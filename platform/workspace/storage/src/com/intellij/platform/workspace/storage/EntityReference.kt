@@ -13,15 +13,15 @@ package com.intellij.platform.workspace.storage
  * resolve to `null` or resolve to a completely different entity which reused the same internal ID. So if you need to be sure that the
  * reference resolves to the original entity, you need to also subscribe to changes in the storage.
  */
-abstract class EntityReference<out E : WorkspaceEntity> {
+public abstract class EntityReference<out E : WorkspaceEntity> {
   /**
    * Returns an entity corresponding to this reference in [storage] or `null` if there is no such entity.
    */
-  abstract fun resolve(storage: EntityStorage): E?
+  public abstract fun resolve(storage: EntityStorage): E?
 
   /**
    * Checks whether this reference points to the given [entity].
    * This function works faster than resolving the reference and comparing the result.
    */
-  abstract fun isReferenceTo(entity: WorkspaceEntity): Boolean
+  public abstract fun isReferenceTo(entity: WorkspaceEntity): Boolean
 }

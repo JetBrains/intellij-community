@@ -6,12 +6,12 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface GlobalWorkspaceModelCache {
-  fun loadCache(): EntityStorage?
-  fun scheduleCacheSave()
+public interface GlobalWorkspaceModelCache {
+  public fun loadCache(): EntityStorage?
+  public fun scheduleCacheSave()
 
-  companion object {
-    fun getInstance(): GlobalWorkspaceModelCache? =
+  public companion object {
+    public fun getInstance(): GlobalWorkspaceModelCache? =
       ApplicationManager.getApplication().getService(GlobalWorkspaceModelCache::class.java)
   }
 }

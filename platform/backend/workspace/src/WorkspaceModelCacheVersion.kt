@@ -7,7 +7,7 @@ package com.intellij.platform.backend.workspace
  * This interface has a goal to reset saved workspace model cache in case the version of entities has changed.
  * Use workspaceModel.cache.version extension point to register this extension.
  */
-interface WorkspaceModelCacheVersion {
-  fun getId(): String
-  fun getVersion(): String
+public interface WorkspaceModelCacheVersion {
+  public fun getId(): String
+  public fun getVersion(): String
 }

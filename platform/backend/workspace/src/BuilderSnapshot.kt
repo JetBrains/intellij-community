@@ -10,10 +10,10 @@ import org.jetbrains.annotations.ApiStatus
  * Represents a new state of the storage, it should be obtained from [BuilderSnapshot.getStorageReplacement] and passed to 
  * [WorkspaceModel.replaceProjectModel].
  */
-class StorageReplacement internal constructor(
-  val version: Long,
-  val builder: MutableEntityStorage,
-  val changes: Map<Class<*>, List<EntityChange<*>>>
+public class StorageReplacement internal constructor(
+  public val version: Long,
+  public val builder: MutableEntityStorage,
+  public val changes: Map<Class<*>, List<EntityChange<*>>>
 )
 
 /**
@@ -21,23 +21,23 @@ class StorageReplacement internal constructor(
  * Its instance can be obtained from [WorkspaceModel.getBuilderSnapshot].
  * This class can be used without global read or write lock, but it isn't a thread safe.
  */
-class BuilderSnapshot @ApiStatus.Internal constructor(val version: Long, private val storage: EntityStorageSnapshot) {
+public class BuilderSnapshot @ApiStatus.Internal constructor(private val version: Long, private val storage: EntityStorageSnapshot) {
   /**
    * Provides access to [MutableEntityStorage] which can be used to prepare the new state.
    */
-  val builder: MutableEntityStorage = MutableEntityStorage.from(storage)
+  public val builder: MutableEntityStorage = MutableEntityStorage.from(storage)
 
   /**
    * Returns `true` if entities in this instance differ from the original storage.
    */
-  fun areEntitiesChanged(): Boolean = !builder.hasSameEntities(storage)
+  public fun areEntitiesChanged(): Boolean = !builder.hasSameEntities(storage)
 
   /**
    * Prepares a replacement for the storage. 
    * Execution of this function may take considerable time, so it's better to invoke it from a background thread, and only pass its result
    * to [WorkspaceModel.replaceProjectModel] under write-lock.
    */
-  fun getStorageReplacement(): StorageReplacement {
+  public fun getStorageReplacement(): StorageReplacement {
     val changes = builder.collectChanges(storage)
     return StorageReplacement(version, builder, changes)
   }

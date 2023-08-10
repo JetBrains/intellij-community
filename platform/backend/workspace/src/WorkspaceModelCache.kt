@@ -10,19 +10,19 @@ import org.jetbrains.annotations.TestOnly
  * Plugins aren't supposed to use this interface directly, the cache is loaded and saved automatically by [WorkspaceModel].
  */
 @ApiStatus.Internal
-interface WorkspaceModelCache {
-  val enabled: Boolean
+public interface WorkspaceModelCache {
+  public val enabled: Boolean
 
-  fun loadCache(): EntityStorage?
-  fun loadUnloadedEntitiesCache(): EntityStorage?
+  public fun loadCache(): EntityStorage?
+  public fun loadUnloadedEntitiesCache(): EntityStorage?
 
   /**
    * Save workspace model caches
    */
   @TestOnly
-  fun saveCacheNow()
+  public fun saveCacheNow()
 
-  companion object {
-    fun getInstance(project: Project): WorkspaceModelCache? = project.getService(WorkspaceModelCache::class.java)?.takeIf { it.enabled }
+  public companion object {
+    public fun getInstance(project: Project): WorkspaceModelCache? = project.getService(WorkspaceModelCache::class.java)?.takeIf { it.enabled }
   }
 }
