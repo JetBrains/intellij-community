@@ -507,6 +507,8 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/JetBrains/jps-javac-extension/")
       .apache("https://github.com/JetBrains/jps-javac-extension/blob/master/LICENSE.txt"),
     LibraryLicense(libraryName = "JSch", url = "https://www.jcraft.com/jsch/").newBsd("https://www.jcraft.com/jsch/LICENSE.txt"),
+    LibraryLicense(name = "jsch", libraryName = "eclipse.jgit.ssh.jsch", url = "https://www.jcraft.com/jsch/")
+      .newBsd("https://www.jcraft.com/jsch/LICENSE.txt"),
     LibraryLicense(libraryName = "jsch-agent-proxy", url = "https://github.com/ymnk/jsch-agent-proxy")
       .newBsd("https://github.com/ymnk/jsch-agent-proxy/blob/master/LICENSE.txt"),
     LibraryLicense(name = "JSON", libraryName = "json.jar", license = "JSON License", licenseUrl = "https://www.json.org/license.html",
