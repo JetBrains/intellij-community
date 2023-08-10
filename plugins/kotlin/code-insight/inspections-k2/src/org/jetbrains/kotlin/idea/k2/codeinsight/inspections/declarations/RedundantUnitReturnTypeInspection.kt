@@ -3,8 +3,11 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
@@ -12,11 +15,19 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdate
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 internal class RedundantUnitReturnTypeInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtNamedFunction, TypeInfo>(KtNamedFunction::class),
+    AbstractKotlinApplicableInspectionWithContext<KtNamedFunction, TypeInfo>(),
     CleanupLocalInspectionTool {
 
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+        return object : KtVisitorVoid() {
+            override fun visitNamedFunction(function: KtNamedFunction) {
+                visitTargetElement(function, holder, isOnTheFly)
+            }
+        }
+    }
     override fun getProblemDescription(element: KtNamedFunction, context: TypeInfo): String =
         KotlinBundle.message("inspection.redundant.unit.return.type.display.name")
 

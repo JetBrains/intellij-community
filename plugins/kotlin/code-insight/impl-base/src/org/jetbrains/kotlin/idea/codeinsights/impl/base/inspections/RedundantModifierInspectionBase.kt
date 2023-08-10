@@ -2,22 +2,32 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableDiagnosticInspectionWithContext
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 abstract class RedundantModifierInspectionBase<DIAGNOSTIC : KtDiagnosticWithPsi<KtModifierListOwner>>(
     private val modifierSet: TokenSet,
-) : AbstractKotlinApplicableDiagnosticInspectionWithContext<KtModifierListOwner, DIAGNOSTIC, RedundantModifierInspectionBase.ModifierContext>(
-        KtModifierListOwner::class
-    ),
+) : AbstractKotlinApplicableDiagnosticInspectionWithContext<KtModifierListOwner, DIAGNOSTIC, RedundantModifierInspectionBase.ModifierContext>(),
     CleanupLocalInspectionTool {
 
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+        return object : KtVisitorVoid() {
+            override fun visitDeclaration(dcl: KtDeclaration) {
+                visitTargetElement(dcl, holder, isOnTheFly)
+            }
+        }
+    }
     class ModifierContext(val modifier: KtModifierKeywordToken)
 
     override fun getProblemDescription(element: KtModifierListOwner, context: ModifierContext): String =

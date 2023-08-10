@@ -2,16 +2,15 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.psi.KtElement
-import kotlin.reflect.KClass
 
 /**
  * A [AbstractKotlinApplicableInspectionWithContext] that applies to an element if it has a specific [DIAGNOSTIC].
  */
-abstract class AbstractKotlinApplicableDiagnosticInspectionWithContext<ELEMENT : KtElement, DIAGNOSTIC : KtDiagnosticWithPsi<ELEMENT>, CONTEXT>(
-    elementType: KClass<ELEMENT>,
-) : AbstractKotlinApplicableInspectionWithContext<ELEMENT, CONTEXT>(elementType), AbstractKotlinApplicableDiagnosticInspectionBase<ELEMENT, DIAGNOSTIC> {
+abstract class AbstractKotlinApplicableDiagnosticInspectionWithContext<ELEMENT : KtElement, DIAGNOSTIC : KtDiagnosticWithPsi<ELEMENT>, CONTEXT>
+    : AbstractKotlinApplicableInspectionWithContext<ELEMENT, CONTEXT>(), AbstractKotlinApplicableDiagnosticInspection<ELEMENT, DIAGNOSTIC> {
     /**
      * Provides some context for [apply] given some [element] and [diagnostic].
      *
@@ -22,7 +21,9 @@ abstract class AbstractKotlinApplicableDiagnosticInspectionWithContext<ELEMENT :
 
     context(KtAnalysisSession)
     final override fun prepareContext(element: ELEMENT): CONTEXT? {
-        val diagnostic = this.getDiagnostic(element) ?: return null
+        val diagnostics = element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
+        val suitableDiagnostics = diagnostics.filterIsInstance(this.getDiagnosticType().java)
+        val diagnostic = suitableDiagnostics.firstOrNull() ?: return null
         return prepareContextByDiagnostic(element, diagnostic)
     }
 }

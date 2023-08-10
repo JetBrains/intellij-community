@@ -2,8 +2,11 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
@@ -22,8 +25,15 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 private val FILTER_IS_INSTANCE_CALLABLE_ID = CallableId(StandardClassIds.BASE_COLLECTIONS_PACKAGE, Name.identifier("filterIsInstance"))
 
 internal class FilterIsInstanceCallWithClassLiteralArgumentInspection :
-    AbstractKotlinApplicableInspection<KtCallExpression>(KtCallExpression::class), CleanupLocalInspectionTool {
+    AbstractKotlinApplicableInspection<KtCallExpression>(), CleanupLocalInspectionTool {
 
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+        return object : KtVisitorVoid() {
+            override fun visitCallExpression(expression: KtCallExpression) {
+                visitTargetElement(expression, holder, isOnTheFly)
+            }
+        }
+    }
     override fun getProblemDescription(element: KtCallExpression): String =
         KotlinBundle.message("inspection.filter.is.instance.call.with.class.literal.argument.display.name")
 

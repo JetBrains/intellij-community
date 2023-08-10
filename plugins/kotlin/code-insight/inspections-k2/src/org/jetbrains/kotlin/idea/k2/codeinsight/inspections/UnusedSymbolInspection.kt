@@ -3,7 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
-import org.jetbrains.kotlin.idea.highlighting.SafeDeleteFix
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
@@ -51,9 +52,9 @@ import org.jetbrains.kotlin.idea.base.psi.mustHaveNonEmptyPrimaryConstructor
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindClassUsagesHandler
 import org.jetbrains.kotlin.idea.base.util.projectScope
-import org.jetbrains.kotlin.idea.codeinsight.api.inspections.KotlinSingleElementInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
+import org.jetbrains.kotlin.idea.highlighting.SafeDeleteFix
 import org.jetbrains.kotlin.idea.inspections.describe
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.findScriptsWithUsages
@@ -71,7 +72,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 /**
  * Current inspection does nothing
  */
-internal class UnusedSymbolInspection : KotlinSingleElementInspection<KtNamedDeclaration>(KtNamedDeclaration::class), UnfairLocalInspectionTool {
+internal class UnusedSymbolInspection : LocalInspectionTool(), UnfairLocalInspectionTool {
 
     // TODO: Having parity between Java and Kotlin might be a good idea once we replace the global Kotlin inspection with a UAST-based one.
     private val javaInspection = UnusedDeclarationInspection()
@@ -712,11 +713,15 @@ internal class UnusedSymbolInspection : KotlinSingleElementInspection<KtNamedDec
         return listOf(SafeDeleteFix(element))
     }
 
-    override fun visitTargetElement(element: KtNamedDeclaration, holder: ProblemsHolder, isOnTheFly: Boolean) {
-        if (isOnTheFly) return
-        val message = element.describe()?.let { KotlinBaseHighlightingBundle.message("inspection.message.never.used", it) } ?: return
-        if (!isApplicableByPsi(element)) return
-        val psiToReportProblem = analyze(element) { getPsiToReportProblem(element) } ?: return
-        holder.registerProblem(psiToReportProblem, message, *createQuickFixes(element).toTypedArray())
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+        return object: KtVisitorVoid() {
+            override fun visitNamedDeclaration(element: KtNamedDeclaration) {
+                if (isOnTheFly) return
+                val message = element.describe()?.let { KotlinBaseHighlightingBundle.message("inspection.message.never.used", it) } ?: return
+                if (!isApplicableByPsi(element)) return
+                val psiToReportProblem = analyze(element) { getPsiToReportProblem(element) } ?: return
+                holder.registerProblem(psiToReportProblem, message, *createQuickFixes(element).toTypedArray())
+            }
+        }
     }
 }

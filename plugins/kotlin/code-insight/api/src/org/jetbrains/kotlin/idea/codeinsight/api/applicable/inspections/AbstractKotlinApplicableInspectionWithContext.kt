@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableTool
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.prepareContextWithAnalyze
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.psi.KtElement
-import kotlin.reflect.KClass
 
 /**
  * A simple [LocalInspectionTool] that visits *one* element type and produces *a single* quickfix. Marks an element with a warning if the
@@ -20,9 +19,7 @@ import kotlin.reflect.KClass
  * For more complex inspections that should either visit multiple kinds of elements or register multiple (or zero) problems, simply use
  * [LocalInspectionTool].
  */
-abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement, CONTEXT>(
-    elementType: KClass<ELEMENT>,
-) : AbstractKotlinApplicableInspectionBase<ELEMENT>(elementType), KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
+abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement, CONTEXT> : AbstractKotlinApplicableInspectionBase<ELEMENT>(), KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
     /**
      * @see com.intellij.codeInspection.CommonProblemDescriptor.getDescriptionTemplate
      */
