@@ -477,16 +477,21 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         },
 
         Method("java.lang.String.concat") convertTo
-                CustomExpression { expression ->
-                    if (expression !is JKCallExpression) error("Expression should be JKCallExpression")
-                    val firstArgument = expression.parent.cast<JKQualifiedExpression>()::receiver.detached()
-                    val secondArgument = expression.arguments.arguments.first()::value.detached()
-                    JKBinaryExpression(
-                        firstArgument,
-                        secondArgument,
-                        JKKtOperatorImpl(JKOperatorToken.PLUS, typeFactory.types.possiblyNullString)
-                    )
-                } withReplaceType REPLACE_WITH_QUALIFIER,
+            CustomExpression { expression ->
+                if (expression !is JKCallExpression) error("Expression should be JKCallExpression")
+                val parent = expression.parent.cast<JKQualifiedExpression>()
+                val firstArgument = parent::receiver.detached()
+                val secondArgument = expression.arguments.arguments.first()::value.detached()
+
+                // Drop the line break to avoid awkward formatting of binary expression with operator on next line
+                firstArgument.hasLineBreakAfter = false
+
+                JKBinaryExpression(
+                    firstArgument,
+                    secondArgument,
+                    JKKtOperatorImpl(JKOperatorToken.PLUS, typeFactory.types.string)
+                ).parenthesize().withFormattingFrom(parent)
+            } withReplaceType REPLACE_WITH_QUALIFIER,
 
         // We request the `split` function with the exact signature `split(regex: Regex, limit: Int = 0)`
         // (see `JKSymbolProvider.provideMethodSymbolWithExactSignature`).

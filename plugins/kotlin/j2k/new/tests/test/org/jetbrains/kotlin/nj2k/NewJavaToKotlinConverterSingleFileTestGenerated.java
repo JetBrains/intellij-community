@@ -4087,6 +4087,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/methodCallExpression/specialBuiltinMembers.java");
         }
 
+        @TestMetadata("stringConcatFormatting.java")
+        public void testStringConcatFormatting() throws Exception {
+            runTest("testData/newJ2k/methodCallExpression/stringConcatFormatting.java");
+        }
+
         @TestMetadata("stringMethods.java")
         public void testStringMethods() throws Exception {
             runTest("testData/newJ2k/methodCallExpression/stringMethods.java");
