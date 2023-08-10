@@ -179,9 +179,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               app.flushQueueFromAnyThread()
 
               val agentContext = when (session.agentInfo.agentType) {
-                RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, protocol)
-                RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, protocol)
-                RdAgentType.GATEWAY -> GatewayAgentContextImpl(session.agentInfo, protocol)
+                RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, protocol, lifetime)
+                RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, protocol, lifetime)
+                RdAgentType.GATEWAY -> GatewayAgentContextImpl(session.agentInfo, protocol, lifetime)
               }
 
               // Execute test method
