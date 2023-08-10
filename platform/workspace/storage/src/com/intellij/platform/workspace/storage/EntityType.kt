@@ -5,20 +5,7 @@ package com.intellij.platform.workspace.storage
  * implementation only.
  */
 public abstract class EntityType<T : WorkspaceEntity, B : WorkspaceEntity.Builder<T>>(public val base: EntityType<*, *>? = null) {
-    public var open: Boolean = false
-    public var abstract: Boolean = false
-    public var sealed: Boolean = false
-
-    public val inheritanceAllowed: Boolean get() = open || sealed || abstract
-
-    public val superTypes: List<EntityType<*, *>>
-      get() = base?.superTypes?.toMutableList()?.apply { add(base) } ?: emptyList()
-
-
     private val ival: Class<T> get() = javaClass.enclosingClass as Class<T>
-
-    public open val packageName: String
-        get() = ival.packageName
 
     public open val name: String by lazy {
         if (ival.enclosingClass == null) ival.simpleName else {
@@ -46,6 +33,4 @@ public abstract class EntityType<T : WorkspaceEntity, B : WorkspaceEntity.Builde
     }
 
     protected fun builder(): B = _builder()
-
-    override fun toString(): String = name
 }
