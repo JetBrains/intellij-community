@@ -273,17 +273,17 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   }
 
   @NotNull
-  protected List<HighlightInfo> highlightErrors() {
+  protected final List<HighlightInfo> highlightErrors() {
     return doHighlighting(HighlightSeverity.ERROR);
   }
 
   @NotNull
-  protected List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minSeverity) {
+  protected final List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minSeverity) {
     return filter(doHighlighting(), minSeverity);
   }
 
   @NotNull
-  protected List<HighlightInfo> doHighlighting() {
+  protected final List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     IntList toIgnore = new IntArrayList();

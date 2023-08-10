@@ -19,7 +19,6 @@ import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.javaee.UriUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.ant.dom.AntResolveInspection;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.model.psi.PsiSymbolService;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -47,7 +46,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -86,7 +84,13 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(false);
   }
   private void doTest(boolean checkWarnings) throws Exception {
-    doTest(getFullRelativeTestName(), checkWarnings, false);
+    XmlHighlightVisitor.setDoJaxpTesting(myTestJustJaxpValidation);
+    try {
+      doTest(getFullRelativeTestName(), checkWarnings, false);
+    }
+    finally {
+      XmlHighlightVisitor.setDoJaxpTesting(false);
+    }
   }
 
   private String getFullRelativeTestName() {
@@ -95,21 +99,6 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   private String getFullRelativeTestName(String ext) {
     return BASE_PATH + getTestName(false) + ext;
-  }
-
-  @NotNull
-  @Override
-  protected List<HighlightInfo> doHighlighting() {
-    if(myTestJustJaxpValidation) {
-      XmlHighlightVisitor.setDoJaxpTesting(true);
-    }
-
-    final List<HighlightInfo> highlightInfos = super.doHighlighting();
-    if(myTestJustJaxpValidation) {
-      XmlHighlightVisitor.setDoJaxpTesting(false);
-    }
-
-    return highlightInfos;
   }
 
   @Override
@@ -1245,7 +1234,6 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testBigPrologHighlightingPerformance() {
-    MadTestingUtil.enableAllInspections(myProject, XMLLanguage.INSTANCE);
     configureByText(XmlFileType.INSTANCE,
                     "<!DOCTYPE rules [\n" +
                     IntStream.range(0, 10000).mapToObj(i -> "<!ENTITY pnct" + i + " \"x\">\n").collect(Collectors.joining()) +
