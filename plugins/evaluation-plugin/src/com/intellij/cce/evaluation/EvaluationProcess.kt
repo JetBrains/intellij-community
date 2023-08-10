@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
-import com.intellij.cce.evaluation.step.FinishEvaluationStep
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import kotlin.system.measureTimeMillis
 
-class EvaluationProcess private constructor(private val steps: List<EvaluationStep>) {
+class EvaluationProcess private constructor(private val steps: List<EvaluationStep>,
+                                            private val finalStep: FinishEvaluationStep?) {
   companion object {
     fun build(init: Builder.() -> Unit, stepFactory: StepFactory): EvaluationProcess {
       val builder = Builder()
@@ -25,17 +25,20 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
     var currentWorkspace = workspace
     var hasError = false
     for (step in steps) {
-      if (hasError && step !is UndoableEvaluationStep.UndoStep
-          && step !is FinishEvaluationStep) continue
+      if (hasError && step !is UndoableEvaluationStep.UndoStep) continue
       println("Starting step: ${step.name} (${step.description})")
       val duration = measureTimeMillis {
         val result = step.start(currentWorkspace)
-        if (result == null) hasError = true
-        else currentWorkspace = result
+        if (result == null) {
+          hasError = true
+        } else {
+          currentWorkspace = result
+        }
       }
       stats[step.name] = duration
     }
     currentWorkspace.saveAdditionalStats("evaluation_process", stats)
+    finalStep?.start(currentWorkspace, hasError)
     return currentWorkspace
   }
 
@@ -44,7 +47,6 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
     var shouldInterpretActions: Boolean = false
     var shouldGenerateReports: Boolean = false
     var shouldReorderElements: Boolean = false
-    var shouldHighlightInIde: Boolean = false
 
     fun build(factory: StepFactory): EvaluationProcess {
       val steps = mutableListOf<EvaluationStep>()
@@ -89,11 +91,7 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
           steps.add(step.undoStep())
       }
 
-      if (!isTestingEnvironment) {
-        steps.add(factory.finishEvaluationStep())
-      }
-
-      return EvaluationProcess(steps)
+      return EvaluationProcess(steps, factory.finishEvaluationStep().takeIf { !isTestingEnvironment })
     }
   }
 }

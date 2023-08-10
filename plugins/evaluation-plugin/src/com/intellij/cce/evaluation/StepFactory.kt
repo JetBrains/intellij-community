@@ -7,9 +7,9 @@ interface StepFactory {
   fun interpretActionsOnNewWorkspaceStep(): EvaluationStep
   fun reorderElements(): EvaluationStep
   fun generateReportStep(): EvaluationStep
-  fun finishEvaluationStep(): EvaluationStep
   fun setupStatsCollectorStep(): EvaluationStep?
   fun setupSdkStep(): EvaluationStep?
   fun checkSdkConfiguredStep(): EvaluationStep
+  fun finishEvaluationStep(): FinishEvaluationStep
   fun featureSpecificSteps(): List<EvaluationStep>
 }
