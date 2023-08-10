@@ -16,13 +16,13 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.IntFunction
 
-class ConnectionId private constructor(
-  val parentClass: Int,
-  val childClass: Int,
-  val connectionType: ConnectionType,
-  val isParentNullable: Boolean
+public class ConnectionId private constructor(
+  public val parentClass: Int,
+  public val childClass: Int,
+  public val connectionType: ConnectionType,
+  public val isParentNullable: Boolean
 ) {
-  enum class ConnectionType {
+  public enum class ConnectionType {
     ONE_TO_ONE,
     ONE_TO_MANY,
     ONE_TO_ABSTRACT_MANY,
@@ -34,7 +34,7 @@ class ConnectionId private constructor(
    *
    * E.g. parent is optional (nullable) for child entity, so the parent can be safely removed.
    */
-  fun canRemoveParent(): Boolean = isParentNullable
+  public fun canRemoveParent(): Boolean = isParentNullable
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -63,7 +63,7 @@ class ConnectionId private constructor(
            "child=${ClassToIntConverter.INSTANCE.getClassOrDie(childClass).simpleName} $connectionType)"
   }
 
-  fun debugStr(): String = """
+  public fun debugStr(): String = """
     ConnectionId info:
       - Parent class: ${this.parentClass.findWorkspaceEntity()}
       - Child class: ${this.childClass.findWorkspaceEntity()}
@@ -71,10 +71,10 @@ class ConnectionId private constructor(
       - Parent of child is nullable: $isParentNullable
   """.trimIndent()
 
-  companion object {
+  public companion object {
     /** This function should be [@Synchronized] because interner is not thread-save */
     @Synchronized
-    fun <Parent : WorkspaceEntity, Child : WorkspaceEntity> create(
+    public fun <Parent : WorkspaceEntity, Child : WorkspaceEntity> create(
       parentClass: Class<Parent>,
       childClass: Class<Child>,
       connectionType: ConnectionType,
@@ -87,7 +87,7 @@ class ConnectionId private constructor(
     /** This function should be [@Synchronized] because interner is not thread-save */
     @Synchronized
     @ApiStatus.Internal
-    fun create(
+    public fun create(
       parentClass: Int,
       childClass: Int,
       connectionType: ConnectionType,
@@ -101,7 +101,7 @@ class ConnectionId private constructor(
   }
 }
 
-val ConnectionId.isOneToOne: Boolean
+public val ConnectionId.isOneToOne: Boolean
   get() = this.connectionType == ConnectionType.ONE_TO_ONE || this.connectionType == ConnectionType.ABSTRACT_ONE_TO_ONE
 
 /**

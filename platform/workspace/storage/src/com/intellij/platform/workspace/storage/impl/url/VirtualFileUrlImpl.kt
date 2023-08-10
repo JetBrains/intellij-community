@@ -10,7 +10,7 @@ import java.nio.file.Path
 /**
  * Represent a URL (in VFS format) of a file or directory.
  */
-open class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
+public open class VirtualFileUrlImpl(public val id: Int, internal val manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
   private var cachedUrl: String? = null
 
   override fun getUrl(): String {
@@ -20,7 +20,7 @@ open class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlM
     return cachedUrl!!
   }
 
-  fun getUrlSegments(): List<String> {
+  public fun getUrlSegments(): List<String> {
     return url.split('/', '\\')
   }
 
@@ -38,7 +38,7 @@ open class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlM
     return calculatedUrl
   }
 
-  override fun getSubTreeFileUrls() = manager.getSubtreeVirtualUrlsById(this)
+  override fun getSubTreeFileUrls(): List<VirtualFileUrl> = manager.getSubtreeVirtualUrlsById(this)
 
   override fun append(relativePath: String): VirtualFileUrl = manager.append(this, relativePath.removePrefix("/"))
 
@@ -62,6 +62,6 @@ open class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlM
  * Do not use io version in production code as FSD filesystems are incompatible with java.io
  */
 @TestOnly
-fun File.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromPath(absolutePath)
+public fun File.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromPath(absolutePath)
 
-fun Path.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromPath(toAbsolutePath().toString())
+public fun Path.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromPath(toAbsolutePath().toString())

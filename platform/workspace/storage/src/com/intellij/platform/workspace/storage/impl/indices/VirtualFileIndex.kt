@@ -40,14 +40,14 @@ internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl,
 internal typealias EntityId2JarDir = BidirectionalLongMultiMap<VirtualFileUrl>
 
 @Suppress("UNCHECKED_CAST")
-open class VirtualFileIndex internal constructor(
+public open class VirtualFileIndex internal constructor(
   internal open val entityId2VirtualFileUrl: EntityId2Vfu,
   internal open val vfu2EntityId: Vfu2EntityId,
   internal open val entityId2JarDir: EntityId2JarDir,
 ) : VirtualFileUrlIndex {
   private lateinit var entityStorage: AbstractEntityStorage
 
-  constructor() : this(EntityId2Vfu(), Vfu2EntityId(getHashingStrategy()), EntityId2JarDir())
+  internal constructor() : this(EntityId2Vfu(), Vfu2EntityId(getHashingStrategy()), EntityId2JarDir())
 
   internal fun getVirtualFiles(id: EntityId): Set<VirtualFileUrl> {
     val result = mutableSetOf<VirtualFileUrl>()
@@ -87,7 +87,7 @@ open class VirtualFileIndex internal constructor(
       entityData.createEntity(entityStorage) to it.key.propertyName
     } ?: emptySequence()
 
-  fun getIndexedJarDirectories(): Set<VirtualFileUrl> = entityId2JarDir.values
+  public fun getIndexedJarDirectories(): Set<VirtualFileUrl> = entityId2JarDir.values
 
   internal fun setTypedEntityStorage(storage: AbstractEntityStorage) {
     entityStorage = storage
@@ -128,7 +128,7 @@ open class VirtualFileIndex internal constructor(
   internal fun getCompositeKey(entityId: EntityId, propertyName: String) =
     EntityIdWithProperty(entityId, propertyName)
 
-  class MutableVirtualFileIndex private constructor(
+  public class MutableVirtualFileIndex private constructor(
     // Do not write to [entityId2VirtualFileUrl]  and [vfu2EntityId] directly! Create a dedicated method for that
     // and call [startWrite] before write.
     override var entityId2VirtualFileUrl: EntityId2Vfu,
@@ -247,7 +247,7 @@ open class VirtualFileIndex internal constructor(
       entityId2JarDir = entityId2JarDir.copy()
     }
 
-    fun toImmutable(): VirtualFileIndex {
+    public fun toImmutable(): VirtualFileIndex {
       freezed = true
       return VirtualFileIndex(entityId2VirtualFileUrl, vfu2EntityId, entityId2JarDir)
     }
@@ -368,12 +368,12 @@ open class VirtualFileIndex internal constructor(
       return copiedMap
     }
 
-    companion object {
+    public companion object {
       private val LOG = logger<MutableVirtualFileIndex>()
       private const val DEFAULT_COLLECTION_SIZE = 2
 
-      const val VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY = "entitySource"
-      fun from(other: VirtualFileIndex): MutableVirtualFileIndex {
+      internal const val VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY = "entitySource"
+      internal fun from(other: VirtualFileIndex): MutableVirtualFileIndex {
         if (other is MutableVirtualFileIndex) other.freezed = true
         return MutableVirtualFileIndex(other.entityId2VirtualFileUrl, other.vfu2EntityId, other.entityId2JarDir)
       }

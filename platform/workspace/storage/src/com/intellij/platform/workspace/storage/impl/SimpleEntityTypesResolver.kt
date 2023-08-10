@@ -3,7 +3,7 @@ package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.platform.workspace.storage.EntityTypesResolver
 
-object SimpleEntityTypesResolver : EntityTypesResolver {
+public object SimpleEntityTypesResolver : EntityTypesResolver {
   override fun getPluginId(clazz: Class<*>): String? = null
 
   override fun resolveClass(name: String, pluginId: String?): Class<*> {

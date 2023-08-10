@@ -968,7 +968,7 @@ internal sealed interface ReplaceWithState {
   object NoChangeTraceLost : ReplaceWithState
 }
 
-sealed interface ParentsRef {
+internal sealed interface ParentsRef {
   data class TargetRef(val targetEntityId: EntityId) : ParentsRef {
     override fun toString(): String {
       return "TargetRef(targetEntityId=${targetEntityId.asString()})"

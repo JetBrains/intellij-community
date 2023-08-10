@@ -8,11 +8,11 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.isSubclassOf
 
-val calculatedCache = mutableMapOf<KProperty<*>, PropertyMetadata>()
-data class PropertyMetadata(val returnTypeClass: Class<out WorkspaceEntity>, val isCollection: Boolean, val isNullable: Boolean)
+internal val calculatedCache = mutableMapOf<KProperty<*>, PropertyMetadata>()
+internal data class PropertyMetadata(val returnTypeClass: Class<out WorkspaceEntity>, val isCollection: Boolean, val isNullable: Boolean)
 
-class WorkspaceEntityExtensionDelegate<T> {
-  operator fun getValue(thisRef: WorkspaceEntity, property: KProperty<*>): T {
+public class WorkspaceEntityExtensionDelegate<T> {
+  public operator fun getValue(thisRef: WorkspaceEntity, property: KProperty<*>): T {
     thisRef as WorkspaceEntityBase
     val propertyMetadata = computeOrGetCachedMetadata(property)
     val workspaceEntitySequence = thisRef.referrers(propertyMetadata.returnTypeClass)
@@ -31,7 +31,7 @@ class WorkspaceEntityExtensionDelegate<T> {
     return result as T
   }
 
-  operator fun setValue(thisRef: WorkspaceEntity, property: KProperty<*>, value: T?) {
+  public operator fun setValue(thisRef: WorkspaceEntity, property: KProperty<*>, value: T?) {
     thisRef as ModifiableWorkspaceEntityBase<*, *>
     val entities = if (value is List<*>) value else listOf(value)
     thisRef.updateReferenceToEntity(property.returnTypeKClass.java, property.isChildProperty, entities as List<WorkspaceEntity?>)

@@ -8,57 +8,57 @@ import org.jetbrains.annotations.NonNls
 /**
  * A base interface for immutable [EntityStorageSnapshot] and [MutableEntityStorage].
  */
-interface EntityStorage {
+public interface EntityStorage {
   /**
    * Returns a sequence containing all the entities of the given type from this storage. 
    * There are no guaranties about the order of the elements in the returned sequence.
    */
-  fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E>
+  public fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E>
 
   /**
    * Returns number of entities of the given type in the storage.
    */
-  fun <E : WorkspaceEntity> entitiesAmount(entityClass: Class<E>): Int
+  public fun <E : WorkspaceEntity> entitiesAmount(entityClass: Class<E>): Int
 
   /**
    * Returns a sequence containing all entities of type [entityClass] which contains a [SymbolicEntityId] property equal to the given [id].
    * There are no guaranties about the order of the elements in the returned sequence.
    */
-  fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(id: SymbolicEntityId<E>, entityClass: Class<R>): Sequence<R>
+  public fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(id: SymbolicEntityId<E>, entityClass: Class<R>): Sequence<R>
 
   /**
    * Returns an entity which [symbolicId][WorkspaceEntityWithSymbolicId.symbolicId] property is equal to the given [id] or `null` if there 
    * is no such entity.
    */
-  fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E?
+  public fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E?
 
   /**
    * Returns `true` if there is an entity which [symbolicId][WorkspaceEntityWithSymbolicId.symbolicId] property is equal to the given [id].
    * `contains(id)` is equivalent to `resolve(id) != null`, but works a bit faster.
    */
-  operator fun <E : WorkspaceEntityWithSymbolicId> contains(id: SymbolicEntityId<E>): Boolean
+  public operator fun <E : WorkspaceEntityWithSymbolicId> contains(id: SymbolicEntityId<E>): Boolean
 
   /**
    * Returns a mapping with the given [identifier] which associates entities from this storage with values of type [T]. 
    */
-  fun <T> getExternalMapping(identifier: @NonNls String): ExternalEntityMapping<T>
+  public fun <T> getExternalMapping(identifier: @NonNls String): ExternalEntityMapping<T>
 
   /**
    * Returns an index which allows to quickly find entities which refer to a particular [VirtualFileUrl][com.intellij.platform.workspace.storage.url.VirtualFileUrl]
    * in their properties.
    */
-  fun getVirtualFileUrlIndex(): VirtualFileUrlIndex
+  public fun getVirtualFileUrlIndex(): VirtualFileUrlIndex
 
   /**
    * Returns a map containing all entities from this storage which [entitySource][WorkspaceEntity.entitySource] property satisfies the
    * given [sourceFilter]. 
    */
-  fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
+  public fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
 
   /**
    * Returns a snapshot of the current state. It won't be affected by future changes in this storage if it's mutable.
    */
-  fun toSnapshot(): EntityStorageSnapshot
+  public fun toSnapshot(): EntityStorageSnapshot
 }
 
 /**
@@ -67,16 +67,16 @@ interface EntityStorage {
  * 
  * Use [com.intellij.platform.backend.workspace.WorkspaceModel.currentSnapshot] to get an instance representing entities inside the IDE process. 
  */
-interface EntityStorageSnapshot : EntityStorage {
-  companion object {
-    fun empty(): EntityStorageSnapshot = EntityStorageSnapshotImpl.EMPTY
+public interface EntityStorageSnapshot : EntityStorage {
+  public companion object {
+    public fun empty(): EntityStorageSnapshot = EntityStorageSnapshotImpl.EMPTY
   }
 }
 
 /**
  * Creates a mutable copy of `this` storage.
  */
-fun EntityStorage.toBuilder(): MutableEntityStorage {
+public fun EntityStorage.toBuilder(): MutableEntityStorage {
   return MutableEntityStorage.from(this)
 }
 

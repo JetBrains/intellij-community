@@ -6,7 +6,7 @@ import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.impl.EntityId
 import org.jetbrains.annotations.TestOnly
 
-open class SymbolicIdInternalIndex private constructor(
+internal open class SymbolicIdInternalIndex private constructor(
   internal open val index: HashBiMap<EntityId, SymbolicEntityId<*>>
 ) {
   constructor() : this(HashBiMap.create<EntityId, SymbolicEntityId<*>>())

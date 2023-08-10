@@ -28,12 +28,12 @@ import java.util.function.IntFunction
  * @author Alex Plate
  */
 
-sealed class ImmutableNonNegativeIntIntMultiMap(
+internal sealed class ImmutableNonNegativeIntIntMultiMap(
   override var values: IntArray,
   override val links: Int2IntMap
 ) : NonNegativeIntIntMultiMap() {
 
-  class ByList internal constructor(values: IntArray, links: Int2IntMap) : ImmutableNonNegativeIntIntMultiMap(values, links) {
+  internal class ByList internal constructor(values: IntArray, links: Int2IntMap) : ImmutableNonNegativeIntIntMultiMap(values, links) {
     override fun toMutable(): MutableNonNegativeIntIntMultiMap.ByList = MutableNonNegativeIntIntMultiMap.ByList(values, links)
   }
 
@@ -93,7 +93,7 @@ sealed class ImmutableNonNegativeIntIntMultiMap(
   }
 }
 
-sealed class MutableNonNegativeIntIntMultiMap(
+internal sealed class MutableNonNegativeIntIntMultiMap(
   override var values: IntArray,
   override var links: Int2IntMap,
   protected var freezed: Boolean
@@ -313,7 +313,7 @@ sealed class MutableNonNegativeIntIntMultiMap(
   }
 }
 
-sealed class NonNegativeIntIntMultiMap {
+internal sealed class NonNegativeIntIntMultiMap {
 
   protected abstract var values: IntArray
   protected abstract val links: Int2IntMap

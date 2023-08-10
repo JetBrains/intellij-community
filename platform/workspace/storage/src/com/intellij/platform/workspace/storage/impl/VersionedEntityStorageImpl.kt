@@ -56,7 +56,7 @@ internal class ValuesCache {
   }
 }
 
-class VersionedEntityStorageOnBuilder(private val builder: MutableEntityStorage) : VersionedEntityStorage {
+public class VersionedEntityStorageOnBuilder(private val builder: MutableEntityStorage) : VersionedEntityStorage {
   private val currentSnapshot: AtomicReference<StorageSnapshotCache> = AtomicReference()
   private val valuesCache: ValuesCache
     get() = getCurrentSnapshot().cache
@@ -75,8 +75,8 @@ class VersionedEntityStorageOnBuilder(private val builder: MutableEntityStorage)
   override fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P): R =
     valuesCache.cachedValue(value, parameter, current)
 
-  override fun <R> clearCachedValue(value: CachedValue<R>) = valuesCache.clearCachedValue(value)
-  override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) =
+  override fun <R> clearCachedValue(value: CachedValue<R>): Unit = valuesCache.clearCachedValue(value)
+  override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P): Unit =
     valuesCache.clearCachedValue(value, parameter)
 
   private fun getCurrentSnapshot(): StorageSnapshotCache {
@@ -90,7 +90,7 @@ class VersionedEntityStorageOnBuilder(private val builder: MutableEntityStorage)
   }
 }
 
-class VersionedEntityStorageOnStorage(private val storage: EntityStorage) : VersionedEntityStorage {
+public class VersionedEntityStorageOnStorage(private val storage: EntityStorage) : VersionedEntityStorage {
   init {
     if (storage is MutableEntityStorage) error("storage must be immutable, but got: ${storage.javaClass.name}")
   }
@@ -111,12 +111,12 @@ class VersionedEntityStorageOnStorage(private val storage: EntityStorage) : Vers
   override fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P): R =
     valuesCache.cachedValue(value, parameter, current)
 
-  override fun <R> clearCachedValue(value: CachedValue<R>) = valuesCache.clearCachedValue(value)
-  override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) =
+  override fun <R> clearCachedValue(value: CachedValue<R>): Unit = valuesCache.clearCachedValue(value)
+  override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P): Unit =
     valuesCache.clearCachedValue(value, parameter)
 }
 
-class DummyVersionedEntityStorage(private val builder: MutableEntityStorage) : VersionedEntityStorage {
+public class DummyVersionedEntityStorage(private val builder: MutableEntityStorage) : VersionedEntityStorage {
   override val version: Long
     get() = builder.modificationCount
 
@@ -132,7 +132,7 @@ class DummyVersionedEntityStorage(private val builder: MutableEntityStorage) : V
   override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) {}
 }
 
-open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : VersionedEntityStorage {
+public open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : VersionedEntityStorage {
   private val currentSnapshot: AtomicReference<StorageSnapshotCache> = AtomicReference()
   private val valuesCache: ValuesCache
     get() {
@@ -154,7 +154,7 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
   override val version: Long
     get() = currentPointer.version
 
-  val pointer: Current
+  public val pointer: Current
     get() = currentPointer
 
   override fun <R> cachedValue(value: CachedValue<R>): R =
@@ -163,11 +163,11 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
   override fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P): R =
     valuesCache.cachedValue(value, parameter, current)
 
-  override fun <R> clearCachedValue(value: CachedValue<R>) = valuesCache.clearCachedValue(value)
-  override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) =
+  override fun <R> clearCachedValue(value: CachedValue<R>): Unit = valuesCache.clearCachedValue(value)
+  override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P): Unit =
     valuesCache.clearCachedValue(value, parameter)
 
-  class Current(val version: Long, val storage: EntityStorageSnapshot)
+  public class Current(public val version: Long, public val storage: EntityStorageSnapshot)
 
   @Volatile
   private var currentPointer: Current = Current(0, initialStorage)
@@ -180,8 +180,8 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
    * We may calculate the change in this function as we won't need the changes for bridges initialization.
    */
   @Synchronized
-  fun replace(newStorage: EntityStorageSnapshot, changes: Map<Class<*>, List<EntityChange<*>>>,
-              beforeChanged: (VersionedStorageChange) -> Unit, afterChanged: (VersionedStorageChange) -> Unit) {
+  public fun replace(newStorage: EntityStorageSnapshot, changes: Map<Class<*>, List<EntityChange<*>>>,
+                     beforeChanged: (VersionedStorageChange) -> Unit, afterChanged: (VersionedStorageChange) -> Unit) {
     val oldCopy = currentPointer
     if (oldCopy.storage == newStorage) return
     val change = VersionedStorageChangeImpl(this, oldCopy.storage, newStorage, changes)

@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 internal typealias ChangeLog = MutableMap<EntityId, ChangeEntry>
 
-class WorkspaceBuilderChangeLog {
+internal class WorkspaceBuilderChangeLog {
   var modificationCount: Long = 0
 
   internal val changeLog: ChangeLog = LinkedHashMap()

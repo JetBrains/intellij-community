@@ -13,25 +13,25 @@ import com.intellij.platform.workspace.storage.impl.EntityId
  * For example, entity implementations may use some advanced functionality of the storage (e.g. get entities by reference).
  */
 @EntityStorageInstrumentationApi
-interface EntityStorageInstrumentation : EntityStorage {
+public interface EntityStorageInstrumentation : EntityStorage {
   /**
    * Create entity using [newInstance] function.
    * In some implementations of the storage ([EntityStorageSnapshot]), the entity is cached and the new instance is created only once.
    */
-  fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T
-  fun <T : WorkspaceEntity> resolveReference(reference: EntityReference<T>): T?
+  public fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T
+  public fun <T : WorkspaceEntity> resolveReference(reference: EntityReference<T>): T?
 
-  fun getOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): WorkspaceEntity?
-  fun getManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<WorkspaceEntity>
+  public fun getOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): WorkspaceEntity?
+  public fun getManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<WorkspaceEntity>
 
-  fun getParent(connectionId: ConnectionId, child: WorkspaceEntity): WorkspaceEntity?
+  public fun getParent(connectionId: ConnectionId, child: WorkspaceEntity): WorkspaceEntity?
 }
 
 @EntityStorageInstrumentationApi
-interface EntityStorageSnapshotInstrumentation : EntityStorageSnapshot, EntityStorageInstrumentation
+public interface EntityStorageSnapshotInstrumentation : EntityStorageSnapshot, EntityStorageInstrumentation
 
 @EntityStorageInstrumentationApi
-interface MutableEntityStorageInstrumentation : MutableEntityStorage, EntityStorageInstrumentation {
+public interface MutableEntityStorageInstrumentation : MutableEntityStorage, EntityStorageInstrumentation {
   /**
    * Replaces existing children of a given parent with a new list of children.
    *
@@ -46,7 +46,7 @@ interface MutableEntityStorageInstrumentation : MutableEntityStorage, EntityStor
    * @param parent The parent WorkspaceEntity whose children will be replaced.
    * @param newChildren The new list of WorkspaceEntities to replace the children with.
    */
-  fun replaceChildren(connectionId: ConnectionId, parent: WorkspaceEntity, newChildren: List<WorkspaceEntity>)
+  public fun replaceChildren(connectionId: ConnectionId, parent: WorkspaceEntity, newChildren: List<WorkspaceEntity>)
 
   /**
    * Adds a child to the list of children of parent.
@@ -62,7 +62,7 @@ interface MutableEntityStorageInstrumentation : MutableEntityStorage, EntityStor
    * @param parent The parent WorkspaceEntity.
    * @param child The WorkspaceEntity to be added as a child.
    */
-  fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity?, child: WorkspaceEntity)
+  public fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity?, child: WorkspaceEntity)
 }
 
 
@@ -81,7 +81,7 @@ interface MutableEntityStorageInstrumentation : MutableEntityStorage, EntityStor
 @RequiresOptIn("This is an internal entity storage API and it's usage requires an explicit opt-in")
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY)
-annotation class EntityStorageInstrumentationApi
+public annotation class EntityStorageInstrumentationApi
 
 @EntityStorageInstrumentationApi
 internal val EntityStorage.instrumentation: EntityStorageInstrumentation

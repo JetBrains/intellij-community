@@ -24,7 +24,7 @@ import kotlin.io.path.createFile
 import kotlin.io.path.readBytes
 
 @ApiStatus.Internal
-fun reportErrorAndAttachStorage(message: String, storage: EntityStorage) {
+public fun reportErrorAndAttachStorage(message: String, storage: EntityStorage) {
   reportConsistencyIssue(message = message,
                          e = IllegalStateException(),
                          sourceFilter = null,
@@ -166,9 +166,9 @@ internal fun EntitySource.anonymize(sourceFilter: ((EntitySource) -> Boolean)?):
   }
 }
 
-data class AnonymizedEntitySource(val originalSourceDump: String) : EntitySource
-data class MatchedEntitySource(val originalSourceDump: String) : EntitySource
-data class UnmatchedEntitySource(val originalSourceDump: String) : EntitySource
+public data class AnonymizedEntitySource(val originalSourceDump: String) : EntitySource
+public data class MatchedEntitySource(val originalSourceDump: String) : EntitySource
+public data class UnmatchedEntitySource(val originalSourceDump: String) : EntitySource
 
 private fun serializeContentToFolder(contentFolder: Path,
                                      left: EntityStorage?,

@@ -10,7 +10,7 @@ import kotlin.math.max
 /**
  * Sublist isn't update indexes for now
  */
-class MutableWorkspaceList<E>(collection: Collection<E>) : ArrayList<E>(collection) {
+public class MutableWorkspaceList<E>(collection: Collection<E>) : ArrayList<E>(collection) {
   private var updateAction: ((value: List<E>) -> Unit)? = null
 
   override fun add(element: E): Boolean {
@@ -94,11 +94,11 @@ class MutableWorkspaceList<E>(collection: Collection<E>) : ArrayList<E>(collecti
     callForOutsideUpdate()
   }
 
-  fun setModificationUpdateAction(updater: (value: List<E>) -> Unit) {
+  public fun setModificationUpdateAction(updater: (value: List<E>) -> Unit) {
     updateAction = updater
   }
 
-  fun cleanModificationUpdateAction() {
+  public fun cleanModificationUpdateAction() {
     updateAction = null
   }
 
@@ -113,14 +113,14 @@ class MutableWorkspaceList<E>(collection: Collection<E>) : ArrayList<E>(collecti
   }
 }
 
-fun <T> Collection<T>.toMutableWorkspaceList(): MutableWorkspaceList<T> {
+public fun <T> Collection<T>.toMutableWorkspaceList(): MutableWorkspaceList<T> {
   return MutableWorkspaceList(this)
 }
 
 /**
  * [MutableIterable.removeAll] and [MutableIterator.remove]  aren't update indexes for now
  */
-class MutableWorkspaceSet<E>(collection: Collection<E>) : LinkedHashSet<E>(max(2 * collection.size, 11)) {
+public class MutableWorkspaceSet<E>(collection: Collection<E>) : LinkedHashSet<E>(max(2 * collection.size, 11)) {
   private var updateAction: ((Set<E>) -> Unit)? = null
 
   init {
@@ -175,16 +175,16 @@ class MutableWorkspaceSet<E>(collection: Collection<E>) : LinkedHashSet<E>(max(2
     return result
   }
 
-  fun setModificationUpdateAction(updater: (value: Set<E>) -> Unit) {
+  public fun setModificationUpdateAction(updater: (value: Set<E>) -> Unit) {
     updateAction = updater
   }
 
   @TestOnly
-  fun getModificationUpdateAction(): ((value: Set<E>) -> Unit)? {
+  public fun getModificationUpdateAction(): ((value: Set<E>) -> Unit)? {
     return updateAction
   }
 
-  fun cleanModificationUpdateAction() {
+  public fun cleanModificationUpdateAction() {
     updateAction = null
   }
 
@@ -199,6 +199,6 @@ class MutableWorkspaceSet<E>(collection: Collection<E>) : LinkedHashSet<E>(max(2
   }
 }
 
-fun <T> Collection<T>.toMutableWorkspaceSet(): MutableWorkspaceSet<T> {
+public fun <T> Collection<T>.toMutableWorkspaceSet(): MutableWorkspaceSet<T> {
   return MutableWorkspaceSet(this)
 }

@@ -7,7 +7,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.function.Consumer
 
-class ImmutableIntIntUniqueBiMap internal constructor(
+internal class ImmutableIntIntUniqueBiMap internal constructor(
   override val key2Value: Int2IntMap,
   override val value2Key: Int2IntMap
 ) : IntIntUniqueBiMap() {
@@ -17,7 +17,7 @@ class ImmutableIntIntUniqueBiMap internal constructor(
   fun toMutable(): MutableIntIntUniqueBiMap = MutableIntIntUniqueBiMap(key2Value, value2Key)
 }
 
-class MutableIntIntUniqueBiMap private constructor(
+internal class MutableIntIntUniqueBiMap private constructor(
   override var key2Value: Int2IntMap,
   override var value2Key: Int2IntMap,
   private var freezed: Boolean
@@ -92,7 +92,7 @@ class MutableIntIntUniqueBiMap private constructor(
   }
 }
 
-sealed class IntIntUniqueBiMap {
+internal sealed class IntIntUniqueBiMap {
 
   protected abstract val key2Value: Int2IntMap
   protected abstract val value2Key: Int2IntMap

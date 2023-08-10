@@ -1218,5 +1218,5 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
 }
 
 /** This function exposes `brokenConsistency` property to the outside and should be removed along with the property itself */
-val EntityStorage.isConsistent: Boolean
+public val EntityStorage.isConsistent: Boolean
   get() = !(this as AbstractEntityStorage).brokenConsistency

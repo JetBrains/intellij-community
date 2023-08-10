@@ -6,7 +6,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 
-object GeneratedCodeCompatibilityChecker {
+internal object GeneratedCodeCompatibilityChecker {
   fun checkCode(entity: Class<WorkspaceEntity>) {
     val builderClass: Class<*>
 

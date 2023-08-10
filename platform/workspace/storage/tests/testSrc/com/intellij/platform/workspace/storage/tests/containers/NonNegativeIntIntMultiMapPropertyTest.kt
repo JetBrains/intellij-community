@@ -30,7 +30,7 @@ class NonNegativeIntIntMultiMapPropertyTest {
     }
   }
 
-  class AddValues(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
+  internal class AddValues(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val amountOfValues = env.generateValue(Generator.integers(0, 10), null)
 
@@ -49,7 +49,7 @@ class NonNegativeIntIntMultiMapPropertyTest {
     }
   }
 
-  class GetValues(val myMap: NonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
+  internal class GetValues(val myMap: NonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val key = selectKey(env, workingMap) ?: return
 
@@ -61,7 +61,7 @@ class NonNegativeIntIntMultiMapPropertyTest {
     }
   }
 
-  class RemoveAll(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
+  internal class RemoveAll(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val key = selectKey(env, workingMap) ?: return
 
@@ -74,7 +74,7 @@ class NonNegativeIntIntMultiMapPropertyTest {
     }
   }
 
-  class RemoveKeyValue(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
+  internal class RemoveKeyValue(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val key = selectKey(env, workingMap) ?: return
       val values = workingMap.get(key).sorted()
@@ -90,7 +90,7 @@ class NonNegativeIntIntMultiMapPropertyTest {
     }
   }
 
-  class ToImmutable(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
+  internal class ToImmutable(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val immutable = myMap.toImmutable()
 

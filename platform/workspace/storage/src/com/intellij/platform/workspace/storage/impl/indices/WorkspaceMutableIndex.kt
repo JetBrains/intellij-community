@@ -3,7 +3,7 @@ package com.intellij.platform.workspace.storage.impl.indices
 
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 
-interface WorkspaceMutableIndex<D> {
-  fun index(entity: WorkspaceEntityData<*>, data: D)
-  fun remove(entity: WorkspaceEntityData<*>, data: D)
+public interface WorkspaceMutableIndex<D> {
+  public fun index(entity: WorkspaceEntityData<*>, data: D)
+  public fun remove(entity: WorkspaceEntityData<*>, data: D)
 }

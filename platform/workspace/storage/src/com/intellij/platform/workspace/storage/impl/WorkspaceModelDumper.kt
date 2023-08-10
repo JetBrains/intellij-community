@@ -4,8 +4,8 @@ package com.intellij.platform.workspace.storage.impl
 import com.intellij.platform.workspace.storage.EntityStorage
 
 @Suppress("unused")
-object WorkspaceModelDumper {
-  fun simpleEntities(store: EntityStorage): String {
+public object WorkspaceModelDumper {
+  public fun simpleEntities(store: EntityStorage): String {
     return buildString {
       store as AbstractEntityStorage
       val classToEntities = HashMap<String, String>()

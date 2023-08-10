@@ -83,28 +83,28 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDele
  * for details.
  */
 @Abstract
-interface WorkspaceEntity {
+public interface WorkspaceEntity {
   /**
    * Returns an instance describing where this entity comes from.
    */
-  val entitySource: EntitySource
+  public val entitySource: EntitySource
 
   /**
    * Creates a reference encapsulating an internal ID of this entity. 
    */
-  fun <E : WorkspaceEntity> createReference(): EntityReference<E>
+  public fun <E : WorkspaceEntity> createReference(): EntityReference<E>
 
   /**
    * Returns the interface describing the specific type of this entity.
    */
-  fun getEntityInterface(): Class<out WorkspaceEntity>
+  public fun getEntityInterface(): Class<out WorkspaceEntity>
 
-  companion object {
+  public companion object {
     /**
      * Used to implement extension properties for entities: every extension property must be implemented using 
      * `by WorkspaceEntity.extension()` clause.
      */
-    inline fun <reified T> extension(): WorkspaceEntityExtensionDelegate<T> {
+    public inline fun <reified T> extension(): WorkspaceEntityExtensionDelegate<T> {
       return WorkspaceEntityExtensionDelegate()
     }
   }
@@ -116,7 +116,7 @@ interface WorkspaceEntity {
    * Currently, the class must inherit from ModifiableWorkspaceEntityBase.
    */
   @Abstract
-  interface Builder<Unmodifiable : WorkspaceEntity> : WorkspaceEntity {
+  public interface Builder<Unmodifiable : WorkspaceEntity> : WorkspaceEntity {
     override var entitySource: EntitySource
   }
 }

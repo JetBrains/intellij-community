@@ -25,21 +25,21 @@ internal typealias EntityId = Long
 
 internal const val invalidEntityId: EntityId = -1
 
-val EntityId.arrayId: Int
+internal val EntityId.arrayId: Int
   get() {
     assert(this >= 0)
     return (this shr 32).toInt()
   }
 
-val EntityId.clazz: Int
+internal val EntityId.clazz: Int
   get() {
     assert(this >= 0)
     return this.toInt()
   }
 
-fun EntityId.asString() = if (this >= 0) clazz.findWorkspaceEntity().simpleName + "-:-" + arrayId.toString() else "UNINITIALIZED"
+internal fun EntityId.asString() = if (this >= 0) clazz.findWorkspaceEntity().simpleName + "-:-" + arrayId.toString() else "UNINITIALIZED"
 
-fun EntityId.copy(arrayId: Int = this.arrayId, clazz: Int = this.clazz): EntityId {
+internal fun EntityId.copy(arrayId: Int = this.arrayId, clazz: Int = this.clazz): EntityId {
   return createEntityId(arrayId, clazz)
 }
 

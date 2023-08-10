@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * via [com.intellij.platform.workspace.storage.MutableEntityStorage.addEntity] function.
  */
 @Experimental
-fun <T : WorkspaceEntity> T.createEntityTreeCopy(requireTopLevelEntity: Boolean = false): WorkspaceEntity.Builder<T> {
+public fun <T : WorkspaceEntity> T.createEntityTreeCopy(requireTopLevelEntity: Boolean = false): WorkspaceEntity.Builder<T> {
   //copying entity from another snapshot
   val originalSnapshot = (this as WorkspaceEntityBase).snapshot as AbstractEntityStorage
   val entityData = originalSnapshot.entityDataByIdOrDie(id)

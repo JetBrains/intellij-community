@@ -11,7 +11,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 
-open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
+public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   private val idGenerator = IntIdGenerator()
   private var emptyUrl: VirtualFileUrl? = null
   private val fileNameStore = VirtualFileNameStore()
@@ -63,7 +63,7 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   }
 
   @Synchronized
-  fun getUrlById(id: Int): String {
+  public fun getUrlById(id: Int): String {
     if (id <= 0) return ""
 
     var node = id2NodeMapping[id]
@@ -96,7 +96,7 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return VirtualFileUrlImpl(id, manager)
   }
 
-  fun getCachedVirtualFileUrls(): List<VirtualFileUrl> = id2NodeMapping.values.mapNotNull(FilePathNode::getCachedVirtualFileUrl)
+  public fun getCachedVirtualFileUrls(): List<VirtualFileUrl> = id2NodeMapping.values.mapNotNull(FilePathNode::getCachedVirtualFileUrl)
 
   internal fun add(path: String, parentNode: FilePathNode? = null): VirtualFileUrl {
     val segments = splitNames(path)
@@ -238,7 +238,7 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
 
   private fun splitNames(path: String): List<String> = path.split('/', '\\')
 
-  fun print() = rootNode.print()
+  public fun print(): String = rootNode.print()
 
   internal inner class FilePathNode(val nodeId: Int, val contentId: Int, val parent: FilePathNode? = null) {
     private var virtualFileUrl: VirtualFileUrl? = null

@@ -128,12 +128,12 @@ import org.jetbrains.annotations.NonNls
  *
  * This is not a full list of use cases. You can use this operation based on your needs.
  */
-interface MutableEntityStorage : EntityStorage {
+public interface MutableEntityStorage : EntityStorage {
   /**
    * Returns `true` if there are changes recorded in this storage after its creation. Note, that this method may return `true` if these
    * changes actually don't modify the resulting set of entities, you may use [hasSameEntities] to perform more sophisticated check.
    */
-  fun hasChanges(): Boolean
+  public fun hasChanges(): Boolean
 
   /**
    * Add the given entity to the storage. All children of the entity will also be added.
@@ -141,21 +141,21 @@ interface MutableEntityStorage : EntityStorage {
    * If any of the children exists in a different storage, this child will be copied with all sub-children and added to the storage.
    * If any of the children exists in `this` storage, the reference to this child will be added instead of creating a new child entity.
    */
-  infix fun <T : WorkspaceEntity> addEntity(entity: T): T
+  public infix fun <T : WorkspaceEntity> addEntity(entity: T): T
 
   /**
    * Modifies the given entity [e] by passing a builder interface for it to [change]. 
    * This function isn't supposed to be used directly, it's more convenient to use a specialized `modifyEntity` extension function which
    * is generated for each entity type.
    */
-  fun <M : WorkspaceEntity.Builder<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
+  public fun <M : WorkspaceEntity.Builder<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
 
   /**
    * Remove the entity from the storage if it's present. All child entities of the entity with non-null reference to the parent entity are
    * also removed.
    * @return `true` if the entity was removed, `false` if the entity was not in the storage
    */
-  fun removeEntity(e: WorkspaceEntity): Boolean
+  public fun removeEntity(e: WorkspaceEntity): Boolean
 
   /**
    * Finds all entities which [entitySource][WorkspaceEntity.entitySource] satisfy the given [sourceFilter] and replaces them with the 
@@ -172,7 +172,7 @@ interface MutableEntityStorage : EntityStorage {
    * 
    * The exact list of optimizations is an implementation detail.
    */
-  fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: EntityStorage)
+  public fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: EntityStorage)
 
   /**
    * Return changes in entities recorded in this instance. [original] parameter is used to get the old instances of modified
@@ -184,7 +184,7 @@ interface MutableEntityStorage : EntityStorage {
    * To understand how the changes are collected see the KDoc for [com.intellij.platform.backend.workspace.WorkspaceModelChangeListener]
    */
   @ApiStatus.Internal
-  fun collectChanges(original: EntityStorage): Map<Class<*>, List<EntityChange<*>>>
+  public fun collectChanges(original: EntityStorage): Map<Class<*>, List<EntityChange<*>>>
 
   /**
    * Merges changes from [diff] to this storage. 
@@ -192,14 +192,14 @@ interface MutableEntityStorage : EntityStorage {
    * same base storage as this one. 
    * Calling the function for a mutable storage with a different base storage may lead to unpredictable results.
    */
-  fun addDiff(diff: MutableEntityStorage)
+  public fun addDiff(diff: MutableEntityStorage)
 
   /**
    * Returns `true` if this instance contains entities with the same properties as [original] storage it was created from. 
    * The difference from [hasChanges] is that this method will return `true` in cases when an entity was removed, and then a new entity
    * with the same properties was added.
    */
-  fun hasSameEntities(original: EntityStorage): Boolean
+  public fun hasSameEntities(original: EntityStorage): Boolean
 
   /**
    * Returns an existing or create a new mapping with the given [identifier].
@@ -208,48 +208,48 @@ interface MutableEntityStorage : EntityStorage {
    * * intellij.facets.bridge
    * * rider.backend.id
    */
-  fun <T> getMutableExternalMapping(identifier: @NonNls String): MutableExternalEntityMapping<T>
+  public fun <T> getMutableExternalMapping(identifier: @NonNls String): MutableExternalEntityMapping<T>
   
   /**
    * Returns a number which is incremented after each change in the storage.
    */
-  val modificationCount: Long
+  public val modificationCount: Long
 
-  companion object {
+  public companion object {
     /**
      * Creates an empty mutable storage. It may be populated with new entities and passed to [addDiff] or [replaceBySource].  
      */
     @JvmStatic
-    fun create(): MutableEntityStorage = MutableEntityStorageImpl.create()
+    public fun create(): MutableEntityStorage = MutableEntityStorageImpl.create()
 
     /**
      * Creates a mutable copy of the given [storage].
      */
     @JvmStatic
-    fun from(storage: EntityStorage): MutableEntityStorage = MutableEntityStorageImpl.from(storage)
+    public fun from(storage: EntityStorage): MutableEntityStorage = MutableEntityStorageImpl.from(storage)
   }
 }
 
 /**
  * Describes a change in an entity. Instances of this class are obtained from [VersionedStorageChange].
  */
-sealed class EntityChange<T : WorkspaceEntity> {
+public sealed class EntityChange<T : WorkspaceEntity> {
   /**
    * Returns the entity which was removed or replaced in the change.
    */
-  abstract val oldEntity: T?
+  public abstract val oldEntity: T?
 
   /**
    * Returns the entity which was added or used as a replacement in the change.
    */
-  abstract val newEntity: T?
+  public abstract val newEntity: T?
 
   /**
    * Describes an entity which was added to the storage, directly (via [MutableEntityStorage.addEntity]) or indirectly (as a child of another
    * added entity, or as a result of a batch operation ([replaceBySource][MutableEntityStorage.replaceBySource], 
    * [addDiff][MutableEntityStorage.addDiff]), or after modification of a reference from a parent entity).
    */
-  data class Added<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
+  public data class Added<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
     override val oldEntity: T?
       get() = null
     override val newEntity: T
@@ -261,7 +261,7 @@ sealed class EntityChange<T : WorkspaceEntity> {
    * another removed entity, or as a result of a batch operation ([replaceBySource][MutableEntityStorage.replaceBySource],
    * [addDiff][MutableEntityStorage.addDiff]), or after modification of a reference from a parent entity).
    */
-  data class Removed<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
+  public data class Removed<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
     override val oldEntity: T
       get() = entity
     override val newEntity: T?
@@ -272,7 +272,7 @@ sealed class EntityChange<T : WorkspaceEntity> {
    * Describes changes in properties of an entity.
    * Old values of the properties can be obtained via [oldEntity], new values can be obtained via [newEntity].
    */
-  data class Replaced<T : WorkspaceEntity>(override val oldEntity: T, override val newEntity: T) : EntityChange<T>()
+  public data class Replaced<T : WorkspaceEntity>(override val oldEntity: T, override val newEntity: T) : EntityChange<T>()
 }
 
 /**
@@ -280,4 +280,4 @@ sealed class EntityChange<T : WorkspaceEntity> {
  * Entities will be compared based on properties with this annotation.
  */
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE)
-annotation class EqualsBy
+public annotation class EqualsBy

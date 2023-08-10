@@ -30,7 +30,7 @@ class NonNegativeIntIntBiMapPropertyTest {
     }
   }
 
-  class AddValues(val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
+  internal class AddValues(private val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val amountOfValues = env.generateValue(Generator.integers(0, 10), null)
 
@@ -51,7 +51,7 @@ class NonNegativeIntIntBiMapPropertyTest {
     }
   }
 
-  class GetValues(val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
+  internal class GetValues(private val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val key = selectKey(env, workingMap) ?: return
 
@@ -63,7 +63,7 @@ class NonNegativeIntIntBiMapPropertyTest {
     }
   }
 
-  class RemoveAll(val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
+  internal class RemoveAll(private val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val key = selectKey(env, workingMap) ?: return
 
@@ -76,7 +76,7 @@ class NonNegativeIntIntBiMapPropertyTest {
     }
   }
 
-  class RemoveKeyValue(val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
+  internal class RemoveKeyValue(private val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val key = selectKey(env, workingMap) ?: return
       val value = workingMap.get(key)!!
@@ -90,7 +90,7 @@ class NonNegativeIntIntBiMapPropertyTest {
     }
   }
 
-  class ToImmutable(val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
+  internal class ToImmutable(private val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val immutable = myMap.toImmutable()
 

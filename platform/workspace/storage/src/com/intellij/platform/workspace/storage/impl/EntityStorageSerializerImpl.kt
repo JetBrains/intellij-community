@@ -50,7 +50,7 @@ import kotlin.system.measureNanoTime
 
 private val LOG = logger<EntityStorageSerializerImpl>()
 
-class DefaultListSerializer<T : List<*>> : CollectionSerializer<T>() {
+internal class DefaultListSerializer<T : List<*>> : CollectionSerializer<T>() {
   override fun create(kryo: Kryo, input: Input, type: Class<out T>, size: Int): T {
     val registration: Registration = kryo.getRegistration(type)
     if (registration.instantiator == null && List::class.java.isAssignableFrom(type)) {
@@ -61,7 +61,7 @@ class DefaultListSerializer<T : List<*>> : CollectionSerializer<T>() {
   }
 }
 
-class DefaultSetSerializer<T : Set<*>> : CollectionSerializer<T>() {
+internal class DefaultSetSerializer<T : Set<*>> : CollectionSerializer<T>() {
   override fun create(kryo: Kryo, input: Input, type: Class<out T>, size: Int): T {
     val registration: Registration = kryo.getRegistration(type)
     if (registration.instantiator == null && Set::class.java.isAssignableFrom(type)) {
@@ -72,7 +72,7 @@ class DefaultSetSerializer<T : Set<*>> : CollectionSerializer<T>() {
   }
 }
 
-class DefaultMapSerializer<T : Map<*, *>> : MapSerializer<T>() {
+internal class DefaultMapSerializer<T : Map<*, *>> : MapSerializer<T>() {
   override fun create(kryo: Kryo, input: Input, type: Class<out T>, size: Int): T {
     val registration = kryo.getRegistration(type)
     if (registration.instantiator == null && Map::class.java.isAssignableFrom(type)) {
@@ -83,14 +83,14 @@ class DefaultMapSerializer<T : Map<*, *>> : MapSerializer<T>() {
   }
 }
 
-class EntityStorageSerializerImpl(
+public class EntityStorageSerializerImpl(
   private val typesResolver: EntityTypesResolver,
   private val virtualFileManager: VirtualFileUrlManager,
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
   private val urlRelativizer: UrlRelativizer? = null
 ) : EntityStorageSerializer {
-  companion object {
-    const val SERIALIZER_VERSION = "v52"
+  public companion object {
+    public const val SERIALIZER_VERSION: String = "v52"
   }
 
   private val interner = HashSetInterner<SerializableEntityId>()
@@ -215,7 +215,7 @@ class EntityStorageSerializerImpl(
     registerSerializer(kryo, getter1.newInstance().javaClass, EmptySerializer, getter1)
   }
 
-  object EmptySerializer : Serializer<Any>(false, true) {
+  internal object EmptySerializer : Serializer<Any>(false, true) {
     override fun write(kryo: Kryo?, output: Output?, `object`: Any?) {}
     override fun read(kryo: Kryo, input: Input?, type: Class<out Any>?): Any = kryo.newInstance(type)
   }
@@ -933,7 +933,7 @@ class EntityStorageSerializerImpl(
 
   @TestOnly
   @Suppress("UNCHECKED_CAST")
-  fun deserializeCacheAndDiffLog(file: Path, diffLogFile: Path): MutableEntityStorage? {
+  public fun deserializeCacheAndDiffLog(file: Path, diffLogFile: Path): MutableEntityStorage? {
     val builder = deserializeCache(file).getOrThrow() ?: return null
 
     var log: ChangeLog
@@ -963,7 +963,7 @@ class EntityStorageSerializerImpl(
 
   @TestOnly
   @Suppress("UNCHECKED_CAST")
-  fun deserializeClassToIntConverter(file: Path) {
+  public fun deserializeClassToIntConverter(file: Path) {
     createKryoInput(file).use { input ->
       val (kryo, _) = createKryo()
 

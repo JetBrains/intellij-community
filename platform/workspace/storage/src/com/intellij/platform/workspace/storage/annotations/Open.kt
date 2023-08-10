@@ -5,4 +5,4 @@ package com.intellij.platform.workspace.storage.annotations
  * Opens specified type or property for subclassing or overriding.
  */
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
-annotation class Open
+public annotation class Open

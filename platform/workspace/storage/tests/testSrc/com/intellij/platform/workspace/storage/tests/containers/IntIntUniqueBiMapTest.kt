@@ -8,7 +8,7 @@ import org.junit.Test
 
 class IntIntUniqueBiMapTest {
 
-  lateinit var map: MutableIntIntUniqueBiMap
+  private lateinit var map: MutableIntIntUniqueBiMap
 
   @Before
   fun setUp() {
