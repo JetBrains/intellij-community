@@ -47,6 +47,9 @@ public abstract class LafManager {
 
   public abstract void repaintUI();
 
+  /**
+   * @return if autodetect is supported and enabled
+   */
   public abstract boolean getAutodetect();
 
   public abstract void setAutodetect(boolean value);

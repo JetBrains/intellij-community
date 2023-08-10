@@ -994,7 +994,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun getAutodetect(): Boolean {
-    return autodetect
+    return autodetect && autodetectSupported
   }
 
   override fun setAutodetect(value: Boolean) {
