@@ -298,6 +298,15 @@ public final class EditorEmbeddedComponentManager {
       if (inlay == null) return null;
       Disposer.register(this, inlay);
 
+      renderer.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent e) {
+          if (e.getSource() instanceof MyRenderer renderer) {
+            revalidateComponents(renderer.getBounds().y);
+          }
+        }
+      });
+
       renderer.addMouseWheelListener(myEditor.getContentComponent()::dispatchEvent);
 
       renderer.setInlay(inlay);
