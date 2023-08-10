@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
-import com.intellij.openapi.vfs.newvfs.persistent.namecache.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
@@ -78,8 +77,10 @@ public final class FSRecordsImpl {
 
   //@formatter:off
   static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-enumerator", false);
+
   public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.use-streamlined-attributes-storage", true);
   public static final boolean USE_RAW_ACCESS_TO_READ_CHILDREN = getBooleanProperty("vfs.use-raw-access-to-read-children", true);
+  private static final boolean USE_FILE_NAME_CACHE = getBooleanProperty("vfs.name-cache.enable", true);
   //@formatter:on
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
@@ -142,12 +143,12 @@ public final class FSRecordsImpl {
   private final AtomicLong invertedNameIndexModCount = new AtomicLong();
 
   /**
-   * Caching wrapper around {@link PersistentFSConnection#namesEnumerator} 
+   * Caching wrapper around {@link PersistentFSConnection#namesEnumerator}
    * TODO RC: ideally this caching wrapper should be created inside connection, and connection.getNames()
    *          should return already wrapped (caching) enumerator -- so it is an implementation detail
-   *          noone needs to know about
+   *          no one needs to know about
    */
-  private final FileNameCache fileNameCache;
+  private final DataEnumeratorEx<String> fileNamesEnumerator;
 
 
   /** VFS implementation version */
@@ -305,7 +306,14 @@ public final class FSRecordsImpl {
     this.currentVersion = currentVersion;
     this.initializationResult = initializationResult;
 
-    this.fileNameCache = new SLRUFileNameCache(connection.getNames());
+    //RC: this cache is actually a replacement for CachingEnumerator inside PersistentStringEnumerator.
+    //    This inside-cache is disabled in VFS, and re-implemented on top.
+    if (USE_FILE_NAME_CACHE) {
+      this.fileNamesEnumerator = new SLRUFileNameCache(connection.getNames());
+    }
+    else {
+      this.fileNamesEnumerator = connection.getNames();
+    }
   }
 
   //========== lifecycle: ========================================
@@ -420,7 +428,9 @@ public final class FSRecordsImpl {
     return connection.isDirty();
   }
 
-  @Nullable VfsLogEx getVfsLog() { return connection.getVfsLog(); }
+  @Nullable VfsLogEx getVfsLog() {
+    return connection.getVfsLog();
+  }
 
   //========== record allocations: ========================================
 
@@ -790,7 +800,7 @@ public final class FSRecordsImpl {
 
       IntList nameIds = new IntArrayList(names.size());
       for (String name : names) {
-        int nameId = fileNameCache.tryEnumerate(name);
+        int nameId = fileNamesEnumerator.tryEnumerate(name);
         if (nameId != NULL_NAME_ID) {
           nameIds.add(nameId);
         }
@@ -876,7 +886,7 @@ public final class FSRecordsImpl {
   public int getNameId(@NotNull String name) {
     try {
       checkNotDisposed();
-      return fileNameCache.enumerate(name);
+      return fileNamesEnumerator.enumerate(name);
     }
     catch (Throwable e) {
       throw handleError(e);
@@ -888,7 +898,7 @@ public final class FSRecordsImpl {
     try {
       checkNotDisposed();
       int nameId = connection.getRecords().getNameId(fileId);
-      return nameId == NULL_NAME_ID ? "" : fileNameCache.valueOf(nameId);
+      return nameId == NULL_NAME_ID ? "" : fileNamesEnumerator.valueOf(nameId);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -910,7 +920,7 @@ public final class FSRecordsImpl {
     assert nameId >= NULL_NAME_ID : "nameId(=" + nameId + ") must be positive";
     checkNotDisposed();
     try {
-      return nameId == NULL_NAME_ID ? "" : fileNameCache.valueOf(nameId);
+      return nameId == NULL_NAME_ID ? "" : fileNamesEnumerator.valueOf(nameId);
     }
     catch (IOException e) {
       throw handleError(e);

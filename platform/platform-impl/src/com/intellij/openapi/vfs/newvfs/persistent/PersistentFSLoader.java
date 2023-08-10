@@ -620,7 +620,7 @@ public final class PersistentFSLoader {
       return new StringPersistentEnumerator(namesFile);
     }
     else {
-      LOG.info("VFS uses strict names enumerator");
+      LOG.info("VFS uses regular names enumerator");
       return new PersistentStringEnumerator(namesFile, PERSISTENT_FS_STORAGE_CONTEXT);
     }
   }

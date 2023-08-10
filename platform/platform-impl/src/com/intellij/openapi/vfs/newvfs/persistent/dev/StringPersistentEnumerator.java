@@ -19,8 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * Persistent enumerator for strings. Uses append-only log to store strings, and in-memory Map[string->id].
- * 
+ * Persistent enumerator for strings.
+ * Uses append-only log to store strings, and in-memory Map[string->id].
  */
 public class StringPersistentEnumerator implements ScannableDataEnumeratorEx<String>, Forceable, Closeable {
 

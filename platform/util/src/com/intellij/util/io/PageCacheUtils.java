@@ -26,6 +26,7 @@ public final class PageCacheUtils {
   /**
    * Enables new (brand-name: 'lock-free') implementations for various VFS components.
    * So far they co-exist with the legacy implementations
+   * TODO rename to LOCK_FREE_PAGE_CACHE_ENABLED ('cos it is not only about VFS)
    */
   public static final boolean LOCK_FREE_VFS_ENABLED = getBooleanProperty("vfs.lock-free-impl.enable", false);
 
