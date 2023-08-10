@@ -325,11 +325,12 @@ internal class PhmVcsLogStorageBackend(
 
     @NonNls
     private const val INDEX = "index"
+    private const val VERSION = 0
 
     @JvmStatic
     fun create(project: Project, storage: VcsLogStorage, roots: Set<VirtualFile>, logId: String,
                errorHandler: VcsLogErrorHandler, parent: Disposable): PhmVcsLogStorageBackend? {
-      val storageId = StorageId.Directory(project.name, INDEX, logId, VcsLogStorageImpl.VERSION + VcsLogPersistentIndex.VERSION)
+      val storageId = StorageId.Directory(project.name, INDEX, logId, VcsLogStorageImpl.VERSION + VcsLogPersistentIndex.VERSION + VERSION)
       val userRegistry = project.getService(VcsUserRegistry::class.java)
       try {
         return IOUtil.openCleanOrResetBroken({ PhmVcsLogStorageBackend(storageId, storage, roots, userRegistry, errorHandler, parent) }) {
