@@ -38,9 +38,10 @@ suspend fun renderBlock(
     checkNotNull(node) { "Failed to find svg node after append" }
 
     node.updatePieDiagramViewBox()
-    node.removeUserJourneyHeightAttribute()
+    node.convertExplicitHeightAndWidthAttributesToStyle()
 
     nodeToLastValidHtml[block] = block.innerHTML
+    renderResult.svg = block.innerHTML
     return renderResult
   } catch (exception: Throwable) {
     console.error("Error while generating blocks:\n", exception)
@@ -53,10 +54,14 @@ private fun Element.findSvgElement(): Element? {
   return findChildElement { it.nodeName == "svg" }
 }
 
-private fun Element.removeUserJourneyHeightAttribute() {
-  if (getAttribute("aria-roledescription") != "journey") return
+private fun Element.convertExplicitHeightAndWidthAttributesToStyle() {
+  if (hasAttribute("style")) return
 
+  val width = getAttribute("width")?.toDoubleOrNull() ?: return
+  setAttribute("width", "100%")
   removeAttribute("height")
+
+  setAttribute("style", "max-width: ${width}px;")
 }
 
 private fun Element.updatePieDiagramViewBox() {

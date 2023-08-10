@@ -6,7 +6,7 @@ external interface MermaidRenderResult {
   /**
    * The svg code for the rendered graph.
    */
-  val svg: String
+  var svg: String
 
   /**
    * Bind function to be called after the svg has been inserted into the DOM.
