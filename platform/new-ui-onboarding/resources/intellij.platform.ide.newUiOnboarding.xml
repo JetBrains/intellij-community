@@ -23,8 +23,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStartupActivity"/>
     <meetNewUiCustomization implementation="com.intellij.platform.ide.newUiOnboarding.MeetNewUiOnboardingCustomization"/>
-    <registryKey key="ide.experimental.ui.onboarding" defaultValue="false"
-                 description="Show the dialog on startup after first New UI switch with a proposal to start the onboarding."/>
+    <registryKey key="ide.experimental.ui.onboarding" defaultValue="true"
+                 description="Show the dialog on startup after New UI switch with a proposal to start the onboarding."/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStatistics"/>
     <statistics.validation.customValidationRule implementation="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepIdRule"/>
