@@ -325,7 +325,7 @@ internal class PhmVcsLogStorageBackend(
 
     @NonNls
     private const val INDEX = "index"
-    private const val VERSION = 0
+    private const val VERSION = 1
 
     @JvmStatic
     fun create(project: Project, storage: VcsLogStorage, roots: Set<VirtualFile>, logId: String,

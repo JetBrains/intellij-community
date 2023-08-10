@@ -272,13 +272,13 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       LightFilePath path = (LightFilePath)o;
-      return myRoot.equals(path.myRoot) &&
+      return myRoot.getPath().equals(path.myRoot.getPath()) &&
              myRelativePath.equals(path.myRelativePath);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myRoot, myRelativePath);
+      return Objects.hash(myRoot.getPath(), myRelativePath);
     }
   }
 
