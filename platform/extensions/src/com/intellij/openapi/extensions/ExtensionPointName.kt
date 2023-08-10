@@ -280,19 +280,9 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
       }
     }
   }
-
-  @ApiStatus.Internal
-  inline fun processExtensions(consumer: (extension: T, pluginDescriptor: PluginDescriptor) -> Unit) {
-    val point = getPointImpl(null)
-    for (adapter in point.sortedAdapters) {
-      val extension = createOrError(adapter, point) ?: continue
-      consumer(extension, adapter.pluginDescriptor)
-    }
-  }
 }
 
-@PublishedApi
-internal fun <T : Any> createOrError(adapter: ExtensionComponentAdapter, point: ExtensionPointImpl<T>): T? {
+private fun <T : Any> createOrError(adapter: ExtensionComponentAdapter, point: ExtensionPointImpl<T>): T? {
   try {
     return adapter.createInstance(point.componentManager)
   }

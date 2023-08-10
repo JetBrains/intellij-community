@@ -182,9 +182,11 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl,
       @Suppress("DEPRECATION")
       val extensionPoint = app.extensionArea.getExtensionPoint<com.intellij.openapi.application.PreloadingActivity>("com.intellij.preloadingActivity")
       @Suppress("DEPRECATION")
-      ExtensionPointName<com.intellij.openapi.application.PreloadingActivity>("com.intellij.preloadingActivity").processExtensions { activity, pluginDescriptor ->
-        launch(CoroutineName(activity.javaClass.name)) {
-          executePreloadActivity(activity, pluginDescriptor)
+      for (item in ExtensionPointName<com.intellij.openapi.application.PreloadingActivity>(extensionPoint.name).filterableLazySequence()) {
+        launch(CoroutineName(item.implementationClassName)) {
+          item.instance?.let {
+            executePreloadActivity(activity = it, descriptor = item.pluginDescriptor)
+          }
         }
       }
       extensionPoint.reset()

@@ -156,10 +156,10 @@ private class OptionsTopHitProviderActivity : ProjectActivity {
       coroutineContext.ensureActive()
 
       val cache = TopHitCache.getInstance(project)
-      OptionsTopHitProvider.PROJECT_LEVEL_EP.processExtensions { provider, pluginDescriptor ->
+      for (item in OptionsTopHitProvider.PROJECT_LEVEL_EP.filterableLazySequence()) {
         coroutineContext.ensureActive()
         try {
-          cache.getCachedOptions(provider, project, pluginDescriptor)
+          cache.getCachedOptions(item.instance ?: continue, project, item.pluginDescriptor)
         }
         catch (e: CancellationException) {
           throw e
