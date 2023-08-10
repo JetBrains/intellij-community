@@ -85,7 +85,7 @@ class SetupCompletionStep(private val language: Language,
   }
 
   private fun setMLCompletion(rankingValue: Boolean, languageValue: Boolean = rankingValue) {
-    settings.setLanguageEnabled(language.name, languageValue)
+    settings.setLanguageEnabled(language.displayName, languageValue)
     settings.isRankingEnabled = rankingValue
   }
 }
