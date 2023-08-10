@@ -12,7 +12,6 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
@@ -42,13 +41,16 @@ class TerminalPromptPanel(
 
     commandHistoryPresenter = CommandHistoryPresenter(project, editor, commandExecutor)
 
-    val innerBorder = JBUI.Borders.customLine(UIUtil.getTextFieldBackground(), 6, 0, 6, 0)
+    val innerBorder = JBUI.Borders.empty(TerminalUI.promptTopInset,
+                                         TerminalUI.blockLeftInset + TerminalUI.cornerToBlockInset,
+                                         TerminalUI.promptBottomInset,
+                                         TerminalUI.blockRightInset + TerminalUI.cornerToBlockInset)
     val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
     border = JBUI.Borders.compound(outerBorder, innerBorder)
 
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
     add(promptLabel)
-    add(Box.createRigidArea(JBDimension(0, 4)))
+    add(Box.createRigidArea(JBDimension(0, TerminalUI.promptToCommandInset)))
     add(editorTextField)
   }
 
@@ -78,14 +80,19 @@ class TerminalPromptPanel(
       override fun setBackground(bg: Color?) {
         // do nothing to not set background to editor in super method
       }
+
+      override fun updateUI() {
+        super.updateUI()
+        font = EditorUtil.getEditorFont()
+      }
     }
     textField.setDisposedWith(this)
-    textField.border = JBUI.Borders.emptyLeft(JBUI.scale(LEFT_INSET))
     textField.alignmentX = JComponent.LEFT_ALIGNMENT
 
     val editor = textField.getEditor(true) as EditorImpl
     editor.scrollPane.border = JBUI.Borders.empty()
-    editor.backgroundColor = UIUtil.getTextFieldBackground()
+    editor.gutterComponentEx.isPaintBackground = false
+    editor.backgroundColor = TerminalUI.terminalBackground
     editor.colorsScheme.apply {
       editorFontName = settings.terminalFont.fontName
       editorFontSize = settings.terminalFont.size
@@ -97,24 +104,22 @@ class TerminalPromptPanel(
   }
 
   private fun createPromptLabel(): JLabel {
-    val label = JLabel()
-    label.font = EditorUtil.getEditorFont()
-    label.border = JBUI.Borders.emptyLeft(JBUI.scale(LEFT_INSET))
+    val label = object : JLabel() {
+      override fun updateUI() {
+        super.updateUI()
+        font = EditorUtil.getEditorFont()
+      }
+    }
+    label.foreground = TerminalUI.promptForeground
     label.alignmentX = JComponent.LEFT_ALIGNMENT
     return label
   }
 
-  override fun getBackground(): Color {
-    return UIUtil.getTextFieldBackground()
-  }
+  override fun getBackground(): Color = TerminalUI.terminalBackground
 
   override fun getComponent(): JComponent = this
 
   override fun getPreferredFocusableComponent(): JComponent = editor.contentComponent
 
   override fun dispose() {}
-
-  companion object {
-    private const val LEFT_INSET: Int = 7
-  }
 }

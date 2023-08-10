@@ -14,6 +14,10 @@ object TerminalUI {
   const val blockArc = 8
   const val blocksGap = 6
 
+  const val promptTopInset = 11
+  const val promptBottomInset = 12
+  const val promptToCommandInset = 2
+
   // todo: create color keys
   val terminalBackground: Color
     get() = JBColor(0xFFFFFF, 0x1E1F22)
@@ -21,4 +25,6 @@ object TerminalUI {
     get() = JBColor(0xF0F2F5, 0x2B2D30)
   val outputForeground: Color
     get() = JBColor(0x080808, 0xBDC0C9)
+  val promptForeground: Color
+    get() = JBColor(0x6C707E, 0x868A91)
 }
