@@ -1,4 +1,4 @@
-// "Replace with count()" "true"
+// "Collapse loop with stream 'count()'" "true-preview"
 import java.util.Arrays;
 
 public class Test {

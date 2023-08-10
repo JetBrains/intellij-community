@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,9 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.ArrayList;
 
-/**
- * @author yole
- */
+
 public class NoButtonGroupInspection extends BaseFormInspection {
   private static final Logger LOG = Logger.getInstance(NoButtonGroupInspection.class);
 
@@ -63,8 +61,7 @@ public class NoButtonGroupInspection extends BaseFormInspection {
   }
 
   private static boolean areCellsAdjacent(final IContainer parent, final GridConstraints c1, final GridConstraints c2) {
-    if (parent instanceof RadContainer) {
-      final RadContainer container = (RadContainer)parent;
+    if (parent instanceof RadContainer container) {
       if (!container.getLayoutManager().isGrid()) return false;
       if (c1.getRow() == c2.getRow()) {
         return FormEditingUtil.prevCol(container, c1.getColumn()) == c2.getColumn() ||

@@ -4,6 +4,7 @@ package com.intellij.psi.stubs;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,7 @@ import java.util.function.UnaryOperator;
 
 @ApiStatus.Internal
 final class FileLocalStringEnumerator implements AbstractStringEnumerator {
-  private final Object2IntOpenHashMap<String> myEnumerates;
+  private final Object2IntMap<String> myEnumerates;
   private final ArrayList<String> myStrings = new ArrayList<>();
 
   FileLocalStringEnumerator(boolean forSavingStub) {

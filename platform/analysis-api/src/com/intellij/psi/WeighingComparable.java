@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
-*/
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<T,Loc>>, ForceableComparable {
   private static final Comparable NULL = new Comparable() {
     @Override
@@ -40,7 +27,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
   private final Weigher<T,Loc>[] myWeighers;
 
   public WeighingComparable(final Computable<? extends T> element,
-                            @Nullable final Loc location,
+                            final @Nullable Loc location,
                             final Weigher<T,Loc>[] weighers) {
     myElement = element;
     myLocation = location;
@@ -59,7 +46,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
   }
 
   @Override
-  public int compareTo(@NotNull final WeighingComparable<T,Loc> comparable) {
+  public int compareTo(final @NotNull WeighingComparable<T,Loc> comparable) {
     if (myComputedWeighs == comparable.myComputedWeighs) return 0;
 
     for (int i = 0; i < myComputedWeighs.length; i++) {
@@ -80,8 +67,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
     return 0;
   }
 
-  @Nullable
-  private Comparable getWeight(final int index) {
+  private @Nullable Comparable getWeight(final int index) {
     Comparable weight = myComputedWeighs[index];
     if (weight == null) {
       T element = myElement.compute();
@@ -90,6 +76,17 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
       myComputedWeighs[index] = weight;
     }
     return weight == NULL ? null : weight;
+  }
+
+  @ApiStatus.Internal
+  public Map<String, Object> getWeights() {
+    Map<String, Object> result = new LinkedHashMap<>();
+    for (int i = 0; i < myComputedWeighs.length; i++) {
+      if (myComputedWeighs[i] == NULL) continue;
+
+      result.put(myWeighers[i].toString(), myComputedWeighs[i]);
+    }
+    return result;
   }
 
   public String toString() {

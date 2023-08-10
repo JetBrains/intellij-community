@@ -86,8 +86,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   @NotNull
   public Kind getKindEnum(@NotNull PsiFile containingFile) {
-    if (!containingFile.isValid()) { // optimization to avoid relatively expensive this.isValid check
-      // but still provide diagnostics for this element and not its containing DummyHolder file
+    if (!containingFile.isValid()) {
+      // optimization to avoid relatively expensive this.isValid check
+      // but still provide diagnostics for this element, not for its containing DummyHolder file
       PsiUtilCore.ensureValid(this);
     }
     CompositeElement treeParent = getTreeParent();
@@ -134,8 +135,12 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return Kind.PACKAGE_NAME_KIND;
     }
     if (i == JavaElementType.IMPORT_STATEMENT) {
-      boolean isOnDemand = SourceTreeToPsiMap.<PsiImportStatement>treeToPsiNotNull(treeParent).isOnDemand();
-      return isOnDemand ? Kind.CLASS_FQ_OR_PACKAGE_NAME_KIND : Kind.CLASS_FQ_NAME_KIND;
+      PsiElement parent = treeParent.getPsi();
+      if (parent instanceof PsiImportStatement) {
+        boolean isOnDemand = ((PsiImportStatement)parent).isOnDemand();
+        return isOnDemand ? Kind.CLASS_FQ_OR_PACKAGE_NAME_KIND : Kind.CLASS_FQ_NAME_KIND;
+      }
+      // otherwise, fallthrough to diagnoseUnknownParent()
     }
     if (i == JavaElementType.IMPORT_STATIC_STATEMENT) {
       return Kind.CLASS_FQ_OR_PACKAGE_NAME_KIND;
@@ -172,24 +177,21 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return fragment.isClassesAccepted() ? Kind.CLASS_FQ_OR_PACKAGE_NAME_KIND : Kind.PACKAGE_NAME_KIND;
     }
 
-    diagnoseUnknownParent();
+    diagnoseUnknownParent(treeParent, i);
     return Kind.CLASS_NAME_KIND;
   }
 
-  private void diagnoseUnknownParent() {
-    CompositeElement parent = getTreeParent();
-    IElementType i = parent.getElementType();
-    StringBuilder msg = new StringBuilder("Unknown parent for java code reference: '").append(parent)
-      .append("'; Type: ").append(i).append(";\n")
-      .append(" Class: ").append(parent.getClass()).append('\n');
+  private void diagnoseUnknownParent(@NotNull CompositeElement parent, @NotNull IElementType parentElementType) {
+    String msg = "Java code reference '" + getText() + "' has unknown parent: '" + parent + "' (" + parent.getClass() + ")" +
+                 "; of type: " + parentElementType + "\n";
     while (parent != null && parent.getPsi() instanceof PsiExpression) {
       parent = parent.getTreeParent();
-      msg.append(" Parent: '").append(parent).append("'; \n");
+      msg += " Parent: '" + parent + "'\n";
     }
     if (parent != null) {
-      msg.append(DebugUtil.treeToString(parent, false));
+      msg += "PSI of the top-level PsiExpression parent:\n"+DebugUtil.treeToString(parent, true);
     }
-    LOG.error(msg.toString());
+    LOG.error(msg);
   }
 
   private static boolean isCodeFragmentType(@NotNull IElementType type) {
@@ -339,8 +341,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return getNormalizedText();
 
       default:
-        LOG.error(kind);
-        return null;
+        throw new IllegalArgumentException("Unexpected kind: " + kind);
     }
   }
 
@@ -536,8 +537,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return result;
     }
 
-    LOG.error(this);
-    return JavaResolveResult.EMPTY_ARRAY;
+    throw new IllegalArgumentException("Unexpected kind: " + kind);
   }
 
   @Override
@@ -563,13 +563,15 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case CLASS_NAME_KIND:
       case CLASS_FQ_NAME_KIND:
         if (!(element instanceof PsiClass)) {
-          throw cannotBindError(element, kind);
+          throw cannotBindError(element, kind, element+ " is not a PsiClass but "+element.getClass());
         }
         return bindToClass((PsiClass)element, containingFile);
 
       case PACKAGE_NAME_KIND:
         if (!(element instanceof PsiPackage)) {
-          throw cannotBindError(element, kind);
+          throw cannotBindError(element, kind, "I, " + this +" ("+getClass()+") contained in "+containingFile+" in "+containingFile.getVirtualFile()+
+                                               " am a package since my treeParent is " + getTreeParent()+" of "+getTreeParent().getElementType()+
+                                               ", but "+element+ " is not a PsiPackage but "+element.getClass());
         }
         return bindToPackage((PsiPackage)element);
 
@@ -582,7 +584,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           return bindToPackage((PsiPackage)element);
         }
         else {
-          throw cannotBindError(element, kind);
+          throw cannotBindError(element, kind, element+ " is not a PsiClass/PsiPackage but "+element.getClass());
         }
       case CLASS_IN_QUALIFIED_NEW_KIND:
         if (element instanceof PsiClass) {
@@ -597,18 +599,17 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           return ref;
         }
         else {
-          throw cannotBindError(element, kind);
+          throw cannotBindError(element, kind, element+ " is not a PsiClass but "+element.getClass());
         }
 
       default:
-        LOG.error(kind);
-        return null;
+        throw new IllegalArgumentException("Unexpected kind: " + kind);
     }
   }
 
   @NotNull
-  private static IncorrectOperationException cannotBindError(@NotNull PsiElement element, @NotNull Kind kind) {
-    return new IncorrectOperationException("Cannot bind to " + element+" of kind: "+kind);
+  private static IncorrectOperationException cannotBindError(@NotNull PsiElement element, @NotNull Kind kind, @NotNull String reason) {
+    return new IncorrectOperationException("Cannot bind to " + element+" of kind: "+kind+" because "+reason);
   }
 
   @NotNull
@@ -622,7 +623,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       assert qName != null : aClass;
       PsiClass psiClass = facade.getResolveHelper().resolveReferencedClass(qName, this);
       if (!getManager().areElementsEquivalent(psiClass, aClass)) {
-        throw cannotBindError(aClass, getKindEnum(containingFile));
+        String reason = "reference '"+qName+"' resolved to "+psiClass+" (which is not equivalent to "+aClass+")";
+        throw cannotBindError(aClass, getKindEnum(containingFile), reason);
       }
     }
     else if (facade.findClass(qName, getResolveScope()) == null && !preserveQualification) {
@@ -645,6 +647,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       }
     }
 
+    PsiElement qualifier = getQualifier();
+    PsiReferenceParameterList parentReferencesList = qualifier instanceof PsiJavaCodeReferenceElement 
+                                                     ? ((PsiJavaCodeReferenceElement)qualifier).getParameterList() 
+                                                     : null;
     PsiJavaCodeReferenceElement ref;
     try {
       ref = facade.getParserFacade().createReferenceFromText(text.toString(), getParent());
@@ -660,6 +666,16 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     PsiReferenceParameterList refParameterList = ref.getParameterList();
     if (parameterList != null && refParameterList != null) {
       refParameterList.replace(parameterList);
+    }
+
+    if (parentReferencesList != null) {
+      PsiElement refQualifier = ref.getQualifier();
+      if (refQualifier instanceof PsiJavaCodeReferenceElement) {
+        PsiReferenceParameterList qRefParameterList = ((PsiJavaCodeReferenceElement)refQualifier).getParameterList();
+        if (qRefParameterList != null) {
+          qRefParameterList.replace(parentReferencesList);
+        }
+      }
     }
 
     getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
@@ -703,8 +719,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return true;
 
       default:
-        LOG.error(kind);
-        return true;
+        throw new IllegalArgumentException("Unexpected kind: " + kind);
     }
 
     ASTNode qualifier = findChildByRole(ChildRole.QUALIFIER);
@@ -784,8 +799,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         }
         return false;
       default:
-        LOG.error(kind);
-        return true;
+        throw new IllegalArgumentException("Unexpected kind: " + kind);
     }
 
     ASTNode referenceNameElement = getReferenceNameNode();
@@ -1011,8 +1025,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return getNormalizedText(); // there cannot be any <...>
 
       default:
-        LOG.error(kind);
-        return null;
+        throw new IllegalArgumentException("Unexpected kind: " + kind);
     }
   }
 
@@ -1034,6 +1047,13 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     PsiReferenceParameterList parameterList = getParameterList();
     if (parameterList == null) return PsiType.EMPTY_ARRAY;
     return parameterList.getTypeArguments();
+  }
+
+  @Override
+  public int getTypeParameterCount() {
+    PsiReferenceParameterList parameterList = getParameterList();
+    if (parameterList == null) return 0;
+    return parameterList.getTypeArgumentCount();
   }
 
   @NotNull

@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenGeneralConfigurable extends MavenGeneralPanel implements SearchableConfigurable {
 
   private final Project myProject;
@@ -60,7 +57,7 @@ public class MavenGeneralConfigurable extends MavenGeneralPanel implements Searc
 
   @Override
   public void reset() {
-    getData(getState());
+    initializeFormData(getState(), myProject);
   }
 
   @Override

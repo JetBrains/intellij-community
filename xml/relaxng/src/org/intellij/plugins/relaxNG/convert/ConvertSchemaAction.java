@@ -18,10 +18,12 @@ package org.intellij.plugins.relaxNG.convert;
 
 import com.intellij.ide.highlighter.DTDFileType;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,6 +59,11 @@ public class ConvertSchemaAction extends AnAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static SchemaType getInputType(Project project, VirtualFile... files) {
     if (files.length == 0) return null;
 
@@ -77,7 +84,7 @@ public class ConvertSchemaAction extends AnAction {
       }
       if (files.length > 1) {
         for (VirtualFile virtualFile : files) {
-          if (virtualFile.getFileType() != XmlFileType.INSTANCE || getInputType(project, virtualFile) != null) {
+          if (!FileTypeRegistry.getInstance().isFileOfType(virtualFile, XmlFileType.INSTANCE) || getInputType(project, virtualFile) != null) {
             return null;
           }
         }

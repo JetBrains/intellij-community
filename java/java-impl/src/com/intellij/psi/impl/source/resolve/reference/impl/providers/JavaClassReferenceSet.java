@@ -31,9 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
-*/
 public class JavaClassReferenceSet {
   public static final char DOT = '.';
   public static final char DOLLAR = '$';

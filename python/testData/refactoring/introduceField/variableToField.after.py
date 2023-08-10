@@ -3,4 +3,4 @@ class Foo:
         self.a = ""
 
     def bar(self):
-        print self.a
+        print(self.a)

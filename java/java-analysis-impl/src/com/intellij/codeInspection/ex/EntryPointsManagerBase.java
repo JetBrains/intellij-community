@@ -1,15 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -17,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -75,7 +81,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
   public EntryPointsManagerBase(@NotNull Project project) {
     myProject = project;
-    myTemporaryEntryPoints = new HashSet<>();
+    myTemporaryEntryPoints = Collections.synchronizedSet(new HashSet<>());
     myPersistentEntryPoints = new LinkedHashMap<>(); // To keep the order between readExternal to writeExternal
     DEAD_CODE_EP_NAME.addChangeListener(() -> {
       if (ADDITIONAL_ANNOS != null) {
@@ -86,7 +92,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
 
   public static EntryPointsManagerBase getInstance(Project project) {
-    return (EntryPointsManagerBase)ServiceManager.getService(project, EntryPointsManager.class);
+    return (EntryPointsManagerBase)project.getService(EntryPointsManager.class);
   }
 
   @Override
@@ -196,8 +202,10 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
 
   private void purgeTemporaryEntryPoints() {
-    for (RefElement entryPoint : myTemporaryEntryPoints) {
-      ((RefElementImpl)entryPoint).setEntry(false);
+    synchronized (myTemporaryEntryPoints) {
+      for (RefElement entryPoint : myTemporaryEntryPoints) {
+        ((RefElementImpl)entryPoint).setEntry(false);
+      }
     }
 
     myTemporaryEntryPoints.clear();
@@ -233,7 +241,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       if (newEntryPoint instanceof RefClass || newEntryPoint instanceof RefMethod) {
         RefClass refClass = newEntryPoint instanceof RefMethod ? ((RefMethod)newEntryPoint).getOwnerClass()
                                                                : (RefClass)newEntryPoint;
-        if (!refClass.isAnonymous()) {
+        if (refClass != null && !refClass.isAnonymous()) {
           final ClassPattern classPattern = new ClassPattern();
           classPattern.pattern = new SmartRefElementPointerImpl(refClass, true).getFQName();
           if (newEntryPoint instanceof RefMethod && !(newEntryPoint instanceof RefImplicitConstructor)) {
@@ -385,11 +393,13 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         }
       }
 
-      final Iterator<RefElement> it = myTemporaryEntryPoints.iterator();
-      while (it.hasNext()) {
-        RefElement refElement = it.next();
-        if (!refElement.isValid()) {
-          it.remove();
+      synchronized (myTemporaryEntryPoints) {
+        final Iterator<RefElement> it = myTemporaryEntryPoints.iterator();
+        while (it.hasNext()) {
+          RefElement refElement = it.next();
+          if (!refElement.isValid()) {
+            it.remove();
+          }
         }
       }
     }
@@ -468,8 +478,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
   @Override
   public boolean isEntryPoint(@NotNull PsiElement element) {
-    if (!(element instanceof PsiModifierListOwner)) return false;
-    PsiModifierListOwner owner = (PsiModifierListOwner)element;
+    if (!(element instanceof PsiModifierListOwner owner)) return false;
     if (!ADDITIONAL_ANNOTATIONS.isEmpty() && ADDITIONAL_ANNOTATIONS.contains(Deprecated.class.getName()) &&
         element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated()) {
       return true;
@@ -506,9 +515,11 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         }
       }
     }
-
+    final Collection<String> defaultAdditionalAnnotations = getAdditionalAnnotations();
     return AnnotationUtil.checkAnnotatedUsingPatterns(owner, ADDITIONAL_ANNOTATIONS) ||
-           AnnotationUtil.checkAnnotatedUsingPatterns(owner, getAdditionalAnnotations());
+           AnnotationUtil.checkAnnotatedUsingPatterns(owner, defaultAdditionalAnnotations) ||
+           MetaAnnotationUtil.isMetaAnnotated(owner, ADDITIONAL_ANNOTATIONS) ||
+           MetaAnnotationUtil.isMetaAnnotated(owner, defaultAdditionalAnnotations);
   }
 
   private static boolean isAcceptedByPattern(@NotNull PsiClass element, String qualifiedName, ClassPattern pattern, Set<? super PsiClass> visited) {
@@ -539,6 +550,14 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       }
     }
     return false;
+  }
+
+  public List<String> getCustomAdditionalAnnotations() {
+    return List.copyOf(ADDITIONAL_ANNOTATIONS);
+  }
+
+  public List<String> getWriteAnnotations() {
+    return List.copyOf(myWriteAnnotations);
   }
 
   public LinkedHashSet<ClassPattern> getPatterns() {
@@ -615,7 +634,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
   }
 
-  public class AddImplicitlyWriteAnnotation implements IntentionAction {
+  public class AddImplicitlyWriteAnnotation implements IntentionAction, LocalQuickFix {
     private final String myQualifiedName;
 
     public AddImplicitlyWriteAnnotation(String qualifiedName) {myQualifiedName = qualifiedName;}
@@ -623,7 +642,12 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     @Override
     @NotNull
     public String getText() {
-      return QuickFixBundle.message("fix.unused.symbol.injection.text",  myQualifiedName);
+      return QuickFixBundle.message("fix.add.write.annotation.text",  myQualifiedName);
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return getText();
     }
 
     @Override
@@ -633,14 +657,54 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
 
     @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      performAction(descriptor.getStartElement().getContainingFile());
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+      return new IntentionPreviewInfo.Html(QuickFixBundle.message("fix.add.write.annotation.description", myQualifiedName));
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return new IntentionPreviewInfo.Html(QuickFixBundle.message("fix.add.write.annotation.description", myQualifiedName));
+    }
+
+    @Override
     public boolean isAvailable(@NotNull Project project1, Editor editor, PsiFile file) {
       return true;
     }
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      myWriteAnnotations.add(myQualifiedName);
-      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
+      performAction(file);
+    }
+
+    private void performAction(@NotNull PsiFile file) {
+      Project project = file.getProject();
+      VirtualFile vFile = file.getVirtualFile();
+      doAddAnnotation(project);
+      UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
+        @Override
+        public void undo() {
+          if (myWriteAnnotations.removeAll(List.of(myQualifiedName))) {
+            ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
+          }
+        }
+
+        @Override
+        public void redo() {
+          doAddAnnotation(project);
+        }
+      });
+    }
+
+    private void doAddAnnotation(Project project) {
+      if (!myWriteAnnotations.contains(myQualifiedName)) {
+        myWriteAnnotations.add(myQualifiedName);
+        ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
+      }
     }
 
     @Override

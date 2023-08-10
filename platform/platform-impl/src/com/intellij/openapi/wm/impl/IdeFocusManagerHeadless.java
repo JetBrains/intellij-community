@@ -55,10 +55,6 @@ public class IdeFocusManagerHeadless extends IdeFocusManager { // FIXME-ank: rev
   }
 
   @Override
-  public void setTypeaheadEnabled(boolean enabled) {
-  }
-
-  @Override
   public Component getFocusOwner() {
     return null;
   }

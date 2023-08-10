@@ -7,24 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.jps.api.JpsDynamicBundle;
 
-import java.util.function.Supplier;
-
-public final class GroovyJpsBundle extends JpsDynamicBundle {
-
+public final class GroovyJpsBundle {
   private static final @NonNls String BUNDLE = "messages.GroovyJpsBundle";
-  private static final GroovyJpsBundle INSTANCE = new GroovyJpsBundle();
+  private static final JpsDynamicBundle INSTANCE = new JpsDynamicBundle(GroovyJpsBundle.class, BUNDLE);
 
   private GroovyJpsBundle() {
-    super(BUNDLE);
   }
 
   public static @Nls @NotNull String message(@PropertyKey(resourceBundle = BUNDLE) @NotNull String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
-  }
-
-  public
-  static @NotNull Supplier<@Nls @NotNull String> messagePointer(@PropertyKey(resourceBundle = BUNDLE) @NotNull String key,
-                                                                Object @NotNull ... params) {
-    return INSTANCE.getLazyMessage(key, params);
   }
 }

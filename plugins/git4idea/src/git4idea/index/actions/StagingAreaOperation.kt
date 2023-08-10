@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.update.FilePathChange
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
@@ -41,6 +40,19 @@ object GitAddOperation : StagingAreaOperation {
 
   override fun processPaths(project: Project, root: VirtualFile, nodes: List<GitFileStatusNode>) {
     GitFileUtils.addPaths(project, root, nodes.map { it.filePath }, true)
+  }
+}
+
+object GitAddWithoutContentOperation : StagingAreaOperation {
+  override val actionText get() = GitBundle.messagePointer("stage.add.no.content.action.text")
+  override val progressTitle get() = GitBundle.message("stage.add.process")
+  override val icon = null
+  override val errorMessage: String get() = GitBundle.message("stage.add.error.title")
+
+  override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.UNTRACKED
+
+  override fun processPaths(project: Project, root: VirtualFile, nodes: List<GitFileStatusNode>) {
+    GitFileUtils.addPathsToIndex(project, root, nodes.map { it.filePath })
   }
 }
 

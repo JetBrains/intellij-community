@@ -29,7 +29,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Objects;
 
 public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor {
   private static final Logger LOG = Logger.getInstance(CacheDiffRequestProcessor.class);
@@ -48,6 +49,9 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
     new SoftHardCacheMap<>(5, 5);
 
   @NotNull private final DiffTaskQueue myQueue = new DiffTaskQueue();
+
+  private @Nullable T myQueuedProvider = null;
+  private boolean myValidateQueuedProvider = false;
 
   public CacheDiffRequestProcessor(@Nullable Project project) {
     super(project);
@@ -95,37 +99,71 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
   public void updateRequest(final boolean force, boolean useCache, @Nullable final ScrollToPolicy scrollToChangePolicy) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed()) return;
-    myQueue.abort();
 
     final T requestProvider = getCurrentRequestProvider();
     if (requestProvider == null) {
-      applyRequest(NoDiffRequest.INSTANCE, force, scrollToChangePolicy);
+      myQueue.abort();
+      finishUpdate(NoDiffRequest.INSTANCE, force, scrollToChangePolicy);
       return;
     }
 
     DiffRequest cachedRequest = useCache ? loadRequestFast(requestProvider) : null;
     if (cachedRequest != null) {
-      applyRequest(cachedRequest, force, scrollToChangePolicy);
+      myQueue.abort();
+      finishUpdate(cachedRequest, force, scrollToChangePolicy);
       return;
     }
+
+    if (useCache && !force && Objects.equals(myQueuedProvider, requestProvider)) {
+      // Let the ongoing computation to finish - high chance, it will be up-to-date with our request.
+      // Schedule double-check in case 'loadRequestFast' implements additional validation.
+      myValidateQueuedProvider = true;
+      return;
+    }
+
+    myQueuedProvider = requestProvider;
+    myValidateQueuedProvider = false;
 
     myQueue.executeAndTryWait(
       indicator -> {
         final DiffRequest request = doLoadRequest(requestProvider, indicator);
-        return () -> {
-          myRequestCache.put(requestProvider, request);
-          applyRequest(request, force, scrollToChangePolicy);
-        };
+        return () -> finishRequestLoading(request, force, scrollToChangePolicy, requestProvider);
       },
       () -> applyRequest(new LoadingDiffRequest(getRequestName(requestProvider)), force, scrollToChangePolicy),
       getFastLoadingTimeMillis()
     );
   }
 
-  protected int getFastLoadingTimeMillis() {
-    return ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  @RequiresEdt
+  private void finishRequestLoading(@NotNull DiffRequest request,
+                                    boolean force,
+                                    @Nullable ScrollToPolicy scrollToChangePolicy,
+                                    @NotNull T requestProvider) {
+    boolean shouldValidate = myValidateQueuedProvider;
+
+    myRequestCache.put(requestProvider, request);
+    finishUpdate(request, force, scrollToChangePolicy);
+
+    if (shouldValidate) {
+      updateRequest();
+    }
   }
 
+  @RequiresEdt
+  private void finishUpdate(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
+    myQueuedProvider = null;
+    myValidateQueuedProvider = false;
+    applyRequest(request, force, scrollToChangePolicy);
+  }
+
+  protected int getFastLoadingTimeMillis() {
+    return ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  }
+
+  /**
+   * NB: Method may be overridden to check if cached request is up-to-date, or needs to be updated.
+   * Ex: if a reasonable `T.equals()` cannot be implemented.
+   */
   @Nullable
   protected DiffRequest loadRequestFast(@NotNull T provider) {
     return myRequestCache.get(provider);

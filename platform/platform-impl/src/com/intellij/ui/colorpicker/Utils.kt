@@ -20,5 +20,5 @@ import java.awt.Color
 /**
  * Convert (Alpha + HSB) color format to ARGB format.
  */
-fun ahsbToArgb(alpha: Int, hue: Float, saturation: Float, brightness: Float) =
+fun ahsbToArgb(alpha: Int, hue: Float, saturation: Float, brightness: Float): Int =
   (alpha shl 24) or (Color.HSBtoRGB(hue, saturation, brightness) and 0x00FFFFFF)

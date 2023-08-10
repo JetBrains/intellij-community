@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -9,11 +9,15 @@ import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.UIExperiment;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.ViewImpl;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.ui.customization.CustomActionsListener;
+import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,8 +30,8 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -39,14 +43,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class XDebugSessionTab extends DebuggerSessionTabBase {
   public static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
 
   protected XWatchesViewImpl myWatchesView;
   private boolean myWatchesInVariables = Registry.is("debugger.watches.in.variables");
-  private final LinkedHashMap<String, XDebugView> myViews = new LinkedHashMap<>();
+  private final Map<String, XDebugView> myViews = new LinkedHashMap<>();
 
   @Nullable
   protected XDebugSessionImpl mySession;
@@ -69,11 +75,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       }
     }
     XDebugSessionTab tab;
-    if (Registry.is("debugger.new.debug.tool.window.view")) {
-      tab = new XDebugSessionTab2(session, icon, environment);
-    }
-    else if (Registry.is("debugger.new.tool.window.layout")) {
-      tab = new XDebugSessionTab3(session, icon, environment);
+    if (UIExperiment.isNewDebuggerUIEnabled() || XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(session.getDebugProcess())) {
+      if (XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess())) {
+        tab = new XDebugSessionTab3(session, icon, environment);
+      }
+      else {
+        tab = new XDebugSessionTabNewUI(session, icon, environment);
+      }
     }
     else {
       tab = new XDebugSessionTab(session, icon, environment, true);
@@ -100,18 +108,52 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   protected void init(XDebugSessionImpl session) {
     initDebuggerTab(session);
+    initFocusingVariablesFromFramesView();
 
     attachToSession(session);
 
     DefaultActionGroup focus = new DefaultActionGroup();
     focus.add(ActionManager.getInstance().getAction(XDebuggerActions.FOCUS_ON_BREAKPOINT));
+    focus.add(ActionManager.getInstance().getAction(XDebuggerActions.FOCUS_ON_FINISH));
     myUi.getOptions().setAdditionalFocusActions(focus).setMinimizeActionEnabled(true).setMoveToGridActionEnabled(true);
 
     initListeners(myUi);
     rebuildViews();
   }
 
+  protected @Nullable <T> T getView(String viewId, Class<T> viewClass) {
+    return ObjectUtils.tryCast(myViews.get(viewId), viewClass);
+  }
+
+  protected void initFocusingVariablesFromFramesView() {
+    XFramesView framesView = getView(DebuggerContentInfo.FRAME_CONTENT, XFramesView.class);
+    XVariablesViewBase variablesView = getView(DebuggerContentInfo.VARIABLES_CONTENT, XVariablesViewBase.class);
+    if (framesView == null || variablesView == null) return;
+
+    framesView.onFrameSelectionKeyPressed(frame -> {
+      Content content = findOrRestoreContentIfNeeded(DebuggerContentInfo.VARIABLES_CONTENT);
+      if (content == null) return;
+      getUi().selectAndFocus(content, true, true).doWhenDone(() -> {
+        // Don't ruin an old selection from the saved tree state (if any) while it's being restored.
+        // Most of the time restoring the selection is fast enough. But even if it's not,
+        // the variables view is focused instantly, so the user can still use the arrow keys
+        // for navigating through the variables loaded so far. The tree restorer, in turn,
+        // is careful enough to not reset the selection if the user happened to change it already.
+        variablesView.onReady().whenComplete((node, throwable) -> {
+          if (node != null && node.getTree().isSelectionEmpty()) {
+            node.getTree().setSelectionRow(0);
+          }
+        });
+      });
+    });
+  }
+
   protected void initDebuggerTab(XDebugSessionImpl session) {
+    createDefaultTabs(session);
+    CustomActionsListener.subscribe(this, () -> initToolbars(session));
+  }
+
+  protected final void createDefaultTabs(XDebugSessionImpl session) {
     Content framesContent = createFramesContent();
     myUi.addContent(framesContent, 0, PlaceInGrid.left, false);
 
@@ -137,7 +179,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   protected void addVariablesAndWatches(@NotNull XDebugSessionImpl session) {
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
     if (!myWatchesInVariables) {
-      myUi.addContent(createWatchesContent(session), 0, PlaceInGrid.right, false);
+      myUi.addContent(createWatchesContent(session, null), 0, PlaceInGrid.right, false);
     }
   }
 
@@ -191,7 +233,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private Content createVariablesContent(@NotNull XDebugSessionImpl session) {
     XVariablesView variablesView;
     if (myWatchesInVariables) {
-      variablesView = myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables);
+      variablesView = myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables, false, false);
     } else {
       variablesView = new XVariablesView(session);
     }
@@ -206,8 +248,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return result;
   }
 
-  private Content createWatchesContent(@NotNull XDebugSessionImpl session) {
-    myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables);
+  protected Content createWatchesContent(@NotNull XDebugSessionImpl session, @Nullable XWatchesViewImpl watchesView) {
+    myWatchesView = watchesView != null ? watchesView : new XWatchesViewImpl(session, myWatchesInVariables);
     registerView(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getPanel(),
                                                 XDebuggerBundle.message("debugger.session.tab.watches.title"), null, myWatchesView.getDefaultFocusedComponent());
@@ -217,7 +259,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   @NotNull
   private Content createFramesContent() {
-    XFramesView framesView = new XFramesView(myProject);
+    XFramesView framesView = new XFramesView(mySession);
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
                                                XDebuggerBundle.message("debugger.session.tab.frames.title"), null, framesView.getDefaultFocusedComponent());
@@ -273,15 +315,16 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   protected void initToolbars(@NotNull XDebugSessionImpl session) {
-    DefaultActionGroup leftToolbar = new DefaultActionGroup();
+    ActionGroup leftGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP);
+    DefaultActionGroup leftToolbar = new DefaultActionGroupWithDelegate(leftGroup);
     if (myEnvironment != null) {
       leftToolbar.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
       leftToolbar.addAll(session.getRestartActions());
-      leftToolbar.add(new CreateAction());
+      leftToolbar.add(new CreateAction(AllIcons.General.Settings));
       leftToolbar.addSeparator();
       leftToolbar.addAll(session.getExtraActions());
     }
-    leftToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP));
+    leftToolbar.addAll(leftGroup);
 
     for (AnAction action : session.getExtraStopActions()) {
       leftToolbar.add(action, new Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM));
@@ -302,8 +345,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     leftToolbar.add(PinToolwindowTabAction.getPinAction());
 
-    DefaultActionGroup topLeftToolbar = new DefaultActionGroup();
-    topLeftToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP));
+    ActionGroup topGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP);
+    DefaultActionGroup topLeftToolbar = new DefaultActionGroupWithDelegate(topGroup);
+    topLeftToolbar.addAll(topGroup);
 
     registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
@@ -374,21 +418,10 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XDebugSessionTab tab = session != null ? session.getSessionTab() : null;
     if (tab != null) {
       tab.toFront(false, null);
-      // restore watches tab if minimized
-      tab.restoreContent(viewId);
-
-      RunnerLayoutUi layoutUi = tab.getUi();
-      if (layoutUi instanceof DataProvider) {
-        RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)layoutUi));
-        if (ui != null) {
-          Content content = ui.findContent(viewId);
-
-          // if the view is not visible (e.g. Console tab is selected, while Debugger tab is not)
-          // make sure we make it visible to the user
-          if (content != null) {
-            ui.select(content, false);
-          }
-        }
+      Content content = tab.findOrRestoreContentIfNeeded(viewId);
+      // make sure we make it visible to the user
+      if (content != null) {
+        tab.myUi.selectAndFocus(content, false, false);
       }
     }
   }
@@ -444,8 +477,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   private void removeContent(String contentId) {
-    restoreContent(contentId); //findContent returns null if content is minimized
-    myUi.removeContent(myUi.findContent(contentId), true);
+    myUi.removeContent(findOrRestoreContentIfNeeded(contentId), true);
     unregisterView(contentId);
   }
 
@@ -456,12 +488,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
   }
 
-  protected void restoreContent(String contentId) {
-    if (myUi instanceof DataProvider) {
-      RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)myUi));
-      if (ui != null) {
-        ui.restoreContent(contentId);
-      }
+  public @Nullable Content findOrRestoreContentIfNeeded(@NotNull String contentId) {
+    RunnerContentUi contentUi = myUi instanceof DataProvider ? RunnerContentUi.KEY.getData(((DataProvider)myUi)) : null;
+    if (contentUi != null) {
+      return contentUi.findOrRestoreContentIfNeeded(contentId);
     }
+    return myUi.findContent(contentId);
   }
 }

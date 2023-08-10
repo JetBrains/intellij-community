@@ -18,7 +18,6 @@ package com.jetbrains.python.psi;
 /**
  * The 'finally' part.
  * @see PyTryPart
- * User: dcheryasov
  */
 public interface PyFinallyPart extends PyStatementPart {
 }

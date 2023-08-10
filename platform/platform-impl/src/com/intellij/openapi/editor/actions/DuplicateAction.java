@@ -10,10 +10,8 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class DuplicateAction extends EditorAction {
   public DuplicateAction() {
@@ -47,35 +45,28 @@ public class DuplicateAction extends EditorAction {
       editor.getSelectionModel().setSelection(end, end+s.length());
     }
     else {
-      duplicateLinesRange(editor, document, caretModel.getVisualPosition(), caretModel.getVisualPosition());
+      duplicateLinesRange(editor, caretModel.getVisualPosition(), caretModel.getVisualPosition());
     }
   }
 
-  @Nullable
-  static Couple<Integer> duplicateLinesRange(Editor editor, Document document, VisualPosition rangeStart, VisualPosition rangeEnd) {
-    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcSurroundingRange(editor, rangeStart, rangeEnd);
+  static @NotNull TextRange duplicateLinesRange(@NotNull Editor editor,
+                                                @NotNull VisualPosition rangeStart,
+                                                @NotNull VisualPosition rangeEnd) {
+    TextRange range = EditorUtil.calcSurroundingTextRange(editor, rangeStart, rangeEnd);
+    String s = editor.getDocument().getText(range);
     int offset = editor.getCaretModel().getOffset();
-
-    LogicalPosition lineStart = lines.first;
-    LogicalPosition nextLineStart = lines.second;
-    int start = editor.logicalPositionToOffset(lineStart);
-    int end = editor.logicalPositionToOffset(nextLineStart);
-    if (end <= start) {
-      return null;
-    }
-    String s = document.getCharsSequence().subSequence(start, end).toString();
-    int newOffset = end + offset - start;
-    int selectionStart = end;
-    if (nextLineStart.line == document.getLineCount() - 1 && nextLineStart.column > 0) { // last line
+    int newOffset = offset + range.getLength();
+    int selectionStart = range.getEndOffset();
+    if (!s.endsWith("\n")) { // last line
       s = "\n"+s;
       newOffset++;
       selectionStart++;
     }
-    DocumentGuardedTextUtil.insertString(document, end, s);
+    DocumentGuardedTextUtil.insertString(editor.getDocument(), range.getEndOffset(), s);
 
     editor.getCaretModel().moveToOffset(newOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    return Couple.of(selectionStart, end + s.length());
+    return TextRange.create(selectionStart, range.getEndOffset() + s.length());
   }
 
   @Override

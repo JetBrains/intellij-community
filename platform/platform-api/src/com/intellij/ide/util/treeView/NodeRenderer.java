@@ -37,8 +37,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   public void customizeCellRenderer(@NotNull JTree tree, @NlsSafe Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     @NlsSafe Object node = TreeUtil.getUserObject(value);
 
-    if (node instanceof NodeDescriptor) {
-      NodeDescriptor<?> descriptor = (NodeDescriptor<?>)node;
+    if (node instanceof NodeDescriptor<?> descriptor) {
       // TODO: use this color somewhere
       Color color = descriptor.getColor();
       setIcon(fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus));
@@ -46,8 +45,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
 
     ItemPresentation p0 = getPresentation(node);
 
-    if (p0 instanceof PresentationData) {
-      PresentationData presentation = (PresentationData)p0;
+    if (p0 instanceof PresentationData presentation) {
       Color color = node instanceof NodeDescriptor ? ((NodeDescriptor<?>)node).getColor() : null;
       setIcon(fixIconIfNeeded(presentation.getIcon(false), selected, hasFocus));
 

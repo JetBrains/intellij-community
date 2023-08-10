@@ -1,0 +1,11 @@
+// "Suppress 'ConstantConditionIf' for fun foo" "true"
+
+@Suppress("ConstantConditionIf")
+fun foo() {
+    if (true) {
+    }
+}
+
+// IGNORE_FIR
+// TOOL: org.jetbrains.kotlin.idea.inspections.ConstantConditionIfInspection
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

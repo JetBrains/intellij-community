@@ -19,24 +19,17 @@ package com.intellij.vcs.log.graph.impl.print.elements;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
-import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
+import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager;
 import org.jetbrains.annotations.NotNull;
 
 public class EdgePrintElementImpl extends PrintElementWithGraphElement implements EdgePrintElement {
 
   @NotNull
   public static EdgePrintElement.LineStyle convertToLineStyle(@NotNull GraphEdgeType edgeType) {
-    switch (edgeType) {
-      case USUAL:
-      case NOT_LOAD_COMMIT:
-        return EdgePrintElement.LineStyle.SOLID;
-      case DOTTED:
-      case DOTTED_ARROW_UP:
-      case DOTTED_ARROW_DOWN:
-        return EdgePrintElement.LineStyle.DASHED;
-      default:
-        throw new IllegalStateException("Edge type not supported: " + edgeType);
-    }
+    return switch (edgeType) {
+      case USUAL, NOT_LOAD_COMMIT -> LineStyle.SOLID;
+      case DOTTED, DOTTED_ARROW_UP, DOTTED_ARROW_DOWN -> LineStyle.DASHED;
+    };
   }
 
   @NotNull private final Type myType;
@@ -50,8 +43,8 @@ public class EdgePrintElementImpl extends PrintElementWithGraphElement implement
                               @NotNull Type type,
                               @NotNull GraphEdge graphEdge,
                               boolean hasArrow,
-                              @NotNull PrintElementManager printElementManager) {
-    super(rowIndex, positionInCurrentRow, graphEdge, printElementManager);
+                              @NotNull PrintElementPresentationManager presentationManager) {
+    super(rowIndex, positionInCurrentRow, graphEdge, presentationManager);
     myType = type;
     myLineStyle = convertToLineStyle(graphEdge.getType());
     myPositionInOtherRow = positionInOtherRow;
@@ -83,9 +76,7 @@ public class EdgePrintElementImpl extends PrintElementWithGraphElement implement
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof EdgePrintElement)) return false;
-
-    EdgePrintElement that = (EdgePrintElement)o;
+    if (!(o instanceof EdgePrintElement that)) return false;
 
     if (myPositionInCurrentRow != that.getPositionInCurrentRow()) return false;
     if (myPositionInOtherRow != that.getPositionInOtherRow()) return false;

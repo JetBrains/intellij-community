@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.patterns;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -20,7 +20,12 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * @author yole
+ * Provides patterns for literals, strings, arguments and function/method arguments of Python.
+ * <p>
+ * Please see the <a href="https://plugins.jetbrains.com/docs/intellij/element-patterns.html">IntelliJ Platform Docs</a>
+ * for a high-level overview.
+ *
+ * @see PlatformPatterns
  */
 public class PythonPatterns extends PlatformPatterns {
 
@@ -40,8 +45,7 @@ public class PythonPatterns extends PlatformPatterns {
     return new PyElementPattern.Capture<>(new InitialPatternCondition<>(PyStringLiteralExpression.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
-        if (o instanceof PyStringLiteralExpression) {
-          final PyStringLiteralExpression expr = (PyStringLiteralExpression)o;
+        if (o instanceof PyStringLiteralExpression expr) {
           if (!DocStringUtil.isDocStringExpression(expr) && expr.getTextLength() < STRING_LITERAL_LIMIT) {
             final String value = expr.getStringValue();
             return pattern.matcher(value).find();
@@ -105,11 +109,9 @@ public class PythonPatterns extends PlatformPatterns {
     final PyCallExpression call = (PyCallExpression)((PyExpression)expression).getParent().getParent();
 
     // TODO is it better or worse to allow implicits here?
-    final PyResolveContext context = PyResolveContext
-      .defaultContext()
-      .withTypeEvalContext(TypeEvalContext.codeAnalysis(call.getProject(), call.getContainingFile()));
+    final var context = TypeEvalContext.codeAnalysis(call.getProject(), call.getContainingFile());
 
-    return call.multiResolveCalleeFunction(context);
+    return call.multiResolveCalleeFunction(PyResolveContext.defaultContext(context));
   }
 
   private static boolean isCallArgument(@Nullable Object expression, @Nullable String functionName, int index) {

@@ -3,9 +3,9 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -15,6 +15,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -32,31 +33,24 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-/**
- * @author Irina.Chernushina on 4/19/2017.
- */
 @Tag("SchemaInfo")
-public class UserDefinedJsonSchemaConfiguration {
+public final class UserDefinedJsonSchemaConfiguration {
   private final static Comparator<Item> ITEM_COMPARATOR = (o1, o2) -> {
     if (o1.isPattern() != o2.isPattern()) return o1.isPattern() ? -1 : 1;
     if (o1.isDirectory() != o2.isDirectory()) return o1.isDirectory() ? -1 : 1;
     return o1.path.compareToIgnoreCase(o2.path);
   };
 
-  public @Nls String name;
+  private @Nls String name;
+  private @Nullable @Nls String generatedName;
   public String relativePathToSchema;
   public JsonSchemaVersion schemaVersion = JsonSchemaVersion.SCHEMA_4;
   public boolean applicationDefined;
   public List<Item> patterns = new SmartList<>();
+  public boolean isIgnoredFile = false;
   @Transient
-  private final AtomicClearableLazyValue<List<PairProcessor<Project, VirtualFile>>> myCalculatedPatterns =
-    new AtomicClearableLazyValue<>() {
-      @NotNull
-      @Override
-      protected List<PairProcessor<Project, VirtualFile>> compute() {
-        return recalculatePatterns();
-      }
-    };
+  private final SynchronizedClearableLazy<List<PairProcessor<Project, VirtualFile>>> myCalculatedPatterns = new SynchronizedClearableLazy<>(
+    this::recalculatePatterns);
 
   public UserDefinedJsonSchemaConfiguration() {
   }
@@ -73,12 +67,28 @@ public class UserDefinedJsonSchemaConfiguration {
     setPatterns(patterns);
   }
 
+  public void setGeneratedName(@NotNull @Nls String generatedName) {
+    this.generatedName = generatedName;
+  }
+
+  public @Nls String getGeneratedName() {
+    return this.generatedName;
+  }
+
   public @Nls String getName() {
     return name;
   }
 
   public void setName(@NotNull @Nls String name) {
     this.name = name;
+  }
+
+  public boolean isIgnoredFile() {
+    return isIgnoredFile;
+  }
+
+  public void setIgnoredFile(boolean ignoredFile) {
+    isIgnoredFile = ignoredFile;
   }
 
   public String getRelativePathToSchema() {
@@ -129,28 +139,25 @@ public class UserDefinedJsonSchemaConfiguration {
     final List<PairProcessor<Project, VirtualFile>> result = new SmartList<>();
     for (final Item patternText : patterns) {
       switch (patternText.mappingKind) {
-        case File:
-          result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) || vfile.getUrl().equals(Item.neutralizePath(patternText.getPath())));
-          break;
-        case Pattern:
-          String pathText = patternText.getPath().replace(File.separatorChar, '/').replace('\\', '/');
+        case File -> result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) ||
+                                                    vfile.getUrl().equals(Item.neutralizePath(patternText.getPath())));
+        case Pattern -> {
+          String pathText = FileUtil.toSystemIndependentName(patternText.getPath());
           final Pattern pattern = pathText.isEmpty()
                                   ? PatternUtil.NOTHING
                                   : pathText.indexOf('/') >= 0
                                     ? PatternUtil.compileSafe(".*/" + PatternUtil.convertToRegex(pathText), PatternUtil.NOTHING)
                                     : PatternUtil.fromMask(pathText);
           result.add((project, file) -> JsonSchemaObject.matchPattern(pattern, pathText.indexOf('/') >= 0
-                                                        ? file.getPath()
-                                                        : file.getName()));
-          break;
-        case Directory:
-          result.add((project, vfile) -> {
-            final VirtualFile relativeFile = getRelativeFile(project, patternText);
-            if (relativeFile == null || !VfsUtilCore.isAncestor(relativeFile, vfile, true)) return false;
-            JsonSchemaService service = JsonSchemaService.Impl.get(project);
-            return service.isApplicableToFile(vfile);
-          });
-          break;
+                                                                               ? file.getPath()
+                                                                               : file.getName()));
+        }
+        case Directory -> result.add((project, vfile) -> {
+          final VirtualFile relativeFile = getRelativeFile(project, patternText);
+          if (relativeFile == null || !VfsUtilCore.isAncestor(relativeFile, vfile, true)) return false;
+          JsonSchemaService service = JsonSchemaService.Impl.get(project);
+          return service.isApplicableToFile(vfile);
+        });
       }
     }
     return result;
@@ -206,6 +213,7 @@ public class UserDefinedJsonSchemaConfiguration {
     return result;
   }
 
+
   public static class Item {
     public String path;
     public JsonMappingKind mappingKind = JsonMappingKind.File;
@@ -252,16 +260,11 @@ public class UserDefinedJsonSchemaConfiguration {
     }
 
     public @Tooltip String getError() {
-      switch (mappingKind) {
-        case File:
-          return !StringUtil.isEmpty(path) ? null : JsonBundle.message("schema.configuration.error.empty.file.path");
-        case Pattern:
-          return !StringUtil.isEmpty(path) ? null : JsonBundle.message("schema.configuration.error.empty.pattern");
-        case Directory:
-          return null;
-      }
-
-      return JsonBundle.message("schema.configuration.error.unknown.mapping");
+      return switch (mappingKind) {
+        case File -> !StringUtil.isEmpty(path) ? null : JsonBundle.message("schema.configuration.error.empty.file.path");
+        case Pattern -> !StringUtil.isEmpty(path) ? null : JsonBundle.message("schema.configuration.error.empty.pattern");
+        case Directory -> null;
+      };
     }
 
     public boolean isPattern() {

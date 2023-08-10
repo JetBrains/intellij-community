@@ -2,15 +2,14 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class DevelopPluginsAction extends AnAction implements DumbAware {
   @NonNls private static final String PLUGIN_WEBSITE = "https://plugins.jetbrains.com/docs/intellij/";
 
@@ -22,5 +21,10 @@ public class DevelopPluginsAction extends AnAction implements DumbAware {
     catch(IllegalStateException ex) {
       // ignore
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

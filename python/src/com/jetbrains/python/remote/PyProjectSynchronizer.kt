@@ -122,7 +122,7 @@ interface PyProjectSynchronizerProvider {
  * Several strategies to be used for [PyProjectSynchronizer.checkSynchronizationAvailable].
  * See concrete impls.
  */
-interface PySyncCheckStrategy
+sealed interface PySyncCheckStrategy
 
 /**
  * Checks if specific folder could be synced with remote interpreter.

@@ -17,15 +17,29 @@ import java.util.List;
  * it can NOT be done through {@link ChangeListManager} interface; it is for external/IDEA user modifications
  */
 public interface ChangeListManagerGate {
+  /**
+   * @return lists with <b>populated</b> {@link LocalChangeList#getChanges()}
+   */
   @NotNull
   List<LocalChangeList> getListsCopy();
 
+  /**
+   * @return list with <b>non-populated</b> {@link LocalChangeList#getChanges()}
+   */
   @Nullable
   LocalChangeList findChangeList(@Nullable @NlsSafe String name);
 
+  /**
+   * If a changelist with this name already exists, an error is logged.
+   *
+   * @return list with <b>non-populated</b> {@link LocalChangeList#getChanges()}
+   */
   @NotNull
   LocalChangeList addChangeList(@NotNull @NlsSafe String name, @Nullable @NlsSafe String comment);
 
+  /**
+   * @return list with <b>non-populated</b> {@link LocalChangeList#getChanges()}
+   */
   @NotNull
   LocalChangeList findOrCreateList(@NotNull @NlsSafe String name, @Nullable @NlsSafe String comment);
 

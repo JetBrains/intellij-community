@@ -34,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class DomFileDescriptionTest extends DomHardCoreTestCase {
   private VirtualFile myFooElementFile;
   private VirtualFile myBarElementFile;

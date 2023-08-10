@@ -1,23 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,23 +17,30 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-/* package */ final class DfaCallArguments {
+public final class DfaCallArguments {
   final DfaValue myQualifier;
   final DfaValue[] myArguments;
   final @NotNull MutationSignature myMutation;
 
-  DfaCallArguments(DfaValue qualifier, DfaValue[] arguments, @NotNull MutationSignature mutation) {
+  public DfaCallArguments(DfaValue qualifier, DfaValue[] arguments, @NotNull MutationSignature mutation) {
     myQualifier = qualifier;
     myArguments = arguments;
     myMutation = mutation;
   }
 
+  public DfaValue getQualifier() {
+    return myQualifier;
+  }
+
+  public DfaValue[] getArguments() {
+    return myArguments;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof DfaCallArguments)) return false;
-    DfaCallArguments that = (DfaCallArguments)o;
-    return myQualifier == that.myQualifier &&
+    return o instanceof DfaCallArguments that && 
+           myQualifier == that.myQualifier &&
            myMutation.equals(that.myMutation) &&
            Arrays.equals(myArguments, that.myArguments);
   }
@@ -52,9 +49,25 @@ import java.util.Set;
   public int hashCode() {
     return (Objects.hashCode(myQualifier) * 31 + Arrays.hashCode(myArguments))*31+myMutation.hashCode();
   }
+  
+  public DfaValue[] toArray() {
+    if (myArguments == null || myQualifier == null) return DfaValue.EMPTY_ARRAY;
+    return ArrayUtil.prepend(myQualifier, myArguments);
+  }
 
-  public void flush(DfaMemoryState state) {
+  public void flush(@NotNull DfaMemoryState state, @NotNull DfaValueFactory factory, @Nullable PsiMethod method) {
+    SideEffectHandlers.SideEffectHandler handler = SideEffectHandlers.getHandler(method);
+    if (handler != null) {
+      handler.handleSideEffect(factory, state, this);
+      return;
+    }
     if (myMutation.isPure()) {
+      if (myQualifier instanceof DfaVariableValue qualifier) {
+        // We assume that even pure call may modify private fields (e.g., to cache something)
+        state.flushVariables(v -> v.getQualifier() == qualifier &&
+                                  v.getPsiVariable() instanceof PsiMember member &&
+                                  member.hasModifierProperty(PsiModifier.PRIVATE));
+      }
       return;
     }
     if (myMutation == MutationSignature.UNKNOWN || myArguments == null) {
@@ -81,26 +94,29 @@ import java.util.Set;
     DfaValue qualifierValue = null;
     if (call instanceof PsiMethodCallExpression) {
       PsiExpression qualifier = ((PsiMethodCallExpression)call).getMethodExpression().getQualifierExpression();
-      qualifierValue = factory.createValue(qualifier);
+      qualifierValue = JavaDfaValueFactory.getExpressionDfaValue(factory, qualifier);
     }
     if (qualifierValue == null) {
       qualifierValue = factory.getUnknown();
     }
     boolean varArgCall = MethodCallUtils.isVarArgCall(call);
     PsiExpression[] args = argumentList.getExpressions();
-    PsiParameter[] parameters = method.getParameterList().getParameters();
+    PsiParameterList parameterList = method.getParameterList();
+    if (parameterList.isEmpty()) {
+      return new DfaCallArguments(qualifierValue, DfaValue.EMPTY_ARRAY, MutationSignature.fromCall(call)); 
+    }
+    PsiParameter[] parameters = parameterList.getParameters();
     DfaValue[] argValues = new DfaValue[parameters.length];
     for (int i = 0; i < parameters.length; i++) {
       DfaValue argValue = null;
       if (i < args.length && (!varArgCall || i < parameters.length - 1)) {
-        argValue = factory.createValue(args[i]);
+        argValue = JavaDfaValueFactory.getExpressionDfaValue(factory, args[i]);
       }
       if (argValue == null) {
         argValue = factory.getUnknown();
       }
       argValues[i] = argValue;
     }
-    DfaCallArguments arguments = new DfaCallArguments(qualifierValue, argValues, MutationSignature.fromCall(call));
-    return arguments;
+    return new DfaCallArguments(qualifierValue, argValues, MutationSignature.fromCall(call));
   }
 }

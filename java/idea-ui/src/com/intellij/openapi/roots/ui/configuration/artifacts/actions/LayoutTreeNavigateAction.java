@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.packaging.ui.TreeNodePresentation;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LayoutTreeNavigateAction extends ArtifactEditorNavigateActionBase {
@@ -35,4 +37,8 @@ public class LayoutTreeNavigateAction extends ArtifactEditorNavigateActionBase {
     return node != null ? node.getElementPresentation() : null;
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
 }

@@ -9,7 +9,7 @@
           "onclick": "CreateNewDoc()"
         },
         {
-          "value": "There is <warning descr="ARTICLE_MISSING">document</warning>.",
+          "value": "There is document.",
           "onclick": "OpenDoc()"
         },
         {

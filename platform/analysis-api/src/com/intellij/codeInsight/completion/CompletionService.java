@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
@@ -15,16 +15,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * For completion FAQ, see {@link CompletionContributor}.
- *
- * @author peter
  */
 public abstract class CompletionService {
   public static final Key<CompletionStatistician> STATISTICS_KEY = Key.create("completion");
@@ -39,18 +35,17 @@ public abstract class CompletionService {
 
   /**
    * Set lookup advertisement text (at the bottom) at any time. Will do nothing if no completion process is in progress.
-   * @param text
    * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void setAdvertisementText(@Nullable @NlsContexts.PopupAdvertisement String text);
 
   /**
-   * Run all contributors until any of them returns false or the list is exhausted. If from parameter is not null, contributors
+   * Run all contributors until any of them returns false or the list is exhausted. If {@code from} parameter is not null, contributors
    * will be run starting from the next one after that.
    */
   public void getVariantsFromContributors(final CompletionParameters parameters,
-                                          @Nullable final CompletionContributor from,
+                                          final @Nullable CompletionContributor from,
                                           final Consumer<? super CompletionResult> consumer) {
     getVariantsFromContributors(parameters, from, createMatcher(suggestPrefix(parameters), false), consumer);
   }
@@ -75,11 +70,15 @@ public abstract class CompletionService {
       if (customSorter != null) {
         result = result.withRelevanceSorter(customSorter);
       }
-      contributor.fillCompletionVariants(parameters, result);
+      getVariantsFromContributor(parameters, contributor, result);
       if (result.isStopped()) {
         return;
       }
     }
+  }
+
+  protected void getVariantsFromContributor(CompletionParameters params, CompletionContributor contributor, CompletionResultSet result) {
+    contributor.fillCompletionVariants(params, result);
   }
 
   protected abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<? super CompletionResult> consumer,
@@ -87,12 +86,10 @@ public abstract class CompletionService {
 
   protected abstract String suggestPrefix(CompletionParameters parameters);
 
-  @NotNull
-  protected abstract PrefixMatcher createMatcher(String prefix, boolean typoTolerant);
+  protected abstract @NotNull PrefixMatcher createMatcher(String prefix, boolean typoTolerant);
 
 
-  @Nullable
-  public abstract CompletionProcess getCurrentCompletion();
+  public abstract @Nullable CompletionProcess getCurrentCompletion();
 
   /**
    * The main method that is invoked to collect all the completion variants
@@ -102,21 +99,20 @@ public abstract class CompletionService {
    */
   public void performCompletion(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
     final Set<LookupElement> lookupSet = ContainerUtil.newConcurrentSet();
-
     AtomicBoolean typoTolerant = new AtomicBoolean();
 
     BatchConsumer<CompletionResult> batchConsumer = new BatchConsumer<>() {
       @Override
       public void startBatch() {
         if (consumer instanceof BatchConsumer) {
-          ((BatchConsumer)consumer).startBatch();
+          ((BatchConsumer<?>)consumer).startBatch();
         }
       }
 
       @Override
       public void endBatch() {
         if (consumer instanceof BatchConsumer) {
-          ((BatchConsumer)consumer).endBatch();
+          ((BatchConsumer<?>)consumer).endBatch();
         }
       }
 

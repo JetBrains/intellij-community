@@ -28,7 +28,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
   /**
    * @deprecated Provide both action description and text, as they have different capitalization rules.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public AbstractDomGenerateProvider(@Nls final String description, final Class<T> aClass) {
     this(description, aClass, null);
   }
@@ -36,7 +36,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
   /**
    * @deprecated Provide both action description and text, as they have different capitalization rules.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public AbstractDomGenerateProvider(@Nls final String description, final Class<T> aClass, @Nullable String mappingId) {
     this(description, description, aClass, mappingId);
   }

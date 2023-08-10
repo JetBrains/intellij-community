@@ -5,6 +5,7 @@ package com.intellij.mock;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -96,6 +97,11 @@ public /* not final for Android Studio tests */ class MockPsiManager extends Psi
   }
 
   @Override
+  public <T> T runInBatchFilesMode(@NotNull Computable<T> runnable) {
+    return null;
+  }
+
+  @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     return null;
   }
@@ -122,6 +128,11 @@ public /* not final for Android Studio tests */ class MockPsiManager extends Psi
   @Override
   public boolean isInProject(@NotNull PsiElement element) {
     return false;
+  }
+
+  @Override
+  public @Nullable FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile) {
+    return null;
   }
 
   @Override

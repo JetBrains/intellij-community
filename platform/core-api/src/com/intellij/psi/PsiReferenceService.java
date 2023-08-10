@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,13 +24,12 @@ public abstract class PsiReferenceService {
    * @param element PSI element to which the references will be bound
    * @param hints optional hints which are passed to {@link PsiReferenceProvider#acceptsHints(PsiElement, PsiReferenceService.Hints)} and
    * {@link PsiReferenceProvider#acceptsTarget(PsiElement)} before the {@link com.intellij.patterns.ElementPattern} is matched, for performing
-   * fail-fast checks in case the pattern takes long to match.
+   * fail-fast checks in case the pattern takes a long time to match.
    * @return the references
    */
-  @NotNull
-  public abstract List<PsiReference> getReferences(@NotNull final PsiElement element, @NotNull final Hints hints);
+  public abstract @NotNull List<PsiReference> getReferences(final @NotNull PsiElement element, final @NotNull Hints hints);
 
-  public PsiReference @NotNull [] getContributedReferences(@NotNull final PsiElement element) {
+  public PsiReference @NotNull [] getContributedReferences(final @NotNull PsiElement element) {
     final List<PsiReference> list = getReferences(element, Hints.NO_HINTS);
     return list.toArray(PsiReference.EMPTY_ARRAY);
   }
@@ -44,8 +43,8 @@ public abstract class PsiReferenceService {
   public static class Hints {
     public static final Hints NO_HINTS = new Hints();
 
-    @Nullable public final PsiElement target;
-    @Nullable public final Integer offsetInElement;
+    public final @Nullable PsiElement target;
+    public final @Nullable Integer offsetInElement;
 
     public Hints() {
       target = null;

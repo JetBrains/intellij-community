@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -19,7 +19,7 @@ class ClashingTraitMethodsTest extends GrHighlightingTestBase {
   }
 
   void testClash() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait T1 {
   def foo(){}
 }
@@ -35,7 +35,7 @@ class <warning descr="Traits T1, T2 contain clashing methods with signature foo(
   }
 
   void testCustomImplementationNoClash() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait T1 {
   def foo(){}
 }
@@ -51,7 +51,7 @@ class A implements T1, T2 {
   }
 
   void testNoClash() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait T1 {
   def foo(){}
 }
@@ -66,7 +66,7 @@ class A implements T1, T2 {
   }
 
   void testNoClashWithInterface() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait T1 {
   def foo(){}
 }
@@ -81,7 +81,7 @@ class A implements T1, T2 {
   }
 
   void testClashWithDefaultMethodInterfaces() {
-    testHighlighting('''
+    doTestHighlighting('''
 interface T1 {
   default foo(){}
 }
@@ -96,7 +96,7 @@ class <warning descr="Traits T1, T2 contain clashing methods with signature foo(
   }
 
   void testClashTraitWithDefaultMethodInterface() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait T1 {
   def foo(){}
 }
@@ -112,7 +112,7 @@ class <warning descr="Traits T1, T2 contain clashing methods with signature foo(
 
 
   void testNoClashInInheritor() {
-    testHighlighting('''
+    doTestHighlighting('''
 trait T1 {
   def foo(){}
 }

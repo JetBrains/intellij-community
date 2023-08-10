@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * Notifies that a certain member has been moved.
  * This listener is invoked by pull up, push down and extract super refactorings.
  * To subscribe to move refactoring use {@link RefactoringElementListener} class.
- * @author ven
  */
 public interface MoveMemberListener {
   /**

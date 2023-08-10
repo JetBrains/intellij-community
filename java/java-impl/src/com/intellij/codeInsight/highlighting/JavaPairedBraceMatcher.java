@@ -16,17 +16,14 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lang.BracePair;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaPairedBraceMatcher extends PairedBraceMatcherAdapter {
+public class JavaPairedBraceMatcher extends PairedBraceAndAnglesMatcher {
   private static class Holder {
     private static final TokenSet TYPE_TOKENS =
       TokenSet.orSet(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET,
@@ -37,70 +34,16 @@ public class JavaPairedBraceMatcher extends PairedBraceMatcherAdapter {
   }
 
   public JavaPairedBraceMatcher() {
-    super(new JavaBraceMatcher(), JavaLanguage.INSTANCE);
+    super(new JavaBraceMatcher(), JavaLanguage.INSTANCE, JavaFileType.INSTANCE, Holder.TYPE_TOKENS);
   }
 
   @Override
-  public boolean isLBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
-    return isBrace(iterator, fileText, fileType, true);
+  public @NotNull IElementType lt() {
+    return JavaTokenType.LT;
   }
 
   @Override
-  public boolean isRBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
-    return isBrace(iterator, fileText, fileType, false);
-  }
-
-  private boolean isBrace(HighlighterIterator iterator,
-                          CharSequence fileText,
-                          FileType fileType,
-                          boolean left) {
-    final BracePair pair = findPair(left, iterator, fileText, fileType);
-    if (pair == null) return false;
-
-    final IElementType opposite = left ? JavaTokenType.GT : JavaTokenType.LT;
-    if ((left ? pair.getRightBraceType() : pair.getLeftBraceType()) != opposite) return true;
-
-    if (fileType != JavaFileType.INSTANCE) return false;
-
-    final IElementType braceElementType = left ? JavaTokenType.LT : JavaTokenType.GT;
-    int count = 0;
-    try {
-      int paired = 1;
-      while (true) {
-        count++;
-        if (left) {
-          iterator.advance();
-        } else {
-          iterator.retreat();
-        }
-        if (iterator.atEnd()) break;
-        final IElementType tokenType = iterator.getTokenType();
-        if (tokenType == opposite) {
-          paired--;
-          if (paired == 0) return true;
-          continue;
-        }
-
-        if (tokenType == braceElementType) {
-          paired++;
-          continue;
-        }
-
-        if (!Holder.TYPE_TOKENS.contains(tokenType)) {
-          return false;
-        }
-      }
-      return false;
-    }
-    finally {
-      while (count-- > 0) {
-        if (left) {
-          iterator.retreat();
-        } else {
-          iterator.advance();
-        }
-      }
-    }
+  public @NotNull IElementType gt() {
+    return JavaTokenType.GT;
   }
 }
-

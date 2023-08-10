@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
@@ -18,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class StaticGenericInfo extends DomGenericInfoEx {
   private final Class<? extends DomElement> myClass;
 
@@ -46,7 +43,7 @@ public final class StaticGenericInfo extends DomGenericInfoEx {
     myClass = clazz;
   }
 
-  final synchronized boolean buildMethodMaps() {
+  synchronized boolean buildMethodMaps() {
     if (!myInitialized) {
       final StaticGenericInfoBuilder builder = new StaticGenericInfoBuilder(myClass);
       final JavaMethod customChildrenGetter = builder.getCustomChildrenGetter();
@@ -187,7 +184,7 @@ public final class StaticGenericInfo extends DomGenericInfoEx {
   @Override
   @NotNull
   public List<? extends CustomDomChildrenDescriptionImpl> getCustomNameChildrenDescription() {
-    return myCustomDescription == null ? Collections.emptyList() : Collections.singletonList(myCustomDescription);
+    return ContainerUtil.createMaybeSingletonList(myCustomDescription);
   }
 
   @Nullable
@@ -200,7 +197,7 @@ public final class StaticGenericInfo extends DomGenericInfoEx {
   public String getElementName(DomElement element) {
     buildMethodMaps();
     Object o = getNameObject(element);
-    return o == null || o instanceof String ? (String)o : ((GenericValue)o).getStringValue();
+    return o == null || o instanceof String ? (String)o : ((GenericValue<?>)o).getStringValue();
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution;
 
 import com.intellij.application.options.PathMacrosImpl;
@@ -11,10 +11,10 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.OpenProjectTaskBuilder;
-import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,7 +56,7 @@ public abstract class AbstractTestFrameworkCompilingIntegrationTest extends Abst
 
   private @NotNull static String getConfigFile(@NotNull String name, @NotNull Path optionDir) throws IOException {
     try {
-      return "\n---\n" + name + " content: " + PathKt.readText(optionDir.resolve(name)) + "\n---\n";
+      return "\n---\n" + name + " content: " + Files.readString(optionDir.resolve(name)) + "\n---\n";
     }
     catch (NoSuchFileException e) {
       return name + " doesn't exist";

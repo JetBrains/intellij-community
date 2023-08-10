@@ -7,13 +7,17 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import java.io.File
 
-abstract class FileHyperlinkInfoBase(private val myProject: Project,
-                                     private val myDocumentLine: Int,
-                                     private val myDocumentColumn: Int) : FileHyperlinkInfo {
+abstract class FileHyperlinkInfoBase
+@JvmOverloads
+constructor(private val myProject: Project,
+            private val myDocumentLine: Int,
+            private val myDocumentColumn: Int,
+            private val myUseBrowser: Boolean = true) : FileHyperlinkInfo {
 
   protected abstract val virtualFile: VirtualFile?
 
@@ -21,7 +25,10 @@ abstract class FileHyperlinkInfoBase(private val myProject: Project,
     val file = virtualFile
     if (file == null || !file.isValid) return null
 
-    val document = FileDocumentManager.getInstance().getDocument(file) // need to load decompiler text
+    val document = ProjectLocator.withPreferredProject(file, myProject).use {
+      // need to load decompiler text
+      FileDocumentManager.getInstance().getDocument(file)
+    }
     val line = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY)?.let { mapping ->
       val mappingLine = mapping.bytecodeToSource(myDocumentLine + 1) - 1
       if (mappingLine < 0) null else mappingLine
@@ -37,29 +44,27 @@ abstract class FileHyperlinkInfoBase(private val myProject: Project,
     }
   }
 
-  override fun navigate(project: Project?) {
-    project ?: return
-    descriptor?.let {
-      if (it.file.isDirectory) {
-        val psiManager = PsiManager.getInstance(project)
-        val psiDirectory = psiManager.findDirectory(it.file)
-        if (psiDirectory != null && psiManager.isInProject(psiDirectory)) {
-          psiDirectory.navigate(true)
-        }
-        else {
-          PsiNavigationSupport.getInstance().openDirectoryInSystemFileManager(File(it.file.path))
-        }
+  override fun navigate(project: Project) {
+    val descriptor = descriptor ?: return
+    if (descriptor.file.isDirectory) {
+      val psiManager = PsiManager.getInstance(project)
+      val psiDirectory = psiManager.findDirectory(descriptor.file)
+      if (psiDirectory != null && psiManager.isInProject(psiDirectory)) {
+        psiDirectory.navigate(true)
       }
       else {
-        if (null == FileEditorManager.getInstance(project).openTextEditor(it, true)) {
-          BrowserHyperlinkInfo(it.file.url).navigate(project)
-        }
+        PsiNavigationSupport.getInstance().openDirectoryInSystemFileManager(File(descriptor.file.path))
+      }
+    }
+    else {
+      if (null == FileEditorManager.getInstance(project).openTextEditor(descriptor, true) && myUseBrowser) {
+        BrowserHyperlinkInfo(descriptor.file.url).navigate(project)
       }
     }
   }
 
   /**
-   * Calculates an offset, that matches given line and column of the document.
+   * Calculates an offset that matches the given line and column of the document.
    *
    * @param document [Document] instance
    * @param documentLine zero-based line of the document
@@ -71,7 +76,7 @@ abstract class FileHyperlinkInfoBase(private val myProject: Project,
     if (documentLine < 0 || document.lineCount <= documentLine) return null
     val lineStartOffset = document.getLineStartOffset(documentLine)
     val lineEndOffset = document.getLineEndOffset(documentLine)
-    val fixedColumn = Math.min(Math.max(documentColumn, 0), lineEndOffset - lineStartOffset)
+    val fixedColumn = documentColumn.coerceAtLeast(0).coerceAtMost(lineEndOffset - lineStartOffset)
     return lineStartOffset + fixedColumn
   }
 }

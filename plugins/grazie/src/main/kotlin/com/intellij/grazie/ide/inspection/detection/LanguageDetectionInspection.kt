@@ -2,50 +2,27 @@ package com.intellij.grazie.ide.inspection.detection
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.config.DetectionContext
 import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.detection.toLanguage
-import com.intellij.grazie.grammar.ide.GraziePsiElementProcessor
 import com.intellij.grazie.ide.inspection.detection.problem.LanguageDetectionProblemDescriptor
-import com.intellij.grazie.ide.language.LanguageGrammarChecking
-import com.intellij.grazie.ide.msg.GrazieStateLifecycle
-import com.intellij.grazie.jlanguage.Lang
-import com.intellij.grazie.utils.lazyConfig
+import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
+import com.intellij.grazie.text.TextExtractor
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiWhiteSpace
 
 internal class LanguageDetectionInspection : LocalInspectionTool() {
-  companion object : GrazieStateLifecycle {
+  companion object {
     private val key = KeyWithDefaultValue.create("language-detection-inspection-key", DetectionContext.Local())
-
-    private var enabledStrategiesIDs: Set<String> by lazyConfig(this::init)
-    private var disabledStrategiesIDs: Set<String> by lazyConfig(this::init)
-
-    private var available: Set<Lang> by lazyConfig(this::init)
-    private var disabled: DetectionContext.State by lazyConfig(this::init)
-
-    override fun init(state: GrazieConfig.State) {
-      available = state.availableLanguages
-      disabled = state.detectionContext
-      enabledStrategiesIDs = state.enabledGrammarStrategies
-      disabledStrategiesIDs = state.disabledGrammarStrategies
-    }
-
-    override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
-      if (
-        prevState.enabledGrammarStrategies != newState.enabledGrammarStrategies
-        || prevState.disabledGrammarStrategies != newState.disabledGrammarStrategies
-        || prevState.availableLanguages != newState.availableLanguages
-        || prevState.detectionContext != newState.detectionContext
-      ) {
-        init(newState)
-      }
-    }
   }
 
   override fun inspectionStarted(session: LocalInspectionToolSession, isOnTheFly: Boolean) {
@@ -53,26 +30,31 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
   }
 
   override fun inspectionFinished(session: LocalInspectionToolSession, holder: ProblemsHolder) {
+    val state = GrazieConfig.get()
     val context = session.getUserData(key)!!
-    val languages = context.getToNotify((disabled.disabled + available.map { it.toLanguage() }).toSet())
+    val languages = context.getToNotify((state.detectionContext.disabled + state.availableLanguages.map { it.toLanguage() }).toSet())
 
     if (languages.isEmpty()) return
 
-    holder.registerProblem(LanguageDetectionProblemDescriptor.create(holder.manager, holder.isOnTheFly, session.file, languages))
+    val descriptor = ReadAction.compute<ProblemDescriptor,RuntimeException>{ LanguageDetectionProblemDescriptor.create(holder.manager, holder.isOnTheFly, session.file, languages) }
+    holder.registerProblem(descriptor)
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-    if (!isOnTheFly || InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(holder.file))
+    val file = holder.file
+    if (!isOnTheFly || InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(file) || GrazieInspection.ignoreGrammarChecking(file))
       return PsiElementVisitor.EMPTY_VISITOR
 
+    val domains = GrazieInspection.checkedDomains()
+    val areChecksDisabled = GrazieInspection.getDisabledChecker(file)
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
-        val strategies = LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)
-
-        for (strategy in strategies) {
-          val (_, _, _, text) = GraziePsiElementProcessor.processElements(listOf(element), strategy)
-          LangDetector.updateContext(text.first().text, session.getUserData(key)!!)
-          break
+        if (element is PsiWhiteSpace || areChecksDisabled(element)) return
+        val context = session.getUserData(key)!!
+        val texts = TextExtractor.findUniqueTextsAt(element, domains)
+        texts.forEach {
+          ProgressManager.checkCanceled()
+          LangDetector.updateContext(it, context)
         }
       }
     }

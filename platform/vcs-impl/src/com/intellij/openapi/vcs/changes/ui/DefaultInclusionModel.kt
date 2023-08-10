@@ -4,11 +4,11 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.util.EventDispatcher
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.ui.ThreeStateCheckBox
-import it.unimi.dsi.fastutil.Hash
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import com.intellij.vcsUtil.VcsUtil
 import java.util.*
-import kotlin.collections.HashSet
 
 abstract class BaseInclusionModel : InclusionModel {
   private val inclusionEventDispatcher = EventDispatcher.create(InclusionListener::class.java)
@@ -35,11 +35,15 @@ object NullInclusionModel : InclusionModel {
 }
 
 class DefaultInclusionModel(
-  private val inclusionHashingStrategy: Hash.Strategy<Any>? = null
+  private val inclusionHashingStrategy: HashingStrategy<Any>? = null
 ) : BaseInclusionModel() {
-  private val inclusion: MutableSet<Any> = if (inclusionHashingStrategy == null) HashSet() else ObjectOpenCustomHashSet(inclusionHashingStrategy)
+  private val inclusion: MutableSet<Any> = if (inclusionHashingStrategy == null) HashSet() else CollectionFactory.createCustomHashingStrategySet(inclusionHashingStrategy)
 
-  override fun getInclusion(): Set<Any> = Collections.unmodifiableSet<Any>((if (inclusionHashingStrategy == null) HashSet(inclusion) else ObjectOpenCustomHashSet(inclusion, inclusionHashingStrategy)))
+  override fun getInclusion(): Set<Any> {
+    val set = if (inclusionHashingStrategy == null) HashSet(inclusion)
+    else CollectionFactory.createCustomHashingStrategySet(inclusionHashingStrategy).also { it.addAll(inclusion) }
+    return Collections.unmodifiableSet(set)
+  }
 
   override fun getInclusionState(item: Any): ThreeStateCheckBox.State =
     if (item in inclusion) ThreeStateCheckBox.State.SELECTED else ThreeStateCheckBox.State.NOT_SELECTED
@@ -51,7 +55,7 @@ class DefaultInclusionModel(
   }
 
   override fun removeInclusion(items: Collection<Any>) {
-    if (inclusion.removeAll(items)) fireInclusionChanged()
+    if (VcsUtil.removeAllFromSet(inclusion, items)) fireInclusionChanged()
   }
 
   override fun setInclusion(items: Collection<Any>) {

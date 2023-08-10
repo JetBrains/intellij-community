@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import static com.intellij.ui.scale.TestScaleHelper.*;
-import static junit.framework.TestCase.*;
+import static org.junit.Assert.*;
 
 /**
  * Tests ide.browser.jcef.headless.enabled and ide.browser.jcef.testMode.enabled registry keys
@@ -22,6 +23,11 @@ public class JBCefTestModeTest {
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
+  @Before
+  public void before() {
+    assumeStandalone();
+  }
+
   @After
   public void after() {
     restoreProperties();
@@ -29,8 +35,6 @@ public class JBCefTestModeTest {
 
   @Test
   public void test() {
-    assumeStandalone();
-
     setRegistryProperty("ide.browser.jcef.headless.enabled", "false");
     setRegistryProperty("ide.browser.jcef.testMode.enabled", "false");
 

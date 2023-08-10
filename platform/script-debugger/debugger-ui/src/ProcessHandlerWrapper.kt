@@ -5,6 +5,8 @@ import com.intellij.execution.KillableProcess
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.ProcessListener
+import com.intellij.openapi.Disposable
 import com.intellij.xdebugger.XDebugProcess
 import org.jetbrains.rpc.LOG
 import java.io.OutputStream
@@ -24,6 +26,18 @@ class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val
         notifyProcessTerminated(event.exitCode)
       }
     })
+  }
+
+  override fun addProcessListener(listener: ProcessListener) {
+    handler.addProcessListener(listener)
+  }
+
+  override fun addProcessListener(listener: ProcessListener, parentDisposable: Disposable) {
+    handler.addProcessListener(listener, parentDisposable)
+  }
+
+  override fun removeProcessListener(listener: ProcessListener) {
+    handler.removeProcessListener(listener)
   }
 
   override fun isSilentlyDestroyOnClose(): Boolean = handler.isSilentlyDestroyOnClose

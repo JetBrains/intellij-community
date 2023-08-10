@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +98,7 @@ public class OptionDescription implements Comparable<OptionDescription> {
 
   public final int hashCode() {
     int result;
-    result = (myOption != null ? myOption.hashCode() : 0);
+    result = myOption != null ? myOption.hashCode() : 0;
     result = 31 * result + (myHit != null ? myHit.hashCode() : 0);
     result = 31 * result + (myPath != null ? myPath.hashCode() : 0);
     result = 31 * result + (myConfigurableId != null ? myConfigurableId.hashCode() : 0);
@@ -107,12 +107,21 @@ public class OptionDescription implements Comparable<OptionDescription> {
 
   @Override
   public final int compareTo(final OptionDescription o) {
-    if (Comparing.strEqual(myHit, o.getHit())) {
-      return myOption != null ? myOption.compareTo(o.getOption()) : 0;
+    String hit1 = StringUtil.notNullize(myHit);
+    String hit2 = StringUtil.notNullize(o.getHit());
+    int diff = hit1.compareTo(hit2);
+    if (diff != 0) return diff;
+
+    String option1 = myOption;
+    String option2 = o.getOption();
+    if (option1 != null && option2 != null) {
+      return option1.compareTo(option2);
     }
-    if (myHit != null && o.getHit() != null) {
-      return myHit.compareTo(o.getHit());
+    else if (option1 != null || option2 != null) {
+      return option1 == null ? 1 : -1; // nulls go last
     }
-    return 0;
+    else {
+      return 0;
+    }
   }
 }

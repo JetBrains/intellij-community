@@ -1,14 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Trinity;
@@ -20,12 +22,13 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.TriConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.function.BiFunction;
 
-public class BackgroundHighlightingUtil {
+public final class BackgroundHighlightingUtil {
   /**
    * start background thread where find injected fragment at the caret position,
    * invoke {@code backgroundProcessor} on that fragment and invoke later {@code edtProcessor} in EDT,
@@ -33,9 +36,10 @@ public class BackgroundHighlightingUtil {
    */
   static <T> void lookForInjectedFileInOtherThread(@NotNull Project project,
                                                    @NotNull Editor editor,
-                                                   @NotNull BiFunction<? super PsiFile, ? super EditorEx, ? extends T> backgroundProcessor,
-                                                   @NotNull TriConsumer<? super PsiFile, ? super EditorEx, ? super T> edtProcessor) {
+                                                   @NotNull BiFunction<? super PsiFile, ? super Editor, ? extends T> backgroundProcessor,
+                                                   @NotNull TriConsumer<? super PsiFile, ? super Editor, ? super T> edtProcessor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    assert !(editor instanceof EditorWindow) : editor;
     if (!isValidEditor(editor)) return;
 
     int offsetBefore = editor.getCaretModel().getOffset();
@@ -51,7 +55,7 @@ public class BackgroundHighlightingUtil {
           return null;
         }
         PsiFile newFile = getInjectedFileIfAny(offsetBefore, psiFile);
-        EditorEx newEditor = (EditorEx)InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, newFile);
+        Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, newFile);
         T result = backgroundProcessor.apply(newFile, newEditor);
         return Trinity.create(newFile, newEditor, result);
       })
@@ -61,11 +65,10 @@ public class BackgroundHighlightingUtil {
       .finishOnUiThread(ModalityState.stateForComponent(editor.getComponent()), t -> {
         if (t == null) return;
         PsiFile foundFile = t.getFirst();
-        EditorEx newEditor = t.getSecond();
-        T result = t.getThird();
         if (foundFile == null) return;
-
         if (foundFile.isValid() && offsetBefore == editor.getCaretModel().getOffset()) {
+          Editor newEditor = t.getSecond();
+          T result = t.getThird();
           edtProcessor.accept(foundFile, newEditor, result);
         }
         else {
@@ -75,10 +78,21 @@ public class BackgroundHighlightingUtil {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private static boolean isValidEditor(@NotNull Editor editor) {
+  static boolean isValidEditor(@NotNull Editor editor) {
     Project editorProject = editor.getProject();
     return editorProject != null && !editorProject.isDisposed() && !editor.isDisposed() &&
-           EditorActivityManager.getInstance().isVisible(editor);
+           UIUtil.isShowing(editor.getContentComponent());
+  }
+
+  static boolean needMatching(@NotNull Editor newEditor, @NotNull CodeInsightSettings codeInsightSettings) {
+    if (!codeInsightSettings.HIGHLIGHT_BRACES) return false;
+
+    if (newEditor.getSelectionModel().hasSelection()) return false;
+
+    if (newEditor.getSoftWrapModel().isInsideOrBeforeSoftWrap(newEditor.getCaretModel().getVisualPosition())) return false;
+
+    TemplateState state = TemplateManagerImpl.getTemplateState(newEditor);
+    return state == null || state.isFinished();
   }
 
   @NotNull

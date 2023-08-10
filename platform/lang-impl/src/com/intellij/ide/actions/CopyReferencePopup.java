@@ -3,63 +3,45 @@ package com.intellij.ide.actions;
 
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
-import com.intellij.psi.PsiElement;
-import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
-import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
-import static com.intellij.openapi.actionSystem.LangDataKeys.PSI_ELEMENT_ARRAY;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 
-public class CopyReferencePopup extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(CopyReferencePopup.class);
-  private static final String COPY_REFERENCE_POPUP_PLACE = "CopyReferencePopupPlace";
+public class CopyReferencePopup extends NonTrivialActionGroup {
   private static final int DEFAULT_WIDTH = JBUIScale.scale(500);
-  private static final PresentationFactory PRESENTATION_FACTORY = new PresentationFactory();
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    ActionGroup actionGroup = getCopyReferenceActionGroup();
-    if (actionGroup == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
-
-    List<AnAction> actions = Utils.expandActionGroup(false, actionGroup, PRESENTATION_FACTORY, e.getDataContext(), e.getPlace());
-    e.getPresentation().setEnabledAndVisible(CopyPathsAction.isCopyReferencePopupAvailable() && !actions.isEmpty());
+    super.update(e);
+    e.getPresentation().setPerformGroup(true);
+    e.getPresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
+    e.getPresentation().putClientProperty(ActionMenu.SUPPRESS_SUBMENU, true);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ActionGroup actionGroup = getCopyReferenceActionGroup();
-    if (actionGroup == null) return;
-
-    DataContext dataContext = cloneDataContext(e);
-    ListPopup popup =
-      new PopupFactoryImpl.ActionGroupPopup(LangBundle.message("popup.title.copy"), actionGroup, e.getDataContext(), true, true, false,
-                                            true, null, -1, null, COPY_REFERENCE_POPUP_PLACE) {
+    PresentationFactory factory = new PresentationFactory();
+    ListPopup popup = new PopupFactoryImpl.ActionGroupPopup(
+      LangBundle.message("popup.title.copy"), this, e.getDataContext(), true, true, false, true,
+      null, -1, null, ActionPlaces.COPY_REFERENCE_POPUP, factory, false) {
       @Override
       protected ListCellRenderer<PopupFactoryImpl.ActionItem> getListElementRenderer() {
         return new PopupListElementRenderer<>(this) {
@@ -67,9 +49,10 @@ public class CopyReferencePopup extends DumbAwareAction {
           private JLabel myShortcutLabel;
 
           @Override
-          protected JComponent createItemComponent() {
-            myTextLabel = new ErrorLabel();
-            myTextLabel.setBorder(JBUI.Borders.empty(1));
+          protected void createLabel() {
+            super.createLabel();
+
+            myIconLabel.setBorder(JBUI.Borders.empty(1, 1, 1, JBUI.CurrentTheme.ActionsList.elementIconGap()));
 
             myInfoLabel = new JLabel();
             myInfoLabel.setBorder(JBUI.Borders.empty(1, DEFAULT_HGAP, 1, 1));
@@ -77,42 +60,37 @@ public class CopyReferencePopup extends DumbAwareAction {
             myShortcutLabel = new JLabel();
             myShortcutLabel.setBorder(JBUI.Borders.emptyLeft(DEFAULT_HGAP));
             myShortcutLabel.setForeground(UIUtil.getContextHelpForeground());
+          }
 
-            JPanel textPanel = new JPanel(new BorderLayout());
-            JPanel titlePanel = new JPanel(new BorderLayout());
-            titlePanel.add(myTextLabel, BorderLayout.WEST);
-            titlePanel.add(myShortcutLabel, BorderLayout.CENTER);
+          @Override
+          protected JComponent createItemComponent() {
+            createLabel();
 
-            textPanel.add(titlePanel, BorderLayout.WEST);
-            textPanel.add(myInfoLabel, BorderLayout.CENTER);
-            return layoutComponent(textPanel);
+            JPanel panel = new JPanel(new GridBagLayout());
+
+            GridBag gbc = new GridBag();
+
+            panel.add(myIconLabel, gbc.next());
+            panel.add(myTextLabel, gbc.next());
+            panel.add(myShortcutLabel, gbc.next());
+            panel.add(myInfoLabel, gbc.next().weightx(1));
+
+            return layoutComponent(panel);
           }
 
           @Override
           protected void customizeComponent(@NotNull JList<? extends PopupFactoryImpl.ActionItem> list,
                                             @NotNull PopupFactoryImpl.ActionItem actionItem,
                                             boolean isSelected) {
+            myButtonsSeparator.setVisible(false);
             AnAction action = actionItem.getAction();
-            AnActionEvent event = new AnActionEvent(e.getInputEvent(),
-                                                    dataContext,
-                                                    COPY_REFERENCE_POPUP_PLACE,
-                                                    action.getTemplatePresentation().clone(),
-                                                    e.getActionManager(),
-                                                    e.getModifiers());
-
-            ActionUtil.performDumbAwareUpdate(true, action, event, false);
-
-            Editor editor = EDITOR.getData(dataContext);
-            java.util.List<PsiElement> elements = CopyReferenceUtil.getElementsToCopy(editor, dataContext);
-            String qualifiedName = null;
-            if (action instanceof CopyPathProvider) {
-              qualifiedName = ((CopyPathProvider)action).getQualifiedName(getProject(), elements, editor, dataContext);
-            }
-
+            Presentation presentation = factory.getPresentation(action);
+            String qualifiedName = presentation.getClientProperty(CopyPathProvider.QUALIFIED_NAME);
+            myInfoLabel.setText("");
             if (qualifiedName != null) {
               myInfoLabel.setText(qualifiedName);
             }
-            Color foreground = isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor();
+            Color foreground = isSelected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor();
             myInfoLabel.setForeground(foreground);
             myShortcutLabel.setForeground(foreground);
 
@@ -137,21 +115,19 @@ public class CopyReferencePopup extends DumbAwareAction {
       protected boolean isResizable() {
         return true;
       }
+      @Override
+      public @NotNull Dimension getPreferredContentSize() {
+        return new Dimension(DEFAULT_WIDTH, super.getPreferredContentSize().height);
+      }
+      @Override
+      public Dimension getSize() {
+        return getPreferredContentSize();
+      }
     };
 
     updatePopupSize(popup);
 
     popup.showInBestPositionFor(e.getDataContext());
-  }
-
-  @Nullable
-  public ActionGroup getCopyReferenceActionGroup() {
-    AnAction popupGroup = ActionManager.getInstance().getAction("CopyReferencePopupGroup");
-    if (!(popupGroup instanceof DefaultActionGroup)) {
-      LOG.warn("Cannot find 'CopyReferencePopup' action to show popup");
-      return null;
-    }
-    return (ActionGroup)popupGroup;
   }
 
   private static void updatePopupSize(@NotNull ListPopup popup) {
@@ -160,13 +136,5 @@ public class CopyReferencePopup extends DumbAwareAction {
       popup.getContent().setSize(new Dimension(DEFAULT_WIDTH, popup.getContent().getPreferredSize().height));
       popup.setSize(popup.getContent().getPreferredSize());
     });
-  }
-
-  @NotNull
-  private static DataContext cloneDataContext(@NotNull AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    return SimpleDataContext.builder()
-      .addAll(dataContext, PSI_ELEMENT, PROJECT, PSI_ELEMENT_ARRAY, VIRTUAL_FILE_ARRAY, EDITOR)
-      .build();
   }
 }

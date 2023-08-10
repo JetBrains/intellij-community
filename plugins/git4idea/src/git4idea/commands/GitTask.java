@@ -32,7 +32,6 @@ import com.intellij.openapi.vcs.VcsException;
 import git4idea.GitDisposable;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +48,6 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @deprecated To remove in IDEA 2017.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2017")
 @Deprecated
 public class GitTask {
 
@@ -281,7 +279,7 @@ public class GitTask {
 
     private void justRun() {
       String oldTitle = myProgressIndicator.getText();
-      myProgressIndicator.setText(myTitle);
+      myProgressIndicator.setText(getTitle());
       myDelegate.run(myProgressIndicator);
       myProgressIndicator.setText(oldTitle);
       if (myProgressIndicator.isCanceled()) {
@@ -294,7 +292,7 @@ public class GitTask {
     @Override
     public void execute(ProgressIndicator indicator) {
       addListeners(this, indicator);
-      GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, myTitle);
+      GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, getTitle());
     }
 
     @Override
@@ -319,7 +317,7 @@ public class GitTask {
     @Override
     public void execute(ProgressIndicator indicator) {
       addListeners(this, indicator);
-      GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, myTitle);
+      GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, getTitle());
     }
 
     @Override

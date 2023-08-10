@@ -32,16 +32,16 @@ public final class TypeHierarchyTreeStructure extends SubtypesHierarchyTreeStruc
   @NotNull
   private static HierarchyNodeDescriptor buildHierarchyElement(@NotNull Project project, @NotNull PsiClass aClass) {
     HierarchyNodeDescriptor descriptor = null;
-    final PsiClass[] superClasses = createSuperClasses(aClass);
+    PsiClass[] superClasses = createSuperClasses(aClass);
     for(int i = superClasses.length - 1; i >= 0; i--){
-      final PsiClass superClass = superClasses[i];
-      final HierarchyNodeDescriptor newDescriptor = new TypeHierarchyNodeDescriptor(project, descriptor, superClass, false);
+      PsiClass superClass = superClasses[i];
+      HierarchyNodeDescriptor newDescriptor = new TypeHierarchyNodeDescriptor(project, descriptor, superClass, false);
       if (descriptor != null){
         descriptor.setCachedChildren(new HierarchyNodeDescriptor[] {newDescriptor});
       }
       descriptor = newDescriptor;
     }
-    final HierarchyNodeDescriptor newDescriptor = new TypeHierarchyNodeDescriptor(project, descriptor, aClass, true);
+    HierarchyNodeDescriptor newDescriptor = new TypeHierarchyNodeDescriptor(project, descriptor, aClass, true);
     if (descriptor != null) {
       descriptor.setCachedChildren(new HierarchyNodeDescriptor[] {newDescriptor});
     }
@@ -53,12 +53,12 @@ public final class TypeHierarchyTreeStructure extends SubtypesHierarchyTreeStruc
     if (!aClass.isValid()) return PsiClass.EMPTY_ARRAY;
     if (aClass.isInterface()) return PsiClass.EMPTY_ARRAY;
 
-    final ArrayList<PsiClass> superClasses = new ArrayList<>();
+    ArrayList<PsiClass> superClasses = new ArrayList<>();
     while (!CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
-      final PsiClass aClass1 = aClass;
-      final PsiClass[] superTypes = aClass1.getSupers();
+      PsiClass aClass1 = aClass;
+      PsiClass[] superTypes = aClass1.getSupers();
       PsiClass superType = null;
-      for (final PsiClass type : superTypes) {
+      for (PsiClass type : superTypes) {
         if (!type.isInterface()) {
           superType = type;
           break;

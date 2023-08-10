@@ -1,4 +1,4 @@
-// "Replace with 'Collections.emptyIterator()'" "true"
+// "Replace with 'Collections.emptyIterator()'" "true-preview"
 import java.util.*;
 
 class Test {

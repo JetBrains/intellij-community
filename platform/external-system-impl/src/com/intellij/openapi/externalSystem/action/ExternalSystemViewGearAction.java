@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.action;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
@@ -28,6 +29,12 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ExternalSystemViewGearAction extends ExternalSystemToggleAction {
 
   private ExternalProjectsViewImpl myView;
+
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
 
   @Override
   protected boolean isEnabled(@NotNull AnActionEvent e) {

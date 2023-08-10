@@ -1,7 +1,7 @@
 
 class Foo {
 
-  public static final Bar[] bars= new Bar[] {new Bar("a", 0, "A", "B", "C"), new Bar("b", 1, "A", "B")};
+  public static final Bar[] bars = new Bar[] {new Bar("a", 0, "A", "B", "C"), new Bar("b", 1, "A", "B")};
 }
 
 

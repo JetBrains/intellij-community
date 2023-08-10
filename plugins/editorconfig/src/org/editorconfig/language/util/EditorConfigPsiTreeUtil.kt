@@ -21,8 +21,8 @@ import org.editorconfig.language.util.core.EditorConfigPsiTreeUtilCore
 import kotlin.math.max
 
 object EditorConfigPsiTreeUtil {
-  inline fun <reified T : PsiElement> PsiElement.getParentOfType(strict: Boolean = false) =
-    PsiTreeUtil.getParentOfType(this, T::class.java, strict)
+  inline fun <reified T : PsiElement> PsiElement.getParentOfType(strict: Boolean = false, vararg stopAt: Class<out PsiElement>) =
+    PsiTreeUtil.getParentOfType(this, T::class.java, strict, *stopAt)
 
   inline fun <reified T : PsiElement> PsiElement.hasParentOfType() =
     getParentOfType<T>() != null
@@ -70,7 +70,7 @@ object EditorConfigPsiTreeUtil {
   fun findRemovableRange(element: PsiElement): IntRange =
     EditorConfigPsiTreeUtilCore.findRemovableRangeBackward(element)
     ?: EditorConfigPsiTreeUtilCore.findRemovableRangeForward(element)
-    ?: element.textRange.startOffset until element.textRange.endOffset
+    ?: (element.textRange.startOffset until element.textRange.endOffset)
 
   /**
    * current file **is** included
@@ -82,8 +82,7 @@ object EditorConfigPsiTreeUtil {
     }
 
     val service = EditorConfigFileHierarchyService.getInstance(file.project)
-    val serviceResult = service.getParentEditorConfigFiles(virtualFile)
-    return when (serviceResult) {
+    return when (val serviceResult = service.getParentEditorConfigFiles(virtualFile)) {
       is EditorConfigServiceLoaded -> serviceResult.list
       is EditorConfigServiceLoading -> findParentFilesUsingIndex(file, virtualFile)
     }
@@ -93,16 +92,17 @@ object EditorConfigPsiTreeUtil {
     val caretOffset = editor.caretModel.offset
     val viewProvider = file.viewProvider
     val psiUnderCaret = viewProvider.findElementAt(caretOffset, EditorConfigLanguage)
+    val elementType = psiUnderCaret?.node?.elementType ?: return null
 
-    return when (psiUnderCaret?.node?.elementType) {
-      EditorConfigElementTypes.IDENTIFIER -> psiUnderCaret
-
-      null, TokenType.WHITE_SPACE, EditorConfigElementTypes.DOT -> {
+    return when (elementType) {
+      TokenType.WHITE_SPACE, EditorConfigElementTypes.DOT -> {
         val previousIndex = max(0, caretOffset - 1)
         val previousElement = viewProvider.findElementAt(previousIndex)
         if (previousElement?.node?.elementType != EditorConfigElementTypes.IDENTIFIER) null
         else previousElement
       }
+
+      EditorConfigElementTypes.IDENTIFIER -> psiUnderCaret
 
       else -> null
     }

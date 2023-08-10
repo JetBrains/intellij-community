@@ -1,12 +1,26 @@
 <html>
 <body>
-Reports anonymous classes which could be transformed to constructor or factory method call accepting lambda expression.
-<p>The following classes are reported by this inspection:</p>
+Reports anonymous classes which could be transformed to a constructor or a factory method call with a lambda expression argument.
+<p>The following classes are reported by this inspection:
 <ul>
-  <li><b>ThreadLocal</b> anonymous classes having <b>initialValue()</b> method (could be replaced with <b>ThreadLocal.withInitial</b>)</li>
-  <li><b>Thread</b> anonymous classes having <b>run()</b> method (could be replaced with <b>new Thread(Runnable)</b></li>
+  <li>Anonymous classes extending <code>ThreadLocal</code> which have an <code>initialValue()</code> method (can be replaced with <code>ThreadLocal.withInitial</code>)</li>
+  <li>Anonymous classes extending <code>Thread</code> which have a <code>run()</code> method (can be replaced with <code>new Thread(Runnable)</code></li>
 </ul>
+<p>Example:</p>
+<pre><code>
+  <b>new</b> Thread() {
+    @Override
+    <b>public void</b> run() {
+      System.out.println("Hello from thread!");
+    }
+  }.start();
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  <b>new</b> Thread(() -> {
+    System.out.println("Hello from thread!");
+  }).start();
+</code></pre>
 <!-- tooltip end -->
-<p><small>New in 2016.3</small></p>
 </body>
 </html>

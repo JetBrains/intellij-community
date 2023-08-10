@@ -78,7 +78,10 @@ public final class PopupDispatcher implements AWTEventListener, KeyEventDispatch
 
     while (true) {
       if (eachParent.isDisposed() || !eachParent.getContent().isShowing()) {
-        getActiveRoot().cancel();
+        WizardPopup currentActiveRoot = getActiveRoot();
+        if (eachParent.getParent() == currentActiveRoot) {
+          currentActiveRoot.cancel();
+        }
         return false;
       }
 
@@ -124,8 +127,14 @@ public final class PopupDispatcher implements AWTEventListener, KeyEventDispatch
           return;
         }
       }
+      WizardPopup activeRoot = getActiveRoot();
+      if (aBaseWizardPopup != activeRoot && ourShowingStep != activeRoot) {
+        // even if no parent popup exist (e.g. it's ActionGroupPopup), sync showing step with possible changed active root.
+        // set visible active root to correctly dispatch subsequent events.
+        ourShowingStep = activeRoot;
+      }
     }
-   }
+  }
 
   static WizardPopup getActiveRoot() {
     return ourActiveWizardRoot;

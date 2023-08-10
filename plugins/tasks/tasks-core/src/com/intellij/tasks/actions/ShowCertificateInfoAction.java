@@ -1,5 +1,6 @@
 package com.intellij.tasks.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,10 +19,6 @@ import java.util.List;
 public class ShowCertificateInfoAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ShowCertificateInfoAction.class);
 
-  public ShowCertificateInfoAction() {
-    super("Show certificate information dialog");
-  }
-
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     try {
@@ -37,6 +34,11 @@ public class ShowCertificateInfoAction extends AnAction {
     catch (Exception logged) {
       LOG.error(logged);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }
 

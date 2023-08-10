@@ -40,7 +40,7 @@ abstract class StoredPropertyBase<T> : StoredProperty<T>, ReadWriteProperty<Base
   }
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>): T = getValue(thisRef)
-  override operator fun setValue(thisRef: BaseState, property: KProperty<*>, value: T) = setValue(thisRef, value)
+  override operator fun setValue(thisRef: BaseState, property: KProperty<*>, value: T): Unit = setValue(thisRef, value)
 }
 
 enum class JsonSchemaType(val jsonName: String) {

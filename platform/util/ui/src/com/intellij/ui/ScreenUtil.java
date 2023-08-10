@@ -3,7 +3,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,12 +11,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Area;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 public final class ScreenUtil {
   public static final String DISPOSE_TEMPORARY = "dispose.temporary";
 
   @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache = Boolean.getBoolean("ide.cache.screen.insets")
-                                                                                                 ? CollectionFactory.createWeakMap() : null;
+                                                                                                 ? new WeakHashMap<>() : null;
   private static final int ourInsetsTimeout = SystemProperties.getIntProperty("ide.insets.cache.timeout", 5000);  // shouldn't be too long
 
   private ScreenUtil() { }
@@ -294,6 +294,41 @@ public final class ScreenUtil {
     return x * x + y * y;
   }
 
+  public static void moveAndScale(@NotNull Point location, @NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    checkScreensNonEmpty(fromScreen, toScreen);
+    double kw = toScreen.getWidth() / fromScreen.getWidth();
+    double kh = toScreen.getHeight() / fromScreen.getHeight();
+    location.setLocation(toScreen.x + (location.x - fromScreen.x) * kw, toScreen.y + (location.y - fromScreen.y) * kh);
+  }
+
+  public static void moveAndScale(@NotNull Dimension size, @NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    checkScreensNonEmpty(fromScreen, toScreen);
+    double kw = toScreen.getWidth() / fromScreen.getWidth();
+    double kh = toScreen.getHeight() / fromScreen.getHeight();
+    size.setSize(size.width * kw, size.height * kh);
+  }
+
+  public static void moveAndScale(@NotNull Rectangle bounds, @NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    checkScreensNonEmpty(fromScreen, toScreen);
+    double kw = toScreen.getWidth() / fromScreen.getWidth();
+    double kh = toScreen.getHeight() / fromScreen.getHeight();
+    bounds.setRect(
+      toScreen.x + (bounds.x - fromScreen.x) * kw,
+      toScreen.y + (bounds.y - fromScreen.y) * kh,
+      bounds.width * kw,
+      bounds.height * kh
+    );
+  }
+
+  private static void checkScreensNonEmpty(@NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    if (fromScreen.isEmpty()) {
+      throw new IllegalArgumentException("Can't move from an empty screen: " + fromScreen);
+    }
+    if (toScreen.isEmpty()) {
+      throw new IllegalArgumentException("Can't move to an empty screen: " + toScreen);
+    }
+  }
+
   public static void moveRectangleToFitTheScreen(Rectangle aRectangle) {
     int screenX = aRectangle.x + aRectangle.width / 2;
     int screenY = aRectangle.y + aRectangle.height / 2;
@@ -303,24 +338,31 @@ public final class ScreenUtil {
   }
 
   public static void moveToFit(final Rectangle rectangle, final Rectangle container, @Nullable Insets padding) {
+    moveToFit(rectangle, container, padding, false);
+  }
+
+  public static void moveToFit(final Rectangle rectangle, final Rectangle container, @Nullable Insets padding, boolean crop) {
     Rectangle move = new Rectangle(rectangle);
     JBInsets.addTo(move, padding);
 
     if (move.getMaxX() > container.getMaxX()) {
       move.x = (int)container.getMaxX() - move.width;
     }
-
-
     if (move.getMinX() < container.getMinX()) {
       move.x = (int)container.getMinX();
+    }
+    if (move.getMaxX() > container.getMaxX() && crop) {
+      move.width = (int)container.getMaxX() - move.x;
     }
 
     if (move.getMaxY() > container.getMaxY()) {
       move.y = (int)container.getMaxY() - move.height;
     }
-
     if (move.getMinY() < container.getMinY()) {
       move.y = (int)container.getMinY();
+    }
+    if (move.getMaxY() > container.getMaxY() && crop) {
+      move.height = (int)container.getMaxY() - move.y;
     }
 
     JBInsets.removeFrom(move, padding);
@@ -441,7 +483,7 @@ public final class ScreenUtil {
    * @param bounds - area to check if location shifted towards or not. Also in screen coordinates
    * @return true if movement from prevLocation to location is towards specified rectangular area
    */
-  public static boolean isMovementTowards(final Point prevLocation, final Point location, final Rectangle bounds) {
+  public static boolean isMovementTowards(final Point prevLocation, @NotNull Point location, final Rectangle bounds) {
     if (bounds == null) {
       return false;
     }

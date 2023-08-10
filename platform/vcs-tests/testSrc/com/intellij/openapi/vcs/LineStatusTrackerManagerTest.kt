@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
 import com.intellij.idea.Bombed
+import com.intellij.idea.IgnoreJUnit3
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertBaseTextContentIs
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertTextContentIs
+import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
-import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import java.util.*
 
 class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
@@ -167,7 +168,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     ranges[1].assertChangeList("Test")
   }
 
-  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Aleksey.Pivovarov")
+  @IgnoreJUnit3
   fun `test tracker from non-default changelist - closed file modified during initialisation, edit line from non-active list`() {
     createChangelist("Test")
 
@@ -185,7 +186,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     file.assertAffectedChangeLists("Test")
   }
 
-  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Aleksey.Pivovarov")
+  @IgnoreJUnit3
   fun `test tracker from non-default changelist - closed file modified during initialisation, edit unchanged line and line from non-active list`() {
     createChangelist("Test")
 
@@ -790,7 +791,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     file.assertAffectedChangeLists("Test 2")
   }
 
-  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Aleksey.Pivovarov")
+  @IgnoreJUnit3
   fun `test vcs refresh - tracker created and released during update (changes moved via LST)`() {
     createChangelist("Test")
 
@@ -891,7 +892,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     file.assertAffectedChangeLists("Test")
   }
 
-  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Aleksey.Pivovarov")
+  @IgnoreJUnit3
   fun `test vcs refresh - tracker created and released during update  (changes moved via LST, no partial changes)`() {
     createChangelist("Test")
 
@@ -984,7 +985,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     FILE_2.toFilePath.assertAffectedChangeLists(DEFAULT)
   }
 
-  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Aleksey.Pivovarov")
+  @IgnoreJUnit3
   fun `test file rename - with partial changes, try release tracker during CLM refresh`() {
     createChangelist("Test")
 
@@ -1071,6 +1072,37 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       shelveManager.unshelveChangeList(shelvedList, null, null, list, false)
       tracker.assertTextContentIs("a1_b_c_d2_e_f1")
       FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+    }
+  }
+
+  fun `test shelve-unshelve 3`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a1_b_c_d_e_f1")
+    setBaseVersion(FILE_1, "a_b_c_d_e_f")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+
+    file.withOpenedEditor {
+      val tracker = file.tracker as PartialLocalLineStatusTracker
+
+      lstm.waitUntilBaseContentsLoaded()
+      FILE_1.toFilePath.assertAffectedChangeLists("Test")
+
+      val list = clm.findChangeList("Test")!!
+      val shelvedList = shelveManager.shelveChanges(list.changes, "X", false)
+
+      runCommand { file.document.setText(parseInput("a_b_c_d_e_f")) }
+      removeBaseVersion(FILE_1)
+      refreshCLM()
+      lstm.waitUntilBaseContentsLoaded()
+
+      shelveManager.unshelveChangeList(shelvedList, null, null, list, false)
+      setBaseVersion(FILE_1, "a_b_c_d_e_f")
+      refreshCLM()
+      lstm.waitUntilBaseContentsLoaded()
+      tracker.assertTextContentIs("a1_b_c_d_e_f1")
+      FILE_1.toFilePath.assertAffectedChangeLists("Test")
     }
   }
 }

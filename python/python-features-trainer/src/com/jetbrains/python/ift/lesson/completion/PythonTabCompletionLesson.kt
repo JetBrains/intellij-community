@@ -1,18 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.ift.lesson.completion
 
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
 import com.jetbrains.python.ift.PythonLessonsBundle
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
+import training.dsl.*
+import training.dsl.LessonUtil.checkExpectedStateOfEditor
+import training.learn.course.KLesson
+import training.util.isToStringContains
 import javax.swing.JList
 
-class PythonTabCompletionLesson(module: Module)
-  : KLesson("Tab completion", PythonLessonsBundle.message("python.tab.completion.lesson.name"), module, "Python") {
+class PythonTabCompletionLesson
+  : KLesson("Tab completion", PythonLessonsBundle.message("python.tab.completion.lesson.name")) {
   private val template = parseLessonSample("""
     class Calculator:
         def __init__(self):
@@ -28,7 +25,7 @@ class PythonTabCompletionLesson(module: Module)
 
   private val sample = createFromTemplate(template, "current")
 
-  private val isTotalItem = { item: Any -> item.toString().contains("total") }
+  private val isTotalItem = { item: Any -> item.isToStringContains("total") }
 
   override val lessonContent: LessonContext.() -> Unit
     get() {
@@ -36,8 +33,8 @@ class PythonTabCompletionLesson(module: Module)
         prepareSample(sample)
         task("CodeCompletion") {
           text(PythonLessonsBundle.message("python.tab.completion.start.completion",
-                                     code("current"), code("total"), action(it)))
-          triggerByListItemAndHighlight(checkList = { ui -> isTotalItem(ui) })
+                                           code("current"), code("total"), action(it)))
+          triggerAndBorderHighlight().listItem { ui -> isTotalItem(ui) }
           proposeRestoreMe()
           test { actions(it) }
         }
@@ -60,8 +57,8 @@ class PythonTabCompletionLesson(module: Module)
         task {
           val result = LessonUtil.insertIntoSample(template, "total")
           text(PythonLessonsBundle.message("python.tab.completion.use.tab.completion",
-                                     action("EditorEnter"), code("total"), code("current"),
-                                     action("EditorTab")))
+                                           action("EditorEnter"), code("total"), code("current"),
+                                           action("EditorTab")))
 
           trigger("EditorChooseLookupItemReplace") {
             editor.document.text == result
@@ -69,7 +66,7 @@ class PythonTabCompletionLesson(module: Module)
           restoreAfterStateBecomeFalse {
             selectNeededItem()?.not() ?: true
           }
-          test { GuiTestUtil.shortcut(Key.TAB) }
+          test { invokeActionViaShortcut("TAB") }
         }
       }
     }
@@ -87,4 +84,5 @@ class PythonTabCompletionLesson(module: Module)
       checkExpectedStateOfEditor(sample)
     }
   }
+
 }

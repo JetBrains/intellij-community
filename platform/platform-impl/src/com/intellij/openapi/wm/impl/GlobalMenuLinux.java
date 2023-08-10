@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -23,9 +23,11 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.system.CpuArch;
 import com.intellij.util.ui.ImageUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
@@ -38,23 +40,24 @@ import javax.imageio.ImageIO;
 import javax.swing.Timer;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.peer.ComponentPeer;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 interface GlobalMenuLib extends Library {
-  void startWatchDbus(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
-
   void runMainLoop(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
 
   void execOnMainLoop(JRunnable run);
@@ -146,10 +149,10 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   private static final GlobalMenuLib.JRunnable ourUpdateAllRoots;
   private static final GlobalMenuLib.JRunnable ourOnAppmenuServiceAppeared;
   private static final GlobalMenuLib.JRunnable ourOnAppmenuServiceVanished;
-  private static final Map<Long, GlobalMenuLinux> ourInstances = new ConcurrentHashMap<>();
+  private static final Set<GlobalMenuLinux> ourInstances = ConcurrentHashMap.newKeySet();
   private static boolean ourIsServiceAvailable = false;
 
-  private final long myXid;
+  private AtomicLong myXid = new AtomicLong(0);
   private final @NotNull JFrame myFrame;
   private List<MenuItemInternal> myRoots;
   private Pointer myWindowHandle;
@@ -190,7 +193,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
           return;
         }
 
-        for (GlobalMenuLinux gml : ourInstances.values()) {
+        for (GlobalMenuLinux gml : ourInstances) {
           gml._updateRoots();
         }
       };
@@ -205,7 +208,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         LOG.info("Closed dbus-service 'com.canonical.AppMenu.Registrar'");
         ourIsServiceAvailable = false;
         final boolean isMainMenuVisible = UISettings.getInstance().getShowMainMenu();
-        for (GlobalMenuLinux gml : ourInstances.values()) {
+        for (GlobalMenuLinux gml : ourInstances) {
           gml.myWindowHandle = null;
           if (isMainMenuVisible) {
             ApplicationManager.getApplication().invokeLater(() -> {
@@ -218,26 +221,17 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
       };
 
-      // NOTE: Linux implementation of JavaFX starts native main loop with GtkApplication._runLoop()
-      try {
-        Class<?> platformImpl = Class.forName("com.sun.javafx.application.PlatformImpl");
-        Method startup = platformImpl.getMethod("startup", Runnable.class);
-        Runnable r = () -> ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished);
-        startup.invoke(null, r);
-      }
-      catch (Throwable e) {
-        LOG.info("can't start main loop via JavaFX (will run it manually): " + e.getMessage());
-        final Thread glibMain = new Thread(() -> ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished),
-                                           "GlobalMenuLinux loop");
-        glibMain.start();
-      }
+      final String threadName = "GlobalMenuLinux loop";
+      new Thread(() -> ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished),
+                                         threadName).start();
+      LOG.info("Start glib main loop in thread: " + threadName);
     }
   }
 
   static final class MyActionTuner implements ActionConfigurationCustomizer {
     @Override
     public void customize(@NotNull ActionManager actionManager) {
-      if (!SystemInfo.isLinux || ApplicationManager.getApplication().isUnitTestMode() || !isPresented()) {
+      if (!SystemInfoRt.isLinux || ApplicationManager.getApplication().isUnitTestMode() || !isPresented()) {
         return;
       }
 
@@ -249,7 +243,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            for (GlobalMenuLinux gml : ourInstances.values()) {
+            for (GlobalMenuLinux gml : ourInstances) {
               gml.toggle(enabled);
             }
             enabled = !enabled;
@@ -258,14 +252,26 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
   }
 
-  public static GlobalMenuLinux create(@NotNull JFrame frame) {
-    final long xid = _getX11WindowXid(frame);
-    return xid == 0 ? null : new GlobalMenuLinux(xid, frame);
+  public static @NotNull GlobalMenuLinux create(@NotNull JFrame frame) {
+    return new GlobalMenuLinux(frame);
   }
 
-  private GlobalMenuLinux(long xid, @NotNull JFrame frame) {
-    LOG.info("created instance of GlobalMenuLinux for xid=0x" + Long.toHexString(xid));
-    myXid = xid;
+  private GlobalMenuLinux(@NotNull JFrame frame) {
+    assert ourLib != null;
+    LOG.info("created instance of GlobalMenuLinux for frame: " + frame);
+
+    final long xid = _getX11WindowXid(frame);
+    myXid.set(xid);
+    if (xid == 0) {
+      frame.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentShown(ComponentEvent e) {
+          frame.removeComponentListener(this);
+          myXid.set(_getX11WindowXid(frame));
+        }
+      });
+    }
+
     myFrame = frame;
     myOnWindowReleased = () -> {
       // exec at glib-thread
@@ -277,18 +283,17 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
       }
       if (myIsDisposed) {
-        ourInstances.remove(myXid);
+        ourInstances.remove(this);
       }
     };
 
     if (SystemInfo.isKDE && !KDE_DISABLE_ROOT_MNEMONIC_PROCESSING) {
       // root menu items doesn't catch mnemonic shortcuts (in KDE), so process them inside IDE
       IdeEventQueue.getInstance().addDispatcher(e -> {
-        if (!(e instanceof KeyEvent)) {
+        if (!(e instanceof KeyEvent event)) {
           return false;
         }
 
-        final KeyEvent event = (KeyEvent)e;
         if (!event.isAltDown()) {
           return false;
         }
@@ -297,9 +302,12 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         final Window wndParent = src instanceof Window ? (Window)src : SwingUtilities.windowForComponent(src);
         final char eventChar = Character.toUpperCase(event.getKeyChar());
 
-        for (GlobalMenuLinux gml : ourInstances.values()) {
+        for (GlobalMenuLinux gml : ourInstances) {
           if (gml.myFrame == wndParent) {
-            for (MenuItemInternal root : gml.myRoots) {
+            List<MenuItemInternal> currentRoots = gml.myRoots;
+            if (currentRoots == null) return false;
+
+            for (MenuItemInternal root : currentRoots) {
               if (eventChar == root.mnemonic) {
                 ourLib.showMenuItem(root.nativePeer);
                 return false;
@@ -313,21 +321,25 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       }, this);
     }
 
-    ourInstances.put(myXid, this);
+    ourInstances.add(this);
   }
 
   @Override
   public void dispose() {
     // exec at EDT
-    if (ourLib == null || myIsDisposed) {
+    if (myIsDisposed) {
       return;
     }
 
     myIsDisposed = true;
 
     if (myWindowHandle != null) {
-      _trace("dispose frame, scheduled destroying of GlobalMenuLinux for xid=0x%X", myXid);
+      _trace("scheduled destroying of GlobalMenuLinux for frame %s | xid=0x%X", myFrame, myXid);
       ourLib.releaseWindowOnMainLoop(myWindowHandle, myOnWindowReleased);
+    }
+    else {
+      _trace("scheduled destroying of unused GlobalMenuLinux for frame %s | xid=0x%X", myFrame, myXid);
+      ourLib.execOnMainLoop(myOnWindowReleased);
     }
   }
 
@@ -339,7 +351,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
     final long xid = _getX11WindowXid(frame);
     if (xid == 0) {
-      LOG.warn("can't obtain XID of window: " + frame + ", skip global menu binding");
+      LOG.debug("can't obtain XID of window: " + frame + ", skip global menu binding");
       return;
     }
     if (myWindowHandle != null) {
@@ -356,7 +368,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
     final long xid = _getX11WindowXid(frame);
     if (xid == 0) {
-      LOG.warn("can't obtain XID of window: " + frame + ", skip global menu unbinding");
+      LOG.debug("can't obtain XID of window: " + frame + ", skip global menu unbinding");
       return;
     }
     if (myWindowHandle != null) {
@@ -388,6 +400,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         if (DO_FILL_ROOTS) {
           final long startMs = System.currentTimeMillis();
           am.removeAll(); // just for insurance
+          am.setSelected(true);
           am.fillMenu();
           _syncChildren(mi, am, 1, stats); // NOTE: fill root menus to avoid empty submenu showing
           am.removeAll();
@@ -410,11 +423,15 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     if (myIsRootsUpdated || !myIsEnabled || myIsDisposed) {
       return;
     }
+    if (myXid.get() == 0) {
+      LOG.debug("can´t update roots of frame " + myFrame + " because xid == 0");
+      return;
+    }
 
     myIsRootsUpdated = true;
 
     if (myWindowHandle == null) {
-      myWindowHandle = ourLib.registerWindow(myXid, this);
+      myWindowHandle = ourLib.registerWindow(myXid.get(), this);
       if (myWindowHandle == null) {
         LOG.error("AppMenu-service can't register xid " + myXid);
         return;
@@ -444,6 +461,10 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
   public void toggle(boolean enabled) {
     if (ourLib == null || myIsDisposed) {
+      return;
+    }
+    if (myXid.get() == 0) {
+      LOG.debug("can´t toggle global-menu of frame " + myFrame + " because xid == 0");
       return;
     }
 
@@ -495,23 +516,16 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   }
 
   private static String _evtype2str(int eventType) {
-    switch (eventType) {
-      case GlobalMenuLib.EVENT_OPENED:
-        return "event-opened";
-      case GlobalMenuLib.EVENT_CLOSED:
-        return "event-closed";
-      case GlobalMenuLib.EVENT_CLICKED:
-        return "event-clicked";
-      case GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW:
-        return "signal-about-to-show";
-      case GlobalMenuLib.SIGNAL_ACTIVATED:
-        return "signal-activated";
-      case GlobalMenuLib.SIGNAL_CHILD_ADDED:
-        return "signal-child-added";
-      case GlobalMenuLib.SIGNAL_SHOWN:
-        return "signal-shown";
-    }
-    return "unknown-event-type-" + eventType;
+    return switch (eventType) {
+      case GlobalMenuLib.EVENT_OPENED -> "event-opened";
+      case GlobalMenuLib.EVENT_CLOSED -> "event-closed";
+      case GlobalMenuLib.EVENT_CLICKED -> "event-clicked";
+      case GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW -> "signal-about-to-show";
+      case GlobalMenuLib.SIGNAL_ACTIVATED -> "signal-activated";
+      case GlobalMenuLib.SIGNAL_CHILD_ADDED -> "signal-child-added";
+      case GlobalMenuLib.SIGNAL_SHOWN -> "signal-shown";
+      default -> "unknown-event-type-" + eventType;
+    };
   }
 
   private static byte[] _icon2png(Icon icon) {
@@ -540,14 +554,12 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       return null;
     }
     MenuItemInternal result = null;
-    if (each instanceof ActionMenuItem) {
-      final ActionMenuItem ami = (ActionMenuItem)each;
+    if (each instanceof ActionMenuItem ami) {
       result = new MenuItemInternal(parent, -1, System.identityHashCode(ami),
                                     ami.isToggleable() ? GlobalMenuLib.ITEM_CHECK : GlobalMenuLib.ITEM_SIMPLE, ami.getAnAction());
       result.jitem = ami;
     }
-    else if (each instanceof ActionMenu) {
-      final ActionMenu am2 = (ActionMenu)each;
+    else if (each instanceof ActionMenu am2) {
       result = new MenuItemInternal(parent, -1, System.identityHashCode(am2), GlobalMenuLib.ITEM_SUBMENU, am2.getAnAction());
       result.jitem = am2;
     }
@@ -608,9 +620,9 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
       }
       if (cmi != null) {
-        if (deepness > 1 && (each instanceof ActionMenu)) {
-          final ActionMenu jmiEach = (ActionMenu)each;
+        if (deepness > 1 && (each instanceof ActionMenu jmiEach)) {
           jmiEach.removeAll();
+          jmiEach.setSelected(true);
           jmiEach.fillMenu();
           _syncChildren(cmi, jmiEach, deepness - 1, stats);
         }
@@ -682,15 +694,15 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
     final MenuItemInternal mi = _findMenuItem(uid);
     if (mi == null) {
-      LOG.error("can't find menu-item by uid " + uid + ", eventType=" + eventType);
+      LOG.debug("can't find menu-item by uid " + uid + ", eventType=" + eventType);
       return;
     }
     if (mi.nativePeer == null) {
-      LOG.error("menu-item hasn't native peer, uid = " + uid + ", eventType=" + eventType);
+      LOG.debug("menu-item hasn't native peer, uid = " + uid + ", eventType=" + eventType);
       return;
     }
     if (mi.action == null) {
-      LOG.error("menu-item hasn't associated AnAction, uid = " + uid + ", eventType=" + eventType);
+      LOG.debug("menu-item hasn't associated AnAction, uid = " + uid + ", eventType=" + eventType);
       return;
     }
 
@@ -726,12 +738,15 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
           if (jmi == null) {
             if (TRACE_HIERARCHY_MISMATCHES) {
               _trace(
-                "corresponding (opening) swing item is null, event source: " + mi + ", swing menu hierarchy:\n" + _dumpSwingHierarchy());
+                "corresponding (opening) swing item is null, event source: " +
+                mi +
+                ", swing menu hierarchy:\n" +
+                _dumpSwingHierarchy());
             }
             return;
           }
-          if (!(jmi instanceof ActionMenu)) {
-            LOG.error("corresponding (opening) swing item isn't instance of ActionMenu, class=" +
+          if (!(jmi instanceof ActionMenu am)) {
+            LOG.debug("corresponding (opening) swing item isn't instance of ActionMenu, class=" +
                       jmi.getClass().getName() +
                       ", event source: " +
                       mi);
@@ -740,8 +755,8 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
           mi.lastFilledMs = timeMs;
 
-          final ActionMenu am = (ActionMenu)jmi;
           am.removeAll();
+          am.setSelected(true);
           am.fillMenu();
           _syncChildren(mi, am, DONT_FILL_SUBMENU ? 1 : 2,
                         stats); // NOTE: fill next submenus level to avoid empty submenu showing (intermittent behaviour of menu-applet)
@@ -775,15 +790,14 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
         return;
       }
-      if (!(jmi instanceof ActionMenuItem)) {
-        LOG.error("corresponding (clicked) swing item isn't instance of ActionMenuItem, class=" +
+      if (!(jmi instanceof ActionMenuItem ami)) {
+        LOG.debug("corresponding (clicked) swing item isn't instance of ActionMenuItem, class=" +
                   jmi.getClass().getName() +
                   ", event source: " +
                   mi);
         return;
       }
 
-      final ActionMenuItem ami = (ActionMenuItem)jmi;
       ApplicationManager.getApplication().invokeLater(() -> ami.doClick());
     }
   }
@@ -798,9 +812,10 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
   private static GlobalMenuLib _loadLibrary() {
     Application app;
-    if (!SystemInfo.isLinux ||
+    if (!SystemInfoRt.isLinux ||
+        !(CpuArch.isIntel64() || CpuArch.isArm64()) ||
         (app = ApplicationManager.getApplication()) == null || app.isUnitTestMode() || app.isHeadlessEnvironment() ||
-        Registry.is("linux.native.menu.force.disable") ||
+        Boolean.getBoolean("linux.native.menu.force.disable") ||
         (LoadingState.COMPONENTS_REGISTERED.isOccurred() && !Experiments.getInstance().isFeatureEnabled("linux.native.menu")) ||
         !JnaLoader.isLoaded() ||
         isUnderVMWithSwiftPluginInstalled()) {
@@ -808,7 +823,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
 
     try {
-      Path lib = PathManager.findBinFile("libdbm64.so");
+      @SuppressWarnings("SpellCheckingInspection") Path lib = PathManager.findBinFile("libdbm.so");
       assert lib != null : "DBM lib missing; bin=" + Arrays.toString(new File(PathManager.getBinPath()).list());
       return Native.load(lib.toString(), GlobalMenuLib.class, Collections.singletonMap("jna.encoding", "UTF8"));
     }
@@ -971,11 +986,9 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         return null;
       }
 
-      if (!(target instanceof JMenuItem)) {
+      if (!(target instanceof JMenuItem jmi)) {
         return null;
       }
-
-      final JMenuItem jmi = (JMenuItem)target;
 
       // find by text
       final String label = jmi.getText();
@@ -1086,16 +1099,16 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         if (TRACE_CLEARING) _trace("corresponding (closing) swing item is null - nothing to clear, event source: ", this);
         return;
       }
-      if (!(jitem instanceof ActionMenu)) {
-        LOG.error("corresponding (closing) swing item isn't instance of ActionMenu, class=" +
+      if (!(jitem instanceof ActionMenu am)) {
+        LOG.debug("corresponding (closing) swing item isn't instance of ActionMenu, class=" +
                   jitem.getClass().getName() +
                   ", event source: " +
                   toString());
         return;
       }
 
-      final ActionMenu am = (ActionMenu)jitem;
       am.clearItems();
+      am.setSelected(false);
       clearChildrenSwingRefs();
       _onSwingCleared(System.currentTimeMillis());
       if (TRACE_CLEARING) _trace("\t cleared '%s'", toStringShort());
@@ -1114,22 +1127,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
   }
 
-  private static final class QueuedEvent {
-    final int uid;
-    final int eventType;
-    final int rootId;
-    final long timeMs;
-
-    private QueuedEvent(int uid, int eventType, int rootId, long timeMs) {
-      this.uid = uid;
-      this.eventType = eventType;
-      this.rootId = rootId;
-      this.timeMs = timeMs;
-    }
-
-    static QueuedEvent of(int uid, int eventType, int rootId, long timeMs) {
-      return new QueuedEvent(uid, eventType, rootId, timeMs);
-    }
+  private record QueuedEvent(int uid, int eventType, int rootId, long timeMs) {
   }
 
   private class EventFilter {
@@ -1236,7 +1234,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
         else {
           // filter is closed
-          myQueued.add(QueuedEvent.of(uid, eventType, mi.rootPos, timeMs));
+          myQueued.add(new QueuedEvent(uid, eventType, mi.rootPos, timeMs));
           if (myTimer != null) {
             myTimer.restart();
           }
@@ -1251,48 +1249,37 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
       // filter is opened and first root appeared
       if (TRACE_EVENT_FILTER) _trace("EventFilter: close filter");
-      myQueued.add(QueuedEvent.of(uid, eventType, mi.rootPos, timeMs));
+      myQueued.add(new QueuedEvent(uid, eventType, mi.rootPos, timeMs));
       myClosedMs = timeMs;
       _startTimer();
       return false;
     }
   }
 
-  private static Object _getPeerField(@NotNull Component object) {
-    try {
-      Field field = Component.class.getDeclaredField("peer");
-      field.setAccessible(true);
-      return field.get(object);
-    }
-    catch (IllegalAccessException | NoSuchFieldException e) {
-      LOG.error(e);
-      return null;
-    }
-  }
-
   private static long _getX11WindowXid(@NotNull Window frame) {
     try {
       // getPeer method was removed in jdk9, but 'peer' field still exists
-      final ComponentPeer wndPeer = (ComponentPeer)_getPeerField(frame);
-      if (wndPeer == null) {
+      MethodHandles.Lookup lookup = MethodHandles.lookup();
+      ComponentPeer componentPeer = (ComponentPeer)MethodHandles.privateLookupIn(Component.class, lookup)
+        .findVarHandle(Component.class, "peer", ComponentPeer.class)
+        .get(frame);
+      if (componentPeer == null) {
         // wait a little for X11-peer to be connected
-        LOG.info("frame peer is null, wait for connection");
+        LOG.debug("frame peer is null, wait for connection");
         return 0;
       }
 
       // sun.awt.X11.XBaseWindow isn't available at all jdks => use reflection
-      if (!wndPeer.getClass().getName().equals("sun.awt.X11.XFramePeer")) {
-        LOG.info("frame peer isn't instance of XBaseWindow, class of peer: " + wndPeer.getClass());
+      Class<? extends ComponentPeer> componentPeerClass = componentPeer.getClass();
+      if (!componentPeerClass.getName().equals("sun.awt.X11.XFramePeer")) {
+        LOG.info("frame peer isn't instance of XBaseWindow, class of peer: " + componentPeerClass);
         return 0;
       }
 
       // System.out.println("Window id (from XBaseWindow): 0x" + Long.toHexString(((XBaseWindow)frame.getPeer()).getWindow()));
-      final Method method = wndPeer.getClass().getMethod("getWindow");
-      if (method == null) {
-        return 0;
-      }
-
-      return (long)method.invoke(wndPeer);
+      return (long)MethodHandles.privateLookupIn(componentPeerClass, lookup)
+        .findVirtual(componentPeerClass, "getWindow", MethodType.methodType(Long.TYPE))
+        .invoke(componentPeer);
     }
     catch (Throwable e) {
       LOG.error(e);

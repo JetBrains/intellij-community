@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -18,7 +19,7 @@ public class FQNameCellRenderer extends SimpleColoredComponent implements ListCe
 
   public FQNameCellRenderer() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    FONT = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
+    FONT = scheme.getFont(EditorFontType.PLAIN);
     setOpaque(true);
   }
 
@@ -32,8 +33,7 @@ public class FQNameCellRenderer extends SimpleColoredComponent implements ListCe
 
     clear();
 
-    if (value instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)value;
+    if (value instanceof PsiClass aClass) {
       setIcon(aClass.getIcon(0));
       if (aClass.getQualifiedName() != null) {
         SimpleTextAttributes attributes;

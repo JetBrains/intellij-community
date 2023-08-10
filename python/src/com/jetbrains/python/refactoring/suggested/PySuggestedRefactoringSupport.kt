@@ -37,10 +37,15 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
              !shouldBeSuppressed(element)
     }
 
+    internal fun shouldSuppressRefactoringForDeclaration(state: SuggestedRefactoringState): Boolean {
+      // don't merge with `shouldBeSuppressed` because `shouldBeSuppressed` could be invoked in EDT and resolve below could slow down it
+      val element = state.restoredDeclarationCopy()
+      return element == null || PyiUtil.isOverload(element, TypeEvalContext.codeAnalysis(element.project, element.containingFile))
+    }
+
     private fun shouldBeSuppressed(element: PsiElement): Boolean {
       if (PyiUtil.isInsideStub(element)) return true
       if (element is PyElement && PyiUtil.getPythonStub(element) != null) return true
-      if (PyiUtil.isOverload(element, TypeEvalContext.codeAnalysis(element.project, element.containingFile))) return true
 
       return false
     }
@@ -50,15 +55,15 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
     }
   }
 
-  override fun isDeclaration(psiElement: PsiElement): Boolean = findSupport(psiElement) != null
+  override fun isAnchor(psiElement: PsiElement): Boolean = findSupport(psiElement) != null
 
-  override fun signatureRange(declaration: PsiElement): TextRange? = findSupport(declaration)!!.signatureRange(declaration)?.takeIf {
-    !declaration.containingFile.hasErrorElementInRange(it)
+  override fun signatureRange(anchor: PsiElement): TextRange? = findSupport(anchor)?.signatureRange(anchor)?.takeIf {
+    !anchor.containingFile.hasErrorElementInRange(it)
   }
 
   override fun importsRange(psiFile: PsiFile): TextRange? = null
 
-  override fun nameRange(declaration: PsiElement): TextRange? = (declaration as? PsiNameIdentifierOwner)?.nameIdentifier?.textRange
+  override fun nameRange(anchor: PsiElement): TextRange? = (anchor as? PsiNameIdentifierOwner)?.nameIdentifier?.textRange
 
   override fun isIdentifierStart(c: Char): Boolean = c == '_' || Character.isLetter(c)
 

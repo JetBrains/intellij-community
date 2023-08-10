@@ -13,9 +13,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -123,28 +121,11 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       .createPopup().showInBestPositionFor(editor);
   }
 
-  private static class MyItem {
-    final String name;
-    final int index;
-    MyItem(String name, int index) {
-      this.name = name;
-      this.index = index;
-    }
-
+  private record MyItem(String name, int index) {
     @Override
     public String toString() {
       return name;
     }
-  }
-
-  /**
-   * @deprecated operate with
-   * {@link EditorColors#SEARCH_RESULT_ATTRIBUTES} directly
-   */
-  @Deprecated
-  public static TextAttributes getTestAttributesForExtract() {
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    return manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
   }
 
   protected static class MyUnwrapAction extends AnAction {
@@ -218,7 +199,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       });
     }
 
-    private void highlightExtractedElements(final List<PsiElement> extractedElements) {
+    private void highlightExtractedElements(final List<? extends PsiElement> extractedElements) {
       for (PsiElement each : extractedElements) {
         final TextRange textRange = each.getTextRange();
         HighlightManager.getInstance(myProject).addRangeHighlight(
@@ -236,7 +217,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       return myUnwrapper.getDescription(myElement);
     }
 
-    PsiElement collectAffectedElements(@NotNull List<PsiElement> toExtract) {
+    PsiElement collectAffectedElements(@NotNull List<? super PsiElement> toExtract) {
       return myUnwrapper.collectAffectedElements(myElement, toExtract);
     }
   }

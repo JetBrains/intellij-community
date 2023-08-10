@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -70,7 +70,7 @@ public interface AnnotationHolder {
    * @return the annotation (which can be modified to set additional annotation parameters)
    * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   Annotation createWarningAnnotation(@NotNull ASTNode node, @Nullable @InspectionMessage String message);
 
   /**
@@ -95,19 +95,6 @@ public interface AnnotationHolder {
    */
   @Deprecated
   Annotation createWeakWarningAnnotation(@NotNull PsiElement elt,
-                                         @Nullable @InspectionMessage String message);
-
-  /**
-   * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
-   * message over the specified AST node.
-   *
-   * @param node    the node over which the annotation is created.
-   * @param message the info message.
-   * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
-   */
-  @Deprecated
-  Annotation createWeakWarningAnnotation(@NotNull ASTNode node,
                                          @Nullable @InspectionMessage String message);
 
   /**
@@ -191,9 +178,18 @@ public interface AnnotationHolder {
                               @Nullable @InspectionMessage String message,
                               @Nullable String htmlTooltip);
 
+  /**
+   * @return the session in which the annotators are running.
+   * It's guaranteed that during this session {@link Annotator#annotate(PsiElement, AnnotationHolder)} is called at most once for each PSI element in the file,
+   * then found annotations are displayed on the screen, then the session is disposed.
+   */
   @NotNull
   AnnotationSession getCurrentAnnotationSession();
 
+  /**
+   * @return true if the inspections are running in batch mode (see "Code|Inspect Code..."), false if the inspections are in the on-the-fly mode (i.e., they are run when the editor opened the file in the window).
+   * The difference is in the desired latency level which may require reducing the power of analysis in the on-the-fly mode to improve responsiveness.
+   */
   boolean isBatchMode();
 
   /**
@@ -203,30 +199,30 @@ public interface AnnotationHolder {
    *
    * @param severity The severity of the annotation.
    * @param message  The message this annotation will show in the status bar and the tooltip.
-   * @apiNote The builder created by this method is already initialized by the current element, i.e. the psiElement currently visited by inspection
-   * visitor. You'll need to call {@link AnnotationBuilder#range(TextRange)} or similar method explicitly only if target element differs from current element.
+   * @apiNote The builder created by this method is already initialized by the current element, i.e., the psiElement being visited by the current annotator.
+   * You need to call {@link AnnotationBuilder#range(TextRange)} or similar method explicitly only if target element differs from the current element.
    * Please note, that the range in {@link AnnotationBuilder#range(TextRange)} must be inside the range of the current element.
+   * @return builder instance you can use to further customize your annotation
    */
   @Contract(pure = true)
-  @NotNull
-  default AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity,
+  default @NotNull AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity,
                                           @NotNull @InspectionMessage String message) {
-    throw new IllegalStateException("Please do not override AnnotationHolder, use standard provided one instead");
+    throw new IllegalStateException("Please do not override AnnotationHolder, use the standard provided one instead");
   }
 
   /**
-   * Begin constructing a new annotation with no message.
+   * Begin constructing a new annotation with no message and no tooltip.
    * To finish construction and show the annotation on screen {@link AnnotationBuilder#create()} must be called.
    * For example: <p>{@code holder.newSilentAnnotation(HighlightSeverity.WARNING).textAttributes(MY_ATTRIBUTES_KEY).create();}</p>
    *
    * @param severity The severity of the annotation.
-   * @apiNote The builder created by this method is already initialized by the current element, i.e. the psiElement currently visited by inspection
-   * visitor. You'll need to call {@link AnnotationBuilder#range(TextRange)} or similar method explicitly only if target element differs from current element.
-   * Please note, that the range in {@link AnnotationBuilder#range(TextRange)} must be inside the range of the current element.
+   * @apiNote The builder created by this method is already initialized by the current element, i.e., the psiElement being visited by the current annotator.
+   * You need to call {@link AnnotationBuilder#range(TextRange)} or similar method explicitly only if target element differs from the current element.
+   * Please note that the range in {@link AnnotationBuilder#range(TextRange)} must be inside the range of the current element.
+   * @return builder instance you can use to further customize your annotation
    */
   @Contract(pure = true)
-  @NotNull
-  default AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
-    throw new IllegalStateException("Please do not override AnnotationHolder, use standard provided one instead");
+  default @NotNull AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
+    throw new IllegalStateException("Please do not override AnnotationHolder, use the standard provided one instead");
   }
 }

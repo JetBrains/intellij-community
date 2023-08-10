@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginStateListener;
@@ -8,18 +9,16 @@ import com.intellij.ide.plugins.PluginStateManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -41,6 +40,11 @@ public class PluginUpdatesService {
       @Override
       public void install(@NotNull IdeaPluginDescriptor descriptor) {
         finishUpdate(descriptor);
+      }
+
+      @Override
+      public void uninstall(@NotNull IdeaPluginDescriptor descriptor) {
+        install(descriptor);
       }
     });
   }
@@ -99,7 +103,7 @@ public class PluginUpdatesService {
       for (Iterator<IdeaPluginDescriptor> I = myCache.iterator(); I.hasNext(); ) {
         IdeaPluginDescriptor downloadedDescriptor = I.next();
 
-        if (downloadedDescriptor.getPluginId() == descriptor.getPluginId()) {
+        if (Objects.equals(downloadedDescriptor.getPluginId(), descriptor.getPluginId())) {
           I.remove();
 
           Integer countValue = getCount();
@@ -184,6 +188,14 @@ public class PluginUpdatesService {
     }
   }
 
+  public static @Nullable @Nls String getUpdatesTooltip() {
+    Collection<IdeaPluginDescriptor> updates = getUpdates();
+    if (ContainerUtil.isEmpty(updates)) {
+      return null;
+    }
+    return IdeBundle.message("updates.plugin.ready.tooltip", StringUtil.join(updates, plugin -> plugin.getName(), ", "), updates.size());
+  }
+
   private static void calculateUpdates() {
     synchronized (ourLock) {
       if (myPreparing) {
@@ -199,7 +211,8 @@ public class PluginUpdatesService {
     }
 
     NonUrgentExecutor.getInstance().execute(() -> {
-      UpdateChecker.CheckPluginsUpdateResult updates = UpdateChecker.checkPluginsUpdate(new EmptyProgressIndicator());
+      List<IdeaPluginDescriptor> cache = ContainerUtil.map(UpdateChecker.getInternalPluginUpdates().getPluginUpdates().getAll(),
+                                                           PluginDownloader::getDescriptor);
 
       ApplicationManager.getApplication().invokeLater(() -> {
         synchronized (ourLock) {
@@ -212,12 +225,6 @@ public class PluginUpdatesService {
           }
 
           myPrepared = true;
-          List<IdeaPluginDescriptor> cache = new ArrayList<>();
-          Collection<PluginDownloader> availableUpdates = updates.getAvailableUpdates();
-          if (availableUpdates != null) {
-            cache.addAll(ContainerUtil.map(availableUpdates, (downloader -> downloader.getDescriptor())));
-          }
-          cache.addAll(ContainerUtil.map(updates.getAvailableDisabledUpdates(), (downloader -> downloader.getDescriptor())));
           myCache = cache;
 
           Integer countValue = getCount();

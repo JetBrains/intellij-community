@@ -1,4 +1,4 @@
-// "Make 'b' return 'void'" "false"
+// "Make 'b()' return 'void'" "false"
 
 class Test {
     static void a() {}

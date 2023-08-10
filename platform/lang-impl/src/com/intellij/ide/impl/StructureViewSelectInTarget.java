@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.PlatformUtils;
@@ -25,7 +26,7 @@ public class StructureViewSelectInTarget implements SelectInTarget {
     myProject = project;
 
     if (PlatformUtils.isPyCharmEducational()) {
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     }
   }
 
@@ -53,7 +54,11 @@ public class StructureViewSelectInTarget implements SelectInTarget {
     final Runnable runnable = () -> StructureViewFactoryEx.getInstanceEx(myProject).runWhenInitialized(
       () -> getStructureViewWrapper().selectCurrentElement(fileEditor, context.getVirtualFile(), requestFocus));
     if (requestFocus) {
-      windowManager.getToolWindow(ToolWindowId.STRUCTURE_VIEW).activate(runnable);
+      ToolWindow window = windowManager.getToolWindow(getToolWindowId());
+      // not all startup activities might have passed?
+      if (window != null) {
+        window.activate(runnable);
+      }
     }
     else {
       runnable.run();

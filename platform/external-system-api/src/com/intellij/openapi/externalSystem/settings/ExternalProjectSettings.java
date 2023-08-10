@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.settings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,8 +13,6 @@ import java.util.Set;
 
 /**
  * Holds settings specific to a particular project imported from an external system.
- *
- * @author Denis Zhdanov
  */
 public abstract class ExternalProjectSettings implements Comparable<ExternalProjectSettings>, Cloneable {
 
@@ -56,22 +53,11 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   }
 
   /**
-   * @deprecated see {@link ExternalProjectSettings#setUseAutoImport} for details
-   */
-  @Transient
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public boolean isUseAutoImport() {
-    return true;
-  }
-
-  /**
    * @deprecated Auto-import cannot be disabled
-   * @see com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker for details
+   * @see com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
    */
   @Transient
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public void setUseAutoImport(@SuppressWarnings("unused") boolean useAutoImport) {
     LOG.warn(new Throwable("Auto-import cannot be disabled"));
   }
@@ -79,7 +65,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   /**
    * @deprecated left for settings backward-compatibility
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isCreateEmptyContentRootDirectories() {
     return myCreateEmptyContentRootDirectories;
   }
@@ -87,7 +73,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   /**
    * @deprecated left for settings backward-compatibility
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setCreateEmptyContentRootDirectories(boolean createEmptyContentRootDirectories) {
     myCreateEmptyContentRootDirectories = createEmptyContentRootDirectories;
   }
@@ -96,6 +82,13 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
     return myUseQualifiedModuleNames;
   }
 
+  /**
+   * @deprecated qualified module names are used by default, so there is no need to call with method with {@code true}; and {@code false}
+   * shouldn't be used as a parameter as well, because all plugins are supposed to use qualified module names for grouping (see IDEA-166061 
+   * for details). 
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public void setUseQualifiedModuleNames(boolean useQualifiedModuleNames) {
     myUseQualifiedModuleNames = useQualifiedModuleNames;
   }

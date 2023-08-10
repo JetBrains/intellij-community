@@ -10,11 +10,10 @@ import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 
@@ -79,7 +78,7 @@ public class CustomResourceBundleTest extends BasePlatformTestCase {
     assertEquals("p_asd", bundle2.getBaseName());
 
     final ResourceBundleManager manager = ResourceBundleManager.getInstance(getProject());
-    final ArrayList<PropertiesFile> rawBundle = ContainerUtil.newArrayList(propertiesFile, propertiesFile2);
+    List<PropertiesFile> rawBundle = List.of(propertiesFile, propertiesFile2);
     final String suggestedBaseName = PropertiesUtil.getDefaultBaseName(rawBundle);
     assertEquals("p", suggestedBaseName);
     manager.combineToResourceBundle(rawBundle, suggestedBaseName);
@@ -158,7 +157,7 @@ public class CustomResourceBundleTest extends BasePlatformTestCase {
     final PropertiesFile propFile2 = PropertiesImplUtil.getPropertiesFile(myFixture.addFileToProject("qwe1/asd1/p_abc.properties", ""));
     assertNotNull(propFile1);
     assertNotNull(propFile2);
-    resourceBundleManager.combineToResourceBundle(ContainerUtil.newArrayList(propFile1, propFile2), "p");
+    resourceBundleManager.combineToResourceBundle(List.of(propFile1, propFile2), "p");
 
     final PsiFile someFile = myFixture.addFileToProject("to_remove/asd.txt", "");
     final PsiDirectory toRemove = someFile.getParent();
@@ -196,7 +195,7 @@ public class CustomResourceBundleTest extends BasePlatformTestCase {
     assertSize(2, propertiesFile.getResourceBundle().getPropertiesFiles());
 
     final ResourceBundleManager resourceBundleManager = ResourceBundleManager.getInstance(getProject());
-    resourceBundleManager.combineToResourceBundle(ContainerUtil.newArrayList(propFile1, propFile2), "p");
+    resourceBundleManager.combineToResourceBundle(List.of(propFile1, propFile2), "p");
     resourceBundleManager.dissociateResourceBundle(propertiesFile.getResourceBundle());
     assertSize(1, propertiesFile.getResourceBundle().getPropertiesFiles());
     assertSize(2, propFile2.getResourceBundle().getPropertiesFiles());

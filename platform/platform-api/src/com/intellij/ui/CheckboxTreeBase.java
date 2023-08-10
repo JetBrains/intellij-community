@@ -13,11 +13,12 @@
 // limitations under the License.
 package com.intellij.ui;
 
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,8 +139,7 @@ public class CheckboxTreeBase extends Tree {
     @Override
     public final Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       invalidate();
-      if (value instanceof CheckedTreeNode) {
-        CheckedTreeNode node = (CheckedTreeNode)value;
+      if (value instanceof CheckedTreeNode node) {
 
         State state = getNodeStatus(node);
         myCheckbox.setVisible(true);
@@ -170,16 +170,15 @@ public class CheckboxTreeBase extends Tree {
     }
 
     private State getNodeStatus(final CheckedTreeNode node) {
-      if (myIgnoreInheritance) return node.isChecked() ? State.SELECTED : State.NOT_SELECTED;
-      final boolean checked = node.isChecked();
-      if (node.getChildCount() == 0 || !myUsePartialStatusForParentNodes) return checked ? State.SELECTED : State.NOT_SELECTED;
+      State ownState = node.isChecked() ? State.SELECTED : State.NOT_SELECTED;
+      if (myIgnoreInheritance || node.getChildCount() == 0 || !myUsePartialStatusForParentNodes) {
+        return ownState;
+      }
 
       State result = null;
-
       for (int i = 0; i < node.getChildCount(); i++) {
         TreeNode child = node.getChildAt(i);
-        State childStatus = child instanceof CheckedTreeNode? getNodeStatus((CheckedTreeNode)child) :
-                checked? State.SELECTED : State.NOT_SELECTED;
+        State childStatus = child instanceof CheckedTreeNode? getNodeStatus((CheckedTreeNode)child) : ownState;
         if (childStatus == State.DONT_CARE) return State.DONT_CARE;
         if (result == null) {
           result = childStatus;
@@ -188,17 +187,21 @@ public class CheckboxTreeBase extends Tree {
           return State.DONT_CARE;
         }
       }
-
-      return result == null ? State.NOT_SELECTED : result;
+      return result == null ? ownState : result;
     }
 
     @Override
     public AccessibleContext getAccessibleContext() {
       if (accessibleContext == null) {
-        accessibleContext = new AccessibleContextDelegate(super.getAccessibleContext()) {
+        accessibleContext = new AccessibleContextDelegateWithContextMenu(super.getAccessibleContext()) {
           @Override
           protected Container getDelegateParent() {
             return getParent();
+          }
+
+          @Override
+          protected void doShowContextMenu() {
+            ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true);
           }
 
           @Override
@@ -225,23 +228,6 @@ public class CheckboxTreeBase extends Tree {
                                   boolean leaf,
                                   int row,
                                   boolean hasFocus) {
-      if (value instanceof CheckedTreeNode) {
-        customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
-      }
-    }
-
-    /**
-     * @deprecated use {@link CheckboxTreeCellRendererBase#customizeRenderer(JTree, Object, boolean, boolean, boolean, int, boolean)}
-     */
-    @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
-    @Deprecated
-    public void customizeCellRenderer(JTree tree,
-                                      Object value,
-                                      boolean selected,
-                                      boolean expanded,
-                                      boolean leaf,
-                                      int row,
-                                      boolean hasFocus) {
     }
 
     public ColoredTreeCellRenderer getTextRenderer() {
@@ -257,7 +243,7 @@ public class CheckboxTreeBase extends Tree {
    * @see State
    * @deprecated Don't use this enum. Left for API compatibility.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public enum NodeState {
     FULL, CLEAR, PARTIAL
   }

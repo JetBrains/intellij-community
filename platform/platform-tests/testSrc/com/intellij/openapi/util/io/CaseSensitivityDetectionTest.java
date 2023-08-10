@@ -1,17 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.io.SuperUserStatus;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.junit.Assert.*;
@@ -25,13 +23,13 @@ public class CaseSensitivityDetectionTest {
   public void windowsFSRootsMustHaveDefaultSensitivity() {
     assumeWindows();
 
-    String systemDrive = System.getenv("SystemDrive");  // typically "C:"
+    String systemDrive = System.getenv("SystemDrive");  // typically, "C:"
     assertNotNull(systemDrive);
     File root = new File(systemDrive + '\\');
     CaseSensitivity rootCs = FileSystemUtil.readParentCaseSensitivity(root);
     assertEquals(systemDrive, CaseSensitivity.INSENSITIVE, rootCs);
 
-    String systemRoot = System.getenv("SystemRoot");  // typically "C:\Windows"
+    String systemRoot = System.getenv("SystemRoot");  // typically, "C:\Windows"
     assertNotNull(systemRoot);
     File child = new File(systemRoot);
     assertEquals(root, child.getParentFile());
@@ -40,14 +38,7 @@ public class CaseSensitivityDetectionTest {
 
   @Test
   public void wslRootsMustBeCaseSensitive() {
-    assumeWindows();
-
-    List<@NotNull String> distributions = enumerateWslDistributions();
-    assumeTrue("No WSL distributions found", !distributions.isEmpty());
-
-    String name = distributions.get(0);
-    assumeTrue("WSL distribution " + name + " doesn't seem to be alive", reanimateWslDistribution(name));
-
+    String name = assumeWorkingWslDistribution();
     String root = "\\\\wsl$\\" + name;
     assertEquals(root, CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(new File(root)));
   }
@@ -58,7 +49,8 @@ public class CaseSensitivityDetectionTest {
     assumeWslPresence();
     assumeTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
 
-    File file = tempDir.newFile("dir/child.txt"), dir = file.getParentFile();
+    File file = tempDir.newFile("dir/child.txt");
+    File dir = file.getParentFile();
     assertEquals(CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
     setCaseSensitivity(dir, true);
     assertEquals(CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
@@ -123,18 +115,28 @@ public class CaseSensitivityDetectionTest {
   }
 
   @Test
+  public void nativeApiWorksWithNonLatinPaths() {
+    String uni = SystemInfo.isWindows ? getUnicodeName(System.getProperty("sun.jnu.encoding")) : getUnicodeName();
+    assumeTrue(uni != null);
+    File file = tempDir.newFile(uni + "/0");
+    CaseSensitivity expected = SystemInfo.isWindows || SystemInfo.isMac ? CaseSensitivity.INSENSITIVE : CaseSensitivity.SENSITIVE;
+    assertEquals(expected, FileSystemUtil.readParentCaseSensitivity(file));
+  }
+
+  @Test
   public void caseSensitivityNativeWrappersMustWorkAtLeastInSimpleCases() {
-    FileAttributes.CaseSensitivity defaultCS = SystemInfo.isFileSystemCaseSensitive ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+    CaseSensitivity defaultCS = SystemInfo.isFileSystemCaseSensitive ? CaseSensitivity.SENSITIVE : CaseSensitivity.INSENSITIVE;
     assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(tempDir.newFile("dir0/child.txt")));
-    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(tempDir.newFile("dir0/0"))); // there's toggleable "child.txt" in this dir already
+    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(tempDir.newFile("dir0/0"))); // there's a toggleable "child.txt" in this dir already
     assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(tempDir.newFile("dir1/0")));
   }
 
   @Test
   public void caseSensitivityMustBeDeducibleByPureJavaIOAtLeastInSimpleCases() {
-    FileAttributes.CaseSensitivity defaultCS = SystemInfo.isFileSystemCaseSensitive ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+    CaseSensitivity defaultCS = SystemInfo.isFileSystemCaseSensitive ? CaseSensitivity.SENSITIVE : CaseSensitivity.INSENSITIVE;
     assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(tempDir.newFile("dir0/child.txt")));
-    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(tempDir.newFile("dir0/0"))); // there's toggleable "child.txt" in this dir already
+    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(tempDir.newFile("dir0/0"))); // there's a toggleable "child.txt" in this dir already
+    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(tempDir.newDirectory("dir0/Ubuntu")));
     //assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(tempDir.newFile("dir1/0")));
   }
 }

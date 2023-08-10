@@ -15,11 +15,10 @@
  */
 package org.intellij.plugins.xpathView.util;
 
-import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -86,7 +85,7 @@ public final class MyPsiUtil {
       return false;
     }
 
-    public static String getAttributePrefix(@NotNull XmlAttribute attribute) {
+    public static @NotNull String getAttributePrefix(@NotNull XmlAttribute attribute) {
         final String name = attribute.getName();
         if (name.indexOf(':') == -1) {
             return "";
@@ -156,15 +155,17 @@ public final class MyPsiUtil {
         file.accept(new PsiRecursiveElementVisitor() {
             @Override
             public void visitElement(@NotNull PsiElement element) {
-                AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(file));
+              AnnotationSessionImpl.computeWithSession(file, false, holder -> {
                 holder.runAnnotatorWithContext(element, annotator);
                 for (Annotation annotation : holder) {
-                    if (annotation.getSeverity() == HighlightSeverity.ERROR) {
-                        error[0] = annotation.getMessage();
-                        break;
-                    }
+                  if (annotation.getSeverity() == HighlightSeverity.ERROR) {
+                    error[0] = annotation.getMessage();
+                    break;
+                  }
                 }
-                super.visitElement(element);
+                return null;
+              });
+              super.visitElement(element);
             }
         });
         return error[0];

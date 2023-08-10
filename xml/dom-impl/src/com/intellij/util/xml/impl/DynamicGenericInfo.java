@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.project.Project;
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,11 +18,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.SoftReference;
 import java.util.*;
 
-/**
- * @author peter
- */
+import static com.intellij.reference.SoftReference.dereference;
+
 public final class DynamicGenericInfo extends DomGenericInfoEx {
   private static final Key<SoftReference<Interner<ChildrenDescriptionsHolder<?>>>> HOLDERS_CACHE = Key.create("DOM_CHILDREN_HOLDERS_CACHE");
   private final StaticGenericInfo myStaticGenericInfo;
@@ -44,7 +43,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  public final boolean checkInitialized() {
+  public boolean checkInitialized() {
     if (myInitialized) return true;
     myStaticGenericInfo.buildMethodMaps();
 
@@ -107,7 +106,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
 
   private static <T extends DomChildDescriptionImpl> ChildrenDescriptionsHolder<T> internChildrenHolder(XmlFile file, ChildrenDescriptionsHolder<T> holder) {
     SoftReference<Interner<ChildrenDescriptionsHolder<?>>> ref = file.getUserData(HOLDERS_CACHE);
-    Interner<ChildrenDescriptionsHolder<?>> cache = SoftReference.dereference(ref);
+    Interner<ChildrenDescriptionsHolder<?>> cache = dereference(ref);
     if (cache == null) {
       cache = Interner.createWeakInterner();
       file.putUserData(HOLDERS_CACHE, new SoftReference<>(cache));
@@ -171,14 +170,14 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
 
   @Override
   @NotNull
-  public final List<FixedChildDescriptionImpl> getFixedChildrenDescriptions() {
+  public List<FixedChildDescriptionImpl> getFixedChildrenDescriptions() {
     checkInitialized();
     return myFixeds.getDescriptions();
   }
 
   @Override
   @NotNull
-  public final List<CollectionChildDescriptionImpl> getCollectionChildrenDescriptions() {
+  public List<CollectionChildDescriptionImpl> getCollectionChildrenDescriptions() {
     checkInitialized();
     return myCollections.getDescriptions();
   }

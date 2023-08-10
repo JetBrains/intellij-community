@@ -74,13 +74,17 @@ public class ModifierListElement extends CompositeElement {
   private static ASTNode getDefaultAnchor(PsiModifierList modifierList, PsiKeyword modifier) {
     Integer order = ourModifierToOrderMap.get(modifier.getText());
     if (order == null) return null;
+    boolean hasKeyword = false;
     for (ASTNode child = SourceTreeToPsiMap.psiToTreeNotNull(modifierList).getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (ElementType.KEYWORD_BIT_SET.contains(child.getElementType())) {
+        hasKeyword = true;
         Integer order1 = ourModifierToOrderMap.get(child.getText());
         if (order1 == null) continue;
         if (order1.intValue() > order.intValue()) {
           return child;
         }
+      } else if (child.getElementType() == JavaElementType.ANNOTATION && hasKeyword) {
+        return child;
       }
     }
     return null;

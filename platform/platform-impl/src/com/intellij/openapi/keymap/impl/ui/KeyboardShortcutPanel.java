@@ -38,8 +38,7 @@ final class KeyboardShortcutPanel extends ShortcutPanel<KeyboardShortcut> {
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(mySecondStroke, true));
         }
       }
-      else if (event.getNewValue() instanceof KeyboardShortcut) {
-        KeyboardShortcut shortcut = (KeyboardShortcut)event.getNewValue();
+      else if (event.getNewValue() instanceof KeyboardShortcut shortcut) {
         myFirstStroke.setKeyStroke(shortcut.getFirstKeyStroke());
         mySecondStroke.setKeyStroke(shortcut.getSecondKeyStroke());
       }

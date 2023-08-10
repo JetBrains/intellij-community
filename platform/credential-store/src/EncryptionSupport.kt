@@ -25,11 +25,11 @@ internal interface EncryptionSupport {
   fun decrypt(data: ByteArray): ByteArray
 }
 
-internal enum class EncryptionType {
+enum class EncryptionType {
   BUILT_IN, CRYPT_32, PGP_KEY
 }
 
-internal fun getDefaultEncryptionType() = if (SystemInfo.isWindows) EncryptionType.CRYPT_32 else EncryptionType.BUILT_IN
+fun getDefaultEncryptionType() = if (SystemInfo.isWindows) EncryptionType.CRYPT_32 else EncryptionType.BUILT_IN
 
 private open class AesEncryptionSupport(private val key: Key) : EncryptionSupport {
   companion object {
@@ -48,7 +48,6 @@ private open class AesEncryptionSupport(private val key: Key) : EncryptionSuppor
 
     private fun decrypt(data: ByteArray, key: Key): ByteArray {
       val byteBuffer = ByteBuffer.wrap(data)
-      @Suppress("UsePropertyAccessSyntax")
       val ivLength = byteBuffer.getInt()
       val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
       cipher.init(Cipher.DECRYPT_MODE, key, IvParameterSpec(data, byteBuffer.position(), ivLength))
@@ -74,7 +73,7 @@ private class PgpKeyEncryptionSupport(private val encryptionSpec: EncryptionSpec
   override fun decrypt(data: ByteArray) = Pgp().decrypt(data)
 }
 
-internal data class EncryptionSpec(val type: EncryptionType, val pgpKeyId: String?)
+data class EncryptionSpec(val type: EncryptionType, val pgpKeyId: String?)
 
 internal fun createEncryptionSupport(spec: EncryptionSpec): EncryptionSupport {
   return when (spec.type) {
@@ -97,7 +96,7 @@ internal fun createBuiltInOrCrypt32EncryptionSupport(isCrypt32: Boolean): Encryp
   return AesEncryptionSupport(builtInEncryptionKey)
 }
 
-internal fun CharArray.toByteArrayAndClear(): ByteArray {
+fun CharArray.toByteArrayAndClear(): ByteArray {
   val charBuffer = CharBuffer.wrap(this)
   val byteBuffer = Charsets.UTF_8.encode(charBuffer)
   fill(0.toChar())

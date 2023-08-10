@@ -10,7 +10,7 @@ class ChangeSignatureTest {
         try {
             bar();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 }

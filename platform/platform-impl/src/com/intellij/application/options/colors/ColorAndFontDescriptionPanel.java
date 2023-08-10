@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.ide.IdeBundle;
@@ -25,7 +25,7 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,8 +166,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
   public void reset(@NotNull EditorSchemeAttributeDescriptor attrDescription) {
     try {
       myUiEventsEnabled = false;
-      if (!(attrDescription instanceof ColorAndFontDescription)) return;
-      ColorAndFontDescription description = (ColorAndFontDescription)attrDescription;
+      if (!(attrDescription instanceof ColorAndFontDescription description)) return;
 
       if (description.isFontEnabled()) {
         myLabelFont.setEnabled(description.isEditable());
@@ -215,7 +214,8 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> baseDescriptor = description.getFallbackKeyDescriptor();
     if (baseDescriptor != null) {
       String attrName = baseDescriptor.second.getDisplayName();
-      String attrLabel = attrName.replaceAll(EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR, FontUtil.rightArrow(UIUtil.getLabelFont()));
+      String attrLabel = attrName.replaceAll(EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR, FontUtil.rightArrow(
+        StartupUiUtil.getLabelFont()));
       ColorAndFontDescriptorsProvider settingsPage = baseDescriptor.first;
       String tooltipText;
       String labelText;
@@ -263,8 +263,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
 
   @Override
   public void apply(@NotNull EditorSchemeAttributeDescriptor attrDescription, EditorColorsScheme scheme) {
-    if (!(attrDescription instanceof ColorAndFontDescription)) return;
-    ColorAndFontDescription description = (ColorAndFontDescription)attrDescription;
+    if (!(attrDescription instanceof ColorAndFontDescription description)) return;
 
     description.setInherited(myInheritAttributesBox.isSelected());
     if (description.isInherited()) {

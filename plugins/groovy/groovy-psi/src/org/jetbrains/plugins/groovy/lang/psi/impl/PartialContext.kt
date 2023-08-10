@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
+import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
+import com.intellij.psi.impl.source.resolve.ResolveCache
 import com.intellij.psi.impl.source.resolve.ResolveCache.AbstractResolver
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -11,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.createDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType
 import java.util.function.Function
 
-internal class PartialContext(private val types: Map<VariableDescriptor, DFAType>, private val isCachingAllowed: Boolean) : InferenceContext {
+internal class PartialContext(private val types: Map<VariableDescriptor, DFAType>) : InferenceContext {
   private val cache = HashMap<Any, Any>()
 
   private fun <T> doGetCachedValue(key: Any, computable: () -> T): T {
@@ -25,7 +27,7 @@ internal class PartialContext(private val types: Map<VariableDescriptor, DFAType
   override fun getVariableType(ref: GrReferenceExpression): PsiType? {
     val descriptor = ref.createDescriptor()
     if (types.containsKey(descriptor)) {
-      return types[descriptor]?.getResultType(ref.manager)
+      return types[descriptor]?.resultType
     }
     else {
       return null
@@ -38,10 +40,18 @@ internal class PartialContext(private val types: Map<VariableDescriptor, DFAType
     }
   }
 
-  override fun isInferenceResultsCachingAllowed(): Boolean = isCachingAllowed
-
-  override fun <T : PsiReference, R> resolveWithCaching(ref: T, resolver: AbstractResolver<T, R>, incomplete: Boolean): R? {
+  override fun <T : PsiReference, R> resolveWithCaching(ref: T, resolver: AbstractResolver<T, Array<R>>, incomplete: Boolean): Array<R>? {
     return doGetCachedValue(Pair(ref, incomplete)) {
+      if (ref is PsiPolyVariantReference) {
+        val topLevelCachedValue = ResolveCache.getInstance(ref.element.project).getCachedResults(ref, ref.element.isPhysical, incomplete, false)
+        if (topLevelCachedValue != null) {
+          // if ResolveCache contains some result for this 'ref', then it means that 'resolveWithCaching' was
+          // called earlier in TopInferenceContext with this 'resolver'
+          // therefore, this unchecked cast is justified
+          @Suppress("UNCHECKED_CAST")
+          return@doGetCachedValue topLevelCachedValue as Array<R>
+        }
+      }
       resolver.resolve(ref, incomplete)
     }
   }

@@ -78,11 +78,9 @@ abstract class PyExternalDocTest : PyTestCase() {
     val elementName = qname.substring(ind+1)
     val p = PyStdlibDocumentationLinkProvider()
     TestCase.assertEquals(expectedUrl,
-                          "${p.webPageName(QualifiedName.fromDottedString(moduleName), projectDescriptor.sdk)}.html#${p.fragmentName(
+                          "${p.webPageName(QualifiedName.fromDottedString(moduleName), projectDescriptor!!.sdk)}.html#${p.fragmentName(
                             moduleName)}.$elementName")
   }
-
-  override fun getProjectDescriptor() = ourPy3Descriptor
 }
 
 class PyExternalDocTestPy3 : PyExternalDocTest() {
@@ -147,5 +145,5 @@ class PyExternalDocTestPy2 : PyExternalDocTest() {
     doUrl("pyexpat.ErrorString", "pyexpat.html#xml.parsers.expat.ErrorString")
   }
 
-  override fun getProjectDescriptor() = ourPyDescriptor
+  override fun getProjectDescriptor() = ourPy2Descriptor
 }

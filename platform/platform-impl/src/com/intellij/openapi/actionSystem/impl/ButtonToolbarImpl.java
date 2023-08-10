@@ -16,6 +16,7 @@ import java.util.ArrayList;
 
 import static com.intellij.util.IJSwingUtilities.getFocusedComponentInWindowOrSelf;
 
+@Deprecated(forRemoval = true)
 class ButtonToolbarImpl extends JPanel {
   private final String myPlace;
   private final PresentationFactory myPresentationFactory;
@@ -29,7 +30,7 @@ class ButtonToolbarImpl extends JPanel {
     initButtons(actionGroup);
 
     updateActions();
-    ActionManagerEx.getInstanceEx().addTimerListener(500, new WeakTimerListener(new MyTimerListener()));
+    ActionManagerEx.getInstanceEx().addTimerListener(new WeakTimerListener(new MyTimerListener()));
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
   }
 
@@ -93,7 +94,7 @@ class ButtonToolbarImpl extends JPanel {
             e.getModifiers()
           );
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-            ActionUtil.performActionDumbAware(action, event);
+            ActionUtil.performActionDumbAwareWithCallbacks(action, event);
           }
         }
       });
@@ -141,8 +142,7 @@ class ButtonToolbarImpl extends JPanel {
       // don't update toolbar if there is currently active modal dialog
 
       final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-      if (window instanceof Dialog) {
-        final Dialog dialog = (Dialog)window;
+      if (window instanceof Dialog dialog) {
         if (dialog.isModal() && !SwingUtilities.isDescendingFrom(ButtonToolbarImpl.this, dialog)) {
           return;
         }

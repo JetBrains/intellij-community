@@ -56,18 +56,12 @@ public final class MergeUtil {
     String message = getter != null ? getter.fun(result) : null;
     if (message != null) return message;
 
-    switch (result) {
-      case CANCEL:
-        return DiffBundle.message("button.merge.resolve.cancel");
-      case LEFT:
-        return DiffBundle.message("button.merge.resolve.accept.left");
-      case RIGHT:
-        return DiffBundle.message("button.merge.resolve.accept.right");
-      case RESOLVED:
-        return DiffBundle.message("button.merge.resolve.apply");
-      default:
-        throw new IllegalArgumentException(result.toString());
-    }
+    return DiffBundle.message(switch (result) {
+      case CANCEL -> "button.merge.resolve.cancel";
+      case LEFT -> "button.merge.resolve.accept.left";
+      case RIGHT -> "button.merge.resolve.accept.right";
+      case RESOLVED -> "button.merge.resolve.apply";
+    });
   }
 
   @NotNull
@@ -171,7 +165,7 @@ public final class MergeUtil {
 
   public static void reportProjectFileChangeIfNeeded(@Nullable Project project, @Nullable VirtualFile file) {
     if (project != null && file != null && isProjectFile(file)) {
-      StoreReloadManager.getInstance().saveChangedProjectFile(file, project);
+      StoreReloadManager.Companion.getInstance(project).saveChangedProjectFile(file);
     }
   }
 

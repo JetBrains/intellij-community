@@ -4,11 +4,9 @@ package com.intellij.ui.components;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AnchorableComponent;
-import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.*;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.JBComponent;
@@ -110,7 +108,15 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     myFontColor = null;
     super.setForeground(fg);
     if (myEditorPane != null) {
-      updateStyle(myEditorPane);
+      updateEditorPaneStyle();
+    }
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    if (myEditorPane != null) {
+      myEditorPane.setEnabled(enabled);
     }
   }
 
@@ -138,6 +144,19 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     return super.getMinimumSize();
   }
 
+  @Override
+  public Dimension getMaximumSize() {
+    if (myAnchor != null && myAnchor != this) return myAnchor.getMaximumSize();
+    if (myEditorPane != null) {
+      return getLayout().maximumLayoutSize(this);
+    }
+    return super.getMaximumSize();
+  }
+
+  @Override
+  public BorderLayout getLayout() {
+    return (BorderLayout)super.getLayout();
+  }
 
   @Override
   protected void paintComponent(Graphics g) {
@@ -151,7 +170,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     super.setText(text);
     if (myEditorPane != null) {
       myEditorPane.setText(getText());
-      updateStyle(myEditorPane);
+      updateEditorPaneStyle();
       checkMultiline();
       updateTextAlignment();
     }
@@ -188,14 +207,15 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   }
 
   private void checkMultiline() {
-    myMultiline = StringUtil.removeHtmlTags(getText()).contains(System.lineSeparator());
+    String text = getText();
+    myMultiline = text != null && StringUtil.removeHtmlTags(text).contains(System.lineSeparator());
   }
 
   @Override
   public void setFont(Font font) {
     super.setFont(font);
     if (myEditorPane != null) {
-      updateStyle(myEditorPane);
+      updateEditorPaneStyle();
       updateTextAlignment();
     }
   }
@@ -224,9 +244,22 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     }
   }
 
-  protected void updateLayout() {
+  @Override
+  public void setHorizontalTextPosition(int textPosition) {
+    super.setHorizontalTextPosition(textPosition);
+    if (myEditorPane != null) {
+      updateLayout();
+    }
+  }
+
+  private void updateLayout() {
     setLayout(new BorderLayout(getIcon() == null ? 0 : getIconTextGap(), 0));
-    add(myIconLabel, BorderLayout.WEST);
+    int position = getHorizontalTextPosition();
+    String iconConstraint = getComponentOrientation().isLeftToRight() ? BorderLayout.WEST : BorderLayout.EAST;
+    if (getComponentOrientation().isLeftToRight() && position == SwingConstants.LEADING) iconConstraint = BorderLayout.EAST;
+    if (!getComponentOrientation().isLeftToRight() && position == SwingConstants.TRAILING) iconConstraint = BorderLayout.EAST;
+    if (position == SwingConstants.LEFT) iconConstraint = BorderLayout.EAST;
+    add(myIconLabel, iconConstraint);
     add(myEditorPane, BorderLayout.CENTER);
   }
 
@@ -309,8 +342,8 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
         myEditorPane.addHyperlinkListener(createHyperlinkListener());
         ComponentUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
 
-        myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
-        updateStyle(myEditorPane);
+        myEditorPane.setEditorKit(HTMLEditorKitBuilder.simple());
+        updateEditorPaneStyle();
 
         if (myEditorPane.getCaret() instanceof DefaultCaret) {
           ((DefaultCaret)myEditorPane.getCaret()).setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
@@ -320,6 +353,10 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
         myEditorPane.setCaretPosition(0);
         updateLayout();
         updateTextAlignment();
+
+        // Remove label from tab order because selectable labels doesn't have visible selection state
+        setFocusTraversalPolicyProvider(true);
+        setFocusTraversalPolicy(new DisabledTraversalPolicy());
       }
       else {
         removeAll();
@@ -330,10 +367,10 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     return this;
   }
 
-  private void updateStyle(@NotNull JEditorPane pane) {
+  private void updateEditorPaneStyle() {
     myEditorPane.setFont(getFont());
     myEditorPane.setForeground(getForeground());
-    EditorKit kit = pane.getEditorKit();
+    EditorKit kit = myEditorPane.getEditorKit();
     if (kit instanceof HTMLEditorKit) {
       StyleSheet css = ((HTMLEditorKit)kit).getStyleSheet();
       css.addRule("body, p {" +
@@ -351,6 +388,10 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   public JBLabel setAllowAutoWrapping(boolean allowAutoWrapping) {
     myAllowAutoWrapping = allowAutoWrapping;
     return this;
+  }
+
+  public boolean isAllowAutoWrapping() {
+    return myAllowAutoWrapping;
   }
 
   private void updateTextAlignment() {

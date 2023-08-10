@@ -124,7 +124,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
                          int toRow,
                          int fromCol,
                          int toCol,
-                         @NotNull Consumer<ArrayChunk> whenLoaded) {
+                         @NotNull Consumer<? super ArrayChunk> whenLoaded) {
 
     myQueue.queue(new Update(updateMessage) {
       @Override
@@ -152,8 +152,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
   }
 
   public String correctStringValue(@NotNull Object value) {
-    if (value instanceof String) {
-      String corrected = (String)value;
+    if (value instanceof String corrected) {
       if (myStrategy.isNumeric(myDebugValue.getType())) {
         if (corrected.startsWith("'") || corrected.startsWith("\"")) {
           corrected = corrected.substring(1, corrected.length() - 1);

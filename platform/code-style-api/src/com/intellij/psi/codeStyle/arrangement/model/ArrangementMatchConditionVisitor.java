@@ -17,9 +17,6 @@ package com.intellij.psi.codeStyle.arrangement.model;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public interface ArrangementMatchConditionVisitor {
 
   void visit(@NotNull ArrangementAtomMatchCondition condition);

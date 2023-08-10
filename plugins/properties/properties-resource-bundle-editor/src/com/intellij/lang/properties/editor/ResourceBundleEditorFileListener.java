@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ModalityState;
@@ -8,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -77,15 +76,15 @@ final class ResourceBundleEditorFileListener implements VirtualFileListener {
   }
 
   private class MyVfsEventsProcessor {
-    private final AtomicReference<Set<EventWithType>> myEventQueue =
-      new AtomicReference<>(ContainerUtil.newConcurrentSet());
+    private final AtomicReference<Set<EventWithType>> myEventQueue
+      = new AtomicReference<>(ConcurrentCollectionFactory.createConcurrentSet());
 
     private final MergingUpdateQueue myUpdateQueue =
       new MergingUpdateQueue("rbe.vfs.listener.queue", 200, true, myEditor.getComponent(), myEditor, myEditor.getComponent(), false) {
         @Override
         protected void execute(Update @NotNull [] updates) {
           final ReadTask task = new ReadTask() {
-            final Set<EventWithType> myEvents = myEventQueue.getAndSet(ContainerUtil.newConcurrentSet());
+            final Set<EventWithType> myEvents = myEventQueue.getAndSet(ConcurrentCollectionFactory.createConcurrentSet());
 
             @Nullable
             @Override
@@ -113,13 +112,10 @@ final class ResourceBundleEditorFileListener implements VirtualFileListener {
                     }
                     if (validFilesCount > 1) {
                       toDo = myEditor::recreateEditorsPanel;
-                    } else {
+                    }
+                    else {
                       toDo = () -> {
-                        final FileEditorManagerEx fileEditorManager = (FileEditorManagerEx)FileEditorManager.getInstance(myProject);
-                        final VirtualFile file = fileEditorManager.getFile(myEditor);
-                        if (file != null) {
-                          fileEditorManager.closeFile(file);
-                        }
+                        FileEditorManager.getInstance(myProject).closeFile(myEditor.getFile());
                       };
                     }
                     break;
@@ -171,7 +167,7 @@ final class ResourceBundleEditorFileListener implements VirtualFileListener {
                   if (myEditor.isValid()) {
                     toDoCopy.run();
                   }
-                }, ModalityState.NON_MODAL);
+                }, ModalityState.nonModal());
               }
             }
 

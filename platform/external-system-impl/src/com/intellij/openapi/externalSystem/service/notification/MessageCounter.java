@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,10 +23,10 @@ public final class MessageCounter {
                                      @NotNull NotificationSource source,
                                      @NotNull NotificationCategory category,
                                      @NotNull ProjectSystemId projectSystemId) {
-    Object2IntOpenHashMap<NotificationCategory> counter = map.computeIfAbsent(projectSystemId, __ -> new HashMap<>())
+    Object2IntMap<NotificationCategory> counter = map.computeIfAbsent(projectSystemId, __ -> new HashMap<>())
       .computeIfAbsent(groupName, __ -> new HashMap<>())
       .computeIfAbsent(source, __ -> new Object2IntOpenHashMap<>());
-    counter.addTo(category, 1);
+    counter.mergeInt(category, 1, Math::addExact);
   }
 
   public synchronized void remove(@Nullable String groupName,
@@ -39,7 +40,7 @@ public final class MessageCounter {
       }
     }
     else {
-      Object2IntOpenHashMap<NotificationCategory> counter = groupMap.computeIfAbsent(groupName, __ -> new HashMap<>())
+      Object2IntMap<NotificationCategory> counter = groupMap.computeIfAbsent(groupName, __ -> new HashMap<>())
         .computeIfAbsent(notificationSource, __ -> new Object2IntOpenHashMap<>());
       counter.clear();
     }
@@ -54,7 +55,7 @@ public final class MessageCounter {
     Map<String, Map<NotificationSource, Object2IntOpenHashMap<NotificationCategory>>> groupMap = value == null ? Collections.emptyMap() : value;
     for (Map.Entry<String, Map<NotificationSource, Object2IntOpenHashMap<NotificationCategory>>> entry : groupMap.entrySet()) {
       if (groupName == null || groupName.equals(entry.getKey())) {
-        Object2IntOpenHashMap<NotificationCategory> counter = entry.getValue().get(notificationSource);
+        Object2IntMap<NotificationCategory> counter = entry.getValue().get(notificationSource);
         if (counter == null) {
           continue;
         }

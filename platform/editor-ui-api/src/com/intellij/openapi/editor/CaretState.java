@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.NonNls;
@@ -25,23 +11,25 @@ public class CaretState {
   private final LogicalPosition selectionEnd;
 
   public CaretState(@Nullable LogicalPosition caretPosition, 
-                    @Nullable LogicalPosition selectionStart, @Nullable LogicalPosition selectionEnd) {
+                    @Nullable LogicalPosition selectionStart,
+                    @Nullable LogicalPosition selectionEnd) {
     this(caretPosition, 0, selectionStart, selectionEnd);
   }
 
   /**
    * @param visualColumnAdjustment see {@link #getVisualColumnAdjustment()}
    */
-  public CaretState(@Nullable LogicalPosition caretPosition, int visualColumnAdjustment, 
-                    @Nullable LogicalPosition selectionStart, @Nullable LogicalPosition selectionEnd) {
+  public CaretState(@Nullable LogicalPosition caretPosition,
+                    int visualColumnAdjustment,
+                    @Nullable LogicalPosition selectionStart,
+                    @Nullable LogicalPosition selectionEnd) {
     this.caretPosition = caretPosition;
     this.visualColumnAdjustment = visualColumnAdjustment;
     this.selectionStart = selectionStart;
     this.selectionEnd = selectionEnd;
   }
 
-  @Nullable
-  public LogicalPosition getCaretPosition(){
+  public @Nullable LogicalPosition getCaretPosition(){
     return caretPosition;
   }
 
@@ -54,19 +42,16 @@ public class CaretState {
     return visualColumnAdjustment;
   }
 
-  @Nullable
-  public LogicalPosition getSelectionStart() {
+  public @Nullable LogicalPosition getSelectionStart() {
     return selectionStart;
   }
 
-  @Nullable
-  public LogicalPosition getSelectionEnd() {
+  public @Nullable LogicalPosition getSelectionEnd() {
     return selectionEnd;
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "CaretState{" +
            "caretPosition=" + caretPosition +
            (visualColumnAdjustment == 0 ? "" : (", visualColumnAdjustment=" + visualColumnAdjustment)) +

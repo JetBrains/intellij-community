@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.export;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -57,10 +57,10 @@ public final class HTMLExportUtil {
     Runnable showError = () -> Messages.showMessageDialog(
       project,
       InspectionsBundle.message("inspection.export.error.writing.to", file.toString(), message),
-      InspectionsBundle.message("inspection.export.results.error.title"),
+      InspectionsBundle.message("inspection.export.results.title"),
       Messages.getErrorIcon()
     );
-    ApplicationManager.getApplication().invokeLater(showError, ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(showError, ModalityState.nonModal());
     throw new ProcessCanceledException();
   }
 }

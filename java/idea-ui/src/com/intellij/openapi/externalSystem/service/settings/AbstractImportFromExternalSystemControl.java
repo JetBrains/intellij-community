@@ -42,8 +42,6 @@ import java.awt.*;
 
 /**
  * A control which knows how to manage settings of external project being imported.
- * 
- * @author Denis Zhdanov
  */
 public abstract class AbstractImportFromExternalSystemControl<
   ProjectSettings extends ExternalProjectSettings,

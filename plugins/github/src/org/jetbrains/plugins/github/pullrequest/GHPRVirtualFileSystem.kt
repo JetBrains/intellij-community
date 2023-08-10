@@ -10,7 +10,6 @@ import com.intellij.vcs.editor.GsonComplexPathSerializer
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.data.SimpleGHPRIdentifier
 
 internal class GHPRVirtualFileSystem : ComplexPathVirtualFileSystem<GHPRVirtualFileSystem.GHPRFilePath>(
   GsonComplexPathSerializer(GHPRFilePath::class.java)
@@ -19,20 +18,29 @@ internal class GHPRVirtualFileSystem : ComplexPathVirtualFileSystem<GHPRVirtualF
 
   override fun findOrCreateFile(project: Project, path: GHPRFilePath): VirtualFile? {
     val filesManager = GHPRDataContextRepository.getInstance(project).findContext(path.repository)?.filesManager ?: return null
-    return if (path.isDiff) filesManager.findDiffFile(path.prId) else filesManager.findTimelineFile(path.prId)
+    val pullRequest = path.prId
+    val sourceId = path.sourceId
+    return when {
+      pullRequest == null && sourceId != null -> filesManager.createOrGetNewPRDiffFile(sourceId, true)
+      pullRequest == null -> null
+      path.isDiff -> filesManager.findDiffFile(pullRequest)
+      else -> filesManager.findTimelineFile(pullRequest)
+    }
   }
 
   fun getPath(fileManagerId: String,
               project: Project,
               repository: GHRepositoryCoordinates,
-              id: GHPRIdentifier,
+              id: GHPRIdentifier?,
+              sourceId: String?,
               isDiff: Boolean = false): String =
-    getPath(GHPRFilePath(fileManagerId, project.locationHash, repository, SimpleGHPRIdentifier(id), isDiff))
+    getPath(GHPRFilePath(fileManagerId, project.locationHash, repository, id, sourceId, isDiff))
 
   data class GHPRFilePath(override val sessionId: String,
                           override val projectHash: String,
                           val repository: GHRepositoryCoordinates,
-                          val prId: SimpleGHPRIdentifier,
+                          val prId: GHPRIdentifier?,
+                          val sourceId: String?,
                           val isDiff: Boolean) : ComplexPath
 
   companion object {

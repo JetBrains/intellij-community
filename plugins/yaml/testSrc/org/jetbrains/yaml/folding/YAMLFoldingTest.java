@@ -24,6 +24,10 @@ public class YAMLFoldingTest extends BasePlatformTestCase {
   public void testRuby22423() {
     defaultTest();
   }
+  
+  public void testComments() {
+    defaultTest();
+  }
 
   public void testRegionFolding() {
     defaultTest();

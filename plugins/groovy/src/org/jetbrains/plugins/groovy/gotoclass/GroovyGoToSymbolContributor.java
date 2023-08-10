@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotationMethodNameI
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
 
-/**
- * @author ilyas
- */
 public class GroovyGoToSymbolContributor implements ChooseByNameContributorEx {
   @Override
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {

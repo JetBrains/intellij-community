@@ -15,8 +15,6 @@ import java.util.List;
  * Allows to build controls that show target user text with 'reach info' (e.g. inline icon button).
  * <p/>
  * Not thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class RichTextControlBuilder {
   
@@ -125,13 +123,8 @@ public class RichTextControlBuilder {
             rowComponents.add(component);
           }
           metaDataProcessor = null;
-          if (end < s.length()) {
-            // Handle situation like '{@key}text', i.e. there is no white space between the meta-data and the text that follows it.
-            s = s.substring(end);
-          }
-          else {
-            continue;
-          }
+          // Handle situation like '{@key}text', i.e. there is no white space between the meta-data and the text that follows it.
+          s = s.substring(end);
         }
         else {
           ignoreNext = true;

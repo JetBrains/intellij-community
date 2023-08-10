@@ -1,0 +1,4 @@
+// "Add missing actual declarations" "true"
+// COMPILER_ARGUMENTS: -XXLanguage:+GenericInlineClassParameter
+
+expect value class IC(val i: Int)

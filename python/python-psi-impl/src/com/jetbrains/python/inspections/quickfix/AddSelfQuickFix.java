@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Insert 'self' in a method that lacks any arguments
- * User: dcheryasov
  */
 public class AddSelfQuickFix implements LocalQuickFix {
   private final String myParamName;
@@ -39,8 +38,7 @@ public class AddSelfQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
-    if (element instanceof PyParameterList) {
-      final PyParameterList parameterList = (PyParameterList)element;
+    if (element instanceof PyParameterList parameterList) {
       PyNamedParameter newParameter = PyElementGenerator.getInstance(project).createParameter(myParamName);
       parameterList.addParameter(newParameter);
     }

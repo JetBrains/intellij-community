@@ -14,7 +14,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -35,16 +34,13 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.project.ProjectCloseListener;
+import com.intellij.openapi.ui.DoNotAskOption;
+import com.intellij.openapi.ui.MessageConstants;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileContentsChangedAdapter;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -52,29 +48,24 @@ import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
+import java.io.File;
+import java.util.*;
+import java.util.function.Function;
+
 @State(name = "com.intellij.coverage.CoverageDataManagerImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class CoverageDataManagerImpl extends CoverageDataManager implements Disposable, PersistentStateComponent<Element> {
   private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -162,8 +153,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
             }
           }
         }
-
-        ActionToolbarImpl.updateAllToolbarsImmediately();
       }
     }, this);
 
@@ -239,15 +228,19 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   public CoverageSuite addCoverageSuite(final String name, final CoverageFileProvider fileProvider, final String[] filters, final long lastCoverageTimeStamp,
                                         @Nullable final String suiteToMergeWith,
                                         final CoverageRunner coverageRunner,
-                                        final boolean collectLineInfo,
-                                        final boolean tracingEnabled) {
-    final CoverageSuite suite = createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith, collectLineInfo, tracingEnabled);
-    if (suiteToMergeWith == null || !name.equals(suiteToMergeWith)) {
+                                        final boolean coverageByTestEnabled,
+                                        final boolean branchCoverage) {
+    final CoverageSuite suite = createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith, coverageByTestEnabled, branchCoverage);
+    addCoverageSuite(suite, suiteToMergeWith);
+    return suite;
+  }
+
+  public void addCoverageSuite(final CoverageSuite suite, @Nullable final String suiteToMergeWith) {
+    if (suiteToMergeWith == null || !suite.getPresentableName().equals(suiteToMergeWith)) {
       removeCoverageSuite(suite);
     }
     myCoverageSuites.remove(suite); // remove previous instance
     myCoverageSuites.add(suite); // add new instance
-    return suite;
   }
 
   @Override
@@ -283,7 +276,11 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   @Override
   public void removeCoverageSuite(final CoverageSuite suite) {
     suite.deleteCachedCoverageData();
+    unregisterCoverageSuite(suite);
+  }
 
+  @Override
+  public void unregisterCoverageSuite(CoverageSuite suite) {
     myCoverageSuites.remove(suite);
     if (myCurrentSuitesBundle != null && myCurrentSuitesBundle.contains(suite)) {
       CoverageSuite[] suites = myCurrentSuitesBundle.getSuites();
@@ -347,61 +344,82 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   @Override
   public void coverageGathered(@NotNull final CoverageSuite suite) {
+    fireCoverageGathered(suite);
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
       if (myCurrentSuitesBundle != null) {
-        final String message = CoverageBundle.message("display.coverage.prompt", suite.getPresentableName());
-
-        final CoverageOptionsProvider coverageOptionsProvider = CoverageOptionsProvider.getInstance(myProject);
-        final DialogWrapper.DoNotAskOption doNotAskOption = new DialogWrapper.DoNotAskOption() {
-          @Override
-          public boolean isToBeShown() {
-            return coverageOptionsProvider.getOptionToReplace() == 3;
-          }
-
-          @Override
-          public void setToBeShown(boolean value, int exitCode) {
-            coverageOptionsProvider.setOptionsToReplace(value ? 3 : exitCode);
-          }
-
-          @Override
-          public boolean canBeHidden() {
-            return true;
-          }
-
-          @Override
-          public boolean shouldSaveOptionsOnCancel() {
-            return true;
-          }
-
-          @NotNull
-          @Override
-          public String getDoNotShowMessage() {
-            return UIBundle.message("dialog.options.do.not.show");
-          }
-        };
-        final String[] options = myCurrentSuitesBundle.getCoverageEngine() == suite.getCoverageEngine() ?
-                                 new String[] {
-                                   CoverageBundle.message("coverage.replace.active.suites"),
-                                   CoverageBundle.message("coverage.add.to.active.suites"),
-                                   CoverageBundle.message("coverage.do.not.apply.collected.coverage")} :
-                                 new String[] {
-                                   CoverageBundle.message("coverage.replace.active.suites"),
-                                   CoverageBundle.message("coverage.do.not.apply.collected.coverage")};
-        final int answer = doNotAskOption.isToBeShown() ? Messages.showDialog(message, CoverageBundle.message("code.coverage"),
-                                                                              options, 1, Messages.getQuestionIcon(),
-                                                                              doNotAskOption) : coverageOptionsProvider.getOptionToReplace();
-        if (answer == DialogWrapper.OK_EXIT_CODE) {
-          chooseSuitesBundle(new CoverageSuitesBundle(suite));
-        }
-        else if (answer == 1) {
-          chooseSuitesBundle(new CoverageSuitesBundle(ArrayUtil.append(myCurrentSuitesBundle.getSuites(), suite)));
-        }
+        final int replaceOption = CoverageOptionsProvider.getInstance(myProject).getOptionToReplace();
+        final boolean canMergeSuites = myCurrentSuitesBundle.getCoverageEngine() == suite.getCoverageEngine();
+        final boolean shouldAsk = replaceOption == CoverageOptionsProvider.ASK_ON_NEW_SUITE ||
+                                  replaceOption == CoverageOptionsProvider.ADD_SUITE && !canMergeSuites;
+        coverageGathered(suite, shouldAsk ? askMergeOption(suite, canMergeSuites) : replaceOption);
       }
       else {
         chooseSuitesBundle(new CoverageSuitesBundle(suite));
       }
     });
+  }
+
+  private int askMergeOption(@NotNull CoverageSuite suite, boolean canMergeSuites) {
+    final CoverageOptionsProvider coverageOptionsProvider = CoverageOptionsProvider.getInstance(myProject);
+
+    Function<Integer, Integer> mapCode = (Integer exitCode) -> {
+      if (canMergeSuites) {
+        return switch (exitCode) {
+          case MessageConstants.YES -> CoverageOptionsProvider.REPLACE_SUITE;
+          case MessageConstants.NO -> CoverageOptionsProvider.ADD_SUITE;
+          default -> CoverageOptionsProvider.IGNORE_SUITE;
+        };
+      }
+      else {
+        return exitCode == 0 ? CoverageOptionsProvider.REPLACE_SUITE : CoverageOptionsProvider.IGNORE_SUITE;
+      }
+    };
+
+    var doNotAskOption = new DoNotAskOption.Adapter() {
+      @Override
+      public void rememberChoice(boolean isSelected, int exitCode) {
+        if (isSelected) {
+          coverageOptionsProvider.setOptionsToReplace(mapCode.apply(exitCode));
+        }
+      }
+    };
+    String title = CoverageBundle.message("code.coverage");
+    String message = CoverageBundle.message("display.coverage.prompt", suite.getPresentableName());
+    if (canMergeSuites) {
+      int result = MessageDialogBuilder.yesNoCancel(title, message)
+        .yesText(getSuiteReplaceOption(CoverageOptionsProvider.REPLACE_SUITE))
+        .noText(getSuiteReplaceOption(CoverageOptionsProvider.ADD_SUITE))
+        .cancelText(getSuiteReplaceOption(CoverageOptionsProvider.IGNORE_SUITE))
+        .doNotAsk(doNotAskOption)
+        .show(suite.getProject());
+      return mapCode.apply(result);
+    }
+    else {
+      return MessageDialogBuilder.yesNo(title, message)
+               .yesText(getSuiteReplaceOption(CoverageOptionsProvider.REPLACE_SUITE))
+               .noText(getSuiteReplaceOption(CoverageOptionsProvider.IGNORE_SUITE))
+               .doNotAsk(doNotAskOption)
+               .ask(suite.getProject()) ? CoverageOptionsProvider.REPLACE_SUITE : CoverageOptionsProvider.IGNORE_SUITE;
+    }
+  }
+
+  @Nls
+  private static String getSuiteReplaceOption(int optionCode) {
+    return switch (optionCode) {
+      case CoverageOptionsProvider.REPLACE_SUITE -> CoverageBundle.message("coverage.replace.active.suites");
+      case CoverageOptionsProvider.ADD_SUITE -> CoverageBundle.message("coverage.add.to.active.suites");
+      case CoverageOptionsProvider.IGNORE_SUITE -> CoverageBundle.message("coverage.do.not.apply.collected.coverage");
+      default -> throw new IllegalStateException("Unexpected value: " + optionCode);
+    };
+  }
+
+  private void coverageGathered(@NotNull final CoverageSuite suite, int replaceOption) {
+    switch (replaceOption) {
+      case CoverageOptionsProvider.REPLACE_SUITE -> chooseSuitesBundle(new CoverageSuitesBundle(suite));
+      case CoverageOptionsProvider.ADD_SUITE ->
+        chooseSuitesBundle(new CoverageSuitesBundle(ArrayUtil.append(myCurrentSuitesBundle.getSuites(), suite)));
+    }
   }
 
   @Override
@@ -468,7 +486,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   private void renewInformationInEditors() {
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-    final VirtualFile[] openFiles = fileEditorManager.getOpenFiles();
+    final List<VirtualFile> openFiles = fileEditorManager.getOpenFilesWithRemotes();
     for (VirtualFile openFile : openFiles) {
       final FileEditor[] allEditors = fileEditorManager.getAllEditors(openFile);
       applyInformationToEditor(allEditors, openFile);
@@ -476,7 +494,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   private void applyInformationToEditor(FileEditor[] editors, final VirtualFile file) {
-    final PsiFile psiFile = doInReadActionIfProjectOpen(() -> PsiManager.getInstance(myProject).findFile(file));
+    final PsiFile psiFile = doInReadActionIfProjectOpen(() -> file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null);
     if (psiFile != null && myCurrentSuitesBundle != null && psiFile.isPhysical()) {
       final CoverageEngine engine = myCurrentSuitesBundle.getCoverageEngine();
       if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) {
@@ -518,7 +536,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   @Override
   public <T> T doInReadActionIfProjectOpen(Computable<T> computation) {
-    synchronized(myLock) {
+    synchronized (myLock) {
       if (myIsProjectClosing) return null;
     }
     return ApplicationManager.getApplication().runReadAction(computation);
@@ -582,7 +600,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Override
-  public void addSuiteListener(final CoverageSuiteListener listener, Disposable parentDisposable) {
+  public void addSuiteListener(@NotNull final CoverageSuiteListener listener, @NotNull Disposable parentDisposable) {
     myListeners.add(listener);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -590,6 +608,12 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
         myListeners.remove(listener);
       }
     });
+  }
+
+  public void fireCoverageGathered(@NotNull CoverageSuite suite) {
+    for (CoverageSuiteListener listener : myListeners) {
+      listener.coverageGathered(suite);
+    }
   }
 
   public void fireBeforeSuiteChosen() {
@@ -652,14 +676,14 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
                                             final String[] filters,
                                             final long lastCoverageTimeStamp,
                                             final String suiteToMergeWith,
-                                            final boolean collectLineInfo,
-                                            final boolean tracingEnabled) {
+                                            final boolean coverageByTestEnabled,
+                                            final boolean branchCoverage) {
 
     CoverageSuite suite = null;
     for (CoverageEngine engine : CoverageEngine.EP_NAME.getExtensions()) {
       if (coverageRunner.acceptsCoverageEngine(engine)) {
         suite = engine.createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp,
-                                           suiteToMergeWith, collectLineInfo, tracingEnabled, false, myProject);
+                                           suiteToMergeWith, coverageByTestEnabled, branchCoverage, false, myProject);
         if (suite != null) {
           break;
         }
@@ -671,6 +695,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   private Alarm myRequestsAlarm = null;
+
   public static class CoverageEditorFactoryListener implements EditorFactoryListener {
     private final Map<Editor, Runnable> myCurrentEditors = new HashMap<>();
 
@@ -687,12 +712,10 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
           final Document document = editor.getDocument();
           return documentManager.getPsiFile(document);
         });
-        if (psiFile != null && psiFile.isPhysical()) {
-          final CoverageEngine engine = manager.myCurrentSuitesBundle.getCoverageEngine();
-          if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) {
-            return;
-          }
-
+        if (psiFile == null || !psiFile.isPhysical()) return;
+        final CoverageEngine engine = manager.myCurrentSuitesBundle.getCoverageEngine();
+        AppExecutorUtil.getAppExecutorService().execute(() -> {
+          if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) return;
           CoverageEditorAnnotator annotator = manager.getAnnotator(editor);
           if (annotator == null) {
             annotator = engine.createSrcFileAnnotator(psiFile, editor);
@@ -714,8 +737,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
             }
           };
           myCurrentEditors.put(editor, request);
-          getRequestsAlarm(manager).addRequest(request, 100);
-        }
+          ApplicationManager.getApplication().invokeLater(() -> getRequestsAlarm(manager).addRequest(request, 100));
+        });
       }
     }
 
@@ -752,8 +775,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       return alarm;
     }
   }
-  
-  public static class CoverageProjectManagerListener implements ProjectManagerListener {
+
+  public static class CoverageProjectManagerListener implements ProjectCloseListener {
     @Override
     public void projectClosing(@NotNull Project project) {
       CoverageDataManagerImpl manager = (CoverageDataManagerImpl)getInstance(project);

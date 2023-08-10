@@ -17,9 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class CustomRegionTreeElement implements StructureViewTreeElement {
 
   private final PsiElement myStartElement;
@@ -116,6 +113,10 @@ public class CustomRegionTreeElement implements StructureViewTreeElement {
       }
     }
     return false;
+  }
+
+  public boolean containsOffset(int offset) {
+    return offset >= myStartElement.getTextRange().getStartOffset() && offset <= myEndOffset;
   }
 
   public CustomRegionTreeElement createNestedRegion(@NotNull PsiElement element) {

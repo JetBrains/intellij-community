@@ -39,7 +39,7 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
   private final Computable<String> myPattern;
 
   /** @deprecated explicitly sets model for a list. Use other constructors instead. */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public NameFilteringListModel(JList<T> list,
                                 Function<? super T, String> namer,
                                 Condition<? super String> filter,

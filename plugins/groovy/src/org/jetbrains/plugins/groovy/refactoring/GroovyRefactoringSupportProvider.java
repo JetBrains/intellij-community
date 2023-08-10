@@ -30,9 +30,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceField
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler;
 
-/**
- * @author ilyas
- */
 public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider {
 
   public static final GroovyRefactoringSupportProvider INSTANCE = new GroovyRefactoringSupportProvider();
@@ -97,7 +94,7 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
 
     //don't try to inplace rename aliased imported references
     if (parent instanceof GrReferenceElement) {
-      GroovyResolveResult result = ((GrReferenceElement)parent).advancedResolve();
+      GroovyResolveResult result = ((GrReferenceElement<?>)parent).advancedResolve();
       PsiElement fileResolveContext = result.getCurrentFileResolveContext();
       if (fileResolveContext instanceof GrImportStatement && ((GrImportStatement)fileResolveContext).isAliasedImport()) {
         return false;

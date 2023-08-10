@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions;
 
 import org.jetbrains.annotations.NonNls;
@@ -17,7 +17,6 @@ public interface XDebuggerActions {
 
   @NonNls String RUN_TO_CURSOR = "RunToCursor";
   @NonNls String FORCE_RUN_TO_CURSOR = "ForceRunToCursor";
-  @NonNls String EDIT_TYPE_SOURCE = "Debugger.EditTypeSource";
 
   @NonNls String SHOW_EXECUTION_POINT = "ShowExecutionPoint";
   @NonNls String JUMP_TO_SOURCE = "XDebugger.JumpToSource";
@@ -28,6 +27,7 @@ public interface XDebuggerActions {
 
   @NonNls String TOOL_WINDOW_TOP_TOOLBAR_GROUP = "XDebugger.ToolWindow.TopToolbar";
   @NonNls String TOOL_WINDOW_TOP_TOOLBAR_3_GROUP = "XDebugger.ToolWindow.TopToolbar3";
+  @NonNls String TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP = "XDebugger.ToolWindow.TopToolbar3.Extra";
   @NonNls String TOOL_WINDOW_LEFT_TOOLBAR_GROUP = "XDebugger.ToolWindow.LeftToolbar";
   @NonNls String EVALUATE_DIALOG_TREE_POPUP_GROUP = "XDebugger.Evaluation.Dialog.Tree.Popup";
   @NonNls String INSPECT_TREE_POPUP_GROUP = "XDebugger.Inspect.Tree.Popup";
@@ -59,4 +59,5 @@ public interface XDebuggerActions {
   @NonNls String MARK_OBJECT = "Debugger.MarkObject";
 
   @NonNls String FOCUS_ON_BREAKPOINT = "Debugger.FocusOnBreakpoint";
+  @NonNls String FOCUS_ON_FINISH = "Debugger.FocusOnFinish";
 }

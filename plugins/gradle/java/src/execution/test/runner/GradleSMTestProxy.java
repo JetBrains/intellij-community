@@ -11,13 +11,11 @@ import org.jetbrains.plugins.gradle.execution.test.runner.events.TestEventResult
  */
 public class GradleSMTestProxy extends SMTestProxy {
 
-  @Nullable private final String myClassName;
   @Nullable private String myParentId;
   @Nullable private TestEventResult myLastResult;
 
-  public GradleSMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl, @Nullable String className) {
+  public GradleSMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl) {
     super(testName, isSuite, locationUrl);
-    myClassName = className;
   }
 
   @Nullable
@@ -27,11 +25,6 @@ public class GradleSMTestProxy extends SMTestProxy {
 
   public void setParentId(@Nullable String parentId) {
     myParentId = parentId;
-  }
-
-  @Nullable
-  public String getClassName() {
-    return myClassName;
   }
 
   @ApiStatus.Experimental

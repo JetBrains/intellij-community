@@ -34,9 +34,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.intellij.psi.util.CachedValueProvider.Result.create;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.*;
 
-/**
- * @author ilyas
- */
 public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock {
 
   private final AtomicReference<GrParameter[]> mySyntheticItParameter = new AtomicReference<>();

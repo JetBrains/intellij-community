@@ -2,10 +2,22 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.ui.TextFieldWithAutoCompletion
 
 
 class PlainTextSupportTest : GrazieTestBase() {
   fun `test grammar check in file`() {
     runHighlightTestForFile("ide/language/plain/Example.txt")
+  }
+
+  fun `test no grammar checks in TextFieldWithAutoCompletion`() {
+    val field = TextFieldWithAutoCompletion(
+      project, TextFieldWithAutoCompletion.StringsCompletionProvider(emptyList(), null), true, "I have an new apple here.")
+    field.addNotify()
+    disposeOnTearDown(Disposable { field.removeNotify() })
+    myFixture.configureFromExistingVirtualFile(FileDocumentManager.getInstance().getFile(field.editor!!.document)!!)
+    myFixture.checkHighlighting()
   }
 }

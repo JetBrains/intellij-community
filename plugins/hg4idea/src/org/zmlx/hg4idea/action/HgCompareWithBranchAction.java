@@ -26,7 +26,7 @@ import static com.intellij.openapi.vcs.history.VcsDiffUtil.createChangesWithCurr
 
 public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRepository> {
   @Override
-  protected boolean noBranchesToCompare(@NotNull HgRepository repository) {
+  protected boolean nothingToCompare(@NotNull HgRepository repository) {
     final Map<String, LinkedHashSet<Hash>> branches = repository.getBranches();
     if (branches.size() > 1) return false;
     final Hash currentRevisionHash = getCurrentHash(repository);

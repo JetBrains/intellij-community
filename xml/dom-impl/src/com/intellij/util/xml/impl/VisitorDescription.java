@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NonNls;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 public final class VisitorDescription {
   private final Class<? extends DomElementVisitor> myVisitorClass;
   private final ClassMap<Method> myMethods = new ClassMap<>(new ConcurrentHashMap<>());
@@ -31,7 +28,7 @@ public final class VisitorDescription {
         continue;
       }
       final String methodName = method.getName();
-      if (VISIT.equals(methodName) || methodName.startsWith(VISIT) /*&& domClass.getSimpleName().equals(methodName.substring(VISIT.length()))*/) {
+      if (/*VISIT.equals(methodName) ||*/ methodName.startsWith(VISIT) /*&& domClass.getSimpleName().equals(methodName.substring(VISIT.length()))*/) {
         method.setAccessible(true);
         myMethods.put(domClass, method);
       }

@@ -22,5 +22,7 @@ public interface ExpressionContext {
   <T> T getProperty(Key<T> key);
   @Nullable
   PsiElement getPsiElementAtStartOffset();
+  @Nullable
+  TextResult getVariableValue(String variableName);
 }
 

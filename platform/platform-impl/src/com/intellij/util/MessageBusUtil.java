@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.application.Application;
@@ -10,7 +10,9 @@ import com.intellij.util.messages.Topic;
 public final class MessageBusUtil {
   private static <T> Runnable createPublisherRunnable(final Project project, final Topic<? extends T> topic, final Consumer<? super T> listener) {
     return () -> {
-      if (project.isDisposed()) throw new ProcessCanceledException();
+      if (project.isDisposed()) {
+        throw new ProcessCanceledException();
+      }
       listener.consume(project.getMessageBus().syncPublisher(topic));
     };
   }
@@ -20,7 +22,8 @@ public final class MessageBusUtil {
     final Runnable runnable = createPublisherRunnable(project, topic, listener);
     if (application.isDispatchThread()) {
       runnable.run();
-    } else {
+    }
+    else {
       application.invokeLater(runnable);
     }
   }

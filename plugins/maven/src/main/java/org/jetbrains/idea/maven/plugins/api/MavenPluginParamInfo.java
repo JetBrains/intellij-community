@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.plugins.api;
 
 import com.intellij.lang.Language;
@@ -22,9 +22,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.*;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenPluginParamInfo {
 
   private static final Logger LOG = Logger.getInstance(MavenPluginParamInfo.class);
@@ -54,7 +51,7 @@ public final class MavenPluginParamInfo {
             pluginsMap = MavenUtil.getOrCreate(pluginsMap, paramPath[i]);
           }
 
-          ParamInfo paramInfo = new ParamInfo(pluginDescriptor.getPluginDescriptor().getPluginClassLoader(), param);
+          ParamInfo paramInfo = new ParamInfo(pluginDescriptor.getPluginDescriptor().getClassLoader(), param);
 
           Map<String, ParamInfo> goalsMap = MavenUtil.getOrCreate(pluginsMap, pluginId);
 
@@ -204,9 +201,9 @@ public final class MavenPluginParamInfo {
   }
 
   public static final class ParamInfo {
-    private final ClassLoader myClassLoader;
+    private final @NotNull ClassLoader myClassLoader;
 
-    private final MavenPluginDescriptor.Param myParam;
+    private final @NotNull MavenPluginDescriptor.Param myParam;
 
     private volatile boolean myLanguageInitialized;
     private Language myLanguageInstance;
@@ -215,7 +212,8 @@ public final class MavenPluginParamInfo {
     private volatile boolean myProviderInitialized;
     private volatile MavenParamReferenceProvider myProviderInstance;
 
-    private ParamInfo(ClassLoader classLoader, MavenPluginDescriptor.Param param) {
+    private ParamInfo(@NotNull ClassLoader classLoader,
+                      @NotNull MavenPluginDescriptor.Param param) {
       myClassLoader = classLoader;
       myParam = param;
     }

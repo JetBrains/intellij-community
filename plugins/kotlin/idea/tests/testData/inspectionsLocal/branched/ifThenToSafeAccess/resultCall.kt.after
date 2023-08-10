@@ -1,0 +1,6 @@
+// DISABLE-ERRORS
+// WITH_STDLIB
+
+val someNullableString: String? = ""
+fun String.bar(): Result<String> = Result.success("")
+val result = someNullableString?.bar()

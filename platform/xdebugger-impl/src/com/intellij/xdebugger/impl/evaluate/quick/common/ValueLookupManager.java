@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class ValueLookupManager
@@ -7,9 +7,9 @@
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
@@ -24,7 +24,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -36,7 +36,8 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
 
   private final Project myProject;
   private final Alarm myAlarm;
-  private AbstractValueHint myRequest = null;
+  private HintRequest myHintRequest = null;
+  private AbstractValueHint myCurrentHint = null;
   private boolean myListening;
 
   public ValueLookupManager(@NotNull Project project) {
@@ -54,7 +55,15 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
 
   @Override
   public void mouseExited(@NotNull EditorMouseEvent e) {
+    cancelAll();
+  }
+
+  private void cancelAll() {
     myAlarm.cancelAllRequests();
+    if (myHintRequest != null) {
+      myHintRequest.cancellableHint.tryCancel();
+      myHintRequest = null;
+    }
   }
 
   @Override
@@ -72,111 +81,142 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
     if (e.getArea() != EditorMouseEventArea.EDITING_AREA ||
         DISABLE_VALUE_LOOKUP.get(editor) == Boolean.TRUE ||
         type == null) {
-      myAlarm.cancelAllRequests();
+      cancelAll();
       return;
     }
 
     if (type == ValueHintType.MOUSE_OVER_HINT && !ApplicationManager.getApplication().isActive()) {
+      hideHint();
       return;
     }
 
-    Point point = e.getMouseEvent().getPoint();
-    if (myRequest != null) {
-      if (myRequest.getType() == ValueHintType.MOUSE_CLICK_HINT) {
+    if (type != ValueHintType.MOUSE_CLICK_HINT) { // click should always trigger a new hint
+      if ((myHintRequest != null && myHintRequest.type == ValueHintType.MOUSE_CLICK_HINT) ||
+          (myCurrentHint != null && myCurrentHint.getType() == ValueHintType.MOUSE_CLICK_HINT)) {
         return;
-      }
-      else if (!myRequest.isKeepHint(editor, point)) {
-        hideHint();
       }
     }
 
+    Point point = e.getMouseEvent().getPoint();
     for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
       QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
       if (handler.isEnabled(myProject)) {
-        requestHint(handler, editor, point, type);
-        break;
+        requestHint(handler, editor, point, e, type);
+        return;
       }
     }
+
+    // if no providers were triggered - hide
+    hideHint();
   }
 
-  private void requestHint(final QuickEvaluateHandler handler, final Editor editor, final Point point, @NotNull final ValueHintType type) {
+  private void requestHint(final QuickEvaluateHandler handler,
+                           final Editor editor,
+                           final Point point,
+                           @NotNull EditorMouseEvent e,
+                           @NotNull final ValueHintType type) {
     final Rectangle area = editor.getScrollingModel().getVisibleArea();
-    myAlarm.cancelAllRequests();
+    cancelAll();
     if (type == ValueHintType.MOUSE_OVER_HINT) {
       if (Registry.is("debugger.valueTooltipAutoShow")) {
         myAlarm.addRequest(() -> {
           if (area.equals(editor.getScrollingModel().getVisibleArea())) {
-            showHint(handler, editor, point, type);
+            showHint(handler, editor, point, e, type);
           }
         }, getDelay(handler));
       }
     }
     else {
-      showHint(handler, editor, point, type);
+      showHint(handler, editor, point, e, type);
     }
   }
 
   private int getDelay(QuickEvaluateHandler handler) {
     int delay = handler.getValueLookupDelay(myProject);
-    if (myRequest != null && !myRequest.isHintHidden()) {
+    if (myCurrentHint != null && !myCurrentHint.isHintHidden()) {
       delay = Math.max(100, delay); // if hint is showing, delay should not be too small, see IDEA-141464
     }
     return delay;
   }
 
   public void hideHint() {
-    if (myRequest != null) {
-      myRequest.hideHint();
-      myRequest = null;
+    if (myCurrentHint != null) {
+      myCurrentHint.hideHint();
+      myCurrentHint = null;
     }
   }
 
-  public void showHint(@NotNull QuickEvaluateHandler handler, @NotNull Editor editor, @NotNull Point point, @NotNull ValueHintType type) {
-    PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> doShowHint(handler, editor, point, type));
+  public void showHint(@NotNull QuickEvaluateHandler handler,
+                       @NotNull Editor editor,
+                       @NotNull Point point,
+                       @Nullable EditorMouseEvent e,
+                       @NotNull ValueHintType type) {
+    PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> doShowHint(handler, editor, point, e, type));
   }
 
   private void doShowHint(@NotNull QuickEvaluateHandler handler,
                           @NotNull Editor editor,
                           @NotNull Point point,
+                          @Nullable EditorMouseEvent event,
                           @NotNull ValueHintType type) {
-    myAlarm.cancelAllRequests();
+    cancelAll();
     if (editor.isDisposed() || !handler.canShowHint(myProject)) {
       return;
     }
-    if (myRequest != null && myRequest.isInsideHint(editor, point)) {
+    if (myCurrentHint != null && myCurrentHint.isInsideHint(editor, point)) {
       return;
     }
-    Promise<AbstractValueHint> hintPromise;
+    if (event != null && !event.isOverText()) { // do not trigger if there's no text below
+      return;
+    }
+
     try {
-      hintPromise = handler.createValueHintAsync(myProject, editor, point, type);
-    }
-    catch (IndexNotReadyException e) {
-      return;
-    }
-    hintPromise.onSuccess(hint -> {
-      if (hint == null)
-        return;
-      if (myRequest != null && myRequest.equals(hint)) {
-        return;
-      }
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (!hint.canShowHint()) {
+      QuickEvaluateHandler.CancellableHint cancellableHint = handler.createValueHintAsync(myProject, editor, point, type);
+      HintRequest hintRequest = new HintRequest(cancellableHint, type);
+      myHintRequest = hintRequest;
+      cancellableHint.hintPromise().onProcessed(hint -> {
+        if (myHintRequest == hintRequest) { // clear request if it has not changed
+          myHintRequest = null;
+        }
+        if (hint == null) {
+          UIUtil.invokeLaterIfNeeded(() -> {
+            hideHint();
+            if (event != null) {
+              EditorMouseHoverPopupManager.getInstance().showInfoTooltip(event);
+            }
+          });
           return;
         }
-
-        hideHint();
-
-        myRequest = hint;
-        myRequest.invokeHint(() -> {
-          if (myRequest != null && myRequest == hint) {
-            myRequest = null;
+        if (myCurrentHint != null && myCurrentHint.equals(hint)) {
+          return;
+        }
+        if (event != null) {
+          hint.setEditorMouseEvent(event);
+        }
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (!hint.canShowHint()) {
+            return;
           }
+
+          hideHint();
+
+          myCurrentHint = hint;
+          myCurrentHint.invokeHint(() -> {
+            if (myCurrentHint == hint) {
+              myCurrentHint = null;
+            }
+          });
         });
-     });
-    });
+      });
+    }
+    catch (IndexNotReadyException ignored) {
+    }
   }
 
   public static ValueLookupManager getInstance(Project project) {
-    return ServiceManager.getService(project, ValueLookupManager.class);
+    return project.getService(ValueLookupManager.class);
+  }
+
+  private record HintRequest(@NotNull QuickEvaluateHandler.CancellableHint cancellableHint, @NotNull ValueHintType type) {
   }
 }

@@ -21,12 +21,12 @@ import java.util.Set;
  * @author Eugene Zhuravlev
  */
 public abstract class JVMModuleBuildTarget<R extends BuildRootDescriptor> extends ModuleBasedTarget<R> {
-  public JVMModuleBuildTarget(ModuleBasedBuildTargetType<? extends JVMModuleBuildTarget<R>> targetType, JpsModule module) {
+  public JVMModuleBuildTarget(@NotNull ModuleBasedBuildTargetType<? extends JVMModuleBuildTarget<R>> targetType, JpsModule module) {
     super(targetType, module);
   }
 
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return getModule().getName();
   }
 
@@ -46,7 +46,7 @@ public abstract class JVMModuleBuildTarget<R extends BuildRootDescriptor> extend
   }
 
   @Override
-  public R findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
+  public R findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
     final List<R> descriptors = rootIndex.getRootDescriptors(
       new File(rootId), Collections.singletonList((BuildTargetType<? extends JVMModuleBuildTarget<R>>)getTargetType()), null
     );

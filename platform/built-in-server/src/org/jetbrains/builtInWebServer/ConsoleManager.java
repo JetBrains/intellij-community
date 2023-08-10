@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer;
 
 import com.intellij.execution.filters.TextConsoleBuilder;
@@ -45,7 +45,7 @@ public final class ConsoleManager {
         .registerToolWindow(netService.getConsoleToolWindowId(), false, ToolWindowAnchor.BOTTOM, netService.getProject(), true);
       toolWindow.setIcon(netService.getConsoleToolWindowIcon());
 
-      Content content = ContentFactory.SERVICE.getInstance().createContent(toolWindowPanel, "", false);
+      Content content = ContentFactory.getInstance().createContent(toolWindowPanel, "", false);
       Disposer.register(content, console);
 
       toolWindow.getContentManager().addContent(content);

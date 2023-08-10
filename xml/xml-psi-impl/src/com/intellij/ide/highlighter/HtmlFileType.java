@@ -55,7 +55,7 @@ public class HtmlFileType extends XmlLikeFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return XmlPsiBundle.message("filetype.description.html");
+    return XmlPsiBundle.message("filetype.html.description");
   }
 
   @Override

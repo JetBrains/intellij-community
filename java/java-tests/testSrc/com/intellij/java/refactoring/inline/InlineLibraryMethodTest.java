@@ -23,11 +23,12 @@ public class InlineLibraryMethodTest extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testInlineAllInProjectFromLibrary() {
-    myFixture.addClass("package mycompany;\n" +
-                                           "public class File {\n" +
-                                           " public static File createTempFile(String pr, String postfix){return createTempFile(pr, postfix, null);}\n" +
-                                           " public static File createTempFile(String pr, String postfix, String base){return new File();}\n" +
-                                           "}");
+    myFixture.addClass("""
+                         package mycompany;
+                         public class File {
+                          public static File createTempFile(String pr, String postfix){return createTempFile(pr, postfix, null);}
+                          public static File createTempFile(String pr, String postfix, String base){return new File();}
+                         }""");
     @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
     myFixture.configureByFile(fileName);
 

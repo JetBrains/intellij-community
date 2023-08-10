@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -8,7 +8,6 @@ import com.intellij.ide.fileTemplates.FileTemplatesScheme;
 import com.intellij.ide.fileTemplates.InternalTemplateBean;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -16,14 +15,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.PathKt;
 import org.jdom.Element;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -78,8 +75,8 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       configurable.reset();
       FileTemplate template = configurable.createTemplate("foo", "bar", "hey", false);
       assertTrue(configurable.isModified());
-      FileTemplate[] templates = configurable.getTabs()[0].getTemplates();
-      assertTrue(ArrayUtil.contains(template, templates));
+      List<FileTemplate> templates = configurable.getTabs()[0].getTemplates();
+      assertTrue(templates.contains(template));
       configurable.changeScheme(myTemplateManager.getProjectScheme());
       assertTrue(configurable.isModified());
 //      assertEquals(templates.length, configurable.getTabs()[0].getTemplates().length);
@@ -95,14 +92,14 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     myTemplateManager.setTemplates(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, Arrays.asList(myTemplateManager.getAllTemplates()));
     assertNotNull(myTemplateManager.getTemplate("foo.txt"));
 
-    File foo = FileUtilRt.createTempDirectory("foo", null, false);
-    Project project = PlatformTestUtil.loadAndOpenProject(foo.toPath(), getTestRootDisposable());
+    Path tempDir = Files.createTempDirectory(getClass().getSimpleName() + '_' + getTestName(true) + '_');
     try {
+      Project project = PlatformTestUtil.loadAndOpenProject(tempDir, getTestRootDisposable());
       assertNotNull(project);
       assertNotNull(FileTemplateManager.getInstance(project).getTemplate("foo.txt"));
     }
     finally {
-      FileUtilRt.delete(foo);
+      NioFiles.deleteRecursively(tempDir);
     }
   }
 
@@ -134,15 +131,15 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
   }
 
   public void testAddRemoveShared() throws Exception {
-    File foo = FileUtilRt.createTempDirectory("foo", null, false);
-    Project project = PlatformTestUtil.loadAndOpenProject(foo.toPath(), getTestRootDisposable());
+    Path tempDir = Files.createTempDirectory(getClass().getSimpleName() + '_' + getTestName(true) + '_');
     try {
+      Project project = PlatformTestUtil.loadAndOpenProject(tempDir, getTestRootDisposable());
       assertThat(project).isNotNull();
       FileTemplateManager manager = FileTemplateManager.getInstance(project);
       manager.setCurrentScheme(manager.getProjectScheme());
       manager.saveAllTemplates();
 
-      FileTemplateSettings settings = ServiceManager.getService(project, FileTemplateSettings.class);
+      FileTemplateSettings settings = project.getService(FileTemplateSettings.class);
       FTManager ftManager = settings.getDefaultTemplatesManager();
       Path root = ftManager.getConfigRoot();
       Files.createDirectories(root);
@@ -171,7 +168,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       assertThat(file).doesNotExist();
     }
     finally {
-      FileUtilRt.delete(foo);
+      NioFiles.deleteRecursively(tempDir);
     }
   }
 
@@ -241,7 +238,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       (CustomFileTemplate)myTemplateManager.addTemplate("foo.txt" + FileTemplateBase.TEMPLATE_CHILDREN_SUFFIX + "1", "txt");
     template.setChildren(new FileTemplate[]{child});
     myTemplateManager.saveAllTemplates();
-    FTManager ftManager = ServiceManager.getService(ProjectManager.getInstance().getDefaultProject(), FileTemplateSettings.class).getDefaultTemplatesManager();
+    FTManager ftManager = ProjectManager.getInstance().getDefaultProject().getService(FileTemplateSettings.class).getDefaultTemplatesManager();
     ftManager.getTemplates().clear();
     ftManager.loadCustomizedContent();
     FileTemplateBase loaded = ftManager.getTemplate("foo.txt");
@@ -260,9 +257,10 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     Element state = settings.getState();
     assertNotNull(state);
     Element element = state.getChildren().get(0).getChildren().get(0);
-    assertEquals("<template name=\"testTemplate.txt\" reformat=\"true\" live-template-enabled=\"false\" enabled=\"true\">\n" +
-                 "  <template name=\"child.txt\" file-name=\"child\" reformat=\"true\" live-template-enabled=\"false\" />\n" +
-                 "</template>", JDOMUtil.writeElement(element));
+    assertEquals("""
+                   <template name="testTemplate.txt" reformat="true" live-template-enabled="false" enabled="true">
+                     <template name="child.txt" file-name="child" reformat="true" live-template-enabled="false" />
+                   </template>""", JDOMUtil.writeElement(element));
   }
 
   private FileTemplateManagerImpl myTemplateManager;

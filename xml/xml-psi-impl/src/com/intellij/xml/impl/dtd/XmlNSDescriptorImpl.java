@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.impl.dtd;
 
 import com.intellij.codeInsight.daemon.Validator;
@@ -31,18 +31,18 @@ public final class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<Xm
   private static final SimpleFieldCache<CachedValue<Map<String, XmlElementDescriptor>>, XmlNSDescriptorImpl> myCachedDeclsCache = new
     SimpleFieldCache<>() {
       @Override
-      protected final CachedValue<Map<String, XmlElementDescriptor>> compute(final XmlNSDescriptorImpl xmlNSDescriptor) {
+      protected CachedValue<Map<String, XmlElementDescriptor>> compute(final XmlNSDescriptorImpl xmlNSDescriptor) {
         return xmlNSDescriptor.doBuildDeclarationMap();
       }
 
       @Override
-      protected final CachedValue<Map<String, XmlElementDescriptor>> getValue(final XmlNSDescriptorImpl xmlNSDescriptor) {
+      protected CachedValue<Map<String, XmlElementDescriptor>> getValue(final XmlNSDescriptorImpl xmlNSDescriptor) {
         return xmlNSDescriptor.myCachedDecls;
       }
 
       @Override
-      protected final void putValue(final CachedValue<Map<String, XmlElementDescriptor>> cachedValue,
-                                    final XmlNSDescriptorImpl xmlNSDescriptor) {
+      protected void putValue(final CachedValue<Map<String, XmlElementDescriptor>> cachedValue,
+                              final XmlNSDescriptorImpl xmlNSDescriptor) {
         xmlNSDescriptor.myCachedDecls = cachedValue;
       }
     };
@@ -138,7 +138,7 @@ public final class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<Xm
     return getElements();
   }
 
-  public final XmlElementDescriptor getElementDescriptor(String name){
+  public XmlElementDescriptor getElementDescriptor(String name){
     return buildDeclarationMap().get(name);
   }
 

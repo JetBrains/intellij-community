@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
-import com.google.common.collect.Lists;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.DefaultInspectionToolResultExporter;
 import com.intellij.codeInspection.InspectionEP;
@@ -13,7 +12,10 @@ import com.intellij.codeInspection.ui.AggregateResultsExporter;
 import com.intellij.codeInspection.ui.GlobalReportedProblemFilter;
 import com.intellij.codeInspection.ui.ReportedProblemFilter;
 import com.intellij.configurationStore.JbXmlOutputter;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,19 +44,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
-  public static final Topic<InspectListener> INSPECT_TOPIC = new Topic<>("inspect events", InspectListener.class);
+  public static final Topic<InspectListener> INSPECT_TOPIC = new Topic<>(InspectListener.class, Topic.BroadcastDirection.NONE);
 
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextEx.class);
   private static final int MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES = SystemProperties
     .getIntProperty("max.open.global.inspection.xml.files", 50);
   private final ConcurrentMap<InspectionToolWrapper<?, ?>, InspectionToolResultExporter> myPresentationMap = new ConcurrentHashMap<>();
-  protected volatile Path myOutputDir;
-  protected GlobalReportedProblemFilter myGlobalReportedProblemFilter;
+  private volatile Path myOutputDir;
+  private GlobalReportedProblemFilter myGlobalReportedProblemFilter;
   private ReportedProblemFilter myReportedProblemFilter;
-  Map<Path, Long> myProfile;
-  protected InspectionProblemConsumer myProblemConsumer = null;
+  private Map<Path, Long> myProfile;
+  protected InspectionProblemConsumer myProblemConsumer;
 
-  public GlobalInspectionContextEx(@NotNull Project project) {super(project);}
+  public GlobalInspectionContextEx(@NotNull Project project) { super(project); }
 
   public void launchInspectionsOffline(@NotNull AnalysisScope scope,
                                        @NotNull Path outputPath,
@@ -63,37 +65,36 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     performInspectionsWithProgressAndExportResults(scope, runGlobalToolsOnly, true, outputPath, inspectionsResults);
   }
 
-  public void performInspectionsWithProgressAndExportResults(final @NotNull AnalysisScope scope,
-                                                             final boolean runGlobalToolsOnly,
-                                                             final boolean isOfflineInspections,
+  public void performInspectionsWithProgressAndExportResults(@NotNull AnalysisScope scope,
+                                                             boolean runGlobalToolsOnly,
+                                                             boolean isOfflineInspections,
                                                              @NotNull Path outputDir,
-                                                             final @NotNull List<? super Path> inspectionsResults) {
+                                                             @NotNull List<? super Path> inspectionsResults) {
     cleanupTools();
     setCurrentScope(scope);
 
-    final Runnable action = () -> {
-      myOutputDir = outputDir;
+    myOutputDir = outputDir;
+    try {
       try {
-        try {
-          performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
-        }
-        finally {
+        performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
+      }
+      finally {
+        if (areToolsInitialized()) {
           exportResultsSmart(inspectionsResults, outputDir);
         }
       }
-      finally {
-        myOutputDir = null;
-      }
-    };
-    action.run();
+    }
+    finally {
+      myOutputDir = null;
+    }
   }
 
-  protected void exportResults(@NotNull List<? super Path> inspectionsResults,
-                               @NotNull List<? extends Tools> inspections,
-                               @NotNull Path outputDir,
-                               @Nullable XMLOutputFactory xmlOutputFactory) {
+  private void exportResults(@NotNull List<? super Path> inspectionsResults,
+                             @NotNull List<? extends Tools> inspections,
+                             @NotNull Path outputDir,
+                             @Nullable XMLOutputFactory xmlOutputFactory) {
     if (xmlOutputFactory == null) {
-      xmlOutputFactory = XMLOutputFactory.newInstance();
+      xmlOutputFactory = XMLOutputFactory.newDefaultFactory();
     }
 
     BufferedWriter[] writers = new BufferedWriter[inspections.size()];
@@ -117,20 +118,22 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
         }
       }
 
+      List<List<ScopeToolState>> states = new ArrayList<>();
+      for (Tools inspection : inspections) {
+        states.add(inspection.getTools());
+      }
       getRefManager().iterate(new RefVisitor() {
         @Override
-        public void visitElement(final @NotNull RefEntity refEntity) {
-          int i = 0;
-          for (Tools tools : inspections) {
-            for (ScopeToolState state : tools.getTools()) {
+        public void visitElement(@NotNull RefEntity refEntity) {
+          for (int i = 0; i < states.size(); i++) {
+            for (ScopeToolState state : states.get(i)) {
               try {
                 InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
-                InspectionToolResultExporter presentation = getPresentation(toolWrapper);
                 BufferedWriter writer = writers[i];
                 if (writer != null &&
                     (myGlobalReportedProblemFilter == null ||
                      myGlobalReportedProblemFilter.shouldReportProblem(refEntity, toolWrapper.getShortName()))) {
-                  presentation.exportResults(e -> {
+                  getPresentation(toolWrapper).exportResults(e -> {
                     try {
                       JbXmlOutputter.collapseMacrosAndWrite(e, getProject(), writer);
                       writer.flush();
@@ -140,12 +143,14 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
                     }
                   }, refEntity, d -> false);
                 }
+                else {
+                  return;
+                }
               }
               catch (Throwable e) {
                 LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
               }
             }
-            i++;
           }
         }
       });
@@ -176,34 +181,42 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     }
   }
 
-  public void exportResultsSmart(@NotNull List<? super Path> inspectionsResults, @NotNull Path outputDir) {
-    final List<Tools> globalToolsWithProblems = new ArrayList<>();
-    final List<Tools> toolsWithResultsToAggregate = new ArrayList<>();
+  private void exportResultsSmart(@NotNull List<? super Path> inspectionsResults, @NotNull Path outputDir) {
+    List<Tools> globalToolsWithProblems = new ArrayList<>();
+    List<Tools> toolsWithResultsToAggregate = new ArrayList<>();
     for (Map.Entry<String, Tools> entry : getTools().entrySet()) {
-      final Tools sameTools = entry.getValue();
+      Tools sameTools = entry.getValue();
       boolean hasProblems = false;
       String toolName = entry.getKey();
       if (sameTools != null) {
         for (ScopeToolState toolDescr : sameTools.getTools()) {
           InspectionToolWrapper<?, ?> toolWrapper = toolDescr.getTool();
           InspectionToolResultExporter presentation = getPresentation(toolWrapper);
-          if (presentation instanceof AggregateResultsExporter) {
-            presentation.updateContent();
-            if (presentation.hasReportedProblems()) {
-              toolsWithResultsToAggregate.add(sameTools);
-              break;
+          try {
+            if (presentation instanceof AggregateResultsExporter) {
+              ReadAction.run(() -> presentation.updateContent());
+              if (presentation.hasReportedProblems().toBoolean()) {
+                toolsWithResultsToAggregate.add(sameTools);
+                break;
+              }
+            }
+            if (toolWrapper instanceof LocalInspectionToolWrapper) {
+              hasProblems = Files.exists(InspectionsResultUtil.getInspectionResultPath(outputDir, toolWrapper.getShortName()));
+            }
+            else {
+              ReadAction.run(() -> presentation.updateContent());
+              if (presentation.hasReportedProblems().toBoolean()) {
+                globalToolsWithProblems.add(sameTools);
+                LOG.assertTrue(!hasProblems, toolName);
+                break;
+              }
             }
           }
-          if (toolWrapper instanceof LocalInspectionToolWrapper) {
-            hasProblems = Files.exists(InspectionsResultUtil.getInspectionResultFile(outputDir, toolWrapper.getShortName()));
+          catch (ProcessCanceledException | IndexNotReadyException e) {
+            throw e;
           }
-          else {
-            presentation.updateContent();
-            if (presentation.hasReportedProblems()) {
-              globalToolsWithProblems.add(sameTools);
-              LOG.assertTrue(!hasProblems, toolName);
-              break;
-            }
+          catch (Throwable e) {
+            LOG.error(e);
           }
         }
       }
@@ -211,9 +224,9 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
       // close "problem" tag for local inspections (see DefaultInspectionToolResultExporter.addProblemElement())
       if (hasProblems) {
         try {
-          final Path file = InspectionsResultUtil.getInspectionResultPath(outputDir, sameTools.getShortName());
+          Path file = InspectionsResultUtil.getInspectionResultPath(outputDir, sameTools.getShortName());
           inspectionsResults.add(file);
-          Files.write(file, ("</" + PROBLEMS_TAG_NAME + ">").getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
+          Files.writeString(file, "</" + PROBLEMS_TAG_NAME + ">", StandardOpenOption.APPEND);
         }
         catch (IOException e) {
           LOG.error(e);
@@ -221,15 +234,13 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
       }
     }
 
-    exportResultsWithAggregation(inspectionsResults, toolsWithResultsToAggregate, myOutputDir);
+    exportResultsWithAggregation(inspectionsResults, toolsWithResultsToAggregate, outputDir);
 
     // export global inspections
     if (!globalToolsWithProblems.isEmpty()) {
-      XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
-      Lists.partition(globalToolsWithProblems, MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES).forEach(inspections ->
-                                                                                                      exportResults(inspectionsResults,
-                                                                                                                    inspections, outputDir,
-                                                                                                                    xmlOutputFactory));
+      XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newDefaultFactory();
+      ContainerUtil.splitListToChunks(globalToolsWithProblems, MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES)
+        .forEach(inspections -> exportResults(inspectionsResults, inspections, outputDir, xmlOutputFactory));
     }
   }
 
@@ -238,8 +249,8 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
                                             @NotNull Path outputPath) {
     for (Tools tools : toolsWithResultsToAggregate) {
       String inspectionName = tools.getShortName();
-      inspectionsResults.add(InspectionsResultUtil.getInspectionResultFile(outputPath, inspectionName));
-      inspectionsResults.add(InspectionsResultUtil.getInspectionResultFile(outputPath, inspectionName + InspectionsResultUtil.AGGREGATE));
+      inspectionsResults.add(InspectionsResultUtil.getInspectionResultPath(outputPath, inspectionName));
+      inspectionsResults.add(InspectionsResultUtil.getInspectionResultPath(outputPath, inspectionName + InspectionsResultUtil.AGGREGATE));
       try {
         List<? extends InspectionToolWrapper<?, ?>> wrappers = ContainerUtil.map(tools.getTools(), ScopeToolState::getTool);
         InspectionsResultUtil.writeInspectionResult(getProject(), inspectionName, wrappers, outputPath, this::getPresentation);
@@ -314,11 +325,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     }
   }
 
-  public InspectionProblemConsumer getProblemConsumer() {
-    return myProblemConsumer;
-  }
-
-  public void setProblemConsumer(InspectionProblemConsumer problemConsumer) {
+  public void setProblemConsumer(@NotNull InspectionProblemConsumer problemConsumer) {
     myProblemConsumer = problemConsumer;
   }
 }

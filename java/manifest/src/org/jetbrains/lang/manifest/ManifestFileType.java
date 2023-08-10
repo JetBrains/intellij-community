@@ -51,7 +51,7 @@ public final class ManifestFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return ManifestBundle.message("file.type.description");
+    return ManifestBundle.message("filetype.manifest.description");
   }
 
   @NotNull
@@ -62,7 +62,7 @@ public final class ManifestFileType extends LanguageFileType {
   }
 
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return AllIcons.FileTypes.Manifest;
   }
 }

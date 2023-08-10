@@ -1,4 +1,4 @@
-// "Insert '(String)s' declaration" "true"
+// "Insert '(String)s' declaration" "true-preview"
 class C {
     void f() {
         String s = "";

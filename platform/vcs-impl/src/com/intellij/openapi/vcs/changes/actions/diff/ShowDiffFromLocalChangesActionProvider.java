@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffDialogHints;
@@ -7,17 +7,15 @@ import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.ListSelection;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain.Producer;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.util.concurrency.FutureResult;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -25,12 +23,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT;
 
 public class ShowDiffFromLocalChangesActionProvider implements AnActionExtensionProvider {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return e.getData(ChangesListView.DATA_KEY) != null;
@@ -38,17 +41,31 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    updateAvailability(e);
+  }
+
+  public static void updateAvailability(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    ChangesListView view = e.getRequiredData(ChangesListView.DATA_KEY);
+    Presentation presentation = e.getPresentation();
+    String place = e.getPlace();
 
-    JBIterable<Change> changes = view.getSelectedChanges();
-    JBIterable<FilePath> unversionedFiles = view.getSelectedUnversionedFiles();
+    if (e.getData(ChangesListView.DATA_KEY) == null) {
+      presentation.setEnabled(false);
+      return;
+    }
 
-    if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
-      e.getPresentation().setEnabled(project != null && (changes.isNotEmpty() || unversionedFiles.isNotEmpty()));
+    JBIterable<Change> changes = JBIterable.of(e.getData(VcsDataKeys.CHANGES));
+    JBIterable<FilePath> unversionedFiles = JBIterable.from(e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY));
+
+    if (ActionPlaces.MAIN_MENU.equals(place)) {
+      presentation.setEnabled(project != null && (changes.isNotEmpty() || unversionedFiles.isNotEmpty()));
     }
     else {
-      e.getPresentation().setEnabled(project != null && canShowDiff(project, changes, unversionedFiles));
+      presentation.setEnabled(project != null && canShowDiff(project, changes, unversionedFiles));
+    }
+
+    if (ActionPlaces.CHANGES_VIEW_TOOLBAR.equals(place)) {
+      presentation.setVisible(!ExperimentalUI.isNewUI());
     }
   }
 
@@ -72,18 +89,19 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
     DiffRequestChain chain;
     if (needsConversion) {
-      FutureResult<ListSelection<Producer>> resultRef = new FutureResult<>();
+      CompletableFuture<ListSelection<Producer>> resultRef = new CompletableFuture<>();
       // this trick is essential since we are under some conditions to refresh changes;
       // but we can only rely on callback after refresh
       ChangeListManager.getInstance(project).invokeAfterUpdate(true, () -> {
-        try {
-          ChangesViewManager.getInstanceEx(project).refreshImmediately();
-          List<Change> actualChanges = loadFakeRevisions(project, changes);
-          resultRef.set(collectRequestProducers(project, actualChanges, unversioned, view));
-        }
-        catch (Throwable err) {
-          resultRef.setException(err);
-        }
+        ChangesViewManager.getInstanceEx(project).promiseRefresh().onProcessed(__ -> {
+          try {
+            List<Change> actualChanges = loadFakeRevisions(project, changes);
+            resultRef.complete(collectRequestProducers(project, actualChanges, unversioned, view));
+          }
+          catch (Throwable err) {
+            resultRef.completeExceptionally(err);
+          }
+        });
       });
 
       chain = new ChangeDiffRequestChain.Async() {
@@ -101,14 +119,13 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     else {
       ListSelection<Producer> producers = collectRequestProducers(project, changes, unversioned, view);
       if (producers.isEmpty()) return;
-      chain = new ChangeDiffRequestChain(producers.getList(), producers.getSelectedIndex());
+      chain = new ChangeDiffRequestChain(producers);
     }
 
     chain.putUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
     setAllowExcludeFromCommit(project, chain);
     DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.DEFAULT);
   }
-
 
   private static boolean checkIfThereAreFakeRevisions(@NotNull Project project, @NotNull List<? extends Change> changes) {
     boolean needsConversion = false;
@@ -137,30 +154,34 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   }
 
   @NotNull
-  private static ListSelection<Producer> collectRequestProducers(@NotNull Project project,
-                                                                 @NotNull List<? extends Change> changes,
-                                                                 @NotNull List<? extends FilePath> unversioned,
-                                                                 @NotNull ChangesListView changesView) {
+  public static ListSelection<Producer> collectRequestProducers(@NotNull Project project,
+                                                                @NotNull List<? extends Change> changes,
+                                                                @NotNull List<? extends FilePath> unversioned,
+                                                                @NotNull ChangesListView changesView) {
     if (changes.size() == 1 && unversioned.isEmpty()) { // show all changes from this changelist
       Change selectedChange = changes.get(0);
-      List<Change> changelistChanges = changesView.getAllChangesFromSameChangelist(selectedChange);
-      if (changelistChanges != null) {
-        int selectedIndex = ContainerUtil.indexOf(changelistChanges, it -> ChangeListChange.HASHING_STRATEGY.equals(selectedChange, it));
-        if (selectedIndex == -1) selectedIndex = changelistChanges.indexOf(selectedChange);
-        return createChangeProducers(project, changelistChanges, selectedIndex);
+      List<Change> selectedChanges = changesView.getAllChangesFromSameChangelist(selectedChange);
+      if (selectedChanges == null) {
+        selectedChanges = changesView.getAllChangesFromSameAmendNode(selectedChange);
+      }
+      if (selectedChanges != null) {
+        int selectedIndex = ContainerUtil.indexOf(selectedChanges, it -> ChangeListChange.HASHING_STRATEGY.equals(selectedChange, it));
+        if (selectedIndex == -1) selectedIndex = selectedChanges.indexOf(selectedChange);
+        return createChangeProducers(project, selectedChanges, selectedIndex);
       }
     }
 
     if (unversioned.size() == 1 && changes.isEmpty()) { // show all unversioned changes
       FilePath selectedFile = unversioned.get(0);
-      List<FilePath> allUnversioned = changesView.getUnversionedFiles().collect(Collectors.toList());
+      List<FilePath> allUnversioned = changesView.getUnversionedFiles().toList();
       int selectedIndex = allUnversioned.indexOf(selectedFile);
       return createUnversionedProducers(project, allUnversioned, selectedIndex);
     }
 
     ListSelection<Producer> changeProducers = createChangeProducers(project, changes, 0);
     ListSelection<Producer> unversionedProducers = createUnversionedProducers(project, unversioned, 0);
-    return ListSelection.createAt(ContainerUtil.concat(changeProducers.getList(), unversionedProducers.getList()), 0);
+    return ListSelection.createAt(ContainerUtil.concat(changeProducers.getList(), unversionedProducers.getList()), 0)
+      .asExplicitSelection();
   }
 
   private static ListSelection<Producer> createChangeProducers(@NotNull Project project,

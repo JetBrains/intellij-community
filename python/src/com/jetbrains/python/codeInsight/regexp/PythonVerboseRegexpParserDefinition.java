@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.regexp;
 
 import com.intellij.lang.PsiParser;
@@ -15,9 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 
-/**
- * @author yole
- */
+
 public class PythonVerboseRegexpParserDefinition extends PythonRegexpParserDefinition {
   public static final IFileElementType VERBOSE_PYTHON_REGEXP_FILE = new IFileElementType("VERBOSE_PYTHON_REGEXP_FILE", PythonVerboseRegexpLanguage.INSTANCE);
   private final EnumSet<RegExpCapability> VERBOSE_CAPABILITIES;

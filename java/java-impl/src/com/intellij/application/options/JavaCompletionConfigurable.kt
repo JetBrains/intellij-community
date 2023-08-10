@@ -4,25 +4,21 @@ package com.intellij.application.options
 import com.intellij.application.options.editor.AutoImportOptionsConfigurable
 import com.intellij.ide.DataManager
 import com.intellij.java.JavaBundle
-import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.options.ex.Settings
-import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.labels.LinkListener
-import javax.swing.JComponent
+import com.intellij.ui.components.ActionLink
+import com.intellij.ui.dsl.builder.Panel
 
-class JavaCompletionConfigurable : UnnamedConfigurable {
-  override fun createComponent(): JComponent {
-    return LinkLabel<Any>(JavaBundle.message("link.configure.classes.excluded.from.completion"), null, LinkListener { label, data ->
-      val dataContext = DataManager.getInstance().getDataContext(label)
-      val settingsEditor = dataContext.getData(Settings.KEY) ?: return@LinkListener
-      val configurable = settingsEditor.find(AutoImportOptionsConfigurable::class.java) ?: return@LinkListener
-      settingsEditor.select(configurable, JavaBundle.message("exclude.from.completion.group"))
-    })
-  }
+class JavaCompletionConfigurable : UiDslUnnamedConfigurable.Simple() {
 
-  override fun isModified(): Boolean = false
-
-  override fun apply() {
+  override fun Panel.createContent() {
+    row {
+      link(JavaBundle.message("link.configure.classes.excluded.from.completion")) {
+        val dataContext = DataManager.getInstance().getDataContext(it.source as ActionLink)
+        val settingsEditor = dataContext.getData(Settings.KEY) ?: return@link
+        val configurable = settingsEditor.find(AutoImportOptionsConfigurable::class.java) ?: return@link
+        settingsEditor.select(configurable, JavaBundle.message("exclude.from.completion.group"))
+      }
+    }
   }
 }
-

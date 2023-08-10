@@ -216,4 +216,44 @@ class C {
     }
     System.out.println(<error descr="Variable 's' might not have been initialized">s</error>);
   }
+
+  sealed interface T permits T1, T2 {}
+  final class T1 implements T {}
+  final class T2 implements T {}
+
+  private void testStatement1(T obj) {
+    int i;
+    switch (obj) {
+      case T1 t1 -> i = 1;
+      case T2 t2 -> i = 2;
+    };
+    System.out.println(i);
+  }
+
+  private void testStatement2(int obj) {
+    int i;
+    switch (obj) {
+      case 1 -> i = 1;
+      case 2 -> i = 2;
+    };
+    System.out.println(<error descr="Variable 'i' might not have been initialized">i</error>);
+  }
+
+  private void testStatement3(Integer obj) {
+    int i;
+    switch (obj) {
+      case 1 -> i = 1;
+      case 2 -> i = 2;
+    };
+    System.out.println(<error descr="Variable 'i' might not have been initialized">i</error>);
+  }
+
+  private void testExpressions1(T obj) {
+    int i;
+    int y = switch (obj) {
+      case T1 t1 -> {i = 1; yield 1;}
+      case T2 t2 -> {i = 2; yield 2;}
+    };
+    System.out.println(i);
+  }
 }

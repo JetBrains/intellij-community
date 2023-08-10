@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -21,15 +21,13 @@ import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.util.containers.ContainerUtil.*;
 
 public final class FileHistoryUtil {
-  @Nullable
-  public static VirtualFile createVcsVirtualFile(@Nullable VcsFileRevision revision) {
+  public static @Nullable VirtualFile createVcsVirtualFile(@Nullable VcsFileRevision revision) {
     if (!VcsHistoryUtil.isEmpty(revision)) {
       if (revision instanceof VcsFileRevisionEx) {
         FilePath path = ((VcsFileRevisionEx)revision).getPath();
@@ -56,25 +54,21 @@ public final class FileHistoryUtil {
     return VfsUtilCore.isAncestor(directory.getIOFile(), revision.getFile().getIOFile(), false);
   }
 
-  @Nullable
-  static Change createChangeToParents(int commitRow, @NotNull List<Integer> parentRows,
-                                      @NotNull VisiblePack visiblePack, @NotNull VcsLogDiffHandler diffHandler,
-                                      @NotNull VcsLogData logData) {
+  static @Nullable Change createChangeToParents(int commitRow, @NotNull List<Integer> parentRows,
+                                                @NotNull VisiblePack visiblePack, @NotNull VcsLogDiffHandler diffHandler,
+                                                @NotNull VcsLogData logData) {
     int commitIndex = visiblePack.getVisibleGraph().getRowInfo(commitRow).getCommit();
     FilePath path = FileHistoryPaths.filePath(visiblePack, commitIndex);
     if (path == null) return null;
     Hash commitHash = logData.getCommitId(commitIndex).getHash();
     ContentRevision afterRevision = createContentRevision(commitHash, commitIndex, visiblePack, diffHandler);
 
-    List<Integer> parentCommits = map(parentRows, r -> visiblePack.getVisibleGraph().getRowInfo(r).getCommit());
-    if (parentCommits.isEmpty() && commitRow + 1 < visiblePack.getVisibleGraph().getVisibleCommitCount()) {
-      parentCommits = Collections.singletonList(visiblePack.getVisibleGraph().getRowInfo(commitRow + 1).getCommit());
-    }
-    if (parentCommits.isEmpty()) {
+    if (parentRows.isEmpty()) {
       if (afterRevision == null) return null;
       return new Change(null, afterRevision);
     }
 
+    List<Integer> parentCommits = map(parentRows, r -> visiblePack.getVisibleGraph().getRowInfo(r).getCommit());
     List<Hash> parentHashes = map(parentCommits, c -> logData.getCommitId(c).getHash());
     List<Change> parentChanges = mapNotNull(toCollection(zip(parentCommits, parentHashes)), parent -> {
       ContentRevision beforeRevision = createContentRevision(parent.second, parent.first, visiblePack, diffHandler);
@@ -84,12 +78,11 @@ public final class FileHistoryUtil {
     if (parentChanges.size() <= 1) {
       return getFirstItem(parentChanges);
     }
-    return new MyVcsChangesMerger(commitHash, parentHashes, diffHandler).merge(path, parentChanges);
+    return new MyVcsChangesMerger(commitHash, parentHashes, diffHandler).mergedChange(path, parentChanges);
   }
 
-  @Nullable
-  private static ContentRevision createContentRevision(@NotNull Hash commitHash, int commitIndex, @NotNull VcsLogDataPack visiblePack,
-                                                       @NotNull VcsLogDiffHandler diffHandler) {
+  private static @Nullable ContentRevision createContentRevision(@NotNull Hash commitHash, int commitIndex, @NotNull VcsLogDataPack visiblePack,
+                                                                 @NotNull VcsLogDiffHandler diffHandler) {
     boolean isDeleted = FileHistoryPaths.isDeletedInCommit(visiblePack, commitIndex);
     if (isDeleted) return null;
     FilePath path = FileHistoryPaths.filePath(visiblePack, commitIndex);
@@ -98,9 +91,9 @@ public final class FileHistoryUtil {
   }
 
   private static final class MyVcsChangesMerger extends VcsChangesMerger {
-    @NotNull private final Hash myCommit;
-    @NotNull private final Hash myFirstParent;
-    @NotNull private final VcsLogDiffHandler myDiffHandler;
+    private final @NotNull Hash myCommit;
+    private final @NotNull Hash myFirstParent;
+    private final @NotNull VcsLogDiffHandler myDiffHandler;
 
     private MyVcsChangesMerger(@NotNull Hash commit, @NotNull List<Hash> parentCommits, @NotNull VcsLogDiffHandler diffHandler) {
       myCommit = commit;
@@ -108,9 +101,8 @@ public final class FileHistoryUtil {
       myDiffHandler = diffHandler;
     }
 
-    @NotNull
     @Override
-    protected Change createChange(@NotNull Change.Type type, @Nullable FilePath beforePath, @Nullable FilePath afterPath) {
+    protected @NotNull Change createChange(@NotNull Change.Type type, @Nullable FilePath beforePath, @Nullable FilePath afterPath) {
       ContentRevision beforeRevision = beforePath == null ? null : myDiffHandler.createContentRevision(beforePath, myFirstParent);
       ContentRevision afterRevision = afterPath == null ? null : myDiffHandler.createContentRevision(afterPath, myCommit);
       return new Change(beforeRevision, afterRevision);

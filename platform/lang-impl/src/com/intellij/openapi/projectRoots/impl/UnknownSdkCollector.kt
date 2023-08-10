@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.google.common.collect.MultimapBuilder
 import com.google.common.hash.Hashing
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
@@ -29,7 +30,6 @@ private val EP_NAME = ExtensionPointName.create<UnknownSdkContributor>("com.inte
 interface UnknownSdkContributor {
   fun contributeUnknownSdks(project: Project): List<UnknownSdk>
 
-  @JvmDefault
   fun contributeKnownSdks(project: Project) : List<Sdk> = listOf()
 }
 
@@ -68,7 +68,7 @@ data class UnknownSdkSnapshot(
     return this.sdkState == other.sdkState
   }
 
-  override fun hashCode() = Objects.hash(totallyUnknownSdks.size, resolvableSdks.size, sdkState)
+  override fun hashCode(): Int = Objects.hash(totallyUnknownSdks.size, resolvableSdks.size, sdkState)
 }
 
 private data class MissingSdkInfo(
@@ -97,8 +97,9 @@ open class UnknownSdkCollector(private val myProject: Project) : UnknownSdkBlock
    * NOTE. The callback may not happen if a given task is merged
    * with a previous or a next similar one.
    */
-  internal fun UnknownSdkCollectorQueue.collectSdksPromise(onCompleted: Consumer<UnknownSdkSnapshot>) {
+  internal fun UnknownSdkCollectorQueue.collectSdksPromise(lifetime: Disposable, onCompleted: Consumer<UnknownSdkSnapshot>) {
     ReadAction.nonBlocking<UnknownSdkSnapshot> { collectSdksUnderReadAction() }
+      .expireWith(lifetime)
       .expireWith(myProject)
       .coalesceBy(myProject, UnknownSdkCollector::class)
       .finishOnUiThread(ApplicationManager.getApplication().defaultModalityState, onCompleted)
@@ -196,7 +197,7 @@ open class UnknownSdkCollector(private val myProject: Project) : UnknownSdkBlock
         throw e
       } catch (t: Throwable) {
         LOG.warn("Failed to contribute SDKs with ${it.javaClass.name}. ${t.message}", t)
-        listOf<UnknownSdk>()
+        listOf()
       }
 
       for (unknownSdk in contrib) {

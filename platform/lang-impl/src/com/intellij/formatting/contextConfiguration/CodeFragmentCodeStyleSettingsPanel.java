@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtilRt;
@@ -219,8 +220,8 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
         if (settingsGroup == null) {
           commonFields.add(fieldName);
         }
-        else if (settingsGroup.title != getInstance().WRAPPING_KEEP) {
-          commonFields.addAll(settingsGroup.commonCodeStyleSettingFieldNames);
+        else if (!Strings.areSameInstance(settingsGroup.title(), getInstance().WRAPPING_KEEP)) {
+          commonFields.addAll(settingsGroup.commonCodeStyleSettingFieldNames());
         }
       }
       return commonFields;

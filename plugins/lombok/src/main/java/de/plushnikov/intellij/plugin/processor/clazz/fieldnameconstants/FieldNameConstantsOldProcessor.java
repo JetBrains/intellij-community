@@ -3,10 +3,9 @@ package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
-import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.field.FieldNameConstantsFieldProcessor;
@@ -33,33 +32,32 @@ public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
     super(PsiField.class, LombokClassNames.FIELD_NAME_CONSTANTS);
   }
 
-  private FieldNameConstantsFieldProcessor getFieldNameConstantsFieldProcessor() {
+  private static FieldNameConstantsFieldProcessor getFieldNameConstantsFieldProcessor() {
     return ApplicationManager.getApplication().getService(FieldNameConstantsFieldProcessor.class);
   }
 
   @Override
   protected boolean supportAnnotationVariant(@NotNull PsiAnnotation psiAnnotation) {
-    // old version of @FieldNameConstants has a attributes "prefix" and "suffix", the new one not
+    // old version of @FieldNameConstants has attributes "prefix" and "suffix", the new one not
     return null != psiAnnotation.findAttributeValue("prefix");
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     final boolean result = validateAnnotationOnRightType(psiClass, builder) && LombokProcessorUtil.isLevelVisible(psiAnnotation);
     if (result) {
       final Collection<PsiField> psiFields = filterFields(psiClass);
-      FieldNameConstantsFieldProcessor fieldProcessor = getFieldNameConstantsFieldProcessor();
       for (PsiField psiField : psiFields) {
-        fieldProcessor.checkIfFieldNameIsValidAndWarn(psiAnnotation, psiField, builder);
+        FieldNameConstantsFieldProcessor.checkIfFieldNameIsValidAndWarn(psiAnnotation, psiField, builder);
       }
     }
     return result;
   }
 
-  private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private static boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
-      builder.addError(LombokBundle.message("inspection.message.field.name.constants.only.supported.on.class.enum.or.field.type"));
+      builder.addErrorMessage("inspection.message.field.name.constants.only.supported.on.class.enum.or.field.type");
       result = false;
     }
     return result;
@@ -68,16 +66,15 @@ public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final Collection<PsiField> psiFields = filterFields(psiClass);
-    FieldNameConstantsFieldProcessor fieldProcessor = getFieldNameConstantsFieldProcessor();
     for (PsiField psiField : psiFields) {
-      if (fieldProcessor.checkIfFieldNameIsValidAndWarn(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
-        target.add(fieldProcessor.createFieldNameConstant(psiField, psiClass, psiAnnotation));
+      if (FieldNameConstantsFieldProcessor.checkIfFieldNameIsValidAndWarn(psiAnnotation, psiField, new ProblemProcessingSink())) {
+        target.add(FieldNameConstantsFieldProcessor.createFieldNameConstant(psiField, psiClass, psiAnnotation));
       }
     }
   }
 
   @NotNull
-  private Collection<PsiField> filterFields(@NotNull PsiClass psiClass) {
+  private static Collection<PsiField> filterFields(@NotNull PsiClass psiClass) {
     final Collection<PsiField> psiFields = new ArrayList<>();
 
     FieldNameConstantsFieldProcessor fieldProcessor = getFieldNameConstantsFieldProcessor();

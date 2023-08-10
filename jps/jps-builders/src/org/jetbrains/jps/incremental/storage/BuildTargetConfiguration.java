@@ -6,9 +6,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -52,7 +52,7 @@ public final class BuildTargetConfiguration {
     return "";
   }
 
-  public boolean isTargetDirty(final ProjectDescriptor pd) {
+  public boolean isTargetDirty(@NotNull ProjectDescriptor pd) {
     return DIRTY_MARK.equals(myConfiguration) || !getCurrentState(pd).equals(myConfiguration);
   }
 
@@ -118,7 +118,7 @@ public final class BuildTargetConfiguration {
   }
 
   @NotNull
-  private String getCurrentState(final ProjectDescriptor pd) {
+  private String getCurrentState(@NotNull ProjectDescriptor pd) {
     String state = myCurrentState;
     if (state == null) {
       myCurrentState = state = saveToString(pd);
@@ -126,7 +126,7 @@ public final class BuildTargetConfiguration {
     return state;
   }
 
-  private String saveToString(final ProjectDescriptor pd) {
+  private @NotNull String saveToString(@NotNull ProjectDescriptor pd) {
     StringWriter out = new StringWriter();
     myTarget.writeConfiguration(pd, new PrintWriter(out));
     return out.toString();
@@ -143,7 +143,7 @@ public final class BuildTargetConfiguration {
     }
     File file = getNonexistentOutputsFile();
     if (nonexistentOutputRoots.isEmpty()) {
-      FileUtil.delete(file);
+      file.delete();
     }
     else {
       FileUtil.writeToFile(file, StringUtil.join(nonexistentOutputRoots, "\n"));
@@ -187,7 +187,7 @@ public final class BuildTargetConfiguration {
       PathRelativizerService relativizer = context.getProjectDescriptor().dataManager.getRelativizer();
       List<String> lines = ContainerUtil.map(StringUtil.split(FileUtil.loadFile(file), "\n"),
                                              s -> relativizer.toFull(s));
-      storedNonExistentOutputs = new THashSet<>(lines, FileUtil.PATH_HASHING_STRATEGY);
+      storedNonExistentOutputs = CollectionFactory.createFilePathSet(lines);
     }
     return !storedNonExistentOutputs.containsAll(nonexistentOutputRoots);
   }

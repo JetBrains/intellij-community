@@ -101,9 +101,7 @@ public class FileNode extends PackageDependenciesNode implements Comparable<File
       return super.equals(o);
     }
     if (this == o) return true;
-    if (!(o instanceof FileNode)) return false;
-
-    final FileNode fileNode = (FileNode)o;
+    if (!(o instanceof FileNode fileNode)) return false;
 
     if (!myVFile.equals(fileNode.myVFile)) return false;
 

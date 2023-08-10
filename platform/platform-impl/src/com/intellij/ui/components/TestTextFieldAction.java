@@ -2,6 +2,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.ComboBox;
@@ -40,6 +41,11 @@ public class TestTextFieldAction extends DumbAwareAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private enum Fill {None, Both, Horizontal, Vertical}
 
   private static final class View extends JPanel {
@@ -51,8 +57,7 @@ public class TestTextFieldAction extends DumbAwareAction {
     private final JPanel center = new JPanel(new GridBagLayout()) {
       @Override
       protected void paintComponent(Graphics g) {
-        if (g instanceof Graphics2D && gradient.isSelected()) {
-          Graphics2D g2d = (Graphics2D)g;
+        if (g instanceof Graphics2D g2d && gradient.isSelected()) {
           Rectangle bounds = new Rectangle(getWidth(), getHeight());
           g2d.setPaint(new LinearGradientPaint(
             bounds.x, bounds.y, bounds.width, bounds.height, new float[]{0, 1},

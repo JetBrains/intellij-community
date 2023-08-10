@@ -33,9 +33,9 @@ public class CompileScopeImpl extends CompileScope {
   private final Map<BuildTarget<?>, Set<File>> myFiles;
   private final Map<BuildTarget<?>, Set<File>> myIndirectlyAffectedFiles = Collections.synchronizedMap(new HashMap<>());
 
-  public CompileScopeImpl(Collection<? extends BuildTargetType<?>> types,
-                          Collection<? extends BuildTargetType<?>> typesToForceBuild,
-                          Collection<BuildTarget<?>> targets,
+  public CompileScopeImpl(@NotNull Collection<? extends BuildTargetType<?>> types,
+                          @NotNull Collection<? extends BuildTargetType<?>> typesToForceBuild,
+                          @NotNull Collection<BuildTarget<?>> targets,
                           @NotNull Map<BuildTarget<?>, Set<File>> files) {
     myTypes = types;
     myTypesToForceBuild = new HashSet<>();
@@ -115,9 +115,9 @@ public class CompileScopeImpl extends CompileScope {
 
   private boolean isAffectedByAssociatedModule(BuildTarget<?> target) {
     if (target instanceof ModuleBasedTarget) {
-      final JpsModule module = ((ModuleBasedTarget)target).getModule();
+      final JpsModule module = ((ModuleBasedTarget<?>)target).getModule();
       // this target is associated with module
-      JavaModuleBuildTargetType targetType = JavaModuleBuildTargetType.getInstance(((ModuleBasedTarget)target).isTests());
+      JavaModuleBuildTargetType targetType = JavaModuleBuildTargetType.getInstance(((ModuleBasedTarget<?>)target).isTests());
       if (myTypes.contains(targetType) || myTargets.contains(new ModuleBuildTarget(module, targetType))) {
         return true;
       }

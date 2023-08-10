@@ -107,21 +107,17 @@ public final class ExpectedTypeUtil {
 
   public static boolean matches (PsiType type, ExpectedTypeInfo info) {
     PsiType infoType = info.getType();
-    switch (info.getKind()) {
-      case ExpectedTypeInfo.TYPE_STRICTLY:
-        return type.equals(infoType);
-      case ExpectedTypeInfo.TYPE_OR_SUBTYPE:
-        return infoType.isAssignableFrom(type);
-      case ExpectedTypeInfo.TYPE_OR_SUPERTYPE:
-        return type.isAssignableFrom(infoType);
-      case ExpectedTypeInfo.TYPE_BETWEEN:
-        return type.isAssignableFrom(info.getDefaultType()) && infoType.isAssignableFrom(type);
-      case ExpectedTypeInfo.TYPE_SAME_SHAPED:
-        return true;
-    }
-
-    LOG.error("Unexpected ExpectedInfo kind");
-    return false;
+    return switch (info.getKind()) {
+      case ExpectedTypeInfo.TYPE_STRICTLY -> type.equals(infoType);
+      case ExpectedTypeInfo.TYPE_OR_SUBTYPE -> infoType.isAssignableFrom(type);
+      case ExpectedTypeInfo.TYPE_OR_SUPERTYPE -> type.isAssignableFrom(infoType);
+      case ExpectedTypeInfo.TYPE_BETWEEN -> type.isAssignableFrom(info.getDefaultType()) && infoType.isAssignableFrom(type);
+      case ExpectedTypeInfo.TYPE_SAME_SHAPED -> true;
+      default -> {
+        LOG.error("Unexpected ExpectedInfo kind");
+        yield false;
+      }
+    };
   }
 
   public static class ExpectedClassesFromSetProvider implements ExpectedTypesProvider.ExpectedClassProvider {
@@ -161,7 +157,7 @@ public final class ExpectedTypeUtil {
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(method.getContainingClass())) {
       PsiType type = helper.inferTypeForMethodTypeParameter(typeParameter, parameters, args, PsiSubstitutor.EMPTY, callExpr.getParent(),
                                                             forCompletion ? CompletionParameterTypeInferencePolicy.INSTANCE : DefaultParameterTypeInferencePolicy.INSTANCE);
-      if (PsiType.NULL.equals(type)) return null;
+      if (PsiTypes.nullType().equals(type)) return null;
       result = result.put(typeParameter, type);
     }
 

@@ -1,71 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public final class NullabilityUtil {
 
-  @NotNull
-  public static DfaNullability calcCanBeNull(DfaVariableValue value) {
-    if (value.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor) {
-      return DfaNullability.NOT_NULL;
-    }
-    if (value.getDescriptor() == SpecialField.OPTIONAL_VALUE) {
-      return DfaNullability.NULLABLE;
-    }
-    PsiModifierListOwner var = value.getPsiVariable();
-    if (value.getType() instanceof PsiPrimitiveType) {
-      return DfaNullability.UNKNOWN;
-    }
-    Nullability nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(value.getType(), var);
-    if (nullability != Nullability.UNKNOWN) {
-      return DfaNullability.fromNullability(nullability);
-    }
-    if (var == null) return DfaNullability.UNKNOWN;
-
-    Nullability defaultNullability = value.getFactory().suggestNullabilityForNonAnnotatedMember(var);
-
-    if (var instanceof PsiParameter && var.getParent() instanceof PsiForeachStatement) {
-      PsiExpression iteratedValue = ((PsiForeachStatement)var.getParent()).getIteratedValue();
-      if (iteratedValue != null) {
-        PsiType itemType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
-        if (itemType != null) {
-          return DfaNullability.fromNullability(DfaPsiUtil.getElementNullability(itemType, var));
-        }
-      }
-    }
-
-    if (var instanceof PsiField && value.getFactory().canTrustFieldInitializer((PsiField)var)) {
-      return DfaNullability.fromNullability(getNullabilityFromFieldInitializers((PsiField)var, defaultNullability).second);
-    }
-
-    return DfaNullability.fromNullability(defaultNullability);
-  }
-
-  static Pair<PsiExpression, Nullability> getNullabilityFromFieldInitializers(PsiField field, Nullability defaultNullability) {
-    if (DfaPsiUtil.isFinalField(field)) {
+  public static Pair<PsiExpression, Nullability> getNullabilityFromFieldInitializers(PsiField field) {
+    if (DfaPsiUtil.isFinalField(field) && PsiAugmentProvider.canTrustFieldInitializer(field)) {
       PsiExpression initializer = field.getInitializer();
       if (initializer != null) {
         return Pair.create(initializer, getExpressionNullability(initializer));
@@ -73,7 +30,7 @@ public final class NullabilityUtil {
 
       List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
       if (initializers.isEmpty()) {
-        return Pair.create(null, defaultNullability);
+        return Pair.create(null, Nullability.UNKNOWN);
       }
 
       for (PsiExpression expression : initializers) {
@@ -90,7 +47,7 @@ public final class NullabilityUtil {
     else if (isOnlyImplicitlyInitialized(field)) {
       return Pair.create(null, Nullability.NOT_NULL);
     }
-    return Pair.create(null, defaultNullability);
+    return Pair.create(null, Nullability.UNKNOWN);
   }
 
   private static boolean isOnlyImplicitlyInitialized(PsiField field) {
@@ -104,23 +61,9 @@ public final class NullabilityUtil {
   }
 
   private static boolean weAreSureThereAreNoExplicitWrites(PsiField field) {
-    String name = field.getName();
-    if (field.getInitializer() != null) return false;
-
-    if (!isCheapEnoughToSearch(field, name)) return false;
-
-    return ReferencesSearch.search(field).allMatch(
-        reference -> reference instanceof PsiReferenceExpression && !PsiUtil.isAccessedForWriting((PsiReferenceExpression)reference));
-  }
-
-  private static boolean isCheapEnoughToSearch(PsiField field, String name) {
-    SearchScope scope = field.getUseScope();
-    if (!(scope instanceof GlobalSearchScope)) return true;
-
-    PsiSearchHelper helper = PsiSearchHelper.getInstance(field.getProject());
-    PsiSearchHelper.SearchCostResult result =
-      helper.isCheapEnoughToSearch(name, (GlobalSearchScope)scope, field.getContainingFile(), null);
-    return result != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
+    if (field.hasInitializer()) return false;
+    if (!field.hasModifierProperty(PsiModifier.PRIVATE)) return false;
+    return !VariableAccessUtils.variableIsAssigned(field);
   }
 
   public static Nullability getExpressionNullability(@Nullable PsiExpression expression) {
@@ -138,7 +81,7 @@ public final class NullabilityUtil {
   public static Nullability getExpressionNullability(@Nullable PsiExpression expression, boolean useDataflow) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) return Nullability.UNKNOWN;
-    if (PsiType.NULL.equals(expression.getType())) return Nullability.NULLABLE;
+    if (PsiTypes.nullType().equals(expression.getType())) return Nullability.NULLABLE;
     if (expression instanceof PsiNewExpression ||
         expression instanceof PsiLiteralExpression ||
         expression instanceof PsiPolyadicExpression ||
@@ -172,8 +115,7 @@ public final class NullabilityUtil {
     if (expression instanceof PsiTypeCastExpression) {
       return getExpressionNullability(((PsiTypeCastExpression)expression).getOperand(), useDataflow);
     }
-    if (expression instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
+    if (expression instanceof PsiAssignmentExpression assignment) {
       if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
         return getExpressionNullability(assignment.getRExpression(), useDataflow);
       }
@@ -182,9 +124,8 @@ public final class NullabilityUtil {
     if (useDataflow) {
       return DfaNullability.toNullability(DfaNullability.fromDfType(CommonDataflow.getDfType(expression)));
     }
-    if (expression instanceof PsiReferenceExpression) {
-      PsiReferenceExpression ref = (PsiReferenceExpression)expression;
-      PsiElement target = (ref).resolve();
+    if (expression instanceof PsiReferenceExpression ref) {
+      PsiElement target = ref.resolve();
       if (target instanceof PsiPatternVariable) {
         return Nullability.NOT_NULL; // currently all pattern variables are not-null
       }
@@ -196,8 +137,8 @@ public final class NullabilityUtil {
       }
       return DfaPsiUtil.getElementNullabilityIgnoringParameterInference(expression.getType(), (PsiModifierListOwner)target);
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+    if (expression instanceof PsiMethodCallExpression || expression instanceof PsiTemplateExpression) {
+      PsiMethod method = ((PsiCall)expression).resolveMethod();
       return method != null ? DfaPsiUtil.getElementNullability(expression.getType(), method) : Nullability.UNKNOWN;
     }
     return Nullability.UNKNOWN;

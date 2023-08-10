@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.IntUnaryOperator;
@@ -31,7 +33,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
    */
   private final MostlyUShortIntList myStubData;
 
-  @Nullable private TempState myTempState = new TempState();
+  private @Nullable TempState myTempState = new TempState();
 
   StubList(int initialCapacity) {
     myStubData = new MostlyUShortIntList(initialCapacity * 3);
@@ -131,8 +133,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     myTempState.prepareForChildren(parentId, childrenCount);
   }
 
-  @Nullable
-  abstract StubBase<?> getCachedStub(int index);
+  abstract @Nullable StubBase<?> getCachedStub(int index);
 
   List<StubBase<?>> getChildrenStubs(int id) {
     int count = getChildrenCount(id);
@@ -161,7 +162,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     };
   }
 
-  private Int2ObjectOpenHashMap<MostlyUShortIntList> tempMap() {
+  private IntObjectMap<MostlyUShortIntList> tempMap() {
     assert myTempState != null;
     return Objects.requireNonNull(myTempState.myTempJoinedChildrenMap);
   }
@@ -177,10 +178,9 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     }
   }
 
-  @Nullable
-  private <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(IStubElementType<S, P> elementType,
-                                                                                 IntUnaryOperator idList,
-                                                                                 int start, int end) {
+  private @Nullable <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(IStubElementType<S, P> elementType,
+                                                                                           IntUnaryOperator idList,
+                                                                                           int start, int end) {
     for (int i = start; i < end; ++i) {
       int id = idList.applyAsInt(i);
       if (elementType.getIndex() == getStubTypeIndex(id)) {
@@ -206,6 +206,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
   }
 
   @NotNull
+  @Unmodifiable
   List<StubElement<?>> toPlainList() {
     //noinspection unchecked
     return (List)this;
@@ -220,7 +221,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
   }
 
   private final class TempState {
-    @Nullable Int2ObjectOpenHashMap<MostlyUShortIntList> myTempJoinedChildrenMap;
+    @Nullable IntObjectMap<MostlyUShortIntList> myTempJoinedChildrenMap;
 
     int myCurrentParent = -1;
     int myExpectedChildrenCount;
@@ -268,7 +269,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
 
     private void switchChildrenToTempMap(int parentId) {
       if (myTempJoinedChildrenMap == null) {
-        myTempJoinedChildrenMap = new Int2ObjectOpenHashMap<>();
+        myTempJoinedChildrenMap = ContainerUtil.createConcurrentIntObjectMap();
       }
 
       int start = getChildrenStart(parentId);
@@ -285,7 +286,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
       }
 
       MostlyUShortIntList prev = myTempJoinedChildrenMap.put(parentId, ids);
-      assert prev == null;
+      assert prev == null: parentId;
 
       myStubData.set(childrenStartIndex(parentId), IN_TEMP_MAP);
     }
@@ -333,8 +334,7 @@ final class MaterialStubList extends StubList {
     return super.finalizeLoadingStage();
   }
 
-  @NotNull
-  private StubList createOptimizedCopy() {
+  private @NotNull StubList createOptimizedCopy() {
     MaterialStubList copy = new MaterialStubList(size());
     new Object() {
       void visitStub(StubBase<?> stub, int parentId) {

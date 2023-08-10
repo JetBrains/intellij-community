@@ -31,8 +31,7 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
 
-    if (element instanceof PyAssignmentStatement && element.isWritable()) {
-      final PyAssignmentStatement statement = (PyAssignmentStatement)element;
+    if (element instanceof PyAssignmentStatement statement && element.isWritable()) {
 
       final PyExpression target = statement.getLeftHandSideExpression();
       final PyBinaryExpression expression = (PyBinaryExpression)statement.getAssignedValue();

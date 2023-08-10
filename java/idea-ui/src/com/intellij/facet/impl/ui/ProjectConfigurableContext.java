@@ -35,17 +35,22 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class ProjectConfigurableContext extends FacetEditorContextBase {
   private final Module myModule;
+  private final ProjectStructureConfigurable myProjectStructureConfigurable;
   private final boolean myNewFacet;
   private final ModuleConfigurationState myModuleConfigurationState;
 
-  public ProjectConfigurableContext(final @NotNull Facet facet, final boolean isNewFacet,
+  public ProjectConfigurableContext(final @NotNull Facet facet,
+                                    final boolean isNewFacet,
                                     @Nullable FacetEditorContext parentContext,
-                                    final ModuleConfigurationState state, final UserDataHolder sharedModuleData,
-                                    final UserDataHolder sharedProjectData) {
+                                    final ModuleConfigurationState state,
+                                    final UserDataHolder sharedModuleData,
+                                    final UserDataHolder sharedProjectData,
+                                    ProjectStructureConfigurable projectStructureConfigurable) {
     super(facet, parentContext, state.getFacetsProvider(), state.getModulesProvider(), sharedModuleData, sharedProjectData);
     myModuleConfigurationState = state;
     myNewFacet = isNewFacet;
     myModule = facet.getModule();
+    myProjectStructureConfigurable = projectStructureConfigurable;
   }
 
   @Override
@@ -90,6 +95,6 @@ public abstract class ProjectConfigurableContext extends FacetEditorContextBase 
   @NotNull
   @Override
   public ArtifactsStructureConfigurableContext getArtifactsStructureContext() {
-    return ProjectStructureConfigurable.getInstance(getProject()).getArtifactsStructureConfigurable().getArtifactsStructureContext();
+    return myProjectStructureConfigurable.getArtifactsStructureConfigurable().getArtifactsStructureContext();
   }
 }

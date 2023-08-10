@@ -19,9 +19,6 @@ import com.intellij.openapi.project.Project;
 
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenGroovyConsoleFilter extends AbstractMavenConsoleFilter {
 
   // Example of gmaven error line:

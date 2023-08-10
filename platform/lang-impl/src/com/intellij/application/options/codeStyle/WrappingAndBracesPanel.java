@@ -6,15 +6,18 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.presentation.*;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,14 +75,12 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
       for (CodeStyleSettingPresentation setting : entry.getValue()) {
         String fieldName = setting.getFieldName();
         String uiName = setting.getUiName();
-        if (setting instanceof CodeStyleBoundedIntegerSettingPresentation) {
-          CodeStyleBoundedIntegerSettingPresentation intSetting = (CodeStyleBoundedIntegerSettingPresentation)setting;
+        if (setting instanceof CodeStyleBoundedIntegerSettingPresentation intSetting) {
           int defaultValue = intSetting.getDefaultValue();
           addOption(fieldName, uiName, group.name, intSetting.getLowerBound(), intSetting.getUpperBound(), defaultValue,
                     getDefaultIntValueRenderer(fieldName));
         }
-        else if (setting instanceof CodeStyleSelectSettingPresentation) {
-          CodeStyleSelectSettingPresentation selectSetting = (CodeStyleSelectSettingPresentation)setting;
+        else if (setting instanceof CodeStyleSelectSettingPresentation selectSetting) {
           addOption(fieldName, uiName, group.name, selectSetting.getOptions(), selectSetting.getValues());
         }
         else if (setting instanceof CodeStyleSoftMarginsPresentation) {
@@ -125,15 +126,8 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     return ApplicationBundle.message("settings.code.style.tab.title.wrapping.and.braces");
   }
 
-  protected static class SettingsGroup {
-    public final String title;
-    public final Collection<String> commonCodeStyleSettingFieldNames;
-
-    public SettingsGroup(@NotNull String title,
+  protected record SettingsGroup(@NotNull String title,
                          @NotNull Collection<String> commonCodeStyleSettingFieldNames) {
-      this.title = title;
-      this.commonCodeStyleSettingFieldNames = commonCodeStyleSettingFieldNames;
-    }
   }
 
 
@@ -222,6 +216,22 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
         JLabel wrapLabel = new JLabel(MarginOptionsUtil.getDefaultWrapOnTypingText(getSettings()));
         UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, wrapLabel);
         return wrapLabel;
+      }
+    }
+    else if ("BUILDER_METHODS".equals(optionName)) {
+      if (value instanceof @Nls String strValue) {
+        String tooltipText = ApplicationBundle.message("settings.code.style.builder.methods.tooltip");
+        if (StringUtil.isEmptyOrSpaces(strValue)) {
+          ColoredLabel hintLabel = new ColoredLabel(ApplicationBundle.message("settings.code.style.builder.method.names"), JBColor.gray);
+          UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, hintLabel);
+          hintLabel.setToolTipText(tooltipText);
+          return hintLabel;
+        }
+        else if (!strValue.contains(",")){
+          JLabel valueLabel = new JLabel(strValue);
+          valueLabel.setToolTipText(tooltipText);
+          return valueLabel;
+        }
       }
     }
     return super.getCustomValueRenderer(optionName, value);

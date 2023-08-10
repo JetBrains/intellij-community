@@ -11,9 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public abstract class MergingFileDescription<T extends DomElement> extends DomFileDescription<T>{
   private ModelMerger myMerger;
 

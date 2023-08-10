@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -15,9 +15,6 @@ public interface MainVcsLogUiProperties extends VcsLogUiProperties {
 
   VcsLogUiProperty<Boolean> SHOW_LONG_EDGES = new VcsLogUiProperty<>("Graph.ShowLongEdges");
   VcsLogUiProperty<PermanentGraph.SortType> BEK_SORT_TYPE = new VcsLogUiProperty<>("Graph.BekSortType");
-  VcsLogUiProperty<Boolean> COMPACT_REFERENCES_VIEW = new VcsLogUiProperty<>("Table.CompactReferencesView");
-  VcsLogUiProperty<Boolean> SHOW_TAG_NAMES = new VcsLogUiProperty<>("Table.ShowTagNames");
-  VcsLogUiProperty<Boolean> LABELS_LEFT_ALIGNED = new VcsLogUiProperty<>("Table.LabelsLeftAligned");
   VcsLogUiProperty<Boolean> TEXT_FILTER_MATCH_CASE = new VcsLogUiProperty<>("TextFilter.MatchCase");
   VcsLogUiProperty<Boolean> TEXT_FILTER_REGEX = new VcsLogUiProperty<>("TextFilter.Regex");
   VcsLogUiProperty<Boolean> SHOW_CHANGES_FROM_PARENTS = new VcsLogUiProperty<>("Changes.ShowChangesFromParents");
@@ -36,20 +33,18 @@ public interface MainVcsLogUiProperties extends VcsLogUiProperties {
 
   class VcsLogHighlighterProperty extends VcsLogUiProperty<Boolean> {
     private static final Map<String, VcsLogHighlighterProperty> ourProperties = new HashMap<>();
-    @NotNull private final String myId;
+    private final @NotNull String myId;
 
     public VcsLogHighlighterProperty(@NotNull String name) {
       super("Highlighter." + name);
       myId = name;
     }
 
-    @NotNull
-    public String getId() {
+    public @NotNull String getId() {
       return myId;
     }
 
-    @NotNull
-    public static VcsLogHighlighterProperty get(@NotNull String id) {
+    public static @NotNull VcsLogHighlighterProperty get(@NotNull String id) {
       VcsLogHighlighterProperty property = ourProperties.get(id);
       if (property == null) {
         property = new VcsLogHighlighterProperty(id);

@@ -74,23 +74,23 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     myRoot = createTestProjectStructure();
   }
 
-  void typeInChar(Editor e, char c) {
+  void typeInChar(@NotNull Editor e, char c) {
     EditorActionManager.getInstance();
     TypedAction.getInstance().actionPerformed(e, c, createDataContextFor(e));
   }
 
-  protected void typeInText(Editor editor, String text) {
+  protected void typeInText(@NotNull Editor editor, String text) {
     char[] chars = text.toCharArray();
     for (char aChar : chars) {
       typeInChar(editor, aChar);
     }
   }
 
-  protected static void moveCaret(final Editor e, final String dir, final boolean selection) {
+  protected static void moveCaret(@NotNull Editor e, final String dir, final boolean selection) {
     executeEditorAction(e, "Editor" + dir + (selection ? "WithSelection" : ""));
   }
 
-  protected static void enter(final Editor e) {
+  protected static void enter(@NotNull Editor e) {
     executeEditorAction(e, IdeActions.ACTION_EDITOR_ENTER);
   }
 
@@ -108,7 +108,7 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     EditorTestUtil.executeAction(editor, actionId);
   }
 
-  VirtualFile createFileInCommand(final String name) {
+  VirtualFile createFileInCommand(@NotNull String name) {
     try {
       return WriteCommandAction
         .runWriteCommandAction(getProject(), (ThrowableComputable<VirtualFile, IOException>)() -> myRoot.createChildData(this, name));

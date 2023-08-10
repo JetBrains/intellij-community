@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.PropertiesFileType;
@@ -20,13 +20,19 @@ import com.intellij.psi.PsiManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class ResourceBundleEditorProvider implements FileEditorProvider, DumbAware {
+public final class ResourceBundleEditorProvider implements FileEditorProvider, DumbAware {
   @Override
-  public boolean accept(@NotNull final Project project, @NotNull final VirtualFile file){
-    if (file instanceof ResourceBundleAsVirtualFile) return true;
-    if (!file.isValid()) return false;
-    final FileType type = file.getFileType();
-    if (type != PropertiesFileType.INSTANCE && type != StdFileTypes.XML) return false;
+  public boolean accept(final @NotNull Project project, final @NotNull VirtualFile file){
+    if (file instanceof ResourceBundleAsVirtualFile) {
+      return true;
+    }
+    if (!file.isValid()) {
+      return false;
+    }
+    FileType type = file.getFileType();
+    if (type != PropertiesFileType.INSTANCE && type != StdFileTypes.XML) {
+      return false;
+    }
 
     return ReadAction.compute(() -> {
       if (project.isDisposed()) return Boolean.FALSE;
@@ -37,8 +43,12 @@ public class ResourceBundleEditorProvider implements FileEditorProvider, DumbAwa
   }
 
   @Override
-  @NotNull
-  public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file){
+  public boolean acceptRequiresReadAction() {
+    return false;
+  }
+
+  @Override
+  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     ResourceBundle resourceBundle;
     if (file instanceof ResourceBundleAsVirtualFile) {
       resourceBundle = ((ResourceBundleAsVirtualFile)file).getResourceBundle();
@@ -51,24 +61,21 @@ public class ResourceBundleEditorProvider implements FileEditorProvider, DumbAwa
       resourceBundle = PropertiesImplUtil.getPropertiesFile(psiFile).getResourceBundle();
     }
 
-    return new ResourceBundleEditor(resourceBundle);
+    return new ResourceBundleEditor(project, file, resourceBundle);
   }
 
   @Override
-  @NotNull
-  public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
     return new ResourceBundleEditor.ResourceBundleEditorState(null);
   }
 
   @Override
-  @NotNull
-  public FileEditorPolicy getPolicy() {
+  public @NotNull FileEditorPolicy getPolicy() {
     return FileEditorPolicy.PLACE_AFTER_DEFAULT_EDITOR;
   }
 
   @Override
-  @NotNull
-  public String getEditorTypeId(){
+  public @NotNull String getEditorTypeId(){
     return "ResourceBundle";
   }
 }

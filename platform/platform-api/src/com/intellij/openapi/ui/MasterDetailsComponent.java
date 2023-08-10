@@ -20,6 +20,7 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -126,8 +127,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         MasterDetailsComponent.this.addNotify();
 
         TreeModel m = myTree.getModel();
-        if (m instanceof DefaultTreeModel) {
-          DefaultTreeModel model = (DefaultTreeModel)m;
+        if (m instanceof DefaultTreeModel model) {
           for (int eachRow = 0; eachRow < myTree.getRowCount(); eachRow++) {
             TreePath eachPath = myTree.getPathForRow(eachRow);
             Object component = eachPath.getLastPathComponent();
@@ -185,8 +185,9 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         //do nothing
       }
 
+      @RequiresEdt
       @Override
-      protected void scrollToSource(Component tree) {
+      protected void scrollToSource(@NotNull Component tree) {
         updateSelectionFromTree();
       }
 
@@ -220,8 +221,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     final TreePath path = myTree.getSelectionPath();
     if (path != null) {
       final Object lastPathComp = path.getLastPathComponent();
-      if (!(lastPathComp instanceof MyNode)) return;
-      final MyNode node = (MyNode)lastPathComp;
+      if (!(lastPathComp instanceof MyNode node)) return;
       setSelectedNode(node);
     } else {
       setSelectedNode(null);
@@ -454,8 +454,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
           group.add(action);
         }
       }
-      PopupHandler
-        .installPopupHandler(myTree, group, ActionPlaces.UNKNOWN, ActionManager.getInstance()); //popup should follow the selection
+      PopupHandler.installPopupMenu(myTree, group, "MasterDetailsTreePopup");
     }
   }
 
@@ -527,8 +526,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   @Nullable
   public Object getSelectedObject() {
     final TreePath selectionPath = myTree.getSelectionPath();
-    if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode) {
-      MyNode node = (MyNode)selectionPath.getLastPathComponent();
+    if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode node) {
       final NamedConfigurable configurable = node.getConfigurable();
       LOG.assertTrue(configurable != null, "already disposed");
       return configurable.getEditableObject();
@@ -748,8 +746,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      if (value instanceof MyNode) {
-        final MyNode node = (MyNode)value;
+      if (value instanceof MyNode node) {
         renderIcon(node, expanded);
         renderName(node);
       }
@@ -788,7 +785,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     /**
      * @deprecated Use {@link #MyDeleteAction(Predicate)}
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public MyDeleteAction(@Nullable Condition<Object[]> availableCondition) {
       this(availableCondition == null ? null : (Predicate<Object[]>)availableCondition::value);
     }
@@ -818,6 +815,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         }
       }
       presentation.setEnabled(true);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -959,7 +961,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       JBPopupFactory popupFactory = JBPopupFactory.getInstance();
       DataContext dataContext = e.getDataContext();
       ListPopupStep step = popupFactory.createActionsStep(
-        myActionGroup, dataContext, ActionPlaces.UNKNOWN, false,
+        myActionGroup, dataContext, null, false,
         false, myActionGroup.getTemplatePresentation().getText(), myTree,
         true, myPreselection != null ? myPreselection.getDefaultIndex() : 0, true);
       final ListPopup listPopup = popupFactory.createListPopup(step);

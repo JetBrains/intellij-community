@@ -84,7 +84,7 @@ public class EmmetAbbreviationBalloon {
     panel.add(field, BorderLayout.CENTER);
     panel.add(label, BorderLayout.EAST);
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    final BalloonImpl balloon = (BalloonImpl)popupFactory.createBalloonBuilder(panel)
+    final Balloon balloon = popupFactory.createBalloonBuilder(panel)
       .setCloseButtonEnabled(false)
       .setBlockClicksThroughBalloon(true)
       .setAnimationCycle(0)
@@ -115,7 +115,7 @@ public class EmmetAbbreviationBalloon {
           }
 
           switch (e.getKeyCode()) {
-            case KeyEvent.VK_ENTER:
+            case KeyEvent.VK_ENTER -> {
               final String abbreviation = field.getText();
               if (validateTemplateKey(field, balloon, abbreviation, customTemplateCallback)) {
                 myCallback.onEnter(abbreviation);
@@ -123,10 +123,8 @@ public class EmmetAbbreviationBalloon {
                 field.addCurrentTextToHistory();
                 balloon.hide();
               }
-              break;
-            case KeyEvent.VK_ESCAPE:
-              balloon.hide(false);
-              break;
+            }
+            case KeyEvent.VK_ESCAPE -> balloon.hide(false);
           }
         }
       }

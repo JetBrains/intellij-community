@@ -49,17 +49,8 @@ public final class CharsetToolkit {
   /** @deprecated use {@link StandardCharsets#UTF_8} instead */
   @Deprecated
   public static final Charset UTF8_CHARSET = StandardCharsets.UTF_8;
-  /** @deprecated use {@link StandardCharsets#UTF_16LE} instead */
-  @Deprecated
-  public static final Charset UTF_16LE_CHARSET = StandardCharsets.UTF_16LE;
-  /** @deprecated use {@link StandardCharsets#UTF_16BE} instead */
-  @Deprecated
-  public static final Charset UTF_16BE_CHARSET = StandardCharsets.UTF_16BE;
   public static final Charset UTF_32BE_CHARSET = Charset.forName("UTF-32BE");
   public static final Charset UTF_32LE_CHARSET = Charset.forName("UTF-32LE");
-  /** @deprecated use {@link StandardCharsets#US_ASCII} instead */
-  @Deprecated
-  public static final Charset US_ASCII_CHARSET = StandardCharsets.US_ASCII;
   public static final Charset WIN_1251_CHARSET = Charset.forName("windows-1251");
 
   private static final byte FF = (byte)0xff;

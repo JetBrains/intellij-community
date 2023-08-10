@@ -23,6 +23,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,9 +34,6 @@ import java.nio.charset.UnsupportedCharsetException;
 
 import static com.jetbrains.python.psi.FutureFeature.UNICODE_LITERALS;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyByteLiteralInspection extends PyInspection {
 
   @NotNull
@@ -43,12 +41,13 @@ public class PyByteLiteralInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -57,8 +56,7 @@ public class PyByteLiteralInspection extends PyInspection {
       PsiFile file = node.getContainingFile(); // can't cache this in the instance, alas
       if (file == null) return;
       boolean default_bytes = false;
-      if (file instanceof PyFile) {
-        PyFile pyfile = (PyFile)file;
+      if (file instanceof PyFile pyfile) {
         default_bytes = (!UNICODE_LITERALS.requiredAt(pyfile.getLanguageLevel()) &&
                          !pyfile.hasImportFromFuture(UNICODE_LITERALS)
         );

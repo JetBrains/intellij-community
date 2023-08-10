@@ -66,3 +66,9 @@ class Z extends Y {
     super(properties);
   }
 }
+
+class TestPattern {
+  void f(Object o) {
+    if (o instanceof <warning descr="Raw use of parameterized class 'Map'">Map</warning> m) {}
+  }
+}

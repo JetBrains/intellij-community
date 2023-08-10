@@ -15,17 +15,19 @@
  */
 package com.android.tools.adtui.webp;
 
-import com.intellij.ide.ApplicationInitializedListener;
+import com.intellij.ide.ApplicationLoadListener;
+import com.intellij.openapi.application.Application;
+import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.Node;
 
-import javax.imageio.metadata.IIOInvalidTreeException;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.spi.ImageWriterSpi;
+import java.nio.file.Path;
 
-public class WebpMetadata extends IIOMetadata implements ApplicationInitializedListener {
+public final class WebpMetadata extends IIOMetadata {
   public static final String WEBP_FORMAT_LOWER_CASE = "webp";
   public static final String WEBP_FORMAT_UPPER_CASE = "WEBP";
   public static final String[] WEBP_FORMAT_NAMES = new String[] {WEBP_FORMAT_UPPER_CASE, WEBP_FORMAT_LOWER_CASE};
@@ -36,17 +38,23 @@ public class WebpMetadata extends IIOMetadata implements ApplicationInitializedL
   public static final float DEFAULT_ENCODING_QUALITY = 0.75f;
   public static final boolean DEFAULT_LOSSLESS = true;
 
-  @Override
-  public void componentsInitialized() {
-    ensureWebpRegistered();
+  static final class WebpMetadataRegistrar implements ApplicationLoadListener {
+    private WebpMetadataRegistrar() {
+    }
+
+    @Override
+    public void beforeApplicationLoaded(@NotNull Application application, @NotNull Path configPath) {
+      ensureWebpRegistered();
+    }
   }
 
   /**
    * Ensures that service providers are registered.
    */
   public static void ensureWebpRegistered() {
-    IIORegistry.getDefaultInstance().registerServiceProvider(new WebpImageReaderSpi(), ImageReaderSpi.class);
-    IIORegistry.getDefaultInstance().registerServiceProvider(new WebpImageWriterSpi(), ImageWriterSpi.class);
+    IIORegistry defaultInstance = IIORegistry.getDefaultInstance();
+    defaultInstance.registerServiceProvider(new WebpImageReaderSpi(), ImageReaderSpi.class);
+    defaultInstance.registerServiceProvider(new WebpImageWriterSpi(), ImageWriterSpi.class);
   }
 
   @Override
@@ -60,7 +68,7 @@ public class WebpMetadata extends IIOMetadata implements ApplicationInitializedL
   }
 
   @Override
-  public void mergeTree(String formatName, Node root) throws IIOInvalidTreeException {
+  public void mergeTree(String formatName, Node root) {
   }
 
   @Override

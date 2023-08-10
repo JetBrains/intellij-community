@@ -3,14 +3,11 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
-import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectPathField;
 import com.intellij.openapi.externalSystem.util.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -19,7 +16,6 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,9 +27,6 @@ import java.util.Objects;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.normalizePath;
 
-/**
- * @author Denis Zhdanov
- */
 public final class ExternalSystemTaskSettingsControl implements ExternalSystemSettingsControl<ExternalSystemTaskExecutionSettings> {
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private final Project myProject;
@@ -68,14 +61,7 @@ public final class ExternalSystemTaskSettingsControl implements ExternalSystemSe
     myProjectPathLabel = new JBLabel(ExternalSystemBundle.message(
       "run.configuration.settings.label.project", myExternalSystemId.getReadableName()
     ));
-    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);
-    FileChooserDescriptor projectPathChooserDescriptor = null;
-    if (manager instanceof ExternalSystemUiAware) {
-      projectPathChooserDescriptor = ((ExternalSystemUiAware)manager).getExternalProjectConfigDescriptor();
-    }
-    if (projectPathChooserDescriptor == null) {
-      projectPathChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
-    }
+    FileChooserDescriptor projectPathChooserDescriptor = ExternalSystemApiUtil.getExternalProjectConfigDescriptor(myExternalSystemId);
     String title = ExternalSystemBundle.message("settings.label.select.project", myExternalSystemId.getReadableName());
     myProjectPathField = new ExternalProjectPathField(myProject, myExternalSystemId, projectPathChooserDescriptor, title) {
       @Override
@@ -89,9 +75,7 @@ public final class ExternalSystemTaskSettingsControl implements ExternalSystemSe
     myTasksLabel = new JBLabel(ExternalSystemBundle.message("run.configuration.settings.label.tasks"));
     myTasksTextField = new EditorTextField("", myProject, PlainTextFileType.INSTANCE);
     canvas.add(myTasksLabel, ExternalSystemUiUtil.getLabelConstraints(0));
-    GridBag c = ExternalSystemUiUtil.getFillLineConstraints(0);
-    c.insets.right = myProjectPathField.getButton().getPreferredSize().width + 8 /* street magic, sorry */;
-    canvas.add(myTasksTextField, c);
+    canvas.add(myTasksTextField, ExternalSystemUiUtil.getFillLineConstraints(0));
 
     new TaskCompletionProvider(myProject, myExternalSystemId, myProjectPathField).apply(myTasksTextField);
 

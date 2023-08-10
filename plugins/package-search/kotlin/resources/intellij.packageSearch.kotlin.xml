@@ -1,0 +1,11 @@
+<idea-plugin package="com.jetbrains.packagesearch.intellij.plugin.kotlin">
+
+    <dependencies>
+        <plugin id="org.jetbrains.kotlin"/>
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <codeInsight.unresolvedReferenceQuickFixProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.kotlin.KotlinPackageSearchUnresolvedReferenceQuickFixProvider"/>
+    </extensions>
+</idea-plugin>

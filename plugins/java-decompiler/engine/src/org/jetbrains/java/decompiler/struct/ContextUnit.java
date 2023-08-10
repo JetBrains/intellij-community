@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -65,7 +65,7 @@ public class ContextUnit {
 
       StructClass newCl;
       try (DataInputFullStream in = loader.getClassStream(oldName)) {
-        newCl = new StructClass(in, cl.isOwn(), loader);
+        newCl = StructClass.create(in, cl.isOwn(), loader);
       }
 
       lstClasses.add(newCl);
@@ -80,7 +80,7 @@ public class ContextUnit {
 
   public void save() {
     switch (type) {
-      case TYPE_FOLDER:
+      case TYPE_FOLDER -> {
         // create folder
         resultSaver.saveFolder(filename);
 
@@ -107,11 +107,8 @@ public class ContextUnit {
             }
           }
         }
-
-        break;
-
-      case TYPE_JAR:
-      case TYPE_ZIP:
+      }
+      case TYPE_JAR, TYPE_ZIP -> {
         // create archive file
         resultSaver.saveFolder(archivePath);
         resultSaver.createArchive(archivePath, filename, manifest);
@@ -139,6 +136,7 @@ public class ContextUnit {
         }
 
         resultSaver.closeArchive(archivePath, filename);
+      }
     }
   }
 

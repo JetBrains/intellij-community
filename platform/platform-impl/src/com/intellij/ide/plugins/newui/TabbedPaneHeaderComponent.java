@@ -34,7 +34,6 @@ import java.awt.event.ComponentEvent;
 public class TabbedPaneHeaderComponent extends JPanel {
   private final JBValue myHeight = new JBValue.Float(30);
   private final JBValue myGap = new JBValue.Float(10);
-  private final JBValue myYOffset = new JBValue.Float(3);
 
   private final JBTabbedPane myTabbedPane = new JBTabbedPane() {
     @Override
@@ -76,10 +75,11 @@ public class TabbedPaneHeaderComponent extends JPanel {
         int height = parent.getHeight();
         int gap = myGap.get();
         int x = (parent.getWidth() - width - gap - toolbarSize.width) / 2 - width / 4;
-        int yOffset = myYOffset.get();
+        int y = height > 0 ? height - JBUI.CurrentTheme.TabbedPane.TAB_HEIGHT.get() : 0;
+        int toolbarY = (y + height - toolbarSize.height) / 2;
 
-        tabbedPane.setBounds(x, yOffset, width, height - yOffset);
-        toolbar.setBounds(x + width + gap, (height - toolbarSize.height) / 2, toolbarSize.width, height);
+        tabbedPane.setBounds(x, y, width, height - y);
+        toolbar.setBounds(x + width + gap, toolbarY - JBUI.scale(1), toolbarSize.width, height);
       }
     });
 
@@ -88,18 +88,15 @@ public class TabbedPaneHeaderComponent extends JPanel {
     myTabbedPane.setOpaque(false);
 
     add(myTabbedPane);
-    add(createToolbar(actions,
-                      IdeBundle.message("plugin.manager.tooltip"),
-                      AllIcons.General.GearPlain),
-        BorderLayout.EAST);
+    add(createToolbar(actions, IdeBundle.message("plugin.manager.tooltip"), AllIcons.General.GearPlain), BorderLayout.EAST);
   }
 
   static @NotNull JComponent createToolbar(@NotNull DefaultActionGroup actions,
                                            @Nullable @NlsActions.ActionText String tooltip,
                                            @NotNull Icon icon) {
     DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
-    ActionToolbar toolbar =
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, toolbarActionGroup, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("PluginsHeaderToolbar", toolbarActionGroup, true);
+    toolbar.setTargetComponent(toolbar.getComponent());
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
@@ -162,7 +159,14 @@ public class TabbedPaneHeaderComponent extends JPanel {
     myTabbedPane.addChangeListener(e -> myListener.selectionChanged(myTabbedPane.getSelectedIndex()));
   }
 
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (getParent() != null) update();
+  }
+
   public void update() {
+    setPreferredSize(null);
     doLayout();
     revalidate();
     myTabbedPane.doLayout();
@@ -176,6 +180,10 @@ public class TabbedPaneHeaderComponent extends JPanel {
       Component tab = myTabbedPane.getTabComponentAt(myTabbedPane.getTabCount() - 1);
       ((JLabel)tab).setHorizontalTextPosition(SwingConstants.LEFT);
     }
+  }
+
+  public void setTabTooltip(int index, @Nullable @Nls String tooltip) {
+    myTabbedPane.setToolTipTextAt(index, tooltip);
   }
 
   public int getSelectionTab() {

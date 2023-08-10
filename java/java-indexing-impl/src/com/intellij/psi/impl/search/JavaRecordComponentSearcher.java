@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchRequestCollector;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.util.Processor;
@@ -19,25 +20,25 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
   @Override
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<? super PsiReference> consumer) {
     PsiElement element = queryParameters.getElementToSearch();
-    if (element instanceof PsiRecordComponent) {
-      PsiRecordComponent recordComponent = (PsiRecordComponent)element;
+    if (element instanceof PsiRecordComponent recordComponent) {
+      SearchScope scope = queryParameters.getEffectiveSearchScope();
       RecordNavigationInfo info = findNavigationInfo(recordComponent);
       if (info != null) {
         SearchRequestCollector optimizer = queryParameters.getOptimizer();
         optimizer.searchWord(info.myName,
-                             queryParameters.getEffectiveSearchScope(),
+                             ReadAction.compute(() -> info.myLightMethod.getUseScope().intersectWith(scope)),
                              true,
                              info.myLightMethod);
 
         optimizer.searchWord(info.myName,
-                             ReadAction.compute(() -> info.myLightField.getUseScope()),
+                             ReadAction.compute(() -> info.myLightField.getUseScope().intersectWith(scope)),
                              true,
                              info.myLightField);
 
         PsiParameter parameter = info.myLightCompactConstructorParameter;
         if (parameter != null) {
           optimizer.searchWord(info.myName,
-                               new LocalSearchScope(parameter.getDeclarationScope()),
+                               ReadAction.compute(() -> new LocalSearchScope(parameter.getDeclarationScope())),
                                true,
                                parameter);
         }
@@ -48,7 +49,6 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
   private static RecordNavigationInfo findNavigationInfo(PsiRecordComponent recordComponent) {
     return ReadAction.compute(() -> {
       String name = recordComponent.getName();
-      if (name == null) return null;
       PsiClass containingClass = recordComponent.getContainingClass();
       if (containingClass == null) return null;
 

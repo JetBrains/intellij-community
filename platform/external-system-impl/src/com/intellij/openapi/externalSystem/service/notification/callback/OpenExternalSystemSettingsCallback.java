@@ -62,7 +62,7 @@ public class OpenExternalSystemSettingsCallback extends NotificationListener.Ada
     final Configurable configurable = ((ExternalSystemConfigurableAware)manager).getConfigurable(myProject);
     if(configurable instanceof AbstractExternalSystemConfigurable) {
       ShowSettingsUtil.getInstance().editConfigurable(myProject, configurable,
-                                                      () -> ((AbstractExternalSystemConfigurable)configurable).selectProject(myLinkedProjectPath));
+                                                      () -> ((AbstractExternalSystemConfigurable<?, ?, ?>)configurable).selectProject(myLinkedProjectPath));
     }
 
   }

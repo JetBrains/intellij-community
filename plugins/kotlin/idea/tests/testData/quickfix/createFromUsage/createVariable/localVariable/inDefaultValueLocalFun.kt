@@ -1,0 +1,16 @@
+// "Create local variable 'abc'" "true"
+// ACTION: Add '@JvmOverloads' annotation to function 'testMethod'
+// ACTION: Create local variable 'abc'
+// ACTION: Create parameter 'abc'
+// ACTION: Enable a trailing comma by default in the formatter
+// ACTION: Rename reference
+// WITH_STDLIB
+
+class Test {
+    fun outer() {
+        fun testMethod(x:Int = <caret>abc) {
+
+        }
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateLocalVariableActionFactory$CreateLocalFromUsageAction

@@ -1,16 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.FeedbackDescriptionProvider;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.feedback.FeedbackForm;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.impl.ZenDeskForm;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.io.URLUtil;
@@ -38,6 +48,11 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static String getFeedbackHost(String feedbackUrl, String companyName) {
     Pattern uriPattern = Pattern.compile("[^:/?#]+://(?:www\\.)?([^/?#]*).*", Pattern.DOTALL);
     Matcher matcher = uriPattern.matcher(feedbackUrl);
@@ -46,18 +61,30 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    submit(e.getProject());
+    ZenDeskForm feedbackForm = ((ApplicationInfoImpl)ApplicationInfo.getInstance()).getFeedbackForm();
+    if (Registry.is("ide.in.product.feedback") && feedbackForm != null) {
+      new FeedbackForm(e.getProject(), feedbackForm, false).show();
+    }
+    else {
+      submit(e.getProject());
+    }
   }
 
   public static void submit(@Nullable Project project) {
-    submit(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription(project));
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, IdeBundle.message("reportProblemAction.progress.title.submitting")) {
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        submit(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription(project));
+      }
+    });
   }
 
   public static void submit(@Nullable Project project, @NotNull String description) {
     submit(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), description);
   }
 
-  static void submit(@Nullable Project project, @NotNull String urlTemplate, @NotNull String description) {
+  public static void submit(@Nullable Project project, @NotNull String urlTemplate, @NotNull String description) {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     boolean eap = appInfo.isEAP();
     LicensingFacade la = LicensingFacade.getInstance();

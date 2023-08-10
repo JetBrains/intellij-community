@@ -45,11 +45,11 @@
                     area="IDEA_PROJECT"
                     dynamic="true">
       <with attribute="className" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider"/>
-      <with attribute="predicateClassName" implements="com.intellij.util.NotNullFunction"/>
+      <with attribute="predicateClassName" implements="java.util.function.Predicate"/>
       <with attribute="preloaderClassName" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider$Preloader"/>
     </extensionPoint>
 
-    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean">
+    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
     </extensionPoint>
 
@@ -66,6 +66,10 @@
                     interface="com.intellij.openapi.vcs.changes.ChangesViewModifier"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
+    <extensionPoint name="vcs.changes.changesViewNodeAction"
+                    interface="com.intellij.openapi.vcs.changes.ChangesViewNodeAction"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
     <extensionPoint name="editChangelistSupport"
                     interface="com.intellij.openapi.vcs.changes.ui.EditChangelistSupport"
                     area="IDEA_PROJECT"/>
@@ -73,12 +77,18 @@
     <extensionPoint name="vcsSelectionProvider"
                     interface="com.intellij.vcsUtil.VcsSelectionProvider"
                     dynamic="true"/>
-    <extensionPoint name="vcs.changes.localCommitExecutor" interface="com.intellij.openapi.vcs.changes.LocalCommitExecutor"
+    <extensionPoint name="vcs.changes.localCommitExecutor" interface="com.intellij.openapi.vcs.changes.CommitExecutor"
                     area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="vcsConfigurableProvider"
                     interface="com.intellij.openapi.vcs.VcsConfigurableProvider"
                     dynamic="true"/>
+
+    <extensionPoint name="generalVcsSettingsExtension"
+                    beanClass="com.intellij.openapi.vcs.configurable.GeneralVcsSettingsProviderEP"
+                    area="IDEA_PROJECT" dynamic="true">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
+    </extensionPoint>
 
     <!--<extensionPoint name="writingAccessProvider"-->
     <!--interface="com.intellij.openapi.vfs.WritingAccessProvider"-->
@@ -95,7 +105,12 @@
                     dynamic="true"/>
 
     <extensionPoint name="vcs.ignoredFilesHolder"
-                    interface="com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder$Provider"
+                    interface="com.intellij.openapi.vcs.changes.VcsManagedFilesHolder$Provider"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.unversionedFilesHolder"
+                    interface="com.intellij.openapi.vcs.changes.VcsManagedFilesHolder$Provider"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
 
@@ -156,6 +171,9 @@
     <extensionPoint name="openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
                     dynamic="true"/>
+    <extensionPoint name="openapi.vcs.history.actions.GetVersionAction.ExtensionProvider"
+                    interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="vcsRepositoryInitializer"
                     interface="com.intellij.vcs.VcsRepositoryInitializer"
@@ -187,5 +205,18 @@
                     interface="com.intellij.openapi.vcs.changes.ChangeListChangeAssigner"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
+
+    <extensionPoint name="vcs.envCustomizer"
+                    interface="com.intellij.openapi.vcs.VcsEnvCustomizer"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.vcsSymlinkResolver"
+                    interface="com.intellij.vcs.VcsSymlinkResolver"
+                    area="IDEA_PROJECT"
+                    dynamic="false"/>
+
+    <extensionPoint name="vcs.codeVisionLanguageContext" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

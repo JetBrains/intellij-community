@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.java.JavaBundle;
@@ -27,9 +14,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.controlflow.UnnecessaryReturnInspection;
@@ -59,9 +45,8 @@ public class MakeVoidQuickFix implements LocalQuickFix {
     PsiMethod psiMethod = null;
     if (myProcessor != null) {
       RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
-      if (refElement instanceof RefMethod && refElement.isValid()) {
-        RefMethod refMethod = (RefMethod)refElement;
-        psiMethod = (PsiMethod)refMethod.getPsiElement();
+      if (refElement instanceof RefMethod refMethod && refElement.isValid()) {
+        psiMethod = refMethod.getUastElement().getJavaPsi();
       }
     }
     else {
@@ -69,6 +54,19 @@ public class MakeVoidQuickFix implements LocalQuickFix {
     }
     if (psiMethod == null) return;
     makeMethodHierarchyVoid(project, psiMethod);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    PsiMethod method = PsiTreeUtil.getParentOfType(previewDescriptor.getPsiElement(), PsiMethod.class);
+    if (method == null) return IntentionPreviewInfo.EMPTY;
+    PsiTypeElement returnTypeElement = method.getReturnTypeElement();
+    if (returnTypeElement == null) return IntentionPreviewInfo.EMPTY;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiTypeElement typeElement = factory.createTypeElement(PsiTypes.voidType());
+    returnTypeElement.replace(typeElement);
+    replaceReturnStatements(method);
+    return IntentionPreviewInfo.DIFF;
   }
 
   @Override
@@ -90,19 +88,14 @@ public class MakeVoidQuickFix implements LocalQuickFix {
       return;
     }
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(methodsToModify)) return;
-    final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(project,
-                                                                      psiMethod,
-                                                                      false, null, psiMethod.getName(),
-                                                                      PsiType.VOID,
-                                                                      ParameterInfoImpl.fromMethod(psiMethod)) {
-      @Override
-      protected void performRefactoring(UsageInfo @NotNull [] usages) {
-        super.performRefactoring(usages);
-        for (final PsiMethod method: methodsToModify) {
-          replaceReturnStatements(method);
-        }
-      }
-    };
+    var csp = JavaRefactoringFactory.getInstance(project)
+      .createChangeSignatureProcessor(psiMethod, false, null, psiMethod.getName(), PsiTypes.voidType(),
+                                      ParameterInfoImpl.fromMethod(psiMethod), null, null, null,
+                                      infos -> {
+                                        for (final PsiMethod method : methodsToModify) {
+                                          replaceReturnStatements(method);
+                                        }
+                                      });
     csp.run();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.application.AccessToken
@@ -20,8 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.RunAll
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.common.runAll
 import com.intellij.util.io.createDirectories
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -83,14 +82,14 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   }
 
   override fun tearDown() {
-    RunAll.runAll(
-      ThrowableRunnable { resetSettings() },
-      ThrowableRunnable { resetChanges() },
-      ThrowableRunnable { resetChangelists() },
-      ThrowableRunnable { vcsManager.directoryMappings = emptyList() },
-      ThrowableRunnable { project.getServiceIfCreated(AllVcsesI::class.java)?.unregisterManually(vcs) },
-      ThrowableRunnable { runWriteAction { testRoot.delete(this) } },
-      ThrowableRunnable { super.tearDown() }
+    runAll(
+      { resetSettings() },
+      { resetChanges() },
+      { resetChangelists() },
+      { vcsManager.directoryMappings = emptyList() },
+      { project.getServiceIfCreated(AllVcsesI::class.java)?.unregisterManually(vcs) },
+      { runWriteAction { testRoot.delete(this) } },
+      { super.tearDown() }
     )
   }
 
@@ -127,15 +126,18 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
 
   protected fun addLocalFile(name: String, content: String): VirtualFile {
-    val file = runWriteAction {
+    val file = createLocalFile(name, content)
+    assertFalse(changeProvider.files.contains(file))
+    changeProvider.files.add(file)
+    return file
+  }
+
+  protected fun createLocalFile(name: String, content: String): VirtualFile {
+    return runWriteAction {
       val file = testRoot.createChildData(this, name)
       VfsUtil.saveText(file, parseInput(content))
       file
     }
-
-    assertFalse(changeProvider.files.contains(file))
-    changeProvider.files.add(file)
-    return file
   }
 
   protected fun removeLocalFile(name: String) {
@@ -251,11 +253,10 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
       semaphore.acquireOrThrow()
       try {
         for ((filePath, beforeRevision) in changes) {
-          val file = files.find { VcsUtil.getFilePath(it) == filePath }
-          val afterContent: ContentRevision? = when (file) {
-            null -> null
-            else -> CurrentContentRevision(filePath)
-          }
+          val afterContent: ContentRevision? =
+            if (files.find { VcsUtil.getFilePath(it) == filePath } == null)
+              null
+            else CurrentContentRevision(filePath)
 
           val change = Change(beforeRevision, afterContent)
 
@@ -279,7 +280,6 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
       semaphore.acquireOrThrow()
 
       dirtyScopeManager.markEverythingDirty()
-      clm.scheduleUpdate()
 
       markerSemaphore.acquireOrThrow()
       markerSemaphore.release()

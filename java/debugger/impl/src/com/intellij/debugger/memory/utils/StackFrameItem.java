@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.utils;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -18,13 +18,11 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.xdebugger.XSourcePosition;
@@ -82,7 +80,7 @@ public class StackFrameItem {
 
   @NotNull
   public String method() {
-    return myLocation.method().name();
+    return DebuggerUtilsEx.getLocationMethodName(myLocation);
   }
 
   public int line() {
@@ -99,54 +97,57 @@ public class StackFrameItem {
         try {
           List<XNamedValue> vars = null;
           Location location = frame.location();
-          Method method = location.method();
           if (withVars) {
             if (!DebuggerSettings.getInstance().CAPTURE_VARIABLES) {
               vars = VARS_CAPTURE_DISABLED;
             }
-            else if (method.isNative() || method.isBridge() || DebuggerUtils.isSynthetic(method)) {
-              vars = VARS_NOT_CAPTURED;
-            }
             else {
-              vars = new ArrayList<>();
-
-              try {
-                ObjectReference thisObject = frame.thisObject();
-                if (thisObject != null) {
-                  vars.add(createVariable(thisObject, "this", VariableItem.VarType.OBJECT));
-                }
+              Method method = location.method();
+              if (method.isNative() || method.isBridge() || DebuggerUtils.isSynthetic(method)) {
+                vars = VARS_NOT_CAPTURED;
               }
-              catch (EvaluateException e) {
-                LOG.debug(e);
-              }
+              else {
+                vars = new ArrayList<>();
 
-              try {
-                for (LocalVariableProxyImpl v : frame.visibleVariables()) {
-                  try {
-                    VariableItem.VarType varType = v.getVariable().isArgument() ? VariableItem.VarType.PARAM : VariableItem.VarType.OBJECT;
-                    vars.add(createVariable(frame.getValue(v), v.name(), varType));
-                  }
-                  catch (EvaluateException e) {
-                    LOG.debug(e);
+                try {
+                  ObjectReference thisObject = frame.thisObject();
+                  if (thisObject != null) {
+                    vars.add(createVariable(thisObject, "this", VariableItem.VarType.OBJECT));
                   }
                 }
-              }
-              catch (EvaluateException e) {
-                if (e.getCause() instanceof AbsentInformationException) {
-                  vars.add(JavaStackFrame.LOCAL_VARIABLES_INFO_UNAVAILABLE_MESSAGE_NODE);
-                  // only args for frames w/o debug info for now
-                  try {
-                    for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil
-                      .fetchValues(frame, suspendContext.getDebugProcess(), false).entrySet()) {
-                      vars.add(createVariable(entry.getValue(), entry.getKey().getDisplayName(), VariableItem.VarType.PARAM));
+                catch (EvaluateException e) {
+                  LOG.debug(e);
+                }
+
+                try {
+                  for (LocalVariableProxyImpl v : frame.visibleVariables()) {
+                    try {
+                      VariableItem.VarType varType =
+                        v.getVariable().isArgument() ? VariableItem.VarType.PARAM : VariableItem.VarType.OBJECT;
+                      vars.add(createVariable(frame.getValue(v), v.name(), varType));
+                    }
+                    catch (EvaluateException e) {
+                      LOG.debug(e);
                     }
                   }
-                  catch (Exception ex) {
-                    LOG.info(ex);
-                  }
                 }
-                else {
-                  LOG.debug(e);
+                catch (EvaluateException e) {
+                  if (e.getCause() instanceof AbsentInformationException) {
+                    vars.add(JavaStackFrame.LOCAL_VARIABLES_INFO_UNAVAILABLE_MESSAGE_NODE);
+                    // only args for frames w/o debug info for now
+                    try {
+                      for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil
+                        .fetchValues(frame, suspendContext.getDebugProcess(), false).entrySet()) {
+                        vars.add(createVariable(entry.getValue(), entry.getKey().getDisplayName(), VariableItem.VarType.PARAM));
+                      }
+                    }
+                    catch (Exception ex) {
+                      LOG.info(ex);
+                    }
+                  }
+                  else {
+                    LOG.debug(e);
+                  }
                 }
               }
             }
@@ -206,8 +207,9 @@ public class StackFrameItem {
     @Override
     public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
       ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
-      String type = Registry.is("debugger.showTypes") ? classRenderer.renderTypeName(myType) : null;
-      Icon icon = myVarType == VariableItem.VarType.PARAM ? PlatformIcons.PARAMETER_ICON : AllIcons.Debugger.Value;
+      String type = DebuggerSettings.getInstance().SHOW_TYPES ? classRenderer.renderTypeName(myType) : null;
+      Icon icon = myVarType == VariableItem.VarType.PARAM ? IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter)
+                                                          : AllIcons.Debugger.Value;
       if (myType != null && myType.startsWith(CommonClassNames.JAVA_LANG_STRING + "@")) {
         node.setPresentation(icon, new XStringValuePresentation(myValue) {
           @Nullable
@@ -283,7 +285,7 @@ public class StackFrameItem {
 
     @Override
     public void customizePresentation(@NotNull ColoredTextContainer component) {
-      component.setIcon(JBUIScale.scaleIcon(EmptyIcon.create(6)));
+      component.setIcon(EmptyIcon.ICON_16);
       component.append(myMethodName + ":" + myLineNumber, getAttributes());
       ThreadsViewSettings settings = ThreadsViewSettings.getInstance();
       if (settings.SHOW_CLASS_NAME) {

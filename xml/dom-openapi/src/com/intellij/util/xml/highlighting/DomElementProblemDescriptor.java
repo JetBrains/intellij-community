@@ -19,13 +19,10 @@ package com.intellij.util.xml.highlighting;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public interface DomElementProblemDescriptor extends CommonProblemDescriptor {
 
@@ -34,9 +31,7 @@ public interface DomElementProblemDescriptor extends CommonProblemDescriptor {
   @NotNull
   HighlightSeverity getHighlightSeverity();
   @Override
-  LocalQuickFix @NotNull [] getFixes();
-  @NotNull
-  List<Annotation> getAnnotations();
+  @NotNull LocalQuickFix @Nullable [] getFixes();
 
   void highlightWholeElement();
 

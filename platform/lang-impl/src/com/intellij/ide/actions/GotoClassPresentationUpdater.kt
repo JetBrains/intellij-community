@@ -17,7 +17,7 @@ object GotoClassPresentationUpdater {
 
   @JvmStatic
   @Nls
-  fun getTabTitlePluralized(): String = getActionTitlePluralized()[0]
+  fun getTabTitlePluralized(): String = getGotoClassContributor()?.tabTitlePluralized ?: IdeBundle.message("go.to.class.kind.text.pluralized")
 
   @JvmStatic
   fun getActionTitle(): String =

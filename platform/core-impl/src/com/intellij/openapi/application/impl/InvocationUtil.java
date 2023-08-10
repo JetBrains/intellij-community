@@ -12,8 +12,10 @@ import java.lang.reflect.Field;
 
 @ApiStatus.Internal
 public final class InvocationUtil {
-  public static final @NotNull Class<? extends Runnable> FLUSH_NOW_CLASS = FlushQueue.FlushNow.class;
   public static final @NotNull Class<? extends Runnable> REPAINT_PROCESSING_CLASS = findProcessingClass();
+  public static boolean isFlushNow(@NotNull Runnable runnable) {
+    return LaterInvocator.isFlushNow(runnable);
+  }
   private static final @NotNull Field INVOCATION_EVENT_RUNNABLE_FIELD = findRunnableField();
 
   private InvocationUtil() {}
@@ -62,5 +64,10 @@ public final class InvocationUtil {
                                 @Nullable ReflectiveOperationException cause) {
       super(targetClass + " class internal API has been changed", cause);
     }
+  }
+
+  public static boolean priorityEventPending() {
+    AWTEvent event = Toolkit.getDefaultToolkit().getSystemEventQueue().peekEvent();
+    return event != null && event.getClass().getName().equals("sun.awt.PeerEvent");
   }
 }

@@ -22,7 +22,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.task.ExecuteRunConfigurationTask;
 
 /**
- * @author Vladislav.Soroka
+ * Extension point to customize run configurations execution when run operations are delegated to Gradle.
+ * <p>
+ * Given an {@link ExecuteRunConfigurationTask} instance, an extension can provide alternative execution environment.
+ * E.g., when an Application run configuration is invoked, a Gradle's task of type JavaExec will be executed
  */
 public interface GradleExecutionEnvironmentProvider {
 

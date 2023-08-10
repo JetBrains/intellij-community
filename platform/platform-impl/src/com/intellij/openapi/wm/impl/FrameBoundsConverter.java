@@ -1,14 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.scale.JBUIScale;
+import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+
+import static com.intellij.openapi.wm.impl.WindowManagerImplKt.IDE_FRAME_EVENT_LOG;
 
 /**
  * Converts the frame bounds b/w the user space (JRE-managed HiDPI mode) and the device space (IDE-managed HiDPI mode).
@@ -20,8 +24,7 @@ public final class FrameBoundsConverter {
    * @param bounds the bounds in the device space
    * @return the bounds in the user space
    */
-  @NotNull
-  public static Rectangle convertFromDeviceSpaceAndFitToScreen(@NotNull Rectangle bounds) {
+  public static @Nullable Pair<@NotNull Rectangle, @Nullable GraphicsDevice> convertFromDeviceSpaceAndFitToScreen(@NotNull Rectangle bounds) {
     Rectangle b = bounds.getBounds();
     int centerX = b.x + b.width / 2;
     int centerY = b.y + b.height / 2;
@@ -29,21 +32,39 @@ public final class FrameBoundsConverter {
     for (GraphicsDevice gd : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
       GraphicsConfiguration gc = gd.getDefaultConfiguration();
       Rectangle devBounds = gc.getBounds(); // in user space
-      if (scaleNeeded) scaleUp(devBounds, gc); // to device space if needed
+      if (scaleNeeded) {
+        scaleUp(devBounds, gc); // to device space if needed
+      }
       if (devBounds.contains(centerX, centerY)) {
-        if (scaleNeeded) scaleDown(b, gc); // to user space if needed
+        if (scaleNeeded) {
+          scaleDown(b, gc); // to user space if needed
+        }
         // do not return bounds bigger than the corresponding screen rectangle
         Rectangle screen = ScreenUtil.getScreenRectangle(gc);
-        if (b.x < screen.x) b.x = screen.x;
-        if (b.y < screen.y) b.y = screen.y;
-        if (b.width > screen.width) b.width = screen.width;
-        if (b.height > screen.height) b.height = screen.height;
-        return b;
+        if (b.x < screen.x) {
+          b.x = screen.x;
+        }
+        if (b.y < screen.y) {
+          b.y = screen.y;
+        }
+        if (b.width > screen.width) {
+          b.width = screen.width;
+        }
+        if (b.height > screen.height) {
+          b.height = screen.height;
+        }
+        if (IDE_FRAME_EVENT_LOG.isDebugEnabled()) { // avoid unnecessary concatenation
+          IDE_FRAME_EVENT_LOG.debug("Found the screen " + screen + " for the loaded bounds " + bounds);
+        }
+        return new Pair<>(b, gd);
       }
     }
-    //We didn't find proper device at all, probably it was an external screen that is unavailable now, we cannot use specified bounds
-    ScreenUtil.fitToScreen(b);
-    return b;
+
+    if (IDE_FRAME_EVENT_LOG.isDebugEnabled()) { // avoid unnecessary concatenation
+      IDE_FRAME_EVENT_LOG.debug("Found no screen for the loaded bounds " + bounds);
+    }
+    // We didn't find a proper device at all. Probably it was an external screen that is unavailable now. We cannot use specified bounds.
+    return null;
   }
 
   /**
@@ -53,12 +74,11 @@ public final class FrameBoundsConverter {
    */
   public static Rectangle convertToDeviceSpace(GraphicsConfiguration gc, @NotNull Rectangle bounds) {
     Rectangle b = bounds.getBounds();
-    if (!shouldConvert()) return b;
-
-    try {
-      scaleUp(b, gc);
-    }
-    catch (HeadlessException ignore) {
+    if (shouldConvert()) {
+      try {
+        scaleUp(b, gc);
+      }
+      catch (HeadlessException ignore) { }
     }
     return b;
   }

@@ -27,9 +27,6 @@ import java.util.Map;
 
 import static java.util.Arrays.stream;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalLibraryPathTypeMapperImpl implements ExternalLibraryPathTypeMapper {
 
   private static final Map<LibraryPathType, OrderRootType> MAPPINGS = new EnumMap<>(LibraryPathType.class);

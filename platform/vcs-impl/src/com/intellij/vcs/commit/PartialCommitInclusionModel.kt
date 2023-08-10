@@ -35,10 +35,7 @@ class PartialCommitInclusionModel(private val project: Project) : BaseInclusionM
   override fun addInclusion(items: Collection<Any>) = stateHolder.includeElements(items)
   override fun removeInclusion(items: Collection<Any>) = stateHolder.excludeElements(items)
   override fun setInclusion(items: Collection<Any>) = stateHolder.setIncludedElements(items)
-  override fun retainInclusion(items: Collection<Any>) {
-    val toRemove = getInclusion() - items
-    if (toRemove.isNotEmpty()) removeInclusion(toRemove)
-  }
+  override fun retainInclusion(items: Collection<Any>) = stateHolder.retainElements(items)
 
   override fun clearInclusion() {
     if (getInclusion().isNotEmpty()) setInclusion(emptySet())

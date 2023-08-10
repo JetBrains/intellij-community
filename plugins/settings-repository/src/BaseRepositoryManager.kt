@@ -1,12 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeProvider2
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
@@ -14,14 +13,21 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.io.InputStream
+import java.nio.file.FileSystemException
+import java.nio.file.OpenOption
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.io.path.exists
+import kotlin.io.path.fileSize
+import kotlin.io.path.inputStream
+import kotlin.io.path.isHidden
 
 abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManager {
   protected val lock: ReentrantReadWriteLock = ReentrantReadWriteLock()
@@ -65,21 +71,23 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
   protected open fun isPathIgnored(path: String): Boolean = false
 
   override fun <R> read(path: String, consumer: (InputStream?) -> R): R {
-    var fileToDelete: Path? = null
+    var fileToDelete: Path?
     lock.read {
       val file = dir.resolve(path)
-      when (file.sizeOrNull()) {
-        -1L -> return consumer(null)
-        0L -> {
-          // we ignore empty files as well - delete if corrupted
-          fileToDelete = file
+      val size = try { file.fileSize() } catch (_: FileSystemException) {
+        return consumer(null)
+      }
+      when (size) {
+        0L -> fileToDelete = file  // we ignore empty files as well - delete if corrupted
+        else -> {
+          arrayOf<OpenOption>()
+          return file.inputStream().use(consumer)
         }
-        else -> return file.inputStream().use(consumer)
       }
     }
-
     LOG.runAndLogException {
-      if (fileToDelete!!.sizeOrNull() == 0L) {
+      val size = try { fileToDelete!!.fileSize() } catch (_: FileSystemException) { -1L }
+      if (size == 0L) {
         LOG.warn("File $path is empty (length 0), will be removed")
         delete(fileToDelete!!, path)
       }
@@ -87,18 +95,18 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
     return consumer(null)
   }
 
-  override fun write(path: String, content: ByteArray, size: Int): Boolean {
+  override fun write(path: String, content: ByteArray): Boolean {
     LOG.debug { "Write $path" }
 
     try {
       lock.write {
         val file = dir.resolve(path)
-        file.write(content, 0, size)
+        file.write(content)
         if (isPathIgnored(path)) {
           LOG.debug { "$path is ignored and will be not added to index" }
         }
         else {
-          addToIndex(file, path, content, size)
+          addToIndex(file, path, content)
         }
       }
     }
@@ -112,7 +120,7 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
   /**
    * path relative to repository root
    */
-  protected abstract fun addToIndex(file: Path, path: String, content: ByteArray, size: Int)
+  protected abstract fun addToIndex(file: Path, path: String, content: ByteArray)
 
   override fun delete(path: String): Boolean {
     LOG.debug { "Remove $path"}
@@ -153,7 +161,7 @@ suspend fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvi
   }
 
   var processedFiles: List<VirtualFile>? = null
-  withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+  withContext(Dispatchers.EDT) {
     val fileMergeDialog = MultipleFileMergeDialog(null, files, mergeProvider, object : MergeDialogCustomizer() {
       override fun getMultipleFileDialogTitle() = icsMessage("merge.settings.dialog.title")
     })
@@ -163,7 +171,9 @@ suspend fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvi
   return processedFiles!!
 }
 
-class RepositoryVirtualFile(private val path: String) : LightVirtualFile(PathUtilRt.getFileName(path), StdFileTypes.XML, "", Charsets.UTF_8, 1L) {
+class RepositoryVirtualFile(private val path: String) :
+  LightVirtualFile(PathUtilRt.getFileName(path), FileTypeManager.getInstance().getStdFileType("XML"), "", Charsets.UTF_8, 1L)
+{
   var byteContent: ByteArray? = null
     private set
 

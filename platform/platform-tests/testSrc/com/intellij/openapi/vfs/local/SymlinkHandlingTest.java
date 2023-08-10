@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.WriteAction;
@@ -165,7 +165,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
       assertTrue(linkVDir.getPath(), linkVDir.isWritable());
       setWritableAndCheck(targetDir, false);
       refresh(tempDir.getRoot());
-      assertFalse(linkVDir.getPath(), linkVDir.isWritable());
+      assertTrue(linkVDir.getPath(), linkVDir.isWritable());
     }
     else {
       assertEquals(linkVDir.getPath(), targetDir.canWrite(), linkVDir.isWritable());
@@ -253,7 +253,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     tempDir.newFile("target2/child2.txt");
     Path target1 = target1Child.getParent(), target2 = target2Child.getParent();
     Path link = tempDir.getRoot().toPath().resolve("link");
-    createSymbolicLink(link, target1);
+    Files.createSymbolicLink(link, target1);
     VirtualFile vLink = refreshAndFind(link.toFile());
     assertTrue("link=" + link + ", vLink=" + vLink, vLink != null && vLink.isDirectory() && vLink.is(VFileProperty.SYMLINK));
     vLink.setCharset(StandardCharsets.UTF_8);
@@ -262,7 +262,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     assertEquals(Files.readString(target1Child), VfsUtilCore.loadText(vLink.findChild("child1.txt")));
 
     Files.delete(link);
-    createSymbolicLink(link, target2);
+    Files.createSymbolicLink(link, target2);
     refresh(tempDir.getRoot());
     assertTrue("vLink=" + vLink, vLink.isValid());
     assertEquals(2, vLink.getChildren().length);
@@ -275,7 +275,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     Path target1 = tempDir.newFile("target1.txt", "text".getBytes(StandardCharsets.UTF_8)).toPath();
     Path target2 = tempDir.newFile("target2.txt", "longer text".getBytes(StandardCharsets.UTF_8)).toPath();
     Path link = tempDir.getRoot().toPath().resolve("link");
-    createSymbolicLink(link, target1);
+    Files.createSymbolicLink(link, target1);
     VirtualFile vLink = refreshAndFind(link.toFile());
     assertTrue("link=" + link + ", vLink=" + vLink, vLink != null && !vLink.isDirectory() && vLink.is(VFileProperty.SYMLINK));
     vLink.setCharset(StandardCharsets.UTF_8);
@@ -283,7 +283,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     assertPathsEqual(target1.toString(), vLink.getCanonicalPath());
 
     Files.delete(link);
-    createSymbolicLink(link, target2);
+    Files.createSymbolicLink(link, target2);
     refresh(tempDir.getRoot());
     assertTrue("vLink=" + vLink, vLink.isValid());
     assertEquals(Files.readString(target2), VfsUtilCore.loadText(vLink));

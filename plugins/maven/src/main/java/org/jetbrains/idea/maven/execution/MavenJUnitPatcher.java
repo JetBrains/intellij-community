@@ -9,7 +9,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.PropertiesUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -41,15 +40,14 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
   public static final Pattern ARG_LINE_PATTERN = Pattern.compile("@\\{(.+?)}");
   private static final Logger LOG = Logger.getInstance(MavenJUnitPatcher.class);
   private static final Set<String> EXCLUDE_SUBTAG_NAMES =
-    ContainerUtil.immutableSet("classpathDependencyExclude", "classpathDependencyExcludes", "dependencyExclude");
+    Set.of("classpathDependencyExclude", "classpathDependencyExcludes", "dependencyExclude");
   // See org.apache.maven.artifact.resolver.filter.AbstractScopeArtifactFilter
-  private static final Map<String, List<String>> SCOPE_FILTER = ContainerUtil.<String, List<String>>immutableMapBuilder()
-    .put("compile", Arrays.asList("system", "provided", "compile"))
-    .put("runtime", Arrays.asList("compile", "runtime"))
-    .put("compile+runtime", Arrays.asList("system", "provided", "compile", "runtime"))
-    .put("runtime+system", Arrays.asList("system", "compile", "runtime"))
-    .put("test", Arrays.asList("system", "provided", "compile", "runtime", "test"))
-    .build();
+  private static final Map<String, List<String>> SCOPE_FILTER = Map.of(
+    "compile", Arrays.asList("system", "provided", "compile"),
+    "runtime", Arrays.asList("compile", "runtime"),
+    "compile+runtime", Arrays.asList("system", "provided", "compile", "runtime"),
+    "runtime+system", Arrays.asList("system", "compile", "runtime"),
+    "test", Arrays.asList("system", "provided", "compile", "runtime", "test"));
 
   @Override
   public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {
@@ -87,7 +85,8 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
     if (domModel == null) {
       return s -> s;
     }
-    Properties staticProperties = MavenPropertyResolver.collectPropertiesFromDOM(mavenProject, domModel);
+    var staticProperties = MavenPropertyResolver.collectPropertyMapFromDOM(mavenProject, domModel);
+    Properties modelProperties = mavenProject.getProperties();
     String jaCoCoConfigProperty = getJaCoCoArgLineProperty(mavenProject);
     ParametersList vmParameters = javaParameters.getVMParametersList();
     return name -> {
@@ -95,9 +94,13 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
       if (vmPropertyValue != null) {
         return vmPropertyValue;
       }
-      String staticPropertyValue = staticProperties.getProperty(name);
+      String staticPropertyValue = staticProperties.get(name);
       if (staticPropertyValue != null) {
         return MavenPropertyResolver.resolve(staticPropertyValue, domModel);
+      }
+      String modelPropertyValue = modelProperties.getProperty(name);
+      if (modelPropertyValue != null) {
+        return modelPropertyValue;
       }
       if (name.equals(jaCoCoConfigProperty)) {
         return "";
@@ -150,7 +153,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
 
     if (scopeExclude != null || !excludes.isEmpty()) {
       for (MavenArtifact dependency : mavenProject.getDependencies()) {
-        if (SCOPE_FILTER.getOrDefault(scopeExclude, Collections.emptyList()).contains(dependency.getScope()) ||
+        if (scopeExclude!=null && SCOPE_FILTER.getOrDefault(scopeExclude, Collections.emptyList()).contains(dependency.getScope()) ||
             excludes.contains(dependency.getGroupId() + ":" + dependency.getArtifactId())) {
           File file = dependency.getFile();
           javaParameters.getClassPath().remove(file.getAbsolutePath());
@@ -246,7 +249,8 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
       StreamEx.split(rawText, ',').map(String::trim).into(excludes);
     }
     for (Element child : excludesElement.getChildren()) {
-      if (EXCLUDE_SUBTAG_NAMES.contains(child.getName())) {
+      String name = child.getName();
+      if (name != null && EXCLUDE_SUBTAG_NAMES.contains(name)) {
         String excludeItem = child.getTextTrim();
         if (!excludeItem.isEmpty()) {
           StreamEx.split(excludeItem, ',').map(String::trim).into(excludes);
@@ -280,10 +284,10 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
   }
 
   private static boolean isEnabled(String plugin, String s) {
-    return !Boolean.valueOf(System.getProperty("idea.maven." + plugin + ".disable." + s));
+    return !Boolean.parseBoolean(System.getProperty("idea.maven." + plugin + ".disable." + s));
   }
 
   private static boolean isResolved(String plugin, String s) {
-    return !s.contains("${") || Boolean.valueOf(System.getProperty("idea.maven." + plugin + ".allPropertiesAreResolved"));
+    return !s.contains("${") || Boolean.parseBoolean(System.getProperty("idea.maven." + plugin + ".allPropertiesAreResolved"));
   }
 }

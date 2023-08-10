@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -28,7 +28,7 @@ import java.util.Map;
  * @see MatchingHandler
  */
 public abstract class CompiledPattern {
-  public static final Key<Object> HANDLER_KEY = Key.create("ss.handler");
+  public static final Key<MatchingHandler> HANDLER_KEY = Key.create("ss.handler");
   private final Map<Object, MatchingHandler> handlers = new HashMap<>();
   private final MultiMap<String, PsiElement> variableNodes = new MultiMap<>();
   private SearchScope scope;

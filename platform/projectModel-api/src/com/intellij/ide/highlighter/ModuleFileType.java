@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectModel.ProjectModelBundle;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,32 +16,34 @@ import java.nio.charset.StandardCharsets;
 public final class ModuleFileType implements InternalFileType {
   public static final ModuleFileType INSTANCE = new ModuleFileType();
 
-  @NonNls public static final String DEFAULT_EXTENSION = "iml";
-  @NonNls public static final String DOT_DEFAULT_EXTENSION = ".iml";
+  public static final @NonNls String DEFAULT_EXTENSION = "iml";
+  public static final @NonNls String DOT_DEFAULT_EXTENSION = ".iml";
 
   private ModuleFileType() {}
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "IDEA_MODULE";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
-    return ProjectModelBundle.message("filetype.description.idea.module");
+  public @NotNull String getDescription() {
+    return ProjectModelBundle.message("filetype.idea.module.description");
   }
 
   @Override
-  @NotNull
-  public String getDefaultExtension() {
+  public @Nls @NotNull String getDisplayName() {
+    return ProjectModelBundle.message("filetype.idea.module.display.name");
+  }
+
+  @Override
+  public @NotNull String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 
   @Override
   public Icon getIcon() {
-    return AllIcons.Nodes.IdeaModule;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.IdeaModule);
   }
 
   @Override

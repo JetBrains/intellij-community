@@ -2,7 +2,7 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.xml.util.XmlTagUtilBase;
+import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,9 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class EpydocString extends TagBasedDocString {
 
   public static String[] RTYPE_TAGS = new String[] { "rtype", "returntype" };
@@ -42,12 +40,6 @@ public class EpydocString extends TagBasedDocString {
     final String html = inlineMarkupToHTML(myDescription);
     assert html != null;
     return html;
-  }
-
-  @NotNull
-  @Override
-  public List<String> getParameters() {
-    return toUniqueStrings(getParameterSubstrings());
   }
 
   @NotNull
@@ -180,7 +172,7 @@ public class EpydocString extends TagBasedDocString {
   private static class HTMLConverter extends MarkupConverter {
     @Override
     protected void appendText(String text) {
-      myResult.append(joinLines(XmlTagUtilBase.escapeString(text, false), true));
+      myResult.append(joinLines(XmlStringUtil.escapeString(text, false), true));
     }
 
     @Override
@@ -190,18 +182,10 @@ public class EpydocString extends TagBasedDocString {
         return;
       }
       switch (markupChar) {
-        case 'I':
-          appendTagPair(markupContent, "i");
-          break;
-        case 'B':
-          appendTagPair(markupContent, "b");
-          break;
-        case 'C':
-          appendTagPair(markupContent, "code");
-          break;
-        default:
-          myResult.append(StringUtil.escapeXmlEntities(markupContent));
-          break;
+        case 'I' -> appendTagPair(markupContent, "i");
+        case 'B' -> appendTagPair(markupContent, "b");
+        case 'C' -> appendTagPair(markupContent, "code");
+        default -> myResult.append(StringUtil.escapeXmlEntities(markupContent));
       }
     }
 
@@ -298,5 +282,11 @@ public class EpydocString extends TagBasedDocString {
   @Override
   public Substring getParamTypeSubstring(@Nullable String paramName) {
     return paramName == null ? getTagValue("type") : getTagValue("type", paramName);
+  }
+
+  @Nullable
+  @Override
+  public String getAttributeDescription(@Nullable String attrName) {
+    return attrName != null ? inlineMarkupToHTML(getTagValue(VARIABLE_TAGS, attrName)) : null;
   }
 }

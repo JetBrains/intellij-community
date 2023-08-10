@@ -18,7 +18,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.concurrency.Semaphore
 
 abstract class RunConfigurationJavaExtensionManagerTestCase : ExecutionTestCase() {
-  override fun initOutputChecker(): OutputChecker = OutputChecker("", "")
+  override fun initOutputChecker(): OutputChecker = OutputChecker({ "" }, { "" })
 
   protected fun doTestOnlyApplicableConfigurationExtensionsShouldBeProcessed(configuration: RunConfiguration,
                                                                              expectedOutput: String? = null) {
@@ -45,7 +45,7 @@ abstract class RunConfigurationJavaExtensionManagerTestCase : ExecutionTestCase(
 
   protected class UnApplicableConfigurationExtension : RunConfigurationExtension() {
     override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean = false
-    override fun <T : RunConfigurationBase<*>?> updateJavaParameters(configuration: T,
+    override fun <T : RunConfigurationBase<*>?> updateJavaParameters(configuration: T & Any,
                                                                      params: JavaParameters,
                                                                      runnerSettings: RunnerSettings?) {
       fail("Should not be here")

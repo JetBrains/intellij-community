@@ -18,7 +18,7 @@ package git4idea.history.browser;
 /**
  * @deprecated Use {@link com.intellij.vcs.log.Hash}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class SHAHash {
   private final String myValue;
 

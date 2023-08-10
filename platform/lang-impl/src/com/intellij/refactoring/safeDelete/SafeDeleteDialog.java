@@ -22,9 +22,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author dsl
- */
 public class SafeDeleteDialog extends DialogWrapper {
   private final Project myProject;
   private final PsiElement[] myElements;

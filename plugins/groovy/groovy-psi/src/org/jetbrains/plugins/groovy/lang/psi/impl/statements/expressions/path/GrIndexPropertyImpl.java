@@ -24,9 +24,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isLVal
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isRValue;
 import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.referenceArray;
 
-/**
- * @author ilyas
- */
 public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProperty {
 
   private final GroovyMethodCallReference myRValueReference = new GrGetAtReference(this);

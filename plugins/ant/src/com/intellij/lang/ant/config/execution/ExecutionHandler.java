@@ -1,13 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.JavaCommandLineState;
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.*;
+import com.intellij.execution.target.*;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.util.ExecutionErrorDialog;
+import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
+import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.macro.Macro;
 import com.intellij.lang.ant.AntBundle;
@@ -32,13 +37,14 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.FutureResult;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public final class ExecutionHandler {
@@ -58,7 +64,7 @@ public final class ExecutionHandler {
     if (target == null) {
       return null;
     }
-    FutureResult<ProcessHandler> result = runBuildImpl(
+    Future<ProcessHandler> result = runBuildImpl(
       (AntBuildFileBase)target.getModel().getBuildFile(), target.getTargetNames(), null, dataContext, additionalProperties, antBuildListener, false
     );
     if (result != null) {
@@ -73,7 +79,7 @@ public final class ExecutionHandler {
   }
 
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void runBuild(final AntBuildFileBase buildFile,
                               String[] targets,
                               @Nullable final AntBuildMessageView buildMessageViewToReuse,
@@ -97,14 +103,15 @@ public final class ExecutionHandler {
    * @param antBuildListener should not be null. Use {@link AntBuildListener#NULL}
    */
   @Nullable
-  private static FutureResult<ProcessHandler> runBuildImpl(final AntBuildFileBase buildFile,
-                                                          List<@NlsSafe String> targets,
-                                                          @Nullable final AntBuildMessageView buildMessageViewToReuse,
-                                                          final DataContext dataContext,
-                                                          List<BuildFileProperty> additionalProperties,
-                                                          @NotNull final AntBuildListener antBuildListener, final boolean waitFor) {
+  private static Future<ProcessHandler> runBuildImpl(final AntBuildFileBase buildFile,
+                                                     List<@NlsSafe String> targets,
+                                                     @Nullable final AntBuildMessageView buildMessageViewToReuse,
+                                                     final DataContext dataContext,
+                                                     List<BuildFileProperty> additionalProperties,
+                                                     @NotNull final AntBuildListener antBuildListener, final boolean waitFor) {
     final AntBuildMessageView messageView;
-    final GeneralCommandLine commandLine;
+    final TargetEnvironmentRequest request;
+    final SimpleJavaParameters javaParameters;
     final AntBuildListenerWrapper listenerWrapper = new AntBuildListenerWrapper(buildFile, antBuildListener);
     final Project project = buildFile.getProject();
     try {
@@ -118,8 +125,15 @@ public final class ExecutionHandler {
       builder.getCommandLine().setCharset(EncodingProjectManager.getInstance(buildFile.getProject()).getDefaultCharset());
 
       messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets, additionalProperties);
-      commandLine = builder.getCommandLine().toCommandLine();
-      messageView.setBuildCommandLine(commandLine.getCommandLineString());
+      javaParameters = builder.getCommandLine();
+
+      WslTargetEnvironmentConfiguration wslConfiguration = JavaCommandLineState.checkCreateWslConfiguration(javaParameters.getJdk());
+      if (wslConfiguration != null) {
+        request = new WslTargetEnvironmentRequest(wslConfiguration);
+      }
+      else {
+        request = new LocalTargetEnvironmentRequest();
+      }
 
       project.getMessageBus().syncPublisher(AntExecutionListener.TOPIC).beforeExecution(new AntBeforeExecutionEvent(buildFile, messageView));
     }
@@ -142,13 +156,8 @@ public final class ExecutionHandler {
       LOG.error(e);
       return null;
     }
-    final FutureResult<ProcessHandler> future = new FutureResult<>();
+    CompletableFuture<ProcessHandler> future = new CompletableFuture<>();
     new Task.Backgroundable(buildFile.getProject(), AntBundle.message("ant.build.progress.dialog.title"), true) {
-
-      @Override
-      public boolean shouldStartInBackground() {
-        return true;
-      }
 
       @Override
       public void onCancel() {
@@ -158,8 +167,14 @@ public final class ExecutionHandler {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
-          ProcessHandler handler = runBuild(indicator, messageView, buildFile, listenerWrapper, commandLine);
-          future.set(handler);
+          TargetedCommandLineBuilder builder = javaParameters.toCommandLine(request);
+          TargetEnvironment environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
+          TargetedCommandLine commandLine = builder.build();
+
+          messageView.setBuildCommandLine(commandLine.getCommandPresentation(environment));
+
+          ProcessHandler handler = runBuild(indicator, messageView, buildFile, listenerWrapper, commandLine, environment);
+          future.complete(handler);
           if (waitFor && handler != null) {
             handler.waitFor();
           }
@@ -174,18 +189,19 @@ public final class ExecutionHandler {
   }
 
   @Nullable
-  private static ProcessHandler runBuild(final ProgressIndicator progress,
+  private static ProcessHandler runBuild(@NotNull final ProgressIndicator progress,
                                          @NotNull final AntBuildMessageView errorView,
                                          @NotNull final AntBuildFileBase buildFile,
                                          @NotNull final AntBuildListener antBuildListener,
-                                         @NotNull GeneralCommandLine commandLine) {
+                                         @NotNull TargetedCommandLine commandLine,
+                                         @NotNull TargetEnvironment targetEnvironment) {
     final Project project = buildFile.getProject();
 
     final long startTime = System.currentTimeMillis();
     LocalHistory.getInstance().putSystemLabel(project, AntBundle.message("ant.build.local.history.label", buildFile.getName()));
     final AntProcessHandler handler;
     try {
-      handler = AntProcessHandler.runCommandLine(commandLine);
+      handler = AntProcessHandler.runCommandLine(commandLine, targetEnvironment, progress);
     }
     catch (final ExecutionException e) {
       ApplicationManager.getApplication().invokeLater(

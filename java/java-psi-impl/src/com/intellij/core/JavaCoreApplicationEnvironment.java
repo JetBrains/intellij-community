@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -37,9 +37,7 @@ import com.intellij.psi.stubs.BinaryFileStubBuilders;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 @SuppressWarnings("UnusedDeclaration") // Upsource and Kotlin
 public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
   public JavaCoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
@@ -67,11 +65,11 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     registerApplicationExtensionPoint(ContainerProvider.EP_NAME, ContainerProvider.class);
     addExtension(ContainerProvider.EP_NAME, new JavaContainerProvider());
 
-    myApplication.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
+    application.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
 
-    myApplication.registerService(PsiSubstitutorFactory.class, new PsiSubstitutorFactoryImpl());
-    myApplication.registerService(JavaDirectoryService.class, createJavaDirectoryService());
-    myApplication.registerService(JavaVersionService.class, new JavaVersionService());
+    application.registerService(PsiSubstitutorFactory.class, new PsiSubstitutorFactoryImpl());
+    application.registerService(JavaDirectoryService.class, createJavaDirectoryService());
+    application.registerService(JavaVersionService.class, new JavaVersionService());
 
     addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiPackage.class, new PackagePresentationProvider());
     addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiClass.class, new ClassPresentationProvider());

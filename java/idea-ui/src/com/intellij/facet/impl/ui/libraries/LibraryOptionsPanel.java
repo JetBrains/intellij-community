@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.framework.library.DownloadableLibraryDescription;
@@ -131,20 +131,21 @@ public class LibraryOptionsPanel implements Disposable {
   @Nullable
   private String getPresentableVersion() {
     switch (myButtonEnumModel.getSelected()) {
-      case DOWNLOAD:
+      case DOWNLOAD -> {
         LibraryDownloadSettings settings = mySettings.getDownloadSettings();
         if (settings != null) {
           return settings.getVersion().getVersionNumber();
         }
-        break;
-      case USE_LIBRARY:
+      }
+      case USE_LIBRARY -> {
         LibraryEditor item = myLibraryComboBoxModel.getSelectedItem();
         if (item instanceof ExistingLibraryEditor) {
           return item.getName();
         }
-        break;
-      default:
+      }
+      default -> {
         return null;
+      }
     }
     return null;
   }
@@ -291,7 +292,7 @@ public class LibraryOptionsPanel implements Disposable {
 
   private void doConfigure() {
     switch (myButtonEnumModel.getSelected()) {
-      case DOWNLOAD:
+      case DOWNLOAD -> {
         final LibraryDownloadSettings oldDownloadSettings = mySettings.getDownloadSettings();
         LOG.assertTrue(oldDownloadSettings != null);
         List<? extends FrameworkLibraryVersion> versions = mySettings.getCompatibleVersions();
@@ -303,9 +304,8 @@ public class LibraryOptionsPanel implements Disposable {
         if (newDownloadSettings != null) {
           mySettings.setDownloadSettings(newDownloadSettings);
         }
-        break;
-
-      case USE_LIBRARY:
+      }
+      case USE_LIBRARY -> {
         final Object item = myExistingLibraryComboBox.getSelectedItem();
         if (item instanceof LibraryEditor) {
           EditLibraryDialog dialog = new EditLibraryDialog(myPanel, mySettings, (LibraryEditor)item);
@@ -314,11 +314,9 @@ public class LibraryOptionsPanel implements Disposable {
             WriteAction.run(() -> ((ExistingLibraryEditor)item).commit());
           }
         }
-        break;
-
-      case USE_FROM_PROVIDER:
-      case SETUP_LIBRARY_LATER:
-        break;
+      }
+      case USE_FROM_PROVIDER, SETUP_LIBRARY_LATER -> {
+      }
     }
     updateState();
   }
@@ -411,17 +409,15 @@ public class LibraryOptionsPanel implements Disposable {
     String message = "";
     boolean showConfigurePanel = true;
     switch (myButtonEnumModel.getSelected()) {
-      case DOWNLOAD:
-        message = getDownloadFilesMessage();
-        break;
-      case USE_FROM_PROVIDER:
+      case DOWNLOAD -> message = getDownloadFilesMessage();
+      case USE_FROM_PROVIDER -> {
         if (myLibraryProvider != null) {
           message =
             JavaUiBundle.message("library.options.panel.update.state.library.from.0.will.be.used", myLibraryProvider.getPresentableName());
         }
         myConfigureButton.setVisible(false);
-        break;
-      case USE_LIBRARY:
+      }
+      case USE_LIBRARY -> {
         final Object item = myExistingLibraryComboBox.getSelectedItem();
         if (item == null) {
           myMessageLabel.setIcon(AllIcons.General.BalloonError);
@@ -431,14 +427,13 @@ public class LibraryOptionsPanel implements Disposable {
         else if (item instanceof NewLibraryEditor) {
           final LibraryEditor libraryEditor = (LibraryEditor)item;
           message = JavaUiBundle.message("label.library.will.be.created.description.text", mySettings.getNewLibraryLevel(),
-                                      libraryEditor.getName(), libraryEditor.getFiles(OrderRootType.CLASSES).length);
+                                         libraryEditor.getName(), libraryEditor.getFiles(OrderRootType.CLASSES).length);
         }
         else {
           message = JavaUiBundle.message("label.existing.library.will.be.used", ((ExistingLibraryEditor)item).getName());
         }
-        break;
-      default:
-        showConfigurePanel = false;
+      }
+      default -> showConfigurePanel = false;
     }
 
     if (myLibraryProvider != null) {

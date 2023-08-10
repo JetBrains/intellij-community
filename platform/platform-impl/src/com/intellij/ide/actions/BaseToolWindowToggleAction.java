@@ -1,16 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class BaseToolWindowToggleAction extends ToggleAction implements DumbAware {
+public abstract class BaseToolWindowToggleAction extends ToggleAction implements ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   @Override
   public final boolean isSelected(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -72,4 +74,9 @@ public abstract class BaseToolWindowToggleAction extends ToggleAction implements
   }
 
   protected abstract void update(ToolWindow window, Presentation presentation);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
 }

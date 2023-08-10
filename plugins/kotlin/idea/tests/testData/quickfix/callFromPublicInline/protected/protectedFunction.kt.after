@@ -1,0 +1,10 @@
+// "Make 'protectedMethod' public" "true"
+open class Foo {
+    fun protectedMethod() {}
+
+    inline fun inlineFun() {
+        protectedMethod()
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix

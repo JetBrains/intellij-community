@@ -51,12 +51,7 @@ public class GradleJavaFrameworkSupportProvider extends GradleFrameworkSupportPr
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @NotNull BuildScriptDataBuilder buildScriptData) {
     buildScriptData
-      .addPluginDefinitionInPluginsGroup("id 'java'")
-      .addRepositoriesDefinition("mavenCentral()")
-      .addOther("test {\n" +
-                "    useJUnitPlatform()\n" +
-                "}")
-      .addDependencyNotation("testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'")
-      .addDependencyNotation("testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:1.7.0'");
+      .withJavaPlugin()
+      .withJUnit();
   }
 }

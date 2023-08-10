@@ -10,7 +10,9 @@ import com.intellij.openapi.roots.libraries.CustomLibraryTableDescription;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.SmartList;
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +26,17 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
   private volatile boolean myExtensionsLoaded = false;
   private final Object myExtensionsLoadingLock = new Object();
 
+  LibraryTablesRegistrarImpl() {
+    //this is needed to ensure that VirtualFilePointerManager is initialized before custom library tables and therefore disposed after them;
+    //otherwise VirtualFilePointerManagerImpl.dispose will report non-disposed pointers from custom library tables
+    VirtualFilePointerManager.getInstance();
+  }
+
   @Override
   public @NotNull LibraryTable getLibraryTable() {
+    if (GlobalLibraryTableBridge.Companion.isEnabled()) {
+      return GlobalLibraryTableBridge.Companion.getInstance();
+    }
     return ApplicationLibraryTable.getApplicationTable();
   }
 
@@ -36,14 +47,11 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
 
   @Override
   public LibraryTable getLibraryTableByLevel(String level, @NotNull Project project) {
-    switch (level) {
-      case LibraryTablesRegistrar.PROJECT_LEVEL:
-        return getLibraryTable(project);
-      case LibraryTablesRegistrar.APPLICATION_LEVEL:
-        return getLibraryTable();
-      default:
-        return getCustomLibraryTableByLevel(level);
-    }
+    return switch (level) {
+      case LibraryTablesRegistrar.PROJECT_LEVEL -> getLibraryTable(project);
+      case LibraryTablesRegistrar.APPLICATION_LEVEL -> getLibraryTable();
+      default -> getCustomLibraryTableByLevel(level);
+    };
   }
 
   @Override
@@ -77,15 +85,6 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
       }
     }
     return myCustomLibraryTables;
-  }
-
-  @Override
-  public void registerLibraryTable(@NotNull LibraryTable libraryTable) {
-    String tableLevel = libraryTable.getTableLevel();
-    final LibraryTable oldTable = myCustomLibraryTables.put(tableLevel, (LibraryTableBase)libraryTable);
-    if (oldTable != null) {
-      throw new IllegalArgumentException("Library table '" + tableLevel + "' already registered.");
-    }
   }
 
   @Override

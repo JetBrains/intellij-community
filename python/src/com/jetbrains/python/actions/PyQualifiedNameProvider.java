@@ -33,13 +33,13 @@ import java.util.Collection;
 public class PyQualifiedNameProvider implements QualifiedNameProvider {
 
   @Override
-  public PsiElement adjustElementToCopy(PsiElement element) {
+  public PsiElement adjustElementToCopy(@NotNull PsiElement element) {
     return element instanceof PyClass || element instanceof PyFunction ? element : null;
   }
 
   @Nullable
   @Override
-  public String getQualifiedName(PsiElement element) {
+  public String getQualifiedName(@NotNull PsiElement element) {
     if (element instanceof PyClass) {
       return ((PyClass)element).getQualifiedName();
     }
@@ -51,7 +51,7 @@ public class PyQualifiedNameProvider implements QualifiedNameProvider {
 
   @Nullable
   @Override
-  public PsiElement qualifiedNameToElement(String fqn, Project project) {
+  public PsiElement qualifiedNameToElement(@NotNull String fqn, @NotNull Project project) {
     final PyClass aClass = PyClassNameIndex.findClass(fqn, project);
     if (aClass != null) {
       return aClass;

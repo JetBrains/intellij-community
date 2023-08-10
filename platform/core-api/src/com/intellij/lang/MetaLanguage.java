@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -14,8 +14,6 @@ import java.util.List;
 /**
  * Allows to register a language extension for a group of languages defined by a certain criterion.
  * To use this, specify the ID of a meta-language in the "{@code language}" attribute of an extension in {@code plugin.xml}.
- *
- * @author yole
  */
 public abstract class MetaLanguage extends Language {
   public static final ExtensionPointName<MetaLanguage> EP_NAME = new ExtensionPointName<>("com.intellij.metaLanguage");
@@ -29,7 +27,7 @@ public abstract class MetaLanguage extends Language {
           for (Language matchingLanguage : metaLanguage.getMatchingLanguages()) {
             LanguageUtil.clearMatchingMetaLanguages(matchingLanguage);
           }
-          Language.unregisterLanguage(metaLanguage);
+          metaLanguage.unregisterLanguage(pluginDescriptor);
         }
       }
     }, null);
@@ -47,8 +45,7 @@ public abstract class MetaLanguage extends Language {
   /**
    * Returns the list of all languages matching this meta-language.
    */
-  @NotNull
-  public Collection<Language> getMatchingLanguages() {
+  public @NotNull Collection<Language> getMatchingLanguages() {
     return ContainerUtil.filter(Language.getRegisteredLanguages(), this::matchesLanguage);
   }
 }

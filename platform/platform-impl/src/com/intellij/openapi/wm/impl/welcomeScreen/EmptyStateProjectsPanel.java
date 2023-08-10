@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.DataManager;
@@ -10,28 +10,30 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.components.AnActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.FocusUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
-import static com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory.PRIMARY_BUTTONS_NUM;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.LargeIconWithTextWrapper;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.splitAndWrapActions;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.getApplicationTitle;
 
-public class EmptyStateProjectsPanel extends JPanel {
-
-  public EmptyStateProjectsPanel(@NotNull Disposable parentDisposable) {
+final class EmptyStateProjectsPanel extends BorderLayoutPanel {
+  EmptyStateProjectsPanel(@NotNull Disposable parentDisposable) {
     setBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground());
     JPanel mainPanel = new NonOpaquePanel(new VerticalFlowLayout());
     mainPanel.setBorder(JBUI.Borders.emptyTop(103));
@@ -43,50 +45,67 @@ public class EmptyStateProjectsPanel extends JPanel {
     Couple<DefaultActionGroup> mainAndMore =
       splitAndWrapActions((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE),
                           action -> ActionGroupPanelWrapper.wrapGroups(action, parentDisposable),
-                          PRIMARY_BUTTONS_NUM);
+                          ProjectsTabFactory.PRIMARY_BUTTONS_NUM);
     ActionGroup main = new DefaultActionGroup(
-      ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null), LargeIconWithTextWrapper::wrapAsBigIconWithText));
+      ContainerUtil.map(mainAndMore.getFirst().getChildren(null), LargeIconWithTextWrapper::wrapAsBigIconWithText));
 
     ActionToolbarImpl actionsToolbar = createActionsToolbar(main);
     mainPanel.add(new Wrapper(new FlowLayout(), actionsToolbar.getComponent()));
 
     DefaultActionGroup moreActionGroup = mainAndMore.getSecond();
     if (moreActionGroup.getChildrenCount() > 0) {
-      JPanel moreLinkPanel = new Wrapper(new FlowLayout(), moreActionGroup.getChildrenCount() == 1
-                                                           ? createActionLink(moreActionGroup.getChildren(null)[0])
-                                                           : createLinkWithPopup(moreActionGroup));
+      JComponent actionLink;
+      if (moreActionGroup.getChildrenCount() == 1) {
+        AnAction action = moreActionGroup.getChildren(null)[0];
+        actionLink = new AnActionLink(action, ActionPlaces.WELCOME_SCREEN);
+        if (action instanceof OpenAlienProjectAction) {
+          ((OpenAlienProjectAction)action).scheduleUpdate(actionLink);
+        }
+      }
+      else {
+        actionLink = createLinkWithPopup(moreActionGroup);
+      }
+
+      JPanel moreLinkPanel = new Wrapper(new FlowLayout(), actionLink);
       moreLinkPanel.setBorder(JBUI.Borders.emptyTop(5));
       mainPanel.add(moreLinkPanel);
     }
 
-    add(mainPanel);
+    addToCenter(mainPanel);
   }
 
-  private static ActionLink createActionLink(@NotNull AnAction action) {
-    ActionLink actionLink = new ActionLink(action.getTemplateText(), null, action, null, ActionPlaces.WELCOME_SCREEN);
-    actionLink.setFocusable(true);
-    return actionLink;
-  }
-
-  @NotNull
-  static ActionToolbarImpl createActionsToolbar(ActionGroup actionGroup) {
-    ActionToolbarImpl actionToolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, actionGroup, true);
+  private static @NotNull ActionToolbarImpl createActionsToolbar(ActionGroup actionGroup) {
+    ActionToolbarImpl actionToolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, actionGroup, true) {
+      private boolean wasFocusRequested = false;
+      @Override
+      protected void actionsUpdated(boolean forced,
+                                    @NotNull List<? extends AnAction> newVisibleActions) {
+        super.actionsUpdated(forced, newVisibleActions);
+        if (forced && !newVisibleActions.isEmpty() && getComponents().length > 0 && !wasFocusRequested) {
+          Component obj = FocusUtil.findFocusableComponentIn(getComponents()[0], null);
+          if (obj != null) {
+            wasFocusRequested = true;
+            IdeFocusManager.getGlobalInstance().requestFocus(obj, true);
+          }
+        }
+      }
+    };
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    actionToolbar.setTargetComponent(actionToolbar.getComponent());
     actionToolbar.setBorder(JBUI.Borders.emptyTop(27));
+    actionToolbar.setTargetComponent(actionToolbar.getComponent());
     actionToolbar.setOpaque(false);
     return actionToolbar;
   }
 
-  @NotNull
-  static DropDownLink<String> createLinkWithPopup(@NotNull ActionGroup group) {
+  private static @NotNull DropDownLink<String> createLinkWithPopup(@NotNull ActionGroup group) {
     return new DropDownLink<>(group.getTemplateText(), link
       -> JBPopupFactory.getInstance().createActionGroupPopup(
       null, group, DataManager.getInstance().getDataContext(link),
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true));
   }
 
-  @NotNull
-  static JBLabel createTitle() {
+  private static @NotNull JBLabel createTitle() {
     JBLabel titleLabel = new JBLabel(getApplicationTitle(), SwingConstants.CENTER);
     titleLabel.setOpaque(false);
     Font componentFont = titleLabel.getFont();
@@ -95,8 +114,7 @@ public class EmptyStateProjectsPanel extends JPanel {
     return titleLabel;
   }
 
-  @NotNull
-  static JBLabel createCommentLabel(@NlsContexts.HintText @NotNull String text) {
+  static @NotNull JBLabel createCommentLabel(@NlsContexts.HintText @NotNull String text) {
     JBLabel commentFirstLabel = new JBLabel(text, SwingConstants.CENTER);
     commentFirstLabel.setOpaque(false);
     commentFirstLabel.setForeground(UIUtil.getContextHelpForeground());

@@ -15,6 +15,8 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -23,12 +25,15 @@ import java.util.NoSuchElementException;
  * @deprecated Use {@link Collections#emptyIterator()} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public class EmptyIterator<T> implements Iterator<T> {
   private static final EmptyIterator INSTANCE = new EmptyIterator();
+
   public static <T> EmptyIterator<T> getInstance() {
     //noinspection unchecked
     return INSTANCE;
   }
+
   public boolean hasNext() {
     return false;
   }

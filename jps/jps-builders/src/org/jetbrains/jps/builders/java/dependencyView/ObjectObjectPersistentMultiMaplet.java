@@ -1,43 +1,44 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
-import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Supplier;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMaplet<K, V>{
-  private static final Collection NULL_COLLECTION = Collections.emptySet();
+  private static final Collection<?> NULL_COLLECTION = Collections.emptySet();
   private static final int CACHE_SIZE = 128;
   private final PersistentHashMap<K, Collection<V>> myMap;
   private final DataExternalizer<V> myValueExternalizer;
-  private final SLRUCache<K, Collection> myCache;
+  private final SLRUCache<K, Collection<V>> myCache;
 
   public ObjectObjectPersistentMultiMaplet(final File file,
                                         final KeyDescriptor<K> keyExternalizer,
                                         final DataExternalizer<V> valueExternalizer,
-                                        final BuilderCollectionFactory<V> collectionFactory) throws IOException {
+                                        final Supplier<? extends Collection<V>> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
-    myMap = new PersistentHashMap<>(file, keyExternalizer,
-                                    new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
-    myCache = new SLRUCache<K, Collection>(CACHE_SIZE, CACHE_SIZE, keyExternalizer) {
+    myMap = new PersistentHashMap<>(file, keyExternalizer, new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
+    myCache = new SLRUCache<>(CACHE_SIZE, CACHE_SIZE * 3, keyExternalizer) {
       @NotNull
       @Override
-      public Collection createValue(K key) {
+      public Collection<V> createValue(K key) {
         try {
           final Collection<V> collection = myMap.get(key);
-          return collection == null? NULL_COLLECTION : collection;
+          //noinspection unchecked
+          return collection == null? (Collection<V>)NULL_COLLECTION : collection;
         }
         catch (IOException e) {
           throw new BuildDataCorruptedException(e);
@@ -105,7 +106,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
   @Override
   public void removeAll(K key, Collection<V> values) {
     try {
-      final Collection collection = myCache.get(key);
+      final Collection<V> collection = myCache.get(key);
 
       if (collection != NULL_COLLECTION) {
         if (collection.removeAll(values)) {
@@ -114,7 +115,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
             myMap.remove(key);
           }
           else {
-            myMap.put(key, (Collection<V>)collection);
+            myMap.put(key, collection);
           }
         }
       }
@@ -127,7 +128,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
   @Override
   public void removeFrom(final K key, final V value) {
     try {
-      final Collection collection = myCache.get(key);
+      final Collection<V> collection = myCache.get(key);
 
       if (collection != NULL_COLLECTION) {
         if (collection.remove(value)) {
@@ -136,7 +137,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
             myMap.remove(key);
           }
           else {
-            myMap.put(key, (Collection<V>)collection);
+            myMap.put(key, collection);
           }
         }
       }
@@ -159,23 +160,17 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
 
   @Override
   public void putAll(ObjectObjectMultiMaplet<K, V> m) {
-    m.forEachEntry(new TObjectObjectProcedure<K, Collection<V>>() {
-      @Override
-      public boolean execute(K key, Collection<V> value) {
-        put(key, value);
-        return true;
-      }
+    m.forEachEntry((key, value) -> {
+      put(key, value);
+      return true;
     });
   }
 
   @Override
   public void replaceAll(ObjectObjectMultiMaplet<K, V> m) {
-    m.forEachEntry(new TObjectObjectProcedure<K, Collection<V>>() {
-      @Override
-      public boolean execute(K key, Collection<V> value) {
-        replace(key, value);
-        return true;
-      }
+    m.forEachEntry((key, value) -> {
+      replace(key, value);
+      return true;
     });
   }
 
@@ -203,11 +198,11 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
   }
 
   @Override
-  public void forEachEntry(final TObjectObjectProcedure<K, Collection<V>> procedure) {
+  void forEachEntry(@NotNull PairProcessor<? super K, ? super Collection<V>> procedure) {
     try {
       myMap.processKeysWithExistingMapping(key -> {
         try {
-          return procedure.execute(key, myMap.get(key));
+          return procedure.process(key, myMap.get(key));
         }
         catch (IOException e) {
           throw new BuildDataCorruptedException(e);
@@ -221,10 +216,9 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
 
   private static class CollectionDataExternalizer<V> implements DataExternalizer<Collection<V>> {
     private final DataExternalizer<V> myElementExternalizer;
-    private final BuilderCollectionFactory<V> myCollectionFactory;
+    private final Supplier<? extends Collection<V>> myCollectionFactory;
 
-    CollectionDataExternalizer(DataExternalizer<V> elementExternalizer,
-                                      BuilderCollectionFactory<V> collectionFactory) {
+    CollectionDataExternalizer(DataExternalizer<V> elementExternalizer, Supplier<? extends Collection<V>> collectionFactory) {
       myElementExternalizer = elementExternalizer;
       myCollectionFactory = collectionFactory;
     }
@@ -238,7 +232,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
 
     @Override
     public Collection<V> read(@NotNull final DataInput in) throws IOException {
-      final Collection<V> result = myCollectionFactory.create();
+      final Collection<V> result = myCollectionFactory.get();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
         result.add(myElementExternalizer.read(in));

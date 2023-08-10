@@ -7,7 +7,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-@ApiStatus.Experimental
+/**
+ * WARNING: For internal usage only.
+ */
 public interface DisplayModeEx {
   boolean isDefault(@NotNull DisplayMode dm);
 }

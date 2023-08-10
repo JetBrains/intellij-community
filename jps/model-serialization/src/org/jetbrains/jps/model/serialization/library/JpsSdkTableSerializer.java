@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.library;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -65,7 +65,7 @@ public final class JpsSdkTableSerializer {
     String typeId = getAttributeValue(sdkElement, TYPE_TAG);
     LOG.debug("Loading " + typeId + " SDK '" + name + "'");
     JpsSdkPropertiesSerializer<?> serializer = getSdkPropertiesSerializer(typeId);
-    final JpsLibrary library = createSdk(name, serializer, sdkElement);
+    final JpsLibrary library = createSdk(name, serializer, pathMapper, sdkElement);
     final Element roots = sdkElement.getChild(ROOTS_TAG);
     for (Element rootTypeElement : JDOMUtil.getChildren(roots)) {
       JpsLibraryRootTypeSerializer rootTypeSerializer = getRootTypeSerializer(rootTypeElement.getName());
@@ -96,9 +96,10 @@ public final class JpsSdkTableSerializer {
       }
     }
     else if (type.equals(SIMPLE_TYPE)) {
-      String url = rootElement.getAttributeValue(URL_ATTRIBUTE);
-      if (url == null) return;
-      library.addRoot(pathMapper.mapUrl(url), rootType);
+      String url = pathMapper.mapUrl(rootElement.getAttributeValue(URL_ATTRIBUTE));
+      if (url != null) {
+        library.addRoot(url, rootType);
+      }
     }
   }
 
@@ -119,9 +120,9 @@ public final class JpsSdkTableSerializer {
     return null;
   }
 
-  private static <P extends JpsElement> JpsLibrary createSdk(String name, JpsSdkPropertiesSerializer<P> loader, Element sdkElement) {
+  private static <P extends JpsElement> JpsLibrary createSdk(String name, JpsSdkPropertiesSerializer<P> loader, @NotNull JpsPathMapper pathMapper, Element sdkElement) {
     String versionString = getAttributeValue(sdkElement, VERSION_TAG);
-    String homePath = getAttributeValue(sdkElement, HOME_PATH_TAG);
+    String homePath = pathMapper.mapUrl(getAttributeValue(sdkElement, HOME_PATH_TAG));
     Element propertiesTag = sdkElement.getChild(ADDITIONAL_TAG);
     P properties = loader.loadProperties(propertiesTag);
     return JpsElementFactory.getInstance().createSdk(name, homePath, versionString, loader.getType(), properties);

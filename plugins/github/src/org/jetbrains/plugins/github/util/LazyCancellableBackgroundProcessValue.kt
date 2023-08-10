@@ -1,6 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
+import com.intellij.collaboration.async.CompletableFutureUtil
+import com.intellij.collaboration.async.CompletableFutureUtil.cancellationOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
@@ -9,8 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.EventDispatcher
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
-import org.jetbrains.plugins.github.util.GithubAsyncUtil.extractError
+import com.intellij.collaboration.ui.SimpleEventListener
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
@@ -44,7 +47,7 @@ abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
             this.overriddenFuture = null
             computeUnderProgress().handle(BiFunction<T?, Throwable?, Unit> { result, error ->
               if (error != null) {
-                newFuture.completeExceptionally(extractError(error))
+                newFuture.completeExceptionally(CompletableFutureUtil.extractError(error))
               }
               else {
                 newFuture.complete(result as T)

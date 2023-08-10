@@ -17,9 +17,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GrStringImpl extends GrAbstractLiteral implements GrString {
 
   public GrStringImpl(@NotNull ASTNode node) {

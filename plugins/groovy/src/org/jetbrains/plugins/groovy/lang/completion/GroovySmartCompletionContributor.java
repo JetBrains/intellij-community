@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -21,13 +21,15 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.lang.completion.api.GroovyCompletionConsumer;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.AfterNewClassInsertHandler;
+import org.jetbrains.plugins.groovy.lang.completion.impl.FastGroovyCompletionConsumer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -45,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -63,7 +66,7 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
   private static final ElementPattern<PsiElement> IN_ANNOTATION = PlatformPatterns
     .psiElement().withParent(PlatformPatterns.psiElement(GrReferenceExpression.class).withParent(GrAnnotationNameValuePair.class));
 
-  private static final Hash.Strategy<TypeConstraint> EXPECTED_TYPE_INFO_STRATEGY = new Hash.Strategy<>() {
+  private static final HashingStrategy<TypeConstraint> EXPECTED_TYPE_INFO_STRATEGY = new HashingStrategy<>() {
     @Override
     public int hashCode(@Nullable TypeConstraint object) {
       return object == null ? 0 : object.getType().hashCode();
@@ -106,7 +109,7 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
                                                  }
                                                  else if (o instanceof String) {
                                                    if ("true".equals(o) || "false".equals(o)) {
-                                                     type = PsiType.BOOLEAN;
+                                                     type = PsiTypes.booleanType();
                                                    }
                                                  }
                                                  if (type == null) return;
@@ -119,7 +122,7 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
                                                });
         }
 
-        addExpectedClassMembers(params, result);
+        addExpectedClassMembers(params, new FastGroovyCompletionConsumer(result));
       }
     });
 
@@ -232,9 +235,9 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
     return false;
   }
 
-  static void addExpectedClassMembers(CompletionParameters params, final CompletionResultSet result) {
+  static void addExpectedClassMembers(CompletionParameters params, final GroovyCompletionConsumer result) {
     for (final TypeConstraint info : getExpectedTypeInfos(params)) {
-      Consumer<LookupElement> consumer = element -> result.addElement(element);
+      Consumer<LookupElement> consumer = result::consume;
       PsiType type = info.getType();
       PsiType defType = info.getDefaultType();
       boolean searchInheritors = params.getInvocationCount() > 1;
@@ -322,8 +325,7 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
     }
     else if (pparent instanceof GrApplicationStatement) {
       PsiElement ppparent = pparent.getParent();
-      if (ppparent instanceof GrAssignmentExpression) {
-        GrAssignmentExpression assignment = (GrAssignmentExpression)ppparent;
+      if (ppparent instanceof GrAssignmentExpression assignment) {
 
         GrExpression lvalue = assignment.getLValue();
         GrExpression rvalue = assignment.getRValue();
@@ -401,7 +403,9 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
   }
 
   private static Set<TypeConstraint> getExpectedTypeInfos(final CompletionParameters params) {
-    return new ObjectOpenCustomHashSet<>(getExpectedTypes(params), EXPECTED_TYPE_INFO_STRATEGY);
+    Set<TypeConstraint> set = CollectionFactory.createCustomHashingStrategySet(EXPECTED_TYPE_INFO_STRATEGY);
+    Collections.addAll(set, getExpectedTypes(params));
+    return set;
   }
 
   public static TypeConstraint @NotNull [] getExpectedTypes(CompletionParameters params) {

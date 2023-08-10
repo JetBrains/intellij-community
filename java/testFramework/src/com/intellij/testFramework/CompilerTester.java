@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.*;
@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,7 +46,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.cmdline.LogSetup;
-import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 import org.junit.Assert;
 
 import javax.swing.*;
@@ -55,9 +55,9 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author peter
- */
+import static com.intellij.configurationStore.StoreUtilKt.getPersistentStateComponentStorageLocation;
+import static org.junit.Assert.assertNotNull;
+
 public final class CompilerTester {
   private static final Logger LOG = Logger.getInstance(CompilerTester.class);
 
@@ -73,7 +73,16 @@ public final class CompilerTester {
     this(fixture.getProject(), modules, fixture.getTestRootDisposable());
   }
 
-  public CompilerTester(@NotNull Project project, @NotNull List<? extends Module> modules, @Nullable Disposable disposable) throws Exception {
+  public CompilerTester(@NotNull Project project,
+                        @NotNull List<? extends Module> modules,
+                        @Nullable Disposable disposable) throws Exception {
+    this(project, modules, disposable, true);
+  }
+
+  public CompilerTester(@NotNull Project project,
+                        @NotNull List<? extends Module> modules,
+                        @Nullable Disposable disposable,
+                        boolean overrideJdkAndOutput) throws Exception {
     myProject = project;
     myModules = modules;
     myMainOutput = new TempDirTestFixtureImpl();
@@ -89,22 +98,26 @@ public final class CompilerTester {
     }
 
     CompilerTestUtil.enableExternalCompiler();
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      Objects.requireNonNull(CompilerProjectExtension.getInstance(getProject())).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
-      if (!myModules.isEmpty()) {
-        JavaAwareProjectJdkTableImpl projectJdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx();
-        for (Module module : myModules) {
-          ModuleRootModificationUtil.setModuleSdk(module, projectJdkTable.getInternalJdk());
+    if (overrideJdkAndOutput) {
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+        Objects.requireNonNull(CompilerProjectExtension.getInstance(getProject())).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
+        if (!myModules.isEmpty()) {
+          JavaAwareProjectJdkTableImpl projectJdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx();
+          if ((project.getBasePath() != null) && (WslPath.getDistributionByWindowsUncPath(project.getBasePath()) == null)) {
+            for (Module module : myModules) {
+              ModuleRootModificationUtil.setModuleSdk(module, projectJdkTable.getInternalJdk());
+            }
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   public void tearDown() {
     try {
       RunAll.runAll(
-        () -> CompilerTestUtil.disableExternalCompiler(getProject()),
-        () -> myMainOutput.tearDown()
+        () -> myMainOutput.tearDown(),
+        () -> CompilerTestUtil.disableExternalCompiler(getProject())
       );
     }
     finally {
@@ -177,11 +190,10 @@ public final class CompilerTester {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
-    final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
+    ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
+    PlatformTestUtil.saveProject(getProject(), false);
+    CompilerTestUtil.saveApplicationSettings();
     EdtTestUtil.runInEdtAndWait(() -> {
-      PlatformTestUtil.saveProject(getProject(), false);
-      CompilerTestUtil.saveApplicationSettings();
-
       // for now directory based project is used for external storage
       if (!ProjectKt.isDirectoryBased(myProject)) {
         for (Module module : myModules) {
@@ -194,8 +206,8 @@ public final class CompilerTester {
       Map<String, String> userMacros = pathMacroManager.getUserMacros();
       if (!userMacros.isEmpty()) {
         // require to be presented on disk
-        Path configDir = PathManager.getConfigDir();
-        Path macroFilePath = configDir.resolve("options").resolve(JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME);
+        Path macroFilePath = getPersistentStateComponentStorageLocation(pathMacroManager.getClass());
+        assertNotNull(macroFilePath);
         if (!Files.exists(macroFilePath)) {
           String message = "File " + macroFilePath + " doesn't exist, but user macros defined: " + userMacros;
           // todo find out who deletes this file during tests
@@ -275,10 +287,15 @@ public final class CompilerTester {
     }
   }
 
-  public static void enableDebugLogging() {
-    File logDirectory = BuildManager.getBuildLogDirectory();
-    FileUtil.delete(logDirectory);
-    FileUtil.createDirectory(logDirectory);
+  public static void enableDebugLogging()  {
+    Path logDirectory = BuildManager.getBuildLogDirectory().toPath();
+    try {
+      NioFiles.deleteRecursively(logDirectory);
+      Files.createDirectories(logDirectory);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     Properties properties = new Properties();
     try {
       try (InputStream config = LogSetup.readDefaultLogConfig()) {
@@ -286,8 +303,8 @@ public final class CompilerTester {
       }
 
       properties.setProperty("log4j.rootLogger", "debug, file");
-      File logFile = new File(logDirectory, LogSetup.LOG_CONFIG_FILE_NAME);
-      try (OutputStream output = new BufferedOutputStream(new FileOutputStream(logFile))) {
+      Path logFile = logDirectory.resolve(LogSetup.LOG_CONFIG_FILE_NAME);
+      try (OutputStream output = new BufferedOutputStream(Files.newOutputStream(logFile))) {
         properties.store(output, null);
       }
     }
@@ -296,7 +313,7 @@ public final class CompilerTester {
     }
   }
 
-  private static class ErrorReportingCallback implements CompileStatusNotification {
+  private static final class ErrorReportingCallback implements CompileStatusNotification {
     private final Semaphore mySemaphore;
     private Throwable myError;
     private final List<CompilerMessage> myMessages = new ArrayList<>();

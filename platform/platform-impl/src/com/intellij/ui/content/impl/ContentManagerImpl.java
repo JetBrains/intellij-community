@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content.impl;
 
 import com.intellij.ide.DataManager;
@@ -9,10 +9,12 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.BusyObject;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
@@ -31,15 +33,12 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public class ContentManagerImpl implements ContentManager, PropertyChangeListener, Disposable.Parent {
   private static final Logger LOG = Logger.getInstance(ContentManagerImpl.class);
 
   private ContentUI myUI;
   private final List<Content> myContents = new ArrayList<>();
+  private final List<ContentManagerImpl> myNestedManagers = new SmartList<>();
   private final EventDispatcher<ContentManagerListener> myDispatcher = EventDispatcher.create(ContentManagerListener.class);
   private final List<Content> mySelection = new ArrayList<>();
   private final boolean myCanCloseContents;
@@ -94,6 +93,20 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     if (ui instanceof Disposable) {
       Disposer.register(this, (Disposable)ui);
     }
+  }
+
+  public void addNestedManager(@NotNull ContentManagerImpl manager) {
+    myNestedManagers.add(manager);
+    Disposer.register(manager, new Disposable() {
+      @Override
+      public void dispose() {
+        removeNestedManager(manager);
+      }
+    });
+  }
+
+  public void removeNestedManager(@NotNull ContentManagerImpl manager) {
+    myNestedManagers.remove(manager);
   }
 
   @Override
@@ -161,12 +174,24 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myContents.contains(content)) {
       myContents.remove(content);
-      myContents.add(index == -1 ? myContents.size() : index, content);
+      myContents.add(index < 0 ? myContents.size() : index, content);
       return;
     }
 
+    if (!Content.TEMPORARY_REMOVED_KEY.get(content, false) && getContentCount() == 0 && !isEmpty()) {
+      ContentManager oldManager = content.getManager();
+      for (ContentManagerImpl nestedManager : myNestedManagers) {
+        if (!nestedManager.isEmpty()) {
+          nestedManager.doAddContent(content, index);
+          if (content.getManager() != oldManager) {
+            return;
+          }
+        }
+      }
+    }
+
     ((ContentImpl)content).setManager(this);
-    final int insertIndex = index == -1 ? myContents.size() : index;
+    final int insertIndex = index < 0 ? myContents.size() : index;
     myContents.add(insertIndex, content);
     content.addPropertyChangeListener(this);
     fireContentAdded(content, insertIndex);
@@ -176,6 +201,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       }
       else {
         addSelectedContent(content);
+      }
+      if (myComponent != null && myComponent.isFocusOwner() && myContents.size() == 1) {
+        requestFocus(content, true);
       }
     }
 
@@ -194,12 +222,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     doRemoveContent(content, dispose).doWhenDone(() -> {
       if (requestFocus) {
         Content current = getSelectedContent();
-        if (current != null) {
-          setSelectedContent(current, true, true, !forcedFocus).notify(result);
-        }
-        else {
+        if (current == null) {
           ToolWindowManager.getInstance(myProject).activateEditorComponent();
           result.setDone();
+        }
+        else {
+          setSelectedContent(current, true, true, !forcedFocus).notify(result);
         }
       }
       else {
@@ -279,9 +307,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
     finally {
       if (ApplicationManager.getApplication().isDispatchThread() && !myDisposed && myContents.isEmpty()) {
-        // Cleanup visibleComponent in TabbedPaneUI only if there is no content left,
-        // otherwise immediate adding of a new content will lead to having visible two TabWrapper component
-        // at at the same time.
+        // cleanup visibleComponent in TabbedPaneUI only if there is no content left,
+        // otherwise immediate adding of a new content will lead to having visible two TabWrapper component at the same time.
         myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
       }
     }
@@ -293,7 +320,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       return;
     }
 
-    for (Content content : new ArrayList<>(myContents)) {
+    for (Content content : List.copyOf(myContents)) {
       removeContent(content, dispose);
     }
   }
@@ -304,8 +331,26 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
+  public boolean isEmpty() {
+    boolean empty = ContentManager.super.isEmpty();
+    if (!empty) return false;
+    for (ContentManager manager : myNestedManagers) {
+      if (!manager.isEmpty()) return false;
+    }
+    return true;
+  }
+
+  @Override
   public Content @NotNull [] getContents() {
     return myContents.toArray(new Content[0]);
+  }
+
+  public List<Content> getContentsRecursively() {
+    SmartList<Content> list = new SmartList<>(myContents);
+    for (ContentManagerImpl nestedManager : myNestedManagers) {
+      list.addAll(nestedManager.getContentsRecursively());
+    }
+    return list;
   }
 
   @Override
@@ -327,7 +372,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   public Content getContent(@NotNull JComponent component) {
     Content[] contents = getContents();
     for (Content content : contents) {
-      if (Comparing.equal(component, content.getComponent())) {
+      if (SwingUtilities.isDescendingFrom(component, content.getComponent())) {
         return content;
       }
     }
@@ -447,58 +492,55 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     mySelectionHistory.remove(content);
     mySelectionHistory.add(0, content);
     if (isSelected(content) && requestFocus) {
-      return getFocusManager().requestFocus(getComponent(), true).doWhenProcessed(() -> requestFocus(content, forcedFocus));
+      requestFocusWithFallback(content);
+      return ActionCallback.DONE;
     }
 
     if (!checkSelectionChangeShouldBeProcessed(content, implicit)) {
       return ActionCallback.REJECTED;
     }
     if (!myContents.contains(content)) {
-      throw new IllegalArgumentException("Cannot find content:" + content.getDisplayName());
+      for (ContentManagerImpl manager : myNestedManagers) {
+        ActionCallback nestedCallback = manager.setSelectedContent(content, requestFocus, forcedFocus, implicit);
+        if (nestedCallback != ActionCallback.REJECTED) return nestedCallback;
+      }
+      return ActionCallback.REJECTED;
     }
 
     final boolean focused = isSelectionHoldsFocus();
 
     final Content[] old = getSelectedContents();
 
-    final ActiveRunnable selection = new ActiveRunnable() {
-      @Override
-      public @NotNull ActionCallback run() {
-        if (myDisposed || getIndexOfContent(content) == -1) return ActionCallback.REJECTED;
+    if (myDisposed || getIndexOfContent(content) == -1) return ActionCallback.REJECTED;
 
-        for (Content each : old) {
-          removeFromSelection(each);
-        }
-
-        addSelectedContent(content);
-
-        if (requestFocus) {
-          requestFocus(content, forcedFocus);
-        }
-        return ActionCallback.DONE;
-      }
-    };
-
-    final ActionCallback result = new ActionCallback();
-    boolean enabledFocus = getFocusManager().isFocusTransferEnabled();
-    if (focused || requestFocus) {
-      if (enabledFocus) {
-        return getFocusManager().requestFocusInProject(getComponent(), myProject).doWhenProcessed(() -> selection.run().notify(result));
-      }
+    for (Content each : old) {
+      removeFromSelection(each);
     }
-    return selection.run().notify(result);
+
+    addSelectedContent(content);
+
+    if (requestFocus || focused) {
+      requestFocusWithFallback(content);
+    }
+    return ActionCallback.DONE;
   }
 
   private boolean isSelectionHoldsFocus() {
     boolean focused = false;
     final Content[] selection = getSelectedContents();
     for (Content each : selection) {
-      if (UIUtil.isFocusAncestor(each.getComponent())) {
+      if (isFocusAncestorStrict(each.getComponent())) {
         focused = true;
         break;
       }
     }
     return focused;
+  }
+
+  private static boolean isFocusAncestorStrict(JComponent component) {
+    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (owner == null) return false;
+    return SwingUtilities.isDescendingFrom(owner, component);
   }
 
   @Override
@@ -541,6 +583,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public void addContentManagerListener(@NotNull ContentManagerListener l) {
+    if (Registry.is("ide.content.manager.listeners.order.fix")) {
+      myDispatcher.getListeners().add(l);
+      return;
+    }
     myDispatcher.getListeners().add(0, l);
   }
 
@@ -584,6 +630,15 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return preferredFocusableComponent != null ? getFocusManager().requestFocusInProject(preferredFocusableComponent, myProject) : ActionCallback.REJECTED;
   }
 
+  /**
+   * Focus the content if it defines a preferred focused component, focus our root panel otherwise.
+   */
+  private void requestFocusWithFallback(Content content) {
+    requestFocus(content, true).doWhenRejected(() -> {
+      getFocusManager().requestFocusInProject(getComponent(), myProject);
+    });
+  }
+
   private IdeFocusManager getFocusManager() {
     return IdeFocusManager.getInstance(myProject);
   }
@@ -618,6 +673,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     myDisposed = true;
 
     myContents.clear();
+    myNestedManagers.clear();
     mySelection.clear();
     myContentWithChangedComponent.clear();
     myUI = null;
@@ -636,10 +692,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return myUI.isSingleSelection();
   }
 
-  public void rebuildContentUi() {
-    if (myUI instanceof ToolWindowContentUi) {
-      ToolWindowContentUi contentUi = (ToolWindowContentUi)myUI;
-      contentUi.rebuild();
-    }
+  public @Nullable ContentUI getUI() {
+    return myUI;
   }
 }

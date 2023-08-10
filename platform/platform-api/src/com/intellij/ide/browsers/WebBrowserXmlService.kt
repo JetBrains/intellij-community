@@ -17,9 +17,9 @@ open class WebBrowserXmlService {
     }
   }
 
-  open fun isHtmlFile(element: PsiElement) = false
-  open fun isHtmlFile(file: VirtualFile) = false
-  open fun isHtmlOrXmlFile(psiFile: PsiFile) = false
-  open fun isXmlLanguage(language: Language) = false
-  open fun isHtmlOrXmlLanguage(language: Language) = false
+  open fun isHtmlFile(element: PsiElement): Boolean = false
+  open fun isHtmlFile(file: VirtualFile): Boolean = false
+  open fun isHtmlOrXmlFile(psiFile: PsiFile): Boolean = false
+  open fun isXmlLanguage(language: Language): Boolean = false
+  open fun isHtmlOrXmlLanguage(language: Language): Boolean = false
 }

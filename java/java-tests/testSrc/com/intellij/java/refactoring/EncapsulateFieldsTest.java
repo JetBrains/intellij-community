@@ -60,10 +60,11 @@ public class EncapsulateFieldsTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testInaccessibleSuperMethod() {
-    myFixture.addClass("package a;\n" +
-                       "public class A {\n" +
-                       "  int getFoo();\n" +
-                       "}");
+    myFixture.addClass("""
+                         package a;
+                         public class A {
+                           int getFoo();
+                         }""");
     doTest("foo", "b.B", null);
   }
 

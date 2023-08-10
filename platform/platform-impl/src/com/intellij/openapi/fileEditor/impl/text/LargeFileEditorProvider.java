@@ -1,13 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
@@ -15,7 +11,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,14 +36,15 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
     return "LargeFileEditor";
   }
 
-  public static class LargeTextFileEditor extends TextEditorImpl {
+  public static final class LargeTextFileEditor extends TextEditorImpl {
     LargeTextFileEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
-      super(project, file, provider);
-      ObjectUtils.consumeIfCast(getEditor(), EditorEx.class, editorEx -> editorEx.setViewer(true));
+      super(project, file, provider, TextEditorImpl.Companion.createTextEditor(project, file));
+
+      getEditor().setViewer(true);
     }
   }
 
-  private static class LargeBinaryFileEditor extends UserDataHolderBase implements FileEditor {
+  private static final class LargeBinaryFileEditor extends UserDataHolderBase implements FileEditor {
     private final VirtualFile myFile;
 
     LargeBinaryFileEditor(VirtualFile file) {
@@ -91,30 +87,14 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
     }
 
     @Override
-    public void selectNotify() { }
-
-    @Override
-    public void deselectNotify() { }
-
-    @Override
     public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
     @Override
     public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
     @Override
-    public BackgroundEditorHighlighter getBackgroundHighlighter() {
-      return null;
-    }
-
-    @Override
-    public FileEditorLocation getCurrentLocation() {
-      return null;
-    }
-
-    @Override
-    public StructureViewBuilder getStructureViewBuilder() {
-      return null;
+    public @NotNull VirtualFile getFile() {
+      return myFile;
     }
 
     @Override

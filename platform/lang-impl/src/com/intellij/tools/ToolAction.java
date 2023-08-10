@@ -17,7 +17,7 @@
 package com.intellij.tools;
 
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.ide.macro.MacroManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -30,11 +30,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
-import static com.intellij.openapi.actionSystem.LangDataKeys.MODULE;
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.PROJECT_FILE_DIRECTORY;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.MODULE;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.PROJECT_FILE_DIRECTORY;
 
 /**
  * @author Eugene Belyaev
@@ -55,15 +53,20 @@ public class ToolAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Tool tool = findTool(myActionId, e.getDataContext());
+    Tool tool = findTool(myActionId);
     if (tool != null) {
       e.getPresentation().setText(ToolRunProfile.expandMacrosInName(tool, e.getDataContext()), false);
     }
   }
 
-  private static Tool findTool(String actionId, DataContext context) {
-    MacroManager.getInstance().cacheMacrosPreview(context);
-    for (Tool tool : getAllTools()) {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Nullable
+  private static Tool findTool(@NotNull String actionId) {
+    for (Tool tool : ToolsProvider.getAllTools()) {
       if (actionId.equals(tool.getActionId())) {
         return tool;
       }
@@ -71,23 +74,20 @@ public class ToolAction extends AnAction implements DumbAware {
     return null;
   }
 
-  protected static List<Tool> getAllTools() {
-    return ToolsProvider.getAllTools();
-  }
-
-  static void runTool(String actionId, DataContext context) {
+  static void runTool(@NotNull String actionId, @NotNull DataContext context) {
     runTool(actionId, context, null, 0L, null);
   }
 
-  static void runTool(String actionId,
-                      DataContext context,
+  static void runTool(@NotNull String actionId,
+                      @NotNull DataContext context,
                       @Nullable AnActionEvent e,
                       long executionId,
                       @Nullable ProcessListener processListener) {
-    Tool tool = findTool(actionId, context);
+    Tool tool = findTool(actionId);
     if (tool != null) {
       tool.execute(e, getToolDataContext(context), executionId, processListener);
-    } else {
+    }
+    else {
       Tool.notifyCouldNotStart(processListener);
     }
   }

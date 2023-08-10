@@ -1,18 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.CodeStyleBundle;
 import com.intellij.configurationStore.Property;
-import com.intellij.configurationStore.UnknownElementCollector;
-import com.intellij.configurationStore.UnknownElementWriter;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,8 +21,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ClassMap;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.PresentableEnum;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -55,19 +53,16 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   private static final Logger LOG = Logger.getInstance(CodeStyleSettings.class);
   public static final String VERSION_ATTR = "version";
 
-  private final ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<>();
-
   @NonNls private static final String REPEAT_ANNOTATIONS = "REPEAT_ANNOTATIONS";
-  @NonNls private static final String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
+  @NonNls static final String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
 
   @NonNls private static final String FILETYPE = "fileType";
   private CommonCodeStyleSettingsManager myCommonSettingsManager = new CommonCodeStyleSettingsManager(this);
+  private final CustomCodeStyleSettingsManager myCustomCodeStyleSettingsManager = new CustomCodeStyleSettingsManager(this);
 
   private static class DefaultsHolder {
     private static final CodeStyleSettings myDefaults = new CodeStyleSettings(true, false);
   }
-
-  private UnknownElementWriter myUnknownElementWriter = UnknownElementWriter.EMPTY;
 
   private final SoftMargins mySoftMargins = new SoftMargins();
 
@@ -76,6 +71,8 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   private int myVersion = CURR_VERSION;
 
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
+
+  private final StoredOptionsContainer myStoredOptions = new StoredOptionsContainer();
 
   /**
    * @deprecated Use {@link CodeStyleSettingsManager#createSettings()}or {@link CodeStyleSettingsManager#createTemporarySettings()}.
@@ -90,7 +87,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   /**
    * @deprecated See {@link #CodeStyleSettings()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public CodeStyleSettings(boolean loadExtensions) {
     this(loadExtensions, true);
   }
@@ -104,12 +101,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     initImportsByDefault();
 
     if (loadExtensions) {
-      for (final CustomCodeStyleSettingsFactory factory : CodeStyleSettingsService.getInstance().getCustomCodeStyleSettingsFactories()) {
-        addCustomSettings(factory.createCustomSettings(this));
-      }
-      for (CustomCodeStyleSettingsFactory factory : CodeStyleSettingsService.getInstance().getSettingsPagesProviders()) {
-        addCustomSettings(factory.createCustomSettings(this));
-      }
+      myCustomCodeStyleSettingsManager.initCustomSettings();
     }
 
     if (needsRegistration) {
@@ -128,7 +120,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
   }
 
-  public void setParentSettings(CodeStyleSettings parent) {
+  public void setParentSettings(@NotNull CodeStyleSettings parent) {
     myParentSettings = parent;
   }
 
@@ -136,24 +128,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     return myParentSettings;
   }
 
-  private void addCustomSettings(CustomCodeStyleSettings settings) {
-    if (settings != null) {
-      synchronized (myCustomSettings) {
-        myCustomSettings.put(settings.getClass(), settings);
-      }
-    }
-  }
-
   @NotNull
   public <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> aClass) {
-    synchronized (myCustomSettings) {
-      //noinspection unchecked
-      T result = (T)myCustomSettings.get(aClass);
-      if (result == null) {
-        throw new RuntimeException("Unable to get registered settings of #" + aClass.getSimpleName() + " (" + aClass.getName() + ")");
-      }
-      return result;
-    }
+    return myCustomCodeStyleSettingsManager.getCustomSettings(aClass);
   }
 
   /**
@@ -161,10 +138,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    */
   @Nullable
   public <T extends CustomCodeStyleSettings> T getCustomSettingsIfCreated(@NotNull Class<T> aClass) {
-    synchronized (myCustomSettings) {
-      //noinspection unchecked
-      return (T)myCustomSettings.get(aClass);
-    }
+    return myCustomCodeStyleSettingsManager.getCustomSettingsIfCreated(aClass);
   }
 
   /**
@@ -180,29 +154,23 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   private void copyCustomSettingsFrom(@NotNull CodeStyleSettings from) {
-    synchronized (myCustomSettings) {
-      myCustomSettings.clear();
+    myCustomCodeStyleSettingsManager.copyFrom(from);
 
-      for (final CustomCodeStyleSettings settings : from.getCustomSettingsValues()) {
-        addCustomSettings(settings.copyWith(this));
-      }
+    PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(from.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
+    IMPORT_LAYOUT_TABLE.copyFrom(from.IMPORT_LAYOUT_TABLE);
 
-      PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(from.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
-      IMPORT_LAYOUT_TABLE.copyFrom(from.IMPORT_LAYOUT_TABLE);
+    OTHER_INDENT_OPTIONS.copyFrom(from.OTHER_INDENT_OPTIONS);
 
-      OTHER_INDENT_OPTIONS.copyFrom(from.OTHER_INDENT_OPTIONS);
-
-      myAdditionalIndentOptions.clear();
-      for (Map.Entry<FileType, IndentOptions> optionEntry : from.myAdditionalIndentOptions.entrySet()) {
-        IndentOptions options = optionEntry.getValue();
-        myAdditionalIndentOptions.put(optionEntry.getKey(), (IndentOptions)options.clone());
-      }
-
-      myCommonSettingsManager = from.myCommonSettingsManager.clone(this);
-
-      myRepeatAnnotations.clear();
-      myRepeatAnnotations.addAll(from.myRepeatAnnotations);
+    myAdditionalIndentOptions.clear();
+    for (Map.Entry<FileType, IndentOptions> optionEntry : from.myAdditionalIndentOptions.entrySet()) {
+      IndentOptions options = optionEntry.getValue();
+      myAdditionalIndentOptions.put(optionEntry.getKey(), (IndentOptions)options.clone());
     }
+
+    myCommonSettingsManager = from.myCommonSettingsManager.clone(this);
+
+    myRepeatAnnotations.clear();
+    myRepeatAnnotations.addAll(from.myRepeatAnnotations);
   }
 
   public void copyFrom(CodeStyleSettings from) {
@@ -222,7 +190,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   private static final String ourSystemLineSeparator = System.lineSeparator();
 
   /**
-   * Line separator. It can be null if choosen line separator is "System-dependent"!
+   * Line separator. It can be null if chosen line separator is "System-dependent"!
    */
   public String LINE_SEPARATOR;
 
@@ -241,73 +209,73 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   @Deprecated
   public String FIELD_NAME_PREFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#STATIC_FIELD_NAME_PREFIX} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String STATIC_FIELD_NAME_PREFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PARAMETER_NAME_PREFIX} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String PARAMETER_NAME_PREFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#LOCAL_VARIABLE_NAME_PREFIX} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String LOCAL_VARIABLE_NAME_PREFIX = "";
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#FIELD_NAME_SUFFIX} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String FIELD_NAME_SUFFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#STATIC_FIELD_NAME_SUFFIX} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String STATIC_FIELD_NAME_SUFFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PARAMETER_NAME_SUFFIX} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String PARAMETER_NAME_SUFFIX = "";
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#LOCAL_VARIABLE_NAME_SUFFIX} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String LOCAL_VARIABLE_NAME_SUFFIX = "";
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PREFER_LONGER_NAMES} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean PREFER_LONGER_NAMES = true;
 
 //----------------- 'final' modifier settings -------
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#GENERATE_FINAL_LOCALS} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean GENERATE_FINAL_LOCALS;
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#GENERATE_FINAL_PARAMETERS} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean GENERATE_FINAL_PARAMETERS;
 
 //----------------- visibility -----------------------------
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#VISIBILITY} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String VISIBILITY = "public";
 
 //----------------- generate parentheses around method arguments ----------
   /** @deprecated Use RubyCodeStyleSettings.PARENTHESES_AROUND_METHOD_ARGUMENTS */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean PARENTHESES_AROUND_METHOD_ARGUMENTS = true;
 
 //----------------- annotations ----------------
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#USE_EXTERNAL_ANNOTATIONS} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean USE_EXTERNAL_ANNOTATIONS;
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#INSERT_OVERRIDE_ANNOTATION} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean INSERT_OVERRIDE_ANNOTATION = true;
 
 //----------------- override -------------------
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#REPEAT_SYNCHRONIZED} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean REPEAT_SYNCHRONIZED = true;
 
   private final List<String> myRepeatAnnotations = new ArrayList<>();
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#getRepeatAnnotations()} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public List<String> getRepeatAnnotations() {
     return myRepeatAnnotations;
   }
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#setRepeatAnnotations(List)} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setRepeatAnnotations(List<String> repeatAnnotations) {
     myRepeatAnnotations.clear();
     myRepeatAnnotations.addAll(repeatAnnotations);
@@ -317,41 +285,41 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#LAYOUT_STATIC_IMPORTS_SEPARATELY} */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#USE_FQ_CLASS_NAMES} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean USE_FQ_CLASS_NAMES;
 
   /** @deprecated use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#CLASS_NAMES_IN_JAVADOC} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#USE_SINGLE_CLASS_IMPORTS */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#INSERT_INNER_CLASS_IMPORTS */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean INSERT_INNER_CLASS_IMPORTS;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PACKAGES_TO_USE_IMPORT_ON_DEMAND */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#IMPORT_LAYOUT_TABLE */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#isLayoutStaticImportsSeparately()} */
@@ -456,21 +424,26 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
 // region ORDER OF MEMBERS
 
-  @Deprecated public int STATIC_FIELDS_ORDER_WEIGHT = 1;
-  @Deprecated public int FIELDS_ORDER_WEIGHT = 2;
-  @Deprecated public int CONSTRUCTORS_ORDER_WEIGHT = 3;
-  @Deprecated public int STATIC_METHODS_ORDER_WEIGHT = 4;
-  @Deprecated public int METHODS_ORDER_WEIGHT = 5;
-  @Deprecated public int STATIC_INNER_CLASSES_ORDER_WEIGHT = 6;
-  @Deprecated public int INNER_CLASSES_ORDER_WEIGHT = 7;
+  @Deprecated(forRemoval = true) public int STATIC_FIELDS_ORDER_WEIGHT = 1;
+  @Deprecated(forRemoval = true) public int FIELDS_ORDER_WEIGHT = 2;
+  @Deprecated(forRemoval = true) public int CONSTRUCTORS_ORDER_WEIGHT = 3;
+  @Deprecated(forRemoval = true) public int STATIC_METHODS_ORDER_WEIGHT = 4;
+  @Deprecated(forRemoval = true) public int METHODS_ORDER_WEIGHT = 5;
+  @Deprecated(forRemoval = true) public int STATIC_INNER_CLASSES_ORDER_WEIGHT = 6;
+  @Deprecated(forRemoval = true) public int INNER_CLASSES_ORDER_WEIGHT = 7;
 
 // endregion
 
 // region WRAPPING
 
+  /**
+   * <b>Do not use this field directly since it doesn't reflect a setting for a specific language which may
+   * overwrite this one. Call {@link #getRightMargin(Language)} method instead.</b>
+   */
   @ApiStatus.Internal
   @Property(externalName = "max_line_length")
   public int RIGHT_MARGIN = 120;
+
   /**
    * <b>Do not use this field directly since it doesn't reflect a setting for a specific language which may
    * overwrite this one. Call {@link #isWrapOnTyping(Language)} method instead.</b>
@@ -487,27 +460,27 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   /**
    * @deprecated  Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#ENABLE_JAVADOC_FORMATTING}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean ENABLE_JAVADOC_FORMATTING = true;
 
   /**
    * @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#JD_LEADING_ASTERISKS_ARE_ENABLED}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean JD_LEADING_ASTERISKS_ARE_ENABLED = true;
 
 
 // endregion
 
   /** @deprecated Use {@link com.intellij.application.options.JspCodeStyleSettings#JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST;
 
   //----------------------------------------------------------------------------------------
 
   // region Formatter control
 
-  public boolean FORMATTER_TAGS_ENABLED;
+  public boolean FORMATTER_TAGS_ENABLED = true;
   public String FORMATTER_ON_TAG = "@formatter:on";
   public String FORMATTER_OFF_TAG = "@formatter:off";
 
@@ -550,21 +523,12 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
       return null;
     }
   }
-
-
   // endregion
 
   //----------------------------------------------------------------------------------------
 
   private CodeStyleSettings myParentSettings;
   private boolean myLoadedAdditionalIndentOptions;
-
-  @NotNull
-  private Collection<CustomCodeStyleSettings> getCustomSettingsValues() {
-    synchronized (myCustomSettings) {
-      return Collections.unmodifiableCollection(myCustomSettings.values());
-    }
-  }
 
   private static void setVersion(@NotNull Element element, int version) {
     element.setAttribute(VERSION_ATTR, Integer.toString(version));
@@ -588,7 +552,8 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     myVersion = getVersion(element);
-    notifySettingsBeforeLoading();
+    myCustomCodeStyleSettingsManager.notifySettingsBeforeLoading();
+    myStoredOptions.processOptions(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     if (LAYOUT_STATIC_IMPORTS_SEPARATELY) {
       // add <all other static imports> entry if there is none
@@ -616,13 +581,8 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
       }
     }
 
-    UnknownElementCollector unknownElementCollector = new UnknownElementCollector();
-    for (CustomCodeStyleSettings settings : getCustomSettingsValues()) {
-      settings.getKnownTagNames().forEach(unknownElementCollector::addKnownName);
-      settings.readExternal(element);
-    }
+    myCustomCodeStyleSettingsManager.readExternal(element);
 
-    unknownElementCollector.addKnownName(ADDITIONAL_INDENT_OPTIONS);
     List<Element> list = element.getChildren(ADDITIONAL_INDENT_OPTIONS);
     for (Element additionalIndentElement : list) {
       String fileTypeId = additionalIndentElement.getAttributeValue(FILETYPE);
@@ -638,30 +598,25 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
       }
     }
 
-    unknownElementCollector.addKnownName(CommonCodeStyleSettingsManager.COMMON_SETTINGS_TAG);
     myCommonSettingsManager.readExternal(element);
 
-    myUnknownElementWriter = unknownElementCollector.createWriter(element);
 
     mySoftMargins.deserializeFrom(element);
     myExcludedFiles.deserializeFrom(element);
 
     migrateLegacySettings();
-    notifySettingsLoaded();
+    myCustomCodeStyleSettingsManager.notifySettingsLoaded();
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     setVersion(element, myVersion);
-    CodeStyleSettings parentSettings = new CodeStyleSettings(true, false);
-    DefaultJDOMExternalizer.write(this, element, new DifferenceFilter<>(this, parentSettings));
+    CodeStyleSettings defaultSettings = new CodeStyleSettings(true, false);
+    DefaultJDOMExternalizer.write(this, element, myStoredOptions.createDiffFilter(this, defaultSettings));
     mySoftMargins.serializeInto(element);
     myExcludedFiles.serializeInto(element);
 
-    myUnknownElementWriter.write(element, getCustomSettingsValues(), CustomCodeStyleSettings::getTagName, settings -> {
-      CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
-      settings.writeExternal(element, parentCustomSettings);
-    });
+    myCustomCodeStyleSettingsManager.writeExternal(element, defaultSettings);
 
     if (!myAdditionalIndentOptions.isEmpty()) {
       FileType[] fileTypes = myAdditionalIndentOptions.keySet().toArray(FileType.EMPTY_ARRAY);
@@ -715,7 +670,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     IndentOptions indentOptions = getLanguageIndentOptions(fileType);
     if (indentOptions != null) return indentOptions;
 
-    if (fileType == null) return OTHER_INDENT_OPTIONS;
+    if (fileType == null) {
+      return OTHER_INDENT_OPTIONS;
+    }
 
     if (!myLoadedAdditionalIndentOptions) {
       loadAdditionalIndentOptions();
@@ -749,76 +706,74 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   @NotNull
   public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file) {
-    return getIndentOptionsByFile(file, null);
+    if (file != null) {
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        return getIndentOptionsByFile(file.getProject(), virtualFile, null);
+      }
+      else {
+        return getIndentOptions(file.getFileType());
+      }
+    }
+    return OTHER_INDENT_OPTIONS;
   }
 
-  @NotNull
-  public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file, @Nullable TextRange formatRange) {
-    return getIndentOptionsByFile(file, formatRange, false, null);
+  @ApiStatus.Internal
+  public @NotNull IndentOptions getIndentOptionsByFile(@NotNull Project project, @NotNull VirtualFile file, @Nullable TextRange formatRange) {
+    try (AccessToken ignored = ProjectLocator.withPreferredProject(file, project)) {
+      return getIndentOptionsByFile(project, file, formatRange, false, null);
+    }
   }
 
-  /**
-   * Retrieves indent options for PSI file from an associated document or (if not defined in the document) from file indent options
-   * providers.
-   * @param file  The PSI file to retrieve options for.
-   * @param formatRange The text range within the file for formatting purposes or null if there is either no specific range or multiple
-   *                    ranges. If the range covers the entire file (full reformat), options stored in the document are ignored and
-   *                    indent options are taken from file indent options providers.
-   * @param ignoreDocOptions Ignore options stored in the document and use file indent options providers even if there is no text range
-   *                         or the text range doesn't cover the entire file.
-   * @param providerProcessor A callback object containing a reference to indent option provider which has returned indent options.
-   * @return Indent options from the associated document or file indent options providers.
-   * @see FileIndentOptionsProvider
-   */
-  @NotNull
-  public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file, @Nullable TextRange formatRange, boolean ignoreDocOptions,
-                                              @Nullable Processor<? super FileIndentOptionsProvider> providerProcessor) {
-    if (file != null && file.isValid()) {
-      boolean isFullReformat = isFileFullyCoveredByRange(file, formatRange);
-      if (!ignoreDocOptions && !isFullReformat) {
-        IndentOptions options = IndentOptions.retrieveFromAssociatedDocument(file);
-        if (options != null) {
-          FileIndentOptionsProvider provider = options.getFileIndentOptionsProvider();
-          if (providerProcessor != null && provider != null) {
+  @ApiStatus.Internal
+  public @NotNull IndentOptions getIndentOptionsByFile(@NotNull Project project,
+                                                       @NotNull VirtualFile file,
+                                                       @Nullable TextRange formatRange,
+                                                       boolean ignoreDocOptions,
+                                                       @Nullable Processor<? super FileIndentOptionsProvider> providerProcessor) {
+    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+    boolean isFullReformat = document == null || isFileFullyCoveredByRange(document, formatRange);
+    if (!ignoreDocOptions && !isFullReformat) {
+      IndentOptions options = IndentOptions.retrieveFromAssociatedDocument(document);
+      if (options != null) {
+        FileIndentOptionsProvider provider = options.getFileIndentOptionsProvider();
+        if (providerProcessor != null && provider != null) {
+          providerProcessor.process(provider);
+        }
+        return options;
+      }
+    }
+
+    for (FileIndentOptionsProvider provider : FileIndentOptionsProvider.EP_NAME.getExtensionList()) {
+      if (provider.isAllowed(isFullReformat)) {
+        IndentOptions indentOptions = provider.getIndentOptions(project,this, file);
+        if (indentOptions != null) {
+          if (providerProcessor != null) {
             providerProcessor.process(provider);
           }
-          return options;
+          indentOptions.setFileIndentOptionsProvider(provider);
+          logIndentOptions(file, provider, indentOptions);
+          return indentOptions;
         }
       }
-
-      for (FileIndentOptionsProvider provider : FileIndentOptionsProvider.EP_NAME.getExtensionList()) {
-        if (!isFullReformat || provider.useOnFullReformat()) {
-          IndentOptions indentOptions = provider.getIndentOptions(this, file);
-          if (indentOptions != null) {
-            if (providerProcessor != null) {
-              providerProcessor.process(provider);
-            }
-            indentOptions.setFileIndentOptionsProvider(provider);
-            logIndentOptions(file, provider, indentOptions);
-            return indentOptions;
-          }
-        }
-      }
-
-      Language language = LanguageUtil.getLanguageForPsi(file.getProject(), file.getVirtualFile(), file.getFileType());
-      if (language != null) {
-        IndentOptions options = getIndentOptions(language);
-        if (options != null) {
-          return options;
-        }
-      }
-
-      return getIndentOptions(file.getFileType());
     }
-    else
-      return OTHER_INDENT_OPTIONS;
+
+    Language language = LanguageUtil.getLanguageForPsi(project, file, file.getFileType());
+    if (language != null) {
+      IndentOptions options = getIndentOptions(language);
+      if (options != null) {
+        return options;
+      }
+    }
+
+    return getIndentOptions(file.getFileType());
   }
 
-  private static boolean isFileFullyCoveredByRange(@NotNull PsiFile file, @Nullable TextRange formatRange) {
-    return formatRange != null && formatRange.equals(file.getTextRange());
+  private static boolean isFileFullyCoveredByRange(@NotNull Document document, @Nullable TextRange formatRange) {
+    return formatRange != null && formatRange.equals(new TextRange(0, document.getTextLength()));
   }
 
-  private static void logIndentOptions(@NotNull PsiFile file,
+  private static void logIndentOptions(@NotNull VirtualFile file,
                                        @NotNull FileIndentOptionsProvider provider,
                                        @NotNull IndentOptions options) {
     LOG.debug("Indent options returned by " + provider.getClass().getName() +
@@ -1030,16 +985,28 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     setDefaultRightMargin(rightMargin);
   }
 
+  /**
+   * @return The globally set right margin (hard wrap boundary) as configured at the top of Settings|Editor|Code Style. To get the
+   * actual right margin in effect call {@link #getRightMargin(Language)}
+   */
   public int getDefaultRightMargin() {
     return RIGHT_MARGIN;
   }
 
+  /**
+   * Set the global right margin (hard wrap boundary) which will be used for any language which doesn't define its own margin in
+   * {@link CommonCodeStyleSettings#RIGHT_MARGIN}
+   *
+   * @param rightMargin The new right margin to set.
+   *
+   * @see #setRightMargin(Language, int)
+   */
   public void setDefaultRightMargin(int rightMargin) {
     RIGHT_MARGIN = rightMargin;
   }
 
   /**
-   * Defines whether or not wrapping should occur when typing reaches right margin.
+   * Defines whether wrapping should occur when typing reaches right margin.
    * @param language  The language to check the option for or null for a global option.
    * @return True if wrapping on right margin is enabled.
    */
@@ -1141,7 +1108,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     if (!myExcludedFiles.equals(((CodeStyleSettings)obj).getExcludedFiles())) return false;
     if (!OTHER_INDENT_OPTIONS.equals(((CodeStyleSettings)obj).OTHER_INDENT_OPTIONS)) return false;
     if (!myCommonSettingsManager.equals(((CodeStyleSettings)obj).myCommonSettingsManager)) return false;
-    for (CustomCodeStyleSettings customSettings : myCustomSettings.values()) {
+    for (CustomCodeStyleSettings customSettings : myCustomCodeStyleSettingsManager.getAllSettings()) {
       if (!customSettings.equals(((CodeStyleSettings)obj).getCustomSettings(customSettings.getClass()))) return false;
     }
     return true;
@@ -1154,22 +1121,13 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   private void migrateLegacySettings() {
     if (myVersion < CURR_VERSION) {
-      for (CustomCodeStyleSettings settings : myCustomSettings.values()) {
+      for (CustomCodeStyleSettings settings : myCustomCodeStyleSettingsManager.getAllSettings()) {
         settings.importLegacySettings(this);
       }
       myVersion = CURR_VERSION;
     }
   }
 
-  private void notifySettingsBeforeLoading() {
-    JBIterable.from(myCustomSettings.values())
-              .forEach(CustomCodeStyleSettings::beforeLoading);
-  }
-
-  private void notifySettingsLoaded() {
-    JBIterable.from(myCustomSettings.values())
-              .forEach(CustomCodeStyleSettings::afterLoaded);
-  }
 
   public void resetDeprecatedFields() {
     CodeStyleSettings defaults = getDefaults();
@@ -1243,27 +1201,27 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   @ApiStatus.Internal
-  public void removeSettings(@NotNull LanguageCodeStyleProvider provider) {
-    myCommonSettingsManager.removeLanguageSettings(provider.getLanguage());
+  public void removeCommonSettings(@NotNull LanguageCodeStyleProvider provider) {
+    myCommonSettingsManager.removeLanguageSettings(provider);
   }
 
   @ApiStatus.Internal
-  public void registerSettings(@NotNull LanguageCodeStyleProvider provider) {
-    myCommonSettingsManager.addLanguageSettings(provider.getLanguage(), provider.getDefaultCommonSettings());
+  public void registerCommonSettings(@NotNull LanguageCodeStyleProvider provider) {
+    myCommonSettingsManager.addLanguageSettings(provider);
   }
 
   @ApiStatus.Internal
-  public void removeSettings(@NotNull CustomCodeStyleSettingsFactory factory) {
-    CustomCodeStyleSettings customSettings = factory.createCustomSettings(this);
-    if (customSettings != null) {
-      synchronized (myCustomSettings) {
-        myCustomSettings.remove(customSettings.getClass());
-      }
-    }
+  public void removeCustomSettings(@NotNull CustomCodeStyleSettingsFactory factory) {
+    myCustomCodeStyleSettingsManager.unregisterCustomSettings(factory);
   }
 
   @ApiStatus.Internal
-  public void registerSettings(@NotNull CustomCodeStyleSettingsFactory factory) {
-    addCustomSettings(factory.createCustomSettings(this));
+  public void registerCustomSettings(@NotNull CustomCodeStyleSettingsFactory factory) {
+    myCustomCodeStyleSettingsManager.registerCustomSettings(this, factory);
   }
+
+  CustomCodeStyleSettingsManager getCustomCodeStyleSettingsManager() {
+    return myCustomCodeStyleSettingsManager;
+  }
+
 }

@@ -1,13 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.newItemPopup;
 
+import com.intellij.accessibility.TextFieldWithListAccessibleContext;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -26,11 +31,21 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
 
   private final Collection<TemplatesListVisibilityListener> myVisibilityListeners = new ArrayList<>();
 
-  public NewItemWithTemplatesPopupPanel(List<T> templatesList, ListCellRenderer<T> renderer) {
+  public NewItemWithTemplatesPopupPanel(List<? extends T> templatesList, ListCellRenderer<T> renderer) {
+    this(templatesList, renderer, false);
+  }
+
+  public NewItemWithTemplatesPopupPanel(List<? extends T> templatesList, ListCellRenderer<T> renderer, boolean liveErrorValidation) {
+    super(liveErrorValidation);
     setBackground(JBUI.CurrentTheme.NewClassDialog.panelBackground());
 
     myTemplatesListModel = new MyListModel(templatesList);
     myTemplatesList = createTemplatesList(myTemplatesListModel, renderer);
+
+    JTextField textField = getTextField();
+    if (textField instanceof JBExtendableTextFieldWithMixedAccessibleContext) {
+      ((JBExtendableTextFieldWithMixedAccessibleContext)textField).myListContext = myTemplatesList.getAccessibleContext();
+    }
 
     ScrollingUtil.installMoveUpAction(myTemplatesList, myTextField);
     ScrollingUtil.installMoveDownAction(myTemplatesList, myTextField);
@@ -39,13 +54,16 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     scrollPane.setBorder(JBUI.Borders.empty());
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     templatesListHolder = new Box(BoxLayout.Y_AXIS);
-    Border border = JBUI.Borders.merge(
-      JBUI.Borders.emptyTop(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth()),
-      JBUI.Borders.customLine(JBUI.CurrentTheme.NewClassDialog.bordersColor(), 1, 0, 0, 0),
-      true
-    );
+    if (ExperimentalUI.isNewUI()) {
+      templatesListHolder.setOpaque(true);
+      templatesListHolder.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+    }
+    else {
+      Border border = JBUI.Borders.merge(JBUI.Borders.emptyTop(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth()),
+                                         JBUI.Borders.customLineTop(JBUI.CurrentTheme.NewClassDialog.bordersColor()), true);
+      templatesListHolder.setBorder(border);
+    }
 
-    templatesListHolder.setBorder(border);
     templatesListHolder.add(scrollPane);
 
     add(templatesListHolder, BorderLayout.CENTER);
@@ -84,6 +102,7 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     list.setCellRenderer(renderer);
     list.setFocusable(false);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    list.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
 
     Border border = JBUI.Borders.merge(
       JBUI.Borders.emptyLeft(JBUIScale.scale(5)),
@@ -92,6 +111,11 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     );
     list.setBorder(border);
     return list;
+  }
+
+  @Override
+  protected ExtendableTextField createNonCustomizedTextField() {
+    return new JBExtendableTextFieldWithMixedAccessibleContext();
   }
 
   protected final class MyListModel extends AbstractListModel<T> {
@@ -122,6 +146,15 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     @Override
     public T getElementAt(int index) {
       return myItems.get(index);
+    }
+  }
+
+  private static class JBExtendableTextFieldWithMixedAccessibleContext extends ExtendableTextField {
+    private AccessibleContext myListContext;
+
+    @Override
+    protected AccessibleContext getOriginalAccessibleContext() {
+      return new TextFieldWithListAccessibleContext(this, myListContext);
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.scope;
 
 import com.intellij.openapi.application.ReadAction;
@@ -12,27 +12,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class EditorSelectionLocalSearchScope extends LocalSearchScope {
+public class EditorSelectionLocalSearchScope extends RangeBasedLocalSearchScope {
   private final Editor myEditor;
   private final Project myProject;
   private PsiElement[] myPsiElements;
   private VirtualFile[] myVirtualFiles; // only ever 0 or 1 elements long
   private TextRange[] myRanges;
-  private final boolean myIgnoreInjectedPsi;
-  @NotNull
-  private final @Nls String  myDisplayName;
-
-  private LocalSearchScope myLocalSearchScope;
 
   private void initVirtualFilesAndRanges() {
     if (myRanges != null) {
@@ -71,73 +62,38 @@ public class EditorSelectionLocalSearchScope extends LocalSearchScope {
 
       int[] selectionStarts = selectionModel.getBlockSelectionStarts();
       int[] selectionEnds = selectionModel.getBlockSelectionEnds();
-      final List<PsiElement> elements = new ArrayList<>();
+      final List<@NotNull PsiElement> elements = new ArrayList<>();
 
       for (int i = 0; i < selectionStarts.length; ++i) {
-        int start = selectionStarts[i];
-        final PsiElement startElement = psiFile.findElementAt(start);
-        if (startElement == null) {
-          continue;
-        }
-        int end = selectionEnds[i];
-        final PsiElement endElement = psiFile.findElementAt(end);
-        if (endElement == null) {
-          continue;
-        }
-        final PsiElement parent = PsiTreeUtil.findCommonParent(startElement, endElement);
-        if (parent == null) {
-          continue;
-        }
-
-        final PsiElement[] children = parent.getChildren();
-        TextRange selection = new TextRange(start, end);
-        for (PsiElement child : children) {
-          if (!(child instanceof PsiWhiteSpace) &&
-              child.getContainingFile() != null &&
-              selection.contains(child.getTextOffset())) {
-            elements.add(child);
-          }
-        }
+        collectPsiElementsAtRange(psiFile, elements, selectionStarts[i], selectionEnds[i]);
       }
 
       myPsiElements = elements.toArray(PsiElement.EMPTY_ARRAY);
     });
   }
 
-  private PsiElement[] getPsiElements() {
+  @Override
+  protected @NotNull PsiElement @NotNull [] getPsiElements() {
     if (myPsiElements == null) init();
     return myPsiElements;
   }
 
-  private TextRange[] getRanges() {
+  private @NotNull TextRange @NotNull [] getRanges() {
     initVirtualFilesAndRanges();
     return myRanges;
   }
 
   public EditorSelectionLocalSearchScope(@NotNull Editor editor, Project project,
-                                         @NotNull final @Nls String displayName) {
+                                         final @NotNull @Nls String displayName) {
     this(editor, project, displayName, false);
   }
 
   public EditorSelectionLocalSearchScope(@NotNull Editor editor, Project project,
-                                         @NotNull final @Nls String displayName,
+                                         final @NotNull @Nls String displayName,
                                          final boolean ignoreInjectedPsi) {
-    super(PsiElement.EMPTY_ARRAY);
+    super(displayName, ignoreInjectedPsi);
     myEditor = editor;
     myProject = project;
-    myDisplayName = displayName;
-    myIgnoreInjectedPsi = ignoreInjectedPsi;
-  }
-
-  @Override
-  public boolean isIgnoreInjectedPsi() {
-    return myIgnoreInjectedPsi;
-  }
-
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return myDisplayName;
   }
 
   // Do not instantiate LocalSearchScope for getVirtualFiles, calcHashCode, equals, toString and containsRange.
@@ -150,8 +106,7 @@ public class EditorSelectionLocalSearchScope extends LocalSearchScope {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof EditorSelectionLocalSearchScope)) return false;
-    EditorSelectionLocalSearchScope other = (EditorSelectionLocalSearchScope)o;
+    if (!(o instanceof EditorSelectionLocalSearchScope other)) return false;
 
     VirtualFile[] files = getVirtualFiles();
     VirtualFile[] otherFiles = other.getVirtualFiles();
@@ -221,48 +176,13 @@ public class EditorSelectionLocalSearchScope extends LocalSearchScope {
     return false;
   }
 
-  private void createIfNeeded() {
-    if (myLocalSearchScope == null) {
-      myLocalSearchScope = new LocalSearchScope(getPsiElements(), myDisplayName, myIgnoreInjectedPsi);
+  @Override
+  public @NotNull TextRange @NotNull [] getRanges(@NotNull VirtualFile file) {
+    VirtualFile[] files = getVirtualFiles();
+    if (files.length == 1 && files[0].equals(file)) {
+      return getRanges();
     }
-  }
 
-  @Override
-  public PsiElement @NotNull [] getScope() {
-    createIfNeeded();
-    return myLocalSearchScope.getScope();
-  }
-
-  @NotNull
-  @Override
-  public LocalSearchScope intersectWith(@NotNull LocalSearchScope scope2) {
-    createIfNeeded();
-    return myLocalSearchScope.intersectWith(scope2);
-  }
-
-  @NotNull
-  @Override
-  public SearchScope intersectWith(@NotNull SearchScope scope2) {
-    createIfNeeded();
-    return myLocalSearchScope.intersectWith(scope2);
-  }
-
-  @NotNull
-  @Override
-  public SearchScope union(@NotNull SearchScope scope) {
-    createIfNeeded();
-    return myLocalSearchScope.union(scope);
-  }
-
-  @Override
-  public boolean contains(@NotNull VirtualFile file) {
-    createIfNeeded();
-    return myLocalSearchScope.contains(file);
-  }
-
-  @Override
-  public boolean isInScope(@NotNull VirtualFile file) {
-    createIfNeeded();
-    return myLocalSearchScope.isInScope(file);
+    return TextRange.EMPTY_ARRAY;
   }
 }

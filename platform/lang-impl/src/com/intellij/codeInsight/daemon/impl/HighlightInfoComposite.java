@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -16,12 +16,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class HighlightInfoComposite extends HighlightInfo {
-  @NonNls private static final String LINE_BREAK = "<hr size=1 noshade>";
+  private static final @NonNls String LINE_BREAK = "<hr size=1 noshade>";
 
   private HighlightInfoComposite(@NotNull List<? extends HighlightInfo> infos, @NotNull HighlightInfo anchorInfo) {
     super(null, null, anchorInfo.type, anchorInfo.startOffset, anchorInfo.endOffset,
           createCompositeDescription(infos), createCompositeTooltip(infos), anchorInfo.type.getSeverity(null), false, null, false, 0,
-          anchorInfo.getProblemGroup(), null, anchorInfo.getGutterIconRenderer(), anchorInfo.getGroup());
+          anchorInfo.getProblemGroup(), null, anchorInfo.getGutterIconRenderer(), anchorInfo.getGroup(), null, anchorInfo.psiElement);
     highlighter = anchorInfo.getHighlighter();
     List<Pair<IntentionActionDescriptor, RangeMarker>> markers = ContainerUtil.emptyList();
     List<Pair<IntentionActionDescriptor, TextRange>> ranges = ContainerUtil.emptyList();
@@ -46,8 +46,7 @@ final class HighlightInfoComposite extends HighlightInfo {
     return new HighlightInfoComposite(infos, anchorInfo);
   }
 
-  @Nullable
-  private static @NlsSafe String createCompositeDescription(@NotNull List<? extends HighlightInfo> infos) {
+  private static @Nullable @NlsSafe String createCompositeDescription(@NotNull List<? extends HighlightInfo> infos) {
     StringBuilder description = new StringBuilder();
     boolean isNull = true;
     for (HighlightInfo info : infos) {
@@ -66,20 +65,19 @@ final class HighlightInfoComposite extends HighlightInfo {
     return isNull ? null : description.toString();
   }
 
-  @Nullable
-  private static @NlsSafe String createCompositeTooltip(@NotNull List<? extends HighlightInfo> infos) {
+  private static @Nullable @NlsSafe String createCompositeTooltip(@NotNull List<? extends HighlightInfo> infos) {
     StringBuilder result = new StringBuilder();
     for (HighlightInfo info : infos) {
       String toolTip = info.getToolTip();
       if (toolTip != null) {
-        if (result.length() != 0) {
+        if (!result.isEmpty()) {
           result.append(LINE_BREAK);
         }
         toolTip = XmlStringUtil.stripHtml(toolTip);
         result.append(toolTip);
       }
     }
-    if (result.length() == 0) {
+    if (result.isEmpty()) {
       return null;
     }
     return XmlStringUtil.wrapInHtml(result);

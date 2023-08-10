@@ -134,18 +134,16 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
                 public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                     try {
                         final XmlAttributeValue nameElement = XsltElementImpl.this.getNameElement();
-                        if (method.getName() == "navigate") {
-                            assert nameElement != null;
-
-                            ((NavigationItem)nameElement).navigate((Boolean)args[0]);
-
-                            return null;
-                        } else if (method.getName() == "canNavigate") {
-                            return nameElement instanceof NavigationItem && ((NavigationItem)nameElement).canNavigate();
-                        } else if (method.getName() == "getTextOffset") {
-                            return nameElement != null ? nameElement.getTextOffset() : myElement.getTextOffset();
-                        }
-                        return method.invoke(myElement, args);
+                        return switch (method.getName()) {
+                            case "navigate" -> {
+                              assert nameElement != null;
+                              ((NavigationItem)nameElement).navigate((Boolean)args[0]);
+                              yield null;
+                            }
+                            case "canNavigate" -> nameElement instanceof NavigationItem item && item.canNavigate();
+                            case "getTextOffset" -> nameElement != null ? nameElement.getTextOffset() : myElement.getTextOffset();
+                            default -> method.invoke(myElement, args);
+                        };
                     } catch (InvocationTargetException e1) {
                         throw e1.getTargetException();
                     }

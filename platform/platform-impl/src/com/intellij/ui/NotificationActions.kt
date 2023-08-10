@@ -15,14 +15,19 @@
  */
 package com.intellij.ui
 
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.IdeFrame
 
-abstract class CloseNotificationAction : AnAction() {
+abstract class CloseNotificationAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val layout = getBalloonLayout(e)
     e.presentation.isEnabled = layout != null && layout.balloonCount > 0
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 }
 

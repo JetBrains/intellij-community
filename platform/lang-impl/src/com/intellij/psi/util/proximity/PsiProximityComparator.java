@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.util.proximity;
 
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Computable;
@@ -52,8 +39,8 @@ public class PsiProximityComparator implements Comparator<Object> {
 
   @Override
   public int compare(final Object o1, final Object o2) {
-    PsiElement element1 = o1 instanceof PsiElement ? (PsiElement)o1 : null;
-    PsiElement element2 = o2 instanceof PsiElement ? (PsiElement)o2 : null;
+    PsiElement element1 = getPsiElement(o1);
+    PsiElement element2 = getPsiElement(o2);
     if (element1 == null) return element2 == null ? 0 : 1;
     if (element2 == null) return -1;
 
@@ -79,16 +66,19 @@ public class PsiProximityComparator implements Comparator<Object> {
     return -proximity1.compareTo(proximity2);
   }
 
+  private static PsiElement getPsiElement(Object o) {
+    return o instanceof PsiElement ? (PsiElement)o :
+           o instanceof PsiElementNavigationItem ? ((PsiElementNavigationItem)o).getTargetElement() : null;
+  }
 
-  @Nullable
-  public static WeighingComparable<PsiElement, ProximityLocation> getProximity(final PsiElement element, final PsiElement context) {
+
+  public static @Nullable WeighingComparable<PsiElement, ProximityLocation> getProximity(final PsiElement element, final PsiElement context) {
     if (element == null) return null;
     final Module contextModule = context != null ? ModuleUtilCore.findModuleForPsiElement(context) : null;
     return WeighingService.weigh(WEIGHER_KEY, element, new ProximityLocation(context, contextModule));
   }
 
-  @Nullable
-  public static WeighingComparable<PsiElement, ProximityLocation> getProximity(final Computable<? extends PsiElement> elementComputable, final PsiElement context, ProcessingContext processingContext) {
+  public static @Nullable WeighingComparable<PsiElement, ProximityLocation> getProximity(final Computable<? extends PsiElement> elementComputable, final PsiElement context, ProcessingContext processingContext) {
     PsiElement element = elementComputable.compute();
     if (element == null || context == null) return null;
     Module contextModule = processingContext.get(MODULE_BY_LOCATION);

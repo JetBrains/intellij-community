@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -26,9 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author peter
- */
 public class ReferenceChainLink {
   final String referenceName;
   final boolean isCall;
@@ -43,15 +41,10 @@ public class ReferenceChainLink {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ReferenceChainLink)) return false;
-
-    ReferenceChainLink link = (ReferenceChainLink)o;
-
-    if (isCall != link.isCall) return false;
-    if (argCount != link.argCount) return false;
-    if (!referenceName.equals(link.referenceName)) return false;
-
-    return true;
+    return o instanceof ReferenceChainLink link &&
+           isCall == link.isCall &&
+           argCount == link.argCount &&
+           referenceName.equals(link.referenceName);
   }
 
   @Override
@@ -135,12 +128,13 @@ public class ReferenceChainLink {
   private void markExpensive(Project project) {
     Set<ReferenceChainLink> expensive = project.getUserData(EXPENSIVE_LINKS);
     if (expensive == null) {
-      project.putUserData(EXPENSIVE_LINKS, expensive = ContainerUtil.newConcurrentSet());
+      project.putUserData(EXPENSIVE_LINKS, expensive = ConcurrentCollectionFactory.createConcurrentSet());
     }
     expensive.add(this);
   }
 
-  public List<? extends PsiMember> getSymbolMembers(Set<? extends PsiClass> qualifiers) {
+  @NotNull
+  List<? extends PsiMember> getSymbolMembers(@NotNull Set<? extends PsiClass> qualifiers) {
     return isCall ? ApproximateResolver.getPossibleMethods(qualifiers, referenceName, argCount)
                   : ApproximateResolver.getPossibleNonMethods(qualifiers, referenceName);
   }

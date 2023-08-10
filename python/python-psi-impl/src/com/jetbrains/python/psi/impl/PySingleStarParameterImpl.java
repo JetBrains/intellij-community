@@ -22,9 +22,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PySingleStarParameterStub;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PySingleStarParameterImpl extends PyBaseElementImpl<PySingleStarParameterStub> implements PySingleStarParameter {
   public PySingleStarParameterImpl(ASTNode astNode) {
     super(astNode);

@@ -1,0 +1,11 @@
+// "Surround with null check" "true"
+// WITH_STDLIB
+
+fun Int.bar() = this
+
+fun foo(arg: Int?) {
+    if (arg != null) {
+        run(fun() = arg.bar())
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithNullCheckFix

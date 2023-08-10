@@ -58,7 +58,7 @@ public final class DynamicMemberUtils {
       }
     }
 
-    assert source == res.myClassSource : "Store class sources in static constant, do not generate it in each call.";
+    assert source.equals(res.myClassSource) : "Store class sources in static constant, do not generate it in each call.";
 
     return res;
   }

@@ -55,8 +55,7 @@ public class AddReturnTypeFix implements IntentionAction {
     final PsiElement at = file.findElementAt(offset);
     if (at == null) return null;
 
-    if (at.getParent() instanceof GrReturnStatement) {
-      final GrReturnStatement returnStatement = ((GrReturnStatement)at.getParent());
+    if (at.getParent() instanceof GrReturnStatement returnStatement) {
       final PsiElement word = returnStatement.getReturnWord();
 
       if (!word.getTextRange().contains(offset)) return null;

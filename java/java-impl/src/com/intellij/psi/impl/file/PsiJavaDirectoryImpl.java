@@ -15,11 +15,11 @@
  */
 package com.intellij.psi.impl.file;
 
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,14 +34,14 @@ import org.jetbrains.annotations.NotNull;
 public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
   private static final Logger LOG = Logger.getInstance(PsiJavaDirectoryImpl.class);
 
-  public PsiJavaDirectoryImpl(final PsiManagerImpl manager, final VirtualFile file) {
+  PsiJavaDirectoryImpl(@NotNull PsiManagerImpl manager, @NotNull VirtualFile file) {
     super(manager, file);
   }
 
   @Override
-  public void checkCreateFile(@NotNull final String name) throws IncorrectOperationException {
-    final FileType type = FileTypeManager.getInstance().getFileTypeByFileName(name);
-    if (type == StdFileTypes.CLASS && ProjectRootManager.getInstance(getProject()).getFileIndex().isInSource(getVirtualFile())) {
+  public void checkCreateFile(@NotNull String name) throws IncorrectOperationException {
+    FileType type = FileTypeManager.getInstance().getFileTypeByFileName(name);
+    if (type == JavaClassFileType.INSTANCE && ProjectRootManager.getInstance(getProject()).getFileIndex().isInSource(getVirtualFile())) {
       throw new IncorrectOperationException("Cannot create class-file");
     }
 
@@ -49,11 +49,11 @@ public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
   }
 
   @Override
-  public PsiElement add(@NotNull final PsiElement element) throws IncorrectOperationException {
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     if (element instanceof PsiClass) {
-      final String name = ((PsiClass)element).getName();
+      String name = ((PsiClass)element).getName();
       if (name != null) {
-        final PsiClass newClass = JavaDirectoryService.getInstance().createClass(this, name);
+        PsiClass newClass = JavaDirectoryService.getInstance().createClass(this, name);
         return newClass.replace(element);
       }
       else {
@@ -67,7 +67,7 @@ public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
   }
 
   @Override
-  public void checkAdd(@NotNull final PsiElement element) throws IncorrectOperationException {
+  public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     if (element instanceof PsiClass) {
       if (((PsiClass)element).getContainingClass() == null) {
         JavaDirectoryServiceImpl.checkCreateClassOrInterface(this, ((PsiClass)element).getName());
@@ -83,7 +83,7 @@ public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
 
   @Override
   public ItemPresentation getPresentation() {
-    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(this);
+    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(this);
     return aPackage != null && !StringUtil.isEmpty(aPackage.getName()) ? aPackage.getPresentation() : super.getPresentation();
   }
 }

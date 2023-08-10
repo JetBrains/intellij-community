@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ether;
 
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -22,9 +9,6 @@ import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 
-/**
- * @author: db
- */
 public class CommonTest extends IncrementalTestCase {
   public CommonTest() {
     super("common");
@@ -157,6 +141,13 @@ public class CommonTest extends IncrementalTestCase {
     doTestBuild(1).assertSuccessful();
   }
 
+  public void testSameClassesInDifferentModules() {
+    JpsModule moduleA = addModule("moduleA", "moduleA/src");
+    JpsModule moduleB = addModule("moduleB", "moduleB/src");
+    JpsModuleRootModificationUtil.addDependency(moduleB, moduleA); // ensure compilation sequence
+    doTestBuild(1).assertSuccessful();
+  }
+
   public void testCompileDependenciesOnMovedClassesInFirstRound() {
     doTest().assertSuccessful();
   }
@@ -175,8 +166,8 @@ public class CommonTest extends IncrementalTestCase {
     doTest();
   }
 
-  public void testIntegrateOnNonIncrementalMake() throws Exception {
-    executeWithSystemProperty(Mappings.PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, String.valueOf(true), () -> doTest());
+  public void testIntegrateOnNonIncrementalMake() {
+    PlatformTestUtil.withSystemProperty(Mappings.PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, String.valueOf(true), () -> doTest());
   }
 
   public void testNothingChanged() {
@@ -184,12 +175,10 @@ public class CommonTest extends IncrementalTestCase {
     doTest();
   }
 
-  // Disabled because now several classes with the same qName in different modules are not supporter
-  //
-  //public void testConflictingClasses() {
-  //  JpsModule module1 = addModule("module1", "module1/src");
-  //  JpsModule module2 = addModule("module2", "module2/src");
-  //  JpsModuleRootModificationUtil.addDependency(module2, module1);
-  //  doTestBuild(1).assertSuccessful();
-  //}
+  public void testConflictingClasses() {
+    JpsModule module1 = addModule("module1", "module1/src");
+    JpsModule module2 = addModule("module2", "module2/src");
+    JpsModuleRootModificationUtil.addDependency(module2, module1);
+    doTestBuild(1).assertSuccessful();
+  }
 }

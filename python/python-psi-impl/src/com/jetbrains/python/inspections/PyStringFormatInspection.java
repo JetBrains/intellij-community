@@ -32,9 +32,6 @@ import java.util.stream.Collectors;
 import static com.jetbrains.python.PyStringFormatParser.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyStringFormatInspection extends PyInspection {
 
   @NotNull
@@ -42,7 +39,7 @@ public class PyStringFormatInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
                                         final boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
@@ -86,14 +83,13 @@ public class PyStringFormatInspection extends PyInspection {
           PyLiteralExpression.class, PySubscriptionExpression.class, PyBinaryExpression.class, PyConditionalExpression.class
         };
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(problemTarget);
-        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
 
         final String s = myFormatSpec.get("1");
         if (PsiTreeUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (s != null) {
             final PyType rightType = myTypeEvalContext.getType(rightExpression);
-            if (rightType instanceof PyTupleType) {
-              final PyTupleType tupleType = (PyTupleType)rightType;
+            if (rightType instanceof PyTupleType tupleType) {
               matchEntireTupleTypes(problemTarget, tupleType);
               return tupleType.getElementCount();
             }
@@ -247,8 +243,8 @@ public class PyStringFormatInspection extends PyInspection {
         if (addSubscriptions) {
           additionalExpressions = addSubscriptions(rightExpression.getContainingFile(),
                                                    rightExpression.getText());
-          pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(
-            PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext)).getElement();
+          final var resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
+          pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(resolveContext).getElement();
         }
         else {
           additionalExpressions = new HashMap<>();
@@ -455,7 +451,7 @@ public class PyStringFormatInspection extends PyInspection {
     private static class NewStyleInspection {
 
       private static final List<String> CHECKED_TYPES =
-        Arrays.asList(PyNames.TYPE_STR, PyNames.TYPE_INT, PyNames.TYPE_LONG, "float", "complex", "None");
+        Arrays.asList(PyNames.TYPE_STR, PyNames.TYPE_INT, PyNames.TYPE_LONG, "float", "complex", "None", "LiteralString");
 
       private static final List<String> NUMERIC_TYPES = Arrays.asList(PyNames.TYPE_INT, PyNames.TYPE_LONG, "float", "complex");
 
@@ -662,15 +658,14 @@ public class PyStringFormatInspection extends PyInspection {
       return -1;
     }
 
-    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
-      super(holder, session);
+    public Visitor(final ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
     public void visitPyBinaryExpression(final @NotNull PyBinaryExpression node) {
-      if (node.getLeftExpression() instanceof PyStringLiteralExpression && node.isOperator("%")) {
+      if (node.getLeftExpression() instanceof PyStringLiteralExpression literalExpression && node.isOperator("%")) {
         final Inspection inspection = new Inspection(this, myTypeEvalContext);
-        final PyStringLiteralExpression literalExpression = (PyStringLiteralExpression)node.getLeftExpression();
         inspection.inspectPercentFormat(literalExpression);
         if (inspection.isProblem()) {
           return;

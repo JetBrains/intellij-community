@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 /**
  * Extension of {@link RangeMarkerTree} which can quickly calculate sum of values associated with markers for a given offset range.
@@ -28,7 +28,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
    * so that internal caches related to calculating value sums could be updated.
    */
   void valueUpdated(T marker) {
-    Node node = (Node)lookupNode(marker);
+    Node<T> node = (Node<T>)lookupNode(marker);
     if (node != null) node.recalculateSubTreeSumUp();
   }
 
@@ -102,7 +102,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
 
     private int getLocalSum() {
       int sum = 0;
-      for (Getter<T> g : intervals) {
+      for (Supplier<? extends T> g : intervals) {
         sum += g.get().getAsInt();
       }
       return sum;
@@ -117,7 +117,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
     }
 
     private void recalculateSubTreeSumUp() {
-      Node n = this;
+      Node<?> n = this;
       while (n != null) {
         n.recalculateSubTreeSum();
         n = n.getParent();

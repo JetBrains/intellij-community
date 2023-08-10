@@ -88,6 +88,8 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
 
       @Override
       public void schemeListChanged() {
+        mySettingsPanels.keySet().removeIf(
+          name -> !myModel.containsScheme(name, false) && !myModel.containsScheme(name, true));
         mySchemesPanel.resetSchemesCombo();
       }
 
@@ -196,6 +198,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
   }
 
   public boolean isModified() {
+    if (myModel.isSchemeListModified()) return true;
     final NewCodeStyleSettingsPanel[] panels = getPanels();
     for (NewCodeStyleSettingsPanel panel : panels) {
       //if (!panel.isMultiLanguage()) mySchemesPanel.setPredefinedEnabled(false);
@@ -238,8 +241,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
   public void showTabOnCurrentPanel(String tab) {
     NewCodeStyleSettingsPanel selectedPanel = ensureCurrentPanel();
     CodeStyleAbstractPanel settingsPanel = selectedPanel.getSelectedPanel();
-    if (settingsPanel instanceof TabbedLanguageCodeStylePanel) {
-      TabbedLanguageCodeStylePanel tabbedPanel = (TabbedLanguageCodeStylePanel)settingsPanel;
+    if (settingsPanel instanceof TabbedLanguageCodeStylePanel tabbedPanel) {
       tabbedPanel.changeTab(tab);
     }
   }
@@ -251,15 +253,14 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
       panel.reset(myModel.getCloneSettings(scheme));
       panel.setModel(myModel);
       CodeStyleAbstractPanel settingsPanel = panel.getSelectedPanel();
-      if (settingsPanel instanceof TabbedLanguageCodeStylePanel) {
-        TabbedLanguageCodeStylePanel tabbedPanel = (TabbedLanguageCodeStylePanel)settingsPanel;
+      if (settingsPanel instanceof TabbedLanguageCodeStylePanel tabbedPanel) {
         tabbedPanel.setListener(this);
         String currentTab = myProperties.getValue(getSelectedTabPropertyName(tabbedPanel));
         if (currentTab != null) {
           tabbedPanel.changeTab(currentTab);
         }
-        mySchemesPanel.setSeparatorVisible(false);
       }
+      mySchemesPanel.setSeparatorVisible(false);
       mySettingsPanels.put(name, panel);
       mySettingsPanel.add(scheme.getName(), panel);
     }
@@ -308,5 +309,9 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
 
   public void highlightOptions(@NotNull String searchString) {
     ensureCurrentPanel().highlightOptions(searchString);
+  }
+
+  public void setSchemesPanelVisible(boolean isVisible) {
+    mySchemesPanel.setVisible(isVisible);
   }
 }

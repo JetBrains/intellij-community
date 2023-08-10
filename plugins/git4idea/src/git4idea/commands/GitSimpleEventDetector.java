@@ -40,6 +40,7 @@ public class GitSimpleEventDetector implements GitLineHandlerListener {
     BRANCH_NOT_FULLY_MERGED("is not fully merged"),
     MERGE_CONFLICT("Automatic merge failed; fix conflicts and then commit the result"),
     MERGE_CONFLICT_ON_UNSTASH("conflict"),
+    INDEX_CONFLICT_ON_UNSTASH("conflicts in index"),
     ALREADY_UP_TO_DATE("Already up-to-date", "Already up to date"),
     INVALID_REFERENCE("invalid reference:");
 

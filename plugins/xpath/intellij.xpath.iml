@@ -9,6 +9,7 @@
       <sourceFolder url="file://$MODULE_DIR$/xpath-lang/gen" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/xpath-lang/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/xpath-lang/compatibilityResources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/xpath-lang/testData" type="java-test-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -18,9 +19,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.xpath.rt" />
-    <orderEntry type="module" module-name="intellij.platform.lvcs.impl" />
     <orderEntry type="library" name="Jaxen" level="project" />
-    <orderEntry type="module" module-name="intellij.java.resources.en" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
@@ -29,5 +28,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
   </component>
 </module>

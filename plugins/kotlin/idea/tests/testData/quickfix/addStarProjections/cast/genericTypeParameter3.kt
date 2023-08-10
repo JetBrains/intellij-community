@@ -1,0 +1,5 @@
+// "Change type arguments to <*>" "true"
+fun <T> test(list: List<*>): List<*> {
+    return list as List<T><caret>
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix

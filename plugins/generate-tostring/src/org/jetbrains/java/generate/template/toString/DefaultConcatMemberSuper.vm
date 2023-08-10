@@ -23,13 +23,13 @@ $member.name=" + $member.accessor +
 #end
 #set ( $i = $i + 1 )
 #end
-   #if ( $class.hasSuper )
+   #if ( $class.hasSuper && !$helper.isAbstractSuperMethod($class, "toString", $project) )
    "} " + super.toString();
    #else
    '}';
    #end
 #else
-   #if ( $class.hasSuper )
+   #if ( $class.hasSuper && !$helper.isAbstractSuperMethod($class, "toString", $project))
    return "$classname{} " + super.toString();
    #else
    return "$classname{}";

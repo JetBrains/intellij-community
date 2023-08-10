@@ -18,9 +18,6 @@ package com.intellij.refactoring.rename.naming;
 
 import junit.framework.TestCase;
 
-/**
- * @author dsl
- */
 public class NameSuggesterTest extends TestCase {
   public void testChanges1() {
     doChangesTest("NameSuggesterTest", "NameUnifierTest", "[<Suggester,Unifier>]");

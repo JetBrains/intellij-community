@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general.navigation
 
 import com.intellij.find.FindBundle
@@ -6,46 +6,45 @@ import com.intellij.find.FindInProjectSettings
 import com.intellij.find.FindManager
 import com.intellij.find.SearchTextArea
 import com.intellij.find.impl.FindInProjectSettingsBase
+import com.intellij.find.impl.FindPopupItem
 import com.intellij.find.impl.FindPopupPanel
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.impl.actionButton
-import com.intellij.testGuiFramework.impl.button
-import com.intellij.testGuiFramework.impl.findComponentWithTimeout
-import com.intellij.testGuiFramework.util.Key
-import com.intellij.usages.UsagePresentation
+import com.intellij.openapi.project.Project
 import com.intellij.util.ui.UIUtil
-import org.fest.swing.core.MouseClickInfo
-import org.fest.swing.data.TableCell
-import org.fest.swing.fixture.JTextComponentFixture
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
-import training.commands.kotlin.TaskTestContext
+import org.assertj.swing.core.MouseClickInfo
+import org.assertj.swing.data.TableCell
+import org.assertj.swing.fixture.JTableFixture
+import org.assertj.swing.fixture.JTextComponentFixture
+import training.dsl.*
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.*
+import training.learn.course.KLesson
+import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.isToStringContains
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.*
 
-class FindInFilesLesson(module: Module, lang: String, override val existedFile: String)
-  : KLesson("Find in files", LessonsBundle.message("find.in.files.lesson.name"), module, lang) {
+class FindInFilesLesson(override val sampleFilePath: String,
+                        private val helpUrl: String = "finding-and-replacing-text-in-project.html")
+  : KLesson("Find in files", LessonsBundle.message("find.in.files.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit = {
-    resetFindSettings()
+    sdkConfigurationTasks()
+
+    prepareRuntimeTask {
+      resetFindSettings(project)
+    }
 
     lateinit var showPopupTaskId: TaskContext.TaskId
     task("FindInPath") {
       showPopupTaskId = taskId
       text(LessonsBundle.message("find.in.files.show.find.popup",
-                                 action(it), LessonUtil.actionName(it)))
-      triggerByUiComponentAndHighlight(false, false) { popup: FindPopupPanel ->
+        action(it), LessonUtil.actionName(it)))
+      triggerUI().component { popup: FindPopupPanel ->
         !popup.helper.isReplaceState
       }
       test {
-        Thread.sleep(300)
         actions(it)
       }
     }
@@ -60,53 +59,63 @@ class FindInFilesLesson(module: Module, lang: String, override val existedFile: 
     task {
       val wholeWordsButtonText = FindBundle.message("find.whole.words").dropMnemonic()
       text(LessonsBundle.message("find.in.files.whole.words",
+                                 code("apple"),
+                                 code("pineapple"),
                                  icon(AllIcons.Actions.Words),
                                  LessonUtil.rawKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.ALT_DOWN_MASK))))
       highlightAndTriggerWhenButtonSelected(wholeWordsButtonText)
       showWarningIfPopupClosed(false)
-      test {
+      test(waitEditorToBeReady = false) {
         ideFrame {
           actionButton(wholeWordsButtonText).click()
         }
       }
     }
 
-    task("apple...") {
-      text(LessonsBundle.message("find.in.files.select.row",
-                                 action("EditorUp"), action("EditorDown")))
-      triggerByPartOfComponent { table: JTable ->
-        val rowIndex = table.findLastRowIndexOfItemWithText(it)
+    val neededText = "apple..."
+    task {
+      triggerAndBorderHighlight().componentPart { table: JTable ->
+        val rowIndex = table.findLastRowIndexOfItemWithText(neededText)
         if (rowIndex >= 0) {
           table.getCellRect(rowIndex, 0, false)
         }
         else null
       }
-      triggerByUiComponentAndHighlight(false, false) { table: JTable ->
-        table.selectedRow != -1 && table.selectedRow == table.findLastRowIndexOfItemWithText(it)
+      restoreByTimer(1000)
+      transparentRestore = true
+    }
+
+    task {
+      text(LessonsBundle.message("find.in.files.select.row",
+                                 action("EditorUp"), action("EditorDown")))
+      stateCheck {
+        isSelectedNeededItem(neededText)
       }
       restoreByUi(restoreId = showPopupTaskId)
       test {
         ideFrame {
-          Thread.sleep(300)
-          val table = findComponentWithTimeout { table: JTable -> table.findLastRowIndexOfItemWithText(it) != -1 }
-          val tableFixture = ExtendedTableFixture(robot(), table)
-          val rowIndex = table.findLastRowIndexOfItemWithText(it)
-          tableFixture.click(TableCell.row(rowIndex).column(0), MouseClickInfo.leftButton())
+          val table = previous.ui as? JTable ?: error("No table")
+          val tableFixture = JTableFixture(robot(), table)
+          val rowIndex = { table.findLastRowIndexOfItemWithText(neededText) }
+          tableFixture.pointAt(TableCell.row(rowIndex()).column(0)) // It seems, the list may change for a while
+          tableFixture.click(TableCell.row(rowIndex()).column(0), MouseClickInfo.leftButton())
         }
       }
     }
 
     task {
       text(LessonsBundle.message("find.in.files.go.to.file", LessonUtil.rawEnter()))
-      stateCheck { virtualFile.name != existedFile.substringAfterLast('/') }
-      restoreByUi(restoreId = showPopupTaskId)
-      test { GuiTestUtil.shortcut(Key.ENTER) }
+      stateCheck { virtualFile.name != sampleFilePath.substringAfterLast('/') }
+      restoreState(delayMillis = defaultRestoreDelay) {
+        !isSelectedNeededItem(neededText)
+      }
+      test { invokeActionViaShortcut("ENTER") }
     }
 
     task("ReplaceInPath") {
       text(LessonsBundle.message("find.in.files.show.replace.popup",
                                  action(it), LessonUtil.actionName(it)))
-      triggerByUiComponentAndHighlight(false, false) { popup: FindPopupPanel ->
+      triggerUI().component { popup: FindPopupPanel ->
         popup.helper.isReplaceState
       }
       test { actions(it) }
@@ -115,8 +124,8 @@ class FindInFilesLesson(module: Module, lang: String, override val existedFile: 
     task("orange") {
       text(LessonsBundle.message("find.in.files.type.to.replace",
                                  code("apple"), code(it)))
-      triggerByUiComponentAndHighlight(highlightInside = false) { ui: SearchTextArea ->
-        it.startsWith(ui.textArea.text)
+      triggerAndBorderHighlight().component { ui: SearchTextArea ->
+        it.startsWith(ui.textArea.text) && UIUtil.getParentOfType(FindPopupPanel::class.java, ui) != null
       }
       stateCheck {
         getFindPopup()?.helper?.model?.let { model ->
@@ -147,37 +156,44 @@ class FindInFilesLesson(module: Module, lang: String, override val existedFile: 
       }
     }
 
-    val replaceAllDialogTitle = FindBundle.message("find.replace.all.confirmation.title")
+    val replaceButtonText = FindBundle.message("find.replace.command")
     task {
       val replaceAllButtonText = FindBundle.message("find.popup.replace.all.button").dropMnemonic()
       text(LessonsBundle.message("find.in.files.press.replace.all", strong(replaceAllButtonText)))
-      triggerByUiComponentAndHighlight { button: JButton ->
-        button.text == replaceAllButtonText
+      triggerAndFullHighlight().component { button: JButton ->
+        button.text.isToStringContains(replaceAllButtonText)
       }
-      triggerByUiComponentAndHighlight(false, false) { dialog: JDialog ->
-        dialog.title == replaceAllDialogTitle
+      triggerAndFullHighlight().component { button: JButton ->
+        UIUtil.getParentOfType(JDialog::class.java, button)?.isModal == true && button.text.isToStringContains(replaceButtonText)
       }
       showWarningIfPopupClosed(true)
       test {
         ideFrame {
-          Thread.sleep(300)
           button(replaceAllButtonText).click()
         }
       }
     }
 
     task {
-      val replaceButtonText = FindBundle.message("find.replace.command")
+      addFutureStep {
+        (previous.ui as? JButton)?.addActionListener {
+          completeStep()
+        }
+      }
       text(LessonsBundle.message("find.in.files.confirm.replace", strong(replaceButtonText)))
-      stateCheck { editor.document.charsSequence.contains("orange") }
-      restoreByUi(delayMillis = defaultRestoreDelay)
-      test {
-        ideFrame {
-          Thread.sleep(300)
-          findMessageDialog(replaceAllDialogTitle).click(replaceButtonText)
+      restoreByUi()
+      test(waitEditorToBeReady = false) {
+        dialog(title = "Replace All") {
+          button(replaceButtonText).click()
         }
       }
     }
+  }
+
+  private fun TaskRuntimeContext.isSelectedNeededItem(neededText: String): Boolean {
+    return (previous.ui as? JTable)?.let {
+      it.isShowing && it.selectedRow != -1 && it.selectedRow == it.findLastRowIndexOfItemWithText(neededText)
+    } == true
   }
 
   private fun TaskRuntimeContext.getFindPopup(): FindPopupPanel? {
@@ -185,18 +201,18 @@ class FindInFilesLesson(module: Module, lang: String, override val existedFile: 
   }
 
   private fun TaskContext.highlightAndTriggerWhenButtonSelected(buttonText: String) {
-    triggerByUiComponentAndHighlight { button: ActionButton ->
+    triggerAndFullHighlight().component { button: ActionButton ->
       button.action.templateText == buttonText
     }
-    triggerByUiComponentAndHighlight(false, false) { button: ActionButton ->
+    triggerUI().component { button: ActionButton ->
       button.action.templateText == buttonText && button.isSelected
     }
   }
 
   private fun JTable.findLastRowIndexOfItemWithText(textToFind: String): Int {
     for (ind in (rowCount - 1) downTo 0) {
-      val item = getValueAt(ind, 0) as? UsagePresentation
-      if (item?.plainText?.contains(textToFind, true) == true) {
+      val item = getValueAt(ind, 0) as? FindPopupItem
+      if (item?.presentableText?.contains(textToFind, true) == true) {
         return ind
       }
     }
@@ -205,28 +221,26 @@ class FindInFilesLesson(module: Module, lang: String, override val existedFile: 
 
   private fun TaskContext.showWarningIfPopupClosed(isReplacePopup: Boolean) {
     val actionId = if (isReplacePopup) "ReplaceInPath" else "FindInPath"
-    showWarning(LessonsBundle.message("find.in.files.popup.closed.warning.message", action(actionId), LessonUtil.actionName(actionId)),
-                restoreTaskWhenResolved = true) {
+    showWarning(LessonsBundle.message("find.in.files.popup.closed.warning.message", action(actionId), LessonUtil.actionName(actionId))) {
       getFindPopup()?.helper?.isReplaceState != isReplacePopup
     }
   }
 
-  private fun LessonContext.resetFindSettings() {
-    prepareRuntimeTask {
-      FindManager.getInstance(project).findInProjectModel.apply {
-        isWholeWordsOnly = false
-        stringToFind = ""
-        stringToReplace = ""
-        directoryName = null
-      }
-      val settings = FindInProjectSettings.getInstance(project) as? FindInProjectSettingsBase
-      settings?.apply {
-        findStrings.clear()
-        replaceStrings.clear()
-        recentDirectories.clear()
-      }
-    }
-  }
-
   override val testScriptProperties = TaskTestContext.TestScriptProperties(10)
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("find.in.files.help.link"),
+         LessonUtil.getHelpLink(helpUrl)),
+  )
+}
+
+private fun resetFindSettings(project: Project) {
+  FindManager.getInstance(project).findInProjectModel.apply {
+    isWholeWordsOnly = false
+    stringToFind = ""
+    stringToReplace = ""
+    directoryName = null
+  }
+  (FindInProjectSettings.getInstance(project) as? FindInProjectSettingsBase)
+    ?.loadState(FindInProjectSettingsBase())
 }

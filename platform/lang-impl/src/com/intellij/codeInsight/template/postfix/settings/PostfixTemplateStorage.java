@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate;
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTempl
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "PostfixTemplates", storages = @Storage("postfixTemplates.xml"))
+@State(name = "PostfixTemplates", storages = @Storage("postfixTemplates.xml"), category = SettingsCategory.CODE)
 public final class PostfixTemplateStorage extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final @NonNls String TEMPLATE_TAG = "template";
   private static final @NonNls String PROVIDER_ATTR_NAME = "provider";
@@ -110,8 +111,7 @@ public final class PostfixTemplateStorage extends SimpleModificationTracker impl
       for (PostfixTemplate template : entry.getValue()) {
         PostfixTemplateProvider provider = template.getProvider();
         if (provider != null) {
-          if (template instanceof PostfixChangedBuiltinTemplate) {
-            PostfixChangedBuiltinTemplate changedBuiltinTemplate = (PostfixChangedBuiltinTemplate)template;
+          if (template instanceof PostfixChangedBuiltinTemplate changedBuiltinTemplate) {
             String builtin = changedBuiltinTemplate.getBuiltinTemplate().getId();
             element.addContent(writeTemplate(changedBuiltinTemplate.getDelegate(), provider, builtin));
           }

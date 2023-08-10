@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
@@ -21,7 +22,8 @@ import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class PyMissingTypeHintsInspection extends PyInspection {
   /**
@@ -32,7 +34,7 @@ public class PyMissingTypeHintsInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    return new PyInspectionVisitor(holder, session) {
+    return new PyInspectionVisitor(holder, PyInspectionVisitor.getContext(session)) {
       @Override
       public void visitPyFunction(@NotNull PyFunction function) {
         if (function.getTypeComment() == null &&
@@ -90,10 +92,8 @@ public class PyMissingTypeHintsInspection extends PyInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return PythonUiService.getInstance().createSingleCheckboxOptionsPanel(
-      PyPsiBundle.message("INSP.missing.type.hints.checkbox.only.when.types.are.known"),
-      this, "m_onlyWhenTypesAreKnown");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(checkbox("m_onlyWhenTypesAreKnown", PyPsiBundle.message("INSP.missing.type.hints.checkbox.only.when.types.are.known")));
   }
 
   private static class AddTypeHintsQuickFix implements LocalQuickFix {

@@ -1,14 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Function;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.javac.Iterators.Function;
 
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
+import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
@@ -22,7 +24,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
 
-public class APIWrappers {
+public final class APIWrappers {
 
   /**
    * WARNING: this method may be called from annotation processor's code via reflection. The signature change or rename may break compatibility
@@ -34,7 +36,7 @@ public class APIWrappers {
   @Nullable
   public static <T> T unwrap(Class<? extends T> iface, T wrapper) {
     if (wrapper instanceof WrapperDelegateAccessor) {
-      final Object delegate = ((WrapperDelegateAccessor)wrapper).getWrapperDelegate();
+      final Object delegate = ((WrapperDelegateAccessor<?>)wrapper).getWrapperDelegate();
       if (iface.isInstance(delegate)) {
         return iface.cast(delegate);
       }
@@ -42,13 +44,83 @@ public class APIWrappers {
     return null;
   }
 
-  public static Processor newProcessorWrapper(final Processor delegate, JpsJavacFileManager fileManager) {
-    return wrap(Processor.class, new ProcessorWrapper(delegate, fileManager));
+  public static <T extends FileObject> DiagnosticOutputConsumer newDiagnosticListenerWrapper(ProcessingContext procContext, final DiagnosticOutputConsumer delegate) {
+    return wrap(DiagnosticOutputConsumer.class, new DiagnosticListenerWrapper<T>(procContext, delegate));
   }
 
-  @SuppressWarnings("unchecked")
-  public static <T extends FileObject> DiagnosticOutputConsumer newDiagnosticListenerWrapper(final DiagnosticOutputConsumer delegate, @NotNull Iterable<Processor> processors) {
-    return wrap(DiagnosticOutputConsumer.class, new DiagnosticListenerWrapper<T>(delegate, processors));
+  public static class ProcessingContext {
+    private final JpsJavacFileManager myFileManager;
+    private Iterable<Processor> myAllProcessors = Collections.emptyList();
+    private final Map<ProcessingEnvironment, ProcessingEnvironment> myWrappers = new HashMap<>(); // procEnv -> wrappedProcEnv
+    private String myLastProcName;
+    private final Map<String, String> myProcNamesMap = new HashMap<>(); // real proc className -> wrapped proc className
+    
+    public ProcessingContext(@NotNull JpsJavacFileManager fileManager) {
+      myFileManager = fileManager;
+    }
+
+    @NotNull
+    public JpsJavacFileManager getFileManager() {
+      return myFileManager;
+    }
+
+    @NotNull
+    public ProcessingEnvironment getWrappedProcessingEnvironment(ProcessingEnvironment processingEnv) {
+      ProcessingEnvironment wrapped = myWrappers.get(processingEnv);
+      if (wrapped == null) {
+        myWrappers.put(processingEnv, wrapped = wrap(ProcessingEnvironment.class, new ProcessingEnvironmentWrapper(processingEnv, myFileManager)));
+      }
+      return wrapped;
+    }
+
+    public String getProcessorName(Processor proc) {
+      return (proc instanceof WrapperDelegateAccessor<?>? ((WrapperDelegateAccessor<?>)proc).getWrapperDelegate() : proc).getClass().getName();
+    }
+
+    void setLastExecutedProcessorName(Processor proc) {
+      myLastProcName = getProcessorName(proc);
+    }
+
+    public Iterable<Processor> wrapProcessors(Iterable<? extends Processor> processors) {
+      return myAllProcessors = Iterators.map(processors, new Function<Processor, Processor>() {
+        @Override
+        public Processor fun(Processor processor) {
+          return wrap(Processor.class, new ProcessorWrapper(processor, ProcessingContext.this));
+        }
+      });
+    }
+
+    @Nullable
+    public String adjustMessage(String message) {
+      if (message != null) {
+        try {
+          final String realProcName = myLastProcName;
+          if (realProcName != null && !realProcName.isEmpty()) {
+            final String wrappedName = lookupWrappedProcName(realProcName);
+            if (wrappedName != null) {
+              return message.replace(wrappedName, realProcName);
+            }
+          }
+        }
+        catch (Throwable ignored) {
+           //iterating namesMap may cause unexpected AP class loading exceptions
+        }
+      }
+      return message;
+    }
+
+    private String lookupWrappedProcName(String procName) {
+      String wrappedName = myProcNamesMap.get(procName);
+      if (wrappedName == null) {
+        for (Processor proc : myAllProcessors) {
+          if (proc instanceof WrapperDelegateAccessor<?>) {
+            myProcNamesMap.put(getProcessorName(proc), proc.getClass().getName());
+          }
+        }
+        wrappedName = myProcNamesMap.get(procName);
+      }
+      return wrappedName;
+    }
   }
 
   public interface WrapperDelegateAccessor<T> {
@@ -71,84 +143,119 @@ public class APIWrappers {
 
   @SuppressWarnings("unchecked")
   static class DiagnosticListenerWrapper<T extends FileObject> extends DynamicWrapper<DiagnosticOutputConsumer> implements DiagnosticListener<T>{
-    private final Iterable<Pair<String, String>> myNamesPairs;
+    private final ProcessingContext myProcContext;
 
-    DiagnosticListenerWrapper(DiagnosticOutputConsumer delegate, @NotNull Iterable<Processor> processors) {
+    DiagnosticListenerWrapper(ProcessingContext procContext, DiagnosticOutputConsumer delegate) {
       super(delegate);
-      myNamesPairs = Iterators.filter(Iterators.map(processors, new Function<Processor, Pair<String, String>>() {
-        @Override
-        public Pair<String, String> fun(Processor processor) {
-          return processor instanceof WrapperDelegateAccessor<?> ? Pair.create(processor.getClass().getName(), ((WrapperDelegateAccessor<?>)processor).getWrapperDelegate().getClass().getName()) : null;
-        }
-      }), Iterators.<Pair<String, String>>notNullFilter());
+      myProcContext = procContext;
     }
 
     public void outputLineAvailable(String line) {
-      getWrapperDelegate().outputLineAvailable(DiagnosticWrapper.adjustMessage(myNamesPairs, line));
+      getWrapperDelegate().outputLineAvailable(myProcContext.adjustMessage(line));
     }
 
     @Override
     public void report(Diagnostic<? extends T> diagnostic) {
-      getWrapperDelegate().report(wrap(Diagnostic.class, new DiagnosticWrapper<T>((Diagnostic<T>)diagnostic, myNamesPairs)));
+      getWrapperDelegate().report(wrap(Diagnostic.class, new DiagnosticWrapper<>(myProcContext, (Diagnostic<T>)diagnostic)));
     }
   }
 
   static class DiagnosticWrapper<T> extends DynamicWrapper<Diagnostic<T>> {
-    private final Iterable<Pair<String, String>> myNamesMap;
+    private final ProcessingContext myProcContext;
 
-    DiagnosticWrapper(Diagnostic<T> delegate, Iterable<Pair<String, String>> namesMap) {
+    DiagnosticWrapper(ProcessingContext procContext, Diagnostic<T> delegate) {
       super(delegate);
-      myNamesMap = namesMap;
+      myProcContext = procContext;
     }
 
     public String getMessage(Locale locale) {
-      return adjustMessage(myNamesMap, getWrapperDelegate().getMessage(locale));
-    }
-
-    @Nullable
-    static String adjustMessage(final Iterable<Pair<String, String>> namesMap, String message) {
-      if (message != null) {
-        for (Pair<String, String> pair : namesMap) {
-          final String replaced = message.replace(pair.getFirst(), pair.getSecond());
-          if (!message.equals(replaced)) {
-            return replaced;
-          }
-        }
-      }
-      return message;
+      return myProcContext.adjustMessage(getWrapperDelegate().getMessage(locale));
     }
   }
 
   static class ProcessorWrapper extends DynamicWrapper<Processor> {
-    private final JpsJavacFileManager myFileManager;
+    private final ProcessingContext myProcessingContext;
     private boolean myCodeShown = false;
+    private ProcessingEnvironment myProcessingEnv;
 
-    ProcessorWrapper(Processor delegate, JpsJavacFileManager fileManager) {
+    ProcessorWrapper(Processor delegate, ProcessingContext context) {
       super(delegate);
-      myFileManager = fileManager;
+      myProcessingContext = context;
     }
 
     public void init(ProcessingEnvironment processingEnv) {
+      myProcessingEnv = processingEnv;
+      final Ref<ClassLoader> oldCtxLoader = setupContextClassLoader();
       try {
-        getWrapperDelegate().init(wrap(ProcessingEnvironment.class, new ProcessingEnvironmentWrapper(processingEnv, myFileManager)));
+        getWrapperDelegate().init(myProcessingContext.getWrappedProcessingEnvironment(processingEnv));
       }
       catch (IllegalArgumentException e) {
-        if (!myCodeShown) {
-          processingEnv.getMessager().printMessage(
-            Diagnostic.Kind.MANDATORY_WARNING,
-            "The " + e.getClass() + " may be caused by the wrapped ProcessingEnvironment object.\n" +
-            "Please pass the wrapped ProcessingEnvironment further to super.init().\n"+
-            "If you need to access the original ProcessingEnvironment object (e.g. for creating com.sun.source.util.Trees.instance(ProcessingEnvironment)), you may use following code in the processor implementation:\n\n" +
-            getUnwrapCodeSuggestion(ProcessingEnvironment.class, "processingEnv")
-          );
-          processingEnv.getMessager().printMessage(
-            Diagnostic.Kind.MANDATORY_WARNING,
-            "Workaround: to make project compile with the current annotation processor implementation, start JPS with VM option: -D"+JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY + "=false\n" +
-            "When run from IDE, the option can be set in \"Compiler Settings | build process VM options\""
-          );
-          myCodeShown = true;
-        }
+        sendDiagnosticWarning(processingEnv, e);
         throw e;
+      }
+      finally {
+        restoreContextClassLoader(oldCtxLoader);
+      }
+    }
+
+    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+      final Ref<ClassLoader> oldCtxLoader = setupContextClassLoader();
+      try {
+        final Processor delegate = getWrapperDelegate();
+        myProcessingContext.setLastExecutedProcessorName(delegate);
+        return delegate.process(annotations, roundEnv);
+      }
+      catch (IllegalArgumentException e) {
+        sendDiagnosticWarning(myProcessingEnv, e);
+        throw e;
+      }
+      finally {
+        restoreContextClassLoader(oldCtxLoader);
+      }
+    }
+
+    /*
+      Some processors may use libraries/frameworks requiring sophisticated setup via thread context class loader.
+      This ensures that the context loader is the same as the one used to load processor itself:
+      it might help to avoid possible conflicts with JPS core classes
+     */
+    @Nullable
+    private Ref<ClassLoader> setupContextClassLoader() {
+      final Processor delegate = getWrapperDelegate();
+      if (delegate != null) {
+        final Thread currentThread = Thread.currentThread();
+        final ClassLoader processorLoader = delegate.getClass().getClassLoader();
+        final ClassLoader currentCtxLoader = currentThread.getContextClassLoader();
+        if (processorLoader != currentCtxLoader) {
+          currentThread.setContextClassLoader(processorLoader);
+          return Ref.create(currentCtxLoader);
+        }
+      }
+      return null;
+    }
+
+    @SuppressWarnings("MethodMayBeStatic")
+    private void restoreContextClassLoader(@Nullable Ref<ClassLoader> loaderRef) {
+      if (loaderRef != null) {
+        Thread.currentThread().setContextClassLoader(loaderRef.get());
+      }
+    }
+
+    private void sendDiagnosticWarning(ProcessingEnvironment processingEnv, Throwable e) {
+      if (processingEnv != null && !myCodeShown) {
+        processingEnv.getMessager().printMessage(
+          Diagnostic.Kind.MANDATORY_WARNING,
+          "The " + e.getClass() + " may be caused by the wrapped ProcessingEnvironment object.\n" +
+          "Please pass the wrapped ProcessingEnvironment further to super.init().\n"+
+          "If you need to access the original ProcessingEnvironment object (e.g. for creating com.sun.source.util.Trees.instance(ProcessingEnvironment)), you may use following code in the processor implementation:\n\n" +
+          getUnwrapCodeSuggestion(ProcessingEnvironment.class, "processingEnv")
+        );
+        processingEnv.getMessager().printMessage(
+          Diagnostic.Kind.MANDATORY_WARNING,
+          "Workaround: to make project compile with the current annotation processor implementation, start JPS with VM option: -D"+JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY + "=false\n" +
+          "When run from IDE, the option can be set in \"Compiler Settings | build process VM options\""
+        );
+        myCodeShown = true;
       }
     }
   }
@@ -184,19 +291,19 @@ public class APIWrappers {
 
     @Override
     public JavaFileObject createSourceFile(CharSequence name, Element... originatingElements) throws IOException {
-      addMapping(name, Arrays.asList(originatingElements));
+      addMapping(name, originatingElements != null? Arrays.asList(originatingElements) : Collections.<Element>emptyList());
       return getWrapperDelegate().createSourceFile(name, originatingElements);
     }
 
     @Override
     public JavaFileObject createClassFile(CharSequence name, Element... originatingElements) throws IOException {
-      addMapping(name, Arrays.asList(originatingElements));
+      addMapping(name, originatingElements != null? Arrays.asList(originatingElements) : Collections.<Element>emptyList());
       return getWrapperDelegate().createClassFile(name, originatingElements);
     }
 
     @Override
     public FileObject createResource(JavaFileManager.Location location, CharSequence moduleAndPkg, CharSequence relativeName, Element... originatingElements) throws IOException {
-      if (originatingElements.length > 0) {
+      if (originatingElements != null && originatingElements.length > 0) {
         final String resourceName;
         if (moduleAndPkg == null) {
           resourceName = relativeName.toString();
@@ -224,7 +331,7 @@ public class APIWrappers {
         // package-path is a package-name where '.' replaced with '/'
         addMapping(resourceName, Arrays.asList(originatingElements));
       }
-      return getWrapperDelegate().createResource(location, moduleAndPkg, relativeName, originatingElements);
+      return getWrapperDelegate().createResource(location, moduleAndPkg, relativeName, originatingElements != null ? originatingElements : new Element[0]);
     }
 
     @Override

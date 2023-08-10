@@ -4,7 +4,6 @@ package org.jetbrains.jps.model.serialization.java.compiler;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsProject;
@@ -29,7 +28,7 @@ public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionS
   public static final String TARGET_ATTRIBUTE = "target";
 
   public static final List<String> DEFAULT_WILDCARD_PATTERNS =
-    ContainerUtil.immutableList("!?*.java", "!?*.form", "!?*.class", "!?*.groovy", "!?*.scala", "!?*.flex", "!?*.kt", "!?*.clj", "!?*.aj");
+    List.of("!?*.java", "!?*.form", "!?*.class", "!?*.groovy", "!?*.scala", "!?*.flex", "!?*.kt", "!?*.clj", "!?*.aj");
 
   public JpsJavaCompilerConfigurationSerializer() {
     super("compiler.xml", "CompilerConfiguration");

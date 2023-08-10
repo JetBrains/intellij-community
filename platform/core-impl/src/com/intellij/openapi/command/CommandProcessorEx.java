@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command;
 
 import com.intellij.openapi.project.Project;
@@ -10,8 +10,7 @@ public abstract class CommandProcessorEx extends CommandProcessor {
   public abstract void enterModal();
   public abstract void leaveModal();
 
-  @Nullable
-  public abstract CommandToken startCommand(@Nullable Project project, @NlsContexts.Command String name, @Nullable Object groupId, @NotNull UndoConfirmationPolicy undoConfirmationPolicy);
+  public abstract @Nullable CommandToken startCommand(@Nullable Project project, @NlsContexts.Command String name, @Nullable Object groupId, @NotNull UndoConfirmationPolicy undoConfirmationPolicy);
 
-  public abstract void finishCommand(@NotNull final CommandToken command, @Nullable Throwable throwable);
+  public abstract void finishCommand(final @NotNull CommandToken command, @Nullable Throwable throwable);
 }

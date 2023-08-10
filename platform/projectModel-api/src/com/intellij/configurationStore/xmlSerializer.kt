@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("XmlSerializer")
 package com.intellij.configurationStore
 
@@ -8,15 +8,21 @@ import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.net.URL
-import java.util.*
 
 @ApiStatus.Internal
-val jdomSerializer: JdomSerializer = ServiceLoader.load(JdomSerializer::class.java, JdomSerializer::class.java.classLoader).first()
+val jdomSerializer: JdomSerializer = run {
+  val implClass = JdomSerializer::class.java.classLoader.loadClass("com.intellij.configurationStore.JdomSerializerImpl")
+  MethodHandles.lookup().findConstructor(implClass, MethodType.methodType(Void.TYPE)).invoke() as JdomSerializer
+}
 
 @JvmOverloads
-fun <T : Any> serialize(obj: T, filter: SerializationFilter? = jdomSerializer.getDefaultSerializationFilter(), createElementIfEmpty: Boolean = false): Element? {
-  return jdomSerializer.serialize(obj, filter, createElementIfEmpty)
+fun <T : Any> serialize(obj: T,
+                        filter: SerializationFilter? = jdomSerializer.getDefaultSerializationFilter(),
+                        createElementIfEmpty: Boolean = false): Element? {
+  return jdomSerializer.serialize(obj = obj, filter = filter, createElementIfEmpty = createElementIfEmpty)
 }
 
 inline fun <reified T: Any> deserialize(element: Element): T = jdomSerializer.deserialize(element, T::class.java)
@@ -28,7 +34,7 @@ fun Element.deserializeInto(bean: Any) {
 }
 
 @JvmOverloads
-fun <T> deserializeAndLoadState(component: PersistentStateComponent<T>, element: Element, clazz: Class<T> = ComponentSerializationUtil.getStateClass(component::class.java)) {
+fun <T : Any> deserializeAndLoadState(component: PersistentStateComponent<T>, element: Element, clazz: Class<T> = ComponentSerializationUtil.getStateClass(component::class.java)) {
   val state = jdomSerializer.deserialize(element, clazz)
   (state as? BaseState)?.resetModificationCount()
   component.loadState(state)

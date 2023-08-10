@@ -148,21 +148,18 @@ public class ConfigFilesTreeBuilder {
   public static void renderNode(Object value, boolean expanded, ColoredTreeCellRenderer renderer) {
     if (!(value instanceof DefaultMutableTreeNode)) return;
     final Object object = ((DefaultMutableTreeNode)value).getUserObject();
-    if (object instanceof FileType) {
-      final FileType fileType = (FileType)object;
+    if (object instanceof FileType fileType) {
       final Icon icon = fileType.getIcon();
       renderer.setIcon(icon);
       renderer.append(getFileTypeNodeName(fileType), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    else if (object instanceof Module) {
-      final Module module = (Module)object;
+    else if (object instanceof Module module) {
       final Icon icon = ModuleType.get(module).getIcon();
       renderer.setIcon(icon);
       final String moduleName = module.getName();
       renderer.append(moduleName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    else if (object instanceof PsiFile) {
-      final PsiFile psiFile = (PsiFile)object;
+    else if (object instanceof PsiFile psiFile) {
       final Icon icon = psiFile.getIcon(0);
       renderer.setIcon(icon);
       final String fileName = psiFile.getName();
@@ -172,8 +169,7 @@ public class ConfigFilesTreeBuilder {
         renderPath(renderer, virtualFile);
       }
     }
-    else if (object instanceof VirtualFile) {
-      VirtualFile file = (VirtualFile)object;
+    else if (object instanceof VirtualFile file) {
       renderer.setIcon(VirtualFilePresentation.getIcon(file));
       renderer.append(file.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       renderPath(renderer, file);
@@ -191,7 +187,7 @@ public class ConfigFilesTreeBuilder {
   }
 
   public static void installSearch(JTree tree) {
-    new TreeSpeedSearch(tree, treePath -> {
+    TreeSpeedSearch.installOn(tree, false, treePath -> {
       final Object object = ((DefaultMutableTreeNode)treePath.getLastPathComponent()).getUserObject();
       if (object instanceof Module) {
         return ((Module)object).getName();

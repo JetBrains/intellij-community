@@ -36,8 +36,7 @@ public class UnusedImportInspection extends GlobalSimpleInspectionTool {
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull GlobalInspectionContext globalContext,
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    if (!(file instanceof PsiJavaFile) || FileTypeUtils.isInServerPageFile(file)) return;
-    PsiJavaFile javaFile = (PsiJavaFile)file;
+    if (!(file instanceof PsiJavaFile javaFile) || FileTypeUtils.isInServerPageFile(file)) return;
     final ImportsAreUsedVisitor visitor = new ImportsAreUsedVisitor(javaFile);
     javaFile.accept(visitor);
     for (PsiImportStatementBase unusedImportStatement : visitor.getUnusedImportStatements()) {

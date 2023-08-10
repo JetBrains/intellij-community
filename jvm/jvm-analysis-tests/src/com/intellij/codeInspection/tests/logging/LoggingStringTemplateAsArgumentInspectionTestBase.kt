@@ -1,0 +1,3 @@
+package com.intellij.codeInspection.tests.logging
+
+abstract class LoggingStringTemplateAsArgumentInspectionTestBase : LoggingInspectionTestBase()

@@ -1,31 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
-import com.intellij.refactoring.introduceVariable.InputValidator;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
-import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
@@ -40,58 +23,18 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpress
   @Override
   protected void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
     // for advanced stuff use ((PsiJavaCodeReferenceElement)expression).advancedResolve(true).getElement();
-    IntroduceVariableHandler handler =
-      ApplicationManager.getApplication().isUnitTestMode() ? getMockHandler() : new IntroduceVariableHandler();
+    JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE)
+                                            .getIntroduceVariableHandler();
+    assert handler != null;
     handler.invoke(expression.getProject(), editor, (PsiExpression)expression);
   }
 
-  @NotNull
-  private static IntroduceVariableHandler getMockHandler() {
-    return new IntroduceVariableHandler() {
-      // mock default settings
-      @Override
-      public final IntroduceVariableSettings getSettings(Project project, Editor editor, final PsiExpression expr,
-                                                         PsiExpression[] occurrences, TypeSelectorManagerImpl typeSelectorManager,
-                                                         boolean declareFinalIfAll, boolean anyAssignmentLHS, InputValidator validator,
-                                                         PsiElement anchor, JavaReplaceChoice replaceChoice) {
-        return new IntroduceVariableSettings() {
-          @Override
-          public @NlsSafe String getEnteredName() {
-            return "foo";
-          }
-
-          @Override
-          public boolean isReplaceAllOccurrences() {
-            return false;
-          }
-
-          @Override
-          public boolean isDeclareFinal() {
-            return false;
-          }
-
-          @Override
-          public boolean isReplaceLValues() {
-            return false;
-          }
-
-          @Override
-          public PsiType getSelectedType() {
-            return expr.getType();
-          }
-
-          @Override
-          public boolean isOK() {
-            return true;
-          }
-        };
-      }
-
-      @Override
-      protected boolean isInplaceAvailableInTestMode() {
-        return true;
-      }
-    };
+  @Override
+  public boolean isApplicable(@NotNull PsiElement context,
+                              @NotNull Document copyDocument, int newOffset) {
+    // Non-inplace mode would require a modal dialog, which is not allowed under postfix templates 
+    return EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled() &&
+           super.isApplicable(context, copyDocument, newOffset);
   }
 
   @Override

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -21,6 +7,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -28,8 +15,8 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.autodetect.IndentOptionsAdjuster;
 import com.intellij.psi.codeStyle.autodetect.IndentOptionsDetectorImpl;
@@ -57,22 +44,22 @@ class DetectAndAdjustIndentOptionsTask {
     myOptionsToAdjust = toAdjust;
   }
   
-  private PsiFile getFile() {
-    return PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+  private VirtualFile getFile() {
+    return FileDocumentManager.getInstance().getFile(myDocument);
   }
 
-  @NotNull
-  private Runnable calcIndentAdjuster(@NotNull ProgressIndicator indicator) {
-    PsiFile file = getFile();
-    IndentOptionsAdjuster adjuster = file == null ? null : new IndentOptionsDetectorImpl(file, indicator).getIndentOptionsAdjuster();
+  private @NotNull Runnable calcIndentAdjuster(@NotNull ProgressIndicator indicator) {
+    VirtualFile file = getFile();
+    IndentOptionsAdjuster adjuster = file == null ? null :
+                                     new IndentOptionsDetectorImpl(myProject, file, myDocument, indicator).getIndentOptionsAdjuster();
     return adjuster != null ? () -> adjustOptions(adjuster) : EmptyRunnable.INSTANCE;
   }
 
   private void adjustOptions(IndentOptionsAdjuster adjuster) {
-    final PsiFile file = getFile();
-    if (file == null) return;
+    VirtualFile virtualFile = getFile();
+    if (virtualFile == null) return;
 
-    final IndentOptions currentDefault = getDefaultIndentOptions(file, myDocument);
+    final IndentOptions currentDefault = getDefaultIndentOptions(myProject, virtualFile, myDocument);
     myOptionsToAdjust.copyFrom(currentDefault);
 
     adjuster.adjust(myOptionsToAdjust);
@@ -82,12 +69,12 @@ class DetectAndAdjustIndentOptionsTask {
     if (!currentDefault.equals(myOptionsToAdjust)) {
       myOptionsToAdjust.setDetected(true);
       myOptionsToAdjust.setOverrideLanguageOptions(true);
-      CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(file);
+      CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(virtualFile);
     }
   }
 
   private void logTooLongComputation() {
-    PsiFile file = getFile();
+    VirtualFile file = getFile();
     String fileName = file != null ? file.getName() : "";
     LOG.debug("Indent detection is too long for: " + fileName);
   }
@@ -114,10 +101,9 @@ class DetectAndAdjustIndentOptionsTask {
     }
   }
 
-  @NotNull
-  static TimeStampedIndentOptions getDefaultIndentOptions(@NotNull PsiFile file, @NotNull Document document) {
+  static @NotNull TimeStampedIndentOptions getDefaultIndentOptions(@NotNull Project project, @NotNull VirtualFile file, @NotNull Document document) {
     FileType fileType = file.getFileType();
-    CodeStyleSettings settings = CodeStyle.getSettings(file);
+    CodeStyleSettings settings = CodeStyle.getSettings(project, file);
     return new TimeStampedIndentOptions(settings.getIndentOptions(fileType), document.getModificationStamp());
   }
 

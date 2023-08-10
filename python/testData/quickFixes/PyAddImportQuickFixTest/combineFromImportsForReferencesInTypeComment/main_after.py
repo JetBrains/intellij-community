@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import List, FrozenSet
 
 xs = []  # type: List
-ys = set()  # type: Literal
+ys = set()  # type: FrozenSet

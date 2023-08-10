@@ -1,4 +1,4 @@
-// "Introduce local variable" "true"
+// "Introduce local variable" "true-preview"
 class a {
   void a() {
     list.add(new Runnable(){

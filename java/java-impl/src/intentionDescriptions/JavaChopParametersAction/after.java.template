@@ -1,9 +1,0 @@
-class A {
-  void foo(
-    <spot>A a1,
-    A a2,
-    A a3</spot>
-    ) {
-
-  }
-}

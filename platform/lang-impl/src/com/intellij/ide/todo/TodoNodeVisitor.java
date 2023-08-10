@@ -30,7 +30,7 @@ class TodoNodeVisitor extends AbstractTreeNodeVisitor<Object> {
         return TodoTreeHelper.getInstance(node.getProject()).contains((ProjectViewNode)node, element);
       }
     }
-    return node instanceof BaseToDoNode && ((BaseToDoNode)node).contains(element) ||
-           node instanceof ProjectViewNode && ((ProjectViewNode)node).contains(myFile);
+    return node instanceof BaseToDoNode && ((BaseToDoNode<?>)node).contains(element) ||
+           node instanceof ProjectViewNode && ((ProjectViewNode<?>)node).contains(myFile);
   }
 }

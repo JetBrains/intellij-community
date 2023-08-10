@@ -41,10 +41,9 @@ public final class ComparisonUtils {
   }
 
   public static boolean isComparison(PsiElement exp) {
-    if (!(exp instanceof GrBinaryExpression)) {
+    if (!(exp instanceof GrBinaryExpression binaryExpression)) {
       return false;
     }
-    final GrBinaryExpression binaryExpression = (GrBinaryExpression) exp;
     final IElementType sign = binaryExpression.getOperationTokenType();
     return s_comparisonStrings.containsKey(sign);
   }

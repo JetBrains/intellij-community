@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.util.SdkHomeBean
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author peter
- */
 class StandaloneGantTest extends LightJavaCodeInsightFixtureTestCase {
 
   @NotNull

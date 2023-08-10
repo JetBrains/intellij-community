@@ -15,9 +15,9 @@ import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.impl.source.xml.stub.XmlStubBasedElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class XMLParserDefinition implements ParserDefinition {
@@ -63,7 +63,7 @@ public class XMLParserDefinition implements ParserDefinition {
       //noinspection rawtypes
       return ((XmlStubBasedElementType)node.getElementType()).createPsi(node);
     }
-    return PsiUtilCore.NULL_PSI_ELEMENT;
+    throw new IncorrectOperationException("I dont know how to create XML PSI for this node: "+node+" ("+node.getClass()+")");
   }
 
   @Override
@@ -73,17 +73,6 @@ public class XMLParserDefinition implements ParserDefinition {
 
   @Override
   public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
-    return canStickTokensTogether(left, right);
-  }
-
-  /**
-   * @deprecated use {@link XMLParserDefinition#canStickTokensTogether(ASTNode, ASTNode)} instead
-   */
-  @Deprecated
-  public static SpaceRequirements canStickTokensTogetherByLexerInXml(final ASTNode left,
-                                                                                      final ASTNode right,
-                                                                                      final Lexer lexer,
-                                                                                      int state) {
     return canStickTokensTogether(left, right);
   }
 

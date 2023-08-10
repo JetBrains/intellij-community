@@ -17,6 +17,8 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -31,7 +33,7 @@ public class BackgroundableActionLock {
     myKeys = keys;
   }
 
-  @RequiresEdt
+  @CalledInAny
   public boolean isLocked() {
     return isLocked(myProject, myKeys);
   }
@@ -48,11 +50,11 @@ public class BackgroundableActionLock {
 
 
   @NotNull
-  public static BackgroundableActionLock getLock(@NotNull Project project, Object @NotNull ... keys) {
+  public static BackgroundableActionLock getLock(@NotNull Project project, Object @NonNls @NotNull ... keys) {
     return new BackgroundableActionLock(project, keys);
   }
 
-  @RequiresEdt
+  @CalledInAny
   public static boolean isLocked(@NotNull Project project, Object @NotNull ... keys) {
     return getManager(project).isBackgroundTaskRunning(keys);
   }

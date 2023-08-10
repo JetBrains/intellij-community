@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -52,12 +51,10 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
-/**
- * @author ilyas
- */
 public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance(GroovyExtractMethodHandler.class);
 
@@ -70,21 +67,21 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
     else {
       final List<GrExpression> expressions = GrIntroduceHandlerBase.collectExpressions(file, editor, editor.getCaretModel().getOffset(), true);
-      final Pass<GrExpression> callback = new Callback(project, editor, file);
+      final Consumer<GrExpression> callback = new Callback(project, editor, file);
       if (expressions.size() == 1) {
-        callback.pass(expressions.get(0));
+        callback.accept(expressions.get(0));
       }
       else if (expressions.isEmpty()) {
         model.selectLineAtCaret();
         invokeImpl(project, editor, file, model.getSelectionStart(), model.getSelectionEnd());
       }
       else {
-        IntroduceTargetChooser.showChooser(editor, expressions, callback, GrIntroduceHandlerBase.GR_EXPRESSION_RENDERER);
+        IntroduceTargetChooser.showChooser(editor, expressions, Pass.create(callback), GrIntroduceHandlerBase.GR_EXPRESSION_RENDERER);
       }
     }
   }
 
-  private final class Callback extends Pass<GrExpression> {
+  private final class Callback implements Consumer<GrExpression> {
     private final Project project;
     private final Editor editor;
     private final PsiFile file;
@@ -97,7 +94,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
 
     @Override
-    public void pass(@NotNull final GrExpression selectedValue) {
+    public void accept(@NotNull final GrExpression selectedValue) {
       final TextRange range = selectedValue.getTextRange();
       invokeImpl(project, editor, file, range.getStartOffset(), range.getEndOffset());
     }
@@ -230,8 +227,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   }
 
   private static boolean isEnclosingDefinition(PsiClass owner, PsiElement startElement) {
-    if (owner instanceof GrTypeDefinition) {
-      GrTypeDefinition definition = (GrTypeDefinition) owner;
+    if (owner instanceof GrTypeDefinition definition) {
       return startElement.getParent() == definition.getBody();
     }
     return false;
@@ -253,8 +249,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
             @Override
             public void visitElement(@NotNull final PsiElement element) {
               super.visitElement(element);
-              if (element instanceof GrReferenceExpression) {
-                GrReferenceExpression expr = (GrReferenceExpression) element;
+              if (element instanceof GrReferenceExpression expr) {
                 if (!expr.isQualified() && oldName.equals(expr.getReferenceName())) {
                   result.add(expr);
                 }

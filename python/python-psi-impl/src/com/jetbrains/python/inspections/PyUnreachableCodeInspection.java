@@ -11,7 +11,10 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.PyStatementListContainer;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,12 +29,12 @@ public class PyUnreachableCodeInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
-    public Visitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    public Visitor(@NotNull ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -43,7 +46,7 @@ public class PyUnreachableCodeInspection extends PyInspection {
         if (instructions.length > 0) {
           ControlFlowUtil.iteratePrev(instructions.length - 1, instructions, instruction -> {
             if (instruction.allPred().isEmpty() && !PyInspectionsUtil.isFirstInstruction(instruction)) {
-              unreachable.add(instruction.getElement());
+              unreachable.add(unwrapStatementListContainer(instruction.getElement()));
             }
             return ControlFlowUtil.Operation.NEXT;
           });
@@ -52,6 +55,10 @@ public class PyUnreachableCodeInspection extends PyInspection {
           registerProblem(e, PyPsiBundle.message("INSP.unreachable.code"));
         }
       }
+    }
+
+    private static @Nullable PsiElement unwrapStatementListContainer(@Nullable PsiElement element) {
+      return element instanceof PyStatementListContainer ? ((PyStatementListContainer)element).getStatementList() : element;
     }
   }
 }

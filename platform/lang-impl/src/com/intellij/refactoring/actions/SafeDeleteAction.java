@@ -16,7 +16,6 @@
 
 package com.intellij.refactoring.actions;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -39,11 +38,6 @@ public class SafeDeleteAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isAvailableForLanguage(Language language) {
-    return true;
-  }
-
-  @Override
   public boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     for (PsiElement element : elements) {
       if (!SafeDeleteProcessor.validElement(element)) return false;
@@ -62,6 +56,7 @@ public class SafeDeleteAction extends BaseRefactoringAction {
                                                         @NotNull PsiFile file,
                                                         @NotNull DataContext context,
                                                         @NotNull String place) {
+    if (!file.isValid()) return false;
     PsiElement targetElement = element;
     if (place.equals(ActionPlaces.REFACTORING_QUICKLIST)) {
       PsiElement caretElement = BaseRefactoringAction.getElementAtCaret(editor, file);

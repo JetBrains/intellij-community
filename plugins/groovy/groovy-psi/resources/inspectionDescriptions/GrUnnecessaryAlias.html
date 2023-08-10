@@ -1,8 +1,13 @@
 <html>
 <body>
-Reports unnecessary import aliases
-<p>
-  <small>New in 2018.1</small>
-</p>
+<p>Reports unnecessary import aliases.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  import com.foo.Bar as Bar
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  import com.foo.Bar
+</code></pre>
 </body>
 </html>

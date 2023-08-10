@@ -1,11 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("HardCodedStringLiteral")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.builtInWebServer
 
-import com.intellij.ide.browsers.WebBrowserXmlService
-import com.intellij.ide.browsers.OpenInBrowserRequest
-import com.intellij.ide.browsers.WebBrowserUrlProvider
+import com.intellij.ide.browsers.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -15,6 +12,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
 import com.intellij.util.Url
 import com.intellij.util.Urls
+import org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService
 import org.jetbrains.ide.BuiltInServerManager
 
 open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
@@ -35,7 +33,7 @@ open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
       return Urls.newFromVirtualFile(file)
     }
     else {
-      return getBuiltInServerUrls(file, request.project, null, request.isAppendAccessToken).firstOrNull()
+      return getBuiltInServerUrls(file, request.project, null, request.isAppendAccessToken, request.reloadMode).firstOrNull()
     }
   }
 }
@@ -44,21 +42,34 @@ open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
 fun getBuiltInServerUrls(file: VirtualFile,
                          project: Project,
                          currentAuthority: String?,
-                         appendAccessToken: Boolean = true): List<Url> {
+                         appendAccessToken: Boolean = true,
+                         reloadMode: ReloadMode? = null): List<Url> {
   if (currentAuthority != null && !compareAuthority(currentAuthority)) {
     return emptyList()
   }
 
   val info = WebServerPathToFileManager.getInstance(project).getPathInfo(file) ?: return emptyList()
-  return getBuiltInServerUrls(info, project, currentAuthority, appendAccessToken)
+  return getBuiltInServerUrls(info, project, currentAuthority, appendAccessToken, reloadMode)
 }
 
-fun getBuiltInServerUrls(info: PathInfo, project: Project, currentAuthority: String? = null, appendAccessToken: Boolean = true): SmartList<Url> {
+fun getBuiltInServerUrls(info: PathInfo,
+                         project: Project,
+                         currentAuthority: String? = null,
+                         appendAccessToken: Boolean = true,
+                         preferredReloadMode: ReloadMode? = null): SmartList<Url> {
   val effectiveBuiltInServerPort = BuiltInServerOptions.getInstance().effectiveBuiltInServerPort
   val path = info.path
 
   val authority = currentAuthority ?: "localhost:$effectiveBuiltInServerPort"
-  val query = if (appendAccessToken) "?$TOKEN_PARAM_NAME=${acquireToken()}" else ""
+  val reloadMode = preferredReloadMode ?: WebBrowserManager.getInstance().webServerReloadMode
+  val appendReloadOnSave = reloadMode != ReloadMode.DISABLED
+  val queryBuilder = StringBuilder()
+  if (appendAccessToken || appendReloadOnSave) queryBuilder.append('?')
+  if (appendAccessToken) queryBuilder.append(TOKEN_PARAM_NAME).append('=').append(acquireToken())
+  if (appendAccessToken && appendReloadOnSave) queryBuilder.append('&')
+  if (appendReloadOnSave) queryBuilder.append(WebServerPageConnectionService.RELOAD_URL_PARAM).append('=').append(reloadMode.name)
+  val query = queryBuilder.toString()
+
   val urls = SmartList(Urls.newHttpUrl(authority, "/${project.name}/$path", query))
 
   val path2 = info.rootLessPathIfPossible

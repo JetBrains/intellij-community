@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.extractor;
 
 import com.intellij.application.options.CodeStyle;
@@ -97,12 +97,12 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
     ProgressManager.getInstance().run(task);
   }
 
-  public void reportResult(@NotNull final String htmlReport,
-                           @NotNull final ValuesExtractionResult calculatedValues,
-                           @NotNull final Project project,
-                           @NotNull final CodeStyleSettings cloneSettings,
-                           @NotNull final PsiFile file,
-                           @NotNull final Map<Value, Object> backup) {
+  public void reportResult(final @NotNull String htmlReport,
+                           final @NotNull ValuesExtractionResult calculatedValues,
+                           final @NotNull Project project,
+                           final @NotNull CodeStyleSettings cloneSettings,
+                           final @NotNull PsiFile file,
+                           final @NotNull Map<Value, Object> backup) {
     UIUtil.invokeLaterIfNeeded(() -> {
       final Balloon balloon = JBPopupFactory
         .getInstance()
@@ -119,7 +119,7 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
                   final List<Value> values = calculatedValues.getValues();
                   Language language = file.getLanguage();
                   CodeStyleSettingsNameProvider nameProvider = new CodeStyleSettingsNameProvider();
-                  for (final LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList()) {
+                  for (final LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getAllProviders()) {
                     Language target = provider.getLanguage();
                     if (target.equals(language)) {
                       //this is our language
@@ -209,5 +209,10 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
     if (LanguageFormatting.INSTANCE.forContext(file) != null) {
       presentation.setEnabled(true);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -79,7 +78,8 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
                                                      GridBagConstraints.HORIZONTAL, JBUI.insets(2, 10, 10, 5), 0, 0));
 
     mySetAsDefaultButton = new JButton(JavaUiBundle.message("button.set.default"));
-    mySetAsDefaultButton.setMnemonic('D');
+    final @NonNls char defaultMnemonic = 'D';
+    mySetAsDefaultButton.setMnemonic(defaultMnemonic);
     myPanel.add(mySetAsDefaultButton, new GridBagConstraints(1, 2, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST,
                                                              GridBagConstraints.NONE, JBUI.insets(2, 10, 10, 5), 0, 0));
 
@@ -138,14 +138,6 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
   @Nullable
   public Sdk getJdk() {
     return myJdkChooser.getSelectedJdk();
-  }
-
-  /**
-   * @deprecated this method does return an empty array
-   */
-  @Deprecated
-  public Object @NotNull [] getAllJdks() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Nullable

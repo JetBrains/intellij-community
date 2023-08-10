@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 /**
@@ -6,7 +6,7 @@ package com.intellij.util.text;
  */
 public final class JBDateFormat {
   private static final JBDateTimeFormatter DEFAULT_FORMATTER = new DefaultJBDateTimeFormatter();
-  static CustomJBDateTimeFormatter CUSTOM_FORMATTER;
+  private static CustomJBDateTimeFormatter CUSTOM_FORMATTER;
 
   static {
     invalidateCustomFormatter();
@@ -23,5 +23,8 @@ public final class JBDateFormat {
   public static void invalidateCustomFormatter() {
     DateTimeFormatManager settings = DateTimeFormatManager.getInstance();
     CUSTOM_FORMATTER = new CustomJBDateTimeFormatter(settings.getDateFormatPattern(), settings.isUse24HourTime());
+    if (DateTimeFormatManager.getInstance().isOverrideSystemDateFormat()) {
+      DateFormatUtil.USE_24_HOUR_TIME = DateTimeFormatManager.getInstance().isUse24HourTime();
+    }
   }
 }

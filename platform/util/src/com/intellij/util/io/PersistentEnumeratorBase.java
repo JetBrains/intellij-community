@@ -1,35 +1,18 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.SLRUMap;
-import com.intellij.util.containers.ShareableKey;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.*;
+import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.keyStorage.AppendableObjectStorage;
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
 import com.intellij.util.io.keyStorage.InlinedKeyStorage;
 import com.intellij.util.io.keyStorage.NoDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.Closeable;
 import java.io.Flushable;
@@ -39,34 +22,52 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author max
  * @author jeka
  */
-public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>, Forceable, Closeable {
+public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>, Forceable, Closeable, SelfDiagnosing {
   protected static final Logger LOG = Logger.getInstance(PersistentEnumeratorBase.class);
   protected static final int NULL_ID = DataEnumeratorEx.NULL_ID;
 
+  protected static final boolean USE_RW_LOCK = SystemProperties.getBooleanProperty("idea.persistent.data.use.read.write.lock", false);
   private static final int META_DATA_OFFSET = 4;
   static final int DATA_START = META_DATA_OFFSET + 16;
-  private static final CacheKey ourFlyweight = new FlyweightKey();
 
-  protected final ResizeableMappedFile myStorage;
-  @NotNull
-  private final AppendableObjectStorage<Data> myKeyStorage;
+  protected final ResizeableMappedFile myCollisionResolutionStorage;
+  protected final @NotNull AppendableObjectStorage<Data> myKeyStorage;
   final KeyDescriptor<Data> myDataDescriptor;
   protected final Path myFile;
   private final Version myVersion;
   private final boolean myDoCaching;
 
+  /**
+   * Lock protects enumerator internal state.
+   * If acquired, the lock must always be acquired _before_ storage lock ({@link #lockStorageWrite()}/{@link #lockStorageWrite()})
+   * <p>
+   * TODO RC: initially RW lock was considered, but was found quite hard to find really read-only
+   * ops, so now it is used only as exclusive lock (i.e. only writeLock part is acquired for both
+   * read and write ops)
+   * <p>
+   * FIXME RC: it seems that this lock is not really needed: all its acquisition are immediately
+   * followed by acquisition of apt. storage lock. Tried to remove it, but got stuck on a read
+   * lock part: i.e. right now all getReadLock().lock() statements really acquire exclusive write
+   * lock, not shared read lock -- hence by replacing getReadLock().lock() with lockStorageRead()
+   * we change semantics. If we replace getReadLock() with lockStorageWrite() -- we keep semantics,
+   * but increase contention on storage write lock -- which is already quite contended.
+   */
+  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
+
   private volatile boolean myDirtyStatusUpdateInProgress;
 
   private boolean myClosed;
-  private boolean myDirty;
-  private boolean myCorrupted;
+  private volatile boolean myDirty;
+  private volatile boolean myCorrupted;
   private RecordBufferHandler<PersistentEnumeratorBase<?>> myRecordHandler;
-  private Flushable myMarkCleanCallback;
+  private @Nullable Flushable myMarkCleanCallback;
 
   public static class Version {
     private static final int DIRTY_MAGIC = 0xbabe1977;
@@ -86,117 +87,54 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  abstract static class RecordBufferHandler<T extends PersistentEnumeratorBase<?>> {
-    abstract int recordWriteOffset(T enumerator, byte[] buf);
+  protected abstract static class RecordBufferHandler<T extends PersistentEnumeratorBase<?>> {
+    abstract int recordWriteOffset(T enumerator, byte[] buf) throws IOException;
+
     abstract byte @NotNull [] getRecordBuffer(T enumerator);
+
     abstract void setupRecord(T enumerator, int hashCode, final int dataOffset, final byte[] buf);
   }
 
-  private static class CacheKey implements ShareableKey {
-    public PersistentEnumeratorBase<?> owner;
-    public Object key;
-
-    private CacheKey(Object key, PersistentEnumeratorBase<?> owner) {
-      this.key = key;
-      this.owner = owner;
-    }
-
-    @Override
-    public ShareableKey getStableCopy() {
-      return this;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (!(o instanceof CacheKey)) return false;
-
-      final CacheKey cacheKey = (CacheKey)o;
-
-      if (!key.equals(cacheKey.key)) return false;
-      if (!owner.equals(cacheKey.owner)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return key.hashCode();
-    }
-  }
-
-  private static CacheKey sharedKey(Object key, PersistentEnumeratorBase owner) {
-    ourFlyweight.key = key;
-    ourFlyweight.owner = owner;
-    return ourFlyweight;
-  }
-
-  private static final int ENUMERATION_CACHE_SIZE;
-  static {
-    String property = System.getProperty("idea.enumerationCacheSize");
-    ENUMERATION_CACHE_SIZE = property == null ? 8192 : Integer.valueOf(property);
-  }
-
-  private static final SLRUMap<Object, Integer> ourEnumerationCache = new SLRUMap<>(ENUMERATION_CACHE_SIZE, ENUMERATION_CACHE_SIZE);
-
-  @TestOnly
-  public static void clearCacheForTests() {
-    ourEnumerationCache.clear();
-  }
-
-  public static class CorruptedException extends IOException {
-    public CorruptedException(Path file) {
-      this("PersistentEnumerator storage corrupted " + file);
-    }
-
-    protected CorruptedException(String message) {
-      super(message);
-    }
-  }
-
-  public static class VersionUpdatedException extends CorruptedException {
-    VersionUpdatedException(@NotNull Path file) {
-      super("PersistentEnumerator storage corrupted " + file);
-    }
-  }
-
-  public PersistentEnumeratorBase(@NotNull Path file,
-                                  @NotNull ResizeableMappedFile storage,
-                                  @NotNull KeyDescriptor<Data> dataDescriptor,
-                                  int initialSize,
-                                  @NotNull Version version,
-                                  @NotNull RecordBufferHandler<? extends PersistentEnumeratorBase<?>> recordBufferHandler,
-                                  boolean doCaching) throws IOException {
+  protected PersistentEnumeratorBase(@NotNull Path file,
+                                     @NotNull ResizeableMappedFile valueStorage,
+                                     @NotNull KeyDescriptor<Data> dataDescriptor,
+                                     int initialSize,
+                                     @NotNull Version version,
+                                     @NotNull RecordBufferHandler<? extends PersistentEnumeratorBase<?>> recordBufferHandler,
+                                     boolean doCaching) throws IOException {
     myDataDescriptor = dataDescriptor;
     myFile = file;
     myVersion = version;
     myRecordHandler = (RecordBufferHandler<PersistentEnumeratorBase<?>>)recordBufferHandler;
     myDoCaching = doCaching;
-
-    if (!Files.exists(file)) {
-      if (file.getFileSystem().isReadOnly()) {
-        throw new IOException(file + " in " + file.getFileSystem() + " is not exist");
-      }
-      FileUtil.delete(keyStreamFile());
-      if (!FileUtil.createIfDoesntExist(file.toFile())) {
-        throw new IOException("Cannot create empty file: " + file);
-      }
-    }
-
-    myStorage = storage;
+    myCollisionResolutionStorage = valueStorage;
 
     lockStorageWrite();
     try {
-      if (myStorage.length() == 0) {
+      if (!Files.exists(file)) {
+        if (file.getFileSystem().isReadOnly()) {
+          throw new IOException(file + " in " + file.getFileSystem() + " is not exist");
+        }
+
+        Path parent = file.getParent();
+        if (parent != null) {
+          Files.createDirectories(parent);
+        }
+        Files.createFile(file);
+      }
+
+      boolean created = false;
+      if (myCollisionResolutionStorage.length() == 0) {
         try {
           markDirty(true);
           putMetaData(0);
           putMetaData2(0);
           setupEmptyFile();
+          doFlush();
+          created = true;
         }
         catch (RuntimeException e) {
           LOG.info(e);
-          myStorage.close();
           if (e.getCause() instanceof IOException) {
             throw (IOException)e.getCause();
           }
@@ -204,80 +142,97 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         }
         catch (IOException e) {
           LOG.info(e);
-          myStorage.close();
           throw e;
         }
         catch (Exception e) {
           LOG.info(e);
-          myStorage.close();
-          throw new CorruptedException(file);
+          throw new CorruptedException("PersistentEnumerator storage corrupted " + file);
         }
       }
       else {
         int sign;
         try {
-          sign = myStorage.getInt(0);
+          sign = myCollisionResolutionStorage.getInt(0);
         }
-        catch(Exception e) {
+        catch (Exception e) {
           LOG.info(e);
           sign = myVersion.dirtyMagic;
         }
         if (sign != myVersion.correctlyClosedMagic) {
-          myStorage.close();
-          if (sign != myVersion.dirtyMagic) throw new VersionUpdatedException(file);
+          if (sign != myVersion.dirtyMagic) {
+            throw new VersionUpdatedException(file, Integer.toHexString(myVersion.correctlyClosedMagic), Integer.toHexString(sign));
+          }
+          else {
+            throw new CorruptedException("PersistentEnumerator storage corrupted " + file);
+          }
+        }
+      }
+
+      if (dataDescriptor instanceof InlineKeyDescriptor) {
+        myKeyStorage = new InlinedKeyStorage<>((InlineKeyDescriptor<Data>)dataDescriptor);
+      }
+      else {
+        try {
+          myKeyStorage = new AppendableStorageBackedByResizableMappedFile<>(
+            keyStreamFile(),
+            initialSize,
+            myCollisionResolutionStorage.getStorageLockContext(),
+            /*pageSize: */ IOUtil.MiB,
+            false,
+            dataDescriptor
+          );
+        }
+        catch (Throwable e) {
+          LOG.info(e);
           throw new CorruptedException(file);
         }
       }
-    }
-    finally {
-      unlockStorageWrite();
-    }
 
-    if (dataDescriptor instanceof InlineKeyDescriptor) {
-      myKeyStorage = new InlinedKeyStorage<>((InlineKeyDescriptor<Data>)dataDescriptor);
+      if (IndexDebugProperties.IS_UNIT_TEST_MODE && LOG.isTraceEnabled()) {
+        LOG.debug("PersistentEnumeratorBase at " + myFile + " has been open (new = " + created + ")");
+      }
     }
-    else {
-      try {
-        myKeyStorage = new AppendableStorageBackedByResizableMappedFile<>(keyStreamFile(),
-                                                                          initialSize,
-                                                                          myStorage.getPagedFileStorage().getStorageLockContext(),
-                                                                          PagedFileStorage.MB,
-                                                                          false,
-                                                                          dataDescriptor);
+    catch (Throwable t) {
+      //Close the valueStorage on any error in a single place:
+      final Exception errorOnClose = ExceptionUtil.runAndCatch(
+        valueStorage::close
+      );
+      if (errorOnClose != null) {
+        t.addSuppressed(errorOnClose);
       }
-      catch (Throwable e) {
-        LOG.info(e);
-        myStorage.close();
-        throw new CorruptedException(file);
-      }
+      throw t;
+    } finally {
+      unlockStorageWrite();
     }
   }
 
-  @NotNull
-  protected Object getDataAccessLock() {
-    return this;
+  protected @NotNull Lock getWriteLock() {
+    return myLock.writeLock();
+  }
+
+  protected @NotNull Lock getReadLock() {
+    return USE_RW_LOCK ? myLock.readLock() : myLock.writeLock();
   }
 
   void lockStorageRead() {
-    myStorage.getPagedFileStorage().lockRead();
+    myCollisionResolutionStorage.lockRead();
   }
 
   void unlockStorageRead() {
-    myStorage.getPagedFileStorage().unlockRead();
+    myCollisionResolutionStorage.unlockRead();
   }
 
   void lockStorageWrite() {
-    myStorage.getPagedFileStorage().lockWrite();
+    myCollisionResolutionStorage.lockWrite();
   }
 
   void unlockStorageWrite() {
-    myStorage.getPagedFileStorage().unlockWrite();
+    myCollisionResolutionStorage.unlockWrite();
   }
 
   protected abstract void setupEmptyFile() throws IOException;
 
-  @NotNull
-  final RecordBufferHandler<PersistentEnumeratorBase<?>> getRecordHandler() {
+  final @NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> getRecordHandler() {
     return myRecordHandler;
   }
 
@@ -285,7 +240,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     myRecordHandler = recordHandler;
   }
 
-  void setMarkCleanCallback(Flushable markCleanCallback) {
+  void setMarkCleanCallback(@NotNull Flushable markCleanCallback) {
     myMarkCleanCallback = markCleanCallback;
   }
 
@@ -300,31 +255,16 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   private int doEnumerate(Data value, boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     if (myDoCaching && !saveNewValue) {
-      synchronized (ourEnumerationCache) {
-        final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
-        if (cachedId != null) return cachedId.intValue();
-      }
+      int cachedId = PersistentEnumeratorCache.getCachedId(value, this);
+      if (cachedId != NULL_ID) return cachedId;
     }
 
-    final int id;
-    try {
-      id = enumerateImpl(value, onlyCheckForExisting, saveNewValue);
-    }
-    catch (Throwable e) {
-      if (!isCorrupted()) {
-        markCorrupted();
-        LOG.info("Marking corrupted:" + myFile, e);
-      }
-
-      //noinspection InstanceofCatchParameter
-      if (e instanceof IOException) throw (IOException)e;
-      throw new IOException(e);
-    }
+    int id = catchCorruption(() -> {
+      return enumerateImpl(value, onlyCheckForExisting, saveNewValue);
+    });
 
     if (myDoCaching && id != NULL_ID) {
-      synchronized (ourEnumerationCache) {
-        ourEnumerationCache.put(new CacheKey(value, this), id);
-      }
+      PersistentEnumeratorCache.cacheId(value, id, this);
     }
 
     return id;
@@ -336,50 +276,55 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public interface DataFilter {
-    boolean accept(int id);
+    boolean accept(int id) throws IOException;
   }
 
-  protected void putMetaData(long data) {
+  protected void putMetaData(long data) throws IOException {
     lockStorageWrite();
     try {
-      if (myStorage.length() < META_DATA_OFFSET + 8 || getMetaData() != data) myStorage.putLong(META_DATA_OFFSET, data);
+      if (myCollisionResolutionStorage.length() < META_DATA_OFFSET + 8 || getMetaData() != data) {
+        myCollisionResolutionStorage.putLong(META_DATA_OFFSET, data);
+      }
     }
     finally {
       unlockStorageWrite();
     }
   }
 
-  protected long getMetaData() {
+  protected long getMetaData() throws IOException {
     lockStorageRead();
     try {
-      return myStorage.getLong(META_DATA_OFFSET);
+      return myCollisionResolutionStorage.getLong(META_DATA_OFFSET);
     }
     finally {
       unlockStorageRead();
     }
   }
 
-  void putMetaData2(long data) {
+  void putMetaData2(long data) throws IOException {
     lockStorageWrite();
     try {
-      if (myStorage.length() < META_DATA_OFFSET + 16 || getMetaData2() != data) myStorage.putLong(META_DATA_OFFSET + 8, data);
+      if (myCollisionResolutionStorage.length() < META_DATA_OFFSET + 16 || getMetaData2() != data) {
+        myCollisionResolutionStorage.putLong(META_DATA_OFFSET + 8, data);
+      }
     }
     finally {
       unlockStorageWrite();
     }
   }
 
-  long getMetaData2() {
+  long getMetaData2() throws IOException {
     lockStorageRead();
     try {
-      return myStorage.getLong(META_DATA_OFFSET + 8);
+      return myCollisionResolutionStorage.getLong(META_DATA_OFFSET + 8);
     }
     finally {
       unlockStorageRead();
     }
   }
 
-  public boolean processAllDataObject(@NotNull final Processor<? super Data> processor, @Nullable final DataFilter filter) throws IOException {
+  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor, final @Nullable DataFilter filter)
+    throws IOException {
     return traverseAllRecords(new RecordsProcessor() {
       @Override
       public boolean process(final int record) throws IOException {
@@ -389,11 +334,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         return true;
       }
     });
-
   }
 
-  @NotNull
-  public Collection<Data> getAllDataObjects(@Nullable final DataFilter filter) throws IOException {
+  public @NotNull Collection<Data> getAllDataObjects(final @Nullable DataFilter filter) throws IOException {
     final List<Data> values = new ArrayList<>();
     processAllDataObject(new CommonProcessors.CollectProcessor<>(values), filter);
     return values;
@@ -403,9 +346,11 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     private int myKey;
 
     public abstract boolean process(int record) throws IOException;
+
     void setCurrentKey(int key) {
       myKey = key;
     }
+
     int getCurrentKey() {
       return myKey;
     }
@@ -426,7 +371,11 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     if (myKeyStorage.checkBytesAreTheSame(addr, value)) return true;
 
     if (myDataDescriptor instanceof DifferentSerializableBytesImplyNonEqualityPolicy) return false;
-    return myDataDescriptor.isEqual(valueOf(idx), value);
+    Data actualValue = valueOf(idx);
+    if (actualValue == null) {
+      return value == null;
+    }
+    return myDataDescriptor.isEqual(actualValue, value);
   }
 
   protected int writeData(final Data value, int hashCode) {
@@ -450,16 +399,20 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return myKeyStorage.append(value);
   }
 
-  protected int setupValueId(int hashCode, int dataOff) {
+  protected int setupValueId(int hashCode, int dataOff) throws IOException {
     final byte[] buf = myRecordHandler.getRecordBuffer(this);
     myRecordHandler.setupRecord(this, hashCode, dataOff, buf);
     final int pos = myRecordHandler.recordWriteOffset(this, buf);
-    myStorage.put(pos, buf, 0, buf.length);
+    myCollisionResolutionStorage.put(pos, buf, 0, buf.length);
 
     return pos;
   }
 
   public boolean iterateData(@NotNull Processor<? super Data> processor) throws IOException {
+    return doIterateData((offset, data) -> processor.process(data));
+  }
+
+  protected boolean doIterateData(@NotNull AppendableObjectStorage.StorageObjectProcessor<? super Data> processor) throws IOException {
     lockStorageWrite(); // todo locking in key storage
     try {
       myKeyStorage.force();
@@ -478,34 +431,28 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   @Override
   public Data valueOf(int idx) throws IOException {
     if (idx <= NULL_ID) return null;
-    try {
+    return catchCorruption(() -> {
+      return findValueFor(idx);
+    });
+  }
 
+  private Data findValueFor(int idx) throws IOException {
+    boolean shouldLock = shouldLockOnValueOf();
+    if (shouldLock) {
       lockStorageRead();
-      try {
-        int addr = indexToAddr(idx);
-
-        return myKeyStorage.read(addr);
-      }
-      finally {
+    }
+    try {
+      int addr = indexToAddr(idx);
+      return myKeyStorage.read(addr, shouldLock);
+    }
+    finally {
+      if (shouldLock) {
         unlockStorageRead();
       }
     }
-    catch (NoDataException e) {
-      if (myFile.getFileSystem().isReadOnly()) {
-        throw e;
-      }
-      markCorrupted();
-      return null;
-    }
-    catch (IOException io) {
-      markCorrupted();
-      throw io;
-    }
-    catch (Throwable e) {
-      markCorrupted();
-      throw new RuntimeException(e);
-    }
   }
+
+  protected abstract boolean shouldLockOnValueOf();
 
   int reEnumerate(Data key) throws IOException {
     if (!canReEnumerate()) throw new IncorrectOperationException();
@@ -516,80 +463,88 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return false;
   }
 
-  protected abstract int indexToAddr(int idx);
+  protected abstract int indexToAddr(int idx) throws IOException;
 
   @Override
   public void close() throws IOException {
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       lockStorageWrite();
       try {
         if (!myClosed) {
           myClosed = true;
           doClose();
+          if (IndexDebugProperties.IS_UNIT_TEST_MODE && LOG.isTraceEnabled()) {
+            LOG.info("PersistentEnumeratorBase at " + myFile + " has been closed");
+          }
         }
       }
       finally {
         unlockStorageWrite();
       }
     }
+    finally {
+      getWriteLock().unlock();
+    }
   }
 
   protected void doClose() throws IOException {
+    IOCancellationCallbackHolder.interactWithUI();
+
+    getWriteLock().lock();
     try {
-      myKeyStorage.close();
-      flush();
+      try {
+        force();
+        myKeyStorage.close();
+      }
+      finally {
+        myCollisionResolutionStorage.close();
+      }
     }
     finally {
-      myStorage.close();
+      getWriteLock().unlock();
     }
   }
 
   public boolean isClosed() {
-    synchronized (getDataAccessLock()) {
+    getReadLock().lock();
+    try {
       return myClosed;
+    }
+    finally {
+      getReadLock().unlock();
     }
   }
 
   @Override
   public boolean isDirty() {
-    synchronized (getDataAccessLock()) {
-      return myDirty;
-    }
+    return myDirty;
   }
 
   public boolean isCorrupted() {
-    synchronized (getDataAccessLock()) {
-      return myCorrupted;
-    }
-  }
-
-  private void flush() throws IOException {
-    synchronized (getDataAccessLock()) {
-      lockStorageWrite();
-      try {
-        if (myStorage.isDirty() || isDirty()) {
-          doFlush();
-        }
-      }
-      finally {
-        unlockStorageWrite();
-      }
-    }
+    return myCorrupted;
   }
 
   protected void doFlush() throws IOException {
     markDirty(false);
-    myStorage.force();
+    myCollisionResolutionStorage.force();
   }
 
   @Override
   public void force() {
-    synchronized (getDataAccessLock()) {
+    if (!isDirty()) return;
+    getWriteLock().lock();
+    try {
       lockStorageWrite();
-
       try {
-        myKeyStorage.force();
-        flush();
+        if (isDirty()) {
+          if (myKeyStorage.isDirty()) {
+            myKeyStorage.force();
+          }
+          if (myCollisionResolutionStorage.isDirty()) {
+            doFlush();
+          }
+        }
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -598,41 +553,47 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         unlockStorageWrite();
       }
     }
+    finally {
+      getWriteLock().unlock();
+    }
   }
 
   protected final void markDirty(boolean dirty) throws IOException {
-    synchronized (getDataAccessLock()) {
-      if (dirty && myDirty && !myDirtyStatusUpdateInProgress) return;
-      lockStorageWrite();
-      try {
-        if (myDirty) {
-          if (!dirty) {
-            myDirtyStatusUpdateInProgress = true;
-            if (myMarkCleanCallback != null) myMarkCleanCallback.flush();
-            if (!myCorrupted) {
-              myStorage.putInt(0, myVersion.correctlyClosedMagic);
-              myDirty = false;
-            }
-            myDirtyStatusUpdateInProgress = false;
+    if (dirty && myDirty && !myDirtyStatusUpdateInProgress) return;
+    lockStorageWrite();
+    try {
+      if (myDirty) {
+        if (!dirty) {
+          myDirtyStatusUpdateInProgress = true;
+          if (myMarkCleanCallback != null) myMarkCleanCallback.flush();
+          if (!myCorrupted) {
+            myCollisionResolutionStorage.putInt(0, myVersion.correctlyClosedMagic);
+            myDirty = false;
           }
-        }
-        else {
-          if (dirty) {
-            myDirtyStatusUpdateInProgress = true;
-            myStorage.putInt(0, myVersion.dirtyMagic);
-            myDirtyStatusUpdateInProgress = false;
-            myDirty = true;
-          }
+          myDirtyStatusUpdateInProgress = false;
         }
       }
-      finally {
-        unlockStorageWrite();
+      else {
+        if (dirty) {
+          myDirtyStatusUpdateInProgress = true;
+          myCollisionResolutionStorage.putInt(0, myVersion.dirtyMagic);
+          myDirtyStatusUpdateInProgress = false;
+          myDirty = true;
+        }
       }
+    }
+    finally {
+      unlockStorageWrite();
     }
   }
 
   protected void markCorrupted() {
-    synchronized (getDataAccessLock()) {
+    if (IndexDebugProperties.IS_UNIT_TEST_MODE && LOG.isTraceEnabled()) {
+      dumpKeysOnCorruption();
+    }
+
+    getWriteLock().lock();
+    try {
       if (!myCorrupted) {
         myCorrupted = true;
         if (LOG.isDebugEnabled()) LOG.debug("Marking corrupted:" + myFile, new Throwable());
@@ -645,16 +606,53 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         }
       }
     }
+    finally {
+      getWriteLock().unlock();
+    }
   }
 
-  private static class FlyweightKey extends CacheKey {
-    FlyweightKey() {
-      super(null, null);
+  protected void dumpKeysOnCorruption() {
+  }
+
+  protected boolean trySelfHeal() {
+    return false;
+  }
+
+  @VisibleForTesting
+  protected <V> V catchCorruption(ThrowableComputable<V, IOException> operation) throws IOException {
+    if (isCorrupted()) {
+      throw new CorruptedException("PersistentEnumerator storage corrupted " + myFile);
     }
 
-    @Override
-    public ShareableKey getStableCopy() {
-      return new CacheKey(key, owner);
+    try {
+      // try to repair a storage
+      try {
+        return operation.compute();
+      }
+      catch (Throwable th) {
+        if (th instanceof NoDataException || !trySelfHeal()) {
+          throw th;
+        }
+      }
+
+      // and try one more time to execute an operation
+      return operation.compute();
+    }
+    catch (NoDataException e) {
+      return null;
+    }
+    catch (ClosedStorageException e) {
+      throw e;
+    }
+    catch (IOException io) {
+      LOG.error(io);
+      markCorrupted();
+      throw io;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      markCorrupted();
+      throw new RuntimeException(e);
     }
   }
 }

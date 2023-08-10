@@ -1,4 +1,4 @@
-// "Convert to LongAdder" "true"
+// "Convert to 'LongAdder'" "true"
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main10 {

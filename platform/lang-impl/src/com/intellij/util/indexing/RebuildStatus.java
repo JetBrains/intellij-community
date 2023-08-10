@@ -4,14 +4,12 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author peter
- */
 public enum RebuildStatus {
   OK,
   REQUIRES_REBUILD,
@@ -32,7 +30,7 @@ public enum RebuildStatus {
     return ourRebuildStatus.get(indexId).compareAndSet(OK, REQUIRES_REBUILD);
   }
 
-  static void clearIndexIfNecessary(ID<?, ?> indexId, ThrowableRunnable<? extends StorageException> clearAction) throws StorageException {
+  static void clearIndexIfNecessary(ID<?, ?> indexId, ThrowableRunnable<StorageException> clearAction) throws StorageException {
     AtomicReference<RebuildStatus> rebuildStatus = ourRebuildStatus.get(indexId);
     if (rebuildStatus == null) {
       throw new StorageException("Problem updating " + indexId);
@@ -58,7 +56,16 @@ public enum RebuildStatus {
     }
   }
 
+  static boolean isOk() {
+    return ourRebuildStatus.values().stream().map(ref -> ref.get()).noneMatch(status -> status != OK);
+  }
+
   static void reset() {
     ourRebuildStatus.clear();
+  }
+
+  public static @Nullable RebuildStatus getStatus(ID<?, ?> indexId) {
+    AtomicReference<RebuildStatus> reference = ourRebuildStatus.get(indexId);
+    return reference == null ? null : reference.get();
   }
 }

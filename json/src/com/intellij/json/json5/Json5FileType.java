@@ -22,7 +22,7 @@ public final class Json5FileType extends JsonFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return JsonBundle.message("file.type.description.json5");
+    return JsonBundle.message("filetype.json5.description");
   }
 
   @NotNull

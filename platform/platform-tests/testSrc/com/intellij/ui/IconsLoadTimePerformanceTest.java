@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.idea.HardwareAgentRequired;
@@ -6,10 +6,8 @@ import com.intellij.internal.IconsLoadTime;
 import com.intellij.internal.IconsLoadTime.StatData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.icons.ImageCacheKt;
 import com.intellij.ui.scale.TestScaleHelper;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.ui.StartupUiUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -69,12 +67,8 @@ public class IconsLoadTimePerformanceTest {
       String iconPath;
       while ((iconPath = br.readLine()) != null) {
         URL url = new File(PlatformTestUtil.getCommunityPath() + "/" + iconPath).toURI().toURL();
-        /* do not use global cache */
-        int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
-        if (StartupUiUtil.isUnderDarcula()) {
-          flags |= ImageLoader.USE_DARK;
-        }
-        ImageLoader.loadFromUrl(url.toString(), null, flags, ScaleContext.create());
+        // do not use global cache
+        ImageCacheKt.loadImageFromUrlWithoutCache(url.toString());
       }
     }
     StatData svgData = IconsLoadTime.getStatData(false, true);

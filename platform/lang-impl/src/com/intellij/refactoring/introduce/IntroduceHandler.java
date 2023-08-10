@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduce;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -63,12 +63,7 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
         invokeOnTarget(list.get(0), file, editor, project);
       }
       else {
-        IntroduceTargetChooser.showIntroduceTargetChooser(editor, list, new Pass<>() {
-          @Override
-          public void pass(final Target target) {
-            invokeOnTarget(target, file, editor, project);
-          }
-        }, RefactoringBundle.message("introduce.target.chooser.expressions.title"), targetInfo.getSecond());
+        IntroduceTargetChooser.showIntroduceTargetChooser(editor, list, target -> invokeOnTarget(target, file, editor, project), RefactoringBundle.message("introduce.target.chooser.expressions.title"), targetInfo.getSecond());
       }
     }
   }
@@ -156,13 +151,22 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
         return IntroduceHandler.this.getOccurrenceRange(occurrence);
       }
     };
-    chooser.showChooser(new Pass<>() {
-      @Override
-      public void pass(final OccurrencesChooser.ReplaceChoice choice) {
-        AbstractInplaceIntroducer<?, ?> introducer = getIntroducer(target, scope, usages, choice, file, editor, project);
-        introducer.startInplaceIntroduceTemplate();
-      }
-    }, occurrencesMap);
+    chooser.showChooser(occurrencesMap, choice -> {
+      startInplaceIntroduce(target, scope, usages, file, editor, project, choice);
+    });
+  }
+
+  public void startInplaceIntroduce(
+    @NotNull Target target,
+    @NotNull Scope scope,
+    @NotNull List<UsageInfo> usages,
+    @NotNull PsiFile file,
+    @NotNull Editor editor,
+    @NotNull Project project,
+    OccurrencesChooser.ReplaceChoice choice
+  ) {
+    AbstractInplaceIntroducer<?, ?> introducer = getIntroducer(target, scope, usages, choice, file, editor, project);
+    introducer.startInplaceIntroduceTemplate();
   }
 
   @NotNull

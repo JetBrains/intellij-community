@@ -24,7 +24,7 @@ public abstract class ProjectTemplatesFactory {
 
   public abstract String @NotNull [] getGroups();
 
-  public abstract ProjectTemplate @NotNull [] createTemplates(@Nullable String group, WizardContext context);
+  public abstract ProjectTemplate @NotNull [] createTemplates(@Nullable String group, @NotNull WizardContext context);
 
   public Icon getGroupIcon(String group) {
     return null;

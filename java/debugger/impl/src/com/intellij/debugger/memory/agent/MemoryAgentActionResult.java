@@ -8,14 +8,11 @@ public class MemoryAgentActionResult<T> {
     OK, TIMEOUT, CANCELLED;
 
     public static ErrorCode valueOf(int value) {
-      switch (value) {
-        case 0:
-          return OK;
-        case 1:
-          return TIMEOUT;
-        default:
-          return CANCELLED;
-      }
+      return switch (value) {
+        case 0 -> OK;
+        case 1 -> TIMEOUT;
+        default -> CANCELLED;
+      };
     }
   }
 

@@ -34,4 +34,14 @@ public class LongRangeMod {
       i++;
     }
   }
+
+  // EA-257681 - IAE: LongRangeSet$Range.<init>
+  void test(int a, int b) {
+    if (a % 2 == 0)
+      b += a / 2;
+    else if (a % 3 == 0)
+      b += a / 3;
+    else
+      a++;
+  }
 }

@@ -8,9 +8,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author ven
- */
 class ResolveClassTest extends GroovyResolveTestCase {
   @Override
   protected String getBasePath() {
@@ -203,8 +200,8 @@ interface Super {
    * https://issues.apache.org/jira/browse/GROOVY-8364
    */
   void testPreferImportsToInheritance() {
-    myFixture.addClass("package java.util; public class MyMap { static interface Entry<K,V> {} } ")
-    myFixture.addClass("package java.util; public class MainMap { static interface Entry<K,V> {} } ")
+    myFixture.addClass("package java.util; public class MyMap { interface Entry<K,V> {} } ")
+    myFixture.addClass("package java.util; public class MainMap { interface Entry<K,V> {} } ")
 
     myFixture.configureByText("a.groovy", """
 import java.util.MainMap.Entry;

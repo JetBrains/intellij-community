@@ -21,8 +21,7 @@ public class FieldScriptTransformationSupport implements AstTransformationSuppor
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
-    if (!(context.getCodeClass() instanceof GroovyScriptClass)) return;
-    final GroovyScriptClass scriptClass = (GroovyScriptClass)context.getCodeClass();
+    if (!(context.getCodeClass() instanceof GroovyScriptClass scriptClass)) return;
     final GroovyFile containingFile = scriptClass.getContainingFile();
     Project project = containingFile.getProject();
     if (isGroovySourceFile(containingFile) && !PsiSearchHelper.getInstance(project).hasIdentifierInFile(containingFile, FIELD)) {

@@ -31,7 +31,6 @@ import com.intellij.projectView.BaseProjectViewTestCase;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -47,18 +46,22 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase {
     PsiFile file = classes[0].getContainingFile();
 
     DependencyUISettings.getInstance().SCOPE_TYPE = PackagePatternProvider.PACKAGES;
-    doTestDependenciesTrees(new AnalysisScope(file), "-Root\n" +
-                                                     " Library Classes\n" +
-                                                     " -Production Classes\n" +
-                                                     "  -com.package1\n" +
-                                                     "   [Class1.java]\n" +
-                                                     " Test Classes\n",
-                            "-Root\n" +
-                            " Library Classes\n" +
-                            " -Production Classes\n" +
-                            "  -com.package1\n" +
-                            "   Class2.java\n" +
-                            " Test Classes\n");
+    doTestDependenciesTrees(new AnalysisScope(file), """
+                              -Root
+                               Library Classes
+                               -Production Classes
+                                -com.package1
+                                 [Class1.java]
+                               Test Classes
+                              """,
+                            """
+                              -Root
+                               Library Classes
+                               -Production Classes
+                                -com.package1
+                                 Class2.java
+                               Test Classes
+                              """);
   }
 
   public void testModuleGroups() throws Exception {
@@ -71,19 +74,22 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase {
     settings.UI_GROUP_BY_SCOPE_TYPE = false;
     settings.UI_SHOW_FILES = false;
     settings.SCOPE_TYPE = ProjectPatternProvider.FILE;
-    doTestDependenciesTrees(new AnalysisScope(myModule), "-Root\n" +
-                                                         " -[a]\n" +
-                                                         "  -b\n" +
-                                                         "   -module\n" +
-                                                         "    -dependencies\n" +
-                                                         "     -src\n" +
-                                                         "      com/package1\n",
-                            "-Root\n" +
-                            " -External Dependencies\n" +
-                            "  -< java 1.7 >\n" +
-                            "   -src.zip\n" +
-                            "    -java/lang\n" +
-                            "     String.java");
+    doTestDependenciesTrees(new AnalysisScope(myModule), """
+                              -Root
+                               -[a]
+                                -b
+                                 -module
+                                  -dependencies
+                                   -src
+                                    com/package1
+                              """,
+                            """
+                              -Root
+                               -External Dependencies
+                                -< java 1.7 >
+                                 -src.zip
+                                  -java/lang
+                                   String.java""");
   }
 
   private void doTestDependenciesTrees(AnalysisScope scope, String expectedLeftTree, String expectedRightTree) {
@@ -93,11 +99,11 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase {
     DependenciesPanel dependenciesPanel = new DependenciesPanel(myProject, builder);
     try {
       JTree leftTree = dependenciesPanel.getLeftTree();
-      TreeUtil.expandAll(leftTree);
+      PlatformTestUtil.expandAll(leftTree);
       PlatformTestUtil.assertTreeEqual(leftTree, expectedLeftTree, true);
 
       JTree rightTree = dependenciesPanel.getRightTree();
-      TreeUtil.expandAll(rightTree);
+      PlatformTestUtil.expandAll(rightTree);
       PlatformTestUtil.assertTreeEqual(rightTree, expectedRightTree, true);
     }
     finally {

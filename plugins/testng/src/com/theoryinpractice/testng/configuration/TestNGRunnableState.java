@@ -107,7 +107,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
       buf.append(StringUtil.join(data.TEST_LISTENERS, ";"));
     }
     collectListeners(javaParameters, buf, IDEATestNGListener.EP_NAME, ";");
-    if (buf.length() > 0) javaParameters.getProgramParametersList().add(CommandLineArgs.LISTENER, buf.toString());
+    if (!buf.isEmpty()) javaParameters.getProgramParametersList().add(CommandLineArgs.LISTENER, buf.toString());
 
     createServerSocket(javaParameters);
     createTempFiles(javaParameters);
@@ -133,7 +133,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
 
   @Override
   public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) {
-    return new SearchingForTestsTask(myServerSocket, config, myTempFile) {
+    return new SearchingForTestsTask(getServerSocket(), config, myTempFile) {
       @Override
       protected void onFound() {
         super.onFound();

@@ -1,6 +1,4 @@
-import org.jetbrains.annotations.Range;
-
 interface Date {
 
-  int getMonth();
+  int <spot>getMonth</spot>();
 }

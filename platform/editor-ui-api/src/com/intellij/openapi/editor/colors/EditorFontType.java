@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors;
 
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,5 +40,14 @@ public enum EditorFontType {
    */
   public @NotNull Font getGlobalFont() {
     return EditorColorsManager.getInstance().getGlobalScheme().getFont(this);
+  }
+
+  public static @NotNull EditorFontType forJavaStyle(@JdkConstants.FontStyle int style) {
+    return switch (style) {
+      case Font.BOLD -> BOLD;
+      case Font.ITALIC -> ITALIC;
+      case Font.BOLD | Font.ITALIC -> BOLD_ITALIC;
+      default -> PLAIN;
+    };
   }
 }

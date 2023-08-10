@@ -16,9 +16,7 @@
 package com.intellij.build.events;
 
 import com.intellij.notification.Notification;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;

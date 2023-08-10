@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.StructRecordComponent;
@@ -22,12 +22,11 @@ public class StructRecordAttribute extends StructGeneralAttribute {
   List<StructRecordComponent> components;
   
   @Override
-  public void initContent(DataInputFullStream data,
-                          ConstantPool pool) throws IOException {
+  public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException {
     int componentCount = data.readUnsignedShort();
     StructRecordComponent[] components = new StructRecordComponent[componentCount];
     for (int i = 0; i < componentCount; i++) {
-      components[i] = new StructRecordComponent(data, pool);
+      components[i] = StructRecordComponent.create(data, pool);
     }
     this.components = Arrays.asList(components);
   }

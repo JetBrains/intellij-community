@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-/**
- * @author Pavel.Dolgov
- */
 public abstract class JavaFxPropertyReference<T extends PsiElement> extends PsiReferenceBase<T> {
   protected final PsiClass myPsiClass;
 

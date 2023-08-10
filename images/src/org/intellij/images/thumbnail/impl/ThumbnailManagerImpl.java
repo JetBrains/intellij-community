@@ -37,7 +37,7 @@ final class ThumbnailManagerImpl extends ThumbnailManager implements Disposable 
 
   @Override
   @NotNull
-  public final ThumbnailView getThumbnailView() {
+  public ThumbnailView getThumbnailView() {
     if (thumbnailView == null) {
       thumbnailView = new ThumbnailViewImpl(project);
     }

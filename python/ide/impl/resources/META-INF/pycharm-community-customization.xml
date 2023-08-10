@@ -2,8 +2,12 @@
 <idea-plugin>
   <resource-bundle>messages.PyBundle</resource-bundle>
 
+  <content>
+    <module name="intellij.pycharm.community.ide.impl/training"/>
+  </content>
   <projectListeners>
     <listener class="com.jetbrains.python.PyModuleListener" topic="com.intellij.openapi.project.ModuleListener"/>
+    <listener class="com.jetbrains.python.PySdkFromEnvironmentVariableConfigurator" topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -21,31 +25,21 @@
                          bundle="messages.PyBundle"
                          key="configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"
                          instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
-                         groupWeight="5"/>
+                         groupWeight="5"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
                          bundle="messages.PyBundle"
                          key="configurable.PyDependenciesConfigurable.display.name"
                          provider="com.jetbrains.python.configuration.PyDependenciesConfigurableProvider"/>
 
-    <filetype.prebuiltStubsProvider filetype="Python" implementationClass="com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider"/>
-
     <statusBarWidgetFactory id="pythonInterpreterWidget"
                             implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetFactory"
-                            order="after codeStyleWidget, before gitWidget, before hgWidget, before notificationsWidget"/>
-
-    <projectConfigurable groupId="build"
-                         id="com.jetbrains.python.buildout.BuildoutModulesConfigurable"
-                         bundle="messages.PyBundle"
-                         key="configurable.BuildoutModulesConfigurable.display.name"
-                         instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
+                            order="after CodeStyleStatusBarWidget, before git, before hg, before Notifications"/>
 
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSdkConfigurator" id="sdk"
                                   order="after PlatformProjectConfigurator"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSourceRootConfigurator" id="sourceRoot"
                                   order="after sdk"/>
-    <directoryProjectConfigurator implementation="com.jetbrains.python.buildout.BuildoutFacetConfigurator" id="buildout"
-                                  order="after sourceRoot"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.PlatformInspectionProfileConfigurator"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.newProject.welcome.PyWelcomeConfigurator" id="welcome" order="last"/>
 
@@ -54,7 +48,7 @@
                         overrides="true"/>
 
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.FileGroupingRuleProvider" order="first"/>
-    <fileStructureGroupRuleProvider implementation="com.jetbrains.python.findUsages.PyClassGroupingRuleProvider"
+    <fileStructureGroupRuleProvider implementation="com.jetbrains.python.PyClassGroupingRuleProvider"
                                     order="before py-function"/>
     <diffPreviewProvider implementation="com.jetbrains.python.configuration.PyDiffPreviewProvider"/>
 
@@ -62,6 +56,9 @@
 
     <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
                         serviceImplementation="com.jetbrains.python.PyIdeCommonOptionsFormFactory"/>
+
+    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonFragmentsBuilder"
+                        serviceImplementation="com.jetbrains.python.PyIdeCommonFragmentsBuilder"/>
 
     <!-- Console -->
     <toolWindow id="Python Console" anchor="bottom" icon="PythonIcons.Python.PythonConsoleToolWindow" canCloseContents="true"
@@ -71,13 +68,13 @@
 
     <applicationService serviceImplementation="com.jetbrains.python.newProject.welcome.PyWelcomeSettings"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.newProject.welcome.PyWelcomeCollector"/>
-    <notificationGroup id="PyCharm Professional Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"/>
-    <notificationGroup id="Python interpreter configuring" displayType="BALLOON"/>
-    <notificationGroup id="Packaging" displayType="BALLOON"/>
+    <notificationGroup id="PyCharm Professional Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"
+      bundle="messages.PyCharmCommunityCustomizationBundle" key="notification.group.pro.advertiser"/>
 
     <ignoredFileProvider implementation="com.jetbrains.python.sdk.configuration.PyTemporarilyIgnoredFileProvider"/>
 
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
+    <defaultToolWindowLayout implementation="com.jetbrains.python.PyToolWindowLayoutProvider" order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -87,6 +84,7 @@
                                       id="environmentYml"/>
     <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyPipfileSdkConfiguration"
                                       id="pipfile" order="before requirementsTxtOrSetupPy"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyPoetrySdkConfiguration"/>
   </extensions>
 
   <actions resource-bundle="messages.ActionsBundle">

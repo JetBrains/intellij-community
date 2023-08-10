@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
@@ -36,13 +36,18 @@ import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
-/**
- * @author peter
- */
+
+import java.nio.file.Files
+
 @CompileStatic
 abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
+  @Override
+  protected boolean runInDispatchThread() {
+    return false
+  }
+
   @Override protected void setUp() {
-    new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log").delete()
+    Files.deleteIfExists(TestLoggerFactory.testLogDir.resolve("../log/build-log/build.log"))
     super.setUp()
     Logger.getInstance(GroovyCompilerTest.class).info(testStartMessage)
     addGroovyLibrary(module)
@@ -171,6 +176,17 @@ class Bar extends Foo {
     assertEmpty(make())
   }
 
+  void testTransitiveDependencyViaAnnotation() {
+    def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo {}')
+    myFixture.addFileToProject('Bar.groovy', 'class Bar { Bar plugin(@DelegatesTo(Foo) c) {} }')
+    def goo = myFixture.addFileToProject('Goo.groovy', '@groovy.transform.CompileStatic class Goo { def x(Bar bar) { bar.plugin {} } }')
+    assertEmpty(make())
+
+    touch(foo.virtualFile)
+    touch(goo.virtualFile)
+    assertEmpty(make())
+  }
+
   void testJavaDependsOnGroovyEnum() throws Throwable {
     myFixture.addFileToProject("Foo.groovy", "enum Foo { FOO }")
     myFixture.addClass("class Bar { Foo f; }")
@@ -234,10 +250,10 @@ class Bar extends Foo {
     println "Idea log"
     TestLoggerFactory.dumpLogToStdout(getTestStartMessage())
 
-    def makeLog = new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log")
-    if (makeLog.exists()) {
+    def makeLog = TestLoggerFactory.testLogDir.resolve("../log/build-log/build.log")
+    if (Files.exists(makeLog)) {
       println "\n\nServer Log:"
-      println makeLog.text
+      println Files.readString(makeLog)
     }
     System.out.flush()
   }

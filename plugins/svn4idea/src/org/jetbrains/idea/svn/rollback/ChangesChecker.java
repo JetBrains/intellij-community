@@ -28,9 +28,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import java.io.File;
 import java.util.*;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class ChangesChecker {
 
   @NotNull private final SuperfluousRemover myForAdds;

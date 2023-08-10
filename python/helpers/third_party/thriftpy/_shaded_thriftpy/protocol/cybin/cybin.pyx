@@ -2,7 +2,7 @@ from libc.stdlib cimport free, malloc
 from libc.stdint cimport int16_t, int32_t, int64_t
 from cpython cimport bool
 
-from thriftpy.transport.cybase cimport CyTransportBase, STACK_STRING_LEN
+from _shaded_thriftpy.transport.cybase cimport CyTransportBase, STACK_STRING_LEN
 
 from ..thrift import TDecodeException
 
@@ -37,7 +37,10 @@ ctypedef enum TType:
     T_SET = 14,
     T_LIST = 15,
     T_UTF8 = 16,
-    T_UTF16 = 17
+    T_UTF16 = 17,
+    T_BINARY = 18
+
+BIN_TYPES = (T_BINARY, T_STRING)
 
 class ProtocolError(Exception):
     pass
@@ -172,7 +175,7 @@ cdef inline read_struct(CyTransportBase buf, obj, decode_response=True):
 
         field_spec = field_specs[fid]
         ttype = field_spec[0]
-        if field_type != ttype:
+        if field_type != ttype and not (ttype in BIN_TYPES and field_type in BIN_TYPES):
             skip(buf, field_type)
             continue
 
@@ -202,11 +205,13 @@ cdef inline write_struct(CyTransportBase buf, obj):
         else:
             container_spec = field_spec[2]
 
-        v = getattr(obj, f_name)
+        v = getattr(obj, f_name, None)
         if v is None:
             continue
-
-        write_i08(buf, f_type)
+        if f_type == T_BINARY:
+            write_i08(buf, T_STRING)
+        else:
+            write_i08(buf, f_type)
         write_i16(buf, fid)
         try:
             c_write_val(buf, f_type, v, container_spec)
@@ -235,7 +240,7 @@ cdef inline c_read_binary(CyTransportBase buf, int32_t size):
 cdef inline c_read_string(CyTransportBase buf, int32_t size):
     py_data = c_read_binary(buf, size)
     try:
-        return py_data.decode("utf-8")
+        return (<char *>py_data)[:size].decode("utf-8")
     except:
         return py_data
 
@@ -265,6 +270,10 @@ cdef c_read_val(CyTransportBase buf, TType ttype, spec=None,
         n = read_i64(buf)
         return (<double*>(&n))[0]
 
+    elif ttype == T_BINARY:
+        size = read_i32(buf)
+        return c_read_binary(buf, size)
+
     elif ttype == T_STRING:
         size = read_i32(buf)
         if decode_response:
@@ -283,7 +292,7 @@ cdef c_read_val(CyTransportBase buf, TType ttype, spec=None,
         orig_type = <TType>read_i08(buf)
         size = read_i32(buf)
 
-        if orig_type != v_type:
+        if orig_type != v_type and not (orig_type in BIN_TYPES and v_type in BIN_TYPES):
             for _ in range(size):
                 skip(buf, orig_type)
             return []
@@ -311,7 +320,10 @@ cdef c_read_val(CyTransportBase buf, TType ttype, spec=None,
         orig_key_type = <TType>read_i08(buf)
         orig_type = <TType>read_i08(buf)
         size = read_i32(buf)
-
+        if orig_key_type in BIN_TYPES:
+            orig_key_type = k_type
+        if orig_type in BIN_TYPES:
+            orig_type = v_type
         if orig_key_type != k_type or orig_type != v_type:
             for _ in range(size):
                 skip(buf, orig_key_type)
@@ -344,6 +356,9 @@ cdef c_write_val(CyTransportBase buf, TType ttype, val, spec=None):
     elif ttype == T_DOUBLE:
         write_double(buf, val)
 
+    elif ttype == T_BINARY:
+        write_string(buf, val)
+
     elif ttype == T_STRING:
         if not isinstance(val, bytes):
             try:
@@ -374,7 +389,7 @@ cpdef skip(CyTransportBase buf, TType ttype):
         read_i32(buf)
     elif ttype == T_I64 or ttype == T_DOUBLE:
         read_i64(buf)
-    elif ttype == T_STRING:
+    elif ttype == T_STRING or ttype == T_BINARY:
         size = read_i32(buf)
         c_read_binary(buf, size)
     elif ttype == T_SET or ttype == T_LIST:
@@ -460,7 +475,7 @@ cdef class TCyBinaryProtocol(object):
         write_i32(self.trans, seqid)
 
     def write_message_end(self):
-        self.trans.c_flush()
+        pass
 
     def read_struct(self, obj):
         try:

@@ -1,4 +1,4 @@
-// "Replace 'IntStream.range().mapToDouble()' with 'Arrays.stream(numbers)'" "true"
+// "Replace 'IntStream.range().mapToDouble()' with 'Arrays.stream(numbers)'" "true-preview"
 
 import java.util.ArrayList;
 import java.util.Arrays;

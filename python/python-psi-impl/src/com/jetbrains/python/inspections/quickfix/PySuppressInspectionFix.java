@@ -22,9 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PySuppressInspectionFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   private final Class<? extends PyElement> myContainerClass;
 

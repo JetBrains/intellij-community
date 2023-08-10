@@ -25,6 +25,7 @@ public class YouTrackRepositoryEditor extends BaseRepositoryEditor<YouTrackRepos
 
   public YouTrackRepositoryEditor(final Project project, final YouTrackRepository repository, Consumer<? super YouTrackRepository> changeListener) {
     super(project, repository, changeListener);
+    myPasswordLabel.setText(TaskBundle.message("label.token"));
 
     // Setup document for completion and highlighting
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDefaultSearch.getDocument());

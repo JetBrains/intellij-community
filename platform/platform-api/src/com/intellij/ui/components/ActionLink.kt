@@ -1,23 +1,28 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil.browse
 import com.intellij.ui.scale.JBUIScale.scale
 import org.jetbrains.annotations.Nls
+import java.awt.Font
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
-import javax.swing.Action
-import javax.swing.Icon
-import javax.swing.JButton
-import javax.swing.SwingConstants
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole.HYPERLINK
+import javax.swing.*
 
 open class ActionLink() : JButton() {
-  override fun getUIClassID() = "LinkButtonUI"
+  override fun getUIClassID(): String = "LinkButtonUI"
 
   init {
     @Suppress("LeakingThis")
     addPropertyChangeListener("enabled") { if (autoHideOnDisable) isVisible = isEnabled }
+  }
+
+  override fun updateUI() {
+    // register predefined link implementation if L&F manager is not loaded yet
+    UIManager.get(uiClassID) ?: UIManager.put(uiClassID, "com.intellij.ui.components.DefaultLinkButtonUI")
+    super.updateUI()
   }
 
   constructor(action: Action) : this() {
@@ -32,11 +37,7 @@ open class ActionLink() : JButton() {
     listener?.let { addActionListener(it) }
   }
 
-  constructor(@Nls text: String, url: String) : this(text, { browse(url) }) {
-    setExternalLinkIcon()
-  }
-
-  var autoHideOnDisable = true
+  var autoHideOnDisable: Boolean = true
     set(newValue) {
       val oldValue = field
       if (oldValue == newValue) return
@@ -45,7 +46,7 @@ open class ActionLink() : JButton() {
       isVisible = !newValue || isEnabled
     }
 
-  var visited = false
+  var visited: Boolean = false
     set(newValue) {
       val oldValue = field
       if (oldValue == newValue) return
@@ -54,12 +55,25 @@ open class ActionLink() : JButton() {
       repaint()
     }
 
-  fun setLinkIcon() = setIcon(AllIcons.Ide.Link, false)
-  fun setExternalLinkIcon() = setIcon(AllIcons.Ide.External_link_arrow, true)
-  fun setDropDownLinkIcon() = setIcon(AllIcons.General.LinkDropTriangle, true)
+  fun setLinkIcon(): Unit = setIcon(AllIcons.Ide.Link, false)
+  fun setContextHelpIcon(): Unit = setIcon(AllIcons.General.ContextHelp, false)
+  fun setExternalLinkIcon(): Unit = setIcon(AllIcons.Ide.External_link_arrow, true)
+  fun setDropDownLinkIcon(): Unit = setIcon(AllIcons.General.LinkDropTriangle, true)
   fun setIcon(anIcon: Icon, atRight: Boolean) {
     icon = anIcon
     iconTextGap = scale(if (atRight) 1 else 4)
     horizontalTextPosition = if (atRight) SwingConstants.LEADING else SwingConstants.TRAILING
+  }
+
+  fun withFont(font: Font): ActionLink {
+    setFont(font)
+    return this
+  }
+
+  override fun getAccessibleContext(): AccessibleContext = myAccessibleContext
+  private val myAccessibleContext: AccessibleContext by lazy {
+    object : AccessibleAbstractButton() {
+      override fun getAccessibleRole() = HYPERLINK
+    }
   }
 }

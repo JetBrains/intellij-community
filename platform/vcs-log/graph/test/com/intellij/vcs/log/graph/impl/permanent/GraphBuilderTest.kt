@@ -27,7 +27,7 @@ abstract class GraphBuilderTest<CommitId : Comparable<CommitId>> : AbstractTestW
   override fun runTest(`in`: String, out: String) {
     val commits = getCommitIdManager().parseCommitList(`in`)
 
-    val graphBuilder = PermanentLinearGraphBuilder.newInstance<CommitId>(commits)
+    val graphBuilder = PermanentLinearGraphBuilder.newInstance(commits)
     val graph = graphBuilder.build { dom -> -getCommitIdManager().toInt(dom) }
 
     val actual = graph.asString(false)

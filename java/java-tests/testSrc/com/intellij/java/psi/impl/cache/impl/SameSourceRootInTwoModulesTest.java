@@ -57,7 +57,7 @@ public class SameSourceRootInTwoModulesTest extends JavaPsiTestCase {
 
       PsiTestUtil.addSourceRoot(anotherModule, mySrcDir1);
 
-      assertEquals(anotherModule, ModuleUtilCore.findModuleForFile(file, myProject));
+      assertNotNull(ModuleUtilCore.findModuleForFile(file, myProject));
     });
   }
 }

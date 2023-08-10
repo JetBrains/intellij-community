@@ -1,23 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.ui.popup.AlignedPopup;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -28,69 +25,40 @@ public final class Utils {
   private Utils() {
   }
 
-  /**
-   * @deprecated use overloaded method instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static void showCompletionPopup(JComponent toolbarComponent,
-                                         final JList list,
+                                         JList<String> list,
                                          @NlsContexts.PopupTitle String title,
-                                         final JTextComponent textField,
+                                         JTextComponent textField,
                                          @NlsContexts.PopupAdvertisement String ad) {
-    showCompletionPopup(toolbarComponent, list, title, textField, ad, (PopupState<JBPopup>)null);
-  }
-
-  /**
-   * @deprecated use overloaded method instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static void showCompletionPopup(JComponent toolbarComponent,
-                                         final JList list,
-                                         @NlsContexts.PopupTitle String title,
-                                         final JTextComponent textField,
-                                         @NlsContexts.PopupAdvertisement String ad,
-                                         JBPopupListener listener) {
-    showCompletionPopup(toolbarComponent, list, title, textField, ad);
-  }
-
-  public static void showCompletionPopup(JComponent toolbarComponent,
-                                         final JList list,
-                                         @NlsContexts.PopupTitle String title,
-                                         final JTextComponent textField,
-                                         @NlsContexts.PopupAdvertisement String ad,
-                                         @Nullable PopupState<JBPopup> popupState) {
 
     final Runnable callback = () -> {
-      String selectedValue = (String)list.getSelectedValue();
+      String selectedValue = list.getSelectedValue();
       if (selectedValue != null) {
         textField.setText(selectedValue);
         IdeFocusManager.getGlobalInstance().requestFocus(textField, false);
       }
     };
 
-    final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
+    final PopupChooserBuilder<String> builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
     if (title != null) {
       builder.setTitle(title);
     }
-    final JBPopup popup = builder.setMovable(false).setResizable(false)
-      .setRequestFocus(true).setItemChoosenCallback(callback).createPopup();
+    final JBPopup popup = builder
+      .setMovable(false)
+      .setResizable(false)
+      .setRequestFocus(true)
+      .setItemChosenCallback(callback)
+      .createPopup();
 
     if (ad != null) {
       popup.setAdText(ad, SwingConstants.LEFT);
     }
 
-    if (popupState != null) popupState.prepareToShow(popup);
-    if (toolbarComponent != null) {
-      popup.showUnderneathOf(toolbarComponent);
-    }
-    else {
-      popup.showUnderneathOf(textField);
-    }
+    JComponent parent = toolbarComponent != null ? toolbarComponent : textField;
+    AlignedPopup.showUnderneathWithoutAlignment(popup, parent);
   }
 
-  public static void setSmallerFont(final JComponent component) {
+  public static void setSmallerFont(JComponent component) {
     if (SystemInfo.isMac) {
       component.setFont(JBUI.Fonts.smallFont());
     }
@@ -112,6 +80,6 @@ public final class Utils {
   @NotNull
   public static List<Shortcut> shortcutsOf(@NotNull String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
-    return action == null ? ContainerUtil.emptyList() : ContainerUtil.immutableList(action.getShortcutSet().getShortcuts());
+    return action == null ? ContainerUtil.emptyList() : List.of(action.getShortcutSet().getShortcuts());
   }
 }

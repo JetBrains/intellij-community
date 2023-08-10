@@ -25,3 +25,8 @@ record CheckOverride(int x) {
 record VarArg(int... x) {
   public int[] x() { return x; }
 }
+
+interface I {
+  String bar();
+}
+record Impl(<error descr="'bar()' in 'Impl' clashes with 'bar()' in 'I'; attempting to use incompatible return type">int</error> bar) implements I {}

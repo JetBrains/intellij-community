@@ -18,9 +18,6 @@ package com.intellij.openapi.roots.libraries;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class LibraryTablePresentation {
 
   @NotNull

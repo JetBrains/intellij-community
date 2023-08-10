@@ -19,19 +19,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * Describes an artifact's type from Project Settings | Artifacts
+ * @see Artifact
+ * @see ArtifactPropertiesProvider
+ */
 public abstract class ArtifactType {
   public static final ExtensionPointName<ArtifactType> EP_NAME = new ExtensionPointName<>("com.intellij.packaging.artifactType");
   private final String myId;
   private final Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> myTitle;
-
-  /**
-   * @deprecated This constructor is meant to provide the binary compatibility with the external plugins.
-   * Please use the constructor that accepts a messagePointer for {@link ArtifactType#myTitle}
-   */
-  @Deprecated
-  protected ArtifactType(@NonNls String id, @Nls(capitalization = Nls.Capitalization.Sentence) String title) {
-    this(id, () -> title);
-  }
 
   protected ArtifactType(@NonNls String id, Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> title) {
     myId = id;

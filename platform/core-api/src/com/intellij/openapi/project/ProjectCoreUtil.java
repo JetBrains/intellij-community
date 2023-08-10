@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -12,11 +12,14 @@ import org.jetbrains.annotations.Nullable;
 
 public final class ProjectCoreUtil {
   /**
-   * @deprecated for internal use only, see {@link #theOnlyOpenProject()}
+   * @deprecated for internal use only, use {@link com.intellij.psi.PsiElement#getProject()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @ApiStatus.Internal
   public static volatile Project theProject;
+
+  private static volatile Project theOnlyProject;
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file) {
     // do not use file.getFileType() to avoid autodetection by content loading for arbitrary files
@@ -31,13 +34,20 @@ public final class ProjectCoreUtil {
   /**
    * For internal usage only.
    *
-   * @return the only open project if there is one, {@code null} if no projects open, or several projects are open, or default project is created
    * @deprecated Please use {@link com.intellij.psi.PsiElement#getProject()} or {@link com.intellij.openapi.project.ProjectManager#getOpenProjects()} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @ApiStatus.Internal
-  @Nullable
-  public static Project theOnlyOpenProject() {
-    return theProject;
+  public static @Nullable Project theOnlyOpenProject() {
+    return theOnlyProject;
+  }
+
+  /**
+   * Do not use to avoid internal data structures corruption
+   */
+  @ApiStatus.Internal
+  public static void updateInternalTheOnlyProjectFieldTemporarily(Project project) {
+    theOnlyProject = project;
   }
 }

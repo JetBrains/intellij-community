@@ -1,19 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
-import com.intellij.codeInsight.navigation.targetPopupPresentation
-import com.intellij.navigation.NavigationTarget
-import com.intellij.navigation.TargetPopupPresentation
-import com.intellij.pom.Navigatable
+import com.intellij.codeInsight.navigation.targetPresentation
+import com.intellij.model.Pointer
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.backend.navigation.NavigationTarget
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.suggested.createSmartPointer
 
 internal class PsiElementNavigationTarget(private val myElement: PsiElement) : NavigationTarget {
 
-  override fun isValid(): Boolean = myElement.isValid
+  override fun createPointer(): Pointer<out NavigationTarget> = Pointer.delegatingPointer(
+    myElement.createSmartPointer(), ::PsiElementNavigationTarget
+  )
 
-  override fun getNavigatable(): Navigatable = psiNavigatable(myElement)
+  override fun computePresentation(): TargetPresentation = targetPresentation(myElement)
 
-  override fun getTargetPresentation(): TargetPopupPresentation = targetPopupPresentation(myElement)
+  override fun navigationRequest(): NavigationRequest? = myElement.psiNavigatable()?.navigationRequest()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -21,9 +25,7 @@ internal class PsiElementNavigationTarget(private val myElement: PsiElement) : N
 
     other as PsiElementNavigationTarget
 
-    if (myElement != other.myElement) return false
-
-    return true
+    return myElement == other.myElement
   }
 
   override fun hashCode(): Int {

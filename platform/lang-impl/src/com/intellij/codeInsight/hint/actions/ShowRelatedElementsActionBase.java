@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -9,8 +9,8 @@ import com.intellij.codeInsight.hint.ImplementationViewSessionFactory;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTaskBase;
 import com.intellij.codeInsight.navigation.ImplementationSearcher;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -26,18 +26,25 @@ import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.Reference;
@@ -83,6 +90,7 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
       for (ImplementationViewSessionFactory factory : getSessionFactories()) {
         ImplementationViewSession session = factory.createSession(dataContext, project, isSearchDeep(), isIncludeAlwaysSelf());
         if (session != null) {
+          ensureValid(session, dataContext);
           showImplementations(session, isInvokedFromEditor, invokedByShortcut);
         }
       }
@@ -98,7 +106,10 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
   @NotNull
   protected abstract @NlsContexts.PopupContent String getIndexNotReadyMessage();
 
-  private void updateElementImplementations(final Object lookupItemObject, ImplementationViewSession session) {
+  private void updateElementImplementations(Object lookupItemObject, ImplementationViewSession session) {
+    if (lookupItemObject instanceof PSIPresentationBgRendererWrapper.PsiItemWithPresentation) {
+      lookupItemObject = ((PSIPresentationBgRendererWrapper.PsiItemWithPresentation)lookupItemObject).getItem();
+    }
     ImplementationViewSessionFactory currentFactory = session.getFactory();
     ImplementationViewSession newSession = createNewSession(currentFactory, session, lookupItemObject);
     if (newSession == null) {
@@ -109,6 +120,7 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
       }
     }
     if (newSession != null) {
+      ensureValid(newSession, lookupItemObject);
       Disposer.dispose(session);
       showImplementations(newSession, false, false);
     }
@@ -117,6 +129,7 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
   private ImplementationViewSession createNewSession(ImplementationViewSessionFactory factory,
                                                      ImplementationViewSession session,
                                                      Object lookupItemObject) {
+    ensureValid(session, lookupItemObject);
     return factory.createSessionForLookupElement(session.getProject(), session.getEditor(), session.getFile(), lookupItemObject,
                                                  isSearchDeep(), isIncludeAlwaysSelf());
   }
@@ -146,12 +159,14 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
     JBPopup popup = SoftReference.dereference(myPopupRef);
     if (popup != null && popup.isVisible() && popup instanceof AbstractPopup) {
       final ImplementationViewComponent component = (ImplementationViewComponent)((AbstractPopup)popup).getComponent();
-      component.update(impls, index);
-      updateInBackground(session, component, (AbstractPopup)popup, usageView);
-      if (invokedByShortcut) {
-        ((AbstractPopup)popup).focusPreferredComponent();
+      if (component != null) {
+        component.update(impls, index);
+        updateInBackground(session, component, (AbstractPopup)popup, usageView);
+        if (invokedByShortcut) {
+          ((AbstractPopup)popup).focusPreferredComponent();
+        }
+        return;
       }
-      return;
     }
 
     Consumer<ImplementationViewComponent> processor = couldPinPopup() ? component -> {
@@ -164,6 +179,11 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
         @Override
         public void updatePopup(Object lookupItemObject) {
           updateElementImplementations(lookupItemObject, session);
+        }
+
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          component.cleanup();
         }
       };
 
@@ -181,11 +201,14 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
           if (task != null) {
             task.cancelTask();
           }
-          Disposer.dispose(session);
           return Boolean.TRUE;
         });
-      
+      WindowMoveListener listener = new WindowMoveListener();
+      listener.installTo(component);
+
       popup = popupBuilder.createPopup();
+      Disposer.register(popup, session);
+      Disposer.register(popup, () -> listener.uninstallFrom(component));
 
       updateInBackground(session, component, (AbstractPopup)popup, usageView);
 
@@ -196,13 +219,7 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
     }
   }
 
-  protected abstract void triggerFeatureUsed(@NotNull Project project);
-
-  protected static void triggerFeatureUsed(@NotNull Project project, @NotNull String key, @NotNull String keyForLookup) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(key);
-    if (LookupManager.getInstance(project).getActiveLookup() != null) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(keyForLookup);
-    }
+  protected void triggerFeatureUsed(@NotNull Project project){
   }
 
   @NotNull
@@ -257,6 +274,25 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
       Collections.addAll(result, elements);
       result.addAll(data.subList(startIdx, data.size()));
       myComponent.update(result, myComponent.getIndex());
+    }
+  }
+
+  // See: https://web.ea.pages.jetbrains.team/#/issue/660785
+  private static void ensureValid(@NotNull ImplementationViewSession session, @Nullable Object context) {
+    PsiFile contextFile = null;
+    if (context instanceof DataContext dataContext) {
+      contextFile = CommonDataKeys.PSI_FILE.getData(dataContext);
+    }
+    if (context instanceof PsiElement psiElement) {
+      contextFile = psiElement.getContainingFile();
+    }
+    VirtualFile contextVirtualFile = contextFile != null ? contextFile.getVirtualFile() : null;
+    VirtualFile sessionVirtualFile = session.getFile();
+    if (contextVirtualFile != null && contextVirtualFile.equals(sessionVirtualFile)) {
+      PsiUtilCore.ensureValid(contextFile);
+    }
+    else if (sessionVirtualFile != null && !sessionVirtualFile.isValid()) {
+      throw new InvalidVirtualFileAccessException(sessionVirtualFile);
     }
   }
 

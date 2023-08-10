@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -23,35 +8,42 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.NavigateAction;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.model.Pointer;
+import com.intellij.model.psi.impl.UtilKt;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.ElementDescriptionUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewShortNameLocation;
-import com.intellij.util.Consumer;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.function.Function;
+import java.awt.event.MouseEvent;
+import java.util.*;
+import java.util.function.Consumer;
 
 public class GotoImplementationHandler extends GotoTargetHandler {
   @Override
   protected String getFeatureUsedKey() {
-    return "navigation.goto.implementation";
+    return null;
   }
 
   @Override
@@ -69,10 +61,34 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return createDataForSource(editor, offset, source);
   }
 
-  private @NotNull GotoData createDataForSource(@NotNull Editor editor, int offset, PsiElement source) {
+  protected @NotNull GotoData createDataForSource(@NotNull Editor editor, int offset, PsiElement source) {
+    final PsiElement[] targets = findTargets(editor, offset, source);
+    if (targets == null) {
+      //canceled search
+      GotoData data = new GotoData(source, PsiElement.EMPTY_ARRAY, Collections.emptyList());
+      data.isCanceled = true;
+      return data;
+    }
+    final PsiReference reference = TargetElementUtil.findReference(editor, offset);
+    GotoData gotoData = new GotoData(source, targets, Collections.emptyList());
+    gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference) {
+      @Override
+      public void onSuccess() {
+        super.onSuccess();
+        @Nullable ItemWithPresentation oneElement = getTheOnlyOneElement();
+        if (oneElement != null && oneElement.getItem() instanceof SmartPsiElementPointer<?> &&
+            navigateToElement(((SmartPsiElementPointer<?>)oneElement.getItem()).getElement())) {
+          myPopup.cancel();
+        }
+      }
+    };
+    return gotoData;
+  }
+
+  protected PsiElement @Nullable [] findTargets(@NotNull Editor editor, int offset, @NotNull PsiElement source) {
     final PsiReference reference = TargetElementUtil.findReference(editor, offset);
     final TargetElementUtil instance = TargetElementUtil.getInstance();
-    PsiElement[] targets = new ImplementationSearcher.FirstImplementationsSearcher() {
+    return new ImplementationSearcher.FirstImplementationsSearcher() {
       @Override
       protected boolean accept(PsiElement element) {
         if (reference != null && !reference.getElement().isValid()) return false;
@@ -84,24 +100,6 @@ public class GotoImplementationHandler extends GotoTargetHandler {
         return false;
       }
     }.searchImplementations(editor, source, offset);
-    if (targets == null) {
-      //canceled search
-      GotoData data = new GotoData(source, PsiElement.EMPTY_ARRAY, Collections.emptyList());
-      data.isCanceled = true;
-      return data;
-    }
-    GotoData gotoData = new GotoData(source, targets, Collections.emptyList());
-    gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference) {
-      @Override
-      public void onSuccess() {
-        super.onSuccess();
-        PsiElement oneElement = getTheOnlyOneElement();
-        if (oneElement != null && navigateToElement(oneElement)) {
-          myPopup.cancel();
-        }
-      }
-    };
-    return gotoData;
   }
 
   public static int tryGetNavigationSourceOffsetFromGutterIcon(@NotNull Editor editor, String actionId) {
@@ -109,10 +107,9 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     List<GutterMark> renderers = ((EditorGutterComponentEx)editor.getGutter()).getGutterRenderers(line);
     List<PsiElement> elementCandidates = new ArrayList<>();
     for (GutterMark renderer : renderers) {
-      if (renderer instanceof LineMarkerInfo.LineMarkerGutterIconRenderer) {
-        LineMarkerInfo.LineMarkerGutterIconRenderer lineMarkerRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)renderer;
-        AnAction clickAction = ((LineMarkerInfo.LineMarkerGutterIconRenderer)renderer).getClickAction();
-        if (clickAction instanceof NavigateAction && actionId.equals(((NavigateAction)clickAction).getOriginalActionId())) {
+      if (renderer instanceof LineMarkerInfo.LineMarkerGutterIconRenderer lineMarkerRenderer) {
+        AnAction clickAction = ((LineMarkerInfo.LineMarkerGutterIconRenderer<?>)renderer).getClickAction();
+        if (clickAction instanceof NavigateAction && actionId.equals(((NavigateAction<?>)clickAction).getOriginalActionId())) {
           elementCandidates.add(lineMarkerRenderer.getLineMarkerInfo().getElement());
         }
       }
@@ -128,14 +125,10 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     int offset = editor.getCaretModel().getOffset();
     PsiElementProcessor<PsiElement> navigateProcessor = element -> {
       GotoData data = createDataForSource(editor, offset, element);
-      successCallback.consume(data);
+      successCallback.accept(data);
       return true;
     };
-    Project project = editor.getProject();
-    if (project == null) return;
-
-    GotoDeclarationAction
-      .chooseAmbiguousTarget(project, editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"), null);
+    GotoDeclarationAction.chooseAmbiguousTarget(editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"), null);
   }
 
   private static PsiElement getContainer(PsiElement refElement) {
@@ -176,22 +169,43 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return CodeInsightBundle.message("goto.implementation.notFound");
   }
 
-  private class ImplementationsUpdaterTask extends BackgroundUpdaterTask {
+  public void navigateToImplementations(@NotNull PsiElement baseElement,
+                                        @NotNull MouseEvent e,
+                                        @NlsContexts.PopupContent String dumbModeMessage) {
+    Project project = baseElement.getProject();
+    if (DumbService.isDumb(project)) {
+      DumbService.getInstance(project).showDumbModeNotification(dumbModeMessage);
+      return;
+    }
+    PsiUtilCore.ensureValid(baseElement);
+    PsiFile containingFile = baseElement.getContainingFile();
+    //for compiled files a decompiled copy is analysed in the editor (see TextEditorBackgroundHighlighter.getPasses)
+    //but it's a non-physical copy with disabled events (see ClsFileImpl.getDecompiledPsiFile)
+    //which in turn means that no document can be found for such file - it's required to restore original file
+    //other non-physical copies should not be opened in the editor
+    PsiFile originalFile = containingFile.getOriginalFile();
+    Editor editor = UtilKt.mockEditor(originalFile);
+    GotoData source = createDataForSource(Objects.requireNonNull(editor, "No document for " + containingFile + "; original: " + originalFile), baseElement.getTextOffset(), baseElement);
+    show(project, editor, containingFile, source, popup -> popup.show(new RelativePoint(e)));
+  }
+
+  @TestOnly
+  public GotoData createDataForSourceForTests(Editor editor, PsiElement element) {
+    return createDataForSource(editor, element.getTextOffset(), element);
+  }
+
+  private class ImplementationsUpdaterTask extends BackgroundUpdaterTaskBase<ItemWithPresentation> {
     private final Editor myEditor;
     private final int myOffset;
     private final GotoData myGotoData;
     private final PsiReference myReference;
 
-    // due to javac bug: java.lang.ClassFormatError: Illegal field name "com.intellij.codeInsight.navigation.GotoImplementationHandler$this" in class com/intellij/codeInsight/navigation/GotoImplementationHandler$ImplementationsUpdaterTask
-    @SuppressWarnings("Convert2Lambda")
     ImplementationsUpdaterTask(@NotNull GotoData gotoData, @NotNull Editor editor, int offset, final PsiReference reference) {
-      super(gotoData.source.getProject(), ImplementationSearcher.getSearchingForImplementations(),
-            createComparatorWrapper(Comparator.comparing(new Function<PsiElement, Comparable>() {
-                @Override
-                public Comparable apply(PsiElement e1) {
-                  return getRenderer(e1, gotoData).getComparingObject(e1);
-                }
-              })));
+      super(
+        gotoData.source.getProject(),
+        ImplementationSearcher.getSearchingForImplementations(),
+         createImplementationComparator(gotoData)
+      );
       myEditor = editor;
       myOffset = offset;
       myGotoData = gotoData;
@@ -201,8 +215,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     @Override
     public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
-      for (PsiElement element : myGotoData.targets) {
-        if (!updateComponent(element)) {
+      for (ItemWithPresentation item : myGotoData.getItems()) {
+        if (!updateComponent(item)) {
           return;
         }
       }
@@ -211,8 +225,9 @@ public class GotoImplementationHandler extends GotoTargetHandler {
         protected void processElement(PsiElement element) {
           indicator.checkCanceled();
           if (!TargetElementUtil.getInstance().acceptImplementationForReference(myReference, element)) return;
-          if (myGotoData.addTarget(element)) {
-            if (!updateComponent(element)) {
+          ItemWithPresentation item = myGotoData.addTarget(element);
+          if (item != null) {
+            if (!updateComponent(item)) {
               indicator.cancel();
             }
           }
@@ -225,5 +240,48 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       String name = ElementDescriptionUtil.getElementDescription(myGotoData.source, UsageViewShortNameLocation.INSTANCE);
       return getChooserTitle(myGotoData.source, name, size, isFinished());
     }
+
+    @Override
+    protected @Nullable Usage createUsage(@NotNull ItemWithPresentation element) {
+      if (element.getItem() instanceof Pointer<?>) {
+        PsiElement psiElement = (PsiElement)((Pointer<?>)element.getItem()).dereference();
+        return psiElement == null ? null : new UsageInfo2UsageAdapter(new UsageInfo(psiElement));
+      }
+      return null;
+    }
+  }
+
+  private static @Nullable Comparator<ItemWithPresentation> createImplementationComparator(@NotNull GotoData gotoData) {
+    Comparator<ItemWithPresentation> projectContentComparator = wrapPsiComparator(projectElementsFirst(gotoData.source.getProject()));
+    Comparator<ItemWithPresentation> presentationComparator = Comparator.comparing(element -> gotoData.getComparingObject(element));
+    Comparator<ItemWithPresentation> positionComparator = wrapPsiComparator(PsiUtilCore::compareElementsByPosition);
+    return projectContentComparator.thenComparing(presentationComparator).thenComparing(positionComparator);
+  }
+
+  @NotNull
+  private static Comparator<ItemWithPresentation> wrapPsiComparator(Comparator<PsiElement> result) {
+    Comparator<ItemWithPresentation> comparator = (o1, o2) -> {
+      if (o1.getItem() instanceof SmartPsiElementPointer<?> && o2.getItem() instanceof SmartPsiElementPointer<?>) {
+        return ReadAction.compute(() -> result.compare(((SmartPsiElementPointer<?>)o1.getItem()).getElement(), ((SmartPsiElementPointer<?>)o2.getItem()).getElement()));
+      }
+      return 0;
+    };
+    return comparator;
+  }
+
+  public static @NotNull Comparator<PsiElement> projectElementsFirst(@NotNull Project project) {
+    FileIndexFacade index = FileIndexFacade.getInstance(project);
+    return Comparator.comparing((PsiElement element) -> {
+      PsiFile containingFile = element.getContainingFile();
+      if (containingFile != null) {
+        VirtualFile virtualFile = containingFile.getVirtualFile();
+        if (virtualFile != null && index.isInContent(virtualFile)) return true;
+      }
+      return false;
+    }).reversed();
+  }
+
+  public static <T> @NotNull Comparator<T> wrapIntoReadAction(@NotNull Comparator<? super T> base) {
+    return (e1, e2) -> ReadAction.compute(() -> base.compare(e1, e2));
   }
 }

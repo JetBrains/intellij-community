@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.BeforeRunTask;
@@ -23,7 +23,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.InplaceButton;
-import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -37,21 +37,22 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class BeforeRunComponent extends JPanel implements DnDTarget, Disposable {
-  private final List<TaskButton> myTags = new ArrayList<>();
+  private final @NotNull List<TaskButton> myTags = new ArrayList<>();
   private final InplaceButton myAddButton;
   private final JPanel myAddPanel;
-  private final LinkLabel<Object> myAddLabel;
+  private final ActionLink myAddLabel;
   private final JLabel myDropFirst = new JLabel(AllIcons.General.DropPlace);
 
   Runnable myChangeListener;
   private RunConfiguration myConfiguration;
 
   public BeforeRunComponent(@NotNull Disposable parentDisposable) {
-    super(new WrapLayout(FlowLayout.LEADING, 0, FragmentedSettingsBuilder.TAG_VGAP));
+    super(new WrapLayout(FlowLayout.LEADING, 0, JBUI.scale(FragmentedSettingsBuilder.TAG_VGAP)));
     Disposer.register(parentDisposable, this);
     add(Box.createVerticalStrut(30));
 
@@ -66,14 +67,15 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     myAddPanel = new JPanel();
     myAddPanel.setBorder(border);
     myAddPanel.add(myAddButton);
-    myAddLabel = new LinkLabel<>(ExecutionBundle.message("run.configuration.before.run.add.task"), null, (aSource, aLinkData) -> showPopup());
+    myAddLabel = new ActionLink(ExecutionBundle.message("run.configuration.before.run.add.task"), e -> { showPopup(); });
     myAddLabel.setBorder(border);
     DnDManager.getInstance().registerTarget(this, this, this);
   }
 
   private List<BeforeRunTaskProvider<BeforeRunTask<?>>> getProviders() {
+    Set<? extends Key<?>> existing = ContainerUtil.map2Set(myTags, button -> button.myTask.getProviderId());
     return ContainerUtil.filter(BeforeRunTaskProvider.EP_NAME.getExtensions(myConfiguration.getProject()),
-                                provider -> provider.createTask(myConfiguration) != null);
+                                provider -> provider.createTask(myConfiguration) != null && (!provider.isSingleton() || !existing.contains(provider.getId())));
   }
 
   private TaskButton createTag(BeforeRunTaskProvider<BeforeRunTask<?>> provider) {
@@ -204,6 +206,8 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
 
   @Override
   public void cleanUpOnLeave() {
+    //just for the case if it can be executed during superclass initialization
+    //noinspection ConstantValue
     if (myTags != null) {
       myTags.forEach(button -> button.showDropPlace(false));
     }
@@ -263,7 +267,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     private BeforeRunTask<?> myTask;
     private int myOrder;
 
-    private TaskButton(@NotNull BeforeRunTaskProvider<BeforeRunTask<?>> provider, Consumer<AnActionEvent> action) {
+    private TaskButton(@NotNull BeforeRunTaskProvider<BeforeRunTask<?>> provider, Consumer<? super AnActionEvent> action) {
       super(provider.getName(), action);
       Disposer.register(BeforeRunComponent.this, this);
       add(myDropPlace, JLayeredPane.DRAG_LAYER);
@@ -273,9 +277,13 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
         @Override
         public void mouseClicked(MouseEvent e) {
           if (e.getClickCount() == 2) {
+            BeforeRunTask clone = myTask.clone();
             if (!DumbService.isDumb(myConfiguration.getProject()) || DumbService.isDumbAware(myProvider)) {
-              myProvider.configureTask(DataManager.getInstance().getDataContext(TaskButton.this), myConfiguration, myTask)
-                .onSuccess(aBoolean -> setTask(myTask));
+              myProvider.configureTask(DataManager.getInstance().getDataContext(TaskButton.this), myConfiguration, clone)
+                .onSuccess(aBoolean -> {
+                  setTask(clone);
+                  updateButton();
+                });
             }
           }
         }
@@ -303,8 +311,8 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
 
     private void updateButton() {
       if (myTask == null) return;
-      updateButton(myOrder + ". " + myProvider.getDescription(myTask), myProvider.getTaskIcon(myTask),
-                   !DumbService.isDumb(myConfiguration.getProject()) || DumbService.isDumbAware(myProvider));
+      setEnabled(!DumbService.isDumb(myConfiguration.getProject()) || DumbService.isDumbAware(myProvider));
+      updateButton(myOrder + ". " + myProvider.getDescription(myTask), myProvider.getTaskIcon(myTask));
     }
 
     private void showDropPlace(boolean show) {
@@ -312,12 +320,12 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     }
 
     @Override
-    public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+    public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
       return true;
     }
 
     @Override
-    public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+    public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
       return new DnDDragStartBean(this);
     }
 

@@ -1,25 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.command.CommandProcessor;
@@ -40,27 +23,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class ElementCreator implements WriteActionAware {
   private static final Logger LOG = Logger.getInstance(ElementCreator.class);
   private final Project myProject;
   private final @NlsContexts.DialogTitle String myErrorTitle;
 
-  protected ElementCreator(Project project, @NlsContexts.DialogTitle String errorTitle) {
+  protected ElementCreator(Project project, @NotNull @NlsContexts.DialogTitle String errorTitle) {
     myProject = project;
     myErrorTitle = errorTitle;
   }
 
-  protected abstract PsiElement[] create(@NotNull String newName) throws Exception;
+  protected abstract PsiElement @NotNull [] create(@NotNull String newName) throws Exception;
   @NlsContexts.Command
-  protected abstract String getActionName(String newName);
+  @NotNull
+  protected abstract String getActionName(@NotNull String newName);
 
-  public PsiElement[] tryCreate(@NotNull final String inputString) {
+  public @NotNull PsiElement @NotNull [] tryCreate(@NotNull final String inputString) {
     if (inputString.isEmpty()) {
-      Messages.showMessageDialog(myProject, IdeBundle.message("error.name.should.be.specified"), CommonBundle.getErrorTitle(),
-                                 Messages.getErrorIcon());
       return PsiElement.EMPTY_ARRAY;
     }
 
@@ -79,14 +58,15 @@ public abstract class ElementCreator implements WriteActionAware {
   }
 
   @Nullable
-  private Exception executeCommand(@NlsContexts.Command String commandName, ThrowableRunnable<? extends Exception> invokeCreate) {
+  private Exception executeCommand(@NotNull @NlsContexts.Command String commandName, @NotNull ThrowableRunnable<? extends Exception> invokeCreate) {
     final Exception[] exception = new Exception[1];
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       LocalHistoryAction action = LocalHistory.getInstance().startAction(commandName);
       try {
         if (startInWriteAction()) {
           WriteAction.run(invokeCreate);
-        } else {
+        }
+        else {
           invokeCreate.run();
         }
       }

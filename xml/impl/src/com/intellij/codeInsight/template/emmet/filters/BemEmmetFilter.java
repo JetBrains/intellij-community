@@ -19,8 +19,8 @@ import java.util.regex.Pattern;
 
 /**
  * Bem filter for emmet support.
- * See the original source code here: https://github.com/emmetio/emmet/blob/master/javascript/filters/bem.js
- * And documentation here: http://docs.emmet.io/filters/bem/
+ * See the original source code here: <a href="https://github.com/emmetio/emmet/blob/master/javascript/filters/bem.js">bem.js</a>
+ * And documentation here: <a href="http://docs.emmet.io/filters/bem/">emmet docs</a>
  */
 public class BemEmmetFilter extends ZenCodingFilter {
   private static final String SUFFIX = "bem";
@@ -48,7 +48,7 @@ public class BemEmmetFilter extends ZenCodingFilter {
   @Override
   public GenerationNode filterNode(@NotNull final GenerationNode node) {
     final Map<String, String> attributes = node.getTemplateToken().getAttributes();
-    String classAttributeName = getClassAttributeName();
+    String classAttributeName = HtmlUtil.CLASS_ATTRIBUTE_NAME;
     String classValue = attributes.get(classAttributeName);
     EmmetOptions emmetOptions = EmmetOptions.getInstance();
     if (classValue != null && emmetOptions != null) {
@@ -66,11 +66,6 @@ public class BemEmmetFilter extends ZenCodingFilter {
       attributes.put(classAttributeName, StringUtil.join(newClassNames, " "));
     }
     return node;
-  }
-
-  @NotNull
-  public String getClassAttributeName() {
-    return HtmlUtil.CLASS_ATTRIBUTE_NAME;
   }
 
   private static Iterable<String> processClassName(@NotNull String className, @NotNull GenerationNode node,
@@ -153,7 +148,6 @@ public class BemEmmetFilter extends ZenCodingFilter {
   /**
    * Adjusting className to BEM format according to tags structure.
    *
-   * @param className
    * @param separator           handling separator
    * @param node                current node
    * @param isModifierSeparator whether we're trying to handle modifier
@@ -189,8 +183,6 @@ public class BemEmmetFilter extends ZenCodingFilter {
   /**
    * Counts separators at the start of className and retrieve className without these separators.
    *
-   * @param name
-   * @param separator
    * @return pair like <name_without_separator_at_the_start, count_of_separators_at_the_start_of_string>
    */
   @NotNull
@@ -208,7 +200,6 @@ public class BemEmmetFilter extends ZenCodingFilter {
    * Returns first class started with pattern [a-z]-
    * or first class started with letter.
    *
-   * @param classNames
    * @return suggested block name for given classes. Empty string if name can't be suggested.
    */
   @NotNull

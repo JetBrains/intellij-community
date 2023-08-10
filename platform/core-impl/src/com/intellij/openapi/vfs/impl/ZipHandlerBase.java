@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,9 +6,8 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.io.ResourceHandle;
-import com.intellij.util.text.ByteArrayCharSequence;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -23,25 +22,25 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public abstract class ZipHandlerBase extends ArchiveHandler {
-  @ApiStatus.Internal
-  public static volatile boolean USE_CRC_INSTEAD_OF_TIMESTAMP = getUseCrcInsteadOfTimestampPropertyValue();
+  private static final Logger LOG = Logger.getInstance(ZipHandlerBase.class);
 
-  private static boolean getUseCrcInsteadOfTimestampPropertyValue() {
-    return SystemProperties.is("zip.handler.uses.crc.instead.of.timestamp");
+  public @NotNull Map<String, Long> getArchiveCrcHashes() throws IOException {
+    try (@NotNull ResourceHandle<ZipFile> handle = acquireZipHandle()) {
+      ZipFile file = handle.get();
+      Enumeration<? extends ZipEntry> entries = file.entries();
+      Map<String, Long> result = new Object2LongOpenHashMap<>();
+      while (entries.hasMoreElements()) {
+        ZipEntry entry = entries.nextElement();
+        result.put(normalizeName(entry.getName()), entry.getCrc());
+      }
+      return result;
+    }
   }
 
-  @VisibleForTesting
   @ApiStatus.Internal
-  public static void forceUseCrcInsteadOfTimestamp() {
-    USE_CRC_INSTEAD_OF_TIMESTAMP = true;
+  public static boolean getUseCrcInsteadOfTimestampPropertyValue() {
+    return Boolean.getBoolean("zip.handler.uses.crc.instead.of.timestamp");
   }
-
-  @VisibleForTesting
-  @ApiStatus.Internal
-  public static void resetUseCrcInsteadOfTimestamp() {
-    USE_CRC_INSTEAD_OF_TIMESTAMP = getUseCrcInsteadOfTimestampPropertyValue();
-  }
-
 
   public ZipHandlerBase(@NotNull String path) {
     super(path);
@@ -57,14 +56,12 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
   protected @NotNull Map<String, EntryInfo> buildEntryMapForZipFile(@NotNull ZipFile zip) {
     Map<String, EntryInfo> map = new ZipEntryMap(zip.size());
 
-    Logger logger = Logger.getInstance(ZipHandlerBase.class);
     Enumeration<? extends ZipEntry> entries = zip.entries();
     while (entries.hasMoreElements()) {
       ZipEntry ze = entries.nextElement();
-      processEntry(map, logger, ze.getName(), ze.isDirectory() ? null : (parent, name) -> {
-        CharSequence sequence = ByteArrayCharSequence.convertToBytesIfPossible(name);
-        long fileStamp = USE_CRC_INSTEAD_OF_TIMESTAMP ? ze.getCrc() : getEntryFileStamp();
-        return new EntryInfo(sequence, false, ze.getSize(), fileStamp, parent);
+      processEntry(map, LOG, ze.getName(), ze.isDirectory() ? null : (parent, name) -> {
+        long fileStamp = getUseCrcInsteadOfTimestampPropertyValue() ? ze.getCrc() : getEntryFileStamp();
+        return new EntryInfo(name, false, ze.getSize(), fileStamp, parent);
       });
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -126,7 +126,7 @@ public final class ExtensionOrderConverter implements CustomReferenceConverter<S
 
   private static boolean isBeforeOrAfterKeyword(String str, boolean trimKeyword) {
     return (trimKeyword ? LoadingOrder.BEFORE_STR.trim() : LoadingOrder.BEFORE_STR).equalsIgnoreCase(str) ||
-           (trimKeyword ? LoadingOrder.AFTER_STR.trim(): LoadingOrder.AFTER_STR).equalsIgnoreCase(str) ||
+           (trimKeyword ? LoadingOrder.AFTER_STR.trim() : LoadingOrder.AFTER_STR).equalsIgnoreCase(str) ||
            LoadingOrder.BEFORE_STR_OLD.equalsIgnoreCase(str) ||
            LoadingOrder.AFTER_STR_OLD.equalsIgnoreCase(str);
   }
@@ -163,7 +163,7 @@ public final class ExtensionOrderConverter implements CustomReferenceConverter<S
     private final Extension myExtension;
 
     OrderReferencedIdPsiReference(@NotNull PsiElement element, @NotNull TextRange rangeInElement,
-                                         @NotNull String referencedId, @NotNull Extension extension) {
+                                  @NotNull String referencedId, @NotNull Extension extension) {
       super(element, rangeInElement);
       myReferencedId = referencedId;
       myExtension = extension;

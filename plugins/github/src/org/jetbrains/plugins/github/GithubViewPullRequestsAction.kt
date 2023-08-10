@@ -2,11 +2,12 @@
 package org.jetbrains.plugins.github
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowController
+import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowViewModel
 import java.util.function.Supplier
 
 class GithubViewPullRequestsAction :
@@ -14,14 +15,20 @@ class GithubViewPullRequestsAction :
                   Supplier { null },
                   AllIcons.Vcs.Vendors.Github) {
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isEnabledAndVisible(e)
   }
 
   private fun isEnabledAndVisible(e: AnActionEvent): Boolean {
     val project = e.project ?: return false
-    return project.service<GHPRToolWindowController>().isAvailable()
+    return project.service<GHPRToolWindowViewModel>().isAvailable.value
   }
 
-  override fun actionPerformed(e: AnActionEvent) = e.project!!.service<GHPRToolWindowController>().show()
+  override fun actionPerformed(e: AnActionEvent) {
+    e.project!!.service<GHPRToolWindowViewModel>().activateAndAwaitProject {
+      viewList()
+    }
+  }
 }

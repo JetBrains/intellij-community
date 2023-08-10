@@ -20,7 +20,6 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -126,9 +125,8 @@ public final class DevkitActionsUtil {
   }
 
   /**
-   * @throws IncorrectOperationException
    */
-  public static void checkCanCreateClass(PsiDirectory directory, String name) {
+  public static void checkCanCreateClass(@NotNull PsiDirectory directory, String name) {
     PsiDirectory currentDir = directory;
     String packageName = StringUtil.getPackageName(name);
     if (!packageName.isEmpty()) {

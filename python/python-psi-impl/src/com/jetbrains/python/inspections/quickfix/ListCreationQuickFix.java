@@ -5,30 +5,21 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.inspections.PyListCreationInspection;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * User : catherine
  */
 public class ListCreationQuickFix implements LocalQuickFix {
-  private final SmartPsiElementPointer<PyAssignmentStatement> myStatement;
-  private final List<PyExpressionStatement> myStatements = new ArrayList<>();
-
-  public ListCreationQuickFix(PyAssignmentStatement statement) {
-    myStatement = SmartPointerManager.createPointer(statement);
-  }
-
-  public void addStatement(PyExpressionStatement statement) {
-    myStatements.add(statement);
-  }
 
   @Override
   @NotNull
@@ -39,13 +30,14 @@ public class ListCreationQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    final PyAssignmentStatement assignmentStatement = myStatement.getElement();
+    final PyAssignmentStatement assignmentStatement = as(descriptor.getPsiElement(), PyAssignmentStatement.class);
     if (assignmentStatement == null) return;
     final PyExpression assignedValue = assignmentStatement.getAssignedValue();
     if (assignedValue == null) return;
 
-    final List<PyExpression> items = buildLiteralItems(assignedValue, myStatements);
-    myStatements.forEach(PyExpressionStatement::delete);
+    List<PyExpressionStatement> appendCalls = PyListCreationInspection.collectSubsequentListAppendCalls(assignmentStatement);
+    final List<PyExpression> items = buildLiteralItems(assignedValue, appendCalls);
+    appendCalls.forEach(PyExpressionStatement::delete);
 
     final String text = "[" + StringUtil.join(items, PyExpression::getText, ", ") + "]";
     assignedValue.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(assignedValue), text));

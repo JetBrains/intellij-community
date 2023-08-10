@@ -2,16 +2,26 @@
 package training.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.showYesNoDialog
 import training.learn.LearnBundle
 import training.util.clearTrainingProgress
 
-class ResetLearningProgressAction : AnAction(AllIcons.Actions.Restart) {
+private class ResetLearningProgressAction : AnAction(AllIcons.Actions.Restart) {
   override fun actionPerformed(e: AnActionEvent) {
-    if (showYesNoDialog(LearnBundle.message("learn.option.reset.progress.dialog"), LearnBundle.message("learn.option.reset.progress.confirm"), null)) {
+    if (showYesNoDialog(LearnBundle.message("learn.option.reset.progress.dialog"),
+                        LearnBundle.message("learn.option.reset.progress.confirm"), null)) {
       clearTrainingProgress()
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = e.project != null
   }
 }

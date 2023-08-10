@@ -31,8 +31,8 @@ public final class ScopeChooserUtils {
    * <li>if no known scope with the provided name found then empty scope is returned</li>
    * </ul>
    */
-  @NotNull
-  public static GlobalSearchScope findScopeByName(@NotNull Project project, @Nullable String scopePresentableName) {
+  public static @NotNull GlobalSearchScope findScopeByName(@NotNull Project project,
+                                                           @Nullable String scopePresentableName) {
     // logic here is similar to ScopeChooserCombo
 
     if (scopePresentableName == null) return GlobalSearchScope.EMPTY_SCOPE;

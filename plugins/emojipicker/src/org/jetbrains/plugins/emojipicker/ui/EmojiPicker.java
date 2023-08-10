@@ -22,8 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-
-public class EmojiPicker extends JLayeredPane {
+public final class EmojiPicker extends JLayeredPane {
   private static final JBDimension DEFAULT_SIZE = new JBDimension(358, 415);
 
   private final List<EmojiCategory> myCategories;
@@ -84,9 +83,7 @@ public class EmojiPicker extends JLayeredPane {
   }
 
   private static void applyWindowMoveListener(Component c) {
-    WindowMoveListener listener = new WindowMoveListener(c);
-    c.addMouseListener(listener);
-    c.addMouseMotionListener(listener);
+    new WindowMoveListener(c).installTo(c);
   }
 
   void selectCategory(EmojiCategory category, boolean scrollToCategory) {
@@ -216,19 +213,18 @@ public class EmojiPicker extends JLayeredPane {
         }
       }
       switch (k) {
-        case KeyEvent.VK_TAB:
+        case KeyEvent.VK_TAB -> {
           int direction = (modifiers & InputEvent.SHIFT_DOWN_MASK) == InputEvent.SHIFT_DOWN_MASK ? -1 : 1;
           currentFocusTarget = (currentFocusTarget + direction + focusTargets.size()) % focusTargets.size();
           myCategoryPanel.repaint();
           mySearchField.repaint();
           return true;
-        case KeyEvent.VK_ESCAPE:
+        }
+        case KeyEvent.VK_ESCAPE -> {
           myInputCallback.accept(null);
           return true;
-        case KeyEvent.VK_UP:
-        case KeyEvent.VK_DOWN:
-        case KeyEvent.VK_LEFT:
-        case KeyEvent.VK_RIGHT:
+        }
+        case KeyEvent.VK_UP, KeyEvent.VK_DOWN, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT -> {
           resetFocus();
           if (!emojiNavigationMode) {
             emojiNavigationMode = k == KeyEvent.VK_UP || k == KeyEvent.VK_DOWN ||
@@ -247,6 +243,7 @@ public class EmojiPicker extends JLayeredPane {
           else {
             return false;
           }
+        }
       }
       if (focus instanceof EmojiCategory) {
         if (k == KeyEvent.VK_ENTER || k == KeyEvent.VK_SPACE) {
@@ -261,7 +258,7 @@ public class EmojiPicker extends JLayeredPane {
       return false;
     }
 
-    private int keyToOffset(int key, int positive, int negative) {
+    private static int keyToOffset(int key, int positive, int negative) {
       if (key == positive) return 1;
       if (key == negative) return -1;
       return 0;

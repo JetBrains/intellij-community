@@ -6,14 +6,16 @@ import com.intellij.openapi.actionSystem.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class FileTemplateSeparator extends ActionGroup {
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return new AnAction[]{Separator.create(shouldShowNamedSeparator(e) ? IdeBundle.message("action.separator.file.templates") : null)};
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static boolean shouldShowNamedSeparator(@Nullable AnActionEvent e) {

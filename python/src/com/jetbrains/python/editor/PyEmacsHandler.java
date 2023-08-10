@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -27,8 +27,6 @@ import java.util.List;
  * Python-specific Emacs-like processing extension.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class PyEmacsHandler implements EmacsProcessingHandler {
 
@@ -93,9 +91,13 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
       return Result.STOP;
     }
     switch (tryToIndentToRight(context)) {
-      case STOP_SUCCESSFUL: return Result.STOP;
-      case STOP_UNSUCCESSFUL: return Result.CONTINUE;
-      case CONTINUE: break;
+      case STOP_SUCCESSFUL -> {
+        return Result.STOP;
+      }
+      case STOP_UNSUCCESSFUL -> {
+        return Result.CONTINUE;
+      }
+      case CONTINUE -> { }
     }
 
     if (tryToIndentToLeft(context)) {
@@ -277,9 +279,11 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     for (int i = start; i < end; i++) {
       char c = text.charAt(i);
       switch (c) {
-        case ' ': result++; break;
-        case '\t': result += context.getIndentOptions().TAB_SIZE; break;
-        default: return result;
+        case ' ' -> result++;
+        case '\t' -> result += context.getIndentOptions().TAB_SIZE;
+        default -> {
+          return result;
+        }
       }
     }
     return result;

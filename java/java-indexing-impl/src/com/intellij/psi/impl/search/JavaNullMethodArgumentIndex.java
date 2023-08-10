@@ -1,34 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.TokenList;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.psi.JavaTokenType.*;
 
 public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMethodArgumentIndex.MethodCallData> {
   public static final ID<MethodCallData, Void> INDEX_ID = ID.create("java.null.method.argument");
-
-  private final boolean myOfflineMode = ApplicationManager.getApplication().isCommandLine() &&
-                                        !ApplicationManager.getApplication().isUnitTestMode();
 
   @NotNull
   @Override
@@ -40,11 +35,7 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
   @Override
   public DataIndexer<MethodCallData, Void, FileContent> getIndexer() {
     return inputData -> {
-      if (myOfflineMode) {
-        return Collections.emptyMap();
-      }
-
-      Map<MethodCallData, Void> result = new THashMap<>();
+      Map<MethodCallData, Void> result = new HashMap<>();
 
       TokenList tokens = JavaParserUtil.obtainTokens(inputData.getPsiFile());
       for (int i = 0; i < tokens.getTokenCount(); i++) {
@@ -134,7 +125,7 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
     return new DefaultFileTypeSpecificInputFilter(JavaFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
-        return JavaParserDefinition.JAVA_FILE.shouldBuildStubFor(file);
+        return JavaFileElementType.isInSourceContent(file);
       }
     };
   }

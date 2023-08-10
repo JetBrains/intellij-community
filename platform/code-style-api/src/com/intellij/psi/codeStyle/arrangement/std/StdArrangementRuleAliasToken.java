@@ -34,21 +34,21 @@ public class StdArrangementRuleAliasToken extends StdArrangementSettingsToken im
   /**
    * All usages of alias token will be replaced by this sequence of rules
    */
-  private List<StdArrangementMatchRule> myDefinitionRules;
+  private List<? extends StdArrangementMatchRule> myDefinitionRules;
 
   public StdArrangementRuleAliasToken(@NotNull String name) {
     this(name, ContainerUtil.emptyList());
   }
 
   public StdArrangementRuleAliasToken(@NotNull String name,
-                                      @NotNull List<StdArrangementMatchRule> definitionRules) {
+                                      @NotNull List<? extends StdArrangementMatchRule> definitionRules) {
     this(createIdByName(name), name, definitionRules);
     myDefinitionRules = definitionRules;
   }
 
 
   public StdArrangementRuleAliasToken(@NotNull String id, @NotNull String name,
-                                      @NotNull List<StdArrangementMatchRule> definitionRules) {
+                                      @NotNull List<? extends StdArrangementMatchRule> definitionRules) {
     super(id, createRepresentationValue(name), StdArrangementTokenType.ALIAS);
     myName = name;
     myDefinitionRules = definitionRules;
@@ -68,11 +68,11 @@ public class StdArrangementRuleAliasToken extends StdArrangementSettingsToken im
     return myName;
   }
 
-  public List<StdArrangementMatchRule> getDefinitionRules() {
+  public List<? extends StdArrangementMatchRule> getDefinitionRules() {
     return myDefinitionRules;
   }
 
-  public void setDefinitionRules(List<StdArrangementMatchRule> definitionRules) {
+  public void setDefinitionRules(List<? extends StdArrangementMatchRule> definitionRules) {
     myDefinitionRules = definitionRules;
   }
 

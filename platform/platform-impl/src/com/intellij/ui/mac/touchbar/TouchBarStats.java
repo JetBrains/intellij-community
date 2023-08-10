@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,16 +30,8 @@ final class TouchBarStats {
 
   static void printAll(@NotNull PrintStream out) {
     for (TouchBarStats tbs: ourStats.values()) {
-      //if (tbs.name.contains("_"))
-      //  continue;
       tbs.print(out);
     }
-  }
-
-  static void startPrintStats() {
-    Timer timer = new Timer(60000, ev -> printAll(System.out));
-    timer.setRepeats(true);
-    timer.start();
   }
 
   void print(@NotNull PrintStream out) {
@@ -81,7 +72,7 @@ final class TouchBarStats {
   }
 
   @NotNull AnActionStats getActionStats(@NotNull AnAction action) {
-    final String actId = BuildUtils.getActionId(action);
+    final String actId = Helpers.getActionId(action);
     return actionStats.computeIfAbsent(actId, s -> new AnActionStats(s));
   }
 

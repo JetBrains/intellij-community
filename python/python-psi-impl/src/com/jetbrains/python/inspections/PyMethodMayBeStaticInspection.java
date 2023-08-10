@@ -27,6 +27,7 @@ import com.jetbrains.python.inspections.quickfix.PyMakeMethodStaticQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,18 +45,17 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
-
     @Override
     public void visitPyFunction(@NotNull PyFunction node) {
-      if (PyNames.getBuiltinMethods(LanguageLevel.forElement(node)).containsKey(node.getName())) return;
+      if (isBuiltin(node)) return;
       final PyClass containingClass = node.getContainingClass();
       if (containingClass == null) return;
       final PsiElement firstSuper = PySuperMethodsSearch.search(node, myTypeEvalContext).findFirst();
@@ -128,6 +128,11 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
                         null, new PyMakeMethodStaticQuickFix(), new PyMakeFunctionFromMethodQuickFix());
       }
     }
+  }
+
+  private static boolean isBuiltin(@NotNull PyFunction node) {
+    final var name = node.getName();
+    return name != null && PyNames.getBuiltinMethods(LanguageLevel.forElement(node)).containsKey(name);
   }
 
   private static boolean isTestElement(@NotNull PyFunction node) {

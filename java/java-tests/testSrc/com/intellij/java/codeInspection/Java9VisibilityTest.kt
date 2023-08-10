@@ -21,9 +21,6 @@ import com.intellij.codeInspection.visibility.VisibilityInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.openapi.application.ex.PathManagerEx
 
-/**
- * @author Pavel.Dolgov
- */
 class Java9VisibilityTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun getTestDataPath() = PathManagerEx.getTestDataPath() + "/inspection/java9Visibility/"
 

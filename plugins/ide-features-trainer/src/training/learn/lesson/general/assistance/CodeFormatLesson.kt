@@ -4,17 +4,16 @@ package training.learn.lesson.general.assistance
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.testGuiFramework.impl.button
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.restoreAfterStateBecomeFalse
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonSample
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import training.learn.lesson.kimpl.restoreAfterStateBecomeFalse
+import training.learn.course.KLesson
 
-class CodeFormatLesson(module: Module, override val lang: String, private val sample: LessonSample, private val optimizeImports: Boolean) :
-  KLesson("CodeAssistance.CodeFormatting", LessonsBundle.message("code.format.lesson.name"), module, lang) {
+class CodeFormatLesson(private val sample: LessonSample, private val optimizeImports: Boolean) :
+  KLesson("CodeAssistance.CodeFormatting", LessonsBundle.message("code.format.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
@@ -25,7 +24,7 @@ class CodeFormatLesson(module: Module, override val lang: String, private val sa
     }
 
     actionTask("ReformatCode") {
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       LessonsBundle.message("code.format.reformat.selection", action(it))
     }
 
@@ -60,7 +59,7 @@ class CodeFormatLesson(module: Module, override val lang: String, private val sa
         restoreAfterStateBecomeFalse {
           focusOwner is EditorComponentImpl
         }
-        test {
+        test(waitEditorToBeReady = false) {
           properties.setValue("LayoutCode.optimizeImports", true)
           ideFrame {
             button("Run").click()
@@ -69,4 +68,9 @@ class CodeFormatLesson(module: Module, override val lang: String, private val sa
       }
     }
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("code.format.help.link"),
+         LessonUtil.getHelpLink("configuring-code-style.html")),
+  )
 }

@@ -1,20 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.PossiblySyncCommand;
+import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
-import com.intellij.debugger.ui.tree.NodeManager;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -27,10 +25,9 @@ import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public final class ExpressionChildrenRenderer extends ReferenceRenderer implements ChildrenRenderer {
@@ -59,26 +56,25 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
   }
 
   @Override
-  public void buildChildren(final Value value, final ChildrenBuilder builder, final EvaluationContext evaluationContext) {
-    final NodeManager nodeManager = builder.getNodeManager();
+  public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
+    EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)evaluationContext;
+    evaluationContextImpl.getDebugProcess().getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
+      @Override
+      public void syncAction(@NotNull SuspendContextImpl suspendContext) {
+        try {
+          ValueDescriptor parentDescriptor = builder.getParentDescriptor();
+          Value childrenValue = evaluateChildren(evaluationContext.createEvaluationContext(value), parentDescriptor);
 
-    try {
-      final ValueDescriptor parentDescriptor = builder.getParentDescriptor();
-      final Value childrenValue = evaluateChildren(
-        evaluationContext.createEvaluationContext(value), parentDescriptor
-      );
-
-      DebuggerUtilsAsync.type(childrenValue)
-        .thenAccept(type -> {
-          NodeRenderer renderer = getChildrenRenderer(type, parentDescriptor);
-          renderer.buildChildren(childrenValue, builder, evaluationContext);
-        });
-    }
-    catch (final EvaluateException e) {
-      List<DebuggerTreeNode> errorChildren = new ArrayList<>();
-      errorChildren.add(nodeManager.createMessageNode(JavaDebuggerBundle.message("error.unable.to.evaluate.expression") + " " + e.getMessage()));
-      builder.setChildren(errorChildren);
-    }
+          DebuggerUtilsAsync.type(childrenValue)
+            .thenAccept(type -> getChildrenRenderer(type, parentDescriptor).buildChildren(childrenValue, builder, evaluationContext));
+        }
+        catch (EvaluateException e) {
+          builder.setErrorMessage(JavaDebuggerBundle.message("error.unable.to.evaluate.children.expression") + " " + e.getMessage());
+          // fallback to the default renderer
+          DebugProcessImpl.getDefaultRenderer(value).buildChildren(value, builder, evaluationContext);
+        }
+      }
+    });
   }
 
   @Nullable
@@ -107,12 +103,12 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
     DefaultJDOMExternalizer.readExternal(this, element);
 
     TextWithImports childrenExpression = DebuggerUtils.getInstance().readTextWithImports(element, "CHILDREN_EXPRESSION");
-    if(childrenExpression != null) {
+    if (childrenExpression != null) {
       setChildrenExpression(childrenExpression);
     }
 
     TextWithImports childrenExpandable = DebuggerUtils.getInstance().readTextWithImports(element, "CHILDREN_EXPANDABLE");
-    if(childrenExpandable != null) {
+    if (childrenExpandable != null) {
       myChildrenExpandable.setReferenceExpression(childrenExpandable);
     }
   }
@@ -129,10 +125,10 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
   public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     Value expressionValue = getLastChildrenValue(node.getParent().getDescriptor());
     if (expressionValue == null) {
-      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("error.unable.to.evaluate.expression"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("error.unable.to.evaluate.children.expression"));
     }
 
-    NodeRenderer childrenRenderer = getChildrenRenderer(expressionValue.type(), (ValueDescriptor) node.getParent().getDescriptor());
+    NodeRenderer childrenRenderer = getChildrenRenderer(expressionValue.type(), (ValueDescriptor)node.getParent().getDescriptor());
 
     PsiExpression childrenPsiExpression = myChildrenExpression.getPsiExpression(node.getProject());
     if (childrenPsiExpression == null) {
@@ -155,28 +151,44 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
 
   @Override
   public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext context, NodeDescriptor parentDescriptor) {
-    final EvaluationContext evaluationContext = context.createEvaluationContext(value);
+    CompletableFuture<Boolean> res = new CompletableFuture<>();
+    EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)context;
+    DebugProcessImpl debugProcess = evaluationContextImpl.getDebugProcess();
+    debugProcess.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
+      @Override
+      public void syncAction(@NotNull SuspendContextImpl suspendContext) {
+        EvaluationContext evaluationContext = context.createEvaluationContext(value);
 
-    if(!StringUtil.isEmpty(myChildrenExpandable.getReferenceExpression().getText())) {
-      try {
-        Value expanded = myChildrenExpandable.getEvaluator(evaluationContext.getProject()).evaluate(evaluationContext);
-        if(expanded instanceof BooleanValue) {
-          return CompletableFuture.completedFuture(((BooleanValue)expanded).booleanValue());
+        if (!StringUtil.isEmpty(myChildrenExpandable.getReferenceExpression().getText())) {
+          try {
+            Value expanded = myChildrenExpandable.getEvaluator(evaluationContext.getProject()).evaluate(evaluationContext);
+            if (expanded instanceof BooleanValue) {
+              res.complete(((BooleanValue)expanded).booleanValue());
+              return;
+            }
+          }
+          catch (EvaluateException e) {
+            // ignored
+          }
+        }
+
+        try {
+          Value children = evaluateChildren(evaluationContext, parentDescriptor);
+          DebugProcessImpl.getDefaultRenderer(value.type())
+            .isExpandableAsync(children, evaluationContext, parentDescriptor)
+            .whenComplete((aBoolean, throwable) -> DebuggerUtilsAsync.completeFuture(aBoolean, throwable, res));
+        }
+        catch (EvaluateException e) {
+          res.complete(true);
         }
       }
-      catch (EvaluateException e) {
-        // ignored
-      }
-    }
 
-    try {
-      Value children = evaluateChildren(evaluationContext, parentDescriptor);
-      ChildrenRenderer defaultChildrenRenderer = DebugProcessImpl.getDefaultRenderer(value.type());
-      return defaultChildrenRenderer.isExpandableAsync(children, evaluationContext, parentDescriptor);
-    }
-    catch (EvaluateException e) {
-      return CompletableFuture.completedFuture(true);
-    }
+      @Override
+      protected void commandCancelled() {
+        res.cancel(false);
+      }
+    });
+    return res;
   }
 
   public TextWithImports getChildrenExpression() {

@@ -1,12 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -200,8 +197,7 @@ public final class ScrollingUtil {
     if (c instanceof JList) {
       ensureRangeIsVisible((JList<?>)c, top, bottom);
     }
-    else if (c instanceof JTable) {
-      JTable table = (JTable)c;
+    else if (c instanceof JTable table) {
       Rectangle cellBounds = getCellBounds(table, top, bottom);
       cellBounds.x = 0;
       table.scrollRectToVisible(cellBounds);
@@ -212,7 +208,7 @@ public final class ScrollingUtil {
     int first = list.getFirstVisibleIndex();
     int last = list.getLastVisibleIndex();
 
-    if (index < 0 || first < 0 || last < 0 || index < first || index > last) {
+    if (first < 0 || last < 0 || index < first || index > last) {
       return false;
     }
     if (index > first && index < last) {
@@ -242,9 +238,11 @@ public final class ScrollingUtil {
     }
     else {
       if ((modifiers & InputEvent.SHIFT_DOWN_MASK) == 0) {
-        selectionModel.removeSelectionInterval(selectionModel.getMinSelectionIndex(), selectionModel.getMaxSelectionIndex());
+        selectionModel.setSelectionInterval(indexToSelect, indexToSelect);
       }
-      selectionModel.addSelectionInterval(indexToSelect, indexToSelect);
+      else {
+        selectionModel.addSelectionInterval(indexToSelect, indexToSelect);
+      }
     }
   }
 
@@ -485,7 +483,7 @@ public final class ScrollingUtil {
         return;
       }
     }
-    _ensureIndexIsVisible(c, indexToSelect, -1, size);
+    _ensureIndexIsVisible(c, indexToSelect, direction, size);
     selectOrAddSelection(selectionModel, indexToSelect, modifiers);
   }
 
@@ -558,6 +556,11 @@ public final class ScrollingUtil {
 
     MyScrollingAction(@NotNull JComponent component) {
       myComponent = component;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -857,7 +860,7 @@ public final class ScrollingUtil {
   private static class TableMovePageDownAction extends MyScrollingAction {
     private @NotNull final JTable myTable;
 
-    public TableMovePageDownAction(@NotNull JTable table) {
+    private TableMovePageDownAction(@NotNull JTable table) {
       super(table);
       myTable = table;
     }

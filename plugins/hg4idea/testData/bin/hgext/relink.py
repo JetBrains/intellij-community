@@ -6,13 +6,36 @@
 # GNU General Public License version 2 or any later version.
 
 """recreates hardlinks between repository clones"""
+from __future__ import absolute_import
 
-from mercurial import hg, util
+import os
+import stat
+
 from mercurial.i18n import _
-import os, stat
+from mercurial.pycompat import open
+from mercurial import (
+    error,
+    hg,
+    registrar,
+    util,
+)
+from mercurial.utils import (
+    stringutil,
+    urlutil,
+)
 
-testedwith = 'internal'
+cmdtable = {}
+command = registrar.command(cmdtable)
+# Note for extension authors: ONLY specify testedwith = 'ships-with-hg-core' for
+# extensions which SHIP WITH MERCURIAL. Non-mainline extensions should
+# be specifying the version(s) of Mercurial they are tested with, or
+# leave the attribute unspecified.
+testedwith = b'ships-with-hg-core'
 
+
+@command(
+    b'relink', [], _(b'[ORIGIN]'), helpcategory=command.CATEGORY_MAINTENANCE
+)
 def relink(ui, repo, origin=None, **opts):
     """recreate hardlinks between two repositories
 
@@ -38,32 +61,34 @@ def relink(ui, repo, origin=None, **opts):
     command is running. (Both repositories will be locked against
     writes.)
     """
-    if (not util.safehasattr(util, 'samefile') or
-        not util.safehasattr(util, 'samedevice')):
-        raise util.Abort(_('hardlinks are not supported on this system'))
-    src = hg.repository(repo.baseui, ui.expandpath(origin or 'default-relink',
-                                          origin or 'default'))
-    ui.status(_('relinking %s to %s\n') % (src.store.path, repo.store.path))
+    if not util.safehasattr(util, b'samefile') or not util.safehasattr(
+        util, b'samedevice'
+    ):
+        raise error.Abort(_(b'hardlinks are not supported on this system'))
+
+    if origin is None and b'default-relink' in ui.paths:
+        origin = b'default-relink'
+    path, __ = urlutil.get_unique_pull_path(b'relink', repo, ui, origin)
+    src = hg.repository(repo.baseui, path)
+    ui.status(_(b'relinking %s to %s\n') % (src.store.path, repo.store.path))
     if repo.root == src.root:
-        ui.status(_('there is nothing to relink\n'))
+        ui.status(_(b'there is nothing to relink\n'))
         return
 
-    locallock = repo.lock()
-    try:
-        remotelock = src.lock()
-        try:
-            candidates = sorted(collect(src, ui))
-            targets = prune(candidates, src.store.path, repo.store.path, ui)
-            do_relink(src.store.path, repo.store.path, targets, ui)
-        finally:
-            remotelock.release()
-    finally:
-        locallock.release()
+    if not util.samedevice(src.store.path, repo.store.path):
+        # No point in continuing
+        raise error.Abort(_(b'source and destination are on different devices'))
+
+    with repo.lock(), src.lock():
+        candidates = sorted(collect(src, ui))
+        targets = prune(candidates, src.store.path, repo.store.path, ui)
+        do_relink(src.store.path, repo.store.path, targets, ui)
+
 
 def collect(src, ui):
     seplen = len(os.path.sep)
     candidates = []
-    live = len(src['tip'].manifest())
+    live = len(src[b'tip'].manifest())
     # Your average repository has some files which were deleted before
     # the tip revision. We account for that by assuming that there are
     # 3 tracked files for every 2 live files as of the tip version of
@@ -72,25 +97,29 @@ def collect(src, ui):
     # mozilla-central as of 2010-06-10 had a ratio of just over 7:5.
     total = live * 3 // 2
     src = src.store.path
+    progress = ui.makeprogress(_(b'collecting'), unit=_(b'files'), total=total)
     pos = 0
-    ui.status(_("tip has %d files, estimated total number of files: %s\n")
-              % (live, total))
+    ui.status(
+        _(b"tip has %d files, estimated total number of files: %d\n")
+        % (live, total)
+    )
     for dirpath, dirnames, filenames in os.walk(src):
         dirnames.sort()
-        relpath = dirpath[len(src) + seplen:]
+        relpath = dirpath[len(src) + seplen :]
         for filename in sorted(filenames):
-            if filename[-2:] not in ('.d', '.i'):
+            if filename[-2:] not in (b'.d', b'.i'):
                 continue
             st = os.stat(os.path.join(dirpath, filename))
             if not stat.S_ISREG(st.st_mode):
                 continue
             pos += 1
             candidates.append((os.path.join(relpath, filename), st))
-            ui.progress(_('collecting'), pos, filename, _('files'), total)
+            progress.update(pos, item=filename)
 
-    ui.progress(_('collecting'), None)
-    ui.status(_('collected %d candidate storage files\n') % len(candidates))
+    progress.complete()
+    ui.status(_(b'collected %d candidate storage files\n') % len(candidates))
     return candidates
+
 
 def prune(candidates, src, dst, ui):
     def linkfilter(src, dst, st):
@@ -103,14 +132,17 @@ def prune(candidates, src, dst, ui):
             return False
         if not util.samedevice(src, dst):
             # No point in continuing
-            raise util.Abort(
-                _('source and destination are on different devices'))
+            raise error.Abort(
+                _(b'source and destination are on different devices')
+            )
         if st.st_size != ts.st_size:
             return False
         return st
 
     targets = []
-    total = len(candidates)
+    progress = ui.makeprogress(
+        _(b'pruning'), unit=_(b'files'), total=len(candidates)
+    )
     pos = 0
     for fn, st in candidates:
         pos += 1
@@ -118,18 +150,21 @@ def prune(candidates, src, dst, ui):
         tgt = os.path.join(dst, fn)
         ts = linkfilter(srcpath, tgt, st)
         if not ts:
-            ui.debug('not linkable: %s\n' % fn)
+            ui.debug(b'not linkable: %s\n' % fn)
             continue
         targets.append((fn, ts.st_size))
-        ui.progress(_('pruning'), pos, fn, _('files'), total)
+        progress.update(pos, item=fn)
 
-    ui.progress(_('pruning'), None)
-    ui.status(_('pruned down to %d probably relinkable files\n') % len(targets))
+    progress.complete()
+    ui.status(
+        _(b'pruned down to %d probably relinkable files\n') % len(targets)
+    )
     return targets
+
 
 def do_relink(src, dst, files, ui):
     def relinkfile(src, dst):
-        bak = dst + '.bak'
+        bak = dst + b'.bak'
         os.rename(dst, bak)
         try:
             util.oslink(src, dst)
@@ -142,15 +177,17 @@ def do_relink(src, dst, files, ui):
     relinked = 0
     savedbytes = 0
 
+    progress = ui.makeprogress(
+        _(b'relinking'), unit=_(b'files'), total=len(files)
+    )
     pos = 0
-    total = len(files)
     for f, sz in files:
         pos += 1
         source = os.path.join(src, f)
         tgt = os.path.join(dst, f)
         # Binary mode, so that read() works correctly, especially on Windows
-        sfp = file(source, 'rb')
-        dfp = file(tgt, 'rb')
+        sfp = open(source, b'rb')
+        dfp = open(tgt, b'rb')
         sin = sfp.read(CHUNKLEN)
         while sin:
             din = dfp.read(CHUNKLEN)
@@ -160,25 +197,19 @@ def do_relink(src, dst, files, ui):
         sfp.close()
         dfp.close()
         if sin:
-            ui.debug('not linkable: %s\n' % f)
+            ui.debug(b'not linkable: %s\n' % f)
             continue
         try:
             relinkfile(source, tgt)
-            ui.progress(_('relinking'), pos, f, _('files'), total)
+            progress.update(pos, item=f)
             relinked += 1
             savedbytes += sz
-        except OSError, inst:
-            ui.warn('%s: %s\n' % (tgt, str(inst)))
+        except OSError as inst:
+            ui.warn(b'%s: %s\n' % (tgt, stringutil.forcebytestr(inst)))
 
-    ui.progress(_('relinking'), None)
+    progress.complete()
 
-    ui.status(_('relinked %d files (%s reclaimed)\n') %
-              (relinked, util.bytecount(savedbytes)))
-
-cmdtable = {
-    'relink': (
-        relink,
-        [],
-        _('[ORIGIN]')
+    ui.status(
+        _(b'relinked %d files (%s reclaimed)\n')
+        % (relinked, util.bytecount(savedbytes))
     )
-}

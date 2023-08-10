@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface PsiInferenceHelper {
   /**
-   * @return {@link PsiType#NULL} iff no type could be inferred
+   * @return {@link PsiTypes#nullType()} iff no type could be inferred
    *         null         iff the type inferred is raw
    *         inferred type otherwise
    */

@@ -1,45 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
-
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.util.Key;
-import com.intellij.ui.ComponentUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/** @deprecated Use com.intellij.ui.mac.touchbar.Touchbar.setActions instead */
+@Deprecated(forRemoval = true)
 public interface TouchbarDataKeys {
-  DataKey<ActionGroup> ACTIONS_KEY = DataKey.create("TouchBarActions");
 
-  Key<ActionDesc> ACTIONS_DESCRIPTOR_KEY = Key.create("TouchBarActions.Descriptor");
-  Key<DlgButtonDesc> DIALOG_BUTTON_DESCRIPTOR_KEY = Key.create("TouchBar.Dialog.SouthPanel.Button.Descriptor");
-
-  @NotNull
-  static ActionDesc putActionDescriptor(@NotNull AnAction action) {
-    ActionDesc result = action.getTemplatePresentation().getClientProperty(ACTIONS_DESCRIPTOR_KEY);
-    if (result == null)
-      action.getTemplatePresentation().putClientProperty(ACTIONS_DESCRIPTOR_KEY, result = new ActionDesc());
-    return result;
-  }
-
-  @NotNull
-  static DlgButtonDesc putDialogButtonDescriptor(@NotNull JButton button, int orderIndex) {
-    return putDialogButtonDescriptor(button, orderIndex, false);
-  }
-
-  @NotNull
-  static DlgButtonDesc putDialogButtonDescriptor(@NotNull JButton button, int orderIndex, boolean isMainGroup) {
-    DlgButtonDesc result = ComponentUtil.getClientProperty(button, DIALOG_BUTTON_DESCRIPTOR_KEY);
-    if (result == null) {
-      TouchbarDataKeys.DlgButtonDesc value = result = new DlgButtonDesc(orderIndex);
-      ComponentUtil.putClientProperty(button, DIALOG_BUTTON_DESCRIPTOR_KEY, value);
-    }
-    result.setMainGroup(isMainGroup);
-    return result;
-  }
-
+  /** @deprecated Use com.intellij.ui.mac.touchbar.Touchbar.setActions instead */
+  @Deprecated(forRemoval = true)
   class DlgButtonDesc {
     private final int myOrderIndex;
     private boolean myIsMainGroup = false;
@@ -55,6 +24,8 @@ public interface TouchbarDataKeys {
     public DlgButtonDesc setDefault(boolean aDefault) { myIsDefault = aDefault; return this; }
   }
 
+  /** @deprecated Use com.intellij.ui.mac.touchbar.Touchbar.setActions instead */
+  @Deprecated(forRemoval = true)
   class ActionDesc {
     private boolean myShowText = false;
     private boolean myShowImage = true;

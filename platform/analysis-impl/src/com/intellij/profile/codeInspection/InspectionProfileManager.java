@@ -48,7 +48,7 @@ public interface InspectionProfileManager {
   /**
    * @deprecated use {@link #getSeverityRegistrar()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default @NotNull SeverityRegistrar getOwnSeverityRegistrar() {
     return getSeverityRegistrar();
   }

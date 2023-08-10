@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VersionManagingFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,7 @@ public class LocalHistoryGroup extends NonTrivialActionGroup implements DumbAwar
     PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
     if (project == null ||
         ActionPlaces.isPopupPlace(e.getPlace()) && (
-          file != null && !file.isInLocalFileSystem() || file == null && element != null)) {
+          file != null && !(file.isInLocalFileSystem() || VersionManagingFileSystem.isEnforcedNonLocal(file)) || file == null && element != null)) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {

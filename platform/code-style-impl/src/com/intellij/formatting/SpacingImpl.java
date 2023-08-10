@@ -109,7 +109,7 @@ public class SpacingImpl extends Spacing {
 
   /**
    * <b>Note:</b> current implementation uses soft type check, i.e. it checks that instance of the given object
-   * IS-A {@link SpacingImpl} and compares state defined at this class only. That means that sub-classes are assumed
+   * IS-A {@link SpacingImpl} and compares state defined at this class only. That means that subclasses are assumed
    * not to override this method in order to preserve {@code 'symmetric'} property.
    *
    * @param o   {@inheritDoc}
@@ -117,8 +117,7 @@ public class SpacingImpl extends Spacing {
    */
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof SpacingImpl)) return false;
-    final SpacingImpl spacing = (SpacingImpl)o;
+    if (!(o instanceof SpacingImpl spacing)) return false;
     return myFlags == spacing.myFlags &&
            myMinSpaces == spacing.myMinSpaces &&
            myMaxSpaces == spacing.myMaxSpaces &&

@@ -1,10 +1,14 @@
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.jetbrains.annotations.Contract;
 
 public class CollectionToArray {
+
+  String[] testEmpty() {
+    List<String> list = new ArrayList<>();
+    return list.toArray(new String[0]);
+  }
+
   void test(List<Object> obj) {
     if (obj.isEmpty()) return;
     Object[] objects = obj.toArray(new Object[0]);
@@ -53,7 +57,7 @@ public class CollectionToArray {
       if (<warning descr="Condition 'arr.length == 15' is always 'true'">arr.length == 15</warning>) {}
     }
   }
-  
+
   void testPresizedArray(List<?> list) {
     if (list.size() == 10) {
       Object[] data = list.toArray(new Object[list.size()]);
@@ -61,7 +65,12 @@ public class CollectionToArray {
     }
   }
 
-  void testRaw(java.util.List l) {  
+  void testPresizedArray2(List<?> list) {
+    Object[] data = list.toArray(new Object[list.size()]);
+    if (<warning descr="Condition 'list.size() == data.length' is always 'true'">list.size() == data.length</warning>) {}
+  }
+
+  void testRaw(java.util.List l) {
     final String[][] ss = (<warning descr="Casting 'l.toArray(...)' to 'String[][]' will produce 'ClassCastException' for any non-null value">String[][]</warning>) l.toArray(new Number[l.size()]);
   }
 
@@ -74,5 +83,19 @@ public class CollectionToArray {
   String[] testEmptyArray(List<String> list, String[] arr) {
     assert arr.length == 0;
     return list.toArray(arr);
+  }
+
+  void testSizeEquality(List<String> list, int x) {
+    String[] arr = list.toArray(new String[0]);
+    if (<warning descr="Condition 'x == 1 && list.get(arr.length).isEmpty()' is always 'false'">x == 1 && list.<warning descr="The call to 'get' always fails as an argument is out of bounds">get</warning>(arr.length).isEmpty()</warning>) {
+    }
+    if (<warning descr="Condition 'x == 2 && arr[list.size()].isEmpty()' is always 'false'">x == 2 && arr[<warning descr="Array index is out of bounds">list.size()</warning>].isEmpty()</warning>) {
+    }
+    if (list.isEmpty()) return;
+    if (<warning descr="Condition 'arr.length == 0' is always 'false'">arr.length == 0</warning>) return;
+  }
+
+  void testUntyped(List<String> list) {
+    String[] strings = (<warning descr="Casting 'list.toArray()' to 'String[]' will produce 'ClassCastException' for any non-null value">String[]</warning>)list.toArray();
   }
 }

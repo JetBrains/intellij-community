@@ -1,0 +1,39 @@
+<component name="libraryTable">
+  <library name="kotlinc.kotlin-stdlib" type="repository">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.20-dev-8143">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.20-dev-8143/kotlin-stdlib-jdk8-1.9.20-dev-8143.jar">
+          <sha256sum>1f71be99add6fb58560f6f588b7d7ef28b7dcc6f84a3d8a5d490ea6ca61f3a29</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.9.20-dev-8143/kotlin-stdlib-1.9.20-dev-8143.jar">
+          <sha256sum>465b9a646b1a79fea62ab55f09058873ce2a283764bb0d727611c2a03b610657</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.9.20-dev-8143/kotlin-stdlib-common-1.9.20-dev-8143.jar">
+          <sha256sum>0571192be26fb22f7b63d40351ffb5d9f7e6a4150df55f9e8bebe2623c400bb9</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.9.20-dev-8143/kotlin-stdlib-jdk7-1.9.20-dev-8143.jar">
+          <sha256sum>02bd856fe93d67afd252e9903f95ebd78e8a34507f211477e44a1a580f070584</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains:annotations" />
+      </exclude>
+    </properties>
+    <ANNOTATIONS>
+      <root url="file://$PROJECT_DIR$/lib/annotations/kotlin" />
+    </ANNOTATIONS>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.20-dev-8143/kotlin-stdlib-jdk8-1.9.20-dev-8143.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.9.20-dev-8143/kotlin-stdlib-1.9.20-dev-8143.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.9.20-dev-8143/kotlin-stdlib-common-1.9.20-dev-8143.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.9.20-dev-8143/kotlin-stdlib-jdk7-1.9.20-dev-8143.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.20-dev-8143/kotlin-stdlib-jdk8-1.9.20-dev-8143-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.9.20-dev-8143/kotlin-stdlib-1.9.20-dev-8143-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.9.20-dev-8143/kotlin-stdlib-common-1.9.20-dev-8143-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.9.20-dev-8143/kotlin-stdlib-jdk7-1.9.20-dev-8143-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

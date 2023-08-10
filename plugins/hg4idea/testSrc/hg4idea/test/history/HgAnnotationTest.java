@@ -39,8 +39,10 @@ public class HgAnnotationTest extends HgPlatformTest {
   public void setUp() throws Exception {
     super.setUp();
     cd(myRepository);
-    appendToHgrc(myRepository, "[extensions]\n" +
-                                "largefiles=!\n");
+    appendToHgrc(myRepository, """
+      [extensions]
+      largefiles=!
+      """);
     touch(aName, "a1");
     myRepository.refresh(false, true);
     hg("add " + aName);

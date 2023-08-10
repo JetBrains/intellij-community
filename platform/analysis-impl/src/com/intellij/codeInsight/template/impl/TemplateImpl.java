@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,10 +26,9 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof TemplateImpl)) return false;
+    if (!(o instanceof TemplateImpl template)) return false;
 
-    final TemplateImpl template = (TemplateImpl) o;
-    if (myId != null && template.myId != null && myId.equals(template.myId)) return true;
+    if (myId != null && myId.equals(template.myId)) return true;
 
     if (isToReformat != template.isToReformat) return false;
     if (isToShortenLongNames != template.isToShortenLongNames) return false;
@@ -63,7 +61,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   @NonNls private static final String SELECTION_END = "SELECTION_END";
   @NonNls public static final String ARG = "ARG";
 
-  public static final Set<String> INTERNAL_VARS_SET = ContainerUtil.set(
+  public static final Set<String> INTERNAL_VARS_SET = Set.of(
     END, SELECTION, SELECTION_START, SELECTION_END);
 
   private boolean isDeactivated;
@@ -86,7 +84,6 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     this(key, null, group);
     setToParseSegments(false);
     setTemplateText("");
-    setSegments(new SmartList<>());
   }
 
   public TemplateImpl(@NotNull @NlsSafe String key, @Nullable @NlsSafe String string, @NotNull @NonNls String group) {
@@ -94,8 +91,8 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   }
 
   TemplateImpl(@NotNull @NlsSafe String key, @NlsSafe String string, @NotNull @NonNls String group, boolean storeBuildingStacktrace) {
+    super(StringUtil.convertLineSeparators(StringUtil.notNullize(string)));
     myKey = key;
-    setString(StringUtil.convertLineSeparators(StringUtil.notNullize(string)));
     myGroupName = group;
     setBuildingTemplateTrace(storeBuildingStacktrace ? new Throwable() : null);
   }
@@ -113,7 +110,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
                               Expression defaultValueExpression,
                               boolean isAlwaysStopAt,
                               boolean skipOnStart) {
-    if (getSegments() != null) {
+    if (isParsed() || !isToParseSegments()) {
       addVariableSegment(name);
     }
     Variable variable = new Variable(name, expression, defaultValueExpression, isAlwaysStopAt, skipOnStart);
@@ -127,6 +124,11 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     Variable variable = new Variable(name, expression, defaultValue, isAlwaysStopAt);
     myVariables.add(variable);
     return variable;
+  }
+
+  @Override
+  public void addVariable(@NotNull Variable variable) {
+    myVariables.add(variable);
   }
 
   @Override
@@ -240,7 +242,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
 
   public void removeAllParsed() {
     myVariables.clear();
-    setSegments(null);
+    clearSegments();
     setToParseSegments(true);
     setBuildingTemplateTrace(new Throwable());
   }
@@ -319,25 +321,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   public void setGroupName(@NotNull @NonNls String groupName) {
     myGroupName = groupName;
   }
-
-  public boolean isSelectionTemplate() {
-    parseSegments();
-    for (Segment v : getSegments()) {
-      if (SELECTION.equals(v.name)) return true;
-    }
-    return ContainerUtil.exists(getVariables(),
-                                v -> containsSelection(v.getExpression()) || containsSelection(v.getDefaultValueExpression()));
-  }
-
-  private static boolean containsSelection(Expression expression) {
-    if (expression instanceof VariableNode) {
-      return SELECTION.equals(((VariableNode)expression).getName());
-    }
-    if (expression instanceof MacroCallNode) {
-      return ContainerUtil.exists(((MacroCallNode)expression).getParameters(), TemplateImpl::containsSelection);
-    }
-    return false;
-  }
+  
 
   public boolean hasArgument() {
     for (Variable v : myVariables) {
@@ -362,10 +346,6 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return getTemplateContext().createCopy();
   }
 
-  boolean contextsEqual(TemplateImpl defaultTemplate) {
-    return getTemplateContext().getDifference(defaultTemplate.getTemplateContext()) == null;
-  }
-
   public void applyOptions(final Map<TemplateOptionalProcessor, Boolean> context) {
     for (Map.Entry<TemplateOptionalProcessor, Boolean> entry : context.entrySet()) {
       entry.getKey().setEnabled(this, entry.getValue().booleanValue());
@@ -380,6 +360,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return myVariables.get(i).skipOnStart();
   }
 
+  @Override
   public ArrayList<Variable> getVariables() {
     return new ArrayList<>(myVariables);
   }

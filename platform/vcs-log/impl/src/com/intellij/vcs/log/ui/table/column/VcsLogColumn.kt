@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.vcs.log.ui.table.GraphTableModel
@@ -36,7 +36,6 @@ interface VcsLogColumn<T> {
   /**
    * Allow user to resize [VcsLogColumn]
    */
-  @JvmDefault
   val isResizable: Boolean
     get() = true
 
@@ -45,7 +44,7 @@ interface VcsLogColumn<T> {
    *
    * @see getStubValue
    */
-  fun getValue(model: GraphTableModel, row: Int): T
+  fun getValue(model: GraphTableModel, row: Int): T?
 
   /**
    * @return [TableCellRenderer] which will be used to draw the column rows
@@ -56,7 +55,7 @@ interface VcsLogColumn<T> {
   fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer
 
   /**
-   * @return a value which should be used if [getValue] were not calculated (e.g. exception is thrown)
+   * @return a value which should be used if [getValue] were not calculated (e.g. null returned or exception is thrown)
    */
   fun getStubValue(model: GraphTableModel): T
 }

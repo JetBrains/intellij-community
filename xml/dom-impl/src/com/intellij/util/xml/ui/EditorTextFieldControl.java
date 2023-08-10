@@ -25,9 +25,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class EditorTextFieldControl<T extends JComponent> extends BaseModifiableControl<T, String> {
   private static final JTextField J_TEXT_FIELD = new JTextField() {
     @Override

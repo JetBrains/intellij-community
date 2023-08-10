@@ -1,14 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
+import com.intellij.codeInspection.DefaultInspectionToolResultExporter;
 import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PathMacroManager;
@@ -20,13 +23,16 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -38,16 +44,17 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import org.jdom.Element;
+import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -55,15 +62,15 @@ public class RefManagerImpl extends RefManager {
   public static final ExtensionPointName<RefGraphAnnotator> EP_NAME = ExtensionPointName.create("com.intellij.refGraphAnnotator");
   private static final Logger LOG = Logger.getInstance(RefManager.class);
 
-  private long myLastUsedMask = 0x0800_0000; // guarded by this
+  private long myLastUsedMask = 0b1000_00000000_00000000_00000000; // guarded by this
 
   private final @NotNull Project myProject;
   private AnalysisScope myScope;
   private RefProject myRefProject;
 
-  private final BitSet myUnprocessedFiles = new BitSet();
+  private final Set<VirtualFile> myUnprocessedFiles = VfsUtilCore.createCompactVirtualFileSet();
   private final boolean processExternalElements = Registry.is("batch.inspections.process.external.elements");
-  private final ConcurrentMap<PsiAnchor, RefElement> myRefTable = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<PsiAnchor, RefElement> myRefTable = new ConcurrentHashMap<>();
 
   private volatile List<RefElement> myCachedSortedRefs; // holds cached values from myPsiToRefTable/myRefTable sorted by containing virtual file; benign data race
 
@@ -78,9 +85,12 @@ public class RefManagerImpl extends RefManager {
   private final List<RefGraphAnnotator> myGraphAnnotators = ContainerUtil.createConcurrentList();
   private GlobalInspectionContext myContext;
 
-  private final Map<Key, RefManagerExtension> myExtensions = new HashMap<>();
-  private final Map<Language, RefManagerExtension> myLanguageExtensions = new HashMap<>();
+  private final Map<Key<?>, RefManagerExtension<?>> myExtensions = new HashMap<>();
+  private final Map<Language, RefManagerExtension<?>> myLanguageExtensions = new HashMap<>();
   private final Interner<String> myNameInterner = Interner.createStringInterner();
+
+  private volatile BlockingQueue<@NotNull Runnable> myTasks;
+  private volatile List<Future<?>> myFutures;
 
   public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
     myProject = project;
@@ -119,10 +129,12 @@ public class RefManagerImpl extends RefManager {
     for (RefElement refElement : getSortedElements()) {
       refElement.accept(visitor);
     }
-    for (RefModule refModule : myModules.values()) {
-      if (myScope.containsModule(refModule.getModule())) refModule.accept(visitor);
+    List<RefModule> filteredModules =
+      ContainerUtil.filter(myModules.values(), refModule -> ReadAction.compute(() -> myScope.containsModule(refModule.getModule())));
+    for (RefModule refModule : filteredModules) {
+      refModule.accept(visitor);
     }
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       extension.iterate(visitor);
     }
   }
@@ -136,7 +148,7 @@ public class RefManagerImpl extends RefManager {
     myContext = null;
 
     myGraphAnnotators.clear();
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       extension.cleanup();
     }
     myExtensions.clear();
@@ -148,8 +160,16 @@ public class RefManagerImpl extends RefManager {
     return myScope;
   }
 
-
-  private void fireNodeInitialized(RefElement refElement) {
+  void fireNodeInitialized(RefElement refElement) {
+    if (!myIsInProcess || !isDeclarationsFound()) {
+      return;
+    }
+    final PsiElement psi = refElement.getPsiElement();
+    if (psi != null) {
+      for (RefManagerExtension<?> each : myExtensions.values()) {
+        each.onEntityInitialized(refElement, psi);
+      }
+    }
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onInitialize(refElement);
     }
@@ -182,7 +202,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  public void fireBuildReferences(RefElement refElement) {
+  private void fireBuildReferences(RefElement refElement) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onReferencesBuild(refElement);
     }
@@ -206,7 +226,7 @@ public class RefManagerImpl extends RefManager {
     if (myLastUsedMask < 0) {
       throw new IllegalStateException("We're out of 64 bits, sorry");
     }
-    myLastUsedMask *= 2;
+    myLastUsedMask <<= 1;
     return myLastUsedMask;
   }
 
@@ -218,7 +238,7 @@ public class RefManagerImpl extends RefManager {
 
   @Override
   public @Nullable String getType(final @NotNull RefEntity ref) {
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       final String type = extension.getType(ref);
       if (type != null) return type;
     }
@@ -239,7 +259,7 @@ public class RefManagerImpl extends RefManager {
 
   @Override
   public @NotNull RefEntity getRefinedElement(@NotNull RefEntity ref) {
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       ref = extension.getRefinedElement(ref);
     }
     return ref;
@@ -257,35 +277,35 @@ public class RefManagerImpl extends RefManager {
       fileElement.addContent(virtualFile.getUrl());
       problem.addContent(fileElement);
     }
-    else if (refEntity instanceof RefElement) {
-      final RefElement refElement = (RefElement)refEntity;
-      final SmartPsiElementPointer pointer = refElement.getPointer();
+    else if (refEntity instanceof RefElement refElement) {
+      final SmartPsiElementPointer<?> pointer = refElement.getPointer();
       PsiFile psiFile = pointer.getContainingFile();
       if (psiFile == null) return null;
 
       Element fileElement = new Element("file");
-      Element lineElement = new Element("line");
       final VirtualFile virtualFile = psiFile.getVirtualFile();
       LOG.assertTrue(virtualFile != null);
       fileElement.addContent(virtualFile.getUrl());
+      problem.addContent(fileElement);
 
+      int resultLine;
       if (actualLine == -1) {
         final Document document = PsiDocumentManager.getInstance(pointer.getProject()).getDocument(psiFile);
         LOG.assertTrue(document != null);
         final Segment range = pointer.getRange();
-        lineElement.addContent(String.valueOf(range != null ? document.getLineNumber(range.getStartOffset()) + 1 : -1));
+        resultLine = range == null ? -1 : document.getLineNumber(range.getStartOffset()) + 1;
       }
       else {
-        lineElement.addContent(String.valueOf(actualLine + 1));
+        resultLine = actualLine + 1;
       }
 
-      problem.addContent(fileElement);
+      Element lineElement = new Element("line");
+      lineElement.addContent(String.valueOf(resultLine));
       problem.addContent(lineElement);
 
       appendModule(problem, refElement.getModule());
     }
-    else if (refEntity instanceof RefModule) {
-      final RefModule refModule = (RefModule)refEntity;
+    else if (refEntity instanceof RefModule refModule) {
       final VirtualFile moduleFile = refModule.getModule().getModuleFile();
       final Element fileElement = new Element("file");
       fileElement.addContent(moduleFile != null ? moduleFile.getUrl() : refEntity.getName());
@@ -293,7 +313,7 @@ public class RefManagerImpl extends RefManager {
       appendModule(problem, refModule);
     }
 
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       extension.export(refEntity, problem);
     }
 
@@ -302,8 +322,48 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
+  @Nullable
+  public Element export(@NotNull RefEntity entity) {
+    Element element = export(entity, -1);
+    if (element == null) return null;
+
+    if (!(entity instanceof RefElement)) return element;
+
+    SmartPsiElementPointer<?> pointer = ((RefElement)entity).getPointer();
+
+    PsiElement psiElement = pointer.getElement();
+
+    Element language = new Element(DefaultInspectionToolResultExporter.INSPECTION_RESULTS_LANGUAGE);
+    language.addContent(psiElement != null ? psiElement.getLanguage().getID() : "");
+    element.addContent(language);
+
+    PsiFile psiFile = pointer.getContainingFile();
+
+    if (psiFile == null) return element;
+
+    Document document = PsiDocumentManager.getInstance(pointer.getProject()).getDocument(psiFile);
+    if (document == null) return element;
+
+    Segment range = pointer.getRange();
+    if (range == null) return element;
+
+    int firstRangeLine = document.getLineNumber(range.getStartOffset());
+    int lineStartOffset = document.getLineStartOffset(firstRangeLine);
+    int endOffset = Math.min(range.getEndOffset(), document.getLineEndOffset(firstRangeLine));
+
+    TextRange exportedRange = new TextRange(range.getStartOffset(), endOffset);
+    String text = ProblemDescriptorUtil.extractHighlightedText(exportedRange, psiFile);
+
+    element.addContent(new Element("offset").addContent(String.valueOf(exportedRange.getStartOffset() - lineStartOffset)));
+    element.addContent(new Element("length").addContent(String.valueOf(exportedRange.getLength())));
+    element.addContent(new Element("highlighted_element").addContent(ProblemDescriptorUtil.sanitizeIllegalXmlChars(text)));
+
+    return element;
+  }
+
+  @Override
   public @Nullable String getGroupName(final @NotNull RefElement entity) {
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       final String groupName = extension.getGroupName(entity);
       if (groupName != null) return groupName;
     }
@@ -329,30 +389,131 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void findAllDeclarations() {
+    final AnalysisScope scope = getScope();
+    if (scope == null) {
+      return;
+    }
     if (!myDeclarationsFound.getAndSet(true)) {
       long before = System.currentTimeMillis();
-      final AnalysisScope scope = getScope();
-      if (scope != null) {
-        scope.accept(myProjectIterator);
+      startTaskWorkers();
+      try {
+        if (!Registry.is("batch.inspections.visit.psi.in.parallel")) {
+          scope.accept(myProjectIterator);
+        }
+        else {
+          final PsiManager psiManager = PsiManager.getInstance(myProject);
+          scope.accept(vFile -> {
+            executeTask(() -> {
+              final PsiFile file = psiManager.findFile(vFile);
+              if (file != null && ProblemHighlightFilter.shouldProcessFileInBatch(file)) {
+                file.accept(myProjectIterator);
+              }
+            });
+            return true;
+          });
+        }
       }
-
-      LOG.info("Total duration of processing project usages:" + (System.currentTimeMillis() - before));
+      finally {
+        waitForWorkersToFinish();
+        LOG.info("Total duration of processing project usages: " + (System.currentTimeMillis() - before) + "ms");
+      }
     }
+  }
+
+  private void waitForWorkersToFinish() {
+    final List<Future<?>> futures = myFutures;
+    if (futures == null) return;
+    myFutures = null;
+    try {
+      for (Future<?> future : futures) {
+        future.get();
+      }
+      myTasks = null;
+    }
+    catch (ExecutionException | InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public void buildReferences(RefElement element) {
+    if (element.areReferencesBuilt()) return;
+    ((RefElementImpl)element).setReferencesBuilt(true);
+    executeTask(() -> {
+      element.initializeIfNeeded();
+      element.buildReferences();
+      fireBuildReferences(element);
+    });
+  }
+
+  @Override
+  public void executeTask(@Async.Schedule @NotNull Runnable runnable) {
+    if (myTasks != null) {
+      try {
+        myTasks.put(runnable);
+      }
+      catch (InterruptedException ignore) {}
+    }
+    else {
+      runnable.run();
+    }
+  }
+
+  private void startTaskWorkers() {
+    if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
+      return;
+    }
+    final int setting = Registry.get("batch.inspections.number.of.threads").asInteger();
+    final int threadsCount = (setting > 0) ? setting : Runtime.getRuntime().availableProcessors() - 1;
+    if (threadsCount == 0) {
+      // need more than 1 core for parallel processing
+      return;
+    }
+    LOG.info("Processing project usages using " + threadsCount + " threads");
+    // unbounded queue because tasks are submitted under read action, so we mustn't block
+    myTasks = new LinkedBlockingQueue<>();
+    myFutures = new ArrayList<>();
+    final Application application = ApplicationManager.getApplication();
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
+    for (int i = 0; i < threadsCount; i++) {
+      final Future<?> future = application.executeOnPooledThread(() -> {
+        while (myFutures != null || !myTasks.isEmpty()) {
+          try {
+            final Runnable task = myTasks.poll(50, TimeUnit.MILLISECONDS);
+            ProgressManager.checkCanceled();
+            if (task != null) {
+              runTask(progressIndicator, task);
+            }
+          }
+          catch (InterruptedException ignore) {}
+        }
+      });
+      myFutures.add(future);
+    }
+  }
+
+  private void runTask(ProgressIndicator progressIndicator, @Async.Execute Runnable task) {
+    DumbService.getInstance(myProject).runReadActionInSmartMode(
+      () -> ProgressManager.getInstance().executeProcessUnderProgress(task, progressIndicator)
+    );
   }
 
   public boolean isDeclarationsFound() {
     return myDeclarationsFound.get();
   }
 
-  public void inspectionReadActionStarted() {
+  public void runInsideInspectionReadAction(@NotNull Runnable runnable) {
     myIsInProcess = true;
-  }
-
-  public void inspectionReadActionFinished() {
-    myIsInProcess = false;
-    if (myScope != null) myScope.invalidate();
-
-    myCachedSortedRefs = null;
+    try {
+      runnable.run();
+    }
+    finally {
+      myIsInProcess = false;
+      if (myScope != null) {
+        myScope.invalidate();
+      }
+      myCachedSortedRefs = null;
+    }
   }
 
   public void startOfflineView() {
@@ -361,10 +522,6 @@ public class RefManagerImpl extends RefManager {
 
   public boolean isOfflineView() {
     return myOfflineView;
-  }
-
-  public boolean isInProcess() {
-    return myIsInProcess;
   }
 
   @Override
@@ -381,15 +538,25 @@ public class RefManagerImpl extends RefManager {
     List<RefElement> answer = myCachedSortedRefs;
     if (answer != null) return answer;
 
-    answer = new ArrayList<>(myRefTable.values());
+    answer = getElements();
     List<RefElement> list = answer;
     ReadAction.run(() -> ContainerUtil.quickSort(list, (o1, o2) -> {
       VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
       VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
-      return (v1 != null ? v1.hashCode() : 0) - (v2 != null ? v2.hashCode() : 0);
+      int v21 = VfsUtilCore.compareByPath(v1, v2);
+      if (v21 != 0) {
+        return v21;
+      }
+      Segment r1 = ObjectUtils.notNull(o1.getPointer().getRange(), TextRange.EMPTY_RANGE);
+      Segment r2 = ObjectUtils.notNull(o2.getPointer().getRange(), TextRange.EMPTY_RANGE);
+      return Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(r1, r2);
     }));
     myCachedSortedRefs = answer = Collections.unmodifiableList(answer);
     return answer;
+  }
+
+  public @NotNull List<RefElement> getElements() {
+    return new ArrayList<>(myRefTable.values());
   }
 
   @Override
@@ -399,24 +566,24 @@ public class RefManagerImpl extends RefManager {
 
   @Override
   public synchronized boolean isInGraph(VirtualFile file) {
-    return !myUnprocessedFiles.get(((VirtualFileWithId)file).getId());
+    return !myUnprocessedFiles.contains(file);
   }
 
   @Override
   public @Nullable PsiNamedElement getContainerElement(@NotNull PsiElement element) {
     Language language = element.getLanguage();
-    RefManagerExtension extension = myLanguageExtensions.get(language);
+    RefManagerExtension<?> extension = myLanguageExtensions.get(language);
     if (extension == null) return null;
     return extension.getElementContainer(element);
   }
 
-  private synchronized void registerUnprocessed(VirtualFileWithId virtualFile) {
-    myUnprocessedFiles.set(virtualFile.getId());
+  private synchronized void registerUnprocessed(VirtualFile virtualFile) {
+    myUnprocessedFiles.add(virtualFile);
   }
 
-  void removeReference(@NotNull RefElement refElem) {
+  private void removeReference(@NotNull RefElement refElem) {
     final PsiElement element = refElem.getPsiElement();
-    final RefManagerExtension extension = element != null ? getExtension(element.getLanguage()) : null;
+    final RefManagerExtension<?> extension = element != null ? getExtension(element.getLanguage()) : null;
     if (extension != null) {
       extension.removeReference(refElem);
     }
@@ -447,10 +614,11 @@ public class RefManagerImpl extends RefManager {
   }
 
   private class ProjectIterator extends PsiElementVisitor {
+
     @Override
     public void visitElement(@NotNull PsiElement element) {
       ProgressManager.checkCanceled();
-      final RefManagerExtension extension = getExtension(element.getLanguage());
+      final RefManagerExtension<?> extension = getExtension(element.getLanguage());
       if (extension != null) {
         extension.visitElement(element);
       }
@@ -463,7 +631,7 @@ public class RefManagerImpl extends RefManager {
             if (element instanceof PsiFile) {
               VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
               if (virtualFile instanceof VirtualFileWithId) {
-                registerUnprocessed((VirtualFileWithId)virtualFile);
+                registerUnprocessed(virtualFile);
               }
             }
           } else {
@@ -517,6 +685,9 @@ public class RefManagerImpl extends RefManager {
         String relative = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), myProject, true, false);
         myContext.incrementJobDoneAmount(myContext.getStdJobDescriptors().BUILD_GRAPH, relative);
       }
+      if (file instanceof PsiBinaryFile || file.getFileType().isBinary()) {
+        return;
+      }
       final FileViewProvider viewProvider = file.getViewProvider();
       final Set<Language> relevantLanguages = viewProvider.getLanguages();
       for (Language language : relevantLanguages) {
@@ -527,11 +698,15 @@ public class RefManagerImpl extends RefManager {
           throw e;
         }
         catch (Throwable e) {
-          LOG.error(new RuntimeExceptionWithAttachments(e, new Attachment("diagnostics.txt", file.getName())));
+          if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+            LOG.error(file.getName(), e);
+          }
+          else {
+            LOG.error(new RuntimeExceptionWithAttachments(e, new Attachment("diagnostics.txt", file.getName())));
+          }
         }
       }
       myPsiManager.dropResolveCaches();
-      InjectedLanguageManager.getInstance(myProject).dropFileCaches(file);
     }
   }
 
@@ -549,7 +724,7 @@ public class RefManagerImpl extends RefManager {
     return getFromRefTableOrCache(
       elem,
       () -> ReadAction.compute(() -> {
-        final RefManagerExtension extension = getExtension(elem.getLanguage());
+        final RefManagerExtension<?> extension = getExtension(elem.getLanguage());
         if (extension != null) {
           final RefElement refElement = extension.createRefElement(elem);
           if (refElement != null) return (RefElementImpl)refElement;
@@ -562,22 +737,16 @@ public class RefManagerImpl extends RefManager {
         }
         return null;
       }),
-      element -> ReadAction.run(() -> {
-        element.initialize();
-        for (RefManagerExtension each : myExtensions.values()) {
-          each.onEntityInitialized(element, elem);
-        }
-        fireNodeInitialized(element);
-      }));
+      element -> ReadAction.run(() -> element.initializeIfNeeded()));
   }
 
-  private RefManagerExtension getExtension(final Language language) {
+  private RefManagerExtension<?> getExtension(final Language language) {
     return myLanguageExtensions.get(language);
   }
 
   @Override
   public @Nullable RefEntity getReference(final String type, final String fqName) {
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       final RefEntity refEntity = extension.getReference(type, fqName);
       if (refEntity != null) return refEntity;
     }
@@ -605,14 +774,12 @@ public class RefManagerImpl extends RefManager {
     return getFromRefTableOrCache(element, factory, null);
   }
 
-  private @Nullable <T extends RefElement> T getFromRefTableOrCache(@NotNull PsiElement element,
-                                                                    @NotNull NullableFactory<? extends T> factory,
-                                                                    @Nullable Consumer<? super T> whenCached) {
-
+  public @Nullable <T extends RefElement> T getFromRefTableOrCache(@NotNull PsiElement element,
+                                                                   @NotNull NullableFactory<? extends T> factory,
+                                                                   @Nullable Consumer<? super T> whenCached) {
     PsiAnchor psiAnchor = createAnchor(element);
     //noinspection unchecked
-    T result = (T)(myRefTable.get(psiAnchor));
-
+    T result = (T)myRefTable.get(psiAnchor);
     if (result != null) return result;
 
     if (!isValidPointForReference()) {
@@ -620,20 +787,20 @@ public class RefManagerImpl extends RefManager {
       return null;
     }
 
-    result = factory.create();
-    if (result == null) return null;
+    T newElement = factory.create();
+    if (newElement == null) return null;
 
     myCachedSortedRefs = null;
-    RefElement prev = myRefTable.putIfAbsent(psiAnchor, result);
+    RefElement prev = myRefTable.putIfAbsent(psiAnchor, newElement);
     if (prev != null) {
       //noinspection unchecked
-      result = (T)prev;
+      return (T)prev;
     }
-    else if (whenCached != null) {
-      whenCached.consume(result);
+    if (whenCached != null) {
+      whenCached.consume(newElement);
     }
 
-    return result;
+    return newElement;
   }
 
   @Override
@@ -660,11 +827,12 @@ public class RefManagerImpl extends RefManager {
     if (containingFile == null) {
       return false;
     }
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       if (!extension.belongsToScope(psiElement)) return false;
     }
     final Boolean inProject = ReadAction.compute(() -> psiElement.getManager().isInProject(psiElement));
-    return inProject.booleanValue() && (ignoreScope || getScope() == null || getScope().contains(psiElement));
+    return (inProject.booleanValue() || ScratchUtil.isScratch(containingFile.getVirtualFile())) &&
+           (ignoreScope || getScope() == null || getScope().contains(psiElement));
   }
 
   @Override
@@ -678,6 +846,7 @@ public class RefManagerImpl extends RefManager {
 
   @Override
   public void removeRefElement(@NotNull RefElement refElement, @NotNull List<? super RefElement> deletedRefs) {
+    refElement.initializeIfNeeded();
     List<RefEntity> children = refElement.getChildren();
     RefElement[] refElements = children.toArray(new RefElement[0]);
     for (RefElement refChild : refElements) {

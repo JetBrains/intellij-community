@@ -115,8 +115,6 @@ public class IgnoreLanguage extends Language {
    * For some ignore files the affected root is the same as the contained directory in which ignore file exist (e.g. .gitignore).
    * For some ignore files the affected root match to the whole repository root (e.g. .git/info/exclude).
    *
-   * @param project
-   * @param ignoreFile
    */
   @Nullable
   public VirtualFile getAffectedRoot(@NotNull Project project, @NotNull VirtualFile ignoreFile){

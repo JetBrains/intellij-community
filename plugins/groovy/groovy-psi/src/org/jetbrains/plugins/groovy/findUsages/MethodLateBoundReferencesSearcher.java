@@ -25,9 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.search.GrSourceFilterScope;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-/**
- * @author ven
- */
 public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
 
   public MethodLateBoundReferencesSearcher() {
@@ -70,11 +67,10 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
     collector.searchWord(name, searchScope, UsageSearchContext.IN_CODE, true, searchTarget, new RequestResultProcessor("groovy.lateBound") {
       @Override
       public boolean processTextOccurrence(@NotNull PsiElement element, int offsetInElement, @NotNull Processor<? super PsiReference> consumer) {
-        if (!(element instanceof GrReferenceExpression)) {
+        if (!(element instanceof GrReferenceExpression ref)) {
           return true;
         }
 
-        final GrReferenceExpression ref = (GrReferenceExpression)element;
         if (!name.equals(ref.getReferenceName()) || PsiUtil.isLValue(ref)) {
           return true;
         }

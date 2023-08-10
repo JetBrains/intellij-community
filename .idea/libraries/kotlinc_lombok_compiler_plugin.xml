@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinc.lombok-compiler-plugin" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:lombok-compiler-plugin-for-ide:1.9.20-dev-8143">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/1.9.20-dev-8143/lombok-compiler-plugin-for-ide-1.9.20-dev-8143.jar">
+          <sha256sum>994e0de733fe43b3c2c594ec8c5ac8106e2372e14bcf0a60942c6ae23fe682b3</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/1.9.20-dev-8143/lombok-compiler-plugin-for-ide-1.9.20-dev-8143.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/1.9.20-dev-8143/lombok-compiler-plugin-for-ide-1.9.20-dev-8143-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

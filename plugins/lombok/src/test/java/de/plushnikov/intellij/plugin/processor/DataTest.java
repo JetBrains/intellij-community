@@ -68,4 +68,8 @@ public class DataTest extends AbstractLombokParsingTestCase {
   public void testData$DataAndSuperBuilder() {
     doTest(true);
   }
+
+  public void testData$DataExtendsRecursive() {
+    doTest(true);
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope.conflictResolvers;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,6 +21,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.FactoryMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,11 +186,20 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   protected void checkSameSignatures(@NotNull List<? extends CandidateInfo> conflicts, Map<MethodCandidateInfo, PsiSubstitutor> map) {
+    filterSupers(conflicts, myContainingFile, map);
+  }
+
+  /**
+   * Remove super methods from {@code conflicts} list of candidates
+   */
+  public static void filterSupers(@NotNull List<? extends CandidateInfo> conflicts,
+                                  @NotNull PsiFile containingFile,
+                                  @Nullable Map<MethodCandidateInfo, PsiSubstitutor> map) {
     // candidates should go in order of class hierarchy traversal
     // in order for this to work
     Map<MethodSignature, CandidateInfo> signatures = new HashMap<>(conflicts.size());
     Set<PsiMethod> superMethods = new HashSet<>();
-    GlobalSearchScope resolveScope = ResolveScopeManager.getInstance(myContainingFile.getProject()).getResolveScope(myContainingFile);
+    GlobalSearchScope resolveScope = ResolveScopeManager.getInstance(containingFile.getProject()).getResolveScope(containingFile);
     for (CandidateInfo conflict : conflicts) {
       final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
       final PsiClass containingClass = method.getContainingClass();
@@ -313,7 +323,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                         Map<MethodCandidateInfo, PsiSubstitutor> map,
                                         boolean ignoreIfStaticsProblem) {
     boolean atLeastOneMatch = false;
-    IntArrayList unmatchedIndices = null;
+    IntList unmatchedIndices = null;
     for (int i = 0; i < conflicts.size(); i++) {
       ProgressManager.checkCanceled();
       CandidateInfo info = conflicts.get(i);
@@ -670,7 +680,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                                            PsiType @NotNull [] types1,
                                                            PsiType @NotNull [] types2,
                                                            @NotNull LanguageLevel languageLevel) {
-    PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(method.getProject())
+    PsiSubstitutor substitutor = PsiResolveHelper.getInstance(method.getProject())
       .inferTypeArguments(typeParameters, types1, types2, languageLevel);
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(method)) {
       ProgressManager.checkCanceled();

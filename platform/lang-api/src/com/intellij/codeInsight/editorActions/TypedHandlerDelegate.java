@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -13,11 +13,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Handler, extending IDE behaviour on typing in editor.
  * <p>
- * Note that {@code PsiFile} passed to handler's methods isn't guaranteed to be in sync with the document at the time of invocation
- * (due to performance considerations). {@link com.intellij.psi.PsiDocumentManager#commitDocument(Document)} should be invoked explicitly,
- * if an up-to-date PSI is required.
- *
- * @author yole
+ * Note that {@code PsiFile} passed to handler's methods isn't guaranteed to be in sync with the document at the time of invocation, for performance reasons.
+ * Heavy/expensive methods should not be called there because they would lead to freezes on typing.
+ * For example, {@link com.intellij.psi.PsiDocumentManager#commitDocument(Document)} should be avoided, if possible.
  */
 public abstract class TypedHandlerDelegate {
   public static final ExtensionPointName<TypedHandlerDelegate> EP_NAME = new ExtensionPointName<>("com.intellij.typedHandler");
@@ -34,6 +32,7 @@ public abstract class TypedHandlerDelegate {
   /**
    * Called before selected text is deleted.
    * This method is supposed to be overridden by handlers having custom behaviour with respect to selection.
+   * This method is called for each caret individually.
    */
   @NotNull
   public Result beforeSelectionRemoved(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
@@ -41,7 +40,16 @@ public abstract class TypedHandlerDelegate {
   }
 
   /**
+   * Called before starting processing the user input. It can be used to determine individual character input because other methods
+   *   may be called multiple times (for each caret individually).
+   * This method is called once regardless how many carets exist in the editor.
+   */
+  public void newTypingStarted(char c, @NotNull Editor editor, @NotNull DataContext context) {
+  }
+
+  /**
    * Called before the specified character typed by the user is inserted in the editor.
+   * This method is called for each caret individually.
    */
   @NotNull
   public Result beforeCharTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
@@ -50,6 +58,7 @@ public abstract class TypedHandlerDelegate {
 
   /**
    * Called after the specified character typed by the user has been inserted in the editor.
+   * This method is called for each caret individually.
    */
   @NotNull
   public Result charTyped(char c, @NotNull Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {

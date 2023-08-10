@@ -28,20 +28,20 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
   private static final Map<String, TextAttributesKey> ourAdditionalHighlighting = ImmutableMap.of("propertyKey", JSON_PROPERTY_KEY);
 
   private static final AttributesDescriptor[] ourAttributeDescriptors = new AttributesDescriptor[]{
-    new AttributesDescriptor(JsonBundle.message("color.page.attribute.property.key"), JSON_PROPERTY_KEY),
+    new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.property.key"), JSON_PROPERTY_KEY),
 
-    new AttributesDescriptor(JsonBundle.message("color.page.attribute.braces"), JSON_BRACES),
-    new AttributesDescriptor(JsonBundle.message("color.page.attribute.brackets"), JSON_BRACKETS),
-    new AttributesDescriptor(JsonBundle.message("color.page.attribute.comma"), JSON_COMMA),
-    new AttributesDescriptor(JsonBundle.message("color.page.attribute.colon"), JSON_COLON),
-    new AttributesDescriptor(JsonBundle.message("color.page.attribute.number"), JSON_NUMBER),
-    new AttributesDescriptor(JsonBundle.message("color.page.attribute.string"), JSON_STRING),
-    new AttributesDescriptor(JsonBundle.message("color.page.attribute.keyword"), JSON_KEYWORD),
-    new AttributesDescriptor(JsonBundle.message("color.page.attribute.line.comment"), JSON_LINE_COMMENT),
-    new AttributesDescriptor(JsonBundle.message("color.page.attribute.block.comment"), JSON_BLOCK_COMMENT),
-    //new AttributesDescriptor("", JSON_IDENTIFIER),
-    new AttributesDescriptor(JsonBundle.message("color.page.attribute.valid.escape.sequence"), JSON_VALID_ESCAPE),
-    new AttributesDescriptor(JsonBundle.message("color.page.attribute.invalid.escape.sequence"), JSON_INVALID_ESCAPE),
+    new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.braces"), JSON_BRACES),
+    new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.brackets"), JSON_BRACKETS),
+    new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.comma"), JSON_COMMA),
+    new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.colon"), JSON_COLON),
+    new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.number"), JSON_NUMBER),
+    new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.string"), JSON_STRING),
+    new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.keyword"), JSON_KEYWORD),
+    new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.line.comment"), JSON_LINE_COMMENT),
+    new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.block.comment"), JSON_BLOCK_COMMENT),
+    new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.valid.escape.sequence"), JSON_VALID_ESCAPE),
+    new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.invalid.escape.sequence"), JSON_INVALID_ESCAPE),
+    new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.parameter"), JSON_PARAMETER)
   };
 
   @Nullable
@@ -59,21 +59,22 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
   @NotNull
   @Override
   public String getDemoText() {
-    return "{\n" +
-           "  // Line comments are not included in standard but nonetheless allowed.\n" +
-           "  /* As well as block comments. */\n" +
-           "  <propertyKey>\"the only keywords are\"</propertyKey>: [true, false, null],\n" +
-           "  <propertyKey>\"strings with\"</propertyKey>: {\n" +
-           "    <propertyKey>\"no escapes\"</propertyKey>: \"pseudopolinomiality\"\n" +
-           "    <propertyKey>\"valid escapes\"</propertyKey>: \"C-style\\r\\n and unicode\\u0021\",\n" +
-           "    <propertyKey>\"illegal escapes\"</propertyKey>: \"\\0377\\x\\\"\n" +
-           "  },\n" +
-           "  <propertyKey>\"some numbers\"</propertyKey>: [\n" +
-           "    42,\n" +
-           "    -0.0e-0,\n" +
-           "    6.626e-34\n" +
-           "  ] \n" +
-           "}";
+    return """
+      {
+        // Line comments are not included in standard but nonetheless allowed.
+        /* As well as block comments. */
+        <propertyKey>"the only keywords are"</propertyKey>: [true, false, null],
+        <propertyKey>"strings with"</propertyKey>: {
+          <propertyKey>"no escapes"</propertyKey>: "pseudopolinomiality"
+          <propertyKey>"valid escapes"</propertyKey>: "C-style\\r\\n and unicode\\u0021",
+          <propertyKey>"illegal escapes"</propertyKey>: "\\0377\\x\\"
+        },
+        <propertyKey>"some numbers"</propertyKey>: [
+          42,
+          -0.0e-0,
+          6.626e-34
+        ]\s
+      }""";
   }
 
   @Nullable

@@ -1,0 +1,16 @@
+// "Opt in for 'NestedMarker' on 'main'" "true"
+
+class TopClass {
+    @RequiresOptIn
+    annotation class NestedMarker
+}
+
+@TopClass.NestedMarker
+class Main
+
+@OptIn(TopClass.NestedMarker::class)
+fun main(){
+    Main()
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix

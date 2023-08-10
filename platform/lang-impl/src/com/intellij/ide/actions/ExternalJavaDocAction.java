@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -41,6 +40,11 @@ public class ExternalJavaDocAction extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -70,9 +74,8 @@ public class ExternalJavaDocAction extends AnAction {
         ((ExternalDocumentationHandler)provider).handleExternal(element, originalElement)) {
       return;
     }
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.javadoc.external");
     Project project = dataContext.getData(CommonDataKeys.PROJECT);
-    final Component contextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    final Component contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<String> urls;
       if (StringUtil.isEmptyOrSpaces(docUrl)) {
@@ -94,8 +97,7 @@ public class ExternalJavaDocAction extends AnAction {
       final List<String> finalUrls = urls;
       ApplicationManager.getApplication().invokeLater(() -> {
         if (ContainerUtil.isEmpty(finalUrls)) {
-          if (element != null && provider instanceof ExternalDocumentationProvider) {
-            ExternalDocumentationProvider externalDocumentationProvider = (ExternalDocumentationProvider)provider;
+          if (element != null && provider instanceof ExternalDocumentationProvider externalDocumentationProvider) {
             if (externalDocumentationProvider.canPromptToConfigureDocumentation(element)) {
               externalDocumentationProvider.promptToConfigureDocumentation(element);
             }
@@ -115,7 +117,7 @@ public class ExternalJavaDocAction extends AnAction {
             }
           }).showInBestPositionFor(DataManager.getInstance().getDataContext(contextComponent));
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     });
 
   }
@@ -148,8 +150,7 @@ public class ExternalJavaDocAction extends AnAction {
 
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
     boolean enabled;
-    if (provider instanceof ExternalDocumentationProvider) {
-      final ExternalDocumentationProvider edProvider = (ExternalDocumentationProvider)provider;
+    if (provider instanceof ExternalDocumentationProvider edProvider) {
       enabled = CompositeDocumentationProvider.hasUrlsFor(provider, element, originalElement) || edProvider.canPromptToConfigureDocumentation(element);
     }
     else {

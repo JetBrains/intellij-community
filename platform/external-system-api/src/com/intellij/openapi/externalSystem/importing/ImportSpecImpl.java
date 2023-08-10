@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,11 +32,12 @@ public class ImportSpecImpl implements ImportSpec {
   @NotNull private final Project myProject;
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private ProgressExecutionMode myProgressExecutionMode;
-  private boolean forceWhenUptodate;
   @Nullable private ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
   private boolean createDirectoriesForEmptyContentRoots;
-  private boolean isReportRefreshError;
+  private boolean isActivateBuildToolWindowOnStart;
+  private boolean isActivateBuildToolWindowOnFailure;
+  @NotNull private ThreeState myNavigateToError = ThreeState.UNSURE;
   @Nullable private String myVmOptions;
   @Nullable private String myArguments;
   @Nullable private ProjectResolverPolicy myProjectResolverPolicy;
@@ -69,15 +71,6 @@ public class ImportSpecImpl implements ImportSpec {
     myProgressExecutionMode = progressExecutionMode;
   }
 
-  @Override
-  public boolean isForceWhenUptodate() {
-    return forceWhenUptodate;
-  }
-
-  public void setForceWhenUptodate(boolean forceWhenUptodate) {
-    this.forceWhenUptodate = forceWhenUptodate;
-  }
-
   public void setCallback(@Nullable ExternalProjectRefreshCallback callback) {
     myCallback = callback;
   }
@@ -107,12 +100,30 @@ public class ImportSpecImpl implements ImportSpec {
   }
 
   @Override
-  public boolean isReportRefreshError() {
-    return isReportRefreshError;
+  public boolean isActivateBuildToolWindowOnStart() {
+    return isActivateBuildToolWindowOnStart;
   }
 
-  public void setReportRefreshError(boolean isReportRefreshError) {
-    this.isReportRefreshError = isReportRefreshError;
+  public void setActivateBuildToolWindowOnStart(boolean isActivate) {
+    isActivateBuildToolWindowOnStart = isActivate;
+  }
+
+  @Override
+  public boolean isActivateBuildToolWindowOnFailure() {
+    return isActivateBuildToolWindowOnFailure;
+  }
+
+  public void setActivateBuildToolWindowOnFailure(boolean isActivate) {
+    isActivateBuildToolWindowOnFailure = isActivate;
+  }
+
+  @Override
+  public @NotNull ThreeState isNavigateToError() {
+    return myNavigateToError;
+  }
+
+  public void setNavigateToError(@NotNull ThreeState navigateToError) {
+    myNavigateToError = navigateToError;
   }
 
   @Nullable

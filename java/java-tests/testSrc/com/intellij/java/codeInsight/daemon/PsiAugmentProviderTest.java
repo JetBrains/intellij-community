@@ -51,7 +51,7 @@ public class PsiAugmentProviderTest extends LightJavaCodeInsightFixtureTestCase 
 
     PsiType type2 = var.getType();
     assertNotNull(type2);
-    assertEquals(PsiType.INT.getCanonicalText(false), type2.getCanonicalText(false));
+    assertEquals(PsiTypes.intType().getCanonicalText(false), type2.getCanonicalText(false));
   }
 
   public void testDuplicatesFromSeveralAugmenterCallsAreIgnored() {
@@ -154,7 +154,7 @@ public class PsiAugmentProviderTest extends LightJavaCodeInsightFixtureTestCase 
       var count = manager.getModificationTracker().getModificationCount();
       if (type.equals(PsiField.class)) {
         //noinspection unchecked
-        return (List<Psi>)Collections.singletonList(new LightFieldBuilder(manager, AUGMENTED_FIELD, PsiType.BOOLEAN) {
+        return (List<Psi>)Collections.singletonList(new LightFieldBuilder(manager, AUGMENTED_FIELD, PsiTypes.booleanType()) {
           @Override
           public int hashCode() {
             return 0;

@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 
 import java.io.IOException;
 
+@Deprecated(forRemoval = true)
 public interface WorkingSetSerializable<Valid, Invalid> {
   String getId();
 

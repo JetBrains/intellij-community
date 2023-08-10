@@ -8,6 +8,5 @@ import com.intellij.openapi.util.ThrowableComputable
  * If called from outside the EDT, transfers control to the EDT first, executes write action there and waits for the execution end.
  */
 inline fun <T> runWriteActionAndWait(crossinline action: () -> T): T {
-  @Suppress("RemoveExplicitTypeArguments") // Kotlin compiler in 1.4-M1 fails to infer parameters automatically
-  return WriteAction.computeAndWait(ThrowableComputable<T, Throwable> { action() })
+  return WriteAction.computeAndWait(ThrowableComputable { action() })
 }

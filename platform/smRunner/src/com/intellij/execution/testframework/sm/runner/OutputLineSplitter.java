@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @deprecated Use {@link OutputEventSplitter}, remove in 2020
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class OutputLineSplitter {
   public static final int SM_MESSAGE_PREFIX = 105;
 

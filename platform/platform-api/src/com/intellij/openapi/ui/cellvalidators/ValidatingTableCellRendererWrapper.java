@@ -45,7 +45,6 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
     this.cellValidator = cellValidator;
     return this;
   }
-
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
@@ -65,6 +64,7 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
     }
 
     add(delegateRenderer, BorderLayout.CENTER);
+    setToolTipText(delegateRenderer.getToolTipText());
     setBorder(delegateRenderer.getBorder());
     delegateRenderer.setBorder(null);
 

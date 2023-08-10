@@ -1,8 +1,8 @@
-<idea-plugin allow-bundled-update="true">
+<idea-plugin package="com.jetbrains.packagesearch">
     <id>com.jetbrains.packagesearch.intellij-plugin</id>
     <name>Package Search</name>
     <vendor>JetBrains</vendor>
-
+    <resource-bundle>messages.packageSearchBundle</resource-bundle>
     <description><![CDATA[
 Find and manage dependencies for JVM and Kotlin Multiplatform projects.
 <br>
@@ -12,32 +12,50 @@ Supports Maven and Gradle projects.
 ]]></description>
 
     <extensionPoints>
-        <extensionPoint qualifiedName="com.intellij.packagesearch.projectModuleOperationProvider"
-                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider"
-                        dynamic="true"/>
-
-        <extensionPoint qualifiedName="com.intellij.packagesearch.projectModuleProvider"
-                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleProvider"
-                        area="IDEA_PROJECT"
-                        dynamic="true"/>
-
         <extensionPoint qualifiedName="com.intellij.packagesearch.configurableContributor"
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributor"
                         area="IDEA_PROJECT"
                         dynamic="true"/>
+
+        <extensionPoint qualifiedName="com.intellij.packagesearch.moduleChangesSignalProvider"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider"
+                        area="IDEA_PROJECT"
+                        dynamic="true"/>
+
+        <extensionPoint qualifiedName="com.intellij.packagesearch.flowModuleChangesSignalProvider"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider"
+                        area="IDEA_PROJECT"
+                        dynamic="true"/>
+
+        <extensionPoint qualifiedName="com.intellij.packagesearch.asyncModuleTransformer"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.AsyncModuleTransformer"
+                        area="IDEA_PROJECT"
+                        dynamic="true"/>
+
+        <extensionPoint qualifiedName="com.intellij.packagesearch.moduleTransformer"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer"
+                        area="IDEA_PROJECT"
+                        dynamic="true"/>
+
+        <extensionPoint qualifiedName="com.intellij.packagesearch.resolvedDependenciesProvider"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ResolvedDependenciesProvider"
+                        dynamic="true"/>
+
     </extensionPoints>
 
-    <depends>com.intellij.modules.java</depends>
-    <depends>com.intellij.externalSystem.dependencyUpdater</depends>
-    <depends optional="true" config-file="plugin-withKotlin.xml">org.jetbrains.kotlin</depends>
-    <depends optional="true" config-file="plugin-withGradle.xml">org.jetbrains.plugins.gradle</depends>
-    <depends optional="true" config-file="plugin-withMaven.xml">org.jetbrains.idea.maven</depends>
+    <content>
+        <module name="intellij.packageSearch.gradle"/>
+        <module name="intellij.packageSearch.kotlin"/>
+        <module name="intellij.packageSearch.maven"/>
+    </content>
+    <dependencies>
+        <plugin id="com.intellij.java"/>
+        <plugin id="org.jetbrains.idea.reposearch"/>
+    </dependencies>
 
     <extensions defaultExtensionNs="com.intellij">
         <codeInsight.unresolvedReferenceQuickFixProvider
-                implementation="com.jetbrains.packagesearch.intellij.plugin.intentions.JavaPackageSearchQuickFixProvider"/>
-
-        <httpRequestHandler implementation="com.jetbrains.packagesearch.intellij.plugin.ide.PackageSearchRestService"/>
+                implementation="com.jetbrains.packagesearch.intellij.plugin.intentions.JavaPackageSearchUnresolvedReferenceQuickFixProvider"/>
 
         <search.optionContributor
                 implementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchSearchableOptionContributor"/>
@@ -45,28 +63,93 @@ Supports Maven and Gradle projects.
         <projectConfigurable groupId="build" key="packagesearch.configuration.title" bundle="messages.packageSearchBundle"
                              id="preferences.packagesearch.PackageSearchGeneralConfigurable"
                              instance="com.jetbrains.packagesearch.intellij.plugin.configuration.ui.PackageSearchGeneralConfigurable"/>
-        <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>
+
+        <packagesearch.flowModuleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensibility.ExternalProjectSignalProvider"/>
+
+        <dependenciesToolWindow.tabProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackagesListPanelProvider"/>
+
+        <dependenciesToolWindow.tabProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.RepositoryManagementPanelProvider"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.services.DependencyNavigationService"
+                        client="all"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectCachesService"
+                        client="all"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectService"
+                        client="all"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.lifecycle.PackageSearchLifecycleScope"
+                        client="all"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackagesListPanelProvider$PanelContainer"
+                        client="all"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel$UIState"
+                        client="all"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.PkgsUiCommandsService"
+                        client="all"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.LoadingContainer"
+                        client="all"/>
 
         <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowAvailabilityService"/>
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.RepositoryManagementPanelProvider$PanelContainer"
+                client="all"/>
 
-        <toolWindow id="Packages" anchor="bottom" secondary="false"
-                    icon="/icons/artifactSmall.svg"
-                    canCloseContents="true"
-                    factoryClass="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory"/>
+        <applicationService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchCachesService"
+                            client="all"/>
 
-        <registryKey id="packagesearch.repository.mock.api"
-                     key="packagesearch.repository.mock.api"
+        <recoveryAction implementation="com.jetbrains.packagesearch.intellij.plugin.extensibility.DeletePackageSearchProjectCachesAction"/>
+
+        <recoveryAction implementation="com.jetbrains.packagesearch.intellij.plugin.extensibility.DeletePackageSearchCachesAction"/>
+
+        <registryKey id="packagesearch.plugin.debug.logging"
+                     key="packagesearch.plugin.debug.logging"
                      defaultValue="false"
-                     description="Mock the package search remote API's /repositories call, and return multiple repositories."
-                     restartRequired="true"/>
+                     description="Emit in-depth debug logging (warning: very spammy, only useful for debugging data flow issues). Make sure you have this line in Help | Diagnostic Tools | Debug Log Settings: '#com.jetbrains.packagesearch.intellij-plugin:trace'."
+                     restartRequired="false"/>
+
+        <registryKey id="packagesearch.plugin.repositories.tab"
+                     key="packagesearch.plugin.repositories.tab"
+                     defaultValue="false"
+                     description="Display the Repositories tab in the Package Search toolwindow. It may not work correctly, or at all."
+                     restartRequired="false"/>
+
+        <registryKey id="packagesearch.plugin.smart.kotlin.multiplatform.checkbox"
+                     key="packagesearch.plugin.smart.kotlin.multiplatform.checkbox"
+                     defaultValue="false"
+                     description="Only display the Kotlin Multiplatform checkbox when at least one supported module has the Kotlin facet applied. When false, it only depends on the Kotlin IntelliJ plugin being enabled."
+                     restartRequired="false"/>
+
+        <statistics.counterUsagesCollector
+                implementationClass="com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger"/>
+
+        <!--suppress PluginXmlCapitalization -->
+        <notificationGroup displayType="BALLOON"
+                           id="packagesearch.notification"
+                           bundle="messages.packageSearchBundle"
+                           key="packagesearch.title"/>
+
+        <themeMetadataProvider path="/META-INF/PackageSearch.themeMetadata.json"/>
     </extensions>
 
     <actions>
         <action id="com.jetbrains.packagesearch.intellij.plugin.actions.AddDependencyAction"
                 class="com.jetbrains.packagesearch.intellij.plugin.actions.AddDependencyAction">
             <add-to-group group-id="GenerateGroup" anchor="first"/>
+        </action>
+        <action id="com.jetbrains.packagesearch.intellij.plugin.actions.PkgsToDAAction"
+                class="com.jetbrains.packagesearch.intellij.plugin.actions.PkgsToDAAction">
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyListGroup"/>
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
         </action>
     </actions>
 </idea-plugin>

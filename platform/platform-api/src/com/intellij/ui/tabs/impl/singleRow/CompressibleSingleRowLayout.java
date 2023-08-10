@@ -5,14 +5,13 @@ import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBFont;
 
-import java.awt.*;
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 
+/**
+ * @deprecated use {@link com.intellij.ui.tabs.impl.multiRow.CompressibleMultiRowLayout} with showPinnedTabsSeparately = false instead
+ */
+@Deprecated(forRemoval = true)
 public class CompressibleSingleRowLayout extends SingleRowLayout {
   public CompressibleSingleRowLayout(JBTabsImpl tabs) {
     super(tabs);
@@ -31,52 +30,35 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
       return;
     }
 
-    int maxGridSize = 0;
     int spentLength = 0;
     int lengthEstimation = 0;
 
-    int[] lengths = new int[data.toLayout.size()];
-
-    List<TabInfo> layout = data.toLayout;
-    for (int i = 0; i < layout.size(); i++) {
-      TabInfo tabInfo = layout.get(i);
-      final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
-      if (maxGridSize == 0) {
-        Font font = label.getLabelComponent().getFont();
-        maxGridSize = GraphicsUtil.stringWidth("m", font == null ? JBFont.label() : font) * myTabs.tabMSize();
-      }
-      int lengthIncrement = label.getPreferredSize().width;
-      lengths[i] = lengthIncrement;
-      lengthEstimation += lengthIncrement;
+    for (TabInfo tabInfo : data.toLayout) {
+      lengthEstimation += Math.max(getMinTabWidth(), myTabs.getInfoToLabel().get(tabInfo).getPreferredSize().width);
     }
 
     final int extraWidth = data.toFitLength - lengthEstimation;
-
-    Arrays.sort(lengths);
-    double acc = 0;
-    int actualGridSize = 0;
-    for (int i = 0; i < lengths.length; i++) {
-      int length = lengths[i];
-      acc += length;
-      actualGridSize = (int)Math.min(maxGridSize, (acc + extraWidth) / (i+1));
-      if (i < lengths.length - 1 && actualGridSize < lengths[i+1]) break;
-    }
-
-
+    float fractionalPart = 0;
     for (Iterator<TabInfo> iterator = data.toLayout.iterator(); iterator.hasNext(); ) {
       TabInfo tabInfo = iterator.next();
-      final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
+      final TabLabel label = myTabs.getInfoToLabel().get(tabInfo);
 
       int length;
       int lengthIncrement = label.getPreferredSize().width;
       if (!iterator.hasNext()) {
-        length = Math.min(data.toFitLength - spentLength, Math.max(actualGridSize, lengthIncrement));
+        length = Math.min(data.toFitLength - spentLength, lengthIncrement);
       }
       else if (extraWidth <= 0 ) {//need compress
-        length = (int)(lengthIncrement * (float)data.toFitLength / lengthEstimation);
+        float fLength = lengthIncrement * (float)data.toFitLength / lengthEstimation;
+        fractionalPart += fLength - (int)fLength;
+        length = (int)fLength;
+        if (fractionalPart >= 1) {
+          length++;
+          fractionalPart -= 1;
+        }
       }
       else {
-        length = Math.max(lengthIncrement, actualGridSize);
+        length = lengthIncrement;
       }
       if (tabInfo.isPinned()) {
         length = Math.min(getMaxPinnedTabWidth(), length);
@@ -87,7 +69,7 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
     }
 
     for (TabInfo eachInfo : data.toDrop) {
-      JBTabsImpl.resetLayout(myTabs.myInfo2Label.get(eachInfo));
+      JBTabsImpl.Companion.resetLayout(myTabs.getInfoToLabel().get(eachInfo));
     }
   }
 

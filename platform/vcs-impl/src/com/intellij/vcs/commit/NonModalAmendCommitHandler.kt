@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.application.runInEdt
@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.util.VcsUserUtil.isSamePerson
@@ -33,7 +32,7 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
   }
 
   init {
-    workflowHandler.workflow.addCommitListener(EditedCommitCleaner(), workflowHandler)
+    workflowHandler.workflow.addVcsCommitListener(EditedCommitCleaner(), workflowHandler)
 
     amendRoot = getSingleRoot()
     project.messageBus.connect(workflowHandler).subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
@@ -50,7 +49,8 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
     val amendAware = amendRoot?.vcs?.checkinEnvironment as? AmendCommitAware ?: return super.amendCommitModeToggled()
 
     fireAmendCommitModeToggled()
-    setAmendPrefix(isAmendCommitMode)
+    workflowHandler.updateDefaultCommitActionName()
+    workflowHandler.hideCommitChecksFailureNotification()
     updateAmendCommitState()
     if (isAmendCommitMode) loadAmendDetails(amendAware, root) else restoreAmendDetails()
   }
@@ -109,8 +109,8 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
     workflowHandler.ui.commitAuthor = amendAuthorData.beforeAmendAuthor
   }
 
-  private inner class EditedCommitCleaner : CommitResultHandler {
-    override fun onSuccess(commitMessage: String) = setEditedCommit(null)
+  private inner class EditedCommitCleaner : CommitterResultHandler {
+    override fun onSuccess() = setEditedCommit(null)
     override fun onCancel() = Unit
     override fun onFailure() = setEditedCommit(null)
   }

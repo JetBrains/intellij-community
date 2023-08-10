@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.DefaultLogger;
@@ -11,14 +12,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Test;
-import org.picocontainer.PicoContainer;
 
+import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -37,14 +37,14 @@ public class ExtensionPointImplTest {
 
   @Test
   public void testCreate() {
-    ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
-    assertThat(extensionPoint.getName()).isEqualTo(ExtensionsImplTest.EXTENSION_POINT_NAME_1);
+    ExtensionPointImpl<@NotNull Integer> extensionPoint = buildExtensionPoint(Integer.class);
+    assertThat(extensionPoint.getName()).isEqualTo("ext.point.one");
     assertThat(extensionPoint.getClassName()).isEqualTo(Integer.class.getName());
   }
 
   @Test
   public void testUnregisterObject() {
-    ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
+    ExtensionPoint<@NotNull Integer> extensionPoint = buildExtensionPoint(Integer.class);
     extensionPoint.registerExtension(123, disposable);
     assertThat(extensionPoint.getExtensionList()).hasSize(1);
 
@@ -56,7 +56,7 @@ public class ExtensionPointImplTest {
 
   @Test
   public void testRegisterObject() {
-    ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
+    ExtensionPoint<@NotNull Integer> extensionPoint = buildExtensionPoint(Integer.class);
     extensionPoint.registerExtension(123, disposable);
     Object[] extensions = extensionPoint.getExtensions();
     assertThat(extensions).describedAs("One extension").hasSize(1);
@@ -66,7 +66,7 @@ public class ExtensionPointImplTest {
 
   @Test
   public void testRegistrationOrder() {
-    ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
+    ExtensionPoint<@NotNull Integer> extensionPoint = buildExtensionPoint(Integer.class);
     extensionPoint.registerExtension(123, disposable);
     extensionPoint.registerExtension(321, LoadingOrder.FIRST, disposable);
     Object[] extensions = extensionPoint.getExtensions();
@@ -76,7 +76,7 @@ public class ExtensionPointImplTest {
 
   @Test
   public void testListener() {
-    ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
+    ExtensionPoint<@NotNull Integer> extensionPoint = buildExtensionPoint(Integer.class);
     final boolean[] added = new boolean[1];
     final boolean[] removed = new boolean[1];
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<Integer>() {
@@ -106,7 +106,7 @@ public class ExtensionPointImplTest {
 
   @Test
   public void testLateListener() {
-    ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
+    ExtensionPoint<@NotNull Integer> extensionPoint = buildExtensionPoint(Integer.class);
     final boolean[] added = new boolean[1];
     extensionPoint.registerExtension(123, disposable);
     //noinspection ConstantConditions
@@ -143,7 +143,7 @@ public class ExtensionPointImplTest {
   public void testIncompatibleAdapter() {
     DefaultLogger.disableStderrDumping(disposable);
 
-    ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
+    ExtensionPointImpl<@NotNull Integer> extensionPoint = buildExtensionPoint(Integer.class);
     extensionPoint.addExtensionAdapter(newStringAdapter());
     assertThatThrownBy(() -> {
       extensionPoint.getExtensionList();
@@ -152,7 +152,7 @@ public class ExtensionPointImplTest {
 
   @Test
   public void testCompatibleAdapter() {
-    ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
+    ExtensionPointImpl<@NotNull Integer> extensionPoint = buildExtensionPoint(Integer.class);
     extensionPoint.registerExtension(0, disposable);
     assertThat(extensionPoint.getExtensions()).hasSize(1);
   }
@@ -178,7 +178,7 @@ public class ExtensionPointImplTest {
   @Test
   public void notApplicableRegistration() {
     doTestInterruptedAdapterProcessing(() -> {
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     }, (extensionPoint, adapter) -> {
       assertThat(extensionPoint.getExtensionList()).hasSize(2);
       adapter.setFire(null);
@@ -189,14 +189,14 @@ public class ExtensionPointImplTest {
 
   @Test
   public void iteratorAndNotApplicableRegistration() {
-    ExtensionPointImpl<String> extensionPoint = buildExtensionPoint(String.class);
+    ExtensionPointImpl<@NotNull String> extensionPoint = buildExtensionPoint(String.class);
 
     extensionPoint.registerExtension("first", disposable);
 
     MyShootingComponentAdapter adapter = newStringAdapter();
     extensionPoint.addExtensionAdapter(adapter);
     adapter.setFire(() -> {
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     });
 
     extensionPoint.registerExtension("third", disposable);
@@ -209,8 +209,9 @@ public class ExtensionPointImplTest {
     assertThat(iterator.hasNext()).isFalse();
   }
 
-  private void doTestInterruptedAdapterProcessing(@NotNull Runnable firework, @NotNull BiConsumer<ExtensionPointImpl<String>, MyShootingComponentAdapter> test) {
-    ExtensionPointImpl<String> extensionPoint = buildExtensionPoint(String.class);
+  private void doTestInterruptedAdapterProcessing(@NotNull Runnable firework,
+                                                  @NotNull BiConsumer<ExtensionPointImpl<@NotNull String>, MyShootingComponentAdapter> test) {
+    ExtensionPointImpl<@NotNull String> extensionPoint = buildExtensionPoint(String.class);
     MyShootingComponentAdapter adapter = newStringAdapter();
 
     extensionPoint.registerExtension("first", disposable);
@@ -226,7 +227,7 @@ public class ExtensionPointImplTest {
 
   @Test
   public void testListenerNotifications() {
-    ExtensionPoint<String> extensionPoint = buildExtensionPoint(String.class);
+    ExtensionPoint<@NotNull String> extensionPoint = buildExtensionPoint(String.class);
 
     final List<String> extensions = new ArrayList<>();
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<String>() {
@@ -256,7 +257,7 @@ public class ExtensionPointImplTest {
 
   @Test
   public void testClearCacheOnUnregisterExtensions() {
-    ExtensionPoint<String> extensionPoint = buildExtensionPoint(String.class);
+    ExtensionPoint<@NotNull String> extensionPoint = buildExtensionPoint(String.class);
 
     List<Integer> sizeList = new ArrayList<>();
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<String>() {
@@ -275,7 +276,7 @@ public class ExtensionPointImplTest {
 
   @Test
   public void clientsCannotModifyCachedExtensions() {
-    ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
+    ExtensionPointImpl<@NotNull Integer> extensionPoint = buildExtensionPoint(Integer.class);
     extensionPoint.registerExtension(4, disposable);
     extensionPoint.registerExtension(2, disposable);
 
@@ -287,23 +288,27 @@ public class ExtensionPointImplTest {
     assertThat(extensionPoint.getExtensionList()).containsExactly(4, 2);
 
     Function<Integer, String> f = it -> "foo";
-    assertThat(ExtensionProcessingHelper.getByGroupingKey(extensionPoint, f.getClass(), "foo", f)).isEqualTo(extensionPoint.getExtensionList());
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, ExtensionPointImplTest.class, Function.identity(), Function.identity())).isEqualTo(2);
+    assertThat(ExtensionProcessingHelper.INSTANCE.getByGroupingKey(extensionPoint, f.getClass(), "foo", f)).isEqualTo(
+      extensionPoint.getExtensionList());
+    assertThat(ExtensionProcessingHelper.INSTANCE.getByKey(extensionPoint, 2, ExtensionPointImplTest.class, Function.identity(),
+                                                           Function.identity())).isEqualTo(2);
     Function<Integer, Integer> f2 = (Integer it) -> it * 2;
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, f2.getClass(), Function.identity(), f2)).isEqualTo(4);
+    assertThat(ExtensionProcessingHelper.INSTANCE.getByKey(extensionPoint, 2, f2.getClass(), Function.identity(), f2)).isEqualTo(4);
 
     Function<Integer, Integer> filteringKeyMapper = it -> it < 3 ? it : null;
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, filteringKeyMapper.getClass(), filteringKeyMapper, Function.identity())).isEqualTo(2);
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 4, filteringKeyMapper.getClass(), filteringKeyMapper, Function.identity())).isNull();
+    assertThat(ExtensionProcessingHelper.INSTANCE.getByKey(extensionPoint, 2, filteringKeyMapper.getClass(), filteringKeyMapper,
+                                                           Function.identity())).isEqualTo(2);
+    assertThat(ExtensionProcessingHelper.INSTANCE.getByKey(extensionPoint, 4, filteringKeyMapper.getClass(), filteringKeyMapper,
+                                                           Function.identity())).isNull();
     Function<@NotNull Integer, @Nullable Integer> f3 = (Integer it) -> (Integer)null;
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 4, f3.getClass(), Function.identity(), f3)).isNull();
+    assertThat(ExtensionProcessingHelper.INSTANCE.getByKey(extensionPoint, 4, f3.getClass(), Function.identity(), f3)).isNull();
   }
 
   @Test
   public void keyedExtensionDisposable() {
     BeanExtensionPoint<KeyedLazyInstance<Integer>> extensionPoint =
-      new BeanExtensionPoint<>("foo", KeyedLazyInstance.class.getName(), new DefaultPluginDescriptor("test"), true);
-    extensionPoint.setComponentManager(new MyComponentManager());
+      new BeanExtensionPoint<>("foo", KeyedLazyInstance.class.getName(), new DefaultPluginDescriptor("test"), new MyComponentManager(),
+                               true);
     KeyedLazyInstance<Integer> extension = new KeyedLazyInstance<Integer>() {
       @Override
       public String getKey() {
@@ -315,18 +320,16 @@ public class ExtensionPointImplTest {
         return 1;
       }
     };
-    extensionPoint.registerExtension(extension, LoadingOrder.ANY);
+    extensionPoint.registerExtension(extension);
     Disposable disposable = ExtensionPointUtil.createKeyedExtensionDisposable(extension.getInstance(), extensionPoint);
     extensionPoint.unregisterExtension(extension);
     assertThat(Disposer.isDisposed(disposable)).isTrue();
     Disposer.dispose(extensionPoint.getComponentManager());
   }
 
-  private static @NotNull <T> ExtensionPointImpl<T> buildExtensionPoint(@NotNull Class<T> aClass) {
-    InterfaceExtensionPoint<T> point = new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass.getName(),
-                                                                     new DefaultPluginDescriptor("test"), aClass, false);
-    point.setComponentManager(new MyComponentManager());
-    return point;
+  private static @NotNull <T> ExtensionPointImpl<@NotNull T> buildExtensionPoint(@NotNull Class<T> aClass) {
+    return new InterfaceExtensionPoint<>("ext.point.one", aClass.getName(), new DefaultPluginDescriptor("test"), new MyComponentManager(),
+                                         aClass, false, false);
   }
 
   private static MyShootingComponentAdapter newStringAdapter() {
@@ -337,7 +340,8 @@ public class ExtensionPointImplTest {
     private Runnable myFire;
 
     MyShootingComponentAdapter(@NotNull String implementationClass) {
-      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null, InterfaceExtensionImplementationClassResolver.INSTANCE);
+      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null,
+            InterfaceExtensionImplementationClassResolver.INSTANCE);
     }
 
     public synchronized void setFire(@Nullable Runnable fire) {
@@ -345,16 +349,31 @@ public class ExtensionPointImplTest {
     }
 
     @Override
-    public synchronized @NotNull <T> T createInstance(@NotNull ComponentManager componentManager) {
+    public synchronized @Nullable <T> T createInstance(@NotNull ComponentManager componentManager) {
       if (myFire != null) {
-        myFire.run();
+        try {
+          myFire.run();
+        }
+        catch (ExtensionNotApplicableException e) {
+          return null;
+        }
       }
       return super.createInstance(componentManager);
     }
   }
 
   static final class MyComponentManager implements ComponentManager {
-    private final DefaultPicoContainer myContainer = new DefaultPicoContainer();
+    @Override
+    public <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
+      try {
+        Constructor<T> constructor = aClass.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        return constructor.newInstance();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
 
     @Override
     public <T> T getComponent(@NotNull Class<T> interfaceClass) {
@@ -362,8 +381,13 @@ public class ExtensionPointImplTest {
     }
 
     @Override
-    public @NotNull PicoContainer getPicoContainer() {
-      return myContainer;
+    public boolean hasComponent(@NotNull Class<?> interfaceClass) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isInjectionForExtensionSupported() {
+      return false;
     }
 
     @Override
@@ -382,9 +406,37 @@ public class ExtensionPointImplTest {
     }
 
     @Override
-    public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
+    public <T> T getService(@NotNull Class<T> serviceClass) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public @NotNull ExtensionsArea getExtensionArea() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass,
+                                                          @NotNull Object key,
+                                                          @NotNull PluginId pluginId) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor)
+      throws ClassNotFoundException {
       //noinspection unchecked
       return (Class<T>)Class.forName(className);
+    }
+
+    @Override
+    public <T> @NotNull T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public @NotNull ActivityCategory getActivityCategory(boolean isExtension) {
+      return ActivityCategory.APP_EXTENSION;
     }
 
     @Override
@@ -407,6 +459,7 @@ public class ExtensionPointImplTest {
 
     @Override
     public @NotNull RuntimeException createError(@NotNull @NonNls String message,
+                                                 @Nullable Throwable error,
                                                  @NotNull PluginId pluginId,
                                                  @Nullable Map<String, String> attachments) {
       return new RuntimeException(message);

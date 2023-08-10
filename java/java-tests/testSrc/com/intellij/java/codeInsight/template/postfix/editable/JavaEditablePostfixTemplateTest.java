@@ -111,7 +111,7 @@ public class JavaEditablePostfixTemplateTest extends LightPlatformTestCase {
   public void testFqnCondition() {
     JavaPostfixTemplateExpressionCondition condition =
       new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition("test.class.Name");
-    Set<JavaPostfixTemplateExpressionCondition> conditions = reloadConditions(templateWithCondition(condition));
+    Set<? extends JavaPostfixTemplateExpressionCondition> conditions = reloadConditions(templateWithCondition(condition));
     JavaPostfixTemplateExpressionCondition reloadedCondition = ContainerUtil.getFirstItem(conditions);
     assertSameElements(conditions, condition);
     assertEquals("test.class.Name",
@@ -139,8 +139,7 @@ public class JavaEditablePostfixTemplateTest extends LightPlatformTestCase {
     return (JavaEditablePostfixTemplate)reloadTemplate(template);
   }
 
-  @NotNull
-  private static Set<JavaPostfixTemplateExpressionCondition> reloadConditions(@NotNull JavaEditablePostfixTemplate template) {
+  private static Set<? extends JavaPostfixTemplateExpressionCondition> reloadConditions(@NotNull JavaEditablePostfixTemplate template) {
     return reloadJavaTemplate(template).getExpressionConditions();
   }
 }

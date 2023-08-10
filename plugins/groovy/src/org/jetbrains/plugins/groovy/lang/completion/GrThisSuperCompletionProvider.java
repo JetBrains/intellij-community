@@ -35,9 +35,8 @@ class GrThisSuperCompletionProvider extends CompletionProvider<CompletionParamet
     assert position.getParent() instanceof GrReferenceExpression;
     final GrReferenceExpression refExpr = ((GrReferenceExpression)position.getParent());
     final GrExpression qualifier = refExpr.getQualifierExpression();
-    if (!(qualifier instanceof GrReferenceExpression)) return;
+    if (!(qualifier instanceof GrReferenceExpression referenceExpression)) return;
 
-    GrReferenceExpression referenceExpression = (GrReferenceExpression)qualifier;
     final PsiElement resolved = referenceExpression.resolve();
     if (!(resolved instanceof PsiClass)) return;
 

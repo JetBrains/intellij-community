@@ -2,8 +2,9 @@
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.CompositeParameterTargetedValue;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.lang.ant.AntBundle;
@@ -33,7 +34,7 @@ import java.util.List;
 
 public class AntCommandLineBuilder {
   private final List<@NlsSafe String> myTargets = new ArrayList<>();
-  private final JavaParameters myCommandLine = new JavaParameters();
+  private final SimpleJavaParameters myCommandLine = new SimpleJavaParameters();
   private @NlsSafe String myBuildFilePath;
   private List<BuildFileProperty> myProperties;
   private boolean myDone = false;
@@ -94,9 +95,9 @@ public class AntCommandLineBuilder {
     }
 
     final String antHome = AntInstallation.HOME_DIR.get(antInstallation.getProperties());
-    vmParametersList.add("-Dant.home=" + antHome);
+    vmParametersList.add(new CompositeParameterTargetedValue("-Dant.home=").addPathPart(antHome));
     final String libraryDir = antHome + (antHome.endsWith("/") || antHome.endsWith(File.separator) ? "" : File.separator) + "lib";
-    vmParametersList.add("-Dant.library.dir=" + libraryDir);
+    vmParametersList.add(new CompositeParameterTargetedValue("-Dant.library.dir=").addPathPart(libraryDir));
 
     String[] urls = jdk.getRootProvider().getUrls(OrderRootType.CLASSES);
     final String jdkHome = homeDirectory.getPath().replace('/', File.separatorChar);
@@ -152,7 +153,7 @@ public class AntCommandLineBuilder {
     myCommandLine.setWorkingDirectory(buildFile.getParent());
   }
 
-  public JavaParameters getCommandLine() {
+  public SimpleJavaParameters getCommandLine() {
     if (myDone) return myCommandLine;
     ParametersList programParameters = myCommandLine.getProgramParametersList();
     for (final String property : myExpandedProperties) {
@@ -160,7 +161,8 @@ public class AntCommandLineBuilder {
         programParameters.add(property);
       }
     }
-    programParameters.add("-buildfile", myBuildFilePath);
+    programParameters.add("-buildfile");
+    programParameters.add(new CompositeParameterTargetedValue().addPathPart(myBuildFilePath));
     for (final String target : myTargets) {
       if (target != null) {
         programParameters.add(target);

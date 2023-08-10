@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.importing;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -9,6 +8,7 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,10 +21,11 @@ public class ImportSpecBuilder {
   @NotNull private final Project myProject;
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private ProgressExecutionMode myProgressExecutionMode;
-  private boolean myForceWhenUptodate;
   @Nullable private ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
-  private boolean isReportRefreshError = true;
+  private boolean isActivateBuildToolWindowOnStart = false;
+  private boolean isActivateBuildToolWindowOnFailure = true;
+  private @NotNull ThreeState isNavigateToError = ThreeState.UNSURE;
   @Nullable private String myVmOptions;
   @Nullable private String myArguments;
   private boolean myCreateDirectoriesForEmptyContentRoots;
@@ -46,12 +47,20 @@ public class ImportSpecBuilder {
     return this;
   }
 
+  /**
+   * @deprecated see {@link ImportSpecBuilder#forceWhenUptodate(boolean)}
+   */
+  @Deprecated
   public ImportSpecBuilder forceWhenUptodate() {
     return forceWhenUptodate(true);
   }
 
+  /**
+   * @deprecated it does nothing from
+   * 16.02.2017, 16:42, ebef09cdbbd6ace3c79d3e4fb63028bac2f15f75
+   */
+  @Deprecated
   public ImportSpecBuilder forceWhenUptodate(boolean force) {
-    myForceWhenUptodate = force;
     return this;
   }
 
@@ -70,8 +79,23 @@ public class ImportSpecBuilder {
     return this;
   }
 
+  public ImportSpecBuilder activateBuildToolWindowOnStart() {
+    isActivateBuildToolWindowOnStart = true;
+    return this;
+  }
+
   public ImportSpecBuilder dontReportRefreshErrors() {
-    isReportRefreshError = false;
+    isActivateBuildToolWindowOnFailure = false;
+    return this;
+  }
+
+  public ImportSpecBuilder dontNavigateToError() {
+    isNavigateToError = ThreeState.NO;
+    return this;
+  }
+
+  public ImportSpecBuilder navigateToError() {
+    isNavigateToError = ThreeState.YES;
     return this;
   }
 
@@ -94,10 +118,11 @@ public class ImportSpecBuilder {
   public ImportSpec build() {
     ImportSpecImpl mySpec = new ImportSpecImpl(myProject, myExternalSystemId);
     mySpec.setProgressExecutionMode(myProgressExecutionMode);
-    mySpec.setForceWhenUptodate(myForceWhenUptodate);
     mySpec.setCreateDirectoriesForEmptyContentRoots(myCreateDirectoriesForEmptyContentRoots);
     mySpec.setPreviewMode(isPreviewMode);
-    mySpec.setReportRefreshError(isReportRefreshError);
+    mySpec.setActivateBuildToolWindowOnStart(isActivateBuildToolWindowOnStart);
+    mySpec.setActivateBuildToolWindowOnFailure(isActivateBuildToolWindowOnFailure);
+    mySpec.setNavigateToError(isNavigateToError);
     mySpec.setArguments(myArguments);
     mySpec.setVmOptions(myVmOptions);
     mySpec.setProjectResolverPolicy(myProjectResolverPolicy);
@@ -117,11 +142,11 @@ public class ImportSpecBuilder {
 
   private void apply(ImportSpec spec) {
     myProgressExecutionMode = spec.getProgressExecutionMode();
-    myForceWhenUptodate = spec.isForceWhenUptodate();
     myCreateDirectoriesForEmptyContentRoots = spec.shouldCreateDirectoriesForEmptyContentRoots();
     myCallback = spec.getCallback();
     isPreviewMode = spec.isPreviewMode();
-    isReportRefreshError = spec.isReportRefreshError();
+    isActivateBuildToolWindowOnStart = spec.isActivateBuildToolWindowOnStart();
+    isActivateBuildToolWindowOnFailure = spec.isActivateBuildToolWindowOnFailure();
     myArguments = spec.getArguments();
     myVmOptions = spec.getVmOptions();
   }
@@ -142,7 +167,7 @@ public class ImportSpecBuilder {
         return;
       }
       final boolean synchronous = myExecutionMode == ProgressExecutionMode.MODAL_SYNC;
-      ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject, synchronous);
+      ProjectDataManager.getInstance().importData(externalProject, myProject);
     }
   }
 }

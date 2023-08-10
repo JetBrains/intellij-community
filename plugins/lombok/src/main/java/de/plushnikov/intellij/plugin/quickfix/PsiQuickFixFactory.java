@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.siyeh.ig.fixes.ChangeAnnotationParameterQuickFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,6 @@ public final class PsiQuickFixFactory {
   }
 
   public static LocalQuickFix createChangeAnnotationParameterFix(@NotNull PsiAnnotation psiAnnotation, @NotNull String name, @Nullable String newValue) {
-    return new ChangeAnnotationParameterQuickFix(psiAnnotation, name, newValue);
+    return LocalQuickFix.from(new ChangeAnnotationParameterQuickFix(psiAnnotation, name, newValue));
   }
 }

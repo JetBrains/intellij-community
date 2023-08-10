@@ -1,4 +1,4 @@
-// "Bind method parameters to fields" "true"
+// "Bind method parameters to fields" "true-preview"
 
 class A{
     private Object myP1;

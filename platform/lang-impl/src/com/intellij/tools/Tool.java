@@ -12,11 +12,17 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.util.ExecutionErrorDialog;
+import com.intellij.execution.wsl.WSLCommandLineOptions;
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WslMacroPathConverter;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
+import com.intellij.ide.macro.MacroPathConverter;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SchemeElement;
@@ -25,6 +31,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +47,7 @@ public class Tool implements SchemeElement {
 
   @NonNls public static final String ACTION_ID_PREFIX = "Tool_";
 
-  public static final String DEFAULT_GROUP_NAME = "External Tools";
+  public static final @Nls String DEFAULT_GROUP_NAME = ToolsBundle.message("external.tools");
   protected static final ProcessEvent NOT_STARTED_EVENT = new ProcessEvent(new NopProcessHandler(), -1);
   private @NlsSafe String myName;
   private String myDescription;
@@ -226,11 +233,10 @@ public class Tool implements SchemeElement {
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof Tool)) {
+    if (!(obj instanceof Tool source)) {
       return false;
     }
 
-    Tool source = (Tool)obj;
     return
       Objects.equals(myName, source.myName) &&
       Objects.equals(myDescription, source.myDescription) &&
@@ -296,6 +302,13 @@ public class Tool implements SchemeElement {
                 processHandler.addProcessListener(processListener);
               }
             }
+
+            @Override
+            public void processNotStarted() {
+              if (processListener != null) {
+                processListener.processNotStarted();
+              }
+            }
           });
         if (environment.getState() == null) {
           return false;
@@ -319,6 +332,7 @@ public class Tool implements SchemeElement {
     }
     catch (ExecutionException ex) {
       ExecutionErrorDialog.show(ex, ToolsBundle.message("tools.process.start.error"), project);
+      notifyCouldNotStart(processListener);
       return false;
     }
     return true;
@@ -334,9 +348,19 @@ public class Tool implements SchemeElement {
                                      ? new PtyCommandLine().withConsoleMode(true)
                                      : new GeneralCommandLine();
     try {
+      String exePath = MacroManager.getInstance().expandMacrosInString(getProgram(), true, dataContext);
+      exePath = MacroManager.getInstance().expandMacrosInString(exePath, false, dataContext);
+      if (exePath == null) return null;
+
+      WSLDistribution wsl = WslPath.getDistributionByWindowsUncPath(exePath);
+      MacroPathConverter pathConverter = null;
+      if (wsl != null) {
+        pathConverter = new WslMacroPathConverter(wsl);
+        dataContext = SimpleDataContext.getSimpleContext(MacroManager.PATH_CONVERTER_KEY, pathConverter, dataContext);
+      }
+
       String paramString = MacroManager.getInstance().expandMacrosInString(getParameters(), true, dataContext);
       String workingDir = MacroManager.getInstance().expandMacrosInString(getWorkingDirectory(), true, dataContext);
-      String exePath = MacroManager.getInstance().expandMacrosInString(getProgram(), true, dataContext);
 
       commandLine.getParametersList().addParametersString(
         MacroManager.getInstance().expandMacrosInString(paramString, false, dataContext));
@@ -344,13 +368,20 @@ public class Tool implements SchemeElement {
       if (!StringUtil.isEmpty(workDirExpanded)) {
         commandLine.setWorkDirectory(workDirExpanded);
       }
-      exePath = MacroManager.getInstance().expandMacrosInString(exePath, false, dataContext);
-      if (exePath == null) return null;
 
       File exeFile = new File(exePath);
       if (exeFile.isDirectory() && exeFile.getName().endsWith(".app")) {
         commandLine.setExePath("open");
         commandLine.getParametersList().prependAll("-a", exePath);
+      }
+      else if (wsl != null) {
+        try {
+          commandLine = createWslCommandLine(CommonDataKeys.PROJECT.getData(dataContext), wsl, commandLine, workDirExpanded,
+                                             pathConverter.convertPath(exePath));
+        }
+        catch (ExecutionException e) {
+          LOG.error("Failed to create wsl command line", e);
+        }
       }
       else {
         commandLine.setExePath(exePath);
@@ -387,5 +418,25 @@ public class Tool implements SchemeElement {
 
   public String getActionIdPrefix() {
     return ACTION_ID_PREFIX;
+  }
+
+  @NotNull
+  public static GeneralCommandLine createWslCommandLine(@Nullable Project project,
+                                                        @NotNull WSLDistribution wsl,
+                                                        @NotNull GeneralCommandLine cmd,
+                                                        @Nullable String linuxWorkingDir,
+                                                        @NotNull String linuxExePath) throws ExecutionException {
+    cmd.setExePath(linuxExePath);
+    WSLCommandLineOptions wslOptions = new WSLCommandLineOptions();
+    if (StringUtil.isNotEmpty(linuxWorkingDir)) {
+      wslOptions.setRemoteWorkingDirectory(linuxWorkingDir);
+    }
+    // Working directory as well as all parameters were computed with MacroPathConverter, so they are
+    // paths in linux. Reset working directory in command line, because linux directory is not valid
+    // in windows, and we will fail to start process with it.
+    cmd.setWorkDirectory((String)null);
+    // run command in interactive shell so that shell rc files are executed and configure proper environment
+    wslOptions.setExecuteCommandInInteractiveShell(true);
+    return wsl.patchCommandLine(cmd, project, wslOptions);
   }
 }

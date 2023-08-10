@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import kotlin.text.Regex;
@@ -21,18 +23,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
-import static com.jetbrains.python.sdk.flavors.WinAppxToolsKt.getAppxFiles;
-import static com.jetbrains.python.sdk.flavors.WinAppxToolsKt.getAppxProduct;
+import static com.jetbrains.python.sdk.WinAppxToolsKt.getAppxFiles;
+import static com.jetbrains.python.sdk.WinAppxToolsKt.getAppxProduct;
 
 /**
  * This class knows how to find python in Windows Registry according to
  * <a href="https://www.python.org/dev/peps/pep-0514/">PEP 514</a>
- *
- * @author yole
  */
-public class WinPythonSdkFlavor extends CPythonSdkFlavor {
+public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   @NotNull
   private static final String[] REG_ROOTS = {"HKEY_LOCAL_MACHINE", "HKEY_CURRENT_USER"};
   /**
@@ -48,11 +49,11 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
                     "IronPython", "ipy.exe");
 
   @NotNull
-  private final ClearableLazyValue<Set<String>> myRegistryCache =
-    ClearableLazyValue.createAtomic(() -> findInRegistry(getWinRegistryService()));
+  private final SynchronizedClearableLazy<Set<String>> myRegistryCache =
+    new SynchronizedClearableLazy<>(() -> findInRegistry(getWinRegistryService()));
   @NotNull
-  private final ClearableLazyValue<Set<String>> myAppxCache =
-    ClearableLazyValue.createAtomic(() -> getPythonsFromStore());
+  private final SynchronizedClearableLazy<Set<String>> myAppxCache = new SynchronizedClearableLazy<>(
+    WinPythonSdkFlavor::getPythonsFromStore);
 
   public static WinPythonSdkFlavor getInstance() {
     return PythonSdkFlavor.EP_NAME.findExtension(WinPythonSdkFlavor.class);
@@ -63,13 +64,17 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
     return SystemInfo.isWindows;
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
+  }
+
+  @Override
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
     Set<String> candidates = new TreeSet<>();
     findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
     findInstallations(candidates, "python.exe", PythonHelpersLocator.getHelpersRoot().getParent());
-    return candidates;
+    return ContainerUtil.map(candidates, Path::of);
   }
 
   private void findInCandidatePaths(Set<String> candidates, String... exe_names) {
@@ -83,17 +88,35 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
   }
 
   @Override
+  public boolean sdkSeemsValid(@NotNull Sdk sdk,
+                               PyFlavorData.@NotNull Empty flavorData,
+                               @Nullable TargetEnvironmentConfiguration targetConfig) {
+    if (super.sdkSeemsValid(sdk, flavorData, targetConfig)) {
+      return true;
+    }
+    if (targetConfig != null) {
+      // non-local, cant check for appx
+      return true;
+    }
+    var path = sdk.getHomePath();
+    return path != null && isLocalPathValidPython(Path.of(path));
+  }
+
+  @Override
   public boolean isValidSdkHome(@NotNull final String path) {
     if (super.isValidSdkHome(path)) {
       return true;
     }
 
-    if (myAppxCache.getValue().contains(path)) {
+    return isLocalPathValidPython(Path.of(path));
+  }
+
+  private boolean isLocalPathValidPython(@NotNull Path path) {
+    if (myAppxCache.getValue().contains(path.toString())) {
       return true;
     }
 
-    final File file = new File(path);
-    return StringUtils.contains(getAppxProduct(file), APPX_PRODUCT) && isValidSdkPath(file);
+    return StringUtils.contains(getAppxProduct(path), APPX_PRODUCT) && isValidSdkPath(path.toFile());
   }
 
   @Override
@@ -135,7 +158,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
 
   @NotNull
   private static Set<String> getPythonsFromStore() {
-    return ContainerUtil.map2Set(getAppxFiles(APPX_PRODUCT, PYTHON_EXE), file -> file.getAbsolutePath());
+    return ContainerUtil.map2Set(getAppxFiles(APPX_PRODUCT, PYTHON_EXE), file -> file.toAbsolutePath().toString());
   }
 
   @NotNull

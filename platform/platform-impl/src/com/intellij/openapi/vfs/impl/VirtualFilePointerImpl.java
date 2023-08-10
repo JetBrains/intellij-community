@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,6 +6,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TraceableDisposable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -53,6 +41,9 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
       return ((VirtualFile)result).getName();
     }
     String url = (String)result;
+    if (node.myFS instanceof ArchiveFileSystem) {
+      url = VfsImplUtil.getLocalPath((ArchiveFileSystem)node.myFS, url);
+    }
     int index = url.lastIndexOf('/');
     return index >= 0 ? url.substring(index + 1) : url;
   }
@@ -61,7 +52,8 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   public VirtualFile getFile() {
     FilePartNode node = checkDisposed(myNode);
     if (node == null) return null;
-    return FilePartNode.myFile(node.myFileOrUrl);
+    VirtualFile file = FilePartNode.myFile(node.myFileOrUrl);
+    return (file != null && file.isValid()) ? file : null;
   }
 
   @Override

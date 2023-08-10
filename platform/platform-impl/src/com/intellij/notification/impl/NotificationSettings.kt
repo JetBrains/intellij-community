@@ -16,13 +16,10 @@
 package com.intellij.notification.impl
 
 import com.intellij.notification.NotificationDisplayType
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import org.jdom.Element
 
 /**
- * @author spleaner
  * @author Konstantin Bulenkov
  */
 data class NotificationSettings @JvmOverloads constructor(var groupId: String,
@@ -31,13 +28,13 @@ data class NotificationSettings @JvmOverloads constructor(var groupId: String,
                                                           var isShouldReadAloud: Boolean,
                                                           var isPlaySound: Boolean = false) {
 
-  fun withShouldLog(shouldLog: Boolean) = copy(isShouldLog = shouldLog)
+  fun withShouldLog(shouldLog: Boolean): NotificationSettings = copy(isShouldLog = shouldLog)
 
-  fun withShouldReadAloud(shouldReadAloud: Boolean) = copy(isShouldReadAloud = shouldReadAloud)
+  fun withShouldReadAloud(shouldReadAloud: Boolean): NotificationSettings = copy(isShouldReadAloud = shouldReadAloud)
 
-  fun withPlaySound(playSound: Boolean) = copy(isPlaySound = playSound)
+  fun withPlaySound(playSound: Boolean): NotificationSettings = copy(isPlaySound = playSound)
 
-  fun withDisplayType(type: NotificationDisplayType) = copy(displayType = type)
+  fun withDisplayType(type: NotificationDisplayType): NotificationSettings = copy(displayType = type)
 
   fun save(): Element {
     return Element("notification").apply {
@@ -62,7 +59,7 @@ data class NotificationSettings @JvmOverloads constructor(var groupId: String,
       }
       else if (displayTypeString != null) {
         try {
-          displayType = NotificationDisplayType.valueOf(StringUtil.toUpperCase(displayTypeString))
+          displayType = NotificationDisplayType.valueOf(Strings.toUpperCase(displayTypeString))
         }
         catch (ignored: IllegalArgumentException) {
         }
@@ -73,5 +70,4 @@ data class NotificationSettings @JvmOverloads constructor(var groupId: String,
   }
 }
 
-fun isReadAloudEnabled() = SystemInfo.isMac
-fun isSoundEnabled() = Registry.`is`("ide.notifications.sound.enabled")
+internal fun isSoundEnabled(): Boolean = true

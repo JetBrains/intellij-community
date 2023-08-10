@@ -5,21 +5,25 @@ import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.InputRedirectAware;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,23 +41,9 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   private final SettingsEditorFragment<Settings, LabeledComponent<TextFieldWithBrowseButton>> myWorkingDirectory;
   private final Computable<Boolean> myHasModule;
 
-  public CommonParameterFragments(@NotNull Project project, Computable<Boolean> hasModule) {
-    myHasModule = hasModule;
-    TextFieldWithBrowseButton workingDirectoryField = new TextFieldWithBrowseButton();
-    workingDirectoryField.addBrowseFolderListener(ExecutionBundle.message("select.working.directory.message"), null,
-                                                    project,
-                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-                                                    TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
-    MacrosDialog.addMacroSupport((ExtendableTextField)workingDirectoryField.getTextField(), MacrosDialog.Filters.DIRECTORY_PATH, hasModule);
-    LabeledComponent<TextFieldWithBrowseButton> field = LabeledComponent.create(workingDirectoryField, ExecutionBundle.message(
-                                                                                       "run.configuration.working.directory.label"));
-    field.setLabelLocation(BorderLayout.WEST);
-    myWorkingDirectory = new SettingsEditorFragment<>("workingDirectory", null, null, field,
-                                                      (settings, component) -> component.getComponent()
-                                                        .setText(settings.getWorkingDirectory()),
-                                                      (settings, component) -> settings
-                                                        .setWorkingDirectory(component.getComponent().getText()),
-                                                      settings -> isNotEmpty(settings.getWorkingDirectory()));
+  public CommonParameterFragments(@NotNull Project project, Computable<Module> moduleProvider) {
+    myHasModule = () -> moduleProvider.compute() != null;
+    myWorkingDirectory = createWorkingDirectory(project, moduleProvider);
     myFragments.add(myWorkingDirectory);
     myFragments.add(createEnvParameters());
   }
@@ -67,13 +57,13 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
     programArguments.getEditorField().getAccessibleContext().setAccessibleName(message);
     FragmentedSettingsUtil.setupPlaceholderVisibility(programArguments.getEditorField());
     setMonospaced(programArguments.getTextField());
-    MacrosDialog.addMacroSupport(programArguments.getEditorField(), MacrosDialog.Filters.ALL, myHasModule);
+    MacrosDialog.addMacroSupport(programArguments.getEditorField(), MacrosDialog.Filters.ALL, () -> myHasModule.compute() != null);
     SettingsEditorFragment<Settings, RawCommandLineEditor> parameters =
       new SettingsEditorFragment<>("commandLineParameters", ExecutionBundle.message("run.configuration.program.parameters.name"), null, programArguments,
                                    100,
                                    (settings, component) -> component.setText(settings.getProgramParameters()),
                                    (settings, component) -> settings.setProgramParameters(component.getText()),
-                                   settings -> true);
+                                   Predicates.alwaysTrue());
     parameters.setRemovable(false);
     parameters.setEditorGetter(editor -> editor.getEditorField());
     parameters.setHint(ExecutionBundle.message("run.configuration.program.parameters.hint"));
@@ -101,7 +91,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
       }
     });
 
-    MacrosDialog.addMacroSupport((ExtendableTextField)inputFile.getTextField(), MacrosDialog.Filters.ALL, myHasModule);
+    MacrosDialog.addMacroSupport((ExtendableTextField)inputFile.getTextField(), MacrosDialog.Filters.ALL, () -> myHasModule.compute() != null);
     LabeledComponent<TextFieldWithBrowseButton> labeledComponent =
       LabeledComponent.create(inputFile, ExecutionBundle.message("redirect.input.from"));
     labeledComponent.setLabelLocation(BorderLayout.WEST);
@@ -121,6 +111,47 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
     return redirectInput;
   }
 
+  public static <S extends CommonProgramRunConfigurationParameters>
+  SettingsEditorFragment<S, LabeledComponent<TextFieldWithBrowseButton>> createWorkingDirectory(
+    @NotNull Project project,
+    @NotNull Computable<? extends Module> moduleProvider
+  ) {
+    ExtendableTextField textField = new ExtendableTextField(10);
+    MacrosDialog.addMacroSupport(textField, MacrosDialog.Filters.DIRECTORY_PATH, () -> moduleProvider.compute() != null);
+    TextFieldWithBrowseButton workingDirectoryField = new TextFieldWithBrowseButton(textField);
+    workingDirectoryField.addBrowseFolderListener(
+      ExecutionBundle.message("select.working.directory.message"),
+      null,
+      project,
+      FileChooserDescriptorFactory.createSingleFolderDescriptor(),
+      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
+    );
+    LabeledComponent<TextFieldWithBrowseButton> field = LabeledComponent.create(
+      workingDirectoryField,
+      ExecutionBundle.message("run.configuration.working.directory.label"),
+      BorderLayout.WEST
+    );
+    SettingsEditorFragment<S, LabeledComponent<TextFieldWithBrowseButton>> workingDirectorySettings =
+      new SettingsEditorFragment<>(
+        "workingDirectory",
+        ExecutionBundle.message("run.configuration.working.directory.name"),
+        null,
+        field,
+        (settings, component) -> component.getComponent().setText(settings.getWorkingDirectory()),
+        (settings, component) -> settings.setWorkingDirectory(component.getComponent().getText()),
+        Predicates.alwaysTrue()
+      );
+    workingDirectorySettings.setRemovable(false);
+    workingDirectorySettings.setValidation(
+      settings -> {
+        ThrowableRunnable<RuntimeConfigurationWarning> runnable =
+          () -> ProgramParametersUtil.checkWorkingDirectoryExist(settings, project, moduleProvider.compute());
+        ValidationInfo validationInfo = RuntimeConfigurationException.validate(textField, runnable);
+        return Collections.singletonList(validationInfo);
+      });
+    return workingDirectorySettings;
+  }
+
   public static <S extends CommonProgramRunConfigurationParameters> SettingsEditorFragment<S, ?> createEnvParameters() {
     EnvironmentVariablesComponent env = new EnvironmentVariablesComponent();
     env.setLabelLocation(BorderLayout.WEST);
@@ -137,14 +168,38 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                      else
                                        env.apply(settings);
                                    },
-                                   s -> true);
+                                   Predicates.alwaysTrue());
     fragment.setCanBeHidden(true);
     fragment.setHint(ExecutionBundle.message("environment.variables.fragment.hint"));
     fragment.setActionHint(ExecutionBundle.message("set.custom.environment.variables.for.the.process"));
+    fragment.addValidation(s -> ProgramParametersUtil.checkEnvFiles(s));
     return fragment;
   }
 
   public static void setMonospaced(Component field) {
     field.setFont(EditorUtil.getEditorFont(JBUI.Fonts.label().getSize()));
+  }
+
+
+  public static <S> SettingsEditorFragment<S, JLabel> createHeader(@Nls(capitalization = Nls.Capitalization.Title) String title) {
+    JLabel jLabel = new JLabel(title);
+    jLabel.setFont(JBUI.Fonts.label().deriveFont(Font.BOLD));
+    SettingsEditorFragment<S, JLabel> fragment = new SettingsEditorFragment<>(
+      "title",
+      null,
+      null,
+      jLabel,
+      SettingsEditorFragmentType.HEADER,
+      (__, ___) -> {},
+      (__, ___) -> {},
+      Predicates.alwaysTrue()
+    );
+    fragment.setCanBeHidden(false);
+    fragment.setRemovable(false);
+    return fragment;
+  }
+
+  public static <S> SettingsEditorFragment<S, JLabel> createRunHeader() {
+    return createHeader(ExecutionBundle.message("application.configuration.title.run"));
   }
 }

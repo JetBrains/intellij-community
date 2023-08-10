@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.analysis.AnalysisBundle
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.*
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.Application
@@ -17,7 +18,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 private val LOG = logger<InspectionToolRegistrar>()
 private val EP_NAME = ExtensionPointName<InspectionToolProvider>("com.intellij.inspectionToolProvider")
@@ -28,7 +28,7 @@ private typealias InspectionFactory = () -> InspectionToolWrapper<*, *>?
 class InspectionToolRegistrar : InspectionToolsSupplier() {
   companion object {
     @JvmStatic
-    fun getInstance() = service<InspectionToolRegistrar>()
+    fun getInstance(): InspectionToolRegistrar = service<InspectionToolRegistrar>()
 
     @ApiStatus.Internal
     @JvmStatic
@@ -41,13 +41,13 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
     }
   }
 
-  private val toolFactories: MutableCollection<MutableList<InspectionFactory>>
+  private val toolFactories: Collection<List<InspectionFactory>>
 
   init {
     val app = ApplicationManager.getApplication()
     val result = CollectionFactory.createSmallMemoryFootprintMap<Any, MutableList<InspectionFactory>>()
     val shortNames = CollectionFactory.createSmallMemoryFootprintMap<String, InspectionEP>()
-    registerToolProviders(app, result)
+    registerToolProviders(result)
     registerInspections(result, app, shortNames, LocalInspectionEP.LOCAL_INSPECTION)
     registerInspections(result, app, shortNames, InspectionEP.GLOBAL_INSPECTION)
     toolFactories = result.values
@@ -55,6 +55,7 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
 
   private fun unregisterInspectionOrProvider(inspectionOrProvider: Any, factories: MutableMap<Any, MutableList<InspectionFactory>>) {
     for (removedTool in (factories.remove(inspectionOrProvider) ?: return)) {
+      removedTool()?.shortName?.let { shortName -> HighlightDisplayKey.unregister(shortName) }
       fireToolRemoved(removedTool)
     }
   }
@@ -80,26 +81,21 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
     }, null)
   }
 
-  private fun registerToolProviders(app: Application, factories: MutableMap<Any, MutableList<InspectionFactory>>) {
-    if (app.isUnitTestMode) {
-      @Suppress("DEPRECATION")
-      LOG.assertTrue(app.getComponentInstancesOfType(InspectionToolProvider::class.java).isEmpty())
-    }
-
+  private fun registerToolProviders(factories: MutableMap<Any, MutableList<InspectionFactory>>) {
     EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
       registerToolProvider(provider, pluginDescriptor, factories, null)
     }
-    EP_NAME.addExtensionPointListener(object : ExtensionPointListener<InspectionToolProvider?> {
-      override fun extensionAdded(provider: InspectionToolProvider, pluginDescriptor: PluginDescriptor) {
+    EP_NAME.addExtensionPointListener(object : ExtensionPointListener<InspectionToolProvider> {
+      override fun extensionAdded(extension: InspectionToolProvider, pluginDescriptor: PluginDescriptor) {
         val added = mutableListOf<InspectionFactory>()
-        registerToolProvider(provider, pluginDescriptor, factories, added)
+        registerToolProvider(extension, pluginDescriptor, factories, added)
         for (supplier in added) {
           fireToolAdded(supplier)
         }
       }
 
-      override fun extensionRemoved(provider: InspectionToolProvider, pluginDescriptor: PluginDescriptor) {
-        unregisterInspectionOrProvider(provider, factories)
+      override fun extensionRemoved(extension: InspectionToolProvider, pluginDescriptor: PluginDescriptor) {
+        unregisterInspectionOrProvider(extension, factories)
       }
     }, null)
   }
@@ -197,7 +193,7 @@ private fun checkTool(toolWrapper: InspectionToolWrapper<*, *>): String? {
   var message: String? = null
   try {
     val id = toolWrapper.getID()
-    if (id == null || !LocalInspectionTool.isValidID(id)) {
+    if (!LocalInspectionTool.isValidID(id)) {
       message = AnalysisBundle.message("inspection.disabled.wrong.id", toolWrapper.getShortName(), id, LocalInspectionTool.VALID_ID_PATTERN)
     }
   }

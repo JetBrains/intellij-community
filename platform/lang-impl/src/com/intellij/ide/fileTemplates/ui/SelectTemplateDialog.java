@@ -34,7 +34,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 /*
- * @author: MYakovlev
+ * @author MYakovlev
  */
 public class SelectTemplateDialog extends DialogWrapper{
   private ComboBox<FileTemplate> myCbxTemplates;
@@ -84,12 +84,13 @@ public class SelectTemplateDialog extends DialogWrapper{
     }
     if(myCbxTemplates == null){
       myCbxTemplates = new ComboBox(model);
-      new ComboboxSpeedSearch(myCbxTemplates) {
+      ComboboxSpeedSearch search = new ComboboxSpeedSearch(myCbxTemplates, null) {
         @Override
         protected String getElementText(Object element) {
           return element instanceof FileTemplate ? ((FileTemplate)element).getName() : null;
         }
       };
+      search.setupListeners();
       myCbxTemplates.setRenderer(SimpleListCellRenderer.create((label, fileTemplate, index) -> {
         if (fileTemplate != null) {
           label.setIcon(FileTemplateUtil.getIcon(fileTemplate));

@@ -132,7 +132,7 @@ public class PaletteItemsComponent extends JBList {
     setTransferHandler(new TreeTransfer(PaletteItem.class));
     DnDManager.getInstance().registerSource(new DnDSource() {
       @Override
-      public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+      public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
         int index = locationToIndex(dragOrigin);
         if (index != -1 && myDesigner != null) {
           PaletteItem paletteItem = myGroup.getItems().get(index);
@@ -142,7 +142,7 @@ public class PaletteItemsComponent extends JBList {
       }
 
       @Override
-      public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+      public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
         return null;
       }
     }, this);

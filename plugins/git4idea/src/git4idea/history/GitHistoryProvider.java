@@ -39,7 +39,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 /**
  * Git history provider implementation
  */
-@Service
+@Service(Service.Level.PROJECT)
 public final class GitHistoryProvider implements VcsHistoryProviderEx,
                                                  VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
                                                  VcsBaseRevisionAdviser {
@@ -178,11 +178,6 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
         }
         return null;
       }
-    }
-
-    @Override
-    public HistoryAsTreeProvider getHistoryAsTreeProvider() {
-      return null;
     }
 
     @Override

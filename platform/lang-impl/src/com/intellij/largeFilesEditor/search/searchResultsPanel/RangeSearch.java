@@ -48,7 +48,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -229,7 +228,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     callScheduledUpdate();
   }
 
-  public void addSearchResultsIntoBeginning(List<SearchResult> searchResults) {
+  public void addSearchResultsIntoBeginning(List<? extends SearchResult> searchResults) {
     if (searchResults == null || searchResults.isEmpty()) {
       return;
     }
@@ -258,7 +257,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     myShowingResultsList.scrollRectToVisible(visibleRect);
   }
 
-  public void addSearchResultsIntoEnd(List<SearchResult> searchResults) {
+  public void addSearchResultsIntoEnd(List<? extends SearchResult> searchResults) {
     if (searchResults == null || searchResults.isEmpty()) {
       return;
     }
@@ -499,7 +498,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
   @Override
   public void tellFrameSearchResultsFound(RangeSearchTask caller,
                                           long curPageNumber,
-                                          ArrayList<SearchResult> allMatchesAtFrame) {
+                                          @NotNull List<? extends SearchResult> allMatchesAtFrame) {
     if (inBackground) {
       ApplicationManager.getApplication().invokeLater(() -> {
         onFrameSearchResultsFound(caller, curPageNumber, allMatchesAtFrame);
@@ -510,7 +509,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  protected void onFrameSearchResultsFound(RangeSearchTask caller, long curPageNumber, ArrayList<SearchResult> allMatchesAtFrame) {
+  protected void onFrameSearchResultsFound(RangeSearchTask caller, long curPageNumber, List<? extends SearchResult> allMatchesAtFrame) {
     if (caller != lastExecutedRangeSearchTask  // means new search task has been already launched
         || caller.isShouldStop()) {
       return;

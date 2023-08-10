@@ -1,28 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.SoftReference;
 import java.util.function.Supplier;
 
 /**
  * Compute-once keep-forever lazy value.
+ * Do not extend, but use static factory methods to create instance.
+ * <p/>
  * Clearable version: {@link ClearableLazyValue}.
  */
 @ApiStatus.NonExtendable
-public abstract class NotNullLazyValue<T> {
+public abstract class NotNullLazyValue<T> implements Supplier<T> {
   private T myValue;
 
-  /**
-   * @deprecated Use {@link NotNullLazyValue#lazy(Supplier)}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  /** @deprecated Use {@link NotNullLazyValue#lazy(Supplier)} */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
-  protected NotNullLazyValue() {
-  }
+  protected NotNullLazyValue() { }
 
   protected abstract @NotNull T compute();
+
+  @Override
+  public final T get() {
+    return getValue();
+  }
 
   public @NotNull T getValue() {
     T result = myValue;
@@ -57,8 +62,8 @@ public abstract class NotNullLazyValue<T> {
     };
   }
 
-  public static @NotNull <T> NotNullLazyValue<T> atomicLazy(@NotNull Supplier<@NotNull ? extends T> value) {
-    //noinspection deprecation
+  @SuppressWarnings("deprecation")
+  public static @NotNull <T> NotNullLazyValue<T> atomicLazy(@NotNull Supplier<? extends @NotNull T> value) {
     return new AtomicNotNullLazyValue<T>() {
       @Override
       protected @NotNull T compute() {
@@ -67,17 +72,51 @@ public abstract class NotNullLazyValue<T> {
     };
   }
 
+  public static <T> Supplier<T> softLazy(Supplier<? extends T> supplier) {
+    return new Supplier<T>() {
+      private SoftReference<T> ref;
+
+      @Override
+      public T get() {
+        T value = com.intellij.reference.SoftReference.dereference(ref);
+        if (value == null) {
+          value = supplier.get();
+          ref = new SoftReference<T>(value);
+        }
+        return value;
+      }
+    };
+  }
+
   /**
    * Assumes that values computed by different threads are equal and interchangeable
    * and readers should be ready to get different instances on different invocations of the {@link #getValue()}.
    */
-  @NotNull
-  public static <T> NotNullLazyValue<T> volatileLazy(@NotNull Supplier<@NotNull ? extends T> value) {
-    return new VolatileNotNullLazyValue<T>() {
-      @NotNull
+  public static @NotNull <T> NotNullLazyValue<T> volatileLazy(@NotNull Supplier<? extends @NotNull T> supplier) {
+    return new NotNullLazyValue<T>() {
+      private volatile T value;
+
       @Override
-      protected T compute() {
-        return value.get();
+      public @NotNull T getValue() {
+        T value = this.value;
+        if (value == null) {
+          RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+          value = compute();
+          if (stamp.mayCacheNow()) {
+            this.value = value;
+          }
+        }
+        return value;
+      }
+
+      @Override
+      public boolean isComputed() {
+        return value != null;
+      }
+
+      @Override
+      protected @NotNull T compute() {
+        return supplier.get();
       }
     };
   }

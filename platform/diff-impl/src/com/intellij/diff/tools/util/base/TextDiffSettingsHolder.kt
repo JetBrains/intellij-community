@@ -1,14 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util.base
 
 import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
@@ -18,7 +15,7 @@ import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
-@State(name = "TextDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))])
+@State(name = "TextDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))], category = SettingsCategory.CODE)
 class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.State> {
   companion object {
     @JvmField val CONTEXT_RANGE_MODES: IntArray = intArrayOf(1, 2, 4, 8, -1)
@@ -30,16 +27,14 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var CONTEXT_RANGE: Int = 4,
 
     var MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES: Boolean = false,
-    var MERGE_LST_GUTTER_MARKERS: Boolean = true
+    var MERGE_LST_GUTTER_MARKERS: Boolean = true,
+    var ENABLE_ALIGNING_CHANGES_MODE: Boolean = false
   )
 
   data class PlaceSettings(
     // Diff settings
     var HIGHLIGHT_POLICY: HighlightPolicy = HighlightPolicy.BY_WORD,
     var IGNORE_POLICY: IgnorePolicy = IgnorePolicy.DEFAULT,
-
-    // Presentation settings
-    var ENABLE_SYNC_SCROLL: Boolean = true,
 
     // Editor settings
     var SHOW_WHITESPACES: Boolean = false,
@@ -68,16 +63,25 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
     // Presentation settings
 
-    var isEnableSyncScroll: Boolean
-      get()      = PLACE_SETTINGS.ENABLE_SYNC_SCROLL
-      set(value) { PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value }
+    var isEnableSyncScroll: Boolean = true
+      get()      = field
+      set(value) { field = value
+                   PLACE_SETTINGS.eventDispatcher.multicaster.scrollingChanged() }
+
+    var isEnableAligningChangesMode: Boolean
+      get() = SHARED_SETTINGS.ENABLE_ALIGNING_CHANGES_MODE
+      set(value) { SHARED_SETTINGS.ENABLE_ALIGNING_CHANGES_MODE = value }
 
     // Diff settings
 
-    var highlightPolicy: HighlightPolicy
-      get()      = PLACE_SETTINGS.HIGHLIGHT_POLICY
-      set(value) { PLACE_SETTINGS.HIGHLIGHT_POLICY = value
-                   PLACE_SETTINGS.eventDispatcher.multicaster.highlightPolicyChanged() }
+    var highlightPolicy: HighlightPolicy = PLACE_SETTINGS.HIGHLIGHT_POLICY
+      set(value) {
+        field = value
+        if (value != HighlightPolicy.DO_NOT_HIGHLIGHT) { // do not persist confusing value as new default
+          PLACE_SETTINGS.HIGHLIGHT_POLICY = value
+        }
+        PLACE_SETTINGS.eventDispatcher.multicaster.highlightPolicyChanged()
+      }
 
     var ignorePolicy: IgnorePolicy
       get()      = PLACE_SETTINGS.IGNORE_POLICY
@@ -120,11 +124,13 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
     var contextRange: Int
       get()      = SHARED_SETTINGS.CONTEXT_RANGE
-      set(value) { SHARED_SETTINGS.CONTEXT_RANGE = value }
+      set(value) { SHARED_SETTINGS.CONTEXT_RANGE = value
+                   PLACE_SETTINGS.eventDispatcher.multicaster.foldingChanged() }
 
     var isExpandByDefault: Boolean
       get()      = PLACE_SETTINGS.EXPAND_BY_DEFAULT
-      set(value) { PLACE_SETTINGS.EXPAND_BY_DEFAULT = value }
+      set(value) { PLACE_SETTINGS.EXPAND_BY_DEFAULT = value
+                   PLACE_SETTINGS.eventDispatcher.multicaster.foldingChanged() }
 
     var isReadOnlyLock: Boolean
       get()      = PLACE_SETTINGS.READ_ONLY_LOCK
@@ -152,6 +158,8 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
       fun highlightPolicyChanged() {}
       fun ignorePolicyChanged() {}
       fun breadcrumbsPlacementChanged() {}
+      fun foldingChanged() {}
+      fun scrollingChanged() {}
 
       abstract class Adapter : Listener
     }

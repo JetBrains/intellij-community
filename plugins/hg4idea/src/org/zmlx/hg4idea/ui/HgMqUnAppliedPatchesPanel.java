@@ -2,16 +2,9 @@
 package org.zmlx.hg4idea.ui;
 
 import com.google.common.primitives.Ints;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,23 +20,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableSpeedSearch;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyEvent;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.table.AbstractTableModel;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +36,20 @@ import org.zmlx.hg4idea.mq.HgMqAdditionalPatchReader;
 import org.zmlx.hg4idea.mq.MqPatchDetails;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.table.AbstractTableModel;
+import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, HgUpdater, Disposable {
 
@@ -90,10 +83,10 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     });
     myPatchTable.setShowColumns(true);
     myPatchTable.setFillsViewportHeight(true);
-    myPatchTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+    myPatchTable.getEmptyText().setText(IdeCoreBundle.message("message.nothingToShow"));
     myPatchTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
     myPatchTable.setDragEnabled(true);
-    new TableSpeedSearch(myPatchTable);
+    TableSpeedSearch.installOn(myPatchTable);
     myPatchTable.setDropMode(DropMode.INSERT_ROWS);
     myPatchTable.setTransferHandler(new TableRowsTransferHandler(myPatchTable));
 
@@ -115,7 +108,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     MqDeleteAction mqDeleteAction = new MqDeleteAction();
     EmptyAction.setupAction(mqDeleteAction, "hg4idea.QDelete", this);
 
-    PopupHandler.installPopupHandler(myPatchTable, POPUP_ACTION_GROUP, ActionPlaces.PROJECT_VIEW_POPUP);
+    PopupHandler.installPopupMenu(myPatchTable, POPUP_ACTION_GROUP, ActionPlaces.PROJECT_VIEW_POPUP);
 
     ActionManager actionManager = ActionManager.getInstance();
 
@@ -179,9 +172,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof HgMqUnAppliedPatchesPanel)) return false;
-
-    HgMqUnAppliedPatchesPanel panel = (HgMqUnAppliedPatchesPanel)o;
+    if (!(o instanceof HgMqUnAppliedPatchesPanel panel)) return false;
 
     if (!myRepository.equals(panel.myRepository)) return false;
 
@@ -258,6 +249,11 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
         };
         updatePatchSeriesInBackground(deleteTask);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

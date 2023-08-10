@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
 public class UngroupButtonsAction extends AbstractGuiEditorAction {
   public UngroupButtonsAction() {
     super(true);
@@ -26,10 +23,10 @@ public class UngroupButtonsAction extends AbstractGuiEditorAction {
     if (selection.size() == 1) {
       final RadComponent component = selection.get(0);
       IButtonGroup group = FormEditingUtil.findGroupForComponent(editor.getRootContainer(), component);
-      editor.getRootContainer().deleteGroup((RadButtonGroup) group);
+      editor.getRootContainer().deleteGroup((RadButtonGroup)group);
     }
     else {
-      for(RadComponent component: selection) {
+      for (RadComponent component : selection) {
         editor.getRootContainer().setGroupForComponent(component, null);
       }
     }

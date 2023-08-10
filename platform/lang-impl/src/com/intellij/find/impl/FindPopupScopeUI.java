@@ -47,26 +47,12 @@ public interface FindPopupScopeUI {
   class ScopeType {
     public final String name;
     public Supplier<@NlsContexts.ListItem String> textComputable;
-    @Deprecated
-    public final @NlsContexts.ListItem String text;
     public final Icon icon;
 
     public ScopeType(String name, Supplier<@NlsContexts.ListItem String> textComputable, Icon icon) {
       this.name = name;
       this.textComputable = textComputable;
       this.icon = icon;
-      this.text = textComputable.get();
-    }
-
-    /**
-     * @deprecated Use {@link #ScopeType(String, Supplier, Icon)}
-     */
-    @Deprecated
-    public ScopeType(String name, @NlsContexts.ListItem String text, Icon icon) {
-      this.name = name;
-      this.textComputable = () -> text;
-      this.icon = icon;
-      this.text = text;
     }
   }
 }

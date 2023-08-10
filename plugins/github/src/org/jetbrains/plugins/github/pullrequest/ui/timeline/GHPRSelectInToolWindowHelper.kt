@@ -1,28 +1,22 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowController
+import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowViewModel
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
 class GHPRSelectInToolWindowHelper(private val project: Project, private val pullRequest: GHPRIdentifier) {
 
   fun selectCommit(oid: String) {
-    project.service<GHPRToolWindowController>().show { twctr ->
-      twctr.componentController?.viewPullRequest(pullRequest) {
-        it?.selectCommit(oid)
-      }
-    }
+    val vm = project.serviceIfCreated<GHPRToolWindowViewModel>() ?: return
+    vm.activate()
+    vm.projectVm.value?.viewPullRequest(pullRequest, oid)
   }
 
   fun selectChange(oid: String?, filePath: String) {
-    project.service<GHPRToolWindowController>().show { twctr ->
-      twctr.componentController?.viewPullRequest(pullRequest) {
-        it?.selectChange(oid, filePath)
-        twctr.componentController?.openPullRequestDiff(pullRequest, false)
-      }
-    }
+    val projectVm = project.serviceIfCreated<GHPRToolWindowViewModel>()?.projectVm?.value ?: return
+    projectVm.viewPullRequest(pullRequest, oid, filePath)
+    projectVm.openPullRequestDiff(pullRequest, true)
   }
-
 }

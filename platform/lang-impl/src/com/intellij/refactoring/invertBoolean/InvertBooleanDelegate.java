@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.lang.Language;
@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public abstract class InvertBooleanDelegate {
   public static final ExtensionPointName<InvertBooleanDelegate> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.invertBoolean");
@@ -56,7 +58,7 @@ public abstract class InvertBooleanDelegate {
   public abstract void collectRefElements(PsiElement element,
                                           @Nullable RenameProcessor renameProcessor,
                                           @NotNull String newName,
-                                          Collection<PsiElement> elementsToInvert);
+                                          Collection<? super PsiElement> elementsToInvert);
 
   /**
    * Invoked from {@link #collectForeignElementsToInvert(PsiElement, PsiElement, Language, Collection)}
@@ -68,7 +70,7 @@ public abstract class InvertBooleanDelegate {
   /**
    * @return true, if element was found in current language
    */
-  public boolean collectElementsToInvert(PsiElement namedElement, PsiElement expression, Collection<PsiElement> elementsToInvert) {
+  public boolean collectElementsToInvert(PsiElement namedElement, PsiElement expression, Collection<? super PsiElement> elementsToInvert) {
     PsiElement elementToInvert = getElementToInvert(namedElement, expression);
     if (elementToInvert != null) {
       elementsToInvert.add(elementToInvert);
@@ -84,7 +86,7 @@ public abstract class InvertBooleanDelegate {
   protected static void collectForeignElementsToInvert(PsiElement namedElement,
                                                        PsiElement expression,
                                                        Language language,
-                                                       Collection<PsiElement> elementsToInvert) {
+                                                       Collection<? super PsiElement> elementsToInvert) {
     if (!expression.getLanguage().is(language)){
       final InvertBooleanDelegate delegate = findInvertBooleanDelegate(expression);
       if (delegate != null) {
@@ -108,5 +110,5 @@ public abstract class InvertBooleanDelegate {
   /**
    * Detect usages which can't be inverted
    */
-  public void findConflicts(UsageInfo[] usageInfos, MultiMap<PsiElement, String> conflicts) {}
+  public void findConflicts(UsageInfo[] usageInfos, MultiMap<PsiElement, @DialogMessage String> conflicts) {}
 }

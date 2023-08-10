@@ -7,13 +7,13 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.undo.AdjustableUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,9 +31,10 @@ final class UndoableGroup implements Dumpable {
   private final boolean myGlobal;
   private final int myCommandTimestamp;
   private final boolean myTransparent;
-  private final List<UndoableAction> myActions;
+  private final List<? extends UndoableAction> myActions;
   private EditorAndState myStateBefore;
   private EditorAndState myStateAfter;
+  private UndoableGroupOriginalContext myGroupOriginalContext;
   private final Project myProject;
   private final UndoConfirmationPolicy myConfirmationPolicy;
   private boolean myTemporary;
@@ -42,32 +43,34 @@ final class UndoableGroup implements Dumpable {
 
   UndoableGroup(@NlsContexts.Command String commandName,
                 boolean isGlobal,
-                UndoManagerImpl manager,
+                int commandTimestamp,
                 EditorAndState stateBefore,
                 EditorAndState stateAfter,
-                List<UndoableAction> actions,
+                @NotNull List<? extends UndoableAction> actions,
+                @NotNull UndoRedoStacksHolder stacksHolder,
+                @Nullable Project project,
                 UndoConfirmationPolicy confirmationPolicy,
                 boolean transparent,
                 boolean valid) {
     myCommandName = commandName;
     myGlobal = isGlobal;
-    myCommandTimestamp = manager.nextCommandTimestamp();
+    myCommandTimestamp = commandTimestamp;
     myActions = actions;
-    myProject = manager.getProject();
+    myProject = project;
     myStateBefore = stateBefore;
     myStateAfter = stateAfter;
     myConfirmationPolicy = confirmationPolicy;
     myTransparent = transparent;
     myValid = valid;
-    composeStartFinishGroup(manager.getUndoStacksHolder());
+    composeStartFinishGroup(stacksHolder);
     myTemporary = transparent;
   }
 
-  public boolean isGlobal() {
+  boolean isGlobal() {
     return myGlobal;
   }
 
-  public boolean isTransparent() {
+  boolean isTransparent() {
     return myTransparent;
   }
 
@@ -77,30 +80,39 @@ final class UndoableGroup implements Dumpable {
    * on undo/redo. If a non-transparent action is performed after a temporary one, the latter is converted to normal (permanent) action,
    * and redo stack is cleared.
    */
-  public boolean isTemporary() {
+  boolean isTemporary() {
     return myTemporary;
   }
 
-  public void makePermanent() {
+  void makePermanent() {
     myTemporary = false;
   }
 
-  public boolean isUndoable() {
+  boolean isUndoable() {
     for (UndoableAction action : myActions) {
       if (action instanceof NonUndoableAction) return false;
     }
     return true;
   }
 
-  public void undo() {
+  void setOriginalContext(@NotNull UndoableGroupOriginalContext originalContext){
+    myGroupOriginalContext = originalContext;
+  }
+
+  @Nullable
+  UndoableGroupOriginalContext getGroupOriginalContext(){
+    return myGroupOriginalContext;
+  }
+
+  void undo() throws UnexpectedUndoException {
     undoOrRedo(true);
   }
 
-  public void redo() {
+  void redo() throws UnexpectedUndoException {
     undoOrRedo(false);
   }
 
-  private void undoOrRedo(boolean isUndo) {
+  private void undoOrRedo(boolean isUndo) throws UnexpectedUndoException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Performing " + (isUndo ? "undo" : "redo") + " for " + dumpState());
     }
@@ -121,13 +133,13 @@ final class UndoableGroup implements Dumpable {
     }
   }
 
-  private void doUndoOrRedo(final boolean isUndo) {
+  private void doUndoOrRedo(final boolean isUndo) throws UnexpectedUndoException {
     // perform undo action by action, setting bulk update flag if possible
     // if multiple consecutive actions share a document, then set the bulk flag only once
     final UnexpectedUndoException[] exception = {null};
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
-        List<UndoableAction> actionsList = isUndo ? ContainerUtil.reverse(myActions) : myActions;
+        List<? extends UndoableAction> actionsList = isUndo ? ContainerUtil.reverse(myActions) : myActions;
         int toProcess = 0; // index of first action not yet performed
         int toProcessInBulk = 0; // index of first action that can be executed in bulk mode
         int actionCount = actionsList.size();
@@ -155,7 +167,9 @@ final class UndoableGroup implements Dumpable {
         exception[0] = e;
       }
     });
-    if (exception[0] != null) reportUndoProblem(exception[0], isUndo);
+    if (exception[0] != null) {
+      throw exception[0];
+    }
   }
 
   private static void performActions(@NotNull Collection<? extends UndoableAction> actions, boolean isUndo, boolean useBulkMode)
@@ -224,26 +238,16 @@ final class UndoableGroup implements Dumpable {
     final int finishNmb = finishMarks.size();
     if (startNmb != finishNmb) {
       if (isUndo) {
-        if (finishNmb > startNmb) {
-          return true;
-        }
-        else {
-          return false;
-        }
+        return finishNmb > startNmb;
       }
       else {
-        if (startNmb > finishNmb) {
-          return true;
-        }
-        else {
-          return false;
-        }
+        return startNmb > finishNmb;
       }
     }
     return isInsideStartFinishGroup;
   }
 
-  void composeStartFinishGroup(final UndoRedoStacksHolder holder) {
+  private void composeStartFinishGroup(final UndoRedoStacksHolder holder) {
     FinishMarkAction finishMark = getFinishMark();
     if (finishMark != null) {
       boolean global = false;
@@ -283,36 +287,12 @@ final class UndoableGroup implements Dumpable {
     return false;
   }
 
-  private void reportUndoProblem(UnexpectedUndoException e, boolean isUndo) {
-    String title;
-    String message;
-
-    if (isUndo) {
-      title = IdeBundle.message("cannot.undo.title");
-      message = IdeBundle.message("cannot.undo.message");
-    }
-    else {
-      title = IdeBundle.message("cannot.redo.title");
-      message = IdeBundle.message("cannot.redo.message");
-    }
-
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      if (e.getMessage() != null) {
-        message += ".\n" + e.getMessage();
-      }
-      Messages.showMessageDialog(myProject, message, title, Messages.getErrorIcon());
-    }
-    else {
-      LOG.error(e);
-    }
-  }
-
-  public List<UndoableAction> getActions() {
+  List<? extends UndoableAction> getActions() {
     return myActions;
   }
 
   @NotNull
-  public Collection<DocumentReference> getAffectedDocuments() {
+  Collection<DocumentReference> getAffectedDocuments() {
     Set<DocumentReference> result = new HashSet<>();
     for (UndoableAction action : myActions) {
       DocumentReference[] refs = action.getAffectedDocuments();
@@ -321,28 +301,29 @@ final class UndoableGroup implements Dumpable {
     return result;
   }
 
-  public EditorAndState getStateBefore() {
+  EditorAndState getStateBefore() {
     return myStateBefore;
   }
 
-  public EditorAndState getStateAfter() {
+  EditorAndState getStateAfter() {
     return myStateAfter;
   }
 
-  public void setStateBefore(EditorAndState stateBefore) {
+  void setStateBefore(EditorAndState stateBefore) {
     myStateBefore = stateBefore;
   }
 
-  public void setStateAfter(EditorAndState stateAfter) {
+  void setStateAfter(EditorAndState stateAfter) {
     myStateAfter = stateAfter;
   }
 
-  public @NlsContexts.Command String getCommandName() {
+  @NlsContexts.Command String getCommandName() {
     for (UndoableAction action : myActions) {
       if (action instanceof StartMarkAction) {
         String commandName = ((StartMarkAction)action).getCommandName();
         if (commandName != null) return commandName;
-      } else if (action instanceof FinishMarkAction) {
+      }
+      else if (action instanceof FinishMarkAction) {
         String commandName = ((FinishMarkAction)action).getCommandName();
         if (commandName != null) return commandName;
       }
@@ -350,12 +331,16 @@ final class UndoableGroup implements Dumpable {
     return myCommandName;
   }
 
-  public int getCommandTimestamp() {
+  int getCommandTimestamp() {
     return myCommandTimestamp;
   }
 
+  UndoConfirmationPolicy getConfirmationPolicy(){
+    return myConfirmationPolicy;
+  }
+
   @Nullable
-  public StartMarkAction getStartMark() {
+  private StartMarkAction getStartMark() {
     for (UndoableAction action : myActions) {
       if (action instanceof StartMarkAction) return (StartMarkAction)action;
     }
@@ -363,26 +348,34 @@ final class UndoableGroup implements Dumpable {
   }
 
   @Nullable
-  public FinishMarkAction getFinishMark() {
+  private FinishMarkAction getFinishMark() {
     for (UndoableAction action : myActions) {
       if (action instanceof FinishMarkAction) return (FinishMarkAction)action;
     }
     return null;
   }
 
-  public boolean shouldAskConfirmation(boolean redo) {
+  boolean shouldAskConfirmation(boolean redo) {
     if (shouldAskConfirmationForStartFinishGroup(redo)) return true;
     return myConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION ||
            myConfirmationPolicy != UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION && myGlobal;
   }
 
-  public void invalidateActionsFor(DocumentReference ref) {
+  void invalidateChangeRanges() {
+    for (UndoableAction action : myActions) {
+      if (action instanceof AdjustableUndoableAction) {
+        ((AdjustableUndoableAction)action).invalidateChangeRanges();
+      }
+    }
+  }
+
+  void invalidateActionsFor(DocumentReference ref) {
     if (getAffectedDocuments().contains(ref)) {
       myValid = false;
     }
   }
 
-  public boolean isValid() {
+  boolean isValid() {
     return myValid;
   }
 
@@ -398,5 +391,23 @@ final class UndoableGroup implements Dumpable {
     if (multiline) result.append("\n");
     result.append("]");
     return result.toString();
+  }
+
+  static class UndoableGroupOriginalContext {
+    private final UndoableGroup myOriginalGroup;
+    private final UndoableGroup myCurrentStackGroup;
+
+    UndoableGroupOriginalContext(@NotNull UndoableGroup originalGroup, @NotNull UndoableGroup currentStackGroup) {
+      myOriginalGroup = originalGroup;
+      myCurrentStackGroup = currentStackGroup;
+    }
+
+    UndoableGroup getOriginalGroup() {
+      return myOriginalGroup;
+    }
+
+    UndoableGroup getCurrentStackGroup(){
+      return myCurrentStackGroup;
+    }
   }
 }

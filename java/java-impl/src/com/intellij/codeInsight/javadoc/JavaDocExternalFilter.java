@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.documentation.AbstractExternalFilter;
@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.BuiltInServerOptions;
@@ -38,7 +39,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
   );
 
   private static final Pattern HREF_SELECTOR = Pattern.compile("<A.*?HREF=\"([^>\"]*)\"", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-  private static final Pattern METHOD_HEADING = Pattern.compile("<H[34]>(.+?)</H[34]>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+  private static final Pattern METHOD_HEADING = Pattern.compile("<H[34].*>(.+?)</H[34]>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   private final RefConvertor[] myReferenceConverters = {
     new RefConvertor(HREF_SELECTOR) {
@@ -73,8 +74,9 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     return myReferenceConverters;
   }
 
+  @Nls
   @Nullable
-  public static String filterInternalDocInfo(String text) {
+  public static String filterInternalDocInfo(@Nls String text) {
     return text == null ? null : PlatformDocumentationUtil.fixupText(text);
   }
 
@@ -114,7 +116,8 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
           PsiClass aClass = ((PsiMethod)element).getContainingClass();
           if (aClass != null) {
             String qName = aClass.getQualifiedName();
-            return pair(qName, qName + JavaDocInfoGenerator.generateTypeParameters(aClass, true));
+            String typeParameters = JavaDocInfoGeneratorFactory.create(aClass.getProject(), null).generateTypeParameters(aClass, true);
+            return pair(qName, qName + typeParameters);
           }
           return null;
         }

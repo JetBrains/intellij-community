@@ -53,15 +53,14 @@ public class AntResolveInspection extends AntInspection {
   }
 
   @Override
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     if (element instanceof GenericDomValue) {
       final XmlElement valueElement = DomUtil.getValueElement(((GenericDomValue)element));
       if (valueElement != null) {
         checkReferences(valueElement, holder, element);
       }
     }
-    else if (element instanceof AntDomTypeDef) {
-      final AntDomTypeDef typeDef = (AntDomTypeDef)element;
+    else if (element instanceof AntDomTypeDef typeDef) {
       final List<String> errors = typeDef.getErrorDescriptions();
       if (!errors.isEmpty()) {
         @Nls final StringBuilder builder = new StringBuilder();
@@ -72,8 +71,7 @@ public class AntResolveInspection extends AntInspection {
         holder.createProblem(typeDef, builder.toString());
       }
     }
-    else if (element instanceof AntDomCustomElement) {
-      final AntDomCustomElement custom = (AntDomCustomElement)element;
+    else if (element instanceof AntDomCustomElement custom) {
       if (custom.getDefinitionClass() == null) {
         final AntDomNamedElement declaringElement = custom.getDeclaringElement();
         if (declaringElement instanceof AntDomTypeDef) {
@@ -95,10 +93,9 @@ public class AntResolveInspection extends AntInspection {
     Set<PsiReference> processed = null;
     Collection<PropertiesFile> propertyFiles = null; // to be initialized lazily
     for (final PsiReference ref : xmlElement.getReferences()) {
-      if (!(ref instanceof AntDomReference)) {
+      if (!(ref instanceof AntDomReference antDomRef)) {
         continue;
       }
-      final AntDomReference antDomRef = (AntDomReference)ref;
       if (antDomRef.shouldBeSkippedByAnnotator()) {
         continue;
       }
@@ -169,8 +166,7 @@ public class AntResolveInspection extends AntInspection {
       if (xmlElement != null && xmlElement.getTextOffset() >= stopOffset) {
         break; // no need to offer to add properties to files that are imported after the property reference
       }
-      if (child instanceof AntDomProperty) {
-        final AntDomProperty property = (AntDomProperty)child;
+      if (child instanceof AntDomProperty property) {
         final PropertiesFile file = property.getPropertiesFile();
         if (file != null) {
           files.add(file);

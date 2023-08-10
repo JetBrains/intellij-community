@@ -26,7 +26,8 @@ import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.PyUnitTestFactory;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -134,20 +135,24 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
                                         @NotNull final String stderr,
                                         @NotNull final String all, int exitCode) {
           if (runner.getCurrentRerunStep() == 0) {
-            assertEquals("test with docstring produced bad tree", "Test tree:\n" +
-                                                                  "[root](-)\n" +
-                                                                  ".test_test(-)\n" +
-                                                                  "..SomeTestCase(-)\n" +
-                                                                  "...testSomething (Only with docstring test is parsed with extra space)(+)\n" +
-                                                                  "...testSomethingBad (Fail)(-)\n", runner.getFormattedTestTree());
+            assertEquals("test with docstring produced bad tree", """
+              Test tree:
+              [root](-)
+              .test_test(-)
+              ..SomeTestCase(-)
+              ...testSomething (Only with docstring test is parsed with extra space)(+)
+              ...testSomethingBad (Fail)(-)
+              """, runner.getFormattedTestTree());
           }
           else {
             assertEquals("test with docstring failed to rerun",
-                         "Test tree:\n" +
-                         "[root](-)\n" +
-                         ".test_test(-)\n" +
-                         "..SomeTestCase(-)\n" +
-                         "...testSomethingBad (Fail)(-)\n", runner.getFormattedTestTree());
+                         """
+                           Test tree:
+                           [root](-)
+                           .test_test(-)
+                           ..SomeTestCase(-)
+                           ...testSomethingBad (Fail)(-)
+                           """, runner.getFormattedTestTree());
           }
         }
       });
@@ -286,11 +291,13 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
         if (runner.getCurrentRerunStep() == 1) {
           // Make sure derived tests are launched, not abstract
           Assert.assertEquals("Wrong tests after rerun",
-                              "Test tree:\n" +
-                              "[root](-)\n" +
-                              ".rerun_derived(-)\n" +
-                              "..TestDerived(-)\n" +
-                              "...test_a(-)\n", runner.getFormattedTestTree());
+                              """
+                                Test tree:
+                                [root](-)
+                                .rerun_derived(-)
+                                ..TestDerived(-)
+                                ...test_a(-)
+                                """, runner.getFormattedTestTree());
         }
       }
 
@@ -334,7 +341,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
   @Test
   public void testMultipleCases() {
     runPythonTest(
-      new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.getPythonsUnittestName(),
+      new CreateConfigurationMultipleCasesTask<>(new PyUnitTestFactory(PythonTestConfigurationType.getInstance()).getName(),
                                                  PyUnitTestConfiguration.class) {
         @Override
         protected boolean configurationShouldBeProducedForElement(@NotNull final PsiElement element) {

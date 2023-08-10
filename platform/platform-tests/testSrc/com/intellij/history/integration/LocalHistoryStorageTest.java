@@ -2,7 +2,11 @@
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryStorage;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.io.storage.AbstractStorage;
 
 import java.io.DataInputStream;
@@ -32,6 +36,30 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
     }
   }
 
+  public void testChangesAccumulationPerformance() throws IOException {
+    VirtualFile f = WriteAction.compute(
+      () -> VirtualFileManager.getInstance().findFileByUrl("temp:///").createChildData(null, "testChangesAccumulationPerformance.txt")
+    );
+    try {
+      PlatformTestUtil.startPerformanceTest("local history changes accumulation", 1800, () -> {
+        doChangesAccumulationPerformanceTest(f);
+      }).assertTiming();
+    }
+    finally {
+      WriteAction.run(() -> {
+        f.delete(null);
+      });
+    }
+  }
+
+  private void doChangesAccumulationPerformanceTest(VirtualFile file) {
+    for (int i = 0; i < 1000; i++) {
+      getVcs().beginChangeSet();
+      setContent(file, "content " + i);
+      getVcs().endChangeSet("2");
+    }
+  }
+
   public void testBasic() throws Exception {
     assertFirstAndLast(0, 0);
 
@@ -50,7 +78,7 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
     try {
       createRecord();
     }
-    catch (AssertionError e) {
+    catch (IOException e) {
       return;
     }
     fail("should have thrown exception");
@@ -139,7 +167,7 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
     return r;
   }
 
-  private void assertFirstAndLast(int first, int last) {
+  private void assertFirstAndLast(int first, int last) throws IOException {
     assertEquals(first, myStorage.getFirstRecord());
     assertEquals(last, myStorage.getLastRecord());
   }

@@ -21,7 +21,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author Alexander Lobas
  */
-public class ChangeNotesPanel {
+public class ChangeNotesPanel implements ChangeNotes {
   private final JPanel myPanel = new OpaquePanel(new BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR);
   private final JLabel myTitle = new JLabel(IdeBundle.message("label.plugin.change.notes"), AllIcons.General.ArrowRight, SwingConstants.LEFT) {
     @Override
@@ -31,7 +31,7 @@ public class ChangeNotesPanel {
   };
   private final JEditorPane myEditorPane = PluginDetailsPageComponent.createDescriptionComponent(null);
   private final JEditorPane myDescriptionPane;
-  private String myText;
+  private @NlsContexts.DialogMessage String myText;
 
   public ChangeNotesPanel(@NotNull JPanel parent, @Nullable Object constraints, @NotNull JEditorPane descriptionPane) {
     myDescriptionPane = descriptionPane;
@@ -53,23 +53,26 @@ public class ChangeNotesPanel {
     setDecorateState(false);
   }
 
+  @Override
   public void show(@Nullable @NlsContexts.DialogMessage String text) {
     if (text == null) {
       myPanel.setVisible(false);
     }
-    else if (!text.equals(myText)) {
-      myText = text;
-      myEditorPane.setText(XmlStringUtil.wrapInHtml(text));
-      if (myEditorPane.getCaret() != null) {
-        myEditorPane.setCaretPosition(0);
+    else {
+      if (!text.equals(myText)) {
+        myText = text;
+        myEditorPane.setText(XmlStringUtil.wrapInHtml(text));
+        if (myEditorPane.getCaret() != null) {
+          myEditorPane.setCaretPosition(0);
+        }
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myTitle.setBorder(JBUI.Borders.empty(getBorder(myDescriptionPane, true), 0, getBorder(myEditorPane, false), 0));
+          fullRepaint();
+        });
+
+        setDecorateState(false);
       }
-
-      ApplicationManager.getApplication().invokeLater(() -> {
-        myTitle.setBorder(JBUI.Borders.empty(getBorder(myDescriptionPane, true), 0, getBorder(myEditorPane, false), 0));
-        fullRepaint();
-      });
-
-      setDecorateState(false);
       myPanel.setVisible(true);
     }
   }

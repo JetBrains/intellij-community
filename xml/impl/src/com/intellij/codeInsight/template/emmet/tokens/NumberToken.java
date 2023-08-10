@@ -15,9 +15,6 @@
  */
 package com.intellij.codeInsight.template.emmet.tokens;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class NumberToken extends ZenCodingToken {
   private final int myNumber;
 

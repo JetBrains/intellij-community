@@ -10,7 +10,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.isThisRef
 /**
  * @author Max Medvedev
  */
-public class GrAllVarsInitializedPolicy implements GrControlFlowPolicy {
+public final class GrAllVarsInitializedPolicy implements GrControlFlowPolicy {
   private static final GrControlFlowPolicy INSTANCE = new GrAllVarsInitializedPolicy();
 
   public static GrControlFlowPolicy getInstance() {

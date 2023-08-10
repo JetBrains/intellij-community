@@ -1,23 +1,18 @@
 <component name="libraryTable">
   <library name="zip-signer" type="repository">
-    <properties maven-id="org.jetbrains.marketplace:zip-signer:0.8">
-      <exclude>
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-        <dependency maven-id="org.bouncycastle:bcpkix-jdk15on" />
-        <dependency maven-id="org.bouncycastle:bcprov-jdk15on" />
-        <dependency maven-id="org.jetbrains:annotations" />
-        <dependency maven-id="org.slf4j:slf4j-api" />
-      </exclude>
+    <properties include-transitive-deps="false" maven-id="org.jetbrains:marketplace-zip-signer:0.1.8">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/marketplace-zip-signer/0.1.8/marketplace-zip-signer-0.1.8.jar">
+          <sha256sum>826d4d3e21b6584dd9a74f12ef35a2285fe9514fa0093618944666c0a3db194a</sha256sum>
+        </artifact>
+      </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/marketplace/zip-signer/0.8/zip-signer-0.8.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.11.4/protobuf-java-3.11.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/marketplace-zip-signer/0.1.8/marketplace-zip-signer-0.1.8.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/marketplace/zip-signer/0.8/zip-signer-0.8-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.11.4/protobuf-java-3.11.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/marketplace-zip-signer/0.1.8/marketplace-zip-signer-0.1.8-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -120,19 +120,15 @@ public abstract class JiraTask extends Task {
   @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   protected final TaskState getStateById(int id) {
-    switch (id) {
-      case 1:
-        return TaskState.OPEN;
-      case 3:
-        return TaskState.IN_PROGRESS;
-      case 4:
-        return TaskState.REOPENED;
-      case 5: // resolved
-      case 6: // closed
-        return TaskState.RESOLVED;
-      default:
-        return null;
-    }
+    return switch (id) {
+      case 1 -> TaskState.OPEN;
+      case 3 -> TaskState.IN_PROGRESS;
+      case 4 -> TaskState.REOPENED;
+      case 5,  // resolved
+           6 -> // closed
+        TaskState.RESOLVED;
+      default -> null;
+    };
   }
 
   /**

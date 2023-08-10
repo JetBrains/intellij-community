@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -26,14 +26,13 @@ import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PsiPackageImplementationHelperImpl extends PsiPackageImplementationHelper {
   @NotNull
   @Override
@@ -131,7 +130,8 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
     projectView.select(directories[0], directories[0].getVirtualFile(), requestFocus);
   }
 
-  private static PsiDirectory @NotNull [] suggestMostAppropriateDirectories(@NotNull PsiPackage psiPackage) {
+  @VisibleForTesting
+  public static PsiDirectory @NotNull [] suggestMostAppropriateDirectories(@NotNull PsiPackage psiPackage) {
     final Project project = psiPackage.getProject();
     PsiDirectory[] directories = null;
     final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
@@ -156,7 +156,7 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
           }
 
           if (directories == null || directories.length == 0) {
-            directories = psiPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
+            directories = psiPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
           }
         }
         else {

@@ -30,8 +30,6 @@ import java.util.List;
 
 /**
  * Holds javadoc-specific navigation logic.
- * 
- * @author Denis Zhdanov
  */
 public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
 

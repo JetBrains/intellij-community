@@ -18,11 +18,6 @@ public final class JavaCodeStyleSettingsFacadeImpl extends JavaCodeStyleSettings
   }
 
   @Override
-  public int getIndentSize() {
-    return myManager.getCurrentSettings().getIndentSize(JavaFileType.INSTANCE);
-  }
-
-  @Override
   public boolean isGenerateFinalParameters() {
     return myManager.getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS;
   }

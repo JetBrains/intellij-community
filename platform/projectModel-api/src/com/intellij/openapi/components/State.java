@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
-import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.function.Supplier;
 
 /**
  * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html">Persisting States</a>
@@ -49,7 +50,7 @@ public @interface State {
   /**
    * @deprecated Use {@link #additionalExportDirectory()}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   String additionalExportFile() default "";
 
   Class<? extends NameGetter> presentableName() default NameGetter.class;
@@ -79,6 +80,13 @@ public @interface State {
   @ApiStatus.Internal
   boolean useLoadedStateAsExisting() default true;
 
-  abstract class NameGetter implements Getter<String> {
+  @ApiStatus.Experimental
+  boolean getStateRequiresEdt() default false;
+
+  abstract class NameGetter implements Supplier<@Nls String> {
+    @Override
+    public abstract @Nls String get();
   }
+
+  SettingsCategory category() default SettingsCategory.OTHER;
 }

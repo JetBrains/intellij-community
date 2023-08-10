@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.completion.CompletionContributor;
@@ -19,9 +19,9 @@ import java.util.Set;
 public class StructuralSearchTemplatesCompletionContributor extends CompletionContributor {
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    final StructuralSearchDialog dialog = parameters.getEditor().getUserData(StructuralSearchDialog.STRUCTURAL_SEARCH_DIALOG);
+    final StructuralSearchDialog dialog = parameters.getEditor().getUserData(StructuralSearchDialogKeys.STRUCTURAL_SEARCH_DIALOG);
     if (dialog == null) {
-      final Boolean test = parameters.getEditor().getUserData(StructuralSearchDialog.TEST_STRUCTURAL_SEARCH_DIALOG);
+      final Boolean test = parameters.getEditor().getUserData(StructuralSearchDialogKeys.TEST_STRUCTURAL_SEARCH_DIALOG);
       if (test == null || !test) return;
     }
 

@@ -16,34 +16,29 @@
 package com.jetbrains.python.run;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.SettingsEditor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
- * @author Alexander Koshevoy
+ * Allows to extend the editors of pythonic run configurations.
+ * <p>
+ * As for now, it is used to provide additional fields for editing settings of specific Python interpreters (f.e. custom Docker container
+ * settings for Docker-based Python interpreters).
  */
+@ApiStatus.Internal
 public interface PyRunConfigurationEditorExtension {
-  ExtensionPointName<PyRunConfigurationEditorExtension> EP_NAME =
-    ExtensionPointName.create("Pythonid.runConfigurationEditorExtension");
+  ExtensionPointName<PyRunConfigurationEditorExtension> EP_NAME = ExtensionPointName.create("Pythonid.runConfigurationEditorExtension");
 
-  boolean accepts(@NotNull AbstractPythonRunConfiguration configuration);
-
-  @NotNull
-  SettingsEditor<AbstractPythonRunConfiguration> createEditor(@NotNull AbstractPythonRunConfiguration configuration);
-
-  class Factory {
-    @Nullable
-    public static PyRunConfigurationEditorExtension getExtension(@NotNull AbstractPythonRunConfiguration<?> configuration) {
-      List<PyRunConfigurationEditorExtension> extensions = EP_NAME.getExtensionList();
-      for (PyRunConfigurationEditorExtension extension : extensions) {
-        if (extension.accepts(configuration)) {
-          return extension;
-        }
-      }
-      return null;
-    }
-  }
+  /**
+   * Returns the editor factory that could be applied for the provided {@code configuration} or {@code null} if no factory is available for
+   * it.
+   * <p>
+   * Note that this method is called frequently. It might be a good idea to cache the returned factory.
+   *
+   * @param configuration Python run configuration being edited
+   * @return editor factory applicable for provided {@code configuration}
+   */
+  @Nullable
+  PyRunConfigurationEditorFactory accepts(@NotNull AbstractPythonRunConfiguration<?> configuration);
 }

@@ -20,8 +20,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PyStringLiteralExpressionManipulator extends AbstractElementManipulator<PyStringLiteralExpressionImpl> {
@@ -56,7 +56,7 @@ public class PyStringLiteralExpressionManipulator extends AbstractElementManipul
                                              String newContent) {
     final String newText = range.replace(prevText, newContent);
 
-    if (PyStringLiteralUtil.isQuoted(newText)) {
+    if (PyStringLiteralCoreUtil.isQuoted(newText)) {
       return newText;
     }
 
@@ -66,7 +66,7 @@ public class PyStringLiteralExpressionManipulator extends AbstractElementManipul
 
   @NotNull
   private static Pair<String, String> calculateQuotes(@NotNull String text) {
-    final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(text);
+    final Pair<String, String> quotes = PyStringLiteralCoreUtil.getQuotes(text);
 
     if (quotes == null || quotes.first == null && quotes.second == null) return Pair.createNonNull("\"", "\"");
 

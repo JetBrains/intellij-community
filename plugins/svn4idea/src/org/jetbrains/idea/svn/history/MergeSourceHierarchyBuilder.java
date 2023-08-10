@@ -23,9 +23,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
 import java.util.List;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class MergeSourceHierarchyBuilder implements ThrowableConsumer<Pair<LogEntry, Integer>, SvnBindException> {
 
   private LogHierarchyNode myCurrentHierarchy;

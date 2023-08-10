@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.application.PathMacros;
@@ -58,8 +57,7 @@ public final class EPathUtil {
    * @param relativeToOtherModule local path (paths inside jars are rejected)
    * @return url
    */
-  @Nullable
-  static String expandEclipseRelative2OtherModule(final @NotNull Module otherModule, final @Nullable String relativeToOtherModule) {
+  static @Nullable String expandEclipseRelative2OtherModule(final @NotNull Module otherModule, final @Nullable String relativeToOtherModule) {
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(otherModule).getContentRoots();
     for (VirtualFile contentRoot : contentRoots) {
       if (relativeToOtherModule == null) {
@@ -90,7 +88,7 @@ public final class EPathUtil {
   static String expandEclipsePath2Url(final String path,
                                       final ModifiableRootModel model,
                                       final List<String> currentRoots,
-                                      @NotNull final VirtualFile contentRoot) {
+                                      final @NotNull VirtualFile contentRoot) {
     final String rootPath = contentRoot.getPath();
     String url = null;
     if (new File(path).exists()) {  //absolute path
@@ -131,8 +129,7 @@ public final class EPathUtil {
     return url;
   }
 
-  @Nullable
-  public static String collapse2eclipseRelative2OtherModule(final @NotNull Project project, final @NotNull VirtualFile file) {
+  public static @Nullable String collapse2eclipseRelative2OtherModule(final @NotNull Project project, final @NotNull VirtualFile file) {
     final Module module = ModuleUtilCore.findModuleForFile(file, project);
     if (module != null) {
       return collapse2eclipsePathRelative2Module(file, module);
@@ -150,8 +147,7 @@ public final class EPathUtil {
     return null;
   }
 
-  @Nullable
-  private static String collapse2eclipsePathRelative2Module(VirtualFile file, Module module) {
+  private static @Nullable String collapse2eclipsePathRelative2Module(VirtualFile file, Module module) {
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
     for (VirtualFile otherRoot : contentRoots) {
       if (VfsUtilCore.isAncestor(otherRoot, file, false)) {
@@ -162,8 +158,7 @@ public final class EPathUtil {
     return null;
   }
 
-  @Nullable
-  public static VirtualFile getContentRoot(@NotNull ModuleRootModel model) {
+  public static @Nullable VirtualFile getContentRoot(@NotNull ModuleRootModel model) {
     for (VirtualFile virtualFile : model.getContentRoots()) {
       if (virtualFile.findChild(EclipseXml.PROJECT_FILE) != null) {
         return virtualFile;
@@ -182,7 +177,7 @@ public final class EPathUtil {
         final VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
         if (jarFile == null) {
           LOG.error("Url: '" + url + "'; file: " + file);
-          return ProjectRootManagerImpl.extractLocalPath(url);
+          return ProjectRootManagerImpl.Companion.extractLocalPath(url);
         }
         file = jarFile;
       }
@@ -213,14 +208,13 @@ public final class EPathUtil {
       final String path = VfsUtilCore.urlToPath(url);
       final String projectPath = projectBaseDir.getPath();
       if (path.startsWith(projectPath)) {
-        return ProjectRootManagerImpl.extractLocalPath(path.substring(projectPath.length()));
+        return ProjectRootManagerImpl.Companion.extractLocalPath(path.substring(projectPath.length()));
       }
     }
-    return ProjectRootManagerImpl.extractLocalPath(url);  //absolute path
+    return ProjectRootManagerImpl.Companion.extractLocalPath(url);  //absolute path
   }
 
-  @Nullable
-  static String collapse2EclipseVariabledPath(final LibraryOrderEntry libraryOrderEntry, OrderRootType type) {
+  static @Nullable String collapse2EclipseVariabledPath(final LibraryOrderEntry libraryOrderEntry, OrderRootType type) {
     final VirtualFile[] virtualFiles = libraryOrderEntry.getRootFiles(type);
     if (virtualFiles.length > 0) {
       VirtualFile jarFile = virtualFiles[0];
@@ -253,7 +247,7 @@ public final class EPathUtil {
         final String path = FileUtil.toSystemIndependentName(pathMacros.get(name));
         if (filePath.startsWith(path + "/")) {
           final String substr = filePath.substring(path.length());
-          return name + (substr.startsWith("/") || substr.length() == 0 ? substr : "/" + substr);
+          return name + (substr.startsWith("/") || substr.isEmpty() ? substr : "/" + substr);
         }
       }
     }

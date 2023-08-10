@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -32,12 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author peter
- */
 public class EditorHighlighterUpdater {
   @NotNull protected final Project myProject;
-  @NotNull private final EditorEx myEditor;
+  @NotNull protected final EditorEx myEditor;
   @Nullable private final VirtualFile myFile;
 
   public EditorHighlighterUpdater(@NotNull Project project, @NotNull Disposable parentDisposable, @NotNull EditorEx editor, @Nullable VirtualFile file) {
@@ -77,11 +74,9 @@ public class EditorHighlighterUpdater {
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        if (pluginDescriptor.getPluginId() == null) return;
         IdeaPluginDescriptor loadedPluginDescriptor = PluginManagerCore.getPlugin(pluginDescriptor.getPluginId());
-        if (loadedPluginDescriptor == null) return;
-        ClassLoader pluginClassLoader = loadedPluginDescriptor.getPluginClassLoader();
-        if (myFile != null && pluginClassLoader instanceof PluginClassLoader) {
+        ClassLoader pluginClassLoader = loadedPluginDescriptor != null ? loadedPluginDescriptor.getPluginClassLoader() : null;
+        if (myFile != null && pluginClassLoader instanceof PluginAwareClassLoader) {
           FileType fileType = myFile.getFileType();
           if (fileType.getClass().getClassLoader() == pluginClassLoader ||
               (fileType instanceof LanguageFileType && ((LanguageFileType) fileType).getClass().getClassLoader() == pluginClassLoader)) {
@@ -172,7 +167,7 @@ public class EditorHighlighterUpdater {
     @Override
     public void fileTypesChanged(@NotNull final FileTypeEvent event) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-    // File can be invalid after file type changing. The editor should be removed
+      // File can be invalid after file type changing. The editor should be removed
       // by the FileEditorManager if it's invalid.
       FileType type = event.getRemovedFileType();
       if (type != null && !(type instanceof AbstractFileType)) {
@@ -184,5 +179,4 @@ public class EditorHighlighterUpdater {
       }
     }
   }
-
 }

@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Main part of a 'for' statement
- * User: dcheryasov
  */
 public interface PyForPart extends PyStatementPart {
   /**

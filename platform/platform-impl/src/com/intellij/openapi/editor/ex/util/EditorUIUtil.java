@@ -9,9 +9,6 @@ import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 
-/**
- * @author Denis Fokin
- */
 public final class EditorUIUtil {
 
   /* This method has to be used for setting up antialiasing and rendering hints in

@@ -23,10 +23,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usages.TextChunk;
 import com.intellij.util.FontUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 
 class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
@@ -41,7 +41,7 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
       TextChunk textChunk = text[i];
       SimpleTextAttributes attributes = textChunk.getSimpleAttributesIgnoreBackground();
       if (isForcedLeaf) {
-        attributes = attributes.derive(attributes.getStyle(), JBColor.LIGHT_GRAY, attributes.getBgColor(), attributes.getWaveColor());
+        attributes = attributes.derive(attributes.getStyle(), NamedColorUtil.getInactiveTextColor(), attributes.getBgColor(), attributes.getWaveColor());
       }
       append(textChunk.getText(), attributes);
       if (i == 0) {
@@ -51,7 +51,7 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
 
     if (javaSliceUsage != null && javaSliceUsage.indexNesting != 0) {
       append(" " + JavaBundle.message("slice.usage.message.tracking.container.contents",
-                                      getContainerName(javaSliceUsage),
+                                      javaSliceUsage.containerName,
                                       javaSliceUsage.syntheticField.isEmpty() ? "" : "." + javaSliceUsage.syntheticField),
              SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
@@ -99,29 +99,6 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
     if (javaSliceUsage != null && javaSliceUsage.requiresAssertionViolation) {
       append(" " + JavaBundle.message("slice.usage.message.assertion.violated"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
-  }
-
-  @NotNull
-  private static String getContainerName(@NotNull JavaSliceUsage usage) {
-    String result = "";
-    JavaSliceUsage prev = usage;
-    String name = "";
-    while (usage != null) {
-      if (usage.indexNesting != prev.indexNesting) {
-        result = name + (result.isEmpty() ? "" : ".") + result;
-        if (usage.indexNesting == 0) break;
-      }
-      PsiElement element = usage.getElement();
-      if (element instanceof PsiNamedElement) {
-        name = ((PsiNamedElement)element).getName();
-      }
-      else if (element instanceof PsiReference) {
-        name = ((PsiReference)element).getCanonicalText();
-      }
-      prev = usage;
-      usage = (JavaSliceUsage)usage.getParent();
-    }
-    return result;
   }
 }
 

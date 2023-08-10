@@ -2,19 +2,27 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.*;
 
+/**
+ * Please use {@link CompletableFuture} instead as a more standard and better known equivalent
+ */
+@ApiStatus.Obsolete
 public class FutureResult<T> implements Future<T> {
   private final Semaphore mySema = new Semaphore(0);
   private volatile Pair<Object, Boolean> myValue;
 
+  @Contract(pure = true)
   public FutureResult() {
   }
 
+  @Contract(pure = true)
   public FutureResult(@Nullable T result) {
     set(result);
   }

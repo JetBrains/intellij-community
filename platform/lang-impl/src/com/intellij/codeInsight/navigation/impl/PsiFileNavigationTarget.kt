@@ -1,26 +1,28 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.fileLocation
 import com.intellij.codeInsight.navigation.fileStatusAttributes
-import com.intellij.navigation.NavigationTarget
-import com.intellij.navigation.TargetPopupPresentation
+import com.intellij.model.Pointer
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
-import com.intellij.pom.Navigatable
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.backend.navigation.NavigationTarget
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiFile
+import com.intellij.refactoring.suggested.createSmartPointer
 
 internal class PsiFileNavigationTarget(
   private val psiFile: PsiFile
 ) : NavigationTarget {
 
-  override fun isValid(): Boolean = psiFile.isValid
+  override fun createPointer(): Pointer<out NavigationTarget> = Pointer.delegatingPointer(
+    psiFile.createSmartPointer(), ::PsiFileNavigationTarget
+  )
 
-  override fun getNavigatable(): Navigatable = psiFile
-
-  override fun getTargetPresentation(): TargetPopupPresentation {
+  override fun computePresentation(): TargetPresentation {
     val project = psiFile.project
 
-    var builder = TargetPopupPresentation
+    var builder = TargetPresentation
       .builder(psiFile.name)
       .icon(psiFile.getIcon(0))
       .containerText(psiFile.parent?.virtualFile?.presentableUrl)
@@ -34,9 +36,12 @@ internal class PsiFileNavigationTarget(
 
     val locationAndIcon = fileLocation(project, file)
                           ?: return builder.presentation()
-    @Suppress("HardCodedStringLiteral")
-    builder = builder.locationText(locationAndIcon.first, locationAndIcon.second)
+    builder = builder.locationText(locationAndIcon.text, locationAndIcon.icon)
 
     return builder.presentation()
+  }
+
+  override fun navigationRequest(): NavigationRequest? {
+    return psiFile.navigationRequest()
   }
 }

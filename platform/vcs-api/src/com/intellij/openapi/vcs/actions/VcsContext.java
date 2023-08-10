@@ -21,7 +21,6 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PlaceProvider;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,7 +40,7 @@ import static java.util.Collections.emptyList;
  * @see com.intellij.openapi.vcs.actions.VcsContextUtil
  * @deprecated Prefer explicit {@link com.intellij.openapi.actionSystem.DataContext} state caching when needed.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface VcsContext extends PlaceProvider {
   @Nullable Project getProject();
 
@@ -58,7 +57,7 @@ public interface VcsContext extends PlaceProvider {
   /**
    * @deprecated use {@link #getSelectedUnversionedFilePaths}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   default List<VirtualFile> getSelectedUnversionedFiles() {
     return ContainerUtil.mapNotNull(getSelectedUnversionedFilePaths(), FilePath::getVirtualFile);
@@ -76,8 +75,6 @@ public interface VcsContext extends PlaceProvider {
   File[] getSelectedIOFiles();
 
   int getModifiers();
-
-  Refreshable getRefreshableDialog();
 
   File getSelectedIOFile();
 

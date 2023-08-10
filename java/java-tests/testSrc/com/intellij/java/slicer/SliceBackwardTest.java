@@ -19,11 +19,15 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.execution.filters.ExceptionAnalysisProvider;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.slicer.*;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
-import one.util.streamex.StreamEx;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -31,12 +35,22 @@ import java.util.List;
 import java.util.Map;
 
 public class SliceBackwardTest extends SliceTestCase {
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk11());
+  }
+
   private void doTest() throws Exception {
     doTest("");
   }
 
   private void doTest(@NotNull String filter) throws Exception {
     doTest(filter, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  @Override
+  protected @NotNull LanguageLevel getProjectLanguageLevel() {
+    return LanguageLevel.JDK_16;
   }
 
   private void doTest(@NotNull String filter, @NotNull String @NotNull... stack) throws Exception {
@@ -53,10 +67,10 @@ public class SliceBackwardTest extends SliceTestCase {
     params.dataFlowToThis = true;
     SliceLanguageSupportProvider provider = LanguageSlicing.getProvider(element);
     params.valueFilter = filter.isEmpty() ? JavaValueFilter.ALLOW_EVERYTHING : provider.parseFilter(element, filter);
-    List<ExceptionAnalysisProvider.StackLine> lines = StreamEx.of(stack).map(line -> {
+    List<ExceptionAnalysisProvider.StackLine> lines = ContainerUtil.map(stack, line -> {
       String[] parts = line.split(":");
       return new ExceptionAnalysisProvider.StackLine(parts[0], parts[1], null);
-    }).toList();
+    });
     assertTrue(params.valueFilter instanceof JavaValueFilter);
     params.valueFilter = ((JavaValueFilter)params.valueFilter).withStack(lines);
 
@@ -104,7 +118,7 @@ public class SliceBackwardTest extends SliceTestCase {
   public void testAppend() throws Exception { doTest();}
   public void testRequireNonNull() throws Exception { doTest();}
   public void testBackAndForward() throws Exception { doTest();}
-  
+
   public void testFilterIntRange() throws Exception { doTest(">=0");}
   public void testFilterIntRangeArray() throws Exception { doTest(">=0");}
   public void testFilterNull() throws Exception { doTest("null");}
@@ -116,16 +130,22 @@ public class SliceBackwardTest extends SliceTestCase {
   public void testReturnParameter() throws Exception { doTest(); }
   public void testFilterLongByInt() throws Exception { doTest("<=0"); }
   public void testFilterDoubleByInt() throws Exception { doTest("0.0"); }
-  
-  public void testStackFilterSimple() throws Exception { 
+
+  public void testStackFilterSimple() throws Exception {
     doTest("null", "MainTest:test", "MainTest:foo", "MainTest:main");
   }
-  
+
   public void testStackFilterBridgeMethod() throws Exception {
     doTest("null", "MainTest$Bar:get", "MainTest$Bar:get", "MainTest:bar", "MainTest:main");
-  }                                                               
-  
+  }
+
   public void testStackFilterBridgeMethod2() throws Exception {
     doTest("null", "MainTest$Bar:get", "MainTest$Bar:get", "MainTest:bar", "MainTest:main");
-  }                                                               
+  }
+
+  public void testRecordComponent() throws Exception { doTest();}
+  public void testRecordComponent2() throws Exception { doTest();}
+  public void testRecordComponent3() throws Exception { doTest();}
+  public void testOptionalAsContainer() throws Exception { doTest();}
+  public void testUnmodifiableList() throws Exception { doTest();}
 }

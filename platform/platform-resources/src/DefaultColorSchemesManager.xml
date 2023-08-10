@@ -13,6 +13,7 @@
       <option name="INDENT_GUIDE" value="e6e6e6"/>
       <option name="GUTTER_BACKGROUND" value="f0f0f0" />
       <option name="DOCUMENTATION_COLOR" value="f7f7f7"/>
+      <option name="LOOKUP_COLOR" value="f7f7f7"/>
       <option name="NOTIFICATION_BACKGROUND" value="fff8d1" />
       <option name="SELECTED_INDENT_GUIDE" value="c8c8c8"/>
       <option name="SELECTION_FOREGROUND" value="ffffff"/>
@@ -23,8 +24,6 @@
       <option name="SOFT_WRAP_SIGN_COLOR" value="c0c0c0"/>
       <option name="TEARLINE_COLOR" value="D0D0D0"/>
       <option name="SELECTED_TEARLINE_COLOR" value="9C9C9C"/>
-      <option name="SEPARATOR_ABOVE_COLOR" value=""/>
-      <option name="SEPARATOR_BELOW_COLOR" value="e4e4e4"/>
       <option name="READONLY_FRAGMENT_BACKGROUND" value="cfe7ff"/>
       <option name="VISUAL_INDENT_GUIDE" value="eeeeee"/>
       <option name="FOLDED_TEXT_BORDER_COLOR" value="add9c7"/>
@@ -43,7 +42,7 @@
       <option name="IGNORED_MODIFIED_LINES_BORDER_COLOR" value="95b2ce"/>
       <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="9f9f9f"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff"/>
-      <option name="DIFF_SEPARATORS_BACKGROUND" value="D9D9D9"/>
+      <option name="DIFF_SEPARATOR_WAVE" value="d0d0d0"/>
       <option name="STRING_CONTENT_INDENT_GUIDE" value="afd5b5"/>
 
       <option name="MODIFIED_TAB_ICON" value="4083C9"/>
@@ -79,10 +78,10 @@
 
       <option name="Table.hoverBackground" value="EDF5FC"/>
 
-      <option name="BookmarkIcon.background" value="F4AF3D"/>
-      <option name="MnemonicIcon.foreground" value="000000"/>
-      <option name="MnemonicIcon.background" value="FEF7EC"/>
-      <option name="MnemonicIcon.borderColor" value="F4AF3D"/>
+      <option name="Bookmark.iconBackground" value="F4AF3D"/>
+      <option name="Bookmark.Mnemonic.iconForeground" value="000000"/>
+      <option name="Bookmark.Mnemonic.iconBackground" value="FEF7EC"/>
+      <option name="Bookmark.Mnemonic.iconBorderColor" value="F4AF3D"/>
       <option name="ScrollBar.background" value="F5F5F5"/>
       <option name="ScrollBar.trackColor" value="80808000"/>
       <option name="ScrollBar.thumbColor" value="73737333"/>
@@ -543,6 +542,17 @@
           <option name="BACKGROUND" value="bcdaf7"/>
         </value>
       </option>
+      <option name="INLAY_DEFAULT">
+        <value>
+          <option name="FOREGROUND" value="7a7a7a"/>
+          <option name="BACKGROUND" value="ededed"/>
+        </value>
+      </option>
+      <option name="INLAY_TEXT_WITHOUT_BACKGROUND">
+        <value>
+          <option name="FOREGROUND" value="7a7a7a"/>
+        </value>
+      </option>
       <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="660e7a" deuteranopia="1948a6" protanopia="1948a6"/>
@@ -725,6 +735,13 @@
           <option name="BACKGROUND" value="faeae6" deuteranopia="ffe6d1" protanopia="ffe6d1"/>
           <option name="EFFECT_COLOR"/>
           <option name="ERROR_STRIPE_COLOR" value="ffc8c8" />
+        </value>
+      </option>
+
+      <option name="INLINE_STACK_FRAMES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND" value="e6e0f1"/>
         </value>
       </option>
 
@@ -982,7 +999,7 @@
         <option name="CONSOLE_BLACK_OUTPUT">
           <value>
             <option name="FOREGROUND" value="000000" />
-            <option name="BACKGROUND" />
+            <option name="BACKGROUND" value="000000" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -991,8 +1008,8 @@
         </option>
         <option name="CONSOLE_BLUE_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="0000ee" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="063FDB" />
+            <option name="BACKGROUND" value="C4DBFA" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1001,8 +1018,8 @@
         </option>
         <option name="CONSOLE_BLUE_BRIGHT_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="5c5cff" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="2D61F0" />
+            <option name="BACKGROUND" value="95C2FF" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1011,8 +1028,8 @@
         </option>
         <option name="CONSOLE_CYAN_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="00cccc" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="028E8E" />
+            <option name="BACKGROUND" value="BFEEEE" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1021,8 +1038,8 @@
         </option>
         <option name="CONSOLE_CYAN_BRIGHT_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="00ffff" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="15C1C1" />
+            <option name="BACKGROUND" value="8CF1F1" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1031,8 +1048,8 @@
         </option>
         <option name="CONSOLE_DARKGRAY_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="555555" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="656565" />
+            <option name="BACKGROUND" value="B7B7B7" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1041,8 +1058,8 @@
         </option>
         <option name="CONSOLE_GRAY_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="aaaaaa" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="929292" />
+            <option name="BACKGROUND" value="E6E6E6" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1051,8 +1068,8 @@
         </option>
         <option name="CONSOLE_GREEN_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="00cd00" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="067D17" />
+            <option name="BACKGROUND" value="B5E7BE" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1061,8 +1078,8 @@
         </option>
         <option name="CONSOLE_GREEN_BRIGHT_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="00ff00" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="16B42C" />
+            <option name="BACKGROUND" value="85F399" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1071,8 +1088,8 @@
         </option>
         <option name="CONSOLE_MAGENTA_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="cd00cd" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="B309B3" />
+            <option name="BACKGROUND" value="F3D2F3" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1081,8 +1098,8 @@
         </option>
         <option name="CONSOLE_MAGENTA_BRIGHT_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="ff00ff" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="E617E6" />
+            <option name="BACKGROUND" value="FBACFB" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1091,8 +1108,8 @@
         </option>
         <option name="CONSOLE_RED_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="cd0000" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="CE0505" />
+            <option name="BACKGROUND" value="FCA4A7" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1101,8 +1118,8 @@
         </option>
         <option name="CONSOLE_RED_BRIGHT_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="ff0000" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="FF1616" />
+            <option name="BACKGROUND" value="FE7277" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1111,8 +1128,8 @@
         </option>
         <option name="CONSOLE_YELLOW_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="C4A000" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="B28C00" />
+            <option name="BACKGROUND" value="F7E79F" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1121,8 +1138,8 @@
         </option>
         <option name="CONSOLE_YELLOW_BRIGHT_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="eaea00" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="ECC32C" />
+            <option name="BACKGROUND" value="FFE055" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
@@ -1131,12 +1148,17 @@
         </option>
         <option name="CONSOLE_WHITE_OUTPUT">
           <value>
-            <option name="FOREGROUND" value="ffffff" />
-            <option name="BACKGROUND" />
+            <option name="FOREGROUND" value="C9C9C9" />
+            <option name="BACKGROUND" value="FFFFFF" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
             <option name="EFFECT_TYPE" value="0" />
             <option name="ERROR_STRIPE_COLOR" />
+          </value>
+        </option>
+        <option name="TERMINAL_COMMAND_TO_RUN_USING_IDE">
+          <value>
+            <option name="BACKGROUND" value="CFEFC6" />
           </value>
         </option>
         <option name="SPY-JS.FUNCTION_SCOPE">
@@ -1289,6 +1311,7 @@
       <option name="FILESTATUS_modifiedOutside" value="6897bb" />
       <option name="GUTTER_BACKGROUND" value="313335" />
       <option name="DOCUMENTATION_COLOR" value="46484a"/>
+      <option name="LOOKUP_COLOR" value="46484a"/>
       <option name="INDENT_GUIDE" value="373737" />
       <option name="LINE_NUMBERS_COLOR" value="606366" />
       <option name="LINE_NUMBER_ON_CARET_ROW_COLOR" value="a4a3a3" />
@@ -1299,13 +1322,11 @@
       <option name="RIGHT_MARGIN_COLOR" value="4d4d4d" />
       <option name="SELECTED_INDENT_GUIDE" value="505050" />
       <option name="SELECTED_TEARLINE_COLOR" value="787878" />
-      <option name="SEPARATOR_ABOVE_COLOR" value=""/>
-      <option name="SEPARATOR_BELOW_COLOR" value="393a3c"/>
       <option name="SELECTION_BACKGROUND" value="214283" />
       <option name="SELECTION_FOREGROUND" value="" />
       <option name="TEARLINE_COLOR" value="555555" />
       <option name="WHITESPACES" value="606060" />
-      <option name="DIFF_SEPARATORS_BACKGROUND" value="212121"/>
+      <option name="DIFF_SEPARATOR_WAVE" value="555555"/>
       <option name="STRING_CONTENT_INDENT_GUIDE" value="4a5f3e"/>
       <option name="VISUAL_INDENT_GUIDE" value="3c3c3c"/>
       <option name="FOLDED_TEXT_BORDER_COLOR" value="43474a"/>
@@ -1326,10 +1347,10 @@
 
       <option name="Table.hoverBackground" value="464A4D"/>
 
-      <option name="BookmarkIcon.background" value="D9A343"/>
-      <option name="MnemonicIcon.foreground" value="BBBBBB"/>
-      <option name="MnemonicIcon.background" value="5B5341"/>
-      <option name="MnemonicIcon.borderColor" value="D9A343"/>
+      <option name="Bookmark.iconBackground" value="D9A343"/>
+      <option name="Bookmark.Mnemonic.iconForeground" value="BBBBBB"/>
+      <option name="Bookmark.Mnemonic.iconBackground" value="5B5341"/>
+      <option name="Bookmark.Mnemonic.iconBorderColor" value="D9A343"/>
       <option name="ScrollBar.background" value="3F4244"/>
       <option name="ScrollBar.trackColor" value="80808000"/>
       <option name="ScrollBar.thumbColor" value="A6A6A647"/>
@@ -1398,6 +1419,12 @@
           <option name="ERROR_STRIPE_COLOR" value="664233" />
         </value>
       </option>
+      <option name="INLINE_STACK_FRAMES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND" value="534a57"/>
+        </value>
+      </option>
       <option name="COFFEESCRIPT.GLOBAL_VARIABLE">
         <value>
           <option name="FONT_TYPE" value="2" />
@@ -1407,31 +1434,37 @@
       <option name="CONSOLE_BLACK_OUTPUT">
         <value>
           <option name="FOREGROUND" value="000000" />
+          <option name="BACKGROUND" value="000000" />
         </value>
       </option>
       <option name="CONSOLE_BLUE_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="3A91CF" />
+          <option name="FOREGROUND" value="3993D4" />
+          <option name="BACKGROUND" value="245980" />
         </value>
       </option>
       <option name="CONSOLE_BLUE_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="1EA0FC" />
+          <option name="FOREGROUND" value="1FB0FF" />
+          <option name="BACKGROUND" value="1778BD" />
         </value>
       </option>
       <option name="CONSOLE_CYAN_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="009191" />
+          <option name="FOREGROUND" value="00A3A3" />
+          <option name="BACKGROUND" value="154F4F" />
         </value>
       </option>
       <option name="CONSOLE_CYAN_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="00FFFF" />
+          <option name="FOREGROUND" value="00E5E5" />
+          <option name="BACKGROUND" value="006E6E" />
         </value>
       </option>
       <option name="CONSOLE_DARKGRAY_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="4F4F4F" />
+          <option name="FOREGROUND" value="595959" />
+          <option name="BACKGROUND" value="424242" />
         </value>
       </option>
       <option name="CONSOLE_ERROR_OUTPUT">
@@ -1442,27 +1475,32 @@
       </option>
       <option name="CONSOLE_GRAY_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="7A7A7A" />
+          <option name="FOREGROUND" value="808080" />
+          <option name="BACKGROUND" value="616161" />
         </value>
       </option>
       <option name="CONSOLE_GREEN_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="548C26" />
+          <option name="FOREGROUND" value="5C962C" />
+          <option name="BACKGROUND" value="39511F" />
         </value>
       </option>
       <option name="CONSOLE_GREEN_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="61AB11" />
+          <option name="FOREGROUND" value="4FC414" />
+          <option name="BACKGROUND" value="458500" />
         </value>
       </option>
       <option name="CONSOLE_MAGENTA_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="A575BA" />
+          <option name="FOREGROUND" value="A771BF" />
+          <option name="BACKGROUND" value="5C4069" />
         </value>
       </option>
       <option name="CONSOLE_MAGENTA_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="E55CE5" />
+          <option name="FOREGROUND" value="ED7EED" />
+          <option name="BACKGROUND" value="B247B2" />
         </value>
       </option>
       <option name="CONSOLE_NORMAL_OUTPUT">
@@ -1483,12 +1521,14 @@
       </option>
       <option name="CONSOLE_RED_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="DB5451" />
+          <option name="FOREGROUND" value="F0524F" />
+          <option name="BACKGROUND" value="772E2C" />
         </value>
       </option>
       <option name="CONSOLE_RED_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="FF5452" />
+          <option name="FOREGROUND" value="FF4050" />
+          <option name="BACKGROUND" value="B82421" />
         </value>
       </option>
       <option name="CONSOLE_SYSTEM_OUTPUT">
@@ -1499,16 +1539,24 @@
       <option name="CONSOLE_WHITE_OUTPUT">
         <value>
           <option name="FOREGROUND" value="FFFFFF" />
+          <option name="BACKGROUND" value="FFFFFF" />
         </value>
       </option>
       <option name="CONSOLE_YELLOW_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="A89022" />
+          <option name="FOREGROUND" value="A68A0D" />
+          <option name="BACKGROUND" value="5C4F17" />
         </value>
       </option>
       <option name="CONSOLE_YELLOW_BRIGHT_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="FFFF00" />
+          <option name="FOREGROUND" value="E5BF00" />
+          <option name="BACKGROUND" value="A87B00" />
+        </value>
+      </option>
+      <option name="TERMINAL_COMMAND_TO_RUN_USING_IDE">
+        <value>
+          <option name="BACKGROUND" value="40503C" />
         </value>
       </option>
       <option name="CSS.COLOR">
@@ -1976,6 +2024,17 @@
           <option name="BACKGROUND" value="305d78"/>
         </value>
       </option>
+      <option name="INLAY_DEFAULT">
+        <value>
+          <option name="FOREGROUND" value="787878"/>
+          <option name="BACKGROUND" value="3b3b3b"/>
+        </value>
+      </option>
+      <option name="INLAY_TEXT_WITHOUT_BACKGROUND">
+        <value>
+          <option name="FOREGROUND" value="787878"/>
+        </value>
+      </option>
       <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="b389c5" deuteranopia="828eba" protanopia="828eba"/>
@@ -2104,11 +2163,6 @@
       </option>
       <option name="PROPERTIES.VALID_STRING_ESCAPE">
         <value />
-      </option>
-      <option name="PY.BUILTIN_NAME">
-        <value>
-          <option name="FOREGROUND" value="8888c6" />
-        </value>
       </option>
       <option name="REGEXP.BRACES">
         <value>
@@ -2257,18 +2311,6 @@
         <value>
           <option name="FOREGROUND" value="9876aa" deuteranopia="828eba" protanopia="828eba"/>
           <option name="FONT_TYPE" value="2" />
-        </value>
-      </option>
-      <option name="TAPESTRY_COMPONENT_PARAMATER">
-        <value>
-          <option name="FOREGROUND" value="d0d0ff" />
-          <option name="FONT_TYPE" value="1" />
-        </value>
-      </option>
-      <option name="TAPESTRY_COMPONENT_TAG">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
-          <option name="FONT_TYPE" value="1" />
         </value>
       </option>
       <option name="TEMPLATE_VARIABLE_ATTRIBUTES">

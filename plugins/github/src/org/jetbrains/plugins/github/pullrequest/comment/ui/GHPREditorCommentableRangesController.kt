@@ -3,9 +3,9 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.diff.util.LineRange
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.util.ui.codereview.diff.DiffEditorGutterIconRendererFactory
-import com.intellij.util.ui.codereview.diff.EditorRangesController
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import com.intellij.collaboration.ui.codereview.diff.DiffEditorGutterIconRendererFactory
+import com.intellij.collaboration.ui.codereview.diff.EditorRangesController
+import com.intellij.collaboration.ui.SingleValueModel
 
 internal class GHPREditorCommentableRangesController(
   commentableRanges: SingleValueModel<List<LineRange>>,
@@ -14,7 +14,7 @@ internal class GHPREditorCommentableRangesController(
 ) : EditorRangesController(gutterIconRendererFactory, editor) {
 
   init {
-    commentableRanges.addAndInvokeValueChangedListener {
+    commentableRanges.addAndInvokeListener {
       for (range in commentableRanges.value) {
         markCommentableLines(range)
       }

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -12,6 +13,7 @@ import com.intellij.ui.MixedColorProducer;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,48 +22,97 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
-abstract class ScrollBarPainter implements RegionPainter<Float> {
+/**
+ * This is an internal implementation for drawing opaque and transparent scroll bars.
+ * It is public only to provide the ability to edit colors in the Settings/Preferences.
+ * Due to the fact that the colors are animated, the constants given in the class
+ * represent some key points for drawing scrollbars in different modes.
+ *
+ * @see com.intellij.openapi.options.colors.pages.GeneralColorsPage
+ */
+@ApiStatus.Internal
+public abstract class ScrollBarPainter implements RegionPainter<Float> {
   final Rectangle bounds = new Rectangle();
   final TwoWayAnimator animator;
 
-  private static final ColorKey BACKGROUND = key(0xFFF5F5F5, 0xFF3F4244, "ScrollBar.background");
+  /**
+   * The background of the JScrollBar component.
+   * It makes sense for opaque scroll bars only.
+   */
+  public static final ColorKey BACKGROUND = key(0xFFF5F5F5, 0xFF3F4244, "ScrollBar.background");
 
-  private static final ColorKey TRACK_OPAQUE_BACKGROUND
-    = SystemInfo.isMac ? key(0x00808080, 0x00808080, "ScrollBar.Mac.trackColor")
+  /**
+   * The scroll track background on opaque scroll bar.
+   */
+  public static final ColorKey TRACK_OPAQUE_BACKGROUND
+    = SystemInfoRt.isMac ? key(0x00808080, 0x00808080, "ScrollBar.Mac.trackColor")
                          : key(0x00808080, 0x00808080, "ScrollBar.trackColor");
-  private static final ColorKey TRACK_OPAQUE_HOVERED_BACKGROUND
-    = SystemInfo.isMac ? key(0x00808080, 0x00808080, "ScrollBar.Mac.hoverTrackColor")
+  /**
+   * The scroll track background on opaque scroll bar when it is hovered.
+   */
+  public static final ColorKey TRACK_OPAQUE_HOVERED_BACKGROUND
+    = SystemInfoRt.isMac ? key(0x00808080, 0x00808080, "ScrollBar.Mac.hoverTrackColor")
                          : key(0x00808080, 0x00808080, "ScrollBar.hoverTrackColor");
-  private static final ColorKey TRACK_BACKGROUND
-    = SystemInfo.isMac ? key(0x00808080, 0x00808080, "ScrollBar.Mac.Transparent.trackColor")
+  /**
+   * The scroll track background on transparent scroll bar.
+   */
+  public static final ColorKey TRACK_BACKGROUND
+    = SystemInfoRt.isMac ? key(0x00808080, 0x00808080, "ScrollBar.Mac.Transparent.trackColor")
                          : key(0x00808080, 0x00808080, "ScrollBar.Transparent.trackColor");
-  private static final ColorKey TRACK_HOVERED_BACKGROUND
-    = SystemInfo.isMac ? key(0x1A808080, 0x1A808080, "ScrollBar.Mac.Transparent.hoverTrackColor")
+  /**
+   * The scroll track background on transparent scroll bar when it is hovered.
+   */
+  public static final ColorKey TRACK_HOVERED_BACKGROUND
+    = SystemInfoRt.isMac ? key(0x1A808080, 0x1A808080, "ScrollBar.Mac.Transparent.hoverTrackColor")
                          : key(0x1A808080, 0x1A808080, "ScrollBar.Transparent.hoverTrackColor");
 
-  private static final ColorKey THUMB_OPAQUE_FOREGROUND
-    = SystemInfo.isMac ? key(0x33000000, 0x59262626, "ScrollBar.Mac.thumbBorderColor")
+  /**
+   * The scroll thumb border color on opaque scroll bar.
+   */
+  public static final ColorKey THUMB_OPAQUE_FOREGROUND
+    = SystemInfoRt.isMac ? key(0x33000000, 0x59262626, "ScrollBar.Mac.thumbBorderColor")
                          : key(0x33595959, 0x47383838, "ScrollBar.thumbBorderColor");
-  private static final ColorKey THUMB_OPAQUE_BACKGROUND
-    = SystemInfo.isMac ? key(0x33000000, 0x59808080, "ScrollBar.Mac.thumbColor")
+  /**
+   * The scroll thumb background on opaque scroll bar.
+   */
+  public static final ColorKey THUMB_OPAQUE_BACKGROUND
+    = SystemInfoRt.isMac ? key(0x33000000, 0x59808080, "ScrollBar.Mac.thumbColor")
                          : key(0x33737373, 0x47A6A6A6, "ScrollBar.thumbColor");
-  private static final ColorKey THUMB_OPAQUE_HOVERED_FOREGROUND
-    = SystemInfo.isMac ? key(0x80000000, 0x8C262626, "ScrollBar.Mac.hoverThumbBorderColor")
+  /**
+   * The scroll thumb border color on opaque scroll bar when it is hovered.
+   */
+  public static final ColorKey THUMB_OPAQUE_HOVERED_FOREGROUND
+    = SystemInfoRt.isMac ? key(0x80000000, 0x8C262626, "ScrollBar.Mac.hoverThumbBorderColor")
                          : key(0x47595959, 0x59383838, "ScrollBar.hoverThumbBorderColor");
-  private static final ColorKey THUMB_OPAQUE_HOVERED_BACKGROUND
-    = SystemInfo.isMac ? key(0x80000000, 0x8C808080, "ScrollBar.Mac.hoverThumbColor")
+  /**
+   * The scroll thumb background on opaque scroll bar when it is hovered.
+   */
+  public static final ColorKey THUMB_OPAQUE_HOVERED_BACKGROUND
+    = SystemInfoRt.isMac ? key(0x80000000, 0x8C808080, "ScrollBar.Mac.hoverThumbColor")
                          : key(0x47737373, 0x59A6A6A6, "ScrollBar.hoverThumbColor");
-  private static final ColorKey THUMB_FOREGROUND
-    = SystemInfo.isMac ? key(0x00000000, 0x00262626, "ScrollBar.Mac.Transparent.thumbBorderColor")
+  /**
+   * The scroll thumb border color on transparent scroll bar.
+   */
+  public static final ColorKey THUMB_FOREGROUND
+    = SystemInfoRt.isMac ? key(0x00000000, 0x00262626, "ScrollBar.Mac.Transparent.thumbBorderColor")
                          : key(0x33595959, 0x47383838, "ScrollBar.Transparent.thumbBorderColor");
-  private static final ColorKey THUMB_BACKGROUND
-    = SystemInfo.isMac ? key(0x00000000, 0x00808080, "ScrollBar.Mac.Transparent.thumbColor")
+  /**
+   * The scroll thumb background on transparent scroll bar.
+   */
+  public static final ColorKey THUMB_BACKGROUND
+    = SystemInfoRt.isMac ? key(0x00000000, 0x00808080, "ScrollBar.Mac.Transparent.thumbColor")
                          : key(0x33737373, 0x47A6A6A6, "ScrollBar.Transparent.thumbColor");
-  private static final ColorKey THUMB_HOVERED_FOREGROUND
-    = SystemInfo.isMac ? key(0x80000000, 0x8C262626, "ScrollBar.Mac.Transparent.hoverThumbBorderColor")
+  /**
+   * The scroll thumb border color on transparent scroll bar when it is hovered.
+   */
+  public static final ColorKey THUMB_HOVERED_FOREGROUND
+    = SystemInfoRt.isMac ? key(0x80000000, 0x8C262626, "ScrollBar.Mac.Transparent.hoverThumbBorderColor")
                          : key(0x47595959, 0x59383838, "ScrollBar.Transparent.hoverThumbBorderColor");
-  private static final ColorKey THUMB_HOVERED_BACKGROUND
-    = SystemInfo.isMac ? key(0x80000000, 0x8C808080, "ScrollBar.Mac.Transparent.hoverThumbColor")
+  /**
+   * The scroll thumb background on transparent scroll bar when it is hovered.
+   */
+  public static final ColorKey THUMB_HOVERED_BACKGROUND
+    = SystemInfoRt.isMac ? key(0x80000000, 0x8C808080, "ScrollBar.Mac.Transparent.hoverThumbColor")
                          : key(0x47737373, 0x59A6A6A6, "ScrollBar.Transparent.hoverThumbColor");
 
   private static final List<ColorKey> CONTRAST_ELEMENTS_KEYS = Arrays.asList(
@@ -75,15 +126,17 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
     THUMB_HOVERED_BACKGROUND
   );
 
-  private static final int LIGHT_ALPHA = SystemInfo.isMac ? 120 : 160;
-  private static final int DARK_ALPHA = SystemInfo.isMac ? 255 : 180;
+  private static final int LIGHT_ALPHA = SystemInfoRt.isMac ? 120 : 160;
+  private static final int DARK_ALPHA = SystemInfoRt.isMac ? 255 : 180;
 
   ScrollBarPainter(@NotNull Supplier<? extends Component> supplier) {
     animator = new TwoWayAnimator(getClass().getName(), 11, 150, 125, 300, 125) {
       @Override
-      void onValueUpdate() {
+      public void onValueUpdate() {
         Component component = supplier.get();
-        if (component != null) component.repaint();
+        if (component != null) {
+          component.repaint();
+        }
       }
     };
   }
@@ -98,8 +151,11 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
     Color color = EditorColorsUtil.getColor(component, key);
     assert color != null : "default color is not specified for " + key;
 
-    boolean useContrastScrollbars = UISettings.getShadowInstance().getUseContrastScrollbars();
-    if (useContrastScrollbars) color = updateTransparency(color, key);
+    boolean useContrastScrollbars = LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() &&
+                                    UISettings.getInstance().getUseContrastScrollbars();
+    if (useContrastScrollbars) {
+      color = updateTransparency(color, key);
+    }
 
     return color;
   }
@@ -119,18 +175,18 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
   }
 
   static Color getColor(@NotNull Supplier<? extends Component> supplier, @NotNull ColorKey key) {
-    return new JBColor(() -> getColor(supplier.get(), key));
+    return JBColor.lazy(() -> getColor(supplier.get(), key));
   }
 
   static Color getColor(@NotNull Supplier<? extends Component> supplier, @NotNull ColorKey transparent, @NotNull ColorKey opaque) {
-    return new JBColor(() -> {
+    return JBColor.lazy(() -> {
       Component component = supplier.get();
       return getColor(component, component != null && DefaultScrollBarUI.isOpaque(component) ? opaque : transparent);
     });
   }
 
   static void setBackground(@NotNull Component component) {
-    component.setBackground(new JBColor(() -> getColor(component, BACKGROUND)));
+    component.setBackground(JBColor.lazy(() -> getColor(component, BACKGROUND)));
   }
 
   static final class Track extends ScrollBarPainter {
@@ -154,7 +210,7 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
     }
   }
 
-  static final class Thumb extends ScrollBarPainter {
+  static class Thumb extends ScrollBarPainter {
     private final MixedColorProducer fillProducer;
     private final MixedColorProducer drawProducer;
 
@@ -177,11 +233,11 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
       double mixer = value == null ? 0 : value.doubleValue();
       Color fill = fillProducer.produce(mixer);
       Color draw = drawProducer.produce(mixer);
-      if (fill.getRGB() == draw.getRGB()) draw = null; // without border
+      if (ignoreBorder() || fill.getRGB() == draw.getRGB()) draw = null; // without border
 
       int arc = 0;
-      if (SystemInfo.isMac) {
-        int margin = draw == null ? 2 : 1;
+      if (SystemInfoRt.isMac) {
+        int margin = macMargin(draw != null);
         x += margin;
         y += margin;
         width -= margin + margin;
@@ -189,6 +245,30 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
         arc = Math.min(width, height);
       }
       RectanglePainter.paint(g, x, y, width, height, arc, fill, draw);
+    }
+
+    protected int macMargin(boolean withBorder) {
+      return withBorder ? 1 : 2;
+    }
+
+    protected boolean ignoreBorder() {
+      return false;
+    }
+  }
+
+  static final class ThinScrollBarThumb extends Thumb {
+    ThinScrollBarThumb(@NotNull Supplier<? extends Component> supplier, boolean opaque) {
+      super(supplier, opaque);
+    }
+
+    @Override
+    protected int macMargin(boolean withBorder) {
+      return 0;
+    }
+
+    @Override
+    protected boolean ignoreBorder() {
+      return true;
     }
   }
 }

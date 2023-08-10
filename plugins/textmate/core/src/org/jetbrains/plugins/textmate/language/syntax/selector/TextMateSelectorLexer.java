@@ -31,7 +31,7 @@ public final class TextMateSelectorLexer {
         currentSelector = addPendingToken(result, currentSelector);
         result.add(TextMateSelectorToken.HAT);
       }
-      else if (c == '-') {
+      else if (c == '-' && currentSelector.isEmpty()) {
         currentSelector = addPendingToken(result, currentSelector);
         result.add(TextMateSelectorToken.MINUS);
       }
@@ -46,7 +46,7 @@ public final class TextMateSelectorLexer {
           result.add(new PriorityToken(TextMateWeigh.Priority.LOW));
         }
         else if (c == 'L') {
-          result.add(new PriorityToken(TextMateWeigh.Priority.LOW));
+          result.add(new PriorityToken(TextMateWeigh.Priority.HIGH));
         }
       }
       else {
@@ -59,7 +59,7 @@ public final class TextMateSelectorLexer {
 
   @NotNull
   private static StringBuilder addPendingToken(ArrayList<TextMateSelectorToken> result, StringBuilder currentSelector) {
-    if (currentSelector.length() > 0) {
+    if (!currentSelector.isEmpty()) {
       result.add(new SelectorToken(currentSelector.toString()));
       return new StringBuilder();
     }

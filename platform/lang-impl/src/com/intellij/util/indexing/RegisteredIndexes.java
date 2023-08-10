@@ -1,15 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.SmartList;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashSet;
 import java.util.List;
@@ -18,6 +19,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled;
 
 public final class RegisteredIndexes {
   @NotNull
@@ -44,17 +47,13 @@ public final class RegisteredIndexes {
 
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
 
-  RegisteredIndexes(@NotNull FileDocumentManager fileDocumentManager,
-                    @NotNull FileBasedIndexImpl fileBasedIndex) {
+  private volatile RequiredIndexesEvaluator myRequiredIndexesEvaluator;
+
+  RegisteredIndexes(@NotNull FileDocumentManager fileDocumentManager, @NotNull FileBasedIndexImpl fileBasedIndex) {
     myFileDocumentManager = fileDocumentManager;
     myFileBasedIndex = fileBasedIndex;
-    myStateFuture = IndexDataInitializer.submitGenesisTask(new FileBasedIndexDataInitialization(fileBasedIndex, this));
-
-    if (!IndexDataInitializer.ourDoAsyncIndicesInitialization) {
-      ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        waitUntilIndicesAreInitialized();
-      });
-    }
+    myStateFuture = IndexDataInitializer.submitGenesisTask(fileBasedIndex.coroutineScope,
+                                                           new FileBasedIndexDataInitialization(fileBasedIndex, this));
   }
 
   boolean performShutdown() {
@@ -73,7 +72,10 @@ public final class RegisteredIndexes {
     IndexConfiguration state = myState; // memory barrier
     if (state == null) {
       try {
-        myState = state = myStateFuture.get();
+        myState = state = awaitWithCheckCanceled(myStateFuture);
+      }
+      catch (ProcessCanceledException ex) {
+        throw ex;
       }
       catch (Throwable t) {
         throw new RuntimeException(t);
@@ -83,14 +85,12 @@ public final class RegisteredIndexes {
   }
 
   void waitUntilAllIndicesAreInitialized() {
-    try {
-      waitUntilIndicesAreInitialized();
-      ProgressIndicatorUtils.awaitWithCheckCanceled(myAllIndicesInitializedFuture);
-    } catch (Throwable ignore) {}
+    waitUntilIndicesAreInitialized();
+    awaitWithCheckCanceled(myAllIndicesInitializedFuture);
   }
 
   void waitUntilIndicesAreInitialized() {
-    ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
+    awaitWithCheckCanceled((Future<?>)myStateFuture);
   }
 
   void extensionsDataWasLoaded() {
@@ -99,10 +99,15 @@ public final class RegisteredIndexes {
 
   void markInitialized() {
     myInitialized = true;
+    myRequiredIndexesEvaluator = new RequiredIndexesEvaluator(this);
+  }
+
+  void resetHints() {
+    myRequiredIndexesEvaluator = new RequiredIndexesEvaluator(this);
   }
 
   void ensureLoadedIndexesUpToDate() {
-    myAllIndicesInitializedFuture = IndexDataInitializer.submitGenesisTask(() -> {
+    myAllIndicesInitializedFuture = IndexDataInitializer.submitGenesisTask(myFileBasedIndex.coroutineScope, () -> {
       if (!myShutdownPerformed.get()) {
         myFileBasedIndex.ensureStaleIdsDeleted();
         myFileBasedIndex.getChangedFilesCollector().ensureUpToDateAsync();
@@ -115,6 +120,10 @@ public final class RegisteredIndexes {
     ID<?, ?> name = extension.getName();
     if (extension.dependsOnFileContent()) {
       myUnsavedDataUpdateTasks.put(name, new DocumentUpdateTask(name));
+    }
+
+    if (extension.getName() == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
+      return;
     }
 
     if (!extension.dependsOnFileContent()) {
@@ -178,5 +187,16 @@ public final class RegisteredIndexes {
     void doProcess(Document document, Project project) {
       myFileBasedIndex.indexUnsavedDocument(document, myIndexId, project, myFileDocumentManager.getFile(document));
     }
+  }
+
+  @NotNull
+  List<ID<?, ?>> getRequiredIndexes(@NotNull IndexedFile indexedFile) {
+    return myRequiredIndexesEvaluator.getRequiredIndexes(indexedFile);
+  }
+
+  @TestOnly
+  @NotNull
+  public Pair<List<ID<?, ?>>, List<ID<?, ?>>> getRequiredIndexesForFileType(@NotNull FileType fileType) {
+    return myRequiredIndexesEvaluator.getRequiredIndexesForFileType(fileType);
   }
 }

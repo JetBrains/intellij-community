@@ -1,8 +1,5 @@
-from __future__ import print_function
 import sys
 import os
-import subprocess
-import traceback
 
 
 def process_command_line(argv):
@@ -11,6 +8,7 @@ def process_command_line(argv):
     setup['pid'] = 0
     setup['host'] = '127.0.0.1'
     setup['protocol'] = ''
+    setup['debug-mode'] = ''
 
     i = 0
     while i < len(argv):
@@ -34,6 +32,11 @@ def process_command_line(argv):
             setup['protocol'] = argv[i]
             del argv[i]
 
+        elif argv[i] == '--debug-mode':
+            del argv[i]
+            setup['debug-mode'] = argv[i]
+            del argv[i]
+
     if not setup['pid']:
         sys.stderr.write('Expected --pid to be passed.\n')
         sys.exit(1)
@@ -41,17 +44,7 @@ def process_command_line(argv):
 
 
 def main(setup):
-    if sys.platform == 'linux':
-        try:
-            output = subprocess.check_output(['sysctl', 'kernel.yama.ptrace_scope'])
-            if output.decode().strip()[-1] != '0':
-                print("WARNING: The 'kernel.yama.ptrace_scope' parameter value is not 0, attach to process may not work correctly.\n"
-                      "         Please run 'sudo sysctl kernel.yama.ptrace_scope=0' to change the value temporary\n"
-                      "         or add the 'kernel.yama.ptrace_scope = 0' line to /etc/sysctl.d/10-ptrace.conf to set it permanently.",
-                      file=sys.stderr)
-        except Exception:
-            traceback.print_exc()
-
+    sys.path.append(os.path.dirname(__file__))
     import add_code_to_python_process
     show_debug_info_on_target_process = 0
 
@@ -64,7 +57,7 @@ def main(setup):
 sys.path.append("%(pythonpath)s");
 sys.path.append("%(pythonpath2)s");
 import attach_script;
-attach_script.attach(port=%(port)s, host="%(host)s", protocol="%(protocol)s");
+attach_script.attach(port=%(port)s, host="%(host)s", protocol="%(protocol)s", debug_mode="%(debug-mode)s");
 '''.replace('\r\n', '').replace('\r', '').replace('\n', '')
     else:
         setup['pythonpath'] = pydevd_dirname
@@ -74,7 +67,7 @@ attach_script.attach(port=%(port)s, host="%(host)s", protocol="%(protocol)s");
 sys.path.append(\\\"%(pythonpath)s\\\");
 sys.path.append(\\\"%(pythonpath2)s\\\");
 import attach_script;
-attach_script.attach(port=%(port)s, host=\\\"%(host)s\\\", protocol=\\\"%(protocol)s\\\");
+attach_script.attach(port=%(port)s, host=\\\"%(host)s\\\", protocol=\\\"%(protocol)s\\\", debug_mode=\\\"%(debug-mode)s\\\");
 '''.replace('\r\n', '').replace('\r', '').replace('\n', '')
 
     python_code = python_code % setup

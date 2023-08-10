@@ -20,6 +20,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
+@Deprecated(forRemoval = true)
 public class FavoritesListNode extends AbstractTreeNode<String> {
   private static final Logger LOGGER = Logger.getInstance(FavoritesListNode.class);
   private final String myDescription;

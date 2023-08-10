@@ -16,7 +16,6 @@
 package org.jetbrains.jps.model.serialization.artifact;
 
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementChildRole;
@@ -39,11 +38,4 @@ public abstract class JpsArtifactExtensionSerializer<E extends JpsElement> {
   }
 
   public abstract E loadExtension(@Nullable Element optionsTag);
-
-  /**
-   * @deprecated the build process doesn't save project configuration so there is no need to implement this method, it isn't called by the platform
-   */
-  @Deprecated
-  public void saveExtension(@NotNull E extension, @NotNull Element optionsTag) {
-  }
 }

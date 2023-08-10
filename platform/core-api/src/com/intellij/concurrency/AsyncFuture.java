@@ -21,8 +21,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
 /**
- * Author: dmitrylomov
+ * @deprecated Use coroutines or CompletableFuture.
  */
+@Deprecated
 public interface AsyncFuture<V> extends Future<V> {
   void addConsumer(@NotNull Executor executor, @NotNull ResultConsumer<? super V> consumer);
 }

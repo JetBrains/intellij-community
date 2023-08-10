@@ -20,6 +20,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -33,7 +34,7 @@ import java.util.Iterator;
 
 import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
 
-public class SelectAllOccurrencesAction extends EditorAction {
+public class SelectAllOccurrencesAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   protected SelectAllOccurrencesAction() {
     super(new Handler());
   }
@@ -41,6 +42,7 @@ public class SelectAllOccurrencesAction extends EditorAction {
   private static class Handler extends SelectOccurrencesActionHandler {
     @Override
     public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+
       return editor.getProject() != null
              && editor.getCaretModel().supportsMultipleCarets()
              && !SEARCH_DISABLED.get(editor, false);

@@ -23,9 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 
-/**
- * @author ilyas
- */
 public interface GrClassInitializer extends GrMember, PsiClassInitializer, GrMembersDeclaration {
 
   GrClassInitializer[] EMPTY_ARRAY = new GrClassInitializer[0];

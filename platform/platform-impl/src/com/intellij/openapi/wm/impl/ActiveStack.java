@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.toolWindow.ToolWindowEntry;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,27 +11,23 @@ import org.jetbrains.annotations.NotNull;
  * after the another tool window was closed. This stack is cleared every time you active the editor.
  * 2. Permanent stack. It is the same as the first one, but it's not cleared when editor is being
  * activated. It used to provide id of last active tool window.
- *
- * @author Vladimir Kondratyev
  */
 final class ActiveStack {
   /**
    * Contains {@code id}s of tool window that were activated. This stack
    * is cleared each time when editor is being activated.
    */
-  private final Stack<ToolWindowEntry> myStack;
+  private final Stack<ToolWindowEntry> myStack = new Stack<>();
   /**
    * This stack is not cleared when editor is being activated. It means its "long"
    * persistence.
    */
-  private final Stack<ToolWindowEntry> myPersistentStack;
+  private final Stack<ToolWindowEntry> myPersistentStack = new Stack<>();
 
   /**
    * Creates enabled window stack.
    */
   ActiveStack() {
-    myStack = new Stack<>();
-    myPersistentStack = new Stack<>();
   }
 
   /**
@@ -40,19 +37,7 @@ final class ActiveStack {
     myStack.clear();
   }
 
-  /**
-   * Return whether the stack of active (not persistent) {@code id}s is empty or not.
-   */
-  boolean isEmpty() {
-    return myStack.isEmpty();
-  }
-
-  @NotNull
-  ToolWindowEntry pop() {
-    return myStack.pop();
-  }
-
-  int getSize() {
+  private int getSize() {
     return myStack.size();
   }
 

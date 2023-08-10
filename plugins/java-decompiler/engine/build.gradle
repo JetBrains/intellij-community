@@ -2,8 +2,8 @@
 apply plugin: 'java'
 
 compileJava {
-  sourceCompatibility '11'
-  targetCompatibility '11'
+  sourceCompatibility '17'
+  targetCompatibility '17'
 }
 
 sourceSets {
@@ -11,14 +11,15 @@ sourceSets {
   test.java.srcDirs 'test'
 }
 
-repositories { jcenter() }
+repositories { mavenCentral() }
 dependencies {
-  testCompile 'junit:junit:4.12'
-  testCompile 'org.assertj:assertj-core:3.12.2'
+  implementation 'org.jetbrains:annotations:20.1.0'
+  testImplementation 'junit:junit:4.12'
+  testImplementation 'org.assertj:assertj-core:3.23.1'
 }
 
 jar {
-  archiveName 'fernflower.jar'
+  archiveFileName = 'fernflower.jar'
   manifest {
     attributes 'Main-Class': 'org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler'
   }

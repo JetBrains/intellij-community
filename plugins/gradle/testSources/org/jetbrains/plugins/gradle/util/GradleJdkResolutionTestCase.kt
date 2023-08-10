@@ -8,9 +8,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProviderImpl
 import com.intellij.openapi.util.io.FileUtil
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.properties.*
+import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import java.io.File
 import java.util.*
 
@@ -35,7 +36,7 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
     userHome = createUniqueTempDirectory()
     userCache = FileUtil.join(userHome, GRADLE_CACHE_DIR_NAME)
 
-    gradleVersion = GradleVersion.version("5.2.1")
+    gradleVersion = GradleVersion.version("5.0")
 
     earliestSdk = TestSdkGenerator.createNextSdk("1.8")
     latestSdk = TestSdkGenerator.createNextSdk("11")
@@ -95,34 +96,22 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
   }
 
   fun assertGradleProperties(java: TestSdk?) {
-    assertEquals(java?.homePath, getGradleJavaHome(externalProjectPath))
+    assertEquals(java?.homePath, getJavaHome(project, externalProjectPath, GradlePropertiesFile))
   }
 
-  fun assertSuggestedGradleVersionFor(gradleVersion: GradleVersion?, javaVersionString: String) {
-    val testJdk = TestSdkGenerator.createNextSdk(javaVersionString)
-    withRegisteredSdk(testJdk, isProjectSdk = true) {
-      val actualGradleVersion = suggestGradleVersion(project)
-      assertEquals("Suggested incorrect grade version for $testJdk", gradleVersion, actualGradleVersion)
-      if (actualGradleVersion == null) return@withRegisteredSdk
-      val isSupported = isSupported(actualGradleVersion, javaVersionString)
-      assertTrue("Suggested incompatible gradle version $actualGradleVersion for $testJdk", isSupported)
-    }
-  }
-
-  fun assertSuggestedGradleVersionFor(gradleVersionString: String, javaVersionString: String) {
-    val gradleVersion = GradleVersion.version(gradleVersionString)
-    assertSuggestedGradleVersionFor(gradleVersion, javaVersionString)
+  fun assertGradleLocalProperties(java: TestSdk?) {
+    assertEquals(java?.homePath, getJavaHome(project, externalProjectPath, GradleLocalPropertiesFile))
   }
 
   fun withServiceGradleUserHome(action: () -> Unit) {
-    val systemSettings = GradleSystemSettings.getInstance()
-    val serviceDirectoryPath = systemSettings.serviceDirectoryPath
-    systemSettings.serviceDirectoryPath = gradleUserHome
+    val localSettings = GradleLocalSettings.getInstance(project)
+    val localGradleUserHome = localSettings.gradleUserHome
+    localSettings.gradleUserHome = gradleUserHome
     try {
       action()
     }
     finally {
-      systemSettings.serviceDirectoryPath = serviceDirectoryPath
+      localSettings.gradleUserHome = localGradleUserHome
     }
   }
 
@@ -134,9 +123,18 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
     }
 
     fun withGradleProperties(parentDirectory: String, java: TestSdk?, action: () -> Unit) {
-      val propertiesPath = FileUtil.join(parentDirectory, PROPERTIES_FILE_NAME)
+      val propertiesPath = FileUtil.join(parentDirectory, GRADLE_PROPERTIES_FILE_NAME)
       createProperties(propertiesPath) {
         java?.let { setProperty(GRADLE_JAVA_HOME_PROPERTY, it.homePath) }
+      }
+      action()
+      FileUtil.delete(File(propertiesPath))
+    }
+
+    fun withGradleLocalProperties(parentDirectory: String, java: TestSdk?, action: () -> Unit) {
+      val propertiesPath = FileUtil.join(parentDirectory, GRADLE_CACHE_DIR_NAME, GRADLE_LOCAL_PROPERTIES_FILE_NAME)
+      createProperties(propertiesPath) {
+        java?.let { setProperty(GRADLE_LOCAL_JAVA_HOME_PROPERTY, it.homePath) }
       }
       action()
       FileUtil.delete(File(propertiesPath))

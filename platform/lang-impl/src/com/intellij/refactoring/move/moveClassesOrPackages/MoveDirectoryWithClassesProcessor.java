@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.application.ReadAction;
@@ -52,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor {
   private final PsiDirectory[] myDirectories;
@@ -113,12 +100,12 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   public UsageInfo @NotNull [] findUsages() {
     final List<UsageInfo> usages = new ArrayList<>();
     for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-      helper.findUsages(getPsiFiles(), myDirectories, usages, mySearchInComments, mySearchInNonJavaFiles, myProject);
+      helper.findUsages(myFilesToMove, myDirectories, usages, mySearchInComments, mySearchInNonJavaFiles, myProject);
     }
     return UsageViewUtil.removeDuplicatedUsages(usages.toArray(UsageInfo.EMPTY_ARRAY));
   }
 
-  private void collectConflicts(@NotNull MultiMap<PsiElement, String> conflicts,
+  private void collectConflicts(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                 @NotNull Ref<UsageInfo[]> refUsages) {
     for (VirtualFile vFile : myFilesToMove.keySet()) {
       PsiFile file = myManager.findFile(vFile);
@@ -361,6 +348,26 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       if (myTargetDirectory != null) {
         MoveFilesOrDirectoriesUtil.checkMove(psiFile, myTargetDirectory);
       }
+    }
+
+    @NotNull
+    public PsiDirectory getRootDirectory() {
+      if (myTargetDirectory == null) {
+        return myParentDirectory.getRootDirectory();
+      }
+      return myTargetDirectory;
+    }
+
+    @NotNull
+    public String getRelativePathFromRoot() {
+      if (myTargetDirectory != null) {
+        return "";
+      }
+      String pathFromRoot = myParentDirectory.getRelativePathFromRoot();
+      if (pathFromRoot.isEmpty()) {
+        return myRelativePath;
+      }
+      return myRelativePath + "/" + pathFromRoot;
     }
   }
 }

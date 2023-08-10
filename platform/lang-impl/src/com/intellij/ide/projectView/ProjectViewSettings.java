@@ -15,6 +15,11 @@ public interface ProjectViewSettings extends ViewSettings {
     return false;
   }
 
+  @NotNull
+  default NodeSortKey getSortKey() {
+    return NodeSortKey.BY_NAME;
+  }
+
   /**
    * If {@code true} then {@link com.intellij.ide.projectView.impl.NestingTreeStructureProvider} will modify the tree presentation
    * according to the rules managed by {@link com.intellij.ide.projectView.impl.ProjectViewFileNestingService}: some peer files will be
@@ -112,6 +117,12 @@ public interface ProjectViewSettings extends ViewSettings {
     }
 
     @Override
+    public @NotNull NodeSortKey getSortKey() {
+      ProjectView view = getProjectView();
+      return view != null ? view.getSortKey(getPaneID(view)) : NodeSortKey.BY_NAME;
+    }
+
+    @Override
     public boolean isShowMembers() {
       ProjectView view = getProjectView();
       return view != null && view.isShowMembers(getPaneID(view));
@@ -121,6 +132,12 @@ public interface ProjectViewSettings extends ViewSettings {
     public boolean isShowModules() {
       ProjectView view = getProjectView();
       return view != null && view.isShowModules(getPaneID(view));
+    }
+
+    @Override
+    public boolean isShowScratchesAndConsoles() {
+      ProjectView view = getProjectView();
+      return view != null && view.isShowScratchesAndConsoles(getPaneID(view));
     }
 
     @Override

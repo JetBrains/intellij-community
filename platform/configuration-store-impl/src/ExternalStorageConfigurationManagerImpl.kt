@@ -1,14 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.util.xmlb.annotations.Property
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 @Property(style = Property.Style.ATTRIBUTE)
 class ExternalStorageConfiguration : BaseState() {
@@ -20,7 +24,8 @@ class ExternalStorageConfiguration : BaseState() {
  * It shouldn't be used directly, its interface [ExternalStorageConfigurationManager] should be used instead.
  */
 @State(name = "ExternalStorageConfigurationManager")
-internal class ExternalStorageConfigurationManagerImpl(private val project: Project) : SimplePersistentStateComponent<ExternalStorageConfiguration>(ExternalStorageConfiguration()), ExternalStorageConfigurationManager {
+internal class ExternalStorageConfigurationManagerImpl(private val project: Project, private val coroutineScope: CoroutineScope)
+  : SimplePersistentStateComponent<ExternalStorageConfiguration>(ExternalStorageConfiguration()), ExternalStorageConfigurationManager {
   override fun isEnabled(): Boolean = state.enabled
 
   /**
@@ -28,20 +33,41 @@ internal class ExternalStorageConfigurationManagerImpl(private val project: Proj
    */
   override fun setEnabled(value: Boolean) {
     state.enabled = value
-    if (WorkspaceModel.isEnabled) {
-      ApplicationManager.getApplication().invokeAndWait(Runnable {
-        runWriteAction {
-          WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-            val entitiesMap = updater.entitiesBySource { it is JpsImportedEntitySource && it.storedExternally != value }
-            entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatMap { entities -> entities.asSequence() } }.forEach { entity ->
-              val source = entity.entitySource
-              if (source is JpsImportedEntitySource) {
-                updater.changeSource(entity, JpsImportedEntitySource(source.internalFile, source.externalSystemId, value))
-              }
-            }
+    if (project.isDefault) {
+      return
+    }
+    val app = ApplicationManager.getApplication()
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    app.invokeAndWait { app.runWriteAction { updateEntitySource(workspaceModel) } }
+  }
+
+  override fun loadState(state: ExternalStorageConfiguration) {
+    super.loadState(state)
+
+    if (project.isDefault) {
+      return
+    }
+
+    coroutineScope.launch {
+      val workspaceModel = project.serviceAsync<WorkspaceModel>()
+      writeAction {
+        updateEntitySource(workspaceModel)
+      }
+    }
+  }
+
+  private fun updateEntitySource(workspaceModel: WorkspaceModel) {
+    val value = state.enabled
+    workspaceModel.updateProjectModel("Change entity sources to externally imported") { updater ->
+      val entitiesMap = updater.entitiesBySource { it is JpsImportedEntitySource && it.storedExternally != value }
+      entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatMap { entities -> entities.asSequence() } }.forEach { entity ->
+        val source = entity.entitySource
+        if (source is JpsImportedEntitySource) {
+          updater.modifyEntity(WorkspaceEntity.Builder::class.java, entity) {
+            this.entitySource = JpsImportedEntitySource(source.internalFile, source.externalSystemId, value)
           }
         }
-      })
+      }
     }
   }
 }

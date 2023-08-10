@@ -214,8 +214,7 @@ public final class GroovyIntroduceParameterMethodUsagesProcessor implements Intr
 
   @Override
   public boolean processChangeMethodSignature(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
-    if (!(usage.getElement() instanceof GrMethod) || !isGroovyUsage(usage)) return true;
-    GrMethod method = (GrMethod)usage.getElement();
+    if (!(usage.getElement() instanceof GrMethod method) || !isGroovyUsage(usage)) return true;
 
     final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(data.getParameterName(), method.getBlock());
     final MethodJavaDocHelper javaDocHelper = new MethodJavaDocHelper(method);
@@ -255,7 +254,7 @@ public final class GroovyIntroduceParameterMethodUsagesProcessor implements Intr
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
     final String typeText =
-      forcedType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || forcedType == PsiType.NULL || PsiType.VOID.equals(forcedType)
+      forcedType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || forcedType == PsiTypes.nullType() || PsiTypes.voidType().equals(forcedType)
       ? null
       : forcedType.getCanonicalText();
 
@@ -291,8 +290,7 @@ public final class GroovyIntroduceParameterMethodUsagesProcessor implements Intr
 
   @Override
   public boolean processAddDefaultConstructor(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) {
-    if (!(usage.getElement() instanceof PsiClass) || !isGroovyUsage(usage)) return true;
-    PsiClass aClass = (PsiClass)usage.getElement();
+    if (!(usage.getElement() instanceof PsiClass aClass) || !isGroovyUsage(usage)) return true;
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(data.getProject());
     GrMethod constructor =
       factory.createConstructorFromText(aClass.getName(), ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY, "{}");
@@ -304,8 +302,7 @@ public final class GroovyIntroduceParameterMethodUsagesProcessor implements Intr
 
   @Override
   public boolean processAddSuperCall(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
-    if (!(usage.getElement() instanceof GrMethod) || !isGroovyUsage(usage)) return true;
-    GrMethod constructor = (GrMethod)usage.getElement();
+    if (!(usage.getElement() instanceof GrMethod constructor) || !isGroovyUsage(usage)) return true;
 
     if (!constructor.isConstructor()) return true;
 

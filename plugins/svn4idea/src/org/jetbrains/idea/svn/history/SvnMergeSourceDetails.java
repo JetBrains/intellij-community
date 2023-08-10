@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ModalityState;
@@ -58,7 +58,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
   }
 
   public static void showMe(final Project project, final SvnFileRevision revision, final VirtualFile file) {
-    if (ModalityState.NON_MODAL.equals(ModalityState.current())) {
+    if (ModalityState.nonModal().equals(ModalityState.current())) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     final ContentManager contentManager = toolWindow.getContentManager();
 
@@ -66,7 +66,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
     // TODO: Temporary memory leak fix - rewrite this part not to create dialog if only createCenterPanel(), but not show() is invoked
     Disposer.register(project, dialog.getDisposable());
 
-    Content content = ContentFactory.SERVICE.getInstance().createContent(dialog.createCenterPanel(),
+    Content content = ContentFactory.getInstance().createContent(dialog.createCenterPanel(),
         SvnBundle.message("merge.source.details.title", (file == null) ? revision.getURL().toDecodedString() : file.getName(), revision.getRevisionNumber().asString()), true);
     ContentsUtil.addOrReplaceContent(contentManager, content, true);
 
@@ -102,7 +102,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
     private final static int ourMaxWidth = 100;
 
     @Override
-    public void customizeCellRenderer(final JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       final Object value,
                                       final boolean selected,
                                       final boolean expanded,

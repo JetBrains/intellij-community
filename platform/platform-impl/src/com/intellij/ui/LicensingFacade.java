@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.PermanentInstallationID;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,17 +12,19 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 public final class LicensingFacade {
   public String licensedTo;
-  public Supplier<List<String>> restrictions;
+  @NlsSafe
+  public String licenseeEmail;
+  public List<String> restrictions;
   public boolean isEvaluation;
   public Date expirationDate;
   public Date perpetualFallbackDate;
   public Map<String, Date> expirationDates;
   public Map<String, String> confirmationStamps;
   public String metadata;
+  public static volatile boolean isUnusedSignalled;
 
   public volatile static LicensingFacade INSTANCE;
 
@@ -34,9 +38,16 @@ public final class LicensingFacade {
     return licensedTo;
   }
 
+  @NlsSafe
+  @Nullable
+  public String getLicenseeEmail() {
+    return licenseeEmail;
+  }
+
   @NotNull
   public List<String> getLicenseRestrictionsMessages() {
-    return restrictions == null ? Collections.emptyList() : Collections.unmodifiableList(restrictions.get());
+    final List<String> result = restrictions;
+    return result != null? result : Collections.emptyList();
   }
 
   public boolean isEvaluationLicense() {
@@ -44,11 +55,13 @@ public final class LicensingFacade {
   }
 
   public boolean isApplicableForProduct(@NotNull Date releaseDate) {
-    return isPerpetualForProduct(releaseDate) || (expirationDate == null || releaseDate.before(expirationDate));
+    final Date expDate = expirationDate;
+    return isPerpetualForProduct(releaseDate) || (expDate == null || releaseDate.before(expDate));
   }
 
   public boolean isPerpetualForProduct(@NotNull Date releaseDate) {
-    return perpetualFallbackDate != null && releaseDate.before(perpetualFallbackDate);
+    final Date result = perpetualFallbackDate;
+    return result != null && releaseDate.before(result);
   }
 
   /**
@@ -67,11 +80,11 @@ public final class LicensingFacade {
    */
   @Nullable
   public Date getExpirationDate(String productCode) {
-    return expirationDates == null ? null : expirationDates.get(productCode);
+    final Map<String, Date> result = expirationDates;
+    return result != null? result.get(productCode) : null;
   }
 
   /**
-   * @param productCode
    * @return a "confirmation stamp" string describing the license obtained by the licensing subsystem for the product with the given productCode.
    *  returns null, if no license is currently obtained for the product.
    *
@@ -94,10 +107,30 @@ public final class LicensingFacade {
    */
   @Nullable
   public String getConfirmationStamp(String productCode) {
-    return confirmationStamps == null? null : confirmationStamps.get(productCode);
+    final Map<String, String> result = confirmationStamps;
+    return result != null? result.get(productCode) : null;
   }
 
-  public boolean isEA2Product(@NotNull String productCodeOrPluginId) {
-    return ArrayUtil.contains(productCodeOrPluginId, "DPN", "DC", "DPA", "PDB", "PWS", "PGO", "PPS", "PPC", "PRB", "PSW", "Pythonid");
+  private static @NotNull Gson createGson() {
+    return new GsonBuilder().setDateFormat("yyyyMMdd").create();
   }
+
+  public String toJson() {
+    return createGson().toJson(this);
+  }
+
+  @Nullable
+  public static LicensingFacade fromJson(String json) {
+    try {
+      return createGson().fromJson(json, LicensingFacade.class);
+    }
+    catch (Throwable e) {
+      return null;
+    }
+  }
+
+  public static void signalUnused(boolean value) {
+    isUnusedSignalled = value;
+  }
+
 }

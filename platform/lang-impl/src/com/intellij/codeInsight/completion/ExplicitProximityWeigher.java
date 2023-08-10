@@ -18,14 +18,11 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public class ExplicitProximityWeigher extends CompletionWeigher {
 
   @Override
   public Integer weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
-    PrioritizedLookupElement prioritized = item.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
+    PrioritizedLookupElement<?> prioritized = item.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
     return prioritized != null ? prioritized.getExplicitProximity() : 0;
   }
 }

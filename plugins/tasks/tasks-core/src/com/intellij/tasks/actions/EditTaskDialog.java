@@ -28,6 +28,7 @@ import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,6 @@ public class EditTaskDialog extends DialogWrapper {
     myTask = task;
     setTitle(TaskBundle.message("dialog.title.edit.task.choice", task.getPresentableId(), task.isIssue() ? 0 : 1));
 
-//    mySummary.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, "");
     mySummary.setText(task.getSummary());
 
     AbstractVcs vcs = TaskManager.getManager(project).getActiveVcs();
@@ -112,6 +112,8 @@ public class EditTaskDialog extends DialogWrapper {
         }
       }
     }
+    ComboboxSpeedSearch.installOn(myBranch);
+    ComboboxSpeedSearch.installOn(myChangelist);
     init();
   }
 

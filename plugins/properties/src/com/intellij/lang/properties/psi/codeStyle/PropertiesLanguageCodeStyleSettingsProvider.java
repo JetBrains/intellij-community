@@ -27,14 +27,14 @@ final class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeStyl
       }
 
       @Override
-      protected CodeStyleAbstractPanel createPanel(CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(@NotNull CodeStyleSettings settings) {
         return new PropertiesCodeStyleSettingsPanel(settings);
       }
     };
   }
 
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new PropertiesCodeStyleSettings(settings);
   }
 
@@ -60,10 +60,12 @@ final class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeStyl
 
   @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
-    return "key1=value\n" +
-           "some_key=some_value\n\n" +
-           "#commentaries\n" +
-           "last.key=some text here";
+    return """
+      key1=value
+      some_key=some_value
+
+      #commentaries
+      last.key=some text here""";
   }
 
   @Nullable

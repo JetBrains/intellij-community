@@ -44,7 +44,7 @@ public final class SPIFileType extends LanguageFileType implements FileTypeIdent
   @NotNull
   @Override
   public String getDescription() {
-    return JavaBundle.message("spi.file.type.description");
+    return JavaBundle.message("filetype.spi.description");
   }
 
   @NotNull
@@ -54,7 +54,7 @@ public final class SPIFileType extends LanguageFileType implements FileTypeIdent
   }
 
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return AllIcons.FileTypes.Text;
   }
 

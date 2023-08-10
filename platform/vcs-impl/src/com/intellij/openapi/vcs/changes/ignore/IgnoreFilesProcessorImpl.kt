@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ignore
 
 import com.intellij.openapi.Disposable
@@ -23,11 +23,13 @@ import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 private val LOG = logger<IgnoreFilesProcessorImpl>()
 
+/**
+ * Automatically generate or update .ignore files basing on [IgnoredFileProvider] extension point.
+ */
 class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, private val parentDisposable: Disposable)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), AsyncVfsEventsListener, ChangeListListener {
 
@@ -46,19 +48,20 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
     }
   }
 
-  override fun changeListUpdateDone() {
+  override fun unchangedFileStatusChanged(upToDate: Boolean) {
+    if (!upToDate) return
     if (ApplicationManager.getApplication().isUnitTestMode) return
 
-    val files = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toList() }
+    val files: List<VirtualFile>
+    UNPROCESSED_FILES_LOCK.write {
+      files = unprocessedFiles.toList()
+      unprocessedFiles.clear()
+    }
     if (files.isEmpty()) return
 
     val restFiles = silentlyIgnoreFilesInsideConfigDir(files)
     if (needProcessIgnoredFiles() && restFiles.isNotEmpty()) {
       processFiles(restFiles)
-    }
-
-    UNPROCESSED_FILES_LOCK.write {
-      unprocessedFiles.clear()
     }
   }
 
@@ -103,7 +106,9 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
 
   override fun dispose() {
     super.dispose()
-    unprocessedFiles.clear()
+    UNPROCESSED_FILES_LOCK.write {
+      unprocessedFiles.clear()
+    }
   }
 
   private fun writeIgnores(project: Project, potentiallyIgnoredFiles: Collection<VirtualFile>) {
@@ -168,15 +173,18 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
     val projectBasePath = project.basePath ?: return null
     val projectBaseDir = LocalFileSystem.getInstance().findFileByPath(projectBasePath) ?: return null
 
-    return getProjectStoreDirectory(projectBaseDir) ?: return null
+    return getProjectStoreDirectory(projectBaseDir)
   }
 
   private fun VirtualFile.underProjectStoreDir(storeDir: VirtualFile): Boolean {
     return VfsUtilCore.isAncestor(storeDir, this, true)
   }
 
-  override fun doFilterFiles(files: Collection<VirtualFile>) =
-    ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles.filter { isUnder(files, it) }
+  override fun doFilterFiles(files: Collection<VirtualFile>): List<VirtualFile> {
+    val parents = files.toHashSet()
+    return ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles
+      .filter { isUnder(parents, it) }
+  }
 
   override fun rememberForAllProjects() {
     val applicationSettings = VcsApplicationSettings.getInstance()
@@ -191,10 +199,10 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
   override val showActionText: String = VcsBundle.message("ignored.file.manage.view")
 
   override val forCurrentProjectActionText: String = VcsBundle.message("ignored.file.manage.this.project")
-  override val forAllProjectsActionText: String? = VcsBundle.message("ignored.file.manage.all.project")
+  override val forAllProjectsActionText: String = VcsBundle.message("ignored.file.manage.all.project")
   override val muteActionText: String = VcsBundle.message("ignored.file.manage.notmanage")
 
-  override val viewFilesDialogTitle: String? = VcsBundle.message("ignored.file.manage.view.dialog.title")
+  override val viewFilesDialogTitle: String = VcsBundle.message("ignored.file.manage.view.dialog.title")
   override val viewFilesDialogOkActionName: String = VcsBundle.message("ignored.file.manage.view.dialog.ignore.action")
 
   override fun notificationTitle() = ""
@@ -202,22 +210,28 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
                                                                  ApplicationNamesInfo.getInstance().fullProductName,
                                                                  findIgnoredFileContentProvider(vcs)?.fileName ?: VcsBundle.message("changes.ignore.file"))
 
-  private fun isUnder(parents: Collection<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
+  private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
 
   override fun needDoForCurrentProject(): Boolean {
     val appSettings = VcsApplicationSettings.getInstance()
     return !appSettings.DISABLE_MANAGE_IGNORE_FILES && (appSettings.MANAGE_IGNORE_FILES || super.needDoForCurrentProject())
   }
 
-  private fun getAffectedFilePath(event: VFileEvent): FilePath? = when {
-    event is VFileCreateEvent -> VcsUtil.getFilePath(event.path, event.isDirectory)
-    event is VFileMoveEvent ||
-    event is VFileCopyEvent ||
-    event is VFilePropertyChangeEvent && event.isRename -> {
-      VcsUtil.getFilePath(event.path, event.file!!.isDirectory)
+  private fun getAffectedFilePath(event: VFileEvent): FilePath? {
+    if (event.fileSystem !is LocalFileSystem) {
+      return null
+    }
+
+    return when {
+      event is VFileCreateEvent -> VcsUtil.getFilePath(event.path, event.isDirectory)
+      event is VFileMoveEvent ||
+      event is VFileCopyEvent ||
+      event is VFilePropertyChangeEvent && event.isRename -> {
+        VcsUtil.getFilePath(event.path, event.file!!.isDirectory)
       }
-    else -> null
+      else -> null
+    }
   }
 
-  private fun needProcessIgnoredFiles() = Registry.`is`("vcs.ignorefile.generation", true)
+  private fun needProcessIgnoredFiles() = Registry.`is`("vcs.ignorefile.generation")
 }

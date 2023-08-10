@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.java;
 
@@ -20,11 +6,10 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionKey;
@@ -451,13 +436,10 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificWithProjectInputFilter(JavaFileType.INSTANCE) {
+    return new DefaultFileTypeSpecificInputFilter(JavaFileType.INSTANCE) {
       @Override
-      public boolean acceptInput(@NotNull IndexedFile file) {
-        Project project = file.getProject();
-        return super.acceptInput(file) &&
-               (JavaFileElementType.isInSourceContent(file.getFile())) ||
-               (project != null && FileIndexFacade.getInstance(project).isInSource(file.getFile()));
+      public boolean acceptInput(@NotNull VirtualFile file) {
+        return super.acceptInput(file) && JavaFileElementType.isInSourceContent(file);
       }
     };
   }
@@ -485,8 +467,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof IndexEntry)) return false;
-      IndexEntry entry = (IndexEntry)o;
+      if (!(o instanceof IndexEntry entry)) return false;
       return exprStart == entry.exprStart &&
              exprIndex == entry.exprIndex &&
              contextStart == entry.contextStart &&

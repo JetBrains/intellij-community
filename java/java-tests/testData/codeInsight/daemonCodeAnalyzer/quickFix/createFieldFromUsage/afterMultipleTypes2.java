@@ -1,4 +1,4 @@
-// "Create field 'fld'" "true"
+// "Create field 'fld'" "true-preview"
 class A {
     private String fld<caret>;
 

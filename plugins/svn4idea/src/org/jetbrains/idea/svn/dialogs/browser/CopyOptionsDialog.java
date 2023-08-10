@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browser;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
@@ -133,14 +131,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     });
     group.add(new RepositoryBrowserDialog.DeleteAction(myBrowser));
     group.add(new RepositoryBrowserDialog.RefreshAction(myBrowser));
-    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("", group);
-    JPopupMenu component = popupMenu.getComponent();
-    myBrowser.getRepositoryTree().addMouseListener(new PopupHandler() {
-      @Override
-      public void invokePopup(Component comp, int x, int y) {
-        component.show(comp, x, y);
-      }
-    });
+    PopupHandler.installPopupMenu(myBrowser, group, "SvnOptionsBrowserPopup");
 
     Splitter splitter = new Splitter(true, 0.7f);
     splitter.setFirstComponent(createBrowserPartWrapper());

@@ -3,8 +3,8 @@ package com.intellij.lang.java.actions
 
 import com.intellij.psi.*
 
-internal const val FIELD_VARIABLE = "FIELD_NAME_VARIABLE"
-internal const val SETTER_PARAM_NAME = "SETTER_PARAM_NAME"
+internal const val FIELD_VARIABLE: String = "FIELD_NAME_VARIABLE"
+internal const val SETTER_PARAM_NAME: String = "SETTER_PARAM_NAME"
 
 internal interface AccessorTemplateData {
   val fieldRef: PsiElement

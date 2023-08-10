@@ -68,7 +68,7 @@ class StatusBarUpdater implements Disposable {
       return;
     }
 
-    final Document document = editor.getDocument();
+    Document document = editor.getDocument();
     if (document.isInBulkUpdate()) return;
 
     int offset = editor.getCaretModel().getOffset();

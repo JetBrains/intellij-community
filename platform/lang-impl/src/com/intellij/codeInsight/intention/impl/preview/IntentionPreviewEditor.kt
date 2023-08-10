@@ -1,24 +1,26 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.preview
 
-import com.intellij.openapi.editor.impl.EmptySoftWrapModel
+import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.SoftWrapModel
 import com.intellij.openapi.editor.VisualPosition
+import com.intellij.openapi.editor.impl.EmptySoftWrapModel
 import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.psi.PsiFile
 import kotlin.math.min
 
-internal class IntentionPreviewEditor(psiFileCopy: PsiFile, caretOffset: Int)
+internal class IntentionPreviewEditor(psiFileCopy: PsiFile, private val settings: EditorSettings)
   : ImaginaryEditor(psiFileCopy.project, psiFileCopy.viewProvider.document!!) {
-
-  init {
-    caretModel.moveToOffset(caretOffset)
-  }
-
   override fun notImplemented(): RuntimeException = IntentionPreviewUnsupportedOperationException()
 
   override fun isViewer(): Boolean = true
+
+  override fun isOneLineMode(): Boolean = false
+
+  override fun getSettings(): EditorSettings {
+    return settings
+  }
 
   override fun logicalPositionToOffset(pos: LogicalPosition): Int {
     val document = document
@@ -37,9 +39,10 @@ internal class IntentionPreviewEditor(psiFileCopy: PsiFile, caretOffset: Int)
   }
 
   override fun offsetToLogicalPosition(offset: Int): LogicalPosition {
+    val clamped = offset.coerceIn(0, document.textLength)
     val document = document
-    val line = document.getLineNumber(offset)
-    val col = offset - document.getLineStartOffset(line)
+    val line = document.getLineNumber(clamped)
+    val col = clamped - document.getLineStartOffset(line)
     return LogicalPosition(line, col)
   }
 

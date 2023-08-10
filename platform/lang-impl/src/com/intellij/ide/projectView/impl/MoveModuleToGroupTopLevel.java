@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,11 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
 
@@ -34,8 +40,7 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
 
     ModifiableModuleModel moduleModel = e.getData(LangDataKeys.MODIFIABLE_MODULE_MODEL);
     ModuleGrouper grouper = ModuleGrouper.instanceFor(project, moduleModel);
-    List<String> topLevelGroupNames = new ArrayList<>(getTopLevelGroupNames(grouper));
-    Collections.sort(topLevelGroupNames);
+    List<String> topLevelGroupNames = ContainerUtil.sorted(getTopLevelGroupNames(grouper));
 
     List<AnAction> result = new ArrayList<>();
     result.add(new MoveModulesOutsideGroupAction());

@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.application.Application;
@@ -19,11 +18,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -45,8 +40,6 @@ import java.util.*;
 /**
  * There is a possible case that particular test class is not properly configured with test annotations but uses test data files.
  * This class contains utility methods for guessing test data files location and name patterns from existing one.
- *
- * @author Denis Zhdanov
  */
 public final class TestDataGuessByExistingFilesUtil {
   private static final Logger LOG = Logger.getInstance(TestDataGuessByExistingFilesUtil.class);
@@ -112,29 +105,11 @@ public final class TestDataGuessByExistingFilesUtil {
 
     TestFramework framework = TestFrameworks.detectFramework(psiClass);
 
-    if (framework == null || isUtilityMethod(method, psiClass, framework)) {
+    if (framework == null || !framework.isTestMethod(method)) {
       return null;
     }
 
     return getTestName(method.getName());
-  }
-
-  private static boolean isUtilityMethod(@NotNull PsiMethod method, @NotNull PsiClass psiClass, @NotNull TestFramework framework) {
-    if (method == framework.findSetUpMethod(psiClass) || method == framework.findTearDownMethod(psiClass)) {
-      return true;
-    }
-
-    // JUnit3
-    if (framework.getClass().getName().contains("JUnit3")) {
-      return !method.getName().startsWith("test");
-    }
-
-    // JUnit4
-    if (framework.getClass().getName().contains("JUnit4")) {
-      return !AnnotationUtil.isAnnotated(method, "org.junit.Test", 0);
-    }
-
-    return false;
   }
 
   @NotNull
@@ -193,11 +168,10 @@ public final class TestDataGuessByExistingFilesUtil {
       ProgressManager.checkCanceled();
       Object[] elements = gotoModel.getElementsByName(name, false, name);
       for (Object element : elements) {
-        if (!(element instanceof PsiFileSystemItem)) {
+        if (!(element instanceof PsiFileSystemItem psiFile)) {
           continue;
         }
 
-        PsiFileSystemItem psiFile = (PsiFileSystemItem)element;
         if (normalizedTestDataPath != null) {
           PsiFileSystemItem containingDirectory = psiFile.getParent();
           if (containingDirectory != null) {
@@ -273,7 +247,7 @@ public final class TestDataGuessByExistingFilesUtil {
     if (descriptorsByFileNames.size() < 2) {
       return;
     }
-    if (descriptorsByFileNames.stream().noneMatch(descriptor -> descriptor.isFromCurrentModule)) {
+    if (!ContainerUtil.exists(descriptorsByFileNames, descriptor -> descriptor.isFromCurrentModule)) {
       return;
     }
     descriptorsByFileNames.removeIf(d -> !d.isFromCurrentModule);
@@ -370,14 +344,14 @@ public final class TestDataGuessByExistingFilesUtil {
     final String pathSuffix;
     final boolean startWithLowerCase;
     final boolean isFromCurrentModule;
-    final int matchedVFileId;
+    private final SmartPsiElementPointer<PsiFile> filePointer;
 
-    private TestLocationDescriptor(String pathPrefix, String pathSuffix, boolean startWithLowerCase, boolean isFromCurrentModule, int id) {
+    private TestLocationDescriptor(String pathPrefix, String pathSuffix, boolean startWithLowerCase, boolean isFromCurrentModule, SmartPsiElementPointer<PsiFile> filePointer) {
       this.pathPrefix = pathPrefix;
       this.pathSuffix = pathSuffix;
       this.startWithLowerCase = startWithLowerCase;
       this.isFromCurrentModule = isFromCurrentModule;
-      matchedVFileId = id;
+      this.filePointer = filePointer;
     }
 
     static TestLocationDescriptor create(@NotNull String testName, @NotNull VirtualFile matched, @NotNull Project project, @Nullable Module module) {
@@ -402,8 +376,13 @@ public final class TestDataGuessByExistingFilesUtil {
       if (module != null) {
         isFromCurrentModule = module.equals(ModuleUtilCore.findModuleForFile(matched, project));
       }
-      int matchedVFileId = ((VirtualFileWithId)matched).getId();
-      return new TestLocationDescriptor(pathPrefix, pathSuffix, startWithLowerCase, isFromCurrentModule, matchedVFileId);
+      PsiFile file = PsiManager.getInstance(project).findFile(matched);
+      if (file == null) return null;
+      return new TestLocationDescriptor(pathPrefix,
+                                        pathSuffix,
+                                        startWithLowerCase,
+                                        isFromCurrentModule,
+                                        SmartPointerManager.getInstance(project).createSmartPsiElementPointer(file));
     }
 
     @Override
@@ -446,8 +425,8 @@ public final class TestDataGuessByExistingFilesUtil {
     @NotNull
     public List<TestDataFile> restoreFiles() {
       return ContainerUtil.mapNotNull(myDescriptors, d -> {
-        VirtualFile file = ReadAction.compute(() -> VirtualFileManager.getInstance().findFileById(d.matchedVFileId));
-        return file == null ? null : new TestDataFile.Existing(file);
+        PsiFile file = ReadAction.compute(() -> d.filePointer.getElement());
+        return file == null ? null : new TestDataFile.Existing(file.getVirtualFile());
       });
     }
 

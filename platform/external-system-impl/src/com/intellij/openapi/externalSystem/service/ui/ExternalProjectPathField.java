@@ -46,12 +46,9 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalProjectPathField extends ComponentWithBrowseButton<ExternalProjectPathField.MyPathAndProjectButtonPanel>
   implements TextAccessor
 {
@@ -99,8 +96,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
             Object lastPathComponent = path.getLastPathComponent();
             if (lastPathComponent instanceof ExternalSystemNode) {
               Object e1 = ((ExternalSystemNode)lastPathComponent).getDescriptor().getElement();
-              if (e1 instanceof ExternalProjectPojo) {
-                ExternalProjectPojo pojo = (ExternalProjectPojo)e1;
+              if (e1 instanceof ExternalProjectPojo pojo) {
                 textField.setText(pojo.getPath());
                 Editor editor = textField.getEditor();
                 if (editor != null) {
@@ -114,7 +110,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
         JBPopup popup = new PopupChooserBuilder(tree)
           .setTitle(ExternalSystemBundle.message("run.configuration.title.choose.registered.project", externalSystemId.getReadableName()))
           .setResizable(true)
-          .setItemChoosenCallback(treeSelectionCallback)
+          .setItemChosenCallback(treeSelectionCallback)
           .setAutoselectOnMouseMove(true)
           .setCloseOnEnter(false)
           .createPopup();

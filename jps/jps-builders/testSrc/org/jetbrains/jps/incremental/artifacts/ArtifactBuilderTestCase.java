@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -55,13 +55,20 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myProject)) {
-      String outputPath = artifact.getOutputPath();
-      if (outputPath != null) {
-        FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
+    try {
+      for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myProject)) {
+        String outputPath = artifact.getOutputPath();
+        if (outputPath != null) {
+          FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
+        }
       }
     }
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public JpsArtifact addArtifact(LayoutElementTestUtil.LayoutElementCreator root) {

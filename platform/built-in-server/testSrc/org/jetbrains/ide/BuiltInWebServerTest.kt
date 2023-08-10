@@ -14,13 +14,19 @@ import com.intellij.testFramework.*
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
-import com.intellij.util.io.writeChild
+import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
+import org.jetbrains.builtInWebServer.acquireToken
 import org.junit.BeforeClass
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.nio.file.Path
 
 internal class BuiltInWebServerTest : BuiltInServerTestCase() {
@@ -48,7 +54,7 @@ internal class BuiltInWebServerTest : BuiltInServerTestCase() {
   private fun testIndex(vararg paths: String) {
     val project = projectRule.project
     val newPath = tempDirManager.newPath()
-    newPath.writeChild(manager.filePath!!, "hello")
+    newPath.resolve(manager.filePath!!).write("hello".toByteArray())
     LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newPath)
 
     createModule(newPath, project)
@@ -88,7 +94,7 @@ internal class HeavyBuiltInWebServerTest {
   @Test
   fun `path outside of project`() {
     val projectDir = tempDirManager.newPath()
-    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).use { project ->
+    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).useProject { project ->
       projectDir.createDirectories()
       createModule(projectDir, project)
 
@@ -106,7 +112,7 @@ internal class HeavyBuiltInWebServerTest {
   @Test
   fun `file in hidden folder`() {
     val projectDir = tempDirManager.newPath()
-    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).use { project ->
+    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).useProject { project ->
       projectDir.createDirectories()
       createModule(projectDir, project)
 
@@ -120,5 +126,27 @@ internal class HeavyBuiltInWebServerTest {
       val webPath = UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath").replace("%2F", "/")
       testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.OK, asSignedRequest = true)
     }
+  }
+}
+
+internal class BuiltInWebServerAbsolutePathTest : BuiltInServerTestCase() {
+
+  @Test
+  fun `absolute path reference`() {
+    val project = projectRule.project
+    val newPath = tempDirManager.newPath()
+    newPath.resolve("script.js").write("hello".toByteArray())
+    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newPath)
+    createModule(newPath, project)
+
+    val host = "http://localhost:${BuiltInServerManager.getInstance().port}"
+    val builder = HttpRequest.newBuilder(URI("$host/script.js"))
+    builder.header(TOKEN_HEADER_NAME, acquireToken())
+    builder.header(HttpHeaderNames.REFERER.toString(), "${host}/${project.name}/index.html")
+
+    val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()
+    val response = client.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream())
+    assertThat(HttpResponseStatus.valueOf(response.statusCode())).isEqualTo(HttpResponseStatus.OK)
+    assertThat(response.body().reader().readText()).isEqualTo("hello")
   }
 }

@@ -35,10 +35,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class XmlReader {
   private static final Logger LOG = Logger.getInstance(XmlReader.class);
 
@@ -61,8 +57,7 @@ public final class XmlReader {
     final RadComponent component;
     Class componentClass = null;
 
-    if (lwComponent instanceof LwNestedForm) {
-      LwNestedForm nestedForm = (LwNestedForm) lwComponent;
+    if (lwComponent instanceof LwNestedForm nestedForm) {
       boolean recursiveNesting = false;
       try {
         Utils.validateNestedFormLoop(nestedForm.getFormFileName(), new PsiNestedFormLoader(module.getModule()));
@@ -135,8 +130,7 @@ public final class XmlReader {
       else if (lwComponent instanceof LwToolBar) {
         component = new RadToolBar(module, componentClass, id);
       }
-      else if (lwComponent instanceof LwContainer) {
-        final LwContainer lwContainer = (LwContainer)lwComponent;
+      else if (lwComponent instanceof LwContainer lwContainer) {
         LayoutManager layout = lwContainer.getLayout();
         if (layout instanceof XYLayoutManager) {
           // replace stub layout with the real one
@@ -231,8 +225,7 @@ public final class XmlReader {
       }
     }
 
-    if (component instanceof RadRootContainer) {
-      final RadRootContainer radRootContainer = (RadRootContainer)component;
+    if (component instanceof RadRootContainer radRootContainer) {
       final LwRootContainer lwRootContainer = (LwRootContainer)lwComponent;
       radRootContainer.setClassToBind(lwRootContainer.getClassToBind());
       radRootContainer.setMainComponentBinding(lwRootContainer.getMainComponentBinding());

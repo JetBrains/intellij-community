@@ -1,0 +1,10 @@
+Types:
+PsiField:x : long
+PsiReferenceExpression:x : long
+PsiReferenceExpression:x : long
+
+Conversions:
+0 -> $
+
+New expression type changes:
+Fails:

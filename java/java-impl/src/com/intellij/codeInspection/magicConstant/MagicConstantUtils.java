@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -14,21 +14,18 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class MagicConstantUtils {
   private static AllowedValues getAllowedValuesFromMagic(@NotNull PsiType type,
                                                          @NotNull PsiAnnotation magic,
-                                                         @NotNull PsiManager manager) {
+                                                         @NotNull PsiManager manager,
+                                                         @Nullable PsiElement context) {
     PsiAnnotationMemberValue[] allowedValues = PsiAnnotationMemberValue.EMPTY_ARRAY;
     boolean values = false;
     boolean flags = false;
@@ -66,12 +63,12 @@ public final class MagicConstantUtils {
       return null; //other types not supported
     }
 
-    PsiAnnotationMemberValue[] valuesFromClass = readFromClass("valuesFromClass", magic, type, manager);
+    PsiAnnotationMemberValue[] valuesFromClass = readFromClass("valuesFromClass", magic, type, manager, context);
     if (valuesFromClass != null) {
       allowedValues = ArrayUtil.mergeArrays(allowedValues, valuesFromClass, PsiAnnotationMemberValue.ARRAY_FACTORY);
       values = true;
     }
-    PsiAnnotationMemberValue[] flagsFromClass = readFromClass("flagsFromClass", magic, type, manager);
+    PsiAnnotationMemberValue[] flagsFromClass = readFromClass("flagsFromClass", magic, type, manager, context);
     if (flagsFromClass != null) {
       allowedValues = ArrayUtil.mergeArrays(allowedValues, flagsFromClass, PsiAnnotationMemberValue.ARRAY_FACTORY);
       flags = true;
@@ -89,19 +86,29 @@ public final class MagicConstantUtils {
   private static PsiAnnotationMemberValue[] readFromClass(@NonNls @NotNull String attributeName,
                                                           @NotNull PsiAnnotation magic,
                                                           @NotNull PsiType type,
-                                                          @NotNull PsiManager manager) {
+                                                          @NotNull PsiManager manager,
+                                                          @Nullable PsiElement context) {
     PsiAnnotationMemberValue fromClassAttr = magic.findAttributeValue(attributeName);
-    PsiType fromClassType = fromClassAttr instanceof PsiClassObjectAccessExpression ? ((PsiClassObjectAccessExpression)fromClassAttr).getOperand().getType() : null;
+    PsiType fromClassType = fromClassAttr instanceof PsiClassObjectAccessExpression
+                            ? ((PsiClassObjectAccessExpression)fromClassAttr).getOperand().getType()
+                            : null;
     PsiClass fromClass = fromClassType instanceof PsiClassType ? ((PsiClassType)fromClassType).resolve() : null;
     if (fromClass == null) return null;
     String fqn = fromClass.getQualifiedName();
     if (fqn == null) return null;
     List<PsiAnnotationMemberValue> constants = new ArrayList<>();
     for (PsiField field : fromClass.getFields()) {
-      if (!field.hasModifierProperty(PsiModifier.PUBLIC) || !field.hasModifierProperty(PsiModifier.STATIC) || !field.hasModifierProperty(PsiModifier.FINAL)) continue;
+      if (!field.hasModifierProperty(PsiModifier.STATIC) || !field.hasModifierProperty(PsiModifier.FINAL)) continue;
+      if (!field.hasModifierProperty(PsiModifier.PUBLIC)) {
+        if (context == null ||
+            !JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper().isAccessible(field, context, null)) {
+          continue;
+        }
+      }
       PsiType fieldType = field.getType();
       if (!Comparing.equal(fieldType, type)) continue;
-      PsiAssignmentExpression e = (PsiAssignmentExpression)JavaPsiFacade.getElementFactory(manager.getProject()).createExpressionFromText("x="+fqn + "." + field.getName(), field);
+      PsiAssignmentExpression e = (PsiAssignmentExpression)JavaPsiFacade.getElementFactory(manager.getProject())
+        .createExpressionFromText("x=" + fqn + "." + field.getName(), field);
       PsiReferenceExpression refToField = (PsiReferenceExpression)e.getRExpression();
       constants.add(refToField);
     }
@@ -110,27 +117,44 @@ public final class MagicConstantUtils {
     return constants.toArray(PsiAnnotationMemberValue.EMPTY_ARRAY);
   }
 
+  /**
+   * @param element element with possible MagicConstant annotation
+   * @param type    element type
+   * @param context context where annotation is applied (to check the accessibility of magic constant)
+   * @return possible allowed values to be used instead of constant literal; null if no MagicConstant annotation found
+   */
   @Nullable
-  public static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type) {
-    return getAllowedValues(element, type, null);
+  public static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element,
+                                               @Nullable PsiType type,
+                                               @Nullable PsiElement context) {
+    return getAllowedValues(element, type, context, null);
   }
 
   @Nullable
-  static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type, @Nullable Set<? super PsiClass> visited) {
+  static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element,
+                                        @Nullable PsiType type,
+                                        @Nullable PsiElement context,
+                                        @Nullable Set<? super PsiClass> visited) {
     PsiManager manager = element.getManager();
     for (PsiAnnotation annotation : getAllAnnotations(element)) {
       if (type != null && MagicConstant.class.getName().equals(annotation.getQualifiedName())) {
-        AllowedValues values = getAllowedValuesFromMagic(type, annotation, manager);
+        AllowedValues values = getAllowedValuesFromMagic(type, annotation, manager, context);
         if (values != null) return values;
       }
 
       PsiClass aClass = annotation.resolveAnnotationType();
       if (aClass == null) continue;
 
-      if (visited == null) visited = new THashSet<>();
-      if (!visited.add(aClass)) continue;
-      AllowedValues values = getAllowedValues(aClass, type, visited);
-      if (values != null) return values;
+      if (visited == null) {
+        visited = new HashSet<>();
+      }
+      if (!visited.add(aClass)) {
+        continue;
+      }
+      AllowedValues values = getAllowedValues(aClass, type, context, visited);
+      if (values != null) {
+        return values;
+      }
     }
 
     return parseBeanInfo(element, manager);
@@ -163,8 +187,7 @@ public final class MagicConstantUtils {
       }
     }
     PsiMethod method = null;
-    if (owner instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)owner;
+    if (owner instanceof PsiParameter parameter) {
       PsiElement scope = parameter.getDeclarationScope();
       if (!(scope instanceof PsiMethod)) return null;
       PsiElement nav = scope.getNavigationElement();
@@ -226,8 +249,7 @@ public final class MagicConstantUtils {
       if (words.size() != 2) continue;
       String ref = words.get(1);
       PsiExpression constRef = JavaPsiFacade.getElementFactory(manager.getProject()).createExpressionFromText(ref, aClass);
-      if (!(constRef instanceof PsiReferenceExpression)) continue;
-      PsiReferenceExpression expr = (PsiReferenceExpression)constRef;
+      if (!(constRef instanceof PsiReferenceExpression expr)) continue;
       values.add(expr);
     }
     if (values.isEmpty()) return null;
@@ -290,8 +312,8 @@ public final class MagicConstantUtils {
       if (canBeOred != a2.canBeOred) {
         return false;
       }
-      Set<PsiAnnotationMemberValue> v1 = ContainerUtil.set(values);
-      Set<PsiAnnotationMemberValue> v2 = ContainerUtil.set(a2.values);
+      Set<PsiAnnotationMemberValue> v1 = ContainerUtil.newHashSet(values);
+      Set<PsiAnnotationMemberValue> v2 = ContainerUtil.newHashSet(a2.values);
       if (v1.size() != v2.size()) {
         return false;
       }

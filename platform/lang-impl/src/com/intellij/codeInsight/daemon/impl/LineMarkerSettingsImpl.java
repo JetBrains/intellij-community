@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterIconDescriptor;
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -18,7 +19,8 @@ import java.util.Map;
  */
 @State(
   name = "LineMarkerSettings",
-  storages = @Storage("gutter.xml")
+  storages = @Storage("gutter.xml"),
+  category = SettingsCategory.CODE
 )
 public class LineMarkerSettingsImpl extends LineMarkerSettings implements PersistentStateComponent<LineMarkerSettingsImpl> {
 
@@ -41,9 +43,8 @@ public class LineMarkerSettingsImpl extends LineMarkerSettings implements Persis
   @MapAnnotation
   public Map<String, Boolean> providers = new HashMap<>();
 
-  @Nullable
   @Override
-  public LineMarkerSettingsImpl getState() {
+  public @Nullable LineMarkerSettingsImpl getState() {
     return this;
   }
 

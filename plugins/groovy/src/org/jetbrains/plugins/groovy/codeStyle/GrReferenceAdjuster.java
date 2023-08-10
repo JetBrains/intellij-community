@@ -75,7 +75,7 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
                                  boolean useFqInJavadoc,
                                  boolean useFqInCode) {
     boolean result = false;
-    if (element instanceof GrQualifiedReference<?> && ((GrQualifiedReference)element).resolve() instanceof PsiClass) {
+    if (element instanceof GrQualifiedReference<?> && ((GrQualifiedReference<?>)element).resolve() instanceof PsiClass) {
       result = shortenReferenceInner((GrQualifiedReference<?>)element, addImports, incomplete, useFqInJavadoc, useFqInCode);
     }
     else if (element instanceof GrReferenceExpression && PsiUtil.isSuperReference(((GrReferenceExpression)element).getQualifier())) {
@@ -144,8 +144,7 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
       return false;
     }
 
-    if (resolved instanceof PsiClass) {
-      final PsiClass clazz = (PsiClass)resolved;
+    if (resolved instanceof PsiClass clazz) {
       final String qName = clazz.getQualifiedName();
       if (qName != null && addImports && checkIsInnerClass(clazz, ref) && mayInsertImport(ref)) {
         final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
@@ -190,7 +189,7 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
 
     PsiResolveHelper helper = JavaPsiFacade.getInstance(ref.getProject()).getResolveHelper();
     if (ref instanceof GrReferenceElement) {
-      final String classNameText = ((GrReferenceElement)ref).getQualifiedReferenceName();
+      final String classNameText = ((GrReferenceElement<?>)ref).getQualifiedReferenceName();
       if (classNameText == null) return null;
       return helper.resolveReferencedClass(classNameText, ref);
     }
@@ -211,7 +210,7 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
   private static <Qualifier extends PsiElement> boolean shorteningIsMeaningfully(@NotNull GrQualifiedReference<Qualifier> ref,
                                                                                  boolean useFqInJavadoc, boolean useFqInCode) {
 
-    if (ref instanceof GrReferenceElementImpl && ((GrReferenceElementImpl)ref).isFullyQualified()) {
+    if (ref instanceof GrReferenceElementImpl && ((GrReferenceElementImpl<?>)ref).isFullyQualified()) {
       final GrDocComment doc = PsiTreeUtil.getParentOfType(ref, GrDocComment.class);
       if (doc != null) {
         if (useFqInJavadoc) return false;

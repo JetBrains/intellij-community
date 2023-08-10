@@ -5,8 +5,14 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import org.jetbrains.annotations.NotNull;
 
 public interface FileHolder {
+  /**
+   * Notify that CLM refresh has started, everything is dirty
+   */
   void cleanAll();
 
+  /**
+   * Notify that CLM refresh has started for particular scope
+   */
   void cleanAndAdjustScope(@NotNull VcsModifiableDirtyScope scope);
 
   FileHolder copy();

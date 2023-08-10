@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi.ssl;
 
 import com.intellij.security.CompositeX509TrustManager;
@@ -18,8 +18,7 @@ import java.util.UUID;
 
 import static com.intellij.execution.rmi.ssl.SslUtil.*;
 
-public class SslSocketFactory extends DelegateSslSocketFactory {
-
+public final class SslSocketFactory extends DelegateSslSocketFactory {
   public SslSocketFactory() throws GeneralSecurityException {
     super(createDelegate());
   }
@@ -52,7 +51,7 @@ public class SslSocketFactory extends DelegateSslSocketFactory {
   @NotNull
   public static TrustManager[] createTrustManagers(@NotNull String caCertPath) throws Exception {
     List<X509Certificate> certs = loadCertificates(caCertPath);
-    List<TrustManager> result = new ArrayList<TrustManager>(certs.size());
+    List<TrustManager> result = new ArrayList<>(certs.size());
     for (X509Certificate cert : certs) {
       result.add(new MyTrustManager(cert));
     }

@@ -4,6 +4,7 @@ package com.intellij.largeFilesEditor.search.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearch;
 import com.intellij.largeFilesEditor.search.searchTask.RangeSearchTask;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.EditorBundle;
@@ -26,6 +27,11 @@ public class StopRangeSearchAction extends AnAction implements DumbAware {
     e.getPresentation().setEnabled(
       task != null && !task.isFinished() && !task.isShouldStop()
     );
+  }
+  
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

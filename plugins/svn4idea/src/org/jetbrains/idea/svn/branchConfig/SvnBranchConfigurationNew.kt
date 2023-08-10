@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.svn.SvnUtil
-import org.jetbrains.idea.svn.SvnUtil.createUrl
 import org.jetbrains.idea.svn.SvnUtil.isAncestor
 import org.jetbrains.idea.svn.SvnVcs
 import org.jetbrains.idea.svn.api.Url
@@ -72,9 +71,6 @@ class SvnBranchConfigurationNew {
     }
     return null
   }
-
-  @Deprecated("use getBaseName(Url)")
-  fun getBaseName(url: String): String? = getBaseName(createUrl(url, false))
 
   fun getBaseName(url: Url): String? = getBaseUrl(url)?.tail
 

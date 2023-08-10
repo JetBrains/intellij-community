@@ -2,7 +2,9 @@
 import java.util.*;
 
 public class Test {
-  Test(int x) {}
+  Test(int x) {
+    System.out.println(x);
+  }
 
   public void test() {
       new Test(1);

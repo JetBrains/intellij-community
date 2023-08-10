@@ -23,7 +23,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
@@ -65,24 +64,12 @@ public class PropertiesCodeStyleSettings extends CustomCodeStyleSettings {
       }
       if (delimiter != null) {
         switch (delimiter) {
-          case '=':
-            KEY_VALUE_DELIMITER_CODE = 0;
-            break;
-          case ':':
-            KEY_VALUE_DELIMITER_CODE = 1;
-            break;
-          case ' ':
-            KEY_VALUE_DELIMITER_CODE = 2;
-            break;
+          case '=' -> KEY_VALUE_DELIMITER_CODE = 0;
+          case ':' -> KEY_VALUE_DELIMITER_CODE = 1;
+          case ' ' -> KEY_VALUE_DELIMITER_CODE = 2;
         }
       }
     }
   }
 
-  @Override
-  protected void importLegacySettings(@NotNull CodeStyleSettings rootSettings) {
-    if (rootSettings.ALIGN_GROUP_FIELD_DECLARATIONS) {
-      rootSettings.getCommonSettings(PropertiesLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS = true;
-    }
-  }
 }

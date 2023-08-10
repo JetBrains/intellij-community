@@ -1,31 +1,29 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.facade;
 
 import com.intellij.lang.jvm.JvmClass;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * Allows to extend the mechanism of locating classes and packages by full-qualified name.
+ *
+ * Similar to {@link PsiElementFinder}, but for JVM API.
+ */
 public interface JvmElementProvider {
 
   ExtensionPointName<JvmElementProvider> EP_NAME = ExtensionPointName.create("com.intellij.jvm.elementProvider");
 
+  /**
+   * Searches classes within the project for a class with the specified full-qualified name.
+   * @param qualifiedName the full-qualified name of the class to find
+   * @param scope - the scope to search in.
+   * @return list of found classes
+   */
   @NotNull
   List<? extends JvmClass> getClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 }

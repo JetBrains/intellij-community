@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.util.containers.hash.EqualityPolicy;
@@ -17,7 +17,7 @@ import java.io.IOException;
  * <br/>
  * Extend the {@link DifferentSerializableBytesImplyNonEqualityPolicy}
  * in this interface to mark that by-byte in-equality of serialized objects
- * also imply deserialized keys in-equality via {@link #isEqual}
+ * also imply deserialized keys in-equality via {@link #isEqual}.
  *
  * @see PersistentMap
  * @see PersistentHashMap
@@ -29,7 +29,6 @@ public interface KeyDescriptor<T> extends EqualityPolicy<T>, DataExternalizer<T>
    * together with {@link #save(DataOutput, Object)} to persist keys
    * on disk. Make sure the hashcode function is stable and returns
    * the stable values, e.g. that are independent from restarts or environment changes
-   *
    * @see #save(DataOutput, Object)
    */
   @Override
@@ -38,7 +37,6 @@ public interface KeyDescriptor<T> extends EqualityPolicy<T>, DataExternalizer<T>
   /**
    * @implNote The implementation may use this method together
    * with {@link #getHashCode(Object)} to persist key objects on disk.
-   *
    * @see #getHashCode(Object)
    */
   @Override

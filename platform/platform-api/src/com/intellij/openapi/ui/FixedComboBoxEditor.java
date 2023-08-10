@@ -23,8 +23,6 @@ import java.lang.reflect.Method;
 
 /**
  * Use this editor if you wish your combobox editor to look good on Macs.
- *
- * User: spLeaner
  */
 public class FixedComboBoxEditor implements ComboBoxEditor {
   @NotNull
@@ -120,7 +118,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
     @Override
     public boolean hasFocus() {
       Container parent = getParent();
-      if (parent instanceof ComboBox && ((ComboBox)parent).myPaintingNow) {
+      if (parent instanceof ComboBox && ((ComboBox<?>)parent).myPaintingNow) {
         return false; // to disable focus painting around combobox button
       }
       return super.hasFocus();

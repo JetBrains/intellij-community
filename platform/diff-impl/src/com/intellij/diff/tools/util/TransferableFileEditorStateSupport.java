@@ -21,6 +21,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.holders.BinaryEditorHolder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.DiffBundle;
@@ -154,9 +155,8 @@ public class TransferableFileEditorStateSupport {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
       if (myDuringUpdate || !isEnabled()) return;
-      if (!(evt.getSource() instanceof FileEditor)) return;
+      if (!(evt.getSource() instanceof FileEditor editor)) return;
 
-      FileEditor editor = (FileEditor)evt.getSource();
       if (!editor.getComponent().isShowing()) return;
       Dimension size = editor.getComponent().getSize();
       if (size.width <= 0 || size.height <= 0) return;
@@ -210,6 +210,11 @@ public class TransferableFileEditorStateSupport {
     ToggleSynchronousEditorStatesAction(@NotNull TransferableFileEditorStateSupport support) {
       super(DiffBundle.message("synchronize.editors.settings"), AllIcons.Actions.SyncPanels);
       mySupport = support;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

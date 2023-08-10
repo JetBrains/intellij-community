@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="org.jetbrains.plugins.terminal">
   <name>Terminal</name>
   <category>Other Tools</category>
   <id>org.jetbrains.plugins.terminal</id>
@@ -6,14 +6,23 @@
   <description><![CDATA[
 <p>Provides integrated terminal (View | Tool Windows | Terminal)
 ]]></description>
-  <depends>com.intellij.modules.platform</depends>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
+  <content>
+    <module name="intellij.terminal/cloud"/>
+    <module name="intellij.terminal.sh"/>
+  </content>
 
   <resource-bundle>messages.TerminalBundle</resource-bundle>
   <xi:include href="/META-INF/terminal.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/completion-specs.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions>
     <action id="Terminal.OpenInTerminal" class="org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction"
-            icon="TerminalIcons.OpenTerminal_13x13">
+            icon="org.jetbrains.plugins.terminal.TerminalIcons.OpenTerminal_13x13">
       <add-to-group group-id="RevealGroup" anchor="last"/>
       <override-text place="EditorTabPopup"/>
       <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
@@ -21,16 +30,17 @@
       <override-text place="FavoritesPopup" use-text-of-place="EditorTabPopup"/>
       <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
     </action>
+    <action id="Terminal.CloseTab" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="CloseContent"/>
     <action id="Terminal.RenameSession" class="org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
     <action id="Terminal.MoveToEditor" class="org.jetbrains.plugins.terminal.action.MoveTerminalSessionToEditorAction">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
-    <action class="org.jetbrains.plugins.terminal.action.TerminalSplitActionBase$Vertical">
+    <action id="Terminal.SplitVertically" class="org.jetbrains.plugins.terminal.action.TerminalSplitActionBase$Vertical">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
-    <action class="org.jetbrains.plugins.terminal.action.TerminalSplitActionBase$Horizontal">
+    <action id="Terminal.SplitHorizontally" class="org.jetbrains.plugins.terminal.action.TerminalSplitActionBase$Horizontal">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
     <action id="Terminal.NextSplitter" use-shortcut-of="NextSplitter"
@@ -42,17 +52,15 @@
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
     <action id="Terminal.MoveToolWindowTabLeft" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction">
-      <keyboard-shortcut first-keystroke="control alt shift LEFT" keymap="$default"/>
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
     <action id="Terminal.MoveToolWindowTabRight" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction">
-      <keyboard-shortcut first-keystroke="control alt shift RIGHT" keymap="$default"/>
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
-    <action id="Terminal.SwitchFocusToEditor" class="org.jetbrains.plugins.terminal.action.TerminalSwitchFocusToEditorAction">
+    <action id="Terminal.SwitchFocusToEditor" class="com.intellij.openapi.actionSystem.EmptyAction">
       <keyboard-shortcut first-keystroke="ESCAPE" keymap="$default"/>
     </action>
-    <action id="Terminal.CopySelectedText" class="org.jetbrains.plugins.terminal.action.TerminalCopySelectedTextAction">
+    <action id="Terminal.CopySelectedText" class="com.intellij.openapi.actionSystem.EmptyAction">
       <!-- use keyboard-shortcuts of $Copy with Ctrl+Shift+C on Linux  -->
       <keyboard-shortcut first-keystroke="control shift C" keymap="Default for XWin"/>
       <keyboard-shortcut first-keystroke="control C" keymap="Default for XWin"/>
@@ -60,7 +68,7 @@
       <keyboard-shortcut first-keystroke="control C" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control INSERT" keymap="$default"/>
     </action>
-    <action id="Terminal.Paste" class="org.jetbrains.plugins.terminal.action.TerminalPasteAction">
+    <action id="Terminal.Paste" class="com.intellij.openapi.actionSystem.EmptyAction">
       <!-- use keyboard-shortcuts of $Paste with Ctrl+Shift+V on Linux  -->
       <keyboard-shortcut first-keystroke="control shift V" keymap="Default for XWin"/>
       <keyboard-shortcut first-keystroke="control V" keymap="Default for XWin"/>
@@ -68,18 +76,27 @@
       <keyboard-shortcut first-keystroke="control V" keymap="$default"/>
       <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
     </action>
-    <action id="Terminal.SelectAll" class="org.jetbrains.plugins.terminal.action.TerminalSelectAllAction"/>
-    <action id="Terminal.SmartCommandExecution.Run" class="org.jetbrains.plugins.terminal.shellCommandRunner.TerminalRunSmartCommandAction">
+    <action id="Terminal.Find" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Find"/>
+    <action id="Terminal.SelectAll" class="com.intellij.openapi.actionSystem.EmptyAction">
+      <keyboard-shortcut first-keystroke="meta A" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="meta A" keymap="Mac OS X 10.5+"/>
+    </action>
+    <action id="Terminal.SmartCommandExecution.Run" class="com.intellij.openapi.actionSystem.EmptyAction">
       <keyboard-shortcut first-keystroke="control ENTER" keymap="$default"/>
     </action>
-    <action id="Terminal.SmartCommandExecution.Debug" class="org.jetbrains.plugins.terminal.shellCommandRunner.TerminalDebugSmartCommandAction">
+    <action id="Terminal.SmartCommandExecution.Debug" class="com.intellij.openapi.actionSystem.EmptyAction">
       <keyboard-shortcut first-keystroke="control shift ENTER" keymap="$default"/>
     </action>
-    <action id="Terminal.ClearBuffer" class="org.jetbrains.plugins.terminal.action.TerminalClearBufferAction">
+    <action id="Terminal.ClearBuffer" class="com.intellij.openapi.actionSystem.EmptyAction">
       <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X"/>
       <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X 10.5+"/>
     </action>
+    <action id="Terminal.CopyOutput" class="org.jetbrains.plugins.terminal.action.CopyTerminalOutputAction" />
+
+    <group id="Terminal.PopupMenu">
+      <reference ref="Terminal.CopyOutput"/>
+    </group>
   </actions>
 
 </idea-plugin>

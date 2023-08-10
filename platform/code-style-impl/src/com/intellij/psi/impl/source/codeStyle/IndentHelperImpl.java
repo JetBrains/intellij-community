@@ -96,7 +96,7 @@ public class IndentHelperImpl extends IndentHelper {
    * @deprecated Use {@link #fillIndent(CommonCodeStyleSettings.IndentOptions, int)} instead.
    */
   @Deprecated
-  public static String fillIndent(Project project,  FileType fileType, int indent) {
+  static String fillIndent(Project project,  FileType fileType, int indent) {
     return fillIndent(CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(fileType), indent);
   }
 
@@ -111,8 +111,12 @@ public class IndentHelperImpl extends IndentHelper {
       if (indentOptions.SMART_TABS) {
         int tabCount = indentLevelSize / indentOptions.TAB_SIZE;
         int leftSpaces = indentLevelSize - tabCount * indentOptions.TAB_SIZE;
-        buffer.append("\t".repeat(tabCount));
-        buffer.append(" ".repeat(leftSpaces + spaceCount));
+        for (int i = 0; i < tabCount; i++) {
+          buffer.append('\t');
+        }
+        for (int i = 0; i < leftSpaces + spaceCount; i++) {
+          buffer.append(' ');
+        }
       }
       else {
         int size = totalSize;
@@ -129,18 +133,12 @@ public class IndentHelperImpl extends IndentHelper {
       }
     }
     else {
-      buffer.append(" ".repeat(totalSize));
+      for (int i = 0; i < totalSize; i++) {
+        buffer.append(' ');
+      }
     }
 
     return buffer.toString();
-  }
-
-  /**
-   * @deprecated Do not use the implementation, see {@link IndentHelper}
-   */
-  @Deprecated
-  public static int getIndent(Project project, FileType fileType, String text, boolean includeNonSpace) {
-    return getIndent(CodeStyle.getSettings(project).getIndentOptions(fileType), text, includeNonSpace);
   }
 
   public static int getIndent(@NotNull PsiFile file, String text, boolean includeNonSpace) {

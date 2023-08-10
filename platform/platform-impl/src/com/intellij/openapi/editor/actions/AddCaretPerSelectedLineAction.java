@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -11,7 +12,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class AddCaretPerSelectedLineAction extends EditorAction {
+public class AddCaretPerSelectedLineAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public AddCaretPerSelectedLineAction() {
     super(new Handler());
   }

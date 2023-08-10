@@ -27,10 +27,10 @@ public abstract class GitTaskResultHandler {
 
   protected void run(GitTaskResult result) {
     switch (result) {
-      case OK: onSuccess(); break;
-      case CANCELLED: onCancel(); break;
-      case EXCEPTION: onException(); break;
-      case GIT_ERROR: onGitError(); break;
+      case OK -> onSuccess();
+      case CANCELLED -> onCancel();
+      case EXCEPTION -> onException();
+      case GIT_ERROR -> onGitError();
     }
   }
 }

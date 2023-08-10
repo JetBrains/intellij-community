@@ -1,0 +1,3 @@
+fun kj() {
+    KJ().test()
+}

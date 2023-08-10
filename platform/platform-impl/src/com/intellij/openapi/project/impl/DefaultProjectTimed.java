@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,6 +47,6 @@ public abstract class DefaultProjectTimed extends TimedReference<Project> {
         WriteAction.run(() -> super.dispose());
       }
     };
-    GuiUtils.invokeLaterIfNeeded(doDispose, ModalityState.NON_MODAL, myParentDisposable.getDisposed());
+    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), myParentDisposable.getDisposed(), doDispose);
   }
 }

@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -15,8 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -41,7 +38,7 @@ public class ProjectViewDirectoryHelper {
   protected static final Logger LOG = Logger.getInstance(ProjectViewDirectoryHelper.class);
 
   private final Project myProject;
-  private final DirectoryIndex myIndex;
+  private final ProjectFileIndex myFileIndex;
 
   public static ProjectViewDirectoryHelper getInstance(@NotNull Project project) {
     return project.getService(ProjectViewDirectoryHelper.class);
@@ -49,7 +46,7 @@ public class ProjectViewDirectoryHelper {
 
   public ProjectViewDirectoryHelper(Project project) {
     myProject = project;
-    myIndex = DirectoryIndex.getInstance(project);
+    myFileIndex = ProjectFileIndex.getInstance(project);
   }
 
   public Project getProject() {
@@ -134,8 +131,7 @@ public class ProjectViewDirectoryHelper {
   }
 
   public boolean canRepresent(Object element, PsiDirectory directory) {
-    if (element instanceof VirtualFile) {
-      VirtualFile vFile = (VirtualFile) element;
+    if (element instanceof VirtualFile vFile) {
       return Comparing.equal(directory.getVirtualFile(), vFile);
     }
     return false;
@@ -191,15 +187,8 @@ public class ProjectViewDirectoryHelper {
                                                               ViewSettings settings,
                                                               boolean withSubDirectories,
                                                               @Nullable PsiFileSystemItemFilter filter) {
-    return AbstractTreeUi.calculateYieldingToWriteAction(() -> doGetDirectoryChildren(psiDirectory, settings, withSubDirectories, filter));
-  }
-
-  @NotNull
-  private Collection<AbstractTreeNode<?>> doGetDirectoryChildren(PsiDirectory psiDirectory,
-                                                                 ViewSettings settings,
-                                                                 boolean withSubDirectories,
-                                                                 @Nullable PsiFileSystemItemFilter filter) {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
+    if (!psiDirectory.isValid()) return children;
     Project project = psiDirectory.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Module module = fileIndex.getModuleForFile(psiDirectory.getVirtualFile());
@@ -244,7 +233,7 @@ public class ProjectViewDirectoryHelper {
 
     for (VirtualFile root : prm.getContentRoots()) {
       VirtualFile parent = root.getParent();
-      if (!isFileUnderContentRoot(myIndex, parent)) {
+      if (!isFileUnderContentRoot(parent)) {
         topLevelContentRoots.add(root);
       }
     }
@@ -254,7 +243,7 @@ public class ProjectViewDirectoryHelper {
         VirtualFile root = pointer.getFile();
         if (root != null) {
           VirtualFile parent = root.getParent();
-          if (!isFileUnderContentRoot(myIndex, parent)) {
+          if (!isFileUnderContentRoot(parent)) {
             topLevelContentRoots.add(root);
           }
         }
@@ -269,10 +258,9 @@ public class ProjectViewDirectoryHelper {
       if (!shouldBeShown(root, settings)) return false;
       VirtualFile parent = root.getParent();
       if (parent == null) return true;
-      DirectoryInfo info = myIndex.getInfoForFile(parent);
-      if (!module.equals(info.getModule())) return true;
+      if (!module.equals(myFileIndex.getModuleForFile(parent, false))) return true;
       //show inner content root separately only if it won't be shown under outer content root
-      return info.isExcluded(parent) && !shouldShowExcludedFiles(settings);
+      return myFileIndex.isExcluded(parent) && !shouldShowExcludedFiles(settings);
     });
   }
 
@@ -285,8 +273,8 @@ public class ProjectViewDirectoryHelper {
   }
 
 
-  private static boolean isFileUnderContentRoot(@NotNull DirectoryIndex index, @Nullable VirtualFile file) {
-    return file != null && index.getInfoForFile(file).getContentRoot() != null;
+  private boolean isFileUnderContentRoot(@Nullable VirtualFile file) {
+    return file != null && file.isValid() && myFileIndex.getContentRootForFile(file, false) != null;
   }
 
   private PsiElement @NotNull [] directoryChildrenInProject(PsiDirectory psiDirectory, final ViewSettings settings) {
@@ -327,10 +315,9 @@ public class ProjectViewDirectoryHelper {
 
   private boolean shouldBeShown(@NotNull VirtualFile dir, ViewSettings settings) {
     if (!dir.isValid()) return false;
-    DirectoryInfo directoryInfo = myIndex.getInfoForFile(dir);
-    return directoryInfo.isInProject(dir)
-           ? shouldShowExcludedFiles(settings) || !ProjectUtil.isProjectOrWorkspaceFile(dir)
-           : shouldShowExcludedFiles(settings) && directoryInfo.isExcluded(dir);
+    return shouldShowExcludedFiles(settings)
+           ? myFileIndex.isInProjectOrExcluded(dir)
+           : myFileIndex.isInProject(dir) && !ProjectUtil.isProjectOrWorkspaceFile(dir);
   }
 
   private static boolean shouldShowExcludedFiles(ViewSettings settings) {

@@ -44,15 +44,17 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
         }
       }));
 
-    new ComboboxSpeedSearch(getComboBox()) {
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(getComboBox(), null) {
       @Override
       protected String getElementText(Object element) {
         if (element instanceof Trinity) {
-          return (String)((Trinity)element).first;
+          return (String)((Trinity<?, ?, ?>)element).first;
         }
         return null;
       }
-    }.setComparator(new SpeedSearchComparator(true));
+    };
+    search.setupListeners();
+    search.setComparator(new SpeedSearchComparator(true));
     setButtonListener(null);
   }
 

@@ -2,20 +2,26 @@
 package training.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import training.learn.CourseManager
-import training.ui.LearnToolWindowFactory
+import training.statistic.LessonStartingWay
+import training.statistic.StatisticBase
+import training.util.getLearnToolWindowForProject
 import training.util.getNextLessonForCurrent
 import training.util.lessonOpenedInProject
 
-class NextLessonAction : AnAction(AllIcons.Actions.Forward) {
+private class NextLessonAction : AnAction(AllIcons.Actions.Forward) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    if (LearnToolWindowFactory.learnWindowPerProject[project] == null) return
+    if (getLearnToolWindowForProject(project) == null) return
     val nextLesson = getNextLessonForCurrent() ?: return
-    CourseManager.instance.openLesson(project, nextLesson)
+    StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.OPEN_NEXT_OR_PREV_LESSON)
+    CourseManager.instance.openLesson(project, nextLesson, LessonStartingWay.NEXT_BUTTON)
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val project = e.project

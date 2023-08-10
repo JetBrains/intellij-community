@@ -17,7 +17,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
@@ -28,18 +28,19 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.RedundantParenthesesQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * User: catherine
  * <p>
  * Inspection to detect redundant parentheses in if/while statement.
  */
-public class PyRedundantParenthesesInspection extends PyInspection {
-
+public final class PyRedundantParenthesesInspection extends PyInspection {
   private final SmartSerializer mySerializer = new SmartSerializer();
 
   public boolean myIgnorePercOperator = false;
@@ -51,7 +52,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   @Override
@@ -78,8 +79,8 @@ public class PyRedundantParenthesesInspection extends PyInspection {
   }
 
   private class Visitor extends PyInspectionVisitor {
-    Visitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@NotNull ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -116,13 +117,12 @@ public class PyRedundantParenthesesInspection extends PyInspection {
         registerProblem(node, PyPsiBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
       }
       else if (parent instanceof PyReturnStatement || parent instanceof PyYieldExpression) {
-        if (!isTupleWithUnpacking(expression) && !oneElementTuple(expression) ||
-            languageLevel.isAtLeast(LanguageLevel.PYTHON38) && !isYieldFrom(parent)) {
+        if (!(isTupleWithUnpacking(expression) && languageLevel.isOlderThan(LanguageLevel.PYTHON38)) && !oneElementTuple(expression) &&
+            !isYieldFrom(parent)) {
           registerProblem(node, PyPsiBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
         }
       }
-      else if (expression instanceof PyBinaryExpression) {
-        final PyBinaryExpression binaryExpression = (PyBinaryExpression)expression;
+      else if (expression instanceof PyBinaryExpression binaryExpression) {
 
         if (parent instanceof PyPrefixExpression) {
           return;
@@ -155,11 +155,11 @@ public class PyRedundantParenthesesInspection extends PyInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(PyPsiBundle.message("INSP.redundant.parens.ignore.argument.of.operator"), "myIgnorePercOperator");
-    panel.addCheckbox(PyPsiBundle.message("INSP.redundant.parens.ignore.tuples"), "myIgnoreTupleInReturn");
-    panel.addCheckbox(PyPsiBundle.message("INSP.redundant.parens.ignore.empty.lists.of.base.classes"), "myIgnoreEmptyBaseClasses");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myIgnorePercOperator", PyPsiBundle.message("INSP.redundant.parens.ignore.argument.of.operator")),
+      checkbox("myIgnoreTupleInReturn", PyPsiBundle.message("INSP.redundant.parens.ignore.tuples")),
+      checkbox("myIgnoreEmptyBaseClasses", PyPsiBundle.message("INSP.redundant.parens.ignore.empty.lists.of.base.classes"))
+    );
   }
 }

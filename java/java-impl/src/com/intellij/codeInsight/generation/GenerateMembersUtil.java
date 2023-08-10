@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModPsiNavigator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -15,16 +16,17 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -93,7 +95,7 @@ public final class GenerateMembersUtil {
           //     }
           whiteSpace += "\n";
         }
-        final PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(file.getProject());
+        final PsiParserFacade parserFacade = PsiParserFacade.getInstance(file.getProject());
         final ASTNode singleNewLineWhitespace = parserFacade.createWhiteSpaceFromText(whiteSpace).getNode();
         if (singleNewLineWhitespace != null) {
           spaceNode.getTreeParent().replaceChild(spaceNode, singleNewLineWhitespace); // See http://jetbrains.net/jira/browse/IDEADEV-12837
@@ -108,8 +110,7 @@ public final class GenerateMembersUtil {
       if (element instanceof PsiField || element instanceof PsiMethod || element instanceof PsiClassInitializer) break;
       element = element.getNextSibling();
     }
-    if (element instanceof PsiField) {
-      PsiField field = (PsiField)element;
+    if (element instanceof PsiField field) {
       PsiTypeElement typeElement = field.getTypeElement();
       if (typeElement != null && !field.equals(typeElement.getParent())) {
         field.normalizeDeclaration();
@@ -142,31 +143,10 @@ public final class GenerateMembersUtil {
       PsiMethod method = (PsiMethod)firstMember;
       PsiCodeBlock body = method.getBody();
       if (body != null) {
-        PsiElement firstBodyElement = body.getFirstBodyElement();
-        PsiElement l = firstBodyElement;
-        while (l instanceof PsiWhiteSpace) l = l.getNextSibling();
-        if (l == null) l = body;
-        PsiElement lastBodyElement = body.getLastBodyElement();
-        PsiElement r = lastBodyElement;
-        while (r instanceof PsiWhiteSpace) r = r.getPrevSibling();
-        if (r == null) r = body;
-
-        int start = l.getTextRange().getStartOffset();
-        int end = r.getTextRange().getEndOffset();
-
-        boolean adjustLineIndent = false;
-
-        // body is whitespace
-        if (start > end &&
-            firstBodyElement == lastBodyElement &&
-            firstBodyElement instanceof PsiWhiteSpaceImpl
-          ) {
-          CharSequence chars = ((PsiWhiteSpaceImpl)firstBodyElement).getChars();
-          if (chars.length() > 1 && chars.charAt(0) == '\n' && chars.charAt(1) == '\n') {
-            start = end = firstBodyElement.getTextRange().getStartOffset() + 1;
-            adjustLineIndent = true;
-          }
-        }
+        PositionInfo info = getPositionInfo(body);
+        int start = info.start();
+        int end = info.end();
+        boolean adjustLineIndent = info.adjustLineIndent();
 
         editor.getCaretModel().moveToOffset(Math.min(start, end));
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -185,26 +165,87 @@ public final class GenerateMembersUtil {
       }
     }
 
-    int offset;
-    if (firstMember instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)firstMember;
-      PsiCodeBlock body = method.getBody();
-      if (body == null) {
-        offset = method.getTextRange().getStartOffset();
-      }
-      else {
-        PsiJavaToken lBrace = body.getLBrace();
-        assert lBrace != null : firstMember.getText();
-        offset = lBrace.getTextRange().getEndOffset();
-      }
-    }
-    else {
-      offset = firstMember.getTextRange().getStartOffset();
-    }
+    int offset = getOffsetInMethod(firstMember);
 
     editor.getCaretModel().moveToOffset(offset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().removeSelection();
+  }
+
+  public static void positionCaret(@NotNull ModPsiNavigator updater, @NotNull PsiElement firstMember, boolean toEditMethodBody) {
+    LOG.assertTrue(firstMember.isValid());
+    Project project = firstMember.getProject();
+
+    if (toEditMethodBody) {
+      PsiMethod method = (PsiMethod)firstMember;
+      PsiCodeBlock body = method.getBody();
+      if (body != null) {
+        PositionInfo info = getPositionInfo(body);
+
+        updater.moveTo(Math.min(info.start(), info.end()));
+        if (info.start() < info.end()) {
+          //Not an empty body
+          updater.select(TextRange.create(info.start(), info.end()));
+        } else if (info.adjustLineIndent()) {
+          Document document = firstMember.getContainingFile().getViewProvider().getDocument();
+          RangeMarker marker = document.createRangeMarker(info.start(), info.start());
+          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+          if (marker.isValid()) {
+            CodeStyleManager.getInstance(project).adjustLineIndent(document, marker.getStartOffset());
+          }
+        }
+        return;
+      }
+    }
+
+    int offset = getOffsetInMethod(firstMember);
+    updater.moveTo(offset);
+  }
+
+  @NotNull
+  private static PositionInfo getPositionInfo(PsiCodeBlock body) {
+    PsiElement firstBodyElement = body.getFirstBodyElement();
+    PsiElement l = firstBodyElement;
+    while (l instanceof PsiWhiteSpace) l = l.getNextSibling();
+    if (l == null) l = body;
+    PsiElement lastBodyElement = body.getLastBodyElement();
+    PsiElement r = lastBodyElement;
+    while (r instanceof PsiWhiteSpace) r = r.getPrevSibling();
+    if (r == null) r = body;
+
+    int start = l.getTextRange().getStartOffset();
+    int end = r.getTextRange().getEndOffset();
+
+    boolean adjustLineIndent = false;
+
+    // body is whitespace
+    if (start > end &&
+        firstBodyElement == lastBodyElement &&
+        firstBodyElement instanceof PsiWhiteSpaceImpl
+    ) {
+      CharSequence chars = ((PsiWhiteSpaceImpl)firstBodyElement).getChars();
+      if (chars.length() > 1 && chars.charAt(0) == '\n' && chars.charAt(1) == '\n') {
+        start = end = firstBodyElement.getTextRange().getStartOffset() + 1;
+        adjustLineIndent = true;
+      }
+    }
+    return new PositionInfo(start, end, adjustLineIndent);
+  }
+
+  private record PositionInfo(int start, int end, boolean adjustLineIndent) {
+  }
+
+  private static int getOffsetInMethod(@NotNull PsiElement member) {
+    if (member instanceof PsiMethod method) {
+      PsiCodeBlock body = method.getBody();
+      if (body == null) {
+        return method.getTextRange().getStartOffset();
+      }
+      PsiJavaToken lBrace = body.getLBrace();
+      assert lBrace != null : member.getText();
+      return lBrace.getTextRange().getEndOffset();
+    }
+    return member.getTextRange().getStartOffset();
   }
 
   public static PsiElement insert(@NotNull PsiClass aClass, @NotNull PsiMember member, @Nullable PsiElement anchor, boolean before) throws IncorrectOperationException {
@@ -230,8 +271,7 @@ public final class GenerateMembersUtil {
   private static PsiClass findClassAtOffset(@NotNull PsiFile file, PsiElement leaf) {
     PsiElement element = leaf;
     while (element != null && !(element instanceof PsiFile)) {
-      if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
-        final PsiClass psiClass = (PsiClass)element;
+      if (element instanceof PsiClass psiClass && !(element instanceof PsiTypeParameter)) {
         if (psiClass.isEnum()) {
           PsiElement lastChild = null;
           for (PsiElement child = psiClass.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -381,11 +421,16 @@ public final class GenerateMembersUtil {
                                                           @NotNull PsiTypeParameter typeParameter,
                                                           @NotNull PsiSubstitutor substitutor,
                                                           @NotNull PsiMethod sourceMethod) {
+    if (typeParameter instanceof LightElement) {
+      List<PsiClassType> substitutedSupers = ContainerUtil.map(typeParameter.getSuperTypes(), t -> ObjectUtils.notNull(toClassType(substitutor.substitute(t)), t));
+      return factory.createTypeParameter(Objects.requireNonNull(typeParameter.getName()), substitutedSupers.toArray(PsiClassType.EMPTY_ARRAY));
+    }
     final PsiElement copy = ObjectUtils.notNull(typeParameter instanceof PsiCompiledElement ? ((PsiCompiledElement)typeParameter).getMirror() : typeParameter, typeParameter).copy();
+    LOG.assertTrue(copy != null, typeParameter);
     final Map<PsiElement, PsiElement> replacementMap = new HashMap<>();
     copy.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
         final PsiElement resolve = reference.resolve();
         if (resolve instanceof PsiTypeParameter) {
@@ -394,7 +439,20 @@ public final class GenerateMembersUtil {
         }
       }
     });
-    return (PsiTypeParameter)RefactoringUtil.replaceElementsWithMap(copy, replacementMap);
+    return (PsiTypeParameter)CommonJavaRefactoringUtil.replaceElementsWithMap(copy, replacementMap);
+  }
+
+  private static PsiClassType toClassType(PsiType type) {
+    if (type instanceof PsiClassType) {
+      return (PsiClassType)type;
+    }
+    if (type instanceof PsiCapturedWildcardType) {
+      return toClassType(((PsiCapturedWildcardType)type).getUpperBound());
+    }
+    if (type instanceof PsiWildcardType) {
+      return toClassType(((PsiWildcardType)type).getBound());
+    }
+    return null;
   }
 
   private static void substituteParameters(@NotNull JVMElementFactory factory,
@@ -422,7 +480,9 @@ public final class GenerateMembersUtil {
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       final PsiType parameterType = parameter.getType();
-      final PsiType substituted = substituteType(substitutor, parameterType, (PsiMethod)parameter.getDeclarationScope(), parameter.getModifierList());
+      PsiElement declarationScope = parameter.getDeclarationScope();
+      PsiType substituted = declarationScope instanceof PsiTypeParameterListOwner ? substituteType(substitutor, parameterType, (PsiTypeParameterListOwner)declarationScope, parameter.getModifierList()) 
+                                                                                  : parameterType;
       String paramName = parameter.getName();
       boolean isBaseNameGenerated = true;
       final boolean isSubstituted = substituted.equals(parameterType);
@@ -474,7 +534,7 @@ public final class GenerateMembersUtil {
     }
     final PsiParameter[] sourceParameters = source.getParameterList().getParameters();
     final PsiParameterList targetParameterList = target.getParameterList();
-    RefactoringUtil.fixJavadocsForParams(target, ContainerUtil.set(targetParameterList.getParameters()), pair -> {
+    CommonJavaRefactoringUtil.fixJavadocsForParams(target, Set.of(targetParameterList.getParameters()), pair -> {
       final int parameterIndex = targetParameterList.getParameterIndex(pair.first);
       if (parameterIndex >= 0 && parameterIndex < sourceParameters.length) {
         return Comparing.strEqual(pair.second, sourceParameters[parameterIndex].getName());
@@ -489,7 +549,7 @@ public final class GenerateMembersUtil {
     if (method.isConstructor()) {
       return factory.createConstructor(method.getName(), target);
     }
-    return factory.createMethod(method.getName(), PsiType.VOID, target);
+    return factory.createMethod(method.getName(), PsiTypes.voidType(), target);
   }
 
   private static void substituteReturnType(@NotNull PsiManager manager,
@@ -556,7 +616,7 @@ public final class GenerateMembersUtil {
 
     if (overridden == null) {
       if (emptyTemplate) {
-        CreateFromUsageUtils.setupMethodBody(method, containingClass);
+        CreateFromUsageUtils.setupMethodBody(method);
       }
       return;
     }
@@ -746,13 +806,13 @@ public final class GenerateMembersUtil {
     String visibility = javaSettings.VISIBILITY;
 
     @PsiModifier.ModifierConstant String newVisibility;
+    final PsiClass containingClass = member.getContainingClass();
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) {
-      PsiClass aClass = member instanceof PsiClass ? (PsiClass)member : member.getContainingClass();
-      newVisibility = PsiUtil.getMaximumModifierForMember(aClass, false);
+      PsiClass aClass = member instanceof PsiClass ? (PsiClass)member : containingClass;
+      newVisibility = PsiUtil.getSuitableModifierForMember(aClass, prototype.isConstructor());
     }
     else {
-      //noinspection MagicConstant
-      newVisibility = visibility;
+      newVisibility = (containingClass != null && containingClass.isRecord()) ? PsiModifier.PUBLIC : visibility;
     }
     VisibilityUtil.setVisibility(prototype.getModifierList(), newVisibility);
 

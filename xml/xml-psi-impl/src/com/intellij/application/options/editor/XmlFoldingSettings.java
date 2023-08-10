@@ -3,13 +3,14 @@ package com.intellij.application.options.editor;
 
 import com.intellij.lang.XmlCodeFoldingSettings;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "XmlFoldingSettings", storages = @Storage("editor.xml"))
+@State(name = "XmlFoldingSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public final class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentStateComponent<XmlFoldingSettings.State> {
   private final XmlFoldingSettings.State myState = new State();
 

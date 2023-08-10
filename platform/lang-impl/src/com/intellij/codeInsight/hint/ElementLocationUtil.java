@@ -23,7 +23,7 @@ public final class ElementLocationUtil {
   /**
    * @deprecated use {@link #renderElementLocation(PsiElement, Ref)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void customizeElementLabel(final PsiElement element, final JLabel label) {
     Ref<Icon> ref = new Ref<>();
     label.setText(renderElementLocation(element, ref));

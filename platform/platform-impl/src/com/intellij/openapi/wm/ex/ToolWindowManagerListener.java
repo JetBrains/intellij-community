@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.wm.ToolWindow;
@@ -12,19 +12,21 @@ import java.util.List;
 
 public interface ToolWindowManagerListener extends EventListener {
   @Topic.ProjectLevel
-  Topic<ToolWindowManagerListener> TOPIC = new Topic<>("tool window events", ToolWindowManagerListener.class, Topic.BroadcastDirection.NONE);
+  Topic<ToolWindowManagerListener> TOPIC =
+    new Topic<>("tool window events", ToolWindowManagerListener.class, Topic.BroadcastDirection.NONE);
 
   /**
    * @deprecated Use {@link #toolWindowsRegistered}
    */
   @Deprecated
-  default void toolWindowRegistered(@NotNull String id) {
+  default void toolWindowRegistered(@SuppressWarnings("unused") @NotNull String id) {
   }
 
+  /**
+   * WARNING: The listener MIGHT be called NOT ON EDT.
+   */
   default void toolWindowsRegistered(@NotNull List<String> ids, @NotNull ToolWindowManager toolWindowManager) {
-    for (String id : ids) {
-      toolWindowRegistered(id);
-    }
+    ids.forEach(this::toolWindowRegistered);
   }
 
   /**
@@ -40,6 +42,19 @@ public interface ToolWindowManagerListener extends EventListener {
     stateChanged();
   }
 
+  default void stateChanged(@NotNull ToolWindowManager toolWindowManager,
+                            @NotNull ToolWindowManagerListener.ToolWindowManagerEventType changeType) {
+    stateChanged(toolWindowManager);
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  default void stateChanged(@NotNull ToolWindowManager toolWindowManager,
+                            @NotNull ToolWindow toolWindow,
+                            @NotNull ToolWindowManagerListener.ToolWindowManagerEventType changeType) {
+    stateChanged(toolWindowManager, changeType);
+  }
+
   /**
    * Invoked when tool window is shown.
    *
@@ -53,8 +68,7 @@ public interface ToolWindowManagerListener extends EventListener {
    * @deprecated use {@link #toolWindowShown(ToolWindow)} instead
    */
   @SuppressWarnings("unused")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {
   }
 
@@ -63,5 +77,12 @@ public interface ToolWindowManagerListener extends EventListener {
    */
   @Deprecated
   default void stateChanged() {
+  }
+
+  enum ToolWindowManagerEventType {
+    ActivateToolWindow, HideToolWindow, RegisterToolWindow, SetContentUiType, SetLayout, SetShowStripeButton,
+    SetSideTool, SetSideToolAndAnchor, SetToolWindowAnchor, SetToolWindowAutoHide, SetToolWindowType, SetVisibleOnLargeStripe,
+    ShowToolWindow, UnregisterToolWindow, ToolWindowAvailable, ToolWindowUnavailable, MovedOrResized,
+    MoreButtonUpdated
   }
 }

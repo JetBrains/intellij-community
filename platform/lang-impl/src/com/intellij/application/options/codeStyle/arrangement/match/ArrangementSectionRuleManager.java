@@ -60,7 +60,7 @@ public final class ArrangementSectionRuleManager {
     myCommenter = LanguageCommenters.INSTANCE.forLanguage(language);
     myControl = control;
     final List<CompositeArrangementSettingsToken> tokens = new ArrayList<>();
-    tokens.add(new CompositeArrangementSettingsToken(TYPE, ContainerUtil.newArrayList(START_SECTION, END_SECTION)));
+    tokens.add(new CompositeArrangementSettingsToken(TYPE, List.of(START_SECTION, END_SECTION)));
     tokens.add(new CompositeArrangementSettingsToken(TEXT));
     myEditor = new ArrangementMatchingRuleEditor(settingsManager, tokens, colorsProvider, control);
   }

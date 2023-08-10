@@ -2,9 +2,7 @@
 
 package com.intellij.ide;
 
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -19,7 +17,6 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,16 +38,8 @@ public class CopyPasteDelegator implements CopyPasteSupport {
     myEditable = new MyEditable();
   }
 
-  /** @deprecated no replacement needed,
-   * {@code LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext)} is used instead. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected PsiElement @NotNull [] getSelectedElements() {
-    return PsiElement.EMPTY_ARRAY;
-  }
-
   protected PsiElement @NotNull [] getSelectedElements(@NotNull DataContext dataContext) {
-    return ObjectUtils.notNull(LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext), getSelectedElements());
+    return ObjectUtils.notNull(LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext), PsiElement.EMPTY_ARRAY);
   }
 
   private static PsiElement @NotNull [] validate(PsiElement @Nullable [] selectedElements) {
@@ -82,7 +71,13 @@ public class CopyPasteDelegator implements CopyPasteSupport {
     return myEditable;
   }
 
-  class MyEditable implements CutProvider, CopyProvider, PasteProvider {
+  class MyEditable implements CutProvider, CopyProvider, PasteProvider, ActionUpdateThreadAware {
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     @Override
     public void performCopy(@NotNull DataContext dataContext) {
       PsiElement[] elements = validate(getSelectedElements(dataContext));
@@ -104,7 +99,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
 
     @Override
     public void performCut(@NotNull DataContext dataContext) {
-      PsiElement[] elements = validate(getSelectedElements());
+      PsiElement[] elements = validate(getSelectedElements(dataContext));
       if (MoveHandler.adjustForMove(myProject, elements, null) == null) {
         return;
       }
@@ -144,7 +139,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
 
       return DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> {
         try {
-          final Module module = LangDataKeys.MODULE.getData(dataContext);
+          final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
           PsiElement target = getPasteTarget(dataContext, module);
           if (isCopied[0]) {
             pasteAfterCopy(elements, module, target, true);

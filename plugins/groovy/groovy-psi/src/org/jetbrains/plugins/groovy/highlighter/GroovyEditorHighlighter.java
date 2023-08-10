@@ -24,9 +24,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.highlighter.GroovyDocSyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 
-/**
- * @author ilyas
- */
 public class GroovyEditorHighlighter extends LayeredLexerEditorHighlighter {
 
   public GroovyEditorHighlighter(EditorColorsScheme scheme) {

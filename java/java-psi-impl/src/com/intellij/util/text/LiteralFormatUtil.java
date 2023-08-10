@@ -4,6 +4,7 @@ package com.intellij.util.text;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,7 @@ public final class LiteralFormatUtil {
 
   @NotNull
   public static String format(@NotNull final String original, @Nullable final PsiType type) {
-    final boolean isFP = PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type);
+    final boolean isFP = PsiTypes.floatType().equals(type) || PsiTypes.doubleType().equals(type);
 
     String text = original;
     String prefix = "";

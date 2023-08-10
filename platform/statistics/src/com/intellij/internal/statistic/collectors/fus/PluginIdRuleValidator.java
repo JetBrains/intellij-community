@@ -5,12 +5,12 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PluginIdRuleValidator extends CustomValidationRule {
+  @NotNull
   @Override
-  public boolean acceptRuleId(@Nullable String ruleId) {
-    return "plugin".equals(ruleId);
+  public String getRuleId() {
+    return "plugin";
   }
 
   @NotNull

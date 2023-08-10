@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsContexts
@@ -15,10 +16,11 @@ import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -40,7 +42,7 @@ internal object UpdateInfoPanel {
 
   private val REPORTING_LISTENER = object : BrowserHyperlinkListener() {
     override fun hyperlinkActivated(e: HyperlinkEvent) {
-      UpdateInfoStatsCollector.click(e.url.toString())
+      UpdateInfoStatsCollector.click(e.description)
       super.hyperlinkActivated(e)
     }
   }
@@ -94,10 +96,10 @@ internal object UpdateInfoPanel {
     infoLabel.text = infoLabelText(newBuild, patches, testPatch, appInfo)
     infoRow.add(infoLabel)
     if (enableLink) {
-      val link = LinkLabel.create(IdeBundle.message("updates.configure.updates.label")) {
+      val link = ActionLink(IdeBundle.message("updates.configure.updates.label")) {
         ShowSettingsUtil.getInstance().editConfigurable(infoRow, UpdateSettingsConfigurable(false))
       }
-      link.border = JBUI.Borders.empty(0, 4, 0, 0)
+      link.border = JBUI.Borders.emptyLeft(4)
       link.font = smallFont(link.font)
       infoRow.add(link)
     }
@@ -111,7 +113,7 @@ internal object UpdateInfoPanel {
 
   @NlsSafe
   private fun textPaneContent(newBuild: BuildInfo, updatedChannel: UpdateChannel, appNames: ApplicationNamesInfo): String {
-    val style = UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())
+    val style = UIUtil.getCssFontDeclaration(StartupUiUtil.labelFont)
 
     val message = newBuild.message
     val content = when {
@@ -147,5 +149,10 @@ internal object UpdateInfoPanel {
   @JvmStatic
   fun downloadUrl(newBuild: BuildInfo, updatedChannel: UpdateChannel): String =
     IdeUrlTrackingParametersProvider.getInstance().augmentUrl(
-      newBuild.downloadUrl ?: newBuild.blogPost ?: updatedChannel.url ?: "https://www.jetbrains.com")
+      newBuild.downloadUrl ?:
+      newBuild.blogPost ?:
+      updatedChannel.url ?:
+      ApplicationInfoEx.getInstanceEx().downloadUrl ?:
+      ApplicationInfo.getInstance().companyURL ?:
+      "https://www.jetbrains.com")
 }

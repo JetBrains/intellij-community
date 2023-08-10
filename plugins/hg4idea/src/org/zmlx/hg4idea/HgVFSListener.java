@@ -30,7 +30,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.containers.ContainerUtil.map2List;
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.RENAME_FAILED;
 
 /**
@@ -142,11 +141,11 @@ public final class HgVFSListener extends VcsVFSListener {
   @Override
   protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copiedFilesFrom) {
     Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<>(copiedFilesFrom);
-    (new Task.ConditionalModal(myProject,
-                               HgBundle.message("hg4idea.add.progress"),
-                               false,
-                               VcsConfiguration.getInstance(myProject).getAddRemoveOption() ) {
-      @Override public void run(@NotNull ProgressIndicator aProgressIndicator) {
+    (new Task.Backgroundable(myProject,
+                             HgBundle.message("hg4idea.add.progress"),
+                             false) {
+      @Override
+      public void run(@NotNull ProgressIndicator aProgressIndicator) {
         final ArrayList<VirtualFile> adds = new ArrayList<>();
         final HashMap<VirtualFile, VirtualFile> copies = new HashMap<>(); // from -> to
         //delete unversioned and ignored files from copy source
@@ -247,11 +246,11 @@ public final class HgVFSListener extends VcsVFSListener {
       }
     }
 
-    new Task.ConditionalModal(myProject,
-                              HgBundle.message("hg4idea.remove.progress"),
-                              false,
-                              VcsConfiguration.getInstance(myProject).getAddRemoveOption()) {
-      @Override public void run( @NotNull ProgressIndicator indicator ) {
+    new Task.Backgroundable(myProject,
+                            HgBundle.message("hg4idea.remove.progress"),
+                            false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
         // confirm removal from the VCS if needed
         if (myRemoveOption.getValue() != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
           if (myRemoveOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY || filesToConfirmDeletion.isEmpty()) {
@@ -320,7 +319,6 @@ public final class HgVFSListener extends VcsVFSListener {
     final List<MovedFileInfo> failedToMove = new ArrayList<>();
     (new VcsBackgroundTask<>(myProject,
                              HgBundle.message("hg4idea.move.progress"),
-                             VcsConfiguration.getInstance(myProject).getAddRemoveOption(),
                              movedFiles) {
       @Override
       public void onFinished() {
@@ -333,7 +331,7 @@ public final class HgVFSListener extends VcsVFSListener {
         NotificationAction viewFilesAction =
           NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.VFSListener.text.view.files"), () -> {
             DialogWrapper dialog =
-              new ProcessedFilePathsDialog(myProject, map2List(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath)));
+              new ProcessedFilePathsDialog(myProject, ContainerUtil.map(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath)));
             dialog.setTitle(HgBundle.message("hg4idea.rename.error.title"));
             dialog.show();
           });

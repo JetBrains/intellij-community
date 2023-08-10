@@ -3,8 +3,10 @@ package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.PushSource;
+import com.intellij.openapi.util.NlsSafe;
 import git4idea.GitLocalBranch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class GitPushSource implements PushSource {
 
@@ -13,13 +15,27 @@ public abstract class GitPushSource implements PushSource {
     return new OnBranch(branch);
   }
 
+  /**
+   * Create information to push from.
+   * All commits before this including this one will be pushed to a target branch.
+   */
   @NotNull
-  public static GitPushSource create(@NotNull String revision) {
-    return new DetachedHead(revision);
+  public static GitPushSource createRef(@NotNull GitLocalBranch branch, @NotNull String revision) {
+    return new OnRevision(branch, revision);
   }
 
   @NotNull
+  public static GitPushSource createDetached(@NotNull String revision) {
+    return new DetachedHead(revision);
+  }
+
+  @Nullable
   public abstract GitLocalBranch getBranch();
+
+  @NotNull
+  public abstract String getRevision();
+
+  public abstract boolean isBranchRef();
 
   @Override
   public String toString() {
@@ -44,6 +60,50 @@ public abstract class GitPushSource implements PushSource {
     public GitLocalBranch getBranch() {
       return myBranch;
     }
+
+    @NotNull
+    @Override
+    public String getRevision() {
+      return myBranch.getFullName();
+    }
+
+    @Override
+    public boolean isBranchRef() {
+      return true;
+    }
+  }
+
+  static final class OnRevision extends GitPushSource {
+    @NotNull private final GitLocalBranch myBranch;
+    @NlsSafe private final String myRevision;
+
+    private OnRevision(@NotNull GitLocalBranch branch, @NotNull String revision) {
+      myBranch = branch;
+      myRevision = revision;
+    }
+
+    @NotNull
+    @Override
+    public String getPresentation() {
+      return DvcsUtil.getShortHash(myRevision);
+    }
+
+    @NotNull
+    @Override
+    public GitLocalBranch getBranch() {
+      return myBranch;
+    }
+
+    @NotNull
+    @Override
+    public String getRevision() {
+      return myRevision;
+    }
+
+    @Override
+    public boolean isBranchRef() {
+      return false;
+    }
   }
 
   static class DetachedHead extends GitPushSource {
@@ -59,10 +119,21 @@ public abstract class GitPushSource implements PushSource {
       return DvcsUtil.getShortHash(myRevision);
     }
 
-    @NotNull
+    @Nullable
     @Override
     public GitLocalBranch getBranch() {
-      throw new IllegalStateException("Push is not allowed from detached HEAD");
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public String getRevision() {
+      return myRevision;
+    }
+
+    @Override
+    public boolean isBranchRef() {
+      return false;
     }
   }
 }

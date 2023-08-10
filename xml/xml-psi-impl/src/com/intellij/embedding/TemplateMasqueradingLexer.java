@@ -35,6 +35,9 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
     protected static final int DELEGATE_IS_LEXING_LINE = 1;
     protected static final int DELEGATE_IS_LEXING_BLOCK = 2;
     protected static final int EOF = 3;
+    private static final int NON_ZERO_INDENTATION = 4;
+
+    private  static final int STATE_SHIFT = 3;
 
     protected final int myIndent;
     protected final Lexer myDelegate;
@@ -45,6 +48,7 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
 
     @MagicConstant(intValues = {LEXING_BY_SELF, DELEGATE_IS_LEXING_LINE, DELEGATE_IS_LEXING_BLOCK, EOF})
     protected int myState;
+    private boolean hasIndentation;
     protected IElementType myTokenType;
     protected int myTokenStart;
     protected int myTokenEnd;
@@ -69,7 +73,10 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
       myStartOffset = startOffset;
       myEndOffset = endOffset;
       //noinspection MagicConstant
-      myState = initialState % 239;
+      myState = initialState % ( 1 << STATE_SHIFT);
+
+      if ((myState & NON_ZERO_INDENTATION) != 0)
+        throw new IllegalStateException("Cannot restart lexer if there is non-zero indentation.");
 
       myTokenEnd = startOffset;
 
@@ -77,7 +84,7 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
         myTokenEnd = (myState == DELEGATE_IS_LEXING_LINE)
                      ? findEol(startOffset)
                      : findEndByIndent(startOffset);
-        myDelegate.start(buffer, startOffset, myTokenEnd, getDelegateState(initialState / 239));
+        myDelegate.start(buffer, startOffset, myTokenEnd, getDelegateState(initialState >> STATE_SHIFT));
       }
       else
       {
@@ -88,7 +95,7 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
 
     @Override
     public int getState() {
-      return myDelegate.getState() * 239 + myState;
+      return (myDelegate.getState() << STATE_SHIFT) + myState + (hasIndentation ? NON_ZERO_INDENTATION : 0);
     }
 
     @Nullable
@@ -156,6 +163,7 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
         if (StringUtil.isWhiteSpace(myBuffer.charAt(myTokenStart))) {
           myTokenType = getIndentTokenType();
           myTokenEnd = findNonWhitespace(myTokenStart);
+          hasIndentation = true;
           return;
         }
 
@@ -169,8 +177,10 @@ public abstract class TemplateMasqueradingLexer extends MasqueradingLexer {
           else {
             myTokenType = getEmbeddedContentTokenType();
           }
+          hasIndentation = true;
           return;
         }
+        hasIndentation = false;
 
         int embeddedCodeStartMarkerLength = getEmbeddedCodeStartMarkerLength();
         if (embeddedCodeStartMarkerLength > 0) {

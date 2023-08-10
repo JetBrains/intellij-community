@@ -40,7 +40,6 @@ public final class PyRemoteCommandLineStateUtil {
    *                             might run on a remote machine (including
    *                             virtual ones) and IDE
    * @param debugParams          the debug parameters group of the script
-   * @throws RemoteSdkException
    */
   static void patchDebugParams(@NotNull String helpersPath,
                                @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider,

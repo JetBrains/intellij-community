@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.plugins.groovy;
 
 import com.intellij.openapi.module.Module;
@@ -78,7 +78,7 @@ public class MavenGroovyPomScriptType extends GroovyRunnableScriptType {
   }
 
   public static List<VirtualFile> additionalScopeFiles() {
-    VirtualFile jarFile = VfsUtil.findFileByIoFile(getBundledGroovyFile(), false);
+    VirtualFile jarFile = VfsUtil.findFileByIoFile(getBundledGroovyFile().get(), false);
     if (jarFile != null) {
       VirtualFile jarRoot = JarFileSystem.getInstance().getRootByLocal(jarFile);
       if (jarRoot != null) {
@@ -95,7 +95,7 @@ public class MavenGroovyPomScriptType extends GroovyRunnableScriptType {
       for (VirtualFile virtualFile : library.getFiles(OrderRootType.CLASSES)) {
         if (GroovyConfigUtils.GROOVY_JAR_PATTERN.matcher(virtualFile.getName()).matches() ||
             GroovyConfigUtils.matchesGroovyAll(virtualFile.getName())) {
-          List<OrderEntry> orderEntries = ProjectFileIndex.SERVICE.getInstance(project).getOrderEntriesForFile(virtualFile);
+          List<OrderEntry> orderEntries = ProjectFileIndex.getInstance(project).getOrderEntriesForFile(virtualFile);
           if (!orderEntries.isEmpty()) {
             return true;
           }

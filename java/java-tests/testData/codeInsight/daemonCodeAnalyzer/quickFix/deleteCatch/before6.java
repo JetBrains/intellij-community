@@ -1,4 +1,4 @@
-// "Delete catch for 'java.io.IOException'" "true"
+// "Delete catch for 'java.io.IOException'" "true-preview"
 import java.io.*;
 
 class a {

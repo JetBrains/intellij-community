@@ -1,0 +1,9 @@
+// WITH_STDLIB
+// AFTER-WARNING: Parameter 'i' is never used, could be renamed to _
+fun foo() {
+    val list = 1..4
+
+    <caret>for (i in list) {
+
+    }
+}

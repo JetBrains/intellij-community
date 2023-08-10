@@ -22,7 +22,6 @@ import com.intellij.diagnostic.hprof.analysis.analyzeGraph
 import com.intellij.diagnostic.hprof.util.HeapDumpAnalysisNotificationGroup
 import com.intellij.diagnostic.report.HeapReportProperties
 import com.intellij.ide.BrowserUtil
-import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.actions.ShowLogAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -30,9 +29,9 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.DialogWrapper
@@ -42,7 +41,6 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
-import java.io.File
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.OpenOption
@@ -52,14 +50,12 @@ import java.util.concurrent.CompletableFuture
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 
-class AnalysisRunnable(val hprofPath: Path,
+private val LOG: Logger
+  get() = logger<AnalysisRunnable>()
+
+internal class AnalysisRunnable(val hprofPath: Path,
                        val heapProperties: HeapReportProperties,
                        private val deleteAfterAnalysis: Boolean) : Runnable {
-
-  companion object {
-    private val LOG = Logger.getInstance(AnalysisRunnable::class.java)
-  }
-
   override fun run() {
     AnalysisTask().queue()
   }
@@ -73,9 +69,9 @@ class AnalysisRunnable(val hprofPath: Path,
 
       val notification = HeapDumpAnalysisNotificationGroup.GROUP.createNotification(DiagnosticBundle.message("heap.dump.analysis.exception"),
                                                                                     NotificationType.INFORMATION)
-      notification.addAction(NotificationAction.createSimpleExpiring(ShowLogAction.getActionName()) {
-        RevealFileAction.openFile(File(PathManager.getLogPath(), "idea.log"))
-      })
+      if (ShowLogAction.isSupported()) {
+        notification.addAction(ShowLogAction.notificationAction())
+      }
       notification.notify(null)
       if (deleteAfterAnalysis) {
         deleteHprofFileAsync()
@@ -144,11 +140,11 @@ class AnalysisRunnable(val hprofPath: Path,
 }
 private const val SECTION_SEPARATOR = "================"
 
-fun getHeapDumpReportText(reportText: String, heapProperties: HeapReportProperties): String {
+internal fun getHeapDumpReportText(reportText: String, heapProperties: HeapReportProperties): String {
   return "${reportText}${SECTION_SEPARATOR}\n${heapProperties.liveStats}"
 }
 
-class ShowReportDialog(reportText: String, heapProperties: HeapReportProperties) : DialogWrapper(false) {
+internal class ShowReportDialog(reportText: String, heapProperties: HeapReportProperties) : DialogWrapper(false) {
   private val textArea: JTextArea = JTextArea(30, 130)
 
   init {
@@ -160,7 +156,7 @@ class ShowReportDialog(reportText: String, heapProperties: HeapReportProperties)
     isModal = true
   }
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     val pane = JPanel(BorderLayout(0, 5))
     val productName = ApplicationNamesInfo.getInstance().fullProductName
     val vendorName = ApplicationInfoImpl.getShadowInstance().shortCompanyName

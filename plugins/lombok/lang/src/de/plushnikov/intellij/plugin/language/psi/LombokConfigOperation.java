@@ -7,4 +7,6 @@ import com.intellij.psi.PsiElement;
 
 public interface LombokConfigOperation extends PsiElement {
 
+  String getSign();
+
 }

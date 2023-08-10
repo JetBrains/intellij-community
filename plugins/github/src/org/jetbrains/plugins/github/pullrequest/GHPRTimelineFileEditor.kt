@@ -1,10 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
+import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsManager.TOPIC
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.ui.SingleComponentCenteringLayout
@@ -13,10 +17,8 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRFileEditorComponentFactory
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
-import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -24,16 +26,16 @@ import javax.swing.JPanel
 
 internal class GHPRTimelineFileEditor(private val project: Project,
                                       private val dataContext: GHPRDataContext,
-                                      private val pullRequest: GHPRIdentifier)
+                                      private val dataProvider: GHPRDataProvider,
+                                      private val file: GHPRTimelineVirtualFile)
   : FileEditorBase() {
 
   val securityService = dataContext.securityService
+  val repositoryDataService = dataContext.repositoryDataService
+  val htmlImageLoader = dataContext.htmlImageLoader
   val avatarIconsProvider = dataContext.avatarIconsProvider
 
-  private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, this)
   val detailsData = dataProvider.detailsData
-  val stateData = dataProvider.stateData
-  val changesData = dataProvider.changesData
   val reviewData = dataProvider.reviewData
   val commentsData = dataProvider.commentsData
 
@@ -46,16 +48,19 @@ internal class GHPRTimelineFileEditor(private val project: Project,
   override fun getComponent() = content
 
   private fun createContent(): JComponent {
-    return doCreateContent().also {
-      GHUIUtil.overrideUIDependentProperty(it) {
-        isOpaque = true
-        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
-      }
+    return doCreateContent().apply {
+      isOpaque = true
+      background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+    }.also {
+      ApplicationManager.getApplication().messageBus.connect(this)
+        .subscribe(TOPIC, EditorColorsListener { scheme -> it.background = scheme?.defaultBackground })
 
+      val prevProvider = DataManager.getDataProvider(it)
+      DataManager.removeDataProvider(it) // suppress warning - we're delegating to the old provider
       DataManager.registerDataProvider(it) { dataId ->
         when {
           GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> dataProvider
-          else -> null
+          else -> prevProvider?.getData(dataId)
         }
       }
     }
@@ -92,7 +97,7 @@ internal class GHPRTimelineFileEditor(private val project: Project,
 
 
   private fun getCurrentDetails(): GHPullRequestShort? {
-    return detailsData.loadedDetails ?: dataContext.listLoader.loadedData.find { it.id == pullRequest.id }
+    return detailsData.loadedDetails ?: dataContext.listLoader.loadedData.find { it.id == dataProvider.id.id }
   }
 
   override fun getPreferredFocusedComponent(): JComponent? = null
@@ -101,4 +106,6 @@ internal class GHPRTimelineFileEditor(private val project: Project,
     if (timelineLoader.loadedData.isNotEmpty())
       timelineLoader.loadMore(true)
   }
+
+  override fun getFile() = file
 }

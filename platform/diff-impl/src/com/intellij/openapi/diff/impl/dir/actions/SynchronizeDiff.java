@@ -42,7 +42,7 @@ public class SynchronizeDiff extends DirDiffAction {
     if (!e.getPresentation().isEnabled()) {
       return;
     }
-    boolean enabled = e.getData(CommonDataKeys.EDITOR) == null;
+    boolean enabled = e.getData(CommonDataKeys.EDITOR) == null || e.isFromActionToolbar();
     enabled &= !JBIterable.from(mySelectedOnly ? getModel().getSelectedElements() : getModel().getElements())
       .filter(d -> d.getOperation() == COPY_FROM || d.getOperation() == COPY_TO || d.getOperation() == DELETE)
       .filter(d -> d.getSource() == null || d.getSource().isOperationsEnabled())

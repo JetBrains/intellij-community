@@ -40,7 +40,7 @@ public class SvnChangelistListener implements ChangeListListener {
   }
 
   @Override
-  public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
+  public void changesRemoved(final Collection<? extends Change> changes, final ChangeList fromList) {
     if (LocalChangeList.getDefaultName().equals(fromList.getName())) {
       return;
     }
@@ -48,7 +48,7 @@ public class SvnChangelistListener implements ChangeListListener {
   }
 
   @Override
-  public void changesAdded(Collection<Change> changes, ChangeList toList) {
+  public void changesAdded(Collection<? extends Change> changes, ChangeList toList) {
     if (toList == null || LocalChangeList.getDefaultName().equals(toList.getName())) {
       return;
     }
@@ -61,7 +61,7 @@ public class SvnChangelistListener implements ChangeListListener {
   }
 
   @NotNull
-  private List<FilePath> getPathsFromChanges(@NotNull Collection<Change> changes) {
+  private List<FilePath> getPathsFromChanges(@NotNull Collection<? extends Change> changes) {
     return ContainerUtil.findAll(ChangesUtil.getPaths(changes), myUnderSvnCondition);
   }
 
@@ -78,7 +78,7 @@ public class SvnChangelistListener implements ChangeListListener {
   }
 
   @Override
-  public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
+  public void changesMoved(final Collection<? extends Change> changes, final ChangeList fromList, final ChangeList toList) {
     if (fromList.getName().equals(toList.getName())) {
       return;
     }
@@ -117,7 +117,7 @@ public class SvnChangelistListener implements ChangeListListener {
 
   private static void doChangeListOperation(@NotNull SvnVcs vcs,
                                             @NotNull File file,
-                                            @NotNull ThrowableConsumer<ChangeListClient, VcsException> operation) throws VcsException {
+                                            @NotNull ThrowableConsumer<? super ChangeListClient, VcsException> operation) throws VcsException {
     try {
       operation.consume(vcs.getFactory(file).createChangeListClient());
     }
@@ -133,7 +133,7 @@ public class SvnChangelistListener implements ChangeListListener {
     }
   }
 
-  private void removeFromChangeList(@NotNull Collection<Change> changes) {
+  private void removeFromChangeList(@NotNull Collection<? extends Change> changes) {
     for (FilePath path : getPathsFromChanges(changes)) {
       try {
         File file = path.getIOFile();
@@ -145,11 +145,11 @@ public class SvnChangelistListener implements ChangeListListener {
     }
   }
 
-  private void addToChangeList(@NotNull String changeList, @NotNull Collection<Change> changes) {
+  private void addToChangeList(@NotNull String changeList, @NotNull Collection<? extends Change> changes) {
     addToChangeList(changeList, changes, null);
   }
 
-  private void addToChangeList(@NotNull String changeList, @NotNull Collection<Change> changes, String @Nullable [] changeListsToOperate) {
+  private void addToChangeList(@NotNull String changeList, @NotNull Collection<? extends Change> changes, String @Nullable [] changeListsToOperate) {
     for (FilePath path : getPathsFromChanges(changes)) {
       try {
         File file = path.getIOFile();

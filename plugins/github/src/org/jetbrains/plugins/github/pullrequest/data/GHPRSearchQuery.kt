@@ -1,112 +1,60 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchSort
-import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import java.text.ParseException
 import java.text.SimpleDateFormat
 
-internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
-  fun buildApiSearchQuery(searchQueryBuilder: GithubApiSearchQueryBuilder) {
-    for (term in terms) {
-      when (term) {
-        is Term.QueryPart -> {
-          searchQueryBuilder.query(term.apiValue)
-        }
-        is Term.Qualifier -> {
-          searchQueryBuilder.qualifier(term.apiName, term.apiValue)
-        }
-      }
-    }
-  }
+@ApiStatus.Experimental
+class GHPRSearchQuery(val terms: List<Term<*>>) {
 
   fun isEmpty() = terms.isEmpty()
 
-  override fun toString(): String {
-    val builder = StringBuilder()
-    for (term in terms) {
-      builder.append(term.toString())
-      if (builder.isNotEmpty()) builder.append(" ")
-    }
-    return builder.toString()
-  }
+  override fun toString(): String = terms.joinToString(" ")
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is GHPRSearchQuery) return false
 
-    if (terms != other.terms) return false
-
-    return true
+    return terms == other.terms
   }
 
   override fun hashCode(): Int = terms.hashCode()
 
 
   companion object {
-    val DEFAULT = GHPRSearchQuery(listOf(Term.Qualifier.Enum(QualifierName.state, GithubIssueState.open)))
-
     private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd")
-
-    fun parseFromString(string: String): GHPRSearchQuery {
-      val result = mutableListOf<Term<*>>()
-      val terms = string.split(' ')
-      for (term in terms) {
-        if (term.isEmpty()) continue
-
-        val colonIdx = term.indexOf(':')
-        if (colonIdx < 0) {
-          result.add(Term.QueryPart(term.replace("#", "")))
-        }
-        else {
-          try {
-            result.add(QualifierName.valueOf(term.substring(0, colonIdx)).createTerm(term.substring(colonIdx + 1)))
-          }
-          catch (e: IllegalArgumentException) {
-            result.add(Term.QueryPart(term))
-          }
-        }
-      }
-      return GHPRSearchQuery(result)
-    }
   }
 
   @Suppress("EnumEntryName")
   enum class QualifierName(val apiName: String) {
-    state("state") {
-      override fun createTerm(value: String) = Term.Qualifier.Enum.from<GithubIssueState>(this, value)
-    },
-    assignee("assignee") {
-      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
-    },
-    author("author") {
-      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
-    },
-    label("label") {
-      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
-    },
+    `is`("is"),
     after("created") {
-      override fun createTerm(value: String) = Term.Qualifier.Date.After.from(this, value)
+      override fun createTerm(value: String): Term<*> = Term.Qualifier.Date.After.from(this, value)
     },
+    assignee("assignee"),
+    author("author"),
     before("created") {
-      override fun createTerm(value: String) = Term.Qualifier.Date.Before.from(this, value)
+      override fun createTerm(value: String): Term<*> = Term.Qualifier.Date.Before.from(this, value)
     },
-    reviewedBy("reviewed-by") {
-      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
-
-      override fun toString() = apiName
-    },
-    reviewRequested("review-requested") {
-      override fun createTerm(value: String) = Term.Qualifier.Simple(this, value)
-
-      override fun toString() = apiName
-    },
+    label("label"),
+    repo("repo"),
+    review("review"),
+    reviewRequested("review-requested"),
+    reviewedBy("reviewed-by"),
     sortBy("sort") {
-      override fun createTerm(value: String) = Term.Qualifier.Enum.from<GithubIssueSearchSort>(this, value)
-    };
+      override fun createTerm(value: String): Term<*> = Term.Qualifier.Enum.from<GithubIssueSearchSort>(this, value)
+    },
+    state("state") {
+      override fun createTerm(value: String): Term<*> = Term.Qualifier.Enum.from<GithubIssueState>(this, value)
+    },
+    type("type");
 
-    abstract fun createTerm(value: String): Term<*>
+    open fun createTerm(value: String): Term<*> = Term.Qualifier.Simple(this, value)
+
+    override fun toString() = apiName
   }
 
   /**
@@ -119,9 +67,7 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
       if (this === other) return true
       if (other !is Term<*>) return false
 
-      if (value != other.value) return false
-
-      return true
+      return value == other.value
     }
 
     override fun hashCode(): Int = value.hashCode()
@@ -139,6 +85,18 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
 
       class Simple(name: QualifierName, value: String) : Qualifier<String>(name, value) {
         override val apiValue = this.value
+
+        private var not: Boolean = false
+
+        fun not(): Simple {
+          not = !not
+          return this
+        }
+
+        override fun toString(): String {
+          val minus = if (not) "-" else ""
+          return "$minus$name:$value"
+        }
       }
 
       class Enum<T : kotlin.Enum<T>>(name: QualifierName, value: T) : Qualifier<kotlin.Enum<T>>(name, value) {

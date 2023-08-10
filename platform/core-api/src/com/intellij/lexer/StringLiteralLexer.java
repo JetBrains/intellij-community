@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lexer;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -96,10 +96,7 @@ public class StringLiteralLexer extends LexerBase {
     }
 
     if (nextChar == 'x' && myAllowHex) {
-      for(int i = myStart + 2; i < myStart + 4; i++) {
-        if (i >= myEnd || !StringUtil.isHexDigit(myBuffer.charAt(i))) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
-      }
-      return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
+      return getHexCodedEscapeSeq();
     }
 
     switch (nextChar) {
@@ -128,21 +125,37 @@ public class StringLiteralLexer extends LexerBase {
       return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }
 
+    if (highlightAsOriginalLiteral(nextChar)) {
+      return myOriginalLiteralToken;
+    }
+
     return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
+  }
+
+  protected boolean highlightAsOriginalLiteral(char escapedChar) {
+    return false;
   }
 
   protected boolean shouldAllowSlashZero() {
     return false;
   }
 
-  @NotNull
-  protected IElementType handleSingleSlashEscapeSequence() {
+  protected @NotNull IElementType handleSingleSlashEscapeSequence() {
     return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
   }
 
-  @NotNull
-  protected IElementType getUnicodeEscapeSequenceType() {
-    for (int i = myStart + 2; i < myStart + 6; i++) {
+  protected IElementType getHexCodedEscapeSeq() {
+    // \xFF
+    return getStandardLimitedHexCodedEscapeSeq(4);
+  }
+
+  protected @NotNull IElementType getUnicodeEscapeSequenceType() {
+    // \uFFFF
+    return getStandardLimitedHexCodedEscapeSeq(6);
+  }
+
+  protected @NotNull IElementType getStandardLimitedHexCodedEscapeSeq(int offsetLimit) {
+    for (int i = myStart + 2; i < myStart + offsetLimit; i++) {
       if (i >= myEnd || !StringUtil.isHexDigit(myBuffer.charAt(i))) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
     }
     return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
@@ -258,7 +271,7 @@ public class StringLiteralLexer extends LexerBase {
    * <p>When overriding this method, you most likely will need to also override {@link StringLiteralLexer#getTokenType}
    * to return proper type for the sequences located here.</p>
    */
-  protected int locateAdditionalEscapeSequence(@SuppressWarnings("unused") int start, @SuppressWarnings("unused") int indexOfCharAfterSlash) {
+  protected int locateAdditionalEscapeSequence(int start, int indexOfCharAfterSlash) {
     return -1;
   }
 
@@ -269,9 +282,8 @@ public class StringLiteralLexer extends LexerBase {
     myEnd = locateToken(myStart);
   }
 
-  @NotNull
   @Override
-  public CharSequence getBufferSequence() {
+  public @NotNull CharSequence getBufferSequence() {
     return myBuffer;
   }
 

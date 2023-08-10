@@ -30,9 +30,6 @@ import org.jetbrains.idea.svn.update.CmdUpdateClient;
 import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.upgrade.CmdUpgradeClient;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CmdClientFactory extends ClientFactory {
 
   public CmdClientFactory(@NotNull SvnVcs vcs) {

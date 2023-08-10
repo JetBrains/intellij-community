@@ -1,13 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType;
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchingProcessStatisticsCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,18 +31,18 @@ class MixedResultsSearcher implements SESearcher {
 
   private static final Logger LOG = Logger.getInstance(MixedResultsSearcher.class);
 
-  @NotNull private final Listener myListener;
+  @NotNull private final SearchListener myListener;
   @NotNull private final Executor myNotificationExecutor;
   @NotNull private final SEResultsEqualityProvider myEqualityProvider;
 
   /**
-   * Creates MultiThreadSearcher with search results {@link Listener} and specifies executor which going to be used to call listener methods.
+   * Creates MultiThreadSearcher with search results {@link SearchListener} and specifies executor which going to be used to call listener methods.
    * Use this constructor when you for example need to receive listener events only in AWT thread
-   * @param listener {@link Listener} to get notifications about searching process
+   * @param listener {@link SearchListener} to get notifications about searching process
    * @param notificationExecutor searcher guarantees that all listener methods will be called only through this executor
    * @param equalityProviders collection of equality providers that checks if found elements are already in the search results
    */
-  MixedResultsSearcher(@NotNull Listener listener,
+  MixedResultsSearcher(@NotNull SearchListener listener,
                        @NotNull Executor notificationExecutor,
                        @NotNull Collection<? extends SEResultsEqualityProvider> equalityProviders) {
     myListener = listener;
@@ -51,20 +55,20 @@ class MixedResultsSearcher implements SESearcher {
                                   @NotNull String pattern) {
     LOG.debug("Search started for pattern [", pattern, "]");
 
-    Collection<? extends SearchEverywhereContributor<?>> contributors = contributorsAndLimits.keySet();
     if (pattern.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        contributors = Collections.emptySet(); //empty search string is not allowed for tests
+        contributorsAndLimits = Collections.emptyMap(); //empty search string is not allowed for tests
       }
       else {
-        contributors = ContainerUtil.filter(contributors, contributor -> contributor.isEmptyPatternSupported());
+        contributorsAndLimits = ContainerUtil.filter(contributorsAndLimits, c -> c.isEmptyPatternSupported());
       }
     }
 
+    Map<? extends SearchEverywhereContributor<?>, Integer> map = contributorsAndLimits;
     Function<ProgressIndicator, ResultsAccumulator> accumulatorSupplier = indicator ->
-      new ResultsAccumulator(contributorsAndLimits, myEqualityProvider, myListener, myNotificationExecutor, indicator);
+      new ResultsAccumulator(map, myEqualityProvider, myListener, myNotificationExecutor, indicator);
 
-    return performSearch(contributors, pattern, accumulatorSupplier);
+    return performSearch(contributorsAndLimits.keySet(), pattern, accumulatorSupplier);
   }
 
   @Override
@@ -87,6 +91,7 @@ class MixedResultsSearcher implements SESearcher {
       CountDownLatch latch = new CountDownLatch(contributors.size());
       ProgressIndicatorWithCancelListener indicatorWithCancelListener = new ProgressIndicatorWithCancelListener();
       accumulator = accumulatorSupplier.apply(indicatorWithCancelListener);
+      accumulator.searchStarted(pattern);
 
       for (SearchEverywhereContributor<?> contributor : contributors) {
         Runnable task = createSearchTask(pattern, accumulator,
@@ -105,6 +110,7 @@ class MixedResultsSearcher implements SESearcher {
     else {
       indicator = new ProgressIndicatorBase();
       accumulator = accumulatorSupplier.apply(indicator);
+      accumulator.searchStarted(pattern);
     }
 
     indicator.start();
@@ -168,6 +174,7 @@ class MixedResultsSearcher implements SESearcher {
     @Override
     public void run() {
       LOG.debug("Search task started for contributor ", myContributor);
+      SearchingProcessStatisticsCollector.searchStarted(myContributor);
       try {
         boolean repeat;
         do {
@@ -212,6 +219,8 @@ class MixedResultsSearcher implements SESearcher {
           return true;
         }
 
+        reportElementOnce();
+
         boolean added = myAccumulator.addElement(element, myContributor, priority, wrapperIndicator);
         if (!added) {
           myAccumulator.setContributorHasMore(myContributor, true);
@@ -223,33 +232,44 @@ class MixedResultsSearcher implements SESearcher {
         return false;
       }
     }
+
+    private boolean firstElementReported;
+    private void reportElementOnce() {
+      if (firstElementReported) return;
+      firstElementReported = true;
+      SearchingProcessStatisticsCollector.elementFound(myContributor);
+    }
   }
 
   private static class ResultsAccumulator {
 
     private final Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> mySections;
-    private final Listener myListener;
+    private final SearchListener myListener;
     private final Executor myNotificationExecutor;
     private final SEResultsEqualityProvider myEqualityProvider;
     private final ProgressIndicator myProgressIndicator;
     private final Map<? extends SearchEverywhereContributor<?>, Integer> sectionsLimits;
     private final Map<? extends SearchEverywhereContributor<?>, Condition> conditionsMap;
     private final Map<SearchEverywhereContributor<?>, Boolean> hasMoreMap = new ConcurrentHashMap<>();
-    private final Set<SearchEverywhereContributor<?>> finishedContributorsSet = ContainerUtil.newConcurrentSet();
+    private final Set<SearchEverywhereContributor<?>> finishedContributorsSet = ConcurrentCollectionFactory.createConcurrentSet();
     private final Lock lock = new ReentrantLock();
     private volatile boolean mySearchFinished = false;
 
     ResultsAccumulator(Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
-                       SEResultsEqualityProvider equalityProvider, Listener listener, Executor notificationExecutor,
+                       SEResultsEqualityProvider equalityProvider, SearchListener listener, Executor notificationExecutor,
                        ProgressIndicator progressIndicator) {
       this(contributorsAndLimits.entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey(), entry -> new ArrayList<>(entry.getValue()))),
            contributorsAndLimits, equalityProvider, listener, notificationExecutor, progressIndicator);
     }
 
+    public void searchStarted(@NotNull String pattern) {
+      runInNotificationExecutor(() -> myListener.searchStarted(pattern, sectionsLimits.keySet()));
+    }
+
     ResultsAccumulator(Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> alreadyFound,
                        Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
                        SEResultsEqualityProvider equalityProvider,
-                       Listener listener,
+                       SearchListener listener,
                        Executor notificationExecutor,
                        ProgressIndicator progressIndicator) {
       mySections = alreadyFound;
@@ -266,16 +286,31 @@ class MixedResultsSearcher implements SESearcher {
       hasMoreMap.put(contributor, hasMore);
     }
 
-    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator) throws InterruptedException {
-      SearchEverywhereFoundElementInfo newElementInfo = new SearchEverywhereFoundElementInfo(element, priority, contributor);
+    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator)
+      throws InterruptedException {
+      final var mlService = SearchEverywhereMlService.getInstance();
+      final SearchEverywhereFoundElementInfo newElementInfo;
+      if (mlService == null) {
+        newElementInfo = new SearchEverywhereFoundElementInfo(element, priority, contributor);
+      }
+      else {
+        newElementInfo = mlService.createFoundElementInfo(contributor, element, priority);
+      }
+
       Condition condition = conditionsMap.get(contributor);
       Collection<SearchEverywhereFoundElementInfo> section = mySections.get(contributor);
       int limit = sectionsLimits.get(contributor);
 
       lock.lock();
       try {
+        boolean isNotified = false;
         while (section.size() >= limit && !mySearchFinished) {
           indicator.checkCanceled();
+          ProgressManager.checkCanceled();
+          if (!isNotified) {
+            runInNotificationExecutor(() -> myListener.contributorWaits(contributor));
+            isNotified = true;
+          }
           condition.await(100, TimeUnit.MILLISECONDS);
         }
 
@@ -287,6 +322,9 @@ class MixedResultsSearcher implements SESearcher {
           .flatMap(Collection::stream)
           .collect(Collectors.toList());
         SEEqualElementsActionType action = myEqualityProvider.compareItems(newElementInfo, alreadyFoundItems);
+        if (Registry.is("search.everywhere.recent.at.top") && action instanceof SEEqualElementsActionType.Replace replaceAction) {
+          action = fixReplaceAction(replaceAction);
+        }
         if (action == SEEqualElementsActionType.Skip.INSTANCE) {
           LOG.debug(String.format("Element %s for contributor %s was skipped", element.toString(), contributor.getSearchProviderId()));
           return true;
@@ -298,15 +336,16 @@ class MixedResultsSearcher implements SESearcher {
         List<SearchEverywhereFoundElementInfo> toRemove = action instanceof SEEqualElementsActionType.Replace
                                                           ? ((SEEqualElementsActionType.Replace)action).getToBeReplaced()
                                                           : Collections.emptyList();
+
         toRemove.forEach(info -> {
           Collection<SearchEverywhereFoundElementInfo> list = mySections.get(info.getContributor());
           Condition listCondition = conditionsMap.get(info.getContributor());
           list.remove(info);
-          LOG.debug(String.format("Element %s for contributor %s is removed", info.getElement().toString(), info.getContributor().getSearchProviderId()));
+          LOG.debug(String.format("Element %s for contributor %s is removed", info.getElement().toString(),
+                                  info.getContributor().getSearchProviderId()));
           listCondition.signal();
         });
         runInNotificationExecutor(() -> myListener.elementsRemoved(toRemove));
-
         if (section.size() >= limit) {
           stopSearchIfNeeded();
         }
@@ -317,10 +356,21 @@ class MixedResultsSearcher implements SESearcher {
       }
     }
 
+    private static SEEqualElementsActionType fixReplaceAction(SEEqualElementsActionType.Replace action) {
+      String recentContributorID = RecentFilesSEContributor.class.getSimpleName();
+      List<SearchEverywhereFoundElementInfo> updatedList = ContainerUtil.filter(
+        action.getToBeReplaced(),
+        info -> !recentContributorID.equals(info.getContributor().getSearchProviderId())
+      );
+      return updatedList.isEmpty() ? SEEqualElementsActionType.Skip.INSTANCE : new SEEqualElementsActionType.Replace(updatedList);
+    }
+
     public void contributorFinished(SearchEverywhereContributor<?> contributor) {
       lock.lock();
       try {
         finishedContributorsSet.add(contributor);
+        Boolean hasMore = hasMoreMap.get(contributor);
+        runInNotificationExecutor(() -> myListener.contributorFinished(contributor, hasMore != null && hasMore.booleanValue()));
         stopSearchIfNeeded();
       }
       finally {

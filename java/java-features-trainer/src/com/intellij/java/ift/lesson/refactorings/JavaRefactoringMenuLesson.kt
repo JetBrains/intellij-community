@@ -2,22 +2,18 @@
 package com.intellij.java.ift.lesson.refactorings
 
 import com.intellij.CommonBundle
+import com.intellij.idea.ActionsBundle
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
 import com.intellij.util.ui.UIUtil
-import training.commands.kotlin.TaskRuntimeContext
-import training.learn.interfaces.Module
+import training.dsl.*
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.general.refactorings.RefactoringMenuLessonBase
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import training.learn.lesson.kimpl.parseLessonSample
+import training.util.adaptToNotNativeLocalization
 import javax.swing.JDialog
 
-class JavaRefactoringMenuLesson(module: Module) : RefactoringMenuLessonBase("java.refactoring.menu", module, "JAVA") {
-  private val sample = parseLessonSample("""
+class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.menu") {
+  override val sample: LessonSample = parseLessonSample("""
     import java.io.BufferedReader;
     import java.io.FileReader;
     import java.io.IOException;
@@ -44,13 +40,13 @@ class JavaRefactoringMenuLesson(module: Module) : RefactoringMenuLessonBase("jav
                 return lines;
             }
         }
-    }      
+    }
   """.trimIndent())
 
   override val lessonContent: LessonContext.() -> Unit = {
-    prepareSample(sample)
     extractParameterTasks()
     moreRefactoringsTasks()
+    restoreRefactoringOptionsInformer()
   }
 
   private fun LessonContext.moreRefactoringsTasks() {
@@ -62,8 +58,13 @@ class JavaRefactoringMenuLesson(module: Module) : RefactoringMenuLessonBase("jav
 
     actionTask("Inline") {
       restoreIfModifiedOrMoved()
-      JavaLessonsBundle.message("java.refactoring.menu.inline.variable",
-                                code(inlineVariableName), action("Refactorings.QuickListPopupAction"), action(it))
+      if (adaptToNotNativeLocalization) {
+        JavaLessonsBundle.message("java.refactoring.menu.inline.variable", code(inlineVariableName),
+                                  action("Refactorings.QuickListPopupAction"), strong(RefactoringBundle.message("inline.variable.title")),
+                                  action(it))
+      }
+      else JavaLessonsBundle.message("java.refactoring.menu.inline.variable.eng",
+                                     code(inlineVariableName), action("Refactorings.QuickListPopupAction"), action(it))
     }
     task {
       stateCheck {
@@ -75,8 +76,12 @@ class JavaRefactoringMenuLesson(module: Module) : RefactoringMenuLessonBase("jav
 
     actionTask("IntroduceConstant") {
       restoreIfModifiedOrMoved()
-      JavaLessonsBundle.message("java.refactoring.menu.introduce.constant",
-                                action("Refactorings.QuickListPopupAction"), action(it))
+      if (adaptToNotNativeLocalization) {
+        JavaLessonsBundle.message("java.refactoring.menu.introduce.constant", action("Refactorings.QuickListPopupAction"),
+                                  strong(ActionsBundle.message("action.IntroduceConstant.text").dropMnemonic()), action(it))
+      }
+      else JavaLessonsBundle.message("java.refactoring.menu.introduce.constant.eng",
+                                     action("Refactorings.QuickListPopupAction"), action(it))
     }
     task {
       stateCheck {
@@ -89,8 +94,8 @@ class JavaRefactoringMenuLesson(module: Module) : RefactoringMenuLessonBase("jav
       stateCheck {
         !extractConstantDialogShowing()
       }
-      test {
-        GuiTestUtil.shortcut(Key.ENTER)
+      test(waitEditorToBeReady = false) {
+        invokeActionViaShortcut("ENTER")
       }
     }
   }

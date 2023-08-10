@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
+import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
@@ -9,7 +10,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.util.Consumer
 
-open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) : InspectionProfileImpl(source.name, source.myToolSupplier, source.profileManager, source.myBaseProfile, null) {
+open class InspectionProfileModifiableModel(val source: InspectionProfileImpl)
+  : InspectionProfileImpl(source.name, source.myToolSupplier, source.profileManager, source.myBaseProfile, null) {
+
   private var modified = false
 
   init {
@@ -34,26 +37,27 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     copyToolsConfigurations(source, project)
   }
 
-  override fun createTools(project: Project?) = source.getDefaultStates(project).map { it.tool }
+  override fun createTools(project: Project?): List<InspectionToolWrapper<*, *>> = source.getDefaultStates(project).map { it.tool }
 
   private fun copyToolsConfigurations(profile: InspectionProfileImpl, project: Project?) {
     try {
       for (toolList in profile.myTools.values) {
         val tools = myTools[toolList.shortName]!!
         val defaultState = toolList.defaultState
-        tools.setDefaultState(copyToolSettings(defaultState.tool), defaultState.isEnabled, defaultState.level)
+        tools.setDefaultState(copyToolSettings(defaultState.tool), defaultState.isEnabled, defaultState.level, defaultState.editorAttributesExternalName)
         tools.removeAllScopes()
         val nonDefaultToolStates = toolList.nonDefaultTools
         if (nonDefaultToolStates != null) {
           for (state in nonDefaultToolStates) {
             val toolWrapper = copyToolSettings(state.tool)
             val scope = state.getScope(project)
-            if (scope == null) {
+            val tool = if (scope == null) {
               tools.addTool(state.scopeName, toolWrapper, state.isEnabled, state.level)
             }
             else {
               tools.addTool(scope, toolWrapper, state.isEnabled, state.level)
             }
+            state.editorAttributesKey?.externalName?.let { tool.editorAttributesExternalName = it }
           }
         }
         tools.isEnabled = toolList.isEnabled
@@ -102,11 +106,11 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
   fun resetToEmpty(project: Project) {
     initInspectionTools(project)
     for (toolWrapper in getInspectionTools(null)) {
-      setToolEnabled(toolWrapper.shortName, false, project, fireEvents = false)
+      setToolEnabled(toolWrapper.shortName, false, project, /*fireEvents =*/ false)
     }
   }
 
-  private fun InspectionProfileImpl.commit(model: InspectionProfileImpl) {
+  private fun InspectionProfileImpl.commit(model: InspectionProfileModifiableModel) {
     name = model.name
     description = model.description
     isProjectLevel = model.isProjectLevel
@@ -116,6 +120,7 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
       myTools = model.myTools
     }
     profileManager = model.profileManager
+    scopesOrder = model.scopesOrder
   }
 
   fun disableTool(toolShortName: String, element: PsiElement) {
@@ -130,6 +135,7 @@ fun modifyAndCommitProjectProfile(project: Project, action: Consumer<InspectionP
 }
 
 inline fun InspectionProfileImpl.edit(task: InspectionProfileModifiableModel.() -> Unit) {
+  SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS)
   val model = InspectionProfileModifiableModel(this)
   model.task()
   model.commit()

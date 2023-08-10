@@ -17,7 +17,7 @@ import static com.intellij.laf.win10.WinIntelliJTextBorder.MINIMUM_HEIGHT;
 /**
  * @author Konstantin Bulenkov
  */
-public class WinIntelliJButtonUI extends DarculaButtonUI {
+public final class WinIntelliJButtonUI extends DarculaButtonUI {
   static final float DISABLED_ALPHA_LEVEL = 0.47f;
 
   private final PropertyChangeListener helpButtonListener = new PropertyChangeListener() {
@@ -57,8 +57,7 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
       Insets i = c.getInsets();
       help.paintIcon(c, g, i.left, i.top + (c.getHeight() - help.getIconHeight()) / 2);
     }
-    else if (c instanceof AbstractButton) {
-      AbstractButton b = (AbstractButton)c;
+    else if (c instanceof AbstractButton b) {
       Graphics2D g2 = (Graphics2D)g.create();
       try {
         Rectangle r = new Rectangle(c.getSize());

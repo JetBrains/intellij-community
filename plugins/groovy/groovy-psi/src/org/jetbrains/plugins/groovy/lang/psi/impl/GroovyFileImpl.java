@@ -44,8 +44,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.bindings.BindingsKt.proc
 
 /**
  * Implements all abstractions related to Groovy file
- *
- * @author ilyas
  */
 public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, PsiModifiableCodeBlock {
 
@@ -227,10 +225,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
   }
 
   @Override
-  public void setPackageName(String packageName) {
+  public void setPackageName(@NotNull String packageName) {
     final ASTNode fileNode = getNode();
     final GrPackageDefinition currentPackage = getPackageDefinition();
-    if (packageName == null || packageName.isEmpty()) {
+    if (packageName.isEmpty()) {
       if (currentPackage != null) {
         final ASTNode currNode = currentPackage.getNode();
         fileNode.removeChild(currNode);
@@ -341,7 +339,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     final PsiClass scriptClass = getScriptClass();
     if (scriptClass != null) {
       final PsiElement originalElement = scriptClass.getOriginalElement();
-      if (originalElement != scriptClass && originalElement != null) {
+      if (originalElement != scriptClass) {
         return originalElement.getContainingFile();
       }
     }

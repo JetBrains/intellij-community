@@ -29,14 +29,12 @@ import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public final class SuperMethodWarningUtil {
   public static final Key<PsiMethod[]> SIBLINGS = Key.create("MULTIPLE_INHERITANCE");
@@ -44,7 +42,7 @@ public final class SuperMethodWarningUtil {
 
   public static PsiMethod @NotNull [] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return checkSuperMethods(method, Collections.emptyList());
+    return checkSuperMethods(method, actionString, Collections.emptyList());
   }
 
   public static PsiMethod @NotNull [] getTargetMethodCandidates(@NotNull PsiMethod method, @NotNull Collection<? extends PsiElement> ignore) {
@@ -56,7 +54,12 @@ public final class SuperMethodWarningUtil {
     return superMethods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
+  public static PsiMethod @NotNull [] checkSuperMethods(@NotNull PsiMethod method, @NotNull Collection<? extends PsiElement> ignore) {
+    return checkSuperMethods(method, null, ignore);
+  }
+
   public static PsiMethod @NotNull [] checkSuperMethods(@NotNull PsiMethod method,
+                                                        @NlsSafe @Nullable String actionString,
                                                         @NotNull Collection<? extends PsiElement> ignore) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiMethod[] methodTargetCandidates = getTargetMethodCandidates(method, ignore);
@@ -76,18 +79,16 @@ public final class SuperMethodWarningUtil {
     int shouldIncludeBase = showDialog(
       method.getProject(),
       DescriptiveNameUtil.getDescriptiveName(method),
+      actionString,
       superAbstract,
       parentInterface,
       method.getContainingClass().isInterface(),
       ArrayUtilRt.toStringArray(superClasses));
-    switch (shouldIncludeBase) {
-      case Messages.YES:
-        return methodTargetCandidates;
-      case Messages.NO:
-        return new PsiMethod[] {method};
-      default:
-        return PsiMethod.EMPTY_ARRAY;
-    }
+    return switch (shouldIncludeBase) {
+      case Messages.YES -> methodTargetCandidates;
+      case Messages.NO -> new PsiMethod[]{method};
+      default -> PsiMethod.EMPTY_ARRAY;
+    };
   }
 
   @NotNull
@@ -117,17 +118,6 @@ public final class SuperMethodWarningUtil {
 
 
   public static PsiMethod checkSuperMethod(@NotNull PsiMethod method) {
-    return checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
-  }
-
-  /**
-   * @deprecated Use {@link SuperMethodWarningUtil#checkSuperMethod(PsiMethod)} instead. 
-   * 
-   * Custom action word doesn't work well with translations thus is replaced with "refactor"
-   */
-  @Deprecated
-  public static PsiMethod checkSuperMethod(@NotNull PsiMethod method, 
-                                           @SuppressWarnings("unused") @NotNull String actionString) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return method;
@@ -141,17 +131,18 @@ public final class SuperMethodWarningUtil {
 
     int useSuperMethod = showDialog(
       method.getProject(),
+      RefactoringBundle.message("to.refactor"),
       DescriptiveNameUtil.getDescriptiveName(method),
       containingClass.isInterface() || superMethod.hasModifierProperty(PsiModifier.ABSTRACT),
       containingClass.isInterface(),
       aClass.isInterface(),
       containingClass.getQualifiedName()
     );
-    switch (useSuperMethod) {
-      case Messages.YES: return superMethod;
-      case Messages.NO: return method;
-      default: return null;
-    }
+    return switch (useSuperMethod) {
+      case Messages.YES -> superMethod;
+      case Messages.NO -> method;
+      default -> null;
+    };
   }
 
   public static void checkSuperMethod(@NotNull PsiMethod method,
@@ -194,7 +185,7 @@ public final class SuperMethodWarningUtil {
                                  containingClass.isInterface() && !aClass.isInterface() ? 0 : 1, 
                                  SymbolPresentationUtil.getSymbolPresentableText(containingClass));
     }
-    JBPopupFactory.getInstance().createPopupChooserBuilder(ContainerUtil.newArrayList(renameBase, renameCurrent))
+    JBPopupFactory.getInstance().createPopupChooserBuilder(List.of(renameBase, renameCurrent))
       .setTitle(title)
       .setMovable(false)
       .setResizable(false)
@@ -219,11 +210,12 @@ public final class SuperMethodWarningUtil {
   @Messages.YesNoCancelResult
   private static int showDialog(@NotNull Project project,
                                 @NotNull String name,
+                                @NlsSafe @Nullable String actionString,
                                 boolean isSuperAbstract,
                                 boolean isParentInterface,
                                 boolean isContainedInInterface,
                                 String @NotNull ... classNames) {
-    String message = getDialogMessage(name, isSuperAbstract, isParentInterface, isContainedInInterface, classNames);
+    String message = getDialogMessage(name, actionString, isSuperAbstract, isParentInterface, isContainedInInterface, classNames);
     return Messages.showYesNoCancelDialog(project,
                                           message, JavaBundle.message("dialog.title.super.method.found"), JavaBundle.message("button.base.method"),
                                           JavaBundle.message("button.current.method"),
@@ -233,6 +225,7 @@ public final class SuperMethodWarningUtil {
   @Nls
   @NotNull
   private static String getDialogMessage(@NotNull String name,
+                                         @NlsSafe @Nullable String actionString,
                                          boolean isSuperAbstract,
                                          boolean isParentInterface,
                                          boolean isContainedInInterface,
@@ -256,7 +249,9 @@ public final class SuperMethodWarningUtil {
     }
 
     labelText.br();
-    labelText.append(HtmlChunk.text(JavaBundle.message("prompt.do.you.want.to.action_verb.the.method.from_class", classNames.length)));
+    labelText.append(HtmlChunk.text(JavaBundle.message("prompt.do.you.want.to.action_verb.the.method.from_class", 
+                                                       classNames.length, 
+                                                       ObjectUtils.notNull(actionString, RefactoringBundle.message("to.refactor")))));
     return labelText.wrapWithHtmlBody().toString();
   }
 }

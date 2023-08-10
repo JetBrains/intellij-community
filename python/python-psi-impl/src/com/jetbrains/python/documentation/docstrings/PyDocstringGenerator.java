@@ -448,9 +448,8 @@ public final class PyDocstringGenerator {
   }
 
   @NotNull
-  public PyDocStringOwner buildAndInsert() {
+  public PyDocStringOwner buildAndInsert(@NotNull String replacementText) {
     Preconditions.checkNotNull(myDocStringOwner, "For this action docstring owner must be supplied");
-    final String replacementText = buildDocString();
 
     final Project project = myDocStringOwner.getProject();
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
@@ -488,6 +487,12 @@ public final class PyDocstringGenerator {
       });
     }
     return myDocStringOwner;
+  }
+
+  @NotNull
+  public PyDocStringOwner buildAndInsert() {
+    Preconditions.checkNotNull(myDocStringOwner, "For this action docstring owner must be supplied");
+    return buildAndInsert(buildDocString());
   }
 
   public static final class DocstringParam {

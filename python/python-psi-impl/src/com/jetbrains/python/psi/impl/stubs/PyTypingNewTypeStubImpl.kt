@@ -21,7 +21,7 @@ class PyTypingNewTypeStubImpl private constructor(val qualifiedName: String, pri
     stream.writeName(baseClassName)
   }
 
-  override fun getCalleeName(): QualifiedName? {
+  override fun getCalleeName(): QualifiedName {
     return QualifiedName.fromComponents(qualifiedName)
   }
 
@@ -32,6 +32,10 @@ class PyTypingNewTypeStubImpl private constructor(val qualifiedName: String, pri
   override fun getName(): String = qualifiedName
 
   override fun getClassType(): String = baseClassName
+
+  override fun toString(): String {
+    return "PyTypingNewTypeStub(qualifiedName=$qualifiedName, baseClass=$baseClassName)"
+  }
 
   companion object {
     fun create(expression: PyTargetExpression): PyTypingNewTypeStub? {

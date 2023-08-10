@@ -29,9 +29,7 @@ public class GrSplitDeclarationIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
-    if (!(element instanceof GrVariableDeclaration)) return;
-
-    GrVariableDeclaration declaration = (GrVariableDeclaration)element;
+    if (!(element instanceof GrVariableDeclaration declaration)) return;
 
     GrVariable[] variables = declaration.getVariables();
     if (variables.length == 1) {
@@ -133,8 +131,7 @@ public class GrSplitDeclarationIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (element instanceof GrVariableDeclaration) {
-          GrVariableDeclaration decl = (GrVariableDeclaration)element;
+        if (element instanceof GrVariableDeclaration decl) {
           GrVariable[] variables = decl.getVariables();
           if (variables.length > 1 && PsiUtil.isLocalVariable(variables[0])) {
             if (!decl.isTuple() || decl.getTupleInitializer() instanceof GrListOrMap) {

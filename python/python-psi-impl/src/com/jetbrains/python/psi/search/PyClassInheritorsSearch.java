@@ -19,9 +19,7 @@ import com.intellij.psi.search.searches.ExtensibleQueryFactory;
 import com.intellij.util.Query;
 import com.jetbrains.python.psi.PyClass;
 
-/**
- * @author yole
- */
+
 public final class PyClassInheritorsSearch extends ExtensibleQueryFactory<PyClass, PyClassInheritorsSearch.SearchParameters> {
   public static final PyClassInheritorsSearch INSTANCE = new PyClassInheritorsSearch();
 

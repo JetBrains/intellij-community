@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.presentation;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -24,8 +24,7 @@ public class CodeStyleSettingPresentation {
 
     @Override
     public boolean equals(Object o) {
-      if (o instanceof SettingsGroup) {
-        SettingsGroup other = (SettingsGroup) o;
+      if (o instanceof SettingsGroup other) {
         return name != null && name.equals(other.name);
       } else {
         return false;
@@ -92,17 +91,12 @@ public class CodeStyleSettingPresentation {
    */
   @NotNull
   public static Map<SettingsGroup, List<CodeStyleSettingPresentation>> getStandardSettings(LanguageCodeStyleSettingsProvider.SettingsType settingsType) {
-    switch (settingsType) {
-      case BLANK_LINES_SETTINGS:
-        return CodeStyleSettingsPresentations.getInstance().getBlankLinesStandardSettings();
-      case SPACING_SETTINGS:
-        return CodeStyleSettingsPresentations.getInstance().getSpacingStandardSettings();
-      case WRAPPING_AND_BRACES_SETTINGS:
-        return CodeStyleSettingsPresentations.getInstance().getWrappingAndBracesStandardSettings();
-      case INDENT_SETTINGS:
-        return CodeStyleSettingsPresentations.getInstance().getIndentStandardSettings();
-      case LANGUAGE_SPECIFIC:
-    }
-    return new LinkedHashMap<>();
+    return switch (settingsType) {
+      case BLANK_LINES_SETTINGS -> CodeStyleSettingsPresentations.getInstance().getBlankLinesStandardSettings();
+      case SPACING_SETTINGS -> CodeStyleSettingsPresentations.getInstance().getSpacingStandardSettings();
+      case WRAPPING_AND_BRACES_SETTINGS -> CodeStyleSettingsPresentations.getInstance().getWrappingAndBracesStandardSettings();
+      case INDENT_SETTINGS -> CodeStyleSettingsPresentations.getInstance().getIndentStandardSettings();
+      default -> new LinkedHashMap<>();
+    };
   }
 }

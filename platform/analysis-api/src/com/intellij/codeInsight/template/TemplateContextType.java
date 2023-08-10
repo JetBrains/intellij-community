@@ -1,58 +1,68 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.util.NlsContexts.Label;
 
 /**
- * @author yole
+ * Implement this class to describe some particular context that the user may associate with a live template, e.g., "Java String Start".
+ * Contexts are available for the user in the Live Template management UI.
  */
 public abstract class TemplateContextType {
-  public static final ExtensionPointName<TemplateContextType> EP_NAME = new ExtensionPointName<>("com.intellij.liveTemplateContext");
+  String myContextId;
+  SynchronizedClearableLazy<@Nullable TemplateContextType> myBaseContextType;
 
-  @NotNull
-  private final String myContextId;
-  @NotNull
-  private final @Label String myPresentableName;
-  private final VolatileNullableLazyValue<TemplateContextType> myBaseContextType;
+  private final @NotNull @Label String myPresentableName;
 
-  protected TemplateContextType(@NotNull @NonNls String id, @Label @NotNull String presentableName) {
+  protected TemplateContextType(@Label @NotNull String presentableName) {
+    myPresentableName = presentableName;
+  }
+
+  /**
+   * @deprecated Set contextId in plugin.xml instead
+   */
+  @Deprecated
+  protected TemplateContextType(@NotNull String id, @Label @NotNull String presentableName) {
     this(id, presentableName, EverywhereContextType.class);
   }
 
-  protected TemplateContextType(@NotNull @NonNls String id,
+  /**
+   * @deprecated Set contextId and baseContextId in plugin.xml instead
+   */
+  @Deprecated
+  protected TemplateContextType(@NotNull String id,
                                 @Label @NotNull String presentableName,
                                 @Nullable Class<? extends TemplateContextType> baseContextType) {
     myContextId = id;
     myPresentableName = presentableName;
-    myBaseContextType =
-      VolatileNullableLazyValue.createValue(() -> baseContextType == null ? null : EP_NAME.findExtension(baseContextType));
+    Class<? extends TemplateContextType> actualBaseClass = baseContextType != null ? baseContextType : EverywhereContextType.class;
+    myBaseContextType = new SynchronizedClearableLazy(() -> LiveTemplateContextService.getInstance().getTemplateContextType(actualBaseClass));
   }
 
   /**
    * @return context presentable name for templates editor
    */
-  @NotNull
-  public @Label String getPresentableName() {
+  public @NotNull @Label String getPresentableName() {
     return myPresentableName;
   }
 
   /**
    * @return unique ID to be used on configuration files to flag if this context is enabled for particular template
    */
-  @NotNull
-  public @NonNls String getContextId() {
+  public final @NotNull String getContextId() {
+    if (myContextId == null) {
+      throw new AssertionError("contextId must be set for liveTemplateContext " + this);
+    }
     return myContextId;
   }
 
@@ -83,8 +93,7 @@ public abstract class TemplateContextType {
    * @return syntax highlighter that going to be used in live template editor for template with context type enabled. If several context
    * types are enabled - first registered wins.
    */
-  @Nullable
-  public SyntaxHighlighter createHighlighter() {
+  public @Nullable SyntaxHighlighter createHighlighter() {
     return null;
   }
 
@@ -97,14 +106,27 @@ public abstract class TemplateContextType {
    *   enabled for the template.</li>
    * </ol>
    */
-  @Nullable
-  public TemplateContextType getBaseContextType() {
-    return myBaseContextType.getValue();
+  public @Nullable TemplateContextType getBaseContextType() {
+    if (myBaseContextType != null) {
+      try {
+        return myBaseContextType.getValue();
+      }
+      catch (LiveTemplateContextNotFoundException e) {
+        Logger.getInstance(TemplateContextType.class)
+          .error("Error in liveTemplateContext with ID '" + myContextId + "', base liveTemplateContext is not registered plugin.xml", e);
+        // looks like broken plugin, fallback to any context parent
+        return LiveTemplateContextService.getInstance().getTemplateContextType(EverywhereContextType.class);
+      }
+    }
+
+    return null;
   }
 
   @ApiStatus.Internal
-  public void clearCachedBaseContextType() {
-    myBaseContextType.drop();
+  void clearCachedBaseContextType() {
+    if (myBaseContextType != null) {
+      myBaseContextType.drop();
+    }
   }
 
   /**

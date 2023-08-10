@@ -1,0 +1,12 @@
+// "Import property 'asserter'" "true"
+// RUNTIME_WITH_KOTLIN_TEST
+
+package test
+
+import kotlin.test.asserter
+
+fun foo() {
+    asserter
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix

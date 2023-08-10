@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +20,7 @@ public interface ResourceFile {
   @Nullable Class<?> findClass(String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
     throws IOException;
 
-  void processResources(@NotNull String dir, @NotNull Predicate<? super String> nameFilter, @NotNull BiConsumer<? super String, ? super InputStream> consumer)
-    throws IOException;
+  void processResources(@NotNull String dir,
+                        @NotNull Predicate<? super String> nameFilter,
+                        @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException;
 }

@@ -1,0 +1,3 @@
+import foo
+
+fo<caret>

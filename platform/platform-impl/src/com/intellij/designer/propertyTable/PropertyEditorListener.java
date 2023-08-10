@@ -19,10 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public interface PropertyEditorListener extends EventListener {
   /**
    * This method is invoked when user finished editing.

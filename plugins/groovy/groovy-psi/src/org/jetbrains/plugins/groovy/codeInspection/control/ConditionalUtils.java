@@ -31,8 +31,7 @@ class ConditionalUtils {
   }
 
   public static GrStatement stripBraces(GrStatement branch) {
-    if (branch instanceof GrBlockStatement) {
-      final GrBlockStatement block = (GrBlockStatement) branch;
+    if (branch instanceof GrBlockStatement block) {
       final GrStatement[] statements = block.getBlock().getStatements();
       if (statements.length == 1) {
         return statements[0];
@@ -48,11 +47,9 @@ class ConditionalUtils {
     if (statement == null) {
       return false;
     }
-    if (!(statement instanceof GrReturnStatement)) {
+    if (!(statement instanceof GrReturnStatement returnStatement)) {
       return false;
     }
-    final GrReturnStatement returnStatement =
-        (GrReturnStatement) statement;
     final GrExpression returnValue = returnStatement.getReturnValue();
     if (returnValue == null) {
       return false;
@@ -65,11 +62,9 @@ class ConditionalUtils {
     if (statement == null) {
       return false;
     }
-    if (!(statement instanceof GrAssignmentExpression)) {
+    if (!(statement instanceof GrAssignmentExpression assignment)) {
       return false;
     }
-    final GrAssignmentExpression assignment =
-        (GrAssignmentExpression) statement;
     final GrExpression rhs = assignment.getRValue();
     if (rhs == null) {
       return false;

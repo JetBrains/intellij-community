@@ -96,8 +96,7 @@ class PsiElement2Declaration implements PsiSymbolDeclaration {
 
   @Nullable
   private static TextRange getDeclarationRangeFromPom(@NotNull PomTarget target, @NotNull PsiElement declaringElement) {
-    if (target instanceof PsiDeclaredTarget) {
-      PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;
+    if (target instanceof PsiDeclaredTarget declaredTarget) {
       TextRange nameIdentifierRange = declaredTarget.getNameIdentifierRange();
       if (nameIdentifierRange != null) {
         PsiElement navigationElement = declaredTarget.getNavigationElement();
@@ -160,5 +159,13 @@ class PsiElement2Declaration implements PsiSymbolDeclaration {
   @NotNull
   private static TextRange rangeOf(@NotNull PsiElement element) {
     return TextRange.from(0, element.getTextLength());
+  }
+
+  @Override
+  public String toString() {
+    return String.format(
+      "PsiElement2Declaration(targetElement=%s, declaringElement=%s, declarationRange=%s)",
+      myTargetElement, myDeclaringElement, myDeclarationRange
+    );
   }
 }

@@ -1,0 +1,2 @@
+pep8ext_naming.NamingChecker.__getattr__
+pep8ext_naming.NamingChecker.parse_options

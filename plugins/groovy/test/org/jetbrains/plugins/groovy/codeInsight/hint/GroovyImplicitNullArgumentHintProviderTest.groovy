@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.codeInsight.hints.NoSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import groovy.transform.CompileStatic
+import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 
 @CompileStatic
@@ -15,15 +16,15 @@ class GroovyImplicitNullArgumentHintProviderTest extends InlayHintsProviderTestC
     return GroovyProjectDescriptors.GROOVY_2_5
   }
 
-  def doTest(String text) {
-    testProvider("test.groovy", text, new GroovyImplicitNullArgumentHintProvider(), new NoSettings())
+  def doTest(@Language("Groovy") String text) {
+    doTestProvider("test.groovy", text, new GroovyImplicitNullArgumentHintProvider(), new NoSettings())
   }
 
   void 'test call with implicit null argument'() {
     doTest """
 def foo(String s) {}
 
-foo(<# null #>)
+foo(/*<# null #>*/)
 """
   }
 
@@ -47,7 +48,7 @@ foo()
     doTest """
 def foo(s) {}
 
-foo(<# null #>)
+foo(/*<# null #>*/)
 """
   }
 
@@ -57,7 +58,7 @@ class Foo {
   Foo(String s) {}
 }
 
-new Foo(<# null #>)
+new Foo(/*<# null #>*/)
 """
   }
 

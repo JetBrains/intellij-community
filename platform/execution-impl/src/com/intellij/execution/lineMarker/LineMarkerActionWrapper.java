@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.lineMarker;
 
 import com.intellij.codeInsight.intention.PriorityAction;
@@ -11,13 +11,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +35,15 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     myElement = SmartPointerManager.createPointer(element);
     myOrigin = origin;
     copyFrom(origin);
+    if (!(myOrigin instanceof ActionGroup)) {
+      getTemplatePresentation().setPerformGroup(true);
+      getTemplatePresentation().setPopupGroup(true);
+    }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return myOrigin.getActionUpdateThread();
   }
 
   @Override
@@ -62,11 +68,6 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
   }
 
   @Override
-  public boolean canBePerformed(@NotNull DataContext context) {
-    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).canBePerformed(wrapContext(context));
-  }
-
-  @Override
   public boolean isDumbAware() {
     return myOrigin.isDumbAware();
   }
@@ -83,7 +84,7 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
 
   @Override
   public boolean disableIfNoVisibleChildren() {
-    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).disableIfNoVisibleChildren();
+    return myOrigin instanceof ActionGroup && ((ActionGroup)myOrigin).disableIfNoVisibleChildren();
   }
 
   @Override
@@ -92,14 +93,13 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     myOrigin.update(wrapped);
     Icon icon = wrapped.getPresentation().getIcon();
     if (icon != null) {
-      getTemplatePresentation().setIcon(icon);
+      e.getPresentation().setIcon(icon);
     }
   }
 
   @NotNull
   private AnActionEvent wrapEvent(@NotNull AnActionEvent e) {
-    DataContext dataContext = wrapContext(e.getDataContext());
-    return new AnActionEvent(e.getInputEvent(), dataContext, e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
+    return e.withDataContext(wrapContext(e.getDataContext()));
   }
 
   @NotNull
@@ -130,39 +130,19 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     return myOrigin;
   }
 
-  private class MyDataContext extends UserDataHolderBase implements DataContext {
-    private final DataContext myDelegate;
+  private class MyDataContext extends DataContextWrapper {
 
     MyDataContext(DataContext delegate) {
-      myDelegate = delegate;
+      super(delegate);
     }
 
     @Override
-    public <T> T getUserData(@NotNull Key<T> key) {
-      if (myDelegate instanceof UserDataHolder) {
-        return ((UserDataHolder)myDelegate).getUserData(key);
-      }
-      return super.getUserData(key);
-    }
-
-    @Override
-    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-      if (myDelegate instanceof UserDataHolder) {
-        ((UserDataHolder)myDelegate).putUserData(key, value);
-      }
-      else {
-        super.putUserData(key, value);
-      }
-    }
-
-    @Nullable
-    @Override
-    public synchronized Object getData(@NotNull @NonNls String dataId) {
+    public @Nullable Object getRawCustomData(@NotNull String dataId) {
       if (Location.DATA_KEY.is(dataId)) {
         PsiElement element = myElement.getElement();
         return element != null && element.isValid() ? new PsiLocation<>(element) : null;
       }
-      return myDelegate.getData(dataId);
+      return null;
     }
   }
 }

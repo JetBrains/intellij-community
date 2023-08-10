@@ -103,9 +103,7 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
 
     actionGroup.add(new ShowColumns(myPropertyTable));
 
-    PopupHandler.installPopupHandler(myPropertyTable, actionGroup,
-                                     ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP,
-                                     actionManager);
+    PopupHandler.installPopupMenu(myPropertyTable, actionGroup, ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP);
 
     myPropertyTable.getSelectionModel().addListSelectionListener(this);
     valueChanged(null);

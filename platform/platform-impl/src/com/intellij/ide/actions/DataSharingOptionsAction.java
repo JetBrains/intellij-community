@@ -4,13 +4,14 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class DataSharingOptionsAction extends DumbAwareAction {
+public final class DataSharingOptionsAction extends DumbAwareAction {
   public DataSharingOptionsAction() {
     super(IdeBundle.messagePointer("action.DataSharingOptionsAction.text"),
           IdeBundle.messagePointer("action.DataSharingOptionsAction.description"), null);
@@ -24,5 +25,10 @@ public class DataSharingOptionsAction extends DumbAwareAction {
     catch (Exception ex) {
       Logger.getInstance(DataSharingOptionsAction.class).warn(ex);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

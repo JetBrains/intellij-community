@@ -1,26 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.*
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.options.SchemeProcessor
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.throwIfNotEmpty
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
-import java.nio.file.Paths
 
 @NonNls const val ROOT_CONFIG = "\$ROOT_CONFIG$"
 
@@ -35,14 +38,17 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   protected open fun getVirtualFileResolver(): VirtualFileResolver? = null
 
-  final override fun <T : Any, MutableT : T> create(directoryName: String,
-                                                    processor: SchemeProcessor<T, MutableT>,
-                                                    presentableName: String?,
-                                                    roamingType: RoamingType,
-                                                    schemeNameToFileName: SchemeNameToFileName,
-                                                    streamProvider: StreamProvider?,
-                                                    directoryPath: Path?,
-                                                    isAutoSave: Boolean): SchemeManager<T> {
+  final override fun <T: Scheme, MutableT : T> create(
+    directoryName: String,
+    processor: SchemeProcessor<T, MutableT>,
+    presentableName: String?,
+    roamingType: RoamingType,
+    schemeNameToFileName: SchemeNameToFileName,
+    streamProvider: StreamProvider?,
+    directoryPath: Path?,
+    isAutoSave: Boolean,
+    settingsCategory: SettingsCategory
+  ): SchemeManager<T> {
     val path = checkPath(directoryName)
     val fileChangeSubscriber = when {
       streamProvider != null && streamProvider.isApplicable(path, roamingType) -> null
@@ -56,7 +62,8 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                     presentableName = presentableName,
                                     schemeNameToFileName = schemeNameToFileName,
                                     fileChangeSubscriber = fileChangeSubscriber,
-                                    virtualFileResolver = getVirtualFileResolver())
+                                    virtualFileResolver = getVirtualFileResolver(),
+                                    settingsCategory = settingsCategory)
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
@@ -83,6 +90,12 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       try {
         processor(manager)
       }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
       catch (e: Throwable) {
         LOG.error("Cannot reload settings for ${manager.javaClass.name}", e)
       }
@@ -90,18 +103,36 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
   }
 
   final override suspend fun save() {
-    val errors = SmartList<Throwable>()
-    withEdtContext(componentManager) {
-      for (registeredManager in managers) {
-        try {
-          registeredManager.save(errors)
+    var error: Throwable? = null
+    for (registeredManager in managers) {
+      try {
+        if (registeredManager.isUseVfs) {
+          withContext(Dispatchers.EDT) {
+            registeredManager.save()
+          }
         }
-        catch (e: Throwable) {
-          errors.add(e)
+        else {
+          registeredManager.save()
+        }
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        if (error == null) {
+          error = e
+        }
+        else {
+          error.addSuppressed(e)
         }
       }
     }
-    throwIfNotEmpty(errors)
+    error?.let {
+      throw it
+    }
   }
 
   @Suppress("unused")
@@ -114,7 +145,12 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       if (path.startsWith(ROOT_CONFIG)) {
         path = path.substring(ROOT_CONFIG.length + 1)
         val message = "Path must not contains ROOT_CONFIG macro, corrected: $path"
-        if (ApplicationManager.getApplication().isUnitTestMode) throw AssertionError(message) else LOG.warn(message)
+        if (ApplicationManager.getApplication().isUnitTestMode) {
+          throw AssertionError(message)
+        }
+        else {
+          LOG.warn(message)
+        }
       }
       return path
     }
@@ -130,12 +166,11 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
     override fun getVirtualFileResolver() = project as? VirtualFileResolver?
 
-    private fun addVfsListener(schemeManager: SchemeManagerImpl<*, *>) {
-      @Suppress("UNCHECKED_CAST")
-      project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager as SchemeManagerImpl<Any, Any>, project))
+    private fun <T : Scheme, M:T>addVfsListener(schemeManager: SchemeManagerImpl<T, M>) {
+      project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))
     }
 
-    override fun createFileChangeSubscriber(): FileChangeSubscriber? {
+    override fun createFileChangeSubscriber(): FileChangeSubscriber {
       return { schemeManager ->
         if (!ApplicationManager.getApplication().isUnitTestMode || project.getUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE) == true) {
           StartupManagerEx.getInstanceEx(project).runAfterOpened {
@@ -148,12 +183,13 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
     override fun pathToFile(path: String): Path {
       if (project.isDefault) {
         // no idea how to solve this issue (run SingleInspectionProfilePanelTest) in a quick and safe way
-        return Paths.get("__not_existent_path__")
+        return Path.of("__not_existent_path__")
       }
 
-      val projectFileDir = (project.stateStore as? IProjectStore)?.directoryStorePath
+      val projectStore = project.stateStore as? IProjectStore
+      val projectFileDir = projectStore?.directoryStorePath
       if (projectFileDir == null) {
-        return Paths.get(project.basePath!!, ".$path")
+        return if (projectStore != null) projectStore.projectBasePath.resolve(".$path") else Path.of(project.basePath!!, ".$path")
       }
       else {
         return projectFileDir.resolve(path)

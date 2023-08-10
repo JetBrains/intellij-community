@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor
 
 import com.intellij.ide.highlighter.ArchiveFileType
-import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.roots.NativeLibraryOrderRootType
 import com.intellij.openapi.roots.OrderRootType
@@ -79,7 +79,7 @@ class JavaLibraryRootsDetectionTest : LightPlatformTestCase() {
     val dir = directoryContent(content).generateInVirtualTempDir()
     val detector = LibraryRootsDetectorImpl(DefaultLibraryRootsComponentDescriptor().rootDetectors)
     val root = assertOneElement(dir.children.flatMap { file ->
-      val rootFile = if (file.fileType == ArchiveFileType.INSTANCE) JarFileSystem.getInstance().getJarRootForLocalFile(file)!! else file
+      val rootFile = if (FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE)) JarFileSystem.getInstance().getJarRootForLocalFile(file)!! else file
       detector.detectRoots(rootFile, EmptyProgressIndicator())
     })
     val type = assertOneElement(root.types)
@@ -88,7 +88,14 @@ class JavaLibraryRootsDetectionTest : LightPlatformTestCase() {
   }
 
   override fun tearDown() {
-    JarFileSystemImpl.cleanupForNextTest()
-    super.tearDown()
+    try {
+      JarFileSystemImpl.cleanupForNextTest()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 }

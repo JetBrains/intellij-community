@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -27,6 +27,5 @@ public abstract class StripTrailingSpacesFilterFactory {
    * <li>{@link StripTrailingSpacesFilter#ALL_LINES} Allow stripping with no restrictions. Return this value by default.</li>
    * </ul>
    */
-  @NotNull
-  public abstract StripTrailingSpacesFilter createFilter(@Nullable Project project, @NotNull Document document);
+  public abstract @NotNull StripTrailingSpacesFilter createFilter(@Nullable Project project, @NotNull Document document);
 }

@@ -16,15 +16,13 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyWithItem;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyWithItemImpl extends PyElementImpl implements PyWithItem {
   public PyWithItemImpl(ASTNode astNode) {
     super(astNode);
@@ -36,18 +34,8 @@ public class PyWithItemImpl extends PyElementImpl implements PyWithItem {
   }
 
   @Override
-  public PyExpression getExpression() {
-    ASTNode[] children = getNode().getChildren(null);
-    for (ASTNode child: children) {
-      final PsiElement e = child.getPsi();
-      if (e instanceof PyExpression) {
-        return (PyExpression)e;
-      }
-      else if (child.getElementType() == PyTokenTypes.AS_KEYWORD) {
-        break;
-      }
-    }
-    return null;
+  public @NotNull PyExpression getExpression() {
+    return (PyExpression)getFirstChild();
   }
 
   @Override

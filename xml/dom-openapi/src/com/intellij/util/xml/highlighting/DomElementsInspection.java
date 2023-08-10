@@ -26,7 +26,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
@@ -35,42 +34,44 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * @author Dmitry Avdeev
- * @see com.intellij.util.xml.highlighting.BasicDomElementsInspection
+ * @see BasicDomElementsInspection
  */
 public abstract class DomElementsInspection<T extends DomElement> extends XmlSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance(DomElementsInspection.class);
 
   private final Set<Class<? extends T>> myDomClasses;
 
+  @SafeVarargs
   public DomElementsInspection(Class<? extends T> domClass, Class<? extends T> @NotNull ... additionalClasses) {
-    myDomClasses = ContainerUtil.set(additionalClasses);
+    myDomClasses = ContainerUtil.newHashSet(additionalClasses);
     myDomClasses.add(domClass);
   }
 
   /**
-   * This method is called internally in {@link DomElementAnnotationsManager#checkFileElement(com.intellij.util.xml.DomFileElement, DomElementsInspection, boolean)}
+   * This method is called internally in {@link DomElementAnnotationsManager#checkFileElement(DomFileElement, DomElementsInspection, boolean)}
    * it should add some problems to the annotation holder. The default implementation performs recursive tree traversal, and calls
-   * {@link #checkDomElement(com.intellij.util.xml.DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} for each element. 
+   * {@link #checkDomElement(DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} for each element.
    * @param domFileElement file element to check
    * @param holder the place to store problems
    */
-  public void checkFileElement(DomFileElement<T> domFileElement, final DomElementAnnotationHolder holder) {
+  public void checkFileElement(@NotNull DomFileElement<T> domFileElement, @NotNull DomElementAnnotationHolder holder) {
     final DomHighlightingHelper helper =
       DomElementAnnotationsManager.getInstance(domFileElement.getManager().getProject()).getHighlightingHelper();
     final Consumer<DomElement> consumer = new Consumer<>() {
       @Override
-      public void consume(final DomElement element) {
+      public void accept(DomElement element) {
         checkChildren(element, this);
         checkDomElement(element, holder, helper);
       }
     };
-    consumer.consume(domFileElement.getRootElement());
+    consumer.accept(domFileElement.getRootElement());
   }
 
-  protected void checkChildren(final DomElement element, Consumer<? super DomElement> visitor) {
+  protected void checkChildren(@NotNull DomElement element, @NotNull Consumer<? super @NotNull DomElement> visitor) {
     final XmlElement xmlElement = element.getXmlElement();
     if (xmlElement instanceof XmlTag) {
       for (final DomElement child : DomUtil.getDefinedChildren(element, true, true)) {
@@ -78,8 +79,8 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
         if (element1 == null) {
           LOG.error("child=" + child + " of class " + child.getClass() + "; parent=" + element);
         }
-        if (element1.isPhysical()) {
-          visitor.consume(child);
+        else if (element1.isPhysical()) {
+          visitor.accept(child);
         }
       }
 
@@ -87,7 +88,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
         if (description.getAnnotation(Required.class) != null) {
           for (final DomElement child : description.getValues(element)) {
             if (!DomUtil.hasXml(child)) {
-              visitor.consume(child);
+              visitor.accept(child);
             }
           }
         }
@@ -98,14 +99,15 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   /**
    * @return the classes passed earlier to the constructor
    */
+  @NotNull
   public final Set<Class<? extends T>> getDomClasses() {
     return myDomClasses;
   }
 
   /**
    * Not intended to be overridden or called by implementors.
-   * Override {@link #checkFileElement(com.intellij.util.xml.DomFileElement, DomElementAnnotationHolder)} (which is preferred) or
-   * {@link #checkDomElement(com.intellij.util.xml.DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} instead.
+   * Override {@link #checkFileElement(DomFileElement, DomElementAnnotationHolder)} (which is preferred) or
+   * {@link #checkDomElement(DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} instead.
    */
   @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
@@ -149,14 +151,15 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   }
 
   /**
-   * Check particular DOM element for problems. The inspection implementor should focus on this method.
+   * Check a DOM element for problems.
+   * The inspection implementor should focus on this method.
    * The default implementation throws {@link UnsupportedOperationException}.
-   * See {@link com.intellij.util.xml.highlighting.BasicDomElementsInspection}
+   * See {@link BasicDomElementsInspection}
    * @param element element to check
    * @param holder a place to add problems to
    * @param helper helper object
    */
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     throw new UnsupportedOperationException("checkDomElement() is not implemented in " + getClass().getName());
   }
 }

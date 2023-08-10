@@ -81,12 +81,12 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
   private void addExceptionThrowPlaces(@NotNull PsiClassType type, @NotNull PsiElement place) {
     place.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         visitElement(expression);
       }
 
       @Override
-      public void visitThrowStatement(PsiThrowStatement statement) {
+      public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
         super.visitThrowStatement(statement);
         List<PsiClassType> actualTypes = ExceptionUtil.getUnhandledExceptions(statement, place);
         for (PsiClassType actualType : actualTypes) {
@@ -112,7 +112,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         PsiReference reference = expression.getMethodExpression().getReference();
         if (reference != null) {
@@ -127,7 +127,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
       }
 
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         super.visitNewExpression(expression);
         PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
         if (classReference != null) {
@@ -142,7 +142,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
       }
 
       @Override
-      public void visitResourceExpression(PsiResourceExpression expression) {
+      public void visitResourceExpression(@NotNull PsiResourceExpression expression) {
         super.visitResourceExpression(expression);
         List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledCloserExceptions(expression, place);
         for (PsiClassType actualType : exceptionTypes) {
@@ -154,7 +154,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
       }
 
       @Override
-      public void visitResourceVariable(PsiResourceVariable variable) {
+      public void visitResourceVariable(@NotNull PsiResourceVariable variable) {
         super.visitResourceVariable(variable);
         List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledCloserExceptions(variable, place);
         for (PsiClassType actualType : exceptionTypes) {

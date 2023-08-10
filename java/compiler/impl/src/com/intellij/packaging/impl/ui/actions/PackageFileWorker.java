@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,7 +23,6 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.zip.JBZipEntry;
@@ -89,15 +87,15 @@ public final class PackageFileWorker {
   public static void packageFile(@NotNull VirtualFile file, @NotNull Project project, final Artifact[] artifacts,
                                  final boolean packIntoArchives) throws IOException {
     LOG.debug("Start packaging file: " + file.getPath());
-    final Collection<Trinity<Artifact, PackagingElementPath, String>> items = ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project, artifacts);
+    final Collection<ArtifactUtil.ArtifactInfo> items = ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project, artifacts);
     File ioFile = VfsUtilCore.virtualToIoFile(file);
-    for (Trinity<Artifact, PackagingElementPath, String> item : items) {
-      final Artifact artifact = item.getFirst();
+    for (ArtifactUtil.ArtifactInfo item : items) {
+      final Artifact artifact = item.artifact();
       final String outputPath = artifact.getOutputPath();
       if (!StringUtil.isEmpty(outputPath)) {
-        PackageFileWorker worker = new PackageFileWorker(ioFile, item.getThird(), packIntoArchives);
+        PackageFileWorker worker = new PackageFileWorker(ioFile, item.relativeOutputPath(), packIntoArchives);
         LOG.debug(" package to " + outputPath);
-        worker.packageFile(outputPath, item.getSecond().getParents());
+        worker.packageFile(outputPath, item.path().getParents());
       }
     }
   }

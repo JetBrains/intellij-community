@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,8 +21,8 @@ import java.util.List;
  */
 public class TimedVcsCommitImpl implements TimedVcsCommit {
 
-  @NotNull private final Hash myHash;
-  @NotNull private final List<Hash> myParents;
+  private final @NotNull Hash myHash;
+  private final @NotNull List<Hash> myParents;
   private final long myTime;
 
   public TimedVcsCommitImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp) {
@@ -31,14 +32,12 @@ public class TimedVcsCommitImpl implements TimedVcsCommit {
   }
 
   @Override
-  @NotNull
-  public final Hash getId() {
+  public final @NotNull Hash getId() {
     return myHash;
   }
 
   @Override
-  @NotNull
-  public final List<Hash> getParents() {
+  public final @NotNull List<Hash> getParents() {
     return myParents;
   }
 

@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.Change;
@@ -9,7 +8,7 @@ import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.NlsContexts;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
@@ -34,6 +33,10 @@ public class ChangeList {
                                      "current changes won't be saved: " + myCurrentChangeSet);
     }
     myStorage.close();
+  }
+
+  public synchronized void force() {
+    myStorage.force();
   }
 
   public synchronized long nextId() {
@@ -104,7 +107,7 @@ public class ChangeList {
       @Override
       public Iterator<ChangeSet> iterator() {
         return new Iterator<>() {
-          private final TIntHashSet recursionGuard = new TIntHashSet(1000);
+          private final IntOpenHashSet recursionGuard = new IntOpenHashSet(1000);
 
           private ChangeSetHolder currentBlock;
           private ChangeSet next = fetchNext();
@@ -134,11 +137,11 @@ public class ChangeList {
             }
             else {
               synchronized (ChangeList.this) {
-                currentBlock = myStorage.readPrevious(currentBlock.id, recursionGuard);
+                currentBlock = myStorage.readPrevious(currentBlock.id(), recursionGuard);
               }
             }
             if (currentBlock == null) return null;
-            return currentBlock.changeSet;
+            return currentBlock.changeSet();
           }
 
           @Override

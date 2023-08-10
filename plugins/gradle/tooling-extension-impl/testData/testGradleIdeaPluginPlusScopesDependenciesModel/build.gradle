@@ -27,7 +27,7 @@ allprojects {
 
 project(":service") {
   dependencies {
-    compile(project(':api'))
+    <<compile>> project(':api')
   }
 }
 
@@ -39,8 +39,8 @@ project(":api") {
 
 project(":withIdeaModelCustomisations") {
   dependencies {
-    compile files("lib/someDep.jar")
-    testCompile files("lib/someTestDep.jar")
+    <<compile>> files("lib/someDep.jar")
+    <<testCompile>> files("lib/someTestDep.jar")
   }
 
   idea {
@@ -60,6 +60,6 @@ project(":withIdeRepoFileDependency") {
     mavenCentral()
   }
   dependencies {
-    testCompile 'junit:junit:4.11'
+    <<testCompile>> 'junit:junit:4.11'
   }
 }

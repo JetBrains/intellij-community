@@ -1,8 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
-import com.intellij.compiler.instrumentation.FailSafeClassReader;
-import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -12,8 +10,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,24 +18,20 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_UNDER_EDT;
+import static com.intellij.util.concurrency.ThreadingAssertions.MUST_NOT_EXECUTE_UNDER_EDT;
 
 public class TMHInstrumenterTest extends UsefulTestCase {
-  private static final String TEST_DATA_PATH = "plugins/devkit/jps-plugin/testData/threadingModelHelper/assertEdtInstrumenter/";
-
-  private static final String REQUIRES_EDT_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresEdt";
-  private static final String REQUIRES_BACKGROUND_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresBackgroundThread";
-  private static final String REQUIRES_READ_LOCK_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresReadLock";
-  private static final String REQUIRES_WRITE_LOCK_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresWriteLock";
-  private static final String APPLICATION_MANAGER_CLASS_NAME = "com/intellij/openapi/application/fake/ApplicationManager";
-  private static final String APPLICATION_CLASS_NAME = "com/intellij/openapi/application/fake/Application";
+  private static final String TEST_DATA_PATH = "plugins/devkit/jps-plugin/testData/threadingModelHelper/instrumenter/";
 
   private static final String TESTING_BACKGROUND_THREAD_NAME = "TESTING_BACKGROUND_THREAD";
-  private static final String REQUIRES_EDT_MESSAGE = "Access is allowed from event dispatch thread only.";
-  private static final String REQUIRES_BACKGROUND_THREAD_MESSAGE = "Access from event dispatch thread is not allowed.";
 
   public void testSimple() throws Exception {
     doEdtTest();
@@ -64,7 +56,7 @@ public class TMHInstrumenterTest extends UsefulTestCase {
   public void testConstructor() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
     testClass.aClass.getDeclaredConstructor().newInstance();
-    assertThrows(Throwable.class, REQUIRES_EDT_MESSAGE,
+    assertThrows(Throwable.class, MUST_EXECUTE_UNDER_EDT,
                  () -> executeInBackground(() -> testClass.aClass.getDeclaredConstructor().newInstance()));
   }
 
@@ -77,7 +69,7 @@ public class TMHInstrumenterTest extends UsefulTestCase {
   public void testRequiresBackgroundThreadAssertion() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
     executeInBackground(() -> invokeMethod(testClass.aClass));
-    assertThrows(Throwable.class, REQUIRES_BACKGROUND_THREAD_MESSAGE, () -> invokeMethod(testClass.aClass));
+    assertThrows(Throwable.class, MUST_NOT_EXECUTE_UNDER_EDT, () -> invokeMethod(testClass.aClass));
   }
 
   public void testRequiresReadLockAssertion() throws Exception {
@@ -90,10 +82,39 @@ public class TMHInstrumenterTest extends UsefulTestCase {
     assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertWriteAccessAllowed"));
   }
 
+  public void testRequiresReadLockAbsenceAssertion() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertReadAccessNotAllowed"));
+  }
+
+  public void testLineNumber() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
+    assertEquals(Arrays.asList(5, 8, 8), TMHTestUtil.getLineNumbers(testClass.classBytes));
+  }
+
+  public void testLineNumberWhenBodyHasTwoStatements() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
+    assertEquals(Arrays.asList(5, 8, 8, 9), TMHTestUtil.getLineNumbers(testClass.classBytes));
+  }
+
+  public void testLineNumberWhenEmptyBody() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
+    assertEquals(Arrays.asList(5, 7, 7), TMHTestUtil.getLineNumbers(testClass.classBytes));
+  }
+
+  public void testLineNumberWhenOtherMethodBefore() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
+    assertEquals(Arrays.asList(5, 7, 12, 12), TMHTestUtil.getLineNumbers(testClass.classBytes));
+  }
+
   private void doEdtTest() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
     invokeMethod(testClass.aClass);
-    assertThrows(Throwable.class, REQUIRES_EDT_MESSAGE, () -> executeInBackground(() -> invokeMethod(testClass.aClass)));
+    assertThrows(Throwable.class, MUST_EXECUTE_UNDER_EDT, () -> executeInBackground(() -> invokeMethod(testClass.aClass)));
   }
 
   private @NotNull TestClass getInstrumentedTestClass() throws IOException {
@@ -121,7 +142,7 @@ public class TMHInstrumenterTest extends UsefulTestCase {
         classLoader.doDefineClass(null, classData);
       }
       else {
-        byte[] instrumentedClassData = instrument(classData);
+        byte[] instrumentedClassData = TMHTestUtil.instrument(classData);
         if (instrumentedClassData != null) {
           testClass = new TestClass(classLoader.doDefineClass(null, instrumentedClassData), instrumentedClassData, true);
           if (printClassFiles) {
@@ -149,23 +170,12 @@ public class TMHInstrumenterTest extends UsefulTestCase {
     }
     List<String> dependencyPaths = ContainerUtil.map(dependencies, File::getAbsolutePath);
     IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(dependencyPaths));
-    return Files.walk(Paths.get(classesDir.getAbsolutePath()))
-      .filter(Files::isRegularFile)
-      .map(Path::toFile)
-      .collect(Collectors.toList());
-  }
-
-  private static byte @Nullable [] instrument(byte @NotNull [] classData) {
-    FailSafeClassReader reader = new FailSafeClassReader(classData);
-    int flags = InstrumenterClassWriter.getAsmClassWriterFlags(InstrumenterClassWriter.getClassFileVersion(reader));
-    ClassWriter writer = new ClassWriter(reader, flags);
-    boolean instrumented = TMHInstrumenter.instrument(reader, writer, ContainerUtil.set(
-      new TMHAssertionGenerator.AssertEdt(REQUIRES_EDT_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
-      new TMHAssertionGenerator.AssertBackgroundThread(REQUIRES_BACKGROUND_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
-      new TMHAssertionGenerator.AssertReadAccess(REQUIRES_READ_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
-      new TMHAssertionGenerator.AssertWriteAccess(REQUIRES_WRITE_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME)
-    ));
-    return instrumented ? writer.toByteArray() : null;
+    try (Stream<Path> walk = Files.walk(Paths.get(classesDir.getAbsolutePath()))) {
+      return walk
+        .filter(Files::isRegularFile)
+        .map(Path::toFile)
+        .collect(Collectors.toList());
+    }
   }
 
   private static void invokeMethod(@NotNull Class<?> testClass) {

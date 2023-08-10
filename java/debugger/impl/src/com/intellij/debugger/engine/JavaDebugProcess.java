@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.actions.JvmDropFrameActionHandler;
 import com.intellij.debugger.actions.JvmSmartStepIntoActionHandler;
 import com.intellij.debugger.engine.dfaassist.DfaAssist;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -26,11 +26,11 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.UIExperiment;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
@@ -46,11 +46,13 @@ import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.memory.component.InstancesTracker;
 import com.intellij.xdebugger.memory.component.MemoryViewManager;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
@@ -58,6 +60,7 @@ import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.LocatableEvent;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
@@ -68,13 +71,15 @@ public class JavaDebugProcess extends XDebugProcess {
   private volatile XBreakpointHandler<?>[] myBreakpointHandlers;
   private final NodeManagerImpl myNodeManager;
   private final JvmSmartStepIntoActionHandler mySmartStepIntoActionHandler;
+  private final JvmDropFrameActionHandler myDropFrameActionActionHandler;
 
   private static final JavaBreakpointHandlerFactory[] ourDefaultBreakpointHandlerFactories = {
     process -> new JavaBreakpointHandler.JavaLineBreakpointHandler(process),
     process -> new JavaBreakpointHandler.JavaExceptionBreakpointHandler(process),
     process -> new JavaBreakpointHandler.JavaFieldBreakpointHandler(process),
     process -> new JavaBreakpointHandler.JavaMethodBreakpointHandler(process),
-    process -> new JavaBreakpointHandler.JavaWildcardBreakpointHandler(process)
+    process -> new JavaBreakpointHandler.JavaWildcardBreakpointHandler(process),
+    process -> new JavaBreakpointHandler.JavaCollectionBreakpointHandler(process)
   };
 
   public static JavaDebugProcess create(@NotNull final XDebugSession session, @NotNull final DebuggerSession javaSession) {
@@ -90,7 +95,7 @@ public class JavaDebugProcess extends XDebugProcess {
     final DebugProcessImpl process = javaSession.getProcess();
 
     myBreakpointHandlers = StreamEx.of(ourDefaultBreakpointHandlerFactories)
-      .append(JavaBreakpointHandlerFactory.EP_NAME.extensions())
+      .append(JavaBreakpointHandlerFactory.EP_NAME.getExtensionList().stream())
       .map(factory -> factory.createHandler(process))
       .toArray(XBreakpointHandler[]::new);
 
@@ -193,10 +198,11 @@ public class JavaDebugProcess extends XDebugProcess {
       }
     });
     if (!DebuggerUtilsImpl.isRemote(process)) {
-      DfaAssist.installDfaAssist(myJavaSession, session);
+      DfaAssist.installDfaAssist(myJavaSession, session, process.myDisposable);
     }
 
     mySmartStepIntoActionHandler = new JvmSmartStepIntoActionHandler(javaSession);
+    myDropFrameActionActionHandler = new JvmDropFrameActionHandler(javaSession);
   }
 
   private void unsetPausedIfNeeded(DebuggerContextImpl context) {
@@ -411,10 +417,12 @@ public class JavaDebugProcess extends XDebugProcess {
   public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar,
                                         @NotNull DefaultActionGroup topToolbar,
                                         @NotNull DefaultActionGroup settings) {
-    Constraints beforeRunner = new Constraints(Anchor.BEFORE, "Runner.Layout");
-    leftToolbar.add(Separator.getInstance(), beforeRunner);
-    leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.DUMP_THREADS), beforeRunner);
-    leftToolbar.add(Separator.getInstance(), beforeRunner);
+    if (!UIExperiment.isNewDebuggerUIEnabled()) {
+      Constraints beforeRunner = new Constraints(Anchor.BEFORE, "Runner.Layout");
+      leftToolbar.add(Separator.getInstance(), beforeRunner);
+      leftToolbar.add(ActionManager.getInstance().getAction("DumpThreads"), beforeRunner);
+      leftToolbar.add(Separator.getInstance(), beforeRunner);
+    }
 
     Constraints beforeSort = new Constraints(Anchor.BEFORE, "XDebugger.ToggleSortValues");
     settings.addAction(new WatchLastMethodReturnValueAction(), beforeSort);
@@ -432,6 +440,11 @@ public class JavaDebugProcess extends XDebugProcess {
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myAutoModeEnabled;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -456,7 +469,7 @@ public class JavaDebugProcess extends XDebugProcess {
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      DebugProcessImpl process = getCurrentDebugProcess(e.getProject());
+      DebugProcessImpl process = getCurrentDebugProcess(e);
       if (process == null || process.canGetMethodReturnValue()) {
         presentation.setEnabled(true);
         presentation.setText(myText);
@@ -468,6 +481,11 @@ public class JavaDebugProcess extends XDebugProcess {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
     }
@@ -475,7 +493,7 @@ public class JavaDebugProcess extends XDebugProcess {
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean watch) {
       DebuggerSettings.getInstance().WATCH_RETURN_VALUES = watch;
-      DebugProcessImpl process = getCurrentDebugProcess(e.getProject());
+      DebugProcessImpl process = getCurrentDebugProcess(e);
       if (process != null) {
         process.setWatchMethodReturnValuesEnabled(watch);
       }
@@ -483,14 +501,12 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   @Nullable
-  public static DebugProcessImpl getCurrentDebugProcess(@Nullable Project project) {
-    if (project != null) {
-      XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-      if (session != null) {
-        XDebugProcess process = session.getDebugProcess();
-        if (process instanceof JavaDebugProcess) {
-          return ((JavaDebugProcess)process).getDebuggerSession().getProcess();
-        }
+  public static DebugProcessImpl getCurrentDebugProcess(@NotNull AnActionEvent e) {
+    XDebugSession session = DebuggerUIUtil.getSession(e);
+    if (session != null) {
+      XDebugProcess process = session.getDebugProcess();
+      if (process instanceof JavaDebugProcess) {
+        return ((JavaDebugProcess)process).getDebuggerSession().getProcess();
       }
     }
     return null;
@@ -521,5 +537,11 @@ public class JavaDebugProcess extends XDebugProcess {
   @Override
   public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
     return mySmartStepIntoActionHandler;
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public @Nullable XDropFrameHandler getDropFrameHandler() {
+    return myDropFrameActionActionHandler;
   }
 }

@@ -1,0 +1,7 @@
+// "Simplify comparison" "true"
+fun foo(x: Int) {
+    if (true) {
+
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SimplifyComparisonFix

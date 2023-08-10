@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -18,9 +18,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author peter
- */
 public class Advertiser {
   private final List<Item> myTexts = ContainerUtil.createLockFreeCopyOnWriteList();
   private final JPanel myComponent = new JPanel(new AdvertiserLayout());
@@ -88,9 +85,9 @@ public class Advertiser {
     updateAdvertisements();
   }
 
-  private static Font adFont() {
-    Font font = UIUtil.getLabelFont();
-    RelativeFont relativeFont = RelativeFont.NORMAL.fromResource("Popup.Advertiser.fontSizeOffset", -2);
+  protected Font adFont() {
+    Font font = StartupUiUtil.getLabelFont();
+    RelativeFont relativeFont = RelativeFont.NORMAL.scale(JBUI.CurrentTheme.Advertiser.FONT_SIZE_OFFSET.get());
     return relativeFont.derive(font);
   }
 

@@ -15,23 +15,23 @@ import org.editorconfig.configmanagement.lexer.EditorConfigLexerFactory
 import org.editorconfig.language.EditorConfigLanguage
 import org.editorconfig.language.psi.EditorConfigElementTypes
 import org.editorconfig.language.psi.EditorConfigPsiFile
-import org.jetbrains.annotations.NotNull
 
 class EditorConfigParserDefinition : ParserDefinition {
-  override fun createLexer(project: Project) = EditorConfigLexerFactory.getAdapter();
+  override fun createLexer(project: Project) = EditorConfigLexerFactory.getAdapter()
   override fun createParser(project: Project): PsiParser = EditorConfigParser()
 
-  override fun getCommentTokens() = COMMENTS
-  override fun getWhitespaceTokens() = WHITE_SPACES
+  override fun getCommentTokens(): TokenSet = EditorConfigTokenSets.COMMENTS
   override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
   override fun getFileNodeType() = FILE
 
-  override fun createFile(viewProvider: @NotNull FileViewProvider): @NotNull PsiFile = EditorConfigPsiFile(viewProvider)
+  override fun createFile(viewProvider: FileViewProvider): PsiFile = EditorConfigPsiFile(viewProvider)
   override fun createElement(node: ASTNode): PsiElement = EditorConfigElementTypes.Factory.createElement(node)
 
   private companion object {
-    val WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE)
-    val COMMENTS = TokenSet.create(EditorConfigElementTypes.LINE_COMMENT)
     val FILE = IFileElementType(EditorConfigLanguage)
   }
+}
+
+private object EditorConfigTokenSets {
+  val COMMENTS: TokenSet = TokenSet.create(EditorConfigElementTypes.LINE_COMMENT)
 }

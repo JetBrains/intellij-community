@@ -1,108 +1,310 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.util.NlsContexts.LinkLabel;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.border.NamedBorder;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import javax.swing.border.AbstractBorder;
+import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.plaf.basic.BasicPanelUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import static com.intellij.ui.border.NamedBorderKt.withName;
 
 /**
  * @author Dmitry Avdeev
  */
 public class EditorNotificationPanel extends JPanel implements IntentionActionProvider, Weighted {
+
+  private static final Supplier<EditorColorsScheme> GLOBAL_SCHEME_SUPPLIER = () -> EditorColorsManager.getInstance().getGlobalScheme();
+  private static final Consumer<Class<?>> VOID_CONSUMER = __ -> {
+  };
+  private static final String BORDER_WITHOUT_STATUS = "borderWithoutStatus";
+  private static final String BORDER_WITH_STATUS = "borderWithStatus";
+
   protected final JLabel myLabel = new JLabel();
   protected final JLabel myGearLabel = new JLabel();
   protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(16));
-  protected Color myBackgroundColor;
-  protected ColorKey myBackgroundColorKey;
-  @Nullable private Key<?> myProviderKey;
-  private Project myProject;
+
+  private JPanel myLastPanel;
+  private InplaceButton myCloseButton;
+  private Runnable myCloseAction;
+
+  private static Icon CLOSE_ICON;
+
+  private final @NotNull Supplier<? extends EditorColorsScheme> mySchemeSupplier;
+  protected final @Nullable Color myBackgroundColor;
+  protected final @NotNull ColorKey myBackgroundColorKey;
+
+  private @NotNull Consumer<? super Class<?>> myClassConsumer = VOID_CONSUMER;
 
   public EditorNotificationPanel(@Nullable Color backgroundColor) {
-    this();
-    myBackgroundColor = backgroundColor;
+    this(null, backgroundColor);
   }
 
-  public EditorNotificationPanel(@Nullable ColorKey backgroundColorKey) {
-    this();
-    myBackgroundColorKey = backgroundColorKey;
+  public EditorNotificationPanel(@Nullable Color backgroundColor, @NotNull Status status) {
+    this((FileEditor)null, backgroundColor, null, status);
   }
 
+  public EditorNotificationPanel(@Nullable FileEditor fileEditor,
+                                 @Nullable Color backgroundColor) {
+    this(fileEditor, backgroundColor, null);
+  }
+
+  public EditorNotificationPanel(@NotNull ColorKey backgroundColorKey) {
+    this((FileEditor)null, null, backgroundColorKey);
+  }
+
+  public EditorNotificationPanel(@NotNull ColorKey backgroundColorKey, @NotNull Status status) {
+    this((FileEditor)null, null, backgroundColorKey, status);
+  }
+
+  /**
+   * Uses LookAndFeel <code>Label.foreground</code> color for the label and
+   * <code>JBUI.CurrentTheme.Link.Foreground.ENABLED</code> for links foreground.
+   */
   public EditorNotificationPanel() {
+    this((FileEditor)null);
+  }
+
+  /**
+   * If fileEditor is a <code>TextEditor</code> based then use the editor colors scheme for foreground colors:
+   * EditorColorsScheme default foreground (<code>EditorColorsScheme.getDefaultForeground()</code> for the label and
+   * <code>CodeInsightColors.HYPERLINK_ATTRIBUTES</code>'s foreground color for links foreground.
+   * Most often this component is created from <code>EditorNotifications.Provider.createNotificationPanel</code> methods where
+   * <code>FileEditor</code> is available. So this constructor is preferred over the default one.
+   *
+   * @param fileEditor is editor instance. null is equivalent to default constructor.
+   */
+  public EditorNotificationPanel(@Nullable FileEditor fileEditor) {
+    this(fileEditor, null, null);
+  }
+
+  public EditorNotificationPanel(@Nullable FileEditor fileEditor,
+                                 @Nullable Color backgroundColor,
+                                 @Nullable ColorKey backgroundColorKey) {
+    this(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null,
+         backgroundColor,
+         backgroundColorKey);
+  }
+
+  public EditorNotificationPanel(@Nullable Editor editor,
+                                 @Nullable Color backgroundColor,
+                                 @Nullable ColorKey backgroundColorKey) {
     super(new BorderLayout());
+
+    mySchemeSupplier = editor != null ? () -> editor.getColorsScheme() : GLOBAL_SCHEME_SUPPLIER;
+    myBackgroundColor = backgroundColor;
+    myBackgroundColorKey = backgroundColorKey != null ? backgroundColorKey : EditorColors.NOTIFICATION_BACKGROUND;
+    putClientProperty(FileEditorManager.SEPARATOR_COLOR, JBUI.CurrentTheme.Editor.BORDER_COLOR);
 
     JPanel panel = new NonOpaquePanel(new BorderLayout());
     panel.add(BorderLayout.CENTER, myLabel);
     panel.add(BorderLayout.EAST, myLinksPanel);
-    panel.setBorder(JBUI.Borders.empty(5, 0, 5, 5));
     panel.setMinimumSize(new Dimension(0, 0));
 
+    Wrapper gearWrapper = new Wrapper(myGearLabel);
+    gearWrapper.setBorder(new AbstractBorder() {
+      @Override
+      public Insets getBorderInsets(Component c) {
+        return myGearLabel.getIcon() == null ? super.getBorderInsets(c) : new JBInsets(0, 5, 0, 0);
+      }
+    });
+
     add(BorderLayout.CENTER, panel);
-    add(BorderLayout.EAST, myGearLabel);
-    setBorder(JBUI.Borders.empty(0, 10));
+    add(BorderLayout.EAST, gearWrapper);
+    setBorder(borderWithoutStatus());
+    setOpaque(true);
+
+    myLabel.setForeground(mySchemeSupplier.get().getDefaultForeground());
   }
 
-  public void setProject(Project project) {
-    myProject = project;
+  public EditorNotificationPanel(@NotNull Status status) {
+    this((Editor)null, null, null, status);
   }
 
-  public void setProviderKey(@Nullable Key<?> key) {
-    myProviderKey = key;
+  public EditorNotificationPanel(@Nullable FileEditor fileEditor, @NotNull Status status) {
+    this(fileEditor, null, null, status);
+  }
+
+  public EditorNotificationPanel(@Nullable FileEditor fileEditor,
+                                 @Nullable Color backgroundColor,
+                                 @Nullable ColorKey backgroundColorKey,
+                                 @NotNull Status status) {
+    this(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null, backgroundColor, backgroundColorKey, status);
+  }
+
+  public EditorNotificationPanel(@Nullable Editor editor,
+                                 @Nullable Color backgroundColor,
+                                 @Nullable ColorKey backgroundColorKey,
+                                 @NotNull Status status) {
+    this(editor, ExperimentalUI.isNewUI() ? status.background : backgroundColor, backgroundColorKey);
+
+    if (!ExperimentalUI.isNewUI()) {
+      return;
+    }
+
+    myLabel.setIconTextGap(JBUI.scale(8));
+    myLabel.setIcon(new Icon() {
+      @Override
+      public void paintIcon(Component component, Graphics graphics, int x, int y) {
+        if (!StringUtil.isEmpty(myLabel.getText())) {
+          status.icon.paintIcon(component, graphics, x, y);
+        }
+      }
+
+      @Override
+      public int getIconWidth() {
+        return status.icon.getIconWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return status.icon.getIconHeight();
+      }
+    });
+    myLabel.setForeground(JBUI.CurrentTheme.Banner.FOREGROUND);
+    myLabel.setBorder(JBUI.Borders.emptyRight(20));
+
+    setBorder(borderWithStatus());
+
+    putClientProperty(FileEditorManager.SEPARATOR_BORDER, new SideBorder(status.border, SideBorder.TOP | SideBorder.BOTTOM));
+
+    Container parent = myGearLabel.getParent();
+    parent.remove(myGearLabel);
+    remove(parent);
+
+    myLastPanel = new NonOpaquePanel(new HorizontalLayout(16)) {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        if (myGearLabel.getIcon() == null && (myCloseButton == null || !myCloseButton.isVisible())) {
+          size.width = 0;
+        }
+        return size;
+      }
+    };
+    myLastPanel.setBorder(new AbstractBorder() {
+      @Override
+      public Insets getBorderInsets(Component c) {
+        return myGearLabel.getIcon() == null && (myCloseButton == null || !myCloseButton.isVisible())
+               ? super.getBorderInsets(c) : new JBInsets(0, 16, 0, 0);
+      }
+    });
+    myLastPanel.add(myGearLabel);
+    add(BorderLayout.EAST, myLastPanel);
+  }
+
+  private @NotNull static NamedBorder borderWithoutStatus() {
+    return withName(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.Notification.borderInsetsWithoutStatus()), BORDER_WITHOUT_STATUS);
+  }
+
+  private @NotNull static NamedBorder borderWithStatus() {
+    return withName(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.Notification.borderInsets()), BORDER_WITH_STATUS);
+  }
+
+  @Override
+  public void updateUI() {
+    String borderName = null;
+    if (getBorder() instanceof NamedBorder border) {
+      borderName = border.getName();
+    }
+    setUI(new BasicPanelUI() {
+      @Override protected void installDefaults(JPanel p) {}
+    });
+    Border updatedBorder = null;
+    if (borderName != null) {
+      updatedBorder = switch (borderName) {
+        case BORDER_WITHOUT_STATUS -> borderWithoutStatus();
+        case BORDER_WITH_STATUS -> borderWithStatus();
+        default -> null; // Someone set their own border, leave it alone.
+      };
+    }
+    if (updatedBorder != null) {
+      setBorder(updatedBorder);
+    }
+  }
+
+  @ApiStatus.Internal
+  public @Nullable ColorKey getBackgroundColorKey() {
+    return myBackgroundColor == null ? myBackgroundColorKey : null;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable Color getOverriddenBackgroundColor() {
+    return myBackgroundColor;
+  }
+
+  @Override
+  public Color getBackground() {
+    return ObjectUtils.notNull(getOverriddenBackgroundColor(),
+             ObjectUtils.notNull(mySchemeSupplier.get().getColor(getBackgroundColorKey()), getFallbackBackgroundColor()));
+  }
+
+  @ApiStatus.Internal
+  public @NotNull Color getFallbackBackgroundColor() {
+    return UIUtil.getToolTipBackground();
+  }
+
+  @ApiStatus.Internal
+  public void setClassConsumer(@NotNull Consumer<? super Class<?>> classConsumer) {
+    myClassConsumer = classConsumer;
   }
 
   public static Color getToolbarBackground() {
     return UIUtil.getPanelBackground();
   }
 
-  public void setText(@LinkLabel String text) {
+  public void setText(@NotNull @Label String text) {
     myLabel.setText(text);
   }
 
-  public EditorNotificationPanel text(@NotNull @NlsContexts.Label String text) {
+  public EditorNotificationPanel text(@NotNull @Label String text) {
     myLabel.setText(text);
     return this;
   }
 
-  @NotNull
-  public String getText() {
+  public @NotNull @Label String getText() {
     return myLabel.getText();
   }
 
@@ -111,33 +313,49 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return this;
   }
 
-  @Override
-  public Color getBackground() {
-    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    if (myBackgroundColor != null) return myBackgroundColor;
-    if (myBackgroundColorKey != null) {
-      Color color = globalScheme.getColor(myBackgroundColorKey);
-      if (color != null) return color;
-    }
-    Color color = globalScheme.getColor(EditorColors.NOTIFICATION_BACKGROUND);
-    return color != null ? color : UIUtil.getToolTipBackground();
+  public EditorNotificationPanel noIcon() {
+    myLabel.setIcon(null);
+    return this;
   }
 
-  @NotNull
-  public HyperlinkLabel createActionLabel(@LinkLabel String text, @NonNls final String actionId) {
+  public final @NotNull HyperlinkLabel createActionLabel(@NotNull @LinkLabel String text,
+                                                         @NotNull @NonNls String actionId) {
     return createActionLabel(text, actionId, true);
   }
 
-  @NotNull
-  public HyperlinkLabel createActionLabel(@LinkLabel String text,
-                                          @NonNls final String actionId,
-                                          boolean showInIntentionMenu) {
+  public final @NotNull HyperlinkLabel createActionLabel(@NotNull @LinkLabel String text,
+                                                         @NotNull @NonNls String actionId,
+                                                         boolean showInIntentionMenu) {
     return createActionLabel(text, () -> executeAction(actionId), showInIntentionMenu);
   }
 
-  @NotNull
-  public HyperlinkLabel createActionLabel(@LinkLabel String text, @NotNull Runnable action) {
+  public final @NotNull HyperlinkLabel createActionLabel(@NotNull @LinkLabel String text,
+                                                         @NotNull Runnable action) {
     return createActionLabel(text, action, true);
+  }
+
+  private static @NotNull Icon getCloseIcon() {
+    if (CLOSE_ICON == null) {
+      CLOSE_ICON = ExpUiIcons.General.Close;
+    }
+    return CLOSE_ICON;
+  }
+
+  public final @NotNull InplaceButton setCloseAction(@NotNull Runnable action) {
+    myCloseAction = action;
+    if (myCloseButton == null) {
+      myCloseButton = new InplaceButton(IdeBundle.message("editor.banner.close.tooltip"), getCloseIcon(), e -> {
+        myCloseAction.run();
+      });
+      myCloseButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      if (myLastPanel == null) {
+        myLinksPanel.add(myCloseButton);
+      }
+      else {
+        myLastPanel.add(myCloseButton);
+      }
+    }
+    return myCloseButton;
   }
 
   public interface ActionHandler {
@@ -154,85 +372,68 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     void handleQuickFixClick(@NotNull Editor editor, @NotNull PsiFile psiFile);
   }
 
-  @NotNull
-  public HyperlinkLabel createActionLabel(@LinkLabel String text,
-                                          @NotNull final Runnable action,
-                                          boolean showInIntentionMenu) {
-    return createActionLabelImpl(text, withLogNotifications(action), showInIntentionMenu);
+  public @NotNull HyperlinkLabel createActionLabel(@NotNull @LinkLabel String text,
+                                                   @NotNull Runnable action,
+                                                   boolean showInIntentionMenu) {
+    return new ActionHyperlinkLabel(text,
+                                    withLogNotifications(action),
+                                    showInIntentionMenu);
   }
 
-  @NotNull
-  public HyperlinkLabel createActionLabel(@LinkLabel String text,
-                                          final ActionHandler handler,
-                                          boolean showInIntentionMenu) {
-    return createActionLabelImpl(text, withNotifications(handler), showInIntentionMenu);
+  public @NotNull HyperlinkLabel createActionLabel(@NotNull @LinkLabel String text,
+                                                   @NotNull ActionHandler handler,
+                                                   boolean showInIntentionMenu) {
+    return new ActionHyperlinkLabel(text,
+                                    withNotifications(handler),
+                                    showInIntentionMenu);
   }
 
-  @NotNull
-  private HyperlinkLabel createActionLabelImpl(@LinkLabel String text,
-                                               final ActionHandler handler,
-                                               boolean showInIntentionMenu) {
-    ActionHyperlinkLabel label = new ActionHyperlinkLabel(this, text, getBackground(), showInIntentionMenu, handler);
-    myLinksPanel.add(label);
-    return label;
+  public void clear() {
+    myLabel.setText("");
+    myLinksPanel.removeAll();
   }
 
   protected void executeAction(@NonNls String actionId) {
-    final AnAction action = ActionManager.getInstance().getAction(actionId);
-    final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, getActionPlace(),
-                                                                 DataManager.getInstance().getDataContext(this));
-    action.beforeActionPerformedUpdate(event);
-    action.update(event);
-
-    if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
-      ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-      actionManager.fireBeforeActionPerformed(action, event.getDataContext(), event);
-      action.actionPerformed(event);
-      actionManager.fireAfterActionPerformed(action, event.getDataContext(), event);
+    AnAction action = ActionManager.getInstance().getAction(actionId);
+    DataContext dataContext = DataManager.getInstance().getDataContext(this);
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, getActionPlace(), dataContext);
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     }
   }
 
-  @NotNull
-  protected String getActionPlace() {
+  protected @NotNull String getActionPlace() {
     return ActionPlaces.UNKNOWN;
   }
 
-  @Nullable
   @Override
-  public IntentionActionWithOptions getIntentionAction() {
+  public @Nullable IntentionActionWithOptions getIntentionAction() {
     MyIntentionAction action = new MyIntentionAction();
     return action.myOptions.isEmpty() ? null : action;
   }
 
   @Override
   public double getWeight() {
-    return 0;
+    return (this.getClass().hashCode() % Integer.MAX_VALUE) / (double) Integer.MAX_VALUE;
   }
 
-  @Nullable
-  protected @IntentionName String getIntentionActionText() {
+  protected @Nullable @IntentionName String getIntentionActionText() {
     return null;
   }
 
-  @NotNull
-  protected PriorityAction.Priority getIntentionActionPriority() {
+  protected @NotNull PriorityAction.Priority getIntentionActionPriority() {
     return PriorityAction.Priority.NORMAL;
   }
 
-  @NotNull
-  @Nls
-  protected String getIntentionActionFamilyName() {
+  protected @NotNull @Nls String getIntentionActionFamilyName() {
     return IdeBundle.message("intention.family.editor.notification");
   }
 
   private void logNotificationActionInvocation(@NotNull Object handlerClass) {
-    if (myProject != null) {
-      EditorNotifications.getInstance(myProject).logNotificationActionInvocation(myProviderKey, handlerClass.getClass());
-    }
+    myClassConsumer.accept(handlerClass.getClass());
   }
 
-  @NotNull
-  private EditorNotificationPanel.ActionHandler withLogNotifications(@NotNull Runnable action) {
+  private @NotNull EditorNotificationPanel.ActionHandler withLogNotifications(@NotNull Runnable action) {
     return new ActionHandler() {
       @Override
       public void handlePanelActionClick(@NotNull EditorNotificationPanel panel,
@@ -249,8 +450,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     };
   }
 
-  @NotNull
-  private EditorNotificationPanel.ActionHandler withNotifications(@NotNull EditorNotificationPanel.ActionHandler handler) {
+  private @NotNull EditorNotificationPanel.ActionHandler withNotifications(@NotNull EditorNotificationPanel.ActionHandler handler) {
     return new ActionHandler() {
       @Override
       public void handlePanelActionClick(@NotNull EditorNotificationPanel panel,
@@ -267,24 +467,24 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     };
   }
 
-  private static final class ActionHyperlinkLabel extends HyperlinkLabel {
+  private final class ActionHyperlinkLabel extends HyperlinkLabel {
+    private JLabel mySizeLabel;
+    private final @NotNull ActionHandler myHandler;
     private final boolean myShowInIntentionMenu;
-    private final ActionHandler myHandler;
 
-    private ActionHyperlinkLabel(@NotNull EditorNotificationPanel notificationPanel,
-                                 @LinkLabel String text,
-                                 Color background,
-                                 boolean showInIntentionMenu,
-                                 @NotNull EditorNotificationPanel.ActionHandler handler) {
-      super(text, background);
-      myShowInIntentionMenu = showInIntentionMenu;
+    private ActionHyperlinkLabel(@NotNull @LinkLabel String text,
+                                 @NotNull EditorNotificationPanel.ActionHandler handler,
+                                 boolean showInIntentionMenu) {
+      super(text, EditorNotificationPanel.this.getBackground());
       myHandler = handler;
+      myShowInIntentionMenu = showInIntentionMenu;
+
+      myLinksPanel.add(this);
 
       addHyperlinkListener(new HyperlinkAdapter() {
         @Override
-        protected void hyperlinkActivated(HyperlinkEvent e) {
-          if (e == null) return;
-          myHandler.handlePanelActionClick(notificationPanel, e);
+        protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
+          myHandler.handlePanelActionClick(EditorNotificationPanel.this, e);
         }
       });
     }
@@ -292,6 +492,16 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     void handleIntentionActionClick(Editor editor, PsiFile file) {
       if (editor == null || file == null) return;
       myHandler.handleQuickFixClick(editor, file);
+    }
+
+    @Override
+    protected int getStringWidth(@Nls String text, FontMetrics fm) {
+      if (mySizeLabel == null) {
+        mySizeLabel = new JLabel();
+      }
+      mySizeLabel.setText(text);
+      mySizeLabel.setFont(fm.getFont());
+      return mySizeLabel.getPreferredSize().width;
     }
   }
 
@@ -322,15 +532,13 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       return myOptions.get(0).startInWriteAction();
     }
 
-    @NotNull
     @Override
-    public List<IntentionAction> getOptions() {
+    public @NotNull List<IntentionAction> getOptions() {
       return myOptions.isEmpty() ? Collections.emptyList() : myOptions.subList(1, myOptions.size());
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       String textOverride = getIntentionActionText();
       if (textOverride != null) {
         return textOverride;
@@ -344,16 +552,13 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
                                       : StringUtil.shortenTextWithEllipsis(text, 50, 0);
     }
 
-    @NotNull
     @Override
-    public Priority getPriority() {
+    public @NotNull Priority getPriority() {
       return getIntentionActionPriority();
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return getIntentionActionFamilyName();
     }
 
@@ -375,17 +580,13 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       myLabel = label;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getText() {
+    public @Nls @NotNull String getText() {
       return myLabel.getText();
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return IdeBundle.message("intention.family.editor.notification.option");
     }
 
@@ -416,17 +617,13 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       myLabel = label;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getText() {
+    public @Nls @NotNull String getText() {
       return EditorBundle.message("editor.notification.settings.option.name");
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return IdeBundle.message("intention.family.editor.notification.settings");
     }
 
@@ -450,6 +647,23 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     @Override
     public Icon getIcon(@IconFlags int flags) {
       return myLabel.getIcon();
+    }
+  }
+
+  public enum Status {
+    Info(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, AllIcons.General.BalloonInformation),
+    Success(JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND, JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR, AllIcons.Debugger.ThreadStates.Idle),
+    Warning(JBUI.CurrentTheme.Banner.WARNING_BACKGROUND, JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR, AllIcons.General.BalloonWarning),
+    Error(JBUI.CurrentTheme.Banner.ERROR_BACKGROUND, JBUI.CurrentTheme.Banner.ERROR_BORDER_COLOR, AllIcons.General.BalloonError);
+
+    final Color background;
+    final Color border;
+    final Icon icon;
+
+    Status(@NotNull Color background, @NotNull Color border, @NotNull Icon icon) {
+      this.background = background;
+      this.border = border;
+      this.icon = icon;
     }
   }
 }

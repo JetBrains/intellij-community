@@ -8,10 +8,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 public class JavaFoldingPolicyTest extends AbstractFoldingPolicyTest {
   public void testAdditionalChildDocComments() {
     myFixture.configureByText("Test.java",
-                              "/** outer **/\n" +
-                              "class Test {\n" +
-                              "/** <caret>inner **/\n" +
-                              "}");
+                              """
+                                /** outer **/
+                                class Test {
+                                /** <caret>inner **/
+                                }""");
     PsiElement element = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()),
                                                      PsiDocComment.class, false);
     assertNotNull(element);

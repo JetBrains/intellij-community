@@ -17,16 +17,18 @@ object GrazieToastNotifications {
 
   private val shownNotifications = MultiMap.createConcurrent<Group, WeakReference<Notification>>()
 
-  private val MISSED_LANGUAGES_GROUP = NotificationGroup("Proofreading missing languages information",
-                                                         NotificationDisplayType.STICKY_BALLOON, true, null, null,
-                                                         msg("grazie.notification.missing-languages.group"))
+  internal val MISSING_LANGUAGES_GROUP
+    get() = obtainGroup("Proofreading missing languages information")
+
+  internal val GENERAL_GROUP
+    get() = obtainGroup("Grazie notifications")
 
   fun showMissedLanguages(project: Project) {
     val langs = GrazieConfig.get().missedLanguages
-    MISSED_LANGUAGES_GROUP
+    MISSING_LANGUAGES_GROUP
       .createNotification(msg("grazie.notification.missing-languages.title"),
                           msg("grazie.notification.missing-languages.body", langs.joinToString()),
-                          NotificationType.WARNING, null)
+                          NotificationType.WARNING)
       .addAction(object : NotificationAction(msg("grazie.notification.missing-languages.action.download")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           GrazieRemote.downloadMissing(project)
@@ -41,6 +43,8 @@ object GrazieToastNotifications {
           notification.expire()
         }
       })
+      .setSuggestionType(true)
+      .setDisplayId("grazie.missing.language")
       .expireAll(Group.LANGUAGES)
       .notify(project)
   }
@@ -51,5 +55,9 @@ object GrazieToastNotifications {
     }
     shownNotifications.putValue(group, WeakReference(this))
     return this
+  }
+
+  private fun obtainGroup(id: String): NotificationGroup {
+    return NotificationGroupManager.getInstance().getNotificationGroup(id)
   }
 }

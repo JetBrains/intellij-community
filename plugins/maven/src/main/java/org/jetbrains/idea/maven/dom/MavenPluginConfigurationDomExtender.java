@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
@@ -16,7 +16,6 @@ import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry;
@@ -31,10 +30,10 @@ import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 import java.lang.annotation.Annotation;
 import java.util.*;
 
-public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomConfiguration> {
+public final class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomConfiguration> {
   public static final Key<ParameterData> PLUGIN_PARAMETER_KEY = Key.create("MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY");
 
-  private static final Set<String> COLLECTIONS_TYPE_NAMES = ContainerUtil.immutableSet("java.util.Collection", CommonClassNames.JAVA_UTIL_SET,
+  private static final Set<String> COLLECTIONS_TYPE_NAMES = Set.of("java.util.Collection", CommonClassNames.JAVA_UTIL_SET,
                                                                           CommonClassNames.JAVA_UTIL_LIST,
                                                                           "java.util.ArrayList", "java.util.HashSet",
                                                                           CommonClassNames.JAVA_UTIL_LINKED_LIST);
@@ -88,7 +87,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
       }
     }
 
-    Map<String, ParameterData> namesWithParameters = new THashMap<>();
+    Map<String, ParameterData> namesWithParameters = new HashMap<>();
 
     for (MavenDomMojo eachMojo : pluginModel.getMojos().getMojos()) {
       String goal = eachMojo.getGoal().getStringValue();
@@ -223,8 +222,8 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
 
   public static final class ParameterData {
     public final MavenDomParameter parameter;
-    public @Nullable String defaultValue;
-    public @Nullable String expression;
+    public @Nullable @NlsSafe String defaultValue;
+    public @Nullable @NlsSafe String expression;
 
     private ParameterData(MavenDomParameter parameter) {
       this.parameter = parameter;

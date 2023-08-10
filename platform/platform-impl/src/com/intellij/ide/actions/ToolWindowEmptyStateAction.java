@@ -1,11 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentUI;
 import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +22,7 @@ public abstract class ToolWindowEmptyStateAction extends ActivateToolWindowActio
   }
 
   @Override
-  protected boolean hasEmptyState() {
+  protected boolean hasEmptyState(@NotNull Project project) {
     return true;
   }
 
@@ -29,13 +32,12 @@ public abstract class ToolWindowEmptyStateAction extends ActivateToolWindowActio
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(getToolWindowId());
     if (toolWindow == null) return;
     toolWindow.setAvailable(true);
-    StatusText emptyText = toolWindow.getEmptyText();
-    if (emptyText != null) {
+    if (toolWindow instanceof ToolWindowImpl windowImpl) {
+      StatusText emptyText = windowImpl.getEmptyText();
       setupEmptyText(project, emptyText);
-      ((ToolWindowImpl) toolWindow).setEmptyStateBackground(JBColor.background());
+      setEmptyStateBackground(toolWindow);
     }
-    ContentManagerImpl manager = (ContentManagerImpl) toolWindow.getContentManager();
-    manager.rebuildContentUi();
+    rebuildContentUi(toolWindow);
     toolWindow.show();
     toolWindow.activate(null, true);
   }
@@ -44,4 +46,19 @@ public abstract class ToolWindowEmptyStateAction extends ActivateToolWindowActio
 
   protected abstract void ensureToolWindowCreated(@NotNull Project project);
 
+  public static void setEmptyStateBackground(@NotNull ToolWindow toolWindow) {
+    if (toolWindow instanceof ToolWindowImpl) {
+      ((ToolWindowImpl)toolWindow).setEmptyStateBackground(JBColor.background());
+    }
+  }
+
+  public static void rebuildContentUi(@NotNull ToolWindow toolWindow) {
+    ContentManager manager = toolWindow.getContentManager();
+    if (manager instanceof ContentManagerImpl) {
+      ContentUI ui = ((ContentManagerImpl)manager).getUI();
+      if (ui instanceof ToolWindowContentUi) {
+        ((ToolWindowContentUi)ui).rebuild();
+      }
+    }
+  }
 }

@@ -6,7 +6,7 @@ class C {
                     /*1*/
                     throw new /*2*/RuntimeException("a")/*3*/;/*4*/
                 } catch (RuntimeException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
             }
             default -> "";

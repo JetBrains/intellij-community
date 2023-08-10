@@ -36,6 +36,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyEvaluator;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,9 +48,6 @@ import static com.jetbrains.python.psi.impl.PyTypeDeclarationStatementNavigator.
 
 /**
  * Annotates declarations that unconditionally override others without these being used.
- *
- * @author dcheryasov
- * @author vlan
  */
 public class PyRedeclarationInspection extends PyInspection {
 
@@ -58,14 +56,13 @@ public class PyRedeclarationInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
-
     @Override
     public void visitPyFunction(final @NotNull PyFunction node) {
       if (!PyKnownDecoratorUtil.hasUnknownDecorator(node, myTypeEvalContext) &&
@@ -122,8 +119,7 @@ public class PyRedeclarationInspection extends PyInspection {
         final Ref<PsiElement> writeElementRef = Ref.create(null);
         final Ref<Boolean> underPossiblyFalseCondition = Ref.create(false);
         ControlFlowUtil.iteratePrev(startInstruction, instructions, instruction -> {
-          if (instruction instanceof ReadWriteInstruction && instruction.num() != startInstruction) {
-            final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
+          if (instruction instanceof ReadWriteInstruction rwInstruction && instruction.num() != startInstruction) {
             if (name.equals(rwInstruction.getName())) {
               final PsiElement originalElement = rwInstruction.getElement();
               if (originalElement != null) {
@@ -149,6 +145,10 @@ public class PyRedeclarationInspection extends PyInspection {
         });
         final PsiElement writeElement = writeElementRef.get();
         if (writeElement != null && readElementRef.get() == null) {
+          // Repeated patterns are reported as syntactic errors in an annotator
+          if (PsiTreeUtil.findCommonParent(writeElement, element) instanceof PyPattern) {
+            return;
+          }
           final List<LocalQuickFix> quickFixes = new ArrayList<>();
           if (suggestRename(element, writeElement)) {
             LocalQuickFix quickFix = PythonUiService.getInstance().createPyRenameElementQuickFix(element);
@@ -177,8 +177,7 @@ public class PyRedeclarationInspection extends PyInspection {
         return !PyEvaluator.evaluateAsBoolean(forPart.getSource(), false);
       }
 
-      if (instruction instanceof ConditionalInstruction) {
-        final ConditionalInstruction conditionalInstruction = (ConditionalInstruction)instruction;
+      if (instruction instanceof ConditionalInstruction conditionalInstruction) {
         final PsiElement condition = conditionalInstruction.getCondition();
         if (condition instanceof PyExpression) {
           return conditionalInstruction.getResult()

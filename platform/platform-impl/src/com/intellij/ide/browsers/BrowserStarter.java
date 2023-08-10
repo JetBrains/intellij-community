@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.google.common.net.HostAndPort;
@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +28,8 @@ public class BrowserStarter {
   private final StartBrowserSettings mySettings;
   private final RunConfiguration myRunConfiguration;
   private final BooleanSupplier myOutdated;
+  private int myMaximumAttempt = 100;
+  private boolean myOpenOnMaximumAttempt = false;
 
   public BrowserStarter(@NotNull RunConfiguration runConfiguration,
                         @NotNull StartBrowserSettings settings,
@@ -42,6 +43,16 @@ public class BrowserStarter {
                         @NotNull StartBrowserSettings settings,
                         @NotNull ProcessHandler serverProcessHandler) {
     this(runConfiguration, settings, () -> serverProcessHandler.isProcessTerminating() || serverProcessHandler.isProcessTerminated());
+  }
+
+  public BrowserStarter setMaximumAttempts(int value) {
+    myMaximumAttempt = value;
+    return this;
+  }
+
+  public BrowserStarter setOpenOnMaximumAttempt(boolean value) {
+    myOpenOnMaximumAttempt = value;
+    return this;
   }
 
   public void start() {
@@ -81,17 +92,36 @@ public class BrowserStarter {
     if (isOutdated()) {
       LOG.info("Opening " + hostAndPort + " aborted");
     }
-    else if (NetUtils.canConnectToRemoteSocket(hostAndPort.getHost(), hostAndPort.getPort())) {
+    else if (canConnect(hostAndPort.getHost(), hostAndPort.getPort())) {
       openPageNow();
     }
-    else if (attemptNumber < 100) {
+    else if (attemptNumber < myMaximumAttempt) {
       int delayMillis = getDelayMillis(attemptNumber);
       LOG.info("#" + attemptNumber + " check " + hostAndPort + " failed, scheduling next check in " + delayMillis + "ms");
       checkAndOpenPageLater(hostAndPort, attemptNumber + 1, delayMillis);
     }
+    else if (attemptNumber == myMaximumAttempt && myOpenOnMaximumAttempt){
+      LOG.info("#" + attemptNumber + " maximum attempt is reached, page opening is forced");
+      openPageNow();
+    }
     else {
       LOG.info("#" + attemptNumber + " check " + hostAndPort + " failed. Too many failed checks. Failed to open " + hostAndPort);
       showBrowserOpenTimeoutNotification();
+    }
+  }
+
+  private static boolean canConnect(String host, int port) {
+    if (NetUtils.canConnectToRemoteSocket(host, port)) {
+      return true;
+    }
+    else if ("localhost".equals(host)) {
+      // `new Socket("localhost", port)` cannot connect to IPv6-only socket
+      // without -Djava.net.preferIPv6Addresses=true
+      // => try IPv6 localhost explicitly
+      return NetUtils.canConnectToRemoteSocket("::1", port);
+    }
+    else {
+      return false;
     }
   }
 
@@ -112,34 +142,31 @@ public class BrowserStarter {
     JobScheduler.getScheduler().schedule(() -> openPageNow(), 1000, TimeUnit.MILLISECONDS);
   }
 
-  private void openPageNow() {
+  protected void openPageNow() {
     if (!isOutdated()) {
       JavaScriptDebuggerStarter.Util.startDebugOrLaunchBrowser(myRunConfiguration, mySettings);
     }
   }
 
-  private boolean isOutdated() {
+  protected boolean isOutdated() {
     return myOutdated.getAsBoolean();
   }
 
   private void showBrowserOpenTimeoutNotification() {
     NotificationGroup group =
       NotificationGroup.balloonGroup("URL does not respond notification", IdeBundle.message("browser.notification.timeout.group"));
-    NotificationType type = NotificationType.ERROR;
 
-    String title = IdeBundle.message("browser.notification.timeout.title");
     String url = Objects.requireNonNull(mySettings.getUrl());
     String openUrlDescription = "open_url";
     String content = IdeBundle.message("browser.notification.timeout.text", openUrlDescription, url);
 
-    Notification openBrowserNotification = group.createNotification(title, content, type, (notification, event) -> {
-      if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-      if (event.getDescription().equals(openUrlDescription)) {
-        BrowserUtil.open(url);
-        notification.expire();
-      }
-    });
-
-    openBrowserNotification.notify(myRunConfiguration.getProject());
+    group.createNotification(IdeBundle.message("browser.notification.timeout.title"), content, NotificationType.ERROR)
+      .setListener((notification, event) -> {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals(openUrlDescription)) {
+          BrowserUtil.open(url);
+          notification.expire();
+        }
+      })
+      .notify(myRunConfiguration.getProject());
   }
 }

@@ -18,9 +18,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty;
 
 import java.util.*;
 
-/**
- * @author Sergey Evdokimov
- */
 public class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
 
   @Nullable
@@ -35,9 +32,8 @@ public class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
     List<String> path = new ArrayList<>();
 
     while (resolveResult instanceof GroovyMapProperty) {
-      if (!(resolvedQualifier instanceof GrReferenceExpression)) return null;
+      if (!(resolvedQualifier instanceof GrReferenceExpression expr)) return null;
 
-      GrReferenceExpression expr = (GrReferenceExpression)resolvedQualifier;
       path.add(expr.getReferenceName());
 
       resolvedQualifier = expr.getQualifierExpression();

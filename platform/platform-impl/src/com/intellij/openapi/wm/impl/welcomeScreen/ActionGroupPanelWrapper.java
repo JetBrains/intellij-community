@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.CommonBundle;
@@ -17,6 +17,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -26,28 +27,26 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.getPreferredFocusedComponent;
+import static com.intellij.ide.wizard.AbstractWizard.isNewWizard;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getProjectsBackground;
 
-public class ActionGroupPanelWrapper {
+public final class ActionGroupPanelWrapper {
 
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
 
-  public static Pair<JPanel, JBList<AnAction>> createActionGroupPanel(final ActionGroup action,
-                                                                      final Runnable backAction,
+  public static Pair<JPanel, JBList<AnAction>> createActionGroupPanel(ActionGroup action,
+                                                                      Runnable backAction,
                                                                       @NotNull Disposable parentDisposable) {
     JPanel actionsListPanel = new JPanel(new BorderLayout());
 
     actionsListPanel.setBackground(getProjectsBackground());
-    final java.util.List<AnAction> groups = flattenActionGroups(action);
-    final DefaultListModel<AnAction> model = JBList.createDefaultListModel(groups);
-    final JBList<AnAction> list = new JBList<>(model);
+    java.util.List<AnAction> groups = flattenActionGroups(action);
+    DefaultListModel<AnAction> model = JBList.createDefaultListModel(groups);
+    JBList<AnAction> list = new JBList<>(model);
     for (AnAction group : groups) {
       if (group instanceof Disposable) {
         Disposer.register(parentDisposable, (Disposable)group);
@@ -62,15 +61,13 @@ public class ActionGroupPanelWrapper {
 
     list.setBackground(getProjectsBackground());
     list.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<AnAction>() {
-                           @Nullable
                            @Override
-                           public String getTextFor(AnAction value) {
+                           public @Nullable String getTextFor(AnAction value) {
                              return value.getTemplateText();
                            }
 
-                           @Nullable
                            @Override
-                           public String getCaptionAboveOf(AnAction value) {
+                           public @Nullable String getCaptionAboveOf(AnAction value) {
                              return getParentGroupName(value);
                            }
 
@@ -88,11 +85,9 @@ public class ActionGroupPanelWrapper {
                          }) {
                            @Override
                            protected JComponent createItemComponent() {
-                             myTextLabel = new ErrorLabel();
-                             myTextLabel.setOpaque(true);
-                             myTextLabel.setBorder(JBUI.Borders.empty(3, 7));
-
-                             return myTextLabel;
+                             JComponent component = super.createItemComponent();
+                             myTextLabel.setBorder(!isNewWizard() ? JBUI.Borders.empty(3) : JBUI.Borders.empty(5, 0));
+                             return component;
                            }
 
                            @Override
@@ -120,14 +115,37 @@ public class ActionGroupPanelWrapper {
     boolean singleProjectGenerator = list.getModel().getSize() == 1;
 
     final Ref<Component> selected = Ref.create();
-    final JPanel main = new NonOpaquePanel(new BorderLayout());
+    final HashMap<Object, JPanel> panelsMap = new HashMap<>();
+    final Set<JButton> actionButtonsCache = new HashSet<>();
+    final JPanel main = new NonOpaquePanel(new BorderLayout()) {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+
+        // Update all UI components that are detached from windows
+        if (SwingUtilities.getWindowAncestor(this) == null) {
+          for (Component component : getComponents()) {
+            IJSwingUtilities.updateComponentTreeUI(component);
+          }
+        }
+        for (JPanel panel : panelsMap.values()) {
+          if (panel.getParent() == null) {
+            IJSwingUtilities.updateComponentTreeUI(panel);
+          }
+        }
+        for (JButton button : actionButtonsCache) {
+          if (button.getParent() == null) {
+            IJSwingUtilities.updateComponentTreeUI(button);
+          }
+        }
+      }
+    };
     main.add(actionsListPanel, BorderLayout.WEST);
 
     JPanel bottomPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
     bottomPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new JBColor(Gray._217, Gray._81)));
     main.add(bottomPanel, BorderLayout.SOUTH);
 
-    final HashMap<Object, JPanel> panelsMap = new HashMap<>();
     ListSelectionListener selectionListener = e -> {
       if (e.getValueIsAdjusting()) {
         // Update when a change has been finalized.
@@ -146,7 +164,9 @@ public class ActionGroupPanelWrapper {
         selected.set(panel);
         main.add(selected.get());
 
-        updateBottomPanel(panel, (AbstractActionWithPanel)value, bottomPanel, backAction);
+        JButton actionButton = ((AbstractActionWithPanel)value).getActionButton();
+        actionButtonsCache.add(actionButton);
+        updateBottomPanel(panel, actionButton, bottomPanel, backAction);
 
         main.revalidate();
         main.repaint();
@@ -158,6 +178,11 @@ public class ActionGroupPanelWrapper {
         @Override
         public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(!StackingPopupDispatcher.getInstance().isPopupFocused());
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
         }
 
         @Override
@@ -176,17 +201,17 @@ public class ActionGroupPanelWrapper {
   }
 
   private static void updateBottomPanel(@NotNull JPanel currentPanel,
-                                        @NotNull AbstractActionWithPanel actionWithPanel,
+                                        @NotNull JButton actionButton,
                                         @NotNull JPanel bottomPanel,
                                         @Nullable Runnable backAction) {
     bottomPanel.removeAll();
 
     if (SystemInfo.isMac) {
       addCancelButton(bottomPanel, backAction);
-      addActionButton(bottomPanel, actionWithPanel, currentPanel);
+      addActionButton(bottomPanel, actionButton, currentPanel);
     }
     else {
-      addActionButton(bottomPanel, actionWithPanel, currentPanel);
+      addActionButton(bottomPanel, actionButton, currentPanel);
       addCancelButton(bottomPanel, backAction);
     }
   }
@@ -199,15 +224,13 @@ public class ActionGroupPanelWrapper {
   }
 
   private static void addActionButton(@NotNull JPanel bottomPanel,
-                                      @NotNull AbstractActionWithPanel actionWithPanel,
+                                      @NotNull JButton actionButton,
                                       @NotNull JPanel currentPanel) {
-    JButton actionButton = actionWithPanel.getActionButton();
     bottomPanel.add(actionButton);
     currentPanel.getRootPane().setDefaultButton(actionButton);
   }
 
-  @Nullable
-  private static JComponent createCancelButton(@Nullable Runnable cancelAction) {
+  private static @Nullable JComponent createCancelButton(@Nullable Runnable cancelAction) {
     if (cancelAction == null) return null;
 
     JButton cancelButton = new JButton(CommonBundle.getCancelButtonText());
@@ -217,7 +240,7 @@ public class ActionGroupPanelWrapper {
   }
 
   public static void installQuickSearch(JBList<? extends AnAction> list) {
-    new ListSpeedSearch<>(list, o -> {
+    ListSpeedSearch.installOn(list, o -> {
       if (o instanceof AbstractActionWithPanel) { //to avoid dependency mess with ProjectSettingsStepBase
         return o.getTemplatePresentation().getText();
       }
@@ -225,7 +248,7 @@ public class ActionGroupPanelWrapper {
     });
   }
 
-  private static List<AnAction> flattenActionGroups(@NotNull final ActionGroup action) {
+  private static List<AnAction> flattenActionGroups(final @NotNull ActionGroup action) {
     final ArrayList<AnAction> groups = new ArrayList<>();
     String groupName;
     for (AnAction anAction : action.getChildren(null)) {
@@ -245,11 +268,11 @@ public class ActionGroupPanelWrapper {
     return groups;
   }
 
-  private static @NlsContexts.Separator String getParentGroupName(@NotNull final AnAction value) {
+  private static @NlsContexts.Separator String getParentGroupName(final @NotNull AnAction value) {
     return (String)value.getTemplatePresentation().getClientProperty(ACTION_GROUP_KEY);
   }
 
-  private static void setParentGroupName(@NotNull final String groupName, @NotNull final AnAction childAction) {
+  private static void setParentGroupName(final @NotNull String groupName, final @NotNull AnAction childAction) {
     childAction.getTemplatePresentation().putClientProperty(ACTION_GROUP_KEY, groupName);
   }
 
@@ -273,7 +296,7 @@ public class ActionGroupPanelWrapper {
         for (ListSelectionListener listener : listeners) {
           listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), false));
         }
-        JComponent toFocus = getPreferredFocusedComponent(panel);
+        JComponent toFocus = FlatWelcomeFrame.getPreferredFocusedComponent(panel);
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true));
       };
       panel.first.setName(action.getClass().getName());
@@ -288,6 +311,10 @@ public class ActionGroupPanelWrapper {
         @Override
         public void update(@NotNull AnActionEvent e) {
           action.update(e);
+        }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return action.getActionUpdateThread();
         }
       };
     }

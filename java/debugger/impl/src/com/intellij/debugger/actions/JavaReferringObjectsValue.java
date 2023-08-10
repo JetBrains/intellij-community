@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.memory.agent.MemoryAgent;
 import com.intellij.debugger.memory.agent.MemoryAgentPathsToClosestGCRootsProvider;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
@@ -62,7 +63,8 @@ public class JavaReferringObjectsValue extends JavaValue implements ShowReferrin
 
   @Override
   public void customizeTree(@NotNull XDebuggerTree referrersTree) {
-    if (myReferringObjectsProvider instanceof MemoryAgentPathsToClosestGCRootsProvider) {
+    if (myReferringObjectsProvider instanceof MemoryAgentPathsToClosestGCRootsProvider &&
+        MemoryAgent.isAgentLoaded(getEvaluationContext().getDebugProcess())) {
       referrersTree.expandNodesOnLoad(treeNode -> isInTopSubTree(treeNode));
     }
   }

@@ -18,11 +18,28 @@ fragment pullRequestInfoShort on PullRequest {
     }
   }
   labels(first: 100) {
-      nodes {
-          ...labelInfo
+    nodes {
+      ...labelInfo
+    }
+  }
+  reviewRequests(first: 100) {
+    nodes {
+      ... on ReviewRequest {
+        requestedReviewer {
+          ...pullRequestReviewerInfo
+        }
       }
+    }
+  }
+  reviewThreads(last: 100) {
+    nodes {
+      isResolved
+      isOutdated
+    }
   }
 
-    viewerCanUpdate
-    viewerDidAuthor
+  mergeable
+
+  viewerCanUpdate
+  viewerDidAuthor
 }

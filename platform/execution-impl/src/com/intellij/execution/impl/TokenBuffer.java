@@ -11,8 +11,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * Stores list of tokens (a token is {@link TokenInfo} which is a text plus {@link ConsoleViewContentType} plus {@link HyperlinkInfo})
+ * Stores list of tokens (a token is {@link TokenInfo} which is a text plus {@link ConsoleViewContentType} plus {@link HyperlinkInfo}).
  * Tries to maintain the total token text length not more than {@link #maxCapacity}, trims tokens from the beginning on overflow.
+ * Not thread-safe.
+ *
  * Add token via {@link #print(String, ConsoleViewContentType, HyperlinkInfo)}
  * Get all tokens via {@link #drain()}
  */
@@ -102,19 +104,21 @@ final class TokenBuffer {
 
   private void trim() {
     // toss tokens from the beginning until size became < maxCapacity
-    while (size - startIndex > maxCapacity) {
+    int excess = size - maxCapacity;
+    while (excess > startIndex) {
       TokenInfo info = tokens.getFirst();
       int length = info.length();
-      if (length > size - maxCapacity) {
+      if (length > excess) {
         // slice a part of this info
-        startIndex = size - maxCapacity;
+        startIndex = excess;
         break;
       }
       startIndex = 0;
       tokens.removeFirst();
       size -= info.length();
+      excess = size - maxCapacity;
     }
-
+    assert startIndex >= 0 && size >= 0 && maxCapacity >= 0: "startIndex="+startIndex+"; size="+size+"; maxCapacity="+maxCapacity;
     //assert tokens.toList().stream().mapToInt(TokenInfo::length).sum() == size;
   }
 

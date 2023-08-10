@@ -39,7 +39,7 @@ public class JavaParameterListElementType extends JavaStubElementType<PsiParamet
 
   @NotNull
   @Override
-  public PsiParameterListStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
+  public PsiParameterListStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, final @NotNull StubElement<?> parentStub) {
     return new PsiParameterListStubImpl(parentStub);
   }
 

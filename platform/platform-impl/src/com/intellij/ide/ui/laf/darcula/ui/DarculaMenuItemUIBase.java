@@ -130,7 +130,7 @@ public class DarculaMenuItemUIBase extends BasicMenuItemUI {
 
   protected void paintAccText(Graphics g, MenuItemLayoutHelper lh,
                               MenuItemLayoutHelper.LayoutResult lr) {
-    if (!lh.getAccText().equals("")) {
+    if (!lh.getAccText().isEmpty()) {
       ButtonModel model = lh.getMenuItem().getModel();
       g.setFont(lh.getAccFontMetrics().getFont());
       if (!model.isEnabled()) {
@@ -171,7 +171,7 @@ public class DarculaMenuItemUIBase extends BasicMenuItemUI {
 
   protected void paintText(Graphics g, MenuItemLayoutHelper lh,
                            MenuItemLayoutHelper.LayoutResult lr) {
-    if (!lh.getText().equals("")) {
+    if (!lh.getText().isEmpty()) {
       if (lh.getHtmlView() != null) {
         // Text is HTML
         lh.getHtmlView().paint(g, lr.getTextRect());

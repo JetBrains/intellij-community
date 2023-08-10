@@ -6,7 +6,7 @@ import com.intellij.lang.Language
 import com.jetbrains.python.PyBundle
 
 class PythonMLRankingProvider :
-  CatBoostJarCompletionModelProvider(PyBundle.message("settings.completion.ml.python.display.name"), "python_features", "python_model") {
+  CatBoostJarCompletionModelProvider(PyBundle.message("settings.completion.ml.python.display.name"), "python_features_full_line_exp", "python_model_full_line_exp") {
 
   override fun isLanguageSupported(language: Language): Boolean = language.id.compareTo("python", ignoreCase = true) == 0
 

@@ -2,8 +2,12 @@
 package org.jetbrains.plugins.terminal.arrangement;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,7 +34,7 @@ import java.util.stream.Stream;
 @State(name = "TerminalCommandHistoryManager", storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE))
 public final class TerminalCommandHistoryManager implements PersistentStateComponent<TerminalCommandHistoryManager.State> {
 
-  private static final Logger LOG = Logger.getInstance(TerminalArrangementManager.class);
+  private static final Logger LOG = Logger.getInstance(TerminalCommandHistoryManager.class);
   private static final AtomicBoolean PRUNE_SCHEDULED = new AtomicBoolean(false);
 
   private final Map<String, CommandHistoryFileInfo> myMap = new ConcurrentHashMap<>();
@@ -83,7 +87,7 @@ public final class TerminalCommandHistoryManager implements PersistentStateCompo
       return dir;
     }
     if (Files.exists(dir)) {
-      LOG.warn("Not a directory " + dir.toString());
+      LOG.warn("Not a directory " + dir);
       return null;
     }
     deleteOldHistoryDir();
@@ -92,7 +96,7 @@ public final class TerminalCommandHistoryManager implements PersistentStateCompo
       return dir;
     }
     catch (IOException e) {
-      LOG.warn("Cannot create " + dir.toString(), e);
+      LOG.warn("Cannot create " + dir, e);
       return null;
     }
   }
@@ -109,10 +113,16 @@ public final class TerminalCommandHistoryManager implements PersistentStateCompo
         LOG.warn("Cannot delete old terminal/history/", e);
       }
     }
+
     Path parentDir = dir.getParent();
+    if (!Files.isDirectory(parentDir)) {
+      LOG.info("Old terminal/ directory does not exist or not a directory: " + parentDir);
+      return;
+    }
+
     boolean empty = false;
     try (Stream<Path> s = Files.list(parentDir)) {
-      empty = s.count() == 0;
+      empty = s.findAny().isEmpty();
     }
     catch (IOException e) {
       LOG.warn("Cannot list files in " + parentDir, e);
@@ -178,7 +188,7 @@ public final class TerminalCommandHistoryManager implements PersistentStateCompo
     if (PRUNE_SCHEDULED.compareAndSet(false, true)) {
       JobScheduler.getScheduler().schedule(() -> pruneOutdated(), 4, TimeUnit.MINUTES);
     }
-    return ServiceManager.getService(TerminalCommandHistoryManager.class);
+    return ApplicationManager.getApplication().getService(TerminalCommandHistoryManager.class);
   }
 
   private static void pruneOutdated() {
@@ -210,7 +220,7 @@ public final class TerminalCommandHistoryManager implements PersistentStateCompo
     deleteHistoryFiles(toRemove, "outdated sessions");
   }
 
-  public static @NotNull String getFilename(@NotNull Path path) {
+  private static @NotNull String getFilename(@NotNull Path path) {
     return PathUtil.getFileName(path.toString());
   }
 

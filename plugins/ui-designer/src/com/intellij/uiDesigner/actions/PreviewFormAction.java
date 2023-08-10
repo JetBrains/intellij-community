@@ -19,6 +19,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
@@ -65,11 +66,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
-public final class PreviewFormAction extends AnAction{
+public final class PreviewFormAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(PreviewFormAction.class);
 
   /**
@@ -107,9 +104,9 @@ public final class PreviewFormAction extends AnAction{
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
+    GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
 
-    if(editor == null){
+    if (editor == null) {
       e.getPresentation().setVisible(false);
       return;
     }
@@ -119,6 +116,11 @@ public final class PreviewFormAction extends AnAction{
       FileDocumentManager.getInstance().getDocument(file) != null &&
       FileTypeRegistry.getInstance().isFileOfType(file, GuiFormFileType.INSTANCE)
     );
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT ;
   }
 
   private static void showPreviewFrame(@NotNull final Module module, @NotNull final VirtualFile formFile,

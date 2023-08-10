@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -16,9 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public final class CoreFileTypeRegistry extends FileTypeRegistry {
   private final Map<String, FileType> myExtensionsMap = CollectionFactory.createFilePathMap();
   private final List<FileType> myAllFileTypes = new ArrayList<>();
@@ -37,9 +35,8 @@ public final class CoreFileTypeRegistry extends FileTypeRegistry {
     return myAllFileTypes.toArray(FileType.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public FileType getFileTypeByFile(@NotNull VirtualFile file) {
+  public @NotNull FileType getFileTypeByFile(@NotNull VirtualFile file) {
     if (file instanceof LightVirtualFile) {
       FileType fileType = ((LightVirtualFile)file).getAssignedFileType();
       if (fileType != null) {
@@ -49,15 +46,13 @@ public final class CoreFileTypeRegistry extends FileTypeRegistry {
     return getFileTypeByFileName(file.getNameSequence());
   }
 
-  @NotNull
   @Override
-  public FileType getFileTypeByFileName(@NotNull @NonNls String fileName) {
+  public @NotNull FileType getFileTypeByFileName(@NotNull @NonNls String fileName) {
     return getFileTypeByExtension(FileUtilRt.getExtension(fileName));
   }
 
-  @NotNull
   @Override
-  public FileType getFileTypeByExtension(@NonNls @NotNull String extension) {
+  public @NotNull FileType getFileTypeByExtension(@NonNls @NotNull String extension) {
     final FileType result = myExtensionsMap.get(extension);
     return result == null ? UnknownFileType.INSTANCE : result;
   }
@@ -69,9 +64,8 @@ public final class CoreFileTypeRegistry extends FileTypeRegistry {
     }
   }
 
-  @Nullable
   @Override
-  public FileType findFileTypeByName(@NotNull String fileTypeName) {
+  public @Nullable FileType findFileTypeByName(@NotNull String fileTypeName) {
     for (FileType type : myAllFileTypes) {
       if (type.getName().equals(fileTypeName)) {
         return type;

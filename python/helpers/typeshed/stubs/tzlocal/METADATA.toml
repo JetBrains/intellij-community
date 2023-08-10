@@ -1,0 +1,5 @@
+version = "4.2"
+requires = ["types-pytz"]
+
+[tool.stubtest]
+ignore_missing_stub = false

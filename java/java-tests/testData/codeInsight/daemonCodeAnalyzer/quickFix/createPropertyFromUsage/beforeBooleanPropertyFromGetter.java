@@ -1,4 +1,4 @@
-// "Create property" "true"
+// "Create property" "true-preview"
 class JC {}
 
 class Main {

@@ -1,13 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.widget;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.notification.EventLog;
-import com.intellij.notification.LogModel;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
+import com.intellij.notification.impl.NotificationsToolWindowFactory;
 import com.intellij.notification.impl.ui.NotificationsUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -15,6 +14,8 @@ import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.LazyInitializer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,16 +24,21 @@ import sun.swing.SwingUtilities2;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.List;
 
-public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
+public class IdeNotificationArea implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
   public static final String WIDGET_ID = "Notifications";
-  @Nullable
-  private StatusBar myStatusBar;
+  private static final BadgeIconSupplier NOTIFICATION_ICON = new BadgeIconSupplier(AllIcons.Toolwindows.Notifications);
+
+  private final @NotNull LazyInitializer.LazyValue<JLabel> myComponent;
+  private @Nullable StatusBar myStatusBar;
 
   public IdeNotificationArea() {
-    setBorder(WidgetBorder.ICON);
+    myComponent = LazyInitializer.create(() -> {
+      var result = new JLabel();
+      result.setBorder(JBUI.CurrentTheme.StatusBar.Widget.iconBorder());
+      return result;
+    });
   }
 
   @Override
@@ -43,7 +49,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   @Override
   public void dispose() {
     myStatusBar = null;
-    UIUtil.dispose(this);
+    UIUtil.dispose(myComponent.get());
   }
 
   @Override
@@ -55,20 +61,20 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
         @Override
         public boolean onClick(@NotNull MouseEvent e, int clickCount) {
           if (!project.isDisposed()) {
-            EventLog.toggleLog(project, null);
+            ActionCenter.toggleLog(project);
           }
           return true;
         }
-      }.installOn(this, true);
-      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED, () ->
-        ApplicationManager.getApplication().invokeLater(() -> updateStatus(project)));
+      }.installOn(myComponent.get(), true);
+
+      Application app = ApplicationManager.getApplication();
+      app.getMessageBus().connect(this).subscribe(ActionCenter.MODEL_CHANGED, () -> app.invokeLater(() -> updateStatus(project)));
       updateStatus(project);
     }
   }
 
   @Override
-  @NotNull
-  public String ID() {
+  public @NotNull String ID() {
     return WIDGET_ID;
   }
 
@@ -76,25 +82,30 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     if (project == null || project.isDisposed()) {
       return;
     }
-    ArrayList<Notification> notifications = EventLog.getLogModel(project).getNotifications();
+    List<Notification> notifications = NotificationsToolWindowFactory.Companion.getStateNotifications(project);
     updateIconOnStatusBar(notifications);
 
     int count = notifications.size();
-    setToolTipText(count > 0 ? UIBundle.message("status.bar.notifications.widget.tooltip", count) 
+    myComponent.get().setToolTipText(count > 0 ? UIBundle.message("status.bar.notifications.widget.tooltip", count)
                              : UIBundle.message("status.bar.notifications.widget.no.notification.tooltip"));
   }
 
   private void updateIconOnStatusBar(List<? extends Notification> notifications) {
-    setIcon(createIconWithNotificationCount(notifications));
+    myComponent.get().setIcon(getActionCenterNotificationIcon(notifications));
   }
 
-  @NotNull
-  private LayeredIcon createIconWithNotificationCount(List<? extends Notification> notifications) {
-    return createIconWithNotificationCount(this, getMaximumType(notifications), notifications.size(), false);
+  public static @NotNull Icon getActionCenterNotificationIcon(List<? extends Notification> notifications) {
+    for (Notification notification : notifications) {
+      if (notification.isSuggestionType() && notification.isImportantSuggestion() || notification.getType() == NotificationType.ERROR) {
+        if (ExperimentalUI.isNewUI()) return NOTIFICATION_ICON.getErrorIcon();
+        return AllIcons.Toolwindows.NotificationsNewImportant;
+      }
+    }
+    if (ExperimentalUI.isNewUI()) return NOTIFICATION_ICON.getInfoIcon(!notifications.isEmpty());
+    return notifications.isEmpty() ? AllIcons.Toolwindows.Notifications : AllIcons.Toolwindows.NotificationsNew;
   }
 
-  @NotNull
-  public static LayeredIcon createIconWithNotificationCount(JComponent component, NotificationType type, int size, boolean forToolWindow) {
+  public static @NotNull LayeredIcon createIconWithNotificationCount(JComponent component, NotificationType type, int size, boolean forToolWindow) {
     LayeredIcon icon = new LayeredIcon(2);
     Icon baseIcon = getPendingNotificationsIcon(type, forToolWindow);
     icon.setIcon(baseIcon, 0);
@@ -110,42 +121,18 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
   @Override
   public JComponent getComponent() {
-    return this;
+    return myComponent.get();
   }
 
   private static Icon getPendingNotificationsIcon(NotificationType maximumType, boolean forToolWindow) {
     if (maximumType != null) {
-      switch (maximumType) {
-        case WARNING:
-          return forToolWindow ? AllIcons.Toolwindows.WarningEvents : AllIcons.Ide.Notification.WarningEvents;
-        case ERROR:
-          return forToolWindow ? AllIcons.Toolwindows.ErrorEvents : AllIcons.Ide.Notification.ErrorEvents;
-        case INFORMATION:
-        case IDE_UPDATE:
-          return forToolWindow ? AllIcons.Toolwindows.InfoEvents : AllIcons.Ide.Notification.InfoEvents;
-      }
+      return switch (maximumType) {
+        case WARNING -> forToolWindow ? AllIcons.Toolwindows.WarningEvents : AllIcons.Ide.Notification.WarningEvents;
+        case ERROR -> forToolWindow ? AllIcons.Toolwindows.ErrorEvents : AllIcons.Ide.Notification.ErrorEvents;
+        case INFORMATION, IDE_UPDATE -> forToolWindow ? AllIcons.Toolwindows.InfoEvents : AllIcons.Ide.Notification.InfoEvents;
+      };
     }
     return forToolWindow ? AllIcons.Toolwindows.NoEvents : AllIcons.Ide.Notification.NoEvents;
-  }
-
-  @Nullable
-  public static NotificationType getMaximumType(List<? extends Notification> notifications) {
-    NotificationType result = null;
-    for (Notification notification : notifications) {
-      NotificationType type = notification.getType();
-      if (NotificationType.ERROR == type) {
-        return NotificationType.ERROR;
-      }
-
-      if (NotificationType.WARNING == type) {
-        result = NotificationType.WARNING;
-      }
-      else if (result == null && (NotificationType.INFORMATION == type || NotificationType.IDE_UPDATE == type)) {
-        result = NotificationType.INFORMATION;
-      }
-    }
-
-    return result;
   }
 
   private static class TextIcon implements Icon {
@@ -168,9 +155,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof TextIcon)) return false;
-
-      TextIcon icon = (TextIcon)o;
+      if (!(o instanceof TextIcon icon)) return false;
 
       if (myWidth != icon.myWidth) return false;
       if (!myComponent.equals(icon.myComponent)) return false;

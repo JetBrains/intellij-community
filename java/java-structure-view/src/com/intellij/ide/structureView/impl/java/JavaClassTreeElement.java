@@ -5,7 +5,6 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -17,15 +16,6 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
 
   public JavaClassTreeElement(PsiClass cls, boolean inherited) {
     super(inherited, cls);
-  }
-
-  /**
-   * @deprecated use {@link #JavaClassTreeElement(PsiClass, boolean)}
-   * @noinspection unused
-   */
-  @Deprecated
-  public JavaClassTreeElement(PsiClass cls, boolean inherited, Set<PsiClass> parents) {
-    this(cls, inherited);
   }
 
   @Override
@@ -55,14 +45,16 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
         children.add(new ClassInitializerTreeElement((PsiClassInitializer)child));
       }
     }
+    PsiRecordHeader header = aClass.getRecordHeader();
+    if (header != null) {
+      for (PsiRecordComponent recordComponent : header.getRecordComponents()) {
+        children.add(new JavaRecordComponentTreeElement(recordComponent, false));
+      }
+    }
     return children;
   }
 
-  static LinkedHashSet<PsiElement> getOwnChildren(@NotNull PsiClass aClass) {
-    return SlowOperations.allowSlowOperations(() -> doGetOwnChildren(aClass));
-  }
-
-  private static @NotNull LinkedHashSet<PsiElement> doGetOwnChildren(@NotNull PsiClass aClass) {
+  static @NotNull LinkedHashSet<PsiElement> getOwnChildren(@NotNull PsiClass aClass) {
     LinkedHashSet<PsiElement> members = new LinkedHashSet<>();
     addPhysicalElements(aClass.getFields(), members, aClass);
     addPhysicalElements(aClass.getMethods(), members, aClass);

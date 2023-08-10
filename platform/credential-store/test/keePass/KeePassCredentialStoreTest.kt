@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.*
-import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
+import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.io.delete
 import org.assertj.core.api.Assertions.assertThat
@@ -60,7 +60,7 @@ class KeePassCredentialStoreTest {
     provider.setMasterKey("foo", createSecureRandom())
 
     val dbFile = baseDir.resolve(DB_FILE_NAME)
-    val masterPasswordFile = baseDir.resolve(MASTER_KEY_FILE_NAME)
+    val masterPasswordFile = baseDir.resolve(MAIN_KEY_FILE_NAME)
 
     assertThat(dbFile).exists()
     assertThat(masterPasswordFile).exists()
@@ -80,7 +80,7 @@ class KeePassCredentialStoreTest {
 
     assertThatThrownBy {
       provider = createStore(baseDir)
-    }.isInstanceOf(IncorrectMasterPasswordException::class.java)
+    }.isInstanceOf(IncorrectMainPasswordException::class.java)
 
     assertThat(dbFile).exists()
     assertThat(masterPasswordFile).doesNotExist()
@@ -103,7 +103,7 @@ class KeePassCredentialStoreTest {
     assertThat(baseDir).doesNotExist()
 
     val pdbFile = baseDir.resolve(DB_FILE_NAME)
-    val pdbPwdFile = baseDir.resolve(MASTER_KEY_FILE_NAME)
+    val pdbPwdFile = baseDir.resolve(MAIN_KEY_FILE_NAME)
 
     provider.save(defaultEncryptionSpec)
     assertThat(provider.getPassword(fooAttributes)).isEqualTo("pass")
@@ -156,10 +156,9 @@ class KeePassCredentialStoreTest {
 private fun randomString() = UUID.randomUUID().toString()
 
 // avoid this constructor in production sources to avoid m
-@Suppress("TestFunctionName")
 internal fun createStore(baseDir: Path): KeePassCredentialStore {
   return KeePassCredentialStore(dbFile = baseDir.resolve(DB_FILE_NAME),
-                                masterKeyFile = baseDir.resolve(MASTER_KEY_FILE_NAME))
+                                mainKeyFile = baseDir.resolve(MAIN_KEY_FILE_NAME))
 }
 
 internal val defaultEncryptionSpec = EncryptionSpec(getDefaultEncryptionType(), null)

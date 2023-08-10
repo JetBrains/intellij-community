@@ -1,15 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.guess.GuessManager;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -17,32 +18,30 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 
 import java.util.List;
 import java.util.Objects;
 
-public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
-  @SafeFieldForPreview
+public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
   private final PsiType myType;
   private final @IntentionName String myName;
 
   public AddTypeCastFix(@NotNull PsiType type, @NotNull PsiExpression expression) {
-    this(type, expression, "add.typecast.text");
+    this(type, expression, null);
   }
 
-  public AddTypeCastFix(@NotNull PsiType type, @NotNull PsiExpression expression, @PropertyKey(resourceBundle = QuickFixBundle.BUNDLE) String messageKey) {
+  public AddTypeCastFix(@NotNull PsiType type, @NotNull PsiExpression expression, @Nls @Nullable String role) {
     super(expression);
+    boolean literalConversion = tryConvertNumericLiteral(expression, type) != null;
+    if (role == null) {
+      role = QuickFixBundle.message(literalConversion ? "fix.expression.role.literal" : "fix.expression.role.expression");
+    }
     myType = type;
-    myName = QuickFixBundle.message(messageKey, type.isValid() ? type.getCanonicalText() : "");
-  }
-
-  @Override
-  @NotNull
-  public String getText() {
-    return myName;
+    myName = QuickFixBundle.message(literalConversion ? "add.typecast.convert.text" : "add.typecast.cast.text",
+                                    type.isValid() ? type.getCanonicalText() : "", role);
   }
 
   @Override
@@ -52,29 +51,29 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    return myType.isValid() &&
-           !PsiType.VOID.equals(myType) &&
-           PsiTypesUtil.isDenotableType(myType, startElement) &&
-           PsiTypesUtil.allTypeParametersResolved(startElement, myType) &&
-           BaseIntentionAction.canModify(startElement);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpression expr) {
+    if (!myType.isValid() ||
+        PsiTypes.voidType().equals(myType) ||
+        !PsiTypesUtil.isDenotableType(myType, expr) ||
+        !PsiTypesUtil.allTypeParametersResolved(expr, myType)) return null;
+    return Presentation.of(myName).withPriority(PriorityAction.Priority.HIGH).withFixAllOption(this);
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    addTypeCast(project, (PsiExpression)startElement, myType);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression expression, @NotNull ModPsiUpdater updater) {
+    addTypeCast(context.project(), expression, myType);
   }
 
   public static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) {
     PsiExpression typeCast = createCastExpression(originalExpression, project, type);
-    originalExpression.replace(typeCast);
+    originalExpression.replace(Objects.requireNonNull(typeCast));
+  }
+
+  private static String tryConvertNumericLiteral(PsiElement expr, @NotNull PsiType type) {
+    if (expr instanceof PsiLiteralExpression) {
+      return PsiLiteralUtil.tryConvertNumericLiteral((PsiLiteralExpression)expr, type);
+    }
+    return null;
   }
 
   static PsiExpression createCastExpression(PsiExpression original, Project project, PsiType type) {
@@ -82,13 +81,11 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     PsiElement expression = PsiUtil.deparenthesizeExpression(original);
     if (expression == null) return null;
 
-    if (type.equals(PsiType.NULL)) return null;
+    if (type.equals(PsiTypes.nullType())) return null;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(original.getProject());
-    if (expression instanceof PsiLiteralExpression) {
-      String newLiteral = PsiLiteralUtil.tryConvertNumericLiteral((PsiLiteralExpression)expression, type);
-      if (newLiteral != null) {
-        return factory.createExpressionFromText(newLiteral, null);
-      }
+    String newLiteral = tryConvertNumericLiteral(expression, type);
+    if (newLiteral != null) {
+      return factory.createExpressionFromText(newLiteral, null);
     }
     if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
     String text = "(" + type.getCanonicalText(false) + ")value";
@@ -157,7 +154,7 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
       else if (psiClass.findFieldByName(referenceName, true) == null) {
         continue;
       }
-      registrar.register(fixRange, new AddTypeCastFix(conjunct, qualifier, "add.qualifier.typecast.text"), null);
+      registrar.register(fixRange, new AddTypeCastFix(conjunct, qualifier, QuickFixBundle.message("fix.expression.role.qualifier")).asIntention(), null);
     }
   }
 }

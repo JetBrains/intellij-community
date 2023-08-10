@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import java.util.concurrent.ForkJoinPool;
@@ -13,7 +13,7 @@ public final class IdeaForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJ
     boolean parallelismWasNotSpecified = System.getProperty("java.util.concurrent.ForkJoinPool.common.parallelism") == null;
     if (parallelismWasNotSpecified) {
       int N_CPU = Runtime.getRuntime().availableProcessors();
-      // By default FJP initialized with the parallelism=N_CPU - 1
+      // By default, FJP initialized with the parallelism=N_CPU - 1
       // so in case of two processors it becomes parallelism=1 which is too unexpected.
       // In this case force parallelism=2
       // In case of headless execution (unit tests or inspection command-line) there is no AWT thread to reserve cycles for, so dedicate all CPUs for FJP
@@ -23,16 +23,8 @@ public final class IdeaForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJ
     }
   }
 
-  public static void setupPoisonFactory() {
-    // if this method is called early enough and app called setupForkJoinCommonPool() too late
-    // (setupForkJoinCommonPool() has to be called after Main.setFlags() but before FJP init)
-    // then on the first use the FJP will explode, revealing who did the too early FJP init
-    if (!IdeaForkJoinWorkerThreadFactory.class.getName().equals(System.getProperty("java.util.concurrent.ForkJoinPool.common.threadFactory"))) {
-      System.setProperty("java.util.concurrent.ForkJoinPool.common.threadFactory", PoisonFactory.class.getName());
-    }
-  }
-
   private static final AtomicLong bits = new AtomicLong();
+
   @Override
   public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
     final int n = setNextBit();

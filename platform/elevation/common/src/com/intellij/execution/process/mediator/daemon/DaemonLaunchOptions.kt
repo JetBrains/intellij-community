@@ -1,6 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package com.intellij.execution.process.mediator.daemon
 
 import com.intellij.execution.process.mediator.util.parseArgs
@@ -33,8 +31,8 @@ data class DaemonLaunchOptions(
       constructor(s: String) : this(Path.of(s))
     }
 
-    class Port(val port: UShort) : HandshakeOption("--handshake-port=$port") {
-      constructor(s: String) : this(s.toUShort())
+    class Port(val port: Int) : HandshakeOption("--handshake-port=$port") {
+      constructor(s: String) : this(s.toInt())
     }
   }
 

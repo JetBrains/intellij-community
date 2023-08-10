@@ -27,7 +27,9 @@ internal class GitAutomaticRebaseEditor(private val project: Project,
                                         private val entriesEditor: (List<GitRebaseEntry>) -> List<GitRebaseEntry>,
                                         private val plainTextEditor: (String) -> String
 ) : GitInteractiveRebaseEditorHandler(project, root) {
-  val LOG = logger<GitAutomaticRebaseEditor>()
+  companion object {
+    private val LOG = logger<GitAutomaticRebaseEditor>()
+  }
 
   override fun editCommits(file: File): Int {
     try {

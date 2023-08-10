@@ -21,7 +21,6 @@ import org.jetbrains.annotations.ApiStatus;
  * Represents an exclude root under the content root of a module.
  *
  * @see ContentEntry#getExcludeFolders()  
- * @author dsl
  */
 @ApiStatus.NonExtendable
 public interface ExcludeFolder extends ContentFolder {

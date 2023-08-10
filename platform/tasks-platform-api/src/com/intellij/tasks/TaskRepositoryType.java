@@ -69,7 +69,7 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
    * @return states that can be set by {@link TaskRepository#setTaskState(Task, CustomTaskState)}
    * @deprecated Use {@link TaskRepository#getAvailableTaskStates(Task)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public EnumSet<TaskState> getPossibleTaskStates() {
     return EnumSet.noneOf(TaskState.class);
   }

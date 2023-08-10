@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.OpenInRightSplitAction;
-import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -27,12 +27,12 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,7 +44,7 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
 
 public final class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   public static final String ALL_CONTRIBUTORS_GROUP_ID = "SearchEverywhereContributor.All";
-  private static final String LOCATION_SETTINGS_KEY = "search.everywhere.popup";
+  public static final String LOCATION_SETTINGS_KEY = "search.everywhere.popup";
 
   public static final DataKey<Boolean> IS_SELECT_SEARCH_TEXT = DataKey.create("search.everywhere.is.select.search.text");
 
@@ -78,12 +78,12 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     }
 
     Project project = initEvent.getProject();
-    Component contextComponent = initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
 
-    Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors = createContributors(initEvent, project, contextComponent);
-    SearchEverywhereContributorValidationRule.updateContributorsMap(contributors.keySet());
-    mySearchEverywhereUI = createView(myProject, contributors);
-    contributors.keySet().forEach(c -> Disposer.register(mySearchEverywhereUI, c));
+    List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project);
+    SearchEverywhereContributorValidationRule.updateContributorsMap(contributors);
+    SearchEverywhereSpellingCorrector spellingCorrector = SearchEverywhereSpellingCorrector.getInstance(project);
+    mySearchEverywhereUI = createView(myProject, contributors, spellingCorrector);
+    contributors.forEach(c -> Disposer.register(mySearchEverywhereUI, c));
     mySearchEverywhereUI.switchToTab(tabID);
 
     myHistoryIterator = myHistoryList.getIterator(tabID);
@@ -106,10 +106,9 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       .setCancelKeyEnabled(false)
       .setCancelCallback(() -> {
         saveSearchText();
-        SearchEverywhereUsageTriggerCollector.trigger(myProject, DIALOG_CLOSED);
+        DIALOG_CLOSED.log(myProject);
         return true;
       })
-      .addUserData("SIMPLE_WINDOW")
       .setResizable(true)
       .setMovable(true)
       .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
@@ -117,7 +116,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       .createPopup();
     Disposer.register(myBalloon, mySearchEverywhereUI);
     OpenInRightSplitAction.Companion.overrideDoubleClickWithOneClick(myBalloon.getContent());
-    
+
     if (project != null) {
       Disposer.register(project, myBalloon);
     }
@@ -157,27 +156,28 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     calcPositionAndShow(initEvent, project, myBalloon);
   }
 
+  @Override
+  public @NotNull SearchEverywhereUI getCurrentlyShownUI() {
+    checkIsShown();
+    return mySearchEverywhereUI;
+  }
+
   private WindowStateService getStateService() {
     return myProject != null ? WindowStateService.getInstance(myProject) : WindowStateService.getInstance();
   }
 
-  private Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> createContributors(@NotNull AnActionEvent initEvent, Project project, Component contextComponent) {
+  private static List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project) {
     if (project == null) {
       ActionSearchEverywhereContributor.Factory factory = new ActionSearchEverywhereContributor.Factory();
-      return Collections.singletonMap(factory.createContributor(initEvent), SearchEverywhereTabDescriptor.IDE);
+      return Collections.singletonList(factory.createContributor(initEvent));
     }
 
-    Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> res = new HashMap<>();
-    res.put(new TopHitSEContributor(project, contextComponent, s -> mySearchEverywhereUI.getSearchField().setText(s)),
-            SearchEverywhereTabDescriptor.IDE);
-    res.put(new RecentFilesSEContributor(initEvent), SearchEverywhereTabDescriptor.PROJECT);
-    res.put(new RunConfigurationsSEContributor(project, contextComponent, () -> mySearchEverywhereUI.getSearchField().getText()),
-            SearchEverywhereTabDescriptor.IDE);
-
+    List<SearchEverywhereContributor<?>> res = new ArrayList<>();
     for (SearchEverywhereContributorFactory<?> factory : SearchEverywhereContributor.EP_NAME.getExtensionList()) {
-      SearchEverywhereContributor<?> contributor = factory.createContributor(initEvent);
-      SearchEverywhereTabDescriptor tab = factory.getTab();
-      res.put(contributor, tab);
+      if (factory.isAvailable(project)) {
+        SearchEverywhereContributor<?> contributor = factory.createContributor(initEvent);
+        res.add(contributor);
+      }
     }
 
     return res;
@@ -186,7 +186,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   private void calcPositionAndShow(@NotNull AnActionEvent initEvent,
                                    Project project,
                                    JBPopup balloon) {
-    if(initEvent.getPlace().equals(ActionPlaces.NEW_TOOLBAR)){
+    if (initEvent.getPlace().equals(ActionPlaces.RUN_TOOLBAR_LEFT_SIDE)) {
       var component = (Component)initEvent.getInputEvent().getSource();
       balloon.setLocation(component.getLocationOnScreen());
       ((AbstractPopup)balloon).show(component, 0, 0, true);
@@ -244,10 +244,10 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   }
 
   @Override
-  public void setSelectedTabID(@NotNull String contributorID) {
+  public void setSelectedTabID(@NotNull String tabID) {
     checkIsShown();
-    if (!contributorID.equals(getSelectedTabID())) {
-      mySearchEverywhereUI.switchToTab(contributorID);
+    if (!tabID.equals(getSelectedTabID())) {
+      mySearchEverywhereUI.switchToTab(tabID);
     }
   }
 
@@ -266,11 +266,12 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     myEverywhere = everywhere;
   }
 
-  private SearchEverywhereUI createView(Project project, Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
+  private SearchEverywhereUI createView(Project project, List<SearchEverywhereContributor<?>> contributors,
+                                        @Nullable SearchEverywhereSpellingCorrector spellingCorrector) {
     if (LightEdit.owns(project)) {
       contributors = ContainerUtil.filter(contributors, (contributor) -> contributor instanceof LightEditCompatible);
     }
-    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors, myTabsShortcutsMap::get);
+    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors, myTabsShortcutsMap::get, spellingCorrector);
 
     view.setSearchFinishedHandler(() -> {
       if (isShown()) {
@@ -356,6 +357,13 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     searchField.setText(next ? myHistoryIterator.next() : myHistoryIterator.prev());
     searchField.selectAll();
   }
+  @NotNull
+  List<String> getHistoryItems() {
+    if (!isShown()) return ContainerUtil.emptyList();
+
+    updateHistoryIterator();
+    return myHistoryIterator.list;
+  }
 
   private void updateHistoryIterator() {
     if (!isShown()) {
@@ -369,42 +377,29 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   }
 
   private static Map<String, String> createShortcutsMap() {
-    Map<String, String> res = new HashMap<>();
+    Map<String, @Nls String> res = new HashMap<>();
 
-    res.put(ALL_CONTRIBUTORS_GROUP_ID, "Double Shift");
+    res.put(ALL_CONTRIBUTORS_GROUP_ID, LangBundle.message("double.shift"));
     addShortcut(res, "ClassSearchEverywhereContributor", "GotoClass");
     addShortcut(res, "FileSearchEverywhereContributor", "GotoFile");
     addShortcut(res, "SymbolSearchEverywhereContributor", "GotoSymbol");
     addShortcut(res, "ActionSearchEverywhereContributor", "GotoAction");
+    addShortcut(res, "DbSETablesContributor", "GotoDatabaseObject");
+    addShortcut(res, "TextSearchContributor", "TextSearchAction");
 
     return res;
   }
 
-  private static void addShortcut(Map<String, String> map, String contributorID, String actionID) {
+  private static void addShortcut(Map<String, @Nls String> map, String tabId, String actionID) {
     KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionID);
-    if (shortcut != null) map.put(contributorID, KeymapUtil.getShortcutText(shortcut));
+    if (shortcut != null) map.put(tabId, KeymapUtil.getShortcutText(shortcut));
   }
 
   private static class SearchHistoryList {
 
     private final static int HISTORY_LIMIT = 50;
 
-    private static class HistoryItem {
-      private final String searchText;
-      private final String contributorID;
-
-      HistoryItem(String searchText, String contributorID) {
-        this.searchText = searchText;
-        this.contributorID = contributorID;
-      }
-
-      public String getSearchText() {
-        return searchText;
-      }
-
-      public String getContributorID() {
-        return contributorID;
-      }
+    private record HistoryItem(String searchText, String contributorID) {
     }
 
     private final List<HistoryItem> historyList = new ArrayList<>();
@@ -416,16 +411,16 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
     public void saveText(@NotNull String text, @NotNull String contributorID) {
       historyList.stream()
-        .filter(item -> text.equals(item.getSearchText()) && contributorID.equals(item.getContributorID()))
+        .filter(item -> text.equals(item.searchText()) && contributorID.equals(item.contributorID()))
         .findFirst()
         .ifPresent(historyList::remove);
 
       historyList.add(new HistoryItem(text, contributorID));
 
-      List<String> list = filteredHistory(item -> item.getContributorID().equals(contributorID));
+      List<String> list = filteredHistory(item -> item.contributorID().equals(contributorID));
       if (list.size() > HISTORY_LIMIT) {
         historyList.stream()
-          .filter(item -> item.getContributorID().equals(contributorID))
+          .filter(item -> item.contributorID().equals(contributorID))
           .findFirst()
           .ifPresent(historyList::remove);
       }
@@ -438,7 +433,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
         return size > HISTORY_LIMIT ? res.subList(size - HISTORY_LIMIT, size) : res;
       }
       else {
-        return filteredHistory(item -> item.getContributorID().equals(contributorID));
+        return filteredHistory(item -> item.contributorID().equals(contributorID));
       }
     }
 
@@ -446,7 +441,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     private List<String> filteredHistory(Predicate<? super HistoryItem> predicate) {
       return historyList.stream()
         .filter(predicate)
-        .map(item -> item.getSearchText())
+        .map(item -> item.searchText())
         .collect(distinctCollector);
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -32,9 +32,7 @@ class JavaMethodReferenceElement extends LookupElement implements TypedLookupIte
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof JavaMethodReferenceElement)) return false;
-    JavaMethodReferenceElement element = (JavaMethodReferenceElement)o;
-    return getLookupString().equals(element.getLookupString()) &&
+    return o instanceof JavaMethodReferenceElement element && getLookupString().equals(element.getLookupString()) &&
            myRefPlace.equals(element.myRefPlace);
   }
 
@@ -56,7 +54,7 @@ class JavaMethodReferenceElement extends LookupElement implements TypedLookupIte
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setIcon(myMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY));
     super.renderElement(presentation);
   }

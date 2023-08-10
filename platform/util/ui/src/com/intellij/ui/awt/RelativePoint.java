@@ -111,44 +111,32 @@ public class RelativePoint {
 
   @NotNull
   public static RelativePoint getCenterOf(@NotNull JComponent component) {
-    final Rectangle visibleRect = component.getVisibleRect();
-    final Point point = new Point(visibleRect.x + visibleRect.width/2, visibleRect.y + visibleRect.height/2);
-    return new RelativePoint(component, point);
+    return new AnchoredPoint(AnchoredPoint.Anchor.CENTER, component);
   }
 
   @NotNull
   public static RelativePoint getSouthEastOf(@NotNull JComponent component) {
-    final Rectangle visibleRect = component.getVisibleRect();
-    final Point point = new Point(visibleRect.x + visibleRect.width, visibleRect.y + visibleRect.height);
-    return new RelativePoint(component, point);
+    return new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_RIGHT, component);
   }
 
   @NotNull
   public static RelativePoint getSouthWestOf(@NotNull JComponent component) {
-    final Rectangle visibleRect = component.getVisibleRect();
-    final Point point = new Point(visibleRect.x, visibleRect.y + visibleRect.height);
-    return new RelativePoint(component, point);
+    return new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_LEFT, component);
   }
 
   @NotNull
   public static RelativePoint getSouthOf(@NotNull JComponent component) {
-    final Rectangle visibleRect = component.getVisibleRect();
-    final Point point = new Point(visibleRect.x + visibleRect.width / 2, visibleRect.y + visibleRect.height);
-    return new RelativePoint(component, point);
+    return new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM, component);
   }
 
   @NotNull
   public static RelativePoint getNorthWestOf(@NotNull JComponent component) {
-    final Rectangle visibleRect = component.getVisibleRect();
-    final Point point = new Point(visibleRect.x, visibleRect.y);
-    return new RelativePoint(component, point);
+    return new AnchoredPoint(AnchoredPoint.Anchor.TOP_LEFT, component);
   }
 
-  @NotNull @SuppressWarnings("unused")
+  @NotNull
   public static RelativePoint getNorthEastOf(@NotNull JComponent component) {
-    final Rectangle visibleRect = component.getVisibleRect();
-    final Point point = new Point(visibleRect.x + visibleRect.width, visibleRect.y);
-    return new RelativePoint(component, point);
+    return new AnchoredPoint(AnchoredPoint.Anchor.TOP_RIGHT, component);
   }
 
   @NotNull

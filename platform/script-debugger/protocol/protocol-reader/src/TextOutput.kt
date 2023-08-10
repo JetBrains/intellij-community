@@ -115,7 +115,7 @@ class TextOutput(val out: StringBuilder) {
 
   fun quote(s: CharSequence): TextOutput = append('"').append(s).append('"')
 
-  fun maybeIndent() {
+  private fun maybeIndent() {
     if (justNewLined) {
       out.append(indents[identLevel])
       justNewLined = false

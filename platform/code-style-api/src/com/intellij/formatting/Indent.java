@@ -67,6 +67,7 @@ import org.jetbrains.annotations.NotNull;
  */
 
 public abstract class Indent {
+  @NotNull
   public abstract Type getType();
 
   /**
@@ -251,6 +252,10 @@ public abstract class Indent {
 
   public static Indent getSmartIndent(Type type) {
     return Formatter.getInstance().getSmartIndent(type);
+  }
+
+  public static Indent getSmartIndent(Type type, boolean relativeToDirectParent) {
+    return Formatter.getInstance().getSmartIndent(type, relativeToDirectParent);
   }
 
   public static final class Type {

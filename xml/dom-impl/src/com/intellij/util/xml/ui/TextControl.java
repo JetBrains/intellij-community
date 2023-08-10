@@ -34,9 +34,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author peter
- */
 public class TextControl extends EditorTextFieldControl<TextPanel> {
 
   public TextControl(final DomWrapper<String> domWrapper) {
@@ -67,7 +64,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
     final TextPanel boundedComponent1 = boundedComponent;
     final EditorTextField editorTextField = new EditorTextField(factory.fun(""), project, FileTypes.PLAIN_TEXT) {
       @Override
-      protected EditorEx createEditor() {
+      protected @NotNull EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
         return boundedComponent1 instanceof MultiLineTextPanel ? makeBigEditor(editor, ((MultiLineTextPanel)boundedComponent1).getRowCount()) : editor;
       }
@@ -85,7 +82,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
         public void actionPerformed(ActionEvent e) {
           EditorTextField textArea = new EditorTextField(editorTextField.getDocument(), project, FileTypes.PLAIN_TEXT) {
             @Override
-            protected EditorEx createEditor() {
+            protected @NotNull EditorEx createEditor() {
               final EditorEx editor = super.createEditor();
               editor.setEmbeddedIntoDialogWrapper(true);
               return makeBigEditor(editor, 5);

@@ -1,26 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
+import com.intellij.vcs.log.data.DataPackChangeListener
+import com.intellij.vcs.log.impl.VcsProjectLog
+import git4idea.remote.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
-import org.jetbrains.plugins.github.pullrequest.GHPRDiffControllerImpl
+import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModelImpl
 import org.jetbrains.plugins.github.pullrequest.data.provider.*
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.util.DisposalCountingHolder
 import java.util.*
 
-internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDetailsService,
+internal class GHPRDataProviderRepositoryImpl(private val project: Project,
+                                              private val detailsService: GHPRDetailsService,
                                               private val stateService: GHPRStateService,
                                               private val reviewService: GHPRReviewService,
+                                              private val filesService: GHPRFilesService,
                                               private val commentService: GHPRCommentService,
                                               private val changesService: GHPRChangesService,
                                               private val timelineLoaderFactory: (GHPRIdentifier) -> GHListLoader<GHPRTimelineItem>)
@@ -30,6 +37,10 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
 
   private val cache = mutableMapOf<GHPRIdentifier, DisposalCountingHolder<GHPRDataProvider>>()
   private val providerDetailsLoadedEventDispatcher = EventDispatcher.create(DetailsLoadedListener::class.java)
+
+  init {
+    Disposer.register(this, changesService)
+  }
 
   @RequiresEdt
   override fun getDataProvider(id: GHPRIdentifier, disposable: Disposable): GHPRDataProvider {
@@ -52,21 +63,34 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
     cache.values.toList().forEach(Disposer::dispose)
   }
 
-  private fun createDataProvider(parentDisposable: Disposable, id: GHPRIdentifier): GHPRDataProvider {
+  private fun createDataProvider(parentDisposable: CheckedDisposable, id: GHPRIdentifier): GHPRDataProvider {
     val messageBus = MessageBusFactory.newMessageBus(object : MessageBusOwner {
-      override fun isDisposed() = Disposer.isDisposed(parentDisposable)
+      override fun isDisposed() = parentDisposable.isDisposed
 
       override fun createListener(descriptor: ListenerDescriptor) =
         throw UnsupportedOperationException()
     })
     Disposer.register(parentDisposable, messageBus)
 
-    val detailsData = GHPRDetailsDataProviderImpl(detailsService, commentService, id, messageBus).apply {
+    val detailsData = GHPRDetailsDataProviderImpl(detailsService, id, messageBus).apply {
       addDetailsLoadedListener(parentDisposable) {
         loadedDetails?.let { providerDetailsLoadedEventDispatcher.multicaster.onDetailsLoaded(it) }
       }
     }.also {
       Disposer.register(parentDisposable, it)
+    }
+
+    VcsProjectLog.runWhenLogIsReady(project) {
+      if (!parentDisposable.isDisposed) {
+        val dataPackListener = DataPackChangeListener {
+          detailsData.reloadDetails()
+        }
+
+        it.dataManager.addDataPackChangeListener(dataPackListener)
+        Disposer.register(parentDisposable, Disposable {
+          it.dataManager.removeDataPackChangeListener(dataPackListener)
+        })
+      }
     }
 
     val stateData = GHPRStateDataProviderImpl(stateService, id, messageBus, detailsData).also {
@@ -75,7 +99,10 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
     val changesData = GHPRChangesDataProviderImpl(changesService, id, detailsData).also {
       Disposer.register(parentDisposable, it)
     }
-    val reviewData = GHPRReviewDataProviderImpl(commentService, reviewService, id, messageBus).also {
+    val reviewData = GHPRReviewDataProviderImpl(reviewService, changesData, id, messageBus).also {
+      Disposer.register(parentDisposable, it)
+    }
+    val viewedStateData = GHPRViewedStateDataProviderImpl(filesService, id).also {
       Disposer.register(parentDisposable, it)
     }
     val commentsData = GHPRCommentsDataProviderImpl(commentService, id, messageBus)
@@ -121,11 +148,16 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
     }
 
     messageBus.connect(stateData).subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
-      override fun onReviewsChanged() = stateData.reloadMergeabilityState()
+      override fun onReviewsChanged() {
+        stateData.reloadMergeabilityState()
+        // TODO: check if we really need it
+        detailsData.reloadDetails()
+      }
     })
 
-    return GHPRDataProviderImpl(id, detailsData, stateData, changesData, commentsData, reviewData, timelineLoaderHolder,
-                                GHPRDiffControllerImpl())
+    return GHPRDataProviderImpl(
+      id, detailsData, stateData, changesData, commentsData, reviewData, viewedStateData, timelineLoaderHolder, GHPRDiffRequestModelImpl()
+    )
   }
 
   override fun addDetailsLoadedListener(disposable: Disposable, listener: (GHPullRequest) -> Unit) {

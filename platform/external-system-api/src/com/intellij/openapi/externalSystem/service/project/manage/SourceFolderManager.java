@@ -11,8 +11,8 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 @ApiStatus.Experimental
 public interface SourceFolderManager {
 
-  static SourceFolderManager getInstance(@NotNull Project project) {
-    return project.getComponent(SourceFolderManager.class);
+  static @NotNull SourceFolderManager getInstance(@NotNull Project project) {
+    return project.getService(SourceFolderManager.class);
   }
 
   void setSourceFolderPackagePrefix(@NotNull String url, @Nullable String packagePrefix);
@@ -22,4 +22,7 @@ public interface SourceFolderManager {
   void addSourceFolder(@NotNull Module module, @NotNull String url, @NotNull JpsModuleSourceRootType<?> type);
 
   void removeSourceFolders(@NotNull Module module);
+
+  @ApiStatus.Internal
+  void rescanAndUpdateSourceFolders();
 }

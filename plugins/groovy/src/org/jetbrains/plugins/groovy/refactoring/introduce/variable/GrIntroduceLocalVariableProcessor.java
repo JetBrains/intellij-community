@@ -113,7 +113,7 @@ public abstract class GrIntroduceLocalVariableProcessor {
           final PsiElement resolved = psiReference.resolve();
           if (resolved != null) {
             String fieldName = getFieldName(resolved);
-            if (fieldName != null && varName.equals(fieldName)) {
+            if (varName.equals(fieldName)) {
               GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(tempContainer.getProject());
               ((GrReferenceExpression)child).replaceWithExpression(factory.createExpressionFromText("this." + child.getText()), true);
             }

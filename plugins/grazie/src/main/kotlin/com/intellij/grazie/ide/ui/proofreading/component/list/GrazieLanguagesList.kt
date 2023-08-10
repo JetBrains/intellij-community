@@ -11,11 +11,8 @@ import com.intellij.grazie.ide.ui.components.utils.configure
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.utils.toSet
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
-import com.intellij.ui.AddDeleteListPanel
+import com.intellij.ui.*
 import com.intellij.ui.CommonActionsPanel.Buttons
-import com.intellij.ui.ListUtil
-import com.intellij.ui.RowsDnDSupport
-import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.EditableModel
@@ -29,6 +26,7 @@ class GrazieLanguagesList(private val download: (Lang) -> Boolean, private val o
 
   private val decorator: ToolbarDecorator = MyToolbarDecorator(myList)
     .setAddAction { findItemToAdd() }
+    .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
     .setToolbarPosition(ActionToolbarPosition.BOTTOM)
     .setRemoveAction {
       myList.selectedValuesList.forEach(onLanguageRemoved)
@@ -58,7 +56,7 @@ class GrazieLanguagesList(private val download: (Lang) -> Boolean, private val o
 
   override fun addElement(itemToAdd: Lang?) {
     itemToAdd ?: return
-
+    removeExistedDialects(itemToAdd)
     val positionToInsert = -(myListModel.elements().toList().binarySearch(itemToAdd, Comparator.comparing(Lang::nativeName)) + 1)
     myListModel.add(positionToInsert, itemToAdd)
     myList.clearSelection()
@@ -80,9 +78,22 @@ class GrazieLanguagesList(private val download: (Lang) -> Boolean, private val o
 
   /** Returns pair of (available languages, languages to download) */
   private fun getLangsForPopup(): Pair<List<Lang>, List<Lang>> {
-    val enabledLangs = myListModel.elements().asSequence().map { it.iso }.toSet()
-    val (available, toDownload) = Lang.sortedValues().filter { it.iso !in enabledLangs }.partition { it.isAvailable() }
+    val enabledLangs = myListModel.elements().asSequence().map { it.displayName }.toSet()
+    val (available, toDownload) = Lang.sortedValues().filter { it.displayName !in enabledLangs }.partition { it.isAvailable() }
     return available to toDownload
+  }
+
+  private fun removeExistedDialects(lang: Lang) {
+    val dialectsToRemove = ArrayList<Lang>()
+    for (existed in myListModel.elements()) {
+      if (existed.iso == lang.iso) {
+        dialectsToRemove.add(existed)
+      }
+    }
+
+    for (toRemove in dialectsToRemove) {
+      myListModel.removeElement(toRemove)
+    }
   }
 
   private class MyListPopup(step: GrazieLanguagesPopupStep) : ListPopupImpl(null, step) {

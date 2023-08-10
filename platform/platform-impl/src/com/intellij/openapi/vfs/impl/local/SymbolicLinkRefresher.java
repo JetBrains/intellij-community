@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,9 +35,12 @@ final class SymbolicLinkRefresher {
 
   SymbolicLinkRefresher(LocalFileSystemImpl system) {
     mySystem = system;
-    ApplicationManager.getApplication().getMessageBus().connect(system).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+  }
+
+  void refresh() {
+    ApplicationManager.getApplication().getMessageBus().connect(mySystem).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         analyzeEvents(events);
       }
     });

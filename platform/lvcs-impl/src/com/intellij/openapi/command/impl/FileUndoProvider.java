@@ -74,7 +74,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
   }
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent e : events) {
       if (e instanceof VFileContentChangeEvent) {
         beforeContentsChange((VFileContentChangeEvent)e);
@@ -86,7 +86,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent e : events) {
       if (e instanceof VFileCreateEvent ||
           e instanceof VFileMoveEvent ||
@@ -148,6 +148,9 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
     if (!myIsInsideCommand || myProject.isDisposed()) {
       return false;
     }
+    if (UndoUtil.isUndoDisabledFor(file)) {
+      return false;
+    }
 
     Object requestor = e.getRequestor();
     if (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(requestor) || requestor instanceof StorageManagerFileWriteRequestor) {
@@ -157,7 +160,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
   }
 
   private static boolean isUndoable(@NotNull VFileEvent e, @NotNull VirtualFile file) {
-    return !e.isFromRefresh() || file.getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE;
+    return !e.isFromRefresh() || UndoUtil.isForceUndoFlagSet(file);
   }
 
   private void registerUndoableAction(@NotNull VirtualFile file) {

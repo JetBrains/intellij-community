@@ -17,6 +17,7 @@ package org.intellij.plugins.relaxNG.compact.lexer;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.kohsuke.rngom.util.Utf16;
 
 import java.io.FilterReader;
@@ -28,7 +29,7 @@ import java.io.Reader;
  * token ranges in the lexer.
  */
 final class EscapePreprocessor extends FilterReader {
-  private final IntArrayList myQueuedChars;
+  private final IntList myQueuedChars;
   private final Int2IntMap myLengthMap;
 
   private int myOffset;

@@ -15,9 +15,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-/**
- * @author ilyas
- */
 public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrTryCatchStatement {
   public GrTryCatchStatementImpl(@NotNull ASTNode node) {
     super(node);

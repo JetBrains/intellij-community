@@ -17,13 +17,15 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public class CloseAction extends AnAction implements DumbAware, LightEditCompatible {
+public class CloseAction extends AnAction implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -34,8 +36,15 @@ public class CloseAction extends AnAction implements DumbAware, LightEditCompati
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    e.getData(CloseTarget.KEY).close();
+    CloseTarget closeTarget = e.getData(CloseTarget.KEY);
+    if (closeTarget == null) return;
+    closeTarget.close();
   }
 
   public interface CloseTarget {

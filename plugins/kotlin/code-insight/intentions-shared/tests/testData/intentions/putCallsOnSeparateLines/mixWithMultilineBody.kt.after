@@ -1,0 +1,10 @@
+// DISABLE-ERRORS
+fun calculate(): Int {
+    return call1().call2()
+        .call3()
+        .call5 {
+            doSmth()
+        }
+        ?.ref6
+        ?.call7()
+}

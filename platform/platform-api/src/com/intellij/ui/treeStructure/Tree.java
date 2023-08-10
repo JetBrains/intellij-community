@@ -1,16 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.dnd.SmoothAutoScroller;
 import com.intellij.ide.util.treeView.*;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
+import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -30,8 +35,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Map;
 
-import static com.intellij.ide.dnd.SmoothAutoScroller.installDropTargetAsNecessary;
-
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Queryable,
                                            ComponentWithFileColors, TreePathBackgroundSupplier {
   /**
@@ -46,6 +49,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    */
   @ApiStatus.Internal
   public static final Key<Boolean> AUTO_SELECT_ON_MOUSE_PRESSED = Key.create("allows to select a node automatically on right click");
+  @ApiStatus.Internal
+  public static final Key<Boolean> AUTO_SCROLL_FROM_SOURCE_BLOCKED = Key.create("auto scroll from source temporarily blocked");
 
   private final StatusText myEmptyText;
   private final ExpandableItemsHandler<Integer> myExpandableItemsHandler;
@@ -60,6 +65,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private TreePath rollOverPath;
 
+  private final Timer autoScrollUnblockTimer = TimerUtil.createNamedTimer("TreeAutoscrollUnblock", 500, e -> unblockAutoScrollFromSource());
+
   public Tree() {
     this(new DefaultMutableTreeNode());
   }
@@ -73,7 +80,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     myEmptyText = new StatusText(this) {
       @Override
       protected boolean isStatusVisible() {
-        return Tree.this.isEmpty();
+        return Tree.this.isEmptyTextVisible();
       }
     };
 
@@ -87,8 +94,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           TreePath newPath = getPathForLocation(p.x, p.y);
           if (newPath != null && !newPath.equals(rollOverPath)) {
             TreeCellRenderer renderer = getCellRenderer();
-            if (newPath.getLastPathComponent() instanceof TreeNode) {
-              TreeNode node = (TreeNode)newPath.getLastPathComponent();
+            if (newPath.getLastPathComponent() instanceof TreeNode node) {
               JComponent c = (JComponent)renderer.getTreeCellRendererComponent(
                 Tree.this, node,
                 isPathSelected(newPath),
@@ -112,6 +118,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     setSelectionModel(mySelectionModel);
     setOpaque(false);
+
+    putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, myEmptyText.getWrappedFragmentsIterable());
   }
 
   @Override
@@ -122,6 +130,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   protected Graphics getComponentGraphics(Graphics graphics) {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  }
+
+  /**
+   * Starts measuring the next expand operation if the tree supports that
+   * <p>
+   *   Internal API for statistics. Called by the UI and certain actions right before a path is expanded.
+   *   It's up to the tree then to stop measuring at the right moment and send the value to the collector.
+   * </p>
+   * @param path the path that will be expanded
+   */
+  @ApiStatus.Internal
+  public void startMeasuringExpandDuration(@NotNull TreePath path) {
   }
 
   public boolean isEmpty() {
@@ -144,6 +164,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public boolean isFileColorsEnabled() {
     return false;
+  }
+
+  protected boolean isEmptyTextVisible() {
+    return isEmpty();
   }
 
   @NotNull
@@ -191,7 +215,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     if (myBusyIcon != null) {
       remove(myBusyIcon);
-      Disposer.dispose(myBusyIcon);
+      myBusyIcon.dispose();
       myBusyIcon = null;
     }
   }
@@ -260,11 +284,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   private void updateBusy() {
-    if (myBusy) {
+    boolean shouldPaintBusyIcon = myBusy && shouldShowBusyIconIfNeeded();
+
+    if (shouldPaintBusyIcon) {
       if (myBusyIcon == null) {
         myBusyIcon = new AsyncProcessIcon(toString());
         myBusyIcon.setOpaque(false);
         myBusyIcon.setPaintPassiveIcon(false);
+        myBusyIcon.setToolTipText(IdeBundle.message("tooltip.text.update.is.in.progress.click.to.cancel"));
         add(myBusyIcon);
         myBusyIcon.addMouseListener(new MouseAdapter() {
           @Override
@@ -277,26 +304,20 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           }
         });
       }
+
+      myBusyIcon.resume();
+      myBusyIcon.setVisible(true);
+      updateBusyIconLocation();
     }
 
-    if (myBusyIcon != null) {
-      if (myBusy) {
-        if (shouldShowBusyIconIfNeeded()) {
-          myBusyIcon.resume();
-          myBusyIcon.setToolTipText(IdeBundle.message("tooltip.text.update.is.in.progress.click.to.cancel"));
+    if (!shouldPaintBusyIcon && myBusyIcon != null) {
+      myBusyIcon.suspend();
+      myBusyIcon.setVisible(false);
+      SwingUtilities.invokeLater(() -> {
+        if (myBusyIcon != null) {
+          repaint();
         }
-      }
-      else {
-        myBusyIcon.suspend();
-        myBusyIcon.setToolTipText(null);
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> {
-          if (myBusyIcon != null) {
-            repaint();
-          }
-        });
-      }
-      updateBusyIconLocation();
+      });
     }
   }
 
@@ -331,18 +352,40 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   protected void paintFileColorGutter(Graphics g) {
     GraphicsConfig config = new GraphicsConfig(g);
+    config.setupAAPainting();
     Rectangle rect = getVisibleRect();
     int firstVisibleRow = getClosestRowForLocation(rect.x, rect.y);
     int lastVisibleRow = getClosestRowForLocation(rect.x, rect.y + rect.height);
 
+    Color prevColor = firstVisibleRow == 0 ? null : getFileColorForRow(firstVisibleRow - 1);
+    Color curColor = getFileColorForRow(firstVisibleRow);
+    Color nextColor = firstVisibleRow + 1 < getRowCount() ? getFileColorForRow(firstVisibleRow + 1) : null;
     for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
-      TreePath path = getPathForRow(row);
-      Color color = path == null ? null : SlowOperations.allowSlowOperations(() -> getFileColorForPath(path));
-      if (color != null) {
+      nextColor = row + 1 < getRowCount() ? getFileColorForRow(row + 1) : null;
+      if (curColor != null) {
         Rectangle bounds = getRowBounds(row);
-        g.setColor(color);
-        g.fillRect(0, bounds.y, getWidth(), bounds.height);
+        double x = JBUI.scale(4);
+        double y = bounds.y;
+        double w = JBUI.scale(4);
+        double h = bounds.height;
+        if (Registry.is("ide.file.colors.at.left")) {
+          g.setColor(curColor);
+          if (curColor.equals(prevColor) && curColor.equals(nextColor)) {
+            RectanglePainter2D.FILL.paint((Graphics2D)g, x, y, w, h);
+          } else if (!curColor.equals(prevColor) && !curColor.equals(nextColor)) {
+            RectanglePainter2D.FILL.paint((Graphics2D)g, x, y + 2, w, h - 4, w);
+          } else if (curColor.equals(prevColor)) {
+            RectanglePainter2D.FILL.paint((Graphics2D)g, x, y - w, w, h + w - 2, w);
+          } else {
+            RectanglePainter2D.FILL.paint((Graphics2D)g, x, y + 2, w, h + w, w);
+          }
+        } else {
+          g.setColor(curColor);
+          g.fillRect(0, bounds.y, getWidth(), bounds.height);
+        }
       }
+      prevColor = curColor;
+      curColor = nextColor;
     }
     config.restore();
   }
@@ -350,9 +393,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   @Nullable
   public Color getPathBackground(@NotNull TreePath path, int row) {
-    return isFileColorsEnabled() ? getFileColorForPath(path) : null;
+    return isFileColorsEnabled() && !Registry.is("ide.file.colors.at.left") ? getFileColorForPath(path) : null;
   }
 
+  @Nullable
+  public Color getFileColorForRow(int row) {
+    TreePath path = getPathForRow(row);
+    return path != null ? getFileColorForPath(path) : null;
+  }
   @Nullable
   public Color getFileColorForPath(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
@@ -431,7 +479,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     for (int eachRow = 0; eachRow < getRowCount(); eachRow++) {
       TreePath path = getPathForRow(eachRow);
-      PresentableNodeDescriptor node = toPresentableNode(path.getLastPathComponent());
+      PresentableNodeDescriptor<?> node = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, path);
       if (node == null) continue;
 
       if (!node.isContentHighlighted()) continue;
@@ -475,8 +523,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         int lastIndex = -1;
         for (int i = 0; i < kids.length; i++) {
           Object kid = kids[i];
-          if (kid instanceof PresentableNodeDescriptor) {
-            PresentableNodeDescriptor eachKid = (PresentableNodeDescriptor)kid;
+          if (kid instanceof PresentableNodeDescriptor eachKid) {
             if (!node.isHighlightableContentNode(eachKid)) continue;
             if (first == null) {
               first = eachKid;
@@ -492,23 +539,21 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         if (isExpanded(getPath(last))) {
           if (lastIndex + 1 < kids.length) {
             Object child = kids[lastIndex + 1];
-            if (child instanceof PresentableNodeDescriptor) {
-              PresentableNodeDescriptor nextKid = (PresentableNodeDescriptor)child;
+            if (child instanceof PresentableNodeDescriptor nextKid) {
               int nextRow = getRowForPath(getPath(nextKid));
-              last = toPresentableNode(getPathForRow(nextRow - 1).getLastPathComponent());
+              last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(nextRow - 1));
             }
           }
           else {
             NodeDescriptor parentNode = node.getParentDescriptor();
-            if (parentNode instanceof PresentableNodeDescriptor) {
-              PresentableNodeDescriptor ppd = (PresentableNodeDescriptor)parentNode;
+            if (parentNode instanceof PresentableNodeDescriptor ppd) {
               int nodeIndex = node.getIndex();
               if (nodeIndex + 1 < structure.getChildElements(ppd).length) {
                 PresentableNodeDescriptor nextChild = ppd.getChildToHighlightAt(nodeIndex + 1);
                 int nextRow = getRowForPath(getPath(nextChild));
                 TreePath prevPath = getPathForRow(nextRow - 1);
                 if (prevPath != null) {
-                  last = toPresentableNode(prevPath.getLastPathComponent());
+                  last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, prevPath);
                 }
               }
               else {
@@ -516,7 +561,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
                 PresentableNodeDescriptor lastParent = last;
                 boolean lastWasFound = false;
                 for (int i = lastRow + 1; i < getRowCount(); i++) {
-                  PresentableNodeDescriptor eachNode = toPresentableNode(getPathForRow(i).getLastPathComponent());
+                  PresentableNodeDescriptor<?> eachNode = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(i));
                   if (!node.isParentOf(eachNode)) {
                     last = lastParent;
                     lastWasFound = true;
@@ -525,7 +570,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
                   lastParent = eachNode;
                 }
                 if (!lastWasFound) {
-                  last = toPresentableNode(getPathForRow(getRowCount() - 1).getLastPathComponent());
+                  last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(getRowCount() - 1));
                 }
               }
             }
@@ -578,14 +623,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return new int[]{y, x};
   }
 
-  @Nullable
-  private static PresentableNodeDescriptor toPresentableNode(Object pathComponent) {
-    if (!(pathComponent instanceof DefaultMutableTreeNode)) return null;
-    Object userObject = ((DefaultMutableTreeNode)pathComponent).getUserObject();
-    if (!(userObject instanceof PresentableNodeDescriptor)) return null;
-    return (PresentableNodeDescriptor)userObject;
-  }
-
   public TreePath getPath(@NotNull PresentableNodeDescriptor node) {
     AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(this);
     DefaultMutableTreeNode treeNode = builder.getNodeForElement(node);
@@ -595,7 +632,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public void collapsePath(TreePath path) {
-    int row = Registry.is("ide.tree.collapse.recursively") ? getRowForPath(path) : -1;
+    int row = AdvancedSettings.getBoolean("ide.tree.collapse.recursively") ? getRowForPath(path) : -1;
     if (row < 0) {
       super.collapsePath(path);
     }
@@ -613,6 +650,16 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private boolean isAlwaysExpanded(TreePath path) {
     return path != null && TreeUtil.getNodeDepth(this, path) <= 0;
+  }
+
+  private void blockAutoScrollFromSource() {
+    ClientProperty.put(this, AUTO_SCROLL_FROM_SOURCE_BLOCKED, true);
+    autoScrollUnblockTimer.restart();
+  }
+
+  @ApiStatus.Internal
+  public void unblockAutoScrollFromSource() {
+    ClientProperty.remove(this, AUTO_SCROLL_FROM_SOURCE_BLOCKED);
   }
 
   private static class MySelectionModel extends DefaultTreeSelectionModel {
@@ -639,8 +686,17 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   private class MyMouseListener extends MouseAdapter {
+
+    private MyMouseListener() {
+      autoScrollUnblockTimer.setRepeats(false);
+    }
+
     @Override
     public void mousePressed(MouseEvent event) {
+      if (!hasFocus()) {
+        blockAutoScrollFromSource();
+      }
+
       setPressed(event, true);
 
       if (Boolean.FALSE.equals(UIUtil.getClientProperty(event.getSource(), AUTO_SELECT_ON_MOUSE_PRESSED))
@@ -681,8 +737,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     public void mouseExited(MouseEvent e) {
       if (UIUtil.isUnderWin10LookAndFeel() && rollOverPath != null) {
         TreeCellRenderer renderer = getCellRenderer();
-        if (rollOverPath.getLastPathComponent() instanceof TreeNode) {
-          TreeNode node = (TreeNode)rollOverPath.getLastPathComponent();
+        if (rollOverPath.getLastPathComponent() instanceof TreeNode node) {
           JComponent c = (JComponent)renderer.getTreeCellRendererComponent(
             Tree.this, node,
             isPathSelected(rollOverPath),
@@ -702,8 +757,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         Point p = e.getPoint();
         TreePath path = getPathForLocation(p.x, p.y);
         if (path != null) {
-          if (path.getLastPathComponent() instanceof TreeNode) {
-            TreeNode node = (TreeNode)path.getLastPathComponent();
+          if (path.getLastPathComponent() instanceof TreeNode node) {
             JComponent c = (JComponent)getCellRenderer().getTreeCellRendererComponent(
               Tree.this, node,
               isPathSelected(path), isExpanded(path),
@@ -842,6 +896,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   /**
+   * @see com.intellij.ui.table.JBTable#getScrollableUnitIncrement(Rectangle, int, int)
+   */
+  @Override
+  public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+    int increment = super.getScrollableUnitIncrement(visibleRect, orientation, direction);
+    if (increment == 0 && orientation == SwingConstants.VERTICAL && direction < 0) {
+      return visibleRect.y; // BasicTreeUI.getPathBounds includes insets, not allowing to reach 0 with mouse wheel.
+    }
+    return increment;
+  }
+
+  /**
    * Returns the deepest visible component
    * that will be rendered at the specified location.
    *
@@ -876,7 +942,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public void setTransferHandler(TransferHandler handler) {
-    installDropTargetAsNecessary(this);
+    SmoothAutoScroller.installDropTargetAsNecessary(this);
     super.setTransferHandler(handler);
   }
 }

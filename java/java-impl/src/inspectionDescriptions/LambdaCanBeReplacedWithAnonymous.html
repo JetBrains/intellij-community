@@ -1,0 +1,25 @@
+<html>
+<body>
+Reports lambda expressions that can be replaced with anonymous classes.
+<p>
+  Expanding lambda expressions to anonymous classes may be useful if you need to implement other
+  methods inside an anonymous class.
+</p>
+<p>Example:</p>
+<pre><code>
+  s -> System.out.println(s)
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>new Consumer&lt;String&gt;() {
+  @Override
+  public void accept(String s) {
+    System.out.println(s);
+  }
+}</code></pre>
+<!-- tooltip end -->
+<p>
+  <i>Lambda expression</i> appeared in Java 8.
+  This inspection can help to downgrade for backward compatibility with earlier Java versions.
+</p>
+</body>
+</html>

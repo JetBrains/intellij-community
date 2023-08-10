@@ -42,8 +42,7 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
   public boolean canMove(final PsiElement[] elements, final PsiElement targetContainer, @Nullable PsiReference reference) {
     HashSet<String> names = new HashSet<>();
     for (PsiElement element : elements) {
-      if (element instanceof PsiFile) {
-        PsiFile file = (PsiFile)element;
+      if (element instanceof PsiFile file) {
         String name = file.getName();
         if (names.contains(name)) {
           return false;

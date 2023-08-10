@@ -1,6 +1,17 @@
 <html>
 <body>
-Reports ternary conditional expressions which can be replaced by the conditional
-call (?.) operation.
+Reports ternary expressions which can be replaced by a safe call.
+<p><b>Example:</b></p>
+<pre><code>
+  def charArray(String s) {
+      s == null ? null : s.toCharArray()
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  def charArray(String s) {
+      s?.toCharArray()
+  }
+</code></pre>
 </body>
 </html>

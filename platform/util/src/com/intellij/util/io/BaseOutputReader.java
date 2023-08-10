@@ -2,7 +2,6 @@
 package com.intellij.util.io;
 
 import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +44,21 @@ public abstract class BaseOutputReader extends BaseDataReader {
         return BLOCKING;
       }
       return NON_BLOCKING;
+    }
+
+    public static @NotNull Options forTerminalPtyProcess() {
+      return new BaseOutputReader.Options() {
+        @Override
+        public BaseDataReader.SleepingPolicy policy() {
+          // com.pty4j.PtyProcess inheritors do not implement java.io.InputStream#available
+          return BaseDataReader.SleepingPolicy.BLOCKING;
+        }
+
+        @Override
+        public boolean splitToLines() {
+          return false; // prevent converting \r\n to \n to render in terminal emulator correctly
+        }
+      };
     }
   }
 
@@ -212,13 +226,4 @@ public abstract class BaseOutputReader extends BaseDataReader {
   }
 
   protected abstract void onTextAvailable(@NotNull String text);
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #BaseOutputReader(Reader, Options)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public BaseOutputReader(@NotNull Reader reader, @Nullable SleepingPolicy policy) {
-    this(reader, Options.withPolicy(policy));
-  }
-  //</editor-fold>
 }

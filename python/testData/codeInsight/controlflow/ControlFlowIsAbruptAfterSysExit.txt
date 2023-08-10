@@ -1,0 +1,19 @@
+0(1) element: null
+1(2) element: PyImportStatement
+2(3) WRITE ACCESS: sys
+3(4) element: PyTryExceptStatement
+4(5,10) element: PyTryPart
+5(6,10) element: PyAssignmentStatement
+6(7,10) READ ACCESS: int
+7(8,10) element: PySubscriptionExpression
+8(9,10) READ ACCESS: sys
+9(10,15) WRITE ACCESS: n
+10(11) element: PyExceptPart
+11(12) READ ACCESS: ValueError
+12(13) element: PyPrintStatement
+13(14) element: PyExpressionStatement
+14(18) READ ACCESS: sys
+15(16) element: PyPrintStatement
+16(17) READ ACCESS: str
+17(18) READ ACCESS: n
+18() element: null

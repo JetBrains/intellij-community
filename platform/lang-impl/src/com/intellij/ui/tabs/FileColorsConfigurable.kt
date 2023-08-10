@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.search.SearchableOptionContributor
+import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.ide.util.scopeChooser.EditScopesDialog
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable.PROJECT_SCOPES
 import com.intellij.openapi.application.invokeLater
@@ -25,10 +28,11 @@ import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
-import com.intellij.ui.ColorChooser.chooseColor
+import com.intellij.ui.ColorChooserService
 import com.intellij.ui.ColorUtil.toHex
 import com.intellij.ui.CommonActionsPanel
 import com.intellij.ui.FileColorManager
+import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.ui.ToolbarDecorator.createDecorator
 import com.intellij.ui.components.ActionLink
@@ -42,15 +46,19 @@ import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.RegionPaintIcon
 import com.intellij.util.ui.RegionPainter
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.PropertyKey
 import java.awt.*
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
 
-class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScroll {
-  override fun getId() = "reference.settings.ide.settings.file-colors"
-  override fun getDisplayName(): String = message("configurable.file.colors")
-  override fun getHelpTopic() = id
+private const val ID = "reference.settings.ide.settings.file-colors"
+@PropertyKey(resourceBundle = "messages.IdeBundle") private const val DISPLAY_NAME_KEY = "configurable.file.colors"
+
+internal class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScroll {
+  override fun getId(): String = ID
+  override fun getDisplayName(): @Nls String = message(DISPLAY_NAME_KEY)
+  override fun getHelpTopic(): String = id
 
   private val enabledFileColors = object : CheckBoxConfigurable() {
     override fun createCheckBox(): JCheckBox {
@@ -79,8 +87,13 @@ class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScrol
     override var selectedState: Boolean
       get() = manager.isEnabledForTabs
       set(state) {
-        manager.isEnabledForTabs = state
+        FileColorManagerImpl.setEnabledForTabs(state)
       }
+
+    override fun apply() {
+      super.apply()
+      UISettings.getInstance().fireUISettingsChanged()
+    }
   }
 
   private val useInProjectView = object : CheckBoxConfigurable() {
@@ -99,11 +112,12 @@ class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScrol
 
   private val manager = FileColorManager.getInstance(project) as FileColorManagerImpl
   private val colorsTableModel = FileColorsTableModel(manager)
-  private val configurables = listOf(enabledFileColors, useInEditorTabs, useInProjectView, colorsTableModel)
+  // order matters: color changes should be applied before enabling it in the editor/project view
+  private val configurables = listOf(enabledFileColors, colorsTableModel, useInEditorTabs, useInProjectView)
 
   // UnnamedConfigurable
 
-  override fun createComponent(): JPanel? {
+  override fun createComponent(): JPanel {
     disposeUIResources()
 
     val north = JPanel(HorizontalLayout(10))
@@ -135,10 +149,10 @@ class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScrol
     return panel
   }
 
-  override fun isModified() = configurables.any { it.isModified }
-  override fun apply() = configurables.forEach { it.apply() }
-  override fun reset() = configurables.forEach { it.reset() }
-  override fun disposeUIResources() = configurables.forEach { it.disposeUIResources() }
+  override fun isModified(): Boolean = configurables.any { it.isModified }
+  override fun apply(): Unit = configurables.forEach { it.apply() }
+  override fun reset(): Unit = configurables.forEach { it.reset() }
+  override fun disposeUIResources(): Unit = configurables.forEach { it.disposeUIResources() }
 }
 
 // table support
@@ -182,7 +196,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     val name = value as? String ?: return null
     if (null != manager.getColor(name)) return name
     val parent = table ?: return null
-    return chooseColor(parent, message("settings.file.colors.dialog.choose.color"), null)?.let { toHex(it) }
+    return ColorChooserService.instance.showDialog(null, parent, message("settings.file.colors.dialog.choose.color"), null)?.let { toHex(it) }
   }
 
   private fun resolveDuplicate(scopeName: String, colorName: String, toSharedList: Boolean): Boolean {
@@ -231,14 +245,14 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     selectRow(row)
   }
 
-  internal fun addScopeColor(scope: NamedScope, color: String?) {
+  fun addScopeColor(scope: NamedScope, color: String?) {
     val colorName = resolveCustomColor(color) ?: return
     if (resolveDuplicate(scope.scopeId, colorName, false)) return
     local.add(0, FileColorConfiguration(scope.scopeId, colorName))
     onRowInserted(0)
   }
 
-  internal fun getColors(): List<@Nls String> {
+  fun getColors(): List<@Nls String> {
     val list = mutableListOf<String>()
     list += manager.colorNames
     list += message("settings.file.color.custom.name")
@@ -352,7 +366,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     table.tableHeader.defaultRenderer = TableHeaderRenderer()
     table.setDefaultRenderer(String::class.java, TableScopeRenderer(manager))
     // configure color renderer and its editor
-    val editor = ComboBox<String>(getColors().toTypedArray())
+    val editor: ComboBox<String> = ComboBox(getColors().toTypedArray())
     editor.renderer = ComboBoxColorRenderer(manager)
     table.setDefaultEditor(FileColorConfiguration::class.java, DefaultCellEditor(editor))
     table.setDefaultRenderer(FileColorConfiguration::class.java, TableColorRenderer(manager))
@@ -371,6 +385,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
         val popup = JBPopupFactory.getInstance().createListPopup(ScopeListPopupStep(this))
         it.preferredPopupPoint?.let { point -> popup.show(point) }
       }
+      .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
       .setMoveUpActionUpdater { table.selectedRows.all { canExchangeRows(it, it - 1) } }
       .setMoveDownActionUpdater { table.selectedRows.all { canExchangeRows(it, it + 1) } }
       .createPanel()
@@ -490,5 +505,13 @@ private class ColorListPopupStep(val model: FileColorsTableModel, val scope: Nam
     // invoke later to close popup before showing dialog
     invokeLater { model.addScopeColor(scope, value) }
     return null
+  }
+}
+
+class FileColorsSearchOptionContributor : SearchableOptionContributor() {
+  override fun processOptions(processor: SearchableOptionProcessor) {
+    val displayName = message(DISPLAY_NAME_KEY)
+    processor.addOptions("Folder Colors", null, displayName, ID, displayName, false)
+    processor.addOptions("Directory Colors", null, displayName, ID, displayName, false)
   }
 }

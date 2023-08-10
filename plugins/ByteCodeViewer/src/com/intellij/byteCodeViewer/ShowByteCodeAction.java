@@ -1,12 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Editor;
@@ -37,6 +34,12 @@ import javax.swing.*;
 import java.awt.*;
 
 final class ShowByteCodeAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(false);
@@ -62,6 +65,9 @@ final class ShowByteCodeAction extends AnAction {
     final PsiElement psiElement = getPsiElement(dataContext, project, editor);
     if (psiElement == null) return;
 
+    // Some PSI elements could be multiline. Try to be precise about the line we were invoked at.
+    int lineNumber = editor != null ? editor.getCaretModel().getLogicalPosition().line : -1;
+
     if (ByteCodeViewerManager.getContainingClass(psiElement) == null) {
       Messages.showWarningDialog(project, JavaByteCodeViewerBundle.message("bytecode.class.in.selection.message"),
                                  JavaByteCodeViewerBundle.message("bytecode.not.found.message"));
@@ -82,11 +88,14 @@ final class ShowByteCodeAction extends AnAction {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile) &&
+        if (ReadAction.compute(() -> ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile)) &&
             isMarkedForCompilation(project, virtualFile)) {
           myErrorTitle = JavaByteCodeViewerBundle.message("class.file.may.be.out.of.date");
         }
-        myByteCode = ReadAction.compute(() -> ByteCodeViewerManager.getByteCode(psiElement));
+        myByteCode = ReadAction.compute(() -> {
+          PsiElement targetElement = element.getElement();
+          return targetElement != null ? ByteCodeViewerManager.getByteCode(targetElement) : null;
+        });
       }
 
       @Override
@@ -98,7 +107,7 @@ final class ShowByteCodeAction extends AnAction {
 
         final ByteCodeViewerManager codeViewerManager = ByteCodeViewerManager.getInstance(project);
         if (codeViewerManager.hasActiveDockedDocWindow()) {
-          codeViewerManager.doUpdateComponent(targetElement, myByteCode);
+          codeViewerManager.doUpdateComponent(targetElement, lineNumber, myByteCode);
         }
         else {
           if (myByteCode == null) {
@@ -108,7 +117,7 @@ final class ShowByteCodeAction extends AnAction {
           }
 
           final ByteCodeViewerComponent component = new ByteCodeViewerComponent(project);
-          component.setText(myByteCode, targetElement);
+          component.setText(myByteCode, targetElement, lineNumber);
           Processor<JBPopup> pinCallback = popup -> {
             codeViewerManager.recreateToolWindow(targetElement, targetElement);
             popup.cancel();

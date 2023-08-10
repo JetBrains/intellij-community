@@ -44,7 +44,8 @@ public final class JavaSdkVersionUtil {
     JavaSdk javaSdk = JavaSdk.getInstance();
     Sdk candidate = null;
     for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(javaSdk)) {
-      if (!javaSdk.isValidSdkHome(sdk.getHomePath())) continue;
+      String homePath = sdk.getHomePath();
+      if (homePath == null || !javaSdk.isValidSdkHome(homePath)) continue;
       JavaSdkVersion v = javaSdk.getVersion(sdk);
       if (v == version) {
         return sdk;  // exact match

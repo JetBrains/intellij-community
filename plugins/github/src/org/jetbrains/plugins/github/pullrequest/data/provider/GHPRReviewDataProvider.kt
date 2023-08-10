@@ -5,13 +5,13 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
+import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import java.util.concurrent.CompletableFuture
 
 interface GHPRReviewDataProvider {
@@ -38,15 +38,11 @@ interface GHPRReviewDataProvider {
   fun createReview(progressIndicator: ProgressIndicator,
                    event: GHPullRequestReviewEvent? = null, body: String? = null,
                    commitSha: String? = null,
-                   comments: List<GHPullRequestDraftReviewComment>? = null,
                    threads: List<GHPullRequestDraftReviewThread>? = null)
     : CompletableFuture<GHPullRequestPendingReview>
 
   @RequiresEdt
-  fun getReviewMarkdownBody(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<String>
-
-  @RequiresEdt
-  fun updateReviewBody(progressIndicator: ProgressIndicator, reviewId: String, newText: String): CompletableFuture<String>
+  fun updateReviewBody(progressIndicator: ProgressIndicator, reviewId: String, newText: String): CompletableFuture<@NlsSafe String>
 
   @RequiresEdt
   fun deleteReview(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<out Any?>
@@ -55,10 +51,13 @@ interface GHPRReviewDataProvider {
   fun canComment(): Boolean
 
   @RequiresEdt
-  fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String>
-
-  @RequiresEdt
-  fun addComment(progressIndicator: ProgressIndicator, reviewId: String, body: String, commitSha: String, fileName: String, diffLine: Int)
+  fun addComment(progressIndicator: ProgressIndicator,
+                 reviewId: String,
+                 body: String,
+                 commitSha: String,
+                 fileName: String,
+                 side: Side,
+                 line: Int)
     : CompletableFuture<out GHPullRequestReviewComment>
 
   @RequiresEdt
@@ -74,7 +73,13 @@ interface GHPRReviewDataProvider {
     : CompletableFuture<GHPullRequestReviewComment>
 
   @RequiresEdt
-  fun createThread(progressIndicator: ProgressIndicator, reviewId: String?, body: String, line: Int, side: Side, startLine: Int, fileName: String)
+  fun createThread(progressIndicator: ProgressIndicator,
+                   reviewId: String,
+                   body: String,
+                   line: Int,
+                   side: Side,
+                   startLine: Int,
+                   fileName: String)
     : CompletableFuture<GHPullRequestReviewThread>
 
   @RequiresEdt

@@ -36,18 +36,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGeneratorBase;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.webcore.packaging.PackageManagementService.ErrorDescription;
-import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo;
+import com.jetbrains.python.newProject.collector.PythonNewProjectWizardCollector;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageUtil;
+import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.remote.*;
 import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import org.jetbrains.annotations.Contract;
+import com.jetbrains.python.statistics.PyStatisticToolsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +58,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+
 
 /**
  * This class encapsulates remote settings, so one should extend it for any python project that supports remote generation, at least
@@ -178,7 +180,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
       }
     }
 
-    final PyProjectSynchronizer synchronizer = PyProjectSynchronizerProvider.getSynchronizer(sdk);
+    final PyProjectSynchronizer synchronizer = sdk != null ? PyProjectSynchronizerProvider.getSynchronizer(sdk) : null;
 
     if (synchronizer != null) {
       // Before project creation we need to configure sync
@@ -203,6 +205,12 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     }
 
     configureProject(project, baseDir, settings, module, synchronizer);
+    var statisticsInfo = settings.getInterpreterInfoForStatistics();
+    if (statisticsInfo instanceof InterpreterStatisticsInfo interpreterStatisticsInfo) {
+      PythonNewProjectWizardCollector.Companion.logPythonNewProjectGenerated(interpreterStatisticsInfo,
+                                                                             PyStatisticToolsKt.getVersion(settings.getSdk()),
+                                                                             this.getClass());
+    }
   }
 
   /**
@@ -298,25 +306,31 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
   protected static void reportPackageInstallationFailure(@NotNull final String frameworkName,
                                                          @Nullable final Pair<Sdk, ExecutionException> sdkAndException) {
 
-    final ErrorDescription errorDescription = getErrorDescription(sdkAndException);
+    final PyPackageManagementService.PyPackageInstallationErrorDescription errorDescription =
+      getErrorDescription(sdkAndException, frameworkName);
     final Application app = ApplicationManager.getApplication();
-    app.invokeLater(() -> PackagesNotificationPanel.showError(PyBundle.message("python.new.project.install.failed.title", frameworkName),
-                                                              errorDescription));
+    app.invokeLater(() -> {
+      PyPackagesNotificationPanel.showPackageInstallationError(PyBundle.message("python.new.project.install.failed.title", frameworkName),
+                                  errorDescription);
+    });
   }
 
   @NotNull
-  private static ErrorDescription getErrorDescription(@Nullable final Pair<Sdk, ExecutionException> sdkAndException) {
-    ErrorDescription errorDescription = null;
+  private static PyPackageManagementService.PyPackageInstallationErrorDescription getErrorDescription(@Nullable final Pair<Sdk, ExecutionException> sdkAndException,
+                                                                                                      @NotNull String packageName) {
+    PyPackageManagementService.PyPackageInstallationErrorDescription errorDescription = null;
     if (sdkAndException != null) {
       final ExecutionException exception = sdkAndException.second;
-      errorDescription = PyPackageManagementService.toErrorDescription(Collections.singletonList(exception), sdkAndException.first);
+      errorDescription =
+        PyPackageManagementService.toErrorDescription(Collections.singletonList(exception), sdkAndException.first, packageName);
       if (errorDescription == null) {
-        errorDescription = ErrorDescription.fromMessage(exception.getMessage());
+        errorDescription = PyPackageManagementService.PyPackageInstallationErrorDescription.createFromMessage(exception.getMessage());
       }
     }
 
     if (errorDescription == null) {
-      errorDescription = ErrorDescription.fromMessage(PyBundle.message("python.new.project.error.solution.another.sdk"));
+      errorDescription = PyPackageManagementService.PyPackageInstallationErrorDescription.createFromMessage(
+        PyBundle.message("python.new.project.error.solution.another.sdk"));
     }
     return errorDescription;
   }
@@ -336,54 +350,71 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
    * @param forceInstallFramework pass true if you are sure required framework is missing
    * @param callback              to be called after installation (or instead of is framework is installed) on AWT thread
    */
-  protected static void installFrameworkIfNeeded(@NotNull final Project project,
-                                                 @NotNull final String frameworkName,
-                                                 @NotNull final String requirement,
-                                                 @Nullable final Sdk sdk,
-                                                 final boolean forceInstallFramework,
-                                                 @Nullable final Runnable callback) {
+  public static void installFrameworkIfNeeded(@NotNull final Project project,
+                                              @NotNull final String frameworkName,
+                                              @NotNull final String requirement,
+                                              @Nullable final Sdk sdk,
+                                              final boolean forceInstallFramework,
+                                              @Nullable final Runnable callback) {
+    installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, false, callback);
+  }
+
+  public static void installFrameworkInBackground(@NotNull final Project project,
+                                                  @NotNull final String frameworkName,
+                                                  @NotNull final String requirement,
+                                                  @Nullable final Sdk sdk,
+                                                  final boolean forceInstallFramework,
+                                                  @Nullable final Runnable callback) {
+    installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, true, callback);
+  }
+
+  private static void installFrameworkIfNeeded(@NotNull final Project project,
+                                              @NotNull final String frameworkName,
+                                              @NotNull final String requirement,
+                                              @Nullable final Sdk sdk,
+                                              final boolean forceInstallFramework,
+                                              boolean asBackgroundTask,
+                                              @Nullable final Runnable callback) {
 
     if (sdk == null) {
       reportPackageInstallationFailure(frameworkName, null);
       return;
     }
-    final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+
     // For remote SDK we are not sure if framework exists or not, so we'll check it anyway
     if (forceInstallFramework || PythonSdkUtil.isRemote(sdk)) {
-      //Modal is used because it is insane to create project when framework is not installed
-      ProgressManager.getInstance().run(new Task.Modal(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
-        @Override
-        public void run(@NotNull final ProgressIndicator indicator) {
 
-          boolean installed = false;
-          if (!forceInstallFramework) {
-            // First check if we need to do it
-            indicator.setText(PyBundle.message("python.install.framework.checking.is.installed", frameworkName));
-            final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
-            installed = PyPsiPackageUtil.findPackage(packages, requirement) != null;
+      if (asBackgroundTask) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
+          @Override
+          public void run(@NotNull final ProgressIndicator indicator) {
+            installPackages(frameworkName, forceInstallFramework, indicator, requirement, sdk);
           }
 
-
-          if (!installed) {
-            indicator.setText(PyBundle.message("python.install.framework.installing", frameworkName));
-            try {
-              packageManager.install(requirement);
-              packageManager.refresh();
-            }
-            catch (final ExecutionException e) {
-              reportPackageInstallationFailure(requirement, Pair.create(sdk, e));
+          @Override
+          public void onSuccess() {
+            // Installed / checked successfully, call callback on AWT
+            if (callback != null) {
+              callback.run();
             }
           }
-        }
-
-        @Override
-        public void onSuccess() {
-          // Installed / checked successfully, call callback on AWT
-          if (callback != null) {
-            callback.run();
+        });
+      } else {
+        ProgressManager.getInstance().run(new Task.Modal(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
+          @Override
+          public void run(@NotNull final ProgressIndicator indicator) {
+            installPackages(frameworkName, forceInstallFramework, indicator, requirement, sdk);
           }
-        }
-      });
+
+          @Override
+          public void onSuccess() {
+            // Installed / checked successfully, call callback on AWT
+            if (callback != null) {
+              callback.run();
+            }
+          }
+        });
+      }
     }
     else {
       // No need to install, but still need to call callback on AWT
@@ -415,6 +446,32 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
      */
     PyNoProjectAllowedOnSdkException(@NotNull @DialogMessage final String reason) {
       super(reason);
+    }
+  }
+
+  private static void installPackages(@NotNull final String frameworkName,
+                                      boolean forceInstallFramework,
+                                      @NotNull ProgressIndicator indicator,
+                                      @NotNull final String requirement,
+                                      @NotNull final Sdk sdk) {
+    final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+    boolean installed = false;
+    if (!forceInstallFramework) {
+      // First check if we need to do it
+      indicator.setText(PyBundle.message("python.install.framework.checking.is.installed", frameworkName));
+      final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
+      installed = PyPsiPackageUtil.findPackage(packages, requirement) != null;
+    }
+
+    if (!installed) {
+      indicator.setText(PyBundle.message("python.install.framework.installing", frameworkName));
+      try {
+        packageManager.install(requirement);
+        packageManager.refresh();
+      }
+      catch (final ExecutionException e) {
+        reportPackageInstallationFailure(requirement, Pair.create(sdk, e));
+      }
     }
   }
 }

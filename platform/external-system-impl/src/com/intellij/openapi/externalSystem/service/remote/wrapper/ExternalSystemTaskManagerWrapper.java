@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.rmi.RemoteException;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalSystemTaskManagerWrapper<S extends ExternalSystemExecutionSettings>
   extends AbstractRemoteExternalSystemServiceWrapper<S, RemoteExternalSystemTaskManager<S>>
   implements RemoteExternalSystemTaskManager<S> {

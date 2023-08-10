@@ -1,29 +1,36 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.TextMateLanguage;
 
 public class TextMateElementType extends IElementType {
-  public TextMateElementType(@NotNull @NonNls String debugName) {
-    super(debugName, TextMateLanguage.LANGUAGE, false);
+  private final TextMateScope myScope;
+
+  public TextMateElementType(@NotNull TextMateScope scope) {
+    super("TEXTMATE_TOKEN", TextMateLanguage.LANGUAGE, false);
+    myScope = scope;
   }
 
   @NotNull
-  public String getSelector() {
-    return toString();
+  public TextMateScope getScope() {
+    return myScope;
   }
 
   @Override
   public int hashCode() {
-    return getSelector().hashCode();
+    return getScope().hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return myScope.toString();
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    return ((TextMateElementType)o).getSelector().equals(getSelector());
+    return ((TextMateElementType)o).getScope().equals(getScope());
   }
 }

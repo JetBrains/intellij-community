@@ -2,6 +2,7 @@
 package com.jetbrains.python.console.pydev;
 
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,16 +31,20 @@ public interface ConsoleCommunication {
   void notifyInputReceived();
 
   class ConsoleCodeFragment {
-    private final String myText;
+    private @NonNls String myText;
     private final boolean myIsSingleLine;
 
-    public ConsoleCodeFragment(String text, boolean isSingleLine) {
+    public ConsoleCodeFragment(@NonNls String text, boolean isSingleLine) {
       myText = text;
       myIsSingleLine = isSingleLine;
     }
 
-    public String getText() {
+    public @NonNls String getText() {
       return myText;
+    }
+
+    public void setText(@NonNls String text) {
+      myText = text;
     }
 
     public boolean isSingleLine() {

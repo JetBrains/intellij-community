@@ -62,4 +62,38 @@ public class NewExpressionPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testNewAfterNew() {
     doTest();
   }
+
+  public void testNewInsideVarargCall() {
+    doTest();
+  }
+
+  public void testNewInsideVarargCall2() {
+    doTest();
+  }
+
+  public void testNewNestedClass() {
+    doTest();
+  }
+
+  public void testNewNestedClass2() {
+    doTest();
+  }
+
+  public void testNewFQN() {
+    doTest();
+  }
+
+  public void testNewFQNConflict() {
+    doTest();
+  }
+
+  public void testNewFQNImport() {
+    doTest();
+  }
+
+  public void testNewInaccessible() {
+    myFixture.addClass("class Test {private Test() {}}");
+    doTest();
+  }
+
 }

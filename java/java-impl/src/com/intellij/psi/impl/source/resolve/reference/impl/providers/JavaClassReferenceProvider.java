@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.project.Project;
@@ -25,13 +11,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class JavaClassReferenceProvider extends GenericReferenceProvider implements CustomizableReferenceProvider {
   /** Tells reference provider to process only qualified class references (e.g. not resolve String as java.lang.String) */
@@ -51,9 +34,11 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public static final CustomizationKey<Boolean> ALLOW_WILDCARDS = new CustomizationKey<>("ALLOW_WILDCARDS");
 
   /** @deprecated use {@link #SUPER_CLASSES} instead */
-  @Deprecated public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<>("EXTEND_CLASS_NAMES");
+  @Deprecated
+  public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<>("EXTEND_CLASS_NAMES");
   /** @deprecated use {@link #IMPORTS} instead */
-  @Deprecated public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<>("DEFAULT_PACKAGE");
+  @Deprecated(forRemoval = true)
+  public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<>("DEFAULT_PACKAGE");
 
   @Nullable
   private Map<CustomizationKey, Object> myOptions;
@@ -73,10 +58,10 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
   public <T> void setOption(CustomizationKey<T> option, T value) {
     if (myOptions == null) {
-      myOptions = new THashMap<>();
+      myOptions = new HashMap<>();
     }
     if (option == EXTEND_CLASS_NAMES) {
-      SUPER_CLASSES.putValue(myOptions, ContainerUtil.immutableList((String[])value));
+      SUPER_CLASSES.putValue(myOptions, List.of((String[])value));
     }
     else if (option == DEFAULT_PACKAGE) {
       IMPORTS.putValue(myOptions, Collections.singletonList((String)value));
@@ -144,9 +129,12 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     return CachedValuesManager.getManager(project).getParameterizedCachedValue(project, ourPackagesKey, ourPackagesProvider, false, project);
   }
 
-  @Override
-  public void setOptions(@Nullable Map<CustomizationKey, Object> options) {
-    myOptions = options;
+  @NotNull
+  static Set<String> getDefaultPackagesNames(@NotNull Project project) {
+    return CachedValuesManager.getManager(project)
+      .getCachedValue(project, 
+                      () -> CachedValueProvider.Result.create(ContainerUtil.map2Set(getDefaultPackages(project), PsiPackage::getName), 
+                                                              PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Override

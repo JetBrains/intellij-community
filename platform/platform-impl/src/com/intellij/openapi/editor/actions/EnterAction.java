@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
@@ -22,7 +23,9 @@ public class EnterAction extends EditorAction implements LatencyAwareEditorActio
   private static class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
     public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.command.name"));
+      if (IntentionPreviewUtils.getPreviewEditor() != editor) {
+        CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.command.name"));
+      }
       insertNewLineAtCaret(editor);
     }
 

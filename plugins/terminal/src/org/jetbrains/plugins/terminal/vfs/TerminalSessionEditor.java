@@ -1,31 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.vfs;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.JBTerminalWidget;
-import com.jediterm.terminal.ui.TerminalAction;
-import com.jediterm.terminal.ui.TerminalActionProviderBase;
+import com.intellij.terminal.TerminalTitle;
+import com.intellij.terminal.TerminalTitleListener;
+import com.intellij.terminal.ui.TerminalWidgetKt;
 import com.jediterm.terminal.ui.TerminalWidgetListener;
-import com.jediterm.terminal.ui.settings.TabbedSettingsProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collections;
-import java.util.List;
+import java.io.IOException;
 
 public final class TerminalSessionEditor extends UserDataHolderBase implements FileEditor {
   private static final Logger LOG = Logger.getInstance(TerminalSessionEditor.class);
@@ -38,52 +35,49 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
   public TerminalSessionEditor(Project project, @NotNull TerminalSessionVirtualFileImpl terminalFile) {
     myProject = project;
     myFile = terminalFile;
-    terminalFile.getTerminalWidget().moveDisposable(myWidgetParentDisposable);
-
-    final TabbedSettingsProvider settings = myFile.getSettingsProvider();
-
-    myFile.getTerminalWidget().setNextProvider(new TerminalActionProviderBase() {
-      @Override
-      public List<TerminalAction> getActions() {
-        return Collections.singletonList(
-          new TerminalAction(settings.getCloseSessionActionPresentation(), input -> {
-            myFile.getTerminalWidget().close();
-            return true;
-          }).withMnemonicKey(KeyEvent.VK_S)
-        );
-      }
-    });
+    TerminalWidgetKt.setNewParentDisposable(terminalFile.getTerminalWidget(), myWidgetParentDisposable);
 
     myListener = widget -> {
       ApplicationManager.getApplication().invokeLater(() -> {
         FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile);
       }, myProject.getDisposed());
     };
-    myFile.getTerminalWidget().addListener(myListener);
+    JBTerminalWidget termWidget = JBTerminalWidget.asJediTermWidget(myFile.getTerminalWidget());
+    if (termWidget != null) {
+      termWidget.addListener(myListener);
+    }
+
+    terminalFile.getTerminalWidget().getTerminalTitle().addTitleListener(new TerminalTitleListener() {
+      @Override
+      public void onTitleChanged(@NotNull TerminalTitle terminalTitle) {
+        try {
+          terminalFile.rename(null, terminalTitle.buildTitle());
+        }
+        catch (IOException exception) {
+          throw new RuntimeException("Cannot rename");
+        }
+        FileEditorManager.getInstance(project).updateFilePresentation(terminalFile);
+      }
+    }, this);
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
-    return myFile.getTerminalWidget();
+  public @NotNull JComponent getComponent() {
+    return myFile.getTerminalWidget().getComponent();
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myFile.getTerminalWidget();
+  public @NotNull JComponent getPreferredFocusedComponent() {
+    return myFile.getTerminalWidget().getPreferredFocusableComponent();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myFile.getName();
   }
 
   @Override
-  public void setState(@NotNull FileEditorState state) {
-
-  }
+  public void setState(@NotNull FileEditorState state) { }
 
   @Override
   public boolean isModified() {
@@ -96,40 +90,22 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
   }
 
   @Override
-  public void selectNotify() {
-
-  }
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
   @Override
-  public void deselectNotify() {
-
-  }
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
   @Override
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-
-  }
-
-  @Override
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-
-  }
-
-  @Nullable
-  @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public FileEditorLocation getCurrentLocation() {
-    return null;
+  public @NotNull VirtualFile getFile() {
+    return myFile;
   }
 
   @Override
   public void dispose() {
-    myFile.getTerminalWidget().removeListener(myListener);
+    JBTerminalWidget termWidget = JBTerminalWidget.asJediTermWidget(myFile.getTerminalWidget());
+    if (termWidget != null) {
+      termWidget.removeListener(myListener);
+    }
     if (Boolean.TRUE.equals(myFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
       ApplicationManager.getApplication().invokeLater(() -> {
         boolean disposedBefore = Disposer.isDisposed(myFile.getTerminalWidget());

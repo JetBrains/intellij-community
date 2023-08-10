@@ -55,7 +55,7 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
     }
 
     final String tooltip = myData.toString() + (myData.getDescription() != null ? "<br>" + myData.getDescription() : "");
-    setNameAndTooltip(getName(), tooltip, hint);
+    setNameAndTooltip(presentation, getName(), tooltip, hint);
   }
 
   @NotNull

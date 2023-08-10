@@ -8,9 +8,6 @@ import org.codehaus.groovy.control.messages.ExceptionMessage;
 import java.net.URL;
 import java.util.List;
 
-/**
- * @author peter
- */
 public final class GrapeRunner {
   public static final String URL_PREFIX = "URL:";
 

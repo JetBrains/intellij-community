@@ -1,11 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Provides access to the {@link Application}.
@@ -17,9 +22,12 @@ public class ApplicationManager {
     return ourApplication;
   }
 
-  private static void setApplication(@NotNull Application instance) {
+  @ApiStatus.Internal
+  public static void setApplication(@Nullable Application instance) {
     ourApplication = instance;
-    CachedSingletonsRegistry.cleanupCachedFields();
+    for (Runnable cleaner : cleaners) {
+      cleaner.run();
+    }
   }
 
   public static void setApplication(@NotNull Application instance, @NotNull Disposable parent) {
@@ -33,21 +41,27 @@ public class ApplicationManager {
   }
 
   public static void setApplication(@NotNull Application instance,
-                                    @NotNull Getter<FileTypeRegistry> fileTypeRegistryGetter,
+                                    @NotNull Supplier<? extends FileTypeRegistry> fileTypeRegistryGetter,
                                     @NotNull Disposable parent) {
-    final Application old = ourApplication;
-    final Getter<FileTypeRegistry> oldFileTypeRegistry = FileTypeRegistry.ourInstanceGetter;
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        if (old != null) { // to prevent NPEs in threads still running
-          setApplication(old);
-          //noinspection AssignmentToStaticFieldFromInstanceMethod
-          FileTypeRegistry.ourInstanceGetter = oldFileTypeRegistry;
-        }
+    Application old = ourApplication;
+    setApplication(instance);
+    Supplier<? extends FileTypeRegistry> oldFileTypeRegistry = FileTypeRegistry.setInstanceSupplier(fileTypeRegistryGetter);
+    Disposer.register(parent, () -> {
+      if (old != null) {
+        // to prevent NPEs in threads still running
+        setApplication(old);
+        FileTypeRegistry.setInstanceSupplier(oldFileTypeRegistry);
       }
     });
-    setApplication(instance);
-    FileTypeRegistry.ourInstanceGetter = fileTypeRegistryGetter;
+  }
+
+  private static final List<Runnable> cleaners = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  /**
+   * register cleaning operation to be run when the Application instance is reset, for example, in tests
+   */
+  @ApiStatus.Internal
+  public static void registerCleaner(Runnable cleaner) {
+    cleaners.add(cleaner);
   }
 }

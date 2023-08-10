@@ -36,10 +36,11 @@ public class AdvHighlighting8Test extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testProtectedVariable() {
-    myFixture.addClass("package p1;\n" +
-                       "public class A {\n" +
-                       "  protected String myFoo = \"A\";\n" +
-                       "}");
+    myFixture.addClass("""
+                         package p1;
+                         public class A {
+                           protected String myFoo = "A";
+                         }""");
     doTest();
   }
 
@@ -48,40 +49,45 @@ public class AdvHighlighting8Test extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testUnrelatedConcreteInConstructors() {
-    myFixture.addClass("package p;\n" +
-                       "import java.util.List;\n" +
-                       "\n" +
-                       "public class A {\n" +
-                       "  public A(List l) {\n" +
-                       "  }\n" +
-                       "}");
-    myFixture.addClass("import java.util.List;\n" +
-                       "public class A<T> extends p.A {\n" +
-                       "  public A(List<T> l) {\n" +
-                       "    super(l);\n" +
-                       "  }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package p;
+                         import java.util.List;
+
+                         public class A {
+                           public A(List l) {
+                           }
+                         }""");
+    myFixture.addClass("""
+                         import java.util.List;
+                         public class A<T> extends p.A {
+                           public A(List<T> l) {
+                             super(l);
+                           }
+                         }""");
     doTest();
   }
 
   public void testPackageLocalMethod() {
-    myFixture.addClass("package foo;\n" +
-                       "public abstract class A {\n" +
-                       "  abstract void foo();\n" +
-                       "}");
-    myFixture.addClass("package foo.bar;\n" +
-                       "import foo.A;\n" +
-                       "abstract class B extends A {}");
+    myFixture.addClass("""
+                         package foo;
+                         public abstract class A {
+                           abstract void foo();
+                         }""");
+    myFixture.addClass("""
+                         package foo.bar;
+                         import foo.A;
+                         abstract class B extends A {}""");
     doTest();
   }
 
   public void testPackagePrivateAndSuperMethodReference() {
-    myFixture.addClass("package a;\n" +
-                       "public class A {\n" +
-                       "    protected void foo(int a) {\n" +
-                       "        System.out.println(a);\n" +
-                       "    }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package a;
+                         public class A {
+                             protected void foo(int a) {
+                                 System.out.println(a);
+                             }
+                         }""");
     doTest();
   }
 

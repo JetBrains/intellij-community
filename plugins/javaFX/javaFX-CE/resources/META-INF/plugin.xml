@@ -1,0 +1,18 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="org.jetbrains.plugins.javaFX" on-demand="true">
+  <name>JavaFX</name>
+  <id>org.jetbrains.plugins.javaFX</id>
+  <vendor>JetBrains</vendor>
+  <category>JVM Frameworks</category>
+  <description><![CDATA[
+    Enables <a href="https://openjfx.io/">JavaFX</a> support.
+    The following features are available:
+    <ul>
+      <li>Dedicated FXML file type.</li>
+      <li>Ability to create a project with the special file and directory structure.</li>
+      <li>JavaFX-aware coding assistance (code completion, search, navigation and refactoring in JavaFX-specific source files).</li>
+      <li>Integration with <a href="https://github.com/gluonhq/scenebuilder/wiki/Basic-JavaFX-project-with-Scene-Builder">JavaFX Scene Builder</a>.</li>
+    </ul>
+  ]]></description>
+
+  <xi:include href="/META-INF/common-javaFX-plugin.xml"/>
+</idea-plugin>

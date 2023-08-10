@@ -554,7 +554,7 @@ public final class SyntaxInfoBuilder {
       myDefaultForeground = scheme.getDefaultForeground();
       myDefaultBackground = scheme.getDefaultBackground();
 
-      int javaFontSize = scheme.getEditorFontSize();
+      float javaFontSize = scheme.getEditorFontSize2D();
       float fontSize = SystemInfo.isMac || ApplicationManager.getApplication().isHeadlessEnvironment() ?
                        javaFontSize :
                        javaFontSize * 0.75f / UISettings.getDefFontScale(); // matching font size in external apps

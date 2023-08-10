@@ -21,7 +21,7 @@ import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -61,7 +61,7 @@ final public class AnalysisActionUtils {
   @NotNull
   private static AnalysisScope getInspectionScopeImpl(@NotNull DataContext dataContext, @NotNull Project project, Boolean acceptNonProjectDirectories) {
     // possible scopes: file, directory, package, project, module.
-    Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
+    Project projectContext = PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext);
     if (projectContext != null) {
       return new AnalysisScope(projectContext);
     }
@@ -91,7 +91,8 @@ final public class AnalysisActionUtils {
       // analyze on selection
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       if (virtualFiles.length == 1) {
-        PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(virtualFiles[0]);
+        VirtualFile file = virtualFiles[0];
+        PsiDirectory psiDirectory = file.isValid() ? PsiManager.getInstance(project).findDirectory(file) : null;
         if (psiDirectory != null && (acceptNonProjectDirectories || psiDirectory.getManager().isInProject(psiDirectory))) {
           return new AnalysisScope(psiDirectory);
         }

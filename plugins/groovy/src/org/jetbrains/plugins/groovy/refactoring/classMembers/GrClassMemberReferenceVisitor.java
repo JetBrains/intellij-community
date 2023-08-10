@@ -52,8 +52,7 @@ public abstract class GrClassMemberReferenceVisitor extends GroovyRecursiveEleme
   public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement reference) {
     GroovyResolveResult resolveResult = reference.advancedResolve();
     PsiElement referencedElement = resolveResult.getElement();
-    if (referencedElement instanceof GrTypeDefinition) {
-      final GrTypeDefinition referencedClass = (GrTypeDefinition)referencedElement;
+    if (referencedElement instanceof GrTypeDefinition referencedClass) {
       if (PsiTreeUtil.isAncestor(myClass, referencedElement, true) ||
           isPartOf(myClass, referencedClass.getContainingClass())) {
         visitClassMemberReferenceElement(reference, (GrMember)referencedElement, resolveResult);

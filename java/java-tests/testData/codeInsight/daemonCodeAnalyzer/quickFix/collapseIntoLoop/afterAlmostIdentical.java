@@ -1,6 +1,6 @@
 import java.util.Arrays;
 
-// "Collapse into loop" "true"
+// "Collapse into loop" "true-preview"
 class X {
     void test() {
         for (String s : Arrays.asList("Hello", "Hello1", "Hello2")) {

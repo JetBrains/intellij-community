@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see ContentEntry#getSourceFolders()
  * @see ContentEntry#getExcludeFolders()
- * @author dsl
  */
 @ApiStatus.NonExtendable
 public interface ContentFolder extends Synthetic {

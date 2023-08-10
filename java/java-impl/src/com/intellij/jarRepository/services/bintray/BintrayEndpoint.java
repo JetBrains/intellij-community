@@ -33,8 +33,9 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 
 /**
- * @author ibessonov
+ * @deprecated since Bintray service is scheduled for sunsetting in May 2021
  */
+@Deprecated(forRemoval = true)
 public class BintrayEndpoint {
 
   public static final String BINTRAY_API_URL = "https://bintray.com/api/v1/";
@@ -139,7 +140,7 @@ public class BintrayEndpoint {
 
   public <Data, E extends Throwable>
   void executeRequest(@NotNull String url, @NotNull Class<Data> responseDataClass,
-                      @NotNull ThrowableConsumer<Data, IOException> responseHandler,
+                      @NotNull ThrowableConsumer<? super Data, ? extends IOException> responseHandler,
                       @NotNull ExceptionHandler<E> exceptionHandler,
                       @Nullable DoubleConsumer progressHandler) throws IOException, E {
     AtomicReference<Throwable> exception = new AtomicReference<>();
@@ -224,7 +225,7 @@ public class BintrayEndpoint {
   }
 
   private <Data> void handleRequest(HttpRequests.Request request, Class<Data> responseDataClass,
-                                    ThrowableConsumer<Data, IOException> responseHandler) throws IOException {
+                                    ThrowableConsumer<? super Data, ? extends IOException> responseHandler) throws IOException {
     try (InputStream in = request.getInputStream();
          Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
       Data data = gson.fromJson(reader, responseDataClass);

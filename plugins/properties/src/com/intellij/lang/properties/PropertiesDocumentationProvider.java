@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -22,11 +8,15 @@ package com.intellij.lang.properties;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,32 +25,30 @@ import java.awt.*;
 
 public class PropertiesDocumentationProvider extends AbstractDocumentationProvider {
   @Override
-  @Nullable
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof IProperty) {
       return "\"" + renderPropertyValue((IProperty)element) + "\"" + getLocationString(element);
     }
     return null;
   }
 
-  private static String getLocationString(PsiElement element) {
+  private static @NlsSafe String getLocationString(PsiElement element) {
     PsiFile file = element.getContainingFile();
     return file != null ? " [" + file.getName() + "]" : "";
   }
 
-  @NotNull
-  private static String renderPropertyValue(IProperty prop) {
-    String raw = prop.getValue();
-    if (raw == null) {
-      return "<i>empty</i>";
-    }
-    return StringUtil.escapeXmlEntities(raw);
+  private static @NotNull HtmlChunk renderPropertyValue(IProperty prop) {
+    final String raw = prop.getValue();
+    if (raw != null) return HtmlChunk.text(raw);
+
+    return new HtmlBuilder()
+      .append(PropertiesBundle.message("i18n.message.empty"))
+      .wrapWith("i");
   }
 
   @Override
-  public String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
-    if (element instanceof IProperty) {
-      IProperty property = (IProperty)element;
+  public @Nls String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
+    if (element instanceof IProperty property) {
       String text = property.getDocCommentText();
 
       @NonNls String info = "";
@@ -82,7 +70,7 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
           info += "</div>";
         }
       }
-      info += "\n<b>" + property.getName() + "</b>=\"" + renderPropertyValue(((IProperty)element)) + "\"";
+      info += "\n<b>" + property.getName() + "</b>=\"" + renderPropertyValue((IProperty)element) + "\"";
       info += getLocationString(element);
       return info;
     }

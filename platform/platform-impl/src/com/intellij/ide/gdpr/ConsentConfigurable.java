@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ConsentConfigurable extends ConfigurableBase<ConsentSettingsUi, List<Consent>> {
+public final class ConsentConfigurable extends ConfigurableBase<ConsentSettingsUi, List<Consent>> {
   private final List<Consent> myConsents;
 
   public ConsentConfigurable() {

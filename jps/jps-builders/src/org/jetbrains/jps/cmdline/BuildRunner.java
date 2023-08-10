@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,7 @@ import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsProject;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,26 +43,28 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 
 public final class BuildRunner {
   private static final Logger LOG = Logger.getInstance(BuildRunner.class);
-  public static final boolean PARALLEL_BUILD_ENABLED = Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "false"));
-  public static final boolean PARALLEL_BUILD_AUTOMAKE_ENABLED = PARALLEL_BUILD_ENABLED && Boolean.parseBoolean(System.getProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION, "true"));
   private final JpsModelLoader myModelLoader;
   private List<String> myFilePaths = Collections.emptyList();
   private Map<String, String> myBuilderParams = Collections.emptyMap();
   private boolean myForceCleanCaches;
 
-  public BuildRunner(JpsModelLoader modelLoader) {
+  public BuildRunner(@NotNull JpsModelLoader modelLoader) {
     myModelLoader = modelLoader;
   }
 
-  public void setFilePaths(List<String> filePaths) {
+  public void setFilePaths(@Nullable List<String> filePaths) {
     myFilePaths = filePaths != null? filePaths : Collections.emptyList();
   }
 
-  public void setBuilderParams(Map<String, String> builderParams) {
+  public void setBuilderParams(@Nullable Map<String, String> builderParams) {
     myBuilderParams = builderParams != null? builderParams : Collections.emptyMap();
   }
 
-  public ProjectDescriptor load(MessageHandler msgHandler, File dataStorageRoot, BuildFSState fsState) throws IOException {
+  public @NotNull JpsProject loadModelAndGetJpsProject() throws IOException {
+    return myModelLoader.loadModel().getProject();
+  }
+
+  public ProjectDescriptor load(@NotNull MessageHandler msgHandler, @NotNull File dataStorageRoot, @NotNull BuildFSState fsState) throws IOException {
     final JpsModel jpsModel = myModelLoader.loadModel();
     BuildDataPaths dataPaths = new BuildDataPathsImpl(dataStorageRoot);
     BuildTargetRegistryImpl targetRegistry = new BuildTargetRegistryImpl(jpsModel);
@@ -93,7 +97,7 @@ public final class BuildRunner {
         dataManager.close();
       }
       myForceCleanCaches = true;
-      FileUtilRt.delete(dataStorageRoot);
+      NioFiles.deleteRecursively(dataStorageRoot.toPath());
       targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
       projectStamps = new ProjectStamps(dataStorageRoot, targetsState, relativizer);
       dataManager = new BuildDataManager(dataPaths, targetsState, relativizer);
@@ -102,8 +106,9 @@ public final class BuildRunner {
                                                     JpsBuildBundle.message("build.message.project.rebuild.forced.0", e.getMessage())));
     }
 
-    return new ProjectDescriptor(jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
-                                 targetIndex, buildRootIndex, ignoredFileIndex);
+    return new ProjectDescriptor(
+      jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetIndex, buildRootIndex, ignoredFileIndex
+    );
   }
 
   @NotNull
@@ -115,12 +120,25 @@ public final class BuildRunner {
     myForceCleanCaches = forceCleanCaches;
   }
 
+  /**
+   * @deprecated Use {@link #runBuild(ProjectDescriptor, CanceledStatus, MessageHandler, BuildType, List, boolean)} instead.
+   * constantSearch parameter is ignored
+   */
+  @Deprecated(forRemoval = true)
   public void runBuild(ProjectDescriptor pd,
                        CanceledStatus cs,
                        @Nullable Callbacks.ConstantAffectionResolver constantSearch,
                        MessageHandler msgHandler,
                        BuildType buildType,
                        List<TargetTypeBuildScope> scopes, final boolean includeDependenciesToScope) throws Exception {
+    runBuild(pd, cs, msgHandler, buildType, scopes, includeDependenciesToScope);
+  }
+
+  public void runBuild(@NotNull ProjectDescriptor pd,
+                       @NotNull CanceledStatus cs,
+                       @NotNull MessageHandler msgHandler,
+                       @NotNull BuildType buildType,
+                       @NotNull List<TargetTypeBuildScope> scopes, final boolean includeDependenciesToScope) throws Exception {
     for (int attempt = 0; attempt < 2 && !cs.isCanceled(); attempt++) {
       final boolean forceClean = myForceCleanCaches && myFilePaths.isEmpty();
       final CompileScope compileScope = createCompilationScope(pd, scopes, myFilePaths, forceClean, includeDependenciesToScope);
@@ -152,6 +170,11 @@ public final class BuildRunner {
         }
       }
     }
+  }
+
+  public CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes) throws Exception {
+    final boolean forceClean = myForceCleanCaches && myFilePaths.isEmpty();
+    return createCompilationScope(pd, scopes, myFilePaths, forceClean, false);
   }
 
   private static CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes, Collection<String> paths,
@@ -253,5 +276,13 @@ public final class BuildRunner {
       targets.addAll(next);
       current = next;
     }
+  }
+
+  public static boolean isParallelBuildEnabled() {
+    return SystemProperties.getBooleanProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, false);
+  }
+
+  public static boolean isParallelBuildAutomakeEnabled() {
+    return isParallelBuildEnabled() && SystemProperties.getBooleanProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION, true);
   }
 }

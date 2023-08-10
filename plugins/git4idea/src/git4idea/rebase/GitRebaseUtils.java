@@ -19,17 +19,13 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static git4idea.GitNotificationIdsHolder.*;
@@ -132,47 +128,34 @@ public final class GitRebaseUtils {
     for (GitRepository repository : repositories) {
       Repository.State state = repository.getState();
       String repositoryName = getShortRepositoryName(repository);
-      String message = null;
-      switch (state) {
-        case NORMAL:
+      String message = switch (state) {
+        case NORMAL -> {
           if (repository.isFresh()) {
-            message = GitBundle.message("rebase.notification.not.allowed.empty.repository.message", repositoryName);
+            yield GitBundle.message("rebase.notification.not.allowed.empty.repository.message", repositoryName);
           }
-          break;
-        case MERGING:
-          message = new HtmlBuilder()
-            .append(GitBundle.message("rebase.notification.not.allowed.merging.message.first", repositoryName)).br()
-            .append(GitBundle.message("rebase.notification.not.allowed.merging.message.second"))
-            .toString();
-          break;
-        case REBASING:
-          message = new HtmlBuilder()
-            .append(GitBundle.message("rebase.notification.not.allowed.rebasing.message.first", repositoryName)).br()
-            .append(GitBundle.message("rebase.notification.not.allowed.rebasing.message.second"))
-            .toString();
-          break;
-        case GRAFTING:
-          message = new HtmlBuilder()
-            .append(GitBundle.message("rebase.notification.not.allowed.grafting.message.first", repositoryName)).br()
-            .append(GitBundle.message("rebase.notification.not.allowed.grafting.message.second"))
-            .toString();
-          break;
-        case REVERTING:
-          message = new HtmlBuilder()
-            .append(GitBundle.message("rebase.notification.not.allowed.reverting.message.first", repositoryName)).br()
-            .append(GitBundle.message("rebase.notification.not.allowed.reverting.message.second"))
-            .toString();
-          break;
-        case DETACHED:
-          message = new HtmlBuilder()
-            .append(GitBundle.message("rebase.notification.not.allowed.detached.message.first", repositoryName)).br()
-            .append(GitBundle.message("rebase.notification.not.allowed.detached.message.second"))
-            .toString();
-          break;
-        default:
-          LOG.error("Unknown state [" + state.name() + "]");
-          message = GitBundle.message("rebase.notification.not.allowed.message", repositoryName);
-      }
+          yield null;
+        }
+        case MERGING -> new HtmlBuilder()
+          .append(GitBundle.message("rebase.notification.not.allowed.merging.message.first", repositoryName)).br()
+          .append(GitBundle.message("rebase.notification.not.allowed.merging.message.second"))
+          .toString();
+        case REBASING -> new HtmlBuilder()
+          .append(GitBundle.message("rebase.notification.not.allowed.rebasing.message.first", repositoryName)).br()
+          .append(GitBundle.message("rebase.notification.not.allowed.rebasing.message.second"))
+          .toString();
+        case GRAFTING -> new HtmlBuilder()
+          .append(GitBundle.message("rebase.notification.not.allowed.grafting.message.first", repositoryName)).br()
+          .append(GitBundle.message("rebase.notification.not.allowed.grafting.message.second"))
+          .toString();
+        case REVERTING -> new HtmlBuilder()
+          .append(GitBundle.message("rebase.notification.not.allowed.reverting.message.first", repositoryName)).br()
+          .append(GitBundle.message("rebase.notification.not.allowed.reverting.message.second"))
+          .toString();
+        case DETACHED -> new HtmlBuilder()
+          .append(GitBundle.message("rebase.notification.not.allowed.detached.message.first", repositoryName)).br()
+          .append(GitBundle.message("rebase.notification.not.allowed.detached.message.second"))
+          .toString();
+      };
       if (message != null) {
         VcsNotifier.getInstance(project).notifyError(
           REBASE_NOT_ALLOWED,
@@ -195,7 +178,9 @@ public final class GitRebaseUtils {
 
   @Nullable
   public static File getRebaseDir(@NotNull Project project, @NotNull VirtualFile root) {
-    GitRepository repository = Objects.requireNonNull(GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(root));
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(root);
+    if (repository == null) return null;
+
     File f = repository.getRepositoryFiles().getRebaseApplyDir();
     if (f.exists()) {
       return f;
@@ -216,7 +201,6 @@ public final class GitRebaseUtils {
    * Get rebase directory
    *
    *
-   * @param project
    * @param root the vcs root
    * @return the commit information or null if no commit information could be detected
    */
@@ -352,7 +336,6 @@ public final class GitRebaseUtils {
     /**
      * The constructor
      *
-     * @param revision
      * @param subject the commit subject
      */
     public CommitInfo(GitRevisionNumber revision, String subject) {

@@ -7,13 +7,12 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.io.outputStream
 import java.io.InputStream
 import java.nio.file.Path
-import java.nio.file.Paths
 
 class TestApp {
   companion object {
     @JvmStatic
     fun main(args: Array<String>) {
-      val inputFile = Paths.get(args[0].trim())
+      val inputFile = Path.of(args[0].trim())
       val outFile = inputFile.parent.resolve(FileUtilRt.getNameWithoutExtension(inputFile.fileName.toString()) + "-text.ion")
 
       readPossiblyCompressedIonFile(inputFile) { input ->

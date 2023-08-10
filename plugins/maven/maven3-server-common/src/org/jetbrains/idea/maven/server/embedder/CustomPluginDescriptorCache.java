@@ -23,9 +23,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public class CustomPluginDescriptorCache extends DefaultPluginDescriptorCache {
 
   private final Map<Key, PluginDescriptor> descriptors = new HashMap<Key, PluginDescriptor>(128);

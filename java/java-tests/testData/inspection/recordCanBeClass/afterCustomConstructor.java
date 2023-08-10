@@ -1,6 +1,6 @@
 import java.util.Objects;
 
-// "Convert record to class" "true"
+// "Convert record to class" "true-preview"
 final class Range {
     static final Range ZERO = new Range(0);
     private final int x;

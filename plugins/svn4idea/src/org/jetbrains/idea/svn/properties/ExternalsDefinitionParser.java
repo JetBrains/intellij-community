@@ -12,9 +12,6 @@ import java.util.Map;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public final class ExternalsDefinitionParser {
 
   /**

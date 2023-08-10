@@ -84,7 +84,7 @@ public abstract class HgCommitTypeCommand {
       executeChunked(Collections.emptyList());
     }
     else {
-      List<String> relativePaths = ContainerUtil.map2List(myFiles, file -> file.getRelativePath());
+      List<String> relativePaths = ContainerUtil.map(myFiles, file -> file.getRelativePath());
       List<List<String>> chunkedCommits = VcsFileUtil.chunkArguments(relativePaths);
       executeChunked(chunkedCommits);
     }

@@ -1,0 +1,7 @@
+14 i.foo(<bold>s</bold>) (in bar(I, String))
+4 	fun foo(<bold>p: Any</bold>) (in I.foo(Any))
+2 		public void foo(Object <bold>p</bold>) {
+3 			System.out.println(<bold>p</bold>);
+8 		override fun foo(<bold>p: Any</bold>) { (in C.foo(Any))
+9 			val v = <bold>p</bold> (in C.foo(Any))
+9 				<bold>val v</bold> = p (in C.foo(Any))

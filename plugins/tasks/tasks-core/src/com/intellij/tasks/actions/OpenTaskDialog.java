@@ -11,10 +11,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.tasks.*;
-import com.intellij.tasks.impl.LocalTaskImpl;
-import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.tasks.impl.TaskStateCombo;
-import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.tasks.impl.*;
 import com.intellij.tasks.ui.TaskDialogPanel;
 import com.intellij.tasks.ui.TaskDialogPanelProvider;
 import com.intellij.ui.DocumentAdapter;
@@ -140,6 +137,12 @@ public class OpenTaskDialog extends DialogWrapper {
 
     for (TaskDialogPanel panel : myPanels) {
       panel.commit();
+    }
+    if (myTask.getRepository() != null) {
+      TaskManagementUsageCollector.logOpenRemoteTask(myProject, myTask);
+    }
+    else {
+      TaskManagementUsageCollector.logCreateLocalTaskManually(myProject);
     }
     taskManager.activateTask(myTask, isClearContext(), true);
     if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {

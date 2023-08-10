@@ -6,7 +6,7 @@ import java.nio.file.Paths;
 
 public class Example {
   void testRead1() throws IOException {
-    String s = new String(Files<caret>.readAllBytes(Paths.get("/etc/passwd")), StandardCharsets.ISO_8859_1);
+    String s = new String<caret>(Files.readAllBytes(Paths.get("/etc/passwd")), StandardCharsets.ISO_8859_1);
   }
 
   void testRead2() throws IOException {

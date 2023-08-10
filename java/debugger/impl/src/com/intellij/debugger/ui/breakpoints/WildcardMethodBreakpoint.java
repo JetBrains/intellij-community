@@ -15,8 +15,8 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -107,7 +107,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
   public Icon getIcon() {
     if (!isEnabled()) {
       final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-      return master == null? AllIcons.Debugger.Db_disabled_method_breakpoint : AllIcons.Debugger.Db_dep_method_breakpoint;
+      return master == null ? AllIcons.Debugger.Db_disabled_method_breakpoint : AllIcons.Debugger.Db_dep_method_breakpoint;
     }
     return AllIcons.Debugger.Db_method_breakpoint;
   }
@@ -132,9 +132,9 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
 
       Pattern pattern = PatternUtil.fromMask(getClassPattern());
       debugProcess.getVirtualMachineProxy().allClasses().stream()
-                  .filter(c -> pattern.matcher(c.name()).matches())
-                  .filter(ReferenceType::isPrepared)
-                  .forEach(aList -> processClassPrepare(debugProcess, aList));
+        .filter(c -> pattern.matcher(c.name()).matches())
+        .filter(ReferenceType::isPrepared)
+        .forEach(aList -> processClassPrepare(debugProcess, aList));
     }
     else {
       try {
@@ -208,24 +208,24 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
   public void readExternal(Element parentNode) throws InvalidDataException {
     super.readExternal(parentNode);
 
-    //noinspection HardCodedStringLiteral
     String className = parentNode.getAttributeValue("class_name");
     setClassPattern(className);
 
-    //noinspection HardCodedStringLiteral
     String methodName = parentNode.getAttributeValue("method_name");
     setMethodName(methodName);
 
     try {
-      getProperties().WATCH_ENTRY = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "WATCH_ENTRY"));
-    } catch (Exception ignored) {
+      getProperties().WATCH_ENTRY = Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "WATCH_ENTRY"));
+    }
+    catch (Exception ignored) {
     }
     try {
-      getProperties().WATCH_EXIT = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "WATCH_EXIT"));
-    } catch (Exception ignored) {
+      getProperties().WATCH_EXIT = Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "WATCH_EXIT"));
+    }
+    catch (Exception ignored) {
     }
 
-    if(className == null || methodName == null) {
+    if (className == null || methodName == null) {
       throw new InvalidDataException();
     }
   }

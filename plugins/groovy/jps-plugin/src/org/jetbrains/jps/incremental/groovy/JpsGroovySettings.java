@@ -28,9 +28,6 @@ import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfig
 
 import java.io.File;
 
-/**
- * @author peter
- */
 public class JpsGroovySettings extends JpsElementBase<JpsGroovySettings> {
   static final JpsElementChildRole<JpsGroovySettings> ROLE = JpsElementChildRoleBase.create("Groovy Compiler Configuration");
   public static final boolean DEFAULT_INVOKE_DYNAMIC = false;

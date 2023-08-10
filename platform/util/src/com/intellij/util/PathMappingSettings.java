@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -13,18 +13,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class PathMappingSettings extends AbstractPathMapper implements Cloneable {
+  // C:\
+  private static final Pattern WIN_DRIVE = Pattern.compile("^[a-z]:[/\\\\]$", Pattern.CASE_INSENSITIVE);
 
-  @NotNull
-  private List<PathMapping> myPathMappings;
+  private @NotNull List<PathMapping> myPathMappings;
 
-  public PathMappingSettings(@Nullable final List<? extends PathMapping> pathMappings) {
+  public PathMappingSettings(final @Nullable List<? extends PathMapping> pathMappings) {
     myPathMappings = create(pathMappings);
   }
 
-  @NotNull
-  private static List<PathMapping> create(@Nullable final List<? extends PathMapping> mappings) {
+  private static @NotNull List<PathMapping> create(final @Nullable List<? extends PathMapping> mappings) {
     List<PathMapping> result = new ArrayList<>();
     if (mappings != null) {
       for (PathMapping m : mappings) {
@@ -40,13 +41,11 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     myPathMappings = new ArrayList<>();
   }
 
-  @NotNull
-  static String norm(@NotNull String path) {
+  static @NotNull String norm(@NotNull String path) {
     return FileUtil.toSystemIndependentName(path);
   }
 
-  @NotNull
-  private static String normLocal(@NotNull String path) {
+  private static @NotNull String normLocal(@NotNull String path) {
     if (SystemInfo.isWindows) {
       path = StringUtil.toLowerCase(path);
     }
@@ -70,22 +69,19 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
       }
     }
 
-    @Nullable
-    public PathMapping get() {
+    public @Nullable PathMapping get() {
       return myBest;
     }
   }
 
-  @NotNull
   @Override
-  public String convertToLocal(@NotNull String remotePath) {
+  public @NotNull String convertToLocal(@NotNull String remotePath) {
     String localPath = convertToLocal(remotePath, myPathMappings);
     return localPath != null ? localPath : remotePath;
   }
 
-  @NotNull
   @Override
-  public String convertToRemote(@NotNull String localPath) {
+  public @NotNull String convertToRemote(@NotNull String localPath) {
     String remotePath = convertToRemote(localPath, myPathMappings);
     return remotePath != null ? remotePath : localPath;
   }
@@ -116,22 +112,19 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
   }
 
   @Override
-  @NotNull
-  protected final Collection<PathMapping> getAvailablePathMappings() {
+  protected final @NotNull Collection<PathMapping> getAvailablePathMappings() {
     return Collections.unmodifiableCollection(myPathMappings);
   }
 
-  @NotNull
-  public List<PathMapping> getPathMappings() {
+  public @NotNull List<PathMapping> getPathMappings() {
     return myPathMappings;
   }
 
-  public void setPathMappings(@Nullable final List<? extends PathMapping> pathMappings) {
+  public void setPathMappings(final @Nullable List<? extends PathMapping> pathMappings) {
     myPathMappings = create(pathMappings);
   }
 
-  @NotNull
-  public static String mapToLocal(@NotNull String path, @Nullable String remoteRoot, @Nullable String localRoot) {
+  public static @NotNull String mapToLocal(@NotNull String path, @Nullable String remoteRoot, @Nullable String localRoot) {
     if (isAnyEmpty(localRoot, remoteRoot)) {
       return path;
     }
@@ -157,8 +150,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     return StringUtil.isEmpty(localRoot) || StringUtil.isEmpty(remoteRoot);
   }
 
-  @Nullable
-  public static PathMappingSettings readExternal(@Nullable final Element element) {
+  public static @Nullable PathMappingSettings readExternal(final @Nullable Element element) {
     if (element == null) {
       return null;
     }
@@ -171,7 +163,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     return XmlSerializer.deserialize(settingsElement, PathMappingSettings.class);
   }
 
-  public static void writeExternal(@Nullable final Element element, @Nullable final PathMappingSettings mappings) {
+  public static void writeExternal(final @Nullable Element element, final @Nullable PathMappingSettings mappings) {
     if (element == null || mappings == null || mappings.isEmpty()) {
       return;
     }
@@ -216,8 +208,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
       myRemoteRoot = normalize(remoteRoot);
     }
 
-    @Nullable
-    private static String normalize(@Nullable String path) {
+    private static @Nullable String normalize(@Nullable String path) {
       if (path == null) {
         return null;
       }
@@ -252,8 +243,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
       myRemoteRoot = normalize(remoteRoot);
     }
 
-    @NotNull
-    public String mapToLocal(@NotNull String path) {
+    public @NotNull String mapToLocal(@NotNull String path) {
       return PathMappingSettings.mapToLocal(path, myRemoteRoot, myLocalRoot);
     }
 
@@ -287,6 +277,11 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     }
 
     private static String trimSlash(@NotNull String s) {
+      if (WIN_DRIVE.matcher(s).matches()) {
+        // No need to convert c:\ -> C:
+        // Path.ancestor doens't work with it
+        return s;
+      }
       if (s.equals("/")) {
         return s;
       }
@@ -337,5 +332,12 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     remotePrefix = norm(remotePrefix);
     return path.startsWith(remotePrefix) &&
            (path.length() == remotePrefix.length() || remotePrefix.endsWith("/") || path.substring(remotePrefix.length()).startsWith("/"));
+  }
+
+  @Override
+  public String toString() {
+    return "PathMappingSettings{" +
+           "myPathMappings=" + myPathMappings +
+           "} " + super.toString();
   }
 }

@@ -117,11 +117,6 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
     }
 
     @Override
-    public Class<?> getColumnClass() {
-      return String.class;
-    }
-
-    @Override
     public void setValue(PySteppingFilter filter, String value) {
       filter.setFilter(value);
     }

@@ -24,7 +24,6 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
@@ -101,7 +100,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
 
       final List<PsiType>
         expectedThrownTypes = ContainerUtil.map(interfaceMethod.getThrowsList().getReferencedTypes(),
-                                                (Function<PsiType, PsiType>)type -> session.substituteWithInferenceVariables(substitutor.substitute(type)));
+                                                type -> session.substituteWithInferenceVariables(substitutor.substitute(type)));
       final List<PsiType> expectedNonProperThrownTypes = new ArrayList<>();
       for (PsiType type : expectedThrownTypes) {
         if (!session.isProperType(type)) {

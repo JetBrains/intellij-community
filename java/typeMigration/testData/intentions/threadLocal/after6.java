@@ -1,4 +1,4 @@
-// "Convert to ThreadLocal" "true"
+// "Convert to 'ThreadLocal'" "true"
 class Test {
     static final ThreadLocal<Integer> field = new ThreadLocal<Integer>();
   static {

@@ -1,40 +1,39 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectNameProvider
 import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.util.SmartList
 import com.intellij.util.io.delete
-import com.intellij.util.io.isDirectory
 import com.intellij.util.io.write
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.configLocation
+import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReaderWithCache
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ProjectStoreWithJpsContentReader
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.AccessDeniedException
 import java.nio.file.Path
+import java.util.*
+import kotlin.io.path.isDirectory
 
 @ApiStatus.Internal
 open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
   private var lastSavedProjectName: String? = null
-  protected val moduleSavingCustomizer: ModuleSavingCustomizer? = if (WorkspaceModel.isEnabled) ProjectStoreBridge(project) else null
+  protected val moduleSavingCustomizer: ModuleSavingCustomizer = ProjectStoreBridge(project)
 
   init {
     assert(!project.isDefault)
@@ -63,9 +62,6 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
       return storedName
     }
 
-    for (projectNameProvider in ProjectNameProvider.EP_NAME.iterable) {
-      LOG.runAndLogException { projectNameProvider.getDefaultName(project)?.let { return it } }
-    }
     return JpsPathUtil.getDefaultProjectName(projectDir)
   }
 
@@ -84,7 +80,7 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
     val basePath = projectBasePath
 
     fun doSave() {
-      if (currentProjectName == basePath.fileName.toString()) {
+      if (currentProjectName == basePath.fileName?.toString()) {
         // name equals to base path name - just remove name
         getNameFile().delete()
       }
@@ -109,12 +105,9 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
   final override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
     coroutineScope {
       launch {
-        // save modules before project
-        val errors = SmartList<Throwable>()
+        // save modules before the project
         val saveSessionManager = createSaveSessionProducerManager()
-        val moduleSaveSessions = saveModules(errors, forceSavingAllSettings, saveSessionManager)
-        result.addErrors(errors)
-
+        val moduleSaveSessions = saveModules(result, forceSavingAllSettings, saveSessionManager)
         saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings, saveSessionManager)
         saveSessionManager
           .saveWithAdditionalSaveSessions(moduleSaveSessions)
@@ -132,14 +125,14 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
     }
   }
 
-  protected open suspend fun saveModules(errors: MutableList<Throwable>,
+  protected open suspend fun saveModules(result: SaveResult,
                                          isForceSavingAllSettings: Boolean,
-                                         projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
+                                         projectSaveSessionManager: SaveSessionProducerManager): Collection<SaveSession> {
     return emptyList()
   }
 
   final override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager {
-    return moduleSavingCustomizer?.createSaveSessionProducerManager() ?: ProjectSaveSessionProducerManager(project)
+    return moduleSavingCustomizer.createSaveSessionProducerManager()
   }
 
   final override fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
@@ -159,51 +152,43 @@ interface ModuleSavingCustomizer {
 }
 
 @ApiStatus.Internal
-open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(project), ProjectStoreWithJpsContentReader {
-  final override suspend fun saveModules(errors: MutableList<Throwable>,
+open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(project), ProjectStoreWithJpsContentReader {
+  final override suspend fun saveModules(result: SaveResult,
                                          isForceSavingAllSettings: Boolean,
-                                         projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
-    moduleSavingCustomizer?.saveModules(projectSaveSessionManager, this)
-    val modules = ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY
+                                         projectSaveSessionManager: SaveSessionProducerManager): Collection<SaveSession> {
+    moduleSavingCustomizer.saveModules(projectSaveSessionManager, this)
+    val modules = ModuleManager.getInstance(project).modules
     if (modules.isEmpty()) {
       return emptyList()
     }
 
-    return withEdtContext {
-      // do no create with capacity because very rarely a lot of modules will be modified
-      val saveSessions: MutableList<SaveSession> = SmartList()
-      // commit components
-      for (module in modules) {
-        val moduleStore = module.getService(IComponentStore::class.java) as? ComponentStoreImpl ?: continue
-        // collectSaveSessions is very cheap, so, do it in EDT
-        val saveManager = moduleStore.createSaveSessionProducerManager()
-        commitModuleComponents(moduleStore, saveManager, projectSaveSessionManager, isForceSavingAllSettings, errors)
-        saveManager.collectSaveSessions(saveSessions)
-      }
-      saveSessions
+    // do not create with capacity because very rarely a lot of modules will be modified
+    val saveSessions = Collections.synchronizedList(mutableListOf<SaveSession>())
+    // commit components
+    for (module in modules) {
+      val moduleStore = module.getService(IComponentStore::class.java) as? ComponentStoreImpl ?: continue
+      val saveManager = moduleStore.createSaveSessionProducerManager()
+      moduleStore.commitComponents(isForce = isForceSavingAllSettings, session = saveManager, saveResult = result)
+      moduleSavingCustomizer.commitModuleComponents(projectSaveSessionManager, moduleStore, saveManager)
+      saveManager.collectSaveSessions(saveSessions)
     }
+    return saveSessions
   }
 
   override fun createContentReader(): JpsFileContentReaderWithCache {
-    return StorageJpsConfigurationReader(project, project.configLocation!!.baseDirectoryUrlString)
+    return StorageJpsConfigurationReader(project, getJpsProjectConfigLocation(project)!!)
   }
 
-  private fun commitModuleComponents(moduleStore: ComponentStoreImpl, moduleSaveSessionManager: SaveSessionProducerManager,
-                                     projectSaveSessionManager: SaveSessionProducerManager, isForceSavingAllSettings: Boolean,
-                                     errors: MutableList<Throwable>) {
-    moduleStore.commitComponents(isForceSavingAllSettings, moduleSaveSessionManager, errors)
-    moduleSavingCustomizer?.commitModuleComponents(projectSaveSessionManager, moduleStore, moduleSaveSessionManager)
-  }
 }
 
 abstract class ProjectStoreFactoryImpl : ProjectStoreFactory {
-  final override fun createDefaultProjectStore(project: Project) = DefaultProjectStoreImpl(project)
+  final override fun createDefaultProjectStore(project: Project): IComponentStore = DefaultProjectStoreImpl(project)
 }
 
 internal class PlatformLangProjectStoreFactory : ProjectStoreFactoryImpl() {
   override fun createStore(project: Project): IProjectStore {
     LOG.assertTrue(!project.isDefault)
-    return ProjectWithModulesStoreImpl(project)
+    return ProjectWithModuleStoreImpl(project)
   }
 }
 
@@ -216,7 +201,7 @@ internal class PlatformProjectStoreFactory : ProjectStoreFactoryImpl() {
 
 @CalledInAny
 internal suspend fun ensureFilesWritable(project: Project, files: Collection<VirtualFile>): ReadonlyStatusHandler.OperationStatus {
-  return withEdtContext(project) {
+  return withContext(Dispatchers.EDT) {
     ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files)
   }
 }

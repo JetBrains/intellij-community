@@ -1,19 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi;
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentTreeWatcher;
-import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,9 +21,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.awt.event.InputEvent;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.IntPredicate;
 
 /**
@@ -38,36 +36,29 @@ import java.util.function.IntPredicate;
 public final class MnemonicHelper extends ComponentTreeWatcher {
   private static final Logger LOG = Logger.getInstance(MnemonicHelper.class);
 
+  public static final Key<Boolean> DISABLE_MNEMONIC_PROCESSING = Key.create("Disable mnemonic processing in the button or the label");
   public static final Key<IntPredicate> MNEMONIC_CHECKER = Key.create("MNEMONIC_CHECKER");
 
   private static final String TEXT_CHANGED_PROPERTY = "text";
 
-  private static final PropertyChangeListener ourTextPropertyListener = new PropertyChangeListener() {
-    @Override
-    public void propertyChange(PropertyChangeEvent event) {
-      Object source = event.getSource();
-      // SwingUtilities.invokeLater is needed to process this event,
-      // because the method is invoked from the setText method
-      // before Swing updates mnemonics
-      if (source instanceof AbstractButton) {
-        //noinspection SSBasedInspection //see javax.swing.AbstractButton.setText
-        SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic(((AbstractButton)source)));
-      }
-      else if (source instanceof JLabel) {
-        //noinspection SSBasedInspection //see javax.swing.JLabel.setText
-        SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic(((JLabel)source), null));
-      }
+  private static final PropertyChangeListener ourTextPropertyListener = event -> {
+    Object source = event.getSource();
+    // SwingUtilities.invokeLater is needed to process this event,
+    // because the method is invoked from the setText method
+    // before Swing updates mnemonics
+    if (source instanceof AbstractButton) {
+      //noinspection SSBasedInspection //see javax.swing.AbstractButton.setText
+      SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic((AbstractButton)source));
+    }
+    else if (source instanceof JLabel) {
+      //noinspection SSBasedInspection //see javax.swing.JLabel.setText
+      SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic((JLabel)source, null));
     }
   };
 
-  private Int2ObjectMap<String> myMnemonics;
+  private Map<Integer, String> myMnemonics;
 
-  /**
-   * @see #init(Component)
-   * @deprecated do not use this object as a tree watcher
-   */
-  @Deprecated
-  public MnemonicHelper() {
+  private MnemonicHelper() {
     super(ArrayUtil.EMPTY_CLASS_ARRAY);
   }
 
@@ -126,18 +117,22 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
   }
 
   public void checkForDuplicateMnemonics(JLabel label) {
-    if (!Registry.is("ide.checkDuplicateMnemonics")) return;
+    if (!isCheckingDuplicateMnemonicsEnabled()) {
+      return;
+    }
     checkForDuplicateMnemonics(label.getDisplayedMnemonic(), label.getText());
   }
 
   public void checkForDuplicateMnemonics(AbstractButton button) {
-    if (!Registry.is("ide.checkDuplicateMnemonics")) return;
+    if (!isCheckingDuplicateMnemonicsEnabled()) {
+      return;
+    }
     checkForDuplicateMnemonics(button.getMnemonic(), button.getText());
   }
 
   public void checkForDuplicateMnemonics(int mnemonic, String text) {
     if (mnemonic == 0) return;
-    if (myMnemonics == null) myMnemonics = new Int2ObjectOpenHashMap<>();
+    if (myMnemonics == null) myMnemonics = new HashMap<>();
     final String other = myMnemonics.get(mnemonic);
     if (other != null && !other.equals(text)) {
       LOG.error("conflict: multiple components with mnemonic '" + (char)mnemonic + "' seen on '" + text + "' and '" + other + "'");
@@ -146,23 +141,12 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
   }
 
   /**
-   * Creates shortcut for mnemonic replacing standard Alt+Letter to Ctrl+Alt+Letter on Mac with jdk version newer than 6
-   *
-   * @param ch mnemonic letter
-   * @return shortcut for mnemonic
-   */
-  public static CustomShortcutSet createShortcut(char ch) {
-    Character mnemonic = Character.valueOf(ch);
-    return CustomShortcutSet.fromString("alt " + (SystemInfo.isMac ? "released" : "pressed") + " " + mnemonic);
-  }
-
-  /**
    * Initializes mnemonics support for the specified component and for its children if needed.
    *
    * @param component the root component of the hierarchy
    */
   public static void init(Component component) {
-    if (Registry.is("ide.checkDuplicateMnemonics", false)) {
+    if (isCheckingDuplicateMnemonicsEnabled()) {
       new MnemonicHelper().register(component);
     }
     else {
@@ -170,21 +154,18 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
     }
   }
 
+  private static boolean isCheckingDuplicateMnemonicsEnabled() {
+    return Boolean.getBoolean("ide.checkDuplicateMnemonics");
+  }
+
   public static boolean hasMnemonic(@Nullable Component component, int keyCode) {
     if (component instanceof AbstractButton) {
-      AbstractButton button = (AbstractButton)component;
-      if (button instanceof JBOptionButton) {
-        return ((JBOptionButton)button).isOkToProcessDefaultMnemonics() ||
-               button.getMnemonic() == keyCode;
-      }
-      else {
-        return button.getMnemonic() == keyCode;
-      }
+      return ((AbstractButton)component).getMnemonic() == keyCode;
     }
     if (component instanceof JLabel) {
       return ((JLabel)component).getDisplayedMnemonic() == keyCode;
     }
-    IntPredicate checker = UIUtil.getClientProperty(component, MNEMONIC_CHECKER);
+    IntPredicate checker = ClientProperty.get(component, MNEMONIC_CHECKER);
     return checker != null && checker.test(keyCode);
   }
 

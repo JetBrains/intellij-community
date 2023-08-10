@@ -29,7 +29,7 @@ public abstract class JBDateTimeFormatter {
   public abstract String formatTimeWithSeconds(long time);
 
   @NotNull
-  public String formatDate(@NotNull Date time) {
+  public @NlsSafe String formatDate(@NotNull Date time) {
     return formatDate(time.getTime());
   }
 
@@ -47,7 +47,7 @@ public abstract class JBDateTimeFormatter {
   }
 
   @NotNull
-  public String formatPrettyDateTime(@NotNull Date date) {
+  public @NlsSafe String formatPrettyDateTime(@NotNull Date date) {
     return formatPrettyDateTime(date.getTime());
   }
 

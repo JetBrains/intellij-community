@@ -19,13 +19,13 @@ import org.jetbrains.annotations.TestOnly;
 public final class IdentifierHighlighterPassFactory {
   private static final Key<Boolean> ourTestingIdentifierHighlighting = Key.create("TestingIdentifierHighlighting");
 
-  public IdentifierHighlighterPass createHighlightingPass(@NotNull final PsiFile file,
-                                                          @NotNull final Editor editor,
+  public IdentifierHighlighterPass createHighlightingPass(@NotNull PsiFile file,
+                                                          @NotNull Editor editor,
                                                           @NotNull TextRange visibleRange) {
     if (!editor.isOneLineMode() &&
         CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
         !DumbService.isDumb(file.getProject()) &&
-        isEnabledInHeadlessMode() &&
+        isEnabled() &&
         (file.isPhysical() || file.getOriginalFile().isPhysical())) {
       return new IdentifierHighlighterPass(file, editor, visibleRange);
     }
@@ -33,7 +33,7 @@ public final class IdentifierHighlighterPassFactory {
     return null;
   }
 
-  public static boolean isEnabledInHeadlessMode() {
+  public static boolean isEnabled() {
     return !ApplicationManager.getApplication().isUnitTestMode() || TestModeFlags.is(ourTestingIdentifierHighlighting);
   }
 
@@ -46,14 +46,15 @@ public final class IdentifierHighlighterPassFactory {
       r.run();
     }
     finally {
-      TestModeFlags.reset(ourTestingIdentifierHighlighting);
       waitForIdentifierHighlighting();
+      TestModeFlags.reset(ourTestingIdentifierHighlighting);
     }
   }
 
   @TestOnly
   public static void waitForIdentifierHighlighting() {
     // wait for async "highlight identifier" computation to apply in com.intellij.codeInsight.highlighting.BackgroundHighlighter.updateHighlighted
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 }

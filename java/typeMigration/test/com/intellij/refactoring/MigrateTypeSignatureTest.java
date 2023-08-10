@@ -32,15 +32,15 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
   }
 
   public void testExprArrayAccessNegative() {
-    doTestFirstParamType("meth", "Expr", PsiType.DOUBLE);
+    doTestFirstParamType("meth", "Expr", PsiTypes.doubleType());
   }
 
   public void testExprArrayAccessPositive() {
-    doTestFirstParamType("meth", "Expr", PsiType.CHAR);
+    doTestFirstParamType("meth", "Expr", PsiTypes.charType());
   }
 
   public void testExprCalcBooleanBoolean() {
-    doTestFirstParamType("meth", "Expr", PsiType.INT);
+    doTestFirstParamType("meth", "Expr", PsiTypes.intType());
   }
 
   public void testExprCalcBooleanNumeric() {
@@ -50,19 +50,19 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprCalcBooleanReference() {
     doTestFirstParamType("meth", "Expr",
-                         PsiType.DOUBLE);
+                         PsiTypes.doubleType());
   }
 
   public void testExprCalcNumeric2Boolean() {
-    doTestFirstParamType("meth", "Expr", PsiType.BOOLEAN);
+    doTestFirstParamType("meth", "Expr", PsiTypes.booleanType());
   }
 
   public void testExprCalcNumeric2Floating() {
-    doTestFirstParamType("meth", "Expr", PsiType.FLOAT);
+    doTestFirstParamType("meth", "Expr", PsiTypes.floatType());
   }
 
   public void testExprCalcNumeric2Int() {
-    doTestFirstParamType("meth", "Expr", PsiType.LONG);
+    doTestFirstParamType("meth", "Expr", PsiTypes.longType());
   }
 
   public void testExprCalcNumeric2String() {
@@ -76,7 +76,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
   }
 
   public void testExprCast2LvaluePos() {
-    doTestFirstParamType("meth", "Expr", PsiType.INT);
+    doTestFirstParamType("meth", "Expr", PsiTypes.intType());
   }
 
   public void testExprConcatNumeric2Reference() {
@@ -91,7 +91,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprConcatString2Numeric() {
     doTestFirstParamType("meth", "Expr",
-                         PsiType.INT);
+                         PsiTypes.intType());
   }
 
   public void testExprConcatString2Reference() {
@@ -111,17 +111,17 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprLiteralBoolean() {
     doTestFieldType("myField", "Expr",
-                    PsiType.BOOLEAN);
+                    PsiTypes.booleanType());
   }
 
   public void testExprLiteralByte() {
     doTestFieldType("myField", "Expr",
-                    PsiType.BYTE);
+                    PsiTypes.byteType());
   }
 
   public void testExprLiteralChar() {
     doTestFieldType("myField", "Expr",
-                    PsiType.CHAR);
+                    PsiTypes.charType());
   }
 
   public void testExprLiteralClassExtends() {
@@ -161,27 +161,27 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprLiteralDouble() {
     doTestFieldType("myField", "Expr",
-                    PsiType.DOUBLE);
+                    PsiTypes.doubleType());
   }
 
   public void testExprLiteralFloat() {
     doTestFieldType("myField", "Expr",
-                    PsiType.FLOAT);
+                    PsiTypes.floatType());
   }
 
   public void testExprLiteralInt() {
     doTestFieldType("myField", "Expr",
-                    PsiType.INT);
+                    PsiTypes.intType());
   }
 
   public void testExprLiteralLong() {
     doTestFieldType("myField", "Expr",
-                    PsiType.LONG);
+                    PsiTypes.longType());
   }
 
   public void testExprLiteralShort() {
     doTestFieldType("myField", "Expr",
-                    PsiType.SHORT);
+                    PsiTypes.shortType());
   }
 
   public void testExprLiteralString() {
@@ -205,12 +205,12 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
   }
 
   public void testExprNewArrayPrimitive2Lvalue() {
-    doTestFirstParamType("meth", "Expr", PsiType.INT);
+    doTestFirstParamType("meth", "Expr", PsiTypes.intType());
   }
 
   public void testExprNewArrayPrimitive2Rvalue() {
     doTestFieldType("myField", "Expr",
-                    PsiType.INT.createArrayType().createArrayType());
+                    PsiTypes.intType().createArrayType().createArrayType());
   }
 
   public void testExprNewArrayReftype2Lvalue() {
@@ -259,11 +259,11 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
   }
 
   public void testOverridingDown() {
-    doTestMethodType("getInt", "Parent", PsiType.BYTE);
+    doTestMethodType("getInt", "Parent", PsiTypes.byteType());
   }
 
   public void testOverridingUp() {
-    doTestMethodType("getInt", "Child", PsiType.BYTE);
+    doTestMethodType("getInt", "Child", PsiTypes.byteType());
   }
 
   public void testSpecJavadoc() {
@@ -274,7 +274,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
   }
 
   public void testSpecNotUsed() {
-    doTestFieldType("myField", "Spec", PsiType.BOOLEAN);
+    doTestFieldType("myField", "Spec", PsiTypes.booleanType());
   }
 
   public void testTypeArrayReftype2Lvalue() {
@@ -314,7 +314,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeAutoboxBoolean2Rvalue() {
     doTestFieldType("myField", "Type",
-                    PsiType.BOOLEAN);
+                    PsiTypes.booleanType());
   }
 
   public void testTypeAutoboxByte2Lvalue() {
@@ -324,7 +324,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeAutoboxByte2Rvalue() {
     doTestFieldType("myField", "Type",
-                    PsiType.BYTE);
+                    PsiTypes.byteType());
   }
 
   public void testTypeAutoboxChar2Lvalue() {
@@ -334,7 +334,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeAutoboxChar2Rvalue() {
     doTestFieldType("myField", "Type",
-                    PsiType.CHAR);
+                    PsiTypes.charType());
   }
 
   public void testTypeAutoboxDouble2Lvalue() {
@@ -344,7 +344,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeAutoboxDouble2Rvalue() {
     doTestFieldType("myField", "Type",
-                    PsiType.DOUBLE);
+                    PsiTypes.doubleType());
   }
 
   public void testTypeAutoboxFloat2Lvalue() {
@@ -354,7 +354,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeAutoboxFloat2Rvalue() {
     doTestFieldType("myField", "Type",
-                    PsiType.FLOAT);
+                    PsiTypes.floatType());
   }
 
   public void testTypeAutoboxInt2Lvalue() {
@@ -364,7 +364,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeAutoboxInt2Rvalue() {
     doTestFieldType("myField", "Type",
-                    PsiType.INT);
+                    PsiTypes.intType());
   }
 
   public void testTypeAutoboxLong2Lvalue() {
@@ -374,7 +374,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeAutoboxLong2Rvalue() {
     doTestFieldType("myField", "Type",
-                    PsiType.LONG);
+                    PsiTypes.longType());
   }
 
   public void testTypeAutoboxShort2Lvalue() {
@@ -384,7 +384,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeAutoboxShort2Rvalue() {
     doTestFieldType("myField", "Type",
-                    PsiType.SHORT);
+                    PsiTypes.shortType());
   }
 
   public void testTypeGenAncestor2Lvalue() {
@@ -418,59 +418,59 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
   }
 
   public void testTypePrimsubBoolean2Lvalue() {
-    doTestFirstParamType("meth", "Type", PsiType.BOOLEAN);
+    doTestFirstParamType("meth", "Type", PsiTypes.booleanType());
   }
 
   public void testTypePrimsubBoolean2Rvalue() {
-    doTestFieldType("myField", "Type", PsiType.BOOLEAN);
+    doTestFieldType("myField", "Type", PsiTypes.booleanType());
   }
 
   public void testTypePrimsubByte2Rvalue() {
-    doTestFieldType("myField", "Type", PsiType.BYTE);
+    doTestFieldType("myField", "Type", PsiTypes.byteType());
   }
 
   public void testTypePrimsubChar2Lvalue() {
-    doTestFirstParamType("meth", "Type", PsiType.CHAR);
+    doTestFirstParamType("meth", "Type", PsiTypes.charType());
   }
 
   public void testTypePrimsubChar2Rvalue() {
-    doTestFieldType("myField", "Type", PsiType.CHAR);
+    doTestFieldType("myField", "Type", PsiTypes.charType());
   }
 
   public void testTypePrimsubDouble2Lvalue() {
-    doTestFirstParamType("meth", "Type", PsiType.DOUBLE);
+    doTestFirstParamType("meth", "Type", PsiTypes.doubleType());
   }
 
   public void testTypePrimsubFloat2Lvalue() {
-    doTestFirstParamType("meth", "Type", PsiType.FLOAT);
+    doTestFirstParamType("meth", "Type", PsiTypes.floatType());
   }
 
   public void testTypePrimsubFloat2Rvalue() {
-    doTestFieldType("myField", "Type", PsiType.FLOAT);
+    doTestFieldType("myField", "Type", PsiTypes.floatType());
   }
 
   public void testTypePrimsubInt2Lvalue() {
-    doTestFirstParamType("meth", "Type", PsiType.INT);
+    doTestFirstParamType("meth", "Type", PsiTypes.intType());
   }
 
   public void testTypePrimsubInt2Rvalue() {
-    doTestFieldType("myField", "Type", PsiType.INT);
+    doTestFieldType("myField", "Type", PsiTypes.intType());
   }
 
   public void testTypePrimsubLong2Lvalue() {
-    doTestFirstParamType("meth", "Type", PsiType.LONG);
+    doTestFirstParamType("meth", "Type", PsiTypes.longType());
   }
 
   public void testTypePrimsubLong2Rvalue() {
-    doTestFieldType("myField", "Type", PsiType.LONG);
+    doTestFieldType("myField", "Type", PsiTypes.longType());
   }
 
   public void testTypePrimsubShort2Lvalue() {
-    doTestFirstParamType("meth", "Type", PsiType.SHORT);
+    doTestFirstParamType("meth", "Type", PsiTypes.shortType());
   }
 
   public void testTypePrimsubShort2Rvalue() {
-    doTestFieldType("myField", "Type", PsiType.SHORT);
+    doTestFieldType("myField", "Type", PsiTypes.shortType());
   }
 
   public void testTypeRefClassChild2Rvalue() {

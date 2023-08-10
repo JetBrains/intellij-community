@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -12,7 +12,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentInstanceMap;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,20 +24,25 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Use {@code com.intellij.dom.fileMetaData} to register.
+ * Use {@code com.intellij.dom.fileMetaData} extension point to register.
  *
- * @author peter
  * @see MergingFileDescription
  */
 public class DomFileDescription<T> {
-
   /**
-   * @deprecated use {@code com.intellij.dom.fileMetaData} extension instead
+   * @deprecated Register with {@code com.intellij.dom.fileMetaData} extension point instead.
    */
   @Deprecated
   public static final ExtensionPointName<DomFileDescription> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileDescription");
 
-  private final Map<Class<? extends ScopeProvider>, ScopeProvider> myScopeProviders = ConcurrentInstanceMap.create();
+  private final Map<Class<? extends ScopeProvider>, ScopeProvider> myScopeProviders = ConcurrentFactoryMap.createMap(key -> {
+    try {
+      return key.newInstance();
+    }
+    catch (InstantiationException | IllegalAccessException e) {
+      throw new RuntimeException("Couldn't instantiate " + key, e);
+    }
+  });
   protected final Class<T> myRootElementClass;
   protected final String myRootTagName;
   private final String[] myAllPossibleRootTagNamespaces;
@@ -48,7 +53,7 @@ public class DomFileDescription<T> {
   private final Map<String, NotNullFunction<XmlTag, List<String>>> myNamespacePolicies =
     new ConcurrentHashMap<>();
 
-  public DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName, @NonNls String @NotNull ... allPossibleRootTagNamespaces) {
+  public DomFileDescription(final Class<T> rootElementClass, final @NonNls String rootTagName, @NonNls String @NotNull ... allPossibleRootTagNamespaces) {
     myRootElementClass = rootElementClass;
     myRootTagName = rootTagName;
     myAllPossibleRootTagNamespaces = allPossibleRootTagNamespaces.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY
@@ -60,38 +65,14 @@ public class DomFileDescription<T> {
   }
 
   /**
-   * Register an implementation class to provide additional functionality for DOM elements.
+   * Map namespace key, call from {@link #initializeFileDescription()}.
    *
-   * @param domElementClass     interface class.
-   * @param implementationClass abstract implementation class.
-   * @see #initializeFileDescription()
-   * @deprecated use dom.implementation extension point instead
-   */
-  @Deprecated
-  public final <Dom extends DomElement> void registerImplementation(Class<Dom> domElementClass, Class<? extends Dom> implementationClass) {
-    myImplementations.put(domElementClass, implementationClass);
-  }
-
-  /**
    * @param namespaceKey namespace identifier
+   * @param namespaces   XML namespace or DTD public or system id value for the given namespaceKey
    * @see Namespace
-   * @param policy function that takes XML file root tag and returns (maybe empty) list of possible namespace URLs or DTD public ids. This
-   * function shouldn't use DOM since it may be not initialized for the file at the moment
-   * @deprecated use {@link #registerNamespacePolicy(String, String...)} or override {@link #getAllowedNamespaces(String, XmlFile)} instead
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  protected final void registerNamespacePolicy(String namespaceKey, NotNullFunction<XmlTag,List<String>> policy) {
-    myNamespacePolicies.put(namespaceKey, policy);
-  }
-
-  /**
-   * @param namespaceKey namespace identifier
-   * @see Namespace
-   * @param namespaces XML namespace or DTD public or system id value for the given namespaceKey
    */
   public final void registerNamespacePolicy(String namespaceKey, final String... namespaces) {
-    registerNamespacePolicy(namespaceKey, new ConstantFunction<>(Arrays.asList(namespaces)));
+    myNamespacePolicies.put(namespaceKey, new ConstantFunction<>(Arrays.asList(namespaces)));
   }
 
   /**
@@ -124,7 +105,7 @@ public class DomFileDescription<T> {
    * index is rebuilt correctly.
    * @deprecated use "domVersion" attribute of {@code com.intellij.dom.fileMetaData} extension instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public int getVersion() {
     return myRootTagName.hashCode();
   }

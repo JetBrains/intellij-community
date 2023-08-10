@@ -5,7 +5,7 @@ import java.net.InetAddress
 interface LauncherOptions {
   val platformPrefix: String?
   val xmx: Int get() = 800
-  val debugPort: Int get() = -1
+  val debugPort: Int? get() = null
   val debugSuspendOnStart: Boolean get() = false
   val javaArguments: List<String> get() = listOf()
   val ideaArguments: List<String> get() = listOf()
@@ -15,19 +15,19 @@ interface LauncherOptions {
   val runInDocker: Boolean get() = false
 }
 
-data class DockerNetwork(
+data class DockerNetworkEntry(
   val name: String,
-  val IPv4Address: String,
+  val IPAddress: String,
   val defaultGatewayIPv4Address: String?) {
   companion object {
-    val AUTO = DockerNetwork("AUTO", "AUTO", "AUTO")
+    val AUTO = DockerNetworkEntry("AUTO", "AUTO", "AUTO")
   }
 }
 
 interface DockerLauncherOptions : LauncherOptions {
-  val exposedPorts: List<Int> get() = listOf(debugPort)
+  val exposedPorts: List<Int> get() = debugPort?.let { listOf(it) }.orEmpty()
   val runBashBeforeJava: String? get() = null
   val address: InetAddress get() = InetAddress.getLoopbackAddress()
-  val network: DockerNetwork get() = DockerNetwork.AUTO
-  val containerName: String? get() = null
+  val network: DockerNetworkEntry get() = DockerNetworkEntry.AUTO
+  val containerName: String
 }

@@ -1,15 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +23,7 @@ import java.util.List;
 
 public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
   private final Collection<? extends AbstractTreeNode<?>> myMandatoryChildren;
+  private boolean isAlwaysExpand;
 
   public ClassTreeNode(Project project, @NotNull PsiClass value, ViewSettings viewSettings) {
     this(project, value, viewSettings, ContainerUtil.emptyList());
@@ -39,12 +43,15 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
     List<AbstractTreeNode<?>> treeNodes = new ArrayList<>(myMandatoryChildren);
     if (parent != null) {
       try {
-        for (PsiClass psi : parent.getInnerClasses()) {
-          if (psi.isPhysical()) {
-            treeNodes.add(new ClassTreeNode(getProject(), psi, getSettings()));
+        boolean showMembers = getSettings().isShowMembers();
+        if (showMembers || isShowInnerClasses()) {
+          for (PsiClass psi : parent.getInnerClasses()) {
+            if (psi.isPhysical()) {
+              treeNodes.add(new ClassTreeNode(getProject(), psi, getSettings()));
+            }
           }
         }
-        if (getSettings().isShowMembers()) {
+        if (showMembers) {
           for (PsiMethod psi : parent.getMethods()) {
             if (psi.isPhysical()) {
               treeNodes.add(new PsiMethodNode(getProject(), psi, getSettings()));
@@ -63,12 +70,20 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
     return treeNodes;
   }
 
+  private boolean isShowInnerClasses() {
+    boolean showInnerClasses = Registry.is("projectView.always.show.inner.classes", false);
+    if (showInnerClasses) return true;
+    VirtualFile file = getVirtualFile();
+    return file != null && FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE);
+  }
+
   @Override
   public void updateImpl(@NotNull PresentationData data) {
     final PsiClass aClass = getValue();
     if (aClass != null) {
       data.setPresentableText(aClass.getName());
     }
+    isAlwaysExpand = getParentValue() instanceof PsiFile;
   }
 
   public boolean isTopLevel() {
@@ -87,7 +102,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
 
   @Override
   public boolean isAlwaysExpand() {
-    return getParentValue() instanceof PsiFile;
+    return isAlwaysExpand;
   }
 
   @Override
@@ -142,8 +157,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
   private class ClassNameSortKey implements Comparable {
     @Override
     public int compareTo(final Object o) {
-      if (!(o instanceof ClassNameSortKey)) return 0;
-      ClassNameSortKey rhs = (ClassNameSortKey) o;
+      if (!(o instanceof ClassNameSortKey rhs)) return 0;
       return getPosition() - rhs.getPosition();
     }
 
@@ -159,9 +173,9 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
 
   @Override
   public boolean canRepresent(final Object element) {
+    if (!mayContain(element)) return false;
     if (!isValid()) return false;
-
-    return super.canRepresent(element) || SlowOperations.allowSlowOperations(() -> canRepresent(getValue(), element));
+    return super.canRepresent(element) || canRepresent(getValue(), element);
   }
 
   private boolean canRepresent(final PsiClass psiClass, final Object element) {

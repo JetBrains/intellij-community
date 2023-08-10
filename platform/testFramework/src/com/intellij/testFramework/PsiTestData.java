@@ -12,6 +12,10 @@ import org.jdom.Element;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * @deprecated use other to configure test data files
+ */
+@Deprecated
 public class PsiTestData implements JDOMExternalizable {
   public String TEXT_FILE = "";
   private String myText;

@@ -111,10 +111,6 @@ public class MockGeneralTestEventsProcessorAdapter extends GeneralTestEventsProc
   }
 
   @Override
-  public void onFinishTesting() {
-  }
-
-  @Override
   public void setPrinterProvider(@NotNull TestProxyPrinterProvider printerProvider) {
   }
 

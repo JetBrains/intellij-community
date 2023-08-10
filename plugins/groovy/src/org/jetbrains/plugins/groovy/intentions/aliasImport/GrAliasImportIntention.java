@@ -51,8 +51,7 @@ public class GrAliasImportIntention extends Intention {
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final GrImportStatement context;
     final PsiMember resolved;
-    if (element instanceof GrReferenceExpression) {
-      GrReferenceExpression ref = (GrReferenceExpression)element;
+    if (element instanceof GrReferenceExpression ref) {
       GroovyResolveResult result = ref.advancedResolve();
       context = (GrImportStatement)result.getCurrentFileResolveContext();
       assert context != null;
@@ -180,8 +179,7 @@ public class GrAliasImportIntention extends Intention {
 
         if (usageElement.getParent() instanceof GrImportStatement) return;
 
-        if (usageElement instanceof GrReferenceElement) {
-          final GrReferenceElement ref = (GrReferenceElement)usageElement;
+        if (usageElement instanceof GrReferenceElement ref) {
           final PsiElement qualifier = ref.getQualifier();
 
           if (qualifier == null) {

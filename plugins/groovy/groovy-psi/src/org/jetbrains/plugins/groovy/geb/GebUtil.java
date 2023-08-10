@@ -22,9 +22,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class GebUtil {
 
   public static boolean contributeMembersInsideTest(PsiScopeProcessor processor,
@@ -64,8 +61,7 @@ public final class GebUtil {
     PsiType objectType = PsiType.getJavaLangObject(pageOrModuleClass.getManager(), pageOrModuleClass.getResolveScope());
 
     for (PsiElement e = initializer.getFirstChild(); e != null; e = e.getNextSibling()) {
-      if (e instanceof GrMethodCall) {
-        GrMethodCall methodCall = (GrMethodCall)e;
+      if (e instanceof GrMethodCall methodCall) {
 
         GrExpression invokedExpression = methodCall.getInvokedExpression();
         if (!(invokedExpression instanceof GrReferenceExpression)) continue;

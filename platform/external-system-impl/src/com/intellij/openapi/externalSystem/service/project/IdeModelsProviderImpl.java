@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.module.Module;
@@ -47,14 +48,15 @@ import static com.intellij.openapi.util.text.StringUtil.*;
  * @author Vladislav.Soroka
  */
 public class IdeModelsProviderImpl implements IdeModelsProvider {
+  private static final Logger LOG = Logger.getInstance(IdeModelsProviderImpl.class);
 
   @NotNull
   protected final Project myProject;
 
   @NotNull
-  private final Map<ModuleData, Module> myIdeModulesCache = ContainerUtil.createWeakMap();
+  private final Map<ModuleData, Module> myIdeModulesCache = new WeakHashMap<>();
 
-  private final Map<Module, Map<String, List<ModuleOrderEntry>>> myIdeModuleToModuleDepsCache = ContainerUtil.createWeakMap();
+  private final Map<Module, Map<String, List<ModuleOrderEntry>>> myIdeModuleToModuleDepsCache = new WeakHashMap<>();
 
   public IdeModelsProviderImpl(@NotNull Project project) {
     myProject = project;
@@ -194,7 +196,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
         if (isEmpty(((LibraryOrderEntry)entry).getLibraryName())) {
           final Set<String> paths = ContainerUtil.map2Set(libraryDependencyData.getTarget().getPaths(LibraryPathType.BINARY),
                                                           PathUtil::getLocalPath);
-          final Set<String> entryPaths = ContainerUtil.map2Set(entry.getUrls(OrderRootType.CLASSES),
+          final Set<String> entryPaths = ContainerUtil.map2Set(((LibraryOrderEntry)entry).getRootUrls(OrderRootType.CLASSES),
                                                                s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
           if (entryPaths.equals(paths) && ((LibraryOrderEntry)entry).getScope() == data.getScope()) return entry;
           continue;
@@ -208,6 +210,42 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
       }
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public Map<LibraryOrderEntry, LibraryDependencyData> findIdeModuleLibraryOrderEntries(@NotNull ModuleData moduleData,
+                                                                                        @NotNull List<LibraryDependencyData> libraryDependencyDataList) {
+    if (libraryDependencyDataList.isEmpty()) return Collections.emptyMap();
+    Module ownerIdeModule = findIdeModule(moduleData);
+    if (ownerIdeModule == null) return Collections.emptyMap();
+    Map<Set<String>, LibraryDependencyData> libraryDependencyDataMap = new HashMap<>();
+    for (LibraryDependencyData libraryDependencyData : libraryDependencyDataList) {
+      if (libraryDependencyData.getLevel() == LibraryLevel.PROJECT) {
+        LOG.warn("Library data \"" + libraryDependencyData.getInternalName() + "\" not a module level dependency");
+        continue;
+      }
+      if (libraryDependencyData.getOwnerModule() != moduleData) {
+        LOG.warn("Library data \"" + libraryDependencyData.getInternalName() + "\" not belong to the module: " + ownerIdeModule.getName());
+        continue;
+      }
+      libraryDependencyDataMap.put(ContainerUtil.map2Set(libraryDependencyData.getTarget().getPaths(LibraryPathType.BINARY),
+                                                         PathUtil::getLocalPath), libraryDependencyData);
+    }
+
+    Map<LibraryOrderEntry, LibraryDependencyData> result = new HashMap<>();
+    for (OrderEntry entry : getOrderEntries(ownerIdeModule)) {
+      if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
+        if (!libraryOrderEntry.isModuleLevel()) continue;
+        final Set<String> entryPaths = ContainerUtil.map2Set(((LibraryOrderEntry)entry).getRootUrls(OrderRootType.CLASSES),
+                                                             s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
+        LibraryDependencyData libraryDependencyData = libraryDependencyDataMap.get(entryPaths);
+        if (libraryDependencyData != null && libraryOrderEntry.getScope() == libraryDependencyData.getScope()) {
+          result.put(libraryOrderEntry, libraryDependencyData);
+        }
+      }
+    }
+    return result;
   }
 
   @Override
@@ -259,7 +297,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     }
 
     Iterable<String> generate() {
-      List<String> names;
+      List<String> names = new ArrayList<>();
       String prefix = myModule.getGroup();
       File modulePath = new File(myModule.getLinkedExternalProjectPath());
       if (modulePath.isFile()) {
@@ -267,10 +305,11 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
       }
 
       if (prefix == null || startsWith(myModule.getInternalName(), prefix)) {
-        names = ContainerUtil.newArrayList(myModule.getInternalName());
+        names.add(myModule.getInternalName());
       }
       else {
-        names = ContainerUtil.newArrayList(myModule.getInternalName(), prefix + myDelimiter + myModule.getInternalName());
+        names.add(myModule.getInternalName());
+        names.add(prefix + myDelimiter + myModule.getInternalName());
       }
 
       String name = names.get(0);

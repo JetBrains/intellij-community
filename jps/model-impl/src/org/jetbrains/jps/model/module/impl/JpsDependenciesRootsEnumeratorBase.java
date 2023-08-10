@@ -16,7 +16,6 @@
 package org.jetbrains.jps.model.module.impl;
 
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.Consumer;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.*;
@@ -26,6 +25,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public abstract class JpsDependenciesRootsEnumeratorBase<E extends JpsDependenciesEnumeratorBase<?>> implements JpsDependenciesRootsEnumerator {
   protected final JpsOrderRootType myRootType;
@@ -83,7 +83,7 @@ public abstract class JpsDependenciesRootsEnumeratorBase<E extends JpsDependenci
 
   private boolean processLibraryRootUrls(JpsLibrary library, Consumer<? super String> urlConsumer) {
     for (String url : library.getRootUrls(myRootType)) {
-      urlConsumer.consume(url);
+      urlConsumer.accept(url);
     }
     return true;
   }

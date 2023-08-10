@@ -1,7 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.task;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,19 +17,15 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-@State(
-  name = "gradleExecuteTaskHistory",
-  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
-)
-public class ExecuteGradleTaskHistoryService implements PersistentStateComponent<String[]> {
-
+@State(name = "gradleExecuteTaskHistory", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public final class ExecuteGradleTaskHistoryService implements PersistentStateComponent<String[]> {
   private static final int MAX_HISTORY_LENGTH = 20;
   private final LinkedList<String> myHistory = new LinkedList<>();
   private String myWorkDirectory = "";
   private String myCanceledCommand;
 
   public static ExecuteGradleTaskHistoryService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ExecuteGradleTaskHistoryService.class);
+    return project.getService(ExecuteGradleTaskHistoryService.class);
   }
 
   @Nullable

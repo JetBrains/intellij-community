@@ -4,6 +4,7 @@ package com.jetbrains.python.debugger;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -57,7 +58,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     GlobalSearchScope scope = ProjectScope.getProjectScope(myProject);
 
     VirtualFile file = getFile(signature);
-    if (file != null && scope.contains(file)) {
+    if (file != null && ReadAction.compute(() -> scope.contains(file))) {
       recordSignature(file, signature);
     }
   }
@@ -259,7 +260,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   public boolean clearCache() {
     final Ref<Boolean> deleted = Ref.create(false);
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      (Runnable)() -> ProjectFileIndex.SERVICE.getInstance(myProject).iterateContent(fileOrDir -> {
+      (Runnable)() -> ProjectFileIndex.getInstance(myProject).iterateContent(fileOrDir -> {
         if (readAttribute(fileOrDir) != null) {
           writeAttribute(fileOrDir, "");
           deleted.set(true);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -45,6 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,8 +39,6 @@ import java.util.List;
 
 public abstract class ASTDelegatePsiElement extends PsiElementBase {
   private static final Logger LOG = Logger.getInstance(ASTDelegatePsiElement.class);
-
-  private static final List EMPTY = Collections.emptyList();
 
   @Override
   public PsiFile getContainingFile() {
@@ -166,26 +151,22 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   @Override
-  @NotNull
-  public abstract ASTNode getNode();
+  public abstract @NotNull ASTNode getNode();
 
   public void subtreeChanged() {
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return getNode().getElementType().getLanguage();
   }
 
-  @Nullable
-  protected <T extends PsiElement> T findChildByType(IElementType type) {
+  protected @Nullable <T extends PsiElement> T findChildByType(IElementType type) {
     ASTNode node = getNode().findChildByType(type);
     return node == null ? null : (T)node.getPsi();
   }
 
-  @Nullable
-  protected <T extends PsiElement> T findLastChildByType(IElementType type) {
+  protected @Nullable <T extends PsiElement> T findLastChildByType(IElementType type) {
     PsiElement child = getLastChild();
     while (child != null) {
       final ASTNode node = child.getNode();
@@ -197,24 +178,20 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
 
 
-  @NotNull
-  protected <T extends PsiElement> T findNotNullChildByType(IElementType type) {
+  protected @NotNull <T extends PsiElement> T findNotNullChildByType(IElementType type) {
     return notNullChild(findChildByType(type));
   }
 
-  @Nullable
-  protected <T extends PsiElement> T findChildByType(TokenSet type) {
+  protected @Nullable <T extends PsiElement> T findChildByType(TokenSet type) {
     ASTNode node = getNode().findChildByType(type);
     return node == null ? null : (T)node.getPsi();
   }
 
-  @NotNull
-  protected <T extends PsiElement> T findNotNullChildByType(TokenSet type) {
+  protected @NotNull <T extends PsiElement> T findNotNullChildByType(TokenSet type) {
     return notNullChild(findChildByType(type));
   }
 
-  @Nullable
-  protected PsiElement findChildByFilter(TokenSet tokenSet) {
+  protected @Nullable PsiElement findChildByFilter(TokenSet tokenSet) {
     ASTNode[] nodes = getNode().getChildren(tokenSet);
     return nodes.length == 0 ? null : nodes[0].getPsi();
   }
@@ -223,13 +200,13 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return ContainerUtil.map2Array(SharedImplUtil.getChildrenOfType(getNode(), elementType), arrayClass, s -> (T)s.getPsi());
   }
 
-  protected <T extends PsiElement> List<T> findChildrenByType(TokenSet elementType) {
-    List<T> result = EMPTY;
+  protected @Unmodifiable <T extends PsiElement> List<T> findChildrenByType(@NotNull TokenSet elementType) {
+    List<T> result = Collections.emptyList();
     ASTNode child = getNode().getFirstChildNode();
     while (child != null) {
       final IElementType tt = child.getElementType();
       if (elementType.contains(tt)) {
-        if (result == EMPTY) {
+        if (result == Collections.<T>emptyList()) {
           result = new ArrayList<>();
         }
         result.add((T)child.getPsi());
@@ -239,12 +216,12 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return result;
   }
 
-  protected <T extends PsiElement> List<T> findChildrenByType(IElementType elementType) {
-    List<T> result = EMPTY;
+  protected @Unmodifiable <T extends PsiElement> List<T> findChildrenByType(@NotNull IElementType elementType) {
+    List<T> result = Collections.emptyList();
     ASTNode child = getNode().getFirstChildNode();
     while (child != null) {
       if (elementType == child.getElementType()) {
-        if (result == EMPTY) {
+        if (result == Collections.<T>emptyList()) {
           result = new ArrayList<>();
         }
         result.add((T)child.getPsi());
@@ -254,7 +231,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return result;
   }
 
-  protected <T extends PsiElement> T @NotNull [] findChildrenByType(TokenSet elementType, Class<T> arrayClass) {
+  protected <T extends PsiElement> T @NotNull [] findChildrenByType(@NotNull TokenSet elementType, @NotNull Class<T> arrayClass) {
     return ContainerUtil.map2Array(getNode().getChildren(elementType), arrayClass, s -> (T)s.getPsi());
   }
 
@@ -298,7 +275,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   @Override
-  public void checkAdd(@NotNull final PsiElement element) throws IncorrectOperationException {
+  public void checkAdd(final @NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
   }
 
@@ -312,7 +289,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   @Override
-  public PsiElement addRangeBefore(@NotNull final PsiElement first, @NotNull final PsiElement last, final PsiElement anchor)
+  public PsiElement addRangeBefore(final @NotNull PsiElement first, final @NotNull PsiElement last, final PsiElement anchor)
     throws IncorrectOperationException {
     return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
   }
@@ -367,7 +344,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   @Override
-  public PsiElement replace(@NotNull final PsiElement newElement) throws IncorrectOperationException {
+  public PsiElement replace(final @NotNull PsiElement newElement) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(newElement);
     if (getParent() instanceof ASTDelegatePsiElement) {

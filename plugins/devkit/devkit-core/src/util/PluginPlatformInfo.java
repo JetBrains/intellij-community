@@ -1,17 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util;
 
+import com.intellij.java.library.JavaLibraryModificationTracker;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.components.JBList;
@@ -94,7 +94,7 @@ public final class PluginPlatformInfo {
   public static PluginPlatformInfo forModule(@NotNull Module module) {
     return CachedValuesManager.getManager(module.getProject())
       .getCachedValue(module, () ->
-        CachedValueProvider.Result.createSingleDependency(_forModule(module), ProjectRootManager.getInstance(module.getProject())));
+        Result.createSingleDependency(_forModule(module), JavaLibraryModificationTracker.getInstance(module.getProject())));
   }
 
   private static PluginPlatformInfo _forModule(@NotNull Module module) {
@@ -112,8 +112,14 @@ public final class PluginPlatformInfo {
     final String libraryName = entry.getPresentableName();
 
     String version = StringUtil.substringAfterLast(libraryName, ":");
-    if (version == null) {
+    if (StringUtil.isEmpty(version)) {
       return UNRESOLVED_INSTANCE;
+    }
+
+    // Gradle using 'localPath': strip product prefix
+    if (Character.isUpperCase(version.charAt(0))) {
+      version = StringUtil.substringAfter(version, "-");
+      assert version != null;
     }
 
     if (version.contains("-")) {
@@ -134,9 +140,11 @@ public final class PluginPlatformInfo {
         return UNRESOLVED_INSTANCE;
       }
       branch = version.substring(0, 3);
-    } else if (major.length() == 3) {
-        branch = version;
-    } else {
+    }
+    else if (major.length() == 3) {
+      branch = version;
+    }
+    else {
       return UNRESOLVED_INSTANCE;
     }
 

@@ -33,7 +33,7 @@ public interface DomModel<T extends DomElement> {
    * @deprecated Using this method may result in a large memory usage, since it will keep all the DOM and PSI for all the config files
    */
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   T getMergedModel();
 
   @NotNull

@@ -13,17 +13,9 @@ public class BooleanTableCellEditor extends DefaultCellEditor {
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public BooleanTableCellEditor(boolean isStringEditor) {
-    this(isStringEditor, SwingConstants.CENTER);
-  }
-
-  /**
-   * @deprecated  there seems to be no need to change default options, use {@link #BooleanTableCellEditor()} instead.
-   */
-  @Deprecated
-  public BooleanTableCellEditor(boolean isStringEditor, int horizontalAlignment) {
     super(new JCheckBox());
     myStringEditor = isStringEditor;
-    ((JCheckBox) editorComponent).setHorizontalAlignment(horizontalAlignment);
+    ((JCheckBox) editorComponent).setHorizontalAlignment(SwingConstants.CENTER);
   }
 
   public BooleanTableCellEditor() {

@@ -20,9 +20,6 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 
-/**
- * @author dsl
- */
 public class JavaCodeFragmentTableCellEditor extends CodeFragmentTableCellEditorBase {
 
   public JavaCodeFragmentTableCellEditor(final Project project) {
@@ -33,7 +30,7 @@ public class JavaCodeFragmentTableCellEditor extends CodeFragmentTableCellEditor
   public boolean stopCellEditing() {
     final Editor editor = myEditorTextField.getEditor();
     if (editor != null) {
-      JavaReferenceImporter.autoImportReferenceAtCursor(editor, myCodeFragment, true);
+      new JavaReferenceImporter().autoImportReferenceAtCursor(editor, myCodeFragment);
     }
     return super.stopCellEditing();
   }

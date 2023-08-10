@@ -1,12 +1,12 @@
-class A<caret> {
+class A {
     private A() {
     }
 
-    static A newA() {
+    static A createA<caret>() {
         return new A();
     }
 }
 
 public class B {
-    A a = A.newA();
+    A a = A.createA();
 }

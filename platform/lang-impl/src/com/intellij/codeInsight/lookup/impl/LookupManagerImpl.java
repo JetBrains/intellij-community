@@ -1,12 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.CompletionProcess;
-import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
-import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
@@ -18,15 +13,14 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
@@ -47,7 +41,9 @@ public class LookupManagerImpl extends LookupManager {
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
       @Override
-      public void hintShown(final Project project, @NotNull final LightweightHint hint, final int flags) {
+      public void hintShown(final Project project,
+                            @NotNull final LightweightHint hint,
+                            final int flags) {
         if (project == myProject) {
           Lookup lookup = getActiveLookup();
           if (lookup != null && BitUtil.isSet(flags, HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE)) {
@@ -96,6 +92,7 @@ public class LookupManagerImpl extends LookupManager {
   }
 
   @Override
+  @Nullable
   public LookupEx showLookup(@NotNull final Editor editor,
                            LookupElement @NotNull [] items,
                            @NotNull final String prefix,
@@ -118,38 +115,10 @@ public class LookupManagerImpl extends LookupManager {
 
     final LookupImpl lookup = createLookup(editor, arranger, myProject);
 
-    final Alarm alarm = new Alarm();
-
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     myActiveLookup = lookup;
     myActiveLookupEditor = editor;
-    myActiveLookup.addLookupListener(new LookupListener() {
-      @Override
-      public void itemSelected(@NotNull LookupEvent event) {
-        lookupClosed();
-      }
-
-      @Override
-      public void lookupCanceled(@NotNull LookupEvent event) {
-        lookupClosed();
-      }
-
-      @Override
-      public void currentItemChanged(@NotNull LookupEvent event) {
-        alarm.cancelAllRequests();
-        CodeInsightSettings settings = CodeInsightSettings.getInstance();
-        if (settings.AUTO_POPUP_JAVADOC_INFO && DocumentationManager.getInstance(myProject).getDocInfoHint() == null) {
-          alarm.addRequest(() -> showJavadoc(lookup), settings.JAVADOC_INFO_DELAY);
-        }
-      }
-
-      private void lookupClosed() {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-        alarm.cancelAllRequests();
-        lookup.removeLookupListener(this);
-      }
-    });
     Disposer.register(lookup, new Disposable() {
       @Override
       public void dispose() {
@@ -166,9 +135,6 @@ public class LookupManagerImpl extends LookupManager {
       }
       myActiveLookup.refreshUi(true, true);
     }
-    else {
-      alarm.cancelAllRequests(); // no items -> no doc
-    }
 
     fireActiveLookupChanged(null, myActiveLookup);
     return lookup;
@@ -179,30 +145,8 @@ public class LookupManagerImpl extends LookupManager {
     myProject.getMessageBus().syncPublisher(LookupManagerListener.TOPIC).activeLookupChanged(oldLookup, newLookup);
   }
 
-  private void showJavadoc(LookupImpl lookup) {
-    if (myActiveLookup != lookup) return;
-
-    DocumentationManager docManager = DocumentationManager.getInstance(myProject);
-    if (docManager.getDocInfoHint() != null) return; // will auto-update
-
-    LookupElement currentItem = lookup.getCurrentItem();
-    CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
-    if (currentItem != null && currentItem.isValid() && isAutoPopupJavadocSupportedBy(currentItem) && completion != null) {
-      try {
-        boolean hideLookupWithDoc = completion.isAutopopupCompletion() || CodeInsightSettings.getInstance().JAVADOC_INFO_DELAY == 0;
-        docManager.showJavaDocInfo(lookup.getEditor(), lookup.getPsiFile(), false, () -> {
-          if (hideLookupWithDoc && completion == CompletionService.getCompletionService().getCurrentCompletion()) {
-            hideActiveLookup();
-          }
-        });
-      }
-      catch (IndexNotReadyException ignored) {
-      }
-    }
-  }
-
-  protected boolean isAutoPopupJavadocSupportedBy(@SuppressWarnings("unused") LookupElement lookupItem) {
-    return lookupItem.getUserData(SUPPRESS_AUTOPOPUP_JAVADOC) == null;
+  public static boolean isAutoPopupJavadocSupportedBy(@NotNull LookupElement lookupElement) {
+    return lookupElement.getUserData(SUPPRESS_AUTOPOPUP_JAVADOC) == null;
   }
 
   @NotNull

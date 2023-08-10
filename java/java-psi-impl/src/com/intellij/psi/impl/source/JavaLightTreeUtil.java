@@ -18,9 +18,6 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
-/**
- * @author peter
- */
 public final class JavaLightTreeUtil {
   @Nullable
   @Contract("_,null->null")
@@ -88,5 +85,9 @@ public final class JavaLightTreeUtil {
                                             @NotNull IElementType modifierKeyword) {
     LighterASTNode modifierList = LightTreeUtil.firstChildOfType(tree, modifierListOwner, MODIFIER_LIST);
     return LightTreeUtil.firstChildOfType(tree, modifierList, modifierKeyword) != null;
+  }
+
+  public static boolean isNullLiteralExpression(@NotNull LighterAST tree, @NotNull LighterASTNode node) {
+    return node.getTokenType() == LITERAL_EXPRESSION && tree.getChildren(node).get(0).getTokenType() == JavaTokenType.NULL_KEYWORD;
   }
 }

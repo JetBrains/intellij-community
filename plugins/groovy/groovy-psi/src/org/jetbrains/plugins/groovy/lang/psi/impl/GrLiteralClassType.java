@@ -16,9 +16,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
 import static com.intellij.openapi.util.text.StringUtil.getShortName;
 
-/**
- * @author peter
- */
 public abstract class GrLiteralClassType extends PsiClassType {
   protected final GlobalSearchScope myScope;
   protected final JavaPsiFacade myFacade;

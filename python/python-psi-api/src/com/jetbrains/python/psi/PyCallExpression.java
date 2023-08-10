@@ -113,8 +113,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
   @Nullable
   default PyExpression getKeywordArgument(@NotNull String keyword) {
     for (PyExpression arg : getArguments()) {
-      if (arg instanceof PyKeywordArgument) {
-        final PyKeywordArgument keywordArg = (PyKeywordArgument)arg;
+      if (arg instanceof PyKeywordArgument keywordArg) {
         if (keyword.equals(keywordArg.getKeyword())) {
           return keywordArg.getValueExpression();
         }

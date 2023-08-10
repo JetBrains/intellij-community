@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,11 +9,14 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -34,7 +24,7 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.components.Service.Level.PROJECT;
 
 public class MavenProgressIndicator {
-  private ProgressIndicator myIndicator;
+  private @NotNull ProgressIndicator myIndicator;
   private final List<Condition<MavenProgressIndicator>> myCancelConditions = new ArrayList<>();
   private @Nullable final Supplier<MavenSyncConsole> mySyncSupplier;
   private @Nullable final Project myProject;
@@ -45,7 +35,7 @@ public class MavenProgressIndicator {
   }
 
   public MavenProgressIndicator(@Nullable Project project,
-                                ProgressIndicator i,
+                                @NotNull ProgressIndicator i,
                                 @Nullable Supplier<MavenSyncConsole> syncSupplier) {
     myProject = project;
     myIndicator = i;
@@ -53,7 +43,7 @@ public class MavenProgressIndicator {
     maybeTrackIndicator(i);
   }
 
-  public synchronized void setIndicator(ProgressIndicator i) {
+  public synchronized void setIndicator(@NotNull ProgressIndicator i) {
     maybeTrackIndicator(i);
     //setIndicatorStatus(i);
     i.setText(myIndicator.getText());
@@ -65,8 +55,14 @@ public class MavenProgressIndicator {
     myIndicator = i;
   }
 
+  @NotNull
   public synchronized ProgressIndicator getIndicator() {
     return myIndicator;
+  }
+
+  @Nullable
+  public synchronized MavenSyncConsole getSyncConsole() {
+    return null == mySyncSupplier ? null : mySyncSupplier.get();
   }
 
   public synchronized void setText(@NlsContexts.ProgressText String text) {
@@ -118,28 +114,6 @@ public class MavenProgressIndicator {
     if (isCanceled()) throw new MavenProcessCanceledException();
   }
 
-  public void startedDownload(MavenServerProgressIndicator.ResolveType type, String id) {
-
-    if (mySyncSupplier != null) {
-      mySyncSupplier.get().getListener(type).downloadStarted(id);
-    }
-  }
-
-  public void completedDownload(MavenServerProgressIndicator.ResolveType type, String id) {
-    if (mySyncSupplier != null) {
-      mySyncSupplier.get().getListener(type).downloadCompleted(id);
-    }
-  }
-
-  public void failedDownload(MavenServerProgressIndicator.ResolveType type,
-                             String id,
-                             String message,
-                             String trace) {
-    if (mySyncSupplier != null) {
-      mySyncSupplier.get().getListener(type).downloadFailed(id, message, trace);
-    }
-  }
-
   private static class MyEmptyProgressIndicator extends EmptyProgressIndicator {
     private @NlsContexts.ProgressText String myText;
     private @NlsContexts.ProgressDetails String myText2;
@@ -178,9 +152,8 @@ public class MavenProgressIndicator {
 
   private void maybeTrackIndicator(@Nullable ProgressIndicator indicator) {
     if (myProject == null) return; // should we also wait for non-project process like MavenIndicesManager activities?
-    myProject.getService(MavenProgressTracker.class).add(indicator);
-
     if (indicator instanceof ProgressIndicatorEx) {
+      myProject.getService(MavenProgressTracker.class).add(indicator);
       ((ProgressIndicatorEx)indicator).addStateDelegate(new AbstractProgressIndicatorExBase() {
         @Override
         public void start() {
@@ -191,13 +164,23 @@ public class MavenProgressIndicator {
         public void stop() {
           myProject.getService(MavenProgressTracker.class).remove(indicator);
         }
+
+        @Override
+        public void cancel() {
+          try {
+            myProject.getService(MavenProgressTracker.class).remove(indicator);
+          }
+          catch (AlreadyDisposedException ignore) {
+          }
+        }
       });
     }
   }
 
   @ApiStatus.Internal
   @Service(PROJECT)
-  public static final class MavenProgressTracker {
+  public static final class MavenProgressTracker implements Disposable {
+    private final Object myLock = new Object();
     private final Set<ProgressIndicator> myIndicators = Collections.newSetFromMap(new IdentityHashMap<>());
 
     public void waitForProgressCompletion() {
@@ -213,17 +196,39 @@ public class MavenProgressIndicator {
       }
     }
 
-    synchronized private void add(@Nullable ProgressIndicator indicator) {
-      myIndicators.add(indicator);
+    @TestOnly
+    public void assertProgressTasksCompleted() {
+      synchronized (myLock) {
+        if (!myIndicators.isEmpty()) {
+          throw new AssertionError("Not finished tasks:\n" + StringUtil.join(myIndicators, ProgressIndicator::getText, "\n-----"));
+        }
+      }
     }
 
-    synchronized private void remove(@Nullable ProgressIndicator indicator) {
-      myIndicators.remove(indicator);
+    private void add(@Nullable ProgressIndicator indicator) {
+      synchronized (myLock) {
+        myIndicators.add(indicator);
+      }
     }
 
-    synchronized private boolean hasMavenProgressRunning() {
-      myIndicators.removeIf(indicator -> !indicator.isRunning());
-      return !myIndicators.isEmpty();
+    private void remove(@Nullable ProgressIndicator indicator) {
+      synchronized (myLock) {
+        myIndicators.remove(indicator);
+      }
+    }
+
+    private boolean hasMavenProgressRunning() {
+      synchronized (myLock) {
+        myIndicators.removeIf(indicator -> !indicator.isRunning());
+        return !myIndicators.isEmpty();
+      }
+    }
+
+    @Override
+    public void dispose() {
+      synchronized (myLock) {
+        myIndicators.clear();
+      }
     }
   }
 }

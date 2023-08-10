@@ -9,12 +9,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class XmlPsiBundle extends DynamicBundle {
+public final class XmlPsiBundle {
   @NonNls private static final String BUNDLE = "messages.XmlPsiBundle";
-  private static final XmlPsiBundle INSTANCE = new XmlPsiBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(XmlPsiBundle.class, BUNDLE);
 
   private XmlPsiBundle() {
-    super(BUNDLE);
   }
 
   @NotNull
@@ -25,5 +24,9 @@ public final class XmlPsiBundle extends DynamicBundle {
   @NotNull
   public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
+  }
+
+  public static boolean hasKey(String key) {
+    return INSTANCE.containsKey(key);
   }
 }

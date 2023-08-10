@@ -28,6 +28,11 @@ public abstract class AbstractDelombokAction extends AnAction {
     //default constructor
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   protected abstract DelombokHandler createHandler();
 
   private DelombokHandler getHandler() {
@@ -45,9 +50,7 @@ public abstract class AbstractDelombokAction extends AnAction {
     }
 
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-    if (psiDocumentManager.hasUncommitedDocuments()) {
-      psiDocumentManager.commitAllDocuments();
-    }
+    psiDocumentManager.commitAllDocuments();
 
     final DataContext dataContext = event.getDataContext();
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
@@ -75,7 +78,7 @@ public abstract class AbstractDelombokAction extends AnAction {
   }
 
   private void processDirectory(@NotNull final Project project, @NotNull VirtualFile vFile) {
-    VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory()) {
@@ -160,11 +163,11 @@ public abstract class AbstractDelombokAction extends AnAction {
       return true;
     }
     final Collection<PsiClass> classesIntern = PsiClassUtil.collectInnerClassesIntern(psiClass);
-    return classesIntern.stream().anyMatch(this::isValidForClass);
+    return ContainerUtil.exists(classesIntern, this::isValidForClass);
   }
 
   @Nullable
-  private PsiClass getTargetClass(Editor editor, PsiFile file) {
+  private static PsiClass getTargetClass(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) {

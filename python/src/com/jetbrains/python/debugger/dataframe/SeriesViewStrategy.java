@@ -52,9 +52,4 @@ public class SeriesViewStrategy extends DataFrameViewStrategy {
 
     return String.format("%1$s[%1$s.apply(lambda %3$s: bool(%2$s))]", varName, filter.getFilter(), ColumnFilter.VAR_ALIAS);
   }
-
-  @Override
-  public boolean showColumnHeader() {
-    return true;
-  }
 }

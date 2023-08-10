@@ -249,7 +249,7 @@ public class FastSparseSetFactory<E> {
       if (o == this) return true;
       if (!(o instanceof FastSparseSet)) return false;
 
-      int[] longdata = ((FastSparseSet)o).getData();
+      int[] longdata = ((FastSparseSet<?>)o).getData();
       int[] shortdata = data;
 
       if (data.length > longdata.length) {

@@ -7,8 +7,8 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,9 +71,9 @@ public final class ClassUtil {
   }
 
   private static int getNonQualifiedClassIdx(@NotNull final PsiClass psiClass, @NotNull final PsiClass containingClass) {
-    Object2IntMap<PsiClass> indices =
+    ObjectIntMap<PsiClass> indices =
       CachedValuesManager.getCachedValue(containingClass, () -> {
-        Object2IntMap<PsiClass> map = new Object2IntOpenHashMap<>();
+        ObjectIntMap<PsiClass> map = new ObjectIntHashMap<>();
         int index = 0;
         for (PsiClass aClass : SyntaxTraverser.psiTraverser().withRoot(containingClass).postOrderDfsTraversal().filter(PsiClass.class)) {
           if (aClass.getQualifiedName() == null) {
@@ -83,7 +83,7 @@ public final class ClassUtil {
         return CachedValueProvider.Result.create(map, containingClass);
       });
 
-    return indices.getInt(psiClass);
+    return indices.get(psiClass);
   }
 
   public static PsiClass findNonQualifiedClassByIndex(@NotNull String indexName,
@@ -104,7 +104,7 @@ public final class ClassUtil {
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         if (!jvmCompatible) {
           super.visitClass(aClass);
           if (aClass.getQualifiedName() == null) {
@@ -128,7 +128,7 @@ public final class ClassUtil {
       }
 
       @Override
-      public void visitTypeParameter(final PsiTypeParameter classParameter) {
+      public void visitTypeParameter(final @NotNull PsiTypeParameter classParameter) {
         if (!jvmCompatible) {
           super.visitTypeParameter(classParameter);
         }
@@ -266,7 +266,7 @@ public final class ClassUtil {
       signature.append(getBinaryPresentation(param.getType()));
     }
     signature.append(")");
-    signature.append(getBinaryPresentation(Optional.ofNullable(method.getReturnType()).orElse(PsiType.VOID)));
+    signature.append(getBinaryPresentation(Optional.ofNullable(method.getReturnType()).orElse(PsiTypes.voidType())));
     return signature.toString();
   }
 

@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Implementation does nothing but marking the element type. 
- * User: dcheryasov
  */
 public class PyTupleParameterStubImpl extends StubBase<PyTupleParameter>  implements PyTupleParameterStub {
   @Nullable

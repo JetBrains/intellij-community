@@ -1,12 +1,17 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.CancellationManager;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.*;
+import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode.DirectNodeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionNode;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -14,7 +19,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionsGraph;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 
 import java.util.*;
@@ -22,10 +26,13 @@ import java.util.Map.Entry;
 
 public class StackVarsProcessor {
   public void simplifyStackVars(RootStatement root, StructMethod mt, StructClass cl) {
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
+
     Set<Integer> setReorderedIfs = new HashSet<>();
     SSAUConstructorSparseEx ssau = null;
 
     while (true) {
+      cancellationManager.checkCanceled();
       boolean found = false;
 
       SSAConstructorSparseEx ssa = new SSAConstructorSparseEx();
@@ -33,6 +40,7 @@ public class StackVarsProcessor {
 
       SimplifyExprentsHelper sehelper = new SimplifyExprentsHelper(ssau == null);
       while (sehelper.simplifyStackVarsStatement(root, setReorderedIfs, ssa, cl)) {
+        cancellationManager.checkCanceled();
         found = true;
       }
 
@@ -42,7 +50,7 @@ public class StackVarsProcessor {
 
       ssau = new SSAUConstructorSparseEx();
       ssau.splitVariables(root, mt);
-
+      cancellationManager.checkCanceled();
       if (iterateStatements(root, ssau)) {
         found = true;
       }
@@ -93,6 +101,8 @@ public class StackVarsProcessor {
   }
 
   private boolean iterateStatements(RootStatement root, SSAUConstructorSparseEx ssa) {
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
+
     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
 
@@ -106,6 +116,7 @@ public class StackVarsProcessor {
     stackMaps.add(new HashMap<>());
 
     while (!stack.isEmpty()) {
+      cancellationManager.checkCanceled();
       DirectNode nd = stack.removeFirst();
       Map<VarVersionPair, Exprent> mapVarValues = stackMaps.removeFirst();
 
@@ -120,10 +131,10 @@ public class StackVarsProcessor {
         lstLists.add(nd.exprents);
       }
 
-      if (nd.succs.size() == 1) {
-        DirectNode ndsucc = nd.succs.get(0);
-        if (ndsucc.type == DirectNode.NODE_TAIL && !ndsucc.exprents.isEmpty()) {
-          lstLists.add(nd.succs.get(0).exprents);
+      if (nd.successors.size() == 1) {
+        DirectNode ndsucc = nd.successors.get(0);
+        if (ndsucc.type == DirectNodeType.TAIL && !ndsucc.exprents.isEmpty()) {
+          lstLists.add(nd.successors.get(0).exprents);
           nd = ndsucc;
         }
       }
@@ -154,7 +165,7 @@ public class StackVarsProcessor {
         }
       }
 
-      for (DirectNode ndx : nd.succs) {
+      for (DirectNode ndx : nd.successors) {
         stack.add(ndx);
         stackMaps.add(new HashMap<>(mapVarValues));
       }
@@ -162,16 +173,16 @@ public class StackVarsProcessor {
       // make sure the 3 special exprent lists in a loop (init, condition, increment) are not empty
       // change loop type if necessary
       if (nd.exprents.isEmpty() &&
-          (nd.type == DirectNode.NODE_INIT || nd.type == DirectNode.NODE_CONDITION || nd.type == DirectNode.NODE_INCREMENT)) {
+          (nd.type == DirectNodeType.INIT || nd.type == DirectNodeType.CONDITION || nd.type == DirectNodeType.INCREMENT)) {
         nd.exprents.add(null);
 
-        if (nd.statement.type == Statement.TYPE_DO) {
+        if (nd.statement.type == StatementType.DO) {
           DoStatement loop = (DoStatement)nd.statement;
 
-          if (loop.getLooptype() == DoStatement.LOOP_FOR &&
+          if (loop.getLoopType() == LoopType.FOR &&
               loop.getInitExprent() == null &&
               loop.getIncExprent() == null) { // "downgrade" loop to 'while'
-            loop.setLooptype(DoStatement.LOOP_WHILE);
+            loop.setLoopType(LoopType.WHILE);
           }
         }
       }
@@ -227,9 +238,11 @@ public class StackVarsProcessor {
     Exprent exprent = lstExprents.get(index);
 
     int changed = 0;
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
 
     for (Exprent expr : exprent.getAllExprents()) {
       while (true) {
+        cancellationManager.checkCanceled();
         Object[] arr = iterateChildExprent(expr, exprent, next, mapVarValues, ssau);
         Exprent retexpr = (Exprent)arr[0];
         changed |= (Boolean)arr[1] ? 1 : 0;
@@ -280,8 +293,8 @@ public class StackVarsProcessor {
         if (right.type == Exprent.EXPRENT_NEW) {
           // new Object(); permitted
           NewExprent nexpr = (NewExprent)right;
-          if (nexpr.isAnonymous() || nexpr.getNewType().arrayDim > 0
-              || nexpr.getNewType().type != CodeConstants.TYPE_OBJECT) {
+          if (nexpr.isAnonymous() || nexpr.getNewType().getArrayDim() > 0
+              || nexpr.getNewType().getType() != CodeConstants.TYPE_OBJECT) {
             return new int[]{-1, changed};
           }
         }
@@ -539,17 +552,17 @@ public class StackVarsProcessor {
       VarVersionNode nd = stack.remove(0);
       setVisited.add(nd);
 
-      if (nd != varnode && (nd.flags & VarVersionNode.FLAG_PHANTOM_FINEXIT) == 0) {
+      if (nd != varnode && (nd.flags & VarVersionNode.FLAG_PHANTOM_FIN_EXIT) == 0) {
         res.add(nd);
       }
 
-      for (VarVersionEdge edge : nd.succs) {
+      for (VarVersionEdge edge : nd.successors) {
         VarVersionNode succ = edge.dest;
 
         if (!setVisited.contains(edge.dest)) {
 
           boolean isDominated = true;
-          for (VarVersionEdge prededge : succ.preds) {
+          for (VarVersionEdge prededge : succ.predecessors) {
             if (!setVisited.contains(prededge.source)) {
               isDominated = false;
               break;
@@ -584,8 +597,7 @@ public class StackVarsProcessor {
     }
 
     // compare protected ranges
-    if (!InterpreterUtil.equalObjects(ssau.getMapVersionFirstRange().get(leftpaar),
-                                      ssau.getMapVersionFirstRange().get(usedvar))) {
+    if (!Objects.equals(ssau.getMapVersionFirstRange().get(leftpaar), ssau.getMapVersionFirstRange().get(usedvar))) {
       return false;
     }
 

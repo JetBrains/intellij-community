@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.pipenv
 
 import com.google.gson.Gson
@@ -14,9 +14,9 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Document
@@ -49,6 +49,9 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.pathValidation.PlatformAndRoot
+import com.jetbrains.python.pathValidation.ValidationRequest
+import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemDependent
@@ -120,22 +123,6 @@ fun detectPipEnvExecutable(): File? {
  */
 fun getPipEnvExecutable(): File? =
   PropertiesComponent.getInstance().pipEnvPath?.let { File(it) } ?: detectPipEnvExecutable()
-
-fun validatePipEnvExecutable(pipEnvExecutable: @SystemDependent String?): ValidationInfo? {
-  val message = if (pipEnvExecutable.isNullOrBlank()) {
-    PyBundle.message("python.sdk.pipenv.executable.not.found")
-  }
-  else {
-    val file = File(pipEnvExecutable)
-    when {
-      !file.exists() -> PyBundle.message("python.sdk.file.not.found", file.absolutePath)
-      !file.canExecute() || !file.isFile -> PyBundle.message("python.sdk.cannot.execute", file.absolutePath)
-      else -> null
-    }
-  }
-
-  return message?.let { ValidationInfo(it) }
-}
 
 fun suggestedSdkName(basePath: @NlsSafe String): @NlsSafe String = "Pipenv (${PathUtil.getFileName(basePath)})"
 
@@ -253,7 +240,8 @@ val Sdk.pipFileLockRequirements: List<PyRequirement>?
  * A quick-fix for setting up the pipenv for the module of the current PSI element.
  */
 class UsePipEnvQuickFix(sdk: Sdk?, module: Module) : LocalQuickFix {
-  @IntentionName private val quickFixName = when {
+  @IntentionName
+  private val quickFixName = when {
     sdk != null && sdk.isAssociatedWithAnotherModule(module) -> PyBundle.message("python.sdk.pipenv.quickfix.fix.pipenv.name")
     else -> PyBundle.message("python.sdk.pipenv.quickfix.use.pipenv.name")
   }
@@ -354,23 +342,17 @@ class PipEnvPipFileWatcher : EditorFactoryListener {
       else -> PyBundle.message("python.sdk.pipenv.pip.file.lock.out.of.date")
     }
     val content = PyBundle.message("python.sdk.pipenv.pip.file.notification.content")
-    val notification = LOCK_NOTIFICATION_GROUP.createNotification(title = title, content = content,
-                                                                  listener = NotificationListener { notification, event ->
-                                                                    notification.expire()
-                                                                    module.putUserData(notificationActive, null)
-                                                                    FileDocumentManager.getInstance().saveAllDocuments()
-                                                                    when (event.description) {
-                                                                      "#lock" ->
-                                                                        runPipEnvInBackground(module, listOf("lock"),
-                                                                                              PyBundle.message(
-                                                                                                "python.sdk.pipenv.pip.file.notification.locking",
-                                                                                                PIP_FILE))
-                                                                      "#update" ->
-                                                                        runPipEnvInBackground(module, listOf("update", "--dev"),
-                                                                                              PyBundle.message(
-                                                                                                "python.sdk.pipenv.pip.file.notification.updating"))
-                                                                    }
-                                                                  })
+    val notification = LOCK_NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION)
+      .setListener(NotificationListener { notification, event ->
+        notification.expire()
+        module.putUserData(notificationActive, null)
+        FileDocumentManager.getInstance().saveAllDocuments()
+        when (event.description) {
+          "#lock" -> runPipEnvInBackground(module, listOf("lock"), PyBundle.message("python.sdk.pipenv.pip.file.notification.locking"))
+          "#update" -> runPipEnvInBackground(module, listOf("update", "--dev"), PyBundle.message(
+            "python.sdk.pipenv.pip.file.notification.updating"))
+        }
+      })
     module.putUserData(notificationActive, true)
     notification.whenExpired {
       module.putUserData(notificationActive, null)
@@ -416,8 +398,7 @@ private val Document.virtualFile: VirtualFile?
 private fun VirtualFile.getModule(project: Project): Module? =
   ModuleUtil.findModuleForFile(this, project)
 
-private val LOCK_NOTIFICATION_GROUP = NotificationGroup(PyBundle.message("python.sdk.pipenv.pip.file.watcher"),
-                                                        NotificationDisplayType.STICKY_BALLOON, false)
+private val LOCK_NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Pipfile Watcher")
 
 private val Sdk.packageManager: PyPackageManager
   get() = PyPackageManagers.getInstance().forSdk(this)
@@ -433,6 +414,7 @@ fun getPipFileLockRequirements(virtualFile: VirtualFile, packageManager: PyPacka
       .filter { (_, pkg) -> pkg.markers == null }
       .flatMap { (name, pkg) -> packageManager.parseRequirements("$name${pkg.version ?: ""}").asSequence() }
       .toList()
+
   val pipFileLock = parsePipFileLock(virtualFile) ?: return null
   val packages = pipFileLock.packages?.let { toRequirements(it) } ?: emptyList()
   val devPackages = pipFileLock.devPackages?.let { toRequirements(it) } ?: emptyList()

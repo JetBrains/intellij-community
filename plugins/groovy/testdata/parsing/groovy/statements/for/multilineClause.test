@@ -32,7 +32,7 @@ Groovy script
     PsiElement(()('(')
     Reference expression
       PsiElement(identifier)('a')
-    PsiErrorElement:')' expected, got ';'
+    PsiErrorElement:')' or ',' expected, got ';'
       <empty list>
   PsiElement(;)(';')
   Reference expression
@@ -142,7 +142,7 @@ Groovy script
       Expression list
         Reference expression
           PsiElement(identifier)('c')
-    PsiElement(new line)('\n')
+        PsiElement(new line)('\n')
     PsiElement())(')')
   PsiElement(;)(';')
   PsiElement(new line)('\n\n')

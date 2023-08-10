@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
@@ -51,7 +50,7 @@ final class CompositeBinaryBuilderMap {
         int enumeratedId = cumulativeVersionEnumerator.enumerate(cumulativeVersion.toString());
         LOG.debug("composite binary stub builder for " + fileType + " registered:  " +
                   "id = " + enumeratedId + ", " +
-                  "value" + cumulativeVersion.toString());
+                  "value" + cumulativeVersion);
         myCumulativeVersionMap.put(fileType, enumeratedId);
       }
     }
@@ -59,10 +58,19 @@ final class CompositeBinaryBuilderMap {
 
   void persistState(int fileId, @NotNull VirtualFile file) throws IOException {
     int version = getBuilderCumulativeVersion(file);
+    persistVersion(version, fileId);
+  }
+
+  private void persistVersion(int version, int fileId) throws IOException {
     if (version == 0) return;
     try (DataOutputStream stream = FSRecords.writeAttribute(fileId, VERSION_STAMP)) {
       DataInputOutputUtil.writeINT(stream, version);
     }
+  }
+
+  void persistState(int fileId, @NotNull FileType fileType) throws IOException {
+    int version = myCumulativeVersionMap.getInt(fileType);
+    persistVersion(version, fileId);
   }
 
   void resetPersistedState(int fileId) throws IOException {
@@ -98,7 +106,7 @@ final class CompositeBinaryBuilderMap {
     return myCumulativeVersionMap.getInt(type);
   }
 
-  private static @NotNull Path registeredCompositeBinaryBuilderFiles() {
-    return new File(IndexInfrastructure.getIndexRootDir(StubUpdatingIndex.INDEX_ID), ".binary_builders").toPath();
+  private static @NotNull Path registeredCompositeBinaryBuilderFiles() throws IOException {
+    return IndexInfrastructure.getIndexRootDir(StubUpdatingIndex.INDEX_ID).resolve(".binary_builders");
   }
 }

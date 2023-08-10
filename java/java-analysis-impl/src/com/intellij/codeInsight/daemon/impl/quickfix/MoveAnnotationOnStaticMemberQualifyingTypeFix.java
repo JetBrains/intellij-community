@@ -1,12 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -14,7 +13,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class MoveAnnotationOnStaticMemberQualifyingTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public final class MoveAnnotationOnStaticMemberQualifyingTypeFix extends PsiUpdateModCommandAction<PsiAnnotation> {
   public MoveAnnotationOnStaticMemberQualifyingTypeFix(@NotNull final PsiAnnotation annotation) {
     super(annotation);
   }
@@ -25,17 +24,8 @@ public final class MoveAnnotationOnStaticMemberQualifyingTypeFix extends LocalQu
   }
 
   @Override
-  public @IntentionName @NotNull String getText() {
-    return getFamilyName();
-  }
-
-  @Override
-  public void invoke(@NotNull final Project project,
-                     @NotNull final PsiFile file,
-                     @Nullable final Editor editor,
-                     @NotNull final PsiElement startElement,
-                     @NotNull final PsiElement endElement) {
-    final PsiTypeElement psiTypeElement = getTypeElement(startElement);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiAnnotation annotation, @NotNull ModPsiUpdater updater) {
+    final PsiTypeElement psiTypeElement = getTypeElement(annotation);
     if (psiTypeElement == null) return;
 
     final PsiJavaCodeReferenceElement innermostParent = psiTypeElement.getInnermostComponentReferenceElement();
@@ -44,11 +34,11 @@ public final class MoveAnnotationOnStaticMemberQualifyingTypeFix extends LocalQu
     final PsiElement rightmostDot = getRightmostDot(innermostParent.getLastChild());
     if (rightmostDot == null) return;
 
-    innermostParent.addAfter(startElement, rightmostDot);
+    innermostParent.addAfter(annotation, rightmostDot);
 
     final CommentTracker ct = new CommentTracker();
-    ct.markUnchanged(startElement);
-    ct.deleteAndRestoreComments(startElement);
+    ct.markUnchanged(annotation);
+    ct.deleteAndRestoreComments(annotation);
   }
 
   @Nullable("The type does not have DOT tokens")
@@ -67,12 +57,16 @@ public final class MoveAnnotationOnStaticMemberQualifyingTypeFix extends LocalQu
   @Nullable("No type element found")
   @Contract(pure = true)
   private static PsiTypeElement getTypeElement(@NotNull final PsiElement startElement) {
-    final PsiTypeElement psiTypeElement = PsiTreeUtil.getParentOfType(startElement, PsiTypeElement.class);
-    if (psiTypeElement != null) return psiTypeElement;
-
-    final PsiVariable variable = PsiTreeUtil.getParentOfType(startElement, PsiVariable.class);
-    if (variable == null) return null;
-
-    return variable.getTypeElement();
+    PsiElement parent = PsiTreeUtil.getParentOfType(startElement, PsiTypeElement.class, PsiVariable.class, PsiMethod.class);
+    if (parent instanceof PsiTypeElement typeElement) {
+      return typeElement;
+    }
+    if (parent instanceof PsiVariable variable) {
+      return variable.getTypeElement();
+    }
+    if (parent instanceof PsiMethod method) {
+      return method.getReturnTypeElement();
+    }
+    return null;
   }
 }

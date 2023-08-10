@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
@@ -101,14 +101,16 @@ public final class PsiLiteralUtil {
     }
   }
 
-  // convert text to number according to radix specified
-  // if number is more than maxBits bits long, throws NumberFormatException
+  /**
+   * convert text to number according to radix specified
+   * if number is more than maxBits bits long, throws NumberFormatException
+   */
   public static long parseDigits(final String text, final int bitsInRadix, final int maxBits) throws NumberFormatException {
-    final int radix = 1 << bitsInRadix;
     final int textLength = text.length();
     if (textLength == 0) {
       throw new NumberFormatException(text);
     }
+    final int radix = 1 << bitsInRadix;
     long integer = textLength == 1 ? 0 : Long.parseLong(text.substring(0, textLength - 1), radix);
     if ((integer & (-1L << (maxBits - bitsInRadix))) != 0) {
       throw new NumberFormatException(text);
@@ -143,29 +145,29 @@ public final class PsiLiteralUtil {
   }
 
   /**
-   * Convert a string that contains a character (e.g. ""\n"" or ""\\"", etc.)
+   * Convert a string that contains a single character (e.g. ""\n"" or ""\\"", etc.)
    * to a character literal string (e.g. "'\n'" or "'\\'", etc.)
    *
-   * @param text a string to convert
-   * @return the converted string
+   * @param expression  a single character string
+   * @return the character literal string
    */
-  @NotNull
-  public static String charLiteralForCharString(@NotNull final String text) {
-    final int length = text.length();
-    if (length <= 1) return text;
-
-    final String character = text.substring(1, length - 1);
-    final String charLiteral;
-    if ("'".equals(character)) {
-      charLiteral = "'\\''";
+  @Nullable
+  public static String charLiteralString(PsiLiteralExpression expression) {
+    final Object value = expression.getValue();
+    if (!(value instanceof String) || ((CharSequence)value).length() > 1) {
+      throw new IllegalArgumentException();
     }
-    else if ("\\\"".equals(character)) {
-      charLiteral = "'\"'";
+    final String content = expression.isTextBlock()
+                           ? getTextBlockText(expression)
+                           : getStringLiteralContent(expression);
+    if (content == null) {
+      return null;
     }
-    else {
-      charLiteral = '\'' + character + '\'';
+    switch (content) {
+      case "'": return "'\\''";
+      case "\\\"": return "'\"'";
+      default: return '\'' + content + '\'';
     }
-    return charLiteral;
   }
 
   /**
@@ -179,7 +181,7 @@ public final class PsiLiteralUtil {
     PsiElement literal = expression.getFirstChild();
     assert literal instanceof PsiJavaToken : literal;
     IElementType type = ((PsiJavaToken)literal).getTokenType();
-    return (type == JavaTokenType.CHARACTER_LITERAL || type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.TEXT_BLOCK_LITERAL) && 
+    return (type == JavaTokenType.CHARACTER_LITERAL || type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.TEXT_BLOCK_LITERAL) &&
            expression.getValue() == null;
   }
 
@@ -198,6 +200,7 @@ public final class PsiLiteralUtil {
   /**
    * Converts given string to text block content.
    * <p>During conversion:</p>
+   * <ul>
    * <li>All escaped quotes are unescaped.</li>
    * <li>Every third quote is escaped. If escapeStartQuote / escapeEndQuote is set then start / end quote is also escaped.</li>
    * <li>All spaces before \n are converted to \040 escape sequence.
@@ -205,6 +208,7 @@ public final class PsiLiteralUtil {
    * If escapeSpacesInTheEnd is set, then all spaces before the end of the line are converted even if new line in the end is missing. </li>
    * <li> All new line escape sequences are interpreted. </li>
    * <li>Rest of the content is processed as is.</li>
+   * </ul>
    *
    * @param s                    original text
    * @param escapeStartQuote     true if first quote should be escaped (e.g. when copy-pasting into text block after two quotes)
@@ -291,10 +295,9 @@ public final class PsiLiteralUtil {
     int i = parseBackSlash(s, start);
     if (i == -1) return -1;
     int prev = start;
-    int nextIdx;
     int nSlashes = 1;
     while (i < s.length()) {
-      nextIdx = parseBackSlash(s, i);
+      int nextIdx = parseBackSlash(s, i);
       if (nextIdx != -1) {
         result.append(s, prev, i);
         prev = i;
@@ -393,15 +396,22 @@ public final class PsiLiteralUtil {
    */
   public static String @Nullable [] getTextBlockLines(@NotNull PsiLiteralExpression expression) {
     if (!expression.isTextBlock()) return null;
-    String rawText = expression.getText();
-    if (rawText.length() < 7 || !rawText.endsWith("\"\"\"")) return null;
+    return getTextBlockLines(expression.getText());
+  }
+
+  public static String @Nullable [] getTextBlockLines(String text) {
+    if (text.length() < 7 || !text.endsWith("\"\"\"")) return null;
     int start = 3;
     while (true) {
-      char c = rawText.charAt(start++);
+      char c = text.charAt(start++);
       if (c == '\n') break;
-      if (!Character.isWhitespace(c) || start == rawText.length()) return null;
+      if (!isTextBlockWhiteSpace(c) || start == text.length()) return null;
     }
-    return rawText.substring(start, rawText.length() - 3).split("\n", -1);
+    return text.substring(start, text.length() - 3).split("\n", -1);
+  }
+
+  public static boolean isTextBlockWhiteSpace(char c) {
+    return c == ' ' || c == '\t' || c == '\f';
   }
 
   /**
@@ -480,7 +490,7 @@ public final class PsiLiteralUtil {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i];
-      if (line.length() > 0) {
+      if (!line.isEmpty()) {
         sb.append(trimTrailingWhitespaces(line.substring(prefix)));
       }
       if (i < lines.length - 1) {
@@ -491,7 +501,7 @@ public final class PsiLiteralUtil {
   }
 
   @NotNull
-  private static String trimTrailingWhitespaces(@NotNull String line) {
+  public static String trimTrailingWhitespaces(@NotNull String line) {
     int index = line.length();
     while (true) {
       int wsIndex = parseWhitespaceBackwards(line, index - 1);
@@ -511,8 +521,8 @@ public final class PsiLiteralUtil {
     if (Character.isWhitespace(s.charAt(index))) return index;
     index = parseUnicodeEscapeBackwards(s, index, Character::isWhitespace);
     if (index < 0) return -1;
-    int nBackSlashes = 1;
     index--;
+    int nBackSlashes = 1;
     if (index >= 0 && s.charAt(index) == '\\') {
       nBackSlashes++;
       nBackSlashes += countBackSlashes(s, index - 1);
@@ -532,8 +542,12 @@ public final class PsiLiteralUtil {
   }
 
   private static int parseUnicodeEscapeBackwards(@NotNull String s, int index, @NotNull Predicate<? super Character> charPredicate) {
-    // \u1234 needs at least 6 positions
+    // \uFFFD needs at least 6 positions
     if (index - 5 < 0) return -1;
+
+    int start = findSlashU(s, index - 4);
+    if (start < 0) return -1;
+
     try {
       int code = Integer.parseInt(s.substring(index - 3, index + 1), 16);
       if (!charPredicate.test((char) code)) return -1;
@@ -541,8 +555,11 @@ public final class PsiLiteralUtil {
     catch (NumberFormatException e) {
       return -1;
     }
-    if (s.charAt(index - 4) != 'u') return -1;
-    index -= 4;
+    return start;
+  }
+
+  private static int findSlashU(@NotNull String s, int index) {
+    if (s.charAt(index) != 'u') return -1;
     // 'u' can appear multiple times
     do {
       index--;
@@ -603,7 +620,7 @@ public final class PsiLiteralUtil {
     if (i >= line.length()) return -1;
     char c = line.charAt(i++);
     if (c == '\\') {
-      // like \u0020
+      // like \uFFFD
       char c1 = line.charAt(i++);
       if (c1 == 'u') {
         while (i < line.length() && line.charAt(i) == 'u') i++;
@@ -631,24 +648,24 @@ public final class PsiLiteralUtil {
    */
   public static @Nullable String tryConvertNumericLiteral(@NotNull PsiLiteralExpression literal, PsiType wantedType) {
     PsiType exprType = literal.getType();
-    if (PsiType.INT.equals(exprType)) {
-      if (PsiType.LONG.equals(wantedType)) {
+    if (PsiTypes.intType().equals(exprType)) {
+      if (PsiTypes.longType().equals(wantedType)) {
         return literal.getText() + "L";
       }
-      if (PsiType.FLOAT.equals(wantedType)) {
+      if (PsiTypes.floatType().equals(wantedType)) {
         String text = literal.getText();
         if (!text.startsWith("0")) {
           return text + "F";
         }
       }
-      if (PsiType.DOUBLE.equals(wantedType)) {
+      if (PsiTypes.doubleType().equals(wantedType)) {
         String text = literal.getText();
         if (!text.startsWith("0")) {
           return text + ".0";
         }
       }
     }
-    if (PsiType.LONG.equals(exprType) && PsiType.INT.equals(wantedType)) {
+    if (PsiTypes.longType().equals(exprType) && PsiTypes.intType().equals(wantedType)) {
       Long value = ObjectUtils.tryCast(literal.getValue(), Long.class);
       if (value != null && value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
         String text = literal.getText();
@@ -657,17 +674,20 @@ public final class PsiLiteralUtil {
         }
       }
     }
-    if (PsiType.DOUBLE.equals(exprType) && PsiType.FLOAT.equals(wantedType)) {
+    if (PsiTypes.doubleType().equals(exprType) && PsiTypes.floatType().equals(wantedType)) {
       Double value = ObjectUtils.tryCast(literal.getValue(), Double.class);
-      if (value != null && (double)(float)(double)value == value) {
-        String text = literal.getText();
-        if (StringUtil.endsWithIgnoreCase(text, "D")) {
-          text = text.substring(0, text.length() - 1);
+      if (value != null) {
+        float f = (float)(double)value;
+        if (Float.isFinite(f) && (f != 0.0 || value == 0.0)) {
+          String text = literal.getText();
+          if (StringUtil.endsWithIgnoreCase(text, "D")) {
+            text = text.substring(0, text.length() - 1);
+          }
+          return text + "F";
         }
-        return text + "F";
       }
     }
-    if (PsiType.FLOAT.equals(exprType) && PsiType.DOUBLE.equals(wantedType)) {
+    if (PsiTypes.floatType().equals(exprType) && PsiTypes.doubleType().equals(wantedType)) {
       String text = literal.getText();
       if (StringUtil.endsWithIgnoreCase(text, "F")) {
         String newLiteral = text.substring(0, text.length() - 1);
@@ -708,7 +728,6 @@ public final class PsiLiteralUtil {
 
         curOffset += linePrefixLength;
 
-        int charIdx;
         int nextIdx = 0;
         while (true) {
           if (from == charsSoFar) {
@@ -717,7 +736,7 @@ public final class PsiLiteralUtil {
           if (to == charsSoFar) {
             return new TextRange(mappedFrom, curOffset + nextIdx);
           }
-          charIdx = nextIdx;
+          int charIdx = nextIdx;
           nextIdx = getCharEndIndex(line, charIdx);
           if (nextIdx == -1) break;
           charsSoFar++;

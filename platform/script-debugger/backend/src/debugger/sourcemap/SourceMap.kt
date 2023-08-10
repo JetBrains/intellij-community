@@ -3,7 +3,6 @@ package org.jetbrains.debugger.sourcemap
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
-import com.intellij.util.containers.isNullOrEmpty
 
 // sources - is not originally specified, but canonicalized/normalized
 // lines and columns are zero-based according to specification
@@ -101,7 +100,7 @@ abstract class SourceMapBase(protected val sourceMapData: SourceMapData,
     }
 
     val index = entry.source
-    return if (index < 0 || index >= sourcesContent!!.size) null else sourcesContent[index]
+    return if (index < 0 || index >= sourcesContent.size) null else sourcesContent[index]
   }
 
   override fun getSourceContent(sourceIndex: Int): String? {
@@ -109,7 +108,7 @@ abstract class SourceMapBase(protected val sourceMapData: SourceMapData,
     if (sourcesContent.isNullOrEmpty()) {
       return null
     }
-    return if (sourceIndex < 0 || sourceIndex >= sourcesContent!!.size) null else sourcesContent[sourceIndex]
+    return if (sourceIndex < 0 || sourceIndex >= sourcesContent.size) null else sourcesContent[sourceIndex]
   }
 }
 

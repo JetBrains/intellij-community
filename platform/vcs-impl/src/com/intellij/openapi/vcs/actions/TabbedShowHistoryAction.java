@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -18,16 +17,23 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFileHistoryProvider;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 
-public class TabbedShowHistoryAction extends DumbAwareAction implements UpdateInBackground {
+public class TabbedShowHistoryAction extends DumbAwareAction {
   private static final int MANY_CHANGES_THRESHOLD = 1000;
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -46,6 +52,11 @@ public class TabbedShowHistoryAction extends DumbAwareAction implements UpdateIn
       .toList();
 
     if (selectedFiles.isEmpty()) return false;
+
+    List<FilePath> symlinkedPaths = getContextSymlinkedPaths(project, context);
+    if (symlinkedPaths != null && canShowNewFileHistory(project, symlinkedPaths)) {
+      return true;
+    }
 
     if (canShowNewFileHistory(project, selectedFiles)) {
       return ContainerUtil.all(selectedFiles, path -> AbstractVcs.fileInVcsByFileStatus(project, path));
@@ -76,8 +87,8 @@ public class TabbedShowHistoryAction extends DumbAwareAction implements UpdateIn
   }
 
   private static boolean canShowNewFileHistory(@NotNull Project project, @NotNull Collection<FilePath> paths) {
-    VcsLogFileHistoryProvider historyProvider = ApplicationManager.getApplication().getService(VcsLogFileHistoryProvider.class);
-    return historyProvider != null && historyProvider.canShowFileHistory(project, paths, null);
+    VcsLogFileHistoryProvider historyProvider = project.getService(VcsLogFileHistoryProvider.class);
+    return historyProvider != null && historyProvider.canShowFileHistory(paths, null);
   }
 
   @Nullable
@@ -85,14 +96,30 @@ public class TabbedShowHistoryAction extends DumbAwareAction implements UpdateIn
     return ObjectUtils.chooseNotNull(selectedPath.getVirtualFile(), selectedPath.getVirtualFileParent());
   }
 
+  @Nullable
+  private static List<FilePath> getContextSymlinkedPaths(@NotNull Project project, @NotNull DataContext context) {
+    VirtualFile file = VcsContextUtil.selectedFile(context);
+    VirtualFile vcsFile = VcsUtil.resolveSymlink(project, file);
+    return vcsFile != null ? Collections.singletonList(VcsUtil.getFilePath(vcsFile)) : null;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = Objects.requireNonNull(e.getProject());
+
+    List<FilePath> symlinkedPaths = getContextSymlinkedPaths(project, e.getDataContext());
+    if (symlinkedPaths != null && canShowNewFileHistory(project, symlinkedPaths)) {
+      showNewFileHistory(project, symlinkedPaths);
+      return;
+    }
+
     List<FilePath> selectedFiles = VcsContextUtil.selectedFilePaths(e.getDataContext());
     if (canShowNewFileHistory(project, selectedFiles)) {
       showNewFileHistory(project, selectedFiles);
+      return;
     }
-    else if (selectedFiles.size() == 1) {
+
+    if (selectedFiles.size() == 1) {
       FilePath path = Objects.requireNonNull(ContainerUtil.getFirstItem(selectedFiles));
       AbstractVcs vcs = Objects.requireNonNull(ChangesUtil.getVcsForFile(Objects.requireNonNull(getExistingFileOrParent(path)), project));
       showOldFileHistory(project, vcs, path);
@@ -100,8 +127,8 @@ public class TabbedShowHistoryAction extends DumbAwareAction implements UpdateIn
   }
 
   private static void showNewFileHistory(@NotNull Project project, @NotNull Collection<FilePath> paths) {
-    VcsLogFileHistoryProvider historyProvider = ApplicationManager.getApplication().getService(VcsLogFileHistoryProvider.class);
-    historyProvider.showFileHistory(project, paths, null);
+    VcsLogFileHistoryProvider historyProvider = project.getService(VcsLogFileHistoryProvider.class);
+    historyProvider.showFileHistory(paths, null);
   }
 
   private static void showOldFileHistory(@NotNull Project project, @NotNull AbstractVcs vcs, @NotNull FilePath path) {

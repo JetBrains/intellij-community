@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.CommonBundle;
@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -35,10 +34,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.ui.SimpleTextAttributes.LINK_BOLD_ATTRIBUTES;
 
@@ -209,9 +206,12 @@ public class MavenArtifactSearchPanel extends JPanel {
 
   @NotNull
   public List<MavenId> getResult() {
+    TreePath[] selectionPaths = myResultList.getSelectionPaths();
+    if (selectionPaths == null) {
+      return Collections.emptyList();
+    }
     List<MavenId> result = new ArrayList<>();
-
-    for (TreePath each : myResultList.getSelectionPaths()) {
+    for (TreePath each : selectionPaths) {
       Object sel = each.getLastPathComponent();
       MavenDependencyCompletionItem info;
       if (sel instanceof MavenDependencyCompletionItem) {
@@ -324,7 +324,7 @@ public class MavenArtifactSearchPanel extends JPanel {
           Insets insets = tree.getInsets();
           w -= insets.left + insets.right;
 
-          JScrollPane scrollPane = JBScrollPane.findScrollPane(tree);
+          JScrollPane scrollPane = ComponentUtil.getScrollPane(tree);
           if (scrollPane != null) {
             JScrollBar sb = scrollPane.getVerticalScrollBar();
             if (sb != null) {
@@ -353,8 +353,7 @@ public class MavenArtifactSearchPanel extends JPanel {
       else if (value instanceof MavenArtifactSearchResult) {
         formatSearchResult(tree, (MavenArtifactSearchResult)value, selected);
       }
-      else if (value instanceof MavenDependencyCompletionItem) {
-        MavenDependencyCompletionItem info = (MavenDependencyCompletionItem)value;
+      else if (value instanceof MavenDependencyCompletionItem info) {
         String version = info.getVersion();
         Icon icon = MavenDependencyCompletionUtil.getIcon(info.getType());
 

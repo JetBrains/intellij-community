@@ -1,7 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.export;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +57,7 @@ public class ExportTestResultsConfiguration implements PersistentStateComponent<
   private State myState = new State();
 
   public static ExportTestResultsConfiguration getInstance(Project project) {
-    return ServiceManager.getService(project, ExportTestResultsConfiguration.class);
+    return project.getService(ExportTestResultsConfiguration.class);
   }
 
   @Override

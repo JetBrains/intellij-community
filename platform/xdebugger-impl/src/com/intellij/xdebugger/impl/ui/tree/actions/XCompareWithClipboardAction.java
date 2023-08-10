@@ -18,9 +18,11 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import org.jetbrains.annotations.NotNull;
 
 public class XCompareWithClipboardAction extends XFetchValueActionBase {
 
@@ -30,5 +32,10 @@ public class XCompareWithClipboardAction extends XFetchValueActionBase {
       DiffRequest request = DiffRequestFactory.getInstance().createClipboardVsValue(value);
       DiffManager.getInstance().showDiff(project, request);
     });
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

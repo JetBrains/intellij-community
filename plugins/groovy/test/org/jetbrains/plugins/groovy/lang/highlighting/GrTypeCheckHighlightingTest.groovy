@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.openapi.util.RecursionManager
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 
 class GrTypeCheckHighlightingTest extends GrHighlightingTestBase {
@@ -32,7 +31,7 @@ class GrTypeCheckHighlightingTest extends GrHighlightingTestBase {
   }
 
   void 'test box primitive types in list literals'() {
-    testHighlighting '''
+    doTestHighlighting '''
 void method(List<Integer> ints) {}
 void method2(Map<String, Integer> map) {}
 
@@ -47,7 +46,7 @@ method2([a: X.C, b: X.D])
   }
 
   void 'test map without string keys and values'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 def foo(int a) {}
 def m = [(aa): (<error descr="<expression> expected, got ')'">)</error>]
 foo<warning descr="'foo' in '_' cannot be applied to '(java.util.LinkedHashMap)'">(m)</warning>
@@ -55,7 +54,7 @@ foo<warning descr="'foo' in '_' cannot be applied to '(java.util.LinkedHashMap)'
   }
 
   void 'test assignment when getter and setter have different types'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 interface MavenArtifactRepository {
   URI getUrl()
   void setUrl(Object var1)
@@ -67,11 +66,11 @@ def test(MavenArtifactRepository m) {
   }
 
   void 'test parameter with single-character string initializer'() {
-    testHighlighting "@groovy.transform.CompileStatic def ff(char c = '\\n') {}"
+    doTestHighlighting "@groovy.transform.CompileStatic def ff(char c = '\\n') {}"
   }
 
   void 'test ambiguous call @CS'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 def ff(String s, Object o) {}
 def ff(Object o, String s) {}
 
@@ -83,7 +82,7 @@ def usage() {
   }
 
   void 'test no warning for type parameter assigning'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 class A<T> {
     
     T value

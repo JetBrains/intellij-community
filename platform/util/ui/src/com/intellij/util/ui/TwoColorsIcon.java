@@ -12,7 +12,7 @@ import java.awt.*;
  *
  * @deprecated use {@link ColorsIcon} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class TwoColorsIcon extends ColorsIcon {
   public TwoColorsIcon(int size, @Nullable Color color1, @Nullable Color secondColor) {
     super(size, color1, secondColor);

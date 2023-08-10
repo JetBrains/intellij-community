@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import com.intellij.psi.PsiTypeParameterList;
 
-/**
- * @author ilyas
- */
 public interface GrTypeParameterList extends GroovyPsiElement, PsiTypeParameterList {
   @Override
   GrTypeParameter @NotNull [] getTypeParameters();

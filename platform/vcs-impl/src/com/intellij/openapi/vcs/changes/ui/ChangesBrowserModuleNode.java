@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -12,21 +12,29 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
+
+public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> implements ChangesBrowserNode.NodeWithFilePath {
   @NotNull private final FilePath myModuleRoot;
 
-  protected ChangesBrowserModuleNode(Module userObject) {
+  private ChangesBrowserModuleNode(@NotNull Module userObject, @NotNull FilePath moduleRoot) {
     super(userObject);
+    myModuleRoot = moduleRoot;
+  }
 
-    myModuleRoot = getModuleRootFilePath(userObject);
+  @Nullable
+  public static ChangesBrowserModuleNode create(@NotNull Module module) {
+    FilePath moduleRoot = getModuleRootFilePath(module);
+    if (moduleRoot == null) return null;
+    return new ChangesBrowserModuleNode(module, moduleRoot);
   }
 
   @Override
-  public void render(@NotNull final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
+  public void render(@NotNull final ChangesBrowserNodeRenderer renderer,
+                     final boolean selected,
+                     final boolean expanded,
+                     final boolean hasFocus) {
     final Module module = (Module)userObject;
 
     renderer.append(module.isDisposed() ? "" : module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -36,7 +44,8 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
 
     if (module.isDisposed()) {
       renderer.setIcon(ModuleType.EMPTY.getIcon());
-    } else {
+    }
+    else {
       renderer.setIcon(ModuleType.get(module).getIcon());
     }
   }
@@ -44,6 +53,11 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
   @NotNull
   public FilePath getModuleRoot() {
     return myModuleRoot;
+  }
+
+  @Override
+  public @NotNull FilePath getNodeFilePath() {
+    return getModuleRoot();
   }
 
   @Override
@@ -61,14 +75,15 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
     return compareFileNames(getUserObject().getName(), o2.getName());
   }
 
-  @NotNull
-  private static FilePath getModuleRootFilePath(Module module) {
+  @Nullable
+  private static FilePath getModuleRootFilePath(@NotNull Module module) {
     return ReadAction.compute(() -> {
+      if (module.isDisposed()) return null;
       VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
       if (roots.length == 1) {
         return VcsUtil.getFilePath(roots[0]);
       }
-      return VcsUtil.getFilePath(ModuleUtilCore.getModuleDirPath(module));
+      return VcsUtil.getFilePath(ModuleUtilCore.getModuleDirPath(module), true);
     });
   }
 }

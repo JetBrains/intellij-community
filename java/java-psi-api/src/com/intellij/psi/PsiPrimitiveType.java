@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.types.JvmPrimitiveType;
@@ -10,7 +10,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 
 /**
  * Represents primitive types of Java language.
@@ -57,16 +60,6 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
     myName = name;
   }
 
-  /**
-   * @deprecated please don't use {@link PsiPrimitiveType} to represent fake types
-   */
-  @Deprecated
-  public PsiPrimitiveType(@NotNull String name, PsiAnnotation @NotNull [] annotations) {
-    super(annotations);
-    myKind = null;
-    myName = name;
-  }
-
   @NotNull
   @Contract(pure = true)
   private static String getName(@Nullable JvmPrimitiveTypeKind kind) {
@@ -75,7 +68,7 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
 
   @NotNull
   @Override
-  public final JvmPrimitiveTypeKind getKind() {
+  public JvmPrimitiveTypeKind getKind() {
     return Objects.requireNonNull(
       myKind,
       "getKind() called on PsiType.NULL\n" +
@@ -193,28 +186,28 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
   public static @Nullable PsiPrimitiveType fromJvmTypeDescriptor(char descriptor) {
     switch (descriptor) {
       case 'B':
-        return PsiType.BYTE;
+        return PsiTypes.byteType();
       case 'C':
-        return PsiType.CHAR;
+        return PsiTypes.charType();
       case 'D':
-        return PsiType.DOUBLE;
+        return PsiTypes.doubleType();
       case 'F':
-        return PsiType.FLOAT;
+        return PsiTypes.floatType();
       case 'Z':
-        return PsiType.BOOLEAN;
+        return PsiTypes.booleanType();
       case 'I':
-        return PsiType.INT;
+        return PsiTypes.intType();
       case 'J':
-        return PsiType.LONG;
+        return PsiTypes.longType();
       case 'S':
-        return PsiType.SHORT;
+        return PsiTypes.shortType();
       default:
         return null;
     }
   }
 
   /**
-   * This method is nullable since {@link PsiType#NULL} has no FQN.<br/>
+   * This method is nullable since {@link PsiTypes#nullType()} has no FQN.<br/>
    * Consider using {@link JvmPrimitiveTypeKind#getBoxedFqn()} if you know the type you need to get FQN of,
    * e.g. instead of {@code PsiType.INT.getBoxedTypeName()} use {@code JvmPrimitiveTypeKind.INT.getBoxedFqn()}.
    *
@@ -259,14 +252,6 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
     if (aClass == null) return null;
 
     return JavaPsiFacade.getElementFactory(manager.getProject()).createType(aClass);
-  }
-
-  /**
-   * @deprecated please use {@link JvmPrimitiveTypeKind#getBoxedFqns}
-   */
-  @Deprecated
-  public static Collection<String> getAllBoxedTypeNames() {
-    return JvmPrimitiveTypeKind.getBoxedFqns();
   }
 
   @Override

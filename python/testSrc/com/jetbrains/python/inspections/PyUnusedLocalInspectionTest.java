@@ -30,12 +30,12 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
   }
 
   public void testNonlocal() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    doTest();
   }
 
   // PY-1235
   public void testTupleUnpacking() {
-    runWithLanguageLevel(LanguageLevel.PYTHON26, this::doTest);
+    doTest();
   }
 
   // PY-959
@@ -45,7 +45,7 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   // PY-9778
   public void testUnusedCoroutine() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMultiFileTest("b.py"));
+    doMultiFileTest("b.py");
   }
 
   // PY-19491
@@ -55,12 +55,12 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   // PY-20805
   public void testFStringReferences() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-22087
   public void testFStringReferencesInComprehensions() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-8219
@@ -70,17 +70,17 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   // PY-22971
   public void testOverloadsAndImplementationInClass() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   // PY-22971
   public void testTopLevelOverloadsAndImplementation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   // PY-23057
   public void testParameterInMethodWithEllipsis() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   public void testSingleUnderscore() {
@@ -100,7 +100,7 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   // PY-28017
   public void testModuleGetAttr() {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
+    doTest();
   }
 
   // PY-27435
@@ -130,77 +130,93 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
   // PY-16419, PY-26417
   public void testPotentiallySuppressedExceptions() {
     doTestByText(
-      "class C(object):\n" +
-      "    def __enter__(self):\n" +
-      "        return self\n" +
-      "\n" +
-      "    def __exit__(self, exc, value, traceback):\n" +
-      "        return undefined\n" +
-      "\n" +
-      "def f11():\n" +
-      "    with C():\n" +
-      "        x = 1\n" +
-      "        raise Exception()\n" +
-      "    print(x) #pass\n" +
-      "\n" +
-      "def g2():\n" +
-      "    raise Exception()\n" +
-      "\n" +
-      "def f12():\n" +
-      "    with C():\n" +
-      "        <weak_warning descr=\"Local variable 'x' value is not used\">x</weak_warning> = 2\n" +
-      "        return g2()\n" +
-      "    print(x) #pass\n" +
-      "\n" +
-      "class A1(TestCase):\n" +
-      "    def f3(self):\n" +
-      "        with C():\n" +
-      "            x = 2\n" +
-      "            g2()\n" +
-      "        print(x) #pass\n" +
-      "    \n" +
-      "import contextlib\n" +
-      "from contextlib import suppress\n" +
-      "from unittest import TestCase\n" +
-      "\n" +
-      "def f21():\n" +
-      "    with suppress(Exception):\n" +
-      "        x = 1\n" +
-      "        raise Exception()\n" +
-      "    print(x) #pass\n" +
-      "\n" +
-      "def f22():\n" +
-      "    with contextlib.suppress(Exception):\n" +
-      "        x = 2\n" +
-      "        return g2()\n" +
-      "    print(x) #pass\n" +
-      "\n" +
-      "class A2(TestCase):\n" +
-      "    def f3(self):\n" +
-      "        with self.assertRaises(Exception):\n" +
-      "            x = 2\n" +
-      "            g2()\n" +
-      "        print(x) #pass"
+      """
+        class C(object):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc, value, traceback):
+                return undefined
+
+        def f11():
+            with C():
+                x = 1
+                raise Exception()
+            print(x) #pass
+
+        def g2():
+            raise Exception()
+
+        def f12():
+            with C():
+                <weak_warning descr="Local variable 'x' value is not used">x</weak_warning> = 2
+                return g2()
+            print(x) #pass
+
+        class A1(TestCase):
+            def f3(self):
+                with C():
+                    x = 2
+                    g2()
+                print(x) #pass
+           \s
+        import contextlib
+        from contextlib import suppress
+        from unittest import TestCase
+
+        def f21():
+            with suppress(Exception):
+                x = 1
+                raise Exception()
+            print(x) #pass
+
+        def f22():
+            with contextlib.suppress(Exception):
+                x = 2
+                return g2()
+            print(x) #pass
+
+        class A2(TestCase):
+            def f3(self):
+                with self.assertRaises(Exception):
+                    x = 2
+                    g2()
+                print(x) #pass"""
     );
   }
   // PY-22204
   public void testForwardTypeDeclaration() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-22204
   public void testTypeDeclarationFollowsTargetBeforeItsFirstUsage() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-44102
   public void testUnusedMultiAssignmentTarget() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-44102
   public void testUnusedAssignmentExpression() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
+  }
+
+  // PY-48760
+  public void testAllBindingsOfSameNameInOrPatternConsideredUsed() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testUnusedCapturePatterns() {
+    doTest();
+  }
+
+  // PY-50943
+  public void testIncompleteFunctionWithoutName() {
+    doTest();
   }
 
   @NotNull

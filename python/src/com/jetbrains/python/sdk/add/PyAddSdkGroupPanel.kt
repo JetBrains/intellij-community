@@ -27,14 +27,11 @@ import javax.swing.ButtonGroup
 import javax.swing.Icon
 import javax.swing.JPanel
 
-/**
- * @author vlan
- */
 class PyAddSdkGroupPanel(private val nameGetter: java.util.function.Supplier<@Nls String>,
                          panelIcon: Icon,
                          val panels: List<PyAddSdkPanel>,
                          defaultPanel: PyAddSdkPanel) : PyAddSdkPanel() {
-  override val panelName: String get() = nameGetter.get()
+  override val panelName: String get() = nameGetter.get() // NON-NLS
   override val icon: Icon = panelIcon
   var selectedPanel: PyAddSdkPanel = defaultPanel
   private val changeListeners: MutableList<Runnable> = mutableListOf()

@@ -11,9 +11,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class SimpleMethodCallLookupElement extends LookupElement {
   private final PsiMethod myMethod;
 
@@ -37,7 +34,7 @@ public class SimpleMethodCallLookupElement extends LookupElement {
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setIcon(myMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY));
     presentation.setItemText(myMethod.getName());
     presentation.setTailText(PsiFormatUtil.formatMethod(myMethod,

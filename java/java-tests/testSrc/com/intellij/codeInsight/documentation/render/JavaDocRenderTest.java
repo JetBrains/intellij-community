@@ -1,18 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation.render;
 
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
-import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.testFramework.TestFileType;
+import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,79 +44,92 @@ public class JavaDocRenderTest extends AbstractEditorTest {
   }
 
   public void testDeleteLine() {
-    configure("class C {\n" +
-              "<caret>\n" +
-              "  /** doc */\n" +
-              "  int a;\n" +
-              "}\n", true);
-    verifyFoldingState("[FoldRegion +(11:24), placeholder='']");
+    configure("""
+                class C {
+                <caret>
+                  /** doc */
+                  int a;
+                }
+                """, true);
+    verifyFoldingState(11, 23);
     executeAction(IdeActions.ACTION_EDITOR_DELETE_LINE);
-    checkResultByText("class C {\n" +
-                      "  /** doc */\n" +
-                      "<caret>  int a;\n" +
-                      "}\n");
+    checkResultByText("""
+                        class C {
+                        <caret>  /** doc */
+                          int a;
+                        }
+                        """);
   }
 
   public void testTypingAtLineStart() {
-    configure("class C {\n" +
-              "/** doc */\n" +
-              "int a;<caret>\n" +
-              "}\n", true);
-    verifyFoldingState("[FoldRegion +(10:21), placeholder='']");
+    configure("""
+                class C {
+                /** doc */
+                int a;<caret>
+                }
+                """, true);
+    verifyFoldingState(10, 20);
     executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
     type(' ');
-    checkResultByText("class C {\n" +
-                      "/** doc */\n" +
-                      " <caret>int a;\n" +
-                      "}\n");
+    checkResultByText("""
+                        class C {
+                        /** doc */
+                         <caret>int a;
+                        }
+                        """);
   }
 
   public void testCommentModification() {
-    configure("class C {\n" +
-              "  /** doc */\n" +
-              "  int a;<caret>\n" +
-              "}\n", false);
-    verifyFoldingState("[]");
+    configure("""
+                class C {
+                  /** doc */
+                  int a;<caret>
+                }
+                """, false);
+    verifyFoldingState();
     verifyItem(12, 22, null);
     toggleItem();
-    verifyFoldingState("[FoldRegion +(10:23), placeholder='']");
+    verifyFoldingState(10, 22);
     verifyItem(12, 22, "doc");
     toggleItem();
-    verifyFoldingState("[]");
+    verifyFoldingState();
     verifyItem(12, 22, null);
     runWriteCommand(() -> getEditor().getDocument().setText(getEditor().getDocument().getText().replace("doc", "another")));
     toggleItem();
-    verifyFoldingState("[FoldRegion +(10:27), placeholder='']");
+    verifyFoldingState(10, 26);
     verifyItem(12, 26, "another");
   }
 
   public void testMultipleAuthors() {
-    configure("package some;\n" +
-              "\n" +
-              "/**\n" +
-              " * @author foo\n" +
-              " * @author bar\n" +
-              " */\n" +
-              "class C {}", true);
+    configure("""
+                package some;
+
+                /**
+                 * @author foo
+                 * @author bar
+                 */
+                class C {}""", true);
     verifyItem(15, 52,"<table class='sections'><p><tr><td valign='top' class='section'><p>Author:</td>" +
                       "<td valign='top'><p>foo, bar</td></table>");
   }
 
   public void testDocumentStart() {
-    configure("/**\n" +
-              " * comment\n" +
-              " */\n" +
-              "class C {}", true);
-    verifyFoldingState("[FoldRegion +(0:19), placeholder='']");
+    configure("""
+                /**
+                 * comment
+                 */
+                class C {}""", true);
+    verifyFoldingState(0, 18);
   }
 
   public void testPackageInfo() {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(true);
     configureFromFileText("package-info.java",
-                          "/**\n" +
-                          " * whatever\n" +
-                          " */\n" +
-                          "package some;");
+                          """
+                            /**
+                             * whatever
+                             */
+                            package some;""");
     updateRenderedItems(true);
     verifyItem(0, 19, "whatever");
   }
@@ -122,42 +137,45 @@ public class JavaDocRenderTest extends AbstractEditorTest {
   public void testModuleInfo() {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(true);
     configureFromFileText("module-info.java",
-                          "/**\n" +
-                          " * whatever\n" +
-                          " */\n" +
-                          "module some {}");
+                          """
+                            /**
+                             * whatever
+                             */
+                            module some {}""");
     updateRenderedItems(true);
     verifyItem(0, 19, "whatever");
   }
 
   public void testToggleNestedMember() {
-    configure("/**\n" +
-              " * class\n" +
-              " */\n" +
-              "class C {\n" +
-              "  /**\n" +
-              "   * method\n" +
-              "   */\n" +
-              "  void m() {\n" +
-              "    <caret>\n" +
-              "  }\n" +
-              "}", false);
-    verifyFoldingState("[]");
+    configure("""
+                /**
+                 * class
+                 */
+                class C {
+                  /**
+                   * method
+                   */
+                  void m() {
+                    <caret>
+                  }
+                }""", false);
+    verifyFoldingState();
     toggleItem();
-    verifyFoldingState("[FoldRegion +(27:51), placeholder='']");
+    verifyFoldingState(27, 50);
   }
 
   public void testExpandAll() {
     boolean savedValue = CodeFoldingSettings.getInstance().COLLAPSE_METHODS;
     try {
       CodeFoldingSettings.getInstance().COLLAPSE_METHODS = true;
-      configure("/** class */\n" +
-              "class C {\n" +
-              "  void m() {\n" +
-              "  }\n" +
-              "}", true);
+      configure("""
+                  /** class */
+                  class C {
+                    void m() {
+                    }
+                  }""", true);
       int methodBodyPos = getEditor().getDocument().getText().indexOf("{\n  }");
-      CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
+      EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
       executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
       assertNotNull(getEditor().getFoldingModel().getCollapsedRegionAtOffset(methodBodyPos));
       executeAction(IdeActions.ACTION_EXPAND_ALL_REGIONS);
@@ -169,65 +187,72 @@ public class JavaDocRenderTest extends AbstractEditorTest {
   }
 
   public void testTypingAfterCollapse() {
-    configure("/**\n" +
-              " * doc<caret>\n" +
-              " */\n" +
-              "class C {}", false);
+    configure("""
+                /**
+                 * doc<caret>
+                 */
+                class C {}""", false);
     toggleItem();
     type("  ");
-    checkResultByText("/**\n" +
-                      " * doc\n" +
-                      " */\n" +
-                      "  <caret>class C {}");
+    checkResultByText("""
+                          <caret>/**
+                         * doc
+                         */
+                        class C {}""");
   }
 
   public void testAddedCommentIsNotCollapsed() {
     configure("class C {}", true);
     runWriteCommand(() -> getEditor().getDocument().insertString(0, "/**\n * comment\n */\n"));
     updateRenderedItems(false);
-    verifyFoldingState("[]");
+    verifyFoldingState();
   }
 
   public void testLineToYAndBackConversions() {
-    configure("class C {\n" +
-              "  /**\n" +
-              "   * comment\n" +
-              "   */\n" +
-              "  void m() {}\n" +
-              "}", true);
-    List<Inlay<?>> inlays = getEditor().getInlayModel().getBlockElementsForVisualLine(1, true);
-    assertSize(1, inlays);
-    Rectangle inlayBounds = inlays.get(0).getBounds();
-    assertNotNull(inlayBounds);
-    assertFalse(inlayBounds.isEmpty());
+    configure("""
+                class C {
+                  /**
+                   * comment
+                   */
+                  void m() {}
+                }""", true);
+    FoldRegion foldRegion = getEditor().getFoldingModel().getCollapsedRegionAtOffset(10);
+    assertInstanceOf(foldRegion, CustomFoldRegion.class);
+    CustomFoldRegion cfr = (CustomFoldRegion)foldRegion;
+    Point location = cfr.getLocation();
+    assertNotNull(location);
+    Rectangle rendererBounds = new Rectangle(location, new Dimension(cfr.getWidthInPixels(), cfr.getHeightInPixels()));
+    assertFalse(rendererBounds.isEmpty());
 
     @NotNull Pair<@NotNull Interval, @Nullable Interval> p = EditorUtil.logicalLineToYRange(getEditor(), 2);
-    assertEquals(inlayBounds.y, p.first.intervalStart());
-    assertEquals(inlayBounds.y + inlayBounds.height, p.first.intervalEnd());
+    assertEquals(rendererBounds.y, p.first.intervalStart());
+    assertEquals(rendererBounds.y + rendererBounds.height, p.first.intervalEnd());
     assertNull(p.second);
 
-    Interval lineRange = EditorUtil.yToLogicalLineRange(getEditor(), inlayBounds.y + inlayBounds.height / 2);
+    Interval lineRange = EditorUtil.yToLogicalLineRange(getEditor(), rendererBounds.y + rendererBounds.height / 2);
     assertEquals(1, lineRange.intervalStart());
     assertEquals(3, lineRange.intervalEnd());
   }
 
   public void testCommentAnnotationAfterDoc() {
-    configure("/**\n" +
-              " * doc\n" +
-              " */\n" +
-              "<caret>@Deprecated\n" +
-              "class C {}", true);
+    configure("""
+                /**
+                 * doc
+                 */
+                <caret>@Deprecated
+                class C {}""", true);
     executeAction(IdeActions.ACTION_COMMENT_LINE);
-    checkResultByText("/**\n" +
-                      " * doc\n" +
-                      " */\n" +
-                      "//@Deprecated\n" +
-                      "class C {}");
+    checkResultByText("""
+                        /**
+                         * doc
+                         */
+                        //@Deprecated
+                        class C {}""");
   }
 
   private void configure(@NotNull String text, boolean enableRendering) {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(enableRendering);
-    init(text, TestFileType.JAVA);
+    init(text, JavaFileType.INSTANCE);
     updateRenderedItems(enableRendering);
   }
 
@@ -243,16 +268,28 @@ public class JavaDocRenderTest extends AbstractEditorTest {
   }
 
   private void verifyItem(int startOffset, int endOffset, @Nullable String textInContent) {
-    DocRenderItem item = DocRenderItem.getItemAroundOffset(getEditor(), startOffset);
+    DocRenderItem item = DocRenderItemManager.getInstance().getItemAroundOffset(getEditor(), startOffset);
     assertNotNull("Item is not found at offset " + startOffset, item);
-    assertEquals("Unexpected item start offset", startOffset, item.highlighter.getStartOffset());
-    assertEquals("Unexpected item end offset", endOffset, item.highlighter.getEndOffset());
+    assertEquals("Unexpected item start offset", startOffset, item.getHighlighter().getStartOffset());
+    assertEquals("Unexpected item end offset", endOffset, item.getHighlighter().getEndOffset());
+    Object toCheck = item.getFoldRegion();
     if (textInContent == null) {
-      assertNull("Unexpected inlay", item.inlay);
+      assertNull("Item in rendered state", toCheck);
     }
     else {
-      assertNotNull("Inlay doesn't exist", item.inlay);
-      assertTrue("Unexpected rendered text: " + item.textToRender, item.textToRender != null && item.textToRender.contains(textInContent));
+      assertNotNull("Item not in rendered state", toCheck);
+      assertTrue("Unexpected rendered text: " + item.getTextToRender(), item.getTextToRender() != null && item.getTextToRender().contains(textInContent));
+    }
+  }
+
+  private void verifyFoldingState(int... collapsedRegionOffsets) {
+    int expectedNumberOfCollapsedRegions = collapsedRegionOffsets.length / 2;
+    List<FoldRegion> foldRegions = ContainerUtil.filter(getEditor().getFoldingModel().getAllFoldRegions(), region -> !region.isExpanded());
+    assertEquals("Unexpected number of collapsed fold regions", expectedNumberOfCollapsedRegions, foldRegions.size());
+    for (int i = 0; i < expectedNumberOfCollapsedRegions; i++) {
+      FoldRegion region = foldRegions.get(i);
+      assertEquals("Unexpected region " + i + " start offset", collapsedRegionOffsets[i * 2], region.getStartOffset());
+      assertEquals("Unexpected region " + i + " end offset", collapsedRegionOffsets[i * 2 + 1], region.getEndOffset());
     }
   }
 }

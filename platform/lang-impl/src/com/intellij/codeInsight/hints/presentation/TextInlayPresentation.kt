@@ -5,14 +5,16 @@ import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.paint.EffectPainter
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 
 /**
  * Draws text.
  */
-internal class TextInlayPresentation(
-  val metricsStorage: InlayTextMetricsStorage,
+@ApiStatus.Internal
+class TextInlayPresentation(
+  private val metricsStorage: InlayTextMetricsStorage,
   val isSmall: Boolean,
   var text: String
 ) : BasePresentation() {
@@ -41,7 +43,7 @@ internal class TextInlayPresentation(
           when (attributes.effectType) {
             EffectType.LINE_UNDERSCORE -> EffectPainter.LINE_UNDERSCORE.paint(g, 0, metrics.ascent, width, metrics.descent, font)
             EffectType.BOLD_LINE_UNDERSCORE -> EffectPainter.BOLD_LINE_UNDERSCORE.paint(g, 0, metrics.ascent, width, metrics.descent, font)
-            EffectType.STRIKEOUT -> EffectPainter.STRIKE_THROUGH.paint(g, 0, metrics.ascent, width, height, font)
+            EffectType.STRIKEOUT -> EffectPainter.STRIKE_THROUGH.paint(g, 0, metrics.fontBaseline, width, height, font)
             EffectType.WAVE_UNDERSCORE -> EffectPainter.WAVE_UNDERSCORE.paint(g, 0, metrics.ascent, width, metrics.descent, font)
             EffectType.BOLD_DOTTED_LINE -> EffectPainter.BOLD_DOTTED_UNDERSCORE.paint(g, 0, metrics.ascent, width, metrics.descent, font)
             else -> {}

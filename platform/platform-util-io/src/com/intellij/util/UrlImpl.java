@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,12 +20,6 @@ public final class UrlImpl implements Url {
 
   private String externalForm;
   private UrlImpl withoutParameters;
-
-  /** @deprecated Use {@link Urls#newUnparsable(String)} */
-  @Deprecated
-  public UrlImpl(@NotNull String path) {
-    this(null, null, path, null);
-  }
 
   UrlImpl(@Nullable String scheme, @Nullable String authority, @Nullable String path) {
     this(scheme, authority, path, null);
@@ -152,18 +147,16 @@ public final class UrlImpl implements Url {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof UrlImpl)) return false;
+    if (!(o instanceof UrlImpl url)) return false;
 
-    UrlImpl url = (UrlImpl)o;
     return StringUtil.equals(scheme, url.scheme) && StringUtil.equals(authority, url.authority) && getPath().equals(url.getPath()) && StringUtil.equals(parameters, url.parameters);
   }
 
   @Override
   public boolean equalsIgnoreCase(@Nullable Url o) {
     if (this == o) return true;
-    if (!(o instanceof UrlImpl)) return false;
+    if (!(o instanceof UrlImpl url)) return false;
 
-    UrlImpl url = (UrlImpl)o;
     return StringUtil.equalsIgnoreCase(scheme, url.scheme) &&
            StringUtil.equalsIgnoreCase(authority, url.authority) &&
            getPath().equalsIgnoreCase(url.getPath()) &&
@@ -195,5 +188,27 @@ public final class UrlImpl implements Url {
   @Override
   public int hashCodeCaseInsensitive() {
     return computeHashCode(false);
+  }
+
+  @Override
+  public @NotNull Url removeParameter(@NotNull String name) {
+    StringBuilder result = new StringBuilder();
+    String parameters = this.parameters;
+    if (parameters == null) return this;
+    
+    if (parameters.startsWith("?")) {
+      parameters = StringUtil.trimStart(parameters, "?");
+      result.append("?");
+    }
+    boolean added = false;
+    for (String s : parameters.split("&")) {
+      String currentName = ContainerUtil.getFirstItem(StringUtil.split(s, "="));
+      if (!StringUtil.equals(currentName, name)) {
+        if (added) result.append("&");
+        result.append(s);
+        added = true;
+      }
+    }
+    return new UrlImpl(scheme, authority, path, result.toString());
   }
 }

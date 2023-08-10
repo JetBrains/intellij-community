@@ -5,8 +5,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.externalSystem.service.execution.TestUnknownSdkResolver
 import com.intellij.openapi.externalSystem.service.execution.TestUnknownSdkResolver.TestUnknownSdkFixMode.TEST_DOWNLOADABLE_FIX
 import com.intellij.openapi.externalSystem.service.execution.TestUnknownSdkResolver.TestUnknownSdkFixMode.TEST_LOCAL_FIX
-import com.intellij.util.lang.JavaVersion
-import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.properties.USER_HOME
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_DIRECTORY_PATH_KEY
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,6 +17,9 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
   fun `test simple gradle jvm resolution`() {
     withGradleProperties(externalProjectPath, java = latestSdk) {
       assertGradleJvmSuggestion(expected = USE_GRADLE_JAVA_HOME)
+    }
+    withGradleLocalProperties(externalProjectPath, java = latestSdk) {
+      assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
     }
     withRegisteredSdks(earliestSdk, latestSdk, unsupportedSdk) {
       withGradleLinkedProject(java = earliestSdk) {
@@ -67,7 +69,7 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
       assertGradleJvmSuggestion(expected = USE_PROJECT_JDK)
     }
     withRegisteredSdk(unsupportedSdk, isProjectSdk = true) {
-      assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
+      assertGradleJvmSuggestion(expected = USE_PROJECT_JDK)
     }
   }
 
@@ -91,6 +93,33 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
     }
     withGradleProperties(externalProjectPath, java = unsupportedSdk) {
       assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
+    }
+  }
+
+  @Test
+  fun `test gradle jvm resolution (gradle local properties)`() {
+    withGradleLocalProperties(externalProjectPath, java = earliestSdk) {
+      assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
+    }
+    withGradleLocalProperties(externalProjectPath, java = latestSdk) {
+      assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
+    }
+    withGradleLocalProperties(externalProjectPath, java = unsupportedSdk) {
+      assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
+    }
+  }
+
+  @Test
+  fun `test gradle local properties resolution (project properties)`() {
+    assertGradleLocalProperties(java = null)
+    withGradleLocalProperties(externalProjectPath, java = earliestSdk) {
+      assertGradleLocalProperties(java = earliestSdk)
+    }
+    withGradleLocalProperties(externalProjectPath, java = latestSdk) {
+      assertGradleLocalProperties(java = latestSdk)
+    }
+    withGradleLocalProperties(externalProjectPath, java = null) {
+      assertGradleLocalProperties(java = null)
     }
   }
 
@@ -192,41 +221,5 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
         assertGradleProperties(java = null)
       }
     }
-  }
-
-  @Test
-  fun `test suggested gradle version for sdk is compatible with target sdk`() {
-    val gradleVersion = GradleVersion.current()
-    require(gradleVersion >= GradleVersion.version("6.3"))
-
-    assertSuggestedGradleVersionFor(null, "1.1")
-    assertSuggestedGradleVersionFor(null, "1.5")
-
-    assertSuggestedGradleVersionFor("4.10.3", "1.7")
-    assertSuggestedGradleVersionFor(gradleVersion, "1.8")
-    assertSuggestedGradleVersionFor(gradleVersion, "9")
-    assertSuggestedGradleVersionFor(gradleVersion, "11")
-    assertSuggestedGradleVersionFor(gradleVersion, "13")
-    assertSuggestedGradleVersionFor(gradleVersion, "14")
-
-    assertSuggestedGradleVersionFor(gradleVersion, "15")
-    // com.intellij.util.lang.JavaVersion.MAX_ACCEPTED_VERSION - 1
-    assertSuggestedGradleVersionFor(gradleVersion, "24")
-  }
-
-  @Test
-  fun `test suggested oldest compatible gradle version for java version`() {
-    fun getSuggestedGradle(javaFeature: Int) = suggestOldestCompatibleGradleVersion(JavaVersion.compose(javaFeature))
-    assertNull(getSuggestedGradle(6))
-    assertEquals("3.0", getSuggestedGradle(7)!!.version)
-    assertEquals("3.0", getSuggestedGradle(8)!!.version)
-    assertEquals("3.0", getSuggestedGradle(9)!!.version)
-    assertEquals("3.0", getSuggestedGradle(10)!!.version)
-    assertEquals("4.8", getSuggestedGradle(11)!!.version)
-    assertEquals("5.4.1", getSuggestedGradle(12)!!.version)
-    assertEquals("6.0", getSuggestedGradle(13)!!.version)
-    assertEquals("6.3", getSuggestedGradle(14)!!.version)
-    assertEquals("6.7", getSuggestedGradle(15)!!.version)
-    assertEquals("6.7", getSuggestedGradle(24)!!.version)
   }
 }

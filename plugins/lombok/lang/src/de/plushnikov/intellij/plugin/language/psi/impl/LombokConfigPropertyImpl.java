@@ -21,6 +21,7 @@ public class LombokConfigPropertyImpl extends ASTWrapperPsiElement implements Lo
     visitor.visitProperty(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof LombokConfigVisitor) accept((LombokConfigVisitor)visitor);
     else super.accept(visitor);
@@ -30,6 +31,21 @@ public class LombokConfigPropertyImpl extends ASTWrapperPsiElement implements Lo
   @NotNull
   public LombokConfigOperation getOperation() {
     return findNotNullChildByClass(LombokConfigOperation.class);
+  }
+
+  @Override
+  public String getKey() {
+    return LombokConfigPsiUtil.getKey(this);
+  }
+
+  @Override
+  public String getValue() {
+    return LombokConfigPsiUtil.getValue(this);
+  }
+
+  @Override
+  public String getSign() {
+    return LombokConfigPsiUtil.getSign(this);
   }
 
 }

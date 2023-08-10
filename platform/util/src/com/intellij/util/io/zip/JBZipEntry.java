@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.zip;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -338,7 +338,7 @@ public class JBZipEntry implements Cloneable {
     long start = calcDataOffset();
     long size = getCompressedSize();
     myFile.ensureFlushed(start + size);
-    if (myFile.archive.length() < start + size) {
+    if (myFile.myArchive.length() < start + size) {
       throw new EOFException();
     }
     BoundedInputStream bis = new BoundedInputStream(start, size);
@@ -518,11 +518,11 @@ public class JBZipEntry implements Cloneable {
   public void setDataFromPath(@NotNull Path file) throws IOException {
     long size = Files.size(file);
     if (size < FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
-      //for small files its faster to load their whole content into memory so we can write it to zip sequentially
-      setData(Files.readAllBytes(file));
+      // for small files it's faster to load their whole content into memory, so we can write it to zip sequentially
+      myFile.getOutputStream().putNextEntryBytes(this, Files.readAllBytes(file));
     }
     else {
-      try(InputStream input = new BufferedInputStream(Files.newInputStream(file))) {
+      try (InputStream input = Files.newInputStream(file)) {
         myFile.getOutputStream().putNextEntryContent(this, input);
       }
     }
@@ -536,7 +536,9 @@ public class JBZipEntry implements Cloneable {
   }
 
   public byte[] getData() throws IOException {
-    if (size == -1) throw new IOException("no data");
+    if (size == -1) {
+      throw new IOException("no data");
+    }
 
     try (InputStream stream = getInputStream()) {
       return FileUtil.loadBytes(stream, (int)size);
@@ -545,9 +547,9 @@ public class JBZipEntry implements Cloneable {
 
   public long calcDataOffset() throws IOException {
     long offset = getHeaderOffset();
-    myFile.archive.seek(offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
+    myFile.myArchive.seek(offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
     byte[] b = new byte[JBZipFile.WORD];
-    myFile.archive.readFully(b);
+    myFile.myArchive.readFully(b);
     int fileNameLen = ZipShort.getValue(b, 0);
     int extraFieldLen = ZipShort.getValue(b, JBZipFile.SHORT);
     return offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD + fileNameLen + extraFieldLen;
@@ -604,7 +606,7 @@ public class JBZipEntry implements Cloneable {
       }
 
       final int ret;
-      RandomAccessFile archive = myFile.archive;
+      RandomAccessFile archive = myFile.myArchive;
       archive.seek(loc);
       ret = archive.read(b, off, len);
 
@@ -625,7 +627,7 @@ public class JBZipEntry implements Cloneable {
         return -1;
       }
 
-      RandomAccessFile archive = myFile.archive;
+      RandomAccessFile archive = myFile.myArchive;
       archive.seek(loc++);
       return archive.read();
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.diagnostic.Dumpable;
@@ -32,11 +18,8 @@ import java.util.List;
  * Holds registered soft wraps and provides monitoring and management facilities for them.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
-public class SoftWrapsStorage implements Dumpable {
-
+public final class SoftWrapsStorage implements Dumpable {
   private final List<SoftWrapImpl> myWraps = new ArrayList<>();
   private final List<SoftWrapImpl> myWrapsView = Collections.unmodifiableList(myWraps);
   private final List<SoftWrapChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -48,8 +31,7 @@ public class SoftWrapsStorage implements Dumpable {
     return myWraps.isEmpty();
   }
 
-  @Nullable
-  public SoftWrap getSoftWrap(int offset) {
+  public @Nullable SoftWrap getSoftWrap(int offset) {
     int i = getSoftWrapIndex(offset);
     return i >= 0 ? myWraps.get(i) : null;
   }
@@ -57,8 +39,7 @@ public class SoftWrapsStorage implements Dumpable {
   /**
    * @return    view for registered soft wraps sorted by offset in ascending order if any; empty collection otherwise
    */
-  @NotNull
-  public List<SoftWrapImpl> getSoftWraps() {
+  public @NotNull List<SoftWrapImpl> getSoftWraps() {
     return myWrapsView;
   }
 
@@ -108,7 +89,6 @@ public class SoftWrapsStorage implements Dumpable {
    * Inserts given soft wrap to {@link #myWraps} collection at the given index.
    *
    * @param softWrap          soft wrap to store
-   * @return                  previous soft wrap object stored for the same offset if any; {@code null} otherwise
    */
   public void storeOrReplace(SoftWrapImpl softWrap) {
     int i = getSoftWrapIndex(softWrap.getStart());
@@ -185,9 +165,8 @@ public class SoftWrapsStorage implements Dumpable {
     }
   }
 
-  @NotNull
   @Override
-  public String dumpState() {
+  public @NotNull String dumpState() {
     return myWraps.toString();
   }
 }

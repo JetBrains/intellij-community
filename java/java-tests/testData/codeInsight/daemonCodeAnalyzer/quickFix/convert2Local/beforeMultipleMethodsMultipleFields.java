@@ -1,4 +1,4 @@
-// "Convert field to local variable in method 'setEditable1'" "true"
+// "Convert field to local variable in method 'setEditable1'" "true-preview"
 class MyClassTest {
 
   private boolean editable = false;

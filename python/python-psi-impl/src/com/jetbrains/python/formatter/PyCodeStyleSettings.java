@@ -7,10 +7,9 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.jetbrains.python.PyPsiBundle;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyCodeStyleSettings extends CustomCodeStyleSettings {
 
   public enum DictAlignment {
@@ -80,6 +79,7 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
    * (as long as they're multiple of 4), though examples in PEP 8 itself use mostly normal indent. Nonetheless, some users prefer to have 
    * the same indentation level for arguments as for parameters.
    */
+  public boolean USE_CONTINUATION_INDENT_FOR_PARAMETERS = true;
   public boolean USE_CONTINUATION_INDENT_FOR_ARGUMENTS = false;
   public boolean USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = false;
 
@@ -118,7 +118,7 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
    */
   public boolean HANG_CLOSING_BRACKETS = false;
 
-  public PyCodeStyleSettings(CodeStyleSettings container) {
+  public PyCodeStyleSettings(@NotNull CodeStyleSettings container) {
     super("Python", container);
   }
 }

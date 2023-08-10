@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.ui;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +31,6 @@ import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 import org.jetbrains.java.generate.template.TemplateResource;
@@ -42,9 +43,6 @@ import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author dsl
- */
 public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass, PsiMember, MemberInfo> {
   private static final Logger LOG = Logger.getInstance(GenerateEqualsWizard.class);
 
@@ -98,7 +96,9 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       myNonNullPanel = new MemberSelectionPanel(JavaBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"), Collections.emptyList(), null);
       myFieldsToNonNull = createFieldToMemberInfoMap(false);
       for (final Map.Entry<PsiMember, MemberInfo> entry : myFieldsToNonNull.entrySet()) {
-        entry.getValue().setChecked(NullableNotNullManager.isNotNull(entry.getKey()));
+        entry.getValue().setChecked(NullableNotNullManager.isNotNull(entry.getKey()) ||
+                                    entry.getKey() instanceof PsiField field &&
+                                    NullabilityUtil.getNullabilityFromFieldInitializers(field).second == Nullability.NOT_NULL);
       }
     }
 
@@ -270,8 +270,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         @Override
         public String getTooltip(MemberInfo memberInfo) {
           if (checkForProblems(memberInfo) == OK) return null;
-          if (!(memberInfo.getMember() instanceof PsiField)) return JavaBundle.message("generate.equals.hashcode.internal.error");
-          final PsiField field = (PsiField)memberInfo.getMember();
+          if (!(memberInfo.getMember() instanceof PsiField field)) return JavaBundle.message("generate.equals.hashcode.internal.error");
           if (!JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) {
             final PsiType type = field.getType();
             if (PsiAdapter.isNestedArray(type)) {
@@ -287,16 +286,14 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
     @Override
     public boolean isMemberEnabled(MemberInfo member) {
-      if (!(member.getMember() instanceof PsiField)) return false;
-      final PsiField field = (PsiField)member.getMember();
+      if (!(member.getMember() instanceof PsiField field)) return false;
       final PsiType type = field.getType();
       return JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5) || !PsiAdapter.isNestedArray(type);
     }
 
     @Override
     public int checkForProblems(@NotNull MemberInfo member) {
-      if (!(member.getMember() instanceof PsiField)) return ERROR;
-      final PsiField field = (PsiField)member.getMember();
+      if (!(member.getMember() instanceof PsiField field)) return ERROR;
       final PsiType type = field.getType();
       if (!JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) {
         if (PsiAdapter.isNestedArray(type)) return ERROR;
@@ -318,8 +315,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         @Override
         public String getTooltip(MemberInfo memberInfo) {
           if (isMemberEnabled(memberInfo)) return null;
-          if (!(memberInfo.getMember() instanceof PsiField)) return JavaBundle.message("generate.equals.hashcode.internal.error");
-          final PsiField field = (PsiField)memberInfo.getMember();
+          if (!(memberInfo.getMember() instanceof PsiField field)) return JavaBundle.message("generate.equals.hashcode.internal.error");
           final PsiType type = field.getType();
           if (!(type instanceof PsiArrayType) || JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) return null;
           return JavaBundle.message("generate.equals.hashcode.warning.hashcode.for.arrays.is.not.supported");
@@ -338,7 +334,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     }
   }
 
-  private static final class TemplateChooserStep extends StepAdapter {
+  private final class TemplateChooserStep extends StepAdapter {
     private final JComponent myPanel;
 
     private TemplateChooserStep(boolean isFinal, PsiClass psiClass) {
@@ -353,13 +349,17 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         new ComponentWithBrowseButton<>(comboBox, new MyEditTemplatesListener(psiClass, myPanel, comboBox));
       templateChooserLabel.setLabelFor(comboBox);
       final EqualsHashCodeTemplatesManager manager = EqualsHashCodeTemplatesManager.getInstance();
-      setupCombobox(manager, comboBox, psiClass);
+      HashSet<String> invalid = new HashSet<>();
+      setupCombobox(manager, comboBox, psiClass, invalid);
       comboBox.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(@NotNull final ActionEvent M) {
-          manager.setDefaultTemplate((String)comboBox.getSelectedItem());
+          String item = (String)comboBox.getSelectedItem();
+          manager.setDefaultTemplate(item);
+          updateErrorMessage(item, invalid, manager, comboBox);
         }
       });
+      updateErrorMessage(manager.getDefaultTemplateBaseName(), invalid, manager, comboBox);
 
       templateChooserPanel.add(comboBoxWithBrowseButton, BorderLayout.CENTER);
       myPanel.add(templateChooserPanel);
@@ -387,19 +387,36 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       myPanel.add(gettersCheckbox);
     }
 
+    private void updateErrorMessage(String item, HashSet<String> invalid, EqualsHashCodeTemplatesManager manager, ComboBox<String> comboBox) {
+      if (invalid.contains(item)) {
+        TemplateResource template = manager.findTemplateByName(EqualsHashCodeTemplatesManager.toEqualsName(item));
+        if (template != null) {
+          String className = template.getClassName();
+          setErrorText(className != null ? JavaBundle.message("dialog.message.class.not.found", className)
+                                         : JavaBundle.message("dialog.message.template.not.applicable"), comboBox);
+        }
+        else {
+          setErrorText(JavaBundle.message("dialog.message.template.not.found"), comboBox);
+        }
+      }
+      else {
+        setErrorText(null, comboBox);
+      }
+    }
+
     @Override
     public JComponent getComponent() {
       return myPanel;
     }
 
-    private static void setupCombobox(EqualsHashCodeTemplatesManager templatesManager,
+    private void setupCombobox(EqualsHashCodeTemplatesManager templatesManager,
                                       ComboBox<String> comboBox,
-                                      PsiClass psiClass) {
+                                      PsiClass psiClass,
+                                      Set<String> invalid) {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiClass.getProject());
       final GlobalSearchScope resolveScope = psiClass.getResolveScope();
       final Set<String> names = new LinkedHashSet<>();
 
-      final Set<String> invalid = new HashSet<>();
       for (TemplateResource resource : templatesManager.getAllTemplates()) {
         final String templateBaseName = EqualsHashCodeTemplatesManager.getTemplateBaseName(resource);
         if (names.add(templateBaseName)) {
@@ -416,14 +433,10 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         }
       }));
       comboBox.setModel(new DefaultComboBoxModel<>(ArrayUtilRt.toStringArray(names)));
-      String baseName = templatesManager.getDefaultTemplateBaseName();
-      if (invalid.contains(baseName)) { //preselect default template but do not remember as default
-        baseName = EqualsHashCodeTemplatesManager.getTemplateBaseName(templatesManager.getAllTemplates().iterator().next());
-      }
-      comboBox.setSelectedItem(baseName);
+      comboBox.setSelectedItem(templatesManager.getDefaultTemplateBaseName());
     }
 
-    private static class MyEditTemplatesListener implements ActionListener {
+    private class MyEditTemplatesListener implements ActionListener {
       private final PsiClass myPsiClass;
       private final JComponent myParent;
       private final ComboBox<String> myComboBox;
@@ -440,7 +453,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         final EqualsHashCodeTemplatesPanel ui = new EqualsHashCodeTemplatesPanel(myPsiClass.getProject(), EqualsHashCodeTemplatesManager.getInstance());
         ui.selectNodeInTree(templatesManager.getDefaultTemplateBaseName());
         ShowSettingsUtil.getInstance().editConfigurable(myParent, ui);
-        setupCombobox(templatesManager, myComboBox, myPsiClass);
+        setupCombobox(templatesManager, myComboBox, myPsiClass, new HashSet<String>());
       }
     }
   }

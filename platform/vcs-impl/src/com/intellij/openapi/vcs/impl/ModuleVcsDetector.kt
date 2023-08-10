@@ -1,121 +1,154 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
-import com.intellij.ProjectTopics
+import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.vcs.AbstractVcs
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDirectoryMapping
+import com.intellij.openapi.vcs.VcsRootChecker
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.util.Alarm
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.ui.update.DisposableUpdate
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.vcsUtil.VcsUtil
 
 internal class ModuleVcsDetector(private val project: Project) {
-  private val vcsManager by lazy(LazyThreadSafetyMode.NONE) {
-    (ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl)
+  private val vcsManager by lazy(LazyThreadSafetyMode.NONE) { ProjectLevelVcsManagerImpl.getInstanceImpl(project) }
+
+  private val queue = MergingUpdateQueue("ModuleVcsDetector", 1000, true, null, project, null, Alarm.ThreadToUse.POOLED_THREAD).also {
+    it.setRestartTimerOnAdd(true)
   }
 
-  internal class MyPostStartUpActivity : StartupActivity.DumbAware {
-    init {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        throw ExtensionNotApplicableException.INSTANCE
-      }
-    }
+  private val dirtyContentRoots = mutableSetOf<VirtualFile>()
 
-    override fun runActivity(project: Project) {
-      val vcsDetector = project.service<ModuleVcsDetector>()
+  private fun startDetection() {
+    MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.startDetection")
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, MyWorkspaceModelChangeListener())
 
-      val listener = vcsDetector.MyModulesListener()
-      val busConnection = project.messageBus.connect()
-      busConnection.subscribe(ProjectTopics.MODULES, listener)
-      busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, listener)
-
-      if (vcsDetector.vcsManager.needAutodetectMappings()) {
-        vcsDetector.autoDetectVcsMappings(true)
-      }
-    }
-  }
-
-  private inner class MyModulesListener : ModuleRootListener, ModuleListener {
-    private val myMappingsForRemovedModules: MutableList<VcsDirectoryMapping> = mutableListOf()
-
-    override fun beforeRootsChange(event: ModuleRootEvent) {
-      myMappingsForRemovedModules.clear()
-    }
-
-    override fun rootsChanged(event: ModuleRootEvent) {
-      myMappingsForRemovedModules.forEach { mapping -> vcsManager.removeDirectoryMapping(mapping) }
-      // the check calculates to true only before user has done any change to mappings, i.e. in case modules are detected/added automatically
-      // on start etc (look inside)
-      if (vcsManager.needAutodetectMappings()) {
-        autoDetectVcsMappings(false)
-      }
-    }
-
-    override fun moduleAdded(project: Project, module: Module) {
-      myMappingsForRemovedModules.removeAll(getMappings(module))
-      autoDetectModuleVcsMapping(module)
-    }
-
-    override fun beforeModuleRemoved(project: Project, module: Module) {
-      myMappingsForRemovedModules.addAll(getMappings(module))
+    if (vcsManager.needAutodetectMappings() &&
+        vcsManager.haveDefaultMapping() == null &&
+        VcsUtil.shouldDetectVcsMappingsFor(project)) {
+      queue.queue(DisposableUpdate.createDisposable(queue, "initial scan") {
+        runActivity("ModuleVcsDetector.autoDetectDefaultRoots") {
+          autoDetectDefaultRoots()
+        }
+      })
     }
   }
 
-  private fun autoDetectVcsMappings(tryMapPieces: Boolean) {
+  @RequiresBackgroundThread
+  private fun autoDetectDefaultRoots() {
+    val contentRoots = DefaultVcsRootPolicy.getInstance(project).defaultVcsRoots
+    MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.autoDetectDefaultRoots - contentRoots", contentRoots)
+    autoDetectForContentRoots(contentRoots, true)
+  }
+
+  @RequiresBackgroundThread
+  private fun autoDetectForContentRoots(contentRoots: Collection<VirtualFile>, isInitialDetection: Boolean = false) {
+    MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.autoDetectForContentRoots - contentRoots", contentRoots)
     if (vcsManager.haveDefaultMapping() != null) return
 
-    val usedVcses = mutableSetOf<AbstractVcs?>()
+    val usedVcses = mutableSetOf<AbstractVcs>()
     val detectedRoots = mutableSetOf<Pair<VirtualFile, AbstractVcs>>()
 
-    val roots = ModuleManager.getInstance(project).modules.flatMap { it.rootManager.contentRoots.asIterable() }.distinct()
-    for (root in roots) {
-      val moduleVcs = vcsManager.findVersioningVcs(root)
-      if (moduleVcs != null) {
-        detectedRoots.add(Pair(root, moduleVcs))
+    contentRoots
+      .filter { it.isInLocalFileSystem }
+      .filter { it.isDirectory }
+      .forEach { root ->
+        val foundVcs = vcsManager.findVersioningVcs(root)
+        if (foundVcs != null && foundVcs !== vcsManager.getVcsFor(root)) {
+          detectedRoots.add(Pair(root, foundVcs))
+          usedVcses.add(foundVcs)
+        }
       }
-      usedVcses.add(moduleVcs) // put 'null' for unmapped module
+
+    val directMappings = detectedRoots.map { it.first }.toMutableSet()
+    for (rootChecker in VcsRootChecker.EXTENSION_POINT_NAME.extensionList) {
+      val vcs = vcsManager.findVcsByName(rootChecker.supportedVcs.name) ?: continue
+      val detectedMappings = rootChecker.detectProjectMappings(project, contentRoots, directMappings) ?: continue
+      if (detectedMappings.isEmpty()) continue
+
+      usedVcses.add(vcs)
+      for (file in detectedMappings) {
+        detectedRoots.add(Pair(file, vcs))
+      }
     }
+
+    if (detectedRoots.isEmpty()) return
+    MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.autoDetectForContentRoots - detectedRoots", detectedRoots)
 
     val commonVcs = usedVcses.singleOrNull()
     if (commonVcs != null) {
-      // Remove existing mappings that will duplicate added <Project> mapping.
-      val rootPaths = roots.map { it.path }.toSet()
-      val additionalMappings = vcsManager.directoryMappings.filter { it.directory !in rootPaths }
+      if (isInitialDetection) {
+        // Register <Project> mapping along with already existing direct mappings
+        vcsManager.setAutoDirectoryMappings(vcsManager.directoryMappings + VcsDirectoryMapping.createDefault(commonVcs.name))
+        return
+      }
 
-      vcsManager.setAutoDirectoryMappings(additionalMappings + VcsDirectoryMapping.createDefault(commonVcs.name))
-    }
-    else if (tryMapPieces) {
-      val newMappings = detectedRoots.map { (root, vcs) -> VcsDirectoryMapping(root.path, vcs.name) }
-      vcsManager.setAutoDirectoryMappings(vcsManager.directoryMappings + newMappings)
-    }
-  }
-
-  private fun autoDetectModuleVcsMapping(module: Module) {
-    if (vcsManager.haveDefaultMapping() != null) return
-
-    val newMappings = mutableListOf<VcsDirectoryMapping>()
-    for (file in module.rootManager.contentRoots) {
-      val vcs = vcsManager.findVersioningVcs(file)
-      if (vcs != null && vcs !== vcsManager.getVcsFor(file)) {
-        newMappings.add(VcsDirectoryMapping(file.path, vcs.name))
+      if (!vcsManager.hasAnyMappings()) {
+        vcsManager.setAutoDirectoryMappings(listOf(VcsDirectoryMapping.createDefault(commonVcs.name)))
+        return
       }
     }
-    if (newMappings.isNotEmpty()) {
-      vcsManager.setAutoDirectoryMappings(vcsManager.directoryMappings + newMappings)
+
+    vcsManager.registerNewDirectMappings(detectedRoots)
+  }
+
+  fun scheduleScanForNewContentRoots(removed: Collection<VirtualFile>, added: Collection<VirtualFile>) {
+    if (!VcsUtil.shouldDetectVcsMappingsFor(project)) return
+    if (added.isNotEmpty()) {
+      MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.contentRootsChanged - roots added", added)
+      if (vcsManager.haveDefaultMapping() == null) {
+        synchronized(dirtyContentRoots) {
+          dirtyContentRoots.addAll(added)
+          dirtyContentRoots.removeAll(removed.toSet())
+        }
+        queue.queue(DisposableUpdate.createDisposable(queue, "modules scan") { runScanForNewContentRoots() })
+      }
+    }
+
+    if (removed.isNotEmpty()) {
+      MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.contentRootsChanged - roots removed", removed)
+      val remotedPaths = removed.map { it.path }.toSet()
+      val removedMappings = vcsManager.directoryMappings.filter { it.directory in remotedPaths }
+      removedMappings.forEach { mapping -> vcsManager.removeDirectoryMapping(mapping) }
     }
   }
 
-  private fun getMappings(module: Module): List<VcsDirectoryMapping> {
-    return module.rootManager.contentRoots
-      .mapNotNull { root -> vcsManager.directoryMappings.firstOrNull { it.directory == root.path } }
+  private fun runScanForNewContentRoots() {
+    val contentRoots: List<VirtualFile>
+    synchronized(dirtyContentRoots) {
+      contentRoots = dirtyContentRoots.toList()
+      dirtyContentRoots.clear()
+    }
+
+    autoDetectForContentRoots(contentRoots)
+  }
+
+  private inner class MyWorkspaceModelChangeListener : ContentRootChangeListener(skipFileChanges = true) {
+    override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
+      scheduleScanForNewContentRoots(removed, added)
+    }
+  }
+
+  internal class MyStartUpActivity : VcsStartupActivity {
+    init {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        throw ExtensionNotApplicableException.create()
+      }
+    }
+
+    override val order: Int
+      get() = VcsInitObject.MAPPINGS.order + 10
+
+    override fun runActivity(project: Project) {
+      project.service<ModuleVcsDetector>().startDetection()
+    }
   }
 }

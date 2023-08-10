@@ -70,6 +70,7 @@ public class HgAnnotateCommand {
     final HgCommandResult result = new HgCommandExecutor(myProject).executeInCurrentThread(hgFile.getRepo(), "annotate", arguments);
 
     if (result == null) {
+      LOG.debug("No result from annotate command");
       return Collections.emptyList();
     }
 
@@ -100,8 +101,12 @@ public class HgAnnotateCommand {
         );
         annotations.add(annotationLine);
       }
+      else {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Line does not match blame pattern: " + line);
+        }
+      }
     }
     return annotations;
   }
-
 }

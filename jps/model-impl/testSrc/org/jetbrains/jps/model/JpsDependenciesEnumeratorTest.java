@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -33,7 +19,6 @@ import java.io.IOException;
 import java.util.Collections;
 
 import static org.jetbrains.jps.model.java.JpsJavaExtensionService.dependencies;
-
 
 public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
   private JpsModule myModule;
@@ -58,20 +43,19 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
   public void testLibrary() {
     JpsModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
 
-    assertClassRoots(dependencies(myModule), getRtJarJdk17(), getJDomJar());
-    assertClassRoots(dependencies(myModule).withoutSdk(), getJDomJar());
-    assertClassRoots(dependencies(myModule).withoutSdk().productionOnly().runtimeOnly(), getJDomJar());
+    assertClassRoots(dependencies(myModule), getRtJarJdk17(), getFastUtilJar());
+    assertClassRoots(dependencies(myModule).withoutSdk(), getFastUtilJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().productionOnly().runtimeOnly(), getFastUtilJar());
     assertClassRoots(dependencies(myModule).withoutLibraries(), getRtJarJdk17());
-    assertSourceRoots(dependencies(myModule), getJDomSources());
+    assertSourceRoots(dependencies(myModule), getFastUtilSources());
   }
 
-  private static String getJDomSources() {
-    //todo[nik] download sources of JDOM library and locate the JAR via IntelliJProjectConfiguration instead
-    return JpsPathUtil.getLibraryRootUrl(PathManagerEx.findFileUnderCommunityHome("lib/src/jdom.zip"));
+  private static String getFastUtilSources() {
+    return IntelliJProjectConfiguration.getProjectLibrary("fastutil-min").getSourcesUrls().get(0);
   }
 
-  private static String getJDomJar() {
-    return getJarUrlFromProjectLib("JDOM");
+  private static String getFastUtilJar() {
+    return getJarUrlFromProjectLib("fastutil-min");
   }
 
   private static String getAsmJar() {
@@ -96,8 +80,8 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
 
   private JpsLibrary createJDomLibrary() {
     JpsLibrary library = addLibrary("jdom");
-    library.addRoot(getJDomJar(), JpsOrderRootType.COMPILED);
-    library.addRoot(getJDomSources(), JpsOrderRootType.SOURCES);
+    library.addRoot(getFastUtilJar(), JpsOrderRootType.COMPILED);
+    library.addRoot(getFastUtilSources(), JpsOrderRootType.SOURCES);
     return library;
   }
 
@@ -127,7 +111,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     getJavaService().getOrCreateDependencyExtension(dependency).setScope(JpsJavaDependencyScope.RUNTIME);
     JpsModuleRootModificationUtil.addDependency(myModule, createJDomLibrary(), JpsJavaDependencyScope.RUNTIME, false);
 
-    assertClassRoots(dependencies(myModule).withoutSdk(), getJDomJar());
+    assertClassRoots(dependencies(myModule).withoutSdk(), getFastUtilJar());
     assertClassRoots(dependencies(myModule).withoutSdk().exportedOnly());
     assertClassRoots(dependencies(myModule).withoutSdk().compileOnly());
   }
@@ -147,24 +131,24 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     final String testOutput = setModuleOutput(myModule, true);
 
     assertClassRoots(dependencies(myModule).withoutSdk(), testOutput, output, depTestOutput, depOutput);
-    assertClassRoots(dependencies(myModule).withoutSdk().recursively(), testOutput, output, depTestOutput, depOutput, getJDomJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().recursively(), testOutput, output, depTestOutput, depOutput, getFastUtilJar());
     assertSourceRoots(dependencies(myModule), srcRoot, testRoot, depSrcRoot, depTestRoot);
-    assertSourceRoots(dependencies(myModule).recursively(), srcRoot, testRoot, depSrcRoot, depTestRoot, getJDomSources());
+    assertSourceRoots(dependencies(myModule).recursively(), srcRoot, testRoot, depSrcRoot, depTestRoot, getFastUtilSources());
 
-    assertClassRoots(dependencies(myModule).withoutSdk().withoutModuleSourceEntries().recursively(), getJDomJar());
-    assertSourceRoots(dependencies(myModule).withoutSdk().withoutModuleSourceEntries().recursively(), getJDomSources());
-    assertEnumeratorRoots(dependencies(myModule).withoutSdk().withoutModuleSourceEntries().recursively().classes(), getJDomJar());
-    assertEnumeratorRoots(dependencies(myModule).withoutSdk().withoutModuleSourceEntries().recursively().sources(), getJDomSources());
+    assertClassRoots(dependencies(myModule).withoutSdk().withoutModuleSourceEntries().recursively(), getFastUtilJar());
+    assertSourceRoots(dependencies(myModule).withoutSdk().withoutModuleSourceEntries().recursively(), getFastUtilSources());
+    assertEnumeratorRoots(dependencies(myModule).withoutSdk().withoutModuleSourceEntries().recursively().classes(), getFastUtilJar());
+    assertEnumeratorRoots(dependencies(myModule).withoutSdk().withoutModuleSourceEntries().recursively().sources(), getFastUtilSources());
 
     assertEnumeratorRoots(dependencies(myModule).withoutSdk().recursively().classes().withoutSelfModuleOutput(),
-                          output, depTestOutput, depOutput, getJDomJar());
+                          output, depTestOutput, depOutput, getFastUtilJar());
     assertEnumeratorRoots(dependencies(myModule).productionOnly().withoutSdk().recursively().classes().withoutSelfModuleOutput(),
-                          depOutput, getJDomJar());
+                          depOutput, getFastUtilJar());
 
-    assertClassRoots(dependencies(myModule).withoutSdk().withoutDepModules().withoutModuleSourceEntries().recursively(), getJDomJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().withoutDepModules().withoutModuleSourceEntries().recursively(), getFastUtilJar());
     assertEnumeratorRoots(
       dependencies(myModule).productionOnly().withoutSdk().withoutDepModules().withoutModuleSourceEntries().recursively().classes(),
-      getJDomJar());
+      getFastUtilJar());
     assertClassRoots(dependencies(myModule).withoutSdk().withoutDepModules().withoutModuleSourceEntries());
     assertEnumeratorRoots(dependencies(myModule).productionOnly().withoutModuleSourceEntries().withoutSdk().withoutDepModules().classes());
   }
@@ -175,12 +159,12 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     JpsModuleRootModificationUtil.addDependency(myModule, dep, JpsJavaDependencyScope.TEST, true);
 
     assertClassRoots(dependencies(myModule).withoutSdk());
-    assertClassRoots(dependencies(myModule).withoutSdk().recursively(), getJDomJar());
-    assertClassRoots(dependencies(myModule).withoutSdk().exportedOnly().recursively(), getJDomJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().recursively(), getFastUtilJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().exportedOnly().recursively(), getFastUtilJar());
     assertClassRoots(dependencies(myModule).withoutSdk().productionOnly().recursively());
 
-    assertClassRoots(dependencies(myProject).withoutSdk(), getJDomJar());
-    assertClassRoots(dependencies(myProject).withoutSdk().productionOnly(), getJDomJar());
+    assertClassRoots(dependencies(myProject).withoutSdk(), getFastUtilJar());
+    assertClassRoots(dependencies(myProject).withoutSdk().productionOnly(), getFastUtilJar());
   }
 
   public void testNotExportedLibrary() {
@@ -190,7 +174,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     JpsModuleRootModificationUtil.addDependency(myModule, dep, JpsJavaDependencyScope.COMPILE, false);
 
     assertClassRoots(dependencies(myModule).withoutSdk(), getAsmJar());
-    assertClassRoots(dependencies(myModule).withoutSdk().recursively(), getAsmJar(), getJDomJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().recursively(), getAsmJar(), getFastUtilJar());
     assertClassRoots(dependencies(myModule).withoutSdk().recursivelyExportedOnly(), getAsmJar());
     assertClassRoots(dependencies(myModule).withoutSdk().exportedOnly().recursively());
   }
@@ -228,8 +212,8 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     final String output = setModuleOutput(myModule, false);
     final String testOutput = setModuleOutput(myModule, true);
 
-    assertClassRoots(dependencies(myProject).withoutSdk(), testOutput, output, getJDomJar());
-    assertSourceRoots(dependencies(myProject).withoutSdk(), srcRoot, testRoot, getJDomSources());
+    assertClassRoots(dependencies(myProject).withoutSdk(), testOutput, output, getFastUtilJar());
+    assertSourceRoots(dependencies(myProject).withoutSdk(), srcRoot, testRoot, getFastUtilSources());
   }
 
   public void testModules() {
@@ -241,9 +225,9 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     final String testOutput = setModuleOutput(myModule, true);
 
     assertClassRoots(getJavaService().enumerateDependencies(Collections.singletonList(myModule)).withoutSdk(),
-                     testOutput, output, getJDomJar());
+                     testOutput, output, getFastUtilJar());
     assertSourceRoots(getJavaService().enumerateDependencies(Collections.singletonList(myModule)).withoutSdk(),
-                      srcRoot, testRoot, getJDomSources());
+                      srcRoot, testRoot, getFastUtilSources());
   }
 
   private String setModuleOutput(JpsModule module, boolean tests) {

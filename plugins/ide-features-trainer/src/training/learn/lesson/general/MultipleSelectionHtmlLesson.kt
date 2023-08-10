@@ -4,16 +4,20 @@ package training.learn.lesson.general
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.util.PsiTreeUtil
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskRuntimeContext
+import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import training.learn.lesson.kimpl.parseLessonSample
+import training.learn.course.KLesson
 
-class MultipleSelectionHtmlLesson(module: Module)
-  : KLesson("Multiple selections", LessonsBundle.message("multiple.selections.lesson.name"), module, "HTML") {
+class MultipleSelectionHtmlLesson(private val helpUrl: String = "multicursor.html")
+  : KLesson("Multiple selections", LessonsBundle.message("multiple.selections.lesson.name")) {
+
+  override val languageId: String = "HTML"
+  override val sampleFilePath: String = "Learning.html"
+
   private val sample = parseLessonSample("""<!doctype html>
 <html lang="en">
     <head>
@@ -69,6 +73,13 @@ class MultipleSelectionHtmlLesson(module: Module)
         stateCheck { checkMultiChange() }
         test { type("td") }
       }
+      task("EditorEscape") {
+        stateCheck {
+          editor.caretModel.caretCount < 2
+        }
+        text(LessonsBundle.message("multiple.selections.escape", action(it)))
+        test { actions(it) }
+      }
     }
 
   private fun TaskRuntimeContext.checkMultiChange(): Boolean {
@@ -84,4 +95,9 @@ class MultipleSelectionHtmlLesson(module: Module)
     }
     return count == 6
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("multiple.selections.help.multiple.carets"),
+         LessonUtil.getHelpLink(helpUrl)),
+  )
 }

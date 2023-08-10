@@ -1,35 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.eventLog.logger.StatisticsEventLogThrottleWriter
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
-import java.nio.file.Path
+import org.jetbrains.annotations.ApiStatus
+import java.io.File
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 
-private val LOG = Logger.getInstance(StatisticsEventLogger::class.java)
-private val EP_NAME = ExtensionPointName<StatisticsEventLoggerProvider>("com.intellij.statistic.eventLog.eventLoggerProvider")
-
 interface StatisticsEventLogger {
-  @Deprecated("Use StatisticsEventLogger.logAsync()", ReplaceWith("logAsync(group, eventId, isState)"))
-  fun log(group: EventLogGroup, eventId: String, isState: Boolean) {
-    logAsync(group, eventId, isState)
-  }
-
-  @Deprecated("Use StatisticsEventLogger.logAsync", ReplaceWith("logAsync(group, eventId, data, isState)"))
-  fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) {
-    logAsync(group, eventId, data, isState)
-  }
-
   fun logAsync(group: EventLogGroup, eventId: String, isState: Boolean): CompletableFuture<Void> =
     logAsync(group, eventId, Collections.emptyMap(), isState)
 
   fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void>
+  fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void>
+  fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit)
   fun getActiveLogFile(): EventLogFile?
   fun getLogFilesProvider(): EventLogFilesProvider
   fun cleanup()
@@ -38,12 +30,74 @@ interface StatisticsEventLogger {
 
 abstract class StatisticsEventLoggerProvider(val recorderId: String,
                                              val version: Int,
-                                             val sendFrequencyMs: Long = TimeUnit.HOURS.toMillis(1),
-                                             private val maxFileSize: String = "200KB") {
-  open val logger: StatisticsEventLogger by lazy { createLogger() }
+                                             val sendFrequencyMs: Long,
+                                             private val maxFileSizeInBytes: Int,
+                                             val sendLogsOnIdeClose: Boolean = false,
+                                             val isCharsEscapingRequired: Boolean = true) {
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated(message = "Use primary constructor instead")
+  constructor(recorderId: String,
+              version: Int,
+              sendFrequencyMs: Long = TimeUnit.HOURS.toMillis(1),
+              maxFileSize: String = "200KB") : this(recorderId, version, sendFrequencyMs, parseFileSize(maxFileSize))
+
+  @Deprecated(message = "Use primary constructor instead")
+  constructor(recorderId: String,
+              version: Int,
+              sendFrequencyMs: Long,
+              maxFileSizeInBytes: Int) : this(recorderId, version, sendFrequencyMs, maxFileSizeInBytes, false)
+
+  companion object {
+    @JvmStatic
+    val EP_NAME = ExtensionPointName<StatisticsEventLoggerProvider>("com.intellij.statistic.eventLog.eventLoggerProvider")
+    const val DEFAULT_MAX_FILE_SIZE_BYTES = 200 * 1024
+    val DEFAULT_SEND_FREQUENCY_MS = TimeUnit.HOURS.toMillis(1)
+
+    private val LOG = logger<StatisticsEventLoggerProvider>()
+
+    fun parseFileSize(maxFileSize: String): Int {
+      val length = maxFileSize.length
+      if (length < 3) {
+        LOG.warn("maxFileSize should contain measurement unit: $maxFileSize")
+        return DEFAULT_MAX_FILE_SIZE_BYTES
+      }
+      val value = maxFileSize.substring(0, length - 2)
+      val size = try {
+        value.toInt()
+      }
+      catch (e: NumberFormatException) {
+        LOG.warn("Unable to parse maxFileSize for FUS log file: $maxFileSize")
+        return DEFAULT_MAX_FILE_SIZE_BYTES
+      }
+      val multiplier = when (maxFileSize.substring(length - 2, length)) {
+        "KB" -> 1024
+        "MB" -> 1024 * 1024
+        "GB" -> 1024 * 1024 * 1024
+        else -> {
+          LOG.warn("Unable to parse measurement unit of maxFileSize for FUS log file: $maxFileSize")
+          return DEFAULT_MAX_FILE_SIZE_BYTES
+        }
+      }
+      return size * multiplier
+    }
+  }
+
+  private val emptyLogger: StatisticsEventLogger by lazy { EmptyStatisticsEventLogger() }
+  private val actualLogger: StatisticsEventLogger by lazy { createLogger() }
+
+  open val logger: StatisticsEventLogger
+    get() = if (isLoggingEnabled()) actualLogger else emptyLogger
 
   abstract fun isRecordEnabled() : Boolean
   abstract fun isSendEnabled() : Boolean
+  /**
+   * Determines if logging code should be executed on logging method calls
+   * */
+  final fun isLoggingEnabled(): Boolean = isRecordEnabled() || isLoggingAlwaysActive()
+  /**
+   * Determines if logging of events should happen in code even if recording of events to file is disabled
+  * */
+  open fun isLoggingAlwaysActive(): Boolean = false
 
   fun getActiveLogFile(): EventLogFile? {
     return logger.getActiveLogFile()
@@ -53,32 +107,54 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     return logger.getLogFilesProvider()
   }
 
-  private fun createLogger(): StatisticsEventLogger {
-    if (!isRecordEnabled()) {
-      return EmptyStatisticsEventLogger()
-    }
+  /**
+   * Merge strategy defines which successive events should be merged and recorded as a single event.
+   * The amount of merged events is reflected in `com.intellij.internal.statistic.eventLog.LogEventAction#count` field.
+   *
+   * By default, only events with the same values in group id, event id and all event data fields are merged.
+   */
+  open fun createEventsMergeStrategy(): StatisticsEventMergeStrategy {
+    return FilteredEventMergeStrategy(emptySet())
+  }
 
+  private fun createLogger(): StatisticsEventLogger {
     val app = ApplicationManager.getApplication()
     val isEap = app != null && app.isEAP
     val isHeadless = app != null && app.isHeadlessEnvironment
-    val config = EventLogConfiguration
-    val writer = StatisticsEventLogFileWriter(recorderId, maxFileSize, isEap, config.build)
+    // Use `String?` instead of boolean flag for future expansion with other IDE modes
+    val ideMode = if(AppMode.isRemoteDevHost()) "RDH" else null
+    val eventLogConfiguration = EventLogConfiguration.getInstance()
+    val config = eventLogConfiguration.getOrCreate(recorderId)
+    val writer = StatisticsEventLogFileWriter(recorderId, this, maxFileSizeInBytes, isEap, eventLogConfiguration.build)
 
     val configService = EventLogConfigOptionsService.getInstance()
     val throttledWriter = StatisticsEventLogThrottleWriter(
-      configService, recorderId, version.toString(), EventLogNotificationProxy(writer, recorderId)
+      configService, recorderId, version.toString(), writer
     )
 
     val logger = StatisticsFileEventLogger(
-      recorderId, config.sessionId, isHeadless, config.build, config.bucket.toString(), version.toString(), throttledWriter,
-      UsageStatisticsPersistenceComponent.getInstance()
+      recorderId, config.sessionId, isHeadless, eventLogConfiguration.build, config.bucket.toString(), version.toString(),
+      throttledWriter, UsageStatisticsPersistenceComponent.getInstance(), createEventsMergeStrategy(), ideMode
     )
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
   }
 }
 
-internal class EmptyStatisticsEventLoggerProvider(recorderId: String): StatisticsEventLoggerProvider(recorderId, 0, -1) {
+/**
+ * For internal use only.
+ *
+ * Holds default implementation of StatisticsEventLoggerProvider.isLoggingAlwaysActive
+ * to connect logger with com.intellij.internal.statistic.eventLog.ExternalEventLogSettings
+ * */
+abstract class StatisticsEventLoggerProviderExt(recorderId: String, version: Int, sendFrequencyMs: Long,
+                                                maxFileSizeInBytes: Int, sendLogsOnIdeClose: Boolean = false) :
+  StatisticsEventLoggerProvider(recorderId, version, sendFrequencyMs, maxFileSizeInBytes, sendLogsOnIdeClose) {
+  override fun isLoggingAlwaysActive(): Boolean =
+    StatisticsEventLogProviderUtil.getExternalEventLogSettings()?.forceLoggingAlwaysEnabled() ?: false
+}
+
+internal class EmptyStatisticsEventLoggerProvider(recorderId: String): StatisticsEventLoggerProvider(recorderId, 0, -1, DEFAULT_MAX_FILE_SIZE_BYTES) {
   override val logger: StatisticsEventLogger = EmptyStatisticsEventLogger()
 
   override fun isRecordEnabled() = false
@@ -92,23 +168,13 @@ internal class EmptyStatisticsEventLogger : StatisticsEventLogger {
   override fun rollOver() = Unit
   override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> =
     CompletableFuture.completedFuture(null)
+  override fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void> =
+    CompletableFuture.completedFuture(null)
+  override fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit) {}
 }
 
 object EmptyEventLogFilesProvider: EventLogFilesProvider {
-  override fun getLogFilesDir(): Path? = null
+  override fun getLogFiles(): List<File> = emptyList()
 
-  override fun getLogFiles(): List<EventLogFile> = emptyList()
+  override fun getLogFilesExceptActive(): List<File> = emptyList()
 }
-
-fun getEventLogProviders(): List<StatisticsEventLoggerProvider> {
-  return EP_NAME.extensionsIfPointIsRegistered
-}
-
-fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {
-  if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(EP_NAME.name)) {
-    EP_NAME.findFirstSafe { it.recorderId == recorderId }?.let { return it }
-  }
-  LOG.warn("Cannot find event log provider with recorder-id=${recorderId}")
-  return EmptyStatisticsEventLoggerProvider(recorderId)
-}
-

@@ -7,8 +7,8 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.Divider;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.GridBag;
@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 
 
-public class DiffSplitter extends Splitter {
+public class DiffSplitter extends JBSplitter {
 
   @Nullable private Painter myPainter;
   @Nullable private AnAction myTopAction;
@@ -108,7 +108,7 @@ public class DiffSplitter extends Splitter {
     if (action == null) return null;
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DiffSplitter", new DefaultActionGroup(action), true);
-    toolbar.updateActionsImmediately();
+    toolbar.setTargetComponent(toolbar.getComponent());
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.getComponent().setCursor(Cursor.getDefaultCursor());
     return toolbar.getComponent();

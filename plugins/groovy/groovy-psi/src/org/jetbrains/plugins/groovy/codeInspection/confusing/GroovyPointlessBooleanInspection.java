@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
@@ -33,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
@@ -50,12 +50,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
 
   @Override
   public String buildErrorString(Object... args) {
-    if (args[0] instanceof GrBinaryExpression) {
-      return GroovyBundle.message("pointless.boolean.problem.descriptor", calculateSimplifiedBinaryExpression((GrBinaryExpression)args[0]));
-    }
-    else {
-      return GroovyBundle.message("pointless.boolean.problem.descriptor", calculateSimplifiedPrefixExpression((GrUnaryExpression)args[0]));
-    }
+    return GroovyBundle.message("pointless.boolean.problem.descriptor");
   }
 
   @Nullable
@@ -274,14 +269,13 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
 
   private static boolean equalityExpressionIsPointless(GrExpression lhs,
                                                        GrExpression rhs) {
-    return (isTrue(lhs) || isFalse(lhs)) && isBoolean(rhs)
-           || (isTrue(rhs) || isFalse(rhs)) && isBoolean(lhs);
+    return ((isTrue(lhs) || isFalse(lhs)) && isBoolean(rhs)) ||
+           ((isTrue(rhs) || isFalse(rhs)) && isBoolean(lhs));
   }
 
   private static boolean isBoolean(GrExpression expression) {
     final PsiType type = expression.getType();
-    final PsiType unboxed = TypesUtil.unboxPrimitiveTypeWrapper(type);
-    return unboxed != null && PsiType.BOOLEAN.equals(unboxed);
+    return PsiTypes.booleanType().equals(type);
   }
 
   private static boolean andExpressionIsPointless(GrExpression lhs,

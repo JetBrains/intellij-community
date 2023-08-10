@@ -15,16 +15,13 @@ import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.model.internal.DummyModel;
 import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.tooling.builder.ExternalProjectBuilderImpl;
-import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +49,6 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
   @NotNull
   private final GradleVersion myCurrentGradleVersion;
   private MyModelBuilderContext myModelBuilderContext;
-  @Deprecated
-  public static final ThreadLocal<ModelBuilderContext> CURRENT_CONTEXT = new ThreadLocal<ModelBuilderContext>();
 
   public ExtraModelBuilder() {
     this(GradleVersion.current());
@@ -70,7 +65,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     if (DummyModel.class.getName().equals(modelName)) return true;
     if (TurnOffDefaultTasks.class.getName().equals(modelName)) return true;
     for (ModelBuilderService service : modelBuilderServices) {
-      if (service.canBuild(modelName) && isVersionMatch(service)) return true;
+      if (service.canBuild(modelName)) return true;
     }
     return false;
   }
@@ -101,41 +96,39 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
       Gradle rootGradle = getRootGradle(project.getGradle());
       myModelBuilderContext = new MyModelBuilderContext(rootGradle);
     }
-    myModelBuilderContext.setParameter(parameter);
 
-    CURRENT_CONTEXT.set(myModelBuilderContext);
-    try {
-      for (ModelBuilderService service : modelBuilderServices) {
-        if (service.canBuild(modelName) && isVersionMatch(service)) {
-          final long startTime = System.currentTimeMillis();
-          try {
-            if (service instanceof ModelBuilderService.Ex)
-              return ((ModelBuilderService.Ex)service).buildAll(modelName, project, myModelBuilderContext);
-            else {
-              return service.buildAll(modelName, project);
-            }
+    for (ModelBuilderService service : modelBuilderServices) {
+      if (service.canBuild(modelName)) {
+        final long startTime = System.currentTimeMillis();
+        try {
+          if (service instanceof ModelBuilderService.ParameterizedModelBuilderService)
+            return ((ModelBuilderService.ParameterizedModelBuilderService)service)
+              .buildAll(modelName, project, myModelBuilderContext, parameter);
+          if (service instanceof ModelBuilderService.Ex)
+            return ((ModelBuilderService.Ex)service).buildAll(modelName, project, myModelBuilderContext);
+          else {
+            return service.buildAll(modelName, project);
           }
-          catch (Exception e) {
-            if (service instanceof ExternalProjectBuilderImpl) {
-              if (e instanceof RuntimeException) throw (RuntimeException)e;
-              throw new ExternalSystemException(e);
-            }
-            reportModelBuilderFailure(project, service, myModelBuilderContext, e);
-          }
-          finally {
-            if (Boolean.getBoolean("idea.gradle.custom.tooling.perf")) {
-              final long timeInMs = (System.currentTimeMillis() - startTime);
-              reportPerformanceStatistic(project, service, modelName, timeInMs);
-            }
-          }
-          return null;
         }
+        catch (Exception e) {
+          if (service instanceof ExternalProjectBuilderImpl) {
+            //Probably checked exception might still pop from poorly behaving implementation
+            //noinspection ConstantValue
+            if (e instanceof RuntimeException) throw (RuntimeException)e;
+            throw new ExternalSystemException(e);
+          }
+          reportModelBuilderFailure(project, service, myModelBuilderContext, e);
+        }
+        finally {
+          if (Boolean.getBoolean("idea.gradle.custom.tooling.perf")) {
+            final long timeInMs = (System.currentTimeMillis() - startTime);
+            reportPerformanceStatistic(project, service, modelName, timeInMs);
+          }
+        }
+        return null;
       }
-      throw new IllegalArgumentException("Unsupported model: " + modelName);
     }
-    finally {
-      CURRENT_CONTEXT.remove();
-    }
+    throw new IllegalArgumentException("Unsupported model: " + modelName);
   }
 
   private static void reportPerformanceStatistic(Project project, ModelBuilderService service, String modelName, long timeInMs) {
@@ -156,11 +149,6 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     }
   }
 
-  private boolean isVersionMatch(@NotNull ModelBuilderService builderService) {
-    TargetVersions targetVersions = builderService.getClass().getAnnotation(TargetVersions.class);
-    return new VersionMatcher(myCurrentGradleVersion).isVersionMatch(targetVersions);
-  }
-
   @NotNull
   private static Gradle getRootGradle(@NotNull Gradle gradle) {
     Gradle root = gradle;
@@ -171,9 +159,9 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
   }
 
   private static final class MyModelBuilderContext implements ModelBuilderContext {
-    private final Map<DataProvider, Object> myMap = new IdentityHashMap<DataProvider, Object>();
+
+    private final Map<DataProvider, Object> myMap = new IdentityHashMap<>();
     private final Gradle myGradle;
-    @Nullable private ModelBuilderService.Parameter myParameter = null;
 
     private MyModelBuilderContext(Gradle gradle) {
       myGradle = gradle;
@@ -185,24 +173,21 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
       return myGradle;
     }
 
-    @Nullable
-    @Override
-    public String getParameter() {
-      return myParameter != null ? myParameter.getValue() : null;
-    }
-
-    private void setParameter(@Nullable ModelBuilderService.Parameter parameter) {
-      myParameter = parameter;
-    }
-
     @NotNull
     @Override
     public <T> T getData(@NotNull DataProvider<T> provider) {
       Object data = myMap.get(provider);
       if (data == null) {
-        T value = provider.create(myGradle, this);
-        myMap.put(provider, value);
-        return value;
+        synchronized (myMap) {
+          Object secondAttempt = myMap.get(provider);
+          if (secondAttempt != null) {
+            //noinspection unchecked
+            return (T)secondAttempt;
+          }
+          T value = provider.create(myGradle, this);
+          myMap.put(provider, value);
+          return value;
+        }
       }
       else {
         //noinspection unchecked

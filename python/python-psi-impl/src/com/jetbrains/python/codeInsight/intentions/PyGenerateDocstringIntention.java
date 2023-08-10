@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -114,6 +115,7 @@ public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
       if (i < 0) {
         return false;
       }
+      SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS);
       settings.setFormat(DocStringFormat.fromNameOrPlain(values.get(i)));
     }
     return true;

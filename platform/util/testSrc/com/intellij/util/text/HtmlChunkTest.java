@@ -1,12 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.HtmlChunk;
 import org.junit.Test;
 
+import javax.swing.*;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class HtmlChunkTest {
   @Test
@@ -64,6 +68,30 @@ public class HtmlChunkTest {
     assertEquals("<b>hello</b>", HtmlChunk.text("hello").bold().toString());
     assertEquals("<i>hello</i>", HtmlChunk.text("hello").italic().toString());
   }
+
+  @Test
+  public void template() {
+    String userName = "Super<User>";
+    HtmlChunk greeting = HtmlChunk.template("Hello, $user$!", Map.entry("user", HtmlChunk.text(userName).wrapWith("b")));
+    assertEquals("Hello, <b>Super&lt;User&gt;</b>!", greeting.toString());
+    HtmlChunk greeting2 = HtmlChunk.template("$user$$$$user$", Map.entry("user", HtmlChunk.text(userName).wrapWith("b")));
+    assertEquals("<b>Super&lt;User&gt;</b>$<b>Super&lt;User&gt;</b>", greeting2.toString());
+  }
+
+  @Test
+  public void icon() {
+    Icon icon = AllIcons.General.Gear;
+    assertNull(HtmlChunk.empty().findIcon("id"));
+    HtmlChunk chunk = HtmlChunk.icon("id", icon);
+    assertEquals("<icon src=\"id\"/>", chunk.toString());
+    assertEquals(icon, chunk.findIcon("id"));
+    chunk = chunk.wrapWith("p");
+    assertEquals(icon, chunk.findIcon("id"));
+    assertEquals("<p><icon src=\"id\"/></p>", chunk.toString());
+    chunk = HtmlChunk.fragment(HtmlChunk.text("Hello!"), chunk);
+    assertEquals(icon, chunk.findIcon("id"));
+    assertEquals("Hello!<p><icon src=\"id\"/></p>", chunk.toString());
+  }
   
   @Test
   public void toFragment() {
@@ -71,5 +99,7 @@ public class HtmlChunkTest {
     assertEquals("<a href=\"foo\">foo</a><a href=\"bar\">bar</a><a href=\"baz\">baz</a>", fragment.toString());
     fragment = Stream.of("foo", "bar", "baz").map(HtmlChunk::text).collect(HtmlChunk.toFragment(HtmlChunk.br()));
     assertEquals("foo<br/>bar<br/>baz", fragment.toString());
+    fragment = HtmlChunk.fragment(HtmlChunk.text("label:").wrapWith("span"), HtmlChunk.text("description"));
+    assertEquals("<span>label:</span>description", fragment.toString());
   }
 }

@@ -1,4 +1,4 @@
-// "Create class 'ClassB'" "true"
+// "Create class 'ClassB'" "true-preview"
 public class ClassA
 {
   public void mA(Object arg)

@@ -20,7 +20,6 @@ package org.jetbrains.jps.api;
  */
 public interface GlobalOptions {
 
-  String GENERATE_CLASSPATH_INDEX_OPTION = "generate.classpath.index";
   String COMPILE_PARALLEL_OPTION = "compile.parallel";
   String ALLOW_PARALLEL_AUTOMAKE_OPTION = "allow.parallel.automake";
   String COMPILE_PARALLEL_MAX_THREADS_OPTION = "compile.parallel.max.threads";
@@ -51,4 +50,11 @@ public interface GlobalOptions {
    * This will allow JPS process to access bundle's resources and provide localized error/warning/diagnostic messages
    */
   String LANGUAGE_BUNDLE = "jps.language.bundle";
+
+  /**
+   * Environment variable set to UNIX timestamp, defined as the number of seconds, excluding leap seconds, since 01 Jan 1970 00:00:00 UTC.
+   * Should be used instead of a current time for build process to have deterministic timestamps in artifacts like installer distributions.
+   * See <a href="https://reproducible-builds.org/specs/source-date-epoch/">specification</a>
+   */
+  String BUILD_DATE_IN_SECONDS = "SOURCE_DATE_EPOCH";
 }

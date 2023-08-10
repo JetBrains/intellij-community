@@ -1,4 +1,10 @@
 public class UnboxingWithConversionCalls {
+  byte b = 0;
+
+  void test(Object object) {
+    if ((Integer) object != b) {}
+  }
+
   void testConstants() {
     byte b = Integer.valueOf(1234).byteValue();
     if (<warning descr="Condition 'b == -46' is always 'true'">b == -46</warning>) {}

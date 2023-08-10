@@ -46,7 +46,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     val affectedRange = TextRange.from(e.offset, max(e.newLength, e.oldLength))
     val affectedMarkers = markers.filter { affectedRange.intersects(it.fragmentMarker) }
 
-    val guardedRanges = guardedBlocks.mapTo(HashSet()) { it.range }
+    val guardedRanges = guardedBlocks.mapTo(HashSet()) { it.textRange }
     if (affectedMarkers.isEmpty() && guardedRanges.any { it.intersects(affectedRange) }) {
       // changed guarded blocks are on fragment document editor conscience, we just ignore them silently
       return
@@ -62,7 +62,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     val markersToRemove = SmartList<MarkersMapping>()
     for ((affectedMarker, markerText) in distributeTextToMarkers(affectedMarkers, affectedRange, e.offset + e.newLength)
       .let(this::promoteLinesEnds)) {
-      val rangeInHost = affectedMarker.hostMarker.range
+      val rangeInHost = affectedMarker.hostMarker.textRange
 
       myHostEditor.caretModel.moveToOffset(rangeInHost.startOffset)
       val newText = CopyPastePreProcessor.EP_NAME.extensionList.fold(markerText) { newText, preProcessor ->
@@ -93,7 +93,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
 
     }
 
-    val wholeRange = markersWholeRange(affectedMarkers) union workingRange ?: failAndReport("no wholeRange", e)
+    val wholeRange = (markersWholeRange(affectedMarkers) union workingRange) ?: failAndReport("no wholeRange", e)
 
     CodeStyleManager.getInstance(myProject).reformatRange(
       hostPsiFile, wholeRange.startOffset, wholeRange.endOffset, true)
@@ -124,7 +124,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     }
   }
 
-  private fun rebuildMarkers(contextRange: TextRange) {
+  override fun rebuildMarkers(contextRange: TextRange) {
     val psiDocumentManager = PsiDocumentManager.getInstance(myProject)
     psiDocumentManager.commitDocument(myHostDocument)
 
@@ -231,8 +231,6 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
   }
 
 }
-
-private infix fun TextRange?.union(another: TextRange?) = another?.let { this?.union(it) ?: it } ?: this
 
 private fun intermediateElement(psi: PsiElement) =
   psi is PsiWhiteSpace || (psi is PsiJavaToken && psi.tokenType == JavaTokenType.PLUS)

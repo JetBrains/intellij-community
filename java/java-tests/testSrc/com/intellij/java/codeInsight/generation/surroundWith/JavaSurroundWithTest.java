@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/generation/surroundWith/java/";
 
@@ -266,11 +263,12 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
 
   public void testInvokingSurroundInOneLineFoldedMethod() {
     configureFromFileText("a.java",
-                          "class Foo {\n" +
-                          " void bar() {\n" +
-                          "  Sy<caret>stem.out.println();\n" +
-                          " }\n" +
-                          "}");
+                          """
+                            class Foo {
+                             void bar() {
+                              Sy<caret>stem.out.println();
+                             }
+                            }""");
     JavaFoldingTestCase.performInitialFolding(getEditor());
     List<AnAction> actions = SurroundWithHandler.buildSurroundActions(getProject(), getEditor(), getFile(), null);
     assertSize(2, ContainerUtil.findAll(actions, a -> {
@@ -281,14 +279,15 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
 
   public void testExcludeVoidExpressions() {
     configureFromFileText("a.java",
-                          "class Foo {\n" +
-                          " void bar() {\n" +
-                          "  <selection>System.out.println()</selection>;\n" +
-                          " }\n" +
-                          "}");
+                          """
+                            class Foo {
+                             void bar() {
+                              <selection>System.out.println()</selection>;
+                             }
+                            }""");
     SelectionModel model = getEditor().getSelectionModel();
     PsiExpression expr =
-      IntroduceVariableBase.getSelectedExpression(getFile().getProject(), getFile(), model.getSelectionStart(), model.getSelectionEnd());
+      IntroduceVariableUtil.getSelectedExpression(getFile().getProject(), getFile(), model.getSelectionStart(), model.getSelectionEnd());
     assertNotNull(expr);
     assertFalse(new JavaWithParenthesesSurrounder().isApplicable(expr));
     assertFalse(new JavaWithCastSurrounder().isApplicable(expr));
@@ -296,12 +295,12 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
 
   public void testExcludeNonVoidStatements() {
     configureFromFileText("a.java",
-                          "class Foo {\n" +
-                          " int bar() {return 1;}\n" +
-                          " {" +
-                          "   <selection>bar();</selection>\n" +
-                          " }\n" +
-                          "}");
+                          """
+                            class Foo {
+                             int bar() {return 1;}
+                             {   <selection>bar();</selection>
+                             }
+                            }""");
     SelectionModel model = getEditor().getSelectionModel();
     PsiElement[] elements =
       new JavaExpressionSurroundDescriptor().getElementsToSurround(getFile(), model.getSelectionStart(), model.getSelectionEnd());

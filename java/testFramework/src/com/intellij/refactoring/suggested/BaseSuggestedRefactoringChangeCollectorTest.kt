@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
 import com.intellij.lang.Language
@@ -27,8 +27,15 @@ abstract class BaseSuggestedRefactoringChangeCollectorTest<TDeclaration : PsiEle
   }
 
   override fun tearDown() {
-    collector.reset()
-    super.tearDown()
+    try {
+      collector.reset()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   protected fun doTest(

@@ -9,8 +9,10 @@ import com.intellij.ui.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.IJSwingUtilities;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -25,8 +27,6 @@ import java.util.List;
 
 /**
  * @author Eugene Belyaev
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
   @NonNls public static final String POPUP_PLACE = "TabbedPanePopup";
@@ -65,6 +65,11 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     }
     myManager = manager;
     myManager.addContentManagerListener(new MyContentManagerListener());
+  }
+
+  @ApiStatus.Internal
+  public @Nullable ContentManager getManager() {
+    return myManager;
   }
 
   @Override
@@ -109,7 +114,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     return selectedComponent == null ? null : myManager.getContent(selectedComponent);
   }
 
-  private class MyTabbedPaneWrapper extends TabbedPaneWrapper.AsJTabbedPane {
+  public class MyTabbedPaneWrapper extends TabbedPaneWrapper.AsJTabbedPane {
     MyTabbedPaneWrapper(int tabPlacement) {
       super(tabPlacement);
     }
@@ -122,6 +127,10 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     @Override
     protected TabbedPaneHolder createTabbedPaneHolder() {
       return new MyTabbedPaneHolder(this);
+    }
+
+    public ContentManager getContentManager() {
+      return myManager;
     }
 
     private class MyTabbedPane extends TabbedPaneImpl {
@@ -223,7 +232,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
       protected class MyPopupHandler extends PopupHandler {
         @Override
         public void invokePopup(Component comp, int x, int y) {
-          if (myManager.getContentCount() == 0) return;
+          if (myManager.isEmpty()) return;
           showPopup(x, y);
         }
       }

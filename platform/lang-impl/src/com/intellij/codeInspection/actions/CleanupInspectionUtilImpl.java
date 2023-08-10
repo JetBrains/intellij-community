@@ -1,9 +1,11 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
@@ -32,7 +34,7 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
     final boolean isBatch = quickfixClass != null && BatchQuickFix.class.isAssignableFrom(quickfixClass);
     final AbstractPerformFixesTask fixesTask = isBatch ?
         new PerformBatchFixesTask(project, descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY), quickfixClass) :
-        new PerformFixesTask(project, descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY), quickfixClass);
+        new PerformFixesTask(project, descriptions, quickfixClass);
     CommandProcessor.getInstance().executeCommand(project, () -> {
       if (markGlobal) CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
       if (quickfixClass != null && startInWriteAction) {
@@ -61,17 +63,18 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
 
   private static class PerformBatchFixesTask extends AbstractPerformFixesTask {
     private final List<ProblemDescriptor> myBatchModeDescriptors = new ArrayList<>();
-    private boolean myApplied = false;
+    private boolean myApplied;
 
     PerformBatchFixesTask(@NotNull Project project,
-                                 CommonProblemDescriptor @NotNull [] descriptors,
-                                 @NotNull Class<?> quickfixClass) {
+                          CommonProblemDescriptor @NotNull [] descriptors,
+                          @NotNull Class<?> quickfixClass) {
       super(project, descriptors, quickfixClass);
     }
 
     @Override
-    protected void collectFix(QuickFix fix, ProblemDescriptor descriptor, Project project) {
-      myBatchModeDescriptors.add(descriptor);
+    protected <D extends CommonProblemDescriptor> ModCommandExecutor.BatchExecutionResult collectFix(QuickFix<D> fix, D descriptor, Project project) {
+      myBatchModeDescriptors.add((ProblemDescriptor)descriptor);
+      return ModCommandExecutor.Result.SUCCESS;
     }
 
     @Override
@@ -80,8 +83,8 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
         if (!myApplied && !myBatchModeDescriptors.isEmpty()) {
           final ProblemDescriptor representative = myBatchModeDescriptors.get(0);
           LOG.assertTrue(representative.getFixes() != null);
-          for (QuickFix fix : representative.getFixes()) {
-            if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
+          for (QuickFix<?> fix : representative.getFixes()) {
+            if (fix.getClass().isAssignableFrom(myQuickfixClass)) {
               ((BatchQuickFix)fix).applyFix(myProject,
                   myBatchModeDescriptors.toArray(ProblemDescriptor.EMPTY_ARRAY),
                   new ArrayList<>(),
@@ -96,19 +99,6 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
       else {
         return false;
       }
-    }
-  }
-
-  private static class PerformFixesTask extends AbstractPerformFixesTask {
-    PerformFixesTask(@NotNull Project project,
-                            CommonProblemDescriptor @NotNull [] descriptors,
-                            @Nullable Class<?> quickFixClass) {
-      super(project, descriptors, quickFixClass);
-    }
-
-    @Override
-    protected void collectFix(QuickFix fix, ProblemDescriptor descriptor, Project project) {
-      fix.applyFix(project, descriptor);
     }
   }
 }

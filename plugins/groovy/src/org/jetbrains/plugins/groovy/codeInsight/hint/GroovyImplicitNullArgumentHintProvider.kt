@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.codeInsight.hint
 import com.intellij.codeInsight.hints.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.plugins.groovy.GroovyBundle
 import javax.swing.JPanel
 
@@ -23,6 +23,8 @@ class GroovyImplicitNullArgumentHintProvider : InlayHintsProvider<NoSettings> {
   override val name: String
     get() = GroovyBundle.message("settings.inlay.implicit.null.argument")
   override val key: SettingsKey<NoSettings> = ourKey
+  override val group: InlayGroup
+    get() = InlayGroup.VALUES_GROUP
   override val previewText: String
     get() = """
       def foo(a) {}
@@ -34,5 +36,9 @@ class GroovyImplicitNullArgumentHintProvider : InlayHintsProvider<NoSettings> {
     override fun createComponent(listener: ChangeListener): JPanel = panel {}
 
     override val mainCheckboxText: String = GroovyBundle.message("settings.inlay.show.hints.for.implicit.null.argument")
+  }
+
+  override fun getProperty(key: String): String {
+    return GroovyBundle.message(key)
   }
 }

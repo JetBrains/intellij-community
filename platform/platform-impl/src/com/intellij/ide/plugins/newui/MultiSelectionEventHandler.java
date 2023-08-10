@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,12 +13,13 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
  * @author Alexander Lobas
  */
-public class MultiSelectionEventHandler extends EventHandler {
+public final class MultiSelectionEventHandler extends EventHandler {
   private PluginsGroupComponent myContainer;
   private PagePluginLayout myLayout;
   private List<ListPluginComponent> myComponents;
@@ -48,7 +50,7 @@ public class MultiSelectionEventHandler extends EventHandler {
         boolean isControlDown = event.isControlDown();
 
         if (!isControlDown && isLeftMouseButton) {
-          ListPluginComponent component = get(event);
+          ListPluginComponent component = findParent(event);
           int index = getIndex(component);
 
           if (event.isShiftDown()) {
@@ -73,7 +75,7 @@ public class MultiSelectionEventHandler extends EventHandler {
         }
         else if (SwingUtilities.isRightMouseButton(event) ||
                  isControlDown && isLeftMouseButton) {
-          ListPluginComponent component = get(event);
+          ListPluginComponent component = findParent(event);
 
           if (myAllSelected || myMixSelection) {
             int size = getSelection().size();
@@ -94,7 +96,7 @@ public class MultiSelectionEventHandler extends EventHandler {
             return;
           }
 
-          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PluginManagerConfigurable", group);
           popupMenu.setTargetComponent(component);
           popupMenu.getComponent().show(event.getComponent(), event.getX(), event.getY());
           event.consume();
@@ -114,7 +116,7 @@ public class MultiSelectionEventHandler extends EventHandler {
       @Override
       public void mouseMoved(MouseEvent event) {
         if (myHoverComponent == null) {
-          ListPluginComponent component = get(event);
+          ListPluginComponent component = findParent(event);
           if (component.getSelection() == SelectionType.NONE) {
             myHoverComponent = component;
             component.setSelection(SelectionType.HOVER);
@@ -128,23 +130,20 @@ public class MultiSelectionEventHandler extends EventHandler {
 
     myKeyListener = new KeyAdapter() {
       @Override
-      public void keyPressed(KeyEvent event) {
-        int code = event.getKeyCode();
-        int modifiers = event.getModifiersEx();
-        KeyboardShortcut shortcut = new KeyboardShortcut(
-          KeyStroke.getKeyStroke(code, modifiers),
-          null
-        );
+      public void keyPressed(@NotNull KeyEvent event) {
+        KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(event);
 
-        if (check(shortcut, mySelectAllKeys)) {
+        if (contains(mySelectAllKeys, keyStroke)) {
           event.consume();
           selectAll();
-          return;
         }
-        if (check(shortcut, myDeleteKeys)) {
-          code = DELETE_CODE;
+        else {
+          keyPressed(event,
+                     contains(myDeleteKeys, keyStroke) ? DELETE_CODE : event.getKeyCode());
         }
+      }
 
+      private void keyPressed(@NotNull KeyEvent event, int code) {
         if (code == KeyEvent.VK_HOME || code == KeyEvent.VK_END) {
           if (myComponents.isEmpty()) {
             return;
@@ -161,11 +160,14 @@ public class MultiSelectionEventHandler extends EventHandler {
         }
         else if (code == KeyEvent.VK_UP || code == KeyEvent.VK_DOWN) {
           event.consume();
-          if (modifiers == 0) {
-            moveOrResizeSelection(code == KeyEvent.VK_UP, true, 1);
-          }
-          else if (modifiers == Event.SHIFT_MASK) {
-            moveOrResizeSelection(code == KeyEvent.VK_UP, false, 1);
+          Boolean singleSelection = event.getModifiersEx() == 0 ?
+                                    Boolean.TRUE :
+                                    event.isShiftDown() ?
+                                    Boolean.FALSE :
+                                    null;
+
+          if (singleSelection != null) {
+            moveOrResizeSelection(code == KeyEvent.VK_UP, singleSelection, 1);
           }
         }
         else if (code == KeyEvent.VK_PAGE_UP || code == KeyEvent.VK_PAGE_DOWN) {
@@ -186,13 +188,23 @@ public class MultiSelectionEventHandler extends EventHandler {
           component.handleKeyAction(event, getSelection());
         }
       }
+
+      private static boolean contains(@Nullable ShortcutSet shortcutSet, @NotNull KeyStroke keyStroke) {
+        for (Shortcut shortcut : shortcutSet != null ? shortcutSet.getShortcuts() : Shortcut.EMPTY_ARRAY) {
+          if (shortcut instanceof KeyboardShortcut &&
+              ((KeyboardShortcut)shortcut).getFirstKeyStroke().equals(keyStroke)) {
+            return true;
+          }
+        }
+        return false;
+      }
     };
 
     myFocusListener = new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent event) {
         if (mySelectionIndex >= 0 && mySelectionLength == 1 && !myMixSelection) {
-          ListPluginComponent component = get(event);
+          ListPluginComponent component = findParent(event);
           int index = getIndex(component);
           if (mySelectionIndex != index) {
             clearSelectionWithout(index);
@@ -209,16 +221,7 @@ public class MultiSelectionEventHandler extends EventHandler {
       return;
     }
 
-    try {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ListPluginComponent.HANDLE_FOCUS_ON_SELECTION = false;
-
-      myKeyListener.keyPressed(event);
-    }
-    finally {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ListPluginComponent.HANDLE_FOCUS_ON_SELECTION = true;
-    }
+    myComponents.get(0).onSelection(() -> myKeyListener.keyPressed(event));
   }
 
   @Override
@@ -259,18 +262,12 @@ public class MultiSelectionEventHandler extends EventHandler {
 
   @Override
   public void initialSelection(boolean scrollAndFocus) {
-    if (!myComponents.isEmpty() && mySelectionLength == 0) {
-      try {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ListPluginComponent.HANDLE_FOCUS_ON_SELECTION = false;
-
-        singleSelection(myComponents.get(0), 0, scrollAndFocus);
-      }
-      finally {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ListPluginComponent.HANDLE_FOCUS_ON_SELECTION = true;
-      }
+    if (myComponents.isEmpty() || mySelectionLength != 0) {
+      return;
     }
+
+    ListPluginComponent component = myComponents.get(0);
+    component.onSelection(() -> singleSelection(component, 0, scrollAndFocus));
   }
 
   @Override
@@ -285,17 +282,9 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  @NotNull
-  public List<ListPluginComponent> getSelection() {
-    List<ListPluginComponent> selection = new ArrayList<>();
-
-    for (ListPluginComponent component : myComponents) {
-      if (component.getSelection() == SelectionType.SELECTION) {
-        selection.add(component);
-      }
-    }
-
-    return selection;
+  public @NotNull List<ListPluginComponent> getSelection() {
+    return myComponents.stream()
+      .filter(component -> component.getSelection() == SelectionType.SELECTION).toList();
   }
 
   @Override
@@ -512,7 +501,7 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  public void setSelection(@NotNull List<? extends ListPluginComponent> components) {
+  public void setSelection(@NotNull List<ListPluginComponent> components) {
     clearSelectionWithout(-1);
     mySelectionIndex = -1;
     mySelectionLength = components.size();
@@ -569,5 +558,9 @@ public class MultiSelectionEventHandler extends EventHandler {
         component.setSelection(SelectionType.HOVER);
       }
     }, ModalityState.any());
+  }
+
+  private static @NotNull ListPluginComponent findParent(@NotNull ComponentEvent event) {
+    return Objects.requireNonNull(ComponentUtil.getParentOfType(ListPluginComponent.class, event.getComponent()));
   }
 }

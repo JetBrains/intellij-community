@@ -2,19 +2,17 @@
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class PackageViewModuleNode extends AbstractModuleNode{
   public PackageViewModuleNode(Project project, @NotNull Module value, ViewSettings viewSettings) {
@@ -24,16 +22,36 @@ public class PackageViewModuleNode extends AbstractModuleNode{
   @Override
   @NotNull
   public Collection<AbstractTreeNode<?>> getChildren() {
-    return AbstractTreeUi.calculateYieldingToWriteAction(() -> {
-      Module module = getValue();
-      if (module == null || module.isDisposed()) return Collections.emptyList();
-      List<VirtualFile> roots = Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots());
-      final Collection<AbstractTreeNode<?>> result = PackageUtil.createPackageViewChildrenOnFiles(roots, myProject, getSettings(), module, false);
-      if (getSettings().isShowLibraryContents()) {
-        result.add(new PackageViewLibrariesNode(getProject(), module, getSettings()));
+    Module module = getValue();
+    if (module == null || module.isDisposed()) return Collections.emptyList();
+    var result = new ArrayList<AbstractTreeNode<?>>();
+    addChildModules(module, result);
+    addSourceRoots(module, result);
+    addLibraries(module, result);
+    return result;
+  }
+
+  private void addChildModules(Module module, ArrayList<AbstractTreeNode<?>> result) {
+    var grouper = ModuleGrouper.instanceFor(getProject());
+    var moduleGroupPath = grouper.getModuleAsGroupPath(module);
+    if (moduleGroupPath != null) {
+      var moduleGroup = new ModuleGroup(moduleGroupPath);
+      var childModules = moduleGroup.modulesInGroup(getProject());
+      for (Module childModule : childModules) {
+        result.add(new PackageViewModuleNode(getProject(), childModule, getSettings()));
       }
-      return result;
-    });
+    }
+  }
+
+  private void addSourceRoots(Module module, ArrayList<AbstractTreeNode<?>> result) {
+    List<VirtualFile> roots = Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots());
+    result.addAll(PackageUtil.createPackageViewChildrenOnFiles(roots, myProject, getSettings(), module, false));
+  }
+
+  private void addLibraries(Module module, ArrayList<AbstractTreeNode<?>> result) {
+    if (getSettings().isShowLibraryContents()) {
+      result.add(new PackageViewLibrariesNode(getProject(), module, getSettings()));
+    }
   }
 
   @Override

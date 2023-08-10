@@ -21,33 +21,29 @@ package com.intellij.openapi.actionSystem;
  *
  * @deprecated use {@link DataKeys} and {@link DataKey#getData} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface DataConstants {
   /**
    * Returns {@link com.intellij.openapi.project.Project}
    *
    * @deprecated use {@link PlatformDataKeys#PROJECT} instead
    */
-  @Deprecated String PROJECT = CommonDataKeys.PROJECT.getName();
+  @Deprecated(forRemoval = true)
+  String PROJECT = CommonDataKeys.PROJECT.getName();
 
   /**
    * Returns {@link com.intellij.openapi.vfs.VirtualFile}
    *
    * @deprecated use {@link PlatformDataKeys#VIRTUAL_FILE} instead
    */
-  @Deprecated String VIRTUAL_FILE = CommonDataKeys.VIRTUAL_FILE.getName();
-
-  /**
-   * Returns array of {@link com.intellij.openapi.vfs.VirtualFile}
-   *
-   * @deprecated use {@link PlatformDataKeys#VIRTUAL_FILE_ARRAY} instead
-   */
-  @Deprecated String VIRTUAL_FILE_ARRAY = CommonDataKeys.VIRTUAL_FILE_ARRAY.getName();
+  @Deprecated(forRemoval = true)
+  String VIRTUAL_FILE = CommonDataKeys.VIRTUAL_FILE.getName();
 
   /**
    * Returns {@link com.intellij.openapi.editor.Editor}
    *
    * @deprecated use {@link PlatformDataKeys#EDITOR} instead
    */
-  @Deprecated String EDITOR = CommonDataKeys.EDITOR.getName();
+  @Deprecated(forRemoval = true)
+  String EDITOR = CommonDataKeys.EDITOR.getName();
 }

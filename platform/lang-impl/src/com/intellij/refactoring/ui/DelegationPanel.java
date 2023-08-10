@@ -23,9 +23,6 @@ import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-/**
- * @author dsl
- */
 public class DelegationPanel extends JPanel {
   private final JRadioButton myRbModifyCalls;
   private final JRadioButton myRbGenerateDelegate;

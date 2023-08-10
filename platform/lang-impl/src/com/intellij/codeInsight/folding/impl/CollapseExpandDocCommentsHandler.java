@@ -22,7 +22,6 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -79,8 +78,8 @@ public class CollapseExpandDocCommentsHandler implements CodeInsightActionHandle
   private static boolean hasAllowedTokenType(@NotNull Editor editor, @NotNull FoldRegion region, @Nullable PsiElement element) {
     if (element == null) return false;
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(element.getLanguage());
-    if (!(editor instanceof EditorEx) || !(commenter instanceof CodeDocumentationAwareCommenter)) return false;
-    final HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(region.getStartOffset());
+    if (!(commenter instanceof CodeDocumentationAwareCommenter)) return false;
+    final HighlighterIterator iterator = editor.getHighlighter().createIterator(region.getStartOffset());
     if (iterator.atEnd()) return false;
     return ((CodeDocumentationAwareCommenter)commenter).getDocumentationCommentTokenType() == iterator.getTokenType();
   }

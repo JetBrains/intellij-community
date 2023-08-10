@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -32,15 +17,16 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 
-public class MavenDomElementDescriptorHolder {
+@Service(Service.Level.PROJECT)
+public final class MavenDomElementDescriptorHolder {
   private static final Logger LOG = Logger.getInstance(MavenDomElementDescriptorHolder.class);
 
   private enum FileKind {
@@ -61,21 +47,32 @@ public class MavenDomElementDescriptorHolder {
       public String getSchemaUrl() {
         return MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL;
       }
+    },
+    SETTINGS_FILE_1_1 {
+      @Override
+      public String getSchemaUrl() {
+        return MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL_1_1;
+      }
+    },
+    SETTINGS_FILE_1_2 {
+      @Override
+      public String getSchemaUrl() {
+        return MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL_1_2;
+      }
     };
 
     public abstract String getSchemaUrl();
   }
 
   private final Project myProject;
-  private final Map<FileKind, CachedValue<XmlNSDescriptorImpl>> myDescriptorsMap =
-    new THashMap<>();
+  private final Map<FileKind, CachedValue<XmlNSDescriptorImpl>> myDescriptorsMap = new HashMap<>();
 
   public MavenDomElementDescriptorHolder(Project project) {
     myProject = project;
   }
 
   public static MavenDomElementDescriptorHolder getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, MavenDomElementDescriptorHolder.class);
+    return project.getService(MavenDomElementDescriptorHolder.class);
   }
 
   @Nullable
@@ -132,7 +129,16 @@ public class MavenDomElementDescriptorHolder {
   private static FileKind getFileKind(PsiFile file) {
     if (MavenDomUtil.isProjectFile(file)) return FileKind.PROJECT_FILE;
     if (MavenDomUtil.isProfilesFile(file)) return FileKind.PROFILES_FILE;
-    if (MavenDomUtil.isSettingsFile(file)) return FileKind.SETTINGS_FILE;
+    if (MavenDomUtil.isSettingsFile(file)) return getSettingsFileKind(file);
     return null;
+  }
+
+  @NotNull
+  private static FileKind getSettingsFileKind(PsiFile file) {
+    String nameSpace = MavenDomUtil.getXmlSettingsNameSpace(file);
+    if (nameSpace == null) return FileKind.SETTINGS_FILE;
+    if (nameSpace.contains("1.1.0")) return FileKind.SETTINGS_FILE_1_1;
+    if (nameSpace.contains("1.2.0")) return FileKind.SETTINGS_FILE_1_2;
+    return FileKind.SETTINGS_FILE;
   }
 }

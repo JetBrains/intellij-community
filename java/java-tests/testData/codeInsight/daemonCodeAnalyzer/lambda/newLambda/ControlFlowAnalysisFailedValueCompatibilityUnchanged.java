@@ -7,7 +7,7 @@ class Test {
       try {
         return cells.collect(Collectors.toMap(c -> c, null));
       } finally {
-        System.out.println(<error descr="')' expected"><error descr="Expression expected">;</error></error><error descr="Unexpected token">)</error>;
+        System.out.println(<error descr="',' or ')' expected"><error descr="Expression expected">;</error></error><error descr="Unexpected token">)</error>;
       }
     });
   }

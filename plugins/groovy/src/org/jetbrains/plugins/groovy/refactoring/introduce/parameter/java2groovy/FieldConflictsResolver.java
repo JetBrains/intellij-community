@@ -58,8 +58,7 @@ public class FieldConflictsResolver {
     myReferenceExpressions = new ArrayList<>();
     for (PsiReference reference : ReferencesSearch.search(myField, new LocalSearchScope(myScope), false)) {
       final PsiElement element = reference.getElement();
-      if (element instanceof GrReferenceExpression) {
-        final GrReferenceExpression referenceExpression = (GrReferenceExpression)element;
+      if (element instanceof GrReferenceExpression referenceExpression) {
         if (referenceExpression.getQualifierExpression() == null) {
           myReferenceExpressions.add(referenceExpression);
         }

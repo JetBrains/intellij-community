@@ -21,7 +21,6 @@ import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +74,7 @@ public class TemplateNode extends ZenCodingNode {
     String result = myTemplateToken.getKey();
     Map<String, String> attributes = myTemplateToken.getAttributes();
     if (!attributes.isEmpty()) {
-      result += ContainerUtil.toString(attributes);
+      result += attributes;
     }
     return "Template(" + result + ")";
   }

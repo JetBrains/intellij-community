@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.completion.JavaCompletionUtil.JavaLookupElementHighlighter;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil.JavaModuleScope;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -35,17 +36,11 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.codeInsight.completion.JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
- * @author peter
- */
 public class JavaClassNameCompletionContributor extends CompletionContributor implements DumbAware {
   public static final PsiJavaElementPattern.Capture<PsiElement> AFTER_NEW = psiElement().afterLeaf(PsiKeyword.NEW);
 
@@ -68,10 +63,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
       return true;
     }
     PsiComment comment = PsiTreeUtil.getParentOfType(position, PsiComment.class, false);
-    if (comment != null && !(comment instanceof PsiDocComment)) {
-      return true;
-    }
-    return false;
+    return comment != null && !(comment instanceof PsiDocComment);
   }
 
   public static void addAllClasses(@NotNull CompletionParameters parameters,
@@ -125,18 +117,10 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
     }
 
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(insertedElement);
-    final Project project = insertedElement.getProject();
-    final GlobalSearchScope scope;
-    if (inPermitsList) {
-      PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(psiFile.getOriginalElement());
-      if (javaModule == null) return;
-      JavaModuleScope moduleScope = JavaModuleScope.moduleScope(javaModule);
-      if (moduleScope == null) return;
-      scope = moduleScope;
-    }
-    else {
-      scope = filterByScope ? psiFile.getResolveScope() : GlobalSearchScope.allScope(project);
-    }
+    final GlobalSearchScope scope = getReferenceScope(parameters, filterByScope, inPermitsList);
+
+    JavaLookupElementHighlighter highlighter = JavaCompletionUtil.getHighlighterForPlace(insertedElement);
+    boolean patternContext = JavaPatternCompletionUtil.isPatternContext(psiFile, insertedElement);
 
     Processor<PsiClass> classProcessor = new Processor<>() {
       @Override
@@ -165,7 +149,10 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
               element.setLookupString(prefix + element.getLookupString());
 
               JavaConstructorCallElement.wrap(element, insertedElement).forEach(
-                e -> consumer.consume(JavaCompletionUtil.highlightIfNeeded(null, e, e.getObject(), insertedElement)));
+                e -> consumer.consume(highlighter.highlightIfNeeded(null, e, e.getObject())));
+              if (patternContext) {
+                JavaPatternCompletionUtil.addPatterns(consumer::consume, insertedElement, element.getObject());
+              }
             }
           }
         }
@@ -191,8 +178,36 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
         return innerName != null && matcher.prefixMatches(innerName);
       }
     };
+    final Project project = insertedElement.getProject();
     AllClassesGetter.processJavaClasses(matcher, project, scope,
                                         new LimitedAccessibleClassPreprocessor(parameters, filterByScope, classProcessor));
+  }
+
+  @NotNull
+  private static GlobalSearchScope getReferenceScope(@NotNull CompletionParameters parameters,
+                                                     boolean filterByScope,
+                                                     boolean inPermitsList) {
+    PsiElement insertedElement = parameters.getPosition();
+    PsiFile psiFile = insertedElement.getContainingFile().getOriginalFile();
+    Project project = insertedElement.getProject();
+    if (!inPermitsList) {
+      return filterByScope ? psiFile.getResolveScope() : GlobalSearchScope.allScope(project);
+    }
+    if (parameters.getInvocationCount() >= 2) {
+      return GlobalSearchScope.allScope(project);
+    }
+    PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(psiFile.getOriginalElement());
+    JavaModuleScope moduleScope = javaModule == null ? null : JavaModuleScope.moduleScope(javaModule);
+    if (moduleScope != null) {
+      return moduleScope;
+    }
+    PsiDirectory dir = psiFile.getParent();
+    PsiPackage psiPackage = dir == null ? null : JavaDirectoryService.getInstance().getPackage(dir);
+    if (psiPackage != null) {
+      return GlobalSearchScope.filesScope(project, ContainerUtil.map(psiPackage.getFiles(GlobalSearchScope.allScope(project)),
+                                                                     PsiFile::getVirtualFile));
+    }
+    return GlobalSearchScope.fileScope(psiFile);
   }
 
   @NotNull
@@ -219,7 +234,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
   @NotNull
   private static String getClassNameWithContainers(@NotNull PsiClass psiClass) {
     StringBuilder name = new StringBuilder(Objects.requireNonNull(psiClass.getName()));
-    for (PsiClass parent : JBIterable.generate(psiClass, PsiClass::getContainingClass)) {
+    for (PsiClass parent : JBIterable.generate(psiClass.getContainingClass(), PsiClass::getContainingClass)) {
       name.insert(0, parent.getName() + ".");
     }
     return name.toString();
@@ -234,12 +249,13 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
                                                                           boolean withInners,
                                                                           InsertHandler<JavaPsiClassReferenceElement> insertHandler,
                                                                           Condition<? super PsiClass> condition) {
+    String name = psiClass.getName();
+    if (name == null) return Collections.emptyList();
     List<JavaPsiClassReferenceElement> result = new SmartList<>();
     if (condition.value(psiClass)) {
       result.add(AllClassesGetter.createLookupItem(psiClass, insertHandler));
     }
-    String name = psiClass.getName();
-    if (withInners && name != null) {
+    if (withInners) {
       for (PsiClass inner : psiClass.getInnerClasses()) {
         if (inner.hasModifierProperty(PsiModifier.STATIC)) {
           for (JavaPsiClassReferenceElement lookupInner : createClassLookupItems(inner, true, insertHandler, condition)) {

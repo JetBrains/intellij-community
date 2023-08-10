@@ -1,222 +1,284 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.keyStorage;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.util.Processor;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
+import it.unimi.dsi.fastutil.bytes.ByteArrays;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class AppendableStorageBackedByResizableMappedFile<Data> extends ResizeableMappedFile implements AppendableObjectStorage<Data> {
-  private static final ThreadLocal<MyDataIS> ourReadStream = ThreadLocal.withInitial(() -> new MyDataIS());
-  private volatile byte[] myAppendBuffer;
-  private volatile int myFileLength;
-  private volatile int myBufferPosition;
-  private static final int ourAppendBufferLength = 4096;
-  @NotNull
-  private final DataExternalizer<Data> myDataDescriptor;
+/** valueId == offset of value in a file */
+public class AppendableStorageBackedByResizableMappedFile<Data> implements AppendableObjectStorage<Data> {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static final int APPEND_BUFFER_SIZE = 4096;
 
-  public AppendableStorageBackedByResizableMappedFile(final Path file,
+  private static final ThreadLocal<MyDataIS> TLOCAL_READ_STREAMS = ThreadLocal.withInitial(() -> new MyDataIS());
+
+  private final ResizeableMappedFile storage;
+
+  //TODO RC: the class is suspicious because it uses some multi-threading constructs (synchronized, volatile), but
+  //         the class overall is not thread safe in any reasonable sense. I.e. authors seem to consider the class
+  //         for multithreaded use, but it is really not safe for it. We should either made it really thread-safe,
+  //         or remove all synchronized/volatile, and rely on caller for synchronization.
+
+  private volatile int fileLength;
+  private volatile @Nullable AppendMemoryBuffer appendBuffer;
+
+  private final @NotNull DataExternalizer<Data> dataDescriptor;
+
+  public AppendableStorageBackedByResizableMappedFile(@NotNull Path file,
                                                       int initialSize,
                                                       @Nullable StorageLockContext lockContext,
                                                       int pageSize,
                                                       boolean valuesAreBufferAligned,
-                                                      @NotNull DataExternalizer<Data> dataDescriptor) {
-    super(file, initialSize, lockContext, pageSize, valuesAreBufferAligned);
-    myDataDescriptor = dataDescriptor;
-    myFileLength = (int)length();
+                                                      @NotNull DataExternalizer<Data> dataDescriptor) throws IOException {
+    this.storage = new ResizeableMappedFile(
+      file,
+      initialSize,
+      lockContext,
+      pageSize,
+      valuesAreBufferAligned
+    );
+    this.dataDescriptor = dataDescriptor;
+    fileLength = Math.toIntExact(storage.length());
   }
 
-  private void flushKeyStoreBuffer() {
-    if (myBufferPosition > 0) {
-      put(myFileLength, myAppendBuffer, 0, myBufferPosition);
-      myFileLength += myBufferPosition;
-      myBufferPosition = 0;
+  private void flushAppendBuffer() throws IOException {
+    if (AppendMemoryBuffer.hasChanges(appendBuffer)) {
+      int bufferPosition = appendBuffer.getBufferPosition();
+      storage.put(fileLength, appendBuffer.getAppendBuffer(), 0, bufferPosition);
+      fileLength += bufferPosition;
+      appendBuffer = appendBuffer.rewind(fileLength);
     }
   }
 
-  @Override
-  public void force() {
-    flushKeyStoreBuffer();
-    super.force();
-  }
 
   @Override
-  public void close() {
-    flushKeyStoreBuffer();
-    super.close();
-    ourReadStream.remove();
-  }
+  public Data read(int valueId, boolean checkAccess) throws IOException {
+    int offset = valueId;
+    AppendMemoryBuffer buffer = appendBuffer;
+    if (buffer != null
+        && (long)offset >= buffer.startingOffsetInFile) {
+      AppendMemoryBuffer copyForRead = buffer.copy();
 
-  @Override
-  public Data read(final int addr) throws IOException {
-    if (myFileLength <= addr) {
-      // addr points to un-existed data
-      if (myAppendBuffer == null) {
-        throw new NoDataException("requested address points to un-existed data");
+      int bufferOffset = offset - copyForRead.startingOffsetInFile;
+      if (bufferOffset > copyForRead.bufferPosition) {
+        throw new NoDataException("Requested address(=" + offset + ") points to un-existed data: " + appendBuffer);
       }
 
-      // addr points to un-existed data
-      int bufferOffset = addr - myFileLength;
-      if (bufferOffset > myBufferPosition) {
-        throw new NoDataException("requested address points to un-existed data");
-      }
-
-      return myDataDescriptor.read(new DataInputStream(new UnsyncByteArrayInputStream(myAppendBuffer, bufferOffset, myBufferPosition)));
+      UnsyncByteArrayInputStream is = new UnsyncByteArrayInputStream(
+        copyForRead.getAppendBuffer(),
+        bufferOffset,
+        copyForRead.getBufferPosition()
+      );
+      return dataDescriptor.read(new DataInputStream(is));
     }
-    // we do not need to flushKeyBuffer since we store complete records
-    MyDataIS rs = ourReadStream.get();
 
-    rs.setup(this, addr, myFileLength);
-    return myDataDescriptor.read(rs);
+    if (offset >= fileLength) {
+      throw new NoDataException("Requested address(=" + offset + ") points to un-existed data (file length: " + fileLength + ")");
+    }
+    // we do not need to flushAppendBuffer() since we store complete records
+    MyDataIS rs = TLOCAL_READ_STREAMS.get();
+
+    rs.setup(storage, offset, fileLength, checkAccess);
+    return dataDescriptor.read(rs);
   }
 
   @Override
-  public boolean processAll(@NotNull Processor<? super Data> processor) throws IOException {
-    assert !isDirty();
-
-    if (myFileLength == 0) return true;
-
-    try (DataInputStream keysStream = new DataInputStream(
-      new BufferedInputStream(new LimitedInputStream(Files.newInputStream(getPagedFileStorage().getFile()),
-                                                     myFileLength) {
+  public boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException {
+    //TODO RC: processAll requires storage to by flushed first -- but in multithreaded environment it is
+    //         impossible to satisfy this requirement without excessive locking: one needs writeLock to
+    //         do flush, and also at least a readLock for .processAll(). But there shouldn't be any
+    //         locking gap between flush() and.processAll(), which is impossible with regular ReadWriteLock
+    //         (readLock can't be upgraded to writeLock), hence exclusive lock needed for the whole
+    //         (flush+processAll) call.
+    //         Hence right now it is easier to relax the semantics of processAll so that it doesn't guarantee
+    //         strict consistency -- items added after last flush but before .processAll() could be not listed
+    //
+    //if (isDirty()) {
+    //  //RC: why not .force() right here? Probably because of the locks: processAll is a read method, so
+    //  //    it is likely readLock is acquired, but force() requires writeLock, and one can't upgrade read
+    //  //    lock to the write one. So the responsibility was put on a caller.
+    //  throw new IllegalStateException("Must be .force()-ed first");
+    //}
+    if (fileLength == 0) {
+      return true;
+    }
+    IOCancellationCallbackHolder.checkCancelled();
+    return storage.readInputStream(is -> {
+      // calculation may restart few times, so it's expected that processor processes duplicates
+      LimitedInputStream lis = new LimitedInputStream(new BufferedInputStream(is), fileLength) {
         @Override
         public int available() {
           return remainingLimit();
         }
-      }, 32768))) {
+      };
+      DataInputStream valuesStream = new DataInputStream(lis);
       try {
         while (true) {
-          Data key = myDataDescriptor.read(keysStream);
-          if (!processor.process(key)) return false;
+          int offset = lis.getBytesRead();
+          Data value = dataDescriptor.read(valuesStream);
+          if (!processor.process(offset, value)) return false;
         }
       }
       catch (EOFException e) {
         // Done
       }
+
       return true;
-    }
+    });
   }
 
   @Override
   public int getCurrentLength() {
-    return myBufferPosition + myFileLength;
+    return AppendMemoryBuffer.getBufferPosition(appendBuffer) + fileLength;
   }
 
   @Override
   public int append(Data value) throws IOException {
-    final BufferExposingByteArrayOutputStream bos = new BufferExposingByteArrayOutputStream();
-    DataOutput out = new com.intellij.util.io.DataOutputStream(bos);
-    myDataDescriptor.save(out, value);
+    BufferExposingByteArrayOutputStream bos = new BufferExposingByteArrayOutputStream();
+    DataOutput out = new DataOutputStream(bos);
+    dataDescriptor.save(out, value);
     final int size = bos.size();
     final byte[] buffer = bos.getInternalBuffer();
 
     int currentLength = getCurrentLength();
 
-    if (size > ourAppendBufferLength) {
-      flushKeyStoreBuffer();
-      put(currentLength, buffer, 0, size);
-      myFileLength += size;
+    if (size > APPEND_BUFFER_SIZE) {
+      flushAppendBuffer();
+      storage.put(currentLength, buffer, 0, size);
+      fileLength += size;
+      if (appendBuffer != null) {
+        appendBuffer = appendBuffer.rewind(fileLength);
+      }
     }
     else {
-      if (size > ourAppendBufferLength - myBufferPosition) {
-        flushKeyStoreBuffer();
+      if (size > APPEND_BUFFER_SIZE - AppendMemoryBuffer.getBufferPosition(appendBuffer)) {
+        flushAppendBuffer();
       }
       // myAppendBuffer will contain complete records
-      if (myAppendBuffer == null) {
-        myAppendBuffer = new byte[ourAppendBufferLength];
+      if (appendBuffer == null) {
+        appendBuffer = new AppendMemoryBuffer(fileLength);
       }
-      System.arraycopy(buffer, 0, myAppendBuffer, myBufferPosition, size);
-      myBufferPosition += size;
+      appendBuffer.append(buffer, size);
     }
     return currentLength;
   }
 
   @Override
-  public boolean checkBytesAreTheSame(final int addr, Data value) throws IOException {
-    final boolean[] sameValue = new boolean[1];
-    OutputStream comparer = buildOldComparerStream(addr, sameValue);
-    DataOutput out = new DataOutputStream(comparer);
-    myDataDescriptor.save(out, value);
-    comparer.close();
-    return sameValue[0];
+  public boolean checkBytesAreTheSame(int valueId, Data value) throws IOException {
+    int offset = valueId;
+    try (CheckerOutputStream comparer = buildOldComparerStream(offset)) {
+      DataOutput out = new DataOutputStream(comparer);
+      dataDescriptor.save(out, value);
+      return comparer.same;
+    }
+  }
+
+  @Override
+  public void clear() throws IOException {
+    storage.clear();
+    fileLength = 0;
+    appendBuffer = null;
+  }
+
+  @Override
+  public boolean isDirty() {
+    return AppendMemoryBuffer.hasChanges(appendBuffer) || storage.isDirty();
+  }
+
+  @Override
+  public void force() throws IOException {
+    flushAppendBuffer();
+    storage.force();
+  }
+
+  @Override
+  public void close() throws IOException {
+    ExceptionUtil.runAllAndRethrowAllExceptions(
+      new IOException("Can't .close() appendable storage [" + storage.getPagedFileStorage().getFile() + "]"),
+      this::force,
+      storage::close
+    );
   }
 
   @Override
   public void lockRead() {
-    getPagedFileStorage().lockRead();
+    storage.lockRead();
   }
 
   @Override
   public void unlockRead() {
-    getPagedFileStorage().unlockRead();
+    storage.unlockRead();
   }
 
   @Override
   public void lockWrite() {
-    getPagedFileStorage().lockWrite();
+    storage.lockWrite();
   }
 
   @Override
   public void unlockWrite() {
-    getPagedFileStorage().unlockWrite();
+    storage.unlockWrite();
   }
 
-  @NotNull
-  private OutputStream buildOldComparerStream(final int addr, final boolean[] sameValue) {
-    OutputStream comparer;
-    final PagedFileStorage storage = getPagedFileStorage();
+  private abstract static class CheckerOutputStream extends OutputStream {
+    boolean same = true;
+  }
 
-    if (myFileLength <= addr) {
-      comparer = new OutputStream() {
-        int address = addr - myFileLength;
-        boolean same = true;
+  /**
+   * @return fake OutputStream impl that doesn't write anything, but compare bytes to be written against
+   * bytes already in a file on the same positions, and set .same to be true or false
+   */
+  private @NotNull CheckerOutputStream buildOldComparerStream(final int startingOffsetInFile) throws IOException {
+    final PagedFileStorage storage = this.storage.getPagedFileStorage();
+
+    if (fileLength <= startingOffsetInFile) {
+      return new CheckerOutputStream() {
+        private int address = startingOffsetInFile - fileLength;
+
         @Override
         public void write(int b) {
           if (same) {
-            same = address < myBufferPosition && myAppendBuffer[address++] == (byte)b;
+            same = address < AppendMemoryBuffer.getBufferPosition(appendBuffer) && appendBuffer.getAppendBuffer()[address++] == (byte)b;
           }
-        }
-        @Override
-        public void close() {
-          sameValue[0]  = same;
         }
       };
     }
     else {
-      comparer = new OutputStream() {
-        int base = addr;
-        int address = storage.getOffsetInPage(addr);
-        boolean same = true;
-        ByteBuffer buffer = storage.getByteBuffer(addr, false).getCachedBuffer();
-        final int myPageSize = storage.getPageSize();
+      return new CheckerOutputStream() {
+        private int offsetInFile = startingOffsetInFile;
+        private int offsetInPage = storage.getOffsetInPage(startingOffsetInFile);
+        private DirectBufferWrapper buffer = storage.getByteBuffer(startingOffsetInFile, false);
+        private final int pageSize = storage.getPageSize();
 
         @Override
-        public void write(int b) {
+        public void write(int b) throws IOException {
           if (same) {
-            if (myPageSize == address && address < myFileLength) {    // reached end of current byte buffer
-              base += address;
-              buffer = storage.getByteBuffer(base, false).getCachedBuffer();
-              address = 0;
+            if (pageSize == offsetInPage && offsetInFile < fileLength) {    // reached end of current byte buffer
+              offsetInFile += offsetInPage;
+              buffer.unlock();
+              buffer = storage.getByteBuffer(offsetInFile, false);
+              offsetInPage = 0;
             }
-            same = address < myFileLength && buffer.get(address++) == (byte)b;
+            same = offsetInPage < fileLength && buffer.get(offsetInPage++, true) == (byte)b;
           }
         }
 
         @Override
         public void close() {
-          sameValue[0]  = same;
+          buffer.unlock();
         }
       };
-
     }
-    return comparer;
   }
 
   private static final class MyDataIS extends DataInputStream {
@@ -224,8 +286,8 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
       super(new MyBufferedIS());
     }
 
-    void setup(ResizeableMappedFile is, long pos, long limit) {
-      ((MyBufferedIS)in).setup(is, pos, limit);
+    void setup(ResizeableMappedFile is, long pos, long limit, boolean checkAccess) {
+      ((MyBufferedIS)in).setup(is, pos, limit, checkAccess);
     }
   }
 
@@ -234,10 +296,10 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
       super(TOMBSTONE, 512);
     }
 
-    void setup(ResizeableMappedFile in, long pos, long limit) {
+    void setup(ResizeableMappedFile in, long pos, long limit, boolean checkAccess) {
       this.pos = 0;
       this.count = 0;
-      this.in = new MappedFileInputStream(in, pos, limit);
+      this.in = new MappedFileInputStream(in, pos, limit, checkAccess);
     }
   }
 
@@ -247,4 +309,66 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
       throw new IllegalStateException("should not happen");
     }
   };
+
+  /**
+   * The buffer caches in memory a region of a file [startingOffsetInFile..startingOffsetInFile+bufferPosition],
+   * with both ends inclusive.
+   */
+  private static class AppendMemoryBuffer {
+    private final byte[] buffer;
+    /**
+     * Similar to ByteBuffer.position: a cursor pointing to the last written byte of a buffer.
+     * I.e. (bufferPosition+1) is the next byte to be written.
+     */
+    private int bufferPosition;
+
+    private final int startingOffsetInFile;
+
+    private AppendMemoryBuffer(int startingOffsetInFile) {
+      this(new byte[APPEND_BUFFER_SIZE], 0, startingOffsetInFile);
+    }
+
+    private AppendMemoryBuffer(byte[] buffer,
+                               int bufferPosition,
+                               int startingOffsetInFile) {
+      this.buffer = buffer;
+      this.startingOffsetInFile = startingOffsetInFile;
+      this.bufferPosition = bufferPosition;
+    }
+
+
+    private synchronized byte[] getAppendBuffer() {
+      return buffer;
+    }
+
+    private synchronized int getBufferPosition() {
+      return bufferPosition;
+    }
+
+    public synchronized void append(byte[] buffer, int size) {
+      System.arraycopy(buffer, 0, this.buffer, bufferPosition, size);
+      bufferPosition += size;
+    }
+
+    public synchronized @NotNull AppendMemoryBuffer copy() {
+      return new AppendMemoryBuffer(ByteArrays.copy(buffer), bufferPosition, startingOffsetInFile);
+    }
+
+    public synchronized @NotNull AppendMemoryBuffer rewind(int offsetInFile) {
+      return new AppendMemoryBuffer(buffer, 0, offsetInFile);
+    }
+
+    @Override
+    public String toString() {
+      return "AppendMemoryBuffer[" + startingOffsetInFile + ".." + (startingOffsetInFile + bufferPosition) + "]";
+    }
+
+    private static int getBufferPosition(@Nullable AppendMemoryBuffer buffer) {
+      return buffer != null ? buffer.bufferPosition : 0;
+    }
+
+    private static boolean hasChanges(@Nullable AppendMemoryBuffer buffer) {
+      return buffer != null && buffer.getBufferPosition() > 0;
+    }
+  }
 }

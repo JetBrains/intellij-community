@@ -18,8 +18,6 @@ import java.util.regex.Pattern;
  * Certificate information:
  * %certificate_info%
  * (R)eject, accept (t)emporarily or accept (p)ermanently?
- *
- * @author Konstantin Kolosovsky.
  */
 public class TerminalSslCertificateModule extends BaseTerminalModule {
 

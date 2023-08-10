@@ -1,4 +1,4 @@
-// "Annotate parameter 'obj' as @NonNls" "false"
+// "Annotate parameter 'obj' as '@NonNls'" "false"
 import java.util.Optional;
 
 class Foo {

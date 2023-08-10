@@ -44,9 +44,7 @@ public class HgTarget implements PushTarget {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof HgTarget)) return false;
-
-    HgTarget hgTarget = (HgTarget)o;
+    if (!(o instanceof HgTarget hgTarget)) return false;
 
     if (!myBranchName.equals(hgTarget.myBranchName)) return false;
     if (!myTarget.equals(hgTarget.myTarget)) return false;

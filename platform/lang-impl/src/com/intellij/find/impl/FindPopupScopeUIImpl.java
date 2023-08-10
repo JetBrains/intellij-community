@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Functions;
 import com.intellij.util.ObjectUtils;
@@ -31,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 
@@ -86,9 +86,7 @@ class FindPopupScopeUIImpl implements FindPopupScopeUI {
     myDirectoryChooser = new FindPopupDirectoryChooser(myFindPopupPanel);
 
     myScopeCombo = new ScopeChooserCombo();
-    Object selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScope(),
-                                            myHelper.getModel().getCustomScopeName(),
-                                            FindSettings.getInstance().getDefaultScopeName());
+    Object selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScopeName(), FindSettings.getInstance().getDefaultScopeName());
     myScopeCombo.init(myProject, true, true, selection, new Condition<>() {
       //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
       final String moduleFilesScopeName;
@@ -209,9 +207,8 @@ class FindPopupScopeUIImpl implements FindPopupScopeUI {
   }
 
   private static JComponent shrink(JComponent toShrink) {
-    JPanel wrapper = new JPanel(new BorderLayout());
-    wrapper.add(toShrink, BorderLayout.WEST);
-    wrapper.add(Box.createHorizontalGlue(), BorderLayout.CENTER);
+    JPanel wrapper = new JPanel();
+    new RowBuilder(wrapper).add(toShrink);
     return wrapper;
   }
 

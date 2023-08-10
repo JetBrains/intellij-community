@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.projectView;
 
@@ -25,9 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   @Nullable
@@ -78,8 +76,7 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
-    if (element instanceof Form){
-      Form form = (Form) element;
+    if (element instanceof Form form){
       return form.containsFile(vFile);
     }
     return false;
@@ -124,8 +121,7 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   @Nullable @NonNls
   public String getElementUrl(Object element) {
-    if (element instanceof Form) {
-      Form form = (Form)element;
+    if (element instanceof Form form) {
       return form.getClassToBind().getQualifiedName();
     }
     return null;
@@ -133,8 +129,7 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public String getElementModuleName(final Object element) {
-    if (element instanceof Form) {
-      Form form = (Form)element;
+    if (element instanceof Form form) {
       final Module module = ModuleUtil.findModuleForPsiElement(form.getClassToBind());
       return module != null ? module.getName() : null;
     }

@@ -17,7 +17,13 @@
     <orderEntry type="module" module-name="intellij.vcs.git" />
     <orderEntry type="module-library">
       <library name="change-reminder-prediction-model" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.changeReminder.prediction:randomForestRegressor:0.0.11" />
+        <properties maven-id="org.jetbrains.intellij.deps.changeReminder.prediction:randomForestRegressor:0.0.11">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/changeReminder/prediction/randomForestRegressor/0.0.11/randomForestRegressor-0.0.11.jar">
+              <sha256sum>a6908f14a17757a20a0d629c5d2f0986826021c679bfb224963ef6a06097aa21</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/changeReminder/prediction/randomForestRegressor/0.0.11/randomForestRegressor-0.0.11.jar!/" />
         </CLASSES>

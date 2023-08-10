@@ -17,6 +17,7 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,6 +26,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -46,7 +48,7 @@ public class GitBinaryHandler extends GitHandler {
   @NotNull private final Semaphore mySteamSemaphore = new Semaphore(0); // The semaphore that waits for stream processing
   @NotNull private final AtomicReference<VcsException> myException = new AtomicReference<>();
 
-  public GitBinaryHandler(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
+  public GitBinaryHandler(@Nullable Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
     super(project, vcsRoot, command, Collections.emptyList());
   }
 
@@ -115,6 +117,7 @@ public class GitBinaryHandler extends GitHandler {
       }
       exitCode = 255;
     }
+    OUTPUT_LOG.debug(String.format("%s %% %s terminated (%s)", getCommand(), this.hashCode(), exitCode));
     setExitCode(exitCode);
     listeners().processTerminated(exitCode);
   }
@@ -139,7 +142,7 @@ public class GitBinaryHandler extends GitHandler {
           String message = new String(myStderr.toByteArray(), cs);
           if (message.isEmpty()) {
             if (myException.get() != null) {
-              message = IdeBundle.message("finished.with.exit.code.text.message", exitCode);
+              message = IdeCoreBundle.message("finished.with.exit.code.text.message", exitCode);
             }
             else {
               message = null;

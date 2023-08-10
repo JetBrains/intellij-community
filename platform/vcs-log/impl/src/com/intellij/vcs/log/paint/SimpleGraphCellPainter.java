@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.paint;
 
 import com.intellij.openapi.util.Pair;
@@ -38,7 +24,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   private static final double ARROW_ANGLE_COS2 = 0.7;
   private static final double ARROW_LENGTH = 0.3;
 
-  @NotNull private final ColorGenerator myColorGenerator;
+  private final @NotNull ColorGenerator myColorGenerator;
 
   public SimpleGraphCellPainter(@NotNull ColorGenerator colorGenerator) {
     myColorGenerator = colorGenerator;
@@ -61,24 +47,20 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     return new float[]{dashLength, spaceLength};
   }
 
-  @NotNull
-  private BasicStroke getOrdinaryStroke() {
+  private @NotNull BasicStroke getOrdinaryStroke() {
     return new BasicStroke(PaintParameters.getLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
   }
 
-  @NotNull
-  private BasicStroke getSelectedStroke() {
+  private @NotNull BasicStroke getSelectedStroke() {
     return new BasicStroke(PaintParameters.getSelectedLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
   }
 
-  @NotNull
-  private Stroke getDashedStroke(float[] dash) {
+  private @NotNull Stroke getDashedStroke(float[] dash) {
     return new BasicStroke(PaintParameters.getLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, dash,
                            dash[0] / 2);
   }
 
-  @NotNull
-  private Stroke getSelectedDashedStroke(float[] dash) {
+  private @NotNull Stroke getSelectedDashedStroke(float[] dash) {
     return new BasicStroke(PaintParameters.getSelectedLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, dash,
                            dash[0] / 2);
   }
@@ -168,14 +150,13 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
   }
 
-  @NotNull
-  private static Pair<Integer, Integer> rotate(double x,
-                                               double y,
-                                               double centerX,
-                                               double centerY,
-                                               double cos,
-                                               double sin,
-                                               double arrowLength) {
+  private static @NotNull Pair<Integer, Integer> rotate(double x,
+                                                        double y,
+                                                        double centerX,
+                                                        double centerY,
+                                                        double cos,
+                                                        double sin,
+                                                        double arrowLength) {
     double translateX = (x - centerX);
     double translateY = (y - centerY);
 
@@ -214,8 +195,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     g2.setStroke(select ? getSelectedDashedStroke(length) : getDashedStroke(length));
   }
 
-  @NotNull
-  private Color getColor(@NotNull PrintElement printElement) {
+  private @NotNull Color getColor(@NotNull PrintElement printElement) {
     return myColorGenerator.getColor(printElement.getColorId());
   }
 
@@ -285,9 +265,8 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
   }
 
-  @Nullable
   @Override
-  public PrintElement getElementUnderCursor(@NotNull Collection<? extends PrintElement> printElements, int x, int y) {
+  public @Nullable PrintElement getElementUnderCursor(@NotNull Collection<? extends PrintElement> printElements, int x, int y) {
     int nodeWidth = PaintParameters.getNodeWidth(getRowHeight());
     for (PrintElement printElement : printElements) {
       if (printElement instanceof NodePrintElement) {
@@ -299,8 +278,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
 
     for (PrintElement printElement : printElements) {
-      if (printElement instanceof EdgePrintElement) {
-        EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
+      if (printElement instanceof EdgePrintElement edgePrintElement) {
         float lineThickness = PaintParameters.getLineThickness(getRowHeight());
         if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
           if (PositionUtil.overDownEdge(edgePrintElement.getPositionInCurrentRow(), edgePrintElement.getPositionInOtherRow(),

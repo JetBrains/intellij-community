@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
@@ -32,7 +32,7 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
   private final GrLightAnnotationArgumentList myAnnotationArgList;
 
   private final String myQualifiedName;
-  private PsiAnnotationOwner myOwner;
+  private final PsiAnnotationOwner myOwner;
   private final PsiElement myContext;
   private final GrLightClassReferenceElement myRef;
 
@@ -168,10 +168,6 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
     myAnnotationArgList.addAttribute(factory.createAnnotationAttribute(text, this));
   }
 
-  public void setOwner(@NotNull PsiAnnotationOwner owner) {
-    this.myOwner = owner;
-  }
-
   private final class GrLightAnnotationArgumentList extends LightElement implements GrAnnotationArgumentList {
     private List<GrAnnotationNameValuePair> myAttributes = null;
     private GrAnnotationNameValuePair[] myCachedAttributes = GrAnnotationNameValuePair.EMPTY_ARRAY;
@@ -231,7 +227,7 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
         buffer.append(attribute.getText());
         buffer.append(',');
       }
-      if (!myAttributes.isEmpty()) buffer.deleteCharAt(buffer.length() - 1);
+      buffer.deleteCharAt(buffer.length() - 1);
       buffer.append(')');
       return buffer.toString();
     }

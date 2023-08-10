@@ -1,5 +1,8 @@
 <html>
 <body>
-This inspection detects reflective access to classes which aren't visible due to Java 9 module accessibility rules.
+Reports <code>Class.forName()</code> and <code>ClassLoader.loadClass()</code> calls
+which try to access classes that aren't visible in the current scope due to Java 9 module accessibility rules.
+<!-- tooltip end -->
+<p>This inspection only reports if the language level of the project or module is 9 or higher.</p>
 </body>
 </html>

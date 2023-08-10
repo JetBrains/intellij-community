@@ -130,7 +130,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
       if (dialog.showAndGet()) {
         List<ColorSchemeItem> selectedItems = dialog.getSelectedItems();
         for (ColorSchemeItem item : selectedItems) {
-          doImport(importer, item.getFile());
+          doImport(importer, item.file());
         }
       }
     }
@@ -251,26 +251,6 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
     }
   }
 
-  private static class ColorSchemeItem {
-    private final String myName;
-    private final VirtualFile myFile;
-
-    ColorSchemeItem(String name, VirtualFile file) {
-      myName = name;
-      myFile = file;
-    }
-
-    public String getName() {
-      return myName;
-    }
-
-    public VirtualFile getFile() {
-      return myFile;
-    }
-
-    @Override
-    public String toString() {
-      return myName;
-    }
+  private record ColorSchemeItem(String name, VirtualFile file) {
   }
 }

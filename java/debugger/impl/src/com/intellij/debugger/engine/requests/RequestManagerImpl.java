@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
@@ -12,23 +14,23 @@ import com.intellij.debugger.requests.RequestManager;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
-/**
- * @author lex
- */
 public class RequestManagerImpl extends DebugProcessAdapterImpl implements RequestManager {
   private static final Logger LOG = Logger.getInstance(RequestManagerImpl.class);
 
@@ -40,6 +42,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   private final Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests = new HashMap<>();
   private EventRequestManager myEventRequestManager;
+
+  /**
+   * It specifies the thread performing suspend-all stepping.
+   * All events in other threads are ignored.
+   */
   private @Nullable ThreadReference myFilterThread;
 
   public RequestManagerImpl(DebugProcessImpl debugProcess) {
@@ -72,10 +79,10 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   @Nullable
   public static Requestor findRequestor(EventRequest request) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return request != null? (Requestor)request.getProperty(REQUESTOR) : null;
+    return request != null ? (Requestor)request.getProperty(REQUESTOR) : null;
   }
 
-  private static void addClassFilter(EventRequest request, String pattern){
+  private static void addClassFilter(EventRequest request, String pattern) {
     if (request instanceof ExceptionRequest) {
       ((ExceptionRequest)request).addClassFilter(pattern);
     }
@@ -90,7 +97,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
-  private static void addClassExclusionFilter(EventRequest request, String pattern){
+  private static void addClassExclusionFilter(EventRequest request, String pattern) {
     if (request instanceof ExceptionRequest) {
       ((ExceptionRequest)request).addClassExclusionFilter(pattern);
     }
@@ -106,7 +113,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   private void addLocatableRequest(FilteredRequestor requestor, EventRequest request) {
-    if(DebuggerSettings.SUSPEND_ALL.equals(requestor.getSuspendPolicy())) {
+    if (DebuggerSettings.SUSPEND_ALL.equals(requestor.getSuspendPolicy())) {
       request.setSuspendPolicy(EventRequest.SUSPEND_ALL);
     }
     else {
@@ -120,7 +127,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       request.addCountFilter(requestor.getCountFilter());
     }
 
-    if (requestor.isClassFiltersEnabled() && !(request instanceof BreakpointRequest) /*no built-in class filters support for breakpoint requests*/ ) {
+    if (requestor.isClassFiltersEnabled() && !(request instanceof BreakpointRequest) /*no built-in class filters support for breakpoint requests*/) {
       addClassFilters(request, requestor.getClassFilters(), requestor.getClassExclusionFilters());
     }
 
@@ -235,11 +242,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   public void deleteRequest(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myRequestWarnings.remove(requestor);
-    if(!myDebugProcess.isAttached()) {
+    if (!myDebugProcess.isAttached()) {
       return;
     }
     final Set<EventRequest> requests = myRequestorToBelongedRequests.remove(requestor);
-    if(requests == null) {
+    if (requests == null) {
       return;
     }
     for (final EventRequest request : requests) {
@@ -257,11 +264,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
             }
           }
         }
-        try {
-          myEventRequestManager.deleteEventRequest(request);
-        } catch (ArrayIndexOutOfBoundsException e) {
-          LOG.error("Exception in EventRequestManager.deleteEventRequest", e, ThreadDumper.dumpThreadsToString());
-        }
+        DebuggerUtilsAsync.deleteEventRequest(myEventRequestManager, request);
       }
       catch (InvalidRequestStateException ignored) {
         // request is already deleted
@@ -278,24 +281,45 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
+  private static Function<EventRequest, CompletableFuture<Void>> getEventRequestEnabler(boolean sync) {
+    if (sync) {
+      return r -> {
+        r.enable();
+        return CompletableFuture.completedFuture(null);
+      };
+    }
+    else {
+      return request -> DebuggerUtilsAsync.setEnabled(request, true);
+    }
+  }
+
   @Override
-  public void callbackOnPrepareClasses(final ClassPrepareRequestor requestor, final SourcePosition classPosition) {
+  public void callbackOnPrepareClasses(ClassPrepareRequestor requestor, SourcePosition classPosition) {
+    callbackOnPrepareClasses(requestor, classPosition, getEventRequestEnabler(true));
+  }
+
+  public CompletableFuture<Void> callbackOnPrepareClassesAsync(ClassPrepareRequestor requestor, SourcePosition classPosition) {
+    return callbackOnPrepareClasses(requestor, classPosition, getEventRequestEnabler(false));
+  }
+
+  private CompletableFuture<Void> callbackOnPrepareClasses(ClassPrepareRequestor requestor,
+                                                           SourcePosition classPosition,
+                                                           Function<EventRequest, CompletableFuture<Void>> enabler) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    if (checkReadOnly(requestor)) return;
+    if (checkReadOnly(requestor)) return CompletableFuture.completedFuture(null);
 
     List<ClassPrepareRequest> prepareRequests = myDebugProcess.getPositionManager().createPrepareRequests(requestor, classPosition);
-    if(prepareRequests.isEmpty()) {
+    if (prepareRequests.isEmpty()) {
       setInvalid(requestor, JavaDebuggerBundle.message("status.invalid.breakpoint.out.of.class"));
-      return;
+      return CompletableFuture.completedFuture(null);
     }
 
-    for (ClassPrepareRequest prepareRequest : prepareRequests) {
-      if (prepareRequest != null) {
-        registerRequest(requestor, prepareRequest);
-        prepareRequest.enable();
-      }
-    }
+    return CompletableFuture.allOf(StreamEx.of(prepareRequests)
+                                     .nonNull()
+                                     .peek(r -> registerRequest(requestor, r))
+                                     .map(enabler)
+                                     .toArray(CompletableFuture[]::new));
   }
 
   @Override
@@ -317,11 +341,19 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   @Override
   public void enableRequest(EventRequest request) {
+    enableRequest(request, getEventRequestEnabler(true));
+  }
+
+  public CompletableFuture<Void> enableRequestAsync(EventRequest request) {
+    return enableRequest(request, getEventRequestEnabler(false));
+  }
+
+  private CompletableFuture<Void> enableRequest(EventRequest request, Function<EventRequest, CompletableFuture<Void>> enabler) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     LOG.assertTrue(findRequestor(request) != null);
     try {
       final ThreadReference filterThread = myFilterThread;
-      if (filterThread != null) {
+      if (filterThread != null && DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
         if (request instanceof BreakpointRequest) {
           ((BreakpointRequest)request).addThreadFilter(filterThread);
         }
@@ -332,18 +364,20 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
           ((MethodExitRequest)request).addThreadFilter(filterThread);
         }
       }
-      request.enable();
-    } catch (InternalException e) {
+      return enabler.apply(request);
+    }
+    catch (InternalException e) {
       switch (e.errorCode()) {
-        case JvmtiError.DUPLICATE : LOG.info(e); break;
+        case JvmtiError.DUPLICATE -> LOG.info(e);
+        case JvmtiError.NOT_FOUND -> {
+          //event request not found
+          //there could be no requests after hotswap
+        }
 
-        case JvmtiError.NOT_FOUND : break;
-        //event request not found
-        //there could be no requests after hotswap
-
-        default: LOG.error(e);
+        default -> LOG.error(e);
       }
     }
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override
@@ -364,7 +398,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   public boolean isVerified(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     //ClassPrepareRequest is added in any case, so do not count it
-    return findRequests(requestor).stream().anyMatch(r -> !(r instanceof ClassPrepareRequest));
+    return ContainerUtil.exists(findRequests(requestor), r -> !(r instanceof ClassPrepareRequest));
   }
 
   @Override

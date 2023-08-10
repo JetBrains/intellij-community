@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.TableUtil;
+import com.intellij.util.ui.JBUI;
 import com.jetbrains.python.PyBundle;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +16,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -154,6 +153,7 @@ public final class CreateTestDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
+    myMainPanel.setBorder(JBUI.Borders.empty());
     return myMainPanel;
   }
 

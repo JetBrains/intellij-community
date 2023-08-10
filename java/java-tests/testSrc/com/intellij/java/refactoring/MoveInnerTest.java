@@ -29,9 +29,6 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-/**
- *  @author dsl
- */
 public class MoveInnerTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {

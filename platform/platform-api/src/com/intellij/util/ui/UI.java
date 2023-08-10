@@ -64,6 +64,7 @@ public final class UI {
      * @return a newly created instance of {@link ComponentPanelBuilder} for configuring the panel before
      * creation.
      */
+    @Deprecated
     public static ComponentPanelBuilder panel(JComponent component) {
       return new ComponentPanelBuilder(component);
     }
@@ -84,6 +85,7 @@ public final class UI {
      *
      * @return a newly created {@link PanelGridBuilder}
      */
+    @Deprecated
     public static PanelGridBuilder grid() {
       return new PanelGridBuilder();
     }

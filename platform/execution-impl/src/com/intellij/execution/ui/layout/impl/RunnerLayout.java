@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jdom.Element;
@@ -20,17 +19,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class RunnerLayout  {
+public final class RunnerLayout  {
   public static final Key<Integer> DEFAULT_INDEX = Key.create("RunnerLayoutDefaultIndex");
   public static final Key<Integer> DROP_INDEX = Key.create("RunnerLayoutDropIndex");
 
-  protected Map<String, ViewImpl> myViews = new LinkedHashMap<>();
+  private final Map<String, ViewImpl> myViews = new LinkedHashMap<>();
   private final Map<String, ViewImpl.Default> myDefaultViews = new HashMap<>();
 
-  protected Set<TabImpl> myTabs = new TreeSet<>(Comparator.comparingInt(TabImpl::getIndex));
+  private final Set<TabImpl> myTabs = new TreeSet<>(Comparator.comparingInt(TabImpl::getIndex));
   private final Int2ObjectMap<TabImpl.Default> myDefaultTabs = new Int2ObjectOpenHashMap<>();
 
-  protected General myGeneral = new General();
+  private final General myGeneral = new General();
   private final Map<String, Pair<String, LayoutAttractionPolicy>> myDefaultFocus = new HashMap<>();
   private Set<String> myLightWeightIds = null;
 
@@ -38,6 +37,28 @@ public class RunnerLayout  {
   public String getDefaultDisplayName(final int defaultIndex) {
     final TabImpl.Default tab = myDefaultTabs.get(defaultIndex);
     return tab != null ? tab.myDisplayName : null;
+  }
+
+  @Nullable
+  public Icon getDefaultIcon(int defaultIndex) {
+    TabImpl.Default tab = myDefaultTabs.get(defaultIndex);
+    return tab != null ? tab.myIcon : null;
+  }
+
+  public int getDefaultTabIndex(String contentId) {
+    ViewImpl.Default viewDefault = myDefaultViews.get(contentId);
+    return viewDefault != null ? viewDefault.getTabID() : -1;
+  }
+
+  @Nullable
+  public PlaceInGrid getDefaultPlaceInGrid(String contentId) {
+    ViewImpl.Default viewDefault = myDefaultViews.get(contentId);
+    return viewDefault != null ? viewDefault.getPlaceInGrid() : null;
+  }
+
+  public boolean getDefaultIsMinimized(String contentId) {
+    ViewImpl.Default viewDefault = myDefaultViews.get(contentId);
+    return viewDefault != null && viewDefault.isMinimizedInGrid();
   }
 
   @NotNull
@@ -89,7 +110,7 @@ public class RunnerLayout  {
   }
 
   @Nullable
-  protected TabImpl findTab(int index) {
+  private TabImpl findTab(int index) {
     for (TabImpl each : myTabs) {
       if (index == each.getIndex()) return each;
     }
@@ -164,6 +185,10 @@ public class RunnerLayout  {
 
   public void clearStateFor(@NotNull Content content) {
     String id = getOrCreateContentId(content);
+    clearStateForId(id);
+  }
+
+  public void clearStateForId(@NotNull String id) {
     myDefaultViews.remove(id);
     final ViewImpl view = myViews.remove(id);
     if (view != null) {
@@ -192,6 +217,11 @@ public class RunnerLayout  {
       myViews.put(id, view);
     }
     return view;
+  }
+
+  @Nullable
+  public ViewImpl getViewById(@NotNull String id) {
+    return myViews.get(id);
   }
 
   @NotNull
@@ -260,8 +290,17 @@ public class RunnerLayout  {
     myLightWeightIds.add(getOrCreateContentId(content));
   }
 
+  public boolean isTabLabelsHidden() {
+    return myGeneral.isTabLabelsHidden;
+  }
+
+  public void setTabLabelsHidden(boolean tabLabelsHidden) {
+    myGeneral.isTabLabelsHidden = tabLabelsHidden;
+  }
+
   public static class General {
     public volatile boolean horizontalToolbar = false;
     public volatile Map<String, String> focusOnCondition = new HashMap<>();
+    public volatile boolean isTabLabelsHidden = true;
   }
 }

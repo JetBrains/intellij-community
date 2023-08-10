@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.plugins.api;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,9 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenModelPropertiesPatcher {
 
   /*
@@ -43,7 +40,9 @@ public final class MavenModelPropertiesPatcher {
   }
 
   private static void patch(Properties modelProperties, @Nullable List<MavenPluginDescriptor> descriptors, @Nullable String goal, Element cfgElement, MavenPlugin plugin) {
-    if (descriptors == null) return;
+    if (descriptors == null) {
+      return;
+    }
 
     for (MavenPluginDescriptor descriptor : descriptors) {
       if (descriptor.properties != null) {
@@ -55,8 +54,8 @@ public final class MavenModelPropertiesPatcher {
       }
 
       if (descriptor.propertyGenerator != null) {
-        MavenPropertiesGenerator generator = SingletonInstancesCache
-          .getInstance(descriptor.propertyGenerator, descriptor.getLoaderForClass());
+        MavenPropertiesGenerator generator = SingletonInstancesCache.getInstance(descriptor.propertyGenerator,
+                                                                                 descriptor.getPluginDescriptor().getClassLoader());
         generator.generate(modelProperties, goal, plugin, cfgElement);
       }
     }

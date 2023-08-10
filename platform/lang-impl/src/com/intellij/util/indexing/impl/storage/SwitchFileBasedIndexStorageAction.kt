@@ -1,40 +1,46 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage
 
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.popup.list.ComboBoxPopup
-import com.intellij.util.indexing.FileBasedIndexSwitcher
+import com.intellij.util.indexing.FileBasedIndexTumbler
 import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
 import javax.swing.ListCellRenderer
 import javax.swing.ListModel
 
-class SwitchFileBasedIndexStorageAction : AnAction() {
+class SwitchFileBasedIndexStorageAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val allStorages = customIndexStorageDescriptors() + defaultIndexStorageDescriptor()
-
+    val activeStorage = allStorages.find { it.bean == FileBasedIndexLayoutSettings.getUsedLayout()}
     val popupContext = IndexStorageDescriptorPopupContext(project, allStorages)
-    ComboBoxPopup(popupContext, null, Consumer {
+    ComboBoxPopup(popupContext, activeStorage, Consumer {
       restartIndexesWithStorage(it)
     }).showInBestPositionFor(e.dataContext)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   private fun restartIndexesWithStorage(indexStorage: IndexStorageDescriptor) {
     val usedLayout = FileBasedIndexLayoutSettings.getUsedLayout()
     if (usedLayout != indexStorage.bean) {
-      val switcher = FileBasedIndexSwitcher()
+      val switcher = FileBasedIndexTumbler("Index Storage Switching")
       switcher.turnOff()
       try {
         FileBasedIndexLayoutSettings.setUsedLayout(indexStorage.bean)
       }
       finally {
-        switcher.turnOn()
+        switcher.turnOn(null)
       }
     }
   }
@@ -53,7 +59,7 @@ private fun defaultIndexStorageDescriptor(): IndexStorageDescriptor {
 }
 
 private fun customIndexStorageDescriptors(): List<IndexStorageDescriptor> =
-  FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME.extensionList.map {
+  DefaultIndexStorageLayout.availableLayouts.map {
     IndexStorageDescriptor(it.localizedPresentableName, it.id, it.version, it)
   }
 

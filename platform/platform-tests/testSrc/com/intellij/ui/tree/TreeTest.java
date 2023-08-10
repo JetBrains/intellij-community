@@ -3,6 +3,7 @@ package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,7 @@ public class TreeTest implements Disposable {
       throw new RuntimeException(e);
     }
     finally {
-      Disposer.dispose(this);
+      EdtTestUtil.runInEdtAndWait(() -> Disposer.dispose(this));
     }
   }
 
@@ -58,8 +59,7 @@ public class TreeTest implements Disposable {
 
   public void invokeAfterProcessing(@NotNull Runnable runnable) {
     TreeModel model = tree.getModel();
-    if (model instanceof AsyncTreeModel) {
-      AsyncTreeModel async = (AsyncTreeModel)model;
+    if (model instanceof AsyncTreeModel async) {
       if (async.isProcessing()) {
         invokeLater(() -> invokeAfterProcessing(runnable));
         return; // do nothing if delayed

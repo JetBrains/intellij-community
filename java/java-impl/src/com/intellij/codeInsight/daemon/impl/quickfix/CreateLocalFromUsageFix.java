@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.FileModifier;
@@ -22,7 +23,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
@@ -96,13 +97,11 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       anchor = getAnchor(expressions);
       if (anchor == null) return;
     }
-    if (anchor instanceof PsiExpressionStatement &&
-        ((PsiExpressionStatement)anchor).getExpression() instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)((PsiExpressionStatement)anchor).getExpression();
-      if (assignment.getLExpression().textMatches(myReferenceExpression)) {
-        initializer = assignment.getRExpression();
-        isInline = true;
-      }
+    if (anchor instanceof PsiExpressionStatement expressionStatement &&
+        expressionStatement.getExpression() instanceof PsiAssignmentExpression assignment &&
+        assignment.getLExpression().textMatches(myReferenceExpression)) {
+      initializer = assignment.getRExpression();
+      isInline = true;
     }
 
     PsiDeclarationStatement decl = factory.createVariableDeclarationStatement(varName, type, initializer);
@@ -130,11 +129,11 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     final PsiTypeElement typeElement = var.getTypeElement();
     LOG.assertTrue(typeElement != null);
     builder.replaceElement(typeElement,
-                           AbstractJavaInplaceIntroducer.createExpression(expression, typeElement.getText()));
+                           IntroduceVariableUtil.createExpression(expression, typeElement.getText()));
     builder.setEndVariableAfter(var.getNameIdentifier());
     Template template = builder.buildTemplate();
 
-    final Editor newEditor = positionCursor(project, file, var);
+    final Editor newEditor = CodeInsightUtil.positionCursor(project, file, var);
     if (newEditor == null) return;
     TextRange range = var.getTextRange();
     newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());

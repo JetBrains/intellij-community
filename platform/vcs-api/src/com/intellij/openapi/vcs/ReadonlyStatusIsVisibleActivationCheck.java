@@ -9,9 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author irengrig
- */
 public final class ReadonlyStatusIsVisibleActivationCheck {
   private static final @NonNls String ROOT_USER = "root";
 

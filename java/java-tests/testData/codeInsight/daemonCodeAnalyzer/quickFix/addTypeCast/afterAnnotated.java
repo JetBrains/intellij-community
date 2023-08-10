@@ -1,4 +1,4 @@
-// "Cast parameter to 'java.lang.@Anno String'" "true"
+// "Cast argument to 'String'" "true-preview"
 import java.lang.annotation.Target;
 import java.lang.annotation.ElementType;
 

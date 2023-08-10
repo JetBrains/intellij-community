@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.Processor;
@@ -11,7 +11,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.file.Path;
 
-class ValueContainerMap<Key, Value> {
+final class ValueContainerMap<Key, Value> {
   private final @NotNull PersistentMapBase<Key, UpdatableValueContainer<Value>> myPersistentMap;
   private final @NotNull KeyDescriptor<Key> myKeyDescriptor;
   private final @NotNull DataExternalizer<Value> myValueExternalizer;
@@ -50,7 +50,7 @@ class ValueContainerMap<Key, Value> {
     if (!valueContainer.needsCompacting() && !myKeyIsUniqueForIndexedFile) {
       myPersistentMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
-        public void append(@NotNull final DataOutput out) throws IOException {
+        public void append(final @NotNull DataOutput out) throws IOException {
           valueContainer.saveTo(out, myValueExternalizer);
         }
       });
@@ -59,6 +59,10 @@ class ValueContainerMap<Key, Value> {
       // rewrite the value container for defragmentation
       myPersistentMap.put(key, valueContainer);
     }
+  }
+
+  void remove(Key key) throws IOException {
+    myPersistentMap.remove(key);
   }
 
   boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException {
@@ -99,6 +103,10 @@ class ValueContainerMap<Key, Value> {
     myPersistentMap.close();
   }
 
+  void closeAndDelete() throws IOException {
+    myPersistentMap.closeAndDelete();
+  }
+
   void markDirty() throws IOException {
     myPersistentMap.markDirty();
   }
@@ -108,7 +116,7 @@ class ValueContainerMap<Key, Value> {
   }
 
   boolean isDirty() {
-    return myPersistentMap.isClosed();
+    return myPersistentMap.isDirty();
   }
 
   @TestOnly

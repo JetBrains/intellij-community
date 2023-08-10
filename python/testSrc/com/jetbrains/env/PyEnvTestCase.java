@@ -2,7 +2,6 @@
 package com.jetbrains.env;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -10,7 +9,6 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.TestEnv;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -78,8 +76,9 @@ public abstract class PyEnvTestCase {
   /**
    * Escape test output to prevent python test be processed as test result
    */
+  @NotNull
   public static String escapeTestMessage(@NotNull final String message) {
-    return message.replace("##", "from test: \\[sharp][sharp]");
+    return message.replace("##teamcity", "from test: \\[sharp][sharp]");
   }
 
   /**
@@ -126,21 +125,7 @@ public abstract class PyEnvTestCase {
     }
   }
 
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
-    if (runInWriteAction()) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ApplicationManager.getApplication().runWriteAction(runnable));
-    }
-    else {
-      runnable.run();
-    }
-  }
-
-
   protected boolean runInDispatchThread() {
-    return false;
-  }
-
-  protected boolean runInWriteAction() {
     return false;
   }
 
@@ -204,7 +189,11 @@ public abstract class PyEnvTestCase {
     final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
     EnvTestTagsRequired methodAnnotation = null;
     try {
-      final Method method = getClass().getMethod(myTestName.getMethodName());
+      String methodName = myTestName.getMethodName();
+      if (methodName.contains("[")) {
+        methodName = methodName.substring(0, methodName.indexOf('['));
+      }
+      final Method method = getClass().getMethod(methodName);
       methodAnnotation = method.getAnnotation(EnvTestTagsRequired.class);
     }
     catch (final NoSuchMethodException e) {

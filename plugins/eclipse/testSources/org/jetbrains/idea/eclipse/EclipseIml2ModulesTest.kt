@@ -1,26 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse
 
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.testFramework.rules.TempDirectory
-import org.junit.Assume.assumeTrue
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TestName
-import kotlin.io.path.ExperimentalPathApi
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.TempDirectoryExtension
+import com.intellij.testFramework.rules.TestNameExtension
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.io.path.div
 
-@ExperimentalPathApi
+@TestApplication
 class EclipseIml2ModulesTest {
   @JvmField
-  @Rule
-  val tempDirectory = TempDirectory()
+  @RegisterExtension
+  val tempDirectory = TempDirectoryExtension()
 
   @JvmField
-  @Rule
-  val testName = TestName()
+  @RegisterExtension
+  val testName = TestNameExtension()
 
   @Test
   fun testAllProps() {
@@ -33,7 +29,6 @@ class EclipseIml2ModulesTest {
   }
 
   private fun doTest(workspacePath: String, projectName: String) {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val testDataRoot = eclipseTestDataRoot
     val testRoot = testDataRoot / "iml" / testName.methodName.removePrefix("test").decapitalize()
     val commonRoot = testDataRoot / "common" / "twoModulesWithClasspathStorage"
@@ -44,11 +39,5 @@ class EclipseIml2ModulesTest {
     )
     checkConvertToStandardStorage(listOf(testRoot, commonRoot), tempDirectory, testRoot / "expected" / "expected.iml",
                                   false, imlFilePaths)
-  }
-
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
   }
 }

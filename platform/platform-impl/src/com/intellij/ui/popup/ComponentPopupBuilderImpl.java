@@ -65,6 +65,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myPlaceWithinScreen = true;
   private Processor<? super JBPopup> myPinCallback;
   private Dimension myMinSize;
+  private boolean myStretchToOwnerWidth = false;
+  private boolean myStretchToOwnerHeight = false;
   private MaskProvider myMaskProvider;
   private float myAlpha;
   private List<Object> myUserData;
@@ -74,6 +76,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private Component[] myFocusOwners = new Component[0];
 
   private @NlsContexts.PopupAdvertisement String myAd;
+  private JComponent myAdvertiser;
   private boolean myShowShadow = true;
   private boolean myShowBorder = true;
   private boolean myFocusable = true;
@@ -249,8 +252,14 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
       myShowShadow, myShowBorder, myBorderColor, myCancelOnWindowDeactivation, myKeyEventHandler
     );
 
+    popup.setStretchToOwnerWidth(myStretchToOwnerWidth);
+    popup.setStretchToOwnerHeight(myStretchToOwnerHeight);
+
     popup.setNormalWindowLevel(myNormalWindowLevel);
     popup.setOkHandler(myOkHandler);
+    if (myAdvertiser != null) {
+      popup.setFooterComponent(myAdvertiser);
+    }
 
     if (myUserData != null) {
       popup.setUserData(myUserData);
@@ -301,6 +310,18 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public ComponentPopupBuilder setMinSize(final Dimension minSize) {
     myMinSize = minSize;
+    return this;
+  }
+
+  @Override
+  public @NotNull ComponentPopupBuilder setStretchToOwnerWidth(boolean stretchToOwnerWidth) {
+    myStretchToOwnerWidth = stretchToOwnerWidth;
+    return this;
+  }
+
+  @Override
+  public @NotNull ComponentPopupBuilder setStretchToOwnerHeight(boolean stretchToOwnerHeight) {
+    myStretchToOwnerHeight = stretchToOwnerHeight;
     return this;
   }
 
@@ -360,6 +381,13 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   public ComponentPopupBuilder setAdText(@Nullable String text, int textAlignment) {
     myAd = text;
     myAdAlignment = textAlignment;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public ComponentPopupBuilder setAdvertiser(@Nullable JComponent advertiser) {
+    myAdvertiser = advertiser;
     return this;
   }
 

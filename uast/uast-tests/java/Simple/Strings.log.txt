@@ -24,6 +24,12 @@ UFile (package = )
                             USimpleNameReferenceExpression (identifier = s4)
                             ULiteralExpression (value = 2016)
                 UDeclarationsExpression
+                    ULocalVariable (name = s6)
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "Hello again ")
+                            USimpleNameReferenceExpression (identifier = s1)
+                            ULiteralExpression (value = " world")
+                UDeclarationsExpression
                     ULocalVariable (name = empty)
                         ULiteralExpression (value = "")
                 UReturnExpression

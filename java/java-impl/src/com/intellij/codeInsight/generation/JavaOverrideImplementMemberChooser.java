@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -18,6 +19,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,6 +42,7 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodMember> {
   @NonNls public static final String PROP_COMBINED_OVERRIDE_IMPLEMENT = "OverrideImplement.combined";
   @NonNls public static final String PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT = "OverrideImplement.overriding.sorted";
+  @NonNls public static final String PROP_GENERATE_JAVADOC_OVERRIDE_IMPLEMENT = "OverrideImplement.generate.javadoc";
 
   private ToggleAction myMergeAction;
   private final PsiMethodMember[] myAllElements;
@@ -50,6 +53,7 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
   private final PsiFile myFile;
   private boolean myMerge;
   private boolean mySortedByOverriding;
+  private JBCheckBox myGenerateJavadocCheckBox;
 
   @Nullable
   public static JavaOverrideImplementMemberChooser create(final PsiElement aClass,
@@ -132,6 +136,28 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     init();
   }
 
+  @Override
+  public void resetElements(PsiMethodMember[] elements) {
+    super.resetElements(elements);
+    if (myOptionControls.length > 0 && myFile.getLanguage().is(JavaLanguage.INSTANCE)) {
+      myGenerateJavadocCheckBox = new JBCheckBox(JavaBundle.message("methods.to.override.generate.javadoc"));
+      myGenerateJavadocCheckBox.setSelected(isGenerateJavadoc());
+      myOptionControls = ArrayUtil.insert(super.getOptionControls(), 1, myGenerateJavadocCheckBox);
+    }
+  }
+
+  @Override
+  protected void customizeOptionsPanel() {
+    super.customizeOptionsPanel();
+    if (myGenerateJavadocCheckBox != null) {
+      myGenerateJavadocCheckBox.setSelected(isGenerateJavadoc());
+    }
+  }
+
+  public boolean isGenerateJavadoc(){
+    return PropertiesComponent.getInstance(myProject).getBoolean(PROP_GENERATE_JAVADOC_OVERRIDE_IMPLEMENT, false);
+  }
+
   private static PsiMethodMember[] getInitialElements(PsiMethodMember[] allElements,
                                                       PsiMethodMember[] onlyPrimaryElements,
                                                       NotNullLazyValue<PsiMethodWithOverridingPercentMember[]> lazyElementsWithPercent,
@@ -156,6 +182,9 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     super.doOKAction();
     PropertiesComponent.getInstance(myProject).setValue(PROP_COMBINED_OVERRIDE_IMPLEMENT, myMerge, true);
     PropertiesComponent.getInstance(myProject).setValue(PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT, mySortedByOverriding);
+    if (myGenerateJavadocCheckBox != null) {
+      PropertiesComponent.getInstance(myProject).setValue(PROP_GENERATE_JAVADOC_OVERRIDE_IMPLEMENT, myGenerateJavadocCheckBox.isSelected());
+    }
   }
 
   @Override
@@ -173,7 +202,7 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     group.add(myMergeAction);
   }
 
-  private static @NlsContexts.DialogTitle String getChooserTitle(final boolean toImplement, final boolean merge) {
+  static @NlsContexts.DialogTitle String getChooserTitle(final boolean toImplement, final boolean merge) {
     return toImplement
            ? JavaBundle.message("methods.to.implement.chooser.title")
            : merge
@@ -200,6 +229,11 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     @Override
     public boolean isSelected(@NotNull final AnActionEvent e) {
       return mySortedByOverriding;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -234,6 +268,11 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myMerge = state;
       if (state && mySortedByOverriding) {
@@ -245,4 +284,10 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     }
   }
 
+  public OverrideOrImplementOptions getOptions(){
+    return new OverrideOrImplementOptions()
+      .copyJavadoc(isCopyJavadoc())
+      .generateJavadoc(isGenerateJavadoc())
+      .insertOverrideWherePossible(isInsertOverrideAnnotation());
+  }
 }

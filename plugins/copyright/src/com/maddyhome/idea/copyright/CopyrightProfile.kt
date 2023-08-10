@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright
 
 import com.intellij.configurationStore.SerializableScheme
@@ -11,9 +11,10 @@ import com.intellij.util.xmlb.annotations.Transient
 import com.maddyhome.idea.copyright.pattern.EntityUtil
 import org.jdom.Element
 
+@Suppress("SpellCheckingInspection")
 @JvmField
 val DEFAULT_COPYRIGHT_NOTICE: String = EntityUtil.encode(
-  "Copyright (c) \$today.year. Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n" +
+  "Copyright (c) \$originalComment.match(\"Copyright \\(c\\) (\\d+)\", 1, \"-\", \"\$today.year\")\$today.year. Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n" +
   "Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan. \n" +
   "Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna. \n" +
   "Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus. \n" +
@@ -21,7 +22,6 @@ val DEFAULT_COPYRIGHT_NOTICE: String = EntityUtil.encode(
 class CopyrightProfile @JvmOverloads constructor(profileName: String? = null) : ExternalizableScheme, BaseState(), SerializableScheme {
   // ugly name to preserve compatibility
   // must be not private because otherwise binding is not created for private accessor
-  @Suppress("MemberVisibilityCanBePrivate")
   @get:OptionTag("myName")
   var profileName: String? by string()
 

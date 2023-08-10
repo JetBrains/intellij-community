@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -19,9 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public final class DuplicateComponentsAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance(DuplicateComponentsAction.class);
 
@@ -70,9 +68,8 @@ public final class DuplicateComponentsAction extends AbstractGuiEditorAction {
 
   private static void fillDuplicateMap(Map<RadComponent, RadComponent> duplicates, final RadComponent c, final RadComponent copy) {
     duplicates.put(c, copy);
-    if (c instanceof RadContainer) {
+    if (c instanceof RadContainer container) {
       LOG.assertTrue(copy instanceof RadContainer);
-      final RadContainer container = (RadContainer)c;
       final RadContainer containerCopy = (RadContainer)copy;
       for(int i=0; i<container.getComponentCount(); i++) {
         fillDuplicateMap(duplicates, container.getComponent(i), containerCopy.getComponent(i));
@@ -89,8 +86,7 @@ public final class DuplicateComponentsAction extends AbstractGuiEditorAction {
         copy.setDefaultBinding(true);
       }
       for(IProperty prop: copy.getModifiedProperties()) {
-        if (prop instanceof IntroComponentProperty) {
-          final IntroComponentProperty componentProperty = (IntroComponentProperty)prop;
+        if (prop instanceof IntroComponentProperty componentProperty) {
           String copyValue = componentProperty.getValue(copy);
           for(RadComponent original: duplicates.keySet()) {
             if (original.getId().equals(copyValue)) {

@@ -2,14 +2,18 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nullable;
 
 public interface ConfigurableGroup extends Configurable.Composite {
   @NlsContexts.ConfigurableName
   String getDisplayName();
 
+  @NlsContexts.DetailedDescription
+  default @Nullable String getDescription() { return null; }
+
   /**
    * @deprecated unused
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default String getShortName() { return null; }
 }

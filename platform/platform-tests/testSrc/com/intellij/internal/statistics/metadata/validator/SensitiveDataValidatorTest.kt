@@ -14,7 +14,6 @@ import junit.framework.TestCase
 import org.junit.Assert
 import org.junit.Test
 import java.util.*
-import kotlin.collections.HashMap
 
 @Suppress("SameParameterValue")
 class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
@@ -28,7 +27,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     assertTrue(validator.getEventDataRules(eventLogGroup).isEmpty())
 
     assertUndefinedRule(validator, eventLogGroup, "<any-string-accepted>")
-    assertEventDataNotAccepted(validator, eventLogGroup, ValidationResultType.UNDEFINED_RULE, "<any-key-accepted>", "<any-string-accepted>")
+    assertEventDataNotAccepted(validator, eventLogGroup, ValidationResultType.UNDEFINED_RULE, ValidationResultType.UNDEFINED_RULE.description, "<any-string-accepted>")
   }
 
   @Test
@@ -231,7 +230,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     assertEventDataAccepted(validator, elg, "ed_2", "REF_BB")
     assertEventDataNotAccepted(validator, elg, ValidationResultType.REJECTED, "ed_1", "CC")
     assertEventDataNotAccepted(validator, elg, ValidationResultType.REJECTED, "ed_2", "REF_XX")
-    assertEventDataNotAccepted(validator, elg, ValidationResultType.UNDEFINED_RULE, "undefined", "<unknown>")
+    assertEventDataNotAccepted(validator, elg, ValidationResultType.UNDEFINED_RULE, ValidationResultType.UNDEFINED_RULE.description, "<unknown>")
   }
 
   @Test
@@ -243,7 +242,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     assertEventDataAccepted(validator, elg, "ed 2", "REF_BB")
     assertEventDataAccepted(validator, elg, "ed_1", "AA")
     assertEventDataAccepted(validator, elg, "ed_2", "REF_BB")
-    assertEventDataNotAccepted(validator, elg, ValidationResultType.UNDEFINED_RULE, "ed+2", "REF_BB")
+    assertEventDataNotAccepted(validator, elg, ValidationResultType.UNDEFINED_RULE, ValidationResultType.UNDEFINED_RULE.description, "REF_BB")
   }
 
   @Test
@@ -364,9 +363,9 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
       assertEventAccepted(validator, elg, "BBB")
       assertEventAccepted(validator, elg, "CCC")
 
-      assertEventRejected(validator, elg, "DDD")
+      assertThirdPartyRule(validator, elg, "DDD")
       assertEventAccepted(validator, elg, "FIRST")
-      assertEventRejected(validator, elg, "SECOND")
+      assertThirdPartyRule(validator, elg, "SECOND")
     }
   }
 
@@ -462,9 +461,9 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
       assertEventDataAccepted(validator, elg, "data_1", "BBB")
       assertEventDataAccepted(validator, elg, "data_1", "CCC")
 
-      assertEventDataNotAccepted(validator, elg, ValidationResultType.REJECTED, "data_1", "DDD")
+      assertEventDataNotAccepted(validator, elg, ValidationResultType.THIRD_PARTY, "data_1", "DDD")
       assertEventDataAccepted(validator, elg, "data_1", "FIRST")
-      assertEventDataNotAccepted(validator, elg, ValidationResultType.REJECTED, "data_1", "SECOND")
+      assertEventDataNotAccepted(validator, elg, ValidationResultType.THIRD_PARTY, "data_1", "SECOND")
     }
   }
 
@@ -532,7 +531,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     val data: HashMap<String, Any> = hashMapOf( "count" to 1)
     val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
 
-    TestCase.assertEquals(ValidationResultType.UNREACHABLE_METADATA.description, validatedEventData["count"])
+    TestCase.assertEquals(ValidationResultType.UNREACHABLE_METADATA.description, validatedEventData[ValidationResultType.UNREACHABLE_METADATA.description])
   }
 
   @Test
@@ -542,7 +541,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     val data: HashMap<String, Any> = hashMapOf("count" to 1)
     val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
 
-    TestCase.assertEquals(ValidationResultType.UNDEFINED_RULE.description, validatedEventData["count"])
+    TestCase.assertEquals(ValidationResultType.UNDEFINED_RULE.description, validatedEventData[ValidationResultType.UNDEFINED_RULE.description])
   }
 
   internal fun createUnreachableValidator(): TestSensitiveDataValidator {
@@ -551,7 +550,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
         return true
       }
     }
-    return TestSensitiveDataValidator(storage)
+    return TestSensitiveDataValidator(storage, "TEST")
   }
 
   private fun doTestWithRuleList(fileName: String, func: (TestSensitiveDataValidator) -> Unit) {
@@ -619,7 +618,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
   internal inner class TestExistingValidationRule : LocalEnumCustomValidationRule("existing_rule", TestCustomActionId::class.java)
 
   internal inner class TestThirdPartyValidationRule : CustomValidationRule() {
-    override fun acceptRuleId(ruleId: String?): Boolean = "third_party_rule" == ruleId
+    override fun getRuleId(): String = "third_party_rule"
 
     override fun doValidate(data: String, context: EventContext): ValidationResultType {
       return if (data == "FIRST") ValidationResultType.ACCEPTED else ValidationResultType.THIRD_PARTY

@@ -80,8 +80,8 @@ class CollectThreadInfoVisitor(private val threadsMap: Long2ObjectMap<ThreadInfo
 
   override fun visitStackTrace(stackTraceSerialNumber: Long, threadSerialNumber: Long, numberOfFrames: Int, stackFrameIds: LongArray) {
     val frames = ArrayList<String>(stackFrameIds.size)
-    for (i in 0 until stackFrameIds.size) {
-      frames.add(stackFrameIdToStringMap[stackFrameIds[i]])
+    for (id in stackFrameIds) {
+      frames.add(stackFrameIdToStringMap[id])
     }
     threadsMap.put(threadSerialNumber, ThreadInfo(frames))
   }

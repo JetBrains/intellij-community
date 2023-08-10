@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.intellij.ide.ui.search.SearchableOptionsRegistrar.SETTINGS_GROUP_SEPARATOR;
+
 public class Group implements KeymapGroup {
   private Group myParent;
   private final @NlsActions.ActionText String myName;
@@ -24,6 +26,8 @@ public class Group implements KeymapGroup {
   private final ArrayList<Object> myChildren;
 
   private final Set<String> myIds = new HashSet<>();
+
+  private boolean myForceShowAsPopup;
 
   public Group(@NlsActions.ActionText String name, String id, Icon icon) {
     myName = name;
@@ -49,6 +53,14 @@ public class Group implements KeymapGroup {
     return myId;
   }
 
+  public boolean isForceShowAsPopup() {
+    return myForceShowAsPopup;
+  }
+
+  public void setForceShowAsPopup(boolean forceShowAsPopup) {
+    myForceShowAsPopup = forceShowAsPopup;
+  }
+
   @Override
   public void addActionId(String id) {
     if (myChildren.contains(id)) return;
@@ -65,7 +77,7 @@ public class Group implements KeymapGroup {
 
   @Override
   public void addGroup(KeymapGroup keymapGroup) {
-    Group group = (Group) keymapGroup;
+    Group group = (Group)keymapGroup;
     if (myChildren.contains(group)) return;
     myChildren.add(group);
     group.myParent = this;
@@ -79,7 +91,7 @@ public class Group implements KeymapGroup {
     return myIds.contains(id);
   }
 
-  public Set<String> initIds(){
+  public Set<String> initIds() {
     for (Object child : myChildren) {
       if (child instanceof String) {
         myIds.add((String)child);
@@ -87,10 +99,11 @@ public class Group implements KeymapGroup {
       else if (child instanceof QuickList) {
         myIds.add(((QuickList)child).getActionId());
       }
-      else if (child instanceof Group) {
-        Group childGroup = (Group)child;
+      else if (child instanceof Group childGroup) {
         myIds.addAll(childGroup.initIds());
-        if (childGroup.myId != null) myIds.add(childGroup.myId);
+        if (childGroup.myId != null) {
+          myIds.add(childGroup.myId);
+        }
       }
     }
     return myIds;
@@ -105,7 +118,7 @@ public class Group implements KeymapGroup {
   }
 
   public void normalizeSeparators() {
-    while (myChildren.size() > 0 && myChildren.get(0) instanceof Separator) {
+    while (myChildren.size() > 0 && (myChildren.get(0) instanceof Separator s) && s.getText() != null) {
       myChildren.remove(0);
     }
 
@@ -113,7 +126,7 @@ public class Group implements KeymapGroup {
       myChildren.remove(myChildren.size() - 1);
     }
 
-    for (int i=1; i < myChildren.size() - 1; i++) {
+    for (int i = 1; i < myChildren.size() - 1; i++) {
       if (myChildren.get(i) instanceof Separator && myChildren.get(i + 1) instanceof Separator) {
         myChildren.remove(i);
         i--;
@@ -121,17 +134,17 @@ public class Group implements KeymapGroup {
     }
   }
 
-  public String getActionQualifiedPath(String id) {
+  public String getActionQualifiedPath(String id, boolean presentable) {
     Group cur = myParent;
     StringBuilder answer = new StringBuilder();
 
     while (cur != null && !cur.isRoot()) {
-      answer.insert(0, cur.getName() + " | ");
+      answer.insert(0, cur.getName(presentable) + SETTINGS_GROUP_SEPARATOR);
 
       cur = cur.myParent;
     }
 
-    String suffix = calcActionQualifiedPath(id);
+    String suffix = calcActionQualifiedPath(id, presentable);
     if (StringUtil.isEmpty(suffix)) return null;
 
     answer.append(suffix);
@@ -139,9 +152,9 @@ public class Group implements KeymapGroup {
     return answer.toString();
   }
 
-  private String calcActionQualifiedPath(String id) {
+  private String calcActionQualifiedPath(String id, boolean presentable) {
     if (!isRoot() && StringUtil.equals(id, myId)) {
-      return getName();
+      return getName(presentable);
     }
     for (Object child : myChildren) {
       if (child instanceof QuickList) {
@@ -149,7 +162,7 @@ public class Group implements KeymapGroup {
       }
       if (child instanceof String) {
         if (id.equals(child)) {
-          AnAction action = ActionManager.getInstance().getActionOrStub(id);
+          AnAction action = presentable ? ActionManager.getInstance().getActionOrStub(id) : null;
           String path;
           if (action != null) {
             path = action.getTemplatePresentation().getText();
@@ -157,29 +170,34 @@ public class Group implements KeymapGroup {
           else {
             path = id;
           }
-          return !isRoot() ? getName() + " | " + path : path;
+          return !isRoot() ? getName(presentable) + SETTINGS_GROUP_SEPARATOR + path : path;
         }
       }
       else if (child instanceof Group) {
-        String path = ((Group)child).calcActionQualifiedPath(id);
+        String path = ((Group)child).calcActionQualifiedPath(id, presentable);
         if (path != null) {
-          return !isRoot() ? getName() + " | " + path : path;
+          return !isRoot() ? getName(presentable) + SETTINGS_GROUP_SEPARATOR + path : path;
         }
       }
     }
     return null;
   }
 
+  @Nullable
+  private String getName(boolean presentable) {
+    return presentable ? getName() : getId();
+  }
+
   public boolean isRoot() {
     return myParent == null;
   }
 
-  public String getQualifiedPath() {
+  public String getQualifiedPath(boolean presentable) {
     StringBuilder path = new StringBuilder(64);
     Group group = this;
     while (group != null && !group.isRoot()) {
-      if (path.length() > 0) path.insert(0, " | ");
-      path.insert(0, group.getName());
+      if (path.length() > 0) path.insert(0, SETTINGS_GROUP_SEPARATOR);
+      path.insert(0, group.getName(presentable));
       group = group.myParent;
     }
     return path.toString();
@@ -200,20 +218,24 @@ public class Group implements KeymapGroup {
         addSeparator();
       }
     }
+    if (group.myId != null) {
+      myIds.add(group.myId);
+    }
   }
 
-  public ActionGroup constructActionGroup(final boolean popup){
+  public ActionGroup constructActionGroup(final boolean popup) {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup(getName(), popup);
     AnAction groupToRestorePresentation = null;
-    if (getName() != null){
+    if (getName() != null) {
       groupToRestorePresentation = actionManager.getAction(getName());
-    } else {
-      if (getId() != null){
+    }
+    else {
+      if (getId() != null) {
         groupToRestorePresentation = actionManager.getAction(getId());
       }
     }
-    if (groupToRestorePresentation != null){
+    if (groupToRestorePresentation != null) {
       group.copyFrom(groupToRestorePresentation);
     }
     for (Object o : myChildren) {
@@ -233,18 +255,17 @@ public class Group implements KeymapGroup {
 
   @Override
   public boolean equals(Object object) {
-    if (!(object instanceof Group)) return false;
-    final Group group = ((Group)object);
-    if (group.getName() != null && getName() != null){
+    if (!(object instanceof Group group)) return false;
+    if (group.getName() != null && getName() != null) {
       return group.getName().equals(getName());
     }
-    if (getChildren() != null && group.getChildren() != null){
-      if (getChildren().size() != group.getChildren().size()){
+    if (getChildren() != null && group.getChildren() != null) {
+      if (getChildren().size() != group.getChildren().size()) {
         return false;
       }
 
       for (int i = 0; i < getChildren().size(); i++) {
-        if (!getChildren().get(i).equals(group.getChildren().get(i))){
+        if (!getChildren().get(i).equals(group.getChildren().get(i))) {
           return false;
         }
       }

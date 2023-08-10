@@ -18,6 +18,7 @@ package org.intellij.images.thumbnail.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
@@ -48,5 +49,10 @@ public final class ToggleTagsPanelAction extends ToggleAction {
         e.getPresentation().setEnabledAndVisible(view != null);
         e.getPresentation().setText(isSelected(e) ? IdeBundle.message("action.text.hide.tags.panel") : IdeBundle.message("action.text.show.tags.panel"));
         super.update(e);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,11 +7,12 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.reference.SoftReference;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.scale.ScaleContextCache;
 import com.intellij.util.SVGLoader;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.bytesource.ByteSourceArray;
@@ -31,10 +32,12 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Iterator;
 
+import static com.intellij.reference.SoftReference.dereference;
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 
 /**
@@ -48,7 +51,7 @@ public final class IfsUtil {
   public static final String ICO_FORMAT = "ico";
   public static final String SVG_FORMAT = "svg";
 
-  private static final Key<Long> TIMESTAMP_KEY = Key.create("Image.timeStamp");
+  private static final Key<Pair<Long, Long>> TIME_MODIFICATION_STAMP_KEY = Key.create("Image.timeModificationStamp");
   private static final Key<String> FORMAT_KEY = Key.create("Image.format");
   private static final Key<SoftReference<ScaledImageProvider>> IMAGE_PROVIDER_REF_KEY = Key.create("Image.bufferedImageProvider");
   private static final IcoImageParser ICO_IMAGE_PARSER = new IcoImageParser();
@@ -61,9 +64,10 @@ public final class IfsUtil {
    * @throws IOException if image can not be loaded
    */
   private static boolean refresh(@NotNull VirtualFile file) throws IOException {
-    Long loadedTimeStamp = file.getUserData(TIMESTAMP_KEY);
+    Pair<Long, Long> loadedTimeModificationStamp = file.getUserData(TIME_MODIFICATION_STAMP_KEY);
+    Pair<Long, Long> actualTimeModificationStamp = Pair.create(file.getTimeStamp(), file.getModificationStamp());
     SoftReference<ScaledImageProvider> imageProviderRef = file.getUserData(IMAGE_PROVIDER_REF_KEY);
-    if (loadedTimeStamp == null || loadedTimeStamp.longValue() != file.getTimeStamp() || SoftReference.dereference(imageProviderRef) == null) {
+    if (!actualTimeModificationStamp.equals(loadedTimeModificationStamp) || dereference(imageProviderRef) == null) {
       try {
         final byte[] content = file.contentsToByteArray();
         file.putUserData(IMAGE_PROVIDER_REF_KEY, null);
@@ -89,7 +93,7 @@ public final class IfsUtil {
 
           try {
             // ensure svg can be displayed
-            SVGLoader.load(url.get(), new ByteArrayInputStream(content), 1.0f);
+            SVGLoader.INSTANCE.load(url.get(), new ByteArrayInputStream(content), 1.0f);
           }
           catch (Throwable t) {
             LOG.warn(url.get() + " " + t.getMessage());
@@ -98,7 +102,7 @@ public final class IfsUtil {
 
           file.putUserData(FORMAT_KEY, SVG_FORMAT);
           file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(new ImageDocument.CachedScaledImageProvider() {
-            final ScaleContext.Cache<BufferedImage> cache = new ScaleContext.Cache<>((ctx) -> {
+            final ScaleContextCache<Image> cache = new ScaleContextCache<>((ctx) -> {
               try {
                 return SVGLoader.loadHiDPI(url.get(), new ByteArrayInputStream(content), ctx);
               }
@@ -111,11 +115,12 @@ public final class IfsUtil {
             public void clearCache() {
               cache.clear();
             }
+
             @Override
             public BufferedImage apply(Double zoom, Component ancestor) {
               ScaleContext ctx = ScaleContext.create(ancestor);
               ctx.setScale(OBJ_SCALE.of(zoom));
-              return cache.getOrProvide(ctx);
+              return (BufferedImage)cache.getOrProvide(ctx);
             }
           }));
           return true;
@@ -142,7 +147,7 @@ public final class IfsUtil {
         }
       } finally {
         // We perform loading no more needed
-        file.putUserData(TIMESTAMP_KEY, file.getTimeStamp());
+        file.putUserData(TIME_MODIFICATION_STAMP_KEY, actualTimeModificationStamp);
       }
     }
     return false;
@@ -164,7 +169,7 @@ public final class IfsUtil {
   public static ScaledImageProvider getImageProvider(@NotNull VirtualFile file) throws IOException {
     refresh(file);
     SoftReference<ScaledImageProvider> imageProviderRef = file.getUserData(IMAGE_PROVIDER_REF_KEY);
-    return SoftReference.dereference(imageProviderRef);
+    return dereference(imageProviderRef);
   }
 
   public static boolean isSVG(@Nullable VirtualFile file) {

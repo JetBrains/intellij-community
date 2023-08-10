@@ -14,13 +14,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
-* @author peter
-*/
 public class JavaStaticMemberProcessor extends StaticMemberProcessor {
   private final PsiElement myOriginalPosition;
 
-  public JavaStaticMemberProcessor(CompletionParameters parameters) {
+  public JavaStaticMemberProcessor(@NotNull CompletionParameters parameters) {
     super(parameters.getPosition());
     myOriginalPosition = parameters.getOriginalPosition();
     final PsiFile file = parameters.getPosition().getContainingFile();
@@ -28,7 +25,10 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
       final PsiImportList importList = ((PsiJavaFile)file).getImportList();
       if (importList != null) {
         for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
-          importMembersOf(statement.resolveTargetClass());
+          PsiClass aClass = statement.resolveTargetClass();
+          if (aClass != null) {
+            importMembersOf(aClass);
+          }
         }
       }
     }
@@ -51,7 +51,7 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
     }
 
     if (member instanceof PsiMethod) {
-      return AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new GlobalMethodCallElement((PsiMethod)member, shouldImport, false));
+      return AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(getMethodCallElement(shouldImport, List.of((PsiMethod)member)));
     }
     return AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new VariableLookupItem((PsiField)member, shouldImport) {
       @Override
@@ -60,7 +60,7 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
 
         super.handleInsert(context);
       }
-    }.qualifyIfNeeded(ObjectUtils.tryCast(getPosition().getParent(), PsiJavaCodeReferenceElement.class)));
+    }.qualifyIfNeeded(ObjectUtils.tryCast(getPosition().getParent(), PsiJavaCodeReferenceElement.class), containingClass));
   }
 
   private PsiReference createReferenceToMemberName(@NotNull PsiMember member) {
@@ -74,9 +74,14 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
                                               boolean shouldImport) {
     shouldImport |= myOriginalPosition != null && PsiTreeUtil.isAncestor(containingClass, myOriginalPosition, false);
 
-    final JavaMethodCallElement element = new GlobalMethodCallElement(overloads.get(0), shouldImport, true);
+    final JavaMethodCallElement element = getMethodCallElement(shouldImport, overloads);
     JavaCompletionUtil.putAllMethods(element, overloads);
     return element;
+  }
+
+  @NotNull
+  protected JavaMethodCallElement getMethodCallElement(boolean shouldImport, List<? extends PsiMethod> members) {
+    return new GlobalMethodCallElement(members.get(0), shouldImport, members.size()>1);
   }
 
   private static class GlobalMethodCallElement extends JavaMethodCallElement {

@@ -226,7 +226,7 @@ public final class JavaFxPsiUtil {
     if (getter != null) {
       return getter;
     }
-    return findPropertyGetter(psiClass, propertyName, PsiType.BOOLEAN);
+    return findPropertyGetter(psiClass, propertyName, PsiTypes.booleanType());
   }
 
   private static PsiMethod findPropertyGetter(final PsiClass psiClass, final String propertyName, final PsiType propertyType) {
@@ -536,8 +536,7 @@ public final class JavaFxPsiUtil {
     }
     else if (tagDescriptor instanceof JavaFxClassTagDescriptorBase) {
       final PsiElement tagDeclaration = tagDescriptor.getDeclaration();
-      if (tagDeclaration instanceof PsiClass) {
-        PsiClass defaultPropertyOwnerClass = (PsiClass)tagDeclaration;
+      if (tagDeclaration instanceof PsiClass defaultPropertyOwnerClass) {
         final XmlAttribute factoryAttr = targetTag.getAttribute(FxmlConstants.FX_FACTORY);
         if (factoryAttr != null) {
           defaultPropertyOwnerClass = getFactoryProducedClass((PsiClass)tagDeclaration, factoryAttr.getValue());
@@ -688,8 +687,7 @@ public final class JavaFxPsiUtil {
     if (declaration instanceof PsiField) {
       return getWrappedPropertyType((PsiField)declaration, declaration.getProject(), JavaFxCommonNames.ourWritableMap);
     }
-    if (declaration instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)declaration;
+    if (declaration instanceof PsiMethod method) {
       if (!method.getParameterList().isEmpty()) {
         return getSetterArgumentType(method);
       }
@@ -733,8 +731,7 @@ public final class JavaFxPsiUtil {
     if (declaration instanceof PsiField) {
       return getWrappedPropertyType((PsiField)declaration, declaration.getProject(), JavaFxCommonNames.ourReadOnlyMap);
     }
-    if (declaration instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)declaration;
+    if (declaration instanceof PsiMethod psiMethod) {
       if (psiMethod.getParameterList().isEmpty() &&
           !psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
         return getGetterReturnType(psiMethod);

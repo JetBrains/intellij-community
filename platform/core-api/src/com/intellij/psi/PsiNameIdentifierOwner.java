@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import org.jetbrains.annotations.Nullable;
@@ -8,8 +8,6 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * Implementors should also override {@link PsiElement#getTextOffset()} to return
  * the relative offset of the identifier token.
- *
- * @author yole
  */
 public interface PsiNameIdentifierOwner extends PsiNamedElement {
 
@@ -19,8 +17,7 @@ public interface PsiNameIdentifierOwner extends PsiNamedElement {
   /**
    * @return element to be used in reference equality checks
    */
-  @Nullable
-  default PsiElement getIdentifyingElement() {
+  default @Nullable PsiElement getIdentifyingElement() {
     return getNameIdentifier();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.LangBundle;
@@ -24,10 +24,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -89,12 +86,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     };
     myPanel.add(scrollPane
       , new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                               JBUI.emptyInsets(), 0, 0));
+                               JBInsets.emptyInsets(), 0, 0));
 
     final JPanel previewPanel = createPreviewPanel();
     myPanel.add(previewPanel,
                 new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                       JBUI.emptyInsets(), 0, 0));
+                                       JBInsets.emptyInsets(), 0, 0));
 
     installPreviewPanel(previewPanel);
     addPanelToWatch(myPanel);
@@ -247,7 +244,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         return editor == null ? super.getCellEditor(row, column) : editor;
       }
     };
-    TreeTableSpeedSearch speedSearch = new TreeTableSpeedSearch(treeTable);
+    TreeTableSpeedSearch speedSearch = TreeTableSpeedSearch.installOn(treeTable);
     speedSearch.setComparator(new SpeedSearchComparator(false));
     mySearchHelper = new SpeedSearchHelper(speedSearch);
 
@@ -565,12 +562,10 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public final ColumnInfo TITLE = new ColumnInfo("TITLE") {
     @Override
     public Object valueOf(Object o) {
-      if (o instanceof MyTreeNode) {
-        MyTreeNode node = (MyTreeNode)o;
+      if (o instanceof MyTreeNode node) {
         return node.getText();
       }
       return o.toString();
@@ -582,15 +577,13 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   };
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public final ColumnInfo VALUE = new ColumnInfo("VALUE") {
     private final TableCellEditor myEditor = new MyValueEditor();
     private final TableCellRenderer myRenderer = new MyValueRenderer();
 
     @Override
     public Object valueOf(Object o) {
-      if (o instanceof MyTreeNode) {
-        MyTreeNode node = (MyTreeNode)o;
+      if (o instanceof MyTreeNode node) {
         return node.getValue();
       }
 
@@ -849,16 +842,14 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         getPathForRow(row).getLastPathComponent();
       myCurrentEditor = null;
       myCurrentNode = null;
-      if (defaultNode instanceof MyTreeNode) {
-        MyTreeNode node = (MyTreeNode)defaultNode;
+      if (defaultNode instanceof MyTreeNode node) {
         myCurrentNode = node;
         if (node.getKey() instanceof BooleanOption) {
           myCurrentEditor = myBooleanEditor;
           myBooleanEditor.setSelected(node.getValue() == Boolean.TRUE);
           myBooleanEditor.setEnabled(node.isEnabled());
         }
-        else if (node.getKey() instanceof IntOption) {
-          IntOption intOption = (IntOption)node.getKey();
+        else if (node.getKey() instanceof IntOption intOption) {
           myCurrentEditor = myIntOptionsEditor;
           myIntOptionsEditor.setCanBeEmpty(true);
           myIntOptionsEditor.setMinValue(intOption.getMinValue());
@@ -901,7 +892,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     TableCellEditor editor = myTreeTable.getCellEditor();
     if (editor != null && !editor.stopCellEditing()) {
       throw new ConfigurationException(LangBundle.message("dialog.message.editing.cannot.be.stopped"));
@@ -931,7 +922,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   }
 
   @Override
-  protected void resetImpl(final CodeStyleSettings settings) {
+  protected void resetImpl(final @NotNull CodeStyleSettings settings) {
     TreeModel treeModel = myTreeTable.getTree().getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     resetNode(root, settings);
@@ -974,8 +965,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
                                       boolean hasFocus) {
       SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
       String text;
-      if (value instanceof MyTreeNode) {
-        MyTreeNode node = (MyTreeNode)value;
+      if (value instanceof MyTreeNode node) {
         if (node.getKey().groupName == null) {
           attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
         }
@@ -1001,7 +991,9 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   private static void updateColors(@NotNull JComponent component, @NotNull JTable table, boolean isSelected) {
     component.setOpaque(isSelected);
     component.setBackground(RenderingUtil.getBackground(table, isSelected));
-    component.setForeground(RenderingUtil.getForeground(table, isSelected));
+    if (!(component instanceof ColoredLabel) || isSelected) {
+      component.setForeground(RenderingUtil.getForeground(table, isSelected));
+    }
   }
 
   @NotNull
@@ -1012,5 +1004,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     b.append(array[0]);
     for (int i = 1; i < n; i++) b.append(',').append(' ').append(array[i]);
     return b.toString();
+  }
+
+  protected static class ColoredLabel extends JLabel {
+    public ColoredLabel(@Nls String text, Color foreground) {
+      super(text);
+      setForeground(foreground);
+    }
   }
 }

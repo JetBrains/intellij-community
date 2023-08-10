@@ -17,6 +17,8 @@ import groovy.transform.CompileStatic
 
 import java.util.concurrent.atomic.AtomicReference
 
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
+
 @CompileStatic
 trait CompilerMethods {
   abstract Project getProject()
@@ -49,7 +51,9 @@ trait CompilerMethods {
           semaphore.up()
         })
 
-    environment.runner.execute(environment)
+    runInEdtAndWait {
+      environment.runner.execute(environment)
+    }
     if (!semaphore.waitFor(20000)) {
       throw new AssertionError((Object)"Process took too long")
     }

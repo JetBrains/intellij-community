@@ -15,11 +15,12 @@
  */
 package org.jetbrains.idea.maven.dom
 
-/**
- * @author Sergey Evdokimov
- */
+import com.intellij.maven.testFramework.MavenDomTestCase
+import org.junit.Test
+
 class MavenPropertyInActivationSectionTest extends MavenDomTestCase {
 
+  @Test
   void testResolvePropertyFromActivationSection() throws IOException {
     importProject("""
   <groupId>example</groupId>

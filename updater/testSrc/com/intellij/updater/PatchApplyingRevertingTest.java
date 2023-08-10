@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -15,13 +15,15 @@ import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assumeNioSymLinkCreationIsSupported;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
@@ -518,7 +520,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkAdded() throws Exception {
-    assumeNioSymLinkCreationIsSupported();
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     Files.createSymbolicLink(new File(myNewerDir, "Readme.link").toPath(), Paths.get("Readme.txt"));
 
@@ -527,7 +529,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkRemoved() throws Exception {
-    assumeNioSymLinkCreationIsSupported();
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     Files.createSymbolicLink(new File(myOlderDir, "Readme.link").toPath(), Paths.get("Readme.txt"));
 
@@ -536,7 +538,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkRenamed() throws Exception {
-    assumeNioSymLinkCreationIsSupported();
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     Files.createSymbolicLink(new File(myOlderDir, "Readme.link").toPath(), Paths.get("Readme.txt"));
     Files.createSymbolicLink(new File(myNewerDir, "Readme.lnk").toPath(), Paths.get("Readme.txt"));
@@ -546,7 +548,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkRetargeted() throws Exception {
-    assumeNioSymLinkCreationIsSupported();
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     Files.createSymbolicLink(new File(myOlderDir, "Readme.link").toPath(), Paths.get("Readme.txt"));
     Files.createSymbolicLink(new File(myNewerDir, "Readme.link").toPath(), Paths.get("./Readme.txt"));
@@ -598,8 +600,19 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   }
 
   @Test
+  public void fileToSymlinks() throws Exception {
+    IoTestUtil.assumeSymLinkCreationIsSupported();
+
+    resetNewerDir();
+    Files.move(new File(myNewerDir, "Readme.txt").toPath(), new File(myNewerDir, "Readme.md").toPath());
+    Files.createSymbolicLink(new File(myNewerDir, "Readme.txt").toPath(), Paths.get("Readme.md"));
+
+    assertAppliedAndReverted();
+  }
+
+  @Test
   public void multipleDirectorySymlinks() throws Exception {
-    assumeNioSymLinkCreationIsSupported();
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     resetNewerDir();
 
@@ -631,7 +644,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void symlinksToFilesAndDirectories() throws Exception {
-    assumeNioSymLinkCreationIsSupported();
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     resetNewerDir();
 
@@ -654,7 +667,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   @Override
   protected Patch createPatch() throws IOException {
     assertFalse(myFile.exists());
-    Patch patch = PatchFileCreator.create(myPatchSpec, myFile, TEST_UI);
+    Patch patch = PatchFileCreator.create(myPatchSpec, myFile, TEST_UI, null);
     assertTrue(myFile.exists());
     return patch;
   }
@@ -736,11 +749,6 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   private static class MyFailOnApplyPatchAction extends PatchAction {
     MyFailOnApplyPatchAction(Patch patch) {
       super(patch, "_dummy_file_", Digester.INVALID);
-    }
-
-    @Override
-    protected boolean isModified(File toFile) {
-      return false;
     }
 
     @Override

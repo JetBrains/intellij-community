@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.CollectionFactory
 import java.io.InputStream
@@ -32,34 +31,32 @@ interface RepositoryManager {
   /**
    * Returns false if file is not written (for example, due to ignore rules).
    */
-  fun write(path: String, content: ByteArray, size: Int): Boolean
+  fun write(path: String, content: ByteArray): Boolean
 
   fun delete(path: String): Boolean
 
   fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean)
 
   /**
-   * Not all implementations support progress indicator (will not be updated on progress).
-   *
    * syncType will be passed if called before sync.
    *
    * If fixStateIfCannotCommit, repository state will be fixed before commit.
    */
-  suspend fun commit(indicator: ProgressIndicator? = null, syncType: SyncType? = null, fixStateIfCannotCommit: Boolean = true): Boolean
+  suspend fun commit(syncType: SyncType? = null, fixStateIfCannotCommit: Boolean = true): Boolean
 
   fun getAheadCommitsCount(): Int
 
-  fun push(indicator: ProgressIndicator? = null)
+  suspend fun push()
 
-  fun fetch(indicator: ProgressIndicator? = null): Updater
+  suspend fun fetch(): Updater
 
-  suspend fun pull(indicator: ProgressIndicator? = null): UpdateResult?
+  suspend fun pull(): UpdateResult?
 
   fun has(path: String): Boolean
 
-  suspend fun resetToTheirs(indicator: ProgressIndicator): UpdateResult?
+  suspend fun resetToTheirs(): UpdateResult?
 
-  suspend fun resetToMy(indicator: ProgressIndicator, localRepositoryInitializer: (() -> Unit)?): UpdateResult?
+  suspend fun resetToMy(localRepositoryInitializer: (() -> Unit)?): UpdateResult?
 
   fun canCommit(): Boolean
 

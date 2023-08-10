@@ -1,16 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
-
-import com.intellij.openapi.util.Getter;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Base class for concurrent key:int -> (weak/soft) value:V map
@@ -20,10 +17,9 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
   private final ConcurrentIntObjectHashMap<IntReference<V>> myMap = new ConcurrentIntObjectHashMap<>();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
-  @NotNull
-  protected abstract IntReference<V> createReference(int key, @NotNull V value, @NotNull ReferenceQueue<V> queue);
+  protected abstract @NotNull IntReference<V> createReference(int key, @NotNull V value, @NotNull ReferenceQueue<V> queue);
 
-  interface IntReference<V> extends Getter<V> {
+  interface IntReference<V> extends Supplier<V> {
     int getKey();
   }
 
@@ -39,41 +35,51 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
     }
   }
 
-  @NotNull
   @Override
-  public V cacheOrGet(int key, @NotNull V value) {
-    processQueue();
+  public @NotNull V cacheOrGet(int key, @NotNull V value) {
     IntReference<V> newRef = createReference(key, value, myQueue);
+    V result;
     while (true) {
       IntReference<V> ref = myMap.putIfAbsent(key, newRef);
-      if (ref == null) return value; // there were no previous value
+      if (ref == null) {
+        result = value; // there were no previous value
+        break;
+      }
       V old = ref.get();
-      if (old != null) return old;
+      if (old != null) {
+        result = old;
+        break;
+      }
 
       // old value has been gced; need to overwrite
       boolean replaced = myMap.replace(key, ref, newRef);
       if (replaced) {
-        return value;
+        result = value;
+        break;
       }
     }
+    processQueue();
+    return result;
   }
 
   @Override
   public boolean remove(int key, @NotNull V value) {
+    boolean removed = myMap.remove(key, createReference(key, value, myQueue));
     processQueue();
-    return myMap.remove(key, createReference(key, value, myQueue));
+    return removed;
   }
 
   @Override
   public boolean replace(int key, @NotNull V oldValue, @NotNull V newValue) {
+    boolean replaced = myMap.replace(key, createReference(key, oldValue, myQueue), createReference(key, newValue, myQueue));
     processQueue();
-    return myMap.replace(key, createReference(key, oldValue,myQueue), createReference(key, newValue,myQueue));
+    return replaced;
   }
 
   @Override
   public V put(int key, @NotNull V value) {
-    processQueue();
     IntReference<V> ref = myMap.put(key, createReference(key, value, myQueue));
+    processQueue();
     return SoftReference.deref(ref);
   }
 
@@ -85,18 +91,16 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
 
   @Override
   public V remove(int key) {
-    processQueue();
     IntReference<V> ref = myMap.remove(key);
+    processQueue();
     return SoftReference.deref(ref);
   }
 
-  @NotNull
-  static IncorrectOperationException pointlessContainsKey() {
+  private static @NotNull IncorrectOperationException pointlessContainsKey() {
     return new IncorrectOperationException("containsKey() makes no sense for weak/soft map because GC can clear the value any moment now");
   }
 
-  @NotNull
-  static IncorrectOperationException pointlessContainsValue() {
+  private static @NotNull IncorrectOperationException pointlessContainsValue() {
     return new IncorrectOperationException("containsValue() makes no sense for weak/soft map because GC can clear the key any moment now");
   }
 
@@ -121,16 +125,14 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
     return myMap.keys();
   }
 
-  @NotNull
   @Override
-  public Set<Entry<V>> entrySet() {
+  public @NotNull Set<Entry<V>> entrySet() {
     return new MyEntrySetView();
   }
 
-  private class MyEntrySetView extends AbstractSet<Entry<V>> {
-    @NotNull
+  private final class MyEntrySetView extends AbstractSet<Entry<V>> {
     @Override
-    public Iterator<Entry<V>> iterator() {
+    public @NotNull Iterator<Entry<V>> iterator() {
       return entriesIterator();
     }
 
@@ -140,16 +142,17 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
     }
   }
 
-  @NotNull
-  private Iterator<Entry<V>> entriesIterator() {
-    final Iterator<Entry<IntReference<V>>> entryIterator = ((Iterable<Entry<IntReference<V>>>)myMap.entrySet()).iterator();
+  private @NotNull Iterator<Entry<V>> entriesIterator() {
+    Iterator<Entry<IntReference<V>>> entryIterator = ((Iterable<Entry<IntReference<V>>>)myMap.entrySet()).iterator();
     return new Iterator<Entry<V>>() {
       private Entry<V> nextVEntry;
       private Entry<IntReference<V>> nextReferenceEntry;
       private Entry<IntReference<V>> lastReturned;
+
       {
         nextAliveEntry();
       }
+
       @Override
       public boolean hasNext() {
         return nextVEntry != null;
@@ -167,11 +170,11 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
       private void nextAliveEntry() {
         while (entryIterator.hasNext()) {
           Entry<IntReference<V>> entry = entryIterator.next();
-          final V v = entry.getValue().get();
+          V v = entry.getValue().get();
           if (v == null) {
             continue;
           }
-          final int key = entry.getKey();
+          int key = entry.getKey();
           nextVEntry = new SimpleEntry<>(key, v);
           nextReferenceEntry = entry;
           return;
@@ -201,9 +204,8 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
   }
 
   @Override
-  @NotNull
-  public Enumeration<V> elements() {
-    final Enumeration<IntReference<V>> elementRefs = myMap.elements();
+  public @NotNull Enumeration<V> elements() {
+    Enumeration<IntReference<V>> elementRefs = myMap.elements();
     return new Enumeration<V>() {
       private V findNextRef() {
         while (elementRefs.hasMoreElements()) {
@@ -235,25 +237,37 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
   @Override
   public V putIfAbsent(int key, @NotNull V value) {
     IntReference<V> newRef = createReference(key, value, myQueue);
+    V prev;
     while (true) {
-      processQueue();
       IntReference<V> oldRef = myMap.putIfAbsent(key, newRef);
-      if (oldRef == null) return null;
+      if (oldRef == null) {
+        prev = null;
+        break;
+      }
       V oldVal = oldRef.get();
       if (oldVal == null) {
-        if (myMap.replace(key, oldRef, newRef)) return null;
+        if (myMap.replace(key, oldRef, newRef)) {
+          prev = null;
+          break;
+        }
       }
       else {
-        return oldVal;
+        prev = oldVal;
+        break;
       }
+      processQueue();
     }
+    processQueue();
+    return prev;
   }
 
-  @NotNull
   @Override
-  public Collection<V> values() {
-    Set<V> result = new THashSet<>();
-    ContainerUtil.addAll(result, elements());
+  public @NotNull Collection<V> values() {
+    Set<V> result = new HashSet<>();
+    Enumeration<? extends V> enumeration = elements();
+    while (enumeration.hasMoreElements()) {
+      result.add(enumeration.nextElement());
+    }
     return result;
   }
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
+import com.intellij.AbstractBundle;
 import com.intellij.BundleBase;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nls;
@@ -22,13 +23,13 @@ public final class FeatureStatisticsBundle {
 
   private static Reference<ResourceBundle> ourBundle;
   private static final Logger LOG = Logger.getInstance(FeatureStatisticsBundle.class);
-  @NonNls private static final String BUNDLE = "messages.FeatureStatisticsBundle";
+  private static final @NonNls String BUNDLE = "messages.FeatureStatisticsBundle";
 
   private FeatureStatisticsBundle() {
   }
 
   private static ResourceBundle getBundle(final String key) {
-    ResourceBundle providerBundle = ProvidersBundles.INSTANCE.get(key);
+    ResourceBundle providerBundle = ProviderBundles.INSTANCE.get(key);
     if (providerBundle != null) {
       return providerBundle;
     }
@@ -41,15 +42,17 @@ public final class FeatureStatisticsBundle {
     return bundle;
   }
 
-  private static final class ProvidersBundles extends HashMap<String, ResourceBundle> {
+  private static final class ProviderBundles extends HashMap<String, ResourceBundle> {
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-    private static final ProvidersBundles INSTANCE = new ProvidersBundles();
+    private static final ProviderBundles INSTANCE = new ProviderBundles();
 
-    private ProvidersBundles() {
+    private ProviderBundles() {
       for (FeatureStatisticsBundleEP bundleEP : FeatureStatisticsBundleEP.EP_NAME.getExtensionList()) {
         try {
-          ClassLoader pluginClassLoader = bundleEP.getPluginDescriptor().getPluginClassLoader();
-          ResourceBundle bundle = ResourceBundle.getBundle(bundleEP.qualifiedName, Locale.getDefault(), pluginClassLoader);
+          ResourceBundle bundle = ResourceBundle.getBundle(bundleEP.qualifiedName,
+                                                           Locale.getDefault(),
+                                                           bundleEP.getPluginDescriptor().getClassLoader(),
+                                                           AbstractBundle.getControl());
           for (String key : bundle.keySet()) {
             put(key, bundle);
           }

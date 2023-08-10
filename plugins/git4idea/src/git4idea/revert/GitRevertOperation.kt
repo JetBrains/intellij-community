@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.GitApplyChangesProcess
+import git4idea.actions.GitAbortOperationAction
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
 import git4idea.commands.GitLineHandlerListener
@@ -37,8 +38,9 @@ class GitRevertOperation(private val project: Project,
     GitApplyChangesProcess(project, commits, autoCommit, GitBundle.message("revert.operation.name"),
                            GitBundle.message("revert.operation.applied"),
                            command = { repository, commit, autoCommit, listeners ->
-                             doRevert(autoCommit, repository, commit, listeners)
+                             doRevert(autoCommit, repository, commit.id, listeners)
                            },
+                           GitAbortOperationAction.Revert(),
                            emptyCommitDetector = { result -> result.outputAsJoinedString.contains("nothing to commit") },
                            defaultCommitMessageGenerator = { _, commit ->
                              """

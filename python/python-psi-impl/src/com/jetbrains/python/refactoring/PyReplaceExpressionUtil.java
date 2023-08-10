@@ -60,7 +60,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
   /**
    * @param oldExpr old expression that will be substituted
    * @param newExpr new expression to substitute with
-   * @return whether new expression should be wrapped in parenthesis to preserve original semantics
+   * @return whether new expression should be wrapped in parentheses to preserve original semantics
    */
   public static boolean isNeedParenthesis(@NotNull final PyElement oldExpr, @NotNull final PyElement newExpr) {
     final PyElement parentExpr = (PyElement)oldExpr.getParent();
@@ -75,8 +75,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     if (parentPriority > newPriority) {
       return true;
     }
-    else if (parentPriority == newPriority && parentPriority != 0 && parentExpr instanceof PyBinaryExpression) {
-      final PyBinaryExpression binaryExpression = (PyBinaryExpression)parentExpr;
+    else if (parentPriority == newPriority && parentPriority != 0 && parentExpr instanceof PyBinaryExpression binaryExpression) {
       if (isNotAssociative(binaryExpression) && oldExpr == getLeastPrioritySide(binaryExpression)) {
         return true;
       }
@@ -124,7 +123,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
                                                             @NotNull PsiElement newExpression,
                                                             @NotNull TextRange textRange) {
     final String fullText = oldExpression.getText();
-    final Pair<String, String> detectedQuotes = PyStringLiteralUtil.getQuotes(fullText);
+    final Pair<String, String> detectedQuotes = PyStringLiteralCoreUtil.getQuotes(fullText);
     final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
     final String prefix = fullText.substring(0, textRange.getStartOffset());
     final String suffix = fullText.substring(textRange.getEndOffset(), oldExpression.getTextLength());
@@ -132,14 +131,14 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     final PyArgumentList newStyleFormatValue = getNewStyleFormatValueExpression(oldExpression);
     final String newText = newExpression.getText();
 
-    final List<PyStringFormatParser.SubstitutionChunk> substitutions;
+    final List<SubstitutionChunk> substitutions;
     if (newStyleFormatValue != null) {
       substitutions = filterSubstitutions(parseNewStyleFormat(fullText));
     }
     else {
       substitutions = filterSubstitutions(parsePercentFormat(fullText));
     }
-    final boolean hasSubstitutions = substitutions.size() > 0;
+    final boolean hasSubstitutions = !substitutions.isEmpty();
 
     if (formatValue != null && !containsStringFormatting(substitutions, textRange)) {
       if (formatValue instanceof PyTupleExpression) {
@@ -154,9 +153,9 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
         final PyType valueType = context.getType(formatValue);
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(oldExpression);
         final PyType tupleType = builtinCache.getTupleType();
-        final PyType mappingType = PyTypeParser.getTypeByName(null, "collections.Mapping", context);
-        if (!PyTypeChecker.match(tupleType, valueType, context) ||
-            (mappingType != null && !PyTypeChecker.match(mappingType, valueType, context))) {
+        final PyType mappingType = PyTypeParser.getTypeByName(oldExpression, "collections.Mapping", context);
+        if (!PyTypeChecker.match(tupleType, valueType, context) &&
+            !(mappingType != null && PyTypeChecker.match(mappingType, valueType, context))) {
           return replaceSubstringWithSingleValueFormatting(oldExpression, textRange, prefix, suffix, formatValue, newText, substitutions);
         }
       }
@@ -433,7 +432,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
            opType == DIV || opType == FLOORDIV || opType == PERC || opType == EXP || opType == MINUS;
   }
 
-  private static int getExpressionPriority(PyElement expr) {
+  private static int getExpressionPriority(@NotNull PyElement expr) {
     int priority = 0;
     if (expr instanceof PyReferenceExpression ||
         expr instanceof PySubscriptionExpression ||
@@ -441,24 +440,26 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
         expr instanceof PyCallExpression) priority = 1;
     else if (expr instanceof PyPrefixExpression) {
       final IElementType opType = getOperationType(expr);
-      if (opType == PLUS || opType == MINUS || opType == TILDE) priority = 2;
-      if (opType == NOT_KEYWORD) priority = 11;
+      if (opType == AWAIT_KEYWORD) priority = 2;
+      if (opType == PLUS || opType == MINUS || opType == TILDE) priority = 3;
+      if (opType == NOT_KEYWORD) priority = 12;
     }
     else if (expr instanceof PyBinaryExpression) {
       final IElementType opType = getOperationType(expr);
-      if (opType == EXP) priority =  3;
-      if (opType == MULT || opType == AT || opType == DIV || opType == PERC || opType == FLOORDIV) priority =  4;
-      if (opType == PLUS || opType == MINUS) priority =  5;
-      if (opType == LTLT || opType == GTGT) priority = 6;
-      if (opType == AND) priority = 7;
-      if (opType == XOR) priority = 8;
-      if (opType == OR) priority = 9;
-      if (COMPARISON_OPERATIONS.contains(opType)) priority = 10;
-      if (opType == AND_KEYWORD) priority = 12;
-      if (opType == OR_KEYWORD) priority = 13;
+      if (opType == EXP) priority =  4;
+      if (opType == MULT || opType == AT || opType == DIV || opType == PERC || opType == FLOORDIV) priority =  5;
+      if (opType == PLUS || opType == MINUS) priority =  6;
+      if (opType == LTLT || opType == GTGT) priority = 7;
+      if (opType == AND) priority = 8;
+      if (opType == XOR) priority = 9;
+      if (opType == OR) priority = 10;
+      if (COMPARISON_OPERATIONS.contains(opType)) priority = 11;
+      if (opType == AND_KEYWORD) priority = 13;
+      if (opType == OR_KEYWORD) priority = 14;
     }
-    else if (expr instanceof PyConditionalExpression) priority = 14;
-    else if (expr instanceof PyLambdaExpression) priority = 15;
+    else if (expr instanceof PyConditionalExpression) priority = 15;
+    else if (expr instanceof PyLambdaExpression) priority = 16;
+    else if (expr instanceof PyAssignmentExpression) priority = 17;
 
     return -priority;
   }

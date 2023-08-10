@@ -3,6 +3,7 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestIconMapper;
 import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.*;
 
@@ -108,7 +110,11 @@ public final class TestsPresentationUtil {
 
   public static void formatRootNodeWithChildren(final SMTestProxy.SMRootTestProxy testProxy,
                                                 final TestTreeRenderer renderer) {
-    renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
+    IconInfo iconInfo = getIcon(testProxy, renderer.getConsoleProperties());
+    renderer.setIcon(iconInfo.getIcon());
+    String accessibleStatusText = renderer.getAccessibleStatus();
+    if (accessibleStatusText == null) accessibleStatusText = iconInfo.getStatusText();
+    renderer.setAccessibleStatusText(accessibleStatusText);
 
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
 
@@ -137,7 +143,9 @@ public final class TestsPresentationUtil {
       if (!testProxy.getChildren().isEmpty()) {
         formatRootNodeWithChildren(testProxy, renderer);
       } else {
-        renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
+        IconInfo iconInfo = getIcon(testProxy, renderer.getConsoleProperties());
+        renderer.setIcon(iconInfo.getIcon());
+        renderer.setAccessibleStatusText(iconInfo.getStatusText());
         renderer.append(SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.instantiating.tests"),
                         SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
@@ -181,19 +189,22 @@ public final class TestsPresentationUtil {
 
   public static void formatTestProxy(final SMTestProxy testProxy,
                                      final TestTreeRenderer renderer) {
-    renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
+    IconInfo iconInfo = getIcon(testProxy, renderer.getConsoleProperties());
+    renderer.setIcon(iconInfo.getIcon());
+    renderer.setAccessibleStatusText(iconInfo.getStatusText());
     renderer.append(testProxy.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
-  @NotNull
-  public static String getPresentableName(final SMTestProxy testProxy) {
-    final SMTestProxy parent = testProxy.getParent();
-    final String name = testProxy.getName();
+  public static @NotNull String getPresentableName(final @NotNull SMTestProxy testProxy) {
+    return getPresentableName(testProxy, testProxy.getName());
+  }
 
+  public static @NotNull String getPresentableName(final @NotNull SMTestProxy testProxy, final @Nullable String name) {
     if (name == null) {
       return Holder.getNoNameTest();
     }
 
+    final SMTestProxy parent = testProxy.getParent();
     String presentationCandidate = name;
     if (parent != null && !testProxy.isSuite()) {
       String parentName = parent.getName();
@@ -236,55 +247,72 @@ public final class TestsPresentationUtil {
     return presentationCandidate;
   }
 
-  @NotNull
-  public static String getPresentableNameTrimmedOnly(@NotNull SMTestProxy testProxy) {
-    String name = testProxy.getName();
-    if (name != null) {
-      name = name.trim();
-    }
-    if (name == null || name.isEmpty()) {
-      name = Holder.getNoNameTest();
-    }
-    return name;
+  public static @NotNull String getPresentableNameTrimmedOnly(final @Nullable String name) {
+    return (name == null || name.isBlank()) ? Holder.getNoNameTest()
+                                            : name.trim();
   }
 
-  @Nullable
-  private static Icon getIcon(final SMTestProxy testProxy,
-                              final TestConsoleProperties consoleProperties) {
+  /**
+   * @see TestIconMapper#getToolbarIcon(TestStateInfo.Magnitude, boolean, BooleanSupplier)
+   */
+  private static @NotNull IconInfo getIcon(final SMTestProxy testProxy,
+                                           final TestConsoleProperties consoleProperties) {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
 
     final boolean hasErrors = testProxy.hasErrors();
     final boolean hasPassedTests = testProxy.hasPassedTests();
 
-    switch (magnitude) {
-      case ERROR_INDEX:
-        return ERROR_ICON;
-      case FAILED_INDEX:
-        return hasErrors ? FAILED_E_ICON : FAILED_ICON;
-      case IGNORED_INDEX:
-        return hasErrors ? IGNORED_E_ICON : (hasPassedTests ? PASSED_IGNORED : IGNORED_ICON);
-      case NOT_RUN_INDEX:
-        return NOT_RAN;
-      case COMPLETE_INDEX:
-      case PASSED_INDEX:
-        return hasErrors ? PASSED_E_ICON : PASSED_ICON;
-      case RUNNING_INDEX:
+    return switch (magnitude) {
+      case ERROR_INDEX -> IconInfo.wrap(ERROR_ICON, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.error"));
+      case FAILED_INDEX -> hasErrors ? IconInfo.wrap(FAILED_E_ICON, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.failed.with.errors"))
+                                     : IconInfo.wrap(FAILED_ICON, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.failed"));
+      case IGNORED_INDEX -> hasErrors ? IconInfo.wrap(IGNORED_E_ICON, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.ignored.with.errors"))
+                                      : (hasPassedTests ? IconInfo.wrap(PASSED_IGNORED, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.passed.with.ignored"))
+                                                        : IconInfo.wrap(IGNORED_ICON, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.ignored")));
+      case NOT_RUN_INDEX -> IconInfo.wrap(NOT_RAN, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.not.ran"));
+      case COMPLETE_INDEX, PASSED_INDEX -> hasErrors ? IconInfo.wrap(PASSED_E_ICON, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.passed.with.errors"))
+                                                     : IconInfo.wrap(PASSED_ICON, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.passed"));
+      case RUNNING_INDEX -> {
         if (consoleProperties.isPaused()) {
-          return hasErrors ? PAUSED_E_ICON : AllIcons.RunConfigurations.TestPaused;
+          yield hasErrors ? IconInfo.wrap(PAUSED_E_ICON, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.paused.with.errors"))
+                          : IconInfo.wrap(AllIcons.RunConfigurations.TestPaused, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.paused"));
         }
         else {
-          return hasErrors ? RUNNING_E_ICON : RUNNING_ICON;
+          yield hasErrors ? IconInfo.wrap(RUNNING_E_ICON, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.running.with.errors"))
+                          : IconInfo.wrap(RUNNING_ICON, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.running"));
         }
-      case SKIPPED_INDEX:
-        return hasErrors ? SKIPPED_E_ICON : SKIPPED_ICON;
-      case TERMINATED_INDEX:
-        return hasErrors ? TERMINATED_E_ICON : TERMINATED_ICON;
-    }
-    return null;
+      }
+      case SKIPPED_INDEX -> hasErrors ? IconInfo.wrap(SKIPPED_E_ICON, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.skipped.with.errors"))
+                                      : IconInfo.wrap(SKIPPED_ICON, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.skipped"));
+      case TERMINATED_INDEX -> hasErrors ? IconInfo.wrap(TERMINATED_E_ICON, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.terminated.with.errors"))
+                                         : IconInfo.wrap(TERMINATED_ICON, SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.accessible.status.terminated"));
+    };
   }
 
   @Nullable
   public static String getTestStatusPresentation(final SMTestProxy proxy) {
     return proxy.getMagnitudeInfo().getTitle();
+  }
+
+  private static class IconInfo {
+    private final Icon myIcon;
+    private final @Nls String myStatusText;
+
+    private IconInfo(Icon icon, @Nls String statusText) {
+      myIcon = icon;
+      myStatusText = statusText;
+    }
+
+    private Icon getIcon() {
+      return myIcon;
+    }
+
+    private @Nls String getStatusText() {
+      return myStatusText;
+    }
+
+    static IconInfo wrap(Icon icon, @Nls String statusText) {
+      return new IconInfo(icon, statusText);
+    }
   }
 }

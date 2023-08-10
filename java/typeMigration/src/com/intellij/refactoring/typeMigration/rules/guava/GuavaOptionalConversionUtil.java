@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -20,8 +20,7 @@ public final class GuavaOptionalConversionUtil {
     final PsiElement parent = context.getParent();
     if (parent == null) return false;
     final PsiElement maybeMethodCall = parent.getParent();
-    if (!(maybeMethodCall instanceof PsiMethodCallExpression)) return false;
-    final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)maybeMethodCall;
+    if (!(maybeMethodCall instanceof PsiMethodCallExpression methodCall)) return false;
     final int argumentLength = methodCall.getArgumentList().getExpressionCount();
     if (argumentLength != 1) return false;
     final PsiMethod resolvedMethod = methodCall.resolveMethod();

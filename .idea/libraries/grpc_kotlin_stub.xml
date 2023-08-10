@@ -1,19 +1,18 @@
 <component name="libraryTable">
   <library name="grpc-kotlin-stub" type="repository">
-    <properties maven-id="io.grpc:grpc-kotlin-stub:1.0.0">
-      <exclude>
-        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
-        <dependency maven-id="io.grpc:grpc-protobuf" />
-        <dependency maven-id="io.grpc:grpc-stub" />
-        <dependency maven-id="javax.annotation:javax.annotation-api" />
-      </exclude>
+    <properties include-transitive-deps="false" maven-id="io.grpc:grpc-kotlin-stub:1.3.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/1.3.0/grpc-kotlin-stub-1.3.0.jar">
+          <sha256sum>7183d216466b6147cc08f46c6d80ec5764a26cdb2dea2202089ad0912ea74222</sha256sum>
+        </artifact>
+      </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/1.0.0/grpc-kotlin-stub-1.0.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/1.3.0/grpc-kotlin-stub-1.3.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/1.0.0/grpc-kotlin-stub-1.0.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/1.3.0/grpc-kotlin-stub-1.3.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

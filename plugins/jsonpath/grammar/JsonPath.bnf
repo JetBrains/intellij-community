@@ -1,0 +1,209 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+{
+  parserClass="com.intellij.jsonpath.parser.JsonPathParser"
+
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix="JsonPath"
+  psiImplClassSuffix="Impl"
+  psiPackage="com.intellij.jsonpath.psi"
+  psiImplPackage="com.intellij.jsonpath.psi.impl"
+
+  elementTypeHolderClass="com.intellij.jsonpath.psi.JsonPathTypes"
+  elementTypeClass="com.intellij.jsonpath.psi.JsonPathElementType"
+  tokenTypeClass="com.intellij.jsonpath.psi.JsonPathTokenType"
+  psiImplUtilClass = "com.intellij.jsonpath.psi.JsonPathPsiUtils"
+  tokens = [
+    LBRACE='{'
+    RBRACE='}'
+    LBRACKET='['
+    RBRACKET=']'
+    LPARENTH='('
+    RPARENTH=')'
+    COMMA=','
+    COLON=':'
+    DOT='.'
+    RECURSIVE_DESCENT='..'
+    TRUE='true'
+    FALSE='false'
+    NULL='null'
+    ROOT_CONTEXT='$'
+    EVAL_CONTEXT='@'
+    FILTER_OPERATOR='?'
+    WILDCARD='*'
+  ]
+}
+
+private root ::= functionCall | (head_ segments_*)
+
+private head_ ::= (rootSegment | evalSegment | wildcardSegment | idSegment | expressionSegment)
+private segments_ ::= wildcardSegment | dotSegment | expressionSegment
+
+rootSegment ::= ROOT_CONTEXT
+evalSegment ::= EVAL_CONTEXT
+
+private dotSegment ::= ((RECURSIVE_DESCENT | DOT) (functionCall | wildcardSegment | idSegment | expressionSegment)) {
+  pin=1
+}
+
+wildcardSegment ::= WILDCARD {
+  name="*"
+}
+id ::= IDENTIFIER {
+  name="identifier"
+}
+idSegment ::= id
+
+functionCall ::= id LPARENTH functionArgsList? RPARENTH {
+  pin=2
+}
+functionArgsList ::= expression (COMMA expression)* {
+  name="function arguments"
+}
+
+expressionSegment ::= LBRACKET nestedExpression_ RBRACKET
+
+private nestedExpression_ ::=
+  wildcardSegment |
+  filterExpression | // standalone filter operator may be substituted by programmatic filter
+  indexExpression | // supported only in some implementations
+  sliceExpression |
+  indexesList |
+  quotedPathsList
+
+filterExpression ::= FILTER_OPERATOR (LPARENTH expression RPARENTH)? {
+  pin=1
+}
+indexExpression ::= LPARENTH expression RPARENTH {
+  pin=1
+}
+sliceExpression ::=
+  (INTEGER_NUMBER COLON INTEGER_NUMBER COLON INTEGER_NUMBER) |
+  (INTEGER_NUMBER COLON INTEGER_NUMBER) |
+  (INTEGER_NUMBER COLON) |
+  (COLON INTEGER_NUMBER) {
+  name="slice expression"
+}
+indexesList ::= (INTEGER_NUMBER (COMMA INTEGER_NUMBER)*) {
+  name="indexes list"
+}
+
+quotedPathsList ::= stringLiteral (COMMA stringLiteral)*
+
+expression ::=
+  unaryGroup_ |
+  booleanGroup_ |
+  conditionalGroup_ |
+  addGroup_ |
+  mulGroup_ |
+  primaryGroup_ {
+  extraRoot=true
+  name="expression"
+}
+
+private unaryGroup_ ::= unaryNotExpression | unaryMinusExpression
+private conditionalGroup_ ::= conditionalExpression | regexExpression
+private booleanGroup_ ::= andExpression | orExpression
+private addGroup_ ::= plusExpression | minusExpression
+private mulGroup_ ::= multiplyExpression | divideExpression
+private primaryGroup_ ::= value | pathExpression | parenthesizedExpression
+
+value ::= objectValue | arrayValue | literalValue {
+  extends=expression
+}
+
+literalValue ::= nullLiteral | booleanLiteral | numberLiteral | stringLiteral {
+  extends=value
+  name="literalValue"
+}
+
+nullLiteral ::= NULL {
+  extends=literalValue
+  name="null"
+}
+booleanLiteral ::= TRUE | FALSE {
+  extends=literalValue
+}
+numberLiteral ::= DOUBLE_NUMBER | INTEGER_NUMBER {
+  extends=literalValue
+}
+stringLiteral ::= SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING {
+  methods=[
+    getTextFragments
+  ]
+  extends=literalValue
+  mixin="com.intellij.jsonpath.psi.JsonPathStringLiteralMixin"
+}
+arrayValue ::= LBRACKET arrayElement_* RBRACKET {
+  extends=value
+}
+private arrayElement_ ::= value (COMMA|&RBRACKET) {
+  recoverWhile=notBracketOrNextValue
+  pin=1
+}
+private notBracketOrNextValue ::= !(RBRACKET|value)
+
+objectValue ::= LBRACE objectElement* RBRACE {
+  pin=1
+  extends=value
+}
+private objectElement ::= objectProperty (COMMA|&RBRACE) {
+  recoverWhile=notBraceOrNextValue
+  pin=1
+}
+objectProperty ::= stringLiteral (COLON value) {
+  pin(".*")=1
+}
+private notBraceOrNextValue ::= !(RBRACE|value)
+
+unaryNotExpression ::= NOT_OP expression {
+  extends=expression
+}
+unaryMinusExpression ::= MINUS_OP expression {
+  extends=expression
+}
+
+pathExpression ::= head_ segments_* {
+  extends=expression
+  extraRoot=true
+  name="path expression"
+}
+
+parenthesizedExpression ::= LPARENTH expression RPARENTH {
+  extends=expression
+}
+
+conditionalExpression ::= expression binaryConditionalOperator expression {
+  extends=expression
+}
+
+binaryConditionalOperator ::= EEQ_OP | ENE_OP | EQ_OP | NE_OP | GT_OP | LT_OP | GE_OP | LE_OP | NAMED_OP {
+  name="operator"
+}
+
+regexExpression ::= expression RE_OP regexLiteral {
+  extends=expression
+}
+
+regexLiteral ::= REGEX_STRING {
+  name="regex literal"
+}
+
+plusExpression ::= expression PLUS_OP expression {
+  extends=expression
+}
+minusExpression ::= expression MINUS_OP expression {
+  extends=expression
+}
+multiplyExpression ::= expression MULTIPLY_OP expression {
+  extends=expression
+}
+divideExpression ::= expression DIVIDE_OP expression {
+  extends=expression
+}
+andExpression ::= expression AND_OP expression {
+  extends=expression
+}
+orExpression ::= expression OR_OP expression {
+  extends=expression
+}

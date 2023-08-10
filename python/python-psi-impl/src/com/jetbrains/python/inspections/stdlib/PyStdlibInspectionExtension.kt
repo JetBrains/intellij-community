@@ -2,15 +2,15 @@
 package com.jetbrains.python.inspections.stdlib
 
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.DUNDER_POST_INIT
-import com.jetbrains.python.psi.types.PyNamedTupleType
-import com.jetbrains.python.psi.types.PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
+import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.parseStdDataclassParameters
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyNamedTupleType
+import com.jetbrains.python.psi.types.PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -22,8 +22,8 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
 
   override fun ignoreUnresolvedMember(type: PyType, name: String, context: TypeEvalContext): Boolean {
     if (type is PyClassLikeType) {
-      return type is PyNamedTupleType && type.fields.containsKey(name) ||
-             type.getAncestorTypes(context).filterIsInstance<PyNamedTupleType>().any { it.fields.containsKey(name) }
+      return type is PyNamedTupleType && ignoredUnresolvedNamedTupleMember(type, name) ||
+             type.getAncestorTypes(context).filterIsInstance<PyNamedTupleType>().any { ignoredUnresolvedNamedTupleMember(it, name) }
     }
 
     return false
@@ -39,7 +39,11 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
   override fun ignoreMethodParameters(function: PyFunction, context: TypeEvalContext): Boolean {
     return function.name == "__prepare__" &&
            function.getParameters(context).let { it.size == 3 && !it.any { p -> p.isKeywordContainer || p.isPositionalContainer } } ||
-           function.name == DUNDER_POST_INIT &&
+           function.name == Dataclasses.DUNDER_POST_INIT &&
            function.containingClass?.let { parseStdDataclassParameters(it, context) != null } == true
+  }
+
+  private fun ignoredUnresolvedNamedTupleMember(type: PyNamedTupleType, name: String): Boolean {
+    return name == PyNames.SLOTS || type.fields.containsKey(name)
   }
 }

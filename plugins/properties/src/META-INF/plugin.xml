@@ -2,11 +2,14 @@
   <id>com.intellij.properties</id>
   <name>Properties</name>
   <category>Languages</category>
-  <depends>com.intellij.modules.xml</depends>
   <description>
     Enables smart editing of .properties files.
   </description>
   <vendor>JetBrains</vendor>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.xml"/>
+  </dependencies>
 
   <extensionPoints>
     <extensionPoint name="implicitPropertyUsageProvider"
@@ -23,6 +26,7 @@
   <depends optional="true" config-file="properties-copyright.xml">com.intellij.copyright</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <properties.files.provider implementation="com.intellij.lang.properties.provider.PropertiesProviderImpl"/>
     <typeIcon className="com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile" icon="AllIcons.Nodes.ResourceBundle"/>
     <applicationService serviceImplementation="com.intellij.lang.properties.LastSelectedPropertiesFileStore"/>
     <applicationService serviceInterface="com.intellij.lang.properties.PropertiesQuickFixFactory"
@@ -76,6 +80,7 @@
     <localInspection language="Properties" shortName="UnusedProperty" bundle="messages.PropertiesBundle"
                      key="unused.property.inspection.display.name"
                      groupKey="properties.files.inspection.group.display.name" enabledByDefault="true" level="WARNING"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.intellij.lang.properties.codeInspection.unused.UnusedPropertyInspection"/>
     <globalInspection language="Properties" shortName="DuplicatePropertyInspection" bundle="messages.InspectionsBundle"
                       key="duplicate.property.display.name"
@@ -85,6 +90,10 @@
                      key="trail.spaces.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.lang.properties.codeInspection.TrailingSpacesInPropertyInspection"/>
+    <localInspection language="Properties" shortName="UseEllipsisInPropertyInspection" bundle="messages.PropertiesBundle"
+                     key="use.ellipsis.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.lang.properties.codeInspection.UseEllipsisInPropertyInspection"/>
     <localInspection language="Properties" shortName="AlphaUnsortedPropertiesFile" bundle="messages.PropertiesBundle"
                      key="alpha.unsorted.properties.file.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="false" level="WEAK WARNING"
@@ -124,6 +133,29 @@
 
     <lang.inspectionSuppressor language="Properties" implementationClass="com.intellij.lang.properties.codeInspection.PropertiesInspectionSuppressor"/>
     <qualifiedNameProvider implementation="com.intellij.lang.properties.ide.actions.PropertiesQualifiedNameProvider"/>
+
+    <psi.referenceContributor language="Properties" implementation="com.intellij.lang.properties.PropertiesWebReferenceContributor"/>
+
+    <liveTemplateContext contextId="Properties" implementation="com.intellij.lang.properties.template.PropertiesContextType"/>
+    <structuralsearch.profile implementation="com.intellij.lang.properties.structuralsearch.PropertiesStructuralSearchProfile"/>
+
+    <intentionAction>
+      <language>Properties</language>
+      <className>com.intellij.lang.properties.actions.CopyPropertyValueToClipboardIntention</className>
+      <bundleName>messages.PropertiesBundle</bundleName>
+      <categoryKey>intention.category.properties</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>Properties</language>
+      <className>com.intellij.lang.properties.actions.CopyPropertyKeyToClipboardIntention</className>
+      <bundleName>messages.PropertiesBundle</bundleName>
+      <categoryKey>intention.category.properties</categoryKey>
+    </intentionAction>
+
+    <completion.contributor language="Properties"
+                            implementationClass="com.intellij.lang.properties.providers.slf4j.SimpleLoggerPropertiesCompletionContributor"/>
+    <properties.implicitPropertyUsageProvider implementation="com.intellij.lang.properties.providers.slf4j.SimpleLoggerImplicitPropertiesUsageProvider"/>
   </extensions>
   <projectListeners>
     <listener class="com.intellij.lang.properties.Native2AsciiListener" topic="com.intellij.openapi.vfs.encoding.EncodingManagerListener"/>

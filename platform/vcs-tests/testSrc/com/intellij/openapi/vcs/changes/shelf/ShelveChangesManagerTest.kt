@@ -15,12 +15,18 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.*
 import java.nio.file.Paths
 
+@RunsInEdt
 class ShelveChangesManagerTest {
   companion object {
     @ClassRule
     @JvmField
     val appRule = ApplicationRule()
+
+    @ClassRule
+    @JvmField
+    val edtRule = EdtRule()
   }
+
   private lateinit var shelvedChangesManager: ShelveChangesManager
 
   private lateinit var project: Project
@@ -134,8 +140,8 @@ class ShelveChangesManagerTest {
   fun `create patch from shelved changes`() {
     val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
     shelvedChangeList.loadChangesIfNeeded(project)
-    val selectedPaths = listOf(ShelvedWrapper(shelvedChangeList.changes!!.first()).path,
-                               ShelvedWrapper(shelvedChangeList.binaryFiles!!.first()).path)
+    val selectedPaths = listOf(ShelvedWrapper(shelvedChangeList.changes!!.first(), shelvedChangeList).path,
+                               ShelvedWrapper(shelvedChangeList.binaryFiles!!.first(), shelvedChangeList).path)
     val patchBuilder = ShelfPatchBuilder(project, shelvedChangeList, selectedPaths)
     val patches = patchBuilder.buildPatches(project.stateStore.projectBasePath, emptyList(), false, false)
     TestCase.assertTrue(patches.size == selectedPaths.size)

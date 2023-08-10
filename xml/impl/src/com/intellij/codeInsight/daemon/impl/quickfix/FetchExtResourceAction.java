@@ -423,8 +423,7 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
             }
           }
         }
-        else if (element instanceof XmlTag) {
-          final XmlTag tag = (XmlTag)element;
+        else if (element instanceof XmlTag tag) {
           String schemaLocation = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
 
           if (schemaLocation != null) {

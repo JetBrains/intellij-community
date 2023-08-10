@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.icons.AllIcons;
@@ -18,10 +18,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
@@ -41,8 +38,10 @@ import java.util.Map;
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 /**
- * @author Sergey Evdokimov
+ * @deprecated use {@link com.intellij.openapi.roots.ui.configuration.SdkComboBox}
+ * with {@link com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel} instead
  */
+@Deprecated(forRemoval = true)
 public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSystemJdkComboBox.JdkComboBoxItem> {
   private static final int MAX_PATH_LENGTH = 50;
 
@@ -137,7 +136,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
 
       if (group.getChildrenCount() == 0) {
         SimpleJavaSdkType javaSdkType = SimpleJavaSdkType.getInstance();
-        final AnAction addAction = new DumbAwareAction(javaSdkType.getPresentableName(), null, javaSdkType.getIconForAddAction()) {
+        final AnAction addAction = new DumbAwareAction(javaSdkType.getPresentableName(), null, javaSdkType.getIcon()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             jdksModel.doAdd(ExternalSystemJdkComboBox.this, selectedJdk, javaSdkType, updateTree);
@@ -173,23 +172,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
   }
 
 
-  /**
-   * @deprecated because it do nothing
-   */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public @NotNull ExternalSystemJdkComboBox withoutJre() {
-    return this;
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public boolean isHighlightInternalJdk() {
-    return myHighlightInternalJdk;
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public void setHighlightInternalJdk(boolean highlightInternalJdk) {
     myHighlightInternalJdk = highlightInternalJdk;
   }
@@ -297,13 +280,13 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
     String versionString = sdk.getVersionString();
     String homePath = sdk.getHomePath();
     String path = homePath == null ? null : truncateLongPath(homePath);
-    if(versionString == null && path == null) {
+    if (versionString == null && path == null) {
       return "";
     }
     if (path == null) {
       return versionString;
     }
-    if (versionString == null){
+    if (versionString == null) {
       return ExternalSystemBundle.message("external.system.sdk.hint.path", path);
     }
     return ExternalSystemBundle.message("external.system.sdk.hint.path.and.version", versionString, path);
@@ -331,12 +314,12 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
   }
 
   static class JdkComboBoxItem {
-    private final String jdkName;
+    private final @NlsSafe String jdkName;
     private final @NlsContexts.Label String label;
     private final @NlsContexts.HintText String comment;
     private final boolean valid;
 
-    JdkComboBoxItem(String jdkName, @NlsContexts.Label String label, @NlsContexts.HintText String comment, boolean valid) {
+    JdkComboBoxItem(@NlsSafe String jdkName, @NlsContexts.Label String label, @NlsContexts.HintText String comment, boolean valid) {
       this.jdkName = jdkName;
       this.label = label;
       this.comment = comment;

@@ -27,19 +27,21 @@ public interface Constants {
   @NonNls String DESCRIPTION_KEY = "description";
 
   enum StringKey {
-    CONTENT("content"),
-    NAME("name"),
-    CONTENT_NAME("contentName"),
-    WHILE("while"),
-    END("end"),
-    SCOPE_NAME("scopeName"),
-    MATCH("match"),
-    BEGIN("begin");
+    CONTENT("content", '$'),
+    NAME("name", '$'),
+    CONTENT_NAME("contentName", '$'),
+    WHILE("while", '\\'),
+    END("end", '\\'),
+    SCOPE_NAME("scopeName", '$'),
+    MATCH("match", '\\'),
+    BEGIN("begin", '\\');
 
     public final String value;
+    public final char backReferencePrefix;
 
-    StringKey(String name) {
+    StringKey(String name, char backReferencePrefix) {
       value = name;
+      this.backReferencePrefix = backReferencePrefix;
     }
 
     @Nullable
@@ -76,7 +78,6 @@ public interface Constants {
   }
 
   // VALUES
-  @NonNls String DEFAULT_SCOPE_NAME = "default";
   @NonNls String INCLUDE_SELF_VALUE = "$self";
   @NonNls String INCLUDE_BASE_VALUE = "$base";
   @NonNls String BOLD_FONT_STYLE = "bold";
@@ -98,15 +99,22 @@ public interface Constants {
   // PREFERENCES
   @NonNls String HIGHLIGHTING_PAIRS_KEY = "highlightingPairs";
   @NonNls String SMART_TYPING_PAIRS_KEY = "smartTypingPairs";
+  @NonNls String INDENTATION_RULES = "indentationRules";
 
-  // we should depend on intellij util classes as least as possible
+  // INDENTATION PATTERNS
+  @NonNls String INCREASE_INDENT_PATTERN = "increaseIndentPattern";
+  @NonNls String DECREASE_INDENT_PATTERN = "decreaseIndentPattern";
+  @NonNls String INDENT_NEXT_LINE_PATTERN = "indentNextLinePattern";
+  @NonNls String UNINDENTED_LINE_PATTERN = "unIndentedLinePattern";
+
+  // we should depend on intellij util classes as little as possible
   @SuppressWarnings("SSBasedInspection")
   Collection<TextMateBracePair> DEFAULT_HIGHLIGHTING_BRACE_PAIRS =
     Arrays.asList(new TextMateBracePair('[', ']'),
                   new TextMateBracePair('{', '}'),
                   new TextMateBracePair('(', ')'));
 
-  // we should depend on intellij util classes as least as possible
+  // we should depend on intellij util classes as little as possible
   @SuppressWarnings("SSBasedInspection")
   Collection<TextMateBracePair> DEFAULT_SMART_TYPING_BRACE_PAIRS =
     Arrays.asList(new TextMateBracePair('"', '"'),

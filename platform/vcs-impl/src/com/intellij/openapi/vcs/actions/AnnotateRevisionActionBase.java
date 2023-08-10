@@ -9,7 +9,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
@@ -62,10 +62,7 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
     return null;
   }
 
-  protected int getAnnotatedLine(@NotNull AnActionEvent e) {
-    Editor editor = getEditor(e);
-    return editor == null ? 0 : editor.getCaretModel().getLogicalPosition().line;
-  }
+  protected abstract int getAnnotatedLine(@NotNull AnActionEvent e);
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -99,7 +96,8 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
     final VirtualFile file = getFile(e);
     final AbstractVcs vcs = getVcs(e);
 
-    annotate(Objects.requireNonNull(file), Objects.requireNonNull(fileRevision), Objects.requireNonNull(vcs), getEditor(e), getAnnotatedLine(e));
+    annotate(Objects.requireNonNull(file), Objects.requireNonNull(fileRevision), Objects.requireNonNull(vcs), getEditor(e),
+             getAnnotatedLine(e));
   }
 
   public static void annotate(@NotNull VirtualFile file,
@@ -128,7 +126,7 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
         try {
           FileAnnotation fileAnnotation = annotationProvider.annotate(file, fileRevision);
 
-          int newLine = translateLine(oldContent, fileAnnotation.getAnnotatedContent(), annotatedLine);
+          int newLine = annotatedLine < 0 ? -1 : translateLine(oldContent, fileAnnotation.getAnnotatedContent(), annotatedLine);
 
           fileAnnotationRef.set(fileAnnotation);
           newLineRef.set(newLine);
@@ -158,7 +156,7 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
     });
 
     try {
-      semaphore.tryAcquire(ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, TimeUnit.MILLISECONDS);
+      semaphore.tryAcquire(ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, TimeUnit.MILLISECONDS);
 
       // We want to let Backgroundable task open editor if it was fast enough.
       // This will remove blinking on editor opening (step 1 - editor opens, step 2 - annotations are shown).

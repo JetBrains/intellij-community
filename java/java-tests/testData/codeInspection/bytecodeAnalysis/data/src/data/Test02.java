@@ -2,9 +2,6 @@ package bytecodeAnalysis.data;
 
 import bytecodeAnalysis.*;
 
-/**
- * @author lambdamix
- */
 public final class Test02 {
   @ExpectContract(pure = true)
   @ExpectNotNull

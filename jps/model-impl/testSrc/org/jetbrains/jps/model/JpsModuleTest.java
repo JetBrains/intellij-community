@@ -27,10 +27,7 @@ public class JpsModuleTest extends JpsModelTestCase {
   public void testAddSourceRoot() {
     final JpsModule module = myProject.addModule("m", JpsJavaModuleType.INSTANCE);
     JavaSourceRootProperties properties = JpsJavaExtensionService.getInstance().createSourceRootProperties("com.xxx");
-    final JpsModuleSourceRoot sourceRoot = module.addSourceRoot("file://url", JavaSourceRootType.SOURCE, properties);
-
-    assertSameElements(myDispatcher.retrieveAdded(JpsModule.class), module);
-    assertSameElements(myDispatcher.retrieveAdded(JpsModuleSourceRoot.class), sourceRoot);
+    module.addSourceRoot("file://url", JavaSourceRootType.SOURCE, properties);
 
     final JpsModuleSourceRoot root = assertOneElement(module.getSourceRoots());
     assertEquals("file://url", root.getUrl());
@@ -56,28 +53,6 @@ public class JpsModuleTest extends JpsModelTestCase {
     assertEquals("*.class", pattern.getPattern());
   }
 
-  public void testModifiableModel() {
-    final JpsModule module = myProject.addModule("m", JpsJavaModuleType.INSTANCE);
-    final JpsModuleSourceRoot root0 = module.addSourceRoot("url1", JavaSourceRootType.SOURCE);
-    myDispatcher.clear();
-
-    final JpsModel modifiableModel = myModel.createModifiableModel(new TestJpsEventDispatcher());
-    final JpsModule modifiableModule = assertOneElement(modifiableModel.getProject().getModules());
-    modifiableModule.addSourceRoot("url2", JavaSourceRootType.TEST_SOURCE);
-    modifiableModel.commit();
-
-    assertEmpty(myDispatcher.retrieveAdded(JpsModule.class));
-    assertEmpty(myDispatcher.retrieveRemoved(JpsModule.class));
-
-    final List<? extends JpsModuleSourceRoot> roots = module.getSourceRoots();
-    assertEquals(2, roots.size());
-    assertSame(root0, roots.get(0));
-    final JpsModuleSourceRoot root1 = roots.get(1);
-    assertEquals("url2", root1.getUrl());
-    assertOrderedEquals(myDispatcher.retrieveAdded(JpsModuleSourceRoot.class), root1);
-    assertEmpty(myDispatcher.retrieveChanged(JpsModuleSourceRoot.class));
-  }
-
   public void testAddDependency() {
     final JpsModule module = myProject.addModule("m", JpsJavaModuleType.INSTANCE);
     final JpsLibrary library = myProject.addLibrary("l", JpsJavaLibraryType.INSTANCE);
@@ -90,26 +65,6 @@ public class JpsModuleTest extends JpsModelTestCase {
     assertInstanceOf(dependencies.get(0), JpsModuleSourceDependency.class);
     assertSame(library, assertInstanceOf(dependencies.get(1), JpsLibraryDependency.class).getLibrary());
     assertSame(dep, assertInstanceOf(dependencies.get(2), JpsModuleDependency.class).getModule());
-  }
-
-  public void testChangeElementInModifiableModel() {
-    final JpsModule module = myProject.addModule("m", JpsJavaModuleType.INSTANCE);
-    final JpsModule dep = myProject.addModule("dep", JpsJavaModuleType.INSTANCE);
-    final JpsLibrary library = myProject.addLibrary("l", JpsJavaLibraryType.INSTANCE);
-    module.getDependenciesList().addLibraryDependency(library);
-    myDispatcher.clear();
-
-    final JpsModel modifiableModel = myModel.createModifiableModel(new TestJpsEventDispatcher());
-    final JpsModule m = modifiableModel.getProject().getModules().get(0);
-    assertEquals("m", m.getName());
-    m.getDependenciesList().getDependencies().get(1).remove();
-    m.getDependenciesList().addModuleDependency(dep);
-    modifiableModel.commit();
-    assertOneElement(myDispatcher.retrieveRemoved(JpsLibraryDependency.class));
-    assertSame(dep, assertOneElement(myDispatcher.retrieveAdded(JpsModuleDependency.class)).getModuleReference().resolve());
-    List<JpsDependencyElement> dependencies = module.getDependenciesList().getDependencies();
-    assertEquals(2, dependencies.size());
-    assertSame(dep, assertInstanceOf(dependencies.get(1), JpsModuleDependency.class).getModuleReference().resolve());
   }
 
   public void testCreateReferenceByModule() {

@@ -3,7 +3,8 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,8 +14,6 @@ import java.util.Arrays;
  * Highly customizable {@link LineWrapPositionStrategy} implementation.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy {
 
@@ -25,7 +24,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
   private static final int NON_ID_WEIGHT = (Rule.DEFAULT_WEIGHT - 1) / 2;
 
   /** Holds symbols wrap rules by symbol. */
-  private final Int2ObjectOpenHashMap<Rule> myRules = new Int2ObjectOpenHashMap<>();
+  private final IntObjectMap<Rule> myRules = ContainerUtil.createConcurrentIntObjectMap();
   private final Storage myOffset2weight = new Storage();
 
   @Override
@@ -111,9 +110,12 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
       Rule rule = myRules.get(c);
       if (rule != null) {
         switch (rule.condition) {
-          case BOTH:
-          case BEFORE: return i;
-          case AFTER: if (i < endOffset - 1) return i + 1;
+          case BOTH, BEFORE -> {
+            return i;
+          }
+          case AFTER -> {
+            if (i < endOffset - 1) return i + 1;
+          }
         }
       }
 

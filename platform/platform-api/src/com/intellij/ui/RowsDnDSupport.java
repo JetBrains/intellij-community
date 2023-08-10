@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.dnd.*;
@@ -19,16 +19,19 @@ public final class RowsDnDSupport {
   }
 
   public static void install(@NotNull final JTable table, @NotNull final EditableModel model) {
+    if (GraphicsEnvironment.isHeadless()) return;
     table.setDragEnabled(true);
     installImpl(table, model);
   }
 
   public static void install(@NotNull final JList list, @NotNull final EditableModel model) {
+    if (GraphicsEnvironment.isHeadless()) return;
     list.setDragEnabled(true);
     installImpl(list, model);
   }
 
   public static void install(@NotNull final JTree tree, @NotNull final EditableModel model) {
+    if (GraphicsEnvironment.isHeadless()) return;
     tree.setDragEnabled(true);
     installImpl(tree, model);
   }
@@ -38,7 +41,7 @@ public final class RowsDnDSupport {
     DnDSupport.createBuilder(component)
       .setBeanProvider(info -> {
         final Point p = info.getPoint();
-        return new DnDDragStartBean(new RowDragInfo(component, Integer.valueOf(getRow(component, p))));
+        return new DnDDragStartBean(new RowDragInfo(component, getRow(component, p)));
       })
       .setTargetChecker(new DnDTargetChecker() {
         @Override
@@ -67,18 +70,16 @@ public final class RowsDnDSupport {
             boolean canDrop = ((RefinedDropSupport)model).canDrop(oldIndex, newIndex, position);
             event.setDropPossible(canDrop);
             if (canDrop && oldIndex != newIndex) {
-              if (position == BELOW) {
-                cellBounds.y += cellBounds.height - 2;
-              }
-              RelativeRectangle rectangle = new RelativeRectangle(component, cellBounds);
               switch (position) {
                 case INTO:
-                  event.setHighlighting(rectangle, DnDEvent.DropTargetHighlightingType.RECTANGLE);
+                  event.setHighlighting(new RelativeRectangle(component, cellBounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
                   break;
-                case ABOVE:
                 case BELOW:
-                  rectangle.getDimension().height = 2;
-                  event.setHighlighting(rectangle, DnDEvent.DropTargetHighlightingType.FILLED_RECTANGLE);
+                  cellBounds.y += cellBounds.height;
+                case ABOVE:
+                  cellBounds.y -= -1;
+                  cellBounds.height = 2;
+                  event.setHighlighting(new RelativeRectangle(component, cellBounds), DnDEvent.DropTargetHighlightingType.FILLED_RECTANGLE);
                   break;
               }
             }
@@ -149,7 +150,7 @@ public final class RowsDnDSupport {
       return ((JTable)component).rowAtPoint(point);
     }
     else if (component instanceof JList) {
-      return ((JList)component).locationToIndex(point);
+      return ((JList<?>)component).locationToIndex(point);
     }
     else if (component instanceof JTree) {
       return ((JTree)component).getClosestRowForLocation(point.x, point.y);
@@ -181,7 +182,7 @@ public final class RowsDnDSupport {
       return rectangle;
     }
     else if (component instanceof JList) {
-      return ((JList)component).getCellBounds(row, row);
+      return ((JList<?>)component).getCellBounds(row, row);
     }
     else if (component instanceof JTree) {
       return ((JTree)component).getRowBounds(row);
@@ -196,7 +197,7 @@ public final class RowsDnDSupport {
       ((JTable)component).getSelectionModel().setSelectionInterval(row, row);
     }
     else if (component instanceof JList) {
-      ((JList)component).setSelectedIndex(row);
+      ((JList<?>)component).setSelectedIndex(row);
     }
     else if (component instanceof JTree) {
       ((JTree)component).setSelectionRow(row);
@@ -206,14 +207,7 @@ public final class RowsDnDSupport {
     }
   }
 
-  private static class RowDragInfo {
-    public final JComponent component;
-    public final int row;
-
-    RowDragInfo(JComponent component, int row) {
-      this.component = component;
-      this.row = row;
-    }
+  private record RowDragInfo(JComponent component, int row) {
   }
 
   public interface RefinedDropSupport {

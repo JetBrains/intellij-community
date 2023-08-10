@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 
-/**
- * @author ven
- */
 public final class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
   private static final Key<CachedValue<GrGdkMethodImpl>> CACHED_STATIC = Key.create("Cached static gdk method");
   private static final Key<CachedValue<GrGdkMethodImpl>> CACHED_NON_STATIC = Key.create("Cached instance gdk method");
@@ -80,9 +77,7 @@ public final class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMe
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof GrGdkMethodImpl)) return false;
-
-    GrGdkMethodImpl that = (GrGdkMethodImpl)o;
+    if (!(o instanceof GrGdkMethodImpl that)) return false;
 
     if (myMethod != null ? !myMethod.equals(that.myMethod) : that.myMethod != null) return false;
     if (hasModifierProperty(PsiModifier.STATIC) != that.hasModifierProperty(PsiModifier.STATIC)) return false;

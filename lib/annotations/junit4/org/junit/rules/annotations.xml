@@ -1,5 +1,8 @@
 <root>
-  <item
+    <item name='org.junit.rules.ExpectedException org.junit.rules.ExpectedException none()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item
       name='org.junit.rules.ExternalResource org.junit.runners.model.Statement apply(org.junit.runners.model.Statement, org.junit.runner.Description)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

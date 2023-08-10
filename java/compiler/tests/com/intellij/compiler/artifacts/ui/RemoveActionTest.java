@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts.ui;
 
 import com.intellij.openapi.roots.libraries.Library;
@@ -37,12 +38,14 @@ public class RemoveActionTest extends ArtifactEditorTestCase {
     selectNode("x/y/z.txt");
     removeSelected(true);
 
-    assertLayout("<root>\n" +
-                 " x/\n");
+    assertLayout("""
+                   <root>
+                    x/
+                   """);
   }
 
   public void testJarFileInLibrary() {
-    VirtualFile jDomJar = getJDomJar();
+    VirtualFile jDomJar = getFastUtilJar();
     final Library library = addProjectLibrary(null, "jdom", jDomJar);
     createEditor(addArtifact(root().lib(library)), true);
 
@@ -75,10 +78,11 @@ public class RemoveActionTest extends ArtifactEditorTestCase {
 
     selectNode("x/dir");
 
-    assertLayout("<root>\n" +
-                 " x/\n" +
-                 "  artifact:a1\n" +
-                 "  artifact:a2");
+    assertLayout("""
+                   <root>
+                    x/
+                     artifact:a1
+                     artifact:a2""");
     removeSelected(true);
     assertLayout("<root>\n" +
                  " x/");

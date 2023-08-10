@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
@@ -144,8 +145,8 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
 
   private fun replaceByLibrary(library: Library, configuration: NewLibraryConfiguration) {
     val annotationUrls = library.getUrls(AnnotationOrderRootType.getInstance())
-    ProjectStructureConfigurable.getInstance(project).registerObsoleteLibraryRoots((library.getFiles(OrderRootType.CLASSES) +
-                                                                                    library.getFiles(OrderRootType.SOURCES)).asList())
+    val libraryRoots = library.getFiles(OrderRootType.CLASSES) + library.getFiles(OrderRootType.SOURCES)
+    context.modulesConfigurator.projectStructureConfigurable.registerObsoleteLibraryRoots(libraryRoots.asList())
     replaceLibrary(library) { editor ->
       editor.properties = configuration.properties
       editor.removeAllRoots()
@@ -242,7 +243,7 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
     if (file.isDirectory) {
       file.children.forEach { collectNestedJars(it, result) }
     }
-    else if (file.fileType == ArchiveFileType.INSTANCE) {
+    else if (FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE)) {
       val jarRootUrl = VfsUtil.getUrlForLibraryRoot(VfsUtil.virtualToIoFile(file))
       VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarRootUrl)?.let { result.add(it) }
     }

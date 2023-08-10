@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public final class EnumerationChildrenRenderer extends ReferenceRenderer implements ChildrenRenderer{
+public final class EnumerationChildrenRenderer extends ReferenceRenderer implements ChildrenRenderer {
   public static final @NonNls String UNIQUE_ID = "EnumerationChildrenRenderer";
 
   private boolean myAppendDefaultChildren;
@@ -128,7 +128,7 @@ public final class EnumerationChildrenRenderer extends ReferenceRenderer impleme
 
   @Override
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
-    return ((ValueDescriptor) node.getDescriptor()).getDescriptorEvaluation(context);
+    return ((ValueDescriptor)node.getDescriptor()).getDescriptorEvaluation(context);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.Disposable;
@@ -10,9 +10,6 @@ import com.intellij.psi.impl.file.impl.FileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author peter
- */
 public abstract class PsiManagerEx extends PsiManager {
   public static PsiManagerEx getInstanceEx(Project project) {
     //noinspection SSBasedInspection
@@ -26,8 +23,7 @@ public abstract class PsiManagerEx extends PsiManager {
 
   public abstract boolean isAssertOnFileLoading(@NotNull VirtualFile file);
 
-  @NotNull
-  public abstract FileManager getFileManager();
+  public abstract @NotNull FileManager getFileManager();
 
   public abstract void beforeChildAddition(@NotNull PsiTreeChangeEventImpl event);
 

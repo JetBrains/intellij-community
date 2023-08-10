@@ -28,15 +28,11 @@ public class InstanceFilterEditor extends PatternFilterEditor {
                                                    try {
                                                      Long.parseLong(inputString);
                                                      return null;
-                                                   } catch (NumberFormatException e) {
+                                                   }
+                                                   catch (NumberFormatException e) {
                                                      return JavaDebuggerBundle
                                                        .message("add.instance.filter.dialog.error.numeric.value.expected");
                                                    }
-                                                 }
-
-                                                 @Override
-                                                 public boolean checkInput(String inputString) {
-                                                   return getErrorText(inputString) == null;
                                                  }
 
                                                  @Override

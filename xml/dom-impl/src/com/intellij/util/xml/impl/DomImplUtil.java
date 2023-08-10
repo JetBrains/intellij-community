@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,9 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public final class DomImplUtil {
   private static final Logger LOG = Logger.getInstance(DomImplUtil.class);
 
@@ -128,7 +125,7 @@ public final class DomImplUtil {
 
 
   public static List<XmlTag> findSubTags(@NotNull final XmlTag tag, final EvaluatedXmlName name, final XmlFile file) {
-    return findSubTags(tag, name, file, true);
+    return findSubTags(tag, name, file, false);
   }
 
   static List<XmlTag> findSubTags(@NotNull final XmlTag tag, final EvaluatedXmlName name, final XmlFile file, boolean processIncludes) {
@@ -210,8 +207,7 @@ public final class DomImplUtil {
         }
       }
     }
-    if (type instanceof WildcardType) {
-      final WildcardType wildcardType = (WildcardType)type;
+    if (type instanceof WildcardType wildcardType) {
       for (final Type bound : wildcardType.getUpperBounds()) {
         final Class<?> aClass = getErasure(bound);
         if (aClass != null) {

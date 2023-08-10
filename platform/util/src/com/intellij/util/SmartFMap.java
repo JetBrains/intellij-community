@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +11,7 @@ import java.util.function.BiConsumer;
 /**
  * An immutable map optimized for storing few entries with relatively rare updates.
  *
- * @author peter
+ * @see com.intellij.util.fmap.FMap
  */
 public final class SmartFMap<K,V> implements Map<K,V> {
   private static final SmartFMap<?, ?> EMPTY = new SmartFMap<>(ArrayUtilRt.EMPTY_OBJECT_ARRAY);
@@ -35,7 +34,7 @@ public final class SmartFMap<K,V> implements Map<K,V> {
   private static Object doPlus(Object oldMap, Object key, Object value) {
     if (oldMap instanceof Map) {
       //noinspection unchecked
-      Map<Object, Object> newMap = new THashMap<>((Map<Object, Object>)oldMap);
+      Map<Object, Object> newMap = new HashMap<>((Map<Object, Object>)oldMap);
       newMap.put(key, value);
       return newMap;
     }
@@ -165,8 +164,7 @@ public final class SmartFMap<K,V> implements Map<K,V> {
   }
 
   @Override
-  @Nullable
-  public V get(Object key) {
+  public @Nullable V get(Object key) {
     if (key == null) {
       return null;
     }
@@ -210,9 +208,8 @@ public final class SmartFMap<K,V> implements Map<K,V> {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public Set<K> keySet() {
+  public @NotNull Set<K> keySet() {
     if (isEmpty()) return Collections.emptySet();
 
     LinkedHashSet<K> result = new LinkedHashSet<>();
@@ -222,9 +219,8 @@ public final class SmartFMap<K,V> implements Map<K,V> {
     return Collections.unmodifiableSet(result);
   }
 
-  @NotNull
   @Override
-  public Collection<V> values() {
+  public @NotNull Collection<V> values() {
     if (isEmpty()) return Collections.emptyList();
 
     ArrayList<V> result = new ArrayList<>();
@@ -261,9 +257,8 @@ public final class SmartFMap<K,V> implements Map<K,V> {
     return size() == 0;
   }
 
-  @NotNull
   @Override
-  public Set<Entry<K, V>> entrySet() {
+  public @NotNull Set<Entry<K, V>> entrySet() {
     if (isEmpty()) return Collections.emptySet();
 
     LinkedHashSet<Entry<K, V>> set = new LinkedHashSet<>();

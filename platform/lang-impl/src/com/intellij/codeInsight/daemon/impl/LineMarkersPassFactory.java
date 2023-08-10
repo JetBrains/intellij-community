@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
@@ -10,30 +10,40 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-final class LineMarkersPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
+final class LineMarkersPassFactory implements TextEditorHighlightingPassFactoryRegistrar, TextEditorHighlightingPassFactory {
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    registrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, false, Pass.LINE_MARKERS);
+    registrar.registerTextEditorHighlightingPass(this,
+                                                 null,
+                                                 new int[]{Pass.UPDATE_ALL}, false, Pass.LINE_MARKERS);
   }
 
-  @NotNull
+  static @NotNull TextRange expandRangeToCoverWholeLines(@NotNull Document document, @NotNull TextRange textRange) {
+    return MarkupModelImpl.roundToLineBoundaries(document, textRange.getStartOffset(), textRange.getEndOffset());
+  }
+
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    TextRange restrictRange = FileStatusMap.getDirtyTextRange(editor, Pass.LINE_MARKERS);
+  public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+    boolean serializeCodeInsightPasses =
+      ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(file.getProject())).isSerializeCodeInsightPasses();
+    LineMarkersPass.Mode myMode = serializeCodeInsightPasses ? LineMarkersPass.Mode.FAST : LineMarkersPass.Mode.ALL;
+    return createLineMarkersPass(file, editor, myMode, Pass.LINE_MARKERS);
+  }
+
+  static @NotNull TextEditorHighlightingPass createLineMarkersPass(@NotNull PsiFile file, @NotNull Editor editor, @NotNull LineMarkersPass.Mode myMode,
+                                                                   int passId) {
+    TextRange dirtyTextRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, passId);
     Document document = editor.getDocument();
     Project project = file.getProject();
-    if (restrictRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(project, document);
-    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
-    return new LineMarkersPass(project, file, document, expandRangeToCoverWholeLines(document, visibleRange), expandRangeToCoverWholeLines(document, restrictRange));
-  }
-
-  @Nullable
-  private static TextRange expandRangeToCoverWholeLines(@NotNull Document document, TextRange textRange) {
-    if (textRange == null) {
-      return null;
+    if (dirtyTextRange == null || myMode == LineMarkersPass.Mode.NONE) {
+      return new ProgressableTextEditorHighlightingPass.EmptyPass(project, document);
     }
-    return MarkupModelImpl.roundToLineBoundaries(document, textRange.getStartOffset(), textRange.getEndOffset());
+
+    HighlightingSession session = HighlightingSessionImpl.getFromCurrentIndicator(file);
+    ProperTextRange visibleRange = session.getVisibleRange();
+    TextRange priorityBounds = expandRangeToCoverWholeLines(document, visibleRange);
+    TextRange restrictRange = expandRangeToCoverWholeLines(document, dirtyTextRange);
+    return new LineMarkersPass(project, file, document, priorityBounds, restrictRange, myMode, session);
   }
 }

@@ -33,7 +33,7 @@ public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepositor
   @Nullable
   @Override
   public String getAdvertiser() {
-    return TaskBundle.message("html.not.youtrack.customer.yet.get.a.href.https.www.jetbrains.com.youtrack.download.get.youtrack.html.idea.integration.youtrack.a.html");
+    return TaskBundle.message("more.features.available.in.youtrack.plugin");
   }
 
   @Override

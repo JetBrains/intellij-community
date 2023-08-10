@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.injection.ConcatenationAwareInjector;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class ConcatenationInjectorManager extends SimpleModificationTracker implements Disposable {
   public static final ProjectExtensionPointName<ConcatenationAwareInjector> EP_NAME =
     new ProjectExtensionPointName<>("com.intellij.concatenationAwareInjector");

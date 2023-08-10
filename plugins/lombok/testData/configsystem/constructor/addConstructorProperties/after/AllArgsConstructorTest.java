@@ -4,7 +4,7 @@ public class AllArgsConstructorTest {
 
   private final String someProperty;
 
-  @java.beans.ConstructorProperties("someProperty")
+  @java.beans.ConstructorProperties({"someProperty"})
   public AllArgsConstructorTest(String someProperty) {
     this.someProperty = someProperty;
   }

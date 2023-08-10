@@ -3,6 +3,7 @@ package com.intellij.util.text;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
-@State(name = "DateTimeFormatter", storages = @Storage("ui-datetime.xml"))
+@State(name = "DateTimeFormatter", storages = @Storage("ui-datetime.xml"), category = SettingsCategory.SYSTEM)
 public final class DateTimeFormatManager implements PersistentStateComponent<Element> {
   public static final String DEFAULT_DATE_FORMAT = "dd MMM yyyy";
   private boolean myPrettyFormattingAllowed = true;
@@ -80,6 +81,7 @@ public final class DateTimeFormatManager implements PersistentStateComponent<Ele
 
   public void setDateFormatPattern(@NotNull String pattern) {
     try {
+      //noinspection ResultOfObjectAllocationIgnored
       new SimpleDateFormat(pattern);
       myPattern = pattern;
     } catch (Exception ignored) {

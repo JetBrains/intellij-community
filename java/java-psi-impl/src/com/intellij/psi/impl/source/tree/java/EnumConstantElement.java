@@ -25,9 +25,6 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class EnumConstantElement extends CompositeElement implements Constants {
   private static final Logger LOG = Logger.getInstance(EnumConstantElement.class);
   public EnumConstantElement() {

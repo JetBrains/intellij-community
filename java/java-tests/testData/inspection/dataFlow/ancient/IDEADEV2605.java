@@ -20,21 +20,21 @@ public class AndAssign {
         System.out.println("foo");
      }
 
-     r = t;
+     <warning descr="Variable is already assigned to this value">r</warning> = t;
      <warning descr="Condition 'r' at the left side of assignment expression is always 'true'. Can be simplified">r</warning> &= f;                      // Always true
 
      if (<warning descr="Condition 'r' is always 'false'">r</warning>) {                     // Always false
         System.out.println("foo");
      }
 
-     r = f;
+     <warning descr="Variable is already assigned to this value">r</warning> = f;
      <warning descr="Condition 'r' at the left side of assignment expression is always 'false'. Can be simplified">r</warning> &= t;                      // Always false
 
      if (<warning descr="Condition 'r' is always 'false'">r</warning>) {                     // Always false
         System.out.println("foo");
      }
 
-     r = f;
+     <warning descr="Variable is already assigned to this value">r</warning> = f;
      <warning descr="Condition 'r' at the left side of assignment expression is always 'false'. Can be simplified">r</warning> &= f;                      // Always false
 
      if (<warning descr="Condition 'r' is always 'false'">r</warning>) {                     // Always false
@@ -48,7 +48,7 @@ public class AndAssign {
         System.out.println("foo");
      }
 
-     r = t;
+     <warning descr="Variable is already assigned to this value">r</warning> = t;
      <warning descr="Condition 'r' at the left side of assignment expression is always 'true'. Can be simplified">r</warning> |= f<error descr="';' expected"> </error>                      // Always true
 
      if (<warning descr="Condition 'r' is always 'true'">r</warning>) {                     // Always true

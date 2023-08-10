@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.compiler.util;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -25,7 +11,7 @@ import com.intellij.codeInspection.ex.Tools;
 import com.intellij.compiler.options.ValidationConfiguration;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.xml.XMLLanguage;
@@ -45,7 +31,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,9 +39,6 @@ import java.io.DataInput;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author peter
- */
 public class InspectionValidatorWrapper implements Validator {
   private final InspectionValidator myValidator;
   private final PsiManager myPsiManager;
@@ -67,9 +49,12 @@ public class InspectionValidatorWrapper implements Validator {
 
   private static final ThreadLocal<Boolean> ourCompilationThreads = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
-  public InspectionValidatorWrapper(CompilerManager compilerManager, InspectionManager inspectionManager,
-                                    InspectionProjectProfileManager profileManager, PsiDocumentManager psiDocumentManager,
-                                    PsiManager psiManager, InspectionValidator validator) {
+  private InspectionValidatorWrapper(@NotNull CompilerManager compilerManager,
+                                     @NotNull InspectionManager inspectionManager,
+                                     @NotNull InspectionProjectProfileManager profileManager,
+                                     @NotNull PsiDocumentManager psiDocumentManager,
+                                     @NotNull PsiManager psiManager,
+                                     @NotNull InspectionValidator validator) {
     myCompilerManager = compilerManager;
     myInspectionManager = inspectionManager;
     myProfileManager = profileManager;
@@ -79,7 +64,7 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   @NotNull
-  public static InspectionValidatorWrapper create(Project project, InspectionValidator validator) {
+  public static InspectionValidatorWrapper create(@NotNull Project project, @NotNull InspectionValidator validator) {
     return new InspectionValidatorWrapper(
       CompilerManager.getInstance(project),
       InspectionManager.getInstance(project),
@@ -317,7 +302,7 @@ public class InspectionValidatorWrapper implements Validator {
   private static Map<ProblemDescriptor, HighlightDisplayLevel> runInspectionTool(PsiFile file,
                                                                                  LocalInspectionTool inspectionTool,
                                                                                  HighlightDisplayLevel level) {
-    Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<>();
+    Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new java.util.LinkedHashMap<>();
     for (ProblemDescriptor descriptor : runInspectionOnFile(file, inspectionTool)) {
       ProblemHighlightType highlightType = descriptor.getHighlightType();
 
@@ -343,32 +328,31 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   private Map<ProblemDescriptor, HighlightDisplayLevel> runXmlFileSchemaValidation(@NotNull XmlFile xmlFile) {
-    AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(xmlFile));
-
-    List<ExternalAnnotator> annotators = ExternalLanguageAnnotators.allForFile(XMLLanguage.INSTANCE, xmlFile);
-    for (ExternalAnnotator<?, ?> annotator : annotators) {
-      processAnnotator(xmlFile, holder, annotator);
-    }
-    holder.assertAllAnnotationsCreated();
-
-    if (!holder.hasAnnotations()) return Collections.emptyMap();
-
     Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<>();
-    for (Annotation annotation : holder) {
-      HighlightInfo info = HighlightInfo.fromAnnotation(annotation);
-      if (info.getSeverity() == HighlightSeverity.INFORMATION) continue;
+    return AnnotationSessionImpl.computeWithSession(xmlFile, false, holder -> {
+      List<ExternalAnnotator<?,?>> annotators = ExternalLanguageAnnotators.allForFile(XMLLanguage.INSTANCE, xmlFile);
+      for (ExternalAnnotator<?, ?> annotator : annotators) {
+        processAnnotator(xmlFile, holder, annotator);
+      }
+      holder.assertAllAnnotationsCreated();
 
-      PsiElement startElement = xmlFile.findElementAt(info.startOffset);
-      PsiElement endElement = info.startOffset == info.endOffset ? startElement : xmlFile.findElementAt(info.endOffset - 1);
-      if (startElement == null || endElement == null) continue;
+      if (!holder.hasAnnotations()) return Collections.emptyMap();
+      for (Annotation annotation : holder) {
+        HighlightInfo info = HighlightInfo.fromAnnotation(annotation);
+        if (info.getSeverity() == HighlightSeverity.INFORMATION) continue;
 
-      ProblemDescriptor descriptor =
-        myInspectionManager.createProblemDescriptor(startElement, endElement, info.getDescription(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                    false);
-      HighlightDisplayLevel level = info.getSeverity() == HighlightSeverity.ERROR? HighlightDisplayLevel.ERROR: HighlightDisplayLevel.WARNING;
-      problemsMap.put(descriptor, level);
-    }
-    return problemsMap;
+        PsiElement startElement = xmlFile.findElementAt(info.startOffset);
+        PsiElement endElement = info.startOffset == info.endOffset ? startElement : xmlFile.findElementAt(info.endOffset - 1);
+        if (startElement == null || endElement == null) continue;
+
+        ProblemDescriptor descriptor =
+          myInspectionManager.createProblemDescriptor(startElement, endElement, info.getDescription(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                      false);
+        HighlightDisplayLevel level = info.getSeverity() == HighlightSeverity.ERROR? HighlightDisplayLevel.ERROR: HighlightDisplayLevel.WARNING;
+        problemsMap.put(descriptor, level);
+      }
+      return problemsMap;
+    });
   }
 
   private static <X, Y> void processAnnotator(@NotNull XmlFile xmlFile, AnnotationHolderImpl holder, ExternalAnnotator<X, Y> annotator) {

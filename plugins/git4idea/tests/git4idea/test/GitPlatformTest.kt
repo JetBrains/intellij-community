@@ -1,30 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.test
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.Executor.cd
-import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -34,10 +26,7 @@ import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitHandler
-import git4idea.config.GitExecutableManager
-import git4idea.config.GitSaveChangesPolicy
-import git4idea.config.GitVcsApplicationSettings
-import git4idea.config.GitVcsSettings
+import git4idea.config.*
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -91,14 +80,14 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   override fun tearDown() {
-    RunAll(
-      ThrowableRunnable { restoreCredentialHelpers() },
-      ThrowableRunnable { restoreGlobalSslVerify() },
-      ThrowableRunnable { if (::dialogManager.isInitialized) dialogManager.cleanup() },
-      ThrowableRunnable { if (::git.isInitialized) git.reset() },
-      ThrowableRunnable { if (::settings.isInitialized) settings.appSettings.setPathToGit(null) },
-      ThrowableRunnable { super.tearDown() }
-    ).run()
+    runAll(
+      { restoreCredentialHelpers() },
+      { restoreGlobalSslVerify() },
+      { if (::dialogManager.isInitialized) dialogManager.cleanup() },
+      { if (::git.isInitialized) git.reset() },
+      { if (::settings.isInitialized) settings.appSettings.setPathToGit(null) },
+      { super.tearDown() }
+    )
   }
 
   override fun getDebugLogCategories(): Collection<String> {
@@ -227,9 +216,14 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected fun readDetails(hash: String) = readDetails(listOf(hash)).first()
 
   protected fun commit(changes: Collection<Change>) {
-    val exceptions = vcs.checkinEnvironment!!.commit(changes.toList(), "comment", commitContext, mutableSetOf())
+    val exceptions = tryCommit(changes)
     exceptions?.forEach { fail("Exception during executing the commit: " + it.message) }
+  }
+
+  protected fun tryCommit(changes: Collection<Change>): List<VcsException>? {
+    val exceptions = vcs.checkinEnvironment!!.commit(changes.toList(), "comment", commitContext, mutableSetOf())
     updateChangeListManager()
+    return exceptions
   }
 
   protected fun `do nothing on merge`() {
@@ -248,6 +242,13 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     assertTrue("Commit dialog was not shown", vcsHelper.commitDialogWasShown())
   }
 
+  /**
+   * There are small differences between 'recursive' (old) and 'ort' (new) merge algorithms.
+   */
+  protected fun gitUsingOrtMergeAlg(): Boolean {
+    return vcs.version.isLaterOrEqual(GitVersion(2, 34, 0, 0))
+  }
+
   protected fun assertNoChanges() {
     changeListManager.assertNoChanges()
   }
@@ -260,6 +261,11 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
     changeListManager.ensureUpToDate()
     return changeListManager.assertChanges(changes)
+  }
+
+  protected fun updateUntrackedFiles(repo: GitRepository) {
+    repo.untrackedFilesHolder.invalidate()
+    repo.untrackedFilesHolder.createWaiter().waitFor()
   }
 
   protected data class ReposTrinity(val projectRepo: GitRepository, val parent: Path, val bro: Path)

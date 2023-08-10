@@ -1,22 +1,32 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.template.LiveTemplateContext;
+import com.intellij.codeInsight.template.LiveTemplateContextService;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.util.NotNullLazyValue;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-@ApiStatus.Internal
-final class TemplateContextTypes {
+public final class TemplateContextTypes {
+  public static @NotNull List<TemplateContextType> getAllContextTypes() {
+    return ContainerUtil.map(LiveTemplateContextService.getInstance().getLiveTemplateContexts(), LiveTemplateContext::getTemplateContextType);
+  }
 
-  static final NotNullLazyValue<ExtensionPoint<TemplateContextType>> TEMPLATE_CONTEXT_EP =
-    NotNullLazyValue.createValue(() -> TemplateContextType.EP_NAME.getPoint());
+  @SuppressWarnings("unchecked")
+  public static <T extends TemplateContextType> @NotNull T getByClass(@NotNull Class<T> clazz) {
+    LiveTemplateContext liveTemplateContext = LiveTemplateContextService.getInstance().getLiveTemplateContext(clazz);
+    if (liveTemplateContext == null) {
+      throw new IllegalStateException("Template context type with class " + clazz + " is not registered");
+    }
+    return (T)liveTemplateContext.getTemplateContextType();
+  }
 
-  @NotNull
-  public static List<TemplateContextType> getAllContextTypes() {
-    return TEMPLATE_CONTEXT_EP.getValue().getExtensionList();
+  @SuppressWarnings("unchecked")
+  public static <T extends TemplateContextType> @Nullable T getByClassOrNull(@NotNull Class<T> clazz) {
+    LiveTemplateContext liveTemplateContext = LiveTemplateContextService.getInstance().getLiveTemplateContext(clazz);
+    return liveTemplateContext != null ? (T)liveTemplateContext.getTemplateContextType() : null;
   }
 }

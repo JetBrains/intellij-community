@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.popup.AlignedPopup;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
@@ -13,6 +14,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +28,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.ui.dsl.gridLayout.UnscaledGapsKt.toUnscaledGaps;
 
 public class SearchTextField extends JPanel {
 
@@ -57,11 +62,19 @@ public class SearchTextField extends JPanel {
   }
 
   public SearchTextField(boolean historyPopupEnabled, @Nullable String historyPropertyName) {
+    this(historyPopupEnabled, true, historyPropertyName);
+  }
+
+  public SearchTextField(boolean historyPopupEnabled, boolean clearActionEnabled, @Nullable String historyPropertyName) {
     super(new BorderLayout());
     this.historyPopupEnabled = historyPopupEnabled;
 
     myModel = new MyModel();
     myTextField = new TextFieldWithProcessing() {
+      {
+        this.putClientProperty("History.Popup.Enabled", historyPopupEnabled);
+      }
+
       @Override
       public void processKeyEvent(final KeyEvent e) {
         if (preprocessEventForTextField(e)) return;
@@ -74,12 +87,13 @@ public class SearchTextField extends JPanel {
         //noinspection unchecked
         if (ui instanceof Condition && ((Condition)ui).value(e)) return;
 
-        if(e.getX() < JBUIScale.scale(28) && myModel.myFullList.size() > 0) {
+        if (e.getID() == MouseEvent.MOUSE_PRESSED && e.getX() < JBUIScale.scale(28) && myModel.myFullList.size() > 0) {
           myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           if (e.getClickCount() == 1) {
-           showPopup();
+            showPopup();
           }
-        } else {
+        }
+        else {
           myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
         }
         super.processMouseEvent(e);
@@ -93,6 +107,18 @@ public class SearchTextField extends JPanel {
           bounds.width -= 2 * gap;
         }
         return bounds;
+      }
+
+      @Override
+      public String getToolTipText() {
+        if (myPopup != null && myPopup.isVisible()) return null;
+        return super.getToolTipText();
+      }
+
+      @Override
+      public String getToolTipText(MouseEvent event) {
+        if (myPopup != null && myPopup.isVisible()) return null;
+        return super.getToolTipText(event);
       }
     };
     myTextField.setColumns(15);
@@ -138,12 +164,18 @@ public class SearchTextField extends JPanel {
       myTextField.getInputMap().put(SHOW_HISTORY_KEYSTROKE, "showNextHistoryItem");
     }
 
-    myTextField.putClientProperty("JTextField.variant", "search");
-    myTextField.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
+    myTextField.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(4));
     myTextField.putClientProperty("JTextField.Search.CancelAction", (ActionListener)e -> {
       myTextField.setText("");
       onFieldCleared();
     });
+    if (!clearActionEnabled) {
+      myTextField.putClientProperty("JTextField.Search.HideClearAction", true);
+    }
+    myTextField.putClientProperty("JTextField.variant", "search");
+
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, toUnscaledGaps(myTextField.getInsets()));
     DumbAwareAction.create(event -> {
       showPopup();
     }).registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ShowSearchHistory"), myTextField);
@@ -222,7 +254,6 @@ public class SearchTextField extends JPanel {
   public void addCurrentTextToHistory() {
     if (myModel.addElement(getText()) && myHistoryPropertyName != null) {
       PropertiesComponent.getInstance().setValue(myHistoryPropertyName, StringUtil.join(getHistory(), "\n"));
-      reInitPopup();
     }
   }
 
@@ -337,7 +368,7 @@ public class SearchTextField extends JPanel {
 
     public void fireContentsChanged() {
       fireContentsChanged(this, -1, -1);
-      reInitPopup();
+      updatePopup();
     }
 
     public void setItems(List<String> aList) {
@@ -358,29 +389,37 @@ public class SearchTextField extends JPanel {
       final String value = (String)list.getSelectedValue();
       getTextEditor().setText(value != null ? value : "");
       addCurrentTextToHistory();
-      reInitPopup();
     };
   }
 
   protected void showPopup() {
     addCurrentTextToHistory();
-    if ((myPopup == null || !myPopup.isVisible()) && historyPopupEnabled) {
-      reInitPopup();
-      if (isShowing()) {
-        myPopup.showUnderneathOf(getPopupLocationComponent());
-      }
+    if (myPopup != null && myPopup.isVisible()) return;
+    if (historyPopupEnabled) {
+      doShowPopup();
     }
   }
 
-  private void reInitPopup() {
-    hidePopup();
-    final JList<String> list = new JBList<>(myModel);
-    final Runnable chooseRunnable = createItemChosenCallback(list);
-    if(ApplicationManager.getApplication() != null && JBPopupFactory.getInstance() != null) {
+  private void updatePopup() {
+    if (myPopup != null && myPopup.isVisible()) {
+      hidePopup();
+      doShowPopup();
+    }
+  }
+
+  private void doShowPopup() {
+    if (ApplicationManager.getApplication() != null &&
+        JBPopupFactory.getInstance() != null &&
+        isShowing()) {
+      final JList<String> list = new JBList<>(myModel);
+      final Runnable chooseRunnable = createItemChosenCallback(list);
       myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setMovable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(chooseRunnable).createPopup();
+        .setItemChosenCallback(chooseRunnable)
+        .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        .createPopup();
+      AlignedPopup.showUnderneathWithoutAlignment(myPopup, getPopupLocationComponent());
     }
   }
 
@@ -415,15 +454,6 @@ public class SearchTextField extends JPanel {
     return false;
   }
 
-  /**
-   * @deprecated unused
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  public void setSearchIcon(final Icon icon) {
-  }
-
-  @SuppressWarnings("ComponentNotRegistered")
   public static final class FindAction extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
@@ -437,6 +467,11 @@ public class SearchTextField extends JPanel {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(e.getData(KEY) != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }

@@ -1,0 +1,49 @@
+// FILE: test.before.kt
+// "Add non-null asserted (!!) call" "true"
+package p;
+
+fun test(x: Foo) {
+    x.value<caret>.length
+}
+
+// FILE: org/jspecify/nullness/Nullable.java
+package org.jspecify.nullness;
+
+import static java.lang.annotation.ElementType.TYPE_USE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+@Target(TYPE_USE)
+@Retention(RUNTIME)
+public @interface Nullable {}
+
+// FILE: p/Foo.java
+package p;
+
+import org.jspecify.nullness.Nullable;
+
+public class Foo {
+    private @Nullable String value;
+
+    public Foo(@Nullable String value) {
+        this.value = value;
+    }
+
+    public @Nullable String getValue() {
+        return this.value;
+    }
+
+    public void setValue(@Nullable String value) {
+        this.value = value;
+    }
+}
+
+// FILE: test.after.kt
+// "Add non-null asserted (!!) call" "true"
+package p;
+
+fun test(x: Foo) {
+    x.value<caret>!!.length
+}

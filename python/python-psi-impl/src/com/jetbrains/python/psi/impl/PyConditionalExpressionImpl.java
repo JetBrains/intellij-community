@@ -13,9 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyConditionalExpressionImpl extends PyElementImpl implements PyConditionalExpression {
   public PyConditionalExpressionImpl(ASTNode astNode) {
     super(astNode);

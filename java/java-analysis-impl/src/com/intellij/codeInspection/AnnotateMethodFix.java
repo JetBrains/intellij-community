@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ReadAction;
@@ -94,6 +95,15 @@ public class AnnotateMethodFix implements LocalQuickFix {
       annotateMethod(psiMethod);
     }
     UndoUtil.markPsiFileForUndo(method.getContainingFile());
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    if (!annotateSelf()) return IntentionPreviewInfo.EMPTY;
+    PsiMethod method = PsiTreeUtil.getParentOfType(previewDescriptor.getPsiElement(), PsiMethod.class);
+    if (method == null) return IntentionPreviewInfo.EMPTY;
+    annotateMethod(method);
+    return IntentionPreviewInfo.DIFF;
   }
 
   protected boolean annotateOverriddenMethods() {

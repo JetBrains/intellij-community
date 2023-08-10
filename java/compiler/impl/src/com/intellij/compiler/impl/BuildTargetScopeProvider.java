@@ -36,7 +36,7 @@ public abstract class BuildTargetScopeProvider {
   /**
    * @deprecated override {@link #getBuildTargetScopes(CompileScope, Project, boolean)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   @Contract(pure = true)

@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.java.codeInsight.AbstractParameterInfoTestCase;
 import com.intellij.openapi.actionSystem.IdeActions;
 
@@ -77,17 +79,19 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
   }
 
   public void testAddImport() {
-    configureJava("class C {\n" +
-                  "  java.util.List<caret>\n" +
-                  "}");
+    configureJava("""
+                    class C {
+                      java.util.List<caret>
+                    }""");
     type("<ArrayList");
     runImportClassIntention();
     tabOut();
-    checkResult("import java.util.ArrayList;\n" +
-                "\n" +
-                "class C {\n" +
-                "  java.util.List<ArrayList><caret>\n" +
-                "}");
+    checkResult("""
+                  import java.util.ArrayList;
+
+                  class C {
+                    java.util.List<ArrayList><caret>
+                  }""");
   }
 
   public void testSemicolon() {
@@ -143,6 +147,53 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
                 "  static void injected(@Language(\"JAVA\") String value){}" +
                 "}"
     );
+  }
+
+  public void testAnonymousClass() {
+    myFixture.addClass("package p; public class ABC<T> {}");
+    configureJava("""
+                    class Main {
+                      static {
+                        new Runnable() {
+                          {
+                          A<caret>
+                          }
+                        };
+                      }
+                    }""");
+
+    final LookupElement[] elements = myFixture.completeBasic();
+    final LookupElement element = findLookupElementContainingText(elements, "ABC");
+
+    final LookupImpl lookup = getLookup();
+    lookup.finishLookup('<', element);
+
+    waitForParameterInfo();
+    checkResult("""
+                  import p.ABC;
+
+                  class Main {
+                    static {
+                      new Runnable() {
+                        {
+                            ABC<<caret>>
+                        }
+                      };
+                    }
+                  }""");
+    tabOut();
+    checkResult("""
+                  import p.ABC;
+
+                  class Main {
+                    static {
+                      new Runnable() {
+                        {
+                            ABC<><caret>
+                        }
+                      };
+                    }
+                  }""");
   }
 
   private void tabOut() {

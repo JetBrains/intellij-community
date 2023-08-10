@@ -1,20 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.config;
 
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WslPath;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -32,12 +21,14 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.io.URLUtil;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ReferenceType;
 import org.gradle.api.internal.file.IdentityFileResolver;
 import org.gradle.groovy.scripts.TextResourceScriptSource;
 import org.gradle.internal.resource.DefaultTextFileResourceLoader;
 import org.gradle.internal.resource.TextResource;
+import org.gradle.internal.resource.UriTextResource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
@@ -45,18 +36,19 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 public class GradlePositionManager extends ScriptPositionManagerHelper {
-  private static final Pattern GRADLE_CLASS_PATTERN = Pattern.compile(".*_gradle_.*");
-  private static final String SCRIPT_CLOSURE_PREFIX = "build_";
   private static final Key<CachedValue<Map<File, String>>> GRADLE_CLASS_NAME = Key.create("GRADLE_CLASS_NAME");
 
   @Override
   public boolean isAppropriateRuntimeName(@NotNull final String runtimeName) {
-    return runtimeName.startsWith(SCRIPT_CLOSURE_PREFIX) || GRADLE_CLASS_PATTERN.matcher(runtimeName).matches();
+    return true;
   }
 
   @Override
@@ -101,11 +93,28 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
                                           @NotNull GlobalSearchScope scope) {
     String sourceFilePath = getScriptForClassName(refType);
     if (sourceFilePath == null) return null;
-
+    sourceFilePath = getLocalFilePath(project, sourceFilePath);
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(sourceFilePath));
     if (virtualFile == null) return null;
 
     return PsiManager.getInstance(project).findFile(virtualFile);
+  }
+
+  @Override
+  public Collection<? extends FileType> getAcceptedFileTypes() {
+    return Collections.singleton(GradleFileType.INSTANCE);
+  }
+
+  private static String getLocalFilePath(@NotNull Project project, @NotNull String sourceFilePath) {
+    // TODO add the support for other run targets mappings
+    String projectBasePath = project.getBasePath();
+    if (projectBasePath != null && WslPath.isWslUncPath(projectBasePath)) {
+      WSLDistribution wslDistribution = WslPath.getDistributionByWindowsUncPath(projectBasePath);
+      if (wslDistribution != null) {
+        sourceFilePath = wslDistribution.getWindowsPath(sourceFilePath);
+      }
+    }
+    return sourceFilePath;
   }
 
   @Nullable
@@ -136,9 +145,46 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
 
     @Nullable
     private static String calcClassName(File scriptFile) {
-      TextResource resource = new DefaultTextFileResourceLoader(new IdentityFileResolver()).loadFile("script", scriptFile);
-      TextResourceScriptSource scriptSource = new TextResourceScriptSource(resource);
-      return scriptSource.getClassName();
+      TextResource resource = getResource(scriptFile);
+      return new TextResourceScriptSource(resource).getClassName();
+    }
+
+    private static TextResource getResource(File scriptFile) {
+      TextResource resource = null;
+      // TODO add the support for other run targets mappings
+      if (WslPath.isWslUncPath(scriptFile.getPath())) {
+        resource = getWslUriResource(scriptFile);
+      }
+      if (resource == null) {
+        resource = new DefaultTextFileResourceLoader(new IdentityFileResolver()).loadFile("script", scriptFile);
+      }
+      return resource;
+    }
+
+    @Nullable
+    private static TextResource getWslUriResource(@NotNull File scriptFile) {
+      WSLDistribution wslDistribution = WslPath.getDistributionByWindowsUncPath(scriptFile.getPath());
+      if (wslDistribution == null) return null;
+      String wslPath = wslDistribution.getWslPath(scriptFile.getPath());
+      if (wslPath == null) return null;
+      return new UriTextResource("script", pathToUri(wslPath), new IdentityFileResolver());
+    }
+
+    // version of File(path).toURI() w/o using system-dependent java.io.File
+    private static @Nullable URI pathToUri(@NotNull String path) {
+      try {
+        String p = slashify(path);
+        return new URI(URLUtil.FILE_PROTOCOL, null, p.startsWith("//") ? ("//" + p) : p, null);
+      }
+      catch (URISyntaxException ignore) {
+      }
+      return null;
+    }
+
+    // java.io.File#slashify
+    private static String slashify(String path) {
+      String name = FileUtil.toSystemIndependentName(path);
+      return name.startsWith("/") ? name : "/" + name;
     }
   }
 }

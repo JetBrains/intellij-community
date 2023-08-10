@@ -1,35 +1,29 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 /**
- * @author peter
+ * Non-thread safe version of nullable lazy value.
+ * Please use it only in one case: if the value is never shared / calculated between different threads.
+ * Since the state has two non-volatile fields side effects because of using this class between threads are not avoidable
+ * (e.g. NPE in please there it isn't possible at all).
+ *
+ * @see #atomicLazyNullable(Supplier)
+ * @see AtomicNullableLazyValue
+ * @see NotNullLazyValue
  */
 public abstract class NullableLazyValue<T> {
   private boolean myComputed;
-  @Nullable private T myValue;
+  private @Nullable T myValue;
 
-  @Nullable
-  protected abstract T compute();
+  protected abstract @Nullable T compute();
 
-  @Nullable
-  public T getValue() {
+  @SuppressWarnings("DuplicatedCode")
+  public @Nullable T getValue() {
     T value = myValue;
     if (!myComputed) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
@@ -42,13 +36,49 @@ public abstract class NullableLazyValue<T> {
     return value;
   }
 
-  @NotNull
-  public static <T> NullableLazyValue<T> createValue(@NotNull final Factory<? extends T> value) {
-    return new NullableLazyValue<T>() {
+  public boolean isComputed() {
+    return myComputed;
+  }
 
-      @Nullable
+  public static @NotNull <T> NullableLazyValue<T> lazyNullable(@NotNull Supplier<? extends T> value) {
+    return new NullableLazyValue<T>() {
       @Override
-      protected T compute() {
+      protected @Nullable T compute() {
+        return value.get();
+      }
+    };
+  }
+
+  @SuppressWarnings("deprecation")
+  public static @NotNull <T> NullableLazyValue<T> atomicLazyNullable(@NotNull Supplier<? extends T> value) {
+    return new AtomicNullableLazyValue<T>() {
+      @Override
+      protected @Nullable T compute() {
+        return value.get();
+      }
+    };
+  }
+
+  /**
+   * NOTE: Assumes that values computed by different threads are equal and interchangeable
+   * and readers should be ready to get different instances on different invocations of the {@link #getValue()}.
+   */
+  @SuppressWarnings("deprecation")
+  public static @NotNull <T> NullableLazyValue<T> volatileLazyNullable(@NotNull Supplier<? extends T> value) {
+    return new VolatileNullableLazyValue<T>() {
+      @Override
+      protected @Nullable T compute() {
+        return value.get();
+      }
+    };
+  }
+
+  /** @deprecated please use {@link NullableLazyValue#lazyNullable} instead */
+  @Deprecated
+  public static @NotNull <T> NullableLazyValue<T> createValue(@NotNull Factory<? extends T> value) {
+    return new NullableLazyValue<T>() {
+      @Override
+      protected @Nullable T compute() {
         return value.create();
       }
     };

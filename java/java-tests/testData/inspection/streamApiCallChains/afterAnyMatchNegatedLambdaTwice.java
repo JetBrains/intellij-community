@@ -1,4 +1,4 @@
-// "Replace !Stream.anyMatch(x -> !(...)) with allMatch(...)" "true"
+// "Replace !Stream.anyMatch(x -> !(...)) with allMatch(...)" "true-preview"
 
 import java.util.*;
 

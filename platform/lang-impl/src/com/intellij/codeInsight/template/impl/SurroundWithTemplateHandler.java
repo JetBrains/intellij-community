@@ -23,6 +23,11 @@ import java.util.*;
 
 public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!editor.getSelectionModel().hasSelection()) {
@@ -46,7 +51,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   }
 
   @NotNull
-  public static List<AnAction> createActionGroup(@NotNull Editor editor, @NotNull PsiFile file, @NotNull Set<Character> usedMnemonicsSet) {
+  public static List<AnAction> createActionGroup(@NotNull Editor editor, @NotNull PsiFile file, @NotNull Set<? super Character> usedMnemonicsSet) {
     TemplateActionContext templateActionContext = TemplateActionContext.surrounding(file, editor);
     List<CustomLiveTemplate> customTemplates = TemplateManagerImpl.listApplicableCustomTemplates(templateActionContext);
     List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplates(templateActionContext);

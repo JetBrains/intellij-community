@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisScope;
@@ -35,16 +35,22 @@ public abstract class RefManager {
    *
    * @return the analysis scope.
    */
-  @Nullable
-  public abstract AnalysisScope getScope();
+  public abstract @Nullable AnalysisScope getScope();
+
+  /**
+   * To submit task during processing of project usages. The task will be run in a read action in parallel on a separate thread if possible.
+   * @param runnable  the task to run.
+   */
+  public void executeTask(Runnable runnable) {
+    runnable.run();
+  }
 
   /**
    * Returns the project for which the reference graph has been built.
    *
    * @return the project instance.
    */
-  @NotNull
-  public abstract Project getProject();
+  public abstract @NotNull Project getProject();
 
   /**
    * Returns the reference graph node pointing to the project for which the reference
@@ -52,8 +58,7 @@ public abstract class RefManager {
    *
    * @return the node for the project.
    */
-  @NotNull
-  public abstract RefProject getRefProject();
+  public abstract @NotNull RefProject getRefProject();
 
   /**
    * Creates (if necessary) and returns the reference graph node for the specified module.
@@ -61,8 +66,7 @@ public abstract class RefManager {
    * @param module the module for which the reference graph node is requested.
    * @return the node for the module, or null if {@code module} is null.
    */
-  @Nullable
-  public abstract RefModule getRefModule(@Nullable Module module);
+  public abstract @Nullable RefModule getRefModule(@Nullable Module module);
 
   /**
    * Creates (if necessary) and returns the reference graph node for the specified PSI element.
@@ -71,8 +75,7 @@ public abstract class RefManager {
    * @return the node for the element, or null if the element is not valid or does not have
    * a corresponding reference graph node type (is not a field, method, class or file).
    */
-  @Nullable
-  public abstract RefElement getReference(@Nullable PsiElement elem);
+  public abstract @Nullable RefElement getReference(@Nullable PsiElement elem);
 
   /**
    * Creates (if necessary) and returns the reference graph node for the PSI element specified by its type and FQName.
@@ -82,44 +85,57 @@ public abstract class RefManager {
    * @return the node for the element, or null if the element is not found or does not have
    *         a corresponding reference graph node type.
    */
-  @Nullable
-  public abstract RefEntity getReference(String type, String fqName);
+  public abstract @Nullable RefEntity getReference(String type, String fqName);
 
   public abstract long getLastUsedMask();
 
   public abstract <T> T getExtension(@NotNull Key<T> key);
 
-  @Nullable
-  public abstract String getType(@NotNull RefEntity ref);
+  public abstract @Nullable String getType(@NotNull RefEntity ref);
 
-  @NotNull
-  public abstract RefEntity getRefinedElement(@NotNull RefEntity ref);
+  public abstract @NotNull RefEntity getRefinedElement(@NotNull RefEntity ref);
 
-  @Nullable
-  public Element export(@NotNull RefEntity entity, @NotNull Element parent, final int actualLine) {
+  public @Nullable Element export(@NotNull RefEntity entity, @NotNull Element parent, final int actualLine) {
     Element element = export(entity, actualLine);
     if (element == null) return null;
     parent.addContent(element);
     return element;
   }
 
-  @Nullable
-  public Element export(@NotNull RefEntity entity, final int actualLine) {
+  /**
+   * Writes specified reference into org.jdom.Element. Serialized data is used for reporting of inspection problems.
+   *
+   * @param entity     reference to be serialized
+   * @param actualLine value is used only if {@code entity } is {@link RefElement}. If {@code actualLine != -1} then
+   *                   {@code (actualLine+1)} is used as value for {@code line} element in serialized data.
+   * @return element describing specified reference.
+   */
+  public @Nullable Element export(@NotNull RefEntity entity, final int actualLine) {
     throw new UnsupportedOperationException();
   }
 
-  @Nullable
-  public abstract String getGroupName(@NotNull RefElement entity);
+  /**
+   * Writes specified reference into org.jdom.Element. If {@code entity } is {@link RefElement} then this method
+   * in addition to {@link RefManager#export(RefEntity, int)} reports {@code offset}, {@code length} and {@code highlighted_element}
+   * elements as children of returned element.
+   *
+   * @param entity reference to be serialized
+   * @return element describing specified reference.
+   * @see RefManager#export(RefEntity, int)
+   */
+  public @Nullable Element export(@NotNull RefEntity entity) {
+    throw new UnsupportedOperationException();
+  }
+
+  public abstract @Nullable String getGroupName(@NotNull RefElement entity);
 
   public abstract boolean belongsToScope(@Nullable PsiElement psiElement);
 
-  @Nullable
-  public abstract @NlsSafe String getQualifiedName(@Nullable RefEntity refEntity);
+  public abstract @Nullable @NlsSafe String getQualifiedName(@Nullable RefEntity refEntity);
 
   public abstract void removeRefElement(@NotNull RefElement refElement, @NotNull List<? super RefElement> deletedRefs);
 
-  @NotNull
-  public abstract PsiManager getPsiManager();
+  public abstract @NotNull PsiManager getPsiManager();
 
   /**
    * @return false if no {@link com.intellij.codeInspection.lang.RefManagerExtension} was registered for language and is not covered by default implementation for PsiClassOwner
@@ -129,8 +145,7 @@ public abstract class RefManager {
     return true;
   }
 
-  @Nullable
-  public PsiNamedElement getContainerElement(@NotNull PsiElement element) {
+  public @Nullable PsiNamedElement getContainerElement(@NotNull PsiElement element) {
     return null;
   }
 }

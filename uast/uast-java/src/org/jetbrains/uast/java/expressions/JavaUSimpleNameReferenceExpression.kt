@@ -17,8 +17,10 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.*
 import com.intellij.psi.infos.CandidateInfo
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class JavaUSimpleNameReferenceExpression(
   override val sourcePsi: PsiElement?,
   override val identifier: String,
@@ -40,6 +42,9 @@ class JavaUSimpleNameReferenceExpression(
     if (parent is PsiReferenceExpression && parent.parent is PsiMethodCallExpression) {
       return parent.parent
     }
+    else if (parent is PsiAnonymousClass){
+      return parent.parent
+    }
     return parent
   }
 
@@ -54,6 +59,7 @@ class JavaUSimpleNameReferenceExpression(
 
 }
 
+@ApiStatus.Internal
 class JavaUTypeReferenceExpression(
   override val sourcePsi: PsiTypeElement,
   givenParent: UElement?
@@ -62,10 +68,11 @@ class JavaUTypeReferenceExpression(
     get() = sourcePsi.type
 }
 
+@ApiStatus.Internal
 class LazyJavaUTypeReferenceExpression(
   override val sourcePsi: PsiElement,
   givenParent: UElement?,
   private val typeSupplier: () -> PsiType
 ) : JavaAbstractUExpression(givenParent), UTypeReferenceExpression {
-  override val type: PsiType by lz { typeSupplier() }
+  override val type: PsiType by lazyPub { typeSupplier() }
 }

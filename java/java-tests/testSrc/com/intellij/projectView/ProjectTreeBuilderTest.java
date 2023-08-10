@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.structureView.impl.java.JavaInheritedMembersNodeProvider;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -52,33 +52,35 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
     PsiField innerClass1Field = innerClass14.getFields()[0];
     PsiField innerClass2Field = innerClass24.getFields()[0];
 
-    final AbstractProjectViewPSIPane pane = myStructure.createPane();
+    final AbstractProjectViewPane pane = myStructure.createPane();
 
     myStructure.checkNavigateFromSourceBehaviour(innerClass2Field, innerClass2Field.getContainingFile().getVirtualFile(), pane);
 
-    PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
-                                                     " -PsiDirectory: showClassMembers\n" +
-                                                     "  -PsiDirectory: src\n" +
-                                                     "   -PsiDirectory: com\n" +
-                                                     "    -PsiDirectory: package1\n" +
-                                                     "     +Class1\n" +
-                                                     "     -Class2\n" +
-                                                     "      +InnerClass1\n" +
-                                                     "      -InnerClass2\n" +
-                                                     "       -InnerClass22\n" +
-                                                     "        -InnerClass23\n" +
-                                                     "         -InnerClass24\n" +
-                                                     "          +InnerClass25\n" +
-                                                     "          myFieldToSelect:int\n" +
-                                                     "         myInnerClassField:int\n" +
-                                                     "        myInnerClassField:int\n" +
-                                                     "       myInnerClassField:int\n" +
-                                                     "      getValue():int\n" +
-                                                     "      myField1:boolean\n" +
-                                                     "      myField2:boolean\n" +
-                                                     "      myField3:boolean\n" +
-                                                     "      myField4:boolean\n" +
-                                                     " +External Libraries\n"
+    PlatformTestUtil.assertTreeEqual(pane.getTree(), """
+      -Project
+       -PsiDirectory: showClassMembers
+        -PsiDirectory: src
+         -PsiDirectory: com
+          -PsiDirectory: package1
+           +Class1
+           -Class2
+            +InnerClass1
+            -InnerClass2
+             -InnerClass22
+              -InnerClass23
+               -InnerClass24
+                +InnerClass25
+                myFieldToSelect:int
+               myInnerClassField:int
+              myInnerClassField:int
+             myInnerClassField:int
+            getValue():int
+            myField1:boolean
+            myField2:boolean
+            myField3:boolean
+            myField4:boolean
+       +External Libraries
+      """
     );
 
     assertFalse(ProjectViewTestUtil.isExpanded(innerClass15.getFields()[0], pane));
@@ -97,23 +99,25 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
     Promise<TreePath> select = svc.select(innerClass2Field, true);
     PlatformTestUtil.waitForPromise(select);
 
-    String expected = "-Class2.java\n" +
-                      " -Class2\n" +
-                      "  +InnerClass1\n" +
-                      "  -InnerClass2\n" +
-                      "   -InnerClass22\n" +
-                      "    -InnerClass23\n" +
-                      "     -InnerClass24\n" +
-                      "      +InnerClass25\n" +
-                      "      myFieldToSelect: int\n" +
-                      "     myInnerClassField: int\n" +
-                      "    myInnerClassField: int\n" +
-                      "   myInnerClassField: int\n" +
-                      "  getValue(): int\n" +
-                      "  myField1: boolean\n" +
-                      "  myField2: boolean\n" +
-                      "  myField3: boolean\n" +
-                      "  myField4: boolean\n";
+    String expected = """
+      -Class2.java
+       -Class2
+        +InnerClass1
+        -InnerClass2
+         -InnerClass22
+          -InnerClass23
+           -InnerClass24
+            +InnerClass25
+            myFieldToSelect: int
+           myInnerClassField: int
+          myInnerClassField: int
+         myInnerClassField: int
+        getValue(): int
+        myField1: boolean
+        myField2: boolean
+        myField3: boolean
+        myField4: boolean
+      """;
 
     PlatformTestUtil.assertTreeEqual(svc.getTree(), expected);
     Disposer.dispose(svc);

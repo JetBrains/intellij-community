@@ -28,15 +28,12 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 class DomElementResolveProblemDescriptorImpl extends DomElementProblemDescriptorImpl implements DomElementResolveProblemDescriptor {
   @NotNull private final PsiReference myReference;
 
   DomElementResolveProblemDescriptorImpl(@NotNull final GenericDomValue domElement,
                                          @NotNull final PsiReference reference,
-                                         LocalQuickFix... quickFixes) {
+                                         @NotNull LocalQuickFix @NotNull ... quickFixes) {
      super(domElement, reference instanceof FileReference ? ProblemsHolder.unresolvedReferenceMessage(reference) : XmlHighlightVisitor.getErrorDescription(reference), HighlightSeverity.ERROR, quickFixes);
      myReference = reference;
   }

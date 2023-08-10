@@ -1,25 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
-import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.layout.*
-import org.jetbrains.annotations.Nls
+import com.intellij.ui.dsl.builder.Panel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
-import org.jetbrains.plugins.github.util.completionOnEdt
-import org.jetbrains.plugins.github.util.errorOnEdt
-import org.jetbrains.plugins.github.util.submitIOTask
-import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JTextField
 
@@ -34,24 +30,22 @@ internal class GithubLoginPanel(
   private var tokenAcquisitionError: ValidationInfo? = null
 
   private lateinit var currentUi: GHCredentialsUi
-  private var passwordUi = GHPasswordCredentialsUi(serverTextField, executorFactory, isAccountUnique)
   private var tokenUi = GHTokenCredentialsUi(serverTextField, executorFactory, isAccountUnique)
   private var oauthUi = GHOAuthCredentialsUi(executorFactory, isAccountUnique)
 
   private val progressIcon = AnimatedIcon.Default()
   private val progressExtension = ExtendableTextComponent.Extension { progressIcon }
 
-  var footer: LayoutBuilder.() -> Unit
+  var footer: Panel.() -> Unit
     get() = tokenUi.footer
     set(value) {
-      passwordUi.footer = value
       tokenUi.footer = value
       oauthUi.footer = value
       applyUi(currentUi)
     }
 
   init {
-    applyUi(passwordUi)
+    applyUi(tokenUi)
   }
 
   private fun applyUi(ui: GHCredentialsUi) {
@@ -59,18 +53,6 @@ internal class GithubLoginPanel(
     setContent(currentUi.getPanel())
     currentUi.getPreferredFocusableComponent()?.requestFocus()
     tokenAcquisitionError = null
-  }
-
-  @Nls
-  private fun switchUiText(): String {
-    return if (currentUi == passwordUi) message("login.use.token") else message("login.use.credentials")
-  }
-
-  private fun nextUi(): GHCredentialsUi = if (currentUi == passwordUi) tokenUi else passwordUi
-
-  fun createSwitchUiLink() = LinkLabel<Any?>(switchUiText(), null) { link, _ ->
-    applyUi(nextUi())
-    link.text = switchUiText()
   }
 
   fun getPreferredFocusableComponent(): JComponent? =
@@ -102,18 +84,24 @@ internal class GithubLoginPanel(
     currentUi.setBusy(busy)
   }
 
-  fun acquireLoginAndToken(progressIndicator: ProgressIndicator): CompletableFuture<Pair<String, String>> {
-    setBusy(true)
-    tokenAcquisitionError = null
-
-    val server = getServer()
-    val executor = currentUi.createExecutor()
-
-    return service<ProgressManager>()
-      .submitIOTask(progressIndicator) { currentUi.acquireLoginAndToken(server, executor, it) }
-      .completionOnEdt(progressIndicator.modalityState) { setBusy(false) }
-      .errorOnEdt(progressIndicator.modalityState) { setError(it) }
-  }
+  suspend fun acquireLoginAndToken(): Pair<String, String> =
+    withContext(Dispatchers.Main.immediate + ModalityState.stateForComponent(this).asContextElement()) {
+      try {
+        setBusy(true)
+        tokenAcquisitionError = null
+        currentUi.login(getServer())
+      }
+      catch (ce: CancellationException) {
+        throw ce
+      }
+      catch (e: Exception) {
+        setError(e)
+        throw e
+      }
+      finally {
+        setBusy(false)
+      }
+    }
 
   fun getServer(): GithubServerPath = GithubServerPath.from(serverTextField.text.trim())
 
@@ -123,18 +111,13 @@ internal class GithubLoginPanel(
   }
 
   fun setLogin(login: String?, editable: Boolean) {
-    passwordUi.setLogin(login.orEmpty(), editable)
     tokenUi.setFixedLogin(if (editable) null else login)
   }
-
-  fun setPassword(password: String?) = passwordUi.setPassword(password.orEmpty())
-  fun setToken(token: String?) = tokenUi.setToken(token.orEmpty())
 
   fun setError(exception: Throwable?) {
     tokenAcquisitionError = exception?.let { currentUi.handleAcquireError(it) }
   }
 
   fun setOAuthUi() = applyUi(oauthUi)
-  fun setPasswordUi() = applyUi(passwordUi)
   fun setTokenUi() = applyUi(tokenUi)
 }

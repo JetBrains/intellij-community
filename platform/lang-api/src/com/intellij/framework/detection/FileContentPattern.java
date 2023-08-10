@@ -1,15 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework.detection;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.patterns.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.xml.NanoXmlUtil;
 import com.intellij.util.xml.XmlFileHeader;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.Reader;
 
 /**
  * Provides filters for file content
@@ -55,7 +56,7 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
         try {
-          return rootTag.equals(parseHeaderWithException(fileContent).getRootTagLocalName());
+          return rootTag.equals(parseHeaderWithException(CharArrayUtil.readerFromCharSequence(fileContent.getContentAsText())).getRootTagLocalName());
         }
         catch (IOException e) {
           return false;
@@ -73,7 +74,7 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
       @Override
       public boolean accepts(@NotNull final FileContent fileContent, final ProcessingContext context) {
         try {
-          String rootTagNamespace = parseHeaderWithException(fileContent).getRootTagNamespace();
+          String rootTagNamespace = parseHeaderWithException(CharArrayUtil.readerFromCharSequence(fileContent.getContentAsText())).getRootTagNamespace();
           return rootTagNamespace != null && namespacePattern.accepts(rootTagNamespace, context);
         }
         catch (IOException e) {
@@ -83,9 +84,14 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
     });
   }
 
-  @NotNull
-  private static XmlFileHeader parseHeaderWithException(FileContent fileContent) throws IOException {
-    return NanoXmlUtil.parseHeaderWithException(CharArrayUtil.readerFromCharSequence(fileContent.getContentAsText()));
+  public interface ParseXml {
+    @NotNull XmlFileHeader parseHeaderWithException(@NotNull Reader reader);
+    static ParseXml getInstance() {
+      return ApplicationManager.getApplication().getService(ParseXml.class);
+    }
   }
-
+  @NotNull
+  private static XmlFileHeader parseHeaderWithException(@NotNull Reader reader) throws IOException {
+    return ParseXml.getInstance().parseHeaderWithException(reader);
+  }
 }

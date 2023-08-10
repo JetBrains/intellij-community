@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -12,6 +12,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -26,10 +27,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.colorpicker.ColorPickerBuilder;
-import com.intellij.ui.colorpicker.LightCalloutPopup;
-import com.intellij.ui.colorpicker.MaterialGraphicalColorPipetteProvider;
+import com.intellij.ui.colorpicker.*;
 import com.intellij.ui.picker.ColorListener;
+import com.intellij.ui.picker.ColorPickerPopupCloseListener;
 import com.intellij.ui.picker.ColorPipette;
 import com.intellij.ui.picker.ColorPipetteBase;
 import com.intellij.ui.picker.MacColorPipette;
@@ -50,6 +50,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.awt.geom.Area;
 import java.awt.image.BufferedImage;
@@ -61,7 +62,6 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @author pegov
  * @author Konstantin Bulenkov
  */
 public class ColorPicker extends JPanel implements ColorListener, DocumentListener {
@@ -398,31 +398,79 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     return null;
   }
 
+  /**
+   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
+   */
+  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @Nullable Editor editor, @NotNull ColorListener listener) {
     showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), currentColor != null && currentColor.getAlpha() != 255);
   }
 
+  /**
+   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
+   */
+  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @Nullable Editor editor, @NotNull ColorListener listener, boolean showAlpha) {
     showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), showAlpha);
   }
 
+  /**
+   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
+   */
+  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @Nullable Editor editor, @NotNull ColorListener listener, boolean showAlpha, boolean showAlphaAsPercent) {
     showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), showAlpha, showAlphaAsPercent);
   }
 
+  /**
+   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
+   */
+  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener) {
     showColorPickerPopup(project, currentColor, listener, null);
   }
 
+  /**
+   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
+   */
+  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable RelativePoint location) {
     showColorPickerPopup(project, currentColor, listener, location, false);
   }
 
+  /**
+   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
+   */
+  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable final Project project, @Nullable Color currentColor, @NotNull final ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
     showColorPickerPopup(project, currentColor, listener, location, showAlpha, false);
   }
 
+  /**
+   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
+   */
+  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable final Project project, @Nullable Color currentColor, @NotNull final ColorListener listener, @Nullable RelativePoint location, boolean showAlpha, boolean showAlphaAsPercent) {
+    showColorPickerPopup(project, currentColor, listener, location, showAlpha, showAlphaAsPercent, null);
+  }
+
+  static void showColorPickerPopup(@Nullable final Project project,
+                                   @Nullable Color currentColor,
+                                   @Nullable final Editor editor,
+                                   @NotNull final ColorListener listener,
+                                   boolean showAlpha,
+                                   boolean showAlphaAsPercent,
+                                   @Nullable final ColorPickerPopupCloseListener popupCloseListener) {
+    showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), showAlpha, showAlphaAsPercent, popupCloseListener);
+  }
+
+  static void showColorPickerPopup(@Nullable final Project project,
+                                   @Nullable Color currentColor,
+                                   @NotNull final ColorListener listener,
+                                   @Nullable RelativePoint location,
+                                   boolean showAlpha,
+                                   boolean showAlphaAsPercent,
+                                   @Nullable final ColorPickerPopupCloseListener popupCloseListener) {
     if( !isEnoughSpaceToShowPopup() || !Registry.is("ide.new.color.picker")) {
       Color color = showDialog(IdeFocusManager.getGlobalInstance().getFocusOwner(), IdeBundle.message("dialog.title.choose.color"),
                                currentColor, showAlpha, null, showAlphaAsPercent);
@@ -444,29 +492,50 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
                                                                              IdeBundle.message("command.name.apply.color"),
                                                                              groupId);
         alarm.cancelAllRequests();
-        alarm.addRequest(() -> ApplicationManager.getApplication().invokeLaterOnWriteThread(apply), 150);
+        Runnable request = () -> ApplicationManager.getApplication().invokeLaterOnWriteThread(apply);
+        if (source instanceof ColorPipetteButton && ((ColorPipetteButton)source).getCurrentState() == ColorPipetteButton.PipetteState.UPDATING) {
+          alarm.addRequest(request, 150);
+        } else {
+          request.run();
+        }
       }
     };
 
-    LightCalloutPopup popup = new ColorPickerBuilder(showAlpha, showAlphaAsPercent)
+    List<Color> recentColors = RecentColorsComponent.getRecentColors();
+    ColorPickerBuilder builder = new ColorPickerBuilder(showAlpha, showAlphaAsPercent)
       .setOriginalColor(currentColor)
       .addSaturationBrightnessComponent()
       .addColorAdjustPanel(new MaterialGraphicalColorPipetteProvider())
-      .addColorValuePanel().withFocus()
-      //.addSeparator()
-      //.addCustomComponent(MaterialColorPaletteProvider.INSTANCE)
-      .addColorListener(colorListener,true)
+      .addColorValuePanel().withFocus();
+    if (!recentColors.isEmpty()) {
+      builder/*.addSeparator()*/
+        .addCustomComponent(new ColorPickerComponentProvider() {
+          @NotNull
+          @Override
+          public JComponent createComponent(@NotNull ColorPickerModel colorPickerModel) {
+            return new RecentColorsPalette(colorPickerModel, recentColors);
+          }
+        });
+    }
+      builder.addColorListener(colorListener,true)
       .addColorListener(new ColorListener() {
         @Override
         public void colorChanged(Color color, Object source) {
           updatePointer(ref);
         }
       }, true)
+        .addColorListener(new ColorListener() {
+          @Override
+          public void colorChanged(Color color, Object source) {
+            RecentColorsComponent.saveRecentColors(RecentColorsComponent.appendColor(color, recentColors, 20));
+          }
+        }, false)
       .focusWhenDisplay(true)
       .setFocusCycleRoot(true)
       .addKeyAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelPopup(ref))
       .addKeyAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), applyColor(ref))
-      .build();
+      .setPopupCloseListener(popupCloseListener);
+    LightCalloutPopup popup = builder.build();
     ref.set(popup);
 
     if (location == null) {
@@ -923,7 +992,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       });
 
       if (restoreColors) {
-        restoreColors();
+        myRecentColors.clear();
+        myRecentColors.addAll(getRecentColors());
       }
     }
 
@@ -933,25 +1003,28 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
 
     @SuppressWarnings("UseJBColor")
-    private void restoreColors() {
+    public static List<Color> getRecentColors() {
       final String value = PropertiesComponent.getInstance().getValue(COLOR_CHOOSER_COLORS_KEY);
       if (value != null) {
         final List<String> colors = StringUtil.split(value, ",,,");
+        ArrayList<Color> recentColors = new ArrayList<>();
         for (String color : colors) {
           if (color.contains("-")) {
             List<String> components = StringUtil.split(color, "-");
             if (components.size() == 4) {
-              myRecentColors.add(new Color(Integer.parseInt(components.get(0)),
+              recentColors.add(new Color(Integer.parseInt(components.get(0)),
                                            Integer.parseInt(components.get(1)),
                                            Integer.parseInt(components.get(2)),
                                            Integer.parseInt(components.get(3))));
             }
           }
           else {
-            myRecentColors.add(new Color(Integer.parseInt(color)));
+            recentColors.add(new Color(Integer.parseInt(color)));
           }
         }
+        return recentColors;
       }
+      return Collections.emptyList();
     }
 
     @Override
@@ -980,14 +1053,29 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
 
     public void saveColors() {
+      saveRecentColors(myRecentColors);
+    }
+
+    private static void saveRecentColors(List<? extends Color> recentColors) {
       final List<String> values = new ArrayList<>();
-      for (Color recentColor : myRecentColors) {
+      for (Color recentColor : recentColors) {
         if (recentColor == null) break;
         values
           .add(String.format("%d-%d-%d-%d", recentColor.getRed(), recentColor.getGreen(), recentColor.getBlue(), recentColor.getAlpha()));
       }
 
       PropertiesComponent.getInstance().setValue(COLOR_CHOOSER_COLORS_KEY, values.isEmpty() ? null : StringUtil.join(values, ",,,"), null);
+    }
+
+    private static List<Color> appendColor(Color color, List<? extends Color> recentColors, int maxSize) {
+      ArrayList<Color> colors = new ArrayList<>(recentColors);
+      colors.remove(color);
+      colors.add(0, color);
+
+      if (colors.size() > maxSize) {
+        colors = new ArrayList<>(recentColors.subList(0, maxSize));
+      }
+      return colors;
     }
 
     public void appendColor(Color c) {
@@ -1082,7 +1170,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
       setTitle(caption);
       setResizable(false);
-      setOKButtonText(IdeBundle.message("button.choose"));
+      setOKButtonText(listeners == null || listeners.size() > 0 ? IdeBundle.message("button.choose") : IdeBundle.message("button.copy"));
       super.init();
     }
 
@@ -1109,6 +1197,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       myColorPicker.appendRecentColor();
       myColorPicker.saveRecentColors();
 
+      if (myListeners != null && myListeners.isEmpty()) {
+        String color = StringUtil.toUpperCase(ColorUtil.toHex(myColorPicker.myColor));
+        CopyPasteManager.getInstance().setContents(new StringSelection(color));
+      }
       super.doOKAction();
     }
 

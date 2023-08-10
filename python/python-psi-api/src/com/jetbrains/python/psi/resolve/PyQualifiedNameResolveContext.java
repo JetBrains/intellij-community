@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Context for resolving Python qualified names with various options.
  *
- * @author vlan
  */
 public interface PyQualifiedNameResolveContext {
   @Nullable

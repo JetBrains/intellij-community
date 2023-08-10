@@ -100,7 +100,7 @@ public final class ConversionRunner {
     return myConverter.getCreatedFiles();
   }
 
-  public void collectAffectedFiles(@NotNull Collection<Path> affectedFiles) {
+  public void collectAffectedFiles(@NotNull Collection<? super Path> affectedFiles) {
     if (myProcessProjectFile) {
       affectedFiles.add(myContext.getProjectFile());
     }

@@ -1,5 +1,5 @@
 /**
- * This code can be assembled with <a href="https://wiki.openjdk.java.net/display/CodeTools/asmtools">asmtools</a>
+ * This code can be assembled with <a href="https://wiki.openjdk.org/display/CodeTools/asmtools">asmtools</a>
  * using <code>asmtools jasm -g *.jasm</code> command line.
  */
 package  pkg;

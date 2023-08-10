@@ -1,13 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.debugger.values
 
 open class PrimitiveValue(type: ValueType, override val valueString: String) : ValueBase(type) {
 
-  constructor(type: ValueType, value: Int) : this(type, Integer.toString(value)) {
-  }
+  constructor(type: ValueType, value: Int) : this(type, value.toString())
 
-  constructor(type: ValueType, value: Long) : this(type, java.lang.Long.toString(value)) {
-  }
+  constructor(type: ValueType, value: Long) : this(type, value.toString())
 
   companion object {
     const val NA_N_VALUE: String = "NaN"

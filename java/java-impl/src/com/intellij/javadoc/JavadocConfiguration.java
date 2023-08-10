@@ -3,6 +3,7 @@
  */
 package com.intellij.javadoc;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiKeyword;
 
 /**
@@ -10,7 +11,7 @@ import com.intellij.psi.PsiKeyword;
  */
 public class JavadocConfiguration {
   public String OUTPUT_DIRECTORY;
-  public String OPTION_SCOPE = PsiKeyword.PROTECTED;
+  public @NlsSafe String OPTION_SCOPE = PsiKeyword.PROTECTED;
   public boolean OPTION_HIERARCHY = true;
   public boolean OPTION_NAVIGATOR = true;
   public boolean OPTION_INDEX = true;

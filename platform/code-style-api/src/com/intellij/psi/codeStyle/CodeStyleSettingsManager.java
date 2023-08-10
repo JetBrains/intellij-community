@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -6,17 +6,18 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -35,15 +36,15 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   /**
    * @deprecated Use {@link #setMainProjectCodeStyle(CodeStyleSettings)} or {@link #getMainProjectCodeStyle()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public volatile CodeStyleSettings PER_PROJECT_SETTINGS;
 
   public volatile boolean USE_PER_PROJECT_SETTINGS;
   public volatile String PREFERRED_PROJECT_CODE_STYLE;
   private volatile CodeStyleSettings myTemporarySettings;
-
-  private final List<CodeStyleSettingsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  
+  private final ThreadLocal<CodeStyleSettings> myLocalSettings = new ThreadLocal<>();
 
   private final static WeakList<CodeStyleSettings> ourReferencedSettings = new WeakList<>();
 
@@ -59,13 +60,14 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   }
 
   @TestOnly
+  @NotNull
   public final CodeStyleSettings createTemporarySettings() {
     myTemporarySettings = new CodeStyleSettings(true, false);
     return myTemporarySettings;
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  public final CodeStyleSettings cloneSettings(@NotNull CodeStyleSettings settings) {
+  public final @NotNull CodeStyleSettings cloneSettings(@NotNull CodeStyleSettings settings) {
     CodeStyleSettings clonedSettings = new CodeStyleSettings(true, false);
     clonedSettings.copyFrom(settings);
     registerSettings(clonedSettings);
@@ -73,7 +75,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   }
 
   @TestOnly
-  public static CodeStyleSettings createTestSettings(@Nullable CodeStyleSettings baseSettings) {
+  public static @NotNull CodeStyleSettings createTestSettings(@Nullable CodeStyleSettings baseSettings) {
     final CodeStyleSettings testSettings = new CodeStyleSettings(true, false);
     if (baseSettings != null) {
       testSettings.copyFrom(baseSettings);
@@ -81,7 +83,19 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     return testSettings;
   }
 
-  private Collection<CodeStyleSettings> getAllSettings() {
+  public void runWithLocalSettings(@NotNull CodeStyleSettings localSettings,
+                                   @NotNull Runnable runnable) {
+    CodeStyleSettings tempSettingsBefore = myLocalSettings.get();
+    try {
+      myLocalSettings.set(localSettings);
+      runnable.run();
+    }
+    finally {
+      myLocalSettings.set(tempSettingsBefore);
+    }
+  }
+
+  private @NotNull Collection<CodeStyleSettings> getAllSettings() {
     List<CodeStyleSettings> allSettings = new ArrayList<>(enumSettings());
     allSettings.addAll(ourReferencedSettings.toStrongList());
     return allSettings;
@@ -142,6 +156,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     }, disposable);
   }
 
+  @NotNull
   protected Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
 
   @ApiStatus.Internal
@@ -162,28 +177,28 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   @ApiStatus.Internal
   public final void registerLanguageSettings(@NotNull Collection<? extends CodeStyleSettings> allSettings,
                                              @NotNull LanguageCodeStyleProvider provider) {
-    allSettings.forEach(settings -> settings.registerSettings(provider));
+    allSettings.forEach(settings -> settings.registerCommonSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
 
   @ApiStatus.Internal
   public final void unregisterLanguageSettings(@NotNull Collection<? extends CodeStyleSettings> allSettings,
                                                @NotNull LanguageCodeStyleProvider provider) {
-    allSettings.forEach(settings -> settings.removeSettings(provider));
+    allSettings.forEach(settings -> settings.removeCommonSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
 
   @ApiStatus.Internal
   public final void registerCustomSettings(@NotNull Collection<? extends CodeStyleSettings> allSettings,
                                            @NotNull CustomCodeStyleSettingsFactory provider) {
-    allSettings.forEach(settings -> settings.registerSettings(provider));
+    allSettings.forEach(settings -> settings.registerCustomSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
 
   @ApiStatus.Internal
   public final void unregisterCustomSettings(@NotNull Collection<? extends CodeStyleSettings> allSettings,
                                              @NotNull CustomCodeStyleSettingsFactory provider) {
-    allSettings.forEach(settings -> settings.removeSettings(provider));
+    allSettings.forEach(settings -> settings.removeCustomSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
 
@@ -204,17 +219,16 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     return getInstance(project).getCurrentSettings();
   }
 
-  protected void checkState() {}
-
   /**
    * @deprecated see comments for {@link #getSettings(Project)} or {@link CodeStyle#getDefaultSettings()}
    */
   @Deprecated
   @NotNull
   public CodeStyleSettings getCurrentSettings() {
+    CodeStyleSettings localSettings = getLocalSettings();
+    if (localSettings != null) return localSettings;
     CodeStyleSettings temporarySettings = myTemporarySettings;
     if (temporarySettings != null) return temporarySettings;
-    checkState();
     CodeStyleSettings projectSettings = getMainProjectCodeStyle();
     if (USE_PER_PROJECT_SETTINGS && projectSettings != null) return projectSettings;
     return CodeStyleSchemes.getInstance().findPreferredScheme(PREFERRED_PROJECT_CODE_STYLE).getCodeStyleSettings();
@@ -287,33 +301,60 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   public CodeStyleSettings getTemporarySettings() {
     return myTemporarySettings;
   }
-
-  public void addListener(@NotNull CodeStyleSettingsListener listener) {
-    myListeners.add(listener);
+  
+  @ApiStatus.Internal
+  public @Nullable CodeStyleSettings getLocalSettings() {
+    return myLocalSettings.get();
   }
 
-  private void removeListener(@NotNull CodeStyleSettingsListener listener) {
-    myListeners.remove(listener);
+  protected @NotNull MessageBus getMessageBus() {
+    throw new UnsupportedOperationException("The method is not implemented");
   }
 
-  public static void removeListener(@Nullable Project project, @NotNull CodeStyleSettingsListener listener) {
-    if (project == null || project.isDefault()) {
-      getInstance().removeListener(listener);
+  /**
+   * @deprecated use {@link #fireCodeStyleSettingsChanged()} for project-wide changes or
+   * {@link #fireCodeStyleSettingsChanged(VirtualFile)} for file-related changes.
+   */
+  @Deprecated
+  public void fireCodeStyleSettingsChanged(@Nullable PsiFile file) {
+    if (file != null) {
+      fireCodeStyleSettingsChanged(file.getVirtualFile());
     }
     else {
-      if (!project.isDisposed()) {
-        CodeStyleSettingsManager projectInstance = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
-        if (projectInstance != null) {
-          projectInstance.removeListener(listener);
-        }
-      }
+      fireCodeStyleSettingsChanged();
     }
   }
 
-  public void fireCodeStyleSettingsChanged(@Nullable PsiFile file) {
-    for (CodeStyleSettingsListener listener : myListeners) {
-      listener.codeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(file));
+  public void subscribe(@NotNull CodeStyleSettingsListener listener, @NotNull Disposable disposable) {
+    getMessageBus().connect(disposable).subscribe(CodeStyleSettingsListener.TOPIC, listener);
+  }
+
+  public void subscribe(@NotNull CodeStyleSettingsListener listener) {
+    getMessageBus().connect().subscribe(CodeStyleSettingsListener.TOPIC, listener);
+  }
+
+  public void fireCodeStyleSettingsChanged(@NotNull VirtualFile file) {
+    if (getProject() != null) {
+      fireCodeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(getProject(), file));
     }
+  }
+
+  public void fireCodeStyleSettingsChanged() {
+    if (getProject() != null) {
+      fireCodeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(getProject(), null));
+    }
+  }
+
+  private void fireCodeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
+    MessageBus bus = getMessageBus();
+    if (!bus.isDisposed()) {
+      bus.syncPublisher(CodeStyleSettingsListener.TOPIC).codeStyleSettingsChanged(event);
+    }
+  }
+
+  protected @Nullable Project getProject() {
+    ProjectManager projectManager = ProjectManager.getInstance();
+    return projectManager != null ? projectManager.getDefaultProject() : null;
   }
 
   /**
@@ -322,16 +363,18 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
    * code style update and refresh their settings accordingly.
    *
    * @see CodeStyleSettingsListener
-   * @see #addListener(CodeStyleSettingsListener)
    */
   public final void notifyCodeStyleSettingsChanged() {
     updateSettingsTracker();
-    fireCodeStyleSettingsChanged(null);
+    fireCodeStyleSettingsChanged();
   }
 
   @ApiStatus.Internal
   public void updateSettingsTracker() {
     CodeStyleSettings settings = getCurrentSettings();
     settings.getModificationTracker().incModificationCount();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Updated code style settings modification tracker to " + settings.getModificationTracker().getModificationCount());
+    }
   }
 }

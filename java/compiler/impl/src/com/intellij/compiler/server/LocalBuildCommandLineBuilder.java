@@ -3,6 +3,8 @@ package com.intellij.compiler.server;
 
 import com.intellij.compiler.YourKitProfilerService;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.application.PathManagerEx;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +46,7 @@ class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
       if (builder.length() > 0) {
         builder.append(File.pathSeparator);
       }
-      builder.append(getHostWorkingDirectory().resolve(s).toString());
+      builder.append(getHostWorkingDirectory().resolve(s));
     }
     myCommandLine.addParameter(builder.toString());
   }
@@ -57,7 +59,7 @@ class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
   @Override
   @NotNull
   public Path getHostWorkingDirectory() {
-    return BuildManager.getInstance().getBuildSystemDirectory();
+    return getLocalBuildSystemDirectory();
   }
 
   @Override
@@ -72,7 +74,7 @@ class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
 
   @Override
   public String getYjpAgentPath(YourKitProfilerService yourKitProfilerService) {
-    return BuildManager.getInstance().getBuildSystemDirectory()
+    return getLocalBuildSystemDirectory()
       .resolve(yourKitProfilerService.getYKAgentFullName())
       .toAbsolutePath().toString();
   }
@@ -86,5 +88,29 @@ class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
   public GeneralCommandLine buildCommandLine() {
     myCommandLine.setWorkDirectory(getHostWorkingDirectory().toFile());
     return myCommandLine;
+  }
+
+  @Override
+  public void setUnixProcessPriority(int priority) {
+    if (!SystemInfo.isUnix) {
+      throw new IllegalArgumentException("setUnixProcessPriority must be used only on Unix operating systems");
+    }
+
+    setUnixProcessPriority(myCommandLine, priority);
+  }
+
+  @NotNull
+  public static Path getLocalBuildSystemDirectory() {
+    return PathManagerEx.getAppSystemDir().resolve(BuildManager.SYSTEM_ROOT);
+  }
+
+  static void setUnixProcessPriority(GeneralCommandLine commandLine, int priority) {
+    if (priority < -20 || priority > 19) {
+      throw new IllegalArgumentException("priority must be greater or equal to -20 and less than 20: " + priority);
+    }
+
+    String executablePath = commandLine.getExePath();
+    commandLine.setExePath("nice");
+    commandLine.getParametersList().prependAll("-n", Integer.toString(priority), executablePath);
   }
 }

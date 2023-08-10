@@ -44,10 +44,10 @@ project("withIntegrationTests") {
   }
 
   dependencies {
-    integrationTestCompile sourceSets.main.output
-    integrationTestCompile configurations.testCompile
-    integrationTestCompile sourceSets.test.output
-    integrationTestRuntime configurations.testRuntime
+    <<integrationTestCompile>> sourceSets.main.output
+    <<integrationTestCompile>> configurations.testCompile
+    <<integrationTestCompile>> sourceSets.test.output
+    <<integrationTestRuntime>> configurations.testRuntime
   }
 
   //noinspection GrUnresolvedAccess

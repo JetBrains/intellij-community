@@ -35,7 +35,7 @@ public class GitUnstash extends GitRepositoryAction {
                                                                  showStashAction.getTemplatePresentation().clone(),
                                                                  e.getDataContext());
     if (ActionUtil.lastUpdateAndCheckDumb(showStashAction, newEvent, true)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(showStashAction, newEvent, newEvent.getDataContext());
+      ActionUtil.performActionDumbAwareWithCallbacks(showStashAction, newEvent);
     } else {
       super.actionPerformed(e);
     }

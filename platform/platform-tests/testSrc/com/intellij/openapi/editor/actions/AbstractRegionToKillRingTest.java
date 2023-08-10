@@ -20,9 +20,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractRegionToKillRingTest extends LightPlatformCodeInsightTestCase {
 
   public void testNoSelection() {

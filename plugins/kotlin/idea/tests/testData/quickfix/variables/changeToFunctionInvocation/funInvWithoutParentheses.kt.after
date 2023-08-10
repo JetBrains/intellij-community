@@ -1,0 +1,10 @@
+// "Change to function invocation" "true"
+package a
+
+fun foo() {}
+
+fun test() {
+    foo()
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToFunctionInvocationFix

@@ -18,9 +18,11 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.ResolveResult
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 
+@ApiStatus.Internal
 class JavaUAnnotation(
   override val sourcePsi: PsiAnnotation,
   givenParent: UElement?
@@ -31,7 +33,7 @@ class JavaUAnnotation(
   override val qualifiedName: String?
     get() = sourcePsi.qualifiedName
 
-  override val attributeValues: List<UNamedExpression> by lz {
+  override val attributeValues: List<UNamedExpression> by lazyPub {
     val attributes = sourcePsi.parameterList.attributes
 
     attributes.map { attribute -> JavaUNamedExpression(attribute, this) }

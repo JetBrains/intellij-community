@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public class ExtractedParameter {
   @NotNull public final PsiType myType;
   @NotNull public final ExtractableExpressionPart myPattern;
@@ -127,14 +124,14 @@ public class ExtractedParameter {
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
 
       visitModifiedExpression(expression.getLExpression());
     }
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
 
       IElementType op = expression.getOperationTokenType();
@@ -144,7 +141,7 @@ public class ExtractedParameter {
     }
 
     @Override
-    public void visitPostfixExpression(PsiPostfixExpression expression) {
+    public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
       super.visitPostfixExpression(expression);
 
       IElementType op = expression.getOperationTokenType();

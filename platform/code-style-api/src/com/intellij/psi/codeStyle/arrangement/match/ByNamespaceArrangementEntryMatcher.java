@@ -20,9 +20,6 @@ import com.intellij.psi.codeStyle.arrangement.NamespaceAwareArrangementEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Denis Zhdanov
- */
 public class ByNamespaceArrangementEntryMatcher extends AbstractRegexpArrangementMatcher {
 
   public ByNamespaceArrangementEntryMatcher(@NotNull String pattern) {

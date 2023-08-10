@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -31,7 +31,7 @@ public final class SuspendManagerUtil {
   public static SuspendContextImpl findContextByThread(@NotNull SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
     for (SuspendContextImpl context : suspendManager.getEventContexts()) {
       if ((context.getThread() == thread || context.getSuspendPolicy() == EventRequest.SUSPEND_ALL)
-          && !context.isExplicitlyResumed(thread)){
+          && !context.isExplicitlyResumed(thread)) {
         return context;
       }
     }
@@ -40,7 +40,7 @@ public final class SuspendManagerUtil {
   }
 
   public static void assertSuspendContext(SuspendContextImpl context) {
-    if(LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled()) {
       LOG.assertTrue(context.myInProgress, "You can invoke methods only inside commands invoked for SuspendContext");
     }
   }

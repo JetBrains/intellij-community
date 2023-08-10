@@ -192,7 +192,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     }
     else {
       if (RegExpTT.QUANTIFIERS.contains(builder.getTokenType())) {
-        builder.error(RegExpBundle.message("error.dangling.metacharacter"));
+        builder.error(RegExpBundle.message("error.dangling.metacharacter", builder.getTokenText()));
       }
     }
   }
@@ -408,6 +408,10 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     else if (type == RegExpTT.PYTHON_NAMED_GROUP_REF || type == RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF) {
       parseNamedGroupRef(builder, marker, RegExpTT.GROUP_END);
     }
+    else if (type == RegExpTT.PCRE_NUMBERED_GROUP_REF) {
+      builder.advanceLexer();
+      marker.done(RegExpElementTypes.BACKREF);
+    }
     else if (type == RegExpTT.RUBY_NAMED_GROUP_REF || type == RegExpTT.RUBY_NAMED_GROUP_CALL) {
       parseNamedGroupRef(builder, marker, RegExpTT.GT);
     }
@@ -456,7 +460,13 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     }
     else {
       if (RegExpTT.GROUP_BEGIN == type) {
-        parseGroupReferenceCondition(builder, RegExpTT.GROUP_END);
+        IElementType lookAhead = builder.lookAhead(1);
+        if (RegExpTT.PCRE_CONDITIONS.contains(lookAhead)) {
+          parsePcreConditionalGroup(builder);
+        }
+        else {
+          parseGroupReferenceCondition(builder, RegExpTT.GROUP_END);
+        }
       }
       else if (RegExpTT.QUOTED_CONDITION_BEGIN == type) {
         parseGroupReferenceCondition(builder, RegExpTT.QUOTED_CONDITION_END);
@@ -500,6 +510,14 @@ public class RegExpParser implements PsiParser, LightPsiParser {
   private void parseGroupEnd(PsiBuilder builder) {
     parsePattern(builder);
     checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.group"));
+  }
+
+  private static void parsePcreConditionalGroup(PsiBuilder builder) {
+    final PsiBuilder.Marker marker = builder.mark();
+    builder.advanceLexer();
+    builder.advanceLexer();
+    checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.group.reference"));
+    marker.done(RegExpElementTypes.GROUP);
   }
 
   private static void parseNamedGroupRef(PsiBuilder builder, PsiBuilder.Marker marker, IElementType type) {
@@ -584,10 +602,11 @@ public class RegExpParser implements PsiParser, LightPsiParser {
       // merge surrogate pairs into single regexp char
       if (!Character.isSupplementaryCodePoint(value1) && Character.isHighSurrogate((char)value1)) {
         final String text2 = builder.getTokenText();
-        assert text2 != null;
-        final int value2 = RegExpCharImpl.unescapeChar(text2);
-        if (!Character.isSupplementaryCodePoint(value2) && Character.isLowSurrogate((char)value2)) {
-          builder.advanceLexer();
+        if (text2 != null) {
+          final int value2 = RegExpCharImpl.unescapeChar(text2);
+          if (!Character.isSupplementaryCodePoint(value2) && Character.isLowSurrogate((char)value2)) {
+            builder.advanceLexer();
+          }
         }
       }
       marker.done(RegExpElementTypes.CHAR);
@@ -600,11 +619,22 @@ public class RegExpParser implements PsiParser, LightPsiParser {
 
   private static void patternExpected(PsiBuilder builder) {
     final IElementType token = builder.getTokenType();
-    if (token == RegExpTT.GROUP_END) {
-      builder.error(RegExpBundle.message("parse.error.unmatched.closing.parenthesis"));
+    if (token == RegExpTT.GROUP_END || token == RegExpTT.RBRACE || token == RegExpTT.CLASS_END) {
+      builder.error(RegExpBundle.message("parse.error.unmatched.closing.bracket", builder.getTokenText()));
     }
-    else if (RegExpTT.QUANTIFIERS.contains(token) || token == RegExpTT.RBRACE || token == RegExpTT.CLASS_END) {
-      builder.error(RegExpBundle.message("error.dangling.metacharacter"));
+    else if (token == RegExpTT.LBRACE) {
+      builder.error(RegExpBundle.message("error.dangling.opening.bracket"));
+      // try to recover
+      builder.advanceLexer();
+      while (builder.getTokenType() == RegExpTT.NUMBER || builder.getTokenType() == RegExpTT.COMMA) {
+        builder.advanceLexer();
+      }
+      if (builder.getTokenType() == RegExpTT.RBRACE) {
+        builder.advanceLexer();
+      }
+    }
+    else if (RegExpTT.QUANTIFIERS.contains(token)) {
+      builder.error(RegExpBundle.message("error.dangling.metacharacter", builder.getTokenText()));
     }
     else {
       builder.error(RegExpBundle.message("parse.error.pattern.expected"));

@@ -17,294 +17,374 @@ public class UnwrapIfTest extends UnwrapTestCase {
   }
 
   public void testIfBlock() {
-    assertUnwrapped("if(true) {\n" +
-                    "    int i;<caret>\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      if(true) {
+                          int i;<caret>
+                      }
+                      """,
 
                     "int i;<caret>\n");
   }
 
   public void testIfBlockWithComment() {
-    assertUnwrapped("if(true) {\n" +
-                    "    // a comment\n" +
-                    "    int i;<caret>\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      if(true) {
+                          // a comment
+                          int i;<caret>
+                      }
+                      """,
 
-                    "// a comment\n" +
-                    "int i;<caret>\n");
+                    """
+                      // a comment
+                      int i;<caret>
+                      """);
   }
 
   public void testIfMultiStatementBlock() {
-    assertUnwrapped("if(true) {\n" +
-                    "    int i;\n" +
-                    "\n" +
-                    "    int j;<caret>\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      if(true) {
+                          int i;
 
-                    "int i;\n" +
-                    "\n" +
-                    "int j;<caret>\n");
+                          int j;<caret>
+                      }
+                      """,
+
+                    """
+                      int i;
+
+                      int j;<caret>
+                      """);
   }
 
   public void testIfEmpty() {
-    assertUnwrapped("{\n" +
-                    "    if(true<caret>);\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          if(true<caret>);
+                      }
+                      """,
 
-                    "{\n" +
-                    "<caret>}\n");
+                    """
+                      {
+                      <caret>}
+                      """);
   }
 
   public void testIfEmptyBlock() {
-    assertUnwrapped("{\n" +
-                    "    if(true<caret>) {}\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          if(true<caret>) {}
+                      }
+                      """,
 
-                    "{\n" +
-                    "<caret>}\n");
+                    """
+                      {
+                      <caret>}
+                      """);
   }
 
   public void testIfIncomplete() {
-    assertUnwrapped("{\n" +
-                    "    if(true<caret>)\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          if(true<caret>)
+                      }
+                      """,
 
-                    "{\n" +
-                    "<caret>}\n");
+                    """
+                      {
+                      <caret>}
+                      """);
   }
 
   public void testDoesNotAffectNeighbours() {
-    assertUnwrapped("if(true) {}\n" +
-                    "if(false) {<caret>}\n" +
-                    "if(true && false) {}\n",
+    assertUnwrapped("""
+                      if(true) {}
+                      if(false) {<caret>}
+                      if(true && false) {}
+                      """,
 
-                    "if(true) {}\n" +
-                    "<caret>if(true && false) {}\n");
+                    """
+                      if(true) {}
+                      <caret>if(true && false) {}
+                      """);
   }
 
   public void testIfWithElse() {
-    assertUnwrapped("if(true) {\n" +
-                    "    int i;<caret>\n" +
-                    "} else {\n" +
-                    "    int j;\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      if(true) {
+                          int i;<caret>
+                      } else {
+                          int j;
+                      }
+                      """,
 
                     "int i;<caret>\n");
   }
 
   public void testIfWithElses() {
-    assertUnwrapped("if(true) {\n" +
-                    "    int i;<caret>\n" +
-                    "} else if (true) {\n" +
-                    "    int j;\n" +
-                    "} else {\n" +
-                    "    int k;\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      if(true) {
+                          int i;<caret>
+                      } else if (true) {
+                          int j;
+                      } else {
+                          int k;
+                      }
+                      """,
 
                     "int i;<caret>\n");
   }
 
   public void testIfElseIncomplete() {
-    assertUnwrapped("if(true) {\n" +
-                    "    int i;<caret>\n" +
-                    "} else \n",
+    assertUnwrapped("""
+                      if(true) {
+                          int i;<caret>
+                      } else\s
+                      """,
 
                     "int i;<caret>\n");
   }
 
   public void testUnwrapElse() {
-    assertUnwrapped("{\n" +
-                    "    if(true) {\n" +
-                    "        int i;\n" +
-                    "    } else Sys<caret>tem.gc();\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          if(true) {
+                              int i;
+                          } else Sys<caret>tem.gc();
+                      }
+                      """,
 
-                    "{\n" +
-                    "    Sys<caret>tem.gc();\n" +
-                    "}\n");
+                    """
+                      {
+                          Sys<caret>tem.gc();
+                      }
+                      """);
   }
 
   public void testUnwrapElseBlock() {
-    assertUnwrapped("{\n" +
-                    "    if(true) {\n" +
-                    "        int i;\n" +
-                    "    } else {\n" +
-                    "        int j;<caret>\n" +
-                    "    }\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          if(true) {
+                              int i;
+                          } else {
+                              int j;<caret>
+                          }
+                      }
+                      """,
 
-                    "{\n" +
-                    "    int j;<caret>\n" +
-                    "}\n");
+                    """
+                      {
+                          int j;<caret>
+                      }
+                      """);
   }
 
   public void testUnwrapElseIf() {
-    assertUnwrapped("{\n" +
-                    "    if(true) {\n" +
-                    "        int i;\n" +
-                    "    } else if (false) {\n" +
-                    "        int j;<caret>\n" +
-                    "    }\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          if(true) {
+                              int i;
+                          } else if (false) {
+                              int j;<caret>
+                          }
+                      }
+                      """,
 
-                    "{\n" +
-                    "    int j;<caret>\n" +
-                    "}\n");
+                    """
+                      {
+                          int j;<caret>
+                      }
+                      """);
   }
 
   public void testUnwrapIfElseIfElse() {
-    assertUnwrapped("{\n" +
-                    "    if(true) {\n" +
-                    "        int i;\n" +
-                    "    } else if (false) {\n" +
-                    "        int j;\n" +
-                    "    } else {\n" +
-                    "        int k;<caret>\n" +
-                    "    }\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          if(true) {
+                              int i;
+                          } else if (false) {
+                              int j;
+                          } else {
+                              int k;<caret>
+                          }
+                      }
+                      """,
 
-                    "{\n" +
-                    "    int k;<caret>\n" +
-                    "}\n");
+                    """
+                      {
+                          int k;<caret>
+                      }
+                      """);
   }
 
   public void testUnwrapElseWhenCaretRightInTheElseKeyword() {
-    assertUnwrapped("{\n" +
-                    "    if(true) {\n" +
-                    "        int i;\n" +
-                    "    } el<caret>se {\n" +
-                    "        int j;\n" +
-                    "    }\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          if(true) {
+                              int i;
+                          } el<caret>se {
+                              int j;
+                          }
+                      }
+                      """,
 
-                    "{\n" +
-                    "    int j;<caret>\n" +
-                    "}\n");
+                    """
+                      {
+                          int j;<caret>
+                      }
+                      """);
   }
 
   public void testRemovesWhileIfWhenElseIsIsIncomplete() {
-    assertUnwrapped("{\n" +
-                    "    if(true) {\n" +
-                    "        int i;\n" +
-                    "    } el<caret>se \n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          if(true) {
+                              int i;
+                          } el<caret>se\s
+                      }
+                      """,
 
-                    "{\n" +
-                    "    int i;<caret>\n" +
-                    "}\n");
+                    """
+                      {
+                          int i;<caret>
+                      }
+                      """);
   }
 
   public void testRemoveElse() {
-    assertUnwrapped("{\n" +
-                    "    if(true) {\n" +
-                    "        int i;\n" +
-                    "    } else {\n" +
-                    "        int j;<caret>\n" +
-                    "    }\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          if(true) {
+                              int i;
+                          } else {
+                              int j;<caret>
+                          }
+                      }
+                      """,
 
-                    "{\n" +
-                    "    if(true) {\n" +
-                    "        int i;\n" +
-                    "    }<caret>\n" +
-                    "}\n",
+                    """
+                      {
+                          if(true) {
+                              int i;
+                          }<caret>
+                      }
+                      """,
 
                     1);
   }
 
   public void testRemoveElseWhenCaretRightInTheElseKeyword() {
-    assertUnwrapped("{\n" +
-                    "    if(true) {\n" +
-                    "        int i;\n" +
-                    "    } el<caret>se {\n" +
-                    "        int j;\n" +
-                    "    }\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          if(true) {
+                              int i;
+                          } el<caret>se {
+                              int j;
+                          }
+                      }
+                      """,
 
-                    "{\n" +
-                    "    if(true) {\n" +
-                    "        int i;\n" +
-                    "    }<caret>\n" +
-                    "}\n",
+                    """
+                      {
+                          if(true) {
+                              int i;
+                          }<caret>
+                      }
+                      """,
 
                     1);
   }
 
   public void testRemoveElseIf() {
-    assertUnwrapped("{\n" +
-                    "    if(true) {\n" +
-                    "        int i;\n" +
-                    "    } else if(true) {\n" +
-                    "        int j;<caret>\n" +
-                    "    }\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          if(true) {
+                              int i;
+                          } else if(true) {
+                              int j;<caret>
+                          }
+                      }
+                      """,
 
-                    "{\n" +
-                    "    if(true) {\n" +
-                    "        int i;\n" +
-                    "    }<caret>\n" +
-                    "}\n",
+                    """
+                      {
+                          if(true) {
+                              int i;
+                          }<caret>
+                      }
+                      """,
 
                     1);
   }
 
   public void testRemoveElseIfElse() {
-    assertUnwrapped("if(true) {\n" +
-                    "    int i;\n" +
-                    "} else if (true) {\n" +
-                    "    int j;<caret>\n" +
-                    "} else {\n" +
-                    "    int k;\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      if(true) {
+                          int i;
+                      } else if (true) {
+                          int j;<caret>
+                      } else {
+                          int k;
+                      }
+                      """,
 
-                    "if(true) {\n" +
-                    "    int i;\n" +
-                    "}<caret> else {\n" +
-                    "    int k;\n" +
-                    "}\n",
+                    """
+                      if(true) {
+                          int i;
+                      }<caret> else {
+                          int k;
+                      }
+                      """,
 
                     1);
   }
 
   public void testIfOption() {
-    assertOptions("if (true) {\n" +
-                  "    <caret>\n" +
-                  "}\n",
+    assertOptions("""
+                    if (true) {
+                        <caret>
+                    }
+                    """,
 
                   "Unwrap 'if...'");
   }
 
   public void testIfElseOption() {
-    assertOptions("if (true) {\n" +
-                  "} else {\n" +
-                  "    <caret>\n" +
-                  "}\n",
+    assertOptions("""
+                    if (true) {
+                    } else {
+                        <caret>
+                    }
+                    """,
 
                   "Unwrap 'else...'",
                   "Remove 'else...'");
   }
 
   public void testDoesNotIncludeDirectParentIfsWhenElseIsSelected() {
-    assertOptions("if (true) {\n" +
-                  "} else if (true) {\n" +
-                  "} else if (true) {\n" +
-                  "} else {\n" +
-                  "    <caret>\n" +
-                  "}\n",
+    assertOptions("""
+                    if (true) {
+                    } else if (true) {
+                    } else if (true) {
+                    } else {
+                        <caret>
+                    }
+                    """,
 
                   "Unwrap 'else...'",
                   "Remove 'else...'");
   }
 
   public void testDoesNotIncludeIndirectParentIfsWhenElseIsSelected() {
-    assertOptions("if (true) {\n" +
-                  "} else if (true) {\n" +
-                  "} else {\n" +
-                  "    if (true) {\n" +
-                  "    } else {\n" +
-                  "        <caret>\n" +
-                  "    }\n" +
-                  "}\n",
+    assertOptions("""
+                    if (true) {
+                    } else if (true) {
+                    } else {
+                        if (true) {
+                        } else {
+                            <caret>
+                        }
+                    }
+                    """,
 
                   "Unwrap 'else...'",
                   "Remove 'else...'",
@@ -313,22 +393,26 @@ public class UnwrapIfTest extends UnwrapTestCase {
   }
 
   public void testIfElseIfOption() {
-    assertOptions("if (true) {\n" +
-                  "} else if (false) {\n" +
-                  "    <caret>\n" +
-                  "}\n",
+    assertOptions("""
+                    if (true) {
+                    } else if (false) {
+                        <caret>
+                    }
+                    """,
 
                   "Unwrap 'else...'",
                   "Remove 'else...'");
   }
 
   public void testIfInsideElseOption() {
-    assertOptions("if (true) {\n" +
-                  "} else {\n" +
-                  "  if (false) {\n" +
-                  "    <caret>\n" +
-                  "  }\n" +
-                  "}\n",
+    assertOptions("""
+                    if (true) {
+                    } else {
+                      if (false) {
+                        <caret>
+                      }
+                    }
+                    """,
 
                   "Unwrap 'if...'",
                   "Unwrap 'else...'",
@@ -336,9 +420,11 @@ public class UnwrapIfTest extends UnwrapTestCase {
   }
 
   public void testIfElseOptionWhenCaretIsRughtOnTheElseKeyword() {
-    assertOptions("if (true) {\n" +
-                  "} el<caret>se {\n" +
-                  "}\n",
+    assertOptions("""
+                    if (true) {
+                    } el<caret>se {
+                    }
+                    """,
 
                   "Unwrap 'else...'",
                   "Remove 'else...'");

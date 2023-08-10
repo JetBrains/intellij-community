@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +17,7 @@ import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.BaseOutputReader;
-import com.intellij.util.io.PersistentEnumeratorBase;
+import com.intellij.util.io.CorruptedException;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +32,7 @@ import org.jetbrains.jps.builders.impl.TargetOutputIndexImpl;
 import org.jetbrains.jps.builders.java.*;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -54,6 +55,7 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import javax.tools.Diagnostic;
+import javax.tools.DiagnosticListener;
 import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.FileFilter;
@@ -69,7 +71,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.util.Pair.pair;
 
 public final class JavaBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(JavaBuilder.class);
@@ -104,17 +105,12 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     "-g", "-deprecation", "-nowarn", "-verbose", PROC_NONE_OPTION, PROC_ONLY_OPTION, "-proceedOnError"
   );
   private static final Set<String> POSSIBLY_CONFLICTING_OPTIONS = ContainerUtil.newHashSet(
-    "--boot-class-path", "-bootclasspath", "--class-path", "-classpath", "-cp", PROCESSORPATH_OPTION, "-sourcepath", "--module-path", "-p", "--module-source-path"
+    SOURCE_OPTION, "--boot-class-path", "-bootclasspath", "--class-path", "-classpath", "-cp", PROCESSORPATH_OPTION, "-sourcepath", "--module-path", "-p", "--module-source-path"
   );
 
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<>();
-  private static final Set<JpsModuleType<?>> ourCompilableModuleTypes = new HashSet<>();
   @Nullable private static final File ourDefaultRtJar;
   static {
-    for (JavaBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
-      ourCompilableModuleTypes.addAll(extension.getCompilableModuleTypes());
-    }
-
     File rtJar = null;
     StringTokenizer tokenizer = new StringTokenizer(System.getProperty("sun.boot.class.path", ""), File.pathSeparator, false);
     while (tokenizer.hasMoreTokens()) {
@@ -125,6 +121,16 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       }
     }
     ourDefaultRtJar = rtJar;
+  }
+
+  private static final class CompilableModuleTypesHolder {
+    // avoid loading extensions on JavaBuilder.class load. Init compilable types atomically on demand
+    static final Set<JpsModuleType<?>> ourCompilableModuleTypes = new HashSet<>();
+    static {
+      for (JavaBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
+        ourCompilableModuleTypes.addAll(extension.getCompilableModuleTypes());
+      }
+    }
   }
 
   public static void registerClassPostProcessor(ClassPostProcessor processor) {
@@ -242,7 +248,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     try {
       Set<File> filesToCompile = FileCollectionFactory.createCanonicalFileLinkedSet();
       dirtyFilesHolder.processDirtyFiles((target, file, descriptor) -> {
-        if (JAVA_SOURCES_FILTER.accept(file) && ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {
+        if (JAVA_SOURCES_FILTER.accept(file) && CompilableModuleTypesHolder.ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {
           filesToCompile.add(file);
         }
         return true;
@@ -279,7 +285,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
       return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer, compilingTool, moduleInfoFile);
     }
-    catch (BuildDataCorruptedException | PersistentEnumeratorBase.CorruptedException | ProjectBuildException e) {
+    catch (BuildDataCorruptedException | CorruptedException | ProjectBuildException e) {
       throw e;
     }
     catch (Exception e) {
@@ -393,7 +399,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
                               DiagnosticOutputConsumer diagnosticSink,
                               OutputFileConsumer outputSink,
                               JavaCompilingTool compilingTool,
-                              File moduleInfoFile) {
+                              File moduleInfoFile) throws IOException {
     final Semaphore counter = new Semaphore();
     COUNTER_KEY.set(context, counter);
 
@@ -419,12 +425,11 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     try {
       final int targetLanguageLevel = getTargetPlatformLanguageVersion(chunk.representativeTarget().getModule());
 
-      // when forking external javac, compilers from SDK 1.6 and higher are supported
+      // when forking external javac, compilers from SDK 1.7 and higher are supported
       final Pair<String, Integer> forkSdk;
-      if (shouldForkCompilerProcess(context, chunk, targetLanguageLevel)) {
-        forkSdk = getForkedJavacSdk(chunk, targetLanguageLevel);
+      if (shouldForkCompilerProcess(context, chunk, targetLanguageLevel, compilingTool)) {
+        forkSdk = getForkedJavacSdk(diagnosticSink, chunk, targetLanguageLevel);
         if (forkSdk == null) {
-          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, JpsBuildBundle.message("build.message.cannot.start.javac.process.for.0.unknown.jdk.home", chunk.getName())));
           return false;
         }
       }
@@ -454,7 +459,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       if (moduleInfoFile != null) { // has modules
         final ModulePathSplitter splitter = MODULE_PATH_SPLITTER.get(context);
         final Pair<ModulePath, Collection<File>> pair = splitter.splitPath(
-          moduleInfoFile, outs.keySet(), ProjectPaths.getCompilationModulePath(chunk, false)
+          moduleInfoFile, outs.keySet(), ProjectPaths.getCompilationModulePath(chunk, false), collectAdditionalRequires(options)
         );
         final boolean useModulePathOnly = Boolean.parseBoolean(System.getProperty(USE_MODULE_PATH_ONLY_OPTION))/*compilerConfig.useModulePathOnly()*/;
         if (useModulePathOnly) {
@@ -521,7 +526,24 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static void logJavacCall(ModuleChunk chunk, Iterable<? extends String> options, final String mode) {
+  @NotNull
+  private static Collection<String> collectAdditionalRequires(Iterable<String> options) {
+    // --add-reads module=other-module(,other-module)*
+    // The option specifies additional modules to be considered as required by a given module.
+    final Set<String> result = new SmartHashSet<>();
+    for (Iterator<String> it = options.iterator(); it.hasNext(); ) {
+      final String option = it.next();
+      if ("--add-reads".equalsIgnoreCase(option) && it.hasNext()) {
+        final String moduleNames = StringUtil.substringAfter(it.next(), "=");
+        if (moduleNames != null) {
+          result.addAll(StringUtil.split(moduleNames, ","));
+        }
+      }
+    }
+    return result;
+  }
+
+  private static void logJavacCall(ModuleChunk chunk, Iterable<String> options, final String mode) {
     if (LOG.isDebugEnabled()) {
       LOG.debug((Iterators.contains(options, PROC_ONLY_OPTION)? "Running processors for chunk" : "Compiling chunk") + " [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\", mode=" + mode);
     }
@@ -584,7 +606,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     for (JpsModule module : modules) {
       final LanguageLevel moduleLevel = javaExt.getLanguageLevel(module);
       if (pair == null) {
-        pair = pair(module.getName(), moduleLevel); // first value
+        pair = Pair.create(module.getName(), moduleLevel); // first value
       }
       else if (!Comparing.equal(pair.getSecond(), moduleLevel)) {
         return JpsBuildBundle.message("build.message.modules.0.and.1.must.have.the.same.language.level", pair.getFirst(), module.getName());
@@ -601,7 +623,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
         if (!StringUtil.isEmptyOrSpaces(opts)) {
           final Set<String> parsed = parseOptions(opts);
           if (overridden == null) {
-            overridden = pair(module.getName(), parsed);
+            overridden = Pair.create(module.getName(), parsed);
           }
           else {
             if (!overridden.second.equals(parsed)) {
@@ -655,8 +677,8 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     return false;
   }
 
-  private static boolean shouldForkCompilerProcess(CompileContext context, ModuleChunk chunk, int chunkLanguageLevel) {
-    if (!isJavac(COMPILING_TOOL.get(context))) {
+  private static boolean shouldForkCompilerProcess(CompileContext context, ModuleChunk chunk, int chunkLanguageLevel, JavaCompilingTool compilingTool) {
+    if (!isJavac(compilingTool)) {
       return false; // applicable to javac only
     }
     final int compilerSdkVersion = JavaVersion.current().feature;
@@ -665,7 +687,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       final Pair<JpsSdk<JpsDummyElement>, Integer> sdkVersionPair = getAssociatedSdk(chunk);
       if (sdkVersionPair != null) {
         final Integer chunkSdkVersion = sdkVersionPair.second;
-        if (chunkSdkVersion != compilerSdkVersion && chunkSdkVersion >= 6 /*min. supported compiler version*/) {
+        if (chunkSdkVersion != compilerSdkVersion && chunkSdkVersion >= ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION) {
           // there is a special case because of difference in type inference behavior between javac8 and javac6-javac7
           // so if corresponding JDK is associated with the module chunk, prefer compiler from this JDK over the newer compiler version
           return true;
@@ -694,7 +716,8 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean isJavac(final JavaCompilingTool compilingTool) {
-    return compilingTool != null && (compilingTool.getId() == JavaCompilers.JAVAC_ID || compilingTool.getId() == JavaCompilers.JAVAC_API_ID);
+    return compilingTool != null && (compilingTool.getId().equals(JavaCompilers.JAVAC_ID) ||
+                                     compilingTool.getId().equals(JavaCompilers.JAVAC_API_ID));
   }
 
   private static boolean preferTargetJdkCompiler(CompileContext context) {
@@ -761,7 +784,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   }
 
   @NotNull
-  private static synchronized ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) {
+  private static synchronized ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) throws IOException {
     ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
     if (server != null) {
       return server;
@@ -828,6 +851,10 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       vmOptions.add("-D" + JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY + "=" + JavacMain.TRACK_AP_GENERATED_DEPENDENCIES);
       notifyMessage(context, BuildMessage.Kind.WARNING, "build.message.incremental.annotation.processing.disabled.0", true, JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY);
     }
+    if (compilerSdkVersion > 15) {
+      // enable javac-related reflection tricks in JPS
+      ClasspathBootstrap.configureReflectionOpenPackages(p -> vmOptions.add(p));
+    }
     final JpsProject project = context.getProjectDescriptor().getProject();
     final JpsJavaCompilerOptions compilerOptions = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getCurrentCompilerOptions();
     if (compilerOptions.DEBUGGING_INFO) {
@@ -859,7 +886,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    if (customArgs != null) {
+    if (customArgs != null && !customArgs.isEmpty()) {
       BiConsumer<List<String>, String> appender = List::add;
       final JpsModule module = chunk.representativeTarget().getModule();
       final File baseDirectory = JpsModelSerializationDataService.getBaseDirectory(module);
@@ -906,12 +933,12 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     }
 
     for (ExternalJavacOptionsProvider extension : JpsServiceManager.getInstance().getExtensions(ExternalJavacOptionsProvider.class)) {
-      vmOptions.addAll(extension.getOptions(compilingTool));
+      vmOptions.addAll(extension.getOptions(compilingTool, compilerSdkVersion));
     }
 
     addCompilationOptions(compilerSdkVersion, compilationOptions, context, chunk, profile, true);
 
-    return pair(vmOptions, compilationOptions);
+    return Pair.create(vmOptions, compilationOptions);
   }
 
   private static void notifyOptionPossibleConflicts(CompileContext context, String option, ModuleChunk chunk) {
@@ -1018,21 +1045,24 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       context.getProjectDescriptor().getProject()
     );
 
-    final int languageLevel = getLanguageLevel(chunk.representativeTarget().getModule());
+    @NotNull JpsModule module = chunk.representativeTarget().getModule();
+    final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
+    final int languageLevel = level != null ? level.toJavaVersion().feature : 0;
     final int chunkSdkVersion = getChunkSdkVersion(chunk);
 
-    int bytecodeTarget = getModuleBytecodeTarget(context, chunk, compilerConfiguration, languageLevel);
+    int bytecodeTarget = getModuleBytecodeTarget(context, chunk, compilerConfiguration,
+                                                 (level == LanguageLevel.JDK_X) ? chunkSdkVersion : languageLevel);
 
     if (shouldUseReleaseOption(compilerConfiguration, compilerSdkVersion, chunkSdkVersion, bytecodeTarget)) {
       options.add(RELEASE_OPTION);
-      options.add(complianceOption(bytecodeTarget));
+      options.add(level == LanguageLevel.JDK_X ? complianceOption(chunkSdkVersion) : complianceOption(bytecodeTarget));
       return;
     }
 
     // using older -source, -target and -bootclasspath options
-    if (languageLevel > 0) {
+    if (languageLevel > 0 && !options.contains(SOURCE_OPTION)) {
       options.add(SOURCE_OPTION);
-      options.add(complianceOption(languageLevel));
+      options.add(level == LanguageLevel.JDK_X ? complianceOption(chunkSdkVersion) : complianceOption(languageLevel));
     }
 
     if (bytecodeTarget > 0) {
@@ -1136,40 +1166,77 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   }
 
   @Nullable
-  private static Pair<String, Integer> getForkedJavacSdk(ModuleChunk chunk, int targetLanguageLevel) {
-    final Pair<JpsSdk<JpsDummyElement>, Integer> sdkVersionPair = getAssociatedSdk(chunk);
-    if (sdkVersionPair != null) {
-      final int sdkVersion = sdkVersionPair.second;
-      if (sdkVersion >= 6 && isTargetReleaseSupported(sdkVersion, targetLanguageLevel)) {
-        // current javac compiler does support required language level
-        return pair(sdkVersionPair.first.getHomePath(), sdkVersion);
+  private static Pair<String, Integer> getForkedJavacSdk(DiagnosticListener<? super JavaFileObject> diagnostic, ModuleChunk chunk, int targetLanguageLevel) {
+    final Pair<JpsSdk<JpsDummyElement>, Integer> associatedSdk = getAssociatedSdk(chunk);
+    boolean canRunAssociatedJavac = false;
+    if (associatedSdk != null) {
+      final int sdkVersion = associatedSdk.second;
+      canRunAssociatedJavac = sdkVersion >= ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION;
+      if (isTargetReleaseSupported(sdkVersion, targetLanguageLevel)) {
+        if (canRunAssociatedJavac) {
+          return Pair.create(associatedSdk.first.getHomePath(), sdkVersion);
+        }
+      }
+      else {
+        LOG.warn("Target bytecode version " + targetLanguageLevel + " is not supported by SDK " + sdkVersion + " associated with module " + chunk.getName());
       }
     }
+
     final String fallbackJdkHome = System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null);
     if (fallbackJdkHome == null) {
       LOG.info("Fallback JDK is not specified. (See " + GlobalOptions.FALLBACK_JDK_HOME + " option)");
-      return null;
     }
     final String fallbackJdkVersion = System.getProperty(GlobalOptions.FALLBACK_JDK_VERSION, null);
     if (fallbackJdkVersion == null) {
       LOG.info("Fallback JDK version is not specified. (See " + GlobalOptions.FALLBACK_JDK_VERSION + " option)");
+    }
+
+    if (associatedSdk == null && (fallbackJdkHome == null || fallbackJdkVersion == null)) {
+      diagnostic.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, JpsBuildBundle.message("build.message.cannot.start.javac.process.for.0.unknown.jdk.home", chunk.getName())));
       return null;
     }
-    final int fallbackVersion = JpsJavaSdkType.parseVersion(fallbackJdkVersion);
-    if (fallbackVersion < 6) {
-      LOG.info("Version string for fallback JDK is '" + fallbackJdkVersion + "' (recognized as version '" + fallbackVersion + "')." +
-               " At least version 6 is required.");
-      return null;
+
+    // either associatedSdk or fallbackJdk is configured, but associatedSdk cannot be used
+    if (fallbackJdkHome != null) {
+      final int fallbackVersion = JpsJavaSdkType.parseVersion(fallbackJdkVersion);
+      if (isTargetReleaseSupported(fallbackVersion, targetLanguageLevel)) {
+        if (fallbackVersion >= ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION) {
+          return Pair.create(fallbackJdkHome, fallbackVersion);
+        }
+        else {
+          LOG.info("Version string for fallback JDK is '" + fallbackJdkVersion + "' (recognized as version '" + fallbackVersion + "')." +
+                   " At least version " + ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION + " is required to launch javac process.");
+        }
+      }
     }
-    return pair(fallbackJdkHome, fallbackVersion);
+
+    // at this point, fallbackJdk is not suitable too
+    if (associatedSdk != null) {
+      if (canRunAssociatedJavac) {
+        // although target release is not supported, attempt to start javac, so that javac properly reports this error
+        return Pair.create(associatedSdk.first.getHomePath(), associatedSdk.second);
+      }
+      else {
+        diagnostic.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR,
+          JpsBuildBundle.message(
+            "build.message.unsupported.javac.version",
+            chunk.getName(),
+            associatedSdk.second,
+            ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION,
+            targetLanguageLevel
+          )
+        ));
+      }
+    }
+
+    return null;
   }
 
-  @Nullable
-  private static Pair<JpsSdk<JpsDummyElement>, Integer> getAssociatedSdk(ModuleChunk chunk) {
+  private static @Nullable Pair<@NotNull JpsSdk<JpsDummyElement>, @NotNull Integer> getAssociatedSdk(ModuleChunk chunk) {
     // assuming all modules in the chunk have the same associated JDK;
     // this constraint should be validated on build start
     final JpsSdk<JpsDummyElement> sdk = chunk.representativeTarget().getModule().getSdk(JpsJavaSdkType.INSTANCE);
-    return sdk != null ? pair(sdk, JpsJavaSdkType.getJavaVersion(sdk)) : null;
+    return sdk != null ? Pair.create(sdk, JpsJavaSdkType.getJavaVersion(sdk)) : null;
   }
 
   @Override
@@ -1202,8 +1269,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     private final AtomicInteger myErrorCount = new AtomicInteger(0);
     private final AtomicInteger myWarningCount = new AtomicInteger(0);
     private final Set<File> myFilesWithErrors = FileCollectionFactory.createCanonicalFileSet();
-    @NotNull
-    private final Collection<? extends JavacFileReferencesRegistrar> myRegistrars;
+    private final @NotNull Collection<? extends JavacFileReferencesRegistrar> myRegistrars;
 
     private DiagnosticSink(CompileContext context, @NotNull Collection<? extends JavacFileReferencesRegistrar> refRegistrars) {
       myContext = context;
@@ -1217,7 +1283,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     @Override
     public void registerJavacFileData(JavacFileData data) {
       for (JavacFileReferencesRegistrar registrar : myRegistrars) {
-        registrar.registerFile(myContext, data.getFilePath(), data.getRefs(), data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
+        registrar.registerFile(myContext, data.getFilePath(), Iterators.map(data.getRefs().entrySet(), entry -> entry), data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
       }
     }
 
@@ -1253,9 +1319,8 @@ public final class JavaBuilder extends ModuleLevelBuilder {
             LOG.debug(line);
           }
         }
-        else if (line.contains("\\bjava.lang.OutOfMemoryError\\b")) {
-          myContext.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR,
-                                                       JpsBuildBundle.message("build.message.insufficient.memory")));
+        else if (line.contains("java.lang.OutOfMemoryError")) {
+          myContext.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, JpsBuildBundle.message("build.message.insufficient.memory")));
           myErrorCount.incrementAndGet();
         }
         else {

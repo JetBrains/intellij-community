@@ -33,8 +33,6 @@ import org.jetbrains.annotations.Nullable;
  * Generally, it puts currently selected text to the {@link KillRingTransferable kill ring}.
  * <p/>
  * Thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class KillRingSaveAction extends TextComponentEditorAction {
 
@@ -76,6 +74,11 @@ public class KillRingSaveAction extends TextComponentEditorAction {
           ApplicationManager.getApplication().runWriteAction(runnable);
         }
       }
+    }
+
+    @Override
+    protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+      return !myRemove || editor.getDocument().isWritable();
     }
   }
 }

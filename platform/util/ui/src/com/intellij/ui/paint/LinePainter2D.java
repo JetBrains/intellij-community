@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.paint;
 
 import com.intellij.ui.JreHiDpiUtil;
@@ -6,7 +6,6 @@ import com.intellij.ui.paint.PaintUtil.ParityMode;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -15,7 +14,7 @@ import java.awt.geom.Path2D;
 import java.util.EnumSet;
 
 /**
- * Draws a line with a stroke defined by {@link StrokeType}, provided that the graphics stroke is {@link BasicStroke}),
+ * Draws a line with a stroke defined by {@link StrokeType}, if the graphics stroke is {@link BasicStroke}),
  * otherwise defaults to {@code Graphics2D.draw(Line2D.Double)}.
  * <p>
  * It's assumed that the {@link ScaleType#USR_SCALE} factor is already applied to the values (given in the user space)
@@ -232,7 +231,6 @@ public final class LinePainter2D {
    * @param strokeWidth the stroke width
    * @param valueAA     overrides current {@link RenderingHints#KEY_ANTIALIASING} to {@code valueAA}
    */
-  @ApiStatus.Experimental
   public static void fillPolygon(@NotNull final Graphics2D g,
                                  double @NotNull [] xPoints, double @NotNull [] yPoints,
                                  int nPoints,
@@ -260,7 +258,6 @@ public final class LinePainter2D {
    * @param strokeWidth the stroke width
    * @param valueAA     overrides current {@link RenderingHints#KEY_ANTIALIASING} to {@code valueAA}
    */
-  @ApiStatus.Experimental
   public static void paintPolygon(@NotNull Graphics2D g,
                                   double @NotNull [] xPoints, double @NotNull [] yPoints,
                                   int nPoints,

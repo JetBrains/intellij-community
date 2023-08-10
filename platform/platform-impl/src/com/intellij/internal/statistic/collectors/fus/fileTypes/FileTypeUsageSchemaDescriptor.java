@@ -9,7 +9,7 @@ public interface FileTypeUsageSchemaDescriptor {
   /**
    * @deprecated use {@link FileTypeUsageSchemaDescriptor#describes(Project, VirtualFile)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default boolean describes(@NotNull VirtualFile file) {
     return false;
   }

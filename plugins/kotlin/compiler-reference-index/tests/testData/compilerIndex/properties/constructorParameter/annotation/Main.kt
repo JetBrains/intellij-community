@@ -1,0 +1,1 @@
+annotation class KAnn(val va<caret>lue : String)

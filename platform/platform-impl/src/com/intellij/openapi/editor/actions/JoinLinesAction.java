@@ -41,7 +41,7 @@ public class JoinLinesAction extends TextComponentEditorAction {
         if (doc.getLineStartOffset(endLine) == caret.getSelectionEnd()) endLine--;
       }
 
-      int[] caretRestoreOffset = new int[] {-1};
+      int[] caretRestoreOffset = new int[]{-1};
       int lineCount = endLine - startLine;
       final int line = startLine;
 
@@ -60,7 +60,8 @@ public class JoinLinesAction extends TextComponentEditorAction {
 
       if (caret.hasSelection()) {
         caret.moveToOffset(caret.getSelectionEnd());
-      } else {
+      }
+      else {
         if (caretRestoreOffset[0] != -1) {
           caret.moveToOffset(caretRestoreOffset[0]);
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);

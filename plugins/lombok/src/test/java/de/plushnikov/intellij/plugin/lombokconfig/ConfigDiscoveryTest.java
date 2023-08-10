@@ -13,14 +13,12 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
@@ -53,15 +51,22 @@ public class ConfigDiscoveryTest {
   @Before
   public void setUp() {
     TestApplicationManager.getInstance();
-    discovery = new ConfigDiscovery(){
+    discovery = new ConfigDiscovery() {
       @Override
       protected FileBasedIndex getFileBasedIndex() {
         return fileBasedIndex;
       }
+
+      @Override
+      protected @NotNull Collection<String> discoverPropertyWithCache(@NotNull ConfigKey configKey,
+                                                                      @NotNull PsiFile psiFile) {
+        return super.discoverProperty(configKey, psiFile);
+      }
     };
 
-    when(psiClass.getProject()).thenReturn(project);
+    when(psiFile.getProject()).thenReturn(project);
     when(psiClass.getContainingFile()).thenReturn(psiFile);
+    when(psiFile.getOriginalFile()).thenReturn(psiFile);
     when(psiFile.getVirtualFile()).thenReturn(virtualFile);
     when(virtualFile.getParent()).thenReturn(parentVirtualFile);
     when(parentVirtualFile.getParent()).thenReturn(parentParVirtualFile);
@@ -113,13 +118,8 @@ public class ConfigDiscoveryTest {
     when(fileBasedIndex.getValues(eq(LombokConfigIndex.NAME), eq(configKey), any(GlobalSearchScope.class)))
       .thenReturn(makeValue("+_d;"), Collections.emptyList(), makeValue("-a;+cc"), makeValue("+a;+b"));
 
-    final String[] properties = discovery.getMultipleValueLombokConfigProperty(configKey, psiClass);
-    assertNotNull(properties);
-    assertEquals(3, properties.length);
-    final ArrayList<String> list = new ArrayList<>(Arrays.asList(properties));
-    assertTrue(list.contains("b"));
-    assertTrue(list.contains("cc"));
-    assertTrue(list.contains("_d"));
+    final Collection<String> properties = discovery.getMultipleValueLombokConfigProperty(configKey, psiClass);
+    assertThat(properties, hasItems("b", "cc", "_d"));
   }
 
   @NotNull
@@ -133,10 +133,7 @@ public class ConfigDiscoveryTest {
     when(fileBasedIndex.getValues(eq(LombokConfigIndex.NAME), eq(configKey), isA(GlobalSearchScope.class)))
       .thenReturn(makeValue("+_d;"));
 
-    final String[] properties = discovery.getMultipleValueLombokConfigProperty(configKey, psiClass);
-    assertNotNull(properties);
-    assertEquals(1, properties.length);
-    final ArrayList<String> list = new ArrayList<>(Arrays.asList(properties));
-    assertTrue(list.contains("_d"));
+    final Collection<String> properties = discovery.getMultipleValueLombokConfigProperty(configKey, psiClass);
+    assertThat(properties, hasItems("_d"));
   }
 }

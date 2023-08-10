@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.inference;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -39,27 +39,11 @@ public final class JavaSourceInference {
     DISABLED, ENABLED, PARAMETERS
   }
 
-  private static class MethodInferenceData {
-    static final MethodInferenceData UNKNOWN =
-      new MethodInferenceData(Mutability.UNKNOWN, Nullability.UNKNOWN, Collections.emptyList(), MutationSignature.unknown(), new BitSet());
-
-    final @NotNull Mutability myMutability;
-    final @NotNull Nullability myNullability;
-    final @NotNull List<StandardMethodContract> myContracts;
-    final @NotNull MutationSignature myMutationSignature;
-    final @NotNull BitSet myNotNullParameters;
-
-    MethodInferenceData(@NotNull Mutability mutability,
-                        @NotNull Nullability nullability,
-                        @NotNull List<StandardMethodContract> contracts,
-                        @NotNull MutationSignature signature,
-                        @NotNull BitSet parameters) {
-      myMutability = mutability;
-      myNullability = nullability;
-      myContracts = contracts;
-      myMutationSignature = signature;
-      myNotNullParameters = parameters;
-    }
+  private record MethodInferenceData(@NotNull Mutability mutability, @NotNull Nullability nullability,
+                                     @NotNull List<StandardMethodContract> contracts, @NotNull MutationSignature signature,
+                                     @NotNull BitSet notNullParameters) {
+      static final MethodInferenceData UNKNOWN =
+        new MethodInferenceData(Mutability.UNKNOWN, Nullability.UNKNOWN, Collections.emptyList(), MutationSignature.unknown(), new BitSet());
   }
 
   @NotNull
@@ -111,7 +95,7 @@ public final class JavaSourceInference {
         method, true, () -> result.getNullability(method, data.methodBody(method)));
       return nullability == null ? Nullability.UNKNOWN : nullability;
     }
-    catch (ClassCastException e) {
+    catch (CannotRestoreExpressionException e) {
       throw ContractInferenceIndexKt.handleInconsistency(method, data, e);
     }
   }
@@ -127,7 +111,7 @@ public final class JavaSourceInference {
         method, true, () -> result.getMutability(method, data.methodBody(method)));
       return mutability == null ? Mutability.UNKNOWN : mutability;
     }
-    catch (ClassCastException e) {
+    catch (CannotRestoreExpressionException e) {
       throw ContractInferenceIndexKt.handleInconsistency(method, data, e);
     }
   }
@@ -135,9 +119,14 @@ public final class JavaSourceInference {
   private static @NotNull MutationSignature findMutationSignature(@NotNull PsiMethodImpl method, @NotNull MethodData data) {
     PurityInferenceResult result = data.getPurity();
     if (result == null) return MutationSignature.unknown();
-    MutationSignature signature =
-      RecursionManager.doPreventingRecursion(method, true, () -> result.getMutationSignature(method, data.methodBody(method)));
-    return signature == null ? MutationSignature.unknown() : signature;
+    try {
+      MutationSignature signature =
+        RecursionManager.doPreventingRecursion(method, true, () -> result.getMutationSignature(method, data.methodBody(method)));
+      return signature == null ? MutationSignature.unknown() : signature;
+    }
+    catch (CannotRestoreExpressionException e) {
+      throw ContractInferenceIndexKt.handleInconsistency(method, data, e);
+    }
   }
 
   @NotNull
@@ -157,7 +146,7 @@ public final class JavaSourceInference {
       contracts = RecursionManager.doPreventingRecursion(
         method, true, () -> ContainerUtil.concat(preContracts, c -> c.toContracts(method, data.methodBody(method))));
     }
-    catch (ClassCastException e) {
+    catch (CannotRestoreExpressionException e) {
       throw ContractInferenceIndexKt.handleInconsistency(method, data, e);
     }
     if (contracts == null || contracts.isEmpty()) return Collections.emptyList();
@@ -214,7 +203,7 @@ public final class JavaSourceInference {
    */
   @NotNull
   public static Nullability inferNullability(PsiMethodImpl method) {
-    return getInferenceData(method).myNullability;
+    return getInferenceData(method).nullability;
   }
 
   /**
@@ -224,13 +213,13 @@ public final class JavaSourceInference {
    * @return inferred parameter nullability; {@link Nullability#UNKNOWN} if cannot be inferred or non-applicable
    */
   public static Nullability inferNullability(@NotNull PsiParameter parameter) {
-    if (!parameter.isPhysical() || parameter.getType() instanceof PsiPrimitiveType) return Nullability.UNKNOWN;
+    if (parameter.getType() instanceof PsiPrimitiveType) return Nullability.UNKNOWN;
     PsiParameterList parent = ObjectUtils.tryCast(parameter.getParent(), PsiParameterList.class);
     if (parent == null) return Nullability.UNKNOWN;
     PsiMethodImpl method = ObjectUtils.tryCast(parent.getParent(), PsiMethodImpl.class);
     if (method == null) return Nullability.UNKNOWN;
 
-    BitSet notNullParameters = getInferenceData(method).myNotNullParameters;
+    BitSet notNullParameters = getInferenceData(method).notNullParameters;
     if (!notNullParameters.isEmpty()) {
       int index = parent.getParameterIndex(parameter);
       if (notNullParameters.get(index)) {
@@ -248,7 +237,7 @@ public final class JavaSourceInference {
    */
   @NotNull
   public static Mutability inferMutability(PsiMethodImpl method) {
-    return getInferenceData(method).myMutability;
+    return getInferenceData(method).mutability;
   }
 
   /**
@@ -259,7 +248,7 @@ public final class JavaSourceInference {
    */
   @NotNull
   public static List<StandardMethodContract> inferContracts(@NotNull PsiMethodImpl method) {
-    return getInferenceData(method).myContracts;
+    return getInferenceData(method).contracts;
   }
 
   /**
@@ -269,7 +258,7 @@ public final class JavaSourceInference {
    * @return method mutation signature; {@link MutationSignature#unknown()} if cannot be inferred
    */
   public static MutationSignature inferMutationSignature(@NotNull PsiMethodImpl method) {
-    return getInferenceData(method).myMutationSignature;
+    return getInferenceData(method).signature;
   }
 
   @NotNull
@@ -316,8 +305,9 @@ public final class JavaSourceInference {
       return false;
     }
 
-    if (containingClass.getParent() instanceof PsiNewExpression &&
-        containingClass.getParent().getParent() instanceof PsiVariable &&
+    PsiElement parent = containingClass.getParent();
+    if (parent instanceof PsiNewExpression &&
+        PsiUtil.skipParenthesizedExprUp(parent.getParent()) instanceof PsiVariable &&
         !method.getHierarchicalMethodSignature().getSuperSignatures().isEmpty()) {
       // references outside anonymous class can still resolve to this method, see com.intellij.psi.scope.util.PsiScopesUtil.setupAndRunProcessor()
       return false;

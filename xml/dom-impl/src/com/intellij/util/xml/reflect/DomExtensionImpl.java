@@ -22,9 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 public class DomExtensionImpl implements DomExtension {
   public static final Key<Supplier<? extends DomElement>> KEY_DOM_DECLARATION = Key.create("DOM_DECLARATION");
   public static final Key<List<DomExtender<?>>> DOM_EXTENDER_KEY = Key.create("Dom.Extender");

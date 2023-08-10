@@ -9,6 +9,4 @@ public interface PathDescription {
   @NotNull Path getPath();
 
   boolean isDirectory();
-
-  long lastModified();
 }

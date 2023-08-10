@@ -15,9 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpression {
 
   public PyCallExpressionImpl(ASTNode astNode) {

@@ -22,9 +22,10 @@ class MediatedProcessTestMain {
   object Loop {
     @JvmStatic
     fun main(args: Array<String>) {
-      while (true) {
+      repeat(60) {
         Thread.sleep(500)
       }
+      exitProcess(1)
     }
   }
 
@@ -51,16 +52,15 @@ class MediatedProcessTestMain {
         System.out.close()
         System.err.close()
         System.`in`.close()
-      } catch (e: Exception) {
-        exitProcess(-1)
       }
       catch (e: Exception) {
-        exitProcess(-1)
+        exitProcess(2)
       }
 
-      while (true) {
+      repeat(60) {
         Thread.sleep(500)
       }
+      exitProcess(1)
     }
   }
 

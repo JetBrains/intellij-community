@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.reference;
 
@@ -6,16 +6,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UDeclaration;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UMethod;
 
 public abstract class RefJavaUtil {
-  @Deprecated
+  /**
+   * @deprecated use {@link RefJavaUtil#addReferencesTo} instead
+   */
+  @Deprecated(forRemoval = true)
   public abstract void addReferences(@NotNull PsiModifierListOwner psiFrom, @NotNull RefJavaElement ref, @Nullable PsiElement findIn);
 
-  public void addReferencesTo(@NotNull UDeclaration decl, @NotNull RefJavaElement ref, UElement @Nullable ... findIn) {
+  public void addReferencesTo(@NotNull UElement elem, @NotNull RefJavaElement ref, UElement @Nullable ... findIn) {
     throw new UnsupportedOperationException("Should be implemented");
   }
 
@@ -23,7 +25,13 @@ public abstract class RefJavaUtil {
 
   public abstract boolean isInheritor(@NotNull RefClass subClass, RefClass superClass);
 
-  @Nullable //default package name
+  /**
+   * Returns the name of the package the specified refEntity is contained in,
+   * or null if the specified refEntity is not contained in any package.
+   * @param refEntity  the entity to get the package name for.
+   * @return the package name, or null if the specified entity is not contained in a package.
+   */
+  @Nullable
   public abstract String getPackageName(RefEntity refEntity);
 
   @Nullable
@@ -31,7 +39,7 @@ public abstract class RefJavaUtil {
     throw new UnsupportedOperationException();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public RefClass getOwnerClass(RefManager refManager, PsiElement psiElement) {
     throw new UnsupportedOperationException();
@@ -55,14 +63,19 @@ public abstract class RefJavaUtil {
     throw new UnsupportedOperationException();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isMethodOnlyCallsSuper(PsiMethod derivedMethod) {
     throw new UnsupportedOperationException();
   }
 
   @Nullable
   public static RefPackage getPackage(RefEntity refEntity) {
-    while (refEntity != null && !(refEntity instanceof RefPackage)) refEntity = refEntity.getOwner();
+    while (refEntity != null && !(refEntity instanceof RefPackage)) {
+      if (refEntity instanceof RefElement) {
+        ((RefElement)refEntity).initializeIfNeeded();
+      }
+      refEntity = refEntity.getOwner();
+    }
 
     return (RefPackage)refEntity;
   }
@@ -83,12 +96,12 @@ public abstract class RefJavaUtil {
     throw new UnsupportedOperationException();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isCallToSuperMethod(PsiExpression expression, PsiMethod method) {
     throw new UnsupportedOperationException();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void addTypeReference(PsiElement psiElement, PsiType psiType, RefManager refManager) {
     throw new UnsupportedOperationException();
   }

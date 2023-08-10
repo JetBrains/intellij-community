@@ -1,20 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.DynamicBundle;
-import com.intellij.codeInsight.template.Macro;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.*;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
@@ -38,13 +39,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
+
+import static com.intellij.codeInsight.template.impl.TemplateContext.contextsEqual;
 
 @State(
   name = "TemplateSettings",
   storages = @Storage("templates.xml"),
-  additionalExportDirectory = TemplateSettings.TEMPLATES_DIR_PATH
+  additionalExportDirectory = TemplateSettings.TEMPLATES_DIR_PATH,
+  category = SettingsCategory.CODE
 )
 public final class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
   private static final Logger LOG = Logger.getInstance(TemplateSettings.class);
@@ -224,9 +227,10 @@ public final class TemplateSettings implements PersistentStateComponent<Template
         if (template.isModified()) {
           return SchemeState.POSSIBLY_CHANGED;
         }
+        LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
 
         for (TemplateImpl t : template.getElements()) {
-          if (differsFromDefault(t)) {
+          if (differsFromDefault(allContexts, t)) {
             return SchemeState.POSSIBLY_CHANGED;
           }
         }
@@ -242,9 +246,10 @@ public final class TemplateSettings implements PersistentStateComponent<Template
         if (!elements.isEmpty()) {
           boolean isGroupAttributeAdded = false;
           Lazy<Map<String, TemplateContextType>> idToType = TemplateContext.getIdToType();
+          LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
           for (TemplateImpl t : elements) {
             TemplateImpl defaultTemplate = getDefaultTemplate(t);
-            if (defaultTemplate == null || !t.equals(defaultTemplate) || !t.contextsEqual(defaultTemplate)) {
+            if (defaultTemplate == null || !t.equals(defaultTemplate) || !contextsEqual(allContexts, t, defaultTemplate)) {
               if (!isGroupAttributeAdded) {
                 isGroupAttributeAdded = true;
                 // add attribute only if not empty to avoid empty file (due to group attribute element will be not considered as empty)
@@ -273,7 +278,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
           removeTemplate(template);
         }
       }
-    });
+    }, null, null, SettingsCategory.CODE);
 
     doLoadTemplates(mySchemeManager.loadSchemes());
 
@@ -302,9 +307,13 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     return ApplicationManager.getApplication().getService(TemplateSettings.class);
   }
 
-  boolean differsFromDefault(@NotNull TemplateImpl t) {
+  private boolean differsFromDefault(@NotNull LiveTemplateContextsSnapshot allContexts, @NotNull TemplateImpl t) {
     TemplateImpl def = getDefaultTemplate(t);
-    return def == null || !t.equals(def) || !t.contextsEqual(def);
+    return def == null || !t.equals(def) || !contextsEqual(allContexts, t, def);
+  }
+
+  boolean differsFromDefault(@NotNull TemplateImpl t) {
+    return differsFromDefault(LiveTemplateContextService.getInstance().getSnapshot(), t);
   }
 
   @Nullable
@@ -498,7 +507,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
         }
 
         try {
-          ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
+          ClassLoader pluginClassLoader = pluginDescriptor.getClassLoader();
           readDefTemplate(file, !ep.hidden, pluginClassLoader,
                           PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
         }
@@ -537,29 +546,28 @@ public final class TemplateSettings implements PersistentStateComponent<Template
                                boolean registerTemplate,
                                @NotNull ClassLoader loader,
                                PluginInfo info) throws JDOMException {
+    String pluginId = info.getId();
     Element element;
     try {
-      InputStream stream;
+      byte[] data;
       if (defTemplate.startsWith("/")) {
-        stream = loader.getResourceAsStream(appendExt(defTemplate.substring(1)));
+        data = ResourceUtil.getResourceAsBytes(appendExt(defTemplate.substring(1)), loader);
       }
       else {
-        stream = loader.getResourceAsStream(appendExt(defTemplate));
+        data = ResourceUtil.getResourceAsBytes(appendExt(defTemplate), loader);
       }
-      if (stream == null) {
-        stream = loader.getResourceAsStream(appendExt("idea/" + defTemplate));
-        if (stream == null) {
-          LOG.error("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
-          return;
-        }
-        else {
-          LOG.error("Do not rely on implicit `idea/` prefix: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
-        }
+      if (data == null) {
+        LOG.error(new PluginException("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info,
+                                      pluginId == null ? null : PluginId.getId(pluginId)));
+        return;
       }
-      element = JDOMUtil.load(stream);
+
+      element = JDOMUtil.load(data);
     }
     catch (IOException e) {
-      LOG.error("Unable to read template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info, e);
+      LOG.error(
+        new PluginException("Unable to read template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info, e,
+                            pluginId == null ? null : PluginId.getId(pluginId)));
       return;
     }
 
@@ -595,8 +603,10 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     return defTemplate.substring(defTemplate.lastIndexOf('/') + 1);
   }
 
-  @Nullable
-  private static TemplateGroup parseTemplateGroup(@NotNull Element element, @NonNls String defGroupName, @NotNull ClassLoader classLoader) {
+
+  private static @Nullable TemplateGroup parseTemplateGroup(@NotNull Element element,
+                                                            @NonNls String defGroupName,
+                                                            @NotNull ClassLoader classLoader) {
     if (!TEMPLATE_SET.equals(element.getName())) {
       LOG.error("Ignore invalid template scheme: " + JDOMUtil.writeElement(element));
       return null;
@@ -607,11 +617,11 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       groupName = defGroupName;
     }
 
+    LiveTemplateContextService ltContextService = LiveTemplateContextService.getInstance();
     TemplateGroup result = new TemplateGroup(groupName, element.getAttributeValue("REPLACE"));
-
     for (Element child : element.getChildren(TEMPLATE)) {
       try {
-        result.addElement(readTemplateFromElement(groupName, child, classLoader));
+        result.addElement(readTemplateFromElement(groupName, child, classLoader, ltContextService));
       }
       catch (Exception e) {
         LOG.warn("failed to load template " + element.getAttributeValue(NAME), e);
@@ -673,7 +683,20 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     return result.isEmpty() ? null : result;
   }
 
-  public static TemplateImpl readTemplateFromElement(final String groupName, @NotNull Element element, @NotNull ClassLoader classLoader) {
+  /**
+   * @deprecated Use {@link com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils} if needed for postfix templates.
+   */
+  @Deprecated
+  public static TemplateImpl readTemplateFromElement(String groupName,
+                                                     @NotNull Element element,
+                                                     @NotNull ClassLoader classLoader) {
+    return readTemplateFromElement(groupName, element, classLoader, LiveTemplateContextService.getInstance());
+  }
+
+  public static TemplateImpl readTemplateFromElement(String groupName,
+                                                     @NotNull Element element,
+                                                     @NotNull ClassLoader classLoader,
+                                                     @NotNull LiveTemplateContextService ltContextService) {
     String name = element.getAttributeValue(NAME);
     String value = element.getAttributeValue(VALUE);
     String description;
@@ -681,7 +704,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     String key = element.getAttributeValue(KEY);
     String id = element.getAttributeValue(ID);
     if (resourceBundle != null && key != null) {
-      ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(resourceBundle, classLoader);
+      ResourceBundle bundle = DynamicBundle.getResourceBundle(classLoader, resourceBundle);
       description = bundle.getString(key);
     }
     else {
@@ -710,14 +733,15 @@ public final class TemplateSettings implements PersistentStateComponent<Template
 
     Element context = element.getChild(CONTEXT);
     if (context != null) {
-      template.getTemplateContext().readTemplateContext(context);
+      template.getTemplateContext().readTemplateContext(context, ltContextService);
     }
 
     return template;
   }
 
-  @NotNull
-  public static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateImpl defaultTemplate, @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
+  public static @NotNull Element serializeTemplate(@NotNull TemplateImpl template,
+                                                   @Nullable TemplateImpl defaultTemplate,
+                                                   @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
     if (id != null) {

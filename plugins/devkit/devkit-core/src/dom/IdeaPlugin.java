@@ -1,14 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.PsiPackage;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.impl.IdeaPluginPackageConverter;
 
 import java.util.List;
 
@@ -18,8 +20,7 @@ import java.util.List;
 public interface IdeaPlugin extends DomElement {
   @NonNls String TAG_NAME = "idea-plugin";
 
-  @Nullable @NlsSafe
-  String getPluginId();
+  @Nullable @NlsSafe String getPluginId();
 
   default boolean hasRealPluginId() {
     String pluginId = getPluginId();
@@ -27,236 +28,136 @@ public interface IdeaPlugin extends DomElement {
   }
 
   @SubTag("product-descriptor")
-  @Nullable
-  ProductDescriptor getProductDescriptor();
+  @NotNull ProductDescriptor getProductDescriptor();
 
   @SubTag("content")
-  @Nullable
+  @Stubbed
   @ApiStatus.Experimental
-  ContentDescriptor getContent();
+  @NotNull ContentDescriptor getContent();
 
   @SubTag("dependencies")
-  @Nullable
+  @Stubbed
   @ApiStatus.Experimental
-  DependencyDescriptor getDependencies();
+  @NotNull DependencyDescriptor getDependencies();
 
-  @NotNull
   @NameValue
   @Stubbed
-  GenericDomValue<String> getId();
+  @NotNull GenericDomValue<String> getId();
 
   /**
    * @deprecated Unused.
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @NotNull
   @Attribute("version")
   @Deprecated
-  GenericAttributeValue<Integer> getIdeaPluginVersion();
+  @NotNull GenericAttributeValue<Integer> getIdeaPluginVersion();
 
-  @NotNull
-  GenericAttributeValue<String> getUrl();
+  @NotNull GenericAttributeValue<String> getUrl();
 
   /**
    * @deprecated Unused.
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @NotNull
   @Deprecated
-  GenericAttributeValue<Boolean> getUseIdeaClassloader();
+  @NotNull GenericAttributeValue<Boolean> getUseIdeaClassloader();
 
-  @NotNull
-  GenericAttributeValue<Boolean> getAllowBundledUpdate();
+  @NotNull GenericAttributeValue<Boolean> getAllowBundledUpdate();
 
-  @NotNull
-  GenericAttributeValue<Boolean> getImplementationDetail();
+  @NotNull GenericAttributeValue<Boolean> getImplementationDetail();
 
-  @NotNull
-  GenericAttributeValue<Boolean> getRequireRestart();
+  @ApiStatus.Experimental
+  @NotNull GenericAttributeValue<Boolean> getOnDemand();
 
-  @NotNull
-  GenericAttributeValue<String> getPackage();
+  @NotNull GenericAttributeValue<Boolean> getRequireRestart();
 
-  @NotNull
+  @ApiStatus.Experimental
+  @Stubbed
+  @Convert(IdeaPluginPackageConverter.class)
+  @NotNull GenericAttributeValue<PsiPackage> getPackage();
+
   @Stubbed
   @Required(false)
-  GenericDomValue<String> getName();
+  @NotNull GenericDomValue<String> getName();
 
+  @NotNull GenericDomValue<String> getDescription();
 
-  @NotNull
-  GenericDomValue<String> getDescription();
-
-
-  @NotNull
   @Required(false)
-  GenericDomValue<String> getVersion();
+  @NotNull GenericDomValue<String> getVersion();
 
+  @NotNull Vendor getVendor();
 
-  @NotNull
-  Vendor getVendor();
+  @NotNull GenericDomValue<String> getChangeNotes();
 
-
-  @NotNull
-  GenericDomValue<String> getChangeNotes();
-
-
-  @NotNull
   @Stubbed
-  IdeaVersion getIdeaVersion();
+  @NotNull IdeaVersion getIdeaVersion();
 
+  @NotNull GenericDomValue<String> getCategory();
 
-  @NotNull
-  GenericDomValue<String> getCategory();
-
-
-  @NotNull
   @Stubbed
-  GenericDomValue<String> getResourceBundle();
+  @NotNull GenericDomValue<String> getResourceBundle();
 
-
-  @NotNull
   @Stubbed
   @SubTagList("depends")
-  List<Dependency> getDepends();
+  @NotNull List<? extends Dependency> getDepends();
 
   @SubTagList("depends")
   Dependency addDependency();
 
-  @NotNull
   @SubTagList("incompatible-with")
-  List<GenericDomValue<String>> getIncompatibilities();
+  @NotNull List<GenericDomValue<String>> getIncompatibilities();
 
-  @NotNull
   @Stubbed
   @SubTagList("module")
-  List<PluginModule> getModules();
+  @NotNull List<? extends PluginModule> getModules();
 
-  @NotNull
   @SubTagList("extensions")
   @Stubbed
-  List<Extensions> getExtensions();
+  @NotNull List<? extends Extensions> getExtensions();
 
   Extensions addExtensions();
 
-  @NotNull
   @Stubbed
   @SubTagList("extensionPoints")
-  List<ExtensionPoints> getExtensionPoints();
+  @NotNull List<? extends ExtensionPoints> getExtensionPoints();
 
   ExtensionPoints addExtensionPoints();
 
-
-  @NotNull
   @SubTagList("application-components")
-  List<ApplicationComponents> getApplicationComponents();
+  @NotNull List<? extends ApplicationComponents> getApplicationComponents();
 
   ApplicationComponents addApplicationComponents();
 
-  @NotNull
   @SubTagList("project-components")
-  List<ProjectComponents> getProjectComponents();
+  @NotNull List<? extends ProjectComponents> getProjectComponents();
 
   ProjectComponents addProjectComponents();
 
-  @NotNull
   @SubTagList("module-components")
-  List<ModuleComponents> getModuleComponents();
+  @NotNull List<? extends ModuleComponents> getModuleComponents();
 
   ModuleComponents addModuleComponents();
 
-  @NotNull
   @SubTagList("actions")
   @Stubbed
-  List<Actions> getActions();
+  @NotNull List<? extends Actions> getActions();
 
   Actions addActions();
 
   /**
    * Available since 192.
    */
-  @NotNull
   @SubTagList("applicationListeners")
-  List<Listeners> getApplicationListeners();
+  @NotNull List<? extends Listeners> getApplicationListeners();
 
   /**
    * Available since 192.
    */
-  @NotNull
   @SubTagList("projectListeners")
-  List<Listeners> getProjectListeners();
+  @NotNull List<? extends Listeners> getProjectListeners();
 
   /**
-   * @deprecated not used anymore
+   * @deprecated the corresponding tag in plugin.xml is not supported anymore, this method is used to highlight occurrences of such tag  
    */
-  @SuppressWarnings("SpellCheckingInspection")
   @Deprecated
-  @NotNull
-  List<Helpset> getHelpsets();
-
-  interface ContentDescriptor extends DomElement {
-    @NotNull
-    @Stubbed
-    @SubTagList("module")
-    List<DependencyDescriptor.ModuleDescriptor> getModuleEntry();
-
-    @SubTagList("module")
-    DependencyDescriptor.ModuleDescriptor addModuleEntry();
-
-    @Presentation(icon = "AllIcons.Nodes.Module")
-    interface ModuleDescriptor extends DomElement {
-      @NotNull
-      @Required
-      @Stubbed
-      @NameValue
-      GenericAttributeValue<String> getName();
-
-      @NotNull
-      @Required
-      @Stubbed
-      @NameValue
-      GenericAttributeValue<String> getPackage();
-    }
-  }
-
-  interface DependencyDescriptor extends DomElement {
-    @NotNull
-    @Stubbed
-    @SubTagList("module")
-    List<ModuleDescriptor> getModuleEntry();
-
-    @SubTagList("module")
-    ModuleDescriptor addModuleEntry();
-
-    @NotNull
-    @Stubbed
-    @SubTagList("plugin")
-    List<PluginDescriptor> getPlugin();
-
-    @SubTagList("module")
-    PluginDescriptor addPlugin();
-
-    @Presentation(icon = "AllIcons.Nodes.Module")
-    interface ModuleDescriptor extends DomElement {
-      @NotNull
-      @Required
-      @Stubbed
-      @NameValue
-      GenericAttributeValue<String> getName();
-
-      @NotNull
-      @Required
-      @Stubbed
-      @NameValue
-      GenericAttributeValue<String> getPackage();
-    }
-
-    @Presentation(icon = "AllIcons.Nodes.Plugin")
-    interface PluginDescriptor extends DomElement {
-      @NotNull
-      @Required
-      @Stubbed
-      @NameValue
-      GenericAttributeValue<String> getId();
-    }
-  }
+  @NotNull List<? extends Helpset> getHelpsets();
 }

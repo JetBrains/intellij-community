@@ -28,9 +28,6 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author dcheryasov
- */
 public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implements PyDecorator {
 
   public PyDecoratorImpl(ASTNode astNode) {
@@ -79,7 +76,13 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
 
   @Override
   public boolean hasArgumentList() {
-    return getExpression() instanceof PyCallExpression;
+    final PyDecoratorStub stub = getStub();
+    if (stub != null) {
+      return stub.hasArgumentList();
+    }
+    else {
+      return getExpression() instanceof PyCallExpression;
+    }
   }
 
   @Override

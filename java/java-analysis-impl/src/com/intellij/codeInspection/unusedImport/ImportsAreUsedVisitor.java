@@ -45,7 +45,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitImportList(PsiImportList list) {
+  public void visitImportList(@NotNull PsiImportList list) {
     //ignore imports
   }
 
@@ -78,10 +78,9 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
         element = results[0].getElement();
       }
     }
-    if (!(element instanceof PsiMember)) {
+    if (!(element instanceof PsiMember member)) {
       return;
     }
-    final PsiMember member = (PsiMember)element;
     if (findImport(member, usedImportStatements) != null) {
       return;
     }
@@ -96,8 +95,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     final String qualifiedName;
     final String packageName;
     final PsiClass containingClass = member.getContainingClass();
-    if (member instanceof PsiClass) {
-      final PsiClass referencedClass = (PsiClass)member;
+    if (member instanceof PsiClass referencedClass) {
       qualifiedName = referencedClass.getQualifiedName();
       packageName = qualifiedName != null ? StringUtil.getPackageName(qualifiedName) : null;
     }
@@ -130,14 +128,12 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
           continue;
         }
         final PsiElement target = importStatement.resolve();
-        if (target instanceof PsiPackage) {
-          final PsiPackage aPackage = (PsiPackage)target;
+        if (target instanceof PsiPackage aPackage) {
           if (packageName.equals(aPackage.getQualifiedName())) {
             return importStatement;
           }
         }
-        else if (target instanceof PsiClass) {
-          final PsiClass aClass = (PsiClass)target;
+        else if (target instanceof PsiClass aClass) {
           // a regular import statement does NOT import inner classes from super classes, but a static import does
           if (importStatement instanceof PsiImportStaticStatement) {
             if (member.hasModifierProperty(PsiModifier.STATIC) && InheritanceUtil.isInheritorOrSelf(aClass, containingClass, true)) {

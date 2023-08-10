@@ -15,6 +15,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -73,14 +75,19 @@ public class OneProjectItemCompileScope extends ExportableUserDataHolderBase imp
     if (myProject.isDefault()) {
       return Collections.emptyList();
     }
-    final ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
-    final Module module = index.getModuleForFile(myFile);
-    if (module == null) {
+    final @NotNull ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
+    final Module module = fileIndex.getModuleForFile(myFile);
+    if (module == null || !fileIndex.isInSourceContent(myFile)) {
       return Collections.emptyList();
     }
-    return Collections.singleton(new ModuleSourceSet(
-      module,
-      index.isInTestSourceContent(myFile)? ModuleSourceSet.Type.TEST : ModuleSourceSet.Type.PRODUCTION
-    ));
+
+    JpsModuleSourceRootType<?> rootType = fileIndex.getContainingSourceRootType(myFile);
+    if (rootType == null) return Collections.emptyList();
+    
+    final boolean isResource = rootType instanceof JavaResourceRootType;
+    final ModuleSourceSet.Type type = rootType.isForTests()?
+      isResource? ModuleSourceSet.Type.RESOURCES_TEST :  ModuleSourceSet.Type.TEST :
+      isResource? ModuleSourceSet.Type.RESOURCES :  ModuleSourceSet.Type.PRODUCTION;
+    return Collections.singleton(new ModuleSourceSet(module, type));
   }
 }

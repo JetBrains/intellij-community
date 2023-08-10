@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class JavaArrangementPropertyInfo {
 
   @Nullable private JavaElementArrangementEntry myGetter;

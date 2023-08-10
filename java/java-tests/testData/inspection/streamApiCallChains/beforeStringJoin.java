@@ -1,4 +1,4 @@
-// "Replace with 'Collectors.joining'" "true"
+// "Replace with 'Collectors.joining'" "true-preview"
 
 import java.util.stream.Stream;
 

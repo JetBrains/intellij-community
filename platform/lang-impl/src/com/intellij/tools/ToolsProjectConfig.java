@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools;
 
 import com.intellij.openapi.components.*;
@@ -6,18 +6,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author lene
- */
+@Service(Service.Level.PROJECT)
 @State(name = "ToolsProjectConfig", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ToolsProjectConfig implements PersistentStateComponent<ToolsProjectConfig.State> {
+public final class ToolsProjectConfig implements PersistentStateComponent<ToolsProjectConfig.State> {
   private String myAfterCommitToolsId;
 
   public static ToolsProjectConfig getInstance(final Project project) {
-    return ServiceManager.getService(project, ToolsProjectConfig.class);
+    return project.getService(ToolsProjectConfig.class);
   }
 
-  protected ToolsProjectConfig() {
+  ToolsProjectConfig() {
   }
 
   public String getAfterCommitToolsId() {

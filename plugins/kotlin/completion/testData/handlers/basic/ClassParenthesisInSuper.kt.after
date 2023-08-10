@@ -1,0 +1,7 @@
+package foo
+
+open class Some
+
+class Bar: Some()<caret>
+
+// ELEMENT: Some

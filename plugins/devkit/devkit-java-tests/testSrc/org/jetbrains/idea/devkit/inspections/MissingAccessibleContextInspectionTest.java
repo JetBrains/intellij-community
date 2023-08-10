@@ -11,15 +11,13 @@ public class MissingAccessibleContextInspectionTest extends PluginModuleTestCase
                        "public class JList<E> extends JComponent implements Scrollable, Accessible {}");
     myFixture.addClass("package javax.accessibility;" +
                        "public abstract class AccessibleContext {}");
-    myFixture.addClass("package javax.swing;" +
-                       "public interface ListCellRenderer<E>{" +
-                       "  java.awt.Component getListCellRendererComponent(\n" +
-                       "        JList<? extends E> list,\n" +
-                       "        E value,\n" +
-                       "        int index,\n" +
-                       "        boolean isSelected,\n" +
-                       "        boolean cellHasFocus);" +
-                       "}");
+    myFixture.addClass("""
+                         package javax.swing;public interface ListCellRenderer<E>{  java.awt.Component getListCellRendererComponent(
+                                 JList<? extends E> list,
+                                 E value,
+                                 int index,
+                                 boolean isSelected,
+                                 boolean cellHasFocus);}""");
     myFixture.enableInspections(new MissingAccessibleContextInspection());
   }
 

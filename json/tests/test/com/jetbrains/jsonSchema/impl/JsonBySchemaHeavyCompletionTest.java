@@ -14,9 +14,6 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.junit.Assert;
 
-/**
- * @author Irina.Chernushina on 3/4/2017.
- */
 public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletionTestBase {
   @Override
   protected String getExtensionWithoutDot() {

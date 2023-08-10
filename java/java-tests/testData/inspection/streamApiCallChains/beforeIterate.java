@@ -1,4 +1,4 @@
-// "Replace with three-arg 'iterate()'" "true"
+// "Replace with three-arg 'iterate()'" "true-preview"
 import java.util.stream.*;
 
 class X {

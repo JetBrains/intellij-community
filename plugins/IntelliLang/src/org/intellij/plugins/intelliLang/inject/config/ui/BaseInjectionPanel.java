@@ -33,6 +33,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.EditorTextField;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,7 +65,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
     psiFile.putUserData(BaseInjection.INJECTION_KEY, injection);
     myTextArea = new EditorTextField(document, project, realFileType) {
       @Override
-      protected EditorEx createEditor() {
+      protected @NotNull EditorEx createEditor() {
         final EditorEx ex = super.createEditor();
         ex.setVerticalScrollbarVisible(true);
         ex.setHorizontalScrollbarVisible(true);

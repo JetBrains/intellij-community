@@ -1,0 +1,8 @@
+//@formatter:off
+package c
+
+import a.A
+import b.B
+
+val a = A
+val b = B

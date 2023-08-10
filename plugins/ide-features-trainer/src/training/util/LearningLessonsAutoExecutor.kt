@@ -6,12 +6,15 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
+import com.intellij.util.TimeoutUtil
 import org.jetbrains.concurrency.AsyncPromise
-import training.commands.kotlin.TaskTestContext
+import org.jetbrains.io.json
+import training.dsl.TaskTestContext
 import training.learn.CourseManager
-import training.learn.interfaces.Lesson
+import training.learn.course.KLesson
+import training.learn.course.Lesson
 import training.learn.lesson.LessonListener
-import training.learn.lesson.kimpl.KLesson
+import training.statistic.LessonStartingWay
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -21,7 +24,8 @@ private val LOG: Logger = Logger.getInstance(LearningLessonsAutoExecutor::class.
 class LearningLessonsAutoExecutor(val project: Project, private val progress: ProgressIndicator) {
   private fun runSingleLesson(lesson: Lesson) {
     invokeAndWaitIfNeeded {
-      CourseManager.instance.openLesson(project, lesson)
+      // starting way does not matter because it should not be executed on release builds
+      CourseManager.instance.openLesson(project, lesson, LessonStartingWay.LEARN_TAB)
     }
     try {
       executeLesson(lesson)
@@ -34,16 +38,24 @@ class LearningLessonsAutoExecutor(val project: Project, private val progress: Pr
     }
   }
 
-  private fun runAllLessons() {
+  private fun runAllLessons(): Map<String, Long> {
+    val durations = mutableMapOf<String, Long>()
     TaskTestContext.inTestMode = true
     val lessons = CourseManager.instance.lessonsForModules
 
     for (lesson in lessons) {
-      if (lesson !is KLesson) continue
+      if (lesson !is KLesson || lesson.testScriptProperties.skipTesting) continue
+      if (durations.containsKey(lesson.id)) continue // Just duplicate from another module
       progress.checkCanceled()
-      runSingleLesson(lesson)
+      // Some lessons may have post-completed activities (in onLessonEnd)
+      Thread.sleep(1000)
+      val duration = TimeoutUtil.measureExecutionTime<Throwable> {
+        runSingleLesson(lesson)
+      }
+      durations[lesson.id] = duration
     }
     TaskTestContext.inTestMode = false
+    return durations
   }
 
   private fun executeLesson(lesson: Lesson) {
@@ -68,7 +80,8 @@ class LearningLessonsAutoExecutor(val project: Project, private val progress: Pr
       runBackgroundableTask("Running All Lessons", project) {
         try {
           val learningLessonsAutoExecutor = LearningLessonsAutoExecutor(project, it)
-          learningLessonsAutoExecutor.runAllLessons()
+          val durations = learningLessonsAutoExecutor.runAllLessons()
+          System.setProperty("ift.gui.result", getJsonStatus(durations))
         }
         finally {
           TaskTestContext.inTestMode = false
@@ -87,6 +100,24 @@ class LearningLessonsAutoExecutor(val project: Project, private val progress: Pr
           TaskTestContext.inTestMode = false
         }
       }
+    }
+
+    private fun getJsonStatus(durations: Map<String, Long>): String {
+      val result = StringBuilder()
+
+      result.json {
+        array("lessons") {
+          for (lesson in CourseManager.instance.lessonsForModules) {
+            if (lesson !is KLesson || lesson.testScriptProperties.skipTesting) continue
+            result.json {
+              "id" to lesson.id
+              "passed" to lesson.passed
+              "duration" toRaw durations[lesson.id].toString()
+            }
+          }
+        }
+      }
+      return result.toString()
     }
   }
 }

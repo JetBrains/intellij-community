@@ -2,10 +2,9 @@
 package com.intellij.java.ift.lesson.navigation
 
 import com.intellij.openapi.editor.LogicalPosition
-import training.learn.interfaces.Module
 import training.learn.lesson.general.navigation.FileStructureLesson
 
-class JavaFileStructureLesson(module: Module) : FileStructureLesson(module, "JAVA") {
-  override val existedFile: String = "src/FileStructureDemo.java"
+class JavaFileStructureLesson : FileStructureLesson() {
+  override val sampleFilePath: String = "src/FileStructureDemo.java"
   override val methodToFindPosition: LogicalPosition = LogicalPosition(74, 16)
 }

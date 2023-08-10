@@ -10,7 +10,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * @author peter
+ * This extension point allows console to fold some lines if necessary.
+ * For example, the console from the "Run Application..." action {@link com.intellij.execution.impl.ConsoleViewImpl.CommandLineFolding}
+ * folds command line arguments because they tend to be too long to fit in one line
  */
 public abstract class ConsoleFolding {
   public static final ExtensionPointName<ConsoleFolding> EP_NAME = ExtensionPointName.create("com.intellij.console.folding");
@@ -56,7 +58,7 @@ public abstract class ConsoleFolding {
    * @return {@code true} if line should be folded, {@code false} if not
    * @deprecated since 2018.1. Use {@link #shouldFoldLine(Project, String)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean shouldFoldLine(@SuppressWarnings("unused") @NotNull String line) { return false; }
 
   /**
@@ -64,7 +66,7 @@ public abstract class ConsoleFolding {
    * @return placeholder for lines
    * @deprecated since 2018.1. Use {@link #getPlaceholderText(Project, List)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public String getPlaceholderText(@SuppressWarnings("unused") @NotNull List<String> lines) { return null; }
 }

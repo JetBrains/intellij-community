@@ -1,28 +1,26 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class LabeledIcon implements Icon {
   private final Icon myIcon;
   private final String myMnemonic;
   private final String[] myStrings;
   private int myIconTextGap = 5;
 
-  private Font myFont = UIUtil.getLabelFont();
+  private Font myFont = StartupUiUtil.getLabelFont();
 
   /**
    * @param icon     not {@code null} icon.
    * @param text     to be painted under the <code>icon<code>. This parameter can
    *                 be {@code null} if text isn't specified. In that case {@code LabeledIcon}
-   * @param mnemonic
    */
   public LabeledIcon(Icon icon, String text, String mnemonic) {
     myIcon = icon;
@@ -82,7 +80,7 @@ public class LabeledIcon implements Icon {
   private int getTextWidth() {
     if (myStrings != null) {
       int width = 0;
-      Font font = UIUtil.getLabelFont();
+      Font font = StartupUiUtil.getLabelFont();
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
       for (String string : myStrings) {
         width = fontMetrics.stringWidth(string);
@@ -126,7 +124,7 @@ public class LabeledIcon implements Icon {
 
       if (myMnemonic != null) {
         y -= fontMetrics.getHeight();
-        g.setColor(UIUtil.getInactiveTextColor());
+        g.setColor(NamedColorUtil.getInactiveTextColor());
         int offset = getTextWidth() - fontMetrics.stringWidth(myMnemonic);
         g.drawString(myMnemonic, x + offset, y);
       }

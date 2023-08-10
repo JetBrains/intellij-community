@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
-import com.jetbrains.rd.util.lifetime.isAlive
+import com.jetbrains.rd.util.lifetime.isNotAlive
 
 
 /**
@@ -27,7 +27,9 @@ fun Disposable.defineNestedLifetime(): LifetimeDefinition {
     return lifetimeDefinition
   }
 
-  this.attach { if (lifetimeDefinition.lifetime.isAlive) lifetimeDefinition.terminate() }
+  if (!Disposer.tryRegister(this) { lifetimeDefinition.terminate() })
+    lifetimeDefinition.terminate()
+
   return lifetimeDefinition
 }
 
@@ -37,16 +39,10 @@ fun Disposable.defineNestedLifetime(): LifetimeDefinition {
  * @see createLifetime
  */
 fun Disposable.doIfAlive(action: (Lifetime) -> Unit) {
-  val disposableLifetime: Lifetime?
-  if(Disposer.isDisposed(this)) return
+  if (Disposer.isDisposed(this)) return
 
-  try {
-    disposableLifetime = createLifetime()
-  }
-  catch(t : Throwable){
-    //do nothing, there is no other way to handle disposables
-    return
-  }
+  val disposableLifetime = createLifetime()
+  if (disposableLifetime.isNotAlive) return
 
   action(disposableLifetime)
 }

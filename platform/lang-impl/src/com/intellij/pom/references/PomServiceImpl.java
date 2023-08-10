@@ -21,9 +21,6 @@ import com.intellij.psi.impl.PomTargetPsiElementImpl;
 import com.intellij.pom.PomTarget;
 import com.intellij.openapi.project.Project;
 
-/**
- * @author peter
- */
 public class PomServiceImpl extends PomService {
   private final Project myProject;
 

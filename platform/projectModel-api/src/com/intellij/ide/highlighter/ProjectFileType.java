@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectModel.ProjectModelBundle;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -19,26 +21,28 @@ public final class ProjectFileType implements InternalFileType {
   private ProjectFileType() { }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "IDEA_PROJECT";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
-    return ProjectModelBundle.message("filetype.description.idea.project");
+  public @NotNull String getDescription() {
+    return ProjectModelBundle.message("filetype.idea.project.description");
   }
 
   @Override
-  @NotNull
-  public String getDefaultExtension() {
+  public @Nls @NotNull String getDisplayName() {
+    return ProjectModelBundle.message("filetype.idea.project.display.name");
+  }
+
+  @Override
+  public @NotNull String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 
   @Override
   public Icon getIcon() {
-    return AllIcons.Nodes.IdeaModule;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.IdeaModule);
   }
 
   @Override

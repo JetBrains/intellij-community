@@ -16,7 +16,7 @@
 package com.intellij.vcs.log.graph.impl.print.elements;
 
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
+import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager;
 import org.jetbrains.annotations.NotNull;
 
 public class TerminalEdgePrintElement extends EdgePrintElementImpl {
@@ -24,7 +24,7 @@ public class TerminalEdgePrintElement extends EdgePrintElementImpl {
                                   int position,
                                   @NotNull Type type,
                                   @NotNull GraphEdge graphEdge,
-                                  @NotNull PrintElementManager printElementManager) {
-    super(rowIndex, position, position, type, graphEdge, true, printElementManager);
+                                  @NotNull PrintElementPresentationManager presentationManager) {
+    super(rowIndex, position, position, type, graphEdge, true, presentationManager);
   }
 }

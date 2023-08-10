@@ -17,8 +17,6 @@ package com.intellij.openapi.externalSystem.model.project;
 
 /**
  * Correspond to IJ <a href="">library type</a>.
- * 
- * @author Denis Zhdanov
  */
 public enum LibraryLevel {
   PROJECT, MODULE

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -13,7 +13,7 @@ import java.io.File
 
 class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHandler {
   companion object {
-    val LOG = logger<MacExecutableProblemHandler>()
+    private val LOG = logger<MacExecutableProblemHandler>()
 
     private const val XCODE_LICENSE_ERROR: @NonNls String = "Agreeing to the Xcode/iOS license"
     private const val XCODE_DEVELOPER_PART_ERROR: @NonNls String = "invalid active developer path"
@@ -27,32 +27,34 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
     when {
       isXcodeLicenseError(exception) -> showXCodeLicenseError(errorNotifier)
       isInvalidActiveDeveloperPath(exception) -> showInvalidActiveDeveloperPathError(errorNotifier)
-      else -> showGenericError(exception, errorNotifier, onErrorResolved)
+      else -> showGenericError(exception, errorNotifier)
     }
   }
 
-  private fun showGenericError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
+  private fun showGenericError(exception: Throwable, errorNotifier: ErrorNotifier) {
     errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"),
                             getHumanReadableErrorFor(exception),
-                            ErrorNotifier.FixOption.Standard(GitBundle.message("install.download.and.install.action")) {
-      errorNotifier.executeTask(GitBundle.message("install.downloading.progress"), false) {
-        try {
-          val installer = fetchInstaller(errorNotifier) { it.os == "macOS" && it.pkgFileName != null}
-          if (installer != null) {
-            val fileName = installer.fileName
-            val dmgFile = File(tempPath, fileName)
-            val pkgFileName = installer.pkgFileName!!
-            if (downloadGit(installer, dmgFile, project, errorNotifier)) {
-              errorNotifier.changeProgressTitle(GitBundle.message("install.installing.progress"))
-              installGit(dmgFile, pkgFileName, errorNotifier, onErrorResolved)
-            }
+                            null)
+  }
+
+  internal fun downloadAndInstall(errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
+    errorNotifier.executeTask(GitBundle.message("install.downloading.progress"), false) {
+      try {
+        val installer = fetchInstaller(errorNotifier) { it.os == "macOS" && it.pkgFileName != null }
+        if (installer != null) {
+          val fileName = installer.fileName
+          val dmgFile = File(tempPath, fileName)
+          val pkgFileName = installer.pkgFileName!!
+          if (downloadGit(installer, dmgFile, project, errorNotifier)) {
+            errorNotifier.changeProgressTitle(GitBundle.message("install.installing.progress"))
+            installGit(dmgFile, pkgFileName, errorNotifier, onErrorResolved)
           }
         }
-        finally {
-          FileUtil.delete(tempPath)
-        }
       }
-    })
+      finally {
+        FileUtil.delete(tempPath)
+      }
+    }
   }
 
   private fun installGit(dmgFile: File, pkgFileName: String, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {

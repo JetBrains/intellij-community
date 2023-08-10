@@ -1,13 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.emojipicker.service;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.dom.XmlDomReader;
+import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -16,14 +23,8 @@ import org.jetbrains.plugins.emojipicker.Emoji;
 import org.jetbrains.plugins.emojipicker.EmojiCategory;
 import org.jetbrains.plugins.emojipicker.EmojiSearchIndex;
 import org.jetbrains.plugins.emojipicker.EmojiSkinTone;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -87,7 +88,7 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
       CldrData cldr = new CldrData(emojiData);
       final Locale baseLocale = Locale.ENGLISH;
       cldr.read(baseLocale, emojiNames);
-      searchIndex = new SearchIndex(cldr.myIndexTree.buildIndex());
+      searchIndex = new SearchIndex(cldr.indexTree.buildIndex());
 
       ProgressManager.getInstance().run(
         new Task.Backgroundable(null, message("message.EmojiPicker.Initializing"), false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
@@ -110,7 +111,7 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
                 if (!locales[i].equals(baseLocale)) cldr.read(locales[i], null);
               }
               indicator.setIndeterminate(true);
-              SearchIndex searchIndex = new SearchIndex(cldr.myIndexTree.buildIndex());
+              SearchIndex searchIndex = new SearchIndex(cldr.indexTree.buildIndex());
               indicator.setText(message("message.EmojiPicker.SavingIndexData"));
               try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(serializedIndexPath, StandardOpenOption.CREATE))) {
                 out.writeObject(searchIndex.myIndex);
@@ -165,7 +166,9 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
 
   @Override
   public @Nullable State getState() {
-    if (!dirty) return null;
+    if (!dirty) {
+      return null;
+    }
     dirty = false;
     return new State(mySkinTone, ContainerUtil.map(myRecentlyUsedCategory.getEmoji(), Emoji::getId));
   }
@@ -180,12 +183,11 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
   }
 
   public static EmojiService getInstance() {
-    return ServiceManager.getService(EmojiService.class);
+    return ApplicationManager.getApplication().getService(EmojiService.class);
   }
 
 
-  static class State {
-
+  static final class State {
     public EmojiSkinTone mySkinTone;
     public List<Integer> myRecentlyUsedEmoji;
 
@@ -211,9 +213,7 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
     }
   }
 
-
-  private class SearchIndex {
-
+  private final class SearchIndex {
     private final EmojiSearchIndex myIndex;
     private final boolean[] myIdMap;
 
@@ -223,7 +223,7 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
     }
 
     synchronized List<Emoji> lookupEmoji(@NonNls String prefix) {
-      if (myIndex.lookupIds(myIdMap, prefix)) {
+      if (myIndex.lookupIds(myIdMap, prefix.toLowerCase())) {
         List<Emoji> result = new ArrayList<>(100);
         for (int i = 0; i < myIdMap.length; i++) {
           if (myIdMap[i]) result.add(myEmoji.get(i));
@@ -237,17 +237,16 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
   }
 
 
-  private static class EmojiData {
-
+  private static final class EmojiData {
     private final List<Emoji> myEmoji = new ArrayList<>();
     private final List<EmojiCategory> myCategories = new ArrayList<>();
-    private final Map<@NonNls String, Integer> myIndicesMap = new HashMap<>();
+    private final Map<@NonNls String, Integer> indicesMap = new HashMap<>();
 
     private static EmojiData read() throws IOException {
       Set<@NonNls String> tonedEmojiSet = readToned();
       EmojiData emojiData = new EmojiData();
       try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-        EmojiService.class.getResourceAsStream("/data/emoji.txt"), StandardCharsets.UTF_8))) {
+        Objects.requireNonNull(EmojiService.class.getClassLoader().getResourceAsStream("data/emoji.txt")), StandardCharsets.UTF_8))) {
         EmojiCategory category = null;
         @NonNls String s;
         while ((s = reader.readLine()) != null) {
@@ -263,7 +262,7 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
               Emoji emoji = new Emoji(id, s, tonedEmojiSet.contains(s));
               emojiData.myEmoji.add(emoji);
               category.getEmoji().add(emoji);
-              emojiData.myIndicesMap.put(s, id);
+              emojiData.indicesMap.put(s, id);
             }
           }
         }
@@ -273,61 +272,58 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
 
     private static Set<@NonNls String> readToned() throws IOException {
       try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-        EmojiService.class.getResourceAsStream("/data/toned.txt"), StandardCharsets.UTF_8))) {
+        Objects.requireNonNull(EmojiService.class.getClassLoader().getResourceAsStream("data/toned.txt")), StandardCharsets.UTF_8))) {
         return reader.lines().collect(Collectors.toSet());
       }
     }
   }
 
+  private static final class CldrData {
+    private final EmojiData emojiData;
+    private final EmojiSearchIndex.PrefixTree indexTree = new EmojiSearchIndex.PrefixTree();
 
-  private static class CldrData {
-
-    private final EmojiData myEmojiData;
-    private final DocumentBuilder myDocumentBuilder;
-    private final EmojiSearchIndex.PrefixTree myIndexTree = new EmojiSearchIndex.PrefixTree();
-
-    private CldrData(EmojiData emojiData) throws ParserConfigurationException {
-      myEmojiData = emojiData;
-      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-      factory.setValidating(false);
-      factory.setNamespaceAware(true);
-      factory.setFeature("http://xml.org/sax/features/namespaces", false);
-      factory.setFeature("http://xml.org/sax/features/validation", false);
-      factory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
-      factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-      myDocumentBuilder = factory.newDocumentBuilder();
+    private CldrData(EmojiData emojiData) {
+      this.emojiData = emojiData;
     }
 
-    private void read(Locale locale, @Nls String[] names) throws IOException, SAXException {
+    private void read(@NotNull Locale locale, @Nls String[] names) throws IOException, SAXException {
       @NonNls String l = locale.getLanguage();
-      if (!locale.getScript().isEmpty()) l += "_" + locale.getScript();
-      if (!locale.getCountry().isEmpty()) l += "_" + locale.getCountry();
-      InputStream annotations = EmojiService.class.getResourceAsStream("/data/cldr/annotations/" + l + ".xml");
-      if (annotations != null) read(annotations, locale, names);
-      InputStream derived = EmojiService.class.getResourceAsStream("/data/cldr/annotationsDerived/" + l + ".xml");
-      if (derived != null) read(derived, locale, names);
+      if (!locale.getScript().isEmpty()) {
+        l += "_" + locale.getScript();
+      }
+      if (!locale.getCountry().isEmpty()) {
+        l += "_" + locale.getCountry();
+      }
+      byte[] annotations = ResourceUtil.getResourceAsBytes("data/cldr/annotations/" + l + ".xml", EmojiService.class.getClassLoader());
+      if (annotations != null) {
+        read(annotations, locale, names);
+      }
+      byte[] derived = ResourceUtil.getResourceAsBytes("data/cldr/annotationsDerived/" + l + ".xml", EmojiService.class.getClassLoader());
+      if (derived != null) {
+        read(derived, locale, names);
+      }
     }
 
-    private void read(InputStream in, Locale locale, @Nls String[] names) throws IOException, SAXException {
-      try (in) {
-        Document document = myDocumentBuilder.parse(in);
-        NodeList annotations = document.getElementsByTagName("annotation");
-        for (int i = 0; i < annotations.getLength(); i++) {
-          Node node = annotations.item(i);
-          @NonNls String emoji = node.getAttributes().getNamedItem("cp").getTextContent();
-          Integer index = myEmojiData.myIndicesMap.get(emoji);
-          if (index != null) {
-            @NonNls String value = node.getTextContent();
-            if (node.getAttributes().getNamedItem("type") == null) {
-              for (String keyword : value.split("\\|")) {
-                myIndexTree.add(keyword.strip(), index);
-              }
-            }
-            else if (names != null) {
-              @Nls String name = value.substring(0, 1).toUpperCase(locale) + value.substring(1);
-              names[index] = name;
-            }
+    private void read(byte[] in, Locale locale, @Nls String[] names) {
+      XmlElement document = XmlDomReader.readXmlAsModel(in);
+      Iterator<XmlElement> annotations = document.children("annotation").iterator();
+      while (annotations.hasNext()) {
+        XmlElement node = annotations.next();
+        @NonNls String emoji = node.getAttributeValue("cp");
+        Integer index = emojiData.indicesMap.get(emoji);
+        if (index == null) {
+          continue;
+        }
+
+        @NonNls String value = Objects.requireNonNull(node.content);
+        if (node.getAttributeValue("type") == null) {
+          for (String keyword : value.split("\\|")) {
+            indexTree.add(keyword.strip().toLowerCase(), index);
           }
+        }
+        else if (names != null) {
+          @Nls String name = value.substring(0, 1).toUpperCase(locale) + value.substring(1);
+          names[index] = name;
         }
       }
     }

@@ -16,6 +16,7 @@ import com.intellij.testFramework.JavaResolveTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
     String fileText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vFile));
     myFile = createFile(vFile.getName(), fileText);
     myFile.accept(new JavaRecursiveElementWalkingVisitor(){
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression){
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
         references.add(expression);
         visitElement(expression);
       }
@@ -69,14 +70,14 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
     fileText = StringUtil.convertLineSeparators(fileText);
     myFile = createFile(vFile.getName(), fileText);
     myFile.accept(new XmlRecursiveElementVisitor(){
-      @Override public void visitXmlAttributeValue(XmlAttributeValue value) {
+      @Override public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         ContainerUtil.addAll(references, value.getReferences());
         super.visitXmlAttributeValue(value);
       }
     });
 
     myFile.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression){
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
         references.add(expression);
         visitElement(expression);
       }

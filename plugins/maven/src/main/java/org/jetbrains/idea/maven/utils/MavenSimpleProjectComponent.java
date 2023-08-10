@@ -13,15 +13,7 @@ public abstract class MavenSimpleProjectComponent {
   }
 
   protected boolean isNormalProject() {
-    return !isUnitTestMode() && !isHeadless() && !isDefault();
-  }
-
-  protected boolean isNoBackgroundMode() {
-    return MavenUtil.isNoBackgroundMode();
-  }
-
-  protected boolean isUnitTestMode() {
-    return ApplicationManager.getApplication().isUnitTestMode();
+    return !MavenUtil.isMavenUnitTestModeEnabled() && !isHeadless() && !isDefault();
   }
 
   protected boolean isHeadless() {

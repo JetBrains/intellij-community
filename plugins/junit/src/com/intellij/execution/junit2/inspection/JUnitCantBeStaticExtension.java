@@ -24,8 +24,7 @@ import com.intellij.psi.PsiMethod;
 public class JUnitCantBeStaticExtension implements Condition<PsiElement> {
   @Override
   public boolean value(PsiElement member) {
-    if (member instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)member;
+    if (member instanceof PsiMethod method) {
       if (JUnitUtil.isTestMethodOrConfig(method)){
         return true;
       }

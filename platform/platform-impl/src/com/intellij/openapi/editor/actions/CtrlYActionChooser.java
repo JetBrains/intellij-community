@@ -51,8 +51,7 @@ public final class CtrlYActionChooser {
   }
 
   private static boolean isCtrlY(AWTEvent event) {
-    if (!(event instanceof KeyEvent)) return false;
-    KeyEvent keyEvent = (KeyEvent)event;
+    if (!(event instanceof KeyEvent keyEvent)) return false;
     int modifiers = keyEvent.getModifiers();
     return (keyEvent.getKeyCode() == KeyEvent.VK_Y &&
             ((modifiers & InputEvent.CTRL_MASK) != 0) &&

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,16 +10,30 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ProcessOutput {
-  private final StringBuilder myStdoutBuilder = new StringBuilder();
-  private final StringBuilder myStderrBuilder = new StringBuilder();
-  private @Nullable Integer myExitCode;
-  private boolean myTimeout;
-  private boolean myCancelled;
+  private final StringBuilder myStdoutBuilder;
+  private final StringBuilder myStderrBuilder;
+  private volatile @Nullable Integer myExitCode;
+  private volatile boolean myTimeout;
+  private volatile boolean myCancelled;
 
-  public ProcessOutput() { }
+  public ProcessOutput() {
+    this("", "", null, false, false);
+  }
 
   public ProcessOutput(int exitCode) {
+    this("", "", exitCode, false, false);
+  }
+
+  public ProcessOutput(@NotNull String stdout, @NotNull String stderr, int exitCode, boolean timeout, boolean cancelled) {
+    this(stdout, stderr, Integer.valueOf(exitCode), timeout, cancelled);
+  }
+
+  private ProcessOutput(@NotNull String stdout, @NotNull String stderr, @Nullable Integer exitCode, boolean timeout, boolean cancelled) {
+    myStdoutBuilder = new StringBuilder(stdout);
+    myStderrBuilder = new StringBuilder(stderr);
     myExitCode = exitCode;
+    myTimeout = timeout;
+    myCancelled = cancelled;
   }
 
   public void appendStdout(@Nullable String text) {
@@ -110,5 +124,16 @@ public class ProcessOutput {
 
   public boolean isCancelled() {
     return myCancelled;
+  }
+
+  @Override
+  public String toString() {
+    return "{" +
+           "exitCode=" + myExitCode +
+           ", timeout=" + myTimeout +
+           ", cancelled=" + myCancelled +
+           ", stdout=" + myStdoutBuilder +
+           ", stderr=" + myStderrBuilder +
+           '}';
   }
 }

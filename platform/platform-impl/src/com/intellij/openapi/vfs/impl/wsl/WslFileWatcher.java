@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.wsl;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.wsl.WslPath;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,9 +35,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.intellij.execution.wsl.WSLDistribution.UNC_PREFIX;
 
 public class WslFileWatcher extends PluggableFileWatcher {
   private static Logger logger(@Nullable String vm) {
@@ -44,10 +44,10 @@ public class WslFileWatcher extends PluggableFileWatcher {
   }
 
   private static final String FSNOTIFIER_WSL = "fsnotifier-wsl";
-  private static final int NAME_START = UNC_PREFIX.length();
   private static final String ROOTS_COMMAND = "ROOTS";
   private static final String EXIT_COMMAND = "EXIT";
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
+  private static final int EXIT_TIMEOUT_MS = 500;
 
   private FileWatcherNotificationSink myNotificationSink;
   private Path myExecutable;
@@ -75,13 +75,15 @@ public class WslFileWatcher extends PluggableFileWatcher {
   public void dispose() {
     myShuttingDown = true;
     for (Map.Entry<String, VmData> entry : myVMs.entrySet()) {
-      shutdownProcess(entry.getValue());
+      shutdownProcess(entry.getValue(), true);
     }
   }
 
   @Override
   public boolean isOperational() {
-    return myExecutable != null && (!ApplicationManager.getApplication().isUnitTestMode() || myTestStarted);
+    if (myExecutable == null) return false;
+    var app = ApplicationManager.getApplication();
+    return !(app.isCommandLine() || app.isUnitTestMode()) || myTestStarted;
   }
 
   @Override
@@ -90,7 +92,13 @@ public class WslFileWatcher extends PluggableFileWatcher {
   }
 
   @Override
-  public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
+  public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat, boolean shuttingDown) {
+    if (shuttingDown) {
+      myShuttingDown = true;
+      for (Map.Entry<String, VmData> entry : myVMs.entrySet()) {
+        shutdownProcess(entry.getValue(), false);
+      }
+    }
     if (myShuttingDown) return;
 
     Map<String, VmData> newVMs = new HashMap<>();
@@ -118,20 +126,17 @@ public class WslFileWatcher extends PluggableFileWatcher {
       Map.Entry<String, VmData> entry = iterator.next();
       if (!newVMs.containsKey(entry.getKey())) {
         iterator.remove();
-        shutdownProcess(entry.getValue());
+        shutdownProcess(entry.getValue(), true);
       }
     }
   }
 
-  private static void sortRoots(List<String> roots, Map<String, VmData> vms, List<String> ignored, boolean recursive) {
+  private static void sortRoots(List<String> roots, Map<String, VmData> vms, List<? super String> ignored, boolean recursive) {
     for (String root : roots) {
-      int nameEnd;
-      if (StringUtil.startsWithIgnoreCase(root, UNC_PREFIX) && (nameEnd = root.indexOf('\\', NAME_START)) > NAME_START) {
-        String prefix = root.substring(0, nameEnd);
-        String name = root.substring(NAME_START, nameEnd);
-        VmData vm = vms.computeIfAbsent(name, k -> new VmData(k, prefix));
-        String path = root.substring(nameEnd).replace('\\', '/');
-        (recursive ? vm.recursive : vm.flat).add(path);
+      WslPath wslPath = WslPath.parseWindowsUncPath(root);
+      if (wslPath != null) {
+        VmData vm = vms.computeIfAbsent(wslPath.getDistributionId(), k -> new VmData(k, wslPath.getWslRoot()));
+        (recursive ? vm.recursive : vm.flat).add(wslPath.getLinuxPath());
       }
       else {
         ignored.add(root);
@@ -145,7 +150,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
     MyProcessHandler handler = vm.handler;
     if (handler == null) {
       if (vm.startAttemptCount.incrementAndGet() > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
-        notifyOnFailure(vm.name, ApplicationBundle.message("watcher.bailed.out.10x", vm.name), null);
+        notifyOnFailure(vm.name, IdeCoreBundle.message("watcher.bailed.out.10x"), null);
         return;
       }
 
@@ -158,7 +163,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
       catch (IOException e) {
         vm.logger.error(e);
         vm.startAttemptCount.set(MAX_PROCESS_LAUNCH_ATTEMPT_COUNT);
-        notifyOnFailure(vm.name, ApplicationBundle.message("watcher.failed.to.start", vm.name), null);
+        notifyOnFailure(vm.name, IdeCoreBundle.message("watcher.failed.to.start"), null);
         return;
       }
     }
@@ -176,32 +181,29 @@ public class WslFileWatcher extends PluggableFileWatcher {
     }
   }
 
-  private void shutdownProcess(VmData vm) {
-    MyProcessHandler processHandler = vm.handler;
-
-    if (processHandler != null && !processHandler.isProcessTerminated()) {
-      vm.shuttingDown = true;
-
-      try { processHandler.writeLine(EXIT_COMMAND); }
-      catch (IOException ignore) { }
-
-      if (!processHandler.waitFor(10)) {
-        Runnable r = () -> {
-          if (!processHandler.waitFor(500)) {
-            vm.logger.warn("WSL file watcher is still alive, doing a force quit.");
-            processHandler.destroyProcess();
-          }
-        };
-        if (myShuttingDown) {
-          new Thread(r, FSNOTIFIER_WSL + " shutdown").start();
-        }
-        else {
-          ApplicationManager.getApplication().executeOnPooledThread(r);
-        }
-      }
+  private static void shutdownProcess(VmData vm, boolean await) {
+    var processHandler = vm.handler;
+    if (processHandler == null || processHandler.isProcessTerminated()) {
+      vm.handler = null;
+      return;
     }
 
-    vm.handler = null;
+    vm.shuttingDown = true;
+    try { processHandler.writeLine(EXIT_COMMAND); }
+    catch (IOException ignore) { }
+
+    if (await) {
+      var timeout = TimeUnit.MILLISECONDS.toNanos(EXIT_TIMEOUT_MS) + System.nanoTime();
+      while (!processHandler.isProcessTerminated()) {
+        if (System.nanoTime() > timeout) {
+          vm.logger.warn("WSL file watcher is still alive, doing a force quit.");
+          processHandler.destroyProcess();
+          break;
+        }
+        processHandler.waitFor(10);
+      }
+      vm.handler = null;
+    }
   }
 
   private static final class VmData {
@@ -279,7 +281,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
       if (outputType == ProcessOutputTypes.STDERR) {
         myVm.logger.warn(line);
       }
-      if (outputType != ProcessOutputTypes.STDOUT) {
+      if (outputType != ProcessOutputTypes.STDOUT || myShuttingDown) {
         return;
       }
 
@@ -291,14 +293,19 @@ public class WslFileWatcher extends PluggableFileWatcher {
           watcherOp = WatcherOp.valueOf(line);
         }
         catch (IllegalArgumentException e) {
-          String message = "Illegal watcher command: '" + line + "'";
-          if (line.length() <= 20) message += " " + Arrays.toString(line.chars().toArray());
-          myVm.logger.error(message);
+          // `wsl.exe` own error messages are coming in UTF16LE, accompanied by a couple of short tails (decoding artifacts)
+          byte[] raw = line.getBytes(StandardCharsets.UTF_8);
+          if (raw.length > 3 && raw[0] != 0 && raw[2] != 0 && raw[1] + raw[3] == 0) {
+            myVm.logger.warn(new String(raw, StandardCharsets.UTF_16LE));
+          }
+          else if (!(raw.length == 1 && raw[0] == 0 || raw.length == 2 && raw[0] + raw[1] == 0)) {
+            myVm.logger.error("Illegal watcher command: '" + line + "'", (Throwable)null);
+          }
           return;
         }
 
         if (watcherOp == WatcherOp.GIVEUP) {
-          notifyOnFailure(myVm.name, ApplicationBundle.message("watcher.gave.up"), null);
+          notifyOnFailure(myVm.name, IdeCoreBundle.message("watcher.gave.up"), null);
         }
         else if (watcherOp == WatcherOp.RESET) {
           myNotificationSink.notifyReset(Strings.trimEnd(myVm.prefix, '\\'));
@@ -308,7 +315,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
         }
       }
       else if (myLastOp == WatcherOp.MESSAGE) {
-        String localized = Objects.requireNonNullElse(ApplicationBundle.INSTANCE.messageOrNull(line), line); //NON-NLS
+        String localized = Objects.requireNonNullElse(IdeCoreBundle.INSTANCE.messageOrNull(line), line); //NON-NLS
         myVm.logger.warn(localized);
         notifyOnFailure(myVm.name, localized, NotificationListener.URL_OPENING_LISTENER);
         myLastOp = null;
@@ -369,7 +376,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
     if (app == null || !app.isUnitTestMode()) throw new IllegalStateException();
     myTestStarted = false;
     myShuttingDown = true;
-    myVMs.forEach((key, value) -> shutdownProcess(value));
+    myVMs.forEach((__, vm) -> shutdownProcess(vm, true));
     myVMs.clear();
   }
   //</editor-fold>

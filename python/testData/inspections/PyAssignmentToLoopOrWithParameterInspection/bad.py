@@ -62,7 +62,7 @@ class Foo(object):
                 pass
 
 for elt in range(10):
-    print elt
+    print(elt)
 else:
     for elt in range(10):
         for <weak_warning descr="Variable 'elt' is already declared in 'for' loop or 'with' statement above">elt</weak_warning>  in range(10):

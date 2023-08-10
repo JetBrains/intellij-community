@@ -13,9 +13,8 @@ import com.intellij.refactoring.util.LambdaRefactoringUtil
 object MethodReferenceToLambdaTransformer : PsiElementTransformer.Base() {
   override val visitor: PsiElementVisitor
     get() = object : JavaRecursiveElementVisitor() {
-      override fun visitMethodReferenceExpression(expression: PsiMethodReferenceExpression?) {
+      override fun visitMethodReferenceExpression(expression: PsiMethodReferenceExpression) {
         super.visitMethodReferenceExpression(expression)
-        if (expression == null) return
         LambdaRefactoringUtil.convertMethodReferenceToLambda(expression, false, true)
       }
     }

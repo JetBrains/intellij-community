@@ -93,8 +93,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
       super.setUserObject(userObject);
     }
     finally {
-      if (oldObject instanceof VirtualFilePointer) {
-        VirtualFilePointer pointer = (VirtualFilePointer)oldObject;
+      if (oldObject instanceof VirtualFilePointer pointer) {
         Disposer.dispose((Disposable)pointer);
       }
     }

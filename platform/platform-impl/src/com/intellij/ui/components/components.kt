@@ -8,6 +8,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.asBrowseFolderDescriptor
 import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListener
 import com.intellij.openapi.ui.DialogWrapper.IdeModalityType
 import com.intellij.openapi.ui.ex.MultiLineLabel
@@ -17,7 +18,6 @@ import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
-import com.intellij.ui.components.ActionLink
 import com.intellij.util.FontUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
@@ -33,10 +33,11 @@ import javax.swing.text.BadLocationException
 import javax.swing.text.JTextComponent
 import javax.swing.text.Segment
 
-fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false) = Label(text, style, fontColor, bold, null)
+fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false): JLabel =
+  Label(text, style, fontColor, bold, null)
 
 fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false, font: Font? = null): JLabel {
-  val finalText = BundleBase.replaceMnemonicAmpersand(text)
+  val finalText = BundleBase.replaceMnemonicAmpersand(text)!!
   val label: JLabel
   if (fontColor == null) {
     label = if (finalText.contains('\n')) MultiLineLabel(finalText) else JLabel(finalText)
@@ -116,7 +117,7 @@ fun htmlComponent(@DetailedDescription text: String = "",
 
 fun RadioButton(@RadioButton text: String): JRadioButton = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
 
-fun CheckBox(@Checkbox text: String, selected: Boolean = false, toolTip: String? = null): JCheckBox {
+fun CheckBox(@Checkbox text: String, selected: Boolean = false, toolTip: @Tooltip String? = null): JCheckBox {
   val component = JCheckBox(BundleBase.replaceMnemonicAmpersand(text), selected)
   toolTip?.let { component.toolTipText = it }
   return component
@@ -127,13 +128,13 @@ fun Panel(@BorderTitle title: String? = null, layout: LayoutManager2? = BorderLa
   return Panel(title, false, layout)
 }
 
-fun Panel(@BorderTitle title: String? = null, hasSeparator: Boolean = true, layout: LayoutManager2? = BorderLayout()): JPanel {
+fun Panel(title: @BorderTitle String? = null, hasSeparator: Boolean = true, layout: LayoutManager2? = BorderLayout()): JPanel {
   val panel = JPanel(layout)
   title?.let { setTitledBorder(it, panel, hasSeparator) }
   return panel
 }
 
-fun DialogPanel(@BorderTitle title: String? = null, layout: LayoutManager2? = BorderLayout()): DialogPanel {
+fun DialogPanel(title: @BorderTitle String? = null, layout: LayoutManager2? = BorderLayout()): DialogPanel {
   val panel = DialogPanel(layout)
   title?.let { setTitledBorder(it, panel, hasSeparator = true) }
   return panel
@@ -166,7 +167,7 @@ fun dialog(@DialogTitle title: String,
   return object : MyDialogWrapper(project, parent, modality) {
     init {
       setTitle(title)
-      setResizable(resizable)
+      isResizable = resizable
 
       if (!okActionEnabled) {
         this.okAction.isEnabled = false
@@ -202,7 +203,7 @@ private abstract class MyDialogWrapper(project: Project?,
                                        modality: IdeModalityType) : DialogWrapper(project, parent, true, modality), DialogManager {
   override fun performAction(action: (() -> List<ValidationInfo>?)?) {
     val validationInfoList = action?.invoke()
-    if (validationInfoList == null || validationInfoList.isEmpty()) {
+    if (validationInfoList.isNullOrEmpty()) {
       super.doOKAction()
     }
     else {
@@ -238,31 +239,42 @@ private abstract class MyDialogWrapper(project: Project?,
 }
 
 @JvmOverloads
-fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
-                                                          component: ComponentWithBrowseButton<T>,
-                                                          textField: JTextField,
-                                                          @DialogTitle browseDialogTitle: String?,
-                                                          fileChooserDescriptor: FileChooserDescriptor,
-                                                          textComponentAccessor: TextComponentAccessor<T>,
-                                                          fileChosen: ((chosenFile: VirtualFile) -> String)? = null) {
+fun <T : JComponent> installFileCompletionAndBrowseDialog(
+  project: Project?,
+  component: ComponentWithBrowseButton<T>,
+  textField: JTextField,
+  @DialogTitle browseDialogTitle: String?,
+  @Label browseDialogDescription: String? = null,
+  fileChooserDescriptor: FileChooserDescriptor,
+  textComponentAccessor: TextComponentAccessor<T>,
+  fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+) {
   if (ApplicationManager.getApplication() == null) {
     // tests
     return
   }
 
+  val browseFolderDescriptor = fileChooserDescriptor.asBrowseFolderDescriptor()
+  if (fileChosen != null) {
+    browseFolderDescriptor.convertFileToText = fileChosen
+  }
+
   component.addActionListener(
-    object : BrowseFolderActionListener<T>(browseDialogTitle, null, component, project, fileChooserDescriptor, textComponentAccessor) {
-      override fun onFileChosen(chosenFile: VirtualFile) {
-        if (fileChosen == null) {
-          super.onFileChosen(chosenFile)
-        }
-        else {
-          textComponentAccessor.setText(myTextComponent, fileChosen(chosenFile))
-        }
-      }
-    })
-  FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true,
-                                                         null /* infer disposable from UI context */)
+    BrowseFolderActionListener(
+      browseDialogTitle,
+      browseDialogDescription,
+      component,
+      project,
+      browseFolderDescriptor,
+      textComponentAccessor
+    )
+  )
+  FileChooserFactory.getInstance().installFileCompletion(
+    textField,
+    fileChooserDescriptor,
+    true,
+    null /* infer disposable from UI context */
+  )
 }
 
 @JvmOverloads
@@ -284,7 +296,7 @@ fun textFieldWithHistoryWithBrowseButton(project: Project?,
     textField = component.childComponent.textEditor,
     browseDialogTitle = browseDialogTitle,
     fileChooserDescriptor = fileChooserDescriptor,
-    textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
+    textComponentAccessor = TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
     fileChosen = fileChosen
   )
   return component
@@ -310,7 +322,17 @@ fun textFieldWithBrowseButton(project: Project?,
 
 @JvmOverloads
 fun textFieldWithBrowseButton(project: Project?,
-                              @DialogTitle browseDialogTitle: String,
+                              @DialogTitle browseDialogTitle: String?,
+                              textField: JTextField,
+                              fileChooserDescriptor: FileChooserDescriptor,
+                              fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
+  return textFieldWithBrowseButton(project, browseDialogTitle, null, textField, fileChooserDescriptor, fileChosen)
+}
+
+@JvmOverloads
+fun textFieldWithBrowseButton(project: Project?,
+                              @DialogTitle browseDialogTitle: String?,
+                              @Label browseDialogDescription: String?,
                               textField: JTextField,
                               fileChooserDescriptor: FileChooserDescriptor,
                               fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
@@ -320,6 +342,7 @@ fun textFieldWithBrowseButton(project: Project?,
     component = component,
     textField = component.textField,
     browseDialogTitle = browseDialogTitle,
+    browseDialogDescription = browseDialogDescription,
     fileChooserDescriptor = fileChooserDescriptor,
     textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
     fileChosen = fileChosen
@@ -334,13 +357,10 @@ val JPasswordField.chars: CharSequence?
     if (doc.length == 0) {
       return ""
     }
-
-    val segment = Segment()
-    try {
-      doc.getText(0, doc.length, segment)
+    else try {
+      return Segment().also { doc.getText(0, doc.length, it) }
     }
     catch (e: BadLocationException) {
       return null
     }
-    return segment
   }

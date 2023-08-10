@@ -10,9 +10,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.JavaInspectionTestCase
 import org.intellij.lang.annotations.Language
 
-/**
- * @author Pavel.Dolgov
- */
 class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun getTestDataPath() = PathManagerEx.getTestDataPath() + "/inspection/unusedServiceImplementations/"
 

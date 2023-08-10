@@ -4,7 +4,9 @@ package com.intellij.completion.ml
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 interface CompletionMLPolicy {
     companion object {
         private val INSTANCE = LanguageExtension<CompletionMLPolicy>("com.intellij.completion.ml.ranking.policy")

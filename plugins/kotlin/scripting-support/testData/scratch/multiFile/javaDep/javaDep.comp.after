@@ -1,0 +1,6 @@
+// REPL_MODE: false
+// COMPILER_ARGUMENTS: -Xallow-any-scripts-in-source-roots
+
+import myTest.MyJavaClass
+
+MyJavaClass().test()         // RESULT: 1

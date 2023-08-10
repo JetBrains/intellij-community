@@ -37,7 +37,7 @@ public abstract class FileChangeListenerBase implements BulkFileListener {
   protected abstract void apply();
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent each : events) {
       if (each instanceof VFileDeleteEvent) {
         deleteRecursively(each.getFile(), each);
@@ -49,8 +49,7 @@ public abstract class FileChangeListenerBase implements BulkFileListener {
             deleteRecursively(each.getFile(), each);
           }
         }
-        else if (each instanceof VFileMoveEvent) {
-          VFileMoveEvent moveEvent = (VFileMoveEvent)each;
+        else if (each instanceof VFileMoveEvent moveEvent) {
           String newPath = moveEvent.getNewParent().getPath() + "/" + moveEvent.getFile().getName();
           if (!isRelevant(newPath)) {
             deleteRecursively(moveEvent.getFile(), each);
@@ -77,19 +76,17 @@ public abstract class FileChangeListenerBase implements BulkFileListener {
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent each : events) {
       if (!isRelevant(each.getPath())) continue;
 
-      if (each instanceof VFileCreateEvent) {
-        VFileCreateEvent createEvent = (VFileCreateEvent)each;
+      if (each instanceof VFileCreateEvent createEvent) {
         VirtualFile newChild = createEvent.getParent().findChild(createEvent.getChildName());
         if (newChild != null) {
           updateFile(newChild, each);
         }
       }
-      else if (each instanceof VFileCopyEvent) {
-        VFileCopyEvent copyEvent = (VFileCopyEvent)each;
+      else if (each instanceof VFileCopyEvent copyEvent) {
         VirtualFile newChild = copyEvent.getNewParent().findChild(copyEvent.getNewChildName());
         if (newChild != null) {
           updateFile(newChild, each);

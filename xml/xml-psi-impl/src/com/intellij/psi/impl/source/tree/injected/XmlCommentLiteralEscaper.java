@@ -23,9 +23,6 @@ import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.impl.source.xml.XmlCommentImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
 public class XmlCommentLiteralEscaper extends LiteralTextEscaper<XmlCommentImpl> {
   public XmlCommentLiteralEscaper(@NotNull XmlCommentImpl host) {
     super(host);

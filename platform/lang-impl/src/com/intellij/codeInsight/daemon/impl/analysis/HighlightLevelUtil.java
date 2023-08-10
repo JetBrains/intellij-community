@@ -10,7 +10,7 @@ public final class HighlightLevelUtil {
   }
 
   public static void forceRootHighlighting(@NotNull PsiElement root, @NotNull FileHighlightingSetting level) {
-    final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(root.getProject());
+    HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(root.getProject());
     if (component == null) return;
 
     component.setHighlightingSettingForRoot(root, level);

@@ -42,18 +42,13 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     JBCheckBox checkBox = new JBCheckBox();
     checkBox.setFocusable(false);
-    updateCustomComponent(checkBox, presentation);
     return createCheckboxComponent(checkBox, this, place);
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
-    super.update(e);
-    Presentation presentation = e.getPresentation();
-    JComponent property = presentation.getClientProperty(COMPONENT_KEY);
-    if (property instanceof JCheckBox) {
-      JCheckBox checkBox = (JCheckBox)property;
-
+  public void updateCustomComponent(@NotNull JComponent component,
+                                    @NotNull Presentation presentation) {
+    if (component instanceof JCheckBox checkBox) {
       updateCustomComponent(checkBox, presentation);
     }
   }
@@ -86,7 +81,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
         DataContext dataContext = ActionToolbar.getDataContextFor(checkBox);
         InputEvent inputEvent = new KeyEvent(checkBox, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_SPACE, ' ');
         AnActionEvent event = AnActionEvent.createFromAnAction(action, inputEvent, place, dataContext);
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext);
+        ActionUtil.performActionDumbAwareWithCallbacks(action, event);
       }
     });
 

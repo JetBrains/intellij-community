@@ -30,7 +30,7 @@ public class ActionCommand extends TypeCommand {
   }
 
   @Override
-  protected Promise<Object> _execute(final PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     final String actionName = getText().substring(PREFIX.length()).trim();
 
     final ActionManager am = ActionManager.getInstance();
@@ -44,8 +44,7 @@ public class ActionCommand extends TypeCommand {
       final Shortcut[] sc = getActiveKeymapShortcuts(actionName).getShortcuts();
       KeyStroke stroke = null;
       for (Shortcut each : sc) {
-        if (each instanceof KeyboardShortcut) {
-          final KeyboardShortcut ks = (KeyboardShortcut)each;
+        if (each instanceof KeyboardShortcut ks) {
           final KeyStroke first = ks.getFirstKeyStroke();
           final KeyStroke second = ks.getSecondKeyStroke();
           if (second == null) {
@@ -62,7 +61,7 @@ public class ActionCommand extends TypeCommand {
             context.error(getMessage(), getLine());
           }
         };
-        context.message("Invoking action via shortcut: " + stroke.toString(), getLine());
+        context.message("Invoking action via shortcut: " + stroke, getLine());
 
         final KeyStroke finalStroke = stroke;
 
@@ -70,7 +69,7 @@ public class ActionCommand extends TypeCommand {
           Disposable disposable = Disposer.newDisposable();
           ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
             @Override
-            public void beforeActionPerformed(@NotNull final AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+            public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (context.isDisposed()) {
                   Disposer.dispose(disposable);

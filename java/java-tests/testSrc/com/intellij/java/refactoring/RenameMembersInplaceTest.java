@@ -81,6 +81,29 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
     doTestInplaceRename("bar");
   }
 
+  public void testMethodChain() {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+
+    final PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.getInstance().getAllAccepted());
+    assertNotNull(element);
+
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
+    
+    int start = getEditor().getSelectionModel().getSelectionStart();
+    int end = getEditor().getSelectionModel().getSelectionEnd();
+    
+    new MemberInplaceRenameHandler().doRename(element, getEditor(), DataManager.getInstance().getDataContext(getEditor().getComponent()));
+    TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
+    assertNotNull(state);
+
+    WriteCommandAction.writeCommandAction(getProject())
+      .run(() -> getEditor().getDocument().replaceString(start, end, "bar"));
+    state = TemplateManagerImpl.getTemplateState(getEditor());
+    assertNotNull(state);
+    state.gotoEnd(false);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
   public void testRenameFieldInIncompleteStatement() {
     doTestInplaceRename("bar");
   }

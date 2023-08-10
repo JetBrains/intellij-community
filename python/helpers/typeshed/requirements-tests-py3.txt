@@ -1,8 +1,0 @@
-git+https://github.com/python/mypy.git@master
-typed-ast>=1.0.4
-black==20.8b1
-flake8==3.8.4
-flake8-bugbear==20.1.4
-flake8-pyi==20.10.0
-isort[pyproject]==5.5.3
-pytype>=2020.09.16

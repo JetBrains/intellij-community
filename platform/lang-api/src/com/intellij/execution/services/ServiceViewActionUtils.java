@@ -3,43 +3,42 @@ package com.intellij.execution.services;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-@ApiStatus.Experimental
 public final class ServiceViewActionUtils {
   public static final DataKey<Set<ServiceViewContributor>> CONTRIBUTORS_KEY = DataKey.create("serviceViewContributors");
   public static final DataKey<ServiceViewOptions> OPTIONS_KEY = DataKey.create("ServiceViewTreeOptions");
+  public static final DataKey<Boolean> IS_FROM_TREE_KEY = DataKey.create("IsFromTreeSource");
 
   private ServiceViewActionUtils() {
   }
 
   @Nullable
   public static <T> T getTarget(@NotNull AnActionEvent e, @NotNull Class<T> clazz) {
-    Object[] items = e.getData(PlatformDataKeys.SELECTED_ITEMS);
+    Object[] items = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
     return items != null && items.length == 1 ? ObjectUtils.tryCast(items[0], clazz) : null;
   }
 
   @NotNull
-  public static <T> JBIterable<T> getTargets(@NotNull AnActionEvent e, @NotNull Class<T> clazz) {
-    Object[] items = e.getData(PlatformDataKeys.SELECTED_ITEMS);
-    if (items == null) return JBIterable.empty();
+  public static <T> List<T> getTargets(@NotNull AnActionEvent e, @NotNull Class<T> clazz) {
+    Object[] items = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+    if (items == null) return Collections.emptyList();
 
     List<T> result = new ArrayList<>();
     for (Object item : items) {
       if (!clazz.isInstance(item)) {
-        return JBIterable.empty();
+        return Collections.emptyList();
       }
       result.add(clazz.cast(item));
     }
-    return JBIterable.from(result);
+    return result;
   }
 }

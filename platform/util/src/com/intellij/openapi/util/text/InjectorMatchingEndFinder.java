@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static java.lang.Math.min;
 
-/**
- * @author Irina.Chernushina on 12/2/2015.
- */
 public final class InjectorMatchingEndFinder {
   public static int findMatchingEnd(@NotNull String startSymbol, @NotNull String endSymbol, @NotNull String text, int afterStartIdx) {
     if (afterStartIdx < 0) return -1;

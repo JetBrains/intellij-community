@@ -19,7 +19,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx;
 import org.jetbrains.plugins.gradle.importing.GradleSettingsImportingTestCase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,34 +38,37 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
     @Language("Java")
-    String appClass = "package my;\n" +
-                      "import java.util.Arrays;\n" +
-                      "\n" +
-                      "public class App {\n" +
-                      "    public static void main(String[] args) {\n" +
-                      "        System.out.println(\"Class-Path: \" + System.getProperty(\"java.class.path\"));\n" +
-                      "        System.out.println(\"Passed arguments: \" + Arrays.toString(args));\n" +
-                      "    }\n" +
-                      "}\n";
+    String appClass = """
+      package my;
+      import java.util.Arrays;
+
+      public class App {
+          public static void main(String[] args) {
+              System.out.println("Class-Path: " + System.getProperty("java.class.path"));
+              System.out.println("Passed arguments: " + Arrays.toString(args));
+          }
+      }
+      """;
     createProjectSubFile("src/main/java/my/App.java", appClass);
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
-      new GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .withIdeaPlugin()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+        .withGradleIdeaExtPlugin()
         .addImport("org.jetbrains.gradle.ext.*")
-        .addPostfix("idea {\n" +
-                    "  project.settings {\n" +
-                    "    runConfigurations {\n" +
-                    "       MyApp(Application) {\n" +
-                    "           mainClass = 'my.App'\n" +
-                    "           programParameters = 'foo --bar baz'\n" +
-                    "           moduleName = 'moduleName.main'\n" +
-                    "       }\n" +
-                    "    }\n" +
-                    "  }\n" +
-                    "}")
+        .addPostfix(
+          "idea {",
+          "  project.settings {",
+          "    runConfigurations {",
+          "       MyApp(Application) {",
+          "           mainClass = 'my.App'",
+          "           programParameters = 'foo --bar baz'",
+          "           moduleName = 'moduleName.main'",
+          "       }",
+          "    }",
+          "  }",
+          "}")
         .generate()
     );
 
@@ -96,7 +98,112 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
     }
   }
 
-  private void assertAppRunOutput(RunnerAndConfigurationSettings configurationSettings, String... checks) {
+  @Test
+  public void testJavaModuleRunConfiguration() throws Exception {
+    PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
+    @Language("Java")
+    String appClass = """
+      package my;
+      import java.io.BufferedReader;
+      import java.io.IOException;
+      import java.io.InputStream;
+      import java.io.InputStreamReader;
+      import java.nio.charset.StandardCharsets;
+
+
+      public class App {
+          public static void main(String[] args) throws IOException {
+            String fileContent = new App().readFile();
+            System.out.println("File Content: " + fileContent);
+          }
+         \s
+          public String readFile() throws IOException {
+            try (InputStream is =
+                   getClass().getClassLoader().getResourceAsStream("file.txt")) {
+        if (is == null) return null;
+              BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+              return bufferedReader.readLine();
+            }
+          }
+      }
+      """;
+    createProjectSubFile("src/main/java/my/App.java", appClass);
+    @Language("Java")
+    final String module = """
+      module my {
+       exports my;
+      }""";
+    createProjectSubFile("src/main/java/module-info.java", module);
+    createProjectSubFile("src/main/resources/file.txt", "content\n");
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .withIdeaPlugin()
+        .withGradleIdeaExtPlugin()
+        .addImport("org.jetbrains.gradle.ext.*")
+        .addPostfix(
+          "idea {",
+          "  project.settings {",
+          "    runConfigurations {",
+          "       MyApp(Application) {",
+          "           mainClass = 'my.App'",
+          "           moduleName = 'moduleName.main'",
+          "       }",
+          "    }",
+          "  }",
+          "}")
+        .generate()
+    );
+
+    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(myProject).findConfigurationByName("MyApp");
+    assertAppRunOutput(configurationSettings, "File Content: content");
+  }
+
+  @Test
+  public void testRunApplicationInNestedComposite() throws Exception {
+    PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
+    @Language("Java")
+    String appClass = """
+      package my;
+      import java.util.Arrays;
+
+      public class App {
+          public static void main(String[] args) {
+              System.out.println("Hello expected world");
+          }
+      }
+      """;
+    createProjectSubFile("nested/src/main/java/my/App.java", appClass);
+    createProjectSubFile("settings.gradle", "includeBuild('nested')");
+    createProjectSubFile("nested/settings.gradle", "rootProject.name='app'");
+    createProjectSubFile("nested/build.gradle",
+                         createBuildScriptBuilder()
+                           .withJavaPlugin().generate()
+);
+    createProjectSubFile("build.gradle", createBuildScriptBuilder()
+      .withGradleIdeaExtPlugin()
+      .addImport("org.jetbrains.gradle.ext.*")
+      .addPostfix(
+        "idea {",
+        "  project.settings {",
+        "    runConfigurations {",
+        "       MyApp(Application) {",
+        "           mainClass = 'my.App'",
+        "           moduleName = 'app.main'",
+        "       }",
+        "    }",
+        "  }",
+        "}")
+      .generate());
+    importProject();
+
+    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(myProject).findConfigurationByName("MyApp");
+    assertAppRunOutput(configurationSettings, "Hello expected world");
+  }
+
+  private static void assertAppRunOutput(RunnerAndConfigurationSettings configurationSettings, String... checks) {
     String output = runAppAndGetOutput(configurationSettings);
     for (String check : checks) {
       assertTrue(String.format("App output should contain substring: %s, but was:\n%s", check, output), output.contains(check));

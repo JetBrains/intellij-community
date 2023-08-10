@@ -44,7 +44,7 @@ public class PsiJShellImportHolderImpl extends ASTWrapperPsiElement implements P
 
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
-    final PsiImportStatement importStatement = getImportStatement();
+    PsiImportStatement importStatement = getImportStatement();
     if (importStatement != null) {
       processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
       return processor.execute(importStatement, state);

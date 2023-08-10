@@ -29,7 +29,6 @@ import java.util.Map;
 
 /**
  * Tests assignment mapping.
- * User: dcheryasov
  */
 public class PyAssignmentMappingTest extends LightMarkedTestCase {
 

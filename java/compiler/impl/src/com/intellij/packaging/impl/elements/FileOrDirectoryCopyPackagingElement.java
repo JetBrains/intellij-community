@@ -22,9 +22,17 @@ import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.platform.backend.workspace.VirtualFileUrls;
+import com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.util.JpsPathUtil;
+
+import java.util.Objects;
 
 public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirectoryCopyPackagingElement> extends PackagingElement<T> {
   @NonNls public static final String PATH_ATTRIBUTE = "path";
@@ -47,17 +55,34 @@ public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirect
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
     return element instanceof FileOrDirectoryCopyPackagingElement &&
-           myFilePath != null &&
-           myFilePath.equals(((FileOrDirectoryCopyPackagingElement<?>)element).getFilePath());
+           getMyFilePath() != null &&
+           getMyFilePath().equals(((FileOrDirectoryCopyPackagingElement<?>)element).getFilePath());
   }
 
   @Attribute(PATH_ATTRIBUTE)
   public String getFilePath() {
-    return myFilePath;
+    return getMyFilePath();
   }
 
   public void setFilePath(String filePath) {
-    myFilePath = filePath;
+    String filePathBefore = getMyFilePath();
+    this.update(
+      () -> myFilePath = filePath,
+      (builder, entity) -> {
+        if (filePathBefore.equals(filePath)) return;
+
+        builder.modifyEntity(FileOrDirectoryPackagingElementEntity.Builder.class, entity, ent -> {
+          VirtualFileUrlManager manager = VirtualFileUrls.getVirtualFileUrlManager(myProject);
+          if (filePath != null) {
+            VirtualFileUrl fileUrl = manager.fromPath(filePath);
+            ent.setFilePath(fileUrl);
+          }
+          else {
+            ent.setFilePath(null);
+          }
+          return Unit.INSTANCE;
+        });
+      });
   }
 
   @NotNull
@@ -86,5 +111,18 @@ public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirect
   private static boolean isJar(VirtualFile file) {
     final String ext = file.getExtension();
     return ext != null && ext.equalsIgnoreCase("jar");
+  }
+
+  protected String getMyFilePath() {
+    if (myStorage == null) {
+      return myFilePath;
+    } else {
+      FileOrDirectoryPackagingElementEntity entity = (FileOrDirectoryPackagingElementEntity)getThisEntity();
+      String path = JpsPathUtil.urlToPath(entity.getFilePath().getUrl());
+      if (!Objects.equals(myFilePath, path)) {
+        myFilePath = path;
+      }
+      return path;
+    }
   }
 }

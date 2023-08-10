@@ -27,9 +27,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author vlan
- */
 public class PyChooseRequirementsDialog extends DialogWrapper {
   private final ElementsChooser<PyRequirement> myRequirementsChooser;
 

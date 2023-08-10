@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.process.BuildProcessHandler;
@@ -6,7 +6,6 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.BaseContentCloseListener;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
@@ -17,109 +16,107 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.RegisterToolWindowTask;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.GuiUtils;
+import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.TabbedContent;
-import com.intellij.util.ContentUtilEx;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static com.intellij.util.ContentUtilEx.getFullName;
-
 /**
  * @author Vladislav.Soroka
  */
-public final class BuildContentManagerImpl implements BuildContentManager {
-  /**
-   * @deprecated use Build_Tab_Title_Supplier instead
-   */
-  @SuppressWarnings("SSBasedInspection") @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
-  public static final @NlsContexts.TabTitle String Build = LangBundle.message("tab.title.build");
+public final class BuildContentManagerImpl implements BuildContentManager, Disposable {
+  public static final Supplier<@NlsContexts.TabTitle String> BUILD_TAB_TITLE_SUPPLIER = LangBundle.messagePointer("tab.title.build");
+  private static final BadgeIconSupplier TW_ICON = new BadgeIconSupplier(AllIcons.Toolwindows.ToolWindowBuild);
 
-  public static final Supplier<@NlsContexts.TabTitle String> Build_Tab_Title_Supplier = LangBundle.messagePointer("tab.title.build");
-
-  private static final List<Supplier<@NlsContexts.TabTitle String>> ourPresetOrder = Arrays.asList(
+  private static final List<Supplier<@NlsContexts.TabTitle String>> presetOrder = List.of(
     LangBundle.messagePointer("tab.title.sync"),
-    Build_Tab_Title_Supplier,
+    BUILD_TAB_TITLE_SUPPLIER,
     LangBundle.messagePointer("tab.title.run"),
     LangBundle.messagePointer("tab.title.debug")
   );
   private static final Key<Map<Object, CloseListener>> CONTENT_CLOSE_LISTENERS = Key.create("CONTENT_CLOSE_LISTENERS");
 
-  private final Project myProject;
+  private final Project project;
   private final Map<Content, Pair<Icon, AtomicInteger>> liveContentsMap = new ConcurrentHashMap<>();
 
   public BuildContentManagerImpl(@NotNull Project project) {
-    myProject = project;
+    this.project = project;
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override
   public @NotNull ToolWindow getOrCreateToolWindow() {
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     ToolWindow toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID);
     if (toolWindow != null) {
       return toolWindow;
     }
 
-    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.closable(
-      TOOL_WINDOW_ID, UIBundle.messagePointer("tool.window.name.build"), AllIcons.Toolwindows.ToolWindowBuild));
-    ContentManager contentManager = toolWindow.getContentManager();
-    ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
+    toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, builder -> {
+      builder.stripeTitle = UIBundle.messagePointer("tool.window.name.build");
+      builder.icon = TW_ICON.getOriginalIcon();
+      return Unit.INSTANCE;
+    });
+    toolWindow.setToHideOnEmptyContent(true);
     return toolWindow;
   }
 
   private void invokeLaterIfNeeded(@NotNull Runnable runnable) {
-    if (myProject.isDefault()) {
+    if (project.isDefault()) {
       return;
     }
-    StartupManagerEx.getInstanceEx(myProject).runAfterOpened(() -> {
-      GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.defaultModalityState(), myProject.getDisposed());
+
+    StartupManagerEx.getInstanceEx(project).runAfterOpened(() -> {
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), project.getDisposed(), runnable);
     });
   }
 
   @Override
-  public void addContent(Content content) {
+  public void addContent(@NotNull Content content) {
     invokeLaterIfNeeded(() -> {
       ContentManager contentManager = getOrCreateToolWindow().getContentManager();
-      final String name = content.getTabName();
-      final String category = StringUtil.trimEnd(StringUtil.split(name, " ").get(0), ':');
-      int idx = -1;
-      for (int i = 0; i < ourPresetOrder.size(); i++) {
-        final String s = ourPresetOrder.get(i).get();
+      String name = content.getTabName();
+      String category = Strings.trimEnd(StringUtil.split(name, " ").get(0), ':');
+      int index = -1;
+      for (int i = 0; i < presetOrder.size(); i++) {
+        String s = presetOrder.get(i).get();
         if (s.equals(category)) {
-          idx = i;
+          index = i;
           break;
         }
       }
-      final Content[] existingContents = contentManager.getContents();
-      if (idx != -1) {
+      Content[] existingContents = contentManager.getContents();
+      if (index != -1) {
         MultiMap<String, String> existingCategoriesNames = new MultiMap<>();
         for (Content existingContent : existingContents) {
           String tabName = existingContent.getTabName();
-          existingCategoriesNames.putValue(StringUtil.trimEnd(StringUtil.split(tabName, " ").get(0), ':'), tabName);
+          existingCategoriesNames.putValue(Strings.trimEnd(StringUtil.split(tabName, " ").get(0), ':'), tabName);
         }
 
         int place = 0;
-        for (int i = 0; i <= idx; i++) {
-          String key = ourPresetOrder.get(i).get();
-          Collection<String> tabNames = existingCategoriesNames.get(key);
-          place += tabNames.size();
+        for (int i = 0; i <= index; i++) {
+          String key = presetOrder.get(i).get();
+          place += existingCategoriesNames.get(key).size();
         }
         contentManager.addContent(content, place);
       }
@@ -130,8 +127,7 @@ public final class BuildContentManagerImpl implements BuildContentManager {
       for (Content existingContent : existingContents) {
         existingContent.setDisplayName(existingContent.getTabName());
       }
-      String tabName = content.getTabName();
-      updateTabDisplayName(content, tabName);
+      updateTabDisplayName(content, content.getTabName());
     });
   }
 
@@ -148,9 +144,9 @@ public final class BuildContentManagerImpl implements BuildContentManager {
   @Override
   public void removeContent(Content content) {
     invokeLaterIfNeeded(() -> {
-      ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID);
+      ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID);
       ContentManager contentManager = toolWindow == null ? null : toolWindow.getContentManager();
-      if (contentManager != null && (!contentManager.isDisposed())) {
+      if (contentManager != null && !contentManager.isDisposed()) {
         contentManager.removeContent(content, true);
       }
     });
@@ -174,25 +170,6 @@ public final class BuildContentManagerImpl implements BuildContentManager {
     });
   }
 
-  @Override
-  public Content addTabbedContent(@NotNull JComponent contentComponent,
-                                  @NotNull @NlsContexts.TabTitle String groupPrefix,
-                                  @NotNull String tabName,
-                                  @Nullable Icon icon,
-                                  @Nullable Disposable childDisposable) {
-    ContentManager contentManager = getOrCreateToolWindow().getContentManager();
-    ContentUtilEx.addTabbedContent(contentManager, contentComponent, groupPrefix, tabName, false, childDisposable);
-    Content content = contentManager.findContent(getFullName(groupPrefix, tabName));
-    if (icon != null) {
-      TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(contentManager, groupPrefix);
-      if (tabbedContent != null) {
-        tabbedContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
-        tabbedContent.setIcon(icon);
-      }
-    }
-    return content;
-  }
-
   public void startBuildNotified(@NotNull BuildDescriptor buildDescriptor,
                                  @NotNull Content content,
                                  @Nullable BuildProcessHandler processHandler) {
@@ -202,9 +179,9 @@ public final class BuildContentManagerImpl implements BuildContentManager {
         closeListenerMap = new HashMap<>();
         content.putUserData(CONTENT_CLOSE_LISTENERS, closeListenerMap);
       }
-      closeListenerMap.put(buildDescriptor.getId(), new CloseListener(content, processHandler));
+      closeListenerMap.put(buildDescriptor.getId(), new CloseListener(this, content, processHandler));
     }
-    Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> Pair.pair(c.getIcon(), new AtomicInteger(0)));
+    Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> new Pair<>(c.getIcon(), new AtomicInteger(0)));
     pair.second.incrementAndGet();
     content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
     if (pair.first == null) {
@@ -215,7 +192,7 @@ public final class BuildContentManagerImpl implements BuildContentManager {
       JComponent component = content.getComponent();
       component.invalidate();
       if (!liveContentsMap.isEmpty()) {
-        getOrCreateToolWindow().setIcon(ExecutionUtil.getLiveIndicator(AllIcons.Toolwindows.ToolWindowBuild));
+        getOrCreateToolWindow().setIcon(TW_ICON.getLiveIndicatorIcon());
       }
     });
   }
@@ -225,7 +202,7 @@ public final class BuildContentManagerImpl implements BuildContentManager {
     if (closeListenerMap != null) {
       CloseListener closeListener = closeListenerMap.remove(buildDescriptor.getId());
       if (closeListener != null) {
-        closeListener.dispose();
+        Disposer.dispose(closeListener);
         if (closeListenerMap.isEmpty()) {
           content.putUserData(CONTENT_CLOSE_LISTENERS, null);
         }
@@ -243,16 +220,17 @@ public final class BuildContentManagerImpl implements BuildContentManager {
 
     invokeLaterIfNeeded(() -> {
       if (liveContentsMap.isEmpty()) {
-        getOrCreateToolWindow().setIcon(AllIcons.Toolwindows.ToolWindowBuild);
+        getOrCreateToolWindow().setIcon(TW_ICON.getOriginalIcon());
       }
     });
   }
 
-  private final class CloseListener extends BaseContentCloseListener {
+  private static final class CloseListener extends BaseContentCloseListener {
     private @Nullable BuildProcessHandler myProcessHandler;
 
-    private CloseListener(final @NotNull Content content, @NotNull BuildProcessHandler processHandler) {
-      super(content, myProject);
+    private CloseListener(@NotNull BuildContentManagerImpl buildContentManager, @NotNull Content content, @NotNull BuildProcessHandler processHandler) {
+      super(content, buildContentManager.project, buildContentManager);
+
       myProcessHandler = processHandler;
     }
 
@@ -269,6 +247,7 @@ public final class BuildContentManagerImpl implements BuildContentManager {
       if (myProcessHandler == null || myProcessHandler.isProcessTerminated() || myProcessHandler.isProcessTerminating()) {
         return true;
       }
+
       myProcessHandler.putUserData(RunContentManagerImpl.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY, Boolean.TRUE);
       final String sessionName = myProcessHandler.getExecutionName();
       final WaitForProcessTask task = new WaitForProcessTask(myProcessHandler, sessionName, modal, myProject) {

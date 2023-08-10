@@ -17,10 +17,10 @@
 package com.intellij.completion.ml.personalization.impl
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.completion.ml.common.PrefixMatchingType
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.completion.ml.personalization.UserFactor
 import com.intellij.completion.ml.personalization.UserFactorsManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.textMatching.PrefixMatchingType
 
 /**
  * @author Vitaliy.Bibaev
@@ -60,6 +60,17 @@ class UserFactorsManagerImpl : UserFactorsManager {
         register(AverageTimeBetweenTyping())
 
         register(MnemonicsRatio())
+
+        register(TemplatesRatio())
+
+        for (duration in DECAY_DURATIONS) {
+          register(FullLineSmoothedAcceptanceRate(duration))
+          register(FullLineSelectionCountDecayedBy(duration))
+          register(FullLineShowUpCountDecayedBy(duration))
+        }
+        register(FullLineTimeSinceLastSelection())
+        register(FullLineTimeSinceLastShowUp())
+        register(FullLineWasSelected())
 
         for (type in PrefixMatchingType.values())
             register(PrefixMatchingTypeRatio(type))

@@ -21,9 +21,9 @@ import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindUtil;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -33,7 +33,7 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class IncrementalFindAction extends EditorAction {
+public class IncrementalFindAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public static final Key<Boolean> SEARCH_DISABLED = Key.create("EDITOR_SEARCH_DISABLED");
 
   public static class Handler extends EditorActionHandler {
@@ -47,18 +47,20 @@ public class IncrementalFindAction extends EditorAction {
 
     @Override
     protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
-      if (!editor.isOneLineMode()) {
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      if (!editor.isOneLineMode() && project != null) {
         EditorSearchSession search = EditorSearchSession.get(editor);
         if (search != null) {
           search.getComponent().requestFocusInTheSearchFieldAndSelectContent(project);
           FindUtil.configureFindModel(myReplace, editor, search.getFindModel(), false);
-        } else {
+        }
+        else {
           FindManager findManager = FindManager.getInstance(project);
           FindModel model;
           if (myReplace) {
             model = findManager.createReplaceInFileModel();
-          } else {
+          }
+          else {
             model = new FindModel();
             model.copyFrom(findManager.getFindInFileModel());
           }
@@ -83,7 +85,7 @@ public class IncrementalFindAction extends EditorAction {
       if (SEARCH_DISABLED.get(editor, false)) {
         return false;
       }
-      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       return project != null && !editor.isOneLineMode();
     }
   }

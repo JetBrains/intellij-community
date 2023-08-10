@@ -34,7 +34,7 @@ public class SetShortcutAction extends AnAction implements DumbAware {
     }
 
     AnAction action = e.getData(SELECTED_ACTION);
-    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (action == null || component == null) {
       return;
     }
@@ -68,7 +68,12 @@ public class SetShortcutAction extends AnAction implements DumbAware {
     }
 
     AnAction action = e.getData(SELECTED_ACTION);
-    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     presentation.setEnabled(action != null && component != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

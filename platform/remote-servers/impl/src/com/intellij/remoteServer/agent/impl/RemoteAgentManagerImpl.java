@@ -21,7 +21,7 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
 
   @Override
   public <T extends RemoteAgent> T createAgent(RemoteAgentProxyFactory agentProxyFactory,
-                                               List<File> instanceLibraries,
+                                               List<? extends File> instanceLibraries,
                                                List<Class<?>> commonJarClasses,
                                                String specificsRuntimeModuleName,
                                                String specificsBuildJarPath,
@@ -102,7 +102,7 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
     }
 
     @Override
-    public Builder<T> withInstanceLibraries(@NotNull List<File> libraries) {
+    public Builder<T> withInstanceLibraries(@NotNull List<? extends File> libraries) {
       myInstanceLibraries.addAll(libraries);
       return this;
     }

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  */
 @Tag("resource")
-public class ResourceRootConfiguration extends FilePattern {
+public final class ResourceRootConfiguration extends FilePattern {
   @Tag("directory")
   @NotNull
   public String directory;
@@ -43,5 +43,16 @@ public class ResourceRootConfiguration extends FilePattern {
     //result = 31 * result + includes.hashCode();
     //result = 31 * result + excludes.hashCode();
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "ResourceRootConfiguration{" +
+           "directory='" + directory + '\'' +
+           ", targetPath='" + targetPath + '\'' +
+           ", isFiltered=" + isFiltered +
+           ", includes=" + includes +
+           ", excludes=" + excludes +
+           '}';
   }
 }

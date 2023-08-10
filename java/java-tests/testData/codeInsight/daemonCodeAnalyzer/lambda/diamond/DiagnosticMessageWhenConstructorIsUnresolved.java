@@ -1,6 +1,6 @@
 class Test {
   {
-    D<String> ds = new D<error descr="Cannot infer arguments (unable to resolve constructor)"><></error>(9);
+    D<String> ds = new D<><error descr="Cannot resolve constructor 'D(int)'">(9)</error>;
   }
 }
 

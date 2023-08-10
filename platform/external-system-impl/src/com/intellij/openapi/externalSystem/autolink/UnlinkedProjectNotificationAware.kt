@@ -1,77 +1,77 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.CommonBundle
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationDisplayType.STICKY_BALLOON
-import com.intellij.notification.NotificationGroup
+import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction.createSimpleExpiring
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Companion.LOG
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle.message
+import com.intellij.openapi.externalSystem.ui.ExternalSystemTextProvider
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
-import com.intellij.util.containers.DisposableWrapperList
-import java.util.*
+import com.intellij.openapi.util.NlsActions
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 
+@ApiStatus.Internal
 @State(name = "UnlinkedProjectNotification", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-class UnlinkedProjectNotificationAware(private val project: Project) : PersistentStateComponent<UnlinkedProjectNotificationAware.State> {
-  private val disabledNotifications = Collections.newSetFromMap<String>(ConcurrentHashMap())
-  private val notifiedNotifications = DisposableWrapperList<ExternalSystemProjectId>()
+class UnlinkedProjectNotificationAware(
+  private val project: Project
+) : PersistentStateComponent<UnlinkedProjectNotificationAware.State> {
 
-  fun notify(unlinkedProjectAware: ExternalSystemUnlinkedProjectAware, externalProjectPath: String) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+  private val disabledNotifications = ConcurrentCollectionFactory.createConcurrentSet<String>()
 
-    val systemId = unlinkedProjectAware.systemId
-    val projectId = unlinkedProjectAware.getProjectId(externalProjectPath)
-    val systemName = systemId.readableName
+  private val notifiedNotifications = ConcurrentHashMap<ExternalSystemProjectId, Notification>()
 
-    if (systemId.id in disabledNotifications) return
-    if (projectId in notifiedNotifications) {
-      LOG.debug("Unlinked ${projectId.readableName} project notification is already notified")
+  fun notificationNotify(projectId: ExternalSystemProjectId, callback: () -> Unit) {
+    if (projectId.systemId.id in disabledNotifications) {
+      LOG.debug(projectId.debugName + ": notification has been disabled")
+      return
+    }
+    if (projectId in notifiedNotifications.keys) {
+      LOG.debug(projectId.debugName + ": notification has been already notified")
       return
     }
 
-    val notification = NOTIFICATION_GROUP.createNotification(
-      message("unlinked.project.notification.title", systemName),
-      NotificationType.INFORMATION
-    )
-
-    val notificationDisposable = createExtensionDisposable(project, unlinkedProjectAware)
-    notifiedNotifications.add(projectId, notificationDisposable)
-    notification.whenExpired { Disposer.dispose(notificationDisposable) }
-    unlinkedProjectAware.subscribe(project, object : ExternalSystemProjectLinkListener {
-      override fun onProjectLinked(externalProjectPath: String) {
-        notification.expire()
-      }
-    }, notificationDisposable)
-
-    notification.addAction(NotificationAction.createSimpleExpiring(unlinkedProjectAware.getNotificationText()) {
-      notification.expire()
-      unlinkedProjectAware.linkAndLoadProject(project, externalProjectPath)
-    })
-    notification.addAction(NotificationAction.createSimple(message("unlinked.project.notification.skip.action")) {
-      notification.expire()
-      disabledNotifications.add(systemId.id)
-    })
-    notification.contextHelpAction = object : DumbAwareAction(
-      CommonBundle.getHelpButtonText(),
-      message("unlinked.project.notification.help.text", systemName), null) {
-      override fun actionPerformed(e: AnActionEvent) {}
+    val textProvider = ExternalSystemTextProvider.getExtension(projectId.systemId)
+    val notificationManager = NotificationGroupManager.getInstance()
+    val notificationGroup = notificationManager.getNotificationGroup(NOTIFICATION_GROUP_ID)
+    val notificationContent = textProvider.getUPNText(projectId.projectName)
+    notifiedNotifications.computeIfAbsent(projectId) {
+      notificationGroup.createNotification(notificationContent, NotificationType.INFORMATION)
+        .setSuggestionType(true)
+        .setNotificationHelp(textProvider.getUPNHelpText())
+        .addAction(createSimpleExpiring(textProvider.getUPNLinkActionText()) { callback() })
+        .addAction(createSimpleExpiring(textProvider.getUPNSkipActionText()) {
+          disabledNotifications.add(projectId.systemId.id)
+          LOG.debug(projectId.debugName + ": notification is disabled")
+        }).whenExpired {
+          notifiedNotifications.remove(projectId)
+          LOG.debug(projectId.debugName + ": notification is expired")
+        }.apply {
+          notify(project)
+          LOG.debug(projectId.debugName + ": notification is notified")
+        }
     }
+  }
 
-    notification.notify(project)
+  fun notificationExpire(projectId: ExternalSystemProjectId) {
+    notifiedNotifications.remove(projectId)?.expire()
+  }
 
-    LOG.debug("Notified unlinked ${projectId.readableName} project notification")
+  @TestOnly
+  fun getProjectsWithNotification(): Set<ExternalSystemProjectId> {
+    return notifiedNotifications.keys
   }
 
   override fun getState(): State {
@@ -86,7 +86,10 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
   data class State(var disabledNotifications: Set<String> = emptySet())
 
   companion object {
-    private val NOTIFICATION_GROUP = NotificationGroup("External System Auto-Link Notification Group", STICKY_BALLOON, true)
+
+    private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autolink")
+
+    private const val NOTIFICATION_GROUP_ID = "External System Auto-Link Notification Group"
 
     @JvmStatic
     fun getInstance(project: Project): UnlinkedProjectNotificationAware {
@@ -96,6 +99,12 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
     @JvmStatic
     fun enableNotifications(project: Project, systemId: ProjectSystemId) {
       getInstance(project).disabledNotifications.remove(systemId.id)
+    }
+
+    private fun Notification.setNotificationHelp(help: @NlsActions.ActionDescription String) = apply {
+      contextHelpAction = object : DumbAwareAction(CommonBundle.getHelpButtonText(), help, null) {
+        override fun actionPerformed(e: AnActionEvent) {}
+      }
     }
   }
 }

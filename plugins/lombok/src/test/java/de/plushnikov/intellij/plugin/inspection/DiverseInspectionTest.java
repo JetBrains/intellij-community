@@ -33,7 +33,12 @@ public class DiverseInspectionTest extends LombokInspectionTest {
     doTest();
   }
 
-//  public void testValInspection() {
-//    doTest();
-//  }
+  public void testNoArgsConstructorWithRequiredFieldsShouldBeForced() {
+    doTest();
+  }
+
+  public void testNoArgsConstructorWithNotNullFieldsShouldBeNotForced() {
+    doTest();
+  }
+
 }

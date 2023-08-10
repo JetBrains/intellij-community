@@ -39,7 +39,9 @@ public class BackgroundTaskGroup extends BackgroundTaskQueue {
   }
 
   @Override
-  public void run(@NotNull Task.Backgroundable task, @Nullable ModalityState modalityState, @Nullable ProgressIndicator indicator) {
+  public void run(@NotNull Task.Backgroundable task,
+                  @NotNull ModalityState modalityState,
+                  @Nullable ProgressIndicator indicator) {
     throw new UnsupportedOperationException();
   }
 

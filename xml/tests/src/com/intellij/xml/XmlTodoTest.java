@@ -5,23 +5,29 @@ import com.intellij.editor.TodoItemsTestCase;
 
 public class XmlTodoTest extends TodoItemsTestCase {
   public void testSimple() {
-    testTodos("<root>\n" +
-              "<!-- [TODO to do ]-->\n" +
-              "</root>\n");
+    testTodos("""
+                <root>
+                <!-- [TODO to do ]-->
+                </root>
+                """);
   }
 
   public void testMultilineSingleComment() {
-    testTodos("<root>\n" +
-              "<!-- [TODO to do]\n" +
-              "      [me ]-->\n" +
-              "</root>\n");
+    testTodos("""
+                <root>
+                <!-- [TODO to do]
+                      [me ]-->
+                </root>
+                """);
   }
 
   public void testMultiline() {
-    testTodos("<root>\n" +
-              "<!-- [TODO to do ]-->\n" +
-              "<!--  [me ]-->\n" +
-              "</root>\n");
+    testTodos("""
+                <root>
+                <!-- [TODO to do ]-->
+                <!--  [me ]-->
+                </root>
+                """);
   }
 
   @Override

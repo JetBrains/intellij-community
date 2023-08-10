@@ -138,25 +138,19 @@ public class PaymentManager {
     private void saveNow(Transaction t) {
         Session session = HibernateSessionFactory.currentSession();
 
-        session.
-                save(t);
-        session.
-                flush();
+        session.save(t);
+        session.flush();
     }
 
     @SuppressWarnings("unchecked")
     public UserCashOut performCashOut(double amount, Player player) throws AmountMoreThanBalanceException {
-        Session ses = HibernateSessionFactory.
-                currentSession();
+        Session ses = HibernateSessionFactory.currentSession();
 
         if (player.getBalanceAmt() < amount) {
             throw new AmountMoreThanBalanceException();
         }
 
-        org.
-                hibernate.
-                Transaction tx = ses.
-                beginTransaction();
+        org.hibernate.Transaction tx = ses.beginTransaction();
 
         UserCashOut userCashOut = new UserCashOut(
 

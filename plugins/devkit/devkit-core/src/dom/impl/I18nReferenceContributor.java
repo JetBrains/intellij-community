@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -10,9 +10,11 @@ import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.ResourceBundleReference;
 import com.intellij.notification.impl.NotificationGroupEP;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SchemeConvertorEPBase;
+import com.intellij.openapi.options.advanced.AdvancedSettingBean;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Iconable;
@@ -32,15 +34,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.patterns.StandardPatterns.or;
-import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
-import static com.intellij.patterns.XmlPatterns.xmlTag;
+import static com.intellij.patterns.XmlPatterns.*;
 
 public class I18nReferenceContributor extends PsiReferenceContributor {
 
@@ -61,6 +62,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
 
     private static final String ICON_DESCRIPTION_BUNDLE_EP = IconDescriptionBundleEP.class.getName();
     private static final String TYPE_NAME_EP = TypeNameEP.class.getName();
+    private static final String ADVANCED_SETTINGS_EP = AdvancedSettingBean.class.getName();
 
     private static final String SPRING_TOOL_WINDOW_CONTENT = "com.intellij.spring.toolWindow.SpringToolWindowContent";
   }
@@ -114,6 +116,51 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                                                   Holder.SPRING_TOOL_WINDOW_CONTENT),
                                         new PropertyKeyReferenceProvider(false, "displayName", "bundle"));
 
+
+    XmlAttributeValuePattern idAttributeWithoutTitleKeyPattern =
+      extensionAttributePattern(new String[]{"id"}, Holder.ADVANCED_SETTINGS_EP)
+        .andNot(xmlAttributeValue().withSuperParent(2, xmlTag().withChild(xmlAttribute("titleKey"))));
+    registrar.registerReferenceProvider(idAttributeWithoutTitleKeyPattern,
+                                        new PropertyKeyReferenceProvider(false, "id", null) {
+                                          @Override
+                                          protected @NotNull String getFinalKeyValue(String keyValue) {
+                                            return MessageBundleReferenceContributor.ADVANCED_SETTING + keyValue;
+                                          }
+
+                                          @Override
+                                          protected String getFallbackBundleName() {
+                                            return ApplicationBundle.BUNDLE;
+                                          }
+                                        });
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"titleKey"}, Holder.ADVANCED_SETTINGS_EP),
+                                        new PropertyKeyReferenceProvider(false, "titleKey", null) {
+                                          @Override
+                                          protected String getFallbackBundleName() {
+                                            return ApplicationBundle.BUNDLE;
+                                          }
+                                        });
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"groupKey"}, Holder.ADVANCED_SETTINGS_EP),
+                                        new PropertyKeyReferenceProvider(false, "groupKey", null) {
+                                          @Override
+                                          protected String getFallbackBundleName() {
+                                            return ApplicationBundle.BUNDLE;
+                                          }
+                                        });
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"descriptionKey"}, Holder.ADVANCED_SETTINGS_EP),
+                                        new PropertyKeyReferenceProvider(false, "descriptionKey", null) {
+                                          @Override
+                                          protected String getFallbackBundleName() {
+                                            return ApplicationBundle.BUNDLE;
+                                          }
+                                        });
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"trailingLabelKey"}, Holder.ADVANCED_SETTINGS_EP),
+                                        new PropertyKeyReferenceProvider(false, "trailingLabelKey", null) {
+                                          @Override
+                                          protected String getFallbackBundleName() {
+                                            return ApplicationBundle.BUNDLE;
+                                          }
+                                        });
+
     final XmlAttributeValuePattern separatorSynonymPattern =
       xmlAttributeValue("key")
         .withSuperParent(2,
@@ -152,14 +199,15 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                                                   Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP,
                                                                   Holder.GROUP_CONFIGURABLE_EP,
                                                                   Holder.NOTIFICATION_GROUP_EP,
-                                                                  Holder.SPRING_TOOL_WINDOW_CONTENT),
+                                                                  Holder.SPRING_TOOL_WINDOW_CONTENT,
+                                                                  Holder.ADVANCED_SETTINGS_EP),
                                         bundleReferenceProvider);
     registrar.registerReferenceProvider(nestedExtensionAttributePattern(new String[]{"bundle", "groupBundle"},
                                                                         Holder.CONFIGURABLE_EP),
                                         bundleReferenceProvider);
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"nameBundle"},
-                                                                        Holder.SCHEME_CONVERTER_EP),
+                                                                  Holder.SCHEME_CONVERTER_EP),
                                         bundleReferenceProvider);
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"resourceBundle"},
@@ -174,7 +222,6 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
 
   private static XmlAttributeValuePattern extensionAttributePattern(@NonNls String[] attributeNames,
                                                                     @NonNls String... extensionPointClassNames) {
-    //noinspection deprecation
     return xmlAttributeValue(attributeNames)
       .inFile(DomPatterns.inDomFile(IdeaPlugin.class))
       .withSuperParent(2, extensionPointCapture(extensionPointClassNames));
@@ -190,7 +237,6 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
 
   @NotNull
   private static XmlTagPattern.Capture extensionPointCapture(@NonNls String[] extensionPointClassNames) {
-    //noinspection deprecation
     return xmlTag()
       .and(DomPatterns.withDom(DomPatterns.domElement(Extension.class).with(new PatternCondition<>("relevantEP") {
         @Override
@@ -198,7 +244,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                ProcessingContext context) {
           final ExtensionPoint extensionPoint = extension.getExtensionPoint();
           if (extensionPoint == null) return false;
-          
+
           final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
           for (String name : extensionPointClassNames) {
             if (InheritanceUtil.isInheritor(beanClass, name)) return true;

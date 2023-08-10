@@ -31,8 +31,7 @@ public class ZoomCurrentWindowAction extends MacWindowActionBase {
     final Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     if (focusOwner != null) {
       final Window window = focusOwner instanceof JFrame ? (Window)focusOwner : SwingUtilities.getWindowAncestor(focusOwner);
-      if (window instanceof JFrame) {
-        JFrame frame = (JFrame)window;
+      if (window instanceof JFrame frame) {
         if (frame.getExtendedState() == Frame.NORMAL) {
           frame.setExtendedState(Frame.MAXIMIZED_BOTH);
         }

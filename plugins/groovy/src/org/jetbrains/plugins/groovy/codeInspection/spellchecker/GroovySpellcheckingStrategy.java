@@ -27,14 +27,11 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-/**
- * @author peter
- */
 public class GroovySpellcheckingStrategy extends SpellcheckingStrategy {
   private final GrDocCommentTokenizer myDocCommentTokenizer = new GrDocCommentTokenizer();
   private final Tokenizer<PsiElement> myStringTokenizer = new EscapeSequenceTokenizer<>() {
     @Override
-    public void tokenize(@NotNull PsiElement literal, TokenConsumer consumer) {
+    public void tokenize(@NotNull PsiElement literal, @NotNull TokenConsumer consumer) {
       String text = GrStringUtil.removeQuotes(literal.getText());
       if (!text.contains("\\")) {
         consumer.consumeToken(literal, PlainTextSplitter.getInstance());

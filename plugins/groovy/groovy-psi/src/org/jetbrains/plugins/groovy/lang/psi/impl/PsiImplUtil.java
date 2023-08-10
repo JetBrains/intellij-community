@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -17,7 +17,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
@@ -65,18 +64,20 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticLiteralExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVAR;
+import static com.intellij.reference.SoftReference.dereference;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedence;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.parenthesize;
 
@@ -207,8 +208,7 @@ public final class PsiImplUtil {
         parentCount++;
       }
 
-      if (element instanceof GrCommandArgumentList) {
-        final GrCommandArgumentList commandArgList = (GrCommandArgumentList)element;
+      if (element instanceof GrCommandArgumentList commandArgList) {
 
         final PsiElement parent = commandArgList.getParent();
         LOG.assertTrue(parent instanceof GrApplicationStatement);
@@ -320,7 +320,7 @@ public final class PsiImplUtil {
     ASTNode node = nameElement.getNode();
     LOG.assertTrue(node != null);
 
-    if (node.getElementType() == GroovyTokenTypes.mIDENT || node.getElementType() == kVAR) {
+    if (node.getElementType() == GroovyTokenTypes.mIDENT || TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS.contains(node.getElementType())) {
       return nameElement.getText();
     }
 
@@ -424,7 +424,7 @@ public final class PsiImplUtil {
   public static boolean isSimpleArrayAccess(PsiType exprType, PsiType[] argTypes, PsiElement context, boolean isLValue) {
     return exprType instanceof PsiArrayType &&
            (isLValue && argTypes.length == 2 || !isLValue && argTypes.length == 1) &&
-           TypesUtil.isAssignableByMethodCallConversion(PsiType.INT, argTypes[0], context);
+           TypesUtil.isAssignableByMethodCallConversion(PsiTypes.intType(), argTypes[0], context);
   }
 
   /**
@@ -466,7 +466,7 @@ public final class PsiImplUtil {
     if (block == null) return null;
 
     final SoftReference<PsiCodeBlock> ref = block.getUserData(PSI_CODE_BLOCK);
-    final PsiCodeBlock body = SoftReference.dereference(ref);
+    final PsiCodeBlock body = dereference(ref);
     if (body != null) return body;
     final GrSyntheticCodeBlock newBody = new GrSyntheticCodeBlock(block);
     block.putUserData(PSI_CODE_BLOCK, new SoftReference<>(newBody));
@@ -477,7 +477,7 @@ public final class PsiImplUtil {
     if (typeElement == null) return null;
 
     final SoftReference<PsiTypeElement> ref = typeElement.getUserData(PSI_TYPE_ELEMENT);
-    final PsiTypeElement element = SoftReference.dereference(ref);
+    final PsiTypeElement element = dereference(ref);
     if (element != null) return element;
     final GrSyntheticTypeElement newTypeElement = new GrSyntheticTypeElement(typeElement);
     typeElement.putUserData(PSI_TYPE_ELEMENT, new SoftReference<>(newTypeElement));
@@ -488,9 +488,9 @@ public final class PsiImplUtil {
     if (expr == null) return null;
 
     final SoftReference<PsiExpression> ref = expr.getUserData(PSI_EXPRESSION);
-    final PsiExpression element = SoftReference.dereference(ref);
+    final PsiExpression element = dereference(ref);
     if (element != null) return element;
-    final GrSyntheticExpression newExpr = new GrSyntheticExpression(expr);
+    final PsiExpression newExpr = expr instanceof GrLiteral ? new GrSyntheticLiteralExpression((GrLiteral)expr) : new GrSyntheticExpression(expr);
     expr.putUserData(PSI_EXPRESSION, new SoftReference<>(newExpr));
     return newExpr;
   }
@@ -598,8 +598,7 @@ public final class PsiImplUtil {
       return doNormalizeWildcardByPosition(((PsiCapturedWildcardType)type).getUpperBound(), expression, topLevel);
     }
 
-    if (type instanceof PsiWildcardType) {
-      final PsiWildcardType wildcardType = (PsiWildcardType)type;
+    if (type instanceof PsiWildcardType wildcardType) {
 
       if (PsiUtil.isAccessedForWriting(topLevel)) {
         return wildcardType.getBound();
@@ -669,8 +668,7 @@ public final class PsiImplUtil {
     if (flowOwner == null) return null;
 
     final PsiElement parent = flowOwner.getContext();
-    if (flowOwner instanceof GrOpenBlock && parent instanceof GrMethod) {
-      final GrMethod method = (GrMethod)parent;
+    if (flowOwner instanceof GrOpenBlock && parent instanceof GrMethod method) {
       if (method.isConstructor()) return null;
       return method.getReturnType();
     }
@@ -797,7 +795,7 @@ public final class PsiImplUtil {
 
   public static void appendTypeString(StringBuilder buffer, final PsiType type, PsiElement context) {
     if (type != null) {
-      JavaDocInfoGenerator.generateType(buffer, type, context);
+      JavaDocInfoGeneratorFactory.create(context.getProject(), null).generateType(buffer, type, context);
     }
     else {
       buffer.append(GrModifier.DEF);
@@ -805,8 +803,7 @@ public final class PsiImplUtil {
   }
 
   public static boolean isSpreadAssignment(@Nullable GrExpression lValue) {
-    if (lValue instanceof GrReferenceExpression) {
-      GrReferenceExpression expression = (GrReferenceExpression)lValue;
+    if (lValue instanceof GrReferenceExpression expression) {
       final PsiElement dot = expression.getDotToken();
       if (dot != null && dot.getNode().getElementType() == GroovyTokenTypes.mSPREAD_DOT) {
         return true;

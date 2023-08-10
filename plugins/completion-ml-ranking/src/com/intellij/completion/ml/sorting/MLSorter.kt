@@ -1,28 +1,31 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.completion.ml.sorting
 
 import com.intellij.codeInsight.completion.CompletionFinalSorter
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.ml.features.RankingFeaturesOverrides
+import com.intellij.completion.ml.performance.MLCompletionPerformanceTracker
+import com.intellij.completion.ml.personalization.session.SessionFactorsUtils
+import com.intellij.completion.ml.settings.CompletionMLRankingSettings
+import com.intellij.completion.ml.storage.MutableLookupStorage
+import com.intellij.completion.ml.util.RelevanceUtil
 import com.intellij.completion.ml.util.prefix
 import com.intellij.completion.ml.util.queryLength
-import com.intellij.completion.ml.util.RelevanceUtil
-import com.intellij.completion.ml.common.PrefixMatchingUtil
-import com.intellij.completion.ml.performance.CompletionPerformanceTracker
-import com.intellij.completion.ml.settings.CompletionMLRankingSettings
+import com.intellij.internal.ml.completion.DecoratingItemsPolicy
+import com.intellij.lang.Language
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.completion.ml.personalization.session.SessionFactorsUtils
-import com.intellij.completion.ml.storage.MutableLookupStorage
-import com.intellij.internal.ml.completion.DecoratingItemsPolicy
+import com.intellij.textMatching.PrefixMatchingUtil
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-@Suppress("DEPRECATION")
 class MLSorterFactory : CompletionFinalSorter.Factory {
   override fun newSorter() = MLSorter()
 }
@@ -79,18 +82,19 @@ class MLSorter : CompletionFinalSorter() {
     val queryLength = lookup.queryLength()
     val prefix = lookup.prefix()
 
-    val element2score = mutableMapOf<LookupElement, Double?>()
-    val elements = items.toList()
-
-    val positionsBefore = elements.withIndex().associate { it.value to it.index }
+    val positionsBefore = items.withIndex().associate { it.value to it.index }
+    val elements = positionsBefore.keys.toList()
+    val element2score = HashMap<LookupElement, Double?>(elements.size)
 
     tryFillFromCache(element2score, elements, queryLength)
-    val itemsForScoring = if (element2score.size == elements.size) emptyList() else elements
+    val itemsForScoring = elements.filter { element2score[it] == null }
     calculateScores(element2score, itemsForScoring, positionsBefore,
                     queryLength, prefix, lookup, lookupStorage, parameters)
     val finalRanking = sortByMlScores(elements, element2score, positionsBefore, lookupStorage, lookup)
 
     lookupStorage.performanceTracker.sortingPerformed(itemsForScoring.size, System.currentTimeMillis() - startedTimestamp)
+
+    LOG.assertTrue(elements.size == finalRanking.size, "MLSorter shouldn't filter items")
 
     return finalRanking
   }
@@ -127,7 +131,7 @@ class MLSorter : CompletionFinalSorter() {
       SessionFactorsUtils.saveElementFactorsTo(additional, lookupStorage, element)
       calculateAdditionalFeaturesTo(additional, element, queryLength, prefix.length, position, items.size, parameters)
       lookupStorage.performanceTracker.trackElementFeaturesCalculation(PrefixMatchingUtil.baseName) {
-        PrefixMatchingUtil.calculateFeatures(element, prefix, additional)
+        PrefixMatchingUtil.calculateFeatures(element.lookupString, prefix, additional)
       }
       meaningfulRelevanceExtractor.processFeatures(relevance)
       calculatedElementFeatures.add(ElementFeatures(relevance, additional))
@@ -138,15 +142,14 @@ class MLSorter : CompletionFinalSorter() {
       val features = elementFeatureProvider.calculateFeatures(calculatedElementFeatures)
       lookupFeatures.putAll(features)
     }
-
     val commonSessionFactors = SessionFactorsUtils.updateSessionFactors(lookupStorage, items)
-    val contextFactors = lookupStorage.contextFactors
     val meaningfulRelevance = meaningfulRelevanceExtractor.meaningfulFeatures()
-    val features = RankingFeatures(lookupStorage.userFactors, contextFactors, commonSessionFactors, lookupFeatures, meaningfulRelevance)
+    val features = RankingFeatures(lookupStorage.userFactors, lookupStorage.contextFactors, commonSessionFactors, lookupFeatures,
+                                   meaningfulRelevance)
 
     val tracker = ModelTimeTracker()
     for ((i, element) in items.withIndex()) {
-      val (relevance, additional) = calculatedElementFeatures[i]
+      val (relevance, additional) = overrideElementFeaturesIfNeeded(calculatedElementFeatures[i], lookupStorage.language)
 
       val score = tracker.measure {
         val position = positionsBefore.getValue(element)
@@ -162,11 +165,26 @@ class MLSorter : CompletionFinalSorter() {
     tracker.finished(lookupStorage.performanceTracker)
   }
 
+  private fun overrideElementFeaturesIfNeeded(elementFeatures: ElementFeatures, language: Language): ElementFeatures {
+    for (it in RankingFeaturesOverrides.forLanguage(language)) {
+      val overrides = it.getMlElementFeaturesOverrides(elementFeatures.additional)
+      elementFeatures.additional.putAll(overrides)
+      if (overrides.isNotEmpty())
+        LOG.debug("The next ML features was overridden: [${overrides.map { it.key }.joinToString()}]")
+
+      val relevanceOverrides = it.getDefaultWeigherFeaturesOverrides(elementFeatures.relevance)
+      elementFeatures.relevance.putAll(relevanceOverrides)
+      if (relevanceOverrides.isNotEmpty())
+        LOG.debug("The next default weigher features was overridden: [${relevanceOverrides.map { it.key }.joinToString()}]")
+    }
+    return elementFeatures
+  }
+
   private fun sortByMlScores(items: List<LookupElement>,
                              element2score: Map<LookupElement, Double?>,
                              positionsBefore: Map<LookupElement, Int>,
                              lookupStorage: MutableLookupStorage,
-                             lookup: LookupImpl): Iterable<LookupElement> {
+                             lookup: LookupImpl): List<LookupElement> {
     val shouldSort = element2score.values.none { it == null } && lookupStorage.shouldReRank()
     if (LOG.isDebugEnabled) {
       LOG.debug("ML sorting in completion used=$shouldSort for language=${lookupStorage.language.id}")
@@ -177,7 +195,9 @@ class MLSorter : CompletionFinalSorter() {
       val decoratingItemsPolicy = lookupStorage.model?.decoratingPolicy() ?: DecoratingItemsPolicy.DISABLED
       val topItemsCount = if (reorderOnlyTopItems) REORDER_ONLY_TOP_K else Int.MAX_VALUE
       return items
+        .filter { !it.isIgnored() }
         .reorderByMLScores(element2score, topItemsCount)
+        .insertIgnoredItems(items)
         .markRelevantItemsIfNeeded(element2score, lookup, decoratingItemsPolicy)
         .addDiagnosticsIfNeeded(positionsBefore, topItemsCount, lookup)
     }
@@ -214,10 +234,23 @@ class MLSorter : CompletionFinalSorter() {
     return result
   }
 
+  private fun Iterable<LookupElement>.insertIgnoredItems(allItems: Iterable<LookupElement>): List<LookupElement> {
+    val sortedItems = this.iterator()
+    return allItems.mapNotNull { item ->
+      when {
+        item.isIgnored() -> item
+        sortedItems.hasNext() -> sortedItems.next()
+        else -> null
+      }
+    }
+  }
+
   private fun Iterable<LookupElement>.removeDuplicatesIfNeeded(): Iterable<LookupElement> =
     if (Registry.`is`("completion.ml.reorder.without.duplicates", false)) this.distinctBy { it.lookupString } else this
 
-  private fun Iterable<LookupElement>.addDiagnosticsIfNeeded(positionsBefore: Map<LookupElement, Int>, reordered: Int, lookup: LookupImpl): Iterable<LookupElement> {
+  private fun List<LookupElement>.addDiagnosticsIfNeeded(positionsBefore: Map<LookupElement, Int>,
+                                                         reordered: Int,
+                                                         lookup: LookupImpl): List<LookupElement> {
     if (CompletionMLRankingSettings.getInstance().isShowDiffEnabled) {
       var positionChanged = false
       this.forEachIndexed { position, element ->
@@ -234,9 +267,9 @@ class MLSorter : CompletionFinalSorter() {
     return this
   }
 
-  private fun Iterable<LookupElement>.markRelevantItemsIfNeeded(element2score: Map<LookupElement, Double?>,
-                                                                lookup: LookupImpl,
-                                                                decoratingItemsPolicy: DecoratingItemsPolicy): Iterable<LookupElement> {
+  private fun List<LookupElement>.markRelevantItemsIfNeeded(element2score: Map<LookupElement, Double?>,
+                                                            lookup: LookupImpl,
+                                                            decoratingItemsPolicy: DecoratingItemsPolicy): List<LookupElement> {
     if (CompletionMLRankingSettings.getInstance().isDecorateRelevantEnabled) {
       val relevantItems = decoratingItemsPolicy.itemsToDecorate(this.map { element2score[it] ?: 0.0 })
       for (index in relevantItems) {
@@ -267,6 +300,18 @@ class MLSorter : CompletionFinalSorter() {
     cachedScore[element] = info
 
     return info.mlRank
+  }
+
+  private fun LookupElement.isIgnored(): Boolean {
+    if (this is MLRankingIgnorable) return true
+
+    var item: LookupElement = this
+    while (item is LookupElementDecorator<*>) {
+      item = item.delegate
+      if (item is MLRankingIgnorable) return true
+    }
+
+    return false
   }
 
   /**
@@ -306,7 +351,7 @@ class MLSorter : CompletionFinalSorter() {
       return result
     }
 
-    fun finished(performanceTracker: CompletionPerformanceTracker) {
+    fun finished(performanceTracker: MLCompletionPerformanceTracker) {
       if (itemsScored != 0) {
         performanceTracker.itemsScored(itemsScored, TimeUnit.NANOSECONDS.toMillis(timeSpent))
       }

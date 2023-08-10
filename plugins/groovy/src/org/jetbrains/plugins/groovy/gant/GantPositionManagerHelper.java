@@ -28,9 +28,6 @@ import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHel
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 
-/**
- * @author ilyas
- */
 public class GantPositionManagerHelper extends ScriptPositionManagerHelper {
 
   @Override

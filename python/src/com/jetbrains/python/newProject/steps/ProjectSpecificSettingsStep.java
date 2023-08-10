@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.newProject.steps;
 
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -22,14 +24,17 @@ import com.intellij.ui.HideableDecorator;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkPanel;
@@ -42,6 +47,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -70,7 +76,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   protected JPanel createAdvancedSettings() {
     JComponent advancedSettings = null;
     if (myProjectGenerator instanceof PythonProjectGenerator) {
-      advancedSettings = ((PythonProjectGenerator)myProjectGenerator).getSettingsPanel(myProjectDirectory);
+      advancedSettings = ((PythonProjectGenerator<?>)myProjectGenerator).getSettingsPanel(myProjectDirectory.get());
     }
     else if (myProjectGenerator instanceof WebProjectTemplate) {
       advancedSettings = getPeer().getComponent();
@@ -79,7 +85,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       final JPanel jPanel = new JPanel(new VerticalFlowLayout());
       final HideableDecorator deco = new HideableDecorator(jPanel, PyBundle.message("python.new.project.more.settings"), false);
       if (myProjectGenerator instanceof PythonProjectGenerator) {
-        final ValidationResult result = ((PythonProjectGenerator)myProjectGenerator).warningValidation(getInterpreterPanelSdk());
+        final ValidationResult result = ((PythonProjectGenerator<?>)myProjectGenerator).warningValidation(getInterpreterPanelSdk());
         deco.setOn(!result.isOk());
       }
       deco.setContentComponent(advancedSettings);
@@ -94,8 +100,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final PyAddSdkGroupPanel interpreterPanel = myInterpreterPanel;
     if (interpreterPanel == null) return null;
     final PyAddSdkPanel panel = interpreterPanel.getSelectedPanel();
-    if (panel instanceof PyAddNewEnvironmentPanel) {
-      final PyAddNewEnvironmentPanel newEnvironmentPanel = (PyAddNewEnvironmentPanel)panel;
+    if (panel instanceof PyAddNewEnvironmentPanel newEnvironmentPanel) {
       return new PyLazySdk("Uninitialized environment", newEnvironmentPanel::getOrCreateSdk);
     }
     else if (panel instanceof PyAddExistingSdkPanel) {
@@ -104,6 +109,13 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     else {
       return null;
     }
+  }
+
+  @Nullable
+  public InterpreterStatisticsInfo getInterpreterInfoForStatistics() {
+    if (myInterpreterPanel == null) return null;
+    PyAddSdkPanel panel = myInterpreterPanel.getSelectedPanel();
+    return panel.getStatisticInfo();
   }
 
   @Nullable
@@ -123,7 +135,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     if (myProjectGenerator instanceof PythonProjectGenerator) {
       addLocationChangeListener(event -> {
         final String fileName = PathUtil.getFileName(getProjectLocation());
-        ((PythonProjectGenerator)myProjectGenerator).locationChanged(fileName);
+        ((PythonProjectGenerator<?>)myProjectGenerator).locationChanged(fileName);
       });
     }
   }
@@ -144,8 +156,8 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   protected void initGeneratorListeners() {
     super.initGeneratorListeners();
     if (myProjectGenerator instanceof PythonProjectGenerator) {
-      ((PythonProjectGenerator)myProjectGenerator).addSettingsStateListener(this::checkValid);
-      myErrorLabel.addMouseListener(((PythonProjectGenerator)myProjectGenerator).getErrorLabelMouseListener());
+      ((PythonProjectGenerator<?>)myProjectGenerator).addSettingsStateListener(this::checkValid);
+      myErrorLabel.addMouseListener(((PythonProjectGenerator<?>)myProjectGenerator).getErrorLabelMouseListener());
     }
   }
 
@@ -168,11 +180,22 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       return false;
     }
 
+    var interpreterPanel = myInterpreterPanel;
     final Map<Boolean, List<String>> errorsAndWarnings = StreamEx
-      .of(myInterpreterPanel == null ? Collections.emptyList() : myInterpreterPanel.validateAll())
+      .of(interpreterPanel == null ? Collections.emptyList() : interpreterPanel.validateAll())
       .groupingBy(it -> it.warning, Collectors.mapping(it -> it.message, Collectors.toList()));
-    final List<String> validationErrors = errorsAndWarnings.getOrDefault(false, Collections.emptyList());
+    List<String> validationErrors = errorsAndWarnings.getOrDefault(false, Collections.emptyList());
     final List<String> validationWarnings = errorsAndWarnings.getOrDefault(true, Collections.emptyList());
+
+    if (validationErrors.isEmpty()) {
+      // Once can't create anything on immutable SDK
+      var sdk = (interpreterPanel != null) ?  interpreterPanel.getSdk() : null;
+      if (sdk != null && isImmutableSdk(sdk)) {
+        validationErrors = List.of(
+          PyBundle.message("python.unknown.project.synchronizer.this.interpreter.type.does.not.support.remote.project.creation"));
+      }
+    }
+
     if (!validationErrors.isEmpty()) {
       setErrorText(StringUtil.join(validationErrors, "\n"));
       return false;
@@ -218,7 +241,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
         myInstallFramework = validationInfo.first;
         warnings.addAll(validationInfo.second);
 
-        final ValidationResult warningResult = ((PythonProjectGenerator)myProjectGenerator).warningValidation(sdk);
+        final ValidationResult warningResult = ((PythonProjectGenerator<?>)myProjectGenerator).warningValidation(sdk);
         if (!warningResult.isOk()) {
           warnings.add(warningResult.getErrorMessage());
         }
@@ -232,6 +255,17 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
                        .toString());
     }
     return true;
+  }
+
+  /**
+   * See {@link PythonInterpreterTargetEnvironmentFactory#isMutable(TargetEnvironmentConfiguration)}
+   */
+  private static boolean isImmutableSdk(@NotNull Sdk sdk) {
+    var targetConfig = PySdkExtKt.getTargetEnvConfiguration(sdk);
+    if (targetConfig == null) {
+      return false;
+    }
+    return !PythonInterpreterTargetEnvironmentFactory.Companion.isMutable(targetConfig);
   }
 
   private static @Nls String validateFrameworkSupportsPython3(@NotNull PyFrameworkProjectGenerator generator, @NotNull Sdk sdk) {
@@ -248,7 +282,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     if (!generator.isFrameworkInstalled(sdk)) {
       final String frameworkName = generator.getFrameworkTitle();
       String message = PyBundle.message("python.package.installation.notification.message", frameworkName);
-      if (PyPackageUtil.packageManagementEnabled(sdk)) {
+      if (PyPackageUtil.packageManagementEnabled(sdk, false, false)) {
         installFramework = true;
         final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
         if (!PyPackageUtil.hasManagement(packages)) {
@@ -272,9 +306,9 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
 
       locationPanel.add(location, BorderLayout.CENTER);
       panel.add(locationPanel);
-      panel.add(createInterpretersPanel(((PythonProjectGenerator)myProjectGenerator).getPreferredEnvironmentType()));
+      panel.add(createInterpretersPanel(((PythonProjectGenerator<?>)myProjectGenerator).getPreferredEnvironmentType()));
 
-      final JPanel basePanelExtension = ((PythonProjectGenerator)myProjectGenerator).extendBasePanel();
+      final JPanel basePanelExtension = ((PythonProjectGenerator<?>)myProjectGenerator).extendBasePanel();
       if (basePanelExtension != null) {
         panel.add(basePanelExtension);
       }
@@ -289,11 +323,12 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final JPanel container = new JPanel(new BorderLayout());
     final JPanel decoratorPanel = new JPanel(new VerticalFlowLayout());
 
-    final List<Sdk> existingSdks = getValidPythonSdks();
+    final List<Sdk> allExistingSdks = Arrays.asList(PyConfigurableInterpreterList.getInstance(null).getModel().getSdks());
+    final List<Sdk> existingSdks = getValidPythonSdks(allExistingSdks);
     final Sdk preferredSdk = getPreferredSdk(existingSdks);
 
     final String newProjectPath = getProjectLocation();
-    final PyAddNewEnvironmentPanel newEnvironmentPanel = new PyAddNewEnvironmentPanel(existingSdks, newProjectPath, preferredEnvironment);
+    final PyAddNewEnvironmentPanel newEnvironmentPanel = new PyAddNewEnvironmentPanel(allExistingSdks, newProjectPath, preferredEnvironment);
     final PyAddExistingSdkPanel existingSdkPanel = new PyAddExistingSdkPanel(null, null, existingSdks, newProjectPath, preferredSdk);
 
     PyAddSdkPanel defaultPanel = PySdkSettings.getInstance().getUseNewEnvironmentForNewProject() ?
@@ -320,7 +355,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     return decoratorPanel;
   }
 
-  private void addLocationChangeListener(@NotNull Consumer<DocumentEvent> listener) {
+  private void addLocationChangeListener(@NotNull Consumer<? super DocumentEvent> listener) {
     final TextFieldWithBrowseButton field = myLocationField;
     if (field == null) return;
     field.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
@@ -358,10 +393,10 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   }
 
   @NotNull
-  private static List<Sdk> getValidPythonSdks() {
+  public static List<Sdk> getValidPythonSdks(@NotNull List<Sdk> existingSdks) {
     return StreamEx
-      .of(PyConfigurableInterpreterList.getInstance(null).getAllPythonSdks())
-      .filter(sdk -> sdk != null && sdk.getSdkType() instanceof PythonSdkType && !PythonSdkUtil.isInvalid(sdk))
+      .of(existingSdks)
+      .filter(sdk -> sdk != null && sdk.getSdkType() instanceof PythonSdkType && PySdkExtKt.getSdkSeemsValid(sdk))
       .sorted(new PreferredSdkComparator())
       .toList();
   }
@@ -371,7 +406,14 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     return Optional
       .ofNullable(PyUtil.as(myProjectGenerator, PythonProjectGenerator.class))
       .map(PythonProjectGenerator::getNewProjectPrefix)
-      .map(it -> FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), it, ""))
+      .map(it -> FileUtil.findSequentNonexistentFile(getBaseDir(), it, ""))
       .orElseGet(() -> super.findSequentNonExistingUntitled());
+  }
+
+  private static @NotNull File getBaseDir() {
+    if (PlatformUtils.isDataSpell() && FileUtil.isAncestor(PathManager.getConfigDir(), Paths.get(ProjectUtil.getBaseDir()), false)) {
+      return new File(ProjectUtil.getUserHomeProjectDir());
+    }
+    return new File(ProjectUtil.getBaseDir());
   }
 }

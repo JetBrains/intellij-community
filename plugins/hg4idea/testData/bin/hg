@@ -1,11 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # mercurial - scalable distributed SCM
 #
-# Copyright 2005-2007 Matt Mackall <mpm@selenic.com>
+# Copyright 2005-2007 Olivia Mackall <olivia@selenic.com>
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
+from __future__ import absolute_import
 
 import os
 import sys
@@ -14,25 +15,45 @@ libdir = '@LIBDIR@'
 
 if libdir != '@' 'LIBDIR' '@':
     if not os.path.isabs(libdir):
-        libdir = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                              libdir)
+        libdir = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), libdir
+        )
         libdir = os.path.abspath(libdir)
     sys.path.insert(0, libdir)
 
-# enable importing on demand to reduce startup time
-try:
-    from mercurial import demandimport; demandimport.enable()
-except ImportError:
-    import sys
-    sys.stderr.write("abort: couldn't find mercurial libraries in [%s]\n" %
-                     ' '.join(sys.path))
-    sys.stderr.write("(check your install and PYTHONPATH)\n")
-    sys.exit(-1)
+# Make `pip install --user ...` packages available to the official Windows
+# build.  Most py2 packaging installs directly into the system python
+# environment, so no changes are necessary for other platforms.  The Windows
+# py2 package uses py2exe, which lacks a `site` module.  Hardcode it according
+# to the documentation.
+if getattr(sys, 'frozen', None) == 'console_exe':
+    vi = sys.version_info
+    sys.path.append(
+        os.path.join(
+            os.environ['APPDATA'],
+            'Python',
+            'Python%d%d' % (vi[0], vi[1]),
+            'site-packages',
+        )
+    )
 
-import mercurial.util
-import mercurial.dispatch
+from hgdemandimport import tracing
 
-for fp in (sys.stdin, sys.stdout, sys.stderr):
-    mercurial.util.setbinary(fp)
+with tracing.log('hg script'):
+    # enable importing on demand to reduce startup time
+    try:
+        if sys.version_info[0] < 3 or sys.version_info >= (3, 6):
+            import hgdemandimport
 
-mercurial.dispatch.run()
+            hgdemandimport.enable()
+    except ImportError:
+        sys.stderr.write(
+            "abort: couldn't find mercurial libraries in [%s]\n"
+            % ' '.join(sys.path)
+        )
+        sys.stderr.write("(check your install and PYTHONPATH)\n")
+        sys.exit(-1)
+
+    from mercurial import dispatch
+
+    dispatch.run()

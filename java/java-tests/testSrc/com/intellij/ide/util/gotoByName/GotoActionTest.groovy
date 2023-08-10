@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
@@ -8,7 +8,6 @@ import com.intellij.ide.ui.OptionsTopHitProvider
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
-import com.intellij.ide.util.gotoByName.GotoActionModel.MatchMode
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.java.navigation.ChooseByNameTest
 import com.intellij.openapi.Disposable
@@ -24,7 +23,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.CollectConsumer
-import gnu.trove.Equality
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
@@ -32,17 +30,15 @@ import org.jetbrains.annotations.NotNull
 import java.awt.*
 import java.util.List
 import java.util.concurrent.TimeUnit
+import java.util.function.BiPredicate
 
-/**
- * @author peter
- */
 @CompileStatic
 class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   private static final DataKey<Boolean> SHOW_HIDDEN_KEY = DataKey.create("GotoActionTest.DataKey")
   private static final Comparator<MatchedValue> MATCH_COMPARATOR =
     { MatchedValue item1, MatchedValue item2 -> return item1.compareWeights(item2) } as Comparator<MatchedValue>
-  private static final Equality<MatchedValue> MATCH_EQUALITY =
-    { MatchedValue item1, MatchedValue item2 -> item1 == item2 } as Equality<MatchedValue>
+  private static final BiPredicate<MatchedValue, MatchedValue> MATCH_EQUALITY =
+    { MatchedValue item1, MatchedValue item2 -> item1 == item2 } as BiPredicate<MatchedValue, MatchedValue>
 
   void "test shorter actions first despite ellipsis"() {
     def pattern = 'Rebas'
@@ -94,7 +90,6 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     assert actionMatches('invalidate caches', action) == MatchMode.NAME
     assert actionMatches('cache invalid', action) == MatchMode.NAME
     assert actionMatches('rebuild of all caches', action) == MatchMode.DESCRIPTION
-    assert actionMatches('restart', action) == (ApplicationManager.application.isRestartCapable() ? MatchMode.NAME : MatchMode.NONE)
     assert actionMatches('invcach', action) == MatchMode.NAME
   }
 
@@ -126,6 +121,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
         return "testprovider"
       }
 
+      @NotNull
       @Override
       Collection<OptionDescription> getOptions() {
         return options
@@ -314,11 +310,14 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
       "tab placement"
     ]
 
+    def errors = []
     patterns.forEach { String pattern ->
       def elements = ChooseByNameTest.calcContributorElements(contributor, pattern)
-      assert elements.any { matchedValue -> isNavigableOption(((MatchedValue)matchedValue).value)
+      if (!elements.any { matchedValue -> isNavigableOption(((MatchedValue)matchedValue).value) }) {
+        errors += "Failure for pattern '$pattern' - $elements"
       }
     }
+    assert errors.isEmpty()
   }
 
   private static boolean isNavigableOption(Object o) {
@@ -403,14 +402,20 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
   private def actionMatches(String pattern, AnAction action) {
     def matcher = GotoActionItemProvider.buildMatcher(pattern)
-    return new GotoActionModel(project, null, null).actionMatches(pattern, matcher, action)
+    def model = new GotoActionModel(project, null, null)
+    model.buildGroupMappings()
+    return model.actionMatches(pattern, matcher, action)
   }
 
   private MatchedValue matchedAction(String text, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
     return createMatchedAction(project, createAction(text), pattern, mode, isAvailable)
   }
 
-  public static MatchedValue createMatchedAction(Project project, AnAction action, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
+  static MatchedValue createMatchedAction(Project project,
+                                          AnAction action,
+                                          String pattern,
+                                          MatchMode mode = MatchMode.NAME,
+                                          boolean isAvailable = true) {
     def model = new GotoActionModel(project, null, null)
     def wrapper = new ActionWrapper(action, null, mode, model) {
       @Override
@@ -418,7 +423,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
         return isAvailable
       }
     }
-    new MatchedValue(wrapper, pattern)
+    new MatchedValue(wrapper, pattern, GotoActionModel.MatchedValueType.ACTION)
   }
 
   private static AnAction createAction(String text, String description = null) {
@@ -450,7 +455,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
 
   private static MatchedValue matchedOption(String text, String pattern) {
-    return new MatchedValue(new OptionDescription(text), pattern)
+    return new MatchedValue(new OptionDescription(text), pattern, GotoActionModel.MatchedValueType.OPTION)
   }
 
   private static MatchedValue matchedBooleanOption(String text, String pattern) {
@@ -464,14 +469,13 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
       void setOptionState(boolean enabled) {
       }
     }
-    return new MatchedValue(option, pattern)
+    return new MatchedValue(option, pattern, GotoActionModel.MatchedValueType.OPTION)
   }
 
   static SearchEverywhereContributor<?> createActionContributor(Project project, Disposable parentDisposable) {
-    def res = new TestActionContributor(project, null, null)
+    TestActionContributor res = new TestActionContributor(project, null, null)
     res.setShowDisabled(true)
     Disposer.register(parentDisposable, res)
-
     return res
   }
 

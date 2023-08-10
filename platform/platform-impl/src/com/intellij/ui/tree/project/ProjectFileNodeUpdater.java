@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.project;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.ui.VirtualFileAppearanceListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Ref;
@@ -43,20 +44,18 @@ public abstract class ProjectFileNodeUpdater {
         updateFromRoot();
       }
     });
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> updateFromRoot());
     connection.subscribe(VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
-          if (event instanceof VFileCreateEvent) {
-            VFileCreateEvent create = (VFileCreateEvent)event;
+          if (event instanceof VFileCreateEvent create) {
             updateFromFile(create.getParent());
           }
-          else if (event instanceof VFileCopyEvent) {
-            VFileCopyEvent copy = (VFileCopyEvent)event;
+          else if (event instanceof VFileCopyEvent copy) {
             updateFromFile(copy.getNewParent());
           }
-          else if (event instanceof VFileMoveEvent) {
-            VFileMoveEvent move = (VFileMoveEvent)event;
+          else if (event instanceof VFileMoveEvent move) {
             updateFromFile(move.getNewParent());
             updateFromFile(move.getOldParent());
             updateFromFile(move.getFile());
@@ -102,10 +101,6 @@ public abstract class ProjectFileNodeUpdater {
       public void childMoved(@NotNull PsiTreeChangeEvent event) {
         updateFromElement(event.getOldParent());
         updateFromElement(event.getNewParent());
-      }
-
-      @Override
-      public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
       }
     }, invoker);
     RootType.ROOT_EP.addChangeListener(this::updateFromRoot, project);

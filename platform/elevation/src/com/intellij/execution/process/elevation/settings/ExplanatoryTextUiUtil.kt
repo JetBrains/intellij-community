@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.elevation.settings
 
 import com.intellij.execution.process.elevation.ElevationBundle
@@ -8,11 +8,11 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.StartupUiUtil
 import java.awt.FontMetrics
 
 internal object ExplanatoryTextUiUtil {
-  fun message(firstSentence: @NlsContexts.DialogMessage String,
+  fun message(@NlsContexts.DialogMessage firstSentence: String,
               maxLineLength: Int = 70,
               fontMetrics: FontMetrics? = null): @NlsSafe String {
     return messageHtmlInnards(firstSentence)
@@ -22,7 +22,7 @@ internal object ExplanatoryTextUiUtil {
       .toString()
   }
 
-  private fun messageHtmlInnards(firstSentence: @NlsContexts.DialogMessage String): HtmlChunk {
+  private fun messageHtmlInnards(@NlsContexts.DialogMessage firstSentence: String): HtmlChunk {
     val productName = ApplicationNamesInfo.getInstance().fullProductName
     val commentHtml = ElevationBundle.message("text.elevation.explanatory.comment.html", productName)
     val warningHtml = ElevationBundle.message("text.elevation.explanatory.warning.html")
@@ -34,19 +34,18 @@ internal object ExplanatoryTextUiUtil {
       .toFragment()
   }
 
-  private fun HtmlChunk.limitWidth(maxLineLength: Int,
-                                   fontMetrics: FontMetrics?): HtmlChunk {
-    if (maxLineLength <= 0) return this
+  private fun HtmlChunk.limitWidth(maxLineLength: Int, fontMetrics: FontMetrics?): HtmlChunk {
+    if (maxLineLength <= 0) {
+      return this
+    }
     val maxWidth = stringWidth(toString(), maxLineLength, fontMetrics)
     return wrapWith(HtmlChunk.div().attr("width", maxWidth))
   }
 
-  private fun stringWidth(someText: String,
-                          maxLineLength: Int,
-                          fontMetrics: FontMetrics?): Int {
+  private fun stringWidth(someText: String, maxLineLength: Int, fontMetrics: FontMetrics?): Int {
     val text = someText.ifEmpty { "some text to estimate string width with given metric" }
     val substring = text.repeat((maxLineLength + 1) / (text.length + 1) + 1).substring(0, maxLineLength)
-    return fontMetrics?.stringWidth(substring) ?: GraphicsUtil.stringWidth(substring, UIUtil.getLabelFont())
+    return fontMetrics?.stringWidth(substring) ?: GraphicsUtil.stringWidth(substring, StartupUiUtil.labelFont)
   }
 }
 

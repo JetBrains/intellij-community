@@ -56,18 +56,6 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
   public static final Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
   public static final Key<Change> TAG_KEY = Key.create("DiffRequestPresentable.Tag");
 
-  /**
-   * Use {@link #getYourVersion()} instead
-   */
-  @Deprecated
-  public static final String YOUR_VERSION = DiffBundle.message("merge.version.title.our");
-
-  /**
-   * Use {@link #getBaseVersion()} instead
-   */
-  @Deprecated
-  public static final String BASE_VERSION = DiffBundle.message("merge.version.title.base");
-
   private final @Nullable Project myProject;
   private final @NotNull Change myChange;
   private final @NotNull Map<Key<?>, Object> myChangeContext;
@@ -102,7 +90,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
   }
 
   @Override
-  public @Nullable ChangesBrowserNode.Tag getPopupTag() {
+  public @Nullable ChangesBrowserNode.Tag getTag() {
     return tryCast(myChangeContext.get(TAG_KEY), ChangesBrowserNode.Tag.class);
   }
 
@@ -358,8 +346,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
                                                                                    @NotNull Change change,
                                                                                    @NotNull ContentDiffRequest request) {
     if (project == null) return null;
-    if (!(change instanceof ChangeListChange)) return null;
-    ChangeListChange changeListChange = (ChangeListChange)change;
+    if (!(change instanceof ChangeListChange changeListChange)) return null;
 
     List<DiffContent> contents = request.getContents();
     if (contents.size() != 2) return null;

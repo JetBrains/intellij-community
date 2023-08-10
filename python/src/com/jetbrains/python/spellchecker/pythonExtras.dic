@@ -7,6 +7,7 @@ tuples
 teardown
 doctest
 doctests
+pycon
 unittest
 unittests
 virtualenv

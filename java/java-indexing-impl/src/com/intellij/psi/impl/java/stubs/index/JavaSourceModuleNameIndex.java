@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -9,6 +9,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
+import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -22,23 +24,16 @@ import java.util.jar.Manifest;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 
-public class JavaSourceModuleNameIndex extends ScalarIndexExtension<String> {
+public final class JavaSourceModuleNameIndex extends ScalarIndexExtension<String> {
   private static final ID<String, Void> NAME = ID.create("java.source.module.name");
-
-  private final FileBasedIndex.InputFilter myFilter =
-    new DefaultFileTypeSpecificInputFilter(FileTypeRegistry.getInstance().getFileTypeByExtension("MF")) {
-      @Override
-      public boolean acceptInput(@NotNull VirtualFile f) {
-        return f.isInLocalFileSystem() && "MANIFEST.MF".equalsIgnoreCase(f.getName());
-      }
-    };
 
   private final DataIndexer<String, Void, FileContent> myIndexer = data -> {
     try {
       String name = new Manifest(new ByteArrayInputStream(data.getContent())).getMainAttributes().getValue(PsiJavaModule.AUTO_MODULE_NAME);
       if (name != null) return singletonMap(name, null);
     }
-    catch (IOException ignored) { }
+    catch (IOException ignored) {
+    }
     return emptyMap();
   };
 
@@ -49,7 +44,7 @@ public class JavaSourceModuleNameIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 3;
+    return 4;
   }
 
   @Override
@@ -64,7 +59,10 @@ public class JavaSourceModuleNameIndex extends ScalarIndexExtension<String> {
 
   @Override
   public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-    return myFilter;
+    FileType manifestFileType = FileTypeRegistry.getInstance().getFileTypeByFileName("Manifest.mf");
+    return new FileTypeInputFilterPredicate(FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION, type -> {
+      return type.equals(manifestFileType);
+    });
   }
 
   @Override

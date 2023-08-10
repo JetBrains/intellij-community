@@ -1,0 +1,196 @@
+{
+  "name": "erlang-ls",
+  "version": "0.0.39",
+  "description": "The Visual Studio Code Extension for the Erlang Language Server",
+  "license": "Apache-2.0",
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Erlang LS",
+      "properties": {
+        "erlang_ls.trace.server": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VS Code and the Erlang language server."
+        },
+        "erlang_ls.serverPath": {
+          "scope": "window",
+          "type": "string",
+          "default": "",
+          "description": "Override the default path of the erlang_ls executable with a custom one."
+        },
+        "erlang_ls.dapPath": {
+          "scope": "window",
+          "type": "string",
+          "default": "",
+          "description": "Override the default path of the els_dap executable with a custom one."
+        },
+        "erlang_ls.logPath": {
+          "scope": "window",
+          "type": "string",
+          "default": "",
+          "description": "Override the default directory erlang_ls logs to."
+        },
+        "erlang_ls.logLevel": {
+          "scope": "window",
+          "enum": [
+            "none",
+            "debug",
+            "info",
+            "notice",
+            "warning",
+            "error",
+            "critical",
+            "alert",
+            "emergency"
+          ],
+          "default": "none",
+          "description": "Log level of LS server"
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "erlang",
+        "aliases": [
+          "Erlang"
+        ],
+        "extensions": [
+          ".erl",
+          ".hrl",
+          ".src",
+          ".escript",
+          ".config"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "erlang",
+        "scopeName": "source.erlang",
+        "path": "./grammar/Erlang.plist"
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "erlang"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "erlang",
+        "label": "Erlang OTP Debugger",
+        "initialConfigurations": [
+          {
+            "name": "rebar shell",
+            "type": "erlang",
+            "request": "launch",
+            "runinterminal": [
+              "rebar3",
+              "shell",
+              "--sname",
+              "dap-project-node@localhost",
+              "--setcookie",
+              "COOKIE"
+            ],
+            "projectnode": "dap-project-node@localhost",
+            "cookie": "COOKIE",
+            "timeout": 300,
+            "cwd": "${workspaceRoot}"
+          },
+          {
+            "name": "rebar shell --start-clean",
+            "type": "erlang",
+            "request": "launch",
+            "runinterminal": [
+              "rebar3",
+              "shell",
+              "--sname",
+              "dap-project-node@localhost",
+              "--setcookie",
+              "COOKIE",
+              "--start-clean"
+            ],
+            "projectnode": "dap-project-node@localhost",
+            "cookie": "COOKIE",
+            "timeout": 300,
+            "cwd": "${workspaceRoot}"
+          }
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "projectnode"
+            ],
+            "properties": {
+              "cwd": {
+                "type": "string",
+                "description": "Working directory for runinterminal",
+                "default": "${workspaceRoot}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Stop after launch (unused)",
+                "default": "true"
+              },
+              "module": {
+                "type": "string",
+                "description": "Module for the launch M:F(A)",
+                "default": "io"
+              },
+              "function": {
+                "type": "string",
+                "description": "Funtion for the launch M:F(A)",
+                "default": "format"
+              },
+              "args": {
+                "type": "string",
+                "description": "Args for the launch M:F(A)",
+                "default": "[\"Hello World\"]"
+              },
+              "runinterminal": {
+                "type": "array",
+                "description": "launch command",
+                "default": [
+                  "rebar3",
+                  "shell",
+                  "--sname",
+                  "dap-project-node@localhost",
+                  "--setcookie",
+                  "COOKIE"
+                ]
+              },
+              "projectnode": {
+                "type": "string",
+                "description": "name of the target node that the debugger connects to",
+                "default": "dap-project-node@localhost"
+              },
+              "use_long_names": {
+                "type": "boolean",
+                "description": "start erlang distribution with long names (-name option)",
+                "default": false
+              },
+              "cookie": {
+                "type": "string",
+                "description": "The magic cookie used to connect to the projectnode",
+                "default": "COOKIE"
+              },
+              "timeout": {
+                "type": "integer",
+                "description": "Timeout for connecting to the projectnode after starting the debugger.",
+                "default": 300
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

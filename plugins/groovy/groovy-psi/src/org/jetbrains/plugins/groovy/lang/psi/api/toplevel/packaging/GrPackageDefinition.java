@@ -23,9 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-/**
- * @author ilyas
- */
 public interface GrPackageDefinition extends GrTopStatement, PsiModifierListOwner {
   @Nullable
   String getPackageName();

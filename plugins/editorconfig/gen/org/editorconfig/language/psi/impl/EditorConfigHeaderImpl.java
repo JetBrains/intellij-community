@@ -21,21 +21,16 @@ public class EditorConfigHeaderImpl extends EditorConfigHeaderBase implements Ed
     visitor.visitHeader(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof EditorConfigVisitor) accept((EditorConfigVisitor)visitor);
     else super.accept(visitor);
   }
 
   @Override
-  @NotNull
-  public List<EditorConfigPattern> getPatternList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigPattern.class);
-  }
-
-  @Override
-  @NotNull
-  public List<EditorConfigPatternEnumeration> getPatternEnumerationList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigPatternEnumeration.class);
+  @Nullable
+  public EditorConfigPattern getPattern() {
+    return findChildByClass(EditorConfigPattern.class);
   }
 
 }

@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.User32Ex;
-import com.intellij.jna.DisposableMemory;
 import com.intellij.util.ui.EDT;
 import com.sun.jna.Function;
+import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.*;
 import com.sun.jna.ptr.PointerByReference;
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.peer.ComponentPeer;
 import java.lang.reflect.Method;
 
@@ -120,7 +121,7 @@ final class Win7TaskBar {
       return null;
     }
 
-    try (DisposableMemory memory = new DisposableMemory(ico.length)) {
+    try (Memory memory = new Memory(ico.length)) {
       memory.write(0, ico, 0, ico.length);
 
       int nSize = 100;
@@ -141,9 +142,17 @@ final class Win7TaskBar {
     User32Ex.INSTANCE.FlashWindow(getHandle(frame), true);
   }
 
-  private static WinDef.HWND getHandle(@NotNull JFrame frame) {
+  static void setForegroundWindow(@NotNull Window window) {
+    if (!ourInitialized) {
+      return;
+    }
+
+    User32Ex.INSTANCE.SetForegroundWindow(getHandle(window));
+  }
+
+  private static WinDef.HWND getHandle(@NotNull Window window) {
     try {
-      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(frame);
+      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(window);
       Method getHWnd = peer.getClass().getMethod("getHWnd");
       return new WinDef.HWND(new Pointer((Long)getHWnd.invoke(peer)));
     }

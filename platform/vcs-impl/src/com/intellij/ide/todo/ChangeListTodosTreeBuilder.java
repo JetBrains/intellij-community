@@ -21,15 +21,15 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ChangeListTodosTreeBuilder extends TodoTreeBuilder{
-  public ChangeListTodosTreeBuilder(JTree tree, Project project){
+public class ChangeListTodosTreeBuilder extends TodoTreeBuilder {
+
+  public ChangeListTodosTreeBuilder(@NotNull JTree tree,
+                                    @NotNull Project project) {
     super(tree, project);
   }
 
   @Override
-  @NotNull
-  protected TodoTreeStructure createTreeStructure(){
+  protected @NotNull TodoTreeStructure createTreeStructure() {
     return new ChangeListTodosTreeStructure(myProject);
   }
-
 }

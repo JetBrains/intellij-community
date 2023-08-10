@@ -1,27 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit2.configuration;
 
 import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.application.ClassEditorField;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestObject;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -35,9 +25,10 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
-import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -45,8 +36,7 @@ import javax.swing.text.PlainDocument;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
-
-// Author: dyoma
+import java.util.function.BiConsumer;
 
 public class JUnitConfigurationModel {
   public static final int ALL_IN_PACKAGE = 0;
@@ -64,7 +54,7 @@ public class JUnitConfigurationModel {
 
   static {
     ourTestObjects = Arrays.asList(JUnitConfiguration.TEST_PACKAGE,
-                                   JUnitConfiguration.TEST_CLASS, 
+                                   JUnitConfiguration.TEST_CLASS,
                                    JUnitConfiguration.TEST_METHOD,
                                    JUnitConfiguration.TEST_PATTERN,
                                    JUnitConfiguration.TEST_DIRECTORY,
@@ -76,7 +66,7 @@ public class JUnitConfigurationModel {
   }
 
 
-  private Consumer<Integer> myListener;
+  private BiConsumer<Integer, Integer> myListener;
   private int myType = -1;
   private final Object[] myJUnitDocuments = new Object[6];
   private final Project myProject;
@@ -87,78 +77,92 @@ public class JUnitConfigurationModel {
 
   public boolean setType(int type) {
     if (type == myType) return false;
+    int oldType = myType;
     if (type < 0 || type >= ourTestObjects.size()) type = CLASS;
     myType = type;
-    fireTypeChanged(type);
+    fireTypeChanged(oldType, type);
     return true;
   }
 
-  private void fireTypeChanged(final int newType) {
-    myListener.consume(newType);
+  private void fireTypeChanged(final int oldType, final int newType) {
+    myListener.accept(oldType, newType);
   }
 
-  public void setListener(final Consumer<Integer> listener) {
+  public void setListener(final BiConsumer<Integer, Integer> listener) {
     myListener = listener;
-  }
-
-  public Object getJUnitDocument(final int i) {
-    return myJUnitDocuments[i];
   }
 
   public void setJUnitDocument(final int i, Object doc) {
      myJUnitDocuments[i] = doc;
   }
 
-  public void apply(final Module module, final JUnitConfiguration configuration) {
+  public void apply(final Module module, final JUnitConfiguration configuration, @Nullable ClassEditorField classField) {
     final boolean shouldUpdateName = configuration.isGeneratedName();
-    applyTo(configuration.getPersistentData(), module);
+    applyTo(configuration.getPersistentData(), module, classField);
     if (shouldUpdateName && !JavaExecutionUtil.isNewName(configuration.getName())) {
       configuration.setGeneratedName();
     }
   }
 
-  private void applyTo(final JUnitConfiguration.Data data, final Module module) {
+  private void applyTo(final JUnitConfiguration.Data data, final Module module, @Nullable ClassEditorField classField) {
     final String testObject = getTestObject();
     final String className = getJUnitTextValue(CLASS);
     data.TEST_OBJECT = testObject;
-    if (testObject != JUnitConfiguration.TEST_PACKAGE &&
-        testObject != JUnitConfiguration.TEST_PATTERN &&
-        testObject != JUnitConfiguration.TEST_DIRECTORY &&
-        testObject != JUnitConfiguration.TEST_CATEGORY  &&
-        testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
-      try {
-        data.METHOD_NAME = getJUnitTextValue(METHOD);
-        final PsiClass testClass = !myProject.isDefault() && !StringUtil.isEmptyOrSpaces(className) ? JUnitUtil.findPsiClass(className, module, myProject) : null;
-        if (testClass != null && testClass.isValid()) {
-          data.setMainClass(testClass);
+    if (!JUnitConfiguration.TEST_PACKAGE.equals(testObject) &&
+        !JUnitConfiguration.TEST_PATTERN.equals(testObject) &&
+        !JUnitConfiguration.TEST_DIRECTORY.equals(testObject) &&
+        !JUnitConfiguration.TEST_CATEGORY.equals(testObject) &&
+        !JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
+      data.METHOD_NAME = getJUnitTextValue(METHOD);
+      if (classField != null) {
+        String jvmName = classField.getClassName();
+        if (jvmName != null) {
+          data.MAIN_CLASS_NAME = jvmName;
+          data.PACKAGE_NAME = StringUtil.getPackageName(jvmName);
         }
         else {
           data.MAIN_CLASS_NAME = className;
         }
+        return;
       }
-      catch (ProcessCanceledException | IndexNotReadyException e) {
-        data.MAIN_CLASS_NAME = className;
-      }
-    }
-    else if (testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
-      if (testObject == JUnitConfiguration.TEST_PACKAGE) {
-        data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
-      }
-      else if (testObject == JUnitConfiguration.TEST_DIRECTORY) {
-        data.setDirName(getJUnitTextValue(DIR));
-      }
-      else if (testObject == JUnitConfiguration.TEST_CATEGORY) {
-        data.setCategoryName(getJUnitTextValue(CATEGORY));
-      }
-      else {
-        final LinkedHashSet<String> set = new LinkedHashSet<>();
-        final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
-        for (String pattern : patterns) {
-          if (pattern.length() > 0) {
-            set.add(pattern);
+      if (!className.equals(replaceRuntimeClassName(data.getMainClassName()))) {
+        try {
+          final PsiClass testClass;
+          if (!myProject.isDefault() && !StringUtil.isEmptyOrSpaces(className)) {
+            JavaRunConfigurationModule configurationModule = new JavaRunConfigurationModule(myProject, true);
+            configurationModule.setModule(module);
+            testClass = configurationModule.findClass(className);
+          }
+          else {
+            testClass = null;
+          }
+          if (testClass != null && testClass.isValid()) {
+            data.setMainClass(testClass);
+          }
+          else {
+            data.MAIN_CLASS_NAME = className;
           }
         }
-        data.setPatterns(set);
+        catch (ProcessCanceledException | IndexNotReadyException e) {
+          data.MAIN_CLASS_NAME = className;
+        }
+      }
+    }
+    else if (!JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
+      switch (testObject) {
+        case JUnitConfiguration.TEST_PACKAGE -> data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
+        case JUnitConfiguration.TEST_DIRECTORY -> data.setDirName(getJUnitTextValue(DIR));
+        case JUnitConfiguration.TEST_CATEGORY -> data.setCategoryName(getJUnitTextValue(CATEGORY));
+        default -> {
+          final LinkedHashSet<String> set = new LinkedHashSet<>();
+          final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
+          for (String pattern : patterns) {
+            if (!pattern.isEmpty()) {
+              set.add(pattern);
+            }
+          }
+          data.setPatterns(set);
+        }
       }
       data.MAIN_CLASS_NAME = "";
       data.METHOD_NAME = "";
@@ -190,11 +194,15 @@ public class JUnitConfigurationModel {
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     setTestType(data.TEST_OBJECT);
     setJUnitTextValue(ALL_IN_PACKAGE, data.getPackageName());
-    setJUnitTextValue(CLASS, data.getMainClassName() != null ? data.getMainClassName().replaceAll("\\$", "\\.") : "");
+    setJUnitTextValue(CLASS, replaceRuntimeClassName(data.getMainClassName()));
     setJUnitTextValue(METHOD, data.getMethodNameWithSignature());
     setJUnitTextValue(PATTERN, data.getPatternPresentation());
     setJUnitTextValue(DIR, data.getDirName());
     setJUnitTextValue(CATEGORY, data.getCategory());
+  }
+
+  private static String replaceRuntimeClassName(String mainClassName) {
+    return mainClassName.replace('$', '.');
   }
 
   private void setJUnitTextValue(final int index, final String text) {
@@ -213,8 +221,8 @@ public class JUnitConfigurationModel {
       }
     }
     else {
-      WriteCommandAction
-        .runWriteCommandAction(myProject, () -> ((Document)document).replaceString(0, ((Document)document).getTextLength(), text));
+      WriteCommandAction.runWriteCommandAction(myProject, null, null,
+                                               () -> ((Document)document).replaceString(0, ((Document)document).getTextLength(), text));
     }
   }
 
@@ -223,90 +231,79 @@ public class JUnitConfigurationModel {
   }
 
   public static @NotNull @NlsContexts.Label String getKindName(int value) {
-    switch (value) {
-      case ALL_IN_PACKAGE:
-        return JUnitBundle.message("junit.configuration.kind.all.in.package");
-      case DIR:
-        return JUnitBundle.message("junit.configuration.kind.all.in.directory");
-      case PATTERN:
-        return JUnitBundle.message("junit.configuration.kind.by.pattern");
-      case CLASS:
-        return JUnitBundle.message("junit.configuration.kind.class");
-      case METHOD:
-        return JUnitBundle.message("junit.configuration.kind.method");
-      case CATEGORY:
-        return JUnitBundle.message("junit.configuration.kind.category");
-      case UNIQUE_ID:
-        return JUnitBundle.message("junit.configuration.kind.by.unique.id");
-      case TAGS:
-        return JUnitBundle.message("junit.configuration.kind.by.tags");
-      case BY_SOURCE_POSITION:
-        return JUnitBundle.message("junit.configuration.kind.by.source.position");
-      case BY_SOURCE_CHANGES:
-        return JUnitBundle.message("junit.configuration.kind.by.source.changes");
-    }
-    throw new IllegalArgumentException(String.valueOf(value));
+    return switch (value) {
+      case ALL_IN_PACKAGE -> JUnitBundle.message("junit.configuration.kind.all.in.package");
+      case DIR -> JUnitBundle.message("junit.configuration.kind.all.in.directory");
+      case PATTERN -> JUnitBundle.message("junit.configuration.kind.by.pattern");
+      case CLASS -> JUnitBundle.message("junit.configuration.kind.class");
+      case METHOD -> JUnitBundle.message("junit.configuration.kind.method");
+      case CATEGORY -> JUnitBundle.message("junit.configuration.kind.category");
+      case UNIQUE_ID -> JUnitBundle.message("junit.configuration.kind.by.unique.id");
+      case TAGS -> JUnitBundle.message("junit.configuration.kind.by.tags");
+      case BY_SOURCE_POSITION -> "Through source location"; //NON-NLS internal option
+      case BY_SOURCE_CHANGES -> "Over changes in sources"; //NON-NLS internal option
+      default -> throw new IllegalArgumentException(String.valueOf(value));
+    };
   }
 
   public static @NotNull @NlsContexts.Label String getRepeatModeName(@NotNull @NonNls String value) {
-    switch (value) {
-      case RepeatCount.ONCE:
-        return JUnitBundle.message("junit.configuration.repeat.mode.once");
-      case RepeatCount.N:
-        return JUnitBundle.message("junit.configuration.repeat.mode.n.times");
-      case RepeatCount.UNTIL_FAILURE:
-        return JUnitBundle.message("junit.configuration.repeat.mode.until.failure");
-      case RepeatCount.UNLIMITED:
-        return JUnitBundle.message("junit.configuration.repeat.mode.unlimited");
-    }
+    return JUnitBundle.message(switch (value) {
+      case RepeatCount.ONCE -> "junit.configuration.repeat.mode.once";
+      case RepeatCount.N -> "junit.configuration.repeat.mode.n.times";
+      case RepeatCount.UNTIL_FAILURE -> "junit.configuration.repeat.mode.until.failure";
+      case RepeatCount.UNTIL_SUCCESS -> "junit.configuration.repeat.mode.until.success";
+      case RepeatCount.UNLIMITED -> "junit.configuration.repeat.mode.until.stopped";
+      default -> throw new IllegalArgumentException(value);
+    });
 
-    throw new IllegalArgumentException(value);
   }
 
   public static @NotNull @NlsContexts.Label String getForkModeName(@NotNull @NonNls String value) {
-    switch (value) {
-      case JUnitConfiguration.FORK_NONE:
-        return JUnitBundle.message("junit.configuration.fork.mode.none");
-      case JUnitConfiguration.FORK_METHOD:
-        return JUnitBundle.message("junit.configuration.fork.mode.method");
-      case JUnitConfiguration.FORK_KLASS:
-        return JUnitBundle.message("junit.configuration.fork.mode.class");
-      case JUnitConfiguration.FORK_REPEAT:
-        return JUnitBundle.message("junit.configuration.fork.mode.repeat");
-    }
-
-    throw new IllegalArgumentException(value);
+    return JUnitBundle.message(switch (value) {
+      case JUnitConfiguration.FORK_NONE -> "junit.configuration.fork.mode.none";
+      case JUnitConfiguration.FORK_METHOD -> "junit.configuration.fork.mode.method";
+      case JUnitConfiguration.FORK_KLASS -> "junit.configuration.fork.mode.class";
+      case JUnitConfiguration.FORK_REPEAT -> "junit.configuration.fork.mode.repeat";
+      default -> throw new IllegalArgumentException(value);
+    });
   }
 
-  public void reloadTestKindModel(JComboBox<Integer> comboBox, Module module) {
-    int selectedIndex = comboBox.getSelectedIndex();
-    final DefaultComboBoxModel<Integer> aModel = new DefaultComboBoxModel<>();
-    aModel.addElement(ALL_IN_PACKAGE);
-    aModel.addElement(DIR);
-    aModel.addElement(PATTERN);
-    aModel.addElement(CLASS);
-    aModel.addElement(METHOD);
+  public void reloadTestKindModel(JComboBox<Integer> comboBox, Module module, @Nullable Runnable onDone) {
+    Object selectedItem = comboBox.getSelectedItem();
+    ReadAction.nonBlocking(() -> {
+      final DefaultComboBoxModel<Integer> aModel = new DefaultComboBoxModel<>();
+      aModel.addElement(ALL_IN_PACKAGE);
+      aModel.addElement(DIR);
+      aModel.addElement(PATTERN);
+      aModel.addElement(CLASS);
+      aModel.addElement(METHOD);
 
-    GlobalSearchScope searchScope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
-                                                   : GlobalSearchScope.allScope(myProject);
+      GlobalSearchScope searchScope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
+                                                     : GlobalSearchScope.allScope(myProject);
 
-    if (myProject.isDefault() || JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
-      aModel.addElement(CATEGORY);
-    }
+      if (myProject.isDefault() || JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
+        aModel.addElement(CATEGORY);
+      }
 
-    if (myProject.isDefault() ||
-        JUnitUtil.isJUnit5(searchScope, myProject) ||
-        TestObject.hasJUnit5EnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
-      aModel.addElement(UNIQUE_ID);
-      aModel.addElement(TAGS);
-    }
+      if (myProject.isDefault() ||
+          JUnitUtil.isJUnit5(searchScope, myProject) ||
+          TestObject.hasJUnit5EnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
+        aModel.addElement(UNIQUE_ID);
+        aModel.addElement(TAGS);
+      }
 
-    if (Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
-      aModel.addElement(BY_SOURCE_POSITION);
-      aModel.addElement(BY_SOURCE_CHANGES);
-    }
-    comboBox.setModel(aModel);
-    comboBox.setSelectedIndex(selectedIndex);
+      if (Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
+        aModel.addElement(BY_SOURCE_POSITION);
+        aModel.addElement(BY_SOURCE_CHANGES);
+      }
+      return aModel;
+    }).finishOnUiThread(ModalityState.any(), model -> {
+      comboBox.setModel(model);
+      comboBox.setSelectedItem(selectedItem == null ? myType : selectedItem);
+      if (onDone != null) {
+        onDone.run();
+      }
+    }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   public boolean disableModuleClasspath(boolean wholeProjectSelected) {

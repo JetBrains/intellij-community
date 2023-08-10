@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
@@ -29,15 +15,14 @@ public class DummyLexer extends LexerBase {
   }
 
   @Override
-  public void start(@NotNull final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+  public void start(final @NotNull CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
     myBuffer = buffer;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
   }
 
-  @NotNull
   @Override
-  public CharSequence getBufferSequence() {
+  public @NotNull CharSequence getBufferSequence() {
     return myBuffer;
   }
 
@@ -66,9 +51,8 @@ public class DummyLexer extends LexerBase {
     myStartOffset = myEndOffset;
   }
 
-  @NotNull
   @Override
-  public LexerPosition getCurrentPosition() {
+  public @NotNull LexerPosition getCurrentPosition() {
     return new LexerPositionImpl(0, getState());
   }
 

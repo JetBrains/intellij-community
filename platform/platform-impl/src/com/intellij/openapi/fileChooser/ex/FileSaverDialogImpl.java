@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -20,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
@@ -62,6 +65,42 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   }
 
   @Override
+  protected void init() {
+    super.init();
+
+    // ensure that in the tree only the folder is selected once the user starts editing the file field
+    myFileName.getDocument().addDocumentListener(new DocumentListener() {
+      @Override
+      public void insertUpdate(DocumentEvent e) {
+        changed();
+      }
+
+      @Override
+      public void removeUpdate(DocumentEvent e) {
+        changed();
+      }
+
+      @Override
+      public void changedUpdate(DocumentEvent e) {
+        changed();
+      }
+
+      private void changed() {
+        // when the file name changes AND has focus, then this is the user editing and not an automatic update after selecting a file.
+        if (myFileName.hasFocus()) {
+          // if the selected item is a file (not a directory), change the selection to the parent folder.
+          // this is the symmetric logic as in FileSaverDialogImpl.getFile()
+          if (myFileSystemTree.getSelectedFile() != null && !myFileSystemTree.getSelectedFile().isDirectory()) {
+            // now switch to parent folder of the file
+            myFileSystemTree.select(myFileSystemTree.getSelectedFile().getParent(), () -> {
+            });
+          }
+        }
+      }
+    });
+  }
+
+  @Override
   @Nullable
   public VirtualFileWrapper save(@Nullable VirtualFile baseDir, @Nullable String filename) {
     init();
@@ -99,7 +138,8 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
       return null;
     }
     if (dir.isDirectory()) {
-      path += File.separator + myFileName.getText();
+      String child = myFileName.getText();
+      path = OSAgnosticPathUtil.isAbsolute(child) ? child : FileUtil.join(path, child);
     }
 
     boolean correctExt = true;

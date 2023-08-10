@@ -16,20 +16,23 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TraceableDisposable;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.Scope;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-public class DaemonProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator, Disposable {
+public class DaemonProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
   private static boolean debug;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug);
-  private volatile boolean myDisposed;
   private volatile Throwable myCancellationCause;
+  private volatile Span mySpan;
+  private final IJTracer myTraceManager = TelemetryManager.Companion.getInstance().getTracer(new Scope("daemon", null));
 
   @Override
   public final void stop() {
@@ -39,51 +42,39 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     }
   }
 
-  public void stopIfRunning() {
+  // return true if was stopped
+  boolean stopIfRunning() {
     synchronized (getLock()) {
+      if(mySpan != null) {
+        mySpan.end();
+      }
       if (isRunning()) {
         stop();
+        return true;
       }
-      else {
-        cancel();
-      }
+      cancel();
+      return false;
     }
   }
 
   @Override
   public final void cancel() {
-    boolean changed = false;
     synchronized (getLock()) {
       if (!isCanceled()) {
         myTraceableDisposable.kill("Daemon Progress Canceled");
         super.cancel();
-        changed = true;
       }
-    }
-    if (changed) {
-      Disposer.dispose(this);
     }
   }
 
   public final void cancel(@NotNull Throwable cause) {
-    boolean changed = false;
     synchronized (getLock()) {
       if (!isCanceled()) {
         myCancellationCause = cause;
         myTraceableDisposable.killExceptionally(cause);
         super.cancel();
-        changed = true;
       }
     }
-    if (changed) {
-      Disposer.dispose(this);
-    }
-  }
-
-  // called when canceled
-  @Override
-  public void dispose() {
-    myDisposed = true;
   }
 
   @Override
@@ -107,6 +98,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   public final void start() {
     checkCanceled();
     assert !isRunning() : "running";
+    mySpan = myTraceManager.spanBuilder("run daemon").startSpan();
     super.start();
   }
 
@@ -130,7 +122,16 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     return super.toString() + (debug ? "; "+myTraceableDisposable.getStackTrace()+"\n;" : "");
   }
 
-  final boolean isDisposed() {
-    return myDisposed;
+  @Override
+  public boolean isIndeterminate() {
+    // to avoid silly exceptions "this progress is indeterminate" on storing/restoring wrapper states in JobLauncher
+    return false;
+  }
+
+  /**
+   * @deprecated does nothing, use {@link #cancel()} instead
+   */
+  @Deprecated(forRemoval = true)
+  public void dispose() {
   }
 }

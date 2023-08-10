@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.google.common.collect.Sets;
@@ -11,13 +11,16 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
+import com.intellij.openapi.progress.util.ProgressIndicatorListener;
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -233,7 +236,7 @@ public class SdkDownloadTracker {
   private static class SmartPendingDownloadModalityTracker implements PendingDownloadModalityTracker{
     @NotNull
     static ModalityState modality() {
-      ModalityState state = ApplicationManager.getApplication().getCurrentModalityState();
+      ModalityState state = ModalityState.current();
       TransactionGuard.getInstance().assertWriteSafeContext(state);
       return state;
     }
@@ -340,7 +343,7 @@ public class SdkDownloadTracker {
         public void run(@NotNull ProgressIndicator indicator) {
           boolean failed = false;
           try {
-            new ProgressIndicatorListenerAdapter() {
+            new ProgressIndicatorListener() {
               @Override
               public void cancelled() {
                 myProgressIndicator.cancel();
@@ -436,6 +439,14 @@ public class SdkDownloadTracker {
               }
 
               sdkType.setupSdkPaths(sdk);
+
+              for (Project project: ProjectManager.getInstance().getOpenProjects()) {
+                final var rootManager = ProjectRootManagerImpl.getInstanceImpl(project);
+                final Sdk projectSdk = rootManager.getProjectSdk();
+                if (projectSdk != null && projectSdk.getName().equals(sdk.getName())) {
+                  rootManager.projectJdkChanged();
+                }
+              }
             }
             catch (Exception e) {
               LOG.warn("Failed to set up SDK " + sdk + ". " + e.getMessage(), e);

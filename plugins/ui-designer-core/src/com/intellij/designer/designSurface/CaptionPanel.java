@@ -6,7 +6,6 @@ import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.FindComponentVisitor;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadVisualComponent;
-import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
@@ -28,7 +27,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteProvider {
+public class CaptionPanel extends JBLayeredPane implements DataProvider {
   private static final int SIZE = 16;
 
   private final boolean myHorizontal;
@@ -47,6 +46,7 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
       setBorder(IdeBorderFactory.createBorder(horizontal ? SideBorder.BOTTOM : SideBorder.RIGHT));
     }
 
+    setFullOverlayLayout(true);
     setFocusable(true);
 
     myHorizontal = horizontal;
@@ -164,14 +164,6 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
   }
 
   @Override
-  public void doLayout() {
-    for (int i = getComponentCount() - 1; i >= 0; i--) {
-      Component component = getComponent(i);
-      component.setBounds(0, 0, getWidth(), getHeight());
-    }
-  }
-
-  @Override
   public Dimension getPreferredSize() {
     return new Dimension(SIZE, SIZE);
   }
@@ -184,19 +176,9 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return this;
+      return myActionsProvider;
     }
     return null;
-  }
-
-  @Override
-  public boolean canDeleteElement(@NotNull DataContext dataContext) {
-    return myActionsProvider.canDeleteElement(dataContext);
-  }
-
-  @Override
-  public void deleteElement(@NotNull DataContext dataContext) {
-    myActionsProvider.deleteElement(dataContext);
   }
 
   public void update() {

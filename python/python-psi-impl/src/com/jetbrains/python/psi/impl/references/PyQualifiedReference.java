@@ -24,9 +24,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -52,9 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class PyQualifiedReference extends PyReferenceImpl {
   private static final Logger LOG = Logger.getInstance(PyQualifiedReference.class);
 
@@ -137,7 +135,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
       return false;
     }
     for (PyExpression ex : collectAssignedAttributes(qName, qualifier)) {
-      if (referencedName.equals(ex.getName())) {
+      if (referencedName.equals(ex.getName()) && !PyUtil.isInstanceAttribute(ex)) {
         ret.poke(ex, RatedResolveResult.RATE_NORMAL);
         return true;
       }
@@ -187,8 +185,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
           Collections.addAll(variants, guessedType.getCompletionVariants(myElement.getName(), myElement, ctx));
         }
       }
-      if (qualifier instanceof PyQualifiedExpression) {
-        final PyQualifiedExpression qualifierExpression = (PyQualifiedExpression)qualifier;
+      if (qualifier instanceof PyQualifiedExpression qualifierExpression) {
         final QualifiedName qualifiedName = qualifierExpression.asQualifiedName();
         if (qualifiedName != null) {
           final Collection<PyTargetExpression> attrs = collectAssignedAttributes(qualifiedName, qualifier);
@@ -200,7 +197,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
             if (qualifierType instanceof PyClassType && name != null) {
               variants.add(LookupElementBuilder.createWithSmartPointer(name, expression)
                              .withTypeText(qualifierType.getName())
-                             .withIcon(PlatformIcons.FIELD_ICON));
+                             .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field)));
               namesAlready.add(name);
             }
           }
@@ -231,8 +228,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
   @Nullable
   private PyClassType guessClassTypeByName() {
     final PyExpression qualifierElement = myElement.getQualifier();
-    if (qualifierElement instanceof PyReferenceExpression) {
-      PyReferenceExpression qualifier = (PyReferenceExpression)qualifierElement;
+    if (qualifierElement instanceof PyReferenceExpression qualifier) {
       final String className = qualifier.getReferencedName();
       if (className != null) {
         Collection<PyClass> classes = PyClassNameIndexInsensitive.find(className, getElement().getProject());
@@ -415,8 +411,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     if (element instanceof PyParameter) {
       return true;
     }
-    if (element instanceof PyTargetExpression) {
-      final PyTargetExpression target = (PyTargetExpression)element;
+    if (element instanceof PyTargetExpression target) {
       return !target.isQualified() && ScopeUtil.getScopeOwner(target) instanceof PyFunction;
     }
     return false;

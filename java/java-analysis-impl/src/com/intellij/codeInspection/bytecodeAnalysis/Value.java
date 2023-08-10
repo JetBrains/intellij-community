@@ -4,7 +4,9 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 
 import java.util.List;
 
@@ -19,24 +21,40 @@ enum Value implements Result {
     return List.of();
   }
 
-  ContractReturnValue toReturnValue() {
-    switch (this) {
-      case False: return ContractReturnValue.returnFalse();
-      case True: return ContractReturnValue.returnTrue();
-      case NotNull: return ContractReturnValue.returnNotNull();
-      case Null: return ContractReturnValue.returnNull();
-      case Fail: return ContractReturnValue.fail();
-      default: return ContractReturnValue.returnAny();
+  static @Nullable Value fromBasicValue(BasicValue value) {
+    if (value == AbstractValues.TrueValue) {
+      return True;
     }
+    if (value == AbstractValues.FalseValue) {
+      return False;
+    }
+    if (value == AbstractValues.NullValue) {
+      return Null;
+    }
+    if (value instanceof AbstractValues.NotNullValue) {
+      return NotNull;
+    }
+    return null;
+  }
+
+  ContractReturnValue toReturnValue() {
+    return switch (this) {
+      case False -> ContractReturnValue.returnFalse();
+      case True -> ContractReturnValue.returnTrue();
+      case NotNull -> ContractReturnValue.returnNotNull();
+      case Null -> ContractReturnValue.returnNull();
+      case Fail -> ContractReturnValue.fail();
+      default -> ContractReturnValue.returnAny();
+    };
   }
 
   StandardMethodContract.ValueConstraint toValueConstraint() {
-    switch (this) {
-      case False: return StandardMethodContract.ValueConstraint.FALSE_VALUE;
-      case True: return StandardMethodContract.ValueConstraint.TRUE_VALUE;
-      case NotNull: return StandardMethodContract.ValueConstraint.NOT_NULL_VALUE;
-      case Null: return StandardMethodContract.ValueConstraint.NULL_VALUE;
-      default: return StandardMethodContract.ValueConstraint.ANY_VALUE;
-    }
+    return switch (this) {
+      case False -> StandardMethodContract.ValueConstraint.FALSE_VALUE;
+      case True -> StandardMethodContract.ValueConstraint.TRUE_VALUE;
+      case NotNull -> StandardMethodContract.ValueConstraint.NOT_NULL_VALUE;
+      case Null -> StandardMethodContract.ValueConstraint.NULL_VALUE;
+      default -> StandardMethodContract.ValueConstraint.ANY_VALUE;
+    };
   }
 }

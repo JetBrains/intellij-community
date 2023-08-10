@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
-import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.javac.Iterators.Function;
 
 import java.io.Closeable;
 import java.io.File;
@@ -15,11 +15,13 @@ import java.util.Enumeration;
 
 class LazyClassLoader extends ClassLoader implements Closeable {
   private static final URL[] EMPTY_URL_ARRAY = new URL[0];
+  private final ClassLoader myParent;
   private final Iterable<URL> myUrls;
   private volatile DelegateClassLoader myDelegate;
 
   LazyClassLoader(Iterable<URL> urls, ClassLoader parent) {
-    super(parent);
+    super(null);
+    myParent = parent;
     myUrls = urls;
   }
 
@@ -44,7 +46,7 @@ class LazyClassLoader extends ClassLoader implements Closeable {
       synchronized (myUrls) {
         delegate = myDelegate;
         if (delegate == null) {
-          myDelegate = delegate = new DelegateClassLoader(Iterators.collect(myUrls, new ArrayList<URL>()).toArray(EMPTY_URL_ARRAY), getParent());
+          myDelegate = delegate = new DelegateClassLoader(Iterators.collect(myUrls, new ArrayList<URL>()).toArray(EMPTY_URL_ARRAY), myParent);
         }
       }
     }
@@ -53,7 +55,7 @@ class LazyClassLoader extends ClassLoader implements Closeable {
 
   @Override
   protected Class<?> findClass(String name) throws ClassNotFoundException {
-    return getDelegate().findClass(name);
+    return getDelegate().loadClass(name);
   }
 
   @Override
@@ -78,11 +80,6 @@ class LazyClassLoader extends ClassLoader implements Closeable {
   private static class DelegateClassLoader extends URLClassLoader {
     DelegateClassLoader(URL[] urls, final ClassLoader parent) {
       super(urls, parent);
-    }
-
-    @Override
-    public Class<?> findClass(String name) throws ClassNotFoundException {
-      return super.findClass(name);
     }
 
     @Override

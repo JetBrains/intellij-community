@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -28,7 +29,11 @@ public enum AntialiasingType {
   }
 
   public static boolean canUseSubpixelAAForIDE() {
-    return !SystemInfo.isMacOSMojave || Boolean.getBoolean("enable.macos.ide.subpixelAA");
+    return !SystemInfoRt.isMac || Boolean.getBoolean("enable.macos.ide.subpixelAA");
+  }
+
+  public static boolean canUseSubpixelAAForEditor() {
+    return !SystemInfo.isMacOSBigSur || Boolean.getBoolean("enable.macos.editor.subpixelAA");
   }
 
   public static Object getKeyForCurrentScope(boolean inEditor) {
@@ -69,13 +74,11 @@ public enum AntialiasingType {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return mySerializationName;
   }
 
-  @Nls(capitalization = Sentence)
-  public String getPresentableName() {
+  public @Nls(capitalization = Sentence) String getPresentableName() {
     return myPresentableName.get();
   }
  }

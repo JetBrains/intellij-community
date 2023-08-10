@@ -6,23 +6,13 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import java.awt.*;
 
-final class RunAnythingMore extends JPanel {
-  static final RunAnythingMore instance = new RunAnythingMore();
-  final JLabel label = new JLabel(LangBundle.message("run.anything.load.more.load.more"));
+final class RunAnythingMore extends JLabel {
 
-  private RunAnythingMore() {
-    super(new BorderLayout());
-    add(label, BorderLayout.CENTER);
-  }
-
-  static RunAnythingMore get(boolean isSelected) {
-    instance.setBackground(UIUtil.getListBackground(isSelected, true));
-    instance.label.setForeground(UIUtil.getLabelDisabledForeground());
-    instance.label.setFont(RunAnythingUtil.getTitleFont());
-    instance.label.setBackground(UIUtil.getListBackground(isSelected, true));
-    instance.label.setBorder(JBUI.Borders.emptyLeft(1));
-    return instance;
+  RunAnythingMore() {
+    super(LangBundle.message("run.anything.load.more.load.more"));
+    setForeground(UIUtil.getLabelDisabledForeground());
+    setFont(RunAnythingUtil.getTitleFont());
+    setBorder(JBUI.Borders.emptyLeft(1));
   }
 }

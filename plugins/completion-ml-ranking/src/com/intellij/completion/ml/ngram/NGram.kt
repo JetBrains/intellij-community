@@ -13,6 +13,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.impl.source.tree.LazyParseableElement
 import kotlin.math.max
 import kotlin.math.min
 
@@ -65,8 +66,8 @@ object NGram {
     return modelRunner?.let { runner -> Scorer(NGRAM_RECENT_FILES_SCORER_NAME, { runner.score(it) }, prefix) }
   }
 
-  internal fun isSupported(language: Language): Boolean = language.id.toLowerCase() in SUPPORTED_LANGUAGES
-                                                          || CompletionFeaturesPolicy.useNgramModel(language)
+  internal fun isSupported(language: Language): Boolean = language.id.toLowerCase() in SUPPORTED_LANGUAGES ||
+                                                          CompletionFeaturesPolicy.useNgramModel(language)
 
   fun getNGramPrefix(parameters: CompletionParameters, order: Int): Array<String> {
     val precedingTokens = SyntaxTraverser.revPsiTraverser()
@@ -78,7 +79,7 @@ object NGram {
       .reversed()
     if (precedingTokens.isEmpty()) return emptyArray()
     return with(precedingTokens) {
-      if (last() == parameters.originalPosition?.text ?: "") dropLast(1) else drop(1)
+      if (last() == (parameters.originalPosition?.text ?: "")) dropLast(1) else drop(1)
     }.toTypedArray()
   }
 
@@ -93,7 +94,7 @@ object NGram {
       .reversed()
     if (followingTokens.isEmpty()) return emptyArray()
     return with(followingTokens) {
-      if (last() == parameters.originalPosition?.text ?: "") dropLast(1) else drop(1)
+      if (last() == (parameters.originalPosition?.text ?: "")) dropLast(1) else drop(1)
     }.toTypedArray()
   }
 
@@ -116,15 +117,25 @@ object NGram {
     return SyntaxTraverser.psiTraverser()
       .withRoot(file)
       .onRange(TextRange(0, textRange))
+      .expand { shouldExpand(it) }
       .filter { shouldLex(it) }
       .toList()
       .map { it.text }
   }
 
+  private fun shouldExpand(element: PsiElement): Boolean {
+    return element.isParsed()
+  }
+
   private fun shouldLex(element: PsiElement): Boolean {
-    return element.firstChild == null // is leaf
-           && !element.text.isBlank()
+    return element.isParsed()
+           && element.firstChild == null // is leaf
+           && element.text.isNotBlank()
            && element !is PsiComment
+  }
+
+  private fun PsiElement.isParsed(): Boolean {
+    return this !is LazyParseableElement || isParsed
   }
 
   internal class Scorer(val name: String, private val scoringFunction: (List<String>) -> Double, prefix: Array<String>) {

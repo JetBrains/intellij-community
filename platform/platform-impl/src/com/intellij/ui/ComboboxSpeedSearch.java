@@ -12,18 +12,47 @@ import java.util.function.Function;
  */
 public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
 
-  public static <T> void  installSpeedSearch(JComboBox<T> comboBox, Function<? super T, String> textGetter) {
-    new ComboboxSpeedSearch(comboBox) {
+  public static <T> void installSpeedSearch(JComboBox<T> comboBox, Function<? super T, String> textGetter) {
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(comboBox, null) {
       @Override
       protected String getElementText(Object element) {
         return textGetter.apply((T)element);
       }
     };
+    search.setupListeners();
   }
 
+  public static @NotNull ComboboxSpeedSearch installOn(@NotNull final JComboBox<?> comboBox) {
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(comboBox, null);
+    search.setupListeners();
+    return search;
+  }
+
+  /**
+   * @deprecated Use the static method {@link ComboboxSpeedSearch#installOn(JComboBox)} to install a speed search.
+   * <p>
+   * For inheritance use the non-deprecated constructor.
+   * <p>
+   * Also, note that non-deprecated constructor is side effect free, and you should call for {@link ComboboxSpeedSearch#setupListeners()}
+   * method to enable speed search
+   */
+  @Deprecated
   public ComboboxSpeedSearch(@NotNull final JComboBox comboBox) {
     super(comboBox);
     removeKeyStroke(comboBox.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT), KeyStroke.getKeyStroke(' ', 0));
+  }
+
+  /**
+   * @param sig parameter is used to avoid clash with the deprecated constructor
+   */
+  public ComboboxSpeedSearch(@NotNull final JComboBox comboBox, Void sig) {
+    super(comboBox, sig);
+  }
+
+  @Override
+  public void setupListeners() {
+    super.setupListeners();
+    removeKeyStroke(myComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT), KeyStroke.getKeyStroke(' ', 0));
   }
 
   private static void removeKeyStroke(@Nullable InputMap map, KeyStroke ks) {

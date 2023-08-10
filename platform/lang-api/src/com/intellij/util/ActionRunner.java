@@ -40,7 +40,7 @@ public abstract class ActionRunner {
   /**
    * @deprecated use {@link WriteAction#run(ThrowableRunnable)} or {@link WriteAction#compute(ThrowableComputable)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static <T> T runInsideWriteAction(@NotNull final InterruptibleRunnableWithResult<T> runnable) throws Exception {
     return WriteAction.computeAndWait(() -> runnable.run());
   }
@@ -48,7 +48,7 @@ public abstract class ActionRunner {
   /**
    * @deprecated use {@link ReadAction#run(ThrowableRunnable)} or {@link ReadAction#compute(ThrowableComputable)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void runInsideReadAction(@NotNull final InterruptibleRunnable runnable) throws Exception {
     ReadAction.run(() -> runnable.run());
   }
@@ -64,7 +64,7 @@ public abstract class ActionRunner {
   /**
    * @deprecated obsolete API
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public interface InterruptibleRunnableWithResult<T> {
     T run() throws Exception;
   }

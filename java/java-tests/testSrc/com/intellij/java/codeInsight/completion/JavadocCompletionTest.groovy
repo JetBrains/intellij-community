@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.pom.java.LanguageLevel
@@ -20,10 +20,12 @@ import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.javadoc.PsiDocTag
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.NotNull
+
 class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   private JavaCodeStyleSettings javaSettings
 
@@ -32,11 +34,17 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/javadoc/"
   }
 
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_LATEST
+  }
+
   @Override
   protected void setUp() {
     super.setUp()
     javaSettings = JavaCodeStyleSettings.getInstance(getProject())
-    myFixture.enableInspections(new JavaDocLocalInspection())
+    myFixture.enableInspections(new JavadocDeclarationInspection())
   }
 
   void testNamesInPackage() {
@@ -47,22 +55,22 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   void testNamesInClass() {
     configureByFile("ClassTagName.java")
-    assertStringItems("author", 'author ' + SystemProperties.getUserName(), "deprecated", "param", "see", "serial", "since", "version")
+    assertStringItems("apiNote", "author", "author " + SystemProperties.getUserName(), "deprecated", "hidden", "implNote", "implSpec", "see", "serial", "since", "version")
   }
 
   void testNamesInField() {
     configureByFile("FieldTagName.java")
-    assertStringItems("deprecated", "see", "serial", "serialField", "since")
+    assertStringItems("apiNote", "deprecated", "hidden", "implNote", "implSpec", "see", "serial", "serialField", "since")
   }
 
   void testNamesInMethod0() {
     configureByFile("MethodTagName0.java")
-    assertStringItems("deprecated", "exception", "param", "return", "see", "serialData", "since", "throws")
+    assertStringItems("apiNote", "deprecated", "exception", "hidden", "implNote", "implSpec", "return", "see", "serialData", "since", "throws")
   }
 
   void testNamesInMethod1() {
     configureByFile("MethodTagName1.java")
-    assertStringItems("see", "serialData", "since", "throws")
+    assertStringItems("see", "serialData", "since", "implSpec", "throws")
   }
 
   void testParamValueCompletion() {
@@ -135,7 +143,7 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   void testException0() {
     configureByFile("Exception0.java")
-    assertStringItems("deprecated", "exception", "param", "see", "serialData", "since", "throws")
+    assertStringItems("apiNote", "deprecated", "exception", "hidden", "implNote", "implSpec", "see", "serialData", "since", "throws")
   }
 
   void testException1() {
@@ -152,13 +160,13 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   void testInlineLookup() {
     configureByFile("InlineTagName.java")
-    assertStringItems("code", "docRoot", "inheritDoc", "link", "linkplain", "literal", "value")
+    assertStringItems("code", "docRoot", "index", "inheritDoc", "link", "linkplain", "literal", "snippet", "summary", "systemProperty", "value")
   }
 
   @NeedsIndex.ForStandardLibrary
   void testInlineLookup16() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_16, {configureByFile("InlineTagName16.java")})
-    assertStringItems("code", "docRoot", "index", "inheritDoc", "link", "linkplain", "literal", "return", "systemProperty","value")
+    assertStringItems("code", "docRoot", "index", "inheritDoc", "link", "linkplain", "literal", "return", "summary", "systemProperty","value")
   }
 
   void testFinishWithSharp() throws Throwable {
@@ -753,4 +761,172 @@ interface Bar<T> extends Foo<T> {
     assert !TemplateManagerImpl.getTemplateState(myFixture.editor)
   }
 
+  void "test tags at top level"() {
+    myFixture.configureByText 'a.java', "interface Foo { /**\n * <caret> */void foo(int a); }"
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['@apiNote', '@deprecated', '@exception', '@hidden', '@implNote', '@implSpec', '@param', '@param a', '@see', '@serialData', '@since', '@throws']
+    def element = myFixture.lookupElements[6]
+    assert element.lookupString == "@param"
+    selectItem(element)
+    myFixture.checkResult("interface Foo { /**\n" +
+                          " * @param  */void foo(int a); }")
+  }
+
+  void "test tags at top level inline"() {
+    myFixture.configureByText 'a.java', "interface Foo { /** Hello <caret> */void foo(int a); }"
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@index}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@snippet}', '{@summary}', '{@systemProperty}', '{@value}']
+    def element = myFixture.lookupElements[5]
+    assert element.lookupString == "{@link}"
+    selectItem(element)
+    myFixture.checkResult("interface Foo { /** Hello {@link <caret>} */void foo(int a); }")
+  }
+
+  void "test tags after return"() {
+    myFixture.configureByText 'a.java', "interface Foo { /** @return <caret> */int foo(int a); }"
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@index}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@return}', '{@snippet}', '{@summary}', '{@systemProperty}', '{@value}']
+    def element = myFixture.lookupElements[5]
+    assert element.lookupString == "{@link}"
+    selectItem(element)
+    myFixture.checkResult("interface Foo { /** @return {@link <caret>} */int foo(int a); }")
+  }
+
+  void "test tags at top level inline in brace"() {
+    myFixture.configureByText 'a.java', "interface Foo { /** Hello {<caret>} */void foo(int a); }"
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['@code', '@docRoot', '@index', '@inheritDoc', '@link', '@linkplain', '@literal', '@snippet', '@summary', '@systemProperty', '@value']
+    def element = myFixture.lookupElements[4]
+    assert element.lookupString == "@link"
+    selectItem(element)
+    myFixture.checkResult("interface Foo { /** Hello {@link <caret>} */void foo(int a); }")
+  }
+
+  void "test autoinsert link with space"() {
+    boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION
+    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false
+    try {
+      myFixture.configureByText 'a.java', "/** {@li<caret>} */public class JavadocLink {}"
+      myFixture.completeBasic()
+      myFixture.type(' ')
+      myFixture.checkResult("/** {@link <caret>} */public class JavadocLink {}")
+    }
+    finally {
+      CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = old
+    }
+  }
+
+  void "test custom tag"() {
+    def inspection = new JavadocDeclarationInspection()
+    inspection.registerAdditionalTag("foobar")
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText "a.java", "/**\n * @fo<caret>\n */\npublic class Demo {}"
+    myFixture.completeBasic()
+    myFixture.checkResult("/**\n * @foobar \n */\npublic class Demo {}")
+  }
+  
+  void "test in snippet file"() {
+    myFixture.addFileToProject("snippet-files/test.txt", "empty")
+    myFixture.addFileToProject("snippet-files/sub/test.txt", "empty")
+    myFixture.addFileToProject("snippet-files/sub/Test.java", "empty")
+    myFixture.configureByText "a.java", "/**\n * {@snippet file=\"<caret>\"}\n */\npublic class Demo {}"
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['test.txt', 'sub/']
+    myFixture.lookup.setCurrentItem(myFixture.lookupElements[1])
+    myFixture.type('\n')
+    myFixture.checkResult("/**\n * {@snippet file=\"sub/<caret>\"}\n */\npublic class Demo {}")
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['Test.java', 'test.txt']
+    myFixture.type('\n')
+    myFixture.checkResult("/**\n * {@snippet file=\"sub/Test.java<caret>\"}\n */\npublic class Demo {}")
+  }
+  
+  void "test in snippet class"() {
+    myFixture.addFileToProject("snippet-files/test.txt", "empty")
+    myFixture.addFileToProject("snippet-files/sub/test.txt", "empty")
+    myFixture.addFileToProject("snippet-files/sub/Test.java", "empty")
+    myFixture.configureByText "a.java", "/**\n * {@snippet class=\"<caret>\"}\n */\npublic class Demo {}"
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['sub.']
+    myFixture.type('\n')
+    myFixture.checkResult("/**\n * {@snippet class=\"sub.<caret>\"}\n */\npublic class Demo {}")
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['Test']
+    myFixture.type('\n')
+    myFixture.checkResult("/**\n * {@snippet class=\"sub.Test\"}\n */\npublic class Demo {}")
+  }
+  
+  void testInSnippetAttribute() {
+    myFixture.configureByText "a.java", "/**\n * {@snippet cl<caret>}\n */\npublic class Demo {}"
+    myFixture.complete(CompletionType.BASIC, 0)
+    myFixture.checkResult("/**\n * {@snippet class=<caret>}\n */\npublic class Demo {}")
+  }
+  
+  void testInSnippetAttribute2() {
+    myFixture.configureByText "a.java", "/**\n * {@snippet cl<caret>=x}\n */\npublic class Demo {}"
+    myFixture.complete(CompletionType.BASIC, 0)
+    myFixture.checkResult("/**\n * {@snippet class=<caret>x}\n */\npublic class Demo {}")
+  }
+  
+  void testInSnippetAttribute3() {
+    myFixture.configureByText "a.java", "/**\n * {@snippet class=X cl<caret>}\n */\npublic class Demo {}"
+    myFixture.complete(CompletionType.BASIC, 0)
+    myFixture.checkResult("/**\n * {@snippet class=X cl<caret>}\n */\npublic class Demo {}")
+  }
+  
+  void testRegionCompletion() {
+    myFixture.configureByText "a.java", """
+    /**
+     * {@snippet region=Re<caret>:
+     *   // @start region="Reg1"
+     *   // @end
+     *   // @replace region="Region two"
+     *   // @end
+     *   // @highlight region="Reg#3"
+     *   // @end
+     * }
+     */
+    public class X {}
+"""
+    myFixture.complete(CompletionType.BASIC, 0)
+    assert myFixture.lookupElementStrings == ['"Reg#3"', '"Region two"', 'Reg1']
+    myFixture.type('\n')
+    myFixture.checkResult("""
+    /**
+     * {@snippet region="Reg#3":
+     *   // @start region="Reg1"
+     *   // @end
+     *   // @replace region="Region two"
+     *   // @end
+     *   // @highlight region="Reg#3"
+     *   // @end
+     * }
+     */
+    public class X {}
+""")
+  }
+  
+  void testRegionCompletionInQuotes() {
+    myFixture.configureByText "a.java", """
+    /**
+     * {@snippet region="Re<caret>":
+     *   // @start region="Reg1"
+     *   // @end
+     *   // @replace region="Region two"
+     *   // @end
+     *   // @highlight region="Reg#3"
+     *   // @end
+     * }
+     */
+    public class X {}
+"""
+    myFixture.complete(CompletionType.BASIC, 0)
+    assert myFixture.lookupElementStrings == ['Reg#3', 'Reg1', 'Region two']
+  }
+  
+  void testLangCompletion() {
+    myFixture.configureByText "a.java", "/**\n * {@snippet lang=j<caret>}\n */\npublic class X {}\n"
+    myFixture.complete(CompletionType.BASIC, 0)
+    myFixture.lookupElementStrings.containsAll(['java', '"JSON Lines"', 'JSON'])
+  }
 }

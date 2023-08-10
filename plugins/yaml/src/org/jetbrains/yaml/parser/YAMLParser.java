@@ -2,6 +2,7 @@
 package org.jetbrains.yaml.parser;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
@@ -15,7 +16,7 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 
 import java.util.List;
 
-public class YAMLParser implements PsiParser, YAMLTokenTypes {
+public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
   public static final TokenSet HASH_STOP_TOKENS = TokenSet.create(RBRACE, COMMA);
   public static final TokenSet ARRAY_STOP_TOKENS = TokenSet.create(RBRACKET, COMMA);
   private PsiBuilder myBuilder;
@@ -28,13 +29,19 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   @Override
   @NotNull
   public ASTNode parse(@NotNull final IElementType root, @NotNull final PsiBuilder builder) {
+    parseLight(root, builder);
+    return builder.getTreeBuilt();
+  }
+
+
+  @Override
+  public void parseLight(IElementType root, PsiBuilder builder) {
     myBuilder = builder;
     myStopTokensStack.clear();
     final PsiBuilder.Marker fileMarker = mark();
     parseFile();
     assert myBuilder.eof() : "Not all tokens were passed.";
     fileMarker.done(root);
-    return builder.getTreeBuilt();
   }
 
   private void parseFile() {

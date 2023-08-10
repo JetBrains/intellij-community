@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -10,20 +10,28 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 public abstract class LocalChangeList implements Cloneable, ChangeList {
   @NonNls public static final String OLD_DEFAULT_NAME = "Default";
 
   public static LocalChangeList createEmptyChangeList(Project project, @NotNull String name) {
-    return VcsContextFactory.SERVICE.getInstance().createLocalChangeList(project, name);
+    return VcsContextFactory.getInstance().createLocalChangeList(project, name);
+  }
+
+  public static List<String> getAllDefaultNames() {
+    return Arrays.asList(VcsBundle.message("changes.default.changelist.name"),
+                         VcsBundle.message("changes.default.changelist.name.old"),
+                         OLD_DEFAULT_NAME);
   }
 
   @Override
   public abstract Collection<Change> getChanges();
 
   /**
-   * Logical id that identifies the changelist and should survive name changing.
+   * Logical id that identifies the changelist and should survive name change.
    */
   @NotNull
   @NonNls
@@ -52,7 +60,7 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   public abstract LocalChangeList copy();
 
   public boolean hasDefaultName() {
-    return getDefaultName().equals(getName()) || OLD_DEFAULT_NAME.equals(getName());
+    return getAllDefaultNames().contains(getName());
   }
 
   public boolean isBlank() {
@@ -60,21 +68,15 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   }
 
   /**
-   * @deprecated use {@link ChangeListManager#editName}
-   */
-  @Deprecated
-  public abstract void setName(@NotNull String name);
-
-  /**
    * @deprecated use {@link ChangeListManager#editComment}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void setComment(@Nullable String comment);
 
   /**
    * @deprecated use {@link ChangeListManager#setReadOnly}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void setReadOnly(boolean isReadOnly);
 
   public static @NotNull @NlsSafe String getDefaultName() {

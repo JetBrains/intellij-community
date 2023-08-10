@@ -65,19 +65,10 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitElement(@NotNull PsiElement element) {
-    if (element instanceof PyDecorator) {
-      visitPyCallExpression((PyDecorator)element);
-    }
-    super.visitElement(element);
-  }
-
-  @Override
   public void visitPyDecoratorList(@NotNull PyDecoratorList node) {
     PyDecorator[] decorators = node.getDecorators();
     if (decorators.length > 0) {
       decorators[0].accept(this);
-      visitPyCallExpression(decorators[0]);
     }
   }
 
@@ -141,9 +132,8 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
     int callOrder = getCallOrder();
     mySeenVariants.put(myVariantsFromPython.get(myVariantIndex).first, ++callOrder);
 
-    PsiElement resolved = expression.getReference(
-      PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.userInitiated(
-        expression.getProject(), expression.getContainingFile()))).resolve();
+    var context = TypeEvalContext.userInitiated(expression.getProject(), expression.getContainingFile());
+    PsiElement resolved = expression.getReference(PyResolveContext.defaultContext(context)).resolve();
 
     if (resolved == null || isBuiltIn(resolved) || isAlreadySeen()) return;
 

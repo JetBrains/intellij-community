@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger.frame;
 
@@ -12,15 +12,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a frame of execution stack. The selected frame is shown in 'Variables' panel of 'Debug' tool window.
- * Override {@link XValueContainer#computeChildren} to show local variable, parameters, fields available in the frame
+ * Represents a frame of the execution stack.
+ * The selected frame is shown in the 'Variables' panel of the 'Debug' tool window.
+ * <p>
+ * When implementing a debugger, override {@link XValueContainer#computeChildren}
+ * to show local variables, parameters and fields available in the frame.
  */
 public abstract class XStackFrame extends XValueContainer {
 
   /**
-   * If stack frame is not changed after step expanded nodes and selection will be restored in 'Variables' tree. A stack frame is assumed
-   * unchanged if this method return equal non-null values before and after step
-   * @return an object which will be used to determine if stack frame changed after step
+   * If the stack frame is not changed after stepping in the debugger,
+   * the expanded nodes and the selection will be restored in the 'Variables' tree.
+   * A stack frame is assumed to be unchanged
+   * if this method returns equal non-null values before and after stepping.
+   *
+   * @return an object which will be used to determine if the stack frame changed after stepping
    */
   @Nullable
   public Object getEqualityObject() {
@@ -28,8 +34,13 @@ public abstract class XStackFrame extends XValueContainer {
   }
 
   /**
-   * Implement to support evaluation in debugger (conditional breakpoints, logging message on breakpoint, "Evaluate" action, watches)
-   * @return evaluator instance
+   * Implement this method to support evaluation in the debugger, in particular:
+   * <ul>
+   *   <li>conditional breakpoints
+   *   <li>logging a message on reaching a breakpoint
+   *   <li>the "Evaluate" action
+   *   <li>watches
+   * </ul>
    */
   @Nullable
   public XDebuggerEvaluator getEvaluator() {
@@ -37,7 +48,7 @@ public abstract class XStackFrame extends XValueContainer {
   }
 
   /**
-   * @return source position corresponding to stack frame
+   * @return the current executing point in the stack frame
    */
   @Nullable
   public XSourcePosition getSourcePosition() {
@@ -45,8 +56,7 @@ public abstract class XStackFrame extends XValueContainer {
   }
 
   /**
-   * Customize presentation of the stack frame in frames list
-   * @param component component
+   * Customize the presentation of the stack frame in the frame list.
    */
   public void customizePresentation(@NotNull ColoredTextContainer component) {
     XSourcePosition position = getSourcePosition();

@@ -6,12 +6,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.stats.completion.logger.LineStorage
 import com.intellij.util.io.HttpRequests
-import java.io.ByteArrayOutputStream
+import com.intellij.util.io.URLUtil
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URLConnection
-import java.util.zip.GZIPOutputStream
 
 class SimpleRequestService : RequestService() {
   private companion object {
@@ -23,6 +22,7 @@ class SimpleRequestService : RequestService() {
       val zippedArray = LineStorage.readAsZipArray(file)
       return HttpRequests.post(url, "application/json").tuner {
         it.setRequestProperty(HttpHeaders.CONTENT_ENCODING, "gzip")
+        it.setRequestProperty(HttpHeaders.CONTENT_LENGTH, zippedArray.size.toString())
       }.connect { request ->
         request.write(zippedArray)
         return@connect request.connection.asResponseData(zippedArray.size)
@@ -65,6 +65,10 @@ class SimpleRequestService : RequestService() {
     val connection = this.connection
     if (connection is HttpURLConnection) {
       return connection.responseCode
+    }
+    // for diagnostic purpose
+    if (connection.url.protocol == URLUtil.FILE_PROTOCOL) {
+      return 200
     }
 
     LOG.error("Could not get code from http response")

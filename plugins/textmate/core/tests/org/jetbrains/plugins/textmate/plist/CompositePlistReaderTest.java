@@ -24,11 +24,11 @@ public class CompositePlistReaderTest {
 
   @Test
   public void parseXml() throws IOException {
-    Plist read = new CompositePlistReader().read(new ByteArrayInputStream(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                                                          "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n" +
-                                                                          "<plist version=\"1.0\">\n" +
-                                                                          "<dict><key>someKey</key><string>someValue</string></dict>" +
-                                                                          "</plist>").getBytes(StandardCharsets.UTF_8)));
+    Plist read = new CompositePlistReader().read(new ByteArrayInputStream(("""
+                                                                             <?xml version="1.0" encoding="UTF-8"?>
+                                                                             <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                                                                             <plist version="1.0">
+                                                                             <dict><key>someKey</key><string>someValue</string></dict></plist>""").getBytes(StandardCharsets.UTF_8)));
     assertNotNull(read);
   }
 

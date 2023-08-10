@@ -26,8 +26,6 @@ import javax.swing.*;
 /**
  * Provides default implementation for {@link EditorTextFieldProvider} service and applies available
  * {@link EditorCustomization customizations} if necessary.
- *
- * @author Denis Zhdanov
  */
 public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
   @NotNull
@@ -47,7 +45,7 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
     }
 
     @Override
-    protected EditorEx createEditor() {
+    protected @NotNull EditorEx createEditor() {
       final EditorEx ex = super.createEditor();
       ex.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
       ex.setHorizontalScrollbarVisible(true);

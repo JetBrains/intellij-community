@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.java.JavaBundle;
@@ -96,7 +96,7 @@ public class JavaColorProvider implements ElementColorProvider {
 
   private static boolean isIntLiteralInsideNewJBColorExpression(PsiElement element) {
     ULiteralExpression literalExpression = UastContextKt.toUElement(element, ULiteralExpression.class);
-    if (literalExpression != null && PsiType.INT.equals(literalExpression.getExpressionType())) {
+    if (literalExpression != null && PsiTypes.intType().equals(literalExpression.getExpressionType())) {
       UElement parent = literalExpression.getUastParent();
       if (parent != null) {
         return isNewJBColorExpression(parent);
@@ -106,12 +106,9 @@ public class JavaColorProvider implements ElementColorProvider {
   }
 
   private static boolean isNewJBColorExpression(UElement element) {
-    if (element instanceof UCallExpression) {
-      UCallExpression callExpression = (UCallExpression)element;
-      if (callExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
-        final PsiClass psiClass = PsiTypesUtil.getPsiClass(callExpression.getReturnType());
-        return psiClass != null && JBColor.class.getName().equals(psiClass.getQualifiedName());
-      }
+    if (element instanceof UCallExpression callExpression && callExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
+      final PsiClass psiClass = PsiTypesUtil.getPsiClass(callExpression.getReturnType());
+      return psiClass != null && JBColor.class.getName().equals(psiClass.getQualifiedName());
     }
     return false;
   }
@@ -121,14 +118,14 @@ public class JavaColorProvider implements ElementColorProvider {
     try {
       ColorConstructors type = args.isEmpty() ? null : getConstructorType(args.size(), args.get(0).getExpressionType());
       if (type != null) {
-        switch (type) {
-          case INT:      return new Color(  getInt(args.get(0)));
-          case INT_BOOL: return new Color(  getInt(args.get(0)),   getBoolean(args.get(1)));
-          case INT_x3:   return new Color(  getInt(args.get(0)),   getInt(args.get(1)),   getInt(args.get(2)));
-          case INT_x4:   return new Color(  getInt(args.get(0)),   getInt(args.get(1)),   getInt(args.get(2)), getInt(args.get(3)));
-          case FLOAT_x3: return new Color(getFloat(args.get(0)), getFloat(args.get(1)), getFloat(args.get(2)));
-          case FLOAT_x4: return new Color(getFloat(args.get(0)), getFloat(args.get(1)), getFloat(args.get(2)), getFloat(args.get(3)));
-        }
+        return switch (type) {
+          case INT -> new Color(getInt(args.get(0)));
+          case INT_BOOL -> new Color(getInt(args.get(0)), getBoolean(args.get(1)));
+          case INT_x3 -> new Color(getInt(args.get(0)), getInt(args.get(1)), getInt(args.get(2)));
+          case INT_x4 -> new Color(getInt(args.get(0)), getInt(args.get(1)), getInt(args.get(2)), getInt(args.get(3)));
+          case FLOAT_x3 -> new Color(getFloat(args.get(0)), getFloat(args.get(1)), getFloat(args.get(2)));
+          case FLOAT_x4 -> new Color(getFloat(args.get(0)), getFloat(args.get(1)), getFloat(args.get(2)), getFloat(args.get(3)));
+        };
       }
     }
     catch (Exception ignore) {
@@ -138,14 +135,13 @@ public class JavaColorProvider implements ElementColorProvider {
 
   @Nullable
   private static ColorConstructors getConstructorType(int paramCount, PsiType paramType) {
-    switch (paramCount) {
-      case 1: return ColorConstructors.INT;
-      case 2: return ColorConstructors.INT_BOOL;
-      case 3: return PsiType.INT.equals(paramType) ? ColorConstructors.INT_x3 : ColorConstructors.FLOAT_x3;
-      case 4: return PsiType.INT.equals(paramType) ? ColorConstructors.INT_x4 : ColorConstructors.FLOAT_x4;
-    }
-
-    return null;
+    return switch (paramCount) {
+      case 1 -> ColorConstructors.INT;
+      case 2 -> ColorConstructors.INT_BOOL;
+      case 3 -> PsiTypes.intType().equals(paramType) ? ColorConstructors.INT_x3 : ColorConstructors.FLOAT_x3;
+      case 4 -> PsiTypes.intType().equals(paramType) ? ColorConstructors.INT_x4 : ColorConstructors.FLOAT_x4;
+      default -> null;
+    };
   }
 
   public static int getInt(UExpression expr) {
@@ -205,7 +201,7 @@ public class JavaColorProvider implements ElementColorProvider {
       assert type != null;
       command = () -> {
         switch (type) {
-          case INT:
+          case INT -> {
             if (color.getAlpha() == 255) {
               replaceInt(expr[0], color.getRGB(), true);
             }
@@ -214,8 +210,8 @@ public class JavaColorProvider implements ElementColorProvider {
               argumentList.add(factory.createExpressionFromText("true", null));
               replaceInt(expr[0], color.getRGB() | color.getAlpha() << 24, true, true);
             }
-            return;
-          case INT_BOOL:
+          }
+          case INT_BOOL -> {
             if ("true".equals(expr[1].getText())) {
               replaceInt(expr[0], color.getRGB() | color.getAlpha() << 24, true, true);
             }
@@ -229,9 +225,8 @@ public class JavaColorProvider implements ElementColorProvider {
                 replaceInt(expr[0], color.getRGB() | color.getAlpha() << 24, true, true);
               }
             }
-            return;
-          case INT_x3:
-          case INT_x4:
+          }
+          case INT_x3, INT_x4 -> {
             replaceInt(expr[0], color.getRed());
             replaceInt(expr[1], color.getGreen());
             replaceInt(expr[2], color.getBlue());
@@ -243,9 +238,8 @@ public class JavaColorProvider implements ElementColorProvider {
               String text = String.valueOf(color.getAlpha());
               argumentList.add(factory.createExpressionFromText(text, null));
             }
-            return;
-          case FLOAT_x3:
-          case FLOAT_x4:
+          }
+          case FLOAT_x3, FLOAT_x4 -> {
             float[] rgba = color.getColorComponents(null);
             replaceFloat(expr[0], rgba[0]);
             replaceFloat(expr[1], rgba[1]);
@@ -258,6 +252,7 @@ public class JavaColorProvider implements ElementColorProvider {
               String text = String.valueOf(color.getAlpha());
               argumentList.add(factory.createExpressionFromText(text + "f", null));
             }
+          }
         }
       };
     }

@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -31,10 +30,6 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class LoaderFactory implements Disposable {
   private final Project myProject;
 
@@ -43,7 +38,7 @@ public final class LoaderFactory implements Disposable {
   private final MessageBusConnection myConnection;
 
   public static LoaderFactory getInstance(final Project project) {
-    return ServiceManager.getService(project, LoaderFactory.class);
+    return project.getService(LoaderFactory.class);
   }
 
   public LoaderFactory(final Project project) {
@@ -64,7 +59,7 @@ public final class LoaderFactory implements Disposable {
     myModule2ClassLoader.clear();
   }
 
-  @NotNull public ClassLoader getLoader(final VirtualFile formFile) {
+  @NotNull public ClassLoader getLoader(@NotNull VirtualFile formFile) {
     final Module module = ModuleUtilCore.findModuleForFile(formFile, myProject);
     if (module == null) {
       return getClass().getClassLoader();
@@ -73,7 +68,7 @@ public final class LoaderFactory implements Disposable {
     return getLoader(module);
   }
 
-  public ClassLoader getLoader(final Module module) {
+  public ClassLoader getLoader(@NotNull Module module) {
     final ClassLoader cachedLoader = myModule2ClassLoader.get(module);
     if (cachedLoader != null) {
       return cachedLoader;
@@ -124,7 +119,7 @@ public final class LoaderFactory implements Disposable {
       Object key = it.next();
       Object value = uiDefaults.get(key);
       if (value instanceof Class) {
-        ClassLoader loader = ((Class)value).getClassLoader();
+        ClassLoader loader = ((Class<?>)value).getClassLoader();
         if (loader instanceof DesignTimeClassLoader) {
           it.remove();
         }
@@ -135,7 +130,7 @@ public final class LoaderFactory implements Disposable {
   }
 
   private static final class DesignTimeClassLoader extends UrlClassLoader {
-    private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
+    private static final boolean isParallelCapable = registerAsParallelCapable();
 
     private final String myModuleName;
 

@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -47,7 +46,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   //can not use new SHIFT_DOWN_MASK etc because in this case ActionEvent modifiers do not match
   private static final int ADD_WATCH_MODIFIERS = (SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK;
-  static KeyStroke ADD_WATCH_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ADD_WATCH_MODIFIERS);
+  public static final KeyStroke ADD_WATCH_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ADD_WATCH_MODIFIERS);
 
   private final JPanel myMainPanel;
   private final JPanel myResultPanel;
@@ -60,7 +59,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private EvaluationMode myMode;
   private XSourcePosition mySourcePosition;
   private final SwitchModeAction mySwitchModeAction;
-  private final boolean myIsCodeFragmentEvaluationSupported;
 
   public XDebuggerEvaluationDialog(@NotNull XDebugSession session,
                                    @NotNull XDebuggerEditorsProvider editorsProvider,
@@ -92,7 +90,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myProject = project;
     myEditorsProvider = editorsProvider;
     mySourcePosition = sourcePosition;
-    myIsCodeFragmentEvaluationSupported = isCodeFragmentEvaluationSupported;
     setModal(false);
     setOKButtonText(XDebuggerBundle.message("xdebugger.button.evaluate"));
     setCancelButtonText(XDebuggerBundle.message("xdebugger.evaluate.dialog.close"));
@@ -120,6 +117,11 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         //doOKAction(); // do not evaluate on add to watches
         addToWatches();
@@ -137,16 +139,15 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myTreePanel.getTree().expandNodesOnLoad(XDebuggerEvaluationDialog::isFirstChild);
 
     EvaluationMode mode = XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().getEvaluationDialogMode();
-    if (mode == EvaluationMode.CODE_FRAGMENT && !myIsCodeFragmentEvaluationSupported) {
+    if (mode == EvaluationMode.CODE_FRAGMENT && !isCodeFragmentEvaluationSupported) {
       mode = EvaluationMode.EXPRESSION;
     }
-    if (mode == EvaluationMode.EXPRESSION && text.getMode() == EvaluationMode.CODE_FRAGMENT && myIsCodeFragmentEvaluationSupported) {
+    if (mode == EvaluationMode.EXPRESSION && text.getMode() == EvaluationMode.CODE_FRAGMENT && isCodeFragmentEvaluationSupported) {
       mode = EvaluationMode.CODE_FRAGMENT;
     }
     setTitle(XDebuggerBundle.message("xdebugger.evaluate.dialog.title"));
     switchToMode(mode, text);
-    FUCounterUsageLogger.getInstance().logEvent(project,"debugger.evaluate.usage", "dialog.open",
-                                                new FeatureUsageData().addData("mode", mode.name()));
+    DebuggerEvaluationStatisticsCollector.DIALOG_OPEN.log(project, mode);
     if (mode == EvaluationMode.EXPRESSION) {
       myInputComponent.getInputEditor().selectAll();
     }
@@ -186,8 +187,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    FUCounterUsageLogger.getInstance().logEvent(myProject, "debugger.evaluate.usage", "evaluate",
-                                                new FeatureUsageData().addData("mode", myMode.name()));
+    DebuggerEvaluationStatisticsCollector.EVALUATE.log(myProject, myMode);
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("debugger.evaluate.expression");
     evaluate();
   }
 
@@ -363,8 +364,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       EvaluationMode newMode = (myMode == EvaluationMode.EXPRESSION) ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION;
       // remember only on user selection
       XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().setEvaluationDialogMode(newMode);
-      FUCounterUsageLogger.getInstance().logEvent(myProject, "debugger.evaluate.usage", "mode.switch",
-                                                  new FeatureUsageData().addData("mode", newMode.name()));
+      DebuggerEvaluationStatisticsCollector.MODE_SWITCH.log(myProject, newMode);
       switchToMode(newMode, text);
     }
   }

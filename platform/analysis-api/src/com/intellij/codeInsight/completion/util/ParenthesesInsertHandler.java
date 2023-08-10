@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.util;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -14,9 +14,6 @@ import com.intellij.psi.PsiWhiteSpace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class ParenthesesInsertHandler<T extends LookupElement> implements InsertHandler<T> {
   public static final ParenthesesInsertHandler<LookupElement> WITH_PARAMETERS = new ParenthesesInsertHandler<>() {
     @Override
@@ -85,20 +82,21 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
     this(false, false, true);
   }
 
-  private static boolean isToken(@Nullable final PsiElement element, final String text) {
+  private static boolean isToken(final @Nullable PsiElement element, final String text) {
     return element != null && text.equals(element.getText());
   }
 
   protected abstract boolean placeCaretInsideParentheses(final InsertionContext context, final T item);
 
   @Override
-  public void handleInsert(@NotNull final InsertionContext context, @NotNull final T item) {
+  public void handleInsert(final @NotNull InsertionContext context, final @NotNull T item) {
+    final char completionChar = context.getCompletionChar();
     final Editor editor = context.getEditor();
+    if (completionChar != myLeftParenthesis && !editor.getSettings().isInsertParenthesesAutomatically()) return;
     final Document document = editor.getDocument();
     context.commitDocument();
     PsiElement lParen = findExistingLeftParenthesis(context);
 
-    final char completionChar = context.getCompletionChar();
     final boolean putCaretInside = completionChar == myLeftParenthesis || placeCaretInsideParentheses(context, item);
 
     if (completionChar == myLeftParenthesis) {
@@ -162,7 +160,7 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
     }
     else if (!mySpaceBetweenParentheses) {
       final int rangeStart = context.getStartOffset();
-      final int rangeEnd = editor.getCaretModel().getOffset();
+      final int rangeEnd = Math.max(editor.getCaretModel().getOffset(), context.getStartOffset());
 
       TabOutScopesTracker.getInstance().registerScopeRange(editor, rangeStart, rangeEnd);
     }
@@ -172,14 +170,12 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
     return needSpace ? " " : "";
   }
 
-  @Nullable
-  protected PsiElement findExistingLeftParenthesis(@NotNull InsertionContext context) {
+  protected @Nullable PsiElement findExistingLeftParenthesis(@NotNull InsertionContext context) {
     PsiElement element = findNextToken(context);
     return isToken(element, String.valueOf(myLeftParenthesis)) ? element : null;
   }
 
-  @Nullable
-  protected PsiElement findNextToken(@NotNull InsertionContext context) {
+  protected @Nullable PsiElement findNextToken(@NotNull InsertionContext context) {
     final PsiFile file = context.getFile();
     PsiElement element = file.findElementAt(context.getTailOffset());
     if (element instanceof PsiWhiteSpace) {

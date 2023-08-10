@@ -2,10 +2,12 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
+import com.intellij.execution.wsl.WslPath
+import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Strings
@@ -67,20 +69,15 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     }
 
   private fun getDefaultWorkingDirectory(): String? {
-    val roots = ProjectRootManager.getInstance(project).contentRoots
-    @Suppress("DEPRECATION")
-    val dir = if (roots.size == 1 && roots[0] != null && roots[0].isDirectory) roots[0] else project.baseDir
-    return dir?.canonicalPath
+    return project.guessProjectDir()?.canonicalPath
   }
 
   var shellPath: String
     get() {
       val workingDirectoryLazy : Lazy<String?> = lazy { startingDirectory }
-      val shellPath = if (isProjectLevelShellPath(workingDirectoryLazy::value)) {
-        state.shellPath
-      }
-      else {
-        TerminalOptionsProvider.instance.shellPath
+      val shellPath = when {
+        isProjectLevelShellPath(workingDirectoryLazy::value) && project.isTrusted() -> state.shellPath
+        else -> TerminalOptionsProvider.instance.shellPath
       }
       if (shellPath.isNullOrBlank()) {
         return findDefaultShellPath(workingDirectoryLazy::value)
@@ -99,16 +96,16 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     }
 
   private fun isProjectLevelShellPath(workingDirectory: () -> String?): Boolean {
-    return SystemInfo.isWindows && findWslDistribution(workingDirectory()) != null
+    return SystemInfo.isWindows && findWslDistributionName(workingDirectory()) != null
   }
 
   fun defaultShellPath(): String = findDefaultShellPath { startingDirectory }
 
   private fun findDefaultShellPath(workingDirectory: () -> String?): String {
     if (SystemInfo.isWindows) {
-      val wslDistribution = findWslDistribution(workingDirectory())
-      if (wslDistribution != null) {
-        return "wsl.exe --distribution $wslDistribution"
+      val wslDistributionName = findWslDistributionName(workingDirectory())
+      if (wslDistributionName != null) {
+        return "wsl.exe --distribution $wslDistributionName"
       }
     }
     val shell = System.getenv("SHELL")
@@ -122,15 +119,11 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
       }
       return "/bin/sh"
     }
-    return "cmd.exe"
+    return "powershell.exe"
   }
 
-  private fun findWslDistribution(directory: String?): String? {
-    if (directory == null) return null
-    val prefix = "\\\\wsl$\\"
-    if (!directory.startsWith(prefix)) return null
-    val endInd = directory.indexOf('\\', prefix.length)
-    return if (endInd >= 0) directory.substring(prefix.length, endInd) else null
+  private fun findWslDistributionName(directory: String?): String? {
+    return if (directory == null) null else WslPath.parseWindowsUncPath(directory)?.distributionId
   }
 
   companion object {

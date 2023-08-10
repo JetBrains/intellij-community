@@ -3,13 +3,16 @@ package org.intellij.images.actions
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import org.intellij.images.ImagesBundle
 import javax.swing.JComponent
 
@@ -29,6 +32,10 @@ class EditExternalImageEditorAction: DumbAwareAction() {
     showDialog(e.project)
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   class EditExternalImageEditorDialog(val project: Project?): DialogWrapper(project) {
 
     init {
@@ -43,13 +50,14 @@ class EditExternalImageEditorAction: DumbAwareAction() {
       fileDescriptor.title = ImagesBundle.message("select.external.executable.title")
       fileDescriptor.description = ImagesBundle.message("select.external.executable.message")
 
-      return panel() {
+      return panel {
         row(ImagesBundle.message("external.editor.executable.path")) {
-          textFieldWithBrowseButton({PropertiesComponent.getInstance().getValue(EXT_PATH_KEY, "")},
-                                    {PropertiesComponent.getInstance().setValue(EXT_PATH_KEY, it)},
-                                    project = project,
+          textFieldWithBrowseButton(project = project,
                                     fileChooserDescriptor = fileDescriptor,
-                                    fileChosen = {it.path})
+                                    fileChosen = { it.path })
+            .bindText({ PropertiesComponent.getInstance().getValue(EXT_PATH_KEY, "") },
+                      { PropertiesComponent.getInstance().setValue(EXT_PATH_KEY, it) })
+            .align(AlignX.FILL)
         }
       }
     }

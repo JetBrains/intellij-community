@@ -3,8 +3,9 @@ package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.ide.CopyProvider;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
@@ -22,6 +23,11 @@ class ServiceViewCopyProvider implements CopyProvider {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void performCopy(@NotNull DataContext dataContext) {
     List<ServiceViewItem> items = myServiceView.getSelectedItems();
     if (!items.isEmpty()) {
@@ -36,7 +42,7 @@ class ServiceViewCopyProvider implements CopyProvider {
       return false;
     }
     JComponent detailsComponent = myServiceView.getUi().getDetailsComponent();
-    return detailsComponent == null || !UIUtil.isAncestor(detailsComponent, dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT));
+    return detailsComponent == null || !UIUtil.isAncestor(detailsComponent, dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
   }
 
   @Override

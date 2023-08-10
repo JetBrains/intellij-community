@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -31,7 +17,9 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +28,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,9 +44,11 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
     Project project = dir.getProject();
-    ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    VirtualFile virtualFile = dir.getVirtualFile();
-    String packageName = projectFileIndex.getPackageNameByDirectory(virtualFile);
+    VirtualFile file = dir.getVirtualFile();
+    if (file instanceof LightVirtualFile lvf && lvf.getOriginalFile() != null) {
+      file = lvf.getOriginalFile();
+    }
+    String packageName = PackageIndex.getInstance(project).getPackageNameByDirectory(file);
     if (packageName == null) return null;
     return JavaPsiFacade.getInstance(project).findPackage(packageName);
   }
@@ -180,7 +171,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
       element = askToDefineVariables ? new CreateFromTemplateDialog(project, dir, template, null, properties).create()
                                      : FileTemplateUtil.createFromTemplate(template, fileName, properties, dir);
     }
-    catch (IncorrectOperationException e) {
+    catch (IncorrectOperationException | ProcessCanceledException e) {
       throw e;
     }
     catch (Exception e) {

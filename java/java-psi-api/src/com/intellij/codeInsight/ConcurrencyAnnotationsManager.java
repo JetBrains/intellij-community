@@ -1,14 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ConcurrencyAnnotationsManager {
+@Service(Service.Level.PROJECT)
+public final class ConcurrencyAnnotationsManager {
   private static final String[] FRAMEWORKS = {
     "net.jcip.annotations",
     "javax.annotation.concurrent",
@@ -52,13 +53,13 @@ public class ConcurrencyAnnotationsManager {
   }
 
   public static ConcurrencyAnnotationsManager getInstance(Project project) {
-    return ServiceManager.getService(project, ConcurrencyAnnotationsManager.class);
+    return project.getService(ConcurrencyAnnotationsManager.class);
   }
 
   public List<String> getImmutableAnnotations() {
     return myImmutableList;
   }
-  
+
   public List<String> getGuardedByAnnotations() {
     return myGuardedByList;
   }

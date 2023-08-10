@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.services.impl
 
 import com.intellij.openapi.Disposable
@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import com.intellij.reference.SoftReference
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.containers.FixedHashMap
@@ -34,6 +33,7 @@ import org.editorconfig.language.services.EditorConfigServiceLoading
 import org.editorconfig.language.services.EditorConfigServiceResult
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 import java.lang.ref.Reference
+import java.lang.ref.SoftReference
 
 class EditorConfigFileHierarchyServiceImpl(private val project: Project) : EditorConfigFileHierarchyService(), BulkFileListener, RegistryValueListener, Disposable {
   private val taskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("EditorConfig.notification.vfs.update.executor")
@@ -65,7 +65,7 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
   override fun after(events: List<VFileEvent>) {
     val editorConfigs = events
       .asSequence()
-      .filter { PathUtil.getFileName(it.path) == EditorConfigFileConstants.FILE_NAME }
+      .filter { PathUtil.getFileName(it.path) == EditorConfigFileConstants.FILE_NAME && it.isFromSave }
       .toList()
     if (editorConfigs.isNotEmpty()) {
       synchronized(cacheLocker) {
@@ -76,8 +76,6 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
     }
   }
 
-  override fun beforeValueChanged(value: RegistryValue) {}
-
   override fun afterValueChanged(value: RegistryValue) {
     synchronized(cacheLocker) {
       cacheDropsCount += 1
@@ -86,9 +84,9 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
   }
 
   override fun getParentEditorConfigFiles(virtualFile: VirtualFile): EditorConfigServiceResult {
-    val cachedResult = SoftReference.dereference(synchronized(cacheLocker) {
+    val cachedResult = synchronized(cacheLocker) {
       parentFilesCache[virtualFile]
-    })
+    }?.get()
 
     if (cachedResult != null) return EditorConfigServiceLoaded(cachedResult)
     startBackgroundTask(virtualFile)
@@ -114,7 +112,7 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
    */
   private fun findApplicableFiles(virtualFile: VirtualFile): List<EditorConfigPsiFile>? {
     val app = ApplicationManager.getApplication()
-    Log.assertTrue(!app.isDispatchThread)
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     app.assertReadAccessAllowed()
     return when {
       !EditorConfigRegistry.shouldStopAtProjectRoot() -> findParentPsiFiles(virtualFile)
@@ -130,7 +128,7 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
    */
   private fun findParentPsiFiles(file: VirtualFile): List<EditorConfigPsiFile>? {
     val app = ApplicationManager.getApplication()
-    Log.assertTrue(!app.isDispatchThread)
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     app.assertReadAccessAllowed()
     val expectedCacheDropsCount = cacheDropsCount
 
@@ -157,7 +155,7 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
    */
   private fun findParentFiles(file: VirtualFile): List<VirtualFile>? {
     val app = ApplicationManager.getApplication()
-    Log.assertTrue(!app.isDispatchThread)
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     app.assertReadAccessAllowed()
     val fileName = EditorConfigFileConstants.FILE_NAME
     val expectedCacheDropsCount = cacheDropsCount

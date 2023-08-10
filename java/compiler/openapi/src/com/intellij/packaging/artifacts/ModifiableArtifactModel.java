@@ -17,16 +17,21 @@ package com.intellij.packaging.artifacts;
 
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ModifiableArtifactModel extends ArtifactModel {
 
   @NotNull
-  ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType);
+  default ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType) {
+    return addArtifact(name, artifactType, artifactType.createRootElement(name));
+  }
 
   @NotNull
-  ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType, CompositePackagingElement<?> rootElement);
+  default ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType, CompositePackagingElement<?> rootElement) {
+    return addArtifact(name, artifactType, rootElement, null);
+  }
 
   @NotNull
   ModifiableArtifact addArtifact(@NotNull String name, @NotNull ArtifactType artifactType, CompositePackagingElement<?> rootElement,
@@ -38,7 +43,7 @@ public interface ModifiableArtifactModel extends ArtifactModel {
   ModifiableArtifact getOrCreateModifiableArtifact(@NotNull Artifact artifact);
 
   @Nullable
-  Artifact getModifiableCopy(Artifact artifact);
+  Artifact getModifiableCopy(@NotNull Artifact artifact);
 
   void addListener(@NotNull ArtifactListener listener);
 
@@ -47,6 +52,7 @@ public interface ModifiableArtifactModel extends ArtifactModel {
 
   boolean isModified();
 
+  @RequiresWriteLock
   void commit();
 
   void dispose();

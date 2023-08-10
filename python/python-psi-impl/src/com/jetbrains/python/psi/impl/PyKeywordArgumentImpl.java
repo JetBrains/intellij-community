@@ -14,9 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyKeywordArgumentImpl extends PyElementImpl implements PyKeywordArgument {
   public PyKeywordArgumentImpl(ASTNode astNode) {
     super(astNode);

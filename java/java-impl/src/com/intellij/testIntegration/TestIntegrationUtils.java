@@ -24,6 +24,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -305,11 +306,13 @@ public final class TestIntegrationUtils {
   public static PsiMethod createDummyMethod(@NotNull PsiElement context) {
     JVMElementFactory factory = JVMElementFactories.getFactory(context.getLanguage(), context.getProject());
     if (factory == null) factory = JavaPsiFacade.getElementFactory(context.getProject());
-    return factory.createMethod("dummy", PsiType.VOID);
+    return factory.createMethod("dummy", PsiTypes.voidType());
   }
 
   public static List<TestFramework> findSuitableFrameworks(PsiClass targetClass) {
-    List<TestFramework> frameworks = TestFramework.EXTENSION_NAME.getExtensionList();
+    List<TestFramework> frameworks = ContainerUtil.filter(TestFramework.EXTENSION_NAME.getExtensionList(), framework ->
+      TestFrameworks.isSuitableByLanguage(targetClass, framework)
+    );
     Project project = targetClass.getProject();
 
     List<TestFramework> result = new SmartList<>();

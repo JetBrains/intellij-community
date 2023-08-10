@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -14,9 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public final class FileTypeEditorHighlighterProviders extends FileTypeExtension<EditorHighlighterProvider> {
   public static final ExtensionPointName<KeyedLazyInstance<EditorHighlighterProvider>> EP_NAME = ExtensionPointName.create("com.intellij.editorHighlighterProvider");
   public static final FileTypeEditorHighlighterProviders INSTANCE = new FileTypeEditorHighlighterProviders();
@@ -27,9 +25,8 @@ public final class FileTypeEditorHighlighterProviders extends FileTypeExtension<
     super(EP_NAME);
   }
 
-  @NotNull
   @Override
-  protected List<EditorHighlighterProvider> buildExtensions(@NotNull String stringKey, @NotNull final FileType key) {
+  protected @NotNull List<EditorHighlighterProvider> buildExtensions(@NotNull String stringKey, final @NotNull FileType key) {
     List<EditorHighlighterProvider> fromEP = super.buildExtensions(stringKey, key);
     if (fromEP.isEmpty()) {
       checkAddEPListener();

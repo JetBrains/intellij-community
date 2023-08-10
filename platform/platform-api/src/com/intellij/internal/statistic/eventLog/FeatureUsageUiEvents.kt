@@ -13,21 +13,21 @@ fun getUiEventLogger(): FeatureUsageUiEvents {
 }
 
 interface FeatureUsageUiEvents {
-  fun logSelectConfigurable(configurable: Configurable)
+  fun logSelectConfigurable(configurable: Configurable, loadedFromCache: Boolean, loadTimeMs: Long)
 
   fun logApplyConfigurable(configurable: Configurable)
 
   fun logResetConfigurable(configurable: Configurable)
 
-  fun logShowDialog(name: String, context: Class<*>)
+  fun logShowDialog(dialogClass: Class<*>)
 
-  fun logCloseDialog(name: String, exitCode: Int, context: Class<*>)
+  fun logCloseDialog(dialogClass: Class<*>, exitCode: Int)
 
-  fun logClickOnHelpDialog(name: String, context: Class<*>)
+  fun logClickOnHelpDialog(dialogClass: Class<*>)
 }
 
 object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
-  override fun logSelectConfigurable(configurable: Configurable) {
+  override fun logSelectConfigurable(configurable: Configurable, loadedFromCache: Boolean, loadTimeMs: Long) {
   }
 
   override fun logApplyConfigurable(configurable: Configurable) {
@@ -36,12 +36,12 @@ object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
   override fun logResetConfigurable(configurable: Configurable) {
   }
 
-  override fun logShowDialog(name: String, context: Class<*>) {
+  override fun logShowDialog(dialogClass: Class<*>) {
   }
 
-  override fun logCloseDialog(name: String, exitCode: Int, context: Class<*>) {
+  override fun logCloseDialog(dialogClass: Class<*>, exitCode: Int) {
   }
 
-  override fun logClickOnHelpDialog(name: String, context: Class<*>) {
+  override fun logClickOnHelpDialog(dialogClass: Class<*>) {
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -24,12 +24,9 @@ import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
-import git4idea.GitBranch;
-import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
+import git4idea.*;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
@@ -45,7 +42,6 @@ import git4idea.update.GitUpdatedRanges;
 import git4idea.update.HashRange;
 import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +51,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.notification.NotificationType.INFORMATION;
 import static git4idea.GitNotificationIdsHolder.LOCAL_CHANGES_DETECTED;
+import static git4idea.commands.GitImpl.REBASE_CONFIG_PARAMS;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE;
 import static git4idea.update.GitUpdateSessionKt.getBodyForUpdateNotification;
 import static git4idea.update.GitUpdateSessionKt.getTitleForUpdateNotification;
@@ -140,6 +137,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
               }
               GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(project, selectedRoot);
               rebaseEditorManager.set(GitHandlerRebaseEditorManager.prepareEditor(handler, editor));
+              handler.overwriteConfig(REBASE_CONFIG_PARAMS);
             }
 
             handler.addLineListener(localChangesDetector);
@@ -205,16 +203,15 @@ abstract class GitMergeAction extends GitRepositoryAction {
         if (notificationData != null) {
           String title = getTitleForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount());
           String content = getBodyForUpdateNotification(notificationData.getFilteredCommitsCount());
-          notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, INFORMATION, null,
-                                                                              "git.files.updated.after.merge");
-          notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer(
-            "action.NotificationAction.GitMergeAction.text.view.commits"),
-                                                                 notificationData.getViewCommitAction()));
+          notification = VcsNotifier.STANDARD_NOTIFICATION
+            .createNotification(title, content, INFORMATION)
+            .setDisplayId(GitNotificationIdsHolder.FILES_UPDATED_AFTER_MERGE)
+            .addAction(NotificationAction.createSimple(GitBundle.message("action.NotificationAction.GitMergeAction.text.view.commits"), notificationData.getViewCommitAction()));
         }
         else {
-          notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(VcsBundle.message("message.text.all.files.are.up.to.date"),
-                                                                              "", INFORMATION, null,
-                                                                              "git.all.files.are.up.to.date");
+          notification = VcsNotifier.STANDARD_NOTIFICATION
+            .createNotification(VcsBundle.message("message.text.all.files.are.up.to.date"), INFORMATION)
+            .setDisplayId(GitNotificationIdsHolder.FILES_UP_TO_DATE);
         }
         VcsNotifier.getInstance(project).notify(notification);
       }
@@ -234,7 +231,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
       VcsNotifier.getInstance(project)
         .notifyError(getNotificationErrorDisplayId(),
                      GitBundle.message("merge.action.operation.failed", getActionName()),
-                     result.getErrorOutputAsJoinedString());
+                     result.getErrorOutputAsHtmlString());
       repository.update();
     }
   }
@@ -249,7 +246,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
       MergeChangeCollector collector = new MergeChangeCollector(project, repository, currentRev);
       collector.collect(files);
 
-      GuiUtils.invokeLaterIfNeeded(() -> {
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
         ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
         UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, ActionInfo.UPDATE, false);
         if (tree != null) {
@@ -257,7 +254,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
           tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, GitBundle.message("merge.action.after.update.label")));
           ViewUpdateInfoNotification.focusUpdateInfoTree(project, tree);
         }
-      }, ModalityState.defaultModalityState());
+      });
     }
     catch (VcsException e) {
       GitVcs.getInstance(project).showErrors(singletonList(e), actionName);

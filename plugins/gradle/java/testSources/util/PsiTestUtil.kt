@@ -2,12 +2,9 @@
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.DebugUtil
-
-val LOG = Logger.getInstance("org.jetbrains.plugins.gradle.util.PsiTestUtil")
 
 fun <R> runReadActionAndWait(action: () -> R): R {
   val application = ApplicationManager.getApplication()
@@ -25,9 +22,14 @@ fun PsiElement.findChildByElementType(typeName: String) =
 
 fun PsiElement.findChildrenByElementType(typeName: String): List<PsiElement> {
   val elements = children.filter { it.node.elementType.toString() == typeName }
-  if (elements.isNotEmpty()) return elements
-  printPsiStructure()
-  LOG.serve("PsiElement[$typeName] not found in $this")
+  if (elements.isEmpty()) {
+    throw AssertionError(
+      "PsiElement[$typeName] not found in $this\n" +
+      "PSI:\n" + DebugUtil.psiToString(this, true) + "\n" +
+      "PSI STRUCTURE:\n" + psiStructureToString()
+    )
+  }
+  return elements
 }
 
 inline fun <reified T : PsiElement> PsiElement.findChildByType(): T =
@@ -35,18 +37,23 @@ inline fun <reified T : PsiElement> PsiElement.findChildByType(): T =
 
 inline fun <reified T : PsiElement> PsiElement.findChildrenByType(): List<T> {
   val elements = children.filterIsInstance<T>()
-  if (elements.isNotEmpty()) return elements
-  LOG.warn("\n" + DebugUtil.psiToString(this, true))
-  printPsiStructure()
-  LOG.serve("${T::class.java} not found in $this")
+  if (elements.isEmpty()) {
+    throw AssertionError(
+      "${T::class.java} not found in $this\n" +
+      "PSI:\n" + DebugUtil.psiToString(this, true) + "\n" +
+      "PSI STRUCTURE:\n" + psiStructureToString()
+    )
+  }
+  return elements
 }
 
-fun PsiElement.printPsiStructure(indent: Int = 0) {
-  val prefix = "  ".repeat(indent)
-  LOG.warn(prefix + node.elementType.toString())
-  children.forEach { it.printPsiStructure(indent + 1) }
+fun PsiElement.psiStructureToString(indent: Int = 0): String {
+  return buildString {
+    append("  ".repeat(indent))
+    append(node.elementType.toString())
+    append("\n")
+    for (child in children) {
+      append(child.psiStructureToString(indent + 1))
+    }
+  }
 }
-
-@Suppress("CAST_NEVER_SUCCEEDS")
-fun Logger.serve(message: String): Nothing =
-  error(message) as Nothing

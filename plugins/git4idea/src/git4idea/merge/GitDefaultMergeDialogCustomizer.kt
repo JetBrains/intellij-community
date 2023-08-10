@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge
 
 import com.intellij.diff.DiffEditorTitleCustomizer
@@ -16,12 +16,12 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
+import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.util.Consumer
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -32,7 +32,6 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitBranch
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil.*
-import git4idea.GitVcs
 import git4idea.changes.GitChangeUtils
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitHistoryUtils
@@ -45,7 +44,6 @@ import git4idea.rebase.GitRebaseUtils
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.Nls
-import java.util.*
 import javax.swing.JPanel
 
 internal open class GitDefaultMergeDialogCustomizer(
@@ -182,8 +180,7 @@ internal open class GitDefaultMergeDialogCustomizer(
   private fun loadCherryPickCommitDetails(repository: GitRepository): CherryPickDetails? {
     val cherryPickHead = tryResolveRef(repository, CHERRY_PICK_HEAD) ?: return null
 
-    val shortDetails = GitLogUtil.collectMetadata(project, GitVcs.getInstance(project), repository.root,
-                                                  listOf(cherryPickHead.asString()))
+    val shortDetails = GitLogUtil.collectMetadata(project, repository.root, listOf(cherryPickHead.asString()))
 
     val result = shortDetails.singleOrNull() ?: return null
     return CherryPickDetails(cherryPickHead.toShortString(), result.author.name, result.subject)
@@ -289,8 +286,8 @@ internal fun getTitleWithCommitDetailsCustomizer(
   @NlsSafe commit: String
 ) = DiffEditorTitleCustomizer {
   getTitleWithShowDetailsAction(title) {
-    val dlg = ChangeListViewerDialog(repository.project)
-    dlg.loadChangesInBackground {
+    val panel = LoadingCommittedChangeListPanel(repository.project)
+    panel.loadChangesInBackground {
       val changeList = GitChangeUtils.getRevisionChanges(
         repository.project,
         repository.root,
@@ -299,8 +296,10 @@ internal fun getTitleWithCommitDetailsCustomizer(
         false,
         false
       )
-      ChangeListViewerDialog.ChangelistData(changeList, file)
+      LoadingCommittedChangeListPanel.ChangelistData(changeList, file)
     }
+
+    val dlg = ChangeListViewerDialog(repository.project, panel)
     dlg.title = StringUtil.stripHtml(title, false)
     dlg.isModal = true
     dlg.show()
@@ -321,7 +320,7 @@ internal fun getTitleWithCommitsRangeDetailsCustomizer(
         readFullDetails(
           repository.project,
           repository.root,
-          Consumer { commit ->
+          { commit ->
             val commitMetadata = VcsCommitMetadataImpl(
               commit.id, commit.parents, commit.commitTime, commit.root, commit.subject,
               commit.author, commit.fullMessage, commit.committer, commit.authorTime)
@@ -344,7 +343,7 @@ internal fun getTitleWithCommitsRangeDetailsCustomizer(
 internal fun getTitleWithShowDetailsAction(@Nls title: String, action: () -> Unit): JPanel =
   BorderLayoutPanel()
     .addToCenter(JBLabel(title).setCopyable(true))
-    .addToRight(LinkLabel.create(GitBundle.message("merge.dialog.customizer.show.details.link.label"), action))
+    .addToRight(ActionLink(GitBundle.message("merge.dialog.customizer.show.details.link.label")) { action() })
 
 private fun Boolean.toInt() = if (this) 1 else 0
 

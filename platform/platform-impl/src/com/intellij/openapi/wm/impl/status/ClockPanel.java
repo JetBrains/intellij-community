@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.text.DateTimeFormatManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,14 +16,16 @@ import java.util.concurrent.TimeUnit;
 import static java.awt.RenderingHints.KEY_ANTIALIASING;
 import static java.util.Calendar.*;
 
-public class ClockPanel extends JComponent {
-  private static final int TOP = 1 << 0 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9;
-  private static final int TOP_LEFT = 1 << 0 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9;
-  private static final int TOP_RIGHT = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 7 | 1 << 8 | 1 << 9;
-  private static final int MIDDLE = 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9;
-  private static final int BOTTOM_LEFT = 1 << 0 | 1 << 2 | 1 << 6 | 1 << 8;
-  private static final int BOTTOM_RIGHT = 1 << 0 | 1 << 1 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9;
-  private static final int BOTTOM = 1 << 0 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9;
+public final class ClockPanel extends JComponent {
+  //                                    Digit segments
+  //                                        9876543210
+  private static final int TOP          = 0b1111101101;
+  private static final int TOP_LEFT     = 0b1101110001;
+  private static final int TOP_RIGHT    = 0b1110011111;
+  private static final int MIDDLE       = 0b1101111100;
+  private static final int BOTTOM_LEFT  = 0b0101000101;
+  private static final int BOTTOM_RIGHT = 0b1111111011;
+  private static final int BOTTOM       = 0b1101101101;
   //              top
   //              ---
   //    top-left |   | top-right
@@ -47,7 +36,7 @@ public class ClockPanel extends JComponent {
   //              ---
   //            bottom
 
-  protected final Calendar myCalendar;
+  private final Calendar myCalendar;
   private final boolean is24Hours;
   private ScheduledFuture<?> myScheduledFuture;
   private final Runnable myRepaintRunnable = () -> this.repaint();
@@ -55,6 +44,13 @@ public class ClockPanel extends JComponent {
   public ClockPanel() {
     myCalendar = getInstance();
     is24Hours = new SimpleDateFormat().toLocalizedPattern().contains("H");
+  }
+
+  private boolean is24Hours() {
+    if (DateTimeFormatManager.getInstance().isOverrideSystemDateFormat()) {
+      return DateTimeFormatManager.getInstance().isUse24HourTime();
+    }
+    return is24Hours;
   }
 
   private void scheduleNextRepaint() {
@@ -103,14 +99,15 @@ public class ClockPanel extends JComponent {
       g.setStroke(new BasicStroke(thickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
       g.setColor(UIManager.getColor("Label.foreground"));
       myCalendar.setTimeInMillis(System.currentTimeMillis());
-      int hours = myCalendar.get(is24Hours ? HOUR_OF_DAY : HOUR);
-      if (hours == 0 && !is24Hours) {
+      boolean is24 = is24Hours();
+      int hours = myCalendar.get(is24 ? HOUR_OF_DAY : HOUR);
+      if (hours == 0 && !is24) {
         hours = 12;
       }
       int minutes = myCalendar.get(MINUTE);
       int x = 0;
       int y = (getHeight() - h) / 2;
-      boolean eveningDot = !is24Hours && myCalendar.get(HOUR_OF_DAY) > 11;
+      boolean eveningDot = !is24 && myCalendar.get(HOUR_OF_DAY) > 11;
       if (eveningDot) {
         g.setStroke(new BasicStroke(thickness * 2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g.draw(new Line2D.Float(x + thickness, y + thickness, x + thickness, y + thickness + thickness / 20));

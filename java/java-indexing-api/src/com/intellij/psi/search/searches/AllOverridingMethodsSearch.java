@@ -16,7 +16,6 @@ import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author ven
  * Searches deeply for all overriding methods of all methods in a class, processing pairs
  * (method in original class, overriding method)
  */

@@ -17,9 +17,6 @@ package com.intellij.codeInsight.lookup;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public abstract class ClassifierFactory<T> {
   private final String myId;
 
@@ -36,9 +33,7 @@ public abstract class ClassifierFactory<T> {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ClassifierFactory)) return false;
-
-    ClassifierFactory that = (ClassifierFactory)o;
+    if (!(o instanceof ClassifierFactory that)) return false;
 
     if (!myId.equals(that.myId)) return false;
 

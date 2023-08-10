@@ -1,31 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import java.util.concurrent.CompletableFuture
 
 interface GHPRStateDataProvider {
 
-  @RequiresEdt
-  fun loadMergeabilityState(): CompletableFuture<GHPRMergeabilityState>
+  val mergeabilityState: Flow<Result<GHPRMergeabilityState>>
 
   @RequiresEdt
   fun reloadMergeabilityState()
-
-  @RequiresEdt
-  fun addMergeabilityStateListener(disposable: Disposable, listener: () -> Unit)
-
-  @RequiresEdt
-  fun loadMergeabilityState(disposable: Disposable, consumer: (CompletableFuture<GHPRMergeabilityState>) -> Unit) {
-    addMergeabilityStateListener(disposable) {
-      consumer(loadMergeabilityState())
-    }
-    consumer(loadMergeabilityState())
-  }
 
 
   @CalledInAny

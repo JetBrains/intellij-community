@@ -11,7 +11,7 @@ fun <T> flatten(vararg collections: Collection<T>): Collection<T> = FlatCollecti
 
 private class FlatCollection<T>(private val collections: Array<out Collection<T>>) : AbstractCollection<T>() {
 
-  override val size: Int get() = collections.sumBy { it.size }
+  override val size: Int get() = collections.sumOf { it.size }
 
   override fun iterator(): Iterator<T> = object : FlatteningIterator<Collection<T>, T>(collections.iterator()) {
 

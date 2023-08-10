@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -18,9 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-/**
- * @author yole
- */
+
 public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
   private static final MyAlignProperty ALIGN_PROPERTY = new MyAlignProperty();
 
@@ -80,8 +78,7 @@ public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
     @Override
     public Integer getValue(final RadContainer component) {
       final LayoutManager layout = component.getLayout();
-      if (!(layout instanceof FlowLayout)) return null;
-      FlowLayout flowLayout = (FlowLayout)layout;
+      if (!(layout instanceof FlowLayout flowLayout)) return null;
       return flowLayout.getAlignment();
     }
 
@@ -111,8 +108,7 @@ public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
 
     @Override public boolean isModified(final RadContainer component) {
       final LayoutManager layout = component.getLayout();
-      if (!(layout instanceof FlowLayout)) return false;
-      FlowLayout flowLayout = (FlowLayout)layout;
+      if (!(layout instanceof FlowLayout flowLayout)) return false;
       return flowLayout.getAlignment() != FlowLayout.CENTER;
     }
   }

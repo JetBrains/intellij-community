@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -25,10 +26,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 
-/**
- * @author yole
- */
+
 public class AddComponentAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
@@ -90,8 +95,9 @@ public class AddComponentAction extends AnAction {
     if (itemToBeAdded.getIconPath() == null || itemToBeAdded.getIconPath().length() == 0) {
       PsiClass aClass =
         JavaPsiFacade.getInstance(project).findClass(itemToBeAdded.getClassName().replace('$', '.'), ProjectScope.getAllScope(project));
-      while(aClass != null) {
-        final ComponentItem item = palette.getItem(aClass.getQualifiedName());
+      while (aClass != null) {
+        String name = aClass.getQualifiedName();
+        ComponentItem item = name == null ? null : palette.getItem(name);
         if (item != null) {
           String iconPath = item.getIconPath();
           if (iconPath != null && iconPath.length() > 0) {
@@ -104,7 +110,8 @@ public class AddComponentAction extends AnAction {
     }
   }
 
-  @Override public void update(@NotNull AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (e.getData(GroupItem.DATA_KEY) != null ||
         e.getData(ComponentItem.DATA_KEY) != null) {

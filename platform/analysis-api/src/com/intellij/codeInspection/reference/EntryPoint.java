@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.reference;
 
@@ -24,12 +10,35 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Allows to mark some elements as implicitly used,
+ * so "Unused declaration" inspection would treat <b>all code</b> reachable from those elements as used.
+ * <p/>
+ * 
+ * Entry points can be configured by the user. Common examples are main methods, tests, etc
+ * 
+ * @see com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
+ * @see com.intellij.codeInsight.daemon.ImplicitUsageProvider
+ */
 public abstract class EntryPoint implements JDOMExternalizable , Cloneable {
   private static final Logger LOG = Logger.getInstance(EntryPoint.class);
 
+  /**
+   * @return presentable name to be shown at unused declaration's settings page, "Entry Points" tab 
+   */
   public abstract @NotNull @Nls String getDisplayName();
+
+  /**
+   * @param refElement element in ref graph
+   * @param psiElement corresponding psi element, 
+   * @return true if element should be treated as entry point
+   */
   public abstract boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement);
   public abstract boolean isEntryPoint(@NotNull PsiElement psiElement);
+
+  /**
+   * if entry point is enabled by user or not
+   */
   public abstract boolean isSelected();
   public abstract void setSelected(boolean selected);
 
@@ -37,6 +46,10 @@ public abstract class EntryPoint implements JDOMExternalizable , Cloneable {
     return true;
   }
 
+  /**
+   * @return annotations which signal that element is used. 
+   *         In batch mode, elements with these annotations are added to the entries points of the run
+   */
   public String @Nullable [] getIgnoreAnnotations() {
     return null;
   }

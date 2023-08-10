@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.Annotation;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class IndexedElementInvocationHandler extends DomInvocationHandler {
   private static final Logger LOG = Logger.getInstance(IndexedElementInvocationHandler.class);
   private final int myIndex;

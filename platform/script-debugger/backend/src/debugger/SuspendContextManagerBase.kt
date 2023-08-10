@@ -56,7 +56,7 @@ abstract class SuspendContextManagerBase<T : SuspendContext<CALL_FRAME>, CALL_FR
 
   override fun restartFrame(callFrame: CALL_FRAME): Promise<Boolean> = restartFrame(callFrame, contextOrFail)
 
-  protected open fun restartFrame(callFrame: CALL_FRAME, currentContext: T): Promise<Boolean> = rejectedPromise<Boolean>("Unsupported")
+  protected open fun restartFrame(callFrame: CALL_FRAME, currentContext: T): Promise<Boolean> = rejectedPromise("Unsupported")
 
   override fun canRestartFrame(callFrame: CallFrame): Boolean = false
 

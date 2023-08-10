@@ -1,22 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.processAllImplementationClasses
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.PlatformTestUtil.useAppConfigDir
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createOrLoadProject
 import com.intellij.util.io.getDirectoryTree
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jdom.Element
@@ -51,21 +50,23 @@ internal class DoNotSaveDefaultsTest {
 
   private suspend fun doTest(componentManager: ComponentManagerImpl, isTestEmptyState: Boolean = false) {
     // wake up (edt, some configurables want read action)
-    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-      val picoContainer = componentManager.picoContainer
-      processAllImplementationClasses(componentManager.picoContainer) { clazz, _ ->
-        val className = clazz.name
-        // CvsTabbedWindow calls invokeLater in constructor
-        if (className != "com.intellij.cvsSupport2.ui.CvsTabbedWindow"
-            && className != "com.intellij.lang.javascript.bower.BowerPackagingService"
-            && !className.endsWith(".MessDetectorConfigurationManager")
-            && className != "org.jetbrains.plugins.groovy.mvc.MvcConsole") {
-          val instance = picoContainer.getComponentInstance(className)
-          if (isTestEmptyState && instance is PersistentStateComponent<*>) {
-            testEmptyState(instance)
-          }
+    withContext(Dispatchers.EDT) {
+      for (instance in componentManager.instances(createIfNeeded = true) { aClass ->
+        if (!PersistentStateComponent::class.java.isAssignableFrom(aClass)) {
+          return@instances false
         }
-        true
+
+        val className = aClass.name
+        // CvsTabbedWindow calls invokeLater in constructor
+        className != "com.intellij.diagnostic.EventWatcherImpl"
+        className != "com.intellij.cvsSupport2.ui.CvsTabbedWindow"
+        && className != "com.intellij.lang.javascript.bower.BowerPackagingService"
+        && !className.endsWith(".MessDetectorConfigurationManager")
+        && className != "org.jetbrains.plugins.groovy.mvc.MvcConsole"
+      }) {
+        if (isTestEmptyState) {
+          testEmptyState(instance as PersistentStateComponent<*>)
+        }
       }
     }
 

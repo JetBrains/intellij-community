@@ -34,10 +34,11 @@ public final class PyCaseSensitiveResolveTest extends PyEnvTestCase {
           myFixture.configureByFile("test.py");
           myFixture.completeBasic();
           Assert.assertEquals("Completion failed. Failed to resolve unittest? Case-sensitive resolve failed?",
-                              "from unittest import TestCase\n" +
-                              '\n' +
-                              '\n' +
-                              "TestCase().assertIsNotNone()",
+                              """
+                                from unittest import TestCase
+
+
+                                TestCase().assertIsNotNone()""",
                               myFixture.getFile().getText());
         });
       }

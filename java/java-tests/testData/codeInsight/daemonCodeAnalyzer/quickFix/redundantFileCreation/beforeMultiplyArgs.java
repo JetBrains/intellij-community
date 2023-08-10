@@ -1,4 +1,4 @@
-// "Fix all 'Redundant File object creation' problems in file" "true"
+// "Fix all 'Redundant 'File' instance creation' problems in file" "true"
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;

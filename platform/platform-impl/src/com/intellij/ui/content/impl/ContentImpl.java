@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.Disposable;
@@ -7,10 +7,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,6 +15,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class ContentImpl extends UserDataHolderBase implements Content {
+  @NonNls public static final String PROP_CONTENT_MANAGER = "contentManager";
   private @NlsContexts.TabTitle String myDisplayName;
   private @NlsContexts.Tooltip String myDescription;
   private JComponent myComponent;
@@ -124,8 +122,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   @Override
   public String getTabName() {
-    if (myTabName != null) return myTabName;
-    return myDisplayName;
+    return myTabName == null ? myDisplayName : myTabName;
   }
 
   @Override
@@ -176,7 +173,9 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   public void setManager(@Nullable ContentManager manager) {
+    ContentManager oldValue = myManager;
     myManager = manager;
+    myChangeSupport.firePropertyChange(PROP_CONTENT_MANAGER, oldValue, myManager);
   }
 
   @Override
@@ -264,12 +263,12 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   @Override
   @NonNls
   public String toString() {
-    StringBuilder sb = new StringBuilder("Content name=").append(myDisplayName);
-    if (myIsPinned)
-      sb.append(", pinned");
-    if (myExecutionId != 0)
-      sb.append(", executionId=").append(myExecutionId);
-    return sb.toString();
+    return "Content name="+getDisplayName()
+           + (getDescription() == null ? "" : "; description='"+getDescription()+"'")
+           + (getTabName() == null ? "" : "; tab name='"+getTabName()+"'")
+           + (getToolwindowTitle() == null ? "" : "; toolwindow='"+getToolwindowTitle()+"'")
+           + (isPinned() ? ", pinned" : "")
+           + (getExecutionId() == 0 ? "" : ", executionId=" + getExecutionId());
   }
 
   @Override
@@ -300,6 +299,14 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   @Override
   public void fireAlert() {
     myChangeSupport.firePropertyChange(PROP_ALERT, null, true);
+  }
+
+  /**
+   * @see com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+   */
+  @ApiStatus.Internal
+  public void fireTabLayout() {
+    myChangeSupport.firePropertyChange(PROP_TAB_LAYOUT, null, true);
   }
 
   @Override

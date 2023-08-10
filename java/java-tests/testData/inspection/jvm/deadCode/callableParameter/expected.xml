@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  
+  <problem>
+    <file>TC.kt</file>
+    <line>1</line>
+    <entry_point TYPE="class" FQNAME="TC"/>
+    <description>Class is not instantiated.</description>
+  </problem>
+
+  <problem>
+    <file>TC.kt</file>
+    <line>3</line>
+    <entry_point TYPE="method" FQNAME="TC void fooBar(kotlin.jvm.functions.Function1&lt;? super java.lang.String,kotlin.Unit&gt; edit)"/>
+    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;
+    </description>
+  </problem>
+
+  <problem>
+    <file>TC.kt</file>
+    <line>7</line>
+    <entry_point TYPE="method" FQNAME="TC void runWriteActionAndWait(kotlin.jvm.functions.Function0&lt;? extends T&gt; action)"/>
+    <description>Parameter &lt;code&gt;action&lt;/code&gt; is not used</description>
+  </problem>
+
+
+</problems>

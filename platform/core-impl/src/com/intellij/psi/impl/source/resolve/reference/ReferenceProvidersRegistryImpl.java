@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.lang.Language;
@@ -60,7 +60,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
         private void registerContributorForLanguageAndDialects(Language language, PsiReferenceContributor instance) {
           Set<Language> languageAndDialects = LanguageUtil.getAllDerivedLanguages(language);
           for (Language languageOrDialect : languageAndDialects) {
-            final PsiReferenceRegistrarImpl registrar = myRegistrars.get(languageOrDialect);
+            PsiReferenceRegistrarImpl registrar = myRegistrars.get(languageOrDialect);
             if (registrar != null) {
               registerContributedReferenceProviders(registrar, instance);
             }
@@ -83,17 +83,15 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
     }
 
     List<PsiReferenceProviderBean> referenceProviderBeans = REFERENCE_PROVIDER_EXTENSION.allForLanguageOrAny(language);
-    for (final PsiReferenceProviderBean providerBean : referenceProviderBeans) {
-      final ElementPattern<PsiElement> pattern = providerBean.createElementPattern();
+    for (PsiReferenceProviderBean providerBean : referenceProviderBeans) {
+      ElementPattern<PsiElement> pattern = providerBean.createElementPattern();
       if (pattern != null) {
         registrar.registerReferenceProvider(pattern, new PsiReferenceProvider() {
-
           PsiReferenceProvider myProvider;
 
           @Override
           public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
             if (myProvider == null) {
-
               myProvider = providerBean.instantiate();
               if (myProvider == null) {
                 myProvider = NULL_REFERENCE_PROVIDER;
@@ -110,7 +108,8 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
     return registrar;
   }
 
-  private static void registerContributedReferenceProviders(@NotNull PsiReferenceRegistrarImpl registrar, @NotNull PsiReferenceContributor contributor) {
+  private static void registerContributedReferenceProviders(@NotNull PsiReferenceRegistrarImpl registrar,
+                                                            @NotNull PsiReferenceContributor contributor) {
     contributor.registerReferenceProviders(new TrackingReferenceRegistrar(registrar, contributor));
     Disposer.register(ApplicationManager.getApplication(), contributor);
   }
@@ -145,7 +144,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
       return PsiReference.EMPTY_ARRAY;
     }
 
-    final List<PsiReference> result = new SmartList<>();
+    List<PsiReference> result = new SmartList<>();
     double maxPriority = Math.max(PsiReferenceRegistrar.LOWER_PRIORITY, ArrayUtil.max(allReferencesMap.keySet().toDoubleArray()));
     List<PsiReference> maxPriorityRefs = collectReferences(allReferencesMap.get(maxPriority));
 
@@ -158,14 +157,10 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
   //  we create priorities map: "priority" ->  non-empty references from providers
   //  if provider returns EMPTY_ARRAY or array with "null" references then this provider isn't added in priorities map.
   private static @NotNull Double2ObjectMap<List<PsiReference[]>> mapNotEmptyReferencesFromProviders(@NotNull PsiElement context,
-                                                                                                            @NotNull List<? extends ProviderBinding.ProviderInfo<ProcessingContext>> providers) {
+                                                                                                    @NotNull List<? extends ProviderBinding.ProviderInfo<ProcessingContext>> providers) {
     Double2ObjectMap<List<PsiReference[]>> map = new Double2ObjectOpenHashMap<>();
     for (ProviderBinding.ProviderInfo<ProcessingContext> trinity : providers) {
-      final PsiReference[] refs = getReferences(context, trinity);
-      if ((ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal())
-          && Registry.is("ide.check.reference.provider.underlying.element")) {
-        assertReferenceUnderlyingElement(context, refs, trinity.provider);
-      }
+      PsiReference[] refs = getReferences(context, trinity);
       if (refs.length > 0) {
         List<PsiReference[]> list = map.get(trinity.priority);
         if (list == null) {
@@ -179,20 +174,6 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
       }
     }
     return map;
-  }
-
-  private static void assertReferenceUnderlyingElement(@NotNull PsiElement context,
-                                                       PsiReference[] refs, PsiReferenceProvider provider) {
-    for (PsiReference reference : refs) {
-      if (reference == null) continue;
-      assert reference.getElement() == context : "reference " +
-                                                 reference +
-                                                 " was created for " +
-                                                 context +
-                                                 " but target " +
-                                                 reference.getElement() +
-                                                 ", provider " + provider;
-    }
   }
 
   private static PsiReference @NotNull [] getReferences(@NotNull PsiElement context,
@@ -226,6 +207,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
     for (PsiReference ref : lowerPriorityRefs) {
       if (ref != null) {
         for (PsiReference reference : higherPriorityRefs) {
+          if (reference instanceof PsiReferencesWrapper) continue;
           if (reference != null && ReferenceRange.containsRangeInElement(reference, ref.getRangeInElement())) {
             return false;
           }

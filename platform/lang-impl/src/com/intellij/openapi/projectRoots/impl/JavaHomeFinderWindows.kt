@@ -1,36 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ConvertSecondaryConstructorToPrimary", "UnnecessaryVariable")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ConvertSecondaryConstructorToPrimary")
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Bitness
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.WindowsRegistryUtil
-import com.intellij.util.io.exists
-import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import kotlin.io.path.exists
 import kotlin.text.RegexOption.IGNORE_CASE
 import kotlin.text.RegexOption.MULTILINE
 
 class JavaHomeFinderWindows : JavaHomeFinderBasic {
   companion object {
-    const val defaultJavaLocation = "C:\\Program Files"
+    const val defaultJavaLocation: String = "C:\\Program Files"
 
     @Suppress("SpellCheckingInspection")
     private const val regCommand = """reg query HKLM\SOFTWARE\JavaSoft\JDK /s /v JavaHome"""
 
     private val javaHomePattern = Regex("""^\s+JavaHome\s+REG_SZ\s+(\S.+\S)\s*$""", setOf(MULTILINE, IGNORE_CASE))
 
-    /**
-     * Whether the OS is 64-bit (**important**: it's not the same as [com.intellij.util.system.CpuArch]).
-     */
-    private val os64bit: Boolean = !System.getenv("ProgramFiles(x86)").isNullOrBlank()
-
     private val logger: Logger = Logger.getInstance(JavaHomeFinderWindows::class.java)
-
 
     fun gatherHomePaths(text: CharSequence): Set<String> {
       val paths = TreeSet<String>()
@@ -43,18 +36,26 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     }
   }
 
-  constructor(forceEmbeddedJava: Boolean) : super(forceEmbeddedJava) {
-    if (os64bit && SystemInfoRt.isWindows) {
-      registerFinder(this::readRegisteredLocationsOS64J64)
-      registerFinder(this::readRegisteredLocationsOS64J32)
-    }
-    else {
-      registerFinder(this::readRegisteredLocationsOS32J32)
+  constructor(registeredJdks: Boolean,
+              wslJdks: Boolean,
+              systemInfoProvider: JavaHomeFinder.SystemInfoProvider) : super(systemInfoProvider) {
+    if (registeredJdks) {
+      /** Whether the OS is 64-bit (**important**: it's not the same as [com.intellij.util.system.CpuArch]). */
+      val os64bit = !systemInfoProvider.getEnvironmentVariable("ProgramFiles(x86)").isNullOrBlank()
+      if (os64bit) {
+        registerFinder(this::readRegisteredLocationsOS64J64)
+        registerFinder(this::readRegisteredLocationsOS64J32)
+      }
+      else {
+        registerFinder(this::readRegisteredLocationsOS32J32)
+      }
     }
     registerFinder(this::guessPossibleLocations)
-    for (distro in WslDistributionManager.getInstance().installedDistributions) {
-      val wslFinder = JavaHomeFinderWsl(distro)
-      registerFinder { wslFinder.findExistingJdks() }
+    if (wslJdks) {
+      for (distro in WslDistributionManager.getInstance().installedDistributions) {
+        val wslFinder = JavaHomeFinderWsl(distro)
+        registerFinder { wslFinder.findExistingJdks() }
+      }
     }
   }
 
@@ -95,9 +96,10 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
   }
 
   private fun guessPossibleLocations(): Set<String> {
-    val fsRoots = FileSystems.getDefault().rootDirectories ?: return emptySet()
+    val fsRoots = systemInfo.fsRoots
     val roots: MutableSet<Path> = HashSet()
     for (root in fsRoots) {
+      ProgressManager.checkCanceled()
       if (!root.exists()) {
         continue
       }
@@ -106,6 +108,7 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
       roots.add(root.resolve("Program Files (x86)/Java"))
       roots.add(root.resolve("Java"))
     }
+    getPathInUserHome(".jdks")?.let { roots.add(it) }
     return scanAll(roots, true)
   }
 }

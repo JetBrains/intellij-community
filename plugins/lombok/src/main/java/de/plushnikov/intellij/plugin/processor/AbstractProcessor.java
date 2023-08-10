@@ -4,11 +4,9 @@ import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
-import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -38,7 +36,7 @@ public abstract class AbstractProcessor implements Processor {
    * @param supportedAnnotationClasses annotations this processor supports
    */
   protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
-                              @NotNull String... supportedAnnotationClasses) {
+                              @NotNull String @NotNull ... supportedAnnotationClasses) {
     this.configDiscovery = ConfigDiscovery.getInstance();
     this.supportedClass = supportedClass;
     this.supportedAnnotationClasses = supportedAnnotationClasses;
@@ -72,26 +70,15 @@ public abstract class AbstractProcessor implements Processor {
     final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, annotationParameter);
     if (null == declaredAnnotationValue) {
       result = configDiscovery.getBooleanLombokConfigProperty(configKey, psiClass);
-    } else {
+    }
+    else {
       result = declaredAnnotationValue;
     }
     return result;
-  }
-
-  protected static void copyOnXAnnotations(@Nullable PsiAnnotation processedAnnotation,
-                                           @NotNull PsiModifierList modifierList,
-                                           @NotNull String onXParameterName) {
-    if (processedAnnotation == null) {
-      return;
-    }
-
-    Iterable<String> annotationsToAdd = LombokProcessorUtil.getOnX(processedAnnotation, onXParameterName);
-    annotationsToAdd.forEach(modifierList::addAnnotation);
   }
 
   @Override
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     return LombokPsiElementUsage.NONE;
   }
-
 }

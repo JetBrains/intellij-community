@@ -1,18 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.idea.Bombed;
-import com.intellij.idea.RecordExecution;
+import com.intellij.idea.IgnoreJUnit3;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.tests.ExternalClasspathClassLoader;
+import com.intellij.tests.IgnoreException;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
+import com.intellij.util.io.Decompressor;
 import com.intellij.util.lang.UrlClassLoader;
 import junit.framework.*;
 import org.jetbrains.annotations.NotNull;
@@ -31,11 +35,11 @@ import java.lang.reflect.Modifier;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.TestCaseLoader.*;
 
@@ -78,7 +82,7 @@ public class TestAll implements Test {
     }
   };
 
-  public static final Filter NOT_BOMBED = new Filter() {
+  private static final Filter NOT_BOMBED = new Filter() {
     @Override
     public boolean shouldRun(Description description) {
       return !isBombed(description);
@@ -95,18 +99,30 @@ public class TestAll implements Test {
     }
   };
 
+  private static final Filter NOT_IGNORED = new Filter() {
+    @Override
+    public boolean shouldRun(Description description) {
+      return description.getAnnotation(IgnoreJUnit3.class) == null;
+    }
+
+    @Override
+    public String describe() {
+      return "Not @IgnoreJUnit3";
+    }
+  };
+
   private final TestCaseLoader myTestCaseLoader;
   private int myRunTests = -1;
-  private TestRecorder myTestRecorder;
+  private int myIgnoredTests;
 
-  private static final List<Throwable> outClassLoadingProblems = new ArrayList<>();
+  private static final List<Throwable> ourClassLoadingProblems = new ArrayList<>();
   private static JUnit4TestAdapterCache ourUnit4TestAdapterCache;
 
   public TestAll(String rootPackage) throws Throwable {
     this(rootPackage, getClassRoots());
   }
 
-  public TestAll(String rootPackage, List<Path> classesRoots) throws ClassNotFoundException {
+  public TestAll(String rootPackage, List<? extends Path> classesRoots) throws ClassNotFoundException {
     String classFilterName = "tests/testGroups.properties";
     myTestCaseLoader = new TestCaseLoader(classFilterName);
     if (shouldAddFirstAndLastTests()) {
@@ -115,14 +131,59 @@ public class TestAll implements Test {
     }
     myTestCaseLoader.fillTestCases(rootPackage, classesRoots);
 
-    outClassLoadingProblems.addAll(myTestCaseLoader.getClassLoadingErrors());
+    ourClassLoadingProblems.addAll(myTestCaseLoader.getClassLoadingErrors());
   }
 
   public static List<Throwable> getLoadingClassProblems() {
-    return outClassLoadingProblems;
+    return ourClassLoadingProblems;
   }
 
   public static List<Path> getClassRoots() {
+    return TeamCityLogger.block("Collecting tests from ...", () -> {
+      return doGetClassRoots();
+    });
+  }
+
+  private static List<Path> doGetClassRoots() {
+    String jarsToRunTestsFrom = System.getProperty("jar.dependencies.to.tests");
+    if (jarsToRunTestsFrom != null) {
+      String[] jars = jarsToRunTestsFrom.split(";");
+      List<Path> classpath = Objects.requireNonNull(ExternalClasspathClassLoader.getRoots());
+      List<Path> testPaths = Arrays.stream(jars)
+        .map(jarName -> {
+               List<Path> resultJars = ContainerUtil.filter(classpath, path -> path.getFileName().toString().startsWith(jarName));
+               if (resultJars.size() != 1) {
+                 String classpathPretty = classpath.stream().map(Path::toString).collect(Collectors.joining(File.pathSeparator));
+                 throw new IllegalStateException(
+                   (resultJars.isEmpty() ? "Cannot find " : "More than one ") + jarName + " in " + classpathPretty
+                 );
+               }
+
+               return resultJars.get(0);
+             }
+        )
+        .map(Path::normalize)
+        .map(jar -> {
+          try {
+            if (!Files.exists(jar)) {
+              throw new IllegalStateException(jar + " doesn't exist");
+            }
+
+            String jarNameWithoutExtension = StringUtil.substringBefore(jar.getFileName().toString(), ".");
+            Path out = Paths.get(PathManager.getHomePath(), "out", "jar-dependencies-to-test", jarNameWithoutExtension);
+            new Decompressor.Zip(jar).extract(out);
+            return out;
+          }
+          catch (IOException e) {
+            throw new IllegalStateException(e);
+          }
+        })
+        .collect(Collectors.toList());
+
+      System.out.println("Collecting tests from roots specified by jar.dependencies.to.tests property: " + testPaths);
+      return testPaths;
+    }
+
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
       System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
@@ -192,19 +253,23 @@ public class TestAll implements Test {
   }
 
   @Override
-  public void run(final TestResult testResult) {
-    loadTestRecorder();
-
+  public void run(TestResult testResult) {
     final TestListener testListener = loadDiscoveryListener();
     if (testListener != null) {
       testResult.addListener(testListener);
     }
+    final OutOfProcessRetries.OutOfProcessRetryListener outOfProcessRetryListener = OutOfProcessRetries.getListenerForOutOfProcessRetry();
+    if (outOfProcessRetryListener != null) {
+      testResult.addListener(outOfProcessRetryListener);
+    }
+
+    testResult = RetriesImpl.maybeEnable(testResult);
 
     List<Class<?>> classes = myTestCaseLoader.getClasses();
 
     // to make it easier to reproduce order-dependent failures locally
     System.out.println("------");
-    System.out.println("Running tests:");
+    System.out.println("Running tests classes:");
     for (Class<?> aClass : classes) {
       System.out.println(aClass.getName());
     }
@@ -212,19 +277,7 @@ public class TestAll implements Test {
 
     int totalTests = classes.size();
     for (Class<?> aClass : classes) {
-      boolean recording = false;
-      if (myTestRecorder != null && shouldRecord(aClass)) {
-        myTestRecorder.beginRecording(aClass, aClass.getAnnotation(RecordExecution.class));
-        recording = true;
-      }
-      try {
-        runNextTest(testResult, totalTests, aClass);
-      }
-      finally {
-        if (recording) {
-          myTestRecorder.endRecording();
-        }
-      }
+      runNextTest(testResult, totalTests, aClass);
       if (testResult.shouldStop()) break;
     }
 
@@ -236,6 +289,16 @@ public class TestAll implements Test {
         e.printStackTrace();
       }
     }
+    if (outOfProcessRetryListener != null) {
+      try {
+        outOfProcessRetryListener.save();
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    TestCaseLoader.sendTestRunResultsToNastradamus();
   }
 
   private static TestListener loadDiscoveryListener() {
@@ -252,32 +315,18 @@ public class TestAll implements Test {
     return null;
   }
 
-  private static boolean shouldRecord(@NotNull Class<?> aClass) {
-    return aClass.getAnnotation(RecordExecution.class) != null;
-  }
-
   private static boolean shouldAddFirstAndLastTests() {
     return !"true".equals(System.getProperty("intellij.build.test.ignoreFirstAndLastTests"));
-  }
-
-  private void loadTestRecorder() {
-    String recorderClassName = System.getProperty("test.recorder.class");
-    if (recorderClassName != null) {
-      try {
-        Class<?> recorderClass = Class.forName(recorderClassName);
-        myTestRecorder = (TestRecorder) recorderClass.newInstance();
-      }
-      catch (Exception e) {
-        System.out.println("Error loading test recorder class '" + recorderClassName + "': " + e);
-      }
-    }
   }
 
   private void runNextTest(final TestResult testResult, int totalTests, Class<?> testCaseClass) {
     myRunTests++;
 
-    if (testResult.errorCount() + testResult.failureCount() > MAX_FAILURE_TEST_COUNT && MAX_FAILURE_TEST_COUNT >= 0) {
-      addErrorMessage(testResult, "Too many errors. Executed: " + myRunTests + " of " + totalTests);
+    int errorCount = testResult.errorCount();
+    int count = errorCount + testResult.failureCount() - myIgnoredTests;
+    if (count > MAX_FAILURE_TEST_COUNT && MAX_FAILURE_TEST_COUNT >= 0) {
+      addErrorMessage(testResult, "Too many errors (" + count + ", MAX_FAILURE_TEST_COUNT = " + MAX_FAILURE_TEST_COUNT +
+                                  "). Executed: " + myRunTests + " of " + totalTests);
       testResult.stop();
       return;
     }
@@ -291,6 +340,17 @@ public class TestAll implements Test {
     }
     catch (Throwable t) {
       testResult.addError(test, t);
+    }
+
+    if (testResult.errorCount() > errorCount) {
+      Enumeration<TestFailure> errors = testResult.errors();
+      while (errors.hasMoreElements()) {
+        TestFailure failure = errors.nextElement();
+        if (errorCount-- > 0) continue;
+        if (IgnoreException.isIgnoringThrowable(failure.thrownException())) {
+          myIgnoredTests++;
+        }
+      }
     }
   }
 
@@ -311,7 +371,7 @@ public class TestAll implements Test {
       }
 
       if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)) {
-        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
+        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass.getSimpleName());
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
         if (runEverything) return createJUnit4Adapter(testCaseClass);
 
@@ -328,7 +388,7 @@ public class TestAll implements Test {
 
         JUnit4TestAdapter adapter = createJUnit4Adapter(testCaseClass);
         try {
-          adapter.filter(NOT_BOMBED.intersect(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE));
+          adapter.filter(NOT_BOMBED.intersect(NOT_IGNORED).intersect(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE));
         }
         catch (NoTestsRemainException ignored) {
         }
@@ -345,11 +405,15 @@ public class TestAll implements Test {
           else {
             String name = ((TestCase)test).getName();
             if ("warning".equals(name)) return; // Mute TestSuite's "no tests found" warning
-            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass))) {
+            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass.getSimpleName()))) {
               return;
             }
 
             Method method = findTestMethod((TestCase)test);
+
+            if (method != null && method.getAnnotation(IgnoreJUnit3.class) != null) {
+              return;
+            }
             Bombed methodBomb = method == null ? null : method.getAnnotation(Bombed.class);
             if (methodBomb == null) {
               doAddTest(test);
@@ -366,7 +430,7 @@ public class TestAll implements Test {
         }
 
         @Nullable
-        private Method findTestMethod(final TestCase testCase) {
+        private static Method findTestMethod(final TestCase testCase) {
           return safeFindMethod(testCase.getClass(), testCase.getName());
         }
       };
@@ -387,18 +451,32 @@ public class TestAll implements Test {
 
   private static JUnit4TestAdapterCache getJUnit4TestAdapterCache() {
     if (ourUnit4TestAdapterCache == null) {
-      try {
-        //noinspection SpellCheckingInspection
-        ourUnit4TestAdapterCache = (JUnit4TestAdapterCache)
-          Class.forName("org.apache.tools.ant.taskdefs.optional.junit.CustomJUnit4TestAdapterCache")
-            .getMethod("getInstance")
+      JUnit4TestAdapterCache cache;
+      if ("junit5".equals(System.getProperty("intellij.build.test.runner"))) {
+        try {
+          cache = (JUnit4TestAdapterCache)Class.forName("com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite")
+            .getMethod("createJUnit4TestAdapterCache")
             .invoke(null);
+        }
+        catch (Throwable e) {
+          cache = JUnit4TestAdapterCache.getDefault();
+        }
       }
-      catch (Exception e) {
-        System.out.println("Failed to create CustomJUnit4TestAdapterCache, the default JUnit4TestAdapterCache will be used" +
-                           " and ignored tests won't be properly reported: " + e);
-        ourUnit4TestAdapterCache = JUnit4TestAdapterCache.getDefault();
+      else {
+        try {
+          //noinspection SpellCheckingInspection
+          cache = (JUnit4TestAdapterCache)
+            Class.forName("org.apache.tools.ant.taskdefs.optional.junit.CustomJUnit4TestAdapterCache")
+              .getMethod("getInstance")
+              .invoke(null);
+        }
+        catch (Exception e) {
+          System.out.println("Failed to create CustomJUnit4TestAdapterCache, the default JUnit4TestAdapterCache will be used" +
+                             " and ignored tests won't be properly reported: " + e);
+          cache = JUnit4TestAdapterCache.getDefault();
+        }
       }
+      ourUnit4TestAdapterCache = RetriesImpl.maybeEnable(cache);
     }
     return ourUnit4TestAdapterCache;
   }
@@ -427,5 +505,10 @@ public class TestAll implements Test {
       String description = myBombed.description().isEmpty() ? "" : " (" + myBombed.description() + ")";
       fail("Bomb created by " + myBombed.user() + description + " now explodes!");
     }
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName();
   }
 }

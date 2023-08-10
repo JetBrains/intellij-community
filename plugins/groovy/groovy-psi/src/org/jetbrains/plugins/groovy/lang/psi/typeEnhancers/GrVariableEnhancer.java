@@ -20,9 +20,6 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
-/**
- * @author peter
- */
 public abstract class GrVariableEnhancer {
   public static final ExtensionPointName<GrVariableEnhancer> EP_NAME = ExtensionPointName.create("org.intellij.groovy.variableEnhancer");
 

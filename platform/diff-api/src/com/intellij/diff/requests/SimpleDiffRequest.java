@@ -11,7 +11,12 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
+ * Default {@link DiffRequest} implementation suitable for most purposes.
+ * <p>
+ * {@link com.intellij.diff.DiffTool} implementations are encouraged to cast to the {@link ContentDiffRequest} instead.
+ *
  * @see DiffContentFactory
+ * @see com.intellij.diff.DiffManager
  */
 public class SimpleDiffRequest extends ContentDiffRequest {
   @Nullable private final @NlsContexts.DialogTitle String myTitle;

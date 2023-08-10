@@ -16,11 +16,10 @@ public final class TemporaryPlacesInjector implements LanguageInjectionContribut
 
   @Override
   public @Nullable Injection getInjection(@NotNull PsiElement context) {
-    if (!(context instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost)context).isValidHost()) {
+    if (!(context instanceof PsiLanguageInjectionHost host) || !((PsiLanguageInjectionHost)context).isValidHost()) {
       return null;
     }
 
-    PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
     TemporaryPlacesRegistry registry = TemporaryPlacesRegistry.getInstance(host.getProject());
 
     PsiFile containingFile = context.getContainingFile();
@@ -28,7 +27,7 @@ public final class TemporaryPlacesInjector implements LanguageInjectionContribut
     Language language = injectedLanguage != null ? injectedLanguage.getLanguage() : null;
     if (language == null) return null;
 
-    return new SimpleInjection(language.getID(),
+    return new SimpleInjection(language,
                                injectedLanguage.getPrefix(),
                                injectedLanguage.getSuffix(),
                                registry.getLanguageInjectionSupport().getId());

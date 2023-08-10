@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.openapi.Disposable;
@@ -38,6 +38,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     myExpressionEditor = new XDebuggerExpressionComboBox(project, editorsProvider, historyId, sourcePosition, true, false) {
       @Override
       protected void prepareEditor(EditorEx editor) {
+        super.prepareEditor(editor);
         Font font = EditorUtil.getEditorFont();
         editor.getColorsScheme().setEditorFontName(font.getFontName());
         editor.getColorsScheme().setEditorFontSize(font.getSize());

@@ -1,24 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.concurrency;
 
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Method;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 /**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * Please use <a href="https://youtrack.jetbrains.com/articles/IJPL-A-3/Kotlin-Coroutines">Kotlin coroutines</a> instead
+ * </p>
  * The Promise represents the eventual completion (or failure) of an asynchronous operation, and its resulting value.
- *
+ * <p>
  * A Promise is a proxy for a value not necessarily known when the promise is created.
  * It allows you to associate handlers with an asynchronous action's eventual success value or failure reason.
  * This lets asynchronous methods return values like synchronous methods: instead of immediately returning the final value,
  * the asynchronous method returns a promise to supply the value at some point in the future.
- *
+ * <p>
  * A Promise is in one of these states:
  *
  * <ul>
@@ -27,26 +31,10 @@ import java.util.concurrent.TimeoutException;
  *   <li>rejected: meaning that the operation failed.</li>
  * </ul>
  */
+@ApiStatus.Obsolete
 public interface Promise<T> {
   enum State {
     PENDING, SUCCEEDED, REJECTED
-  }
-
-  /**
-   * @deprecated Use Promises.resolvedPromise
-   */
-  @Deprecated
-  @NotNull
-  static <T> Promise<T> resolve(@Nullable T result) {
-    try {
-      Method method = Promise.class.getClassLoader().loadClass("org.jetbrains.concurrency.Promises").getMethod("resolvedPromise", Object.class);
-      method.setAccessible(true);
-      //noinspection unchecked
-      return (Promise<T>)method.invoke(null, result);
-    }
-    catch (ReflectiveOperationException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   /**
@@ -64,7 +52,7 @@ public interface Promise<T> {
   <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<? super T, ? extends SUB_RESULT> done);
 
   /**
-   * The same as {@link #then(Function)}, but handler can be asynchronous.
+   * The same as {@link #then(Function)}, but the handler can be asynchronous.
    *
    * <pre>
    * {@code
@@ -82,35 +70,16 @@ public interface Promise<T> {
    * Execute passed handler on promise resolve.
    */
   @NotNull
-  Promise<T> onSuccess(@NotNull java.util.function.Consumer<? super T> handler);
-
-  /**
-   * Execute passed handler on promise resolve.
-   * @deprecated Use {@link #onSuccess(java.util.function.Consumer)}
-   */
-  @Deprecated
-  @NotNull
-  default Promise<T> done(@NotNull Consumer<? super T> done) {
-    return onSuccess(it -> done.consume(it));
-  }
+  Promise<T> onSuccess(@NotNull Consumer<? super T> handler);
 
   /**
    * Execute passed handler on promise reject.
    */
   @NotNull
-  Promise<T> onError(@NotNull java.util.function.Consumer<? super Throwable> rejected);
+  Promise<T> onError(@NotNull Consumer<? super Throwable> rejected);
 
   /**
-   * @deprecated Use {@link #onError(java.util.function.Consumer)}
-   */
-  @Deprecated
-  @NotNull
-  default Promise<T> rejected(@NotNull Consumer<? super Throwable> rejected) {
-    return onError(it -> rejected.consume(it));
-  }
-
-  /**
-   * Resolve or reject passed promise as soon as this promise resolved or rejected.
+   * Resolve or reject passed promise as soon as this promise is resolved or rejected.
    */
   @NotNull
   Promise<T> processed(@NotNull Promise<? super T> child);
@@ -120,19 +89,7 @@ public interface Promise<T> {
    * or on promise reject (null as result value will be passed).
    */
   @NotNull
-  Promise<T> onProcessed(@NotNull java.util.function.Consumer<? super T> processed);
-
-  /**
-   * Execute passed handler on promise resolve (result value will be passed),
-   * or on promise reject (null as result value will be passed).
-   *
-   * @deprecated use {@link #onProcessed(java.util.function.Consumer)}
-   */
-  @Deprecated
-  @NotNull
-  default Promise<T> processed(@NotNull Consumer<? super T> action) {
-    return onProcessed(it -> action.consume(it));
-  }
+  Promise<T> onProcessed(@NotNull Consumer<? super T> processed);
 
   /**
    * Get promise state.
@@ -143,8 +100,7 @@ public interface Promise<T> {
   @Nullable
   T blockingGet(int timeout, @NotNull TimeUnit timeUnit) throws TimeoutException, ExecutionException;
 
-  @Nullable
-  default T blockingGet(int timeout) throws TimeoutException, ExecutionException {
+  default @Nullable T blockingGet(int timeout) throws TimeoutException, ExecutionException {
     return blockingGet(timeout, TimeUnit.MILLISECONDS);
   }
 

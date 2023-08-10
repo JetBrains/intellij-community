@@ -4,7 +4,11 @@ package com.intellij.ui.layout.migLayout
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.LC
 import net.miginfocom.layout.UnitValue
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
+@ApiStatus.Internal
 fun createLayoutConstraints(horizontalGap: Int, verticalGap: Int): LC {
   val lc = LC()
   lc.gridGapX = gapToBoundSize(horizontalGap, isHorizontal = true)
@@ -13,11 +17,15 @@ fun createLayoutConstraints(horizontalGap: Int, verticalGap: Int): LC {
   return lc
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
   val unitValue = createUnitValue(value, isHorizontal)
   return BoundSize(unitValue, unitValue, null, false, null)
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 fun createLayoutConstraints(): LC {
   val lc = LC()
   lc.gridGapX = gapToBoundSize(0, true)
@@ -25,14 +33,21 @@ fun createLayoutConstraints(): LC {
   return lc
 }
 
-fun LC.setInsets(value: Int) = setInsets(value, value)
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
+private fun LC.setInsets(value: Int) = setInsets(value, value)
 
-fun LC.setInsets(topBottom: Int, leftRight: Int) {
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
+internal fun LC.setInsets(topBottom: Int, leftRight: Int) {
   val h = createUnitValue(leftRight, isHorizontal = true)
   val v = createUnitValue(topBottom, isHorizontal = false)
   insets = arrayOf(v, h, v, h)
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
+@ApiStatus.Internal
 fun createUnitValue(value: Int, isHorizontal: Boolean): UnitValue {
   return UnitValue(value.toFloat(), "px", isHorizontal, UnitValue.STATIC, null)
 }

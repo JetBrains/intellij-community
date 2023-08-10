@@ -74,6 +74,35 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   protected void initPanel() {
     setLayout(new BorderLayout());
 
+    ToolbarDecorator decorator = createToolbarDecorator();
+
+    final JPanel panel = decorator.createPanel();
+    add(panel, BorderLayout.CENTER);
+    final String label = getLabelText();
+    if (label != null) {
+      UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(label, false, JBUI.insetsTop(8)).setShowLine(false));
+    }
+  }
+
+  @Override
+  protected String getLabelText() {
+    return myLabel;
+  }
+
+  @NotNull
+  @Override
+  public StatusText getEmptyText() {
+    return myTable.getEmptyText();
+  }
+
+  @Override
+  protected JComponent createMainComponent() {
+    initTable();
+
+    return ScrollPaneFactory.createScrollPane(myTable);
+  }
+
+  protected ToolbarDecorator createToolbarDecorator() {
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
@@ -115,31 +144,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     else {
       decorator.disableUpAction().disableDownAction();
     }
-
-    final JPanel panel = decorator.createPanel();
-    add(panel, BorderLayout.CENTER);
-    final String label = getLabelText();
-    if (label != null) {
-      UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(label, false, JBUI.insetsTop(8)).setShowLine(false));
-    }
-  }
-
-  @Override
-  protected String getLabelText(){
-    return myLabel;
-  }
-
-  @NotNull
-  @Override
-  public StatusText getEmptyText() {
-    return myTable.getEmptyText();
-  }
-
-  @Override
-  protected JComponent createMainComponent(){
-    initTable();
-
-    return ScrollPaneFactory.createScrollPane(myTable);
+    return decorator;
   }
 
   private void initTable() {

@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class LinkedToHtmlFilesContributor extends RelatedToHtmlFilesContributor {
   @Override
   public void fillRelatedFiles(@NotNull final XmlFile xmlFile, @NotNull final Set<? super PsiFile> resultSet) {

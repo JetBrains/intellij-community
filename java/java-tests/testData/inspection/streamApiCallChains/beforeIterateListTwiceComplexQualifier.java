@@ -1,4 +1,4 @@
-// "Replace 'IntStream.range().mapToObj()' with 'list.get(...).stream()'" "true"
+// "Replace 'IntStream.range().mapToObj()' with 'list.get(...).stream()'" "true-preview"
 
 import java.util.ArrayList;
 import java.util.List;

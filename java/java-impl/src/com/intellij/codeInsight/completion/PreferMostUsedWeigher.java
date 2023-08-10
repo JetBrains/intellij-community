@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -61,12 +61,10 @@ final class PreferMostUsedWeigher extends LookupElementWeigher {
 
   //Objects.requireNonNull is an example
   private static boolean looksLikeHelperMethodOrConst(@NotNull PsiElement element) {
-    if (!(element instanceof PsiMethod)) return false;
-    PsiMethod method = (PsiMethod)element;
+    if (!(element instanceof PsiMethod method)) return false;
     if (method.isConstructor()) return false;
     if (isRawDeepTypeEqualToObject(method.getReturnType())) return true;
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length == 0) return false;
     for (PsiParameter parameter : parameters) {
       PsiType paramType = parameter.getType();
       if (isRawDeepTypeEqualToObject(paramType)) {

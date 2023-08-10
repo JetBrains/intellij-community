@@ -22,10 +22,10 @@ import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.lang.html.HtmlQuotesFormatPreprocessor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +36,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.DocumentUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,8 +46,6 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   @Override
   public TemplateImpl generateTemplate(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context) {
     TemplateImpl tokenTemplate = token.getTemplate();
-    if (!ApplicationManager.getApplication().isDispatchThread()) return tokenTemplate;
-    
     String s = toString(token, hasChildren, context);
     assert tokenTemplate != null;
     TemplateImpl template = tokenTemplate.copy();
@@ -60,7 +57,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   public TemplateImpl createTemplateByKey(@NotNull String key, boolean forceSingleTag) {
     StringBuilder builder = new StringBuilder("<");
     builder.append(key).append('>');
-    if (!forceSingleTag && !HtmlUtil.isSingleHtmlTag(key)) {
+    if (!forceSingleTag && !HtmlUtil.isSingleHtmlTag(key, false)) {
       builder.append("$END$</").append(key).append('>');
     }
     return new TemplateImpl("", builder.toString(), "");
@@ -72,14 +69,19 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
     XmlTag tag = token.getXmlTag();
     if (tag != null) {
       if (quoteStyle != CodeStyleSettings.QuoteStyle.None) {
-        DocumentUtil.writeInRunUndoTransparentAction(() -> HtmlQuotesFormatPreprocessor.HtmlQuotesConverter.runOnElement(quoteStyle, tag));
+        HtmlQuotesFormatPreprocessor.HtmlQuotesConverter.runOnElement(quoteStyle, tag);
+        //hack: formatter change the document, so we have to apply changes from document back to PSI, since events are disables for the file
+        Document document = token.getFile().getViewProvider().getDocument();
+        token.setTemplateText(document.getText(), token.getFile());
       }
-      return replaceQuotesIfNeeded(toString(tag, token.getAttributes(), hasChildren, context), context.getContainingFile());
+
+      return replaceQuotesIfNeeded(toString(token.getXmlTag(), token.getAttributes(), hasChildren, context),
+                                   context.getContainingFile());
     }
 
     PsiFile file = token.getFile();
     if (quoteStyle != CodeStyleSettings.QuoteStyle.None) {
-      DocumentUtil.writeInRunUndoTransparentAction(() -> HtmlQuotesFormatPreprocessor.HtmlQuotesConverter.runOnElement(quoteStyle, file));
+      HtmlQuotesFormatPreprocessor.HtmlQuotesConverter.runOnElement(quoteStyle, file);
     }
     return replaceQuotesIfNeeded(file.getText(), context.getContainingFile());
   }
@@ -139,7 +141,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
     if (startOffset < 0 || currentOffset > documentText.length() || currentOffset < startOffset) {
       Logger.getInstance(getClass())
         .error("Error while calculating emmet abbreviation. Offset: " + currentOffset + "; Start: " + startOffset,
-               AttachmentFactory.createAttachment(editor.getDocument()));
+               CoreAttachmentFactory.createAttachment(editor.getDocument()));
       return null;
     }
     String key = computeKey(documentText.subSequence(startOffset, currentOffset));

@@ -8,14 +8,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import git4idea.GitStashUsageCollector;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
-import git4idea.stash.GitStashUtils;
 import git4idea.stash.GitStashOperations;
+import git4idea.stash.GitStashUtils;
 import git4idea.util.GitUIUtil;
 import git4idea.validators.GitBranchValidatorKt;
 import org.jetbrains.annotations.NotNull;
@@ -186,7 +188,7 @@ public class GitUnstashDialog extends DialogWrapper {
         myProject
       );
 
-      for (StashInfo info: listOfStashes) {
+      for (StashInfo info : listOfStashes) {
         myStashListModel.addElement(info);
       }
       myStashList.setSelectedIndex(0);
@@ -227,6 +229,10 @@ public class GitUnstashDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
+    GitStashUsageCollector.logStashPopDialog(!StringUtil.isEmpty(myBranchTextField.getText()),
+                                             myReinstateIndexCheckBox.isSelected(),
+                                             myPopStashCheckBox.isSelected());
+
     boolean completed = GitStashOperations.unstash(myProject, getSelectedStash(), myBranchTextField.getText(),
                                                    myPopStashCheckBox.isSelected(), myReinstateIndexCheckBox.isSelected());
     if (completed) {

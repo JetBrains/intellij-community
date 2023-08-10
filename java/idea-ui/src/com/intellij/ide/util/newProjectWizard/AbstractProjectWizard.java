@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.projectWizard.NewProjectWizardCollector;
+import com.intellij.ide.projectWizard.ProjectSettingsStep;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
@@ -22,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.templates.TemplateModuleBuilder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.*;
 
@@ -35,19 +37,18 @@ import java.nio.file.Paths;
  */
 public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardStep> {
   protected final WizardContext myWizardContext;
-  @Nullable
-  private WizardDelegate myDelegate;
+  private @Nullable WizardDelegate myDelegate;
 
-  public AbstractProjectWizard(@Nls String title, Project project, String defaultPath) {
+  public AbstractProjectWizard(@Nls String title, @Nullable Project project, String defaultPath) {
     super(title, project);
     myWizardContext = initContext(project, defaultPath, getDisposable());
-    myWizardContext.setWizard(this);
+    myWizardContext.putUserData(AbstractWizard.KEY, this);
   }
 
-  public AbstractProjectWizard(@NlsContexts.DialogTitle String title, Project project, Component dialogParent) {
+  public AbstractProjectWizard(@NlsContexts.DialogTitle String title, @Nullable Project project, Component dialogParent) {
     super(title, dialogParent);
     myWizardContext = initContext(project, null, getDisposable());
-    myWizardContext.setWizard(this);
+    myWizardContext.putUserData(AbstractWizard.KEY, this);
   }
 
   @Override
@@ -62,15 +63,17 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   private static WizardContext initContext(@Nullable Project project, @Nullable String defaultPath, Disposable parentDisposable) {
     WizardContext context = new WizardContext(project, parentDisposable);
+    if (defaultPath == null && project != null) {
+      defaultPath = project.getBasePath();
+    }
     if (defaultPath != null) {
       context.setProjectFileDirectory(Paths.get(defaultPath), true);
       context.setProjectName(defaultPath.substring(FileUtil.toSystemIndependentName(defaultPath).lastIndexOf("/") + 1));
     }
-   return context;
+    return context;
   }
 
-  @Nullable
-  public static Sdk getNewProjectJdk(WizardContext context) {
+  public static @Nullable Sdk getNewProjectJdk(WizardContext context) {
     if (context.getProjectJdk() != null) {
       return context.getProjectJdk();
     }
@@ -78,16 +81,11 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   }
 
   public static Sdk getProjectSdkByDefault(WizardContext context) {
-    final Project project = context.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : context.getProject();
-    final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    if (projectJdk != null) {
-      return projectJdk;
-    }
-    return null;
+    Project project = context.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : context.getProject();
+    return ProjectRootManager.getInstance(project).getProjectSdk();
   }
 
-  @NotNull
-  public String getNewProjectFilePath() {
+  public @NotNull String getNewProjectFilePath() {
     if (myWizardContext.getProjectStorageFormat() == StorageScheme.DEFAULT) {
       return myWizardContext.getProjectFileDirectory() + File.separator + myWizardContext.getProjectName() + ProjectFileType.DOT_DEFAULT_EXTENSION;
     }
@@ -96,8 +94,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     }
   }
 
-  @NotNull
-  public StorageScheme getStorageScheme() {
+  public @NotNull StorageScheme getStorageScheme() {
     return myWizardContext.getProjectStorageFormat();
   }
 
@@ -109,13 +106,11 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     return myWizardContext.getProjectName();
   }
 
-  @Nullable
-  public Sdk getNewProjectJdk() {
+  public @Nullable Sdk getNewProjectJdk() {
     return getNewProjectJdk(myWizardContext);
   }
 
-  @NotNull
-  public String getNewCompileOutput() {
+  public @NotNull String getNewCompileOutput() {
     final String projectFilePath = myWizardContext.getProjectFileDirectory();
     @NonNls String path = myWizardContext.getCompilerOutputDirectory();
     if (path == null) {
@@ -124,11 +119,9 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     return path;
   }
 
-  @Nullable
-  public ProjectBuilder getBuilder(Project project) {
+  public @Nullable ProjectBuilder getBuilder(Project project) {
     final ProjectBuilder builder = getProjectBuilder();
-    if (builder instanceof ModuleBuilder) {
-      final ModuleBuilder moduleBuilder = (ModuleBuilder)builder;
+    if (builder instanceof ModuleBuilder moduleBuilder) {
       if (moduleBuilder.getName() == null) {
         moduleBuilder.setName(getProjectName());
       }
@@ -174,6 +167,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   public boolean doFinishAction() {
     if (myDelegate != null) {
       myDelegate.doFinishAction();
+      NewProjectWizardCollector.logGeneratorFinished(myWizardContext);
       return true;
     }
     int idx = getCurrentStep();
@@ -215,6 +209,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
       myCurrentStep = idx;
       updateStep();
     }
+    NewProjectWizardCollector.logGeneratorFinished(myWizardContext);
     return true;
   }
 
@@ -251,6 +246,10 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     }
     step.onStepLeaving();
     super.doNextAction();
+    if (isNewWizard()) {
+      NewProjectWizardCollector.logNext(myWizardContext, -1);
+      myWizardContext.setScreen(2);
+    }
   }
 
 
@@ -268,8 +267,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     return isLastStep();
   }
 
-  @NonNls
-  public String getModuleFilePath() {
+  public @NonNls String getModuleFilePath() {
     return myWizardContext.getProjectFileDirectory() + File.separator + myWizardContext.getProjectName() + ModuleFileType.DOT_DEFAULT_EXTENSION;
   }
 
@@ -285,6 +283,9 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
       ((StepWithSubSteps)step).doPreviousAction();
     }
     super.doPreviousAction();
+    if (isNewWizard()) {
+      NewProjectWizardCollector.logPrev(myWizardContext, -1);
+    }
   }
 
   @Override
@@ -305,6 +306,11 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   }
 
   private boolean isLastStep(int step) {
+    if (AbstractWizard.isNewWizard()
+        && mySteps.get(getNextStep(step)) instanceof ProjectSettingsStep
+        && myWizardContext.getProjectBuilder() instanceof TemplateModuleBuilder) {
+      return true;
+    }
     return getNextStep(step) == step && !isStepWithNotCompletedSubSteps(mySteps.get(step));
   }
 
@@ -354,5 +360,17 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   public void setDelegate(@Nullable WizardDelegate delegate) {
     myDelegate = delegate;
+  }
+
+  public @NotNull WizardContext getWizardContext() {
+    return myWizardContext;
+  }
+
+  @Override
+  protected void doHelpAction() {
+    super.doHelpAction();
+    if (isNewWizard()) {
+      NewProjectWizardCollector.logHelpNavigation(myWizardContext);
+    }
   }
 }

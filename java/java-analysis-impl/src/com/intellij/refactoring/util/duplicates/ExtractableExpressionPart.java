@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class ExtractableExpressionPart {
   final PsiExpression myUsage;
   final PsiVariable myVariable;
@@ -105,8 +102,7 @@ public final class ExtractableExpressionPart {
     if (resolved instanceof PsiField && isModification(expression)) {
       return null;
     }
-    if (resolved instanceof PsiVariable && (scope == null || !DuplicatesFinder.isUnder(resolved, scope))) {
-      PsiVariable variable = (PsiVariable)resolved;
+    if (resolved instanceof PsiVariable variable && (scope == null || !DuplicatesFinder.isUnder(resolved, scope))) {
       return new ExtractableExpressionPart(expression, variable, null, variable.getType());
     }
     return null;
@@ -114,14 +110,12 @@ public final class ExtractableExpressionPart {
 
   private static boolean isModification(@NotNull PsiReferenceExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+    if (parent instanceof PsiAssignmentExpression assignment) {
       if (PsiTreeUtil.isAncestor(assignment.getLExpression(), expression, false)) {
         return true;
       }
     }
-    else if (parent instanceof PsiUnaryExpression) {
-      PsiUnaryExpression unary = (PsiUnaryExpression)parent;
+    else if (parent instanceof PsiUnaryExpression unary) {
       IElementType tokenType = unary.getOperationTokenType();
       if ((tokenType.equals(JavaTokenType.PLUSPLUS) || tokenType.equals(JavaTokenType.MINUSMINUS)) &&
           PsiTreeUtil.isAncestor(unary.getOperand(), expression, false)) {
@@ -134,7 +128,7 @@ public final class ExtractableExpressionPart {
   @Nullable
   private static ExtractableExpressionPart matchExpression(@NotNull PsiExpression expression) {
     PsiType type = expression.getType();
-    if (type != null && !PsiType.VOID.equals(type)) {
+    if (type != null && !PsiTypes.voidType().equals(type)) {
       return new ExtractableExpressionPart(expression, null, null, type);
     }
     return null;

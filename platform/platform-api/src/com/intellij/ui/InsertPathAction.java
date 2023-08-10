@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
@@ -20,7 +20,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 
-@SuppressWarnings("ComponentNotRegistered")
 public final class InsertPathAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(InsertPathAction.class);
   private final JTextComponent myTextField;
@@ -94,7 +93,7 @@ public final class InsertPathAction extends AnAction {
         textField, descriptor != null? descriptor : FileChooserDescriptorFactory.createSingleLocalFileDescriptor(), insertSystemDependentPaths
       );
       actionGroup.add(action);
-      MouseListener popupHandler = PopupHandler.installUnknownPopupHandler(textField, actionGroup);
+      MouseListener popupHandler = PopupHandler.installPopupMenu(textField, actionGroup, "InsertPathActionTextFieldPopup");
       action.savePopupHandler(popupHandler);
       textField.putClientProperty(INSERT_PATH_ACTION, action);
     }

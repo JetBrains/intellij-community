@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -7,65 +7,63 @@ import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestIn
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.compiler.server.PortableCachesLoadListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.LibraryScopeCache;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntCollection;
-import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
+import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-import static com.intellij.psi.search.GlobalSearchScope.getScopeRestrictedByFileTypes;
-import static com.intellij.psi.search.GlobalSearchScope.notScope;
-
-public abstract class CompilerReferenceServiceBase<Reader extends CompilerReferenceReader<?>> implements CompilerReferenceService, ModificationTracker {
+public abstract class CompilerReferenceServiceBase<Reader extends CompilerReferenceReader<?>> implements CompilerReferenceService,
+                                                                                                         ModificationTracker,
+                                                                                                         Disposable {
   private static final Logger LOG = Logger.getInstance(CompilerReferenceServiceBase.class);
 
   private final Set<FileType> myFileTypes;
@@ -75,117 +73,147 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   protected final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   protected final Lock myReadDataLock = myLock.readLock();
   private final Lock myOpenCloseLock = myLock.writeLock();
-  protected final Project myProject;
+  protected final Project project;
   private final CompilerReferenceReaderFactory<? extends Reader> myReaderFactory;
   // index build start/finish callbacks are not ordered, so "build1 started" -> "build2 started" -> "build1 finished" -> "build2 finished" is expected sequence
   private int myActiveBuilds = 0;
+  private boolean initialized = false;
 
   protected volatile Reader myReader;
+  private final ThreadLocal<Boolean> myIsInsideLibraryScope = ThreadLocal.withInitial(() -> false);
 
   public CompilerReferenceServiceBase(Project project,
                                       CompilerReferenceReaderFactory<? extends Reader> readerFactory,
                                       BiConsumer<? super MessageBusConnection, ? super Set<String>> compilationAffectedModulesSubscription) {
-    myProject = project;
+    this.project = project;
     myReaderFactory = readerFactory;
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myFileTypes = LanguageCompilerRefAdapter.EP_NAME.getExtensionList().stream().flatMap(a -> a.getFileTypes().stream()).collect(Collectors.toSet());
-    myDirtyScopeHolder = new DirtyScopeHolder(this, FileDocumentManager.getInstance(), PsiDocumentManager.getInstance(project), compilationAffectedModulesSubscription);
+    Set<FileType> affectedFileTypes = LanguageCompilerRefAdapter.EP_NAME.getExtensionList().stream().flatMap(a -> a.getAffectedFileTypes().stream()).collect(Collectors.toSet());
+    myDirtyScopeHolder = new DirtyScopeHolder(project,
+                                              affectedFileTypes,
+                                              myProjectFileIndex,
+                                              this,
+                                              this,
+                                              compilationAffectedModulesSubscription);
 
-    if (!CompilerReferenceService.isEnabled()) {
-      LOG.error("CompilerReferenceService is disabled, but service was requested");
+    if (!isEnabled()) {
       return;
     }
 
-    myDirtyScopeHolder.installVFSListener(project);
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      CompilerManager compilerManager = CompilerManager.getInstance(project);
-      boolean isUpToDate;
-      File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
+    myDirtyScopeHolder.installVFSListener(this);
 
-      boolean validIndexExists = buildDir != null
-                                 && CompilerReferenceIndex.exists(buildDir)
-                                 && !CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion());
-
-      if (validIndexExists) {
-        CompileScope projectCompileScope = compilerManager.createProjectCompileScope(project);
-        isUpToDate = compilerManager.isUpToDate(projectCompileScope);
-      }
-      else {
-        isUpToDate = false;
-      }
-      executeOnBuildThread(() -> {
-        if (isUpToDate) {
-          openReaderIfNeeded(IndexOpenReason.UP_TO_DATE_CACHE);
-        }
-        else {
-          markAsOutdated(validIndexExists);
-        }
-      });
+    Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode()) {
+      return;
     }
 
-    Disposer.register(project, () -> closeReaderIfNeeded(IndexCloseReason.PROJECT_CLOSED));
+    MessageBusConnection connection = project.getMessageBus().connect(this);
+    connection.subscribe(PortableCachesLoadListener.TOPIC, new PortableCachesLoadListener() {
+      @Override
+      public void loadingStarted() {
+        closeReaderIfNeeded(IndexCloseReason.SHUTDOWN);
+      }
+    });
   }
 
-  @Nullable
+  private boolean hasIndex() {
+    File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
+    return !CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion());
+  }
+
+  public static class JCRIIsUpToDateConsumer implements IsUpToDateCheckConsumer {
+    @Override
+    public boolean isApplicable(@NotNull Project project) {
+      CompilerReferenceServiceBase<?> serviceBase = getInstanceIfEnabled(project);
+      return serviceBase != null && serviceBase.hasIndex();
+    }
+
+    @Override
+    public void isUpToDate(@NotNull Project project, boolean isUpToDate) {
+      if (!isUpToDate) return;
+
+      CompilerReferenceServiceBase<?> service = getInstanceIfEnabled(project);
+      if (service != null) {
+        executeOnBuildThread(service::markAsUpToDate);
+      }
+    }
+  }
+
+  private static CompilerReferenceServiceBase<?> getInstanceIfEnabled(Project project) {
+    CompilerReferenceService service = CompilerReferenceService.getInstanceIfEnabled(project);
+    if (service instanceof CompilerReferenceServiceBase<?>) return (CompilerReferenceServiceBase<?>)service;
+
+    return null;
+  }
+
+  public static boolean isEnabled() {
+    return RegistryManager.getInstance().is("compiler.ref.index");
+  }
+
   @Override
-  public GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element) {
-    if (!isServiceEnabledFor(element)) return null;
+  public @Nullable GlobalSearchScope getScopeWithCodeReferences(@NotNull PsiElement element) {
+    if (!isServiceEnabledFor(element)) {
+      return null;
+    }
 
     try {
-      return CachedValuesManager.getCachedValue(element,
-                                                () -> CachedValueProvider.Result.create(buildScopeWithoutReferences(getReferentFileIds(element)),
-                                                  PsiModificationTracker.MODIFICATION_COUNT,
-                                                  this));
+      return CachedValuesManager.getCachedValue(element, () -> {
+        return CachedValueProvider.Result.create(
+          buildScopeWithReferences(getReferentFiles(element), element),
+          PsiModificationTracker.MODIFICATION_COUNT,
+          this);
+      });
     }
     catch (RuntimeException e1) {
       return onException(e1, "scope without code references");
     }
   }
 
-  @Nullable
   @Override
-  public GlobalSearchScope getScopeWithoutImplicitToStringCodeReferences(@NotNull PsiElement aClass) {
-    if (!isServiceEnabledFor(aClass)) return null;
+  public @Nullable GlobalSearchScope getScopeWithImplicitToStringCodeReferences(@NotNull PsiElement aClass) {
+    if (!isServiceEnabledFor(aClass)) {
+      return null;
+    }
 
     try {
-      return CachedValuesManager.getCachedValue(aClass,
-                                                () -> CachedValueProvider.Result.create(
-                                                  buildScopeWithoutReferences(getReferentFileIdsViaImplicitToString(aClass)),
-                                                  PsiModificationTracker.MODIFICATION_COUNT,
-                                                  this));
+      return CachedValuesManager.getCachedValue(aClass, () -> {
+        return CachedValueProvider.Result.create(
+          buildScopeWithReferences(getReferentFileIdsViaImplicitToString(aClass), aClass),
+          PsiModificationTracker.MODIFICATION_COUNT,
+          this);
+      });
     }
-    catch (RuntimeException e1) {
-      return onException(e1, "scope without implicit toString references");
+    catch (RuntimeException e) {
+      return onException(e, "scope without implicit toString references");
     }
   }
 
-  @Nullable
   @Override
-  public CompilerDirectHierarchyInfo getDirectInheritors(@NotNull PsiNamedElement aClass,
-                                                         @NotNull GlobalSearchScope searchScope,
-                                                         @NotNull FileType searchFileType) {
+  public @Nullable CompilerDirectHierarchyInfo getDirectInheritors(@NotNull PsiNamedElement aClass,
+                                                                   @NotNull GlobalSearchScope searchScope,
+                                                                   @NotNull FileType searchFileType) {
     return getHierarchyInfo(aClass, searchScope, searchFileType, CompilerHierarchySearchType.DIRECT_INHERITOR);
   }
 
-  @Nullable
   @Override
-  public CompilerDirectHierarchyInfo getFunExpressions(@NotNull PsiNamedElement functionalInterface,
-                                                       @NotNull GlobalSearchScope searchScope,
-                                                       @NotNull FileType searchFileType) {
+  public @Nullable CompilerDirectHierarchyInfo getFunExpressions(@NotNull PsiNamedElement functionalInterface,
+                                                                 @NotNull GlobalSearchScope searchScope,
+                                                                 @NotNull FileType searchFileType) {
     return getHierarchyInfo(functionalInterface, searchScope, searchFileType, CompilerHierarchySearchType.FUNCTIONAL_EXPRESSION);
   }
 
-  @Nullable
   @Override
-  public Integer getCompileTimeOccurrenceCount(@NotNull PsiElement element, boolean isConstructorSuggestion) {
+  public @Nullable Integer getCompileTimeOccurrenceCount(@NotNull PsiElement element, boolean isConstructorSuggestion) {
     if (!isServiceEnabledFor(element)) return null;
     try {
-      return CachedValuesManager.getCachedValue(element,
-                                                () -> CachedValueProvider.Result.create(ConcurrentFactoryMap.createMap(
-                                                  (Boolean constructorSuggestion) -> calculateOccurrenceCount(element,
-                                                                                                    constructorSuggestion.booleanValue())),
-                                                                                        PsiModificationTracker.MODIFICATION_COUNT,
-                                                                                        this)).get(Boolean.valueOf(isConstructorSuggestion));
+      return CachedValuesManager.getCachedValue(element, () -> {
+        return CachedValueProvider.Result.create(ConcurrentFactoryMap.createMap((Boolean constructorSuggestion) -> {
+                                                   return calculateOccurrenceCount(element, constructorSuggestion.booleanValue());
+                                                 }),
+                                                 PsiModificationTracker.MODIFICATION_COUNT,
+                                                 this);
+      }).get(Boolean.valueOf(isConstructorSuggestion));
     }
     catch (RuntimeException e) {
       return onException(e, "weighting for completion");
@@ -200,10 +228,16 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
         return null;
       }
     }
-    final CompilerElementInfo searchElementInfo = asCompilerElements(element, false, false);
-    if (searchElementInfo == null) return null;
 
-    if (!myReadDataLock.tryLock()) return null;
+    CompilerElementInfo searchElementInfo = asCompilerElements(element, false, false);
+    if (searchElementInfo == null) {
+      return null;
+    }
+
+    if (!myReadDataLock.tryLock()) {
+      return null;
+    }
+
     try {
       if (myReader == null) return null;
       try {
@@ -215,43 +249,50 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
               constructorOccurrences += myReader.getOccurrenceCount(constructorRef);
             }
           }
-          final Integer anonymousCount = myReader.getAnonymousCount((CompilerRef.CompilerClassHierarchyElementDef)searchElementInfo.searchElements[0], searchElementInfo.place == ElementPlace.SRC);
+          final Integer anonymousCount = myReader.getAnonymousCount(
+            (CompilerRef.CompilerClassHierarchyElementDef)searchElementInfo.searchElements.get(0),
+            searchElementInfo.place == ElementPlace.SRC
+          );
           return anonymousCount == null ? constructorOccurrences : (constructorOccurrences + anonymousCount);
         } else {
-          return myReader.getOccurrenceCount(searchElementInfo.searchElements[0]);
+          return myReader.getOccurrenceCount(searchElementInfo.searchElements.get(0));
         }
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-    } finally {
+    }
+    finally {
       myReadDataLock.unlock();
     }
   }
 
-  @Nullable
-  private CompilerHierarchyInfoImpl getHierarchyInfo(@NotNull PsiNamedElement aClass,
-                                                     @NotNull GlobalSearchScope searchScope,
-                                                     @NotNull FileType searchFileType,
-                                                     @NotNull CompilerHierarchySearchType searchType) {
-    if (!isServiceEnabledFor(aClass) || searchScope == LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope()) return null;
+  private @Nullable CompilerHierarchyInfoImpl getHierarchyInfo(@NotNull PsiNamedElement aClass,
+                                                               @NotNull GlobalSearchScope searchScope,
+                                                               @NotNull FileType searchFileType,
+                                                               @NotNull CompilerHierarchySearchType searchType) {
+    if (!isServiceEnabledFor(aClass)) {
+      return null;
+    }
 
     try {
       Map<VirtualFile, SearchId[]> candidatesPerFile = ReadAction.compute(() -> {
-        if (myProject.isDisposed()) throw new ProcessCanceledException();
-        return CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(
-          ConcurrentFactoryMap.createMap((HierarchySearchKey key) -> calculateDirectInheritors(aClass,
-                                                                                               key.mySearchFileType,
-                                                                                               key.mySearchType)),
-          PsiModificationTracker.MODIFICATION_COUNT, this)).get(new HierarchySearchKey(searchType, searchFileType));
+        if (project.isDisposed()) throw new ProcessCanceledException();
+        return CachedValuesManager.getCachedValue(aClass, () -> {
+          return CachedValueProvider.Result.create(
+            ConcurrentFactoryMap.createMap((HierarchySearchKey key) -> calculateDirectInheritors(aClass,
+                                                                                                 key.mySearchFileType,
+                                                                                                 key.mySearchType)),
+            PsiModificationTracker.MODIFICATION_COUNT, this);
+        }).get(new HierarchySearchKey(searchType, searchFileType));
       });
 
       if (candidatesPerFile == null) return null;
       GlobalSearchScope dirtyScope = myDirtyScopeHolder.getDirtyScope();
       if (ElementPlace.LIB == ReadAction.compute(() -> ElementPlace.get(aClass.getContainingFile().getVirtualFile(), myProjectFileIndex))) {
-        dirtyScope = dirtyScope.union(LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope());
+        dirtyScope = dirtyScope.union(ProjectScope.getLibrariesScope(project));
       }
-      return new CompilerHierarchyInfoImpl(candidatesPerFile, aClass, dirtyScope, searchScope, myProject, searchFileType, searchType);
+      return new CompilerHierarchyInfoImpl(candidatesPerFile, aClass, dirtyScope, searchScope, project, searchFileType, searchType);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -262,14 +303,14 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   private boolean isServiceEnabledFor(PsiElement element) {
-    if (!isActive()) return false;
+    if (!isActive() || isInsideLibraryScope()) return false;
     PsiFile file = ReadAction.compute(() -> element.getContainingFile());
-    return file != null && !InjectedLanguageManager.getInstance(myProject).isInjectedFragment(file);
+    return file != null && !InjectedLanguageManager.getInstance(project).isInjectedFragment(file);
   }
 
   @Override
   public boolean isActive() {
-    return myReader != null && CompilerReferenceService.isEnabled();
+    return myReader != null && isEnabled();
   }
 
   private Map<VirtualFile, SearchId[]> calculateDirectInheritors(@NotNull PsiElement aClass,
@@ -279,7 +320,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     if (!(scope instanceof GlobalSearchScope)) return null;
     final CompilerElementInfo searchElementInfo = asCompilerElements(aClass, false, true);
     if (searchElementInfo == null) return null;
-    CompilerRef searchElement = searchElementInfo.searchElements[0];
+    CompilerRef searchElement = searchElementInfo.searchElements.get(0);
 
     if (!myReadDataLock.tryLock()) return null;
     try {
@@ -295,39 +336,66 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  @Nullable
-  private GlobalSearchScope buildScopeWithoutReferences(@Nullable IntSet referentFileIds) {
-    if (referentFileIds == null) return null;
+  private @Nullable GlobalSearchScope buildScopeWithReferences(@Nullable Set<VirtualFile> referentFiles, @NotNull PsiElement element) {
+    if (referentFiles == null) return null;
 
-    return getScopeRestrictedByFileTypes(new ScopeWithoutReferencesOnCompilation(referentFileIds, myProjectFileIndex).intersectWith(notScope(
-      myDirtyScopeHolder.getDirtyScope())),
-                                         myFileTypes.toArray(FileType.EMPTY_ARRAY));
+    GlobalSearchScope referencesScope = GlobalSearchScope.filesWithoutLibrariesScope(project, referentFiles);
+
+    GlobalSearchScope knownDirtyScope = myDirtyScopeHolder.getDirtyScope();
+    GlobalSearchScope wholeClearScope = GlobalSearchScope.notScope(knownDirtyScope);
+    GlobalSearchScope knownCleanScope = GlobalSearchScope.getScopeRestrictedByFileTypes(wholeClearScope, myFileTypes.toArray(FileType.EMPTY_ARRAY));
+    GlobalSearchScope wholeDirtyScope = GlobalSearchScope.notScope(knownCleanScope);
+    GlobalSearchScope mayContainReferencesScope = referencesScope.uniteWith(wholeDirtyScope);
+    return scopeWithLibraryIfNeeded(project, myProjectFileIndex, mayContainReferencesScope, element);
   }
 
-  @Nullable
-  private IntSet getReferentFileIds(@NotNull PsiElement element) {
-    return getReferentFileIds(element, true, (ref, elementPlace) -> myReader.findReferentFileIds(ref, elementPlace == ElementPlace.SRC));
+  public static @NotNull GlobalSearchScope scopeWithLibraryIfNeeded(@NotNull Project project,
+                                                                    @NotNull ProjectFileIndex fileIndex,
+                                                                    @NotNull GlobalSearchScope baseScope,
+                                                                    @NotNull PsiElement element) {
+    VirtualFile file = PsiUtilCore.getVirtualFile(element);
+    if (file == null || !fileIndex.isInLibrary(file)) return baseScope;
+    return baseScope.uniteWith(ProjectScope.getLibrariesScope(project));
   }
 
-  @Nullable
-  private IntSet getReferentFileIdsViaImplicitToString(@NotNull PsiElement element) {
-    return getReferentFileIds(element, false, (ref, elementPlace) -> myReader.findFileIdsWithImplicitToString(ref));
+  private @Nullable Set<VirtualFile> getReferentFiles(@NotNull PsiElement element) {
+    return getReferentFiles(element, true, (ref, elementPlace) -> myReader.findReferentFileIds(ref, elementPlace == ElementPlace.SRC));
   }
 
-  @Nullable
-  private IntSet getReferentFileIds(@NotNull PsiElement element,
-                                    boolean buildHierarchyForLibraryElements,
-                                    @NotNull ReferentFileSearcher referentFileSearcher) {
+  @TestOnly
+  public @Nullable Set<VirtualFile> getReferentFilesForTests(@NotNull PsiElement element) {
+    return getReferentFiles(element);
+  }
+
+  @TestOnly
+  public @Nullable Set<VirtualFile> getReferentFilesForTests(@NotNull CompilerRef compilerRef, boolean checkBaseClassAmbiguity) throws StorageException {
+    return myReader.findReferentFileIds(compilerRef, checkBaseClassAmbiguity);
+  }
+
+  @TestOnly
+  public @Nullable List<@NotNull CompilerRef> getCompilerRefsForTests(@NotNull PsiElement element) throws IOException {
+    LanguageCompilerRefAdapter adapter = LanguageCompilerRefAdapter.findAdapter(element, true);
+    if (adapter == null) return null;
+    return adapter.asCompilerRefs(element, myReader.getNameEnumerator());
+  }
+
+  private @Nullable Set<VirtualFile> getReferentFileIdsViaImplicitToString(@NotNull PsiElement element) {
+    return getReferentFiles(element, false, (ref, elementPlace) -> myReader.findFileIdsWithImplicitToString(ref));
+  }
+
+  private @Nullable Set<VirtualFile> getReferentFiles(@NotNull PsiElement element,
+                                                      boolean buildHierarchyForLibraryElements,
+                                                      @NotNull ReferentFileSearcher referentFileSearcher) {
     final CompilerElementInfo compilerElementInfo = asCompilerElements(element, buildHierarchyForLibraryElements, true);
     if (compilerElementInfo == null) return null;
 
     if (!myReadDataLock.tryLock()) return null;
     try {
       if (myReader == null) return null;
-      IntSet referentFileIds = new IntOpenHashSet();
+      Set<VirtualFile> referentFileIds = VfsUtilCore.createCompactVirtualFileSet();
       for (CompilerRef ref : compilerElementInfo.searchElements) {
         try {
-          IntSet referents = referentFileSearcher.findReferentFiles(ref, compilerElementInfo.place);
+          Set<VirtualFile> referents = referentFileSearcher.findReferentFiles(ref, compilerElementInfo.place);
           if (referents == null) {
             return null;
           }
@@ -345,48 +413,99 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  @Nullable
-  private CompilerElementInfo asCompilerElements(@NotNull PsiElement psiElement,
-                                                 boolean buildHierarchyForLibraryElements,
-                                                 boolean checkNotDirty) {
-    if (!myReadDataLock.tryLock()) return null;
+  private @Nullable CompilerElementInfo asCompilerElements(@NotNull PsiElement psiElement,
+                                                           boolean buildHierarchyForLibraryElements,
+                                                           boolean checkNotDirty) {
+    if (!myReadDataLock.tryLock()) {
+      return null;
+    }
     try {
-      if (myReader == null) return null;
+      if (myReader == null) {
+        return null;
+      }
       VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
-      if (file == null) return null;
+      if (file == null) {
+        return null;
+      }
       ElementPlace place = ElementPlace.get(file, myProjectFileIndex);
       if (checkNotDirty) {
         if (place == null || (place == ElementPlace.SRC && myDirtyScopeHolder.contains(file))) {
           return null;
         }
       }
-      final LanguageCompilerRefAdapter adapter = LanguageCompilerRefAdapter.findAdapter(file);
-      if (adapter == null) return null;
-      final CompilerRef ref = adapter.asCompilerRef(psiElement, myReader.getNameEnumerator());
-      if (ref == null) return null;
+      final LanguageCompilerRefAdapter adapter = LanguageCompilerRefAdapter.findAdapter(psiElement, true);
+      if (adapter == null) {
+        return null;
+      }
+      final List<CompilerRef> refs = adapter.asCompilerRefs(psiElement, myReader.getNameEnumerator());
+      if (refs == null) {
+        return null;
+      }
       if (place == ElementPlace.LIB && buildHierarchyForLibraryElements) {
-        final List<CompilerRef> elements = adapter.getHierarchyRestrictedToLibraryScope(ref,
-                                                                                        psiElement,
-                                                                                        myReader.getNameEnumerator(),
-                                                                                        LibraryScopeCache.getInstance(myProject)
-                                                                                       .getLibrariesOnlyScope());
-        final CompilerRef[] fullHierarchy = new CompilerRef[elements.size() + 1];
-        fullHierarchy[0] = ref;
-        int i = 1;
-        for (CompilerRef element : elements) {
-          fullHierarchy[i++] = element;
-        }
-        return new CompilerElementInfo(place, fullHierarchy);
+        if (adapter.isTooCommonLibraryElement(psiElement)) return null;
+
+        return computeInLibraryScope(() -> {
+          GlobalSearchScope librariesScope = ProjectScope.getLibrariesScope(project);
+          List<CompilerRef> resultList = new ArrayList<>(refs);
+          for (CompilerRef ref : refs) {
+            resultList.addAll(adapter.getHierarchyRestrictedToLibraryScope(ref, psiElement, myReader.getNameEnumerator(), librariesScope));
+          }
+          return new CompilerElementInfo(place, resultList);
+        });
       }
       else {
-        return new CompilerElementInfo(place, ref);
+        return new CompilerElementInfo(place, refs);
       }
     }
     catch (IOException e) {
       throw new RuntimeException(e);
-    } finally {
+    }
+    finally {
       myReadDataLock.unlock();
     }
+  }
+
+  public <T, E extends Throwable> T computeInLibraryScope(ThrowableComputable<T, E> action) throws E {
+    myIsInsideLibraryScope.set(true);
+    try {
+      return action.compute();
+    }
+    finally {
+      myIsInsideLibraryScope.set(false);
+    }
+  }
+
+  @FunctionalInterface
+  public interface CompilerRefProvider {
+    @Nullable CompilerRef provide(@NotNull NameEnumerator nameEnumerator) throws IOException;
+  }
+
+  public @NotNull SearchId @Nullable [] getDirectInheritorsNames(@NotNull CompilerRefProvider compilerRefFunction) {
+    if (!myReadDataLock.tryLock()) {
+      return null;
+    }
+    try {
+      if (myReader == null) {
+        return null;
+      }
+      try {
+        CompilerRef hierarchyElement = compilerRefFunction.provide(myReader.getNameEnumerator());
+        if (hierarchyElement == null) {
+          return null;
+        }
+        return myReader.getDirectInheritorsNames(hierarchyElement);
+      }
+      catch (RuntimeException | StorageException | IOException e) {
+        return onException(e, "direct inheritors names");
+      }
+    }
+    finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  public boolean isInsideLibraryScope() {
+    return myIsInsideLibraryScope.get();
   }
 
   protected void closeReaderIfNeeded(IndexCloseReason reason) {
@@ -396,34 +515,47 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
         myActiveBuilds++;
         myDirtyScopeHolder.compilerActivityStarted();
       }
-      if (myReader != null) {
+
+      boolean myReaderIsNotNull = myReader != null;
+      if (myReaderIsNotNull) {
         myReader.close(reason == IndexCloseReason.AN_EXCEPTION);
         myReader = null;
       }
-    } finally {
+
+      LOG.info("backward reference index reader is closed" + (myReaderIsNotNull ? "" : " (didn't exist)"));
+    }
+    finally {
       myOpenCloseLock.unlock();
     }
   }
 
-  protected void openReaderIfNeeded(IndexOpenReason reason) {
+  protected void openReaderIfNeeded() {
+    // do not run read action inside myOpenCloseLock
+    List<Module> compiledModules = ReadAction.nonBlocking(() -> {
+      ModuleManager moduleManager = ModuleManager.getInstance(project);
+      return ContainerUtil.mapNotNull(myDirtyScopeHolder.getCompilationAffectedModules(), moduleManager::findModuleByName);
+    }).expireWith(this).executeSynchronously();
+
+    Module[] allModules = initialized ? null : allModules();
+
     myCompilationCount.increment();
     myOpenCloseLock.lock();
     try {
-      try {
-        switch (reason) {
-          case UP_TO_DATE_CACHE:
-            myDirtyScopeHolder.upToDateChecked(true);
-            break;
-          case COMPILATION_FINISHED:
-            myDirtyScopeHolder.compilerActivityFinished();
+      myActiveBuilds--;
+
+      if (!initialized) {
+        initialize(allModules, compiledModules);
+      } else {
+        myDirtyScopeHolder.compilerActivityFinished(compiledModules);
+      }
+
+      if (myActiveBuilds == 0 && project.isOpen()) {
+        if (myReader != null) {
+          LOG.warn("already opened – will be overridden");
+          myReader.close(false);
         }
-      }
-      catch (RuntimeException e) {
-        --myActiveBuilds;
-        throw e;
-      }
-      if ((--myActiveBuilds == 0) && myProject.isOpen()) {
-        myReader = myReaderFactory.create(myProject);
+
+        myReader = myReaderFactory.create(project);
         LOG.info("backward reference index reader " + (myReader == null ? "doesn't exist" : "is opened"));
       }
     }
@@ -432,20 +564,36 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  private void markAsOutdated(boolean decrementBuildCount) {
+  private void markAsUpToDate() {
+    Module[] modules = allModules();
+    if (modules == null) return;
+
     myOpenCloseLock.lock();
     try {
-      if (decrementBuildCount) {
-        --myActiveBuilds;
+      long modificationCount = getModificationCount();
+
+      LOG.info("MC: " + modificationCount + ", ABC: " + myActiveBuilds);
+      if (myActiveBuilds == 0 && modificationCount == 1) {
+        myDirtyScopeHolder.compilerActivityFinished(ArraysKt.asList(modules));
+        LOG.info("marked as up to date");
       }
-      myDirtyScopeHolder.upToDateChecked(false);
-    } finally {
+    }
+    finally {
       myOpenCloseLock.unlock();
     }
   }
 
-  public ProjectFileIndex getFileIndex() {
-    return myProjectFileIndex;
+  private void initialize(Module[] allModules, @Nullable Collection<@NotNull Module> compiledModules) {
+    initialized = true;
+    LOG.info("initialized");
+
+    myDirtyScopeHolder.upToDateCheckFinished(allModules != null ? ArraysKt.asList(allModules) : null, compiledModules);
+  }
+
+  private Module [] allModules() {
+    return ReadAction.nonBlocking(() -> {
+      return project.isDisposed() ? null : ModuleManager.getInstance(project).getModules();
+    }).expireWith(this).executeSynchronously();
   }
 
   public Set<FileType> getFileTypes() {
@@ -453,7 +601,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   public Project getProject() {
-    return myProject;
+    return project;
   }
 
   protected static void executeOnBuildThread(@NotNull Runnable compilationFinished) {
@@ -474,44 +622,12 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  protected static final class ScopeWithoutReferencesOnCompilation extends GlobalSearchScope {
-    private final IntSet myReferentIds;
-    private final ProjectFileIndex myIndex;
-
-    public ScopeWithoutReferencesOnCompilation(IntSet ids, ProjectFileIndex index) {
-      myReferentIds = ids;
-      myIndex = index;
-    }
-
-    @Override
-    public boolean contains(@NotNull VirtualFile file) {
-      return file instanceof VirtualFileWithId && myIndex.isInSourceContent(file) && !myReferentIds.contains(((VirtualFileWithId)file).getId());
-    }
-
-    @Override
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return true;
-    }
-
-    @Override
-    public boolean isSearchInLibraries() {
-      return false;
-    }
-  }
-
   @Override
   public long getModificationCount() {
     return myCompilationCount.longValue();
   }
 
-  protected static final class CompilerElementInfo {
-    public final ElementPlace place;
-    public final CompilerRef[] searchElements;
-
-    public CompilerElementInfo(ElementPlace place, CompilerRef... searchElements) {
-      this.place = place;
-      this.searchElements = searchElements;
-    }
+  protected record CompilerElementInfo(ElementPlace place, @NotNull List<@NotNull CompilerRef> searchElements) {
   }
 
   protected static final class HierarchySearchKey {
@@ -538,34 +654,16 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  @TestOnly
-  @Nullable
-  public Set<VirtualFile> getReferentFiles(@NotNull PsiElement element) {
-    ManagingFS managingFS = ManagingFS.getInstance();
-    IntSet ids = getReferentFileIds(element);
-    if (ids == null) {
-      return null;
-    }
-    Set<VirtualFile> fileSet = CollectionFactory.createSmallMemoryFootprintSet(ids.size());
-    for (IntIterator iterator = ids.iterator(); iterator.hasNext(); ) {
-      VirtualFile vFile = managingFS.findFileById(iterator.nextInt());
-      assert vFile != null;
-      fileSet.add(vFile);
-    }
-    return fileSet;
-  }
-
   // should not be used in production code
   @NotNull
   DirtyScopeHolder getDirtyScopeHolder() {
     return myDirtyScopeHolder;
   }
 
-  @Nullable
-  public CompilerReferenceFindUsagesTestInfo getTestFindUsages(@NotNull PsiElement element) {
+  public @Nullable CompilerReferenceFindUsagesTestInfo getTestFindUsages(@NotNull PsiElement element) {
     if (!myReadDataLock.tryLock()) return null;
     try {
-      IntSet referentFileIds = getReferentFileIds(element);
+      @Nullable Set<VirtualFile> referentFileIds = getReferentFiles(element);
       DirtyScopeTestInfo dirtyScopeInfo = myDirtyScopeHolder.getState();
       return new CompilerReferenceFindUsagesTestInfo(referentFileIds, dirtyScopeInfo);
     }
@@ -574,8 +672,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  @Nullable
-  public CompilerReferenceHierarchyTestInfo getTestHierarchy(@NotNull PsiNamedElement element, @NotNull GlobalSearchScope scope, @NotNull FileType fileType) {
+  public @Nullable CompilerReferenceHierarchyTestInfo getTestHierarchy(@NotNull PsiNamedElement element, @NotNull GlobalSearchScope scope, @NotNull FileType fileType) {
     if (!myReadDataLock.tryLock()) return null;
     try {
       final CompilerHierarchyInfoImpl hierarchyInfo = getHierarchyInfo(element, scope, fileType, CompilerHierarchySearchType.DIRECT_INHERITOR);
@@ -587,8 +684,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  @Nullable
-  public CompilerReferenceHierarchyTestInfo getTestFunExpressions(@NotNull PsiNamedElement element, @NotNull GlobalSearchScope scope, @NotNull FileType fileType) {
+  public @Nullable CompilerReferenceHierarchyTestInfo getTestFunExpressions(@NotNull PsiNamedElement element, @NotNull GlobalSearchScope scope, @NotNull FileType fileType) {
     if (!myReadDataLock.tryLock()) return null;
     try {
       final CompilerHierarchyInfoImpl hierarchyInfo = getHierarchyInfo(element, scope, fileType, CompilerHierarchySearchType.FUNCTIONAL_EXPRESSION);
@@ -600,9 +696,14 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  @Nullable
-  protected <T> T onException(@NotNull Exception e, @NotNull String actionName) {
+  @Override
+  public void dispose() {
+    closeReaderIfNeeded(IndexCloseReason.SHUTDOWN);
+  }
+
+  protected @Nullable <T> T onException(@NotNull Exception e, @NotNull String actionName) {
     if (e instanceof ControlFlowException) {
+      //noinspection CastConflictsWithInstanceof
       throw (RuntimeException)e;
     }
 
@@ -614,8 +715,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     return null;
   }
 
-  @NotNull
-  protected static IntSet intersection(@NotNull IntSet set1, @NotNull IntCollection set2) {
+  protected static @NotNull IntSet intersection(@NotNull IntSet set1, @NotNull IntCollection set2) {
     if (set1.isEmpty()) {
       return set1;
     }
@@ -632,7 +732,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   protected enum IndexCloseReason {
     AN_EXCEPTION,
     COMPILATION_STARTED,
-    PROJECT_CLOSED
+    SHUTDOWN
   }
 
   protected enum IndexOpenReason {
@@ -643,6 +743,6 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   @FunctionalInterface
   protected interface ReferentFileSearcher {
     @Nullable
-    IntSet findReferentFiles(@NotNull CompilerRef ref, @NotNull ElementPlace place) throws StorageException;
+    Set<VirtualFile> findReferentFiles(@NotNull CompilerRef ref, @NotNull ElementPlace place) throws StorageException;
   }
 }

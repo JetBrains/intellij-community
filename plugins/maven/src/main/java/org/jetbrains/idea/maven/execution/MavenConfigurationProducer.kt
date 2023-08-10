@@ -56,12 +56,12 @@ class MavenConfigurationProducer : LazyRunConfigurationProducer<MavenRunConfigur
 
     if(configuration.runnerParameters?.workingDirPath != file.parent.path ) return false
     if(configuration.runnerParameters?.pomFileName != file.name ) return false
-    val tasks: List<String> = location.goals
-    val taskNames: List<String> = configuration.runnerParameters.goals
-    if (tasks.isEmpty() && taskNames.isEmpty()) {
+    val newTaskNames: List<String> = location.goals
+    val existingTaskNames: List<String> = configuration.runnerParameters.goals
+    if (newTaskNames.isEmpty() && existingTaskNames.isEmpty()) {
       return true
     }
 
-    return tasks.containsAll(taskNames) && !taskNames.isEmpty()
+    return HashSet(newTaskNames) == HashSet(existingTaskNames)
   }
 }

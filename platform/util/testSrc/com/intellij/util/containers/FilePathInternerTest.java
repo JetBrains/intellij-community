@@ -8,6 +8,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Set;
 

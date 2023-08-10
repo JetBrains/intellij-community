@@ -1,0 +1,210 @@
+It is common for machines (as opposed to humans) to consume Mercurial.
+This help topic describes some of the considerations for interfacing
+machines with Mercurial.
+
+Choosing an Interface
+=====================
+
+Machines have a choice of several methods to interface with Mercurial.
+These include:
+
+- Executing the ``hg`` process
+- Querying a HTTP server
+- Calling out to a command server
+
+Executing ``hg`` processes is very similar to how humans interact with
+Mercurial in the shell. It should already be familiar to you.
+
+:hg:`serve` can be used to start a server. By default, this will start
+a "hgweb" HTTP server. This HTTP server has support for machine-readable
+output, such as JSON. For more, see :hg:`help hgweb`.
+
+:hg:`serve` can also start a "command server." Clients can connect
+to this server and issue Mercurial commands over a special protocol.
+For more details on the command server, including links to client
+libraries, see https://www.mercurial-scm.org/wiki/CommandServer.
+
+:hg:`serve` based interfaces (the hgweb and command servers) have the
+advantage over simple ``hg`` process invocations in that they are
+likely more efficient. This is because there is significant overhead
+to spawn new Python processes.
+
+.. tip::
+
+   If you need to invoke several ``hg`` processes in short order and/or
+   performance is important to you, use of a server-based interface
+   is highly recommended.
+
+Environment Variables
+=====================
+
+As documented in :hg:`help environment`, various environment variables
+influence the operation of Mercurial. The following are particularly
+relevant for machines consuming Mercurial:
+
+HGPLAIN
+    If not set, Mercurial's output could be influenced by configuration
+    settings that impact its encoding, verbose mode, localization, etc.
+
+    It is highly recommended for machines to set this variable when
+    invoking ``hg`` processes.
+
+HGENCODING
+    If not set, the locale used by Mercurial will be detected from the
+    environment. If the determined locale does not support display of
+    certain characters, Mercurial may render these character sequences
+    incorrectly (often by using "?" as a placeholder for invalid
+    characters in the current locale).
+
+    Explicitly setting this environment variable is a good practice to
+    guarantee consistent results. "utf-8" is a good choice on UNIX-like
+    environments.
+
+HGRCPATH
+    If not set, Mercurial will inherit config options from config files
+    using the process described in :hg:`help config`. This includes
+    inheriting user or system-wide config files.
+
+    When utmost control over the Mercurial configuration is desired, the
+    value of ``HGRCPATH`` can be set to an explicit file with known good
+    configs. In rare cases, the value can be set to an empty file or the
+    null device (often ``/dev/null``) to bypass loading of any user or
+    system config files. Note that these approaches can have unintended
+    consequences, as the user and system config files often define things
+    like the username and extensions that may be required to interface
+    with a repository.
+
+HGRCSKIPREPO
+    When set, the .hg/hgrc from repositories are not read.
+
+    Note that not reading the repository's configuration can have
+    unintended consequences, as the repository config files can define
+    things like extensions that are required for access to the
+    repository.
+
+Command-line Flags
+==================
+
+Mercurial's default command-line parser is designed for humans, and is not
+robust against malicious input. For instance, you can start a debugger by
+passing ``--debugger`` as an option value::
+
+    $ REV=--debugger sh -c 'hg log -r "$REV"'
+
+This happens because several command-line flags need to be scanned without
+using a concrete command table, which may be modified while loading repository
+settings and extensions.
+
+Since Mercurial 4.4.2, the parsing of such flags may be restricted by setting
+``HGPLAIN=+strictflags``. When this feature is enabled, all early options
+(e.g. ``-R/--repository``, ``--cwd``, ``--config``) must be specified first
+amongst the other global options, and cannot be injected to an arbitrary
+location::
+
+    $ HGPLAIN=+strictflags hg -R "$REPO" log -r "$REV"
+
+In earlier Mercurial versions where ``+strictflags`` isn't available, you
+can mitigate the issue by concatenating an option value with its flag::
+
+    $ hg log -r"$REV" --keyword="$KEYWORD"
+
+Consuming Command Output
+========================
+
+It is common for machines to need to parse the output of Mercurial
+commands for relevant data. This section describes the various
+techniques for doing so.
+
+Parsing Raw Command Output
+--------------------------
+
+Likely the simplest and most effective solution for consuming command
+output is to simply invoke ``hg`` commands as you would as a user and
+parse their output.
+
+The output of many commands can easily be parsed with tools like
+``grep``, ``sed``, and ``awk``.
+
+A potential downside with parsing command output is that the output
+of commands can change when Mercurial is upgraded. While Mercurial
+does generally strive for strong backwards compatibility, command
+output does occasionally change. Having tests for your automated
+interactions with ``hg`` commands is generally recommended, but is
+even more important when raw command output parsing is involved.
+
+Using Templates to Control Output
+---------------------------------
+
+Many ``hg`` commands support templatized output via the
+``-T/--template`` argument. For more, see :hg:`help templates`.
+
+Templates are useful for explicitly controlling output so that
+you get exactly the data you want formatted how you want it. For
+example, ``log -T {node}\n`` can be used to print a newline
+delimited list of changeset nodes instead of a human-tailored
+output containing authors, dates, descriptions, etc.
+
+.. tip::
+
+   If parsing raw command output is too complicated, consider
+   using templates to make your life easier.
+
+The ``-T/--template`` argument allows specifying pre-defined styles.
+Mercurial ships with the machine-readable styles ``cbor``, ``json``,
+and ``xml``, which provide CBOR, JSON, and XML output, respectively.
+These are useful for producing output that is machine readable as-is.
+
+(Mercurial 5.0 is required for CBOR style.)
+
+.. important::
+
+   The ``json`` and ``xml`` styles are considered experimental. While
+   they may be attractive to use for easily obtaining machine-readable
+   output, their behavior may change in subsequent versions.
+
+   These styles may also exhibit unexpected results when dealing with
+   certain encodings. Mercurial treats things like filenames as a
+   series of bytes and normalizing certain byte sequences to JSON
+   or XML with certain encoding settings can lead to surprises.
+
+Command Server Output
+---------------------
+
+If using the command server to interact with Mercurial, you are likely
+using an existing library/API that abstracts implementation details of
+the command server. If so, this interface layer may perform parsing for
+you, saving you the work of implementing it yourself.
+
+Output Verbosity
+----------------
+
+Commands often have varying output verbosity, even when machine
+readable styles are being used (e.g. ``-T json``). Adding
+``-v/--verbose`` and ``--debug`` to the command's arguments can
+increase the amount of data exposed by Mercurial.
+
+An alternate way to get the data you need is by explicitly specifying
+a template.
+
+Other Topics
+============
+
+revsets
+   Revisions sets is a functional query language for selecting a set
+   of revisions. Think of it as SQL for Mercurial repositories. Revsets
+   are useful for querying repositories for specific data.
+
+   See :hg:`help revsets` for more.
+
+share extension
+   The ``share`` extension provides functionality for sharing
+   repository data across several working copies. It can even
+   automatically "pool" storage for logically related repositories when
+   cloning.
+
+   Configuring the ``share`` extension can lead to significant resource
+   utilization reduction, particularly around disk space and the
+   network. This is especially true for continuous integration (CI)
+   environments.
+
+   See :hg:`help -e share` for more.

@@ -19,9 +19,6 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 import com.intellij.psi.javadoc.PsiDocTag;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ilyas
- */
 public interface GrDocTag extends GroovyDocPsiElement, PsiDocTag {
   GrDocTag[] EMPTY_ARRAY = new GrDocTag[0];
 

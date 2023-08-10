@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-/**
- * @author ilyas
- */
 public abstract class GrExpressionImpl extends GroovyPsiElementImpl implements GrExpression {
   public GrExpressionImpl(@NotNull ASTNode node) {
     super(node);

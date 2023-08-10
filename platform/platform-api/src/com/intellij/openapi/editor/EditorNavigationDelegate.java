@@ -6,8 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Defines contract for extending editor navigation functionality. 
- * 
- * @author Denis Zhdanov
  */
 public interface EditorNavigationDelegate {
 

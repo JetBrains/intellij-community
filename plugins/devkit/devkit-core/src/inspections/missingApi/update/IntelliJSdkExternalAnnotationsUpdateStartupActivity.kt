@@ -1,23 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.missingApi.update
 
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.startup.ProjectActivity
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 
 /**
  * Startup activity that updates external annotations of IDEA JDKs configured in the project.
  */
-class IntelliJSdkExternalAnnotationsUpdateStartupActivity : StartupActivity {
-  override fun runActivity(project: Project) {
+internal class IntelliJSdkExternalAnnotationsUpdateStartupActivity : ProjectActivity {
+  override suspend fun execute(project: Project): Unit = blockingContext {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode) {
-      return
+      return@blockingContext
     }
 
     val ideaJdks = ProjectJdkTable.getInstance().getSdksOfType(IdeaJdk.getInstance())
@@ -29,10 +29,7 @@ class IntelliJSdkExternalAnnotationsUpdateStartupActivity : StartupActivity {
   }
 
   private fun updateAnnotationsLaterIfNecessary(project: Project, ideaJdk: Sdk) {
-    val buildNumber = getIdeaBuildNumber(ideaJdk)
-    if (buildNumber != null) {
-      IntelliJSdkExternalAnnotationsUpdater.getInstance().updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk, buildNumber)
-    }
+    IntelliJSdkExternalAnnotationsUpdater.getInstance().updateIdeaJdkAnnotationsIfNecessary(project, ideaJdk)
   }
 
   private fun subscribeToJdkChanges(project: Project, application: Application) {
@@ -50,11 +47,5 @@ class IntelliJSdkExternalAnnotationsUpdateStartupActivity : StartupActivity {
         }
       }
     })
-  }
-
-  private fun getIdeaBuildNumber(ideaJdk: Sdk): BuildNumber? {
-    val homePath = ideaJdk.homePath ?: return null
-    val buildNumberStr = IdeaJdk.getBuildNumber(homePath) ?: return null
-    return BuildNumber.fromStringOrNull(buildNumberStr)
   }
 }

@@ -3,7 +3,7 @@ sealed class A permits B {}
 sealed class B extends A permits C, D {}
 final class C extends B {}
 non-sealed class D extends B {}
-class E extends <error descr="E is not allowed in the sealed hierarchy">A</error> {}
+class E extends <error descr="'E' is not allowed in the sealed hierarchy">A</error> {}
 <error descr="Illegal combination of modifiers: 'sealed' and 'sealed'">sealed</error> <error descr="Illegal combination of modifiers: 'sealed' and 'sealed'">sealed</error> class SealedSealed {}
 <error descr="Illegal combination of modifiers: 'sealed' and 'non-sealed'">sealed</error> <error descr="Illegal combination of modifiers: 'non-sealed' and 'sealed'">non-sealed</error> class SealedNonSealed {}
 <error descr="Illegal combination of modifiers: 'sealed' and 'final'">sealed</error> <error descr="Illegal combination of modifiers: 'final' and 'sealed'">final</error> class SealedFinal {}
@@ -29,3 +29,7 @@ enum ImplicitlySealedEnum {
 }
 
 <error descr="Modifier 'sealed' not allowed here">sealed</error> @interface MyAnnoType {}
+
+//records
+sealed interface IWithRecords permits WithRecords { }
+record WithRecords() implements IWithRecords {}

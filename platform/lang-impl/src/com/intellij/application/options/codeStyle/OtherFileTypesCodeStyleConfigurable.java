@@ -6,6 +6,7 @@ import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 public class OtherFileTypesCodeStyleConfigurable extends CodeStyleAbstractConfigurable {
   private final OtherFileTypesCodeStyleOptionsForm myOptionsForm;
@@ -16,7 +17,7 @@ public class OtherFileTypesCodeStyleConfigurable extends CodeStyleAbstractConfig
   }
 
   @Override
-  protected CodeStyleAbstractPanel createPanel(CodeStyleSettings settings) {
+  protected @NotNull CodeStyleAbstractPanel createPanel(@NotNull CodeStyleSettings settings) {
     return myOptionsForm;
   }
 

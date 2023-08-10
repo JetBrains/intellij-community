@@ -1,4 +1,4 @@
-// "Move catch for 'java.io.IOException' before 'java.lang.Exception'" "true"
+// "Move catch for 'java.io.IOException' before 'java.lang.Exception'" "true-preview"
 import java.io.*;
 
 class a {

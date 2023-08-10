@@ -1,18 +1,35 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.repositories
 
 import com.intellij.ide.CopyProvider
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.ui.SpeedSearchComparator
-import com.intellij.ui.TreeSpeedSearch
+import com.intellij.openapi.project.Project
+import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchToolWindowModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.localizedName
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
@@ -22,14 +39,14 @@ import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
-class RepositoryTree(val viewModel: PackageSearchToolWindowModel) :
-    Tree(), DataProvider, CopyProvider {
+internal class RepositoryTree(
+    private val project: Project
+) : Tree(), DataProvider, CopyProvider {
 
-    val rootNode: DefaultMutableTreeNode
+    private val rootNode: DefaultMutableTreeNode
         get() = (model as DefaultTreeModel).root as DefaultMutableTreeNode
 
     init {
-
         setCellRenderer(RepositoryTreeItemRenderer())
         selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
 
@@ -37,8 +54,8 @@ class RepositoryTree(val viewModel: PackageSearchToolWindowModel) :
         isRootVisible = false
         showsRootHandles = true
 
-        @Suppress("MagicNumber") // Gotta love Swing APIs
-        border = JBUI.Borders.empty(0, 8, 0, 0)
+        @Suppress("MagicNumber") // Swing dimension constants
+        border = emptyBorder(left = 8)
         emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.repositories.no.repositories.configured")
 
         addMouseListener(object : MouseAdapter() {
@@ -46,7 +63,7 @@ class RepositoryTree(val viewModel: PackageSearchToolWindowModel) :
                 if (e != null && e.clickCount >= 1) {
                     val treePath = getPathForLocation(e.x, e.y) ?: return
                     val item = getRepositoryItemFrom(treePath)
-                    if (item != null && item is RepositoryItem.Module) {
+                    if (item != null && item is RepositoryTreeItem.Module) {
                         openFile(item)
                     }
                 }
@@ -55,7 +72,7 @@ class RepositoryTree(val viewModel: PackageSearchToolWindowModel) :
 
         addTreeSelectionListener {
             val item = getRepositoryItemFrom(it.newLeadSelectionPath)
-            if (item != null && item is RepositoryItem.Module) {
+            if (item != null && item is RepositoryTreeItem.Module) {
                 openFile(item)
             }
         }
@@ -64,90 +81,97 @@ class RepositoryTree(val viewModel: PackageSearchToolWindowModel) :
             override fun keyPressed(e: KeyEvent?) {
                 if (e?.keyCode == KeyEvent.VK_ENTER) {
                     val item = getRepositoryItemFrom(selectionPath)
-                    if (item != null && item is RepositoryItem.Module) {
+                    if (item != null && item is RepositoryTreeItem.Module) {
                         openFile(item)
                     }
                 }
             }
         })
 
+        TreeUIHelper.getInstance().installTreeSpeedSearch(this)
+
         TreeUtil.installActions(this)
+    }
 
-        TreeSpeedSearch(this) {
-            buildString {
-                val item = getRepositoryItemFrom(selectionPath)
-                if (item != null) {
-                    item.meta.remoteInfo?.let { append(it.localizedName()) }
-                    item.meta.name?.let { append(it) }
+    private fun openFile(repositoryModuleItem: RepositoryTreeItem.Module, focusEditor: Boolean = false) {
+        if (!PackageSearchGeneralConfiguration.getInstance(project).autoScrollToSource) return
 
-                    when (item) {
-                        is RepositoryItem.Group -> {
-                            item.meta.url?.let { append(it) }
-                        }
-                        is RepositoryItem.Module -> {
-                            append(item.meta.projectModule?.getFullName())
-                        }
-                    }
+        val file = repositoryModuleItem.module.buildFile ?: return
+        FileEditorManager.getInstance(project).openFile(file, focusEditor, true)
+    }
+
+    fun display(
+        repositoriesDeclarationsByModule: Map<PackageSearchModule, List<RepositoryModel>>,
+        allKnownRepositories: List<RepositoryModel>
+    ) {
+        val previouslySelectedItem = getSelectedRepositoryItem()
+
+        clearSelection()
+        rootNode.removeAllChildren()
+
+        val repoUsages: Map<RepositoryModel, MutableList<PackageSearchModule>> = buildMap {
+            repositoriesDeclarationsByModule.forEach { (module, repos) ->
+                repos.forEach { repo ->
+                    getOrPut(repo) { mutableListOf() }.add(module)
                 }
             }
-        }.apply {
-            comparator = SpeedSearchComparator(false)
         }
 
-        viewModel.repositories.advise(viewModel.lifetime) { packageSearchRepositories ->
-            val previouslySelectedIdentifier = getSelectedRepositoryItem()?.toSimpleIdentifier()
+        allKnownRepositories.asSequence()
+            .filter { it in repoUsages }
+            .sortedBy { it.displayName }
+            .forEach { repository ->
+                val repoItem = RepositoryTreeItem.Repository(repository)
+                val repoNode = DefaultMutableTreeNode(repoItem)
 
-            clearSelection()
-            rootNode.removeAllChildren()
+                repoUsages.getValue(repository).forEach { module ->
+                    val moduleItem = RepositoryTreeItem.Module(module)
+                    val treeNode = DefaultMutableTreeNode(moduleItem)
+                    repoNode.add(treeNode)
 
-            for (group in packageSearchRepositories
-                .sortedBy { it.remoteInfo?.localizedName() ?: it.name ?: it.id }
-                .sortedBy { it.projectModule?.getFullName() ?: "" }
-                .groupBy { it.remoteInfo?.localizedName() + (it.id ?: it.name ?: "") + (it.url ?: "") }) {
-
-                val groupItem = RepositoryItem.Group(group.value.first())
-                val groupNode = DefaultMutableTreeNode(groupItem)
-                rootNode.add(groupNode)
-
-                for (packageSearchRepository in group.value) {
-                    val repositoryItem = RepositoryItem.Module(packageSearchRepository)
-                    val treeNode = DefaultMutableTreeNode(repositoryItem)
-                    groupNode.add(treeNode)
-
-                    if (previouslySelectedIdentifier != null && previouslySelectedIdentifier == repositoryItem.toSimpleIdentifier()) {
+                    if (previouslySelectedItem == moduleItem) {
                         selectionModel.selectionPath = TreePath(treeNode)
                     }
                 }
+
+                rootNode.add(repoNode)
+
+                if (previouslySelectedItem == repoItem) {
+                    selectionModel.selectionPath = TreePath(repoNode)
+                }
             }
 
-            TreeUtil.expandAll(this)
-            updateUI()
-        }
+        TreeUtil.expandAll(this@RepositoryTree)
+        updateUI()
     }
 
-    private fun getRepositoryItemFrom(treePath: TreePath?): RepositoryItem? {
-        val item = treePath?.lastPathComponent as? DefaultMutableTreeNode?
-        return item?.userObject as? RepositoryItem
+    override fun getData(dataId: String) =
+        when (val selectedItem = getSelectedRepositoryItem()) {
+            is DataProvider -> selectedItem.getData(dataId)
+            else -> null
+        }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+    override fun performCopy(dataContext: DataContext) {
+        val selectedItem = getSelectedRepositoryItem()
+        if (selectedItem is CopyProvider) selectedItem.performCopy(dataContext)
+    }
+
+    override fun isCopyEnabled(dataContext: DataContext): Boolean {
+        val selectedItem = getSelectedRepositoryItem()
+        return selectedItem is CopyProvider && selectedItem.isCopyEnabled(dataContext)
+    }
+
+    override fun isCopyVisible(dataContext: DataContext): Boolean {
+        val selectedItem = getSelectedRepositoryItem()
+        return selectedItem is CopyProvider && selectedItem.isCopyVisible(dataContext)
     }
 
     private fun getSelectedRepositoryItem() = getRepositoryItemFrom(this.selectionPath)
 
-    override fun getData(dataId: String) = getSelectedRepositoryItem()?.getData(dataId)
-
-    override fun performCopy(dataContext: DataContext) {
-        getSelectedRepositoryItem()?.performCopy(dataContext)
-    }
-
-    override fun isCopyEnabled(dataContext: DataContext) = getSelectedRepositoryItem()?.isCopyEnabled(dataContext) ?: false
-    override fun isCopyVisible(dataContext: DataContext) = getSelectedRepositoryItem()?.isCopyVisible(dataContext) ?: false
-
-    private fun openFile(repositoryModuleItem: RepositoryItem.Module, focusEditor: Boolean = false) {
-        if (!PackageSearchGeneralConfiguration.getInstance(viewModel.project).autoScrollToSource) return
-
-        repositoryModuleItem.meta.projectModule?.buildFile?.let { file ->
-
-            // TODO At some point it would be nice to jump to the location in the file
-            FileEditorManager.getInstance(viewModel.project).openFile(file, focusEditor, true)
-        }
+    private fun getRepositoryItemFrom(treePath: TreePath?): RepositoryTreeItem? {
+        val item = treePath?.lastPathComponent as? DefaultMutableTreeNode?
+        return item?.userObject as? RepositoryTreeItem
     }
 }

@@ -29,18 +29,16 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlSmartCompletionProvider {
-
+final class XmlSmartCompletionProvider {
   public void complete(CompletionParameters parameters, final CompletionResultSet result, PsiElement element) {
     if (!XmlCompletionContributor.isXmlNameCompletion(parameters)) {
       return;
     }
     result.stopHere();
-    if (!(element.getParent() instanceof XmlTag)) {
+    if (!(element.getParent() instanceof XmlTag tag)) {
       return;
     }
 
-    final XmlTag tag = (XmlTag)element.getParent();
     final XmlTag parentTag = tag.getParentTag();
     if (parentTag == null) return;
     final XmlContentDFA dfa = XmlContentDFA.getContentDFA(parentTag);
@@ -77,5 +75,4 @@ public class XmlSmartCompletionProvider {
     }
     return builder;
   }
-
 }

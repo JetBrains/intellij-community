@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -14,7 +14,7 @@ import java.util.List;
  * corresponding additional actions (like cleaning jar entries cache after change).
  */
 @ApiStatus.Internal
-public class CompoundVFileEvent {
+public final class CompoundVFileEvent {
   private final @NotNull VFileEvent myFileEvent;
   private boolean myInducedEventsCalculated;
   private final @NotNull List<VFileEvent> myInducedEvents = new SmartList<>();
@@ -54,6 +54,6 @@ public class CompoundVFileEvent {
 
   @Override
   public String toString() {
-    return "Compound " + myFileEvent;
+    return "Compound " + myFileEvent + "; induced: "+(myInducedEventsCalculated ? myInducedEvents : " (not yet calculated)");
   }
 }

@@ -8,8 +8,10 @@ import com.intellij.json.psi.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SyntaxTraverser;
@@ -23,6 +25,10 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonPointerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry;
+import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
+import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
+import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
+import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
@@ -36,26 +42,23 @@ public final class JsonCachedValues {
   @Nullable
   public static JsonSchemaObject getSchemaObject(@NotNull VirtualFile schemaFile, @NotNull Project project) {
     JsonFileResolver.startFetchingHttpFileIfNeeded(schemaFile, project);
-    return computeForFile(schemaFile, project, JsonCachedValues::computeSchemaObject, JSON_OBJECT_CACHE_KEY);
-  }
-
-  @Nullable
-  private static JsonSchemaObject computeSchemaObject(@NotNull PsiFile f) {
-    return new JsonSchemaReader(f.getVirtualFile()).read(f);
+    return computeForFile(schemaFile, project, (psiFile) -> {
+      return JsonSchemaCacheManager.getInstance(psiFile.getProject()).computeSchemaObject(schemaFile, psiFile);
+    }, JSON_OBJECT_CACHE_KEY);
   }
 
   static final String URL_CACHE_KEY = "JsonSchemaUrlCache";
   private static final Key<CachedValue<String>> SCHEMA_URL_KEY = Key.create(URL_CACHE_KEY);
   @Nullable
   public static String getSchemaUrlFromSchemaProperty(@NotNull VirtualFile file,
-                                                       @NotNull Project project) {
+                                                      @NotNull Project project) {
     String value = JsonSchemaFileValuesIndex.getCachedValue(project, file, URL_CACHE_KEY);
     if (value != null) {
       return JsonSchemaFileValuesIndex.NULL.equals(value) ? null : value;
     }
 
     PsiFile psiFile = resolveFile(file, project);
-    return !(psiFile instanceof JsonFile) ? null : getOrCompute(psiFile, JsonCachedValues::fetchSchemaUrl, SCHEMA_URL_KEY);
+    return psiFile == null ? null : getOrCompute(psiFile, JsonCachedValues::fetchSchemaUrl, SCHEMA_URL_KEY);
   }
 
   private static PsiFile resolveFile(@NotNull VirtualFile file,
@@ -64,11 +67,37 @@ public final class JsonCachedValues {
     return PsiManager.getInstance(project).findFile(file);
   }
 
-  @Nullable
-  static String fetchSchemaUrl(@Nullable PsiFile psiFile) {
-    if (!(psiFile instanceof JsonFile)) return null;
-    final String url = JsonSchemaFileValuesIndex.readTopLevelProps(psiFile.getFileType(), psiFile.getText()).get(URL_CACHE_KEY);
-    return url == null || JsonSchemaFileValuesIndex.NULL.equals(url) ? null : url;
+  private static @Nullable String fetchSchemaUrl(@Nullable PsiFile psiFile) {
+    if (psiFile == null) return null;
+    if (psiFile instanceof JsonFile) {
+      String url = JsonSchemaFileValuesIndex.readTopLevelProps(psiFile.getFileType(), psiFile.getText()).get(URL_CACHE_KEY);
+      return url == null || JsonSchemaFileValuesIndex.NULL.equals(url) ? null : url;
+    }
+    else {
+      JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(psiFile, JsonSchemaObject.NULL_OBJ);
+      if (walker != null) {
+        Collection<PsiElement> roots = walker.getRoots(psiFile);
+        for (PsiElement root : ObjectUtils.notNull(roots, List.<PsiElement>of())) {
+          JsonValueAdapter adapter = walker.createValueAdapter(root);
+          JsonObjectValueAdapter object = adapter != null ? adapter.getAsObject() : null;
+          if (object != null) {
+            List<JsonPropertyAdapter> list = object.getPropertyList();
+            for (JsonPropertyAdapter propertyAdapter : list) {
+              if (JsonSchemaFileValuesIndex.SCHEMA_PROPERTY_NAME.equals(propertyAdapter.getName())) {
+                Collection<JsonValueAdapter> values = propertyAdapter.getValues();
+                if (values.size() == 1) {
+                  JsonValueAdapter item = ContainerUtil.getFirstItem(values);
+                  if (item.isStringLiteral()) {
+                    return StringUtil.unquoteString(item.getDelegate().getText());
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   static final String ID_CACHE_KEY = "JsonSchemaIdCache";
@@ -139,7 +168,7 @@ public final class JsonCachedValues {
   private static final Key<CachedValue<List<JsonSchemaCatalogEntry>>> SCHEMA_CATALOG_CACHE_KEY = Key.create("JsonSchemaCatalogCache");
   @Nullable
   public static List<JsonSchemaCatalogEntry> getSchemaCatalog(@NotNull final VirtualFile catalog,
-                                   @NotNull final Project project) {
+                                                              @NotNull final Project project) {
     if (!catalog.isValid()) return null;
     return computeForFile(catalog, project, JsonCachedValues::computeSchemaCatalog, SCHEMA_CATALOG_CACHE_KEY);
   }
@@ -220,11 +249,10 @@ public final class JsonCachedValues {
   static JsonSchemaObject computeSchemaForFile(@NotNull PsiFile file, @NotNull JsonSchemaService service) {
     final PsiFile originalFile = CompletionUtil.getOriginalOrSelf(file);
     JsonSchemaObject value = CachedValuesManager.getCachedValue(originalFile, OBJECT_FOR_FILE_KEY, () -> {
-      VirtualFile virtualFile = originalFile.getVirtualFile();
-      VirtualFile schemaFile = virtualFile == null ? null : getSchemaFile(virtualFile, service);
-      JsonSchemaObject schemaObject = virtualFile == null ? null : service.getSchemaObject(virtualFile);
-      PsiFile psiFile = schemaFile == null || !schemaFile.isValid() ? null : originalFile.getManager().findFile(schemaFile);
-      JsonSchemaObject object = schemaObject == null ? JsonSchemaObject.NULL_OBJ : schemaObject;
+      Pair<PsiFile, JsonSchemaObject> schema = getSchemaFile(originalFile, service);
+
+      PsiFile psiFile = schema.first;
+      JsonSchemaObject object = schema.second == null ? JsonSchemaObject.NULL_OBJ : schema.second;
       return psiFile == null
              ? CachedValueProvider.Result.create(object, originalFile, service)
              : CachedValueProvider.Result.create(object, originalFile, psiFile, service);
@@ -232,10 +260,24 @@ public final class JsonCachedValues {
     return value == JsonSchemaObject.NULL_OBJ ? null : value;
   }
 
+  public static boolean hasComputedSchemaObjectForFile(@NotNull PsiFile file) {
+    CachedValue<JsonSchemaObject> data = CompletionUtil.getOriginalOrSelf(file).getUserData(OBJECT_FOR_FILE_KEY);
+    return data != null && data.hasUpToDateValue();
+  }
+
+  private static @NotNull Pair<PsiFile, JsonSchemaObject> getSchemaFile(@NotNull PsiFile originalFile,
+                                                                        @NotNull JsonSchemaService service) {
+    VirtualFile virtualFile = originalFile.getVirtualFile();
+    VirtualFile schemaFile = virtualFile == null ? null : getSchemaFile(virtualFile, service);
+    JsonSchemaObject schemaObject = virtualFile == null ? null : service.getSchemaObject(virtualFile);
+    PsiFile psiFile = schemaFile == null || !schemaFile.isValid() ? null : originalFile.getManager().findFile(schemaFile);
+    return new Pair<>(psiFile, schemaObject);
+  }
+
   static VirtualFile getSchemaFile(@NotNull VirtualFile sourceFile, @NotNull JsonSchemaService service) {
     JsonSchemaServiceImpl serviceImpl = (JsonSchemaServiceImpl)service;
     Collection<VirtualFile> schemas = serviceImpl.getSchemasForFile(sourceFile, true, false);
-    if (schemas.size() == 0) return null;
+    if (schemas.isEmpty()) return null;
     assert schemas.size() == 1;
     return schemas.iterator().next();
   }

@@ -17,4 +17,4 @@ def <error descr="Identifier expected">await</error>():
     pass
 
 
-await<error descr="Expression expected"> </error>= 10
+<error descr="'await' outside async function">await</error><error descr="Expression expected"> </error>= 10

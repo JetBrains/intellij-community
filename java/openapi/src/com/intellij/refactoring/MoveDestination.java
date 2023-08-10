@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -30,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 /**
  * Represents a destination of Move Classes/Packages refactoring.
  * Destination of Move refactoring is generally a single package,
@@ -40,7 +27,6 @@ import java.util.Collection;
  *
  * @see JavaRefactoringFactory#createSourceFolderPreservingMoveDestination(String) 
  * @see JavaRefactoringFactory#createSourceRootMoveDestination(String, VirtualFile)
- *  @author dsl
  */
 public interface MoveDestination {
   /**
@@ -58,14 +44,27 @@ public interface MoveDestination {
   PsiDirectory getTargetIfExists(PsiDirectory source);
   PsiDirectory getTargetIfExists(@NotNull PsiFile source);
 
-  @Nullable @NlsContexts.DialogMessage
+  @Nullable @DialogMessage
   String verify(PsiFile source);
-  @Nullable @NlsContexts.DialogMessage
+  @Nullable @DialogMessage
   String verify(PsiDirectory source);
-  @Nullable @NlsContexts.DialogMessage
+  @Nullable @DialogMessage
   String verify(PsiPackage source);
 
-  void analyzeModuleConflicts(@NotNull Collection<? extends PsiElement> elements, @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages);
+  /**
+   * Searches for conflicts which arise when elements are moved from one module to another
+   * 
+   * E.g. when target module has no dependency on required library, 
+   *      or when usage in the third module has no dependency on the target module 
+   *      
+   * Impl note: do nothing if elements are kept in the same module
+   */
+  void analyzeModuleConflicts(@NotNull Collection<? extends PsiElement> elements, 
+                              @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
+                              final UsageInfo[] usages);
 
+  /**
+   * @return true if runtime scope of {@code place}'s module contains target destination
+   */
   boolean isTargetAccessible(@NotNull Project project, @NotNull VirtualFile place);
 }

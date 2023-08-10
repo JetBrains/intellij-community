@@ -1,0 +1,7 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <iconMapper mappingFile="CollaborationToolsIconMappings.json"/>
+    <themeMetadataProvider path="/META-INF/CollaborationTools.themeMetadata.json"/>
+    <statistics.notificationIdsHolder implementation="com.intellij.collaboration.ui.notification.CollaborationToolsNotificationIdsHolder"/>
+  </extensions>
+</idea-plugin>

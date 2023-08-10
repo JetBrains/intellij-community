@@ -1,9 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.wm.impl.content.BaseLabel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ObjectUtils;
@@ -32,12 +30,17 @@ public abstract class ToolWindowContextMenuActionBase extends AnAction {
     update(e, toolWindow, content);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   public abstract void update(@NotNull AnActionEvent e, @NotNull ToolWindow toolWindow, @Nullable Content content);
   public abstract void actionPerformed(@NotNull AnActionEvent e, @NotNull ToolWindow toolWindow, @Nullable Content content);
 
   @Nullable
   private static Content getContextContent(@NotNull AnActionEvent e, @NotNull ToolWindow toolWindow) {
-    BaseLabel baseLabel = ObjectUtils.tryCast(e.getData(PlatformDataKeys.CONTEXT_COMPONENT), BaseLabel.class);
+    BaseLabel baseLabel = ObjectUtils.tryCast(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), BaseLabel.class);
     Content selectedContent = baseLabel != null ? baseLabel.getContent() : null;
     if (selectedContent == null) {
       selectedContent = toolWindow.getContentManager().getSelectedContent();

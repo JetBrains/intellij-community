@@ -18,7 +18,7 @@ package com.jetbrains.python.inspections;
 import com.google.common.collect.ImmutableList;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
@@ -27,17 +27,17 @@ import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyConditionalStatementPart;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Alexey.Ivanov
- */
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 public class PySimplifyBooleanCheckInspection extends PyInspection {
   private static final List<String> COMPARISON_LITERALS = ImmutableList.of("True", "False", "[]");
 
@@ -48,21 +48,21 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session, ignoreComparisonToZero);
+    return new Visitor(holder, ignoreComparisonToZero, PyInspectionVisitor.getContext(session));
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(PyPsiBundle.message("INSP.simplify.boolean.check.ignore.comparison.to.zero"), "ignoreComparisonToZero");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(checkbox("ignoreComparisonToZero", PyPsiBundle.message("INSP.simplify.boolean.check.ignore.comparison.to.zero")));
   }
 
   private static class Visitor extends PyInspectionVisitor {
     private final boolean myIgnoreComparisonToZero;
 
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, boolean ignoreComparisonToZero) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder,
+            boolean ignoreComparisonToZero,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
       myIgnoreComparisonToZero = ignoreComparisonToZero;
     }
 
@@ -71,7 +71,7 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
       super.visitPyConditionalStatementPart(node);
       final PyExpression condition = node.getCondition();
       if (condition != null) {
-        condition.accept(new PyBinaryExpressionVisitor(getHolder(), getSession(), myIgnoreComparisonToZero));
+        condition.accept(new PyBinaryExpressionVisitor(getHolder(), myTypeEvalContext, myIgnoreComparisonToZero));
       }
     }
   }
@@ -80,9 +80,9 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
     private final boolean myIgnoreComparisonToZero;
 
     PyBinaryExpressionVisitor(@Nullable ProblemsHolder holder,
-                                     @NotNull LocalInspectionToolSession session,
+                              @NotNull TypeEvalContext context,
                                      boolean ignoreComparisonToZero) {
-      super(holder, session);
+      super(holder, context);
       myIgnoreComparisonToZero = ignoreComparisonToZero;
     }
 

@@ -56,8 +56,7 @@ public class MavenSmartCompletionContributor extends CompletionContributor {
     for (PsiReference each : getReferences(parameters)) {
       if (each instanceof TagNameReference) continue;
 
-      if (each instanceof GenericDomValueReference) {
-        GenericDomValueReference reference = (GenericDomValueReference)each;
+      if (each instanceof GenericDomValueReference reference) {
 
         Converter converter = reference.getConverter();
 
@@ -70,8 +69,7 @@ public class MavenSmartCompletionContributor extends CompletionContributor {
             result.addAll(variants);
           }
         }
-        else if (converter instanceof ResolvingConverter) {
-          ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
+        else if (converter instanceof ResolvingConverter resolvingConverter) {
           Collection variants = resolvingConverter.getVariants(reference.getConvertContext());
           addVariants(resolvingConverter, variants, result);
         }

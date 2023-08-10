@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -59,8 +59,7 @@ public interface PsiReference {
    * which is considered a reference
    * @see #getRangeInElement
    */
-  @NotNull
-  default TextRange getAbsoluteRange() {
+  default @NotNull TextRange getAbsoluteRange() {
     return getRangeInElement().shiftRight(getElement().getTextRange().getStartOffset());
   }
 
@@ -88,7 +87,7 @@ public interface PsiReference {
    *
    * @param newElementName the new name of the target element.
    * @return the new underlying element of the reference.
-   * @throws IncorrectOperationException if the rename cannot be handled for some reason.
+   * @throws IncorrectOperationException if the renaming cannot be handled for some reason.
    */
   PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException;
 
@@ -99,7 +98,7 @@ public interface PsiReference {
    *
    * @param element the element which should become the target of the reference.
    * @return the new underlying element of the reference.
-   * @throws IncorrectOperationException if the rebind cannot be handled for some reason.
+   * @throws IncorrectOperationException if the rebinding cannot be handled for some reason.
    */
   PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException;
 
@@ -114,7 +113,7 @@ public interface PsiReference {
   /**
    * Returns the array of String, {@link PsiElement} and/or {@link com.intellij.codeInsight.lookup.LookupElement}
    * instances representing all identifiers that are visible at the location of the reference. The contents
-   * of the returned array is used to build the lookup list for basic code completion. (The list
+   * of the returned array are used to build the lookup list for basic code completion. (The list
    * of visible identifiers may not be filtered by the completion prefix string - the
    * filtering is performed later by the IDE.)
    * <p>

@@ -88,7 +88,7 @@ class HtmlStyleManager(val isInline: Boolean) {
     }
   }
 
-  fun getSeparatorClassName(color: Color) = separatorStyleMap.get(color)!!
+  fun getSeparatorClassName(color: Color): String = separatorStyleMap.get(color)!!
 }
 
 private fun colorToHtml(color: Color) = "#${ColorUtil.toHex(color)}"

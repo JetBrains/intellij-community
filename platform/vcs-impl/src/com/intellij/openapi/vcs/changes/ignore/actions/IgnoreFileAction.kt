@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ignore.actions
 
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.runUndoTransparentWriteAction
@@ -26,6 +27,9 @@ import com.intellij.util.containers.asJBIterable
 import com.intellij.vcsUtil.VcsUtil
 
 class IgnoreFileAction(private val ignoreFile: VirtualFile) : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
@@ -41,6 +45,9 @@ class IgnoreFileAction(private val ignoreFile: VirtualFile) : DumbAwareAction() 
 }
 
 class CreateNewIgnoreFileAction(private val ignoreFileName: String, private val ignoreFileRoot: VirtualFile) : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)

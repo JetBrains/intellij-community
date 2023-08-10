@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.DomainObjectSet;
@@ -6,6 +6,7 @@ import org.gradle.tooling.model.HierarchicalElement;
 import org.gradle.tooling.model.idea.IdeaCompilerOutput;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 import java.util.Collections;
@@ -16,12 +17,13 @@ import java.util.Set;
 import static org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.AdapterUtils.wrap;
 import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.emptyDomainObjectSet;
 
+@ApiStatus.Internal
 public final class InternalIdeaModule implements IdeaModule {
   private String name;
   private String description;
   private InternalIdeaProject parent;
   private Set<InternalIdeaContentRoot> contentRoots = emptyDomainObjectSet();
-  private List<InternalIdeaDependency> dependencies = new LinkedList<InternalIdeaDependency>();
+  private List<InternalIdeaDependency> dependencies = new LinkedList<>();
   private InternalGradleProject gradleProject;
   private InternalIdeaCompilerOutput compilerOutput;
   private InternalIdeaJavaLanguageSettings javaLanguageSettings;
@@ -79,7 +81,7 @@ public final class InternalIdeaModule implements IdeaModule {
 
   @Override
   public DomainObjectSet<? extends HierarchicalElement> getChildren() {
-    return ImmutableDomainObjectSet.of(Collections.<HierarchicalElement>emptySet());
+    return ImmutableDomainObjectSet.of(Collections.emptySet());
   }
 
   @Override

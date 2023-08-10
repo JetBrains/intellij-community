@@ -61,11 +61,6 @@ public class DevKitImplicitUsageProviderTest extends LightJavaCodeInsightFixture
     myFixture.testHighlighting("ImplementedAtRuntimeDomElementImpl.java");
   }
 
-  public void testImplementedAtRuntimeJamElementImpl() {
-    enableImplementedAtRuntimeInspections();
-    myFixture.testHighlighting("ImplementedAtRuntimeJamElementImpl.java");
-  }
-
   public void testManualJamElementInstantiation() {
     myFixture.enableInspections(ImplicitSubclassInspection.class);
     myFixture.testHighlighting("ManualJamElementInstantiation.java");

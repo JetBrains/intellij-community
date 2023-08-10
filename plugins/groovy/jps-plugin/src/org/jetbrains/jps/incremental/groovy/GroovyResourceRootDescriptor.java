@@ -9,9 +9,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.Set;
 
-/**
- * @author peter
- */
 class GroovyResourceRootDescriptor extends BuildRootDescriptor {
   private final CheckResourcesTarget myTarget;
   private final ResourceRootDescriptor myDescriptor;
@@ -21,9 +18,8 @@ class GroovyResourceRootDescriptor extends BuildRootDescriptor {
     myTarget = target;
   }
 
-  @NotNull
   @Override
-  public CheckResourcesTarget getTarget() {
+  public @NotNull CheckResourcesTarget getTarget() {
     return myTarget;
   }
 
@@ -49,12 +45,12 @@ class GroovyResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public String getRootId() {
+  public @NotNull String getRootId() {
     return myDescriptor.getRootId();
   }
 
   @Override
-  public File getRootFile() {
+  public @NotNull File getRootFile() {
     return myDescriptor.getRootFile();
   }
 

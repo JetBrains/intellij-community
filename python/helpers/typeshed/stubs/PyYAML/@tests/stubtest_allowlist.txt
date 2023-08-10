@@ -1,0 +1,4 @@
+# yaml._yaml is for backwards compatibility so none of it matters anyway
+yaml._yaml.CEmitter.__pyx_vtable__
+yaml._yaml.CParser.__pyx_vtable__
+yaml._yaml.__test__

@@ -2,20 +2,18 @@ package com.intellij.laf.win10
 
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.MenuArrowIcon
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.StartupUiUtil
 import javax.swing.UIDefaults
 
-class WinIntelliJLaf : IntelliJLaf() {
+internal class WinIntelliJLaf : IntelliJLaf() {
   init {
-    putUserData(UIUtil.PLUGGABLE_LAF_KEY, name)
+    putUserData(StartupUiUtil.PLUGGABLE_LAF_KEY, name)
   }
 
-  override fun getName(): String {
-    return WinLafProvider.LAF_NAME
-  }
+  override fun getName() = WinLafProvider.LAF_NAME
 
   override fun getPrefix(): String {
-    return "win10intellijlaf"
+    return "com/intellij/laf/win10/win10intellijlaf"
   }
 
   override fun getSystemPrefix(): String? {
@@ -24,7 +22,6 @@ class WinIntelliJLaf : IntelliJLaf() {
 
   override fun loadDefaults(defaults: UIDefaults) {
     super.loadDefaults(defaults)
-    defaults["ClassLoader"] = javaClass.classLoader
     defaults["Menu.arrowIcon"] = Win10MenuArrowIcon()
   }
 

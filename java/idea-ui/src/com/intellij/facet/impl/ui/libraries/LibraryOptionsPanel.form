@@ -3,7 +3,7 @@
   <grid id="f17b8" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="433" height="253"/>
+      <xy x="20" y="20" width="615" height="253"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -139,7 +139,7 @@
                               <componentStyle value="SMALL"/>
                               <enabled value="true"/>
                               <fontColor value="BRIGHTER"/>
-                              <text resource-bundle="messages/JavaUiBundle" key="label.html.jars.will.be.downloaded.into.b.lib.b.directory.br.project.level.library.b.spring.b.will.be.created.html"/>
+                              <text resource-bundle="messages/JavaUiBundle" key="label.library.will.be.created.description.text"/>
                             </properties>
                           </component>
                           <component id="84326" class="javax.swing.JLabel" binding="myHiddenLabel">

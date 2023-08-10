@@ -7,9 +7,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import javax.swing.*;
 
-/**
- * @author ilyas
- */
 public abstract class GroovyScriptType {
 
   private final String id;

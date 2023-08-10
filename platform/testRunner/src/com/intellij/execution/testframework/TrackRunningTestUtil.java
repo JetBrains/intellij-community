@@ -21,7 +21,7 @@ public final class TrackRunningTestUtil {
   private TrackRunningTestUtil() { }
 
   /** @deprecated use {@link #installStopListeners(JTree, Disposable, Consumer)} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void installStopListeners(JTree tree, Disposable parentDisposable, Pass<? super AbstractTestProxy> setSelection) {
     installStopListeners(tree, parentDisposable, (Consumer<? super AbstractTestProxy>)setSelection);
   }
@@ -64,7 +64,7 @@ public final class TrackRunningTestUtil {
       if (component instanceof DefaultMutableTreeNode) {
         final Object userObject = ((DefaultMutableTreeNode)component).getUserObject();
         if (userObject instanceof NodeDescriptor) {
-          return (AbstractTestProxy)((NodeDescriptor)userObject).getElement();
+          return (AbstractTestProxy)((NodeDescriptor<?>)userObject).getElement();
         }
       }
     }

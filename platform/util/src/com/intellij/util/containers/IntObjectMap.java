@@ -26,7 +26,7 @@ public interface IntObjectMap<V> {
   boolean isEmpty();
 
   @NotNull
-  Collection<V> values();
+  Collection<@NotNull V> values();
 
   boolean containsValue(@NotNull V value);
 
@@ -38,5 +38,5 @@ public interface IntObjectMap<V> {
   }
 
   @NotNull
-  Set<Entry<V>> entrySet();
+  Set<@NotNull Entry<V>> entrySet();
 }

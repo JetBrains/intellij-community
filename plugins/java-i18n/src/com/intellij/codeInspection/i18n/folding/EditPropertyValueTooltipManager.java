@@ -87,11 +87,11 @@ public final class EditPropertyValueTooltipManager implements EditorMouseListene
       @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-        String actionId = null;
-        switch (e.getDescription()) {
-          case "expand": actionId = ACTION_EXPAND_REGION; break;
-          case "edit": actionId = ACTION_EDIT_PROPERTY_VALUE; break;
-        }
+        String actionId = switch (e.getDescription()) {
+          case "expand" -> ACTION_EXPAND_REGION;
+          case "edit" -> ACTION_EDIT_PROPERTY_VALUE;
+          default -> null;
+        };
         if (actionId != null) {
           AnAction action = ActionManager.getInstance().getAction(actionId);
           if (action != null) {

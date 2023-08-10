@@ -1,17 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.java.JavaBundle;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -29,6 +34,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -40,8 +46,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -51,7 +61,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
@@ -65,42 +74,59 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsMessageDialog;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity;
 import one.util.streamex.StreamEx;
+import org.jdom.Element;
 import org.jetbrains.annotations.*;
+import org.xml.sax.SAXParseException;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
  * @author anna
  */
-public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsManager {
+public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ExternalAnnotationsManagerImpl.class);
+  private static final NotificationGroup EXTERNAL_ANNOTATIONS_MESSAGES =
+    NotificationGroupManager.getInstance().getNotificationGroup("External annotations");
 
   private final MessageBus myBus;
+  private @Nullable VirtualFile myAdditionalAnnotationsRoot;
 
   public ExternalAnnotationsManagerImpl(@NotNull Project project) {
     super(PsiManager.getInstance(project));
 
     myBus = project.getMessageBus();
-    MessageBusConnection connection = myBus.connect();
+    MessageBusConnection connection = myBus.connect(this);
+
+    connection.subscribe(WorkspaceModelTopics.CHANGED, new ExternalAnnotationsRootListener());
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
+        if (event.isCausedByWorkspaceModelChangesOnly()) return;
         dropAnnotationsCache();
       }
     });
 
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
           if (!event.isFromRefresh()) {
             continue;
@@ -132,8 +158,26 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
         dropAnnotationsCache();
       }
     });
+    RegistryValue additionalRootRegistryValue = Registry.get("java.additional.external.annotations.root.url");
+    String additionalRootUrl = additionalRootRegistryValue.asString();
+    if (!StringUtil.isEmptyOrSpaces(additionalRootUrl)) {
+      myAdditionalAnnotationsRoot = VirtualFileManager.getInstance().refreshAndFindFileByUrl(additionalRootUrl);
+    }
+    additionalRootRegistryValue.addListener(new RegistryValueListener() {
+      @Override
+      public void afterValueChanged(@NotNull RegistryValue value) {
+        String url = value.asString();
+        myAdditionalAnnotationsRoot =
+          !StringUtil.isEmptyOrSpaces(url) ? VirtualFileManager.getInstance().refreshAndFindFileByUrl(url) : null;
+        dropAnnotationsCache();
+      }
+    }, this);
 
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(), project);
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(), this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private void notifyAfterAnnotationChanging(@NotNull PsiModifierListOwner owner, @NotNull String annotationFQName, boolean successful) {
@@ -203,17 +247,18 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   private void annotateExternally(@NotNull VirtualFile root, @NotNull List<? extends ExternalAnnotation> annotations) {
     Project project = myPsiManager.getProject();
 
-    Map<Optional<XmlFile>, List<ExternalAnnotation>> annotationsByFiles = annotations.stream()
-      .collect(Collectors.groupingBy(annotation -> Optional.ofNullable(getFileForAnnotations(root, annotation.getOwner(), project))));
+    Map<Optional<VirtualFile>, List<ExternalAnnotation>> annotationsByFiles = annotations.stream()
+      .collect(Collectors.groupingBy(annotation -> Optional.ofNullable(getFileForAnnotations(root, annotation.getOwner(), project))
+        .map(xmlFile -> xmlFile.getVirtualFile())));
 
-    List<VirtualFile> files = StreamEx.ofKeys(annotationsByFiles).flatMap(StreamEx::of).map(XmlFile::getVirtualFile).nonNull().toList();
+    List<VirtualFile> files = StreamEx.ofKeys(annotationsByFiles).flatMap(StreamEx::of).nonNull().toList();
     ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
     if (status.hasReadonlyFiles()) {
       VirtualFile[] readonlyFiles = status.getReadonlyFiles();
       annotationsByFiles.keySet()
-        .removeIf(opt -> opt.map(XmlFile::getVirtualFile).filter(f -> ArrayUtil.contains(f, readonlyFiles)).isPresent());
+        .removeIf(opt -> opt.filter(f -> ArrayUtil.contains(f, readonlyFiles)).isPresent());
     }
-    
+
     if (annotationsByFiles.isEmpty()) return;
 
     WriteCommandAction.writeCommandAction(project).run(new ThrowableRunnable<>() {
@@ -225,10 +270,14 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
           return;
         }
         try {
-          for (Map.Entry<Optional<XmlFile>, List<ExternalAnnotation>> entry : annotationsByFiles.entrySet()) {
-            XmlFile annotationsFile = entry.getKey().orElse(null);
+          for (Map.Entry<Optional<VirtualFile>, List<ExternalAnnotation>> entry : annotationsByFiles.entrySet()) {
+            VirtualFile annotationsFile = entry.getKey().orElse(null);
+            if (annotationsFile == null) continue;
             List<ExternalAnnotation> fileAnnotations = entry.getValue();
-            annotateExternally(annotationsFile, fileAnnotations);
+            PsiFile file = PsiManager.getInstance(project).findFile(annotationsFile);
+            if (file instanceof XmlFile) {
+              annotateExternally((XmlFile)file, fileAnnotations);
+            }
           }
 
           UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
@@ -259,14 +308,19 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   private void annotateExternally(@Nullable XmlFile annotationsFile, @NotNull List<ExternalAnnotation> annotations) {
     XmlTag rootTag = extractRootTag(annotationsFile);
 
-    TreeMap<String, List<ExternalAnnotation>> ownerToAnnotations = StreamEx.of(annotations)
-      .mapToEntry(annotation -> StringUtil.escapeXmlEntities(getExternalName(annotation.getOwner())), Function.identity())
+    Map<String, List<ExternalAnnotation>> ownerToAnnotations = StreamEx.of(annotations)
+      .mapToEntry(annotation -> {
+        String externalName = getExternalName(annotation.getOwner());
+        return externalName == null ? null : StringUtil.escapeXmlEntities(externalName);
+      }, Function.identity())
       .distinct()
       .grouping(() -> new TreeMap<>(Comparator.nullsFirst(Comparator.naturalOrder())));
 
     if (rootTag == null) {
       ownerToAnnotations.values().stream().flatMap(List::stream).forEach(annotation ->
-                                  notifyAfterAnnotationChanging(annotation.getOwner(), annotation.getAnnotationFQName(), false));
+                                                                           notifyAfterAnnotationChanging(annotation.getOwner(),
+                                                                                                         annotation.getAnnotationFQName(),
+                                                                                                         false));
       return;
     }
 
@@ -303,6 +357,11 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
                                notifyAfterAnnotationChanging(annotation.getOwner(), annotation.getAnnotationFQName(), true));
   }
 
+  @Override
+  protected @Nullable VirtualFile getAdditionalAnnotationRoot() {
+    return myAdditionalAnnotationsRoot;
+  }
+
   @Contract("null -> null")
   private static XmlTag extractRootTag(XmlFile annotationsFile) {
     if (annotationsFile == null) {
@@ -332,14 +391,14 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
    * Adds annotation sub tag after startTag.
    * If startTag is {@code null} searches for all sub tags of rootTag and starts from the first.
    *
-   * @param rootTag root tag to insert subtag into
-   * @param ownerName annotations owner name
+   * @param rootTag    root tag to insert subtag into
+   * @param ownerName  annotations owner name
    * @param annotation external annotation
-   * @param startTag start tag
+   * @param startTag   start tag
    * @return added sub tag
    */
   private @NotNull XmlTag addAnnotation(@NotNull XmlTag rootTag, @NotNull String ownerName,
-                               @NotNull ExternalAnnotation annotation, @Nullable XmlTag startTag) {
+                                        @NotNull ExternalAnnotation annotation, @Nullable XmlTag startTag) {
     if (startTag == null) {
       startTag = PsiTreeUtil.findChildOfType(rootTag, XmlTag.class);
     }
@@ -366,15 +425,15 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
    * Adds between curItem and prevItem if owner's external name < cur item owner external name.
    * Otherwise does nothing, returns null.
    *
-   * @param rootTag root tag to insert sub tag into
-   * @param ownerName annotation owner
+   * @param rootTag    root tag to insert sub tag into
+   * @param ownerName  annotation owner
    * @param annotation external annotation
-   * @param curItem current item with annotations
-   * @param prevItem previous item with annotations
+   * @param curItem    current item with annotations
+   * @param prevItem   previous item with annotations
    * @return added tag
    */
   private @Nullable XmlTag addAnnotation(@NotNull XmlTag rootTag, @NotNull String ownerName, @NotNull ExternalAnnotation annotation,
-                               @NotNull XmlTag curItem, @Nullable XmlTag prevItem) {
+                                         @NotNull XmlTag curItem, @Nullable XmlTag prevItem) {
 
     @NonNls String curItemName = curItem.getAttributeValue("name");
     if (curItemName == null) {
@@ -421,7 +480,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   /**
    * Appends annotation sub tag into itemTag. It can happen only if item tag belongs to annotation owner.
    *
-   * @param itemTag item tag with annotations
+   * @param itemTag    item tag with annotations
    * @param annotation external annotation
    */
   private XmlTag appendItemAnnotation(@NotNull XmlTag itemTag, @NotNull ExternalAnnotation annotation) {
@@ -658,19 +717,19 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
           continue;
         }
 
-        WriteCommandAction.runWriteCommandAction(myPsiManager.getProject(), 
+        WriteCommandAction.runWriteCommandAction(myPsiManager.getProject(),
                                                  JavaBundle.message("update.external.annotations"), null, () -> {
-          PsiDocumentManager.getInstance(myPsiManager.getProject()).commitAllDocuments();
-          try {
-            for (XmlTag annotationTag : tagsToProcess) {
-              annotationTagProcessor.process(annotationTag);
+            PsiDocumentManager.getInstance(myPsiManager.getProject()).commitAllDocuments();
+            try {
+              for (XmlTag annotationTag : tagsToProcess) {
+                annotationTagProcessor.process(annotationTag);
+              }
+              commitChanges(file);
             }
-            commitChanges(file);
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        });
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          });
       }
       notifyAfterAnnotationChanging(listOwner, annotationFQN, processedAnything);
       return processedAnything;
@@ -692,9 +751,12 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   }
 
   private @NotNull AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element,
-                                                          @NotNull Supplier<? extends AnnotationPlace> confirmNewExternalAnnotationRoot) {
+                                                          @NotNull Supplier<AnnotationPlace> confirmNewExternalAnnotationRoot) {
     if (!element.isPhysical() && !(element.getOriginalElement() instanceof PsiCompiledElement)) {
       return AnnotationPlace.IN_CODE; //element just created
+    }
+    if (element instanceof PsiLocalVariable) {
+      return AnnotationPlace.IN_CODE;
     }
     if (!element.getManager().isInProject(element)) return AnnotationPlace.EXTERNAL;
     final Project project = myPsiManager.getProject();
@@ -940,11 +1002,33 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   }
 
   @Override
+  protected void reportXmlParseError(@NotNull VirtualFile file, @NotNull SAXParseException exception) {
+    Project project = myPsiManager.getProject();
+    String basePath = project.getBasePath();
+    String filePath = file.getPresentableUrl();
+    if (basePath != null) {
+      try {
+        filePath = Path.of(basePath).relativize(Path.of(file.getPath())).toString();
+      }
+      catch (IllegalArgumentException ignored) {
+      }
+    }
+    Runnable openAnnotationXml =
+      () -> new OpenFileDescriptor(project, file, exception.getLineNumber() - 1, exception.getColumnNumber() - 1).navigate(true);
+    EXTERNAL_ANNOTATIONS_MESSAGES.createNotification(
+        JavaBundle.message("external.annotations.problem.title"),
+        JavaBundle.message("external.annotations.problem.parse.error", filePath, exception.getMessage()),
+        NotificationType.WARNING)
+      .addAction(NotificationAction.createSimple(JavaBundle.message("external.annotations.open.file"), openAnnotationXml))
+      .notify(project);
+  }
+
+  @Override
   protected void duplicateError(@NotNull VirtualFile virtualFile,
                                 @NotNull String externalName,
                                 @NotNull String text) {
     String message = text + "; for signature: '" + externalName + "' in the file " + virtualFile.getName();
-    LOG.error(message, new Throwable(), AttachmentFactory.createAttachment(virtualFile));
+    LOG.error(message, new Throwable(), CoreAttachmentFactory.createAttachment(virtualFile));
   }
 
   public static boolean areExternalAnnotationsApplicable(@NotNull PsiModifierListOwner owner) {
@@ -1001,12 +1085,12 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
     @Override
     protected boolean isToBeShown() {
-      return CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS;
+      return CodeStyle.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS;
     }
 
     @Override
     protected void setToBeShown(boolean value, boolean onOk) {
-      CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS = value;
+      CodeStyle.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS = value;
     }
 
     @Override
@@ -1040,6 +1124,50 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
       if (file != null && ANNOTATIONS_XML.equals(file.getName()) && isUnderAnnotationRoot(file)) {
         dropAnnotationsCache();
       }
+    }
+  }
+
+  private class ExternalAnnotationsRootListener implements WorkspaceModelChangeListener {
+    @Override
+    public void changed(@NotNull VersionedStorageChange event) {
+      if (hasAnnotationRootInChanges(event, LibraryEntity.class, ExternalAnnotationsRootListener::hasAnnotationRoot) ||
+          hasAnnotationRootInChanges(event, ModuleCustomImlDataEntity.class, ExternalAnnotationsRootListener::hasAnnotationRoot)) {
+        dropAnnotationsCache();
+      }
+    }
+
+    private static <T extends WorkspaceEntity> boolean hasAnnotationRootInChanges(@NotNull VersionedStorageChange event,
+                                                                                  @NotNull Class<T> entityClass,
+                                                                                  @NotNull Predicate<T> hasAnnotationRoot) {
+      for (EntityChange<T> change : event.getChanges(entityClass)) {
+        T newEntity = change.getNewEntity();
+        T oldEntity = change.getOldEntity();
+        if (newEntity != null && hasAnnotationRoot.test(newEntity) || oldEntity != null && hasAnnotationRoot.test(oldEntity)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private static boolean hasAnnotationRoot(LibraryEntity e) {
+      return ContainerUtil.exists(e.getRoots(), root -> AnnotationOrderRootType.ANNOTATIONS_ID.equals(root.getType().getName()));
+    }
+
+    private static boolean hasAnnotationRoot(ModuleCustomImlDataEntity e) {
+      String tagCustomData = e.getRootManagerTagCustomData();
+      if (tagCustomData != null) {
+        try {
+          Element element = JDOMUtil.load(tagCustomData);
+          Element child = element.getChild("annotation-paths");
+          if (child != null && !child.getChildren("root").isEmpty()) {
+            return true;
+          }
+        }
+        catch (Throwable ex) {
+          return false;
+        }
+      }
+      return false;
     }
   }
 }

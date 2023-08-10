@@ -25,10 +25,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class LwComponent implements IComponent{
   /**
    *  Component's ID. Cannot be null.

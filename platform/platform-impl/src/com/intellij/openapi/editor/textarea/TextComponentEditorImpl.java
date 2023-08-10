@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.textarea;
 
 import com.intellij.openapi.editor.*;
@@ -26,7 +12,8 @@ import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,10 +23,10 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author yole
- */
+
 public class TextComponentEditorImpl extends UserDataHolderBase implements TextComponentEditor {
   private final Project myProject;
   private final JTextComponent myTextComponent;
@@ -96,7 +83,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
 
   @Override
   public Insets getInsets() {
-    return JBUI.emptyInsets();
+    return JBInsets.emptyInsets();
   }
 
   @Override
@@ -138,7 +125,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   @NotNull
   @Override
   public InlayModel getInlayModel() {
-    return new TextComponentInlayModel();
+    return new EmptyInlayModel();
   }
 
   @NotNull
@@ -323,5 +310,63 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   @Override
   public IndentsModel getIndentsModel() {
     return new EmptyIndentsModel();
+  }
+
+  private static final AtomicBoolean classesLoaded = new AtomicBoolean();
+
+  @ApiStatus.Internal
+  public static void ensureRequiredClassesAreLoaded() {
+    if (!classesLoaded.compareAndSet(false, true)) {
+      return;
+    }
+    var classLoader = TextComponentEditorImpl.class.getClassLoader();
+    for (var c : Arrays.asList(
+      Border.class,
+      CaretModel.class,
+      Document.class,
+      EditorColorsScheme.class,
+      EditorGutter.class,
+      EditorKind.class,
+      EditorMouseEventArea.class,
+      EditorMouseListener.class,
+      EditorMouseMotionListener.class,
+      EditorSettings.class,
+      EmptyIndentsModel.class,
+      EmptyInlayModel.class,
+      EmptySoftWrapModel.class,
+      FoldingModel.class,
+      IndentsModel.class,
+      InlayModel.class,
+      Insets.class,
+      JBInsets.class,
+      JComponent.class,
+      JTextArea.class,
+      JTextComponent.class,
+      LogicalPosition.class,
+      MarkupModel.class,
+      MouseEvent.class,
+      Point.class,
+      Point2D.class,
+      Project.class,
+      ScrollingModel.class,
+      SettingsImpl.class,
+      SoftWrapModel.class,
+      TextAreaDocument.class,
+      TextComponentCaretModel.class,
+      TextComponentDocument.class,
+      TextComponentEditor.class,
+      TextComponentFoldingModel.class,
+      TextComponentScrollingModel.class,
+      TextComponentSelectionModel.class,
+      UserDataHolderBase.class,
+      VisualPosition.class
+    )) {
+      try {
+        Class.forName(c.getName(), true, classLoader);
+      }
+      catch (ClassNotFoundException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 }

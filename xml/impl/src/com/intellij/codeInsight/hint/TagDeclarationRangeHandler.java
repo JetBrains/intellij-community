@@ -32,8 +32,7 @@ public class TagDeclarationRangeHandler implements DeclarationRangeHandler {
 
     for (PsiElement child = xmlTag.getFirstChild(); child != null; child = child.getNextSibling()) {
       endOffset = child.getTextRange().getEndOffset();
-      if (child instanceof XmlToken) {
-        XmlToken token = (XmlToken)child;
+      if (child instanceof XmlToken token) {
         IElementType tokenType = token.getTokenType();
         if (tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END || tokenType == XmlTokenType.XML_TAG_END) break;
       }

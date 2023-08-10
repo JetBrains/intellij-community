@@ -19,9 +19,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiTarget;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public interface PsiDeclaredTarget extends PsiTarget {
 
   /**

@@ -78,7 +78,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
     if (application.isUnitTestMode()) {
       application.runReadAction(task);
     } else {
-      if (application.isDispatchThread()) throw new IllegalStateException("This method must not be called from EDT");
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
       ProgressIndicatorUtils.yieldToPendingWriteActions();
       ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task, progressIndicator);
     }
@@ -132,7 +132,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
         Integer position = FileBasedIndex.getInstance().getFileData(YAMLKeysIndex.KEY, file, myProject).get(name);
         if (position != null) {
           Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(myProject, file, position);
-          if (!consumer.process(new YAMLKeyNavigationItem(navigatable, name, file))) {
+          if (!consumer.process(new YAMLKeyNavigationItem(myProject, name, file, position))) {
             return;
           }
         }

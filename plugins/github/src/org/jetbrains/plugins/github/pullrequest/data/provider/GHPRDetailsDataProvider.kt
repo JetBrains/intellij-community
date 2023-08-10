@@ -8,12 +8,11 @@ import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
-import org.jetbrains.plugins.github.util.CollectionDelta
+import com.intellij.collaboration.util.CollectionDelta
 import java.util.concurrent.CompletableFuture
 
 interface GHPRDetailsDataProvider {
 
-  @get:RequiresEdt
   val loadedDetails: GHPullRequest?
 
   @RequiresEdt
@@ -35,9 +34,6 @@ interface GHPRDetailsDataProvider {
 
   @RequiresEdt
   fun addDetailsLoadedListener(disposable: Disposable, listener: () -> Unit)
-
-  @RequiresEdt
-  fun getDescriptionMarkdownBody(indicator: ProgressIndicator): CompletableFuture<String>
 
   @RequiresEdt
   fun updateDetails(indicator: ProgressIndicator, title: String? = null, description: String? = null): CompletableFuture<GHPullRequest>

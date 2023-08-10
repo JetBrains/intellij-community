@@ -1,13 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.ift
 
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.ift.lesson.assistance.PythonEditorCodingAssistanceLesson
 import com.jetbrains.python.ift.lesson.basic.PythonContextActionsLesson
 import com.jetbrains.python.ift.lesson.basic.PythonSelectLesson
 import com.jetbrains.python.ift.lesson.basic.PythonSurroundAndUnwrapLesson
 import com.jetbrains.python.ift.lesson.completion.*
-import com.jetbrains.python.ift.lesson.essensial.PythonOnboardingTour
+import com.jetbrains.python.ift.lesson.essensial.PythonOnboardingTourLesson
 import com.jetbrains.python.ift.lesson.navigation.PythonDeclarationAndUsagesLesson
 import com.jetbrains.python.ift.lesson.navigation.PythonFileStructureLesson
 import com.jetbrains.python.ift.lesson.navigation.PythonRecentFilesLesson
@@ -18,110 +19,167 @@ import com.jetbrains.python.ift.lesson.refactorings.PythonRefactorMenuLesson
 import com.jetbrains.python.ift.lesson.refactorings.PythonRenameLesson
 import com.jetbrains.python.ift.lesson.run.PythonDebugLesson
 import com.jetbrains.python.ift.lesson.run.PythonRunConfigurationLesson
-import training.learn.LearningModule
+import training.dsl.LessonUtil
+import training.learn.CourseManager
 import training.learn.LessonsBundle
 import training.learn.course.LearningCourseBase
-import training.learn.interfaces.LessonType
+import training.learn.course.LearningModule
+import training.learn.course.LessonType
 import training.learn.lesson.general.*
 import training.learn.lesson.general.assistance.CodeFormatLesson
+import training.learn.lesson.general.assistance.LocalHistoryLesson
 import training.learn.lesson.general.assistance.ParameterInfoLesson
 import training.learn.lesson.general.assistance.QuickPopupsLesson
 import training.learn.lesson.general.navigation.FindInFilesLesson
 import training.learn.lesson.general.refactorings.ExtractMethodCocktailSortLesson
 import training.learn.lesson.general.refactorings.ExtractVariableFromBubbleLesson
-import training.learn.lesson.kimpl.LessonUtil
-import training.util.switchOnExperimentalLessons
 
 class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
-  override fun modules() = (if (switchOnExperimentalLessons) experimentalModules() else emptyList()) + stableModules()
+  override fun modules() = onboardingTour() + stableModules() + CourseManager.instance.findCommonModules("Git")
 
-  private fun experimentalModules() = listOf(
-    LearningModule(name = PythonLessonsBundle.message("python.onboarding.module.name"),
+  private val disableOnboardingLesson get() = ApplicationNamesInfo.getInstance().fullProductNameWithEdition.equals("PyCharm Edu")
+
+  private fun onboardingTour() = if (!disableOnboardingLesson) listOf(
+    LearningModule(id = "Python.Onboarding",
+                   name = PythonLessonsBundle.message("python.onboarding.module.name"),
                    description = PythonLessonsBundle.message("python.onboarding.module.description", LessonUtil.productName),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.PROJECT) {
-      listOf(
-        PythonOnboardingTour(it),
-      )
-    },
+      listOf(PythonOnboardingTourLesson())
+    }
   )
+  else emptyList()
 
   private fun stableModules() = listOf(
-    LearningModule(name = LessonsBundle.message("editor.basics.module.name"),
+    LearningModule(id = "Python.EditorBasics",
+                   name = LessonsBundle.message("editor.basics.module.name"),
                    description = LessonsBundle.message("editor.basics.module.description"),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SCRATCH) {
       fun ls(sampleName: String) = loadSample("EditorBasics/$sampleName")
       listOf(
-        PythonContextActionsLesson(it),
-        GotoActionLesson(it, lang, ls("Actions.py.sample")),
-        PythonSelectLesson(it),
-        SingleLineCommentLesson(it, lang, ls("Comment.py.sample")),
-        DuplicateLesson(it, lang, ls("Duplicate.py.sample")),
-        MoveLesson(it, lang, "accelerate", ls("Move.py.sample")),
-        CollapseLesson(it, lang, ls("Collapse.py.sample")),
-        PythonSurroundAndUnwrapLesson(it),
-        MultipleSelectionHtmlLesson(it),
+        PythonContextActionsLesson(),
+        GotoActionLesson(ls("Actions.py.sample")),
+        PythonSelectLesson(),
+        CommentUncommentLesson(ls("Comment.py.sample")),
+        DuplicateLesson(ls("Duplicate.py.sample")),
+        MoveLesson("accelerate", ls("Move.py.sample")),
+        CollapseLesson(ls("Collapse.py.sample")),
+        PythonSurroundAndUnwrapLesson(),
+        MultipleSelectionHtmlLesson(),
       )
     },
-    LearningModule(name = LessonsBundle.message("code.completion.module.name"),
+    LearningModule(id = "Python.CodeCompletion",
+                   name = LessonsBundle.message("code.completion.module.name"),
                    description = LessonsBundle.message("code.completion.module.description"),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SCRATCH) {
       listOf(
-        PythonBasicCompletionLesson(it),
-        PythonTabCompletionLesson(it),
-        PythonPostfixCompletionLesson(it),
-        PythonSmartCompletionLesson(it),
-        FStringCompletionLesson(it),
+        PythonBasicCompletionLesson(),
+        PythonTabCompletionLesson(),
+        PythonPostfixCompletionLesson(),
+        PythonSmartCompletionLesson(),
+        FStringCompletionLesson(),
       )
     },
-    LearningModule(name = LessonsBundle.message("refactorings.module.name"),
+    LearningModule(id = "Python.Refactorings",
+                   name = LessonsBundle.message("refactorings.module.name"),
                    description = LessonsBundle.message("refactorings.module.description"),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SCRATCH) {
       fun ls(sampleName: String) = loadSample("Refactorings/$sampleName")
       listOf(
-        PythonRefactorMenuLesson(it),
-        PythonRenameLesson(it),
-        ExtractVariableFromBubbleLesson(it, lang, ls("ExtractVariable.py.sample")),
-        ExtractMethodCocktailSortLesson(it, lang, ls("ExtractMethod.py.sample")),
-        PythonQuickFixesRefactoringLesson(it),
-        PythonInPlaceRefactoringLesson(it),
+        PythonRefactorMenuLesson(),
+        PythonRenameLesson(),
+        ExtractVariableFromBubbleLesson(ls("ExtractVariable.py.sample")),
+        ExtractMethodCocktailSortLesson(ls("ExtractMethod.py.sample")),
+        PythonQuickFixesRefactoringLesson(),
+        PythonInPlaceRefactoringLesson(),
       )
     },
-    LearningModule(name = LessonsBundle.message("code.assistance.module.name"),
+    LearningModule(id = "Python.CodeAssistance",
+                   name = LessonsBundle.message("code.assistance.module.name"),
                    description = LessonsBundle.message("code.assistance.module.description"),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SINGLE_EDITOR) {
       fun ls(sampleName: String) = loadSample("CodeAssistance/$sampleName")
       listOf(
-        CodeFormatLesson(it, lang, ls("CodeFormat.py.sample"), true),
-        ParameterInfoLesson(it, lang, ls("ParameterInfo.py.sample")),
-        QuickPopupsLesson(it, lang, ls("QuickPopups.py.sample")),
-        PythonEditorCodingAssistanceLesson(it, lang, ls("EditorCodingAssistance.py.sample")),
+        LocalHistoryLesson(),
+        CodeFormatLesson(ls("CodeFormat.py.sample"), true),
+        ParameterInfoLesson(ls("ParameterInfo.py.sample")),
+        QuickPopupsLesson(ls("QuickPopups.py.sample")),
+        PythonEditorCodingAssistanceLesson(ls("EditorCodingAssistance.py.sample")),
       )
     },
-    LearningModule(name = LessonsBundle.message("navigation.module.name"),
+    LearningModule(id = "Python.Navigation",
+                   name = LessonsBundle.message("navigation.module.name"),
                    description = LessonsBundle.message("navigation.module.description"),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.PROJECT) {
       listOf(
-        PythonSearchEverywhereLesson(it),
-        FindInFilesLesson(it, lang, "src/warehouse/find_in_files_sample.py"),
-        PythonDeclarationAndUsagesLesson(it),
-        PythonFileStructureLesson(it),
-        PythonRecentFilesLesson(it),
+        PythonSearchEverywhereLesson(),
+        FindInFilesLesson("src/warehouse/find_in_files_sample.py"),
+        PythonDeclarationAndUsagesLesson(),
+        PythonFileStructureLesson(),
+        PythonRecentFilesLesson(),
       )
     },
-    LearningModule(name = LessonsBundle.message("run.debug.module.name"),
+    LearningModule(id = "Python.RunAndDebug",
+                   name = LessonsBundle.message("run.debug.module.name"),
                    description = LessonsBundle.message("run.debug.module.description"),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SINGLE_EDITOR) {
       listOf(
-        PythonRunConfigurationLesson(it),
-        PythonDebugLesson(it),
+        PythonRunConfigurationLesson(),
+        PythonDebugLesson(),
       )
     },
   )
+
+  override fun getLessonIdToTipsMap(): Map<String, List<String>> = mutableMapOf(
+    // EditorBasics
+    "context.actions" to listOf("ContextActions"),
+    "Actions" to listOf("find_action", "GoToAction"),
+    "Select" to listOf("smart_selection", "CtrlW"),
+    "Comment line" to listOf("CommentCode"),
+    "Duplicate" to listOf("CtrlD", "DeleteLine"),
+    "Move" to listOf("MoveUpDown"),
+    "Surround and unwrap" to listOf("SurroundWith"),
+
+    // CodeCompletion
+    "Basic completion" to listOf("CodeCompletion"),
+    "Tab completion" to listOf("TabInLookups"),
+    "Postfix completion" to listOf("PostfixCompletion"),
+
+    // Refactorings
+    "Refactoring menu" to listOf("RefactorThis"),
+    "Rename" to listOf("Rename"),
+    "Extract variable" to listOf("IntroduceVariable"),
+    "Extract method" to listOf("ExtractMethod"),
+    "refactoring.quick.fix" to listOf("QuickFixRightArrow"),
+    "refactoring.in.place" to listOf("InPlaceRefactoring"),
+
+    // CodeAssistance
+    "CodeAssistance.LocalHistory" to listOf("local_history"),
+    "CodeAssistance.CodeFormatting" to listOf("LayoutCode"),
+    "CodeAssistance.ParameterInfo" to listOf("ParameterInfo"),
+    "CodeAssistance.QuickPopups" to listOf("CtrlShiftIForLookup", "CtrlShiftI", "QuickJavaDoc"),
+    "CodeAssistance.EditorCodingAssistance" to listOf("HighlightUsagesInFile", "NextPrevError", "NavigateBetweenErrors"),
+
+    // Navigation
+    "Search everywhere" to listOf("SearchEverywhere", "GoToClass", "search_everywhere_general"),
+    "Find in files" to listOf("FindReplaceToggle", "FindInPath"),
+    "Declaration and usages" to listOf("GoToDeclaration", "ShowUsages"),
+    "File structure" to listOf("FileStructurePopup"),
+    "Recent Files and Locations" to listOf("recent-locations", "RecentFiles"),
+
+    // RunAndDebug
+    "python.run.configuration" to listOf("SelectRunDebugConfiguration"),
+    "python.debug.workflow" to listOf("BreakpointSpeedmenu", "QuickEvaluateExpression", "EvaluateExpressionInEditor"),
+  ).also { map ->
+    val gitCourse = CourseManager.instance.findCommonCourseById("Git")
+    if (gitCourse != null) {
+      map.putAll(gitCourse.getLessonIdToTipsMap())
+    }
+  }
 }

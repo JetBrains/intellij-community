@@ -9,7 +9,6 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
-import com.intellij.openapi.roots.impl.DirectoryIndex
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -116,41 +115,34 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
 
   override fun getPathInfo(file: VirtualFile, project: Project): PathInfo? {
     return runReadAction {
-      val directoryIndex = DirectoryIndex.getInstance(project)
-      val info = directoryIndex.getInfoForFile(file)
+      val fileIndex = ProjectFileIndex.getInstance(project)
       // we serve excluded files
-      if (!info.isExcluded(file) && !info.isInProject(file)) {
+      val isInLibrary = fileIndex.isInLibrary(file)
+      if (!fileIndex.isInContent(file) && !isInLibrary && !fileIndex.isExcluded(file)) {
         // javadoc jars is "not under project", but actually is, so, let's check library or SDK
         if (file.fileSystem == JarFileSystem.getInstance()) getInfoForDocJar(file, project) else null
       }
       else {
-        var root = info.sourceRoot
+        var root = fileIndex.getSourceRootForFile(file)
         val isRootNameOptionalInPath: Boolean
-        val isLibrary: Boolean
         if (root == null) {
           isRootNameOptionalInPath = false
-          root = info.contentRoot
+          root = fileIndex.getContentRootForFile(file, false)
           if (root == null) {
-            root = info.libraryClassRoot
+            root = fileIndex.getClassRootForFile(file)
             if (root == null) {
               // https://youtrack.jetbrains.com/issue/WEB-20598
               return@runReadAction null
             }
-
-            isLibrary = true
-          }
-          else {
-            isLibrary = false
           }
         }
         else {
-          isLibrary = info.isInLibrarySource(file)
-          isRootNameOptionalInPath = !isLibrary
+          isRootNameOptionalInPath = !isInLibrary
         }
 
-        var module = info.module
-        if (isLibrary && module == null) {
-          for (entry in directoryIndex.getOrderEntries(info)) {
+        var module = fileIndex.getModuleForFile(file, false)
+        if (isInLibrary && module == null) {
+          for (entry in fileIndex.getOrderEntriesForFile(file)) {
             if (OrderEntryUtil.isModuleLibraryOrderEntry(entry)) {
               module = entry.ownerModule
               break
@@ -158,7 +150,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
           }
         }
 
-        PathInfo(null, file, root, getModuleNameQualifier(project, module), isLibrary, isRootNameOptionalInPath = isRootNameOptionalInPath)
+        PathInfo(null, file, root, getModuleNameQualifier(project, module), isInLibrary, isRootNameOptionalInPath = isRootNameOptionalInPath)
       }
     }
   }
@@ -269,8 +261,9 @@ private fun findInLibrariesAndSdk(project: Project, rootTypes: Array<OrderRootTy
 
 private fun findInModuleLevelLibraries(module: Module, rootType: OrderRootType, fileProcessor: (root: VirtualFile, module: Module?) -> PathInfo?): PathInfo? {
   return module.rootManager.orderEntries.asSequence()
-    .filter { it is LibraryOrderEntry && it.isModuleLevel }
-    .flatMap { it.getFiles(rootType).asSequence() }
+    .filterIsInstance<LibraryOrderEntry>()
+    .filter { it.isModuleLevel }
+    .flatMap { it.getRootFiles(rootType).asSequence() }
     .map { fileProcessor(it, module) }
     .firstOrNull { it != null }
 }

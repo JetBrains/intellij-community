@@ -15,21 +15,24 @@
  */
 package com.intellij.xml.impl;
 
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public interface XmlAttributeDescriptorEx extends XmlAttributeDescriptor {
 
   /**
-   * @param newTargetName
    * @return new attribute local name
    */
   @Nullable
   @NonNls
-  String handleTargetRename(@NotNull @NonNls final String newTargetName);
+  default String handleTargetRename(@NotNull @NonNls final String newTargetName) {
+    return null;
+  }
+
+  default void validateAttributeName(@NotNull final XmlAttribute attribute, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  }
 }

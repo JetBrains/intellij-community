@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.openapi.Disposable
@@ -7,8 +7,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.EventDispatcher
+import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider
 import java.util.*
-import kotlin.collections.HashMap
 
 /**
  * Service stores information about the currently available [VcsLogColumn]s.
@@ -25,7 +25,7 @@ import kotlin.collections.HashMap
  *
  * @see VcsLogColumnUtilKt with useful column operations
  */
-@Service
+@Service(Service.Level.APP)
 internal class VcsLogColumnManager : Disposable {
   companion object {
     private val defaultColumns = listOf(Root, Commit, Author, Date, Hash)
@@ -51,6 +51,11 @@ internal class VcsLogColumnManager : Disposable {
       newColumn(column)
     }
 
+    registerCustomColumns()
+    registerProvidersColumns()
+  }
+
+  private fun registerCustomColumns() {
     val customColumnListener = object : ExtensionPointListener<VcsLogCustomColumn<*>> {
       override fun extensionAdded(extension: VcsLogCustomColumn<*>, pluginDescriptor: PluginDescriptor) {
         newColumn(extension)
@@ -61,6 +66,21 @@ internal class VcsLogColumnManager : Disposable {
       }
     }
     VcsLogCustomColumn.KEY.point.addExtensionPointListener(customColumnListener, true, this)
+  }
+
+  private fun registerProvidersColumns() {
+    val customColumnListener = object : ExtensionPointListener<VcsCommitExternalStatusProvider<*>> {
+      override fun extensionAdded(extension: VcsCommitExternalStatusProvider<*>, pluginDescriptor: PluginDescriptor) {
+        if (extension is VcsCommitExternalStatusProvider.WithColumn)
+          newColumn(extension.logColumn)
+      }
+
+      override fun extensionRemoved(extension: VcsCommitExternalStatusProvider<*>, pluginDescriptor: PluginDescriptor) {
+        if (extension is VcsCommitExternalStatusProvider.WithColumn)
+          forgetColumn(extension.logColumn)
+      }
+    }
+    VcsCommitExternalStatusProvider.EP.point.addExtensionPointListener(customColumnListener, true, this)
   }
 
   fun getModelIndex(column: VcsLogColumn<*>): Int = modelIndices[column.id]!!
@@ -122,11 +142,9 @@ internal class VcsLogColumnManager : Disposable {
    * Allows to handle currently available columns
    */
   interface CurrentColumnsListener : EventListener {
-    @JvmDefault
     fun columnAdded(column: VcsLogColumn<*>) {
     }
 
-    @JvmDefault
     fun columnRemoved(column: VcsLogColumn<*>) {
     }
   }

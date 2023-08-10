@@ -1,24 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general
 
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.*
+import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonSample
-import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
-import training.learn.lesson.kimpl.restoreAfterStateBecomeFalse
+import training.learn.course.KLesson
+import training.util.toNullableString
 
-abstract class SurroundAndUnwrapLesson(module: Module, lang: String)
-  : KLesson("Surround and unwrap", LessonsBundle.message("surround.and.unwrap.lesson.name"), module, lang) {
+abstract class SurroundAndUnwrapLesson
+  : KLesson("Surround and unwrap", LessonsBundle.message("surround.and.unwrap.lesson.name")) {
 
   protected abstract val sample: LessonSample
 
   protected abstract val surroundItems: Array<String>
   protected abstract val lineShiftBeforeUnwrap: Int
+  protected abstract val unwrapTryText: String
 
   protected open val surroundItemName: String
     get() = surroundItems.joinToString(separator = "/")
@@ -29,12 +26,12 @@ abstract class SurroundAndUnwrapLesson(module: Module, lang: String)
 
       task("SurroundWith") {
         proposeIfModified {
-          editor.caretModel.currentCaret.selectionStart != previous.sample.selection?.first ||
-          editor.caretModel.currentCaret.selectionEnd != previous.sample.selection?.second
+          editor.caretModel.currentCaret.selectionStart != sample.selection?.first ||
+          editor.caretModel.currentCaret.selectionEnd != sample.selection?.second
         }
         text(LessonsBundle.message("surround.and.unwrap.invoke.surround", action(it)))
-        triggerByListItemAndHighlight { item ->
-          surroundItems.all { need -> wordIsPresent(item.toString(), need) }
+        triggerAndBorderHighlight().listItem { item ->
+          surroundItems.all { need -> wordIsPresent(item.toNullableString(), need) }
         }
         test { actions(it) }
       }
@@ -48,7 +45,8 @@ abstract class SurroundAndUnwrapLesson(module: Module, lang: String)
         }
         restoreByUi()
         test {
-          type("${surroundItems.joinToString(separator = " ")}\n") }
+          type("${surroundItems.joinToString(separator = " ")}\n")
+        }
       }
 
       prepareRuntimeTask {
@@ -63,9 +61,7 @@ abstract class SurroundAndUnwrapLesson(module: Module, lang: String)
           editor.caretModel.currentCaret.logicalPosition.line != previous.position.line
         }
         text(LessonsBundle.message("surround.and.unwrap.invoke.unwrap", action(it)))
-        triggerByListItemAndHighlight { item ->
-          wordIsPresent(item.toString(), surroundItems[0])
-        }
+        triggerAndBorderHighlight().listItem { item -> item.toNullableString() == unwrapTryText }
         test { actions(it) }
       }
       task {
@@ -83,15 +79,16 @@ abstract class SurroundAndUnwrapLesson(module: Module, lang: String)
       }
     }
 
-  private fun wordIsPresent(text: String, word: String): Boolean {
+  private fun wordIsPresent(text: String?, word: String): Boolean {
+    if (text == null) return false
     var index = 0
-    while(index != -1 && index < text.length) {
+    while (index != -1 && index < text.length) {
       index = text.indexOf(word, startIndex = index)
       if (index != -1) {
         if ((index == 0 || !text[index - 1].isLetterOrDigit()) &&
-            (index + word.length == text.length || !text[index + word.length + 1].isLetterOrDigit()))
+            (index + word.length == text.length || !text[index + word.length].isLetterOrDigit()))
           return true
-        index = index + word.length
+        index += word.length
       }
     }
     return false
@@ -100,7 +97,15 @@ abstract class SurroundAndUnwrapLesson(module: Module, lang: String)
   private fun TaskContext.proposeIfModified(checkCaret: TaskRuntimeContext.() -> Boolean) {
     proposeRestore {
       checkExpectedStateOfEditor(previous.sample, false)
-      ?: if (checkCaret()) TaskContext.RestoreNotification(TaskContext.CaretRestoreProposal, callback = restorePreviousTaskCallback) else null
+      ?: if (checkCaret()) TaskContext.RestoreNotification(TaskContext.CaretRestoreProposal, callback = restorePreviousTaskCallback)
+      else null
     }
   }
+
+  override val helpLinks: Map<String, String> = mapOf(
+    Pair(LessonsBundle.message("surround.and.unwrap.help.surround.code.fragments"),
+         LessonUtil.getHelpLink("surrounding-blocks-of-code-with-language-constructs.html")),
+    Pair(LessonsBundle.message("surround.and.unwrap.help.unwrapping.and.removing.statements"),
+         LessonUtil.getHelpLink("working-with-source-code.html#unwrap_remove_statement")),
+  )
 }

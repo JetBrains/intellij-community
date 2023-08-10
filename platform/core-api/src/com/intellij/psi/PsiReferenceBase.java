@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.diagnostic.PluginException;
@@ -76,15 +76,13 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     }
   }
 
-  @NotNull
   @Override
-  public T getElement() {
+  public @NotNull T getElement() {
     return myElement;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     TextRange rangeInElement = myRangeInElement;
     if (rangeInElement == null) {
       myRangeInElement = rangeInElement = calculateDefaultRangeInElement();
@@ -108,7 +106,9 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    throw new IncorrectOperationException("Rebind cannot be performed for " + getClass());
+    Class<?> aClass = getClass();
+    throw new IncorrectOperationException("Rebind cannot be performed for " + aClass,
+                                          (Throwable)PluginException.createByClass("", null, aClass));
   }
 
   @Override
@@ -116,20 +116,22 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     return getElement().getManager().areElementsEquivalent(resolve(), element);
   }
 
-  public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, final PsiElement resolveTo) {
+  public static <T extends PsiElement> @NotNull PsiReferenceBase<T> createSelfReference(T element, final PsiElement resolveTo) {
     return new Immediate<>(element, true, resolveTo);
   }
 
-  public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element,
-                                                                               TextRange rangeInElement,
-                                                                               final PsiElement resolveTo) {
+  public static <T extends PsiElement> @NotNull PsiReferenceBase<T> createSelfReference(T element,
+                                                                                        TextRange rangeInElement,
+                                                                                        final PsiElement resolveTo) {
     return new Immediate<>(element, rangeInElement, resolveTo);
   }
 
-  private ElementManipulator<T> getManipulator() {
+  private @NotNull ElementManipulator<T> getManipulator() {
     ElementManipulator<T> manipulator = ElementManipulators.getManipulator(myElement);
     if (manipulator == null) {
-      LOG.error(PluginException.createByClass("Cannot find manipulator for " + myElement + " in " + this + " class " + getClass(), null, myElement.getClass()));
+      throw PluginException.createByClass(
+        "No ElementManipulator instance registered for " + myElement + " [" + myElement.getClass() + "]" +
+        " in " + this + " [" + getClass() + "]", null, myElement.getClass());
     }
     return manipulator;
   }
@@ -164,8 +166,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       ResolveResult[] resolveResults = multiResolve(false);
       return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
     }
@@ -196,13 +197,12 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
     //do nothing. the element will be renamed via PsiMetaData (com.intellij.refactoring.rename.RenameUtil.doRenameGenericNamedElement())
     @Override
-    public PsiElement handleElementRename(@NotNull final String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(final @NotNull String newElementName) throws IncorrectOperationException {
       return getElement();
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       return myResolveTo;
     }
   }

@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml;
 
 import com.intellij.lexer.Lexer;
@@ -12,12 +11,7 @@ import org.jetbrains.yaml.lexer.YAMLFlexLexer;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author: oleg
- * @date: Feb 11, 2008
- */
-public class YAMLSyntaxHighlighter extends SyntaxHighlighterBase implements YAMLTokenTypes {
-
+public final class YAMLSyntaxHighlighter extends SyntaxHighlighterBase implements YAMLTokenTypes {
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<>();
 
   static {
@@ -41,7 +35,6 @@ public class YAMLSyntaxHighlighter extends SyntaxHighlighterBase implements YAML
     ATTRIBUTES.put(ANCHOR, YAMLHighlighter.ANCHOR);
     ATTRIBUTES.put(ALIAS, YAMLHighlighter.ANCHOR);
   }
-
 
   @Override
   public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {

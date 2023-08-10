@@ -12,4 +12,4 @@ class Adjunct:
     class B: pass
 
 
-print '239'
+print('239')

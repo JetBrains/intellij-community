@@ -25,9 +25,6 @@ import org.intellij.lang.annotations.Language;
 
 import java.util.Collections;
 
-/**
- * @author Irina.Chernushina on 2/9/2017.
- */
 public class JsonSchemaSelfHighlightingTest extends JsonSchemaHeavyAbstractTest {
   public static final String BASE_PATH = "/tests/testData/jsonSchema/selfHighlighting";
 
@@ -63,40 +60,42 @@ public class JsonSchemaSelfHighlightingTest extends JsonSchemaHeavyAbstractTest 
 
   public void testPatterns() throws Exception {
     myFixture.enableInspections(new JsonSchemaComplianceInspection());
-    doSelfTest("/patternSchema.json", "{\n" +
-                                  "  \"properties\": {\n" +
-                                  "    \"withPattern\": {\n" +
-                                  "      \"pattern\": \"^[]$\"\n" +
-                                  "    },\n" +
-                                  "    \"everythingFine\": {\n" +
-                                  "      \"pattern\": \"^[a]$\"\n" +
-                                  "    }\n" +
-                                  "  },\n" +
-                                  "  \"patternProperties\": {\n" +
-                                  "    \"p[0-9<error>\"</error>: {},\n" +
-                                  "    \"b[0-7<error>\"</error>: {}\n" +
-                                  "  }\n" +
-                                  "}");
+    doSelfTest("/patternSchema.json", """
+      {
+        "properties": {
+          "withPattern": {
+            "pattern": "^[]$"
+          },
+          "everythingFine": {
+            "pattern": "^[a]$"
+          }
+        },
+        "patternProperties": {
+          "p[0-9<error>"</error>: {},
+          "b[0-7<error>"</error>: {}
+        }
+      }""");
   }
 
   public void testRefs() throws Exception {
     myFixture.enableInspections(new JsonSchemaRefReferenceInspection());
-    doSelfTest("/refsSchema.json", "{\n" +
-                                   "  \"type\": \"object\",\n" +
-                                   "  \"properties\": {\n" +
-                                   "    \"test\" : {\n" +
-                                   "      \"$ref\": \"refsSchema.json\"\n" +
-                                   "    },\n" +
-                                   "    \"test2\": {\n" +
-                                   "      \"$ref\": \"refsSchema.json#/type\"\n" +
-                                   "    },\n" +
-                                   "    \"fail\": {\n" +
-                                   "      \"$ref\": \"<warning>nonExisting.json</warning>\"\n" +
-                                   "    },\n" +
-                                   "    \"fail2\": {\n" +
-                                   "      \"$ref\": \"refsSchema.json#/<warning>zzz</warning>\"\n" +
-                                   "    }\n" +
-                                   "  }\n" +
-                                   "}");
+    doSelfTest("/refsSchema.json", """
+      {
+        "type": "object",
+        "properties": {
+          "test" : {
+            "$ref": "refsSchema.json"
+          },
+          "test2": {
+            "$ref": "refsSchema.json#/type"
+          },
+          "fail": {
+            "$ref": "<warning>nonExisting.json</warning>"
+          },
+          "fail2": {
+            "$ref": "refsSchema.json#/<warning>zzz</warning>"
+          }
+        }
+      }""");
   }
 }

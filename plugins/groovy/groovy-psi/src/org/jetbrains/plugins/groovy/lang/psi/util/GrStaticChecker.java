@@ -174,9 +174,9 @@ public final class GrStaticChecker {
   public static boolean isInStaticContext(@NotNull PsiElement place) {
     PsiClass targetClass = null;
     if (place instanceof GrReferenceExpression) {
-      PsiElement qualifier = ((GrQualifiedReference)place).getQualifier();
+      PsiElement qualifier = ((GrQualifiedReference<?>)place).getQualifier();
       if (PsiUtil.isThisReference(place) && qualifier instanceof GrQualifiedReference) {
-        targetClass = (PsiClass)((GrQualifiedReference)qualifier).resolve();
+        targetClass = (PsiClass)((GrQualifiedReference<?>)qualifier).resolve();
       }
     }
     return isInStaticContext(place, targetClass);

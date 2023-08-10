@@ -22,7 +22,7 @@ import com.intellij.diagnostic.hprof.util.HeapReportUtils.toPaddedShortStringAsC
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.toPaddedShortStringAsSize
 import com.intellij.diagnostic.hprof.util.TruncatingPrintBuffer
 import com.intellij.diagnostic.hprof.visitors.HistogramVisitor
-import java.lang.Math.min
+import kotlin.math.min
 
 class Histogram(val entries: List<HistogramEntry>, val instanceCount: Long) {
 

@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.packaging.preloader;
 
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
@@ -13,10 +11,6 @@ import org.jetbrains.annotations.Nullable;
 public class JavaFxPreloaderArtifactProperties extends ArtifactProperties<JavaFxPreloaderArtifactProperties> {
 
   private String myPreloaderClass;
-  
-  @Override
-  public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
-  }
 
   @Override
   public ArtifactPropertiesEditor createEditor(@NotNull ArtifactEditorContext context) {

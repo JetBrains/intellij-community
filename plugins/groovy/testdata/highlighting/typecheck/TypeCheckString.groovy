@@ -55,7 +55,7 @@ class FooString {
     s = "aaa" =~ /aaa/
     s = []
     s = [] as List
-    s = <error descr="Constructor 'String' in 'java.lang.String' cannot be applied to '(java.lang.Integer, java.lang.Integer, java.lang.Integer)'">[1, 2, 3]</error>
+    s = [1, 2, 3]
     s = [1, 2, 3] as List
     s = ["true"]
     s = [1] as List
@@ -86,7 +86,7 @@ class FooString {
     String s18 = "aaa" =~ /aaa/
     String s19 = []
     String s20 = [] as List
-    String s21 = <error descr="Constructor 'String' in 'java.lang.String' cannot be applied to '(java.lang.Integer, java.lang.Integer, java.lang.Integer)'">[1, 2, 3]</error>
+    String s21 = [1, 2, 3]
     String s22 = [1, 2, 3] as List
 //        String s23 = [a: 1, b: 2, c: 3] // error should be
     String s24 = [a: 1, b: 2, c: 3] as Map

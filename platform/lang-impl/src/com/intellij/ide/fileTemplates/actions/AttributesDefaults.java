@@ -17,6 +17,7 @@ package com.intellij.ide.fileTemplates.actions;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ public class AttributesDefaults {
   private final Map<String, Pair<String, TextRange>> myNamesToValueAndRangeMap = new HashMap<>();
   private Properties myDefaultProperties = null;
   private boolean myFixedName;
+  @Nullable private Map<String, @Nls String> myAttributesVisibleNames = null;
 
   public AttributesDefaults() {
     this(null, null);
@@ -88,6 +90,15 @@ public class AttributesDefaults {
   public String getDefaultValueFor(@NotNull String attributeKey) {
     final Pair<String, TextRange> valueAndRange = myNamesToValueAndRangeMap.get(attributeKey);
     return Pair.getFirst(valueAndRange);
+  }
+
+  public void setAttributeVisibleNames(Map<String, String> visibleNames) {
+    myAttributesVisibleNames = visibleNames;
+  }
+
+  @Nullable
+  public Map<String, @Nls String> getAttributeVisibleNames() {
+    return myAttributesVisibleNames;
   }
 
   public boolean isFixedName() {

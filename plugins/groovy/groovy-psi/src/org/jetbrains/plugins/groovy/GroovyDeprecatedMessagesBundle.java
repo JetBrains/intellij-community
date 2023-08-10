@@ -9,13 +9,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-final class GroovyDeprecatedMessagesBundle extends DynamicBundle {
-
+final class GroovyDeprecatedMessagesBundle {
   private static final @NonNls String BUNDLE = "messages.GroovyDeprecatedMessagesBundle";
-  private static final GroovyDeprecatedMessagesBundle INSTANCE = new GroovyDeprecatedMessagesBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(GroovyDeprecatedMessagesBundle.class, BUNDLE);
 
   private GroovyDeprecatedMessagesBundle() {
-    super(BUNDLE);
   }
 
   public static @Nls @NotNull String message(@PropertyKey(resourceBundle = BUNDLE) @NotNull String key, Object @NotNull ... params) {

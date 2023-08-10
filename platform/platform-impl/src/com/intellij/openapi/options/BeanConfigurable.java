@@ -14,10 +14,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import kotlin.reflect.KMutableProperty0;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,9 +23,10 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
- * See {@link ConfigurableBuilder} for {@link UiDslConfigurable} alternative.
+ * See {@link ConfigurableBuilder} for {@link UiDslUnnamedConfigurable} alternative.
  */
 public abstract class BeanConfigurable<T> implements UnnamedConfigurable, ConfigurableWithOptionDescriptors {
   private final T myInstance;
@@ -60,7 +58,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     }
 
     @NonNls
-    protected String getterName() {
+    private String getterName() {
       if (myValueClass.equals(boolean.class)) {
         return "is" + StringUtil.capitalize(myFieldName);
       }
@@ -109,10 +107,10 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   }
 
   private static final class BeanMethodAccessor<T> extends BeanPropertyAccessor {
-    private final Getter<? extends T> myGetter;
+    private final Supplier<? extends T> myGetter;
     private final Setter<? super T> mySetter;
 
-    private BeanMethodAccessor(Getter<? extends T> getter, Setter<? super T> setter) {
+    private BeanMethodAccessor(Supplier<? extends T> getter, Setter<? super T> setter) {
       myGetter = getter;
       mySetter = setter;
     }
@@ -243,7 +241,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   /**
    * @deprecated use {@link #checkBox(String, Getter, Setter)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected void checkBox(@NonNls String fieldName, @NlsContexts.Checkbox String title) {
     myFields.add(new CheckboxField(fieldName, title));
   }

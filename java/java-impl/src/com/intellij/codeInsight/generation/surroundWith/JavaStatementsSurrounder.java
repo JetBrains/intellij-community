@@ -75,7 +75,7 @@ abstract class JavaStatementsSurrounder implements Surrounder {
     yieldStatement = (PsiYieldStatement)tracker.replaceAndRestoreComments(wrappedStatement, yieldStatement);
 
     PsiExpression yieldExpression = yieldStatement.getExpression();
-    assert yieldExpression != null : DebugUtil.psiToString(yieldStatement, false);
+    assert yieldExpression != null : DebugUtil.psiToString(yieldStatement, true);
     yieldExpression.replace(statement.getExpression());
   }
 

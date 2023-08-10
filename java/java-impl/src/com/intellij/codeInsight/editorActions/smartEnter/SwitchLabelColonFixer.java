@@ -16,20 +16,25 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiCaseLabelElementList;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.PsiSwitchLabelStatement;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.SwitchUtils;
 
-/**
- * @author peter
- */
 public class SwitchLabelColonFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    if (psiElement instanceof PsiSwitchLabelStatement && !psiElement.getText().endsWith(":")) {
-      PsiSwitchLabelStatement statement = (PsiSwitchLabelStatement)psiElement;
-      if (statement.getCaseValue() != null || statement.isDefaultCase()) {
-        editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), ":");
+    if (psiElement instanceof PsiSwitchLabelStatement statement) {
+      PsiSwitchBlock block = statement.getEnclosingSwitchBlock();
+      if (block == null) return;
+      String token = SwitchUtils.isRuleFormatSwitch(block) ? "->" : ":";
+      if (!psiElement.getText().endsWith(token)) {
+        PsiCaseLabelElementList labelElementList = statement.getCaseLabelElementList();
+        if ((labelElementList != null && labelElementList.getElementCount() != 0) || statement.isDefaultCase()) {
+          editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), token);
+        }
       }
     }
   }

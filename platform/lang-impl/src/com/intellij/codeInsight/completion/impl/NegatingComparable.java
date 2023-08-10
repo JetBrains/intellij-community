@@ -18,9 +18,6 @@ package com.intellij.codeInsight.completion.impl;
 import com.intellij.psi.ForceableComparable;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author peter
-*/
 public class NegatingComparable<T extends NegatingComparable<T>> implements Comparable<T>, ForceableComparable {
   private final Comparable myWeigh;
 
@@ -38,7 +35,7 @@ public class NegatingComparable<T extends NegatingComparable<T>> implements Comp
   @Override
   public int compareTo(@NotNull T o) {
     final Comparable w1 = myWeigh;
-    final Comparable w2 = ((NegatingComparable)o).myWeigh;
+    final Comparable w2 = ((NegatingComparable<?>)o).myWeigh;
     if (w1 == null && w2 == null) return 0;
     if (w1 == null) return 1;
     if (w2 == null) return -1;

@@ -80,14 +80,10 @@ public final class Strings {
   }
 
   public static void capitalize(List<String> words) {
-    for (int i = 0; i < words.size(); i++) {
-      words.set(i, StringUtil.capitalize(words.get(i)));
-    }
+    words.replaceAll(StringUtil::capitalize);
   }
 
   public static void upperCase(List<String> words) {
-    for (int i = 0; i < words.size(); i++) {
-      words.set(i, StringUtil.toUpperCase(words.get(i)));
-    }
+    words.replaceAll(StringUtil::toUpperCase);
   }
 }

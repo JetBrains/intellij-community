@@ -11,7 +11,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement
 import com.intellij.diagnostic.ThreadDumper
-import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.internal.performance.LatencyDistributionRecordKey
 import com.intellij.internal.performance.TypingLatencyReportDialog
@@ -21,6 +20,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
 import com.intellij.util.Alarm
@@ -46,17 +47,19 @@ import org.intellij.lang.annotations.Language
 import java.awt.event.KeyEvent
 import java.io.File
 import java.util.*
+import java.util.function.Function
+import javax.swing.JComponent
 
-fun String.toReadable() = replace(" ", "<Space>").replace("\n", "<Enter>").replace("\t", "<Tab>")
+fun String.toReadable(): String = replace(" ", "<Space>").replace("\n", "<Enter>").replace("\t", "<Tab>")
 
 class RetypeLog {
-  val LOG = Logger.getInstance(RetypeLog::class.java)
+  val LOG: Logger = Logger.getInstance(RetypeLog::class.java)
   private val log = arrayListOf<String>()
   private var currentTyping: String? = null
   private var currentCompletion: String? = null
-  var typedChars = 0
+  var typedChars: Int = 0
     private set
-  var completedChars = 0
+  var completedChars: Int = 0
     private set
 
   fun recordTyping(c: Char) {
@@ -533,14 +536,13 @@ class RetypeSession(
   private fun executeEditorAction(actionId: String, timerTick: Long) {
     val actionManager = ActionManagerEx.getInstanceEx()
     val action = actionManager.getAction(actionId)
-    val event = AnActionEvent.createFromAnAction(action, null, "",
-                                                 DataManager.getInstance().getDataContext(
-                                                   editor.component))
-    action.beforeActionPerformedUpdate(event)
-    actionManager.fireBeforeActionPerformed(action, event.dataContext, event)
-    LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, timerTick)
-    action.actionPerformed(event)
-    actionManager.fireAfterActionPerformed(action, event.dataContext, event)
+    val event = AnActionEvent.createFromAnAction(action, null, "", editor.dataContext)
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      ActionUtil.performDumbAwareWithCallbacks(action, event) {
+        LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, timerTick)
+        action.actionPerformed(event)
+      }
+    }
   }
 
   private fun logThreadDump() {
@@ -578,7 +580,7 @@ class RetypeSession(
   }
 
   @Language("JAVA")
-  val code = """
+  val code: String = """
     final class MyClass {
         public static void main1(String[] args) {
           int x = 5;
@@ -587,20 +589,20 @@ class RetypeSession(
   """.trimIndent()
 
   companion object {
-    val LOG = Logger.getInstance(RetypeSession::class.java)
-    const val INTERFERE_FILE_NAME = "IdeaRetypeBackgroundChanges.java"
-    const val LARGE_INDEX_DIR_NAME = "_indexDir_"
+    val LOG: Logger = Logger.getInstance(RetypeSession::class.java)
+    const val INTERFERE_FILE_NAME: String = "IdeaRetypeBackgroundChanges.java"
+    const val LARGE_INDEX_DIR_NAME: String = "_indexDir_"
   }
 }
 
-val RETYPE_SESSION_KEY = Key.create<RetypeSession>("com.intellij.internal.retype.RetypeSession")
-val RETYPE_SESSION_NOTIFICATION_KEY = Key.create<EditorNotificationPanel>("com.intellij.internal.retype.RetypeSessionNotification")
+val RETYPE_SESSION_KEY: Key<RetypeSession> = Key.create("com.intellij.internal.retype.RetypeSession")
 
+class RetypeEditorNotificationProvider : EditorNotificationProvider {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+    return Function { createNotificationPanel(it) }
+  }
 
-class RetypeEditorNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>() {
-  override fun getKey(): Key<EditorNotificationPanel> = RETYPE_SESSION_NOTIFICATION_KEY
-
-  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
+  private fun createNotificationPanel(fileEditor: FileEditor): EditorNotificationPanel? {
     if (fileEditor !is PsiAwareTextEditorImpl) return null
 
     val retypeSession = fileEditor.editor.getUserData(RETYPE_SESSION_KEY)
@@ -609,11 +611,11 @@ class RetypeEditorNotificationProvider : EditorNotifications.Provider<EditorNoti
     val panel: EditorNotificationPanel
 
     if (retypeSession.retypePaused) {
-      panel = EditorNotificationPanel()
+      panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info)
       panel.setText("Pause retyping. Click on editor to resume")
     }
     else {
-      panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN)
+      panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN, EditorNotificationPanel.Status.Info)
       panel.setText("Retyping")
     }
     panel.createActionLabel("Stop without report") {

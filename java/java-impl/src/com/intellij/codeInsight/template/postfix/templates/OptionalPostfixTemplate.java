@@ -8,10 +8,7 @@ import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditable
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -22,7 +19,7 @@ public class OptionalPostfixTemplate extends JavaEditablePostfixTemplate {
           "java.util.$OPTIONAL_CLASS$.$OPTIONAL_METHOD$($EXPR$)",
           "Optional.ofNullable(expr)",
           Collections.singleton(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNonVoidExpressionCondition()),
-          LanguageLevel.JDK_1_8, true, provider);
+          LanguageLevel.JDK_1_8, false, provider);
   }
 
   @Override
@@ -50,13 +47,13 @@ public class OptionalPostfixTemplate extends JavaEditablePostfixTemplate {
 
     PsiType type = element instanceof PsiExpression ? ((PsiExpression)element).getType() : null;
     if (type instanceof PsiPrimitiveType) {
-      if (PsiType.INT.equals(type)) {
+      if (PsiTypes.intType().equals(type)) {
         className = "OptionalInt";
       }
-      else if (PsiType.DOUBLE.equals(type)) {
+      else if (PsiTypes.doubleType().equals(type)) {
         className = "OptionalDouble";
       }
-      else if (PsiType.LONG.equals(type)) {
+      else if (PsiTypes.longType().equals(type)) {
         className = "OptionalLong";
       }
     }

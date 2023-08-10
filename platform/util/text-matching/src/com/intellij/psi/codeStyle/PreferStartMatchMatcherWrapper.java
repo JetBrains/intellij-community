@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
@@ -6,18 +6,16 @@ import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PreferStartMatchMatcherWrapper extends MinusculeMatcher {
+public final class PreferStartMatchMatcherWrapper extends MinusculeMatcher {
   public static final int START_MATCH_WEIGHT = 10000;
-  @NotNull
-  private final MinusculeMatcher myDelegateMatcher;
+  private final @NotNull MinusculeMatcher myDelegateMatcher;
 
   public PreferStartMatchMatcherWrapper(@NotNull MinusculeMatcher matcher) {
     myDelegateMatcher = matcher;
   }
 
   @Override
-  @NotNull
-  public String getPattern() {
+  public @NotNull String getPattern() {
     return myDelegateMatcher.getPattern();
   }
 

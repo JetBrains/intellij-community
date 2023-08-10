@@ -48,15 +48,18 @@ public final class TextOccurrencesUtilBase {
     });
   }
 
+  /**
+   * @param includeReferences usage with a reference ot offset would be skipped iff {@code includeReferences == false} 
+   */
   public static boolean processUsagesInStringsAndComments(@NotNull PsiElement element,
                                                    @NotNull SearchScope searchScope,
                                                    @NotNull String stringToSearch,
-                                                   boolean ignoreReferences,
+                                                   boolean includeReferences,
                                                    @NotNull PairProcessor<? super PsiElement, ? super TextRange> processor) {
     PsiSearchHelper helper = PsiSearchHelper.getInstance(element.getProject());
     SearchScope scope = helper.getUseScope(element);
     scope = scope.intersectWith(searchScope);
-    Processor<PsiElement> commentOrLiteralProcessor = literal -> processTextIn(literal, stringToSearch, ignoreReferences, processor);
+    Processor<PsiElement> commentOrLiteralProcessor = literal -> processTextIn(literal, stringToSearch, includeReferences, processor);
     return processStringLiteralsContainingIdentifier(stringToSearch, scope, helper, commentOrLiteralProcessor) &&
            helper.processCommentsContainingIdentifier(stringToSearch, scope, commentOrLiteralProcessor);
   }
@@ -86,14 +89,14 @@ public final class TextOccurrencesUtilBase {
 
   private static boolean processTextIn(PsiElement scope,
                                        String stringToSearch,
-                                       boolean ignoreReferences,
+                                       boolean allowReferences,
                                        PairProcessor<? super PsiElement, ? super TextRange> processor) {
     String text = scope.getText();
     for (int offset = 0; offset < text.length(); offset++) {
       offset = text.indexOf(stringToSearch, offset);
       if (offset < 0) break;
       final PsiReference referenceAt = scope.findReferenceAt(offset);
-      if (!ignoreReferences && referenceAt != null
+      if (!allowReferences && referenceAt != null
           && (referenceAt.resolve() != null || referenceAt instanceof PsiPolyVariantReference
                                                && ((PsiPolyVariantReference)referenceAt).multiResolve(true).length > 0)) {
         continue;

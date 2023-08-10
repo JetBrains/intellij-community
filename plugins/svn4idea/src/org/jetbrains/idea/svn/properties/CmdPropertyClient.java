@@ -315,7 +315,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     public List<Property> properties = new ArrayList<>();
 
     public long revisionNumber() {
-      return Long.valueOf(revision);
+      return Long.parseLong(revision);
     }
   }
 

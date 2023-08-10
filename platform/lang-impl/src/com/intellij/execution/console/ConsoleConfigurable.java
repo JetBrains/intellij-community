@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
 import com.intellij.execution.ExecutionBundle;
@@ -21,25 +21,26 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.encoding.EncodingReference;
-import com.intellij.ui.*;
+import com.intellij.ui.AddEditDeleteListPanel;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-/**
- * @author peter
- */
+import static com.intellij.openapi.options.Configurable.isCheckboxModified;
+import static com.intellij.openapi.options.Configurable.isFieldModified;
+
 public class ConsoleConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance(ConsoleConfigurable.class);
 
@@ -106,7 +107,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
         new MyAddDeleteListPanel(ApplicationBundle.message("console.fold.console.lines"),
                                  ApplicationBundle.message("console.enter.substring.folded"));
       myNegativePanel = new MyAddDeleteListPanel(ApplicationBundle.message("console.fold.exceptions"),
-                                                 ApplicationBundle.message("console.enter.substring.dont.fold:"));
+                                                 ApplicationBundle.message("console.enter.substring.dont.fold"));
       splitter.setFirstComponent(myPositivePanel);
       splitter.setSecondComponent(myNegativePanel);
 
@@ -145,26 +146,16 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     boolean isModified = !ContainerUtil.newHashSet(myNegativePanel.getListItems()).equals(new HashSet<>(mySettings.getNegativePatterns()));
     isModified |= !ContainerUtil.newHashSet(myPositivePanel.getListItems()).equals(new HashSet<>(mySettings.getPositivePatterns()));
-    isModified |= isModified(myCbUseSoftWrapsAtConsole, editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE));
+    isModified |= isCheckboxModified(myCbUseSoftWrapsAtConsole, editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE));
     UISettings uiSettings = UISettings.getInstance();
-    isModified |= isModified(myCommandsHistoryLimitField, uiSettings.getConsoleCommandHistoryLimit());
+    isModified |= isFieldModified(myCommandsHistoryLimitField, uiSettings.getConsoleCommandHistoryLimit());
     if (ConsoleBuffer.useCycleBuffer()) {
-      isModified |= isModified(myCbOverrideConsoleCycleBufferSize, uiSettings.getOverrideConsoleCycleBufferSize());
-      isModified |= isModified(myConsoleCycleBufferSizeField, uiSettings.getConsoleCycleBufferSizeKb());
+      isModified |= isCheckboxModified(myCbOverrideConsoleCycleBufferSize, uiSettings.getOverrideConsoleCycleBufferSize());
+      isModified |= isFieldModified(myConsoleCycleBufferSizeField, uiSettings.getConsoleCycleBufferSizeKb());
     }
     isModified |= isEncodingModified();
 
     return isModified;
-  }
-
-  private static boolean isModified(JTextField textField, int value) {
-    try {
-      int fieldValue = Integer.parseInt(textField.getText().trim());
-      return fieldValue != value;
-    }
-    catch (NumberFormatException e) {
-      return false;
-    }
   }
 
   private boolean isEncodingModified() {
@@ -188,16 +179,16 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
     editorSettings.setUseSoftWraps(myCbUseSoftWrapsAtConsole.isSelected(), SoftWrapAppliancePlaces.CONSOLE);
     boolean uiSettingsChanged = false;
-    if (isModified(myCommandsHistoryLimitField, uiSettings.getConsoleCommandHistoryLimit())) {
+    if (isFieldModified(myCommandsHistoryLimitField, uiSettings.getConsoleCommandHistoryLimit())) {
       uiSettings.setConsoleCommandHistoryLimit(Math.max(0, Math.min(1000, Integer.parseInt(myCommandsHistoryLimitField.getText().trim()))));
       uiSettingsChanged = true;
     }
     if (ConsoleBuffer.useCycleBuffer()) {
-      if (isModified(myCbOverrideConsoleCycleBufferSize, uiSettings.getOverrideConsoleCycleBufferSize())) {
+      if (isCheckboxModified(myCbOverrideConsoleCycleBufferSize, uiSettings.getOverrideConsoleCycleBufferSize())) {
         uiSettings.setOverrideConsoleCycleBufferSize(myCbOverrideConsoleCycleBufferSize.isSelected());
         uiSettingsChanged = true;
       }
-      if (isModified(myConsoleCycleBufferSizeField, uiSettings.getConsoleCycleBufferSizeKb())) {
+      if (isFieldModified(myConsoleCycleBufferSizeField, uiSettings.getConsoleCycleBufferSizeKb())) {
         uiSettings.setConsoleCycleBufferSizeKb(Math.max(0, Integer.parseInt(myConsoleCycleBufferSizeField.getText().trim())));
         uiSettingsChanged = true;
       }
@@ -267,15 +258,10 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   private static class MyAddDeleteListPanel extends AddEditDeleteListPanel<String> {
     private final @NlsContexts.DialogMessage String myQuery;
 
-    MyAddDeleteListPanel(@NlsContexts.BorderTitle String title, @NlsContexts.DialogMessage String query) {
+    MyAddDeleteListPanel(@NlsContexts.Label String title, @NlsContexts.DialogMessage String query) {
       super(title, new ArrayList<>());
       myQuery = query;
-      new ListSpeedSearch(myList);
-    }
-
-    @Override
-    protected Border createTitledBorder(String title) {
-      return IdeBorderFactory.createTitledBorder(title, false, JBUI.insetsTop(8)).setShowLine(false);
+      ListSpeedSearch.installOn(myList);
     }
 
     @Override

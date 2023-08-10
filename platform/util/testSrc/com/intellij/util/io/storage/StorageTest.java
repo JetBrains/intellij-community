@@ -23,11 +23,7 @@ public class StorageTest extends StorageTestBase {
 
   @Test
   public void testStress() throws Exception {
-    StringBuilder data = new StringBuilder();
-    for (int i = 0; i < 100; i++) {
-      data.append("Hello ");
-    }
-    String hello = data.toString();
+    String hello = "Hello ".repeat(100);
 
     long start = System.currentTimeMillis();
     final int count = 100000;

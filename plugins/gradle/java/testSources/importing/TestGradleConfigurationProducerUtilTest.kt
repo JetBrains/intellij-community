@@ -5,7 +5,8 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiManager
 import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
-import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test
@@ -55,12 +56,12 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
           }
       }
     """.trimIndent())
-    val moduleBuildScript = GradleBuildScriptBuilderEx()
-      .withJavaPlugin()
-      .withJUnit("4.12")
-      .addPostfix("""
+    createBuildFile("module") {
+      withJavaPlugin()
+      withJUnit4()
+      addPostfix("""
         task myTestsJar(type: Jar, dependsOn: testClasses) {
-            baseName = "test-${'$'}{project.archivesBaseName}"
+            archiveBaseName = "test-${'$'}{project.archivesBaseName}"
             from sourceSets.test.output
         }
 
@@ -72,13 +73,13 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
             testArtifacts  myTestsJar
         }
       """.trimIndent())
-    val depModuleBuildScript = GradleBuildScriptBuilderEx()
-      .withJavaPlugin()
-      .withJUnit("4.12")
-      .addDependency("compile project(':module')")
-      .addDependency("testCompile project(path: ':module', configuration: 'testArtifacts')")
-    createProjectSubFile("module/build.gradle", moduleBuildScript.generate())
-    createProjectSubFile("dep-module/build.gradle", depModuleBuildScript.generate())
+    }
+    createBuildFile("dep-module") {
+      withJavaPlugin()
+      withJUnit4()
+      addImplementationDependency(project(":module"))
+      addImplementationDependency(project(":module", "testArtifacts"))
+    }
     createSettingsFile("""
       rootProject.name = 'project'
       include 'module'
@@ -113,9 +114,7 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
 
   private fun assertClassRunConfigurationSettings(expectedSettings: String, vararg classes: PsiClass) {
     val settings = ExternalSystemTaskExecutionSettings()
-    val isApplied = settings.applyTestConfiguration(getModule("project"), *classes) { psiClass ->
-      GradleExecutionSettingsUtil.createTestFilterFrom(psiClass, false)
-    }
+    val isApplied = settings.applyTestConfiguration(getModule("project"), *classes) { createTestFilterFrom(it) }
     assertTrue(isApplied)
     assertEquals(expectedSettings, settings.toString().trim())
   }

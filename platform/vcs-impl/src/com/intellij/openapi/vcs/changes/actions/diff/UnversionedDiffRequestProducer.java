@@ -49,7 +49,7 @@ public final class UnversionedDiffRequestProducer implements ChangeDiffRequestCh
   }
 
   @Override
-  public ChangesBrowserNode.Tag getPopupTag() {
+  public @NotNull ChangesBrowserNode.Tag getTag() {
     return myTag;
   }
 

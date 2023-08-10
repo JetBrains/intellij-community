@@ -32,7 +32,7 @@ public final class StdArrangementExtendableSettings extends StdArrangementSettin
   }
 
   public StdArrangementExtendableSettings(@NotNull List<? extends ArrangementGroupingRule> groupingRules,
-                                          @NotNull List<ArrangementSectionRule> sectionRules,
+                                          @NotNull List<? extends ArrangementSectionRule> sectionRules,
                                           @NotNull Collection<? extends StdArrangementRuleAliasToken> rulesAliases) {
     super(groupingRules, sectionRules);
     myRulesAliases.addAll(rulesAliases);
@@ -97,7 +97,7 @@ public final class StdArrangementExtendableSettings extends StdArrangementSettin
     for (StdArrangementMatchRule matchRule : sequence) {
       final ArrangementCompositeMatchCondition extendedRule = ruleTemplate.clone();
       extendedRule.addOperand(matchRule.getMatcher().getCondition());
-      rules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(extendedRule)));
+      rules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(extendedRule), rule.getOrderType()));
     }
   }
 

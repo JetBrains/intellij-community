@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("RemoveExplicitTypeArguments")
 
 package org.jetbrains.plugins.groovy.intentions.style.inference.search
@@ -10,6 +10,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.Processor
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
@@ -97,6 +98,9 @@ private class ScopeFilteringRequestProcessor(private val anchorElement: GrMethod
 
 
   override fun processTextOccurrence(element: PsiElement, offsetInElement: Int, consumer: Processor<in PsiReference>): Boolean {
+    if (element !is GrReferenceElement<*>) {
+      return true
+    }
     if (element.findElementAt(offsetInElement)?.parentOfType<GrLiteral>() != null) {
       return true
     }
@@ -112,10 +116,10 @@ private class ScopeFilteringRequestProcessor(private val anchorElement: GrMethod
     return delegateProcessor.processTextOccurrence(element, offsetInElement, consumer)
   }
 
-  fun hasSelfReferencesInCaller(element: PsiElement, collisionFinder: CollisionFinder): Boolean {
+  private fun hasSelfReferencesInCaller(element: PsiElement, collisionFinder: CollisionFinder): Boolean {
     val enclosingClosure: GrFunctionalExpression = element.parentOfType<GrFunctionalExpression>() ?: return false
     val call: GrMethodCall = enclosingClosure.parentOfType<GrMethodCall>() ?: return false
-    val arguments: List<GrExpression> = call.closureArguments?.asList()?.plus(call.expressionArguments.asList()) ?: emptyList()
+    val arguments: List<GrExpression> = call.closureArguments.asList().plus(call.expressionArguments.asList())
     if (enclosingClosure !in arguments) {
       return false
     }
@@ -128,7 +132,7 @@ private class ScopeFilteringRequestProcessor(private val anchorElement: GrMethod
   /**
    * Performs checks against calls like foo(foo()) due to possibly undefined return type
    */
-  fun hasSelfReferencesInArguments(element: PsiElement, collisionFinder: CollisionFinder): Boolean {
+  private fun hasSelfReferencesInArguments(element: PsiElement, collisionFinder: CollisionFinder): Boolean {
     val expressionWithArguments: GrExpression = element.parentOfTypes(GrMethodCall::class, GrAssignmentExpression::class) ?: return false
     val isCorrectlyPointing = when (expressionWithArguments) {
       is GrMethodCall -> expressionWithArguments.invokedExpression === element
@@ -141,7 +145,7 @@ private class ScopeFilteringRequestProcessor(private val anchorElement: GrMethod
         is GrAssignmentExpression -> arrayOf(expressionWithArguments.rValue)
         else -> return false
       }
-      if (arguments.any { argument -> collisionFinder.apply { argument.accept(this) }.foundCollision }) {
+      if (arguments.any { argument -> collisionFinder.apply { argument?.accept(this) }.foundCollision }) {
         // there should be provided some connection between method return type and its argument,
         // but currently this option is absent
         return true

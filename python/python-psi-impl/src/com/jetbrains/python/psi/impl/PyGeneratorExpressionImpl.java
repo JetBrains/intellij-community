@@ -28,9 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implements PyGeneratorExpression {
   public PyGeneratorExpressionImpl(ASTNode astNode) {
     super(astNode);

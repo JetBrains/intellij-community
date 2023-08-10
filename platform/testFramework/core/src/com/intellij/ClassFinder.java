@@ -1,43 +1,58 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
 
 public class ClassFinder {
-  private final List<String> classNameList = new ArrayList<>();
-  private final int startPackageName;
+  private static final List<String> IGNORED_CLASS_NAMES = Arrays.asList("com.intellij.tests.BootstrapTests", "com.intellij.AllTests");
+  private final List<String> classNameList;
+  private final Path classPathRoot;
   private final boolean includeUnconventionallyNamedTests;
 
-  public ClassFinder(final File classPathRoot, final String rootPackage, boolean includeUnconventionallyNamedTests) {
+  public ClassFinder(final Path classPathRoot, final String rootPackage, boolean includeUnconventionallyNamedTests) {
+    this.classPathRoot = classPathRoot;
     this.includeUnconventionallyNamedTests = includeUnconventionallyNamedTests;
-    startPackageName = classPathRoot.getAbsolutePath().length() + 1;
-    String directoryOffset = rootPackage.replace('.', File.separatorChar);
-    findAndStoreTestClasses(new File(classPathRoot, directoryOffset));
+    String directoryOffset = rootPackage.replace(".", classPathRoot.getFileSystem().getSeparator());
+    classNameList = findAndStoreTestClasses(classPathRoot.resolve(directoryOffset));
+  }
+
+  /**
+   * @deprecated Use {@linkplain ClassFinder#ClassFinder(Path, String, boolean)} instead.
+   */
+  @Deprecated(forRemoval = true)
+  public ClassFinder(final File classPathRoot, final String rootPackage, boolean includeUnconventionallyNamedTests) {
+    this(classPathRoot.toPath(), rootPackage, includeUnconventionallyNamedTests);
   }
 
   @Nullable
-  private String computeClassName(final File file) {
-    String absPath = file.getAbsolutePath();
+  private String computeClassName(final @NotNull Path path) {
+    Path absPath = path.toAbsolutePath();
+    String fileName = absPath.getFileName().toString();
+    if (!FileUtilRt.extensionEquals(fileName, "class")) {
+      return null;
+    }
     if (!includeUnconventionallyNamedTests) {
-      if (absPath.endsWith("Test.class")) {
-        return StringUtil.trimEnd(absPath.substring(startPackageName), ".class").replace(File.separatorChar, '.');
+      if (fileName.endsWith("Test.class")) {
+        return getClassFQN(absPath);
       }
     }
     else {
-      String nestedClassName = file.getName();
-      if (!nestedClassName.endsWith(".class")) {
-        return null;
-      }
-      nestedClassName = StringUtil.trimEnd(nestedClassName, ".class");
-
+      String nestedClassName = FileUtilRt.getNameWithoutExtension(fileName);
       List<String> names = Arrays.asList(nestedClassName.split("\\$"));
       Collections.reverse(names);
       for (String className : names) {
@@ -49,27 +64,34 @@ public class ClassFinder {
         List<String> words = Arrays.asList(NameUtilCore.nameToWords(className));
 
         if (words.contains("Test") || words.contains("Tests") || words.contains("Suite")) {
-          String fqn = StringUtil.trimEnd(absPath.substring(startPackageName), ".class").replace(File.separatorChar, '.');
-          if (!Arrays.asList("com.intellij.tests.BootstrapTests", "com.intellij.AllTests").contains(fqn)) {
-            return fqn;
-          }
+          return getClassFQN(absPath);
         }
       }
     }
     return null;
   }
 
-  private void findAndStoreTestClasses(@NotNull File current) {
-    if (current.isDirectory()) {
-      File[] files = current.listFiles();
-      if (files != null) {
-        for (File file : files) {
-          findAndStoreTestClasses(file);
-        }
-      }
+  @Nullable
+  private String getClassFQN(final @NotNull Path path) {
+    String fqn = StringUtil
+      .trimEnd(classPathRoot.relativize(path).toString(), ".class")
+      .replace(path.getFileSystem().getSeparator(), ".");
+    return IGNORED_CLASS_NAMES.contains(fqn) ? null : fqn;
+  }
+
+  private List<String> findAndStoreTestClasses(@NotNull Path current) {
+    if (!Files.exists(current)) {
+      return Collections.emptyList();
     }
-    else {
-      ContainerUtil.addIfNotNull(classNameList, computeClassName(current));
+    try (Stream<Path> walk = Files.walk(current)) {
+      return walk
+        .filter(path -> Files.isRegularFile(path))
+        .map(path -> computeClassName(path))
+        .filter(name -> name != null)
+        .toList();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 

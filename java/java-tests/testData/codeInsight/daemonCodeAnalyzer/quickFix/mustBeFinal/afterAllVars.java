@@ -1,4 +1,4 @@
-// "Make variables final" "true"
+// "Make variables final" "true-preview"
 import java.io.*;
 
 class a {

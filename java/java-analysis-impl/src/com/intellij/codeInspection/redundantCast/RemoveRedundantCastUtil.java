@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,8 +18,7 @@ public final class RemoveRedundantCastUtil {
     if (castExpression == null) return null;
     PsiElement parent = castExpression.getParent();
     PsiExpression operand = castExpression.getOperand();
-    if (operand instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parExpr = (PsiParenthesizedExpression)operand;
+    if (operand instanceof PsiParenthesizedExpression parExpr) {
       PsiElement topParent = PsiUtil.skipParenthesizedExprUp(parent);
       if (!(topParent instanceof PsiExpression) ||
           !PsiPrecedenceUtil.areParenthesesNeeded(parExpr.getExpression(), (PsiExpression)topParent, true)) {

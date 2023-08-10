@@ -3,7 +3,6 @@ package org.jetbrains.yaml.editing;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.IElementType;
@@ -33,9 +32,8 @@ public class YAMLInteractiveLexingTest extends BasePlatformTestCase {
   @NotNull
   private String tokenList() {
     Editor editor = myFixture.getEditor();
-    assert editor instanceof EditorEx : "Unsupported editor type";
 
-    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    EditorHighlighter highlighter = editor.getHighlighter();
     StringBuilder result = new StringBuilder();
 
     for (HighlighterIterator it = highlighter.createIterator(0); !it.atEnd(); it.advance()) {

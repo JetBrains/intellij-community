@@ -26,6 +26,6 @@ class ActivateFindToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.FIN
   private fun appendWithActionShortcut(statusText: StatusText, key: String, actionId: String) {
     val shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId)
     val shortcutText = shortcut?.let { " (${KeymapUtil.getShortcutText(shortcut)})" } ?: ""
-    statusText.appendLine(LangBundle.message(key, shortcutText));
+    statusText.appendLine(LangBundle.message(key, shortcutText))
   }
 }

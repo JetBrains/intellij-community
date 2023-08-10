@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.dir.actions.popup;
 
 import com.intellij.ide.diff.DirDiffOperation;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.impl.dir.DirDiffElementImpl;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
@@ -34,7 +35,7 @@ public class SetNoOperation extends DumbAwareAction {
     final JTable table = SetOperationToBase.getTable(e);
     assert model != null && table != null;
     for (DirDiffElementImpl element : model.getSelectedElements()) {
-        element.setOperation(DirDiffOperation.NONE);
+      element.setOperation(DirDiffOperation.NONE);
     }
     table.repaint();
   }
@@ -52,5 +53,10 @@ public class SetNoOperation extends DumbAwareAction {
       }
     }
     e.getPresentation().setEnabled(false);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

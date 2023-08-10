@@ -1,42 +1,22 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.compiler;
 
-import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Util;
-import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.lw.IComponent;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Map;
 
-/**
- * @author yole
- */
-public class GridBagConverter {
+public final class GridBagConverter {
   private final Insets myInsets;
   private int myHGap;
   private int myVGap;
   private boolean mySameSizeHorz;
   private boolean mySameSizeVert;
-  private final ArrayList<JComponent> myComponents = new ArrayList<JComponent>();
-  private final ArrayList<GridConstraints> myConstraints = new ArrayList<GridConstraints>();
+  private final ArrayList<JComponent> myComponents = new ArrayList<>();
+  private final ArrayList<GridConstraints> myConstraints = new ArrayList<>();
   private int myLastRow = -1;
   private int myLastCol = -1;
 
@@ -57,52 +37,7 @@ public class GridBagConverter {
     myConstraints.add(constraints);
   }
 
-  public static void prepareConstraints(final LwContainer container, final Map idToConstraintsMap) {
-    GridLayoutManager gridLayout = (GridLayoutManager) container.getLayout();
-    GridBagConverter converter = new GridBagConverter(gridLayout.getMargin(),
-                                                      getGap(container, true),
-                                                      getGap(container, false),
-                                                      gridLayout.isSameSizeHorizontally(),
-                                                      gridLayout.isSameSizeVertically());
-    for(int i=0; i<container.getComponentCount(); i++) {
-      final LwComponent component = (LwComponent)container.getComponent(i);
-      if (component instanceof LwHSpacer || component instanceof LwVSpacer) {
-        GridConstraints constraints = component.getConstraints().store();
-        constraints.setHSizePolicy(constraints.getHSizePolicy() & ~GridConstraints.SIZEPOLICY_WANT_GROW);
-        constraints.setVSizePolicy(constraints.getVSizePolicy() & ~GridConstraints.SIZEPOLICY_WANT_GROW);
-        converter.addComponent(null, constraints);
-      }
-      else {
-        converter.addComponent(null, component.getConstraints());
-      }
-    }
-    Result[] results = converter.convert();
-    int componentIndex = 0;
-    for (Result result : results) {
-      if (!result.isFillerPanel) {
-        final LwComponent component = (LwComponent)container.getComponent(componentIndex++);
-        idToConstraintsMap.put(component.getId(), result);
-      }
-      // else generateFillerPanel(generator, componentLocal, results [i]);
-    }
-  }
-
-  private static int getGap(LwContainer container, final boolean horizontal) {
-    while(container != null) {
-      final LayoutManager layout = container.getLayout();
-      if (layout instanceof AbstractLayout) {
-        AbstractLayout aLayout = (AbstractLayout) layout;
-        final int gap = horizontal ? aLayout.getHGap() : aLayout.getVGap();
-        if (gap >= 0) {
-          return gap;
-        }
-      }
-      container = container.getParent();
-    }
-    return horizontal ? AbstractLayout.DEFAULT_HGAP : AbstractLayout.DEFAULT_VGAP;
-  }
-
-  public static class Result {
+  public static final class Result {
     public JComponent component;
     public boolean isFillerPanel;
     public GridBagConstraints constraints;
@@ -117,7 +52,7 @@ public class GridBagConverter {
   }
 
   public Result[] convert() {
-    ArrayList<Result> results = new ArrayList<Result>();
+    ArrayList<Result> results = new ArrayList<>();
     for(int i=0; i<myComponents.size(); i++) {
       results.add(convert(myComponents.get(i), myConstraints.get(i)));
     }

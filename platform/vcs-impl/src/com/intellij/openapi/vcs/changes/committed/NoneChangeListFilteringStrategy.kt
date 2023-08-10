@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
-import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import javax.swing.JComponent
 import javax.swing.event.ChangeListener
 
@@ -21,7 +20,7 @@ object NoneChangeListFilteringStrategy : ChangeListFilteringStrategy {
   override fun resetFilterBase() = Unit
   override fun appendFilterBase(changeLists: List<CommittedChangeList>) = Unit
   override fun filterChangeLists(changeLists: List<CommittedChangeList>): List<CommittedChangeList> =
-    newUnmodifiableList(changeLists)
+    java.util.List.copyOf(changeLists)
 
   override fun toString(): String = VcsBundle.message("filter.none.name")
 }

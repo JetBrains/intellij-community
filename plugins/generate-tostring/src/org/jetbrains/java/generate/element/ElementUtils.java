@@ -34,8 +34,6 @@ public final class ElementUtils {
      * Gets the list of members to be put in the VelocityContext.
      *
      * @param members a list of {@link PsiMember} objects.
-     * @param selectedNotNullMembers
-     * @param useAccessors
      * @return a filtered list of only the fields as {@link FieldElement} objects.
      */
     public static List<FieldElement> getOnlyAsFieldElements(Collection<? extends PsiMember> members,
@@ -44,9 +42,8 @@ public final class ElementUtils {
         List<FieldElement> fieldElementList = new ArrayList<>();
 
         for (PsiMember member : members) {
-            if (member instanceof PsiField) {
-                PsiField field = (PsiField) member;
-                FieldElement fe = ElementFactory.newFieldElement(field, useAccessors);
+            if (member instanceof PsiField field) {
+              FieldElement fe = ElementFactory.newFieldElement(field, useAccessors);
                 if (selectedNotNullMembers.contains(member)) {
                     fe.setNotNull(true);
                 }
@@ -67,9 +64,8 @@ public final class ElementUtils {
         List<MethodElement> methodElementList = new ArrayList<>();
 
         for (PsiMember member : members) {
-            if (member instanceof PsiMethod) {
-                PsiMethod method = (PsiMethod) member;
-                MethodElement me = ElementFactory.newMethodElement(method);
+            if (member instanceof PsiMethod method) {
+              MethodElement me = ElementFactory.newMethodElement(method);
                 methodElementList.add(me);
             }
         }
@@ -82,7 +78,6 @@ public final class ElementUtils {
      *
      * @param members                  a list of {@link PsiMember} objects.
      * @param selectedNotNullMembers  a list of @NotNull objects
-     * @param useAccessors
      * @return a filtered list of only the methods as a {@link FieldElement} or {@link MethodElement} objects.
      */
     public static List<Element> getOnlyAsFieldAndMethodElements(Collection<? extends PsiMember> members,

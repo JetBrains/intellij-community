@@ -15,9 +15,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author ilyas
- */
 public class GroovyDocSyntaxHighlighter extends SyntaxHighlighterBase {
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<>();
   private static final IElementType mGDOC_COMMENT_CONTENT = new GroovyDocElementType("GDOC_COMMENT_CONTENT");

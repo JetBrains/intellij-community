@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lexer;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,8 +62,7 @@ public class LayeredLexer extends DelegateLexer {
     }
   }
 
-  @Nullable
-  protected Lexer findLayerLexer(IElementType baseTokenType) {
+  protected @Nullable Lexer findLayerLexer(IElementType baseTokenType) {
     return myStartTokenToLayerLexer.get(baseTokenType);
   }
 
@@ -147,9 +147,8 @@ public class LayeredLexer extends DelegateLexer {
     myState = isLayerActive() ? IN_LAYER_STATE : super.getState();
   }
 
-  @NotNull
   @Override
-  public LexerPosition getCurrentPosition() {
+  public @NotNull LexerPosition getCurrentPosition() {
     return new LexerPositionImpl(getTokenStart(), getState());
   }
 
@@ -161,10 +160,7 @@ public class LayeredLexer extends DelegateLexer {
   private boolean isStopToken(Lexer lexer, IElementType tokenType) {
     final IElementType[] stopTokens = myStopTokens.get(lexer);
     if (stopTokens == null) return false;
-    for (IElementType stopToken : stopTokens) {
-      if (stopToken == tokenType) return true;
-    }
-    return false;
+    return ArrayUtil.indexOfIdentity(stopTokens, tokenType) != -1;
   }
 
   protected boolean isLayerActive() {

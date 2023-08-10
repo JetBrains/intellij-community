@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.hint;
 
@@ -9,6 +9,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -26,7 +27,9 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -118,7 +121,7 @@ public class ParameterInfoComponent extends JPanel {
 
     NORMAL_FONT = editor != null && Registry.is("parameter.info.editor.font")
                   ? editor.getColorsScheme().getFont(EditorFontType.PLAIN)
-                  : UIUtil.getLabelFont();
+                  : StartupUiUtil.getLabelFont();
     BOLD_FONT = editor != null && Registry.is("parameter.info.editor.font")
                 ? editor.getColorsScheme().getFont(EditorFontType.BOLD)
                 : NORMAL_FONT.deriveFont(Font.BOLD);
@@ -151,7 +154,7 @@ public class ParameterInfoComponent extends JPanel {
       myPanels[i] = new OneElementComponent();
       myMainPanel.add(myPanels[i], new GridBagConstraints(0, i, 1, 1, 1, 0,
                                                           GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                          JBUI.emptyInsets(), 0, 0));
+                                                          JBInsets.emptyInsets(), 0, 0));
     }
   }
 
@@ -172,7 +175,7 @@ public class ParameterInfoComponent extends JPanel {
         ? CodeInsightBundle.message("parameter.info.switch.overload.shortcuts.single", upShortcut.isEmpty() ? downShortcut : upShortcut)
         : CodeInsightBundle.message("parameter.info.switch.overload.shortcuts", upShortcut, downShortcut));
       myShortcutLabel.setForeground(CONTEXT_HELP_FOREGROUND);
-      Font labelFont = UIUtil.getLabelFont();
+      Font labelFont = StartupUiUtil.getLabelFont();
       myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
       myShortcutLabel.setBorder(JBUI.Borders.empty(6, 10, 0, 10));
       add(myShortcutLabel, BorderLayout.SOUTH);
@@ -186,13 +189,14 @@ public class ParameterInfoComponent extends JPanel {
 
   @Override
   public Dimension getPreferredSize() {
-    long visibleRows = Stream.of(myPanels).filter(Component::isVisible).count();
     final Dimension preferredSize = super.getPreferredSize();
-    if (visibleRows <= myMaxVisibleRows) {
+    int panelsHeight = Stream.of(myPanels).filter(Component::isVisible).mapToInt(panel -> panel.getPreferredSize().height).sum();
+    int visibleRowsHeight = getFontMetrics(BOLD_FONT).getHeight() * myMaxVisibleRows;
+    if (panelsHeight <= visibleRowsHeight) {
       return preferredSize;
     }
     else {
-      return new Dimension(preferredSize.width + 20, 200);
+      return new Dimension(preferredSize.width + 20, visibleRowsHeight);
     }
   }
 
@@ -319,27 +323,28 @@ public class ParameterInfoComponent extends JPanel {
   }
 
   ParameterInfoControllerBase.Model update(boolean singleParameterInfo) {
-    return SlowOperations.allowSlowOperations(() -> doUpdate(singleParameterInfo));
-  }
-
-  private ParameterInfoControllerBase.Model doUpdate(boolean singleParameterInfo) {
     MyParameterContext context = new MyParameterContext(singleParameterInfo);
 
     int highlightedComponentIdx = -1;
-    for (int i = 0; i < myParameterInfoControllerData.getDescriptors().length; i++) {
+    Object[] descriptors = myParameterInfoControllerData.getDescriptors();
+    for (int i = 0; i < descriptors.length; i++) {
       context.i = i;
-      final Object o = myParameterInfoControllerData.getDescriptors()[i];
+      final Object o = descriptors[i];
 
-      boolean isHighlighted = myParameterInfoControllerData.getDescriptors()[i].equals(myParameterInfoControllerData.getHighlighted());
+      boolean isHighlighted = descriptors[i].equals(myParameterInfoControllerData.getHighlighted());
       if (isHighlighted) {
         context.result.highlightedSignature = i;
       }
-      if (singleParameterInfo && myParameterInfoControllerData.getDescriptors().length > 1 && !context.isHighlighted()) {
+      if (singleParameterInfo && descriptors.length > 1 && !context.isHighlighted()) {
         setVisible(i, false);
       }
       else {
         setVisible(i, true);
-        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> myParameterInfoControllerData.getHandler().updateUI(o, context));
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+          try (AccessToken ignore = SlowOperations.knownIssue("IDEA-305563, EA-819694")) {
+            myParameterInfoControllerData.getHandler().updateUI(o, context);
+          }
+        });
 
         // ensure that highlighted element is visible
         if (context.isHighlighted()) {
@@ -390,7 +395,7 @@ public class ParameterInfoComponent extends JPanel {
     private OneLineComponent getOneLineComponent(int index) {
       for (int i = getComponentCount(); i <= index; i++) {
         add(new OneLineComponent(),
-            new GridBagConstraints(0, i, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+            new GridBagConstraints(0, i, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
       }
       return (OneLineComponent)getComponent(index);
     }
@@ -473,6 +478,15 @@ public class ParameterInfoComponent extends JPanel {
       for (int i = 0; i < texts.length; i++) {
         String paramText = escapeString(texts[i], escapeFunction);
         if (paramText == null) break;
+        FontMetrics fontMetrics = getFontMetrics(BOLD_FONT);
+        if (fontMetrics.stringWidth(line + texts[i]) >= myWidthLimit) {
+          OneLineComponent component = getOneLineComponent(index);
+          buf.append(component.setup(escapeString(line.toString(), escapeFunction), flagsMap, background));
+          index += 1;
+          flagsMap.clear();
+          curOffset = 0;
+          line = new StringBuilder();
+        }
         startOffsets.add(fullLine.length());
         fullLine.append(texts[i]);
         endOffsets.add(fullLine.length());
@@ -492,14 +506,6 @@ public class ParameterInfoComponent extends JPanel {
         }
 
         curOffset += paramText.length();
-        if (line.length() >= 50) {
-          OneLineComponent component = getOneLineComponent(index);
-          buf.append(component.setup(escapeString(line.toString(), escapeFunction), flagsMap, background));
-          index += 1;
-          flagsMap.clear();
-          curOffset = 0;
-          line = new StringBuilder();
-        }
       }
       ParameterInfoControllerBase.SignatureItem item = new ParameterInfoControllerBase.SignatureItem(fullLine.toString(), false, false,
                                                                                                      startOffsets, endOffsets);
@@ -522,7 +528,7 @@ public class ParameterInfoComponent extends JPanel {
       if (myRequestFocus)
         myLabel.setFocusable(true);
 
-      add(myLabel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+      add(myLabel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
     }
 
     @Override

@@ -1,0 +1,10 @@
+interface I {
+    override fun equals(other: Any?): Boolean
+}
+
+open class A {
+    override fun equals(other: Any?): Boolean = false
+}
+
+class Test : I, A() {
+}

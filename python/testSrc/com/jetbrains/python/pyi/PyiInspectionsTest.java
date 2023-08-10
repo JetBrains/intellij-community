@@ -28,9 +28,6 @@ import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class PyiInspectionsTest extends PyTestCase {
 
   private Disposable myRootsDisposable;
@@ -125,7 +122,8 @@ public class PyiInspectionsTest extends PyTestCase {
     doPyiTest(PyUnresolvedReferencesInspection.class);
   }
 
-  public void testPyiTopLevelUnresolvedForwardReferencesInAnnotations() {
+  // PY-49004
+  public void testPyiTopLevelResolvedForwardReferencesInAnnotations() {
     doPyiTest(PyUnresolvedReferencesInspection.class);
   }
 

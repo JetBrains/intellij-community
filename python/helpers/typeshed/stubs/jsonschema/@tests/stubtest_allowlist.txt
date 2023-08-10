@@ -1,0 +1,2 @@
+# TODO: remove _FormatCheckCallable when mypy 0.980 is released
+jsonschema._format._FormatCheckCallable

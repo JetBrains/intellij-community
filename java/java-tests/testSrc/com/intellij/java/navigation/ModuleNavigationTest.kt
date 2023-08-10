@@ -32,7 +32,7 @@ class ModuleNavigationTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testGoToSymbol() {
     val file = myFixture.configureByText("module-info.java", "module my.mod.name { }")
-    val items = GotoSymbolModel2(myFixture.project).getElementsByName("my.mod.name", false, "my.mod")
+    val items = GotoSymbolModel2(myFixture.project, myFixture.testRootDisposable).getElementsByName("my.mod.name", false, "my.mod")
     assertThat(items).containsExactly((file as PsiJavaFile).moduleDeclaration!!)
   }
 }

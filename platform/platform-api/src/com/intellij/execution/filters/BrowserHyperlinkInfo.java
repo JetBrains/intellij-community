@@ -17,6 +17,7 @@ package com.intellij.execution.filters;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Consider to use {@link com.intellij.ide.browsers.OpenUrlHyperlinkInfo}.
@@ -29,7 +30,7 @@ public class BrowserHyperlinkInfo implements HyperlinkInfo {
   }
 
   @Override
-  public void navigate(Project project) {
+  public void navigate(@NotNull Project project) {
     BrowserUtil.browse(myUrl);
   }
 }

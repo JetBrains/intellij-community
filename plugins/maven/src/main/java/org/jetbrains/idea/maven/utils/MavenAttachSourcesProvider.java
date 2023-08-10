@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.AttachSourcesProvider;
@@ -10,34 +10,38 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiFile;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Stream;
 
-public class MavenAttachSourcesProvider implements AttachSourcesProvider {
+final class MavenAttachSourcesProvider implements AttachSourcesProvider {
+
   @Override
-  @NotNull
-  public Collection<AttachSourcesAction> getActions(final List<LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
-    Collection<MavenProject> projects = getMavenProjects(psiFile);
-    if (projects.isEmpty()) return Collections.emptyList();
-    if (findArtifacts(projects, orderEntries).isEmpty()) return Collections.emptyList();
+  public @NotNull Collection<? extends AttachSourcesAction> getActions(@NotNull List<? extends LibraryOrderEntry> orderEntries,
+                                                                       @NotNull PsiFile psiFile) {
+    Collection<? extends MavenProject> projects = getMavenProjects(psiFile);
+    if (projects.isEmpty()) return List.of();
+    if (findArtifacts(projects, orderEntries).isEmpty()) return List.of();
 
-    return Collections.singleton(new AttachSourcesAction() {
+    return List.of(new AttachSourcesAction() {
       @Override
       public String getName() {
         return MavenProjectBundle.message("maven.action.download.sources");
@@ -49,7 +53,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
       }
 
       @Override
-      public ActionCallback perform(List<LibraryOrderEntry> orderEntries) {
+      public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
         // may have been changed by this time...
         Collection<MavenProject> mavenProjects = getMavenProjects(psiFile);
         if (mavenProjects.isEmpty()) {
@@ -61,44 +65,71 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
         Collection<MavenArtifact> artifacts = findArtifacts(mavenProjects, orderEntries);
         if (artifacts.isEmpty()) return ActionCallback.REJECTED;
 
-        final AsyncPromise<MavenArtifactDownloader.DownloadResult> result = new AsyncPromise<>();
-        manager.scheduleArtifactsDownloading(mavenProjects, artifacts, true, false, result);
+        var downloadResult = manager.downloadArtifactsSync(mavenProjects, artifacts, true, false);
 
         final ActionCallback resultWrapper = new ActionCallback();
-        result.onSuccess(downloadResult -> {
-          if (!downloadResult.unresolvedSources.isEmpty()) {
-            HtmlBuilder builder = new HtmlBuilder();
-            builder.append(MavenProjectBundle.message("sources.not.found.for"));
-            int count = 0;
-            for (MavenId each : downloadResult.unresolvedSources) {
-              if (count++ > 5) {
-                builder.append(HtmlChunk.br()).append(MavenProjectBundle.message("and.more"));
-                break;
-              }
-              builder.append(HtmlChunk.br()).append(each.getDisplayString());
+        HtmlBuilder builder = null;
+        if (!downloadResult.unresolvedSources.isEmpty()) {
+          builder = new HtmlBuilder();
+          builder.append(MavenProjectBundle.message("sources.not.found.for"));
+          int count = 0;
+          for (MavenId each : downloadResult.unresolvedSources) {
+            if (count++ > 5) {
+              builder.append(HtmlChunk.br()).append(MavenProjectBundle.message("and.more"));
+              break;
             }
+            builder.append(HtmlChunk.br()).append(each.getDisplayString());
+          }
+        }
+        if (builder != null) {
+          cleanUpUnresolvedSourceFiles(psiFile.getProject(), downloadResult.unresolvedSources);
+          Notifications.Bus.notify(new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
+                                                    MavenProjectBundle.message("maven.sources.cannot.download"),
+                                                    builder.wrapWithHtmlBody().toString(),
+                                                    NotificationType.WARNING),
+                                   psiFile.getProject());
+        }
 
-            Notifications.Bus.notify(new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
-                                                      MavenProjectBundle.message("maven.sources.cannot.download"),
-                                                      builder.wrapWithHtmlBody().toString(),
-                                                      NotificationType.WARNING),
-                                     psiFile.getProject());
-          }
-
-          if (downloadResult.resolvedSources.isEmpty()) {
-            resultWrapper.setRejected();
-          }
-          else {
-            resultWrapper.setDone();
-          }
-        });
+        if (downloadResult.resolvedSources.isEmpty()) {
+          resultWrapper.setRejected();
+        }
+        else {
+          resultWrapper.setDone();
+        }
         return resultWrapper;
       }
     });
   }
 
-  private static Collection<MavenArtifact> findArtifacts(Collection<MavenProject> mavenProjects, List<LibraryOrderEntry> orderEntries) {
-    Collection<MavenArtifact> artifacts = new THashSet<>();
+  private static void cleanUpUnresolvedSourceFiles(Project project, Collection<MavenId> mavenIds) {
+    for (MavenId mavenId : mavenIds) {
+      Path parentFile = MavenUtil.getRepositoryParentFile(project, mavenId);
+      if (parentFile == null) continue;
+      try (Stream<Path> paths = Files.list(parentFile)) {
+        paths
+          .filter(path -> isTargetFile(path.getFileName().toString(), MavenExtraArtifactType.SOURCES))
+          .forEach(path -> {
+            try {
+              FileUtil.delete(path);
+            }
+            catch (IOException e) {
+              MavenLog.LOG.warn(path + " not deleted", e);
+            }
+          });
+      }
+      catch (IOException e) {
+        MavenLog.LOG.warn(parentFile + " cannot be listed", e);
+      }
+    }
+  }
+
+  private static boolean isTargetFile(String name, MavenExtraArtifactType type) {
+    return name.contains("-" + type.getDefaultClassifier()) && name.contains("." + type.getDefaultExtension());
+  }
+
+  private static @NotNull Collection<MavenArtifact> findArtifacts(@NotNull Collection<? extends MavenProject> mavenProjects,
+                                                                  @NotNull List<? extends LibraryOrderEntry> orderEntries) {
+    Collection<MavenArtifact> artifacts = new HashSet<>();
     for (MavenProject each : mavenProjects) {
       for (LibraryOrderEntry entry : orderEntries) {
         final MavenArtifact artifact = MavenRootModelAdapter.findArtifact(each, entry.getLibrary());
@@ -110,7 +141,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
     return artifacts;
   }
 
-  private static Collection<MavenProject> getMavenProjects(PsiFile psiFile) {
+  private static @NotNull Collection<MavenProject> getMavenProjects(@NotNull PsiFile psiFile) {
     Project project = psiFile.getProject();
     Collection<MavenProject> result = new ArrayList<>();
     for (OrderEntry each : ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(psiFile.getVirtualFile())) {

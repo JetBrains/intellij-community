@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -10,9 +10,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class PyFindUsagesTest extends PyTestCase {
   public void testInitUsages() {   // PY-292
     final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/InitUsages.py");
@@ -199,6 +197,30 @@ public class PyFindUsagesTest extends PyTestCase {
     assertEquals(5,
                  myFixture.testFindUsages("findUsages/ConstImportedFromAnotherFileDefiner.py", "findUsages/ConstImportedFromAnotherFile.py")
                    .size());
+  }
+
+  // PY-26881
+  public void testFunctionHasPyiStub() {
+    final Collection<UsageInfo> usages = findMultiFileUsages("lib.py");
+    assertEquals(2, usages.size());
+  }
+
+  // PY-26881
+  public void testClassHasPyiStub() {
+    final Collection<UsageInfo> usages = findMultiFileUsages("parent.py");
+    assertEquals(2, usages.size());
+  }
+
+  // PY-26881
+  public void testClassAttributeHasPyiStub() {
+    final Collection<UsageInfo> usages = findMultiFileUsages("parent.py");
+    assertEquals(3, usages.size());
+  }
+
+  // PY-26881
+  public void testChildClassAttributeHasPyiStub() {
+    final Collection<UsageInfo> usages = findMultiFileUsages("child.py");
+    assertEquals(2, usages.size());
   }
 
   private Collection<UsageInfo> findMultiFileUsages(String filename) {

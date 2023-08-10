@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author ilyas
- */
 class GroovyTransformationsTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override

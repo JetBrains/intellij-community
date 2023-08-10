@@ -13,6 +13,7 @@ import git4idea.push.GitPushSupport
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitSubmoduleInfo
+import git4idea.repo.getDirectSubmodules
 import git4idea.test.*
 import java.nio.file.Path
 import java.util.*
@@ -147,7 +148,7 @@ class GitComplexSubmoduleTest : GitSubmoduleTestBase() {
   private fun assertSubmodules(repo: GitRepository, expectedSubmodules: List<GitRepository>) {
     assertSubmodulesInfo(repo, expectedSubmodules)
     assertSameElements("Submodules identified incorrectly for ${getShortRepositoryName(repo)}",
-                       repositoryManager.getDirectSubmodules(repo), expectedSubmodules)
+                       repo.getDirectSubmodules(), expectedSubmodules)
   }
 
   private fun assertSubmodulesInfo(repo: GitRepository, expectedSubmodules: List<GitRepository>) {

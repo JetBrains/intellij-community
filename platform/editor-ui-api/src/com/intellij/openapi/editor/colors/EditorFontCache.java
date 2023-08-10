@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +13,6 @@ public abstract class EditorFontCache {
     return ApplicationManager.getApplication().getService(EditorFontCache.class);
   }
 
-  @NotNull
-  public abstract Font getFont(@Nullable EditorFontType key);
+  public abstract @NotNull Font getFont(@Nullable EditorFontType key);
   public abstract void reset();
 }

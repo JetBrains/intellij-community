@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,9 +49,8 @@ public interface DisplayPrioritySortable {
    */
   static <T> int compare(@NotNull T o1, @NotNull T o2, @NotNull Function<? super T, String> nameExtractor) {
     if (o1 instanceof DisplayPrioritySortable) {
-      if (o2 instanceof DisplayPrioritySortable) {
+      if (o2 instanceof DisplayPrioritySortable d2) {
         DisplayPrioritySortable d1 = (DisplayPrioritySortable)o1;
-        DisplayPrioritySortable d2 = (DisplayPrioritySortable)o2;
         int result = (d1.getPriority()).compareTo(d2.getPriority());
         if (result != 0) return result;
         result = -Integer.compare(d1.getWeight(), d2.getWeight());

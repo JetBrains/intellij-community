@@ -46,8 +46,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
       final String libraryName = ((LibraryOrderEntry)object).getLibraryName();
       return libraryName != null ? libraryName : CodeInsightBundle.message("package.dependencies.library.node.text");
     }
-    else if (object instanceof ModuleOrderEntry) {
-      final ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)object;
+    else if (object instanceof ModuleOrderEntry moduleOrderEntry) {
       return moduleOrderEntry.getModuleName();
     }
     return null;
@@ -68,8 +67,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
     else if (object instanceof Module) {
       return processChildren((Module)object, processor);
     }
-    else if (object instanceof PsiDirectoryContainer) {
-      final PsiDirectoryContainer psiPackage = (PsiDirectoryContainer)object;
+    else if (object instanceof PsiDirectoryContainer psiPackage) {
       final PsiDirectory[] psiDirectories = ReadAction.compute(() -> rootElement instanceof Module
                                                                      ? psiPackage.getDirectories(
         GlobalSearchScope.moduleScope((Module)rootElement))
@@ -149,8 +147,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
         return containingDirectory;
       }
     }
-    else if (psiElement instanceof PsiDirectory) {
-      PsiDirectory psiDirectory = (PsiDirectory)psiElement;
+    else if (psiElement instanceof PsiDirectory psiDirectory) {
       Project project = psiElement.getProject();
       PsiDirectory parentDirectory = psiDirectory.getParentDirectory();
       if (parentDirectory == null) {

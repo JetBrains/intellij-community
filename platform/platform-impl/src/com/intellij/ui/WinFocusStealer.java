@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.jna.JnaLoader;
@@ -21,7 +21,7 @@ import java.awt.event.AWTEventListener;
  * The desired effect is achieved by setting system-wide 'foreground lock timeout' value to zero. This is a duration that should pass after
  * user input in one window before another window is allowed to steal focus.
  */
-public class WinFocusStealer implements AWTEventListener {
+public final class WinFocusStealer implements AWTEventListener {
   private static final Logger LOG = Logger.getInstance(WinFocusStealer.class);
   private static final int DEFAULT_TIMEOUT_MS = 200000; // default registry value on Windows 10 as of time this code is written
   private final boolean myEnabled;
@@ -49,14 +49,8 @@ public class WinFocusStealer implements AWTEventListener {
    * If this is not the case, at the time this method is invoked, the actual change will be performed when next user input event is
    * received.
    * <p>
-   * With focus stealing enabled, {@link Window#toFront()} method should bring the target IDE window into foreground, even if user is
-   * currently working with another application. For it to work reliably, {@code toFront} method shouldn't be called immediately after
-   * other window- or focus-related API methods (in particular, calling {@code toFront} right after {@link Component#requestFocus()} method
-   * is known not to work as expected). Required delay is empirically estimated to be around 20 ms.
-   * (The hypothesis is that timestamps used for checking timeout are determined with a certain inaccuracy, caused by timer resolution,
-   * and {@code BringWindowToTop} system function, called by {@code requestFocus()}, is treated as a user input, so
-   * {@code SetForegroundWindow} call fails to focus a background window, even with foreground lock timeout is set to 0, if it's preceded
-   * by {@code BringWindowToTop} call)
+   * With focus stealing enabled, {@link AppIcon#requestFocus(Window)} method should bring the target IDE window into foreground, even if
+   * user is currently working with another application.
    */
   public static void setFocusStealingEnabled(boolean value) {
     WinFocusStealer stealer = ApplicationManager.getApplication().getService(WinFocusStealer.class);

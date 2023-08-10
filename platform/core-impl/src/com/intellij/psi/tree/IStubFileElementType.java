@@ -3,12 +3,12 @@
 package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,18 +17,14 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class IStubFileElementType<T extends PsiFileStub> extends StubFileElementType<T> {
-  private static final AtomicClearableLazyValue<Integer> TEMPLATE_STUB_BASE_VERSION = new AtomicClearableLazyValue<Integer>() {
-    @Override
-    protected @NotNull Integer compute() {
-      return calcTemplateStubBaseVersion();
-    }
-  };
+  private static final SynchronizedClearableLazy<Integer> TEMPLATE_STUB_BASE_VERSION =
+    new SynchronizedClearableLazy<>(IStubFileElementType::calcTemplateStubBaseVersion);
 
-  public IStubFileElementType(final Language language) {
+  public IStubFileElementType(Language language) {
     super(language);
   }
 
-  public IStubFileElementType(@NonNls final String debugName, final Language language) {
+  public IStubFileElementType(@NonNls String debugName, Language language) {
     super(debugName, language);
     if (hasNonTrivialExternalId() && !isOutOfOurControl()) {
       IStubElementType.checkNotInstantiatedTooLate(getClass());
@@ -47,8 +43,14 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
   /**
    * Stub structure version. Should be incremented each time when stub tree changes (e.g. elements added/removed,
    * element serialization/deserialization changes).
+   * <p>
    * Make sure to invoke super method for {@link TemplateLanguage} to prevent stub serialization problems due to
-   * data language stub changes
+   * data language stub changes.
+   * <p>
+   * Important: Negative values are not allowed! The platform relies on the fact that template languages have stub versions bigger than
+   * {@link IStubFileElementType#TEMPLATE_STUB_BASE_VERSION}, see {@link StubBuilderType#getVersion()}. At the same time
+   * {@link IStubFileElementType#TEMPLATE_STUB_BASE_VERSION} is computed as a sum of stub versions of all non-template languages.
+   *
    * @return stub version
    */
   public int getStubVersion() {
@@ -59,28 +61,30 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
     return new DefaultStubBuilder();
   }
 
-  @NonNls
-  @NotNull
+  /**
+   * Can only depend on getLanguage() or getDebugName(), should be calculated inplace.
+   * MUST NOT be calculated from any other non-static local variables as it can lead to race-conditions
+   * (<a href="https://youtrack.jetbrains.com/issue/IDEA-306646">IDEA-306646</a>).
+   */
   @Override
-  public String getExternalId() {
+  public @NonNls @NotNull String getExternalId() {
     return DEFAULT_EXTERNAL_ID;
   }
 
   @Override
-  public void serialize(@NotNull final T stub, @NotNull final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull T stub, @NotNull StubOutputStream dataStream) throws IOException {
   }
 
-  @NotNull
   @Override
-  public T deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public @NotNull T deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return (T)new PsiFileStubImpl(null);
   }
 
   @Override
-  public void indexStub(@NotNull final PsiFileStub stub, @NotNull final IndexSink sink) {
+  public void indexStub(@NotNull PsiFileStub stub, @NotNull IndexSink sink) {
   }
 
-  public boolean shouldBuildStubFor(final VirtualFile file) {
+  public boolean shouldBuildStubFor(VirtualFile file) {
     return true;
   }
 
@@ -91,7 +95,7 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
   private static int calcTemplateStubBaseVersion() {
     IElementType[] dataElementTypes = IElementType.enumerate(
       (elementType) -> elementType instanceof IStubFileElementType && !(elementType.getLanguage() instanceof TemplateLanguage));
-    return Arrays.stream(dataElementTypes).mapToInt((e) -> ((IStubFileElementType)e).getStubVersion()).sum();
+    return Arrays.stream(dataElementTypes).mapToInt((e) -> ((IStubFileElementType<?>)e).getStubVersion()).sum();
   }
 
   @ApiStatus.Internal

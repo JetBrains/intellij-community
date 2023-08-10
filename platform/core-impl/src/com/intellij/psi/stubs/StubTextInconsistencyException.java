@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
@@ -20,9 +21,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public final class StubTextInconsistencyException extends RuntimeException implements ExceptionWithAttachments {
   private final String myStubsFromText;
   private final String myStubsFromPsi;
@@ -37,13 +35,11 @@ public final class StubTextInconsistencyException extends RuntimeException imple
     myFileText = file.getText();
   }
 
-  @NotNull
-  public String getStubsFromText() {
+  public @NotNull String getStubsFromText() {
     return myStubsFromText;
   }
 
-  @NotNull
-  public String getStubsFromPsi() {
+  public @NotNull String getStubsFromPsi() {
     return myStubsFromPsi;
   }
 
@@ -88,10 +84,12 @@ public final class StubTextInconsistencyException extends RuntimeException imple
     }
   }
 
-  @NotNull
-  private static List<PsiFileStub> restoreStubsFromText(FileViewProvider viewProvider) {
-    FileContentImpl fc = (FileContentImpl)FileContentImpl.createByText(viewProvider.getVirtualFile(), viewProvider.getContents());
-    fc.setProject(viewProvider.getManager().getProject());
+  private static @NotNull List<PsiFileStub> restoreStubsFromText(FileViewProvider viewProvider) {
+    Project project = viewProvider.getManager().getProject();
+    FileContentImpl fc = (FileContentImpl)FileContentImpl.createByText(viewProvider.getVirtualFile(),
+                                                                       viewProvider.getContents(),
+                                                                       project);
+    fc.setProject(project);
     PsiFileStubImpl copyTree = (PsiFileStubImpl) StubTreeBuilder.buildStubTree(fc);
     return copyTree == null ? Collections.emptyList() : Arrays.asList(copyTree.getStubRoots());
   }

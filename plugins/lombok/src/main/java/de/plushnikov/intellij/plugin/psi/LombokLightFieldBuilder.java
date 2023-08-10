@@ -37,14 +37,14 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
   }
 
   @Override
-  public LombokLightFieldBuilder setModifiers(String... modifiers) {
+  public @NotNull LombokLightFieldBuilder setModifiers(@NotNull String @NotNull ... modifiers) {
     myModifierList.clearModifiers();
     Stream.of(modifiers).forEach(myModifierList::addModifier);
     return this;
   }
 
   @Override
-  public LombokLightFieldBuilder setModifierList(LightModifierList modifierList) {
+  public @NotNull LombokLightFieldBuilder setModifierList(LightModifierList modifierList) {
     setModifiers(modifierList.getModifiers());
     return this;
   }
@@ -133,9 +133,7 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
 
   @Override
   public boolean isEquivalentTo(PsiElement another) {
-    if (another instanceof LombokLightFieldBuilder) {
-      final LombokLightFieldBuilder anotherLightField = (LombokLightFieldBuilder) another;
-
+    if (another instanceof LombokLightFieldBuilder anotherLightField) {
       boolean stillEquivalent = getName().equals(anotherLightField.getName()) &&
         getType().equals(anotherLightField.getType());
 

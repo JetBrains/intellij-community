@@ -1,16 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.concurrency.AppJavaExecutorUtil;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,10 +24,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * @param <T> test result type
- */
-abstract class CachingFileTester<T> {
+abstract class CachingFileTester {
   private static final Logger LOG = Logger.getInstance(CachingFileTester.class);
   private static final int FILE_TEST_TIMEOUT_MS = 30000;
 
@@ -82,15 +79,35 @@ abstract class CachingFileTester<T> {
   }
 
   @NotNull
-  private T testOrAbort(@NotNull GitExecutable executable) throws Exception {
+  private GitVersion testOrAbort(@NotNull GitExecutable executable) throws Exception {
+    int maxAttempts = 1;
+
+    // IDEA-248193 Apple Git might hang with timeout after hibernation. Do several attempts.
+    if (SystemInfo.isMac && "/usr/bin/git".equals(executable.getExePath())) {
+      maxAttempts = 3;
+    }
+
+    int attempt = 0;
+    while (attempt < maxAttempts) {
+      GitVersion result = runTestWithTimeout(executable);
+      if (result != null) return result;
+      attempt++;
+    }
+
+    throw new GitVersionIdentificationException(
+      GitBundle.message("git.executable.validation.error.no.response.in.n.attempts.message", maxAttempts), null);
+  }
+
+  @Nullable
+  private GitVersion runTestWithTimeout(@NotNull GitExecutable executable) throws Exception {
     EmptyProgressIndicator indicator = new EmptyProgressIndicator();
     Ref<Exception> exceptionRef = new Ref<>();
-    Ref<T> resultRef = new Ref<>();
+    Ref<GitVersion> resultRef = new Ref<>();
 
     Semaphore semaphore = new Semaphore(0);
 
-    ApplicationManager.getApplication().executeOnPooledThread(
-      () -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+    AppJavaExecutorUtil.executeOnPooledIoThread(() -> {
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         try {
           resultRef.set(testExecutable(executable));
         }
@@ -100,7 +117,8 @@ abstract class CachingFileTester<T> {
         finally {
           semaphore.release();
         }
-      }, indicator));
+      }, indicator);
+    });
 
     try {
       long start = System.currentTimeMillis();
@@ -111,7 +129,7 @@ abstract class CachingFileTester<T> {
       }
       if (!resultRef.isNull()) return resultRef.get();
       if (!exceptionRef.isNull()) throw exceptionRef.get();
-      throw new GitVersionIdentificationException("Cannot identify version of git executable: no response", null);
+      return null; // timeout
     }
     finally {
       indicator.cancel();
@@ -128,14 +146,14 @@ abstract class CachingFileTester<T> {
   }
 
   @NotNull
-  protected abstract T testExecutable(@NotNull GitExecutable executable) throws Exception;
+  protected abstract GitVersion testExecutable(@NotNull GitExecutable executable) throws Exception;
 
-  class TestResult {
-    @Nullable private final T myResult;
+  public static class TestResult {
+    @Nullable private final GitVersion myResult;
     @Nullable private final Exception myException;
     private final long myFileLastModifiedTimestamp;
 
-    TestResult(@NotNull T result, long timestamp) {
+    TestResult(@NotNull GitVersion result, long timestamp) {
       myResult = result;
       myFileLastModifiedTimestamp = timestamp;
       myException = null;
@@ -148,7 +166,7 @@ abstract class CachingFileTester<T> {
     }
 
     @Nullable
-    public T getResult() {
+    public GitVersion getResult() {
       return myResult;
     }
 

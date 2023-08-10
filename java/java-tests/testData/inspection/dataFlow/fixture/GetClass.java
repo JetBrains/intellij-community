@@ -2,6 +2,14 @@ import java.util.*;
 
 class GetClass {
   native void unknown();
+  
+  private Class myCls;
+  
+  void testSimple(Class<? extends Number> cls, Number n) {
+    if (cls.equals(n.getClass())) {}
+    if (cls == n.getClass()) {}
+    if (myCls == n.getClass()) {}
+  }
 
   public static void testIntClass() {
     Class<?> cls = someIntClass();
@@ -126,5 +134,10 @@ class GetClass {
     if (<warning descr="Condition 'x.getClass().getSimpleName().equals(\"X\")' is always 'true'">x.getClass().getSimpleName().equals("X")</warning>) {}
     if (x.getClass().getName().equals("GetClass$X")) {}
     if (x.getClass().getCanonicalName().<warning descr="Method invocation 'equals' will produce 'NullPointerException'">equals</warning>("GetClass.X")) {}
+  }
+
+  boolean isSorted(Collection<?> c) {
+    Class<?> klass = c.getClass();
+    return <warning descr="Condition 'klass == SortedSet.class' is always 'false'">klass == SortedSet.class</warning>;
   }
 }

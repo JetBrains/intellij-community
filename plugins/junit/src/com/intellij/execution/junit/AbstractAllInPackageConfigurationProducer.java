@@ -16,7 +16,7 @@ public abstract class AbstractAllInPackageConfigurationProducer extends JUnitCon
   /**
    * @deprecated Override {@link #getConfigurationFactory()}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected AbstractAllInPackageConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
   }

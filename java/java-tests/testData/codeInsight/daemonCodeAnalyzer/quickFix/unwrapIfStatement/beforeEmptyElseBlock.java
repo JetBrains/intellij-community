@@ -1,4 +1,4 @@
-// "Remove 'if' statement extracting side effects" "true"
+// "Remove 'if' statement extracting side effects" "true-preview"
 import org.jetbrains.annotations.NotNull;
 class X {
     public String getRole(Object parent) {

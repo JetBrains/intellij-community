@@ -42,6 +42,10 @@
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.JBIterableSupportProvider"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <iconMapper mappingFile="StreamDebuggerIconMappings.json"/>
+  </extensions>
+
   <actions>
     <action id="StreamTracerAction"
             class="com.intellij.debugger.streams.action.TraceStreamAction"

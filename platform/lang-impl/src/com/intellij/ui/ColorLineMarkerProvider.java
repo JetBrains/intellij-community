@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -35,16 +36,25 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
 
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
-    return ElementColorProvider.EP_NAME.computeSafeIfAny(provider -> {
-      Color color = provider.getColorFrom(element);
-      if (color == null) {
-        return null;
-      }
+    return null;
+  }
 
-      MyInfo info = new MyInfo(element, color, provider);
-      NavigateAction.setNavigateAction(info, IdeBundle.message("dialog.title.choose.color"), null, AllIcons.Actions.Colors);
-      return info;
-    });
+  @Override
+  public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
+                                     @NotNull Collection<? super LineMarkerInfo<?>> result) {
+    for (PsiElement element : elements) {
+      ElementColorProvider.EP_NAME.computeSafeIfAny(provider -> {
+        Color color = provider.getColorFrom(element);
+        if (color == null) {
+          return null;
+        }
+
+        MyInfo info = new MyInfo(element, color, provider);
+        NavigateAction.setNavigateAction(info, IdeBundle.message("dialog.title.choose.color"), null, AllIcons.Actions.Colors);
+        result.add(info);
+        return info;
+      });
+    }
   }
 
   @Override
@@ -75,9 +85,9 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
 
               if (Registry.is("ide.new.color.picker")) {
                 RelativePoint relativePoint = new RelativePoint(e.getComponent(), e.getPoint());
-                ColorPicker.showColorPickerPopup(element.getProject(), color, (c, l) -> WriteAction.run(() -> colorProvider.setColorTo(elt, c)), relativePoint, true);
+                ColorChooserService.getInstance().showPopup(element.getProject(), color, (c, l) -> WriteAction.run(() -> colorProvider.setColorTo(elt, c)), relativePoint, true);
               } else {
-                final Color c = ColorChooser.chooseColor(editor.getProject(), editor.getComponent(),
+                final Color c = ColorChooserService.getInstance().showDialog(editor.getProject(), editor.getComponent(),
                                                          IdeBundle.message("dialog.title.choose.color"), color, true);
                 if (c != null) {
                   WriteAction.run(() -> colorProvider.setColorTo(elt, c));

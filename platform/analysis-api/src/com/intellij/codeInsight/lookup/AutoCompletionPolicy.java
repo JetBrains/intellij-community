@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.ClassConditionKey;
@@ -10,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * Use this only in simple cases, use {@link com.intellij.codeInsight.completion.CompletionContributor#handleAutoCompletionPossibility(com.intellij.codeInsight.completion.AutoCompletionContext)}
  * for finer tuning.
- *
- * @author peter
  */
 public enum AutoCompletionPolicy {
   /**
@@ -38,8 +36,7 @@ public enum AutoCompletionPolicy {
    */
   ALWAYS_AUTOCOMPLETE;
 
-  @NotNull
-  public LookupElement applyPolicy(@NotNull LookupElement element) {
+  public @NotNull LookupElement applyPolicy(@NotNull LookupElement element) {
     return new PolicyDecorator(element, this);
   }
 

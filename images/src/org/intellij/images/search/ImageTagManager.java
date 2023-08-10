@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.search;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -24,7 +23,7 @@ public class ImageTagManager implements PersistentStateComponent<ImageTagManager
   private State myState = new State();
 
   public static ImageTagManager getInstance(Project project) {
-    return ServiceManager.getService(project, ImageTagManager.class);
+    return project.getService(ImageTagManager.class);
   }
 
   public boolean hasTag(String tag, VirtualFile file) {

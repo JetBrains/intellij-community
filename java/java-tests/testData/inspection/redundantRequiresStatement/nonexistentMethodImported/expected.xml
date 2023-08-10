@@ -5,6 +5,6 @@
     <line>1</line>
     <entry_point TYPE="java.module" FQNAME="MAIN" />
     <problem_class severity="WARNING">Redundant 'requires' directive in module-info</problem_class>
-    <description>Redundant directive 'requires M2'</description>
+    <description>Redundant directive 'requires M2'. No usages of module packages are found.</description>
   </problem>
 </problems>

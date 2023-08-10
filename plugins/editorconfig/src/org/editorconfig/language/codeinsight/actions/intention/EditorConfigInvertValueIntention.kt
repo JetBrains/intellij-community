@@ -53,12 +53,12 @@ class EditorConfigInvertValueIntention : IntentionAction {
     EditorConfigPsiTreeUtil.findIdentifierUnderCaret(editor, file)?.getParentOfType()
 
   private fun getText(descriptor: EditorConfigDescriptor): String? {
-    descriptor as? EditorConfigConstantDescriptor ?: return null
+    if (descriptor !is EditorConfigConstantDescriptor) return null
     return descriptor.text
   }
 
   private fun constantMatches(descriptor: EditorConfigDescriptor, value: String): Boolean {
-    descriptor as? EditorConfigConstantDescriptor ?: return false
+    if (descriptor !is EditorConfigConstantDescriptor) return false
     return EditorConfigTextMatchingUtil.textMatchesToIgnoreCase(descriptor.text, value)
   }
 

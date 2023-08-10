@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -15,7 +14,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class ModulePackageRepr extends Proto {
+public final class ModulePackageRepr extends Proto {
   private static final DataExternalizer<Integer> INT_EXTERNALIZER = new DataExternalizer<Integer>() {
     @Override
     public void save(@NotNull DataOutput out, Integer value) throws IOException {
@@ -27,16 +26,16 @@ public class ModulePackageRepr extends Proto {
       return DataInputOutputUtil.readINT(in);
     }
   };
-  private final Set<Integer> myModuleNames = new THashSet<>();
+  private final Set<Integer> myModuleNames = new HashSet<>();
 
-  protected ModulePackageRepr(DependencyContext context, int name, Collection<String> modules) {
+  ModulePackageRepr(DependencyContext context, int name, Collection<String> modules) {
     super(0, context.get(null), name, Collections.emptySet());
     for (String module : modules) {
       myModuleNames.add(context.get(module));
     }
   }
 
-  protected ModulePackageRepr(DependencyContext context, DataInput in) {
+  private ModulePackageRepr(DependencyContext context, DataInput in) {
     super(context, in);
     RW.read(INT_EXTERNALIZER, myModuleNames, in);
   }

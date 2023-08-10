@@ -4,7 +4,6 @@ package com.intellij.psi;
 import com.intellij.lang.jvm.JvmAnnotation;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +14,6 @@ import java.util.List;
 
 /**
  * Represents a Java annotation.
- *
- * @author ven
  */
 public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
   /**
@@ -127,14 +124,4 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
   default boolean hasQualifiedName(@NotNull String qualifiedName) {
     return qualifiedName.equals(getQualifiedName());
   }
-
-  /**
-   * @deprecated don't use or override; it's temporarily left for compatibility with older plugins
-   */
-  @Nullable
-  @Deprecated
-  default PsiMetaData getMetaData() {
-    return null;
-  }
-
 }

@@ -31,10 +31,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public final class BoolUtils {
 
   public static boolean isNegation(@NotNull GrExpression exp) {
-    if (!(exp instanceof GrUnaryExpression)) {
+    if (!(exp instanceof GrUnaryExpression prefixExp)) {
       return false;
     }
-    final GrUnaryExpression prefixExp = (GrUnaryExpression) exp;
     final IElementType sign = prefixExp.getOperationTokenType();
     return GroovyTokenTypes.mBNOT.equals(sign);
   }

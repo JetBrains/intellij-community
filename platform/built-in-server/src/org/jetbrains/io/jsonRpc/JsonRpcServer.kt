@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.jsonRpc
 
 import com.google.gson.Gson
@@ -53,7 +53,6 @@ private val gson by lazy {
     .create()
 }
 
-@Suppress("HardCodedStringLiteral")
 class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
 
   private val messageIdCounter = AtomicInteger()
@@ -320,7 +319,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
   }
 }
 
-private fun ByteBuf.writeByte(c: Char) = writeByte(c.toInt())
+private fun ByteBuf.writeByte(c: Char) = writeByte(c.code)
 
 private fun ByteBuf.writeAscii(s: CharSequence): ByteBuf {
   ByteBufUtil.writeAscii(this, s)

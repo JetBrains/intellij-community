@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source;
 
@@ -85,11 +71,11 @@ public class DummyHolder extends PsiFileImpl {
     this(manager, null, context, table);
   }
 
-  public DummyHolder(@NotNull PsiManager manager, final CharTable table, final Language language) {
+  public DummyHolder(@NotNull PsiManager manager, CharTable table, Language language) {
     this(manager, null, null, table, null, language);
   }
 
-  public DummyHolder(@NotNull PsiManager manager, final Language language, final PsiElement context) {
+  public DummyHolder(@NotNull PsiManager manager, Language language, PsiElement context) {
     this(manager, null, context, null, null, language);
   }
 
@@ -115,20 +101,18 @@ public class DummyHolder extends PsiFileImpl {
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     PsiElement context = getContext();
     if (context != null) {
       PsiFile containingFile = context.getContainingFile();
       if (containingFile != null) return containingFile.getFileType();
     }
-    final LanguageFileType fileType = myLanguage.getAssociatedFileType();
+    LanguageFileType fileType = myLanguage.getAssociatedFileType();
     return fileType != null ? fileType : PlainTextFileType.INSTANCE;
   }
 
   @Override
-  @NotNull
-  public FileElement getTreeElement() {
+  public @NotNull FileElement getTreeElement() {
     FileElement fileElement = super.derefTreeElement();
     if (fileElement != null) return fileElement;
 
@@ -146,8 +130,7 @@ public class DummyHolder extends PsiFileImpl {
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return myLanguage;
   }
 
@@ -165,8 +148,7 @@ public class DummyHolder extends PsiFileImpl {
   private FileViewProvider myViewProvider;
 
   @Override
-  @NotNull
-  public FileViewProvider getViewProvider() {
+  public @NotNull FileViewProvider getViewProvider() {
     if(myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
   }

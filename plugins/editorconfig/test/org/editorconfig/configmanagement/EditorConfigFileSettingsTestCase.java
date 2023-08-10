@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightPlatformTestCase;
+import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,8 @@ public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTest
     super.setUp();
     CodeStyle.dropTemporarySettings(getProject());
     myOriginalSettings = CodeStyle.createTestSettings(CodeStyle.getSettings(getProject()));
-    EditorConfigCodeStyleSettingsModifier.setEnabledInTests(true);
+    EditorConfigCodeStyleSettingsModifier.Handler.INSTANCE.setEnabledInTests(true);
+    Utils.setEnabledInTests(true);
 
     // move test data to temp dir to ensure that IJ Project .editorConfig files don't affect tests
     Path testDataDir = Paths.get(PathManagerEx.getHomePath(EditorConfigFileSettingsTestCase.class), getRelativePath(), getTestName(true));
@@ -37,7 +39,8 @@ public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTest
   @Override
   protected void tearDown() throws Exception {
     try {
-      EditorConfigCodeStyleSettingsModifier.setEnabledInTests(false);
+      Utils.setEnabledInTests(false);
+      EditorConfigCodeStyleSettingsModifier.Handler.INSTANCE.setEnabledInTests(false);
       CodeStyle.getSettings(getProject()).copyFrom(myOriginalSettings);
     }
     catch (Throwable e) {

@@ -1,4 +1,4 @@
-// "Surround with try/catch" "true"
+// "Surround with try/catch" "true-preview"
 public class ExTest {
     public static void maybeThrow(String data) throws Ex {
         throw new Ex(data);
@@ -8,8 +8,8 @@ public class ExTest {
         Block<String> b = (t) -> {
             try {
                 return ExTest.maybeThrow(t);
-            } catch (Ex ex) {
-                <selection>ex.printStackTrace();</selection>
+            } catch (Ex e) {
+                <selection>throw new RuntimeException(e);</selection>
             }
         };
     }

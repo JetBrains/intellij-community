@@ -1,17 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 final class GitLogUnorderedRecordCollector extends GitLogRecordCollector<GitCompressedRecord> {
   private static final Logger LOG = Logger.getInstance(GitLogUnorderedRecordCollector.class);
@@ -21,8 +21,8 @@ final class GitLogUnorderedRecordCollector extends GitLogRecordCollector<GitComp
   private int myIncompleteStatusLinesCount = 0;
 
   GitLogUnorderedRecordCollector(@NotNull Project project,
-                                           @NotNull VirtualFile root,
-                                           @NotNull Consumer<? super List<GitCompressedRecord>> consumer) {
+                                 @NotNull VirtualFile root,
+                                 @NotNull Consumer<? super List<GitCompressedRecord>> consumer) {
     super(project, root, consumer);
   }
 
@@ -61,7 +61,8 @@ final class GitLogUnorderedRecordCollector extends GitLogRecordCollector<GitComp
 
   @Override
   protected GitCompressedRecord createEmptyCopy(@NotNull GitCompressedRecord record) {
-    return new GitCompressedRecord(record.getOptions(), new Int2ObjectOpenHashMap<>(), new Int2IntOpenHashMap(), record.isSupportsRawBody());
+    return new GitCompressedRecord(record.getOptions(), new Int2ObjectOpenHashMap<>(), new Int2IntOpenHashMap(),
+                                   record.isSupportsRawBody());
   }
 
   @Override

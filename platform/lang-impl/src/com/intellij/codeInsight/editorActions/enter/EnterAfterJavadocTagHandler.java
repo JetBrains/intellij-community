@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -33,20 +19,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- */
 public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
 
   private static final Context NOT_MATCHED_CONTEXT = new Context();
-  
+
   @Override
   public Result preprocessEnter(@NotNull PsiFile file,
                                 @NotNull Editor editor,
                                 @NotNull Ref<Integer> caretOffset,
                                 @NotNull Ref<Integer> caretAdvance,
                                 @NotNull DataContext dataContext,
-                                EditorActionHandler originalHandler) 
+                                EditorActionHandler originalHandler)
   {
     if (!CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
       return Result.Continue;
@@ -57,7 +40,7 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
     int line = document.getLineNumber(caretOffset.get());
     int start = document.getLineStartOffset(line);
     int end = document.getLineEndOffset(line);
-    
+
     CodeDocumentationUtil.CommentContext commentContext = CodeDocumentationUtil.tryParseCommentContext(file, text, caretOffset.get(), start);
     if (!commentContext.docAsterisk) {
       return Result.Continue;
@@ -69,13 +52,13 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
     }
 
     String indentInsideJavadoc = CodeDocumentationUtil.getIndentInsideJavadoc(document, caretOffset.get());
-    
+
     boolean restoreCaret = false;
     if (caretOffset.get() != context.endTagStartOffset) {
       editor.getCaretModel().moveToOffset(context.endTagStartOffset);
       restoreCaret = true;
     }
-      
+
     originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
     Project project = editor.getProject();
     if (indentInsideJavadoc != null &&
@@ -83,11 +66,11 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
         CodeStyleManager.getInstance(project).getDocCommentSettings(file).isLeadingAsteriskEnabled()) {
       document.insertString(editor.getCaretModel().getOffset(), "*" + indentInsideJavadoc);
     }
-    
+
     if (restoreCaret) {
       editor.getCaretModel().moveToOffset(caretOffset.get());
     }
-    
+
     return Result.DefaultForceIndent;
   }
 
@@ -97,7 +80,7 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
    * <ol>
    *   <li>
    *      if text line that contains given offset is non-first and non-last javadoc line (has {@code '*'}
-   *      as a first non-white space symbol); 
+   *      as a first non-white space symbol);
    *   </li>
    *   <li>
    *      if there is particular opening tag to the left of the given offset (its end offset is returned in case of
@@ -109,7 +92,7 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
    *   </li>
    * </ol>
    </pre>
-   * 
+   *
    * @param text          target text to analyze
    * @param startOffset   start offset to use within the given text (inclusive)
    * @param endOffset     end offset to use withing the given text (exclusive)
@@ -122,21 +105,21 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
     if (asteriskOffset < 0) {
       return NOT_MATCHED_CONTEXT;
     }
-    
+
     startOffset = asteriskOffset + 1;
 
     int startTagStartOffset = -1;
     int startTagEndOffset = -1;
     Set<CharSequence> closedTags = new HashSet<>();
     CharSequence startTag = null;
-    
+
     // Try to find start tag to the left of the given offset.
     for (int i = offset - 1; i >= startOffset; i--) {
       char c = text.charAt(i);
       if (c == ' ' || c == '\t') {
         continue;
       }
-      
+
       if (c == '>' && (startTagEndOffset < 0)) {
         if (i > startOffset && text.charAt(i - 1) == '/') {
           // Handle situation like '<p/>[offset]'
@@ -147,12 +130,12 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
           continue;
         }
       }
-      
+
       if (c == '<') {
         if (startTagEndOffset < 0 || i >= endOffset) {  // We are inside the tag.
           break;
         }
-        
+
         if (text.charAt(i + 1) == '/') {
           CharSequence tag = text.subSequence(i + 2, startTagEndOffset);
           closedTags.add(tag);
@@ -170,30 +153,29 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
         }
       }
     }
-    
+
     if (startTagStartOffset < 0) {
       return NOT_MATCHED_CONTEXT;
     }
-    
+
     int endTagStartOffset = -1;
-    
+
     // Try to find closing tag at or after the given offset.
     for (int i = offset; i < endOffset; i++) {
       char c = text.charAt(i);
-      if (c == '<' && i < endOffset - 2 && text.charAt(i + 1) == '/' && startTag != null
-          && CharArrayUtil.regionMatches(text, i + 2, endOffset, startTag)) 
+      if (c == '<' && i < endOffset - 2 && text.charAt(i + 1) == '/' &&
+          CharArrayUtil.regionMatches(text, i + 2, endOffset, startTag))
       {
         endTagStartOffset = i;
         break;
       }
     }
-    
-    
+
     return new Context(text, startTagEndOffset, endTagStartOffset, startTag, offset);
   }
-  
+
   static class Context {
-    
+
     public final int startTagEndOffset;
     public final int endTagStartOffset;
     public final @Nullable String startTag;
@@ -212,11 +194,11 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
       startTag = tag != null ? tag.toString() : null;
       myOffset = offset;
     }
-    
+
     public boolean shouldGenerateLine() {
       return endTagStartOffset >= 0 && shouldIndent();
     }
-    
+
     public boolean shouldIndent() {
       if (startTagEndOffset < 0 || myText == null || "br".equals(getTagName((startTag)))) {
         return false;

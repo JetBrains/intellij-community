@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbAware;
@@ -19,6 +21,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.scale.JBUIScale;
@@ -139,6 +142,9 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   public void setSuspendPolicy(@NotNull SuspendPolicy policy) {
     if (myState.getSuspendPolicy() != policy) {
       myState.setSuspendPolicy(policy);
+      if (policy == SuspendPolicy.NONE) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("debugger.breakpoint.non.suspending");
+      }
       fireBreakpointChanged();
     }
   }
@@ -360,12 +366,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       builder.append(BR_NBSP);
       //noinspection EnumSwitchStatementWhichMissesCases
       switch (getSuspendPolicy()) {
-        case ALL:
-          builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.all"));
-          break;
-        case THREAD:
-          builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.thread"));
-          break;
+        case ALL -> builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.all"));
+        case THREAD -> builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.thread"));
       }
     }
 
@@ -416,7 +418,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     if (!XDebuggerUtilImpl.isEmptyExpression(getConditionExpression())) {
       LayeredIcon newIcon = new LayeredIcon(2);
       newIcon.setIcon(icon, 0);
-      newIcon.setIcon(AllIcons.Debugger.Question_badge, 1, 10, 6);
+      int hShift = ExperimentalUI.isNewUI() ? 7 : 10;
+      newIcon.setIcon(AllIcons.Debugger.Question_badge, 1, hShift, 6);
       myIcon = JBUIScale.scaleIcon(newIcon);
     }
     else {
@@ -565,7 +568,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     @NotNull
     @Override
     public Alignment getAlignment() {
-      return Alignment.RIGHT;
+      return ExperimentalUI.isNewUI() && EditorUtil.isBreakPointsOnLineNumbers() ? Alignment.LINE_NUMBERS : Alignment.RIGHT;
     }
 
     @Override

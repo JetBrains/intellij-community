@@ -46,10 +46,11 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testException() {
-    showText("java.lang.NullPointerException\n" +
-             "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.findOneStyleSheet(XhtmlFileInfo.java:291)\n" +
-             "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.getStylesheets(XhtmlFileInfo.java:174)\n" +
-             "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.initStylesheets(XhtmlFileInfo.java:119)");
+    showText("""
+               java.lang.NullPointerException
+               \tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.findOneStyleSheet(XhtmlFileInfo.java:291)
+               \tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.getStylesheets(XhtmlFileInfo.java:174)
+               \tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.initStylesheets(XhtmlFileInfo.java:119)""");
     assertIcon("lightning.svg", myContent.getIcon());
     assertEquals("NPE", myContent.getDisplayName());
   }

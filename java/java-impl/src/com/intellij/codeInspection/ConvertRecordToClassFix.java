@@ -1,23 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.ConvertCompactConstructorToCanonicalAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.java.parser.DeclarationParser;
+import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.DummyHolderFactory;
+import com.intellij.psi.impl.source.JavaDummyElement;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.JavaPsiRecordUtil;
@@ -37,12 +45,18 @@ import java.util.Objects;
 
 import static com.intellij.psi.CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME;
 
-public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElement> {
   private final LanguageLevel myLanguageLevel;
-  
+
   public ConvertRecordToClassFix(@NotNull PsiElement candidate) {
     super(candidate);
     myLanguageLevel = PsiUtil.getLanguageLevel(candidate);
+  }
+
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    return Presentation.of(getFamilyName())
+      .withPriority(PriorityAction.Priority.LOW);
   }
 
   @Override
@@ -50,18 +64,13 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
     return JavaBundle.message("intention.family.name.convert.record.to.class");
   }
 
-  @Override
-  public @IntentionName @NotNull String getText() {
-    return getFamilyName();
-  }
-
   @Nullable
   public static PsiClass tryMakeRecord(@NotNull PsiElement element) {
-    // We use java.util.Objects for code generation but it's absent before Java 7
+    // We use java.util.Objects for code generation, but it's absent before Java 7
     if (!PsiUtil.isLanguageLevel7OrHigher(element)) return null;
     PsiJavaFile maybeRecord = (PsiJavaFile)PsiFileFactory.getInstance(element.getProject())
       .createFileFromText("Dummy.java", JavaLanguage.INSTANCE, element.getText(), false, false);
-    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(maybeRecord, LanguageLevel.JDK_15_PREVIEW);
+    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(maybeRecord, LanguageLevel.JDK_16);
     PsiClass[] classes = maybeRecord.getClasses();
     if (classes.length == 1 && classes[0].isRecord()) {
       return classes[0];
@@ -70,11 +79,7 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
     PsiClass recordClass;
     if (startElement instanceof PsiErrorElement) {
       recordClass = tryMakeRecord(startElement);
@@ -84,11 +89,24 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
     if (recordClass == null || !recordClass.isRecord()) return;
 
     String recordClassText = generateText(recordClass);
-    PsiJavaFile psiFile =
-      (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText("Dummy.java", JavaFileType.INSTANCE, recordClassText);
-    PsiClass converted = psiFile.getClasses()[0];
+    JavaDummyElement dummyElement = new JavaDummyElement(
+      recordClassText, builder -> JavaParser.INSTANCE.getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS),
+      LanguageLevel.JDK_16);
+    Project project = context.project();
+    PsiFile file = startElement.getContainingFile();
+    DummyHolder holder = DummyHolderFactory.createHolder(file.getManager(), dummyElement, recordClass);
+    PsiClass converted = (PsiClass)Objects.requireNonNull(SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode()));
     postProcessAnnotations(recordClass, converted);
+    PsiClass result = replace(project, file, startElement, converted);
+    CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
+  }
+
+  private static @NotNull PsiClass replace(@NotNull Project project,
+                                           @NotNull PsiFile file,
+                                           @NotNull PsiElement startElement,
+                                           @NotNull PsiClass converted) {
     if (startElement instanceof PsiErrorElement) {
+      // Older Java version: try to extract part of code which looks like a record
       TextRange range = startElement.getTextRange();
       Document document = file.getViewProvider().getDocument();
       if (document != null) {
@@ -96,21 +114,19 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
         PsiDocumentManager.getInstance(project).commitDocument(document);
         PsiClass pastedClass = PsiTreeUtil.getParentOfType(file.findElementAt(range.getStartOffset()), PsiClass.class);
         if (pastedClass != null) {
-          CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(pastedClass));
-          return;
+          return pastedClass;
         }
       }
     }
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(startElement.replace(converted));
+    return (PsiClass)startElement.replace(converted);
   }
 
   @NotNull
   private String generateText(@NotNull PsiClass recordClass) {
     PsiField lastField =
-      StreamEx.of(recordClass.getFields()).filter(field -> field.hasModifierProperty(PsiModifier.STATIC)).reduce((a, b) -> b)
-        .orElse(null);
+      StreamEx.ofReversed(recordClass.getFields()).findFirst(field -> field.hasModifierProperty(PsiModifier.STATIC)).orElse(null);
     PsiMethod lastMethod =
-      StreamEx.of(recordClass.getMethods()).filter(method -> !(method instanceof SyntheticElement)).reduce((a, b) -> b).orElse(null);
+      StreamEx.ofReversed(recordClass.getMethods()).findFirst(method -> !(method instanceof SyntheticElement)).orElse(null);
     PsiElement lBrace = recordClass.getLBrace();
     PsiElement insertFieldsAfter = lastField == null ? lBrace : lastField;
     PsiElement insertMethodsAfter = lastMethod == null ? insertFieldsAfter : lastMethod;
@@ -280,7 +296,7 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
   private void insertMethods(StringBuilder result, PsiClass psiClass, PsiRecordComponent @NotNull [] components) {
     boolean hasEquals = false, hasHashCode = false, hasToString = false;
     for (PsiMethod method : psiClass.getMethods()) {
-      if (!method.isPhysical() && JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
+      if (method instanceof SyntheticElement && JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
         result.append(method.getText()).append("\n");
       }
       hasEquals |= MethodUtils.isEquals(method);
@@ -328,7 +344,7 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
                   :
                   "if(obj == this) return true;\n" +
                   "if(obj == null || obj.getClass() != this.getClass()) return false;\n" +
-                  (myLanguageLevel.isAtLeast(HighlightingFeature.LVTI.getLevel()) ? PsiKeyword.VAR : psiClass.getName()) + 
+                  (myLanguageLevel.isAtLeast(HighlightingFeature.LVTI.getLevel()) ? PsiKeyword.VAR : psiClass.getName()) +
                    " that = (" + psiClass.getName() + ")obj;\n" +
                    "return " + equalsExpression + ";\n";
     return "@" + CommonClassNames.JAVA_LANG_OVERRIDE + "\n" +
@@ -340,7 +356,7 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
   private static @NotNull String generateEqualsExpression(PsiRecordComponent component) {
     PsiType type = component.getType();
     if (type instanceof PsiPrimitiveType) {
-      if (TypeConversionUtil.isIntegralNumberType(type) || type.equals(PsiType.BOOLEAN)) {
+      if (TypeConversionUtil.isIntegralNumberType(type) || type.equals(PsiTypes.booleanType())) {
         return "this." + component.getName() + "==that." + component.getName();
       }
       if (TypeConversionUtil.isFloatOrDoubleType(type)) {

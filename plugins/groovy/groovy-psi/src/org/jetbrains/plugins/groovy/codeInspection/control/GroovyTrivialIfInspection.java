@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -229,7 +230,7 @@ public class GroovyTrivialIfInspection extends BaseInspection {
         return;
       }
       final PsiType type = condition.getType();
-      if (type == null || !(PsiType.BOOLEAN.isAssignableFrom(type))) {
+      if (type == null || !(PsiTypes.booleanType().isAssignableFrom(type))) {
         return;
       }
 
@@ -280,11 +281,10 @@ public class GroovyTrivialIfInspection extends BaseInspection {
     thenBranch = ConditionalUtils.stripBraces(thenBranch);
     final PsiElement nextStatement =
       PsiTreeUtil.skipWhitespacesForward(ifStatement);
-    if (!(nextStatement instanceof GrStatement)) {
+    if (!(nextStatement instanceof GrStatement elseBranch)) {
       return false;
     }
 
-    final GrStatement elseBranch = (GrStatement) nextStatement;
     return ConditionalUtils.isReturn(thenBranch, "true")
         && ConditionalUtils.isReturn(elseBranch, "false");
   }
@@ -298,10 +298,9 @@ public class GroovyTrivialIfInspection extends BaseInspection {
 
     final PsiElement nextStatement =
       PsiTreeUtil.skipWhitespacesForward(ifStatement);
-    if (!(nextStatement instanceof GrStatement)) {
+    if (!(nextStatement instanceof GrStatement elseBranch)) {
       return false;
     }
-    final GrStatement elseBranch = (GrStatement) nextStatement;
     return ConditionalUtils.isReturn(thenBranch, "false")
         && ConditionalUtils.isReturn(elseBranch, "true");
   }
@@ -382,10 +381,9 @@ public class GroovyTrivialIfInspection extends BaseInspection {
     thenBranch = ConditionalUtils.stripBraces(thenBranch);
     final PsiElement nextStatement =
       PsiTreeUtil.skipWhitespacesBackward(ifStatement);
-    if (!(nextStatement instanceof GrStatement)) {
+    if (!(nextStatement instanceof GrStatement elseBranch)) {
       return false;
     }
-    GrStatement elseBranch = (GrStatement) nextStatement;
 
     elseBranch = ConditionalUtils.stripBraces(elseBranch);
     if (ConditionalUtils.isAssignment(thenBranch, "true") &&
@@ -416,10 +414,9 @@ public class GroovyTrivialIfInspection extends BaseInspection {
     thenBranch = ConditionalUtils.stripBraces(thenBranch);
     final PsiElement nextStatement =
       PsiTreeUtil.skipWhitespacesBackward(ifStatement);
-    if (!(nextStatement instanceof GrStatement)) {
+    if (!(nextStatement instanceof GrStatement elseBranch)) {
       return false;
     }
-    GrStatement elseBranch = (GrStatement) nextStatement;
 
     elseBranch = ConditionalUtils.stripBraces(elseBranch);
     if (ConditionalUtils.isAssignment(thenBranch, "false") &&

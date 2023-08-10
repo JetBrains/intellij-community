@@ -9,10 +9,12 @@ import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SmartSelectInContext;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
@@ -20,12 +22,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,11 +49,15 @@ public final class SelectInContextImpl extends FileSelectInContext {
 
   @Nullable
   public static SelectInContext createContext(AnActionEvent event) {
-    Project project = event.getProject();
-    FileEditor editor = event.getData(PlatformDataKeys.FILE_EDITOR);
-    VirtualFile virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE);
+    SelectInContext result = event.getData(SelectInContext.DATA_KEY);
+    if (result != null) {
+      return result;
+    }
 
-    SelectInContext result = createEditorContext(project, editor, virtualFile);
+    Project project = event.getProject();
+    FileEditor editor = event.getData(PlatformCoreDataKeys.FILE_EDITOR);
+    VirtualFile virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE);
+    result = createEditorContext(project, editor, virtualFile);
     if (result != null) {
       return result;
     }
@@ -61,11 +65,6 @@ public final class SelectInContextImpl extends FileSelectInContext {
     JComponent sourceComponent = getEventComponent(event);
     if (sourceComponent == null) {
       return null;
-    }
-
-    result = event.getData(SelectInContext.DATA_KEY);
-    if (result != null) {
-      return result;
     }
 
     result = createPsiContext(event);
@@ -138,14 +137,38 @@ public final class SelectInContextImpl extends FileSelectInContext {
       };
     }
     else {
-      StructureViewBuilder builder = editor.getStructureViewBuilder();
-      StructureView structureView = builder != null ? builder.createStructureView(editor, project) : null;
-      Object selectorInFile = structureView != null ? structureView.getTreeModel().getCurrentEditorElement() : null;
-      if (structureView != null) Disposer.dispose(structureView);
+      Object selectorInFile = getElementFromStructureView(project, editor);
       if (selectorInFile == null) return new SmartSelectInContext(psiFile, psiFile);
       if (selectorInFile instanceof PsiElement) return new SmartSelectInContext(psiFile, (PsiElement)selectorInFile);
       return new SelectInContextImpl(psiFile, selectorInFile);
     }
+  }
+
+  @Nullable
+  private static Object getElementFromStructureView(@NotNull Project project, @NotNull FileEditor editor) {
+    StructureViewBuilder builder = editor.getStructureViewBuilder();
+    if (builder == null) return null;
+    return getElementFromStructureView(project, editor, builder);
+  }
+
+  @Nullable
+  private static Object getElementFromStructureView(@NotNull Project project, @NotNull FileEditor editor, @NotNull StructureViewBuilder builder) {
+    if (builder instanceof TreeBasedStructureViewBuilder) {
+      return getElementFromStructureTreeView(editor, (TreeBasedStructureViewBuilder)builder);
+    }
+    StructureView structureView = builder.createStructureView(editor, project);
+    Object selectorInFile = structureView.getTreeModel().getCurrentEditorElement();
+    Disposer.dispose(structureView);
+    return selectorInFile;
+  }
+
+  @Nullable
+  private static Object getElementFromStructureTreeView(@NotNull FileEditor fileEditor, TreeBasedStructureViewBuilder builder) {
+    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+    StructureViewModel model = builder.createStructureViewModel(editor);
+    Object selectorInFile = model.getCurrentEditorElement();
+    Disposer.dispose(model);
+    return selectorInFile;
   }
 
   @Nullable
@@ -157,9 +180,21 @@ public final class SelectInContextImpl extends FileSelectInContext {
     }
     PsiFile psiFile = psiElement.getContainingFile();
     if (psiFile == null) {
-      return null;
+      return createFileSystemItemContext(psiElement);
     }
     return new SmartSelectInContext(psiFile, psiElement);
+  }
+
+  @Nullable
+  public static SelectInContext createFileSystemItemContext(PsiElement psiElement) {
+    PsiFileSystemItem fsItem = ObjectUtils.tryCast(psiElement, PsiFileSystemItem.class);
+    VirtualFile vfile = fsItem == null ? null : fsItem.getVirtualFile();
+    return vfile == null ? null : new FileSelectInContext(psiElement.getProject(), vfile) {
+      @Override
+      public @NotNull Object getSelectorInFile() {
+        return psiElement;
+      }
+    };
   }
 
   @Nullable
@@ -170,9 +205,8 @@ public final class SelectInContextImpl extends FileSelectInContext {
       return (JComponent)source;
     }
     else {
-      Component component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+      Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
       return component instanceof JComponent ? (JComponent)component : null;
     }
   }
 }
-

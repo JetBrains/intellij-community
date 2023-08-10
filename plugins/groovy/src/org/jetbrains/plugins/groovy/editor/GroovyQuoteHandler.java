@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 
-/**
- * @author ven
- */
 public class GroovyQuoteHandler implements MultiCharQuoteHandler {
 
   @Override

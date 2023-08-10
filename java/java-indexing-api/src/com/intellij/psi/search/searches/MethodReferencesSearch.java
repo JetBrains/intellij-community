@@ -74,7 +74,7 @@ public final class MethodReferencesSearch extends ExtensibleQueryFactory<PsiRefe
     /**
      * @deprecated Same as {@link #getScopeDeterminedByUser()}. Searchers most likely need to use {@link #getEffectiveSearchScope()}.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     @NotNull
     public SearchScope getScope() {
       return getScopeDeterminedByUser();
@@ -84,7 +84,7 @@ public final class MethodReferencesSearch extends ExtensibleQueryFactory<PsiRefe
     public SearchScope getEffectiveSearchScope () {
       SearchScope scope = myEffectiveScope;
       if (scope == null) {
-        if (!myMethod.isValid()) return GlobalSearchScope.EMPTY_SCOPE;
+        if (!myMethod.isValid()) return LocalSearchScope.EMPTY;
 
         myEffectiveScope = scope = myScope.intersectWith(PsiSearchHelper.getInstance(myMethod.getProject()).getUseScope(myMethod));
       }
@@ -96,24 +96,30 @@ public final class MethodReferencesSearch extends ExtensibleQueryFactory<PsiRefe
     super(EP_NAME);
   }
 
-  public static Query<PsiReference> search(@NotNull PsiMethod method, SearchScope scope, final boolean strictSignatureSearch) {
+  public static @NotNull Query<PsiReference> search(@NotNull PsiMethod method, @NotNull SearchScope scope, final boolean strictSignatureSearch) {
     return search(new SearchParameters(method, scope, strictSignatureSearch));
   }
 
-  public static void searchOptimized(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch,
-                                     @NotNull SearchRequestCollector collector, final Processor<? super PsiReference> processor) {
+  public static void searchOptimized(@NotNull PsiMethod method,
+                                     @NotNull SearchScope scope,
+                                     boolean strictSignatureSearch,
+                                     @NotNull SearchRequestCollector collector,
+                                     @NotNull Processor<? super PsiReference> processor) {
     searchOptimized(method, scope, strictSignatureSearch, collector, false, (psiReference, collector1) -> processor.process(psiReference));
   }
 
-  public static void searchOptimized(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch,
-                                     SearchRequestCollector collector, final boolean inReadAction,
-                                     PairProcessor<? super PsiReference, ? super SearchRequestCollector> processor) {
+  public static void searchOptimized(@NotNull PsiMethod method,
+                                     @NotNull SearchScope scope,
+                                     boolean strictSignatureSearch,
+                                     @NotNull SearchRequestCollector collector,
+                                     boolean inReadAction,
+                                     @NotNull PairProcessor<? super PsiReference, ? super SearchRequestCollector> processor) {
     final SearchRequestCollector nested = new SearchRequestCollector(collector.getSearchSession());
     collector.searchQuery(new QuerySearchRequest(search(new SearchParameters(method, scope, strictSignatureSearch, nested)), nested,
                                                  inReadAction, processor));
   }
 
-  public static Query<PsiReference> search(final SearchParameters parameters) {
+  public static @NotNull Query<PsiReference> search(@NotNull SearchParameters parameters) {
     final Query<PsiReference> result = INSTANCE.createQuery(parameters);
     if (parameters.isSharedOptimizer) {
       return uniqueResults(result);
@@ -125,15 +131,15 @@ public final class MethodReferencesSearch extends ExtensibleQueryFactory<PsiRefe
     return uniqueResults(new MergeQuery<>(result, new SearchRequestQuery(project, requests)));
   }
 
-  public static Query<PsiReference> search(final PsiMethod method, final boolean strictSignatureSearch) {
+  public static @NotNull Query<PsiReference> search(@NotNull PsiMethod method, final boolean strictSignatureSearch) {
     return search(method, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(method)), strictSignatureSearch);
   }
 
-  public static Query<PsiReference> search(final PsiMethod method) {
+  public static @NotNull Query<PsiReference> search(@NotNull PsiMethod method) {
     return search(method, true);
   }
 
-  private static UniqueResultsQuery<PsiReference, ReferenceDescriptor> uniqueResults(@NotNull Query<? extends PsiReference> composite) {
+  private static @NotNull Query<PsiReference> uniqueResults(@NotNull Query<? extends PsiReference> composite) {
     return new UniqueResultsQuery<>(composite, ReferenceDescriptor.MAPPER);
   }
 }

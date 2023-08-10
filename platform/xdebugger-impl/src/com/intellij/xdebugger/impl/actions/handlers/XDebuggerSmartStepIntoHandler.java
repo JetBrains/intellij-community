@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -97,7 +97,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
             choose(handler, variants, position, session, editor);
           }
         }))
-        .onError(throwable -> session.stepInto());
+        .onError(throwable -> UIUtil.invokeLaterIfNeeded(session::stepInto));
     }
   }
 
@@ -124,7 +124,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
                                                                XSourcePosition position,
                                                                final XDebugSession session,
                                                                Editor editor) {
-    if (Registry.is("debugger.smart.step.inplace") && variants.stream().allMatch(v -> v.getHighlightRange() != null)) {
+    if (Registry.is("debugger.smart.step.inplace") && ContainerUtil.and(variants, v -> v.getHighlightRange() != null)) {
       try {
         inplaceChoose(handler, variants, session, editor);
         return;
@@ -331,29 +331,24 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
     void selectNext(Direction direction) {
       int currentLineY = myCurrentVariant.myStartPoint.y;
-      VariantInfo next = null;
-      switch (direction) {
-        case LEFT:
-          next = getPreviousVariant();
-          break;
-        case RIGHT:
-          next = getNextVariant();
-          break;
-        case UP:
+      VariantInfo next = switch (direction) {
+        case LEFT -> getPreviousVariant();
+        case RIGHT -> getNextVariant();
+        case UP -> {
           int previousLineY = myVariants.stream().mapToInt(v -> v.myStartPoint.y).filter(v -> v < currentLineY).max().orElse(-1);
-          next = myVariants.stream()
+          yield myVariants.stream()
             .filter(v -> v.myStartPoint.y == previousLineY)
             .min(DISTANCE_TO_CURRENT_COMPARATOR)
             .orElseGet(this::getPreviousVariant);
-          break;
-        case DOWN:
+        }
+        case DOWN -> {
           int nextLineY = myVariants.stream().mapToInt(v -> v.myStartPoint.y).filter(v -> v > currentLineY).min().orElse(-1);
-          next = myVariants.stream()
+          yield myVariants.stream()
             .filter(v -> v.myStartPoint.y == nextLineY)
             .min(DISTANCE_TO_CURRENT_COMPARATOR)
             .orElseGet(this::getNextVariant);
-          break;
-      }
+        }
+      };
       if (next != null) {
         select(next);
       }

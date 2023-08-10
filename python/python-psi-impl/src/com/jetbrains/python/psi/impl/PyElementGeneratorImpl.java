@@ -33,9 +33,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.Formatter;
 
-/**
- * @author yole
- */
+
 public class PyElementGeneratorImpl extends PyElementGenerator {
   private static final CommasOnly COMMAS_ONLY = new CommasOnly();
   private final Project myProject;
@@ -98,7 +96,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
 
   @Override
   public PyStringLiteralExpression createStringLiteral(@NotNull StringLiteralExpression oldElement, @NotNull String unescaped) {
-    Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(oldElement.getText());
+    Pair<String, String> quotes = PyStringLiteralCoreUtil.getQuotes(oldElement.getText());
     if (quotes != null) {
       return createStringLiteralAlreadyEscaped(quotes.first + unescaped + quotes.second);
     }
@@ -274,6 +272,16 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
       return ((PyExpressionStatement)element).getExpression();
     }
     throw new IncorrectOperationException("could not parse text as expression: " + text);
+  }
+
+  @Override
+  public @NotNull PyPattern createPatternFromText(@NotNull LanguageLevel languageLevel, @NotNull String text)
+    throws IncorrectOperationException {
+    String matchStatement = "match x:\n" +
+                            "    case C(" + text + "):\n" +
+                            "        pass ";
+    int[] pathToAttrPattern = {0, 5, 2, 1, 1};
+    return createFromText(languageLevel, PyPattern.class, matchStatement, pathToAttrPattern);
   }
 
   @Override

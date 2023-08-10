@@ -19,6 +19,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +33,11 @@ import java.util.Arrays;
 
 public class ResourceBundleDeleteProvider implements DeleteProvider {
   private static final Logger LOG = Logger.getInstance(ResourceBundleDeleteProvider.class);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void deleteElement(@NotNull DataContext dataContext) {

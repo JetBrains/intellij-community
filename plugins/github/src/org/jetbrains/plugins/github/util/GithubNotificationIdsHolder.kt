@@ -32,6 +32,10 @@ class GithubNotificationIdsHolder : NotificationIdsHolder {
                   REBASE_REPO_NOT_FOUND,
                   REBASE_CANNOT_LOAD_REPO_INFO,
                   REBASE_REPO_IS_NOT_A_FORK,
+                  REBASE_MULTI_REPO_NOT_SUPPORTED,
+                  REBASE_REMOTE_ORIGIN_NOT_FOUND,
+                  REBASE_ACCOUNT_NOT_FOUND,
+                  REBASE_FAILED_TO_MATCH_REPO,
                   SHARE_CANNOT_FIND_GIT_REPO,
                   SHARE_CANNOT_CREATE_REPO,
                   SHARE_PROJECT_SUCCESSFULLY_SHARED,
@@ -70,6 +74,10 @@ class GithubNotificationIdsHolder : NotificationIdsHolder {
     const val REBASE_REPO_NOT_FOUND = "github.rebase.repo.not.found"
     const val REBASE_CANNOT_LOAD_REPO_INFO = "github.rebase.cannot.load.repo.info"
     const val REBASE_REPO_IS_NOT_A_FORK = "github.rebase.repo.is.not.a.fork"
+    const val REBASE_MULTI_REPO_NOT_SUPPORTED = "github.rebase.multi.repo.not.supported"
+    const val REBASE_REMOTE_ORIGIN_NOT_FOUND = "github.rebase.remote.origin.not.found"
+    const val REBASE_ACCOUNT_NOT_FOUND = "github.rebase.account.not.found"
+    const val REBASE_FAILED_TO_MATCH_REPO = "rebase.error.failed.to.match.gh.repo"
     const val SHARE_CANNOT_FIND_GIT_REPO = "github.share.cannot.find.git.repo"
     const val SHARE_CANNOT_CREATE_REPO = "github.share.cannot.create.repo"
     const val SHARE_PROJECT_SUCCESSFULLY_SHARED = "github.share.project.successfully.shared"

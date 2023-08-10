@@ -34,9 +34,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class MigrationClassImpl extends LightElement implements PsiClass{
   private final String myQualifiedName;
   private final String myName;
@@ -203,12 +200,12 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
   }
 
   @Override
-  public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod findMethodBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
     return null;
   }
 
   @Override
-  public PsiMethod @NotNull [] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
@@ -219,7 +216,7 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
 
   @Override
   @NotNull
-  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases) {
+  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull String name, boolean checkBases) {
     return new ArrayList<>();
   }
 
@@ -266,7 +263,7 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
   }
 
   @Override
-  public boolean isInheritorDeep(PsiClass baseClass, PsiClass classToByPass) {
+  public boolean isInheritorDeep(@NotNull PsiClass baseClass, PsiClass classToByPass) {
     return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 

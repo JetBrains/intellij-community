@@ -11,11 +11,6 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A class initializer wrapper to be used in [UastVisitor].
  */
 interface UClassInitializer : UDeclaration, PsiClassInitializer {
-
-  @Suppress("OverridingDeprecatedMember")
-  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
-  override val psi: PsiClassInitializer
-
   /**
    * Returns the body of this class initializer.
    */

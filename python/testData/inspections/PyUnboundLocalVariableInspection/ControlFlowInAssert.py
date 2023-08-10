@@ -6,5 +6,5 @@ def foo(requestId):
     with DbSession() as db:
         req = db.query(ChartRequest).get(requestId)
         assert req is not None, u"Invalid request"
-        print req
+        print(req)
 

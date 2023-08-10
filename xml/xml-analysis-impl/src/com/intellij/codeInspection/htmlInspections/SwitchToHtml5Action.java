@@ -16,9 +16,6 @@ import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class SwitchToHtml5Action implements LocalQuickFix, IntentionAction {
   @NotNull
   @Override

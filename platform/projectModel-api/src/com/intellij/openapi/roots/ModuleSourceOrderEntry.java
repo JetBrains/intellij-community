@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Order entry for content source folders
- *  @author dsl
  */
 @ApiStatus.NonExtendable
 public interface ModuleSourceOrderEntry extends OrderEntry {

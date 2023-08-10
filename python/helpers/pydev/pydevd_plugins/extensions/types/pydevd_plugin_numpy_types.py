@@ -1,8 +1,11 @@
 from _pydevd_bundle.pydevd_constants import IS_PYCHARM
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
 from _pydevd_bundle.pydevd_resolver import defaultResolver, MAX_ITEMS_TO_HANDLE, TOO_LARGE_ATTR, TOO_LARGE_MSG
-from _pydevd_bundle.pydevd_utils import get_var_and_offset, format_numpy_array
+from _pydevd_bundle.pydevd_utils import get_var_and_offset
+from _pydevd_bundle.pydevd_repr_utils import get_value_repr
 from .pydevd_helpers import find_mod_attr
+
+import inspect
 
 try:
     from collections import OrderedDict
@@ -25,7 +28,7 @@ class NdArrayItemsContainer: pass
 class NDArrayTypeResolveProvider(object):
     def can_provide(self, type_object, type_name):
         nd_array = find_mod_attr('numpy', 'ndarray')
-        return nd_array is not None and issubclass(type_object, nd_array)
+        return nd_array is not None and inspect.isclass(type_object) and issubclass(type_object, nd_array)
 
     '''
        This resolves a numpy ndarray returning some metadata about the NDArray
@@ -106,15 +109,15 @@ class NDArrayTypeResolveProvider(object):
 class NDArrayStrProvider(object):
     def can_provide(self, type_object, type_name):
         nd_array = find_mod_attr('numpy', 'ndarray')
-        return nd_array is not None and issubclass(type_object, nd_array)
+        return nd_array is not None and inspect.isclass(type_object) and issubclass(type_object, nd_array)
 
     def get_str(self, val):
-        return format_numpy_array(val, MAX_ITEMS_TO_HANDLE)
+        return get_value_repr(val)
 
 
 class NdArrayItemsContainerProvider(object):
     def can_provide(self, type_object, type_name):
-        return issubclass(type_object, NdArrayItemsContainer)
+        return inspect.isclass(type_object) and issubclass(type_object, NdArrayItemsContainer)
 
     def resolve(self, obj, attribute):
         if attribute == '__len__':

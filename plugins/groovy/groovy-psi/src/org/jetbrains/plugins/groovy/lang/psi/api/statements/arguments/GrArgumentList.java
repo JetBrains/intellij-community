@@ -26,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 
 /**
- * @author ilyas
  * Plain Argumanet list with parentheses. Cannot contain closure arguments, they are placed outside.
  */
 public interface GrArgumentList extends GroovyPsiElement, GrNamedArgumentsOwner, PsiExpressionList {

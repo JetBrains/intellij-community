@@ -1,0 +1,33 @@
+UFile (package = test.pkg)
+    UClass (name = Test)
+        UMethod (name = foo)
+            UParameter (name = x)
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
+            UBlockExpression
+                UExpressionList (elvis)
+                    UAnnotation (fqName = kotlin.Suppress)
+                        UNamedExpression (name = names)
+                            ULiteralExpression (value = "SdCardPath")
+                    UDeclarationsExpression
+                        ULocalVariable (name = var9b30066b)
+                            UExpressionList (elvis)
+                                UDeclarationsExpression
+                                    ULocalVariable (name = varc0a87e31)
+                                        UQualifiedReferenceExpression
+                                            USimpleNameReferenceExpression (identifier = x)
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                                UIdentifier (Identifier (toString))
+                                                USimpleNameReferenceExpression (identifier = toString, resolvesTo = null)
+                                UIfExpression
+                                    UBinaryExpression (operator = !=)
+                                        USimpleNameReferenceExpression (identifier = varc0a87e31)
+                                        ULiteralExpression (value = null)
+                                    USimpleNameReferenceExpression (identifier = varc0a87e31)
+                                    ULiteralExpression (value = "/sdcard/foo")
+                    UIfExpression
+                        UBinaryExpression (operator = !=)
+                            USimpleNameReferenceExpression (identifier = var9b30066b)
+                            ULiteralExpression (value = null)
+                        USimpleNameReferenceExpression (identifier = var9b30066b)
+                        ULiteralExpression (value = "redundant")
+        UMethod (name = Test)

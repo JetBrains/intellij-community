@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.features
 
 import com.intellij.codeInsight.completion.CompletionLocation
@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.completion.ml.storage.LookupStorage
-import com.intellij.completion.ml.storage.MutableLookupStorage
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper
 
 class MLCompletionWeigher : CompletionWeigher() {
   override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<*> {
@@ -15,7 +15,7 @@ class MLCompletionWeigher : CompletionWeigher() {
     if (!storage.shouldComputeFeatures()) return DummyComparable.EMPTY
     val result = mutableMapOf<String, MLFeatureValue>()
     val contextFeatures = storage.contextProvidersResult()
-    for (provider in ElementFeatureProvider.forLanguage(storage.language)) {
+    ExtensionProcessingHelper.forEachExtensionSafe(ElementFeatureProvider.forLanguage(storage.language)) { provider ->
       val name = provider.name
 
       val features = storage.performanceTracker.trackElementFeaturesCalculation(name) {
@@ -30,19 +30,17 @@ class MLCompletionWeigher : CompletionWeigher() {
     return if (result.isEmpty()) DummyComparable.EMPTY else DummyComparable(result)
   }
 
-  private class DummyComparable(values: Map<String, MLFeatureValue>) : Comparable<Any> {
-    val representation = calculateRepresentation(values)
+  internal class DummyComparable(values: Map<String, MLFeatureValue>) : Comparable<Any> {
+    val mlFeatures = values.mapValues { MLFeaturesUtil.getRawValue(it.value) }
 
     override fun compareTo(other: Any): Int = 0
 
-    override fun toString(): String = representation
+    override fun toString(): String {
+      return mlFeatures.entries.joinToString(",", "[", "]", transform = { "${it.key}=${it.value}" })
+    }
 
     companion object {
       val EMPTY = DummyComparable(emptyMap())
-
-      private fun calculateRepresentation(values: Map<String, MLFeatureValue>): String {
-        return values.entries.joinToString(",", "[", "]", transform = { "${it.key}=${MLFeaturesUtil.valueAsString(it.value)}" })
-      }
     }
   }
 }

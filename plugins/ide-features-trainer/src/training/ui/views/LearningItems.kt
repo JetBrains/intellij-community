@@ -1,56 +1,54 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui.views
 
+import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.guessCurrentProject
-import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.HeightLimitedPane
+import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import icons.FeaturesTrainerIcons
-import org.jetbrains.annotations.NotNull
+import training.FeaturesTrainerIcons
 import training.learn.CourseManager
 import training.learn.LearnBundle
-import training.learn.interfaces.Lesson
-import training.learn.interfaces.Module
+import training.learn.course.IftModule
+import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
+import training.statistic.LessonStartingWay
 import training.ui.UISettings
-import training.util.createBalloon
-import training.util.rigid
-import training.util.scaledRigid
+import training.util.*
 import java.awt.*
-import java.awt.Cursor
-import java.awt.event.*
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 
 private val HOVER_COLOR: Color get() = JBColor.namedColor("Plugins.hoverBackground", JBColor(0xEDF6FE, 0x464A4D))
 
-class LearningItems : JPanel() {
-  var modules: List<Module> = emptyList()
-  private val expanded: MutableSet<Module> = mutableSetOf()
+class LearningItems(private val project: Project) : JPanel() {
+  var modules: Collection<IftModule> = emptyList()
+  private val expanded: MutableSet<IftModule> = mutableSetOf()
 
   init {
     name = "learningItems"
-    layout = BoxLayout(this, BoxLayout.Y_AXIS)
+    layout = VerticalLayout(0, UISettings.getInstance().let { it.panelWidth - (it.westInset + it.eastInset) })
     isOpaque = false
     isFocusable = false
   }
 
-  fun updateItems(showModule: Module? = null) {
+  fun updateItems(showModule: IftModule? = null) {
     if (showModule != null) expanded.add(showModule)
 
     removeAll()
     for (module in modules) {
       if (module.lessons.isEmpty()) continue
-      add(createModuleItem(module))
+      add(createModuleItem(module), VerticalLayout.FILL_HORIZONTAL)
       if (expanded.contains(module)) {
         for (lesson in module.lessons) {
-          add(createLessonItem(lesson))
+          add(createLessonItem(lesson), VerticalLayout.FILL_HORIZONTAL)
         }
       }
     }
@@ -59,91 +57,72 @@ class LearningItems : JPanel() {
   }
 
   private fun createLessonItem(lesson: Lesson): JPanel {
-    val result = JPanel()
-    result.isOpaque = false
+    val name = JLabel(lesson.name).also {
+      it.foreground = JBUI.CurrentTheme.Link.Foreground.ENABLED
+    }
+    val clickAction: () -> Unit = l@{
+      if (!enableLessonsAndPromoters) return@l
+      val cantBeOpenedInDumb = DumbService.getInstance(project).isDumb && !lesson.properties.canStartInDumbMode
+      if (cantBeOpenedInDumb && !LessonManager.instance.lessonShouldBeOpenedCompleted(lesson)) {
+        val balloon = createBalloon(LearnBundle.message("indexing.message"))
+        balloon.showInCenterOf(name)
+        return@l
+      }
+      CourseManager.instance.openLesson(project, lesson, LessonStartingWay.LEARN_TAB)
+    }
+    val result = if (!enableLessonsAndPromoters) NonOpaquePanel() else LearningItemPanel(clickAction)
     result.layout = BoxLayout(result, BoxLayout.X_AXIS)
     result.alignmentX = LEFT_ALIGNMENT
     result.border = EmptyBorder(JBUI.scale(7), JBUI.scale(7), JBUI.scale(6), JBUI.scale(7))
-    val checkmarkIconLabel = createLabelIcon(if (lesson.passed) FeaturesTrainerIcons.Img.GreenCheckmark else EmptyIcon.ICON_16)
+    val checkmarkIconLabel = createLabelIcon(if (lesson.passed) FeaturesTrainerIcons.GreenCheckmark else EmptyIcon.ICON_16)
     result.add(createLabelIcon(EmptyIcon.ICON_16))
-    result.add(scaledRigid(UISettings.instance.expandAndModuleGap, 0))
+    result.add(scaledRigid(UISettings.getInstance().expandAndModuleGap, 0))
     result.add(checkmarkIconLabel)
 
-    val name = LinkLabel<Any>(lesson.name, null)
-    name.setListener(
-      { _, _ ->
-        val project = guessCurrentProject(this)
-        val cantBeOpenedInDumb = DumbService.getInstance(project).isDumb && !lesson.properties.canStartInDumbMode
-        if (cantBeOpenedInDumb && !LessonManager.instance.lessonShouldBeOpenedCompleted(lesson)) {
-          val balloon = createBalloon(LearnBundle.message("indexing.message"))
-          balloon.showInCenterOf(name)
-          return@setListener
-        }
-        CourseManager.instance.openLesson(project, lesson)
-      }, null)
     result.add(rigid(4, 0))
     result.add(name)
+    if (iftPluginIsUsing && lesson.isNewLesson()) {
+      result.add(rigid(10, 0))
+      result.add(NewContentLabel())
+    }
+    result.add(Box.createHorizontalGlue())
+
+    if (!enableLessonsAndPromoters) {
+      checkmarkIconLabel.isEnabled = false
+      name.foreground = JBUI.CurrentTheme.Link.Foreground.DISABLED
+    }
+
     return result
   }
 
-  private fun createModuleItem(module: Module): JPanel {
+  private fun createModuleItem(module: IftModule): JPanel {
     val modulePanel = JPanel()
     modulePanel.isOpaque = false
     modulePanel.layout = BoxLayout(modulePanel, BoxLayout.Y_AXIS)
     modulePanel.alignmentY = TOP_ALIGNMENT
     modulePanel.background = Color(0, 0, 0, 0)
 
-    val result = object : JPanel() {
-      private var onInstall = true
-
-      override fun paint(g: Graphics?) {
-        if (onInstall && mouseAlreadyInside(this)) {
-          setCorrectBackgroundOnInstall(this)
-          onInstall = false
-        }
-        super.paint(g)
+    val clickAction: () -> Unit = {
+      if (expanded.contains(module)) {
+        expanded.remove(module)
       }
+      else {
+        expanded.clear()
+        expanded.add(module)
+      }
+      updateItems()
     }
-    result.isOpaque = true
-    result.background = UISettings.instance.backgroundColor
+    val result = LearningItemPanel(clickAction)
+    result.background = UISettings.getInstance().backgroundColor
     result.layout = BoxLayout(result, BoxLayout.X_AXIS)
     result.border = EmptyBorder(JBUI.scale(8), JBUI.scale(7), JBUI.scale(10), JBUI.scale(7))
     result.alignmentX = LEFT_ALIGNMENT
-
-    val mouseAdapter = object : MouseAdapter() {
-      override fun mouseReleased(e: MouseEvent) {
-        if (!result.visibleRect.contains(e.point)) return
-
-        if (expanded.contains(module)) {
-          expanded.remove(module)
-        }
-        else {
-          expanded.clear()
-          expanded.add(module)
-        }
-        updateItems()
-      }
-
-      override fun mouseEntered(e: MouseEvent) {
-        setCorrectBackgroundOnInstall(result)
-        result.revalidate()
-        result.repaint()
-      }
-
-      override fun mouseExited(e: MouseEvent) {
-        result.background = UISettings.instance.backgroundColor
-        result.cursor = Cursor.getDefaultCursor()
-        result.revalidate()
-        result.repaint()
-      }
-    }
 
     val expandPanel = JPanel().also {
       it.layout = BoxLayout(it, BoxLayout.Y_AXIS)
       it.isOpaque = false
       it.background = Color(0, 0, 0, 0)
       it.alignmentY = TOP_ALIGNMENT
-      //it.add(Box.createVerticalStrut(JBUI.scale(1)))
       it.add(rigid(0, 1))
       val rawIcon = if (expanded.contains(module)) UIUtil.getTreeExpandedIcon() else UIUtil.getTreeCollapsedIcon()
       it.add(createLabelIcon(rawIcon))
@@ -151,50 +130,81 @@ class LearningItems : JPanel() {
     result.add(expandPanel)
 
     val name = JLabel(module.name)
-    name.font = UISettings.instance.modulesFont
-    modulePanel.add(name)
-    scaledRigid(UISettings.instance.progressModuleGap, 0)
-    modulePanel.add(scaledRigid(0, UISettings.instance.progressModuleGap))
+    name.font = UISettings.getInstance().modulesFont
+    if (!iftPluginIsUsing || expanded.contains(module) || !module.lessons.any { it.isNewLesson() }) {
+      modulePanel.add(name)
+    } else {
+      val nameLine = JPanel()
+      nameLine.isOpaque = false
+      nameLine.layout = BoxLayout(nameLine, BoxLayout.X_AXIS)
+      nameLine.alignmentX = LEFT_ALIGNMENT
+
+      nameLine.add(name)
+      nameLine.add(rigid(10, 0))
+      nameLine.add(NewContentLabel())
+
+      modulePanel.add(nameLine)
+    }
+    modulePanel.add(scaledRigid(0, UISettings.getInstance().progressModuleGap))
 
     if (expanded.contains(module)) {
-      modulePanel.add(HeightLimitedPane(module.description ?: "", -1, UIUtil.getLabelForeground() as JBColor).also {
-        it.addMouseListener(mouseAdapter)
+      modulePanel.add(JLabel("<html>${module.description}</html>").also {
+        it.font = UISettings.getInstance().getFont(-1)
+        it.foreground = UIUtil.getLabelForeground()
       })
     }
     else {
-      createModuleProgressLabel(module)?.let {
-        modulePanel.add(it)
-      }
+      modulePanel.add(createModuleProgressLabel(module))
     }
 
-    result.add(scaledRigid(UISettings.instance.expandAndModuleGap, 0))
+    result.add(scaledRigid(UISettings.getInstance().expandAndModuleGap, 0))
     result.add(modulePanel)
     result.add(Box.createHorizontalGlue())
-    result.addMouseListener(mouseAdapter)
     return result
   }
 
-  private fun createLabelIcon(rawIcon: @NotNull Icon): JLabel = JLabel(IconUtil.toSize(rawIcon, JBUI.scale(16), JBUI.scale(16)))
+  private fun createLabelIcon(rawIcon: Icon): JLabel = JLabel(IconUtil.toSize(rawIcon, JBUI.scale(16), JBUI.scale(16)))
 
-  private fun createModuleProgressLabel(module: Module): JBLabel? {
-    val progressStr = module.calcProgress() ?: return null
+  private fun createModuleProgressLabel(module: IftModule): JBLabel {
+    val progressStr = learningProgressString(module.lessons)
     val progressLabel = JBLabel(progressStr)
     progressLabel.name = "progressLabel"
-    progressLabel.foreground = if (module.hasNotPassedLesson()) UISettings.instance.moduleProgressColor else UISettings.instance.completedColor
-    progressLabel.font = UISettings.instance.getFont(-1)
+    val hasNotPassedLesson = module.lessons.any { !it.passed }
+    progressLabel.foreground = if (hasNotPassedLesson) UISettings.getInstance().moduleProgressColor else UISettings.getInstance().completedColor
+    progressLabel.font = UISettings.getInstance().getFont(-1)
     progressLabel.alignmentX = LEFT_ALIGNMENT
     return progressLabel
   }
+}
 
-  private fun setCorrectBackgroundOnInstall(component: Component) {
-    component.background = HOVER_COLOR
-    component.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+private class LearningItemPanel(clickAction: () -> Unit) : JPanel() {
+  init {
+    isOpaque = false
+    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    addMouseListener(object : MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent) {
+        if (!visibleRect.contains(e.point)) return
+        clickAction()
+      }
+
+      override fun mouseEntered(e: MouseEvent) {
+        parent.repaint()
+      }
+
+      override fun mouseExited(e: MouseEvent) {
+        parent.repaint()
+      }
+    })
   }
 
-  private fun mouseAlreadyInside(c: Component): Boolean {
-    val mousePos: Point = MouseInfo.getPointerInfo().location
-    val bounds: Rectangle = c.bounds
-    bounds.location = c.locationOnScreen
-    return bounds.contains(mousePos)
+  override fun paint(g: Graphics) {
+    if (mousePosition != null) {
+      val g2 = g.create() as Graphics2D
+      g2.color = HOVER_COLOR
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
+      g2.fillRoundRect(0, 0, size.width, size.height, JBUI.scale(5), JBUI.scale(5))
+    }
+    super.paint(g)
   }
 }

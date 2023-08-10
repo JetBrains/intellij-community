@@ -1,13 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -16,7 +15,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -26,7 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.*;
+import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.shouldCreateStaticMember;
+import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate;
 
 public final class CreateMethodFromUsageFix {
   private static final Logger LOG = Logger.getInstance(CreateMethodFromUsageFix.class);
@@ -42,36 +41,40 @@ public final class CreateMethodFromUsageFix {
     return false;
   }
 
-  public static boolean hasErrorsInArgumentList(final PsiMethodCallExpression call) {
-    Project project = call.getProject();
+  public static boolean hasVoidInArgumentList(final PsiMethodCallExpression call) {
     PsiExpressionList argumentList = call.getArgumentList();
     for (PsiExpression expression : argumentList.getExpressions()) {
       PsiType type = expression.getType();
-      if (type == null || PsiType.VOID.equals(type)) return true;
+      if (type == null || PsiTypes.voidType().equals(type)) return true;
     }
-    Document document = PsiDocumentManager.getInstance(project).getDocument(call.getContainingFile());
-    if (document == null) return true;
-
-    final TextRange argRange = argumentList.getTextRange();
-    return !DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR,
-                                                   //strictly inside arg list
-                                                   argRange.getStartOffset() + 1,
-                                                   argRange.getEndOffset() - 1,
-                                                   info -> !(info.getActualStartOffset() > argRange.getStartOffset() &&
-                                                             info.getActualEndOffset() < argRange.getEndOffset()));
+    return false;
   }
 
-  public static PsiMethod createMethod(PsiClass targetClass,
-                                       PsiClass parentClass,
-                                       PsiMember enclosingContext,
-                                       String methodName) {
+  /**
+   * Creates a new void no-arg method, adds it into class and returns it
+   * 
+   * @param targetClass class to add method to
+   * @param parentClass context class from where creation was invoked
+   * @param enclosingContext context from where creation was invoked
+   * @param methodName name of the new method
+   * @return newly created method
+   */
+  public static PsiMethod createMethod(@NotNull PsiClass targetClass,
+                                       @Nullable PsiClass parentClass,
+                                       @Nullable PsiMember enclosingContext,
+                                       @NotNull String methodName) {
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), targetClass.getProject());
     if (factory == null) {
       return null;
     }
 
-    PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
+    PsiMethod method = factory.createMethod(methodName, PsiTypes.voidType());
 
+    return addMethod(targetClass, parentClass, enclosingContext, method);
+  }
+
+  public static @NotNull PsiMethod addMethod(@NotNull PsiClass targetClass, @Nullable PsiClass parentClass,
+                                    @Nullable PsiMember enclosingContext, @NotNull PsiMethod method) {
     if (targetClass.equals(parentClass)) {
       method = (PsiMethod)targetClass.addAfter(method, enclosingContext);
     }
@@ -128,7 +131,7 @@ public final class CreateMethodFromUsageFix {
     if (method == null) return;
 
     RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
-    final Editor newEditor = positionCursor(project, targetFile, method);
+    final Editor newEditor = CodeInsightUtil.positionCursor(project, targetFile, method);
     if (newEditor == null) return;
     Template template = builder.buildTemplate();
     newEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());

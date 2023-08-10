@@ -1,61 +1,143 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
-import com.intellij.codeInspection.InspectionManager
-import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.PsiElement
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.options.OptPane.stringList
+import com.intellij.openapi.module.Module
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiFile
-import com.intellij.util.text.SemVer
-import com.intellij.util.text.VersionComparatorUtil
+import com.intellij.psi.util.PsiUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Package
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Version
-import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageUpdateQuickFix
-import com.jetbrains.packagesearch.intellij.plugin.looksLikeGradleVariable
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
-import com.jetbrains.packagesearch.intellij.plugin.version.looksLikeStableVersion
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.changePackage
+import com.jetbrains.packagesearch.intellij.plugin.util.modifyPackages
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 
-abstract class PackageUpdateInspection : LocalInspectionTool() {
+/**
+ * An inspection that flags out-of-date dependencies in supported files, supplying a quick-fix to
+ * upgrade them to the latest version.
+ *
+ * Note that this inspection follows the "only stable" inspection settings.
+ *
+ */
+abstract class PackageUpdateInspection : AbstractPackageUpdateInspectionCheck() {
 
-    abstract fun shouldCheckFile(file: PsiFile): Boolean
+    @JvmField
+    var onlyStable: Boolean = true
 
-    abstract fun getVersionElement(file: PsiFile, dependency: StandardV2Package): PsiElement?
+    @JvmField
+    var excludeList: MutableList<String> = mutableListOf()
 
-    final override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
-        if (!shouldCheckFile(file)) {
-            return null
-        }
+    companion object {
 
-        val project = file.project
-        val model = project.getUserData(PackageSearchToolWindowFactory.ToolWindowModelKey) ?: return null
-        val module = ProjectModuleProvider.obtainAllProjectModulesFor(project).toList().find {
-            it.buildFile == file.virtualFile
-        } ?: return null
-        val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
+        private fun isMavenNotation(notation: String) = notation.split(":").size == 2
 
-        model.preparePackageOperationTargetsFor(listOf(module), null).forEach { target ->
-            val dependency = target.packageSearchDependency.remoteInfo ?: return@forEach
-            val highestVersion = (dependency.versions?.map(StandardV2Version::version) ?: emptyList())
-                .filter { it.isNotBlank() && !looksLikeGradleVariable(it) && (looksLikeStableVersion(it)) }
-                .distinct()
-                .sortedWith(Comparator { o1, o2 -> VersionComparatorUtil.compare(o2, o1) }).firstOrNull() ?: return@forEach
+        private fun isExcluded(packageIdentifier: PackageIdentifier, exclusionRule: String): Boolean {
+            val (groupId, artifactId) = packageIdentifier.rawValue.split(":")
+            val (exclusionGroupId, exclusionArtifactId) = exclusionRule.split(":")
 
-            val semVerHighest = SemVer.parseFromText(highestVersion)
-            val semVerTarget = SemVer.parseFromText(target.version)
-            if (semVerHighest != null && semVerTarget != null && semVerHighest > semVerTarget) {
-                val versionElement = getVersionElement(file, dependency) ?: return@forEach
-                problemsHolder.registerProblem(
-                    versionElement,
-                    PackageSearchBundle.message("packagesearch.inspection.update.description", highestVersion),
-                    PackageUpdateQuickFix(versionElement, target, dependency, highestVersion)
-                )
+            return when {
+                exclusionGroupId == "*" -> artifactId == exclusionArtifactId
+                groupId == exclusionGroupId -> exclusionArtifactId == "*" || artifactId == exclusionArtifactId
+                else -> false
             }
         }
-
-        return problemsHolder.resultsArray
     }
 
-    override fun getDefaultLevel() = HighlightDisplayLevel.WARNING!!
+    override fun getOptionsPane(): OptPane {
+        return pane(
+          checkbox("onlyStable", PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable")),
+          stringList("excludeList", PackageSearchBundle.message("packagesearch.inspection.upgrade.excluded.dependencies"))
+        )
+    }
+
+    override fun ProblemsHolder.checkFile(file: PsiFile, fileModule: Module) {
+        file.project.packageSearchProjectService.installedDependenciesFlow.value
+            .byModule[fileModule]
+            ?.mapNotNull { model -> model.usagesByModule[fileModule]?.let { model to it } }
+            ?.filter { (packageModel, _) -> isNotExcluded(packageModel.identifier) }
+            ?.forEach { (packageModel, usageInfos) ->
+                for (usageInfo in usageInfos) {
+                    val versionElement = kotlin.runCatching {
+                        usageInfo.declarationIndexInBuildFile
+                            ?.let { selectPsiElementIndex(it) }
+                            ?.let { PsiUtil.getElementAtOffset(file, it) }
+                    }.getOrNull() ?: return@forEach
+
+                    val targetVersion =
+                        if (onlyStable) packageModel.highestStableVersion else packageModel.highestUnstableVersion
+
+                    if (usageInfo.declaredVersion is NormalizedPackageVersion.Garbage
+                        || targetVersion == null || usageInfo.declaredVersion >= targetVersion) continue
+
+                    registerProblem(
+                        versionElement,
+                        PackageSearchBundle.message(
+                            "packagesearch.inspection.upgrade.description",
+                            packageModel.identifier.rawValue,
+                            targetVersion.originalVersion.displayName
+                        ),
+                        LocalQuickFixOnPsiElement(
+                            element = versionElement,
+                            familyName = PackageSearchBundle.message("packagesearch.quickfix.upgrade.family"),
+                            text = PackageSearchBundle.message(
+                                "packagesearch.quickfix.upgrade.action",
+                                packageModel.identifier.rawValue,
+                                targetVersion.originalVersion.displayName
+                            ),
+                            isHighPriority = true
+                        ) {
+                            modifyPackages {
+                                changePackage(
+                                    groupId = packageModel.groupId,
+                                    artifactId = packageModel.artifactId,
+                                    version = usageInfo.declaredVersion.originalVersion,
+                                    scope = usageInfo.scope,
+                                    packageSearchModule = usageInfo.module,
+                                    newVersion = targetVersion.originalVersion
+                                )
+                            }
+                        },
+                        LocalQuickFixOnPsiElement(
+                            element = versionElement,
+                            familyName = PackageSearchBundle.message("packagesearch.quickfix.upgrade.exclude.family"),
+                            text = PackageSearchBundle.message(
+                                "packagesearch.quickfix.upgrade.exclude.action",
+                                packageModel.identifier.rawValue
+                            ),
+                            isHighPriority = false
+                        ) {
+                            excludeList.add(packageModel.identifier.rawValue)
+                            ProjectInspectionProfileManager.getInstance(this).fireProfileChanged()
+                        }
+                    )
+                }
+            }
+    }
+
+    private fun isNotExcluded(packageIdentifier: PackageIdentifier) =
+        excludeList.filter { isMavenNotation(it) }.none { isExcluded(packageIdentifier, it) }
+
+    override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.WARNING
 }
+

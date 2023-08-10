@@ -88,9 +88,11 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.text.SimpleDateFormat void applyLocalizedPattern(java.lang.String) 0'>
+    <annotation name="org.jetbrains.annotations.NonNls" />
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.text.SimpleDateFormat void applyPattern(java.lang.String) 0'>
+    <annotation name="org.jetbrains.annotations.NonNls" />
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.text.SimpleDateFormat void set2DigitYearStart(java.util.Date) 0'>

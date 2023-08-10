@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -7,13 +7,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class NlsCapitalizationUtil {
+public final class NlsCapitalizationUtil {
 
   public static boolean isCapitalizationSatisfied(String value, Nls.Capitalization capitalization) {
     if (StringUtil.isEmpty(value) || capitalization == Nls.Capitalization.NotSpecified) {
       return true;
     }
-    value = value.replace("&", "");
     return capitalization == Nls.Capitalization.Title
            ? StringUtil.wordsToBeginFromUpperCase(value).equals(value)
            : checkSentenceCapitalization(value);

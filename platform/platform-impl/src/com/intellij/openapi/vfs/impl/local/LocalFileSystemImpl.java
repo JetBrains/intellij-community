@@ -1,62 +1,81 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PlatformNioHelper;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.*;
 
+import java.io.IOException;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.Objects.requireNonNullElse;
+
 public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposable, VirtualFilePointerCapableFileSystem {
+  @SuppressWarnings("SSBasedInspection")
+  private static final Logger WATCH_ROOTS_LOG = Logger.getInstance("#com.intellij.openapi.vfs.WatchRoots");
   private static final int STATUS_UPDATE_PERIOD = 1000;
 
   private final ManagingFS myManagingFS;
   private final FileWatcher myWatcher;
   private final WatchRootsManager myWatchRootsManager;
-  private final Runnable myAfterMarkDirtyCallback;
   private volatile boolean myDisposed;
 
-  public LocalFileSystemImpl() {
-    this(null);
-  }
+  private final ThreadLocal<Pair<VirtualFile, Map<String, FileAttributes>>> myFileAttributesCache = new ThreadLocal<>();
+  private final DiskQueryRelay<VirtualFile, Map<String, FileAttributes>> myChildrenAttrGetter = new DiskQueryRelay<>(dir -> listWithAttributes(dir));
 
-  public LocalFileSystemImpl(@Nullable Runnable afterMarkDirtyCallback) {
-    myAfterMarkDirtyCallback = afterMarkDirtyCallback;
+  public LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
     myWatcher = new FileWatcher(myManagingFS, () -> {
       AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
-          if (!ApplicationManager.getApplication().isDisposed()) {
-            if (storeRefreshStatusToFiles() && myAfterMarkDirtyCallback != null) {
-              myAfterMarkDirtyCallback.run();
-            }
-          }
-        },
-        STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
+        Application application = ApplicationManager.getApplication();
+        if (application != null && !application.isDisposed()) {
+          storeRefreshStatusToFiles();
+        }
+      },
+      STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     });
+
+    for (PluggableLocalFileSystemContentLoader contentLoader : PLUGGABLE_CONTENT_LOADER_EP_NAME.getExtensionList()) {
+      try {
+        contentLoader.initialize();
+        Disposer.register(this, contentLoader);
+      }
+      catch (Exception e) {
+        LOG.error(PluginException.createByClass(e, contentLoader.getClass()));
+      }
+    }
+
     myWatchRootsManager = new WatchRootsManager(myWatcher, this);
     Disposer.register(ApplicationManager.getApplication(), this);
-    new SymbolicLinkRefresher(this);
+    new SymbolicLinkRefresher(this).refresh();
   }
 
-  @NotNull
-  public FileWatcher getFileWatcher() {
+  public @NotNull FileWatcher getFileWatcher() {
     return myWatcher;
   }
 
@@ -66,51 +85,65 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     myWatcher.dispose();
   }
 
-  private boolean storeRefreshStatusToFiles() {
+  private void storeRefreshStatusToFiles() {
     if (myWatcher.isOperational()) {
-      FileWatcher.DirtyPaths dirtyPaths = myWatcher.getDirtyPaths();
-      markPathsDirty(dirtyPaths.dirtyPaths);
-      markFlatDirsDirty(dirtyPaths.dirtyDirectories);
-      markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive);
-      return !dirtyPaths.dirtyPaths.isEmpty() || !dirtyPaths.dirtyDirectories.isEmpty() || !dirtyPaths.dirtyPathsRecursive.isEmpty();
-    }
-    return false;
-  }
-
-  private void markPathsDirty(@NotNull Iterable<String> dirtyPaths) {
-    for (String dirtyPath : dirtyPaths) {
-      VirtualFile file = findFileByPathIfCached(dirtyPath);
-      if (file instanceof NewVirtualFile) {
-        ((NewVirtualFile)file).markDirty();
+      var dirtyPaths = myWatcher.getDirtyPaths();
+      var marked = markPathsDirty(dirtyPaths.dirtyPaths) |
+                   markFlatDirsDirty(dirtyPaths.dirtyDirectories) |
+                   markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive);
+      if (marked) {
+        statusRefreshed();
       }
     }
   }
 
-  private void markFlatDirsDirty(@NotNull Iterable<String> dirtyPaths) {
-    for (String dirtyPath : dirtyPaths) {
-      Pair<NewVirtualFile, NewVirtualFile> pair = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
-      if (pair.first != null) {
-        pair.first.markDirty();
-        for (VirtualFile child : pair.first.getCachedChildren()) {
+  protected void statusRefreshed() { }
+
+  private boolean markPathsDirty(Iterable<String> dirtyPaths) {
+    var marked = false;
+    for (var dirtyPath : dirtyPaths) {
+      var file = findFileByPathIfCached(dirtyPath);
+      if (file instanceof NewVirtualFile nvf) {
+        nvf.markDirty();
+        marked = true;
+      }
+    }
+    return marked;
+  }
+
+  private boolean markFlatDirsDirty(Iterable<String> dirtyPaths) {
+    var marked = false;
+    for (var dirtyPath : dirtyPaths) {
+      var exactOrParent = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
+      if (exactOrParent.first != null) {
+        exactOrParent.first.markDirty();
+        for (var child : exactOrParent.first.getCachedChildren()) {
           ((NewVirtualFile)child).markDirty();
+          marked = true;
         }
       }
-      else if (pair.second != null) {
-        pair.second.markDirty();
+      else if (exactOrParent.second != null) {
+        exactOrParent.second.markDirty();
+        marked = true;
       }
     }
+    return marked;
   }
 
-  private void markRecursiveDirsDirty(@NotNull Iterable<String> dirtyPaths) {
-    for (String dirtyPath : dirtyPaths) {
-      Pair<NewVirtualFile, NewVirtualFile> pair = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
-      if (pair.first != null) {
-        pair.first.markDirtyRecursively();
+  private boolean markRecursiveDirsDirty(Iterable<String> dirtyPaths) {
+    var marked = false;
+    for (var dirtyPath : dirtyPaths) {
+      var exactOrParent = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
+      if (exactOrParent.first != null) {
+        exactOrParent.first.markDirtyRecursively();
+        marked = true;
       }
-      else if (pair.second != null) {
-        pair.second.markDirty();
+      else if (exactOrParent.second != null) {
+        exactOrParent.second.markDirty();
+        marked = true;
       }
     }
+    return marked;
   }
 
   public void markSuspiciousFilesDirty(@NotNull List<? extends VirtualFile> files) {
@@ -149,21 +182,28 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return aliases;
   }
 
-  @NotNull
   @Override
-  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequestsToRemove,
-                                               @Nullable Collection<String> recursiveRootsToAdd,
-                                               @Nullable Collection<String> flatRootsToAdd) {
+  public @NotNull Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequestsToRemove,
+                                                        @Nullable Collection<String> recursiveRootsToAdd,
+                                                        @Nullable Collection<String> flatRootsToAdd) {
     if (myDisposed) return Collections.emptySet();
-    Collection<WatchRequest> nonNullWatchRequestsToRemove = ContainerUtil.skipNulls(watchRequestsToRemove);
+
+    var nonNullWatchRequestsToRemove = ContainerUtil.skipNulls(watchRequestsToRemove);
     LOG.assertTrue(nonNullWatchRequestsToRemove.size() == watchRequestsToRemove.size(), "watch requests collection should not contain `null` elements");
+
+    if ((recursiveRootsToAdd != null || flatRootsToAdd != null) && WATCH_ROOTS_LOG.isTraceEnabled()) {
+      WATCH_ROOTS_LOG.trace(new Exception("LocalFileSystemImpl#replaceWatchedRoots:" +
+                                          "\n  recursive: " + (recursiveRootsToAdd != null ? recursiveRootsToAdd : "[]") +
+                                          "\n  flat: " + (flatRootsToAdd != null ? flatRootsToAdd : "[]")));
+    }
+
     return myWatchRootsManager.replaceWatchedRoots(nonNullWatchRequestsToRemove,
-                                                   ObjectUtils.notNull(recursiveRootsToAdd, Collections.emptyList()),
-                                                   ObjectUtils.notNull(flatRootsToAdd, Collections.emptyList()));
+                                                   requireNonNullElse(recursiveRootsToAdd, Collections.emptyList()),
+                                                   requireNonNullElse(flatRootsToAdd, Collections.emptyList()));
   }
 
   @Override
-  public void refreshWithoutFileWatcher(final boolean asynchronous) {
+  public void refreshWithoutFileWatcher(boolean asynchronous) {
     Runnable heavyRefresh = () -> {
       for (VirtualFile root : myManagingFS.getRoots(this)) {
         ((NewVirtualFile)root).markDirtyRecursively();
@@ -196,48 +236,103 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   }
 
   @Override
-  @NonNls
-  public String toString() {
-    return "LocalFileSystem";
-  }
-
-  @Override
   @TestOnly
   public void cleanupForNextTest() {
     super.cleanupForNextTest();
     myWatchRootsManager.clear();
   }
 
-  private static boolean isRecursiveOrCircularSymlink(@Nullable VirtualFile parent,
-                                                      @NotNull CharSequence name,
-                                                      @NotNull String symlinkTarget) {
+  private static boolean isRecursiveOrCircularSymlink(@Nullable VirtualFile parent, CharSequence name, String symlinkTarget) {
     if (startsWith(parent, name, symlinkTarget)) return true;
-
-    if (!(parent instanceof VirtualFileSystemEntry)) {
-      return false;
-    }
+    if (!(parent instanceof VirtualFileSystemEntry)) return false;
     // check if it's circular - any symlink above resolves to my target too
     for (VirtualFileSystemEntry p = (VirtualFileSystemEntry)parent; p != null; p = p.getParent()) {
-      // optimization: when the file has no symlinks up the hierarchy, it's not circular
+      // if the file has no symlinks up the hierarchy, it's not circular
       if (!p.thisOrParentHaveSymlink()) return false;
       if (p.is(VFileProperty.SYMLINK)) {
         String parentResolved = p.getCanonicalPath();
-        if (symlinkTarget.equals(parentResolved)) {
-          return true;
-        }
+        if (symlinkTarget.equals(parentResolved)) return true;
       }
     }
     return false;
   }
 
-  private static boolean startsWith(@Nullable VirtualFile parent,
-                                    @NotNull CharSequence name,
-                                    @NotNull String symlinkTarget) {
-    if (parent != null) {
-      String symlinkTargetParent = StringUtil.trimEnd(symlinkTarget, "/" + name);
-      return VfsUtilCore.isAncestorOrSelf(symlinkTargetParent, parent);
-    }
+  private static boolean startsWith(@Nullable VirtualFile parent, CharSequence name, String symlinkTarget) {
     // parent == null means name is root
-    return FileUtil.PATH_CHAR_SEQUENCE_HASHING_STRATEGY.equals(name, symlinkTarget);
+    //noinspection StaticMethodReferencedViaSubclass
+    return parent != null ? VfsUtilCore.isAncestorOrSelf(StringUtil.trimEnd(symlinkTarget, "/" + name), parent)
+                          : StringUtil.equal(name, symlinkTarget, SystemInfo.isFileSystemCaseSensitive);
+  }
+
+  @ApiStatus.Internal
+  public String @NotNull [] listWithCaching(@NotNull VirtualFile dir) {
+    if ((SystemInfo.isWindows || SystemInfo.isMac && CpuArch.isArm64()) && getClass() == LocalFileSystemImpl.class) {
+      Pair<VirtualFile, Map<String, FileAttributes>> cache = myFileAttributesCache.get();
+      if (cache != null) {
+        LOG.error("unordered access to " + dir + " without cleaning after " + cache.first);
+      }
+      Map<String, FileAttributes> result = myChildrenAttrGetter.accessDiskWithCheckCanceled(dir);
+      myFileAttributesCache.set(new Pair<>(dir, result));
+      return ArrayUtil.toStringArray(result.keySet());
+    }
+    else {
+      return list(dir);
+    }
+  }
+
+  @ApiStatus.Internal
+  public void clearListCache() {
+    myFileAttributesCache.remove();
+  }
+
+  @Override
+  public FileAttributes getAttributes(@NotNull VirtualFile file) {
+    Pair<VirtualFile, Map<String, FileAttributes>> cache = myFileAttributesCache.get();
+    if (cache != null) {
+      if (!cache.first.equals(file.getParent())) {
+        LOG.error("unordered access to " + file + " outside " + cache.first);
+      }
+      else {
+        return cache.second.get(file.getName());
+      }
+    }
+
+    return super.getAttributes(file);
+  }
+
+  private static Map<String, FileAttributes> listWithAttributes(VirtualFile dir) {
+    try {
+      var list = CollectionFactory.<FileAttributes>createFilePathMap(10, dir.isCaseSensitive());
+
+      PlatformNioHelper.visitDirectory(Path.of(toIoPath(dir)), (file, result) -> {
+        try {
+          var attrs = copyWithCustomTimestamp(file, FileAttributes.fromNio(file, result.get()));
+          list.put(file.getFileName().toString(), attrs);
+        }
+        catch (Exception e) { LOG.warn(e); }
+        return true;
+      });
+
+      return list;
+    }
+    catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
+    catch (IOException | RuntimeException e) { LOG.warn(e); }
+    return Map.of();
+  }
+
+  private static @Nullable FileAttributes copyWithCustomTimestamp(Path file, FileAttributes attributes) {
+    for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
+      Long custom = provider.getTimestamp(file);
+      if (custom != null) {
+        return attributes.withTimeStamp(custom);
+      }
+    }
+
+    return attributes;
+  }
+
+  @Override
+  public String toString() {
+    return "LocalFileSystem";
   }
 }

@@ -1,16 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -22,24 +19,13 @@ import java.util.function.Supplier;
 public abstract class FactoryMap<K,V> implements Map<K, V> {
   private Map<K, V> myMap;
 
-  /**
-   * @deprecated Use {@link #create(Function)} instead
-   */
-  @Deprecated
-  public FactoryMap() {
-    DeprecatedMethodException.report("Use FactoryMap.create*() instead");
-  }
+  private FactoryMap() { }
 
-  private FactoryMap(boolean safe) {
-  }
-
-  @NotNull
-  protected Map<K, V> createMap() {
+  protected @NotNull Map<K, V> createMap() {
     return new HashMap<>();
   }
 
-  @Nullable
-  protected abstract V create(K key);
+  protected abstract @Nullable V create(K key);
 
   @Override
   public V get(Object key) {
@@ -75,8 +61,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     //noinspection unchecked
     return key == null ? FAKE_NULL() : (T)key;
   }
-  @Nullable
-  private static <T> T nullize(T value) {
+  private static @Nullable <T> T nullize(T value) {
     return value == FAKE_NULL() ? null : value;
   }
 
@@ -99,9 +84,8 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     return nullize(v);
   }
 
-  @NotNull
   @Override
-  public Set<K> keySet() {
+  public @NotNull Set<K> keySet() {
     final Set<K> ts = getMap().keySet();
     K nullKey = FAKE_NULL();
     if (ts.contains(nullKey)) {
@@ -115,7 +99,6 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   public boolean removeValue(Object value) {
     Object t = notNull(value);
-    //noinspection SuspiciousMethodCalls
     return getMap().values().remove(t);
   }
 
@@ -140,21 +123,19 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   @Override
-  public void putAll(@NotNull final Map<? extends K, ? extends V> m) {
+  public void putAll(final @NotNull Map<? extends K, ? extends V> m) {
     for (Entry<? extends K, ? extends V> entry : m.entrySet()) {
       put(entry.getKey(), entry.getValue());
     }
   }
 
-  @NotNull
   @Override
-  public Collection<V> values() {
+  public @NotNull Collection<V> values() {
     return ContainerUtil.map(getMap().values(), FactoryMap::nullize);
   }
 
-  @NotNull
   @Override
-  public Set<Entry<K, V>> entrySet() {
+  public @NotNull Set<Entry<K, V>> entrySet() {
     return ContainerUtil.map2Set(getMap().entrySet(),
                                  entry -> new AbstractMap.SimpleEntry<>(nullize(entry.getKey()), nullize(entry.getValue())));
   }
@@ -164,29 +145,24 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     return String.valueOf(myMap);
   }
 
-  @NotNull
-  public static <K, V> Map<K, V> create(@NotNull final Function<? super K, ? extends V> computeValue) {
-    return new FactoryMap<K, V>(true) {
-      @Nullable
+  public static @NotNull <K, V> Map<K, V> create(final @NotNull Function<? super K, ? extends V> computeValue) {
+    return new FactoryMap<K, V>() {
       @Override
-      protected V create(K key) {
+      protected @Nullable V create(K key) {
         return computeValue.fun(key);
       }
     };
   }
 
-  @NotNull
-  public static <K, V> Map<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Supplier<? extends Map<K, V>> mapCreator) {
-    return new FactoryMap<K, V>(true) {
-      @Nullable
+  public static @NotNull <K, V> Map<K, V> createMap(final @NotNull Function<? super K, ? extends V> computeValue, final @NotNull Supplier<? extends Map<K, V>> mapCreator) {
+    return new FactoryMap<K, V>() {
       @Override
-      protected V create(K key) {
+      protected @Nullable V create(K key) {
         return computeValue.fun(key);
       }
 
-      @NotNull
       @Override
-      protected Map<K, V> createMap() {
+      protected @NotNull Map<K, V> createMap() {
         return mapCreator.get();
       }
     };

@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Irina.Chernushina on 2/20/2017.
- */
 public interface JsonObjectValueAdapter extends JsonValueAdapter {
   @NotNull List<JsonPropertyAdapter> getPropertyList();
 

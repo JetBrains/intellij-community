@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ReadAction;
@@ -25,11 +26,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager;
 import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent;
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
@@ -45,7 +44,6 @@ import static java.util.Objects.requireNonNull;
 
 /**
  * @author oleg
- * @date 9/27/11
  */
 public class GithubCreateGistAction extends DumbAwareAction {
   private static final Logger LOG = GithubUtil.LOG;
@@ -55,6 +53,11 @@ public class GithubCreateGistAction extends DumbAwareAction {
     super(GithubBundle.messagePointer("create.gist.action.title"),
           GithubBundle.messagePointer("create.gist.action.description"),
           AllIcons.Vcs.Vendors.Github);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -103,13 +106,9 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                        @Nullable final Editor editor,
                                        @Nullable final VirtualFile file,
                                        final VirtualFile @Nullable [] files) {
-    if (!GithubAccountsMigrationHelper.getInstance().migrate(project)) return;
-    GithubAuthenticationManager authManager = GithubAuthenticationManager.getInstance();
     GithubSettings settings = GithubSettings.getInstance();
     // Ask for description and other params
     GithubCreateGistDialog dialog = new GithubCreateGistDialog(project,
-                                                               authManager.getAccounts(),
-                                                               authManager.getDefaultAccount(project),
                                                                getFileName(editor, files),
                                                                settings.isPrivateGist(),
                                                                settings.isOpenInBrowserGist(),
@@ -122,13 +121,15 @@ public class GithubCreateGistAction extends DumbAwareAction {
     settings.setCopyURLGist(dialog.isCopyURL());
 
     GithubAccount account = requireNonNull(dialog.getAccount());
-    GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, project);
-    if (requestExecutor == null) return;
 
     final Ref<String> url = new Ref<>();
     new Task.Backgroundable(project, GithubBundle.message("create.gist.process")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        String token = GHCompatibilityUtil.getOrRequestToken(account, project);
+        if (token == null) return;
+        GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(token);
+
         List<FileContent> contents = collectContents(project, editor, file, files);
         if (contents.isEmpty()) return;
 
@@ -238,7 +239,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @Nullable
   private static String getContentFromEditor(@NotNull final Editor editor) {
-    String text = ReadAction.compute(() -> editor.getSelectionModel().getSelectedText());
+    String text = ReadAction.compute(() -> editor.getSelectionModel().getSelectedText(true));
     if (text == null) {
       text = editor.getDocument().getText();
     }

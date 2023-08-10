@@ -1,23 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
+import com.intellij.collaboration.async.CompletableFutureUtil
+import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.plugins.github.util.GithubAsyncUtil
-import org.jetbrains.plugins.github.util.handleOnEdt
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates.observable
 
-open class GHCompletableFutureLoadingModel<T>(parentDisposable: Disposable)
+class GHCompletableFutureLoadingModel<T>(parentDisposable: Disposable)
   : GHSimpleLoadingModel<T>(), Disposable {
-
-  final override var loading: Boolean = false
-
-  final override var result: T? = null
-  final override var resultAvailable: Boolean = false
-    private set
-  final override var error: Throwable? = null
 
   //to cancel old callbacks
   private var updateFuture by observable<CompletableFuture<Unit>?>(null) { _, oldValue, _ ->
@@ -36,10 +29,11 @@ open class GHCompletableFutureLoadingModel<T>(parentDisposable: Disposable)
   }
 
   private fun load(future: CompletableFuture<T>) {
+    error = null
     loading = true
     eventDispatcher.multicaster.onLoadingStarted()
     updateFuture = future.handleOnEdt(this) { result, error ->
-      if (error != null && !GithubAsyncUtil.isCancellation(error)) {
+      if (error != null && !CompletableFutureUtil.isCancellation(error)) {
         this.error = error
         resultAvailable = false
       }

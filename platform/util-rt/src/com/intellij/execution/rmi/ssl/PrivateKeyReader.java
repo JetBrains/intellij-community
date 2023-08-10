@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi.ssl;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -9,10 +9,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.crypto.EncryptedPrivateKeyInfo;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -23,7 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PrivateKeyReader {
+public final class PrivateKeyReader {
   public static final String P1_BEGIN_MARKER = "-----BEGIN RSA PRIVATE KEY";
   public static final String P1_END_MARKER = "-----END RSA PRIVATE KEY";
 
@@ -59,8 +58,37 @@ public class PrivateKeyReader {
     catch (NoSuchAlgorithmException e) {
       throw new IOException("JCE error: " + e.getMessage());
     }
+    return readKey(factory, fileName, password);
+  }
 
-    List<String> lines = FileUtilRt.loadLines(fileName, "UTF-8");
+  @NotNull
+  private static PrivateKey readKey(KeyFactory factory, String fileName, char[] password) throws IOException {
+    //noinspection IOStreamConstructor
+    try (PushbackInputStream stream = new PushbackInputStream(new FileInputStream(fileName))) {
+      int peeked = stream.read();
+      stream.unread(peeked);
+      if (peeked == 48) {
+        return readDerKey(factory, stream, password);
+      }
+      else {
+        return readPemKey(factory, stream, password);
+      }
+    }
+  }
+
+  @NotNull
+  private static PrivateKey readDerKey(KeyFactory factory, InputStream stream, char[] password) throws IOException {
+    byte[] bytes = FileUtilRt.loadBytes(stream);
+    try {
+      return generatePrivateKey(factory, new PKCS8EncodedKeySpec(bytes), "PKCS#8");
+    }
+    catch (IOException ignored2) {
+      return generatePrivateKey(factory, createEncryptedKeySpec(bytes, password), "Encrypted key");
+    }
+  }
+
+  private static PrivateKey readPemKey(KeyFactory factory, InputStream stream, char[] password) throws IOException {
+    List<String> lines = FileUtilRt.loadLines(new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8)));
     for (int i = 0; i < lines.size(); i++) {
       KeySpec keySpec = findRSAKeySpec(lines, i);
       String enc = "PKCS#1";
@@ -72,17 +100,20 @@ public class PrivateKeyReader {
         keySpec = findEncryptedKeySpec(lines, i, password);
         enc = "Encrypted key";
       }
-      if (keySpec == null) continue;
-      try {
-        return factory.generatePrivate(keySpec);
-      }
-      catch (InvalidKeySpecException e) {
-        throw new IOException("Invalid " + enc + " PEM file: " + e.getMessage());
+      if (keySpec != null) {
+        return generatePrivateKey(factory, keySpec, enc);
       }
     }
-
-
     throw new IOException("Invalid PEM file: no begin marker");
+  }
+
+  private static PrivateKey generatePrivateKey(KeyFactory factory, KeySpec keySpec, String enc) throws IOException {
+    try {
+      return factory.generatePrivate(keySpec);
+    }
+    catch (InvalidKeySpecException e) {
+      throw new IOException("Invalid " + enc + " PEM file: " + e.getMessage());
+    }
   }
 
   @Nullable
@@ -90,6 +121,10 @@ public class PrivateKeyReader {
     if (!lines.get(i).contains(EP8_BEGIN_MARKER)) return null;
     List<String> strings = lines.subList(i + 1, lines.size());
     byte[] keyBytes = readKeyMaterial(EP8_END_MARKER, strings);
+    return createEncryptedKeySpec(keyBytes, password);
+  }
+
+  private static PKCS8EncodedKeySpec createEncryptedKeySpec(byte[] keyBytes, char [] password) throws IOException {
     EncryptedPrivateKeyInfo encrypted = new EncryptedPrivateKeyInfo(keyBytes);
     PBEKeySpec encryptedKeySpec = new PBEKeySpec(password);
     try {
@@ -194,7 +229,7 @@ public class PrivateKeyReader {
  *
  * @author zhang
  */
-class DerParser {
+final class DerParser {
 
   // Classes
   public final static int UNIVERSAL = 0x00;
@@ -232,7 +267,7 @@ class DerParser {
 
   public final static int UTC_TIME = 0x17;
 
-  protected InputStream in;
+  private InputStream in;
 
   /**
    * Create a new DER decoder from an input stream.
@@ -330,12 +365,12 @@ class DerParser {
  *
  * @author zhang
  */
-class Asn1Object {
+final class Asn1Object {
 
-  protected final int type;
-  protected final int length;
-  protected final byte[] value;
-  protected final int tag;
+  private final int type;
+  private final int length;
+  private final byte[] value;
+  private final int tag;
 
   /**
    * Construct a ASN.1 TLV. The TLV could be either a

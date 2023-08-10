@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.formatter;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
@@ -16,9 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.WRAP_VALUES;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
-/**
- * @author yole
- */
+
 public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @NotNull
   @Override
@@ -97,7 +95,13 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "WRAP_ON_TYPING",
                                    "KEEP_LINE_BREAKS",
                                    "WRAP_LONG_LINES",
+                                   "CALL_PARAMETERS_WRAP",
+                                   "CALL_PARAMETERS_LPAREN_ON_NEXT_LINE",
+                                   "CALL_PARAMETERS_RPAREN_ON_NEXT_LINE",
                                    "ALIGN_MULTILINE_PARAMETERS",
+                                   "METHOD_PARAMETERS_WRAP",
+                                   "METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE",
+                                   "METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE",
                                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS");
       consumer.showCustomOption(PyCodeStyleSettings.class, "NEW_LINE_AFTER_COLON",
                                 PyBundle.message("formatter.single.clause.statements"),
@@ -155,11 +159,13 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     // e.g. in SpacingBuilder#blankLines(), and can lead to unexpected side-effects in formatter's
     // behavior
     commonSettings.KEEP_BLANK_LINES_IN_CODE = 1;
+    commonSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    commonSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
   }
 
   @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new PyCodeStyleSettings(settings);
   }
 
@@ -169,7 +175,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     return new CodeStyleAbstractConfigurable(baseSettings, modelSettings,
                                              PyBundle.message("configurable.PyLanguageCodeStyleSettingsProvider.display.name")) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
         return new PyCodeStyleMainPanel(getCurrentSettings(), settings);
       }
 
@@ -180,58 +186,62 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     };
   }
 
-  private static final String SPACING_SETTINGS_PREVIEW = "def settings_preview(argument, key=value):\n" +
-                                                         "    dict = {1:'a', 2:'b', 3:'c'}\n" +
-                                                         "    x = dict[1]\n" +
-                                                         "    expr = (1+2)*3 << 4**5 & 16\n" +
-                                                         "    if expr == 0 or abs(expr) < 0: print('weird'); return\n" +
-                                                         "    settings_preview(key=1)\n" +
-                                                         "\n" +
-                                                         "foo =\\\n" +
-                                                         "    bar\n" +
-                                                         "\n" +
-                                                         "def no_params():\n" +
-                                                         "    return globals()";
+  private static final String SPACING_SETTINGS_PREVIEW = """
+    def settings_preview(argument, key=value):
+        dict = {1:'a', 2:'b', 3:'c'}
+        x = dict[1]
+        expr = (1+2)*3 << 4**5 & 16
+        if expr == 0 or abs(expr) < 0: print('weird'); return
+        settings_preview(key=1)
 
-  private static final String BLANK_LINES_SETTINGS_PREVIEW = "import os\n" +
-                                                             "class C(object):\n" +
-                                                             "    import sys\n" +
-                                                             "    x = 1\n" +
-                                                             "    def foo(self):\n" +
-                                                             "        import platform\n" +
-                                                             "        print(platform.processor())";
-  private static final String WRAP_SETTINGS_PREVIEW = "from module import foo, bar, baz, quux\n" +
-                                                      "\n" +
-                                                      "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n" +
-                                                      "\n" +
-                                                      "def xyzzy(long_parameter_1,\n" +
-                                                      "long_parameter_2):\n" +
-                                                      "    pass\n" +
-                                                      "\n" +
-                                                      "xyzzy('long_string_constant1',\n" +
-                                                      "    'long_string_constant2')\n" +
-                                                      "\n" +
-                                                      "xyzzy(\n" +
-                                                      "    'with',\n" +
-                                                      "    'hanging',\n" +
-                                                      "      'indent'\n" +
-                                                      ")\n" +
-                                                      "attrs = [e.attr for e in\n" +
-                                                      "    items]\n" +
-                                                      "\n" +
-                                                      "ingredients = [\n" +
-                                                      "    'green',\n" +
-                                                      "    'eggs',\n" +
-                                                      "]\n" +
-                                                      "\n" +
-                                                      "if True: pass\n" +
-                                                      "\n" +
-                                                      "try: pass\n" +
-                                                      "finally: pass\n";
-  private static final String INDENT_SETTINGS_PREVIEW = "def foo():\n" +
-                                                        "    print 'bar'\n\n" +
-                                                        "def long_function_name(\n" +
-                                                        "        var_one, var_two, var_three,\n" +
-                                                        "        var_four):\n" +
-                                                        "    print(var_one)";
+    foo =\\
+        bar
+
+    def no_params():
+        return globals()""";
+
+  private static final String BLANK_LINES_SETTINGS_PREVIEW = """
+    import os
+    class C(object):
+        import sys
+        x = 1
+        def foo(self):
+            import platform
+            print(platform.processor())""";
+  private static final String WRAP_SETTINGS_PREVIEW = """
+    from module import foo, bar, baz, quux
+
+    long_expression = component_one + component_two + component_three + component_four + component_five + component_six
+
+    def xyzzy(a1, a2, long_parameter_1, a3, a4, long_parameter_2):
+        pass
+
+    xyzzy(1, 2, 'long_string_constant1', 3, 4, 'long_string_constant2')
+
+    xyzzy(
+        'with',
+        'hanging',
+          'indent'
+    )
+    attrs = [e.attr for e in
+        items]
+
+    ingredients = [
+        'green',
+        'eggs',
+    ]
+
+    if True: pass
+
+    try: pass
+    finally: pass
+    """;
+  private static final String INDENT_SETTINGS_PREVIEW = """
+    def foo():
+        print('bar')
+
+    def long_function_name(
+            var_one, var_two, var_three,
+            var_four):
+        print(var_one)""";
 }

@@ -41,14 +41,14 @@ class PyTensorFlowModuleMembersProvider : PyModuleMembersProvider() {
   }
 
   private fun getMembers(context: PyQualifiedNameResolveContext,
-                         pathConfig: Pair<Map<String, String>, String>): Collection<PyCustomMember> {
+                         pathConfig: Map<String, String>): Collection<PyCustomMember> {
     val result = mutableListOf<PyCustomMember>()
 
-    pathConfig.first.mapNotNullTo(result) { (module, path) ->
+    pathConfig.filterKeys { it != "*" }.mapNotNullTo(result) { (module, path) ->
       resolvedModuleToCustomMember(takeFirstResolvedInTensorFlow(path, context), module)
     }
 
-    (takeFirstResolvedInTensorFlow(pathConfig.second, context) as? PsiDirectory)
+    (takeFirstResolvedInTensorFlow(pathConfig["*"]!!, context) as? PsiDirectory)
       ?.let { dir ->
         dir.subdirectories.mapNotNullTo(result) { subdir ->
           resolvedModuleToCustomMember(subdir, subdir.name)
@@ -60,12 +60,12 @@ class PyTensorFlowModuleMembersProvider : PyModuleMembersProvider() {
 
   private fun resolveMember(name: String,
                             context: PyQualifiedNameResolveContext,
-                            pathConfig: Pair<Map<String, String>, String>): PsiElement? {
-    if (name in pathConfig.first) {
-      return takeFirstResolvedInTensorFlow(pathConfig.first.getValue(name), context)
+                            pathConfig: Map<String, String>): PsiElement? {
+    if (name in pathConfig) {
+      return takeFirstResolvedInTensorFlow(pathConfig.getValue(name), context)
     }
 
-    (takeFirstResolvedInTensorFlow(pathConfig.second, context) as? PsiDirectory)
+    (takeFirstResolvedInTensorFlow(pathConfig["*"]!!, context) as? PsiDirectory)
       ?.let { dir ->
         return dir.subdirectories.find { it.name == name }
       }

@@ -57,6 +57,7 @@ public class CommittedListsSequencesZipperTest {
     check(valuesWithCount, list(1, 7, 11, 111), list(1, 7, 11, 111), list(1, 7, 11, 111));
   }
 
+  @SafeVarargs
   private static void check(long[] @NotNull [] expected, List<CommittedChangeList> @NotNull ... lists) {
     CommittedListsSequencesZipper zipper = new CommittedListsSequencesZipper(ConvertorZipper.ourInstance);
     int id = 0;

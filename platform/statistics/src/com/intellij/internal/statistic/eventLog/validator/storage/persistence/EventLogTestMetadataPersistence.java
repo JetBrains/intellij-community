@@ -1,15 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage.persistence;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DatabindException;
+import com.intellij.internal.statistic.config.SerializationHelper;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.Strings;
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors;
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,12 +59,13 @@ public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataP
     }
   }
 
-  public static @NotNull EventGroupRemoteDescriptor createGroupWithCustomRules(@NotNull String groupId, @NotNull String rules) {
+  public static @NotNull EventGroupRemoteDescriptor createGroupWithCustomRules(@NotNull String groupId, @NotNull String rules)
+    throws StreamReadException, DatabindException {
     final String content =
       "{\"id\":\"" + groupId + "\"," +
       "\"versions\":[ {\"from\" : \"1\"}]," +
       "\"rules\":" + rules + "}";
-    return new GsonBuilder().create().fromJson(content, EventGroupRemoteDescriptor.class);
+    return SerializationHelper.INSTANCE.deserialize(content, EventGroupRemoteDescriptor.class);
   }
 
   public static void addTestGroup(@NotNull String recorderId, @NotNull GroupValidationTestRule group) throws IOException {
@@ -93,10 +96,9 @@ public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataP
     }
 
     approvedGroups.groups.add(group);
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
     Files.createDirectories(file.getParent());
     try (BufferedWriter writer = Files.newBufferedWriter(file)) {
-      gson.toJson(approvedGroups, EventGroupRemoteDescriptors.class, writer);
+      SerializationHelper.INSTANCE.serialize(writer, approvedGroups);
     }
   }
 
@@ -104,7 +106,7 @@ public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataP
     final String existing = persistence.getCachedEventsScheme();
     if (Strings.isNotEmpty(existing)) {
       try {
-        return EventGroupRemoteDescriptors.create(existing);
+        return EventLogMetadataUtils.parseGroupRemoteDescriptors(existing);
       }
       catch (EventLogMetadataParseException e) {
         LOG.warn("Failed parsing test cached events scheme", e);
@@ -149,11 +151,10 @@ public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataP
       }
     }
 
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
     Path file = getEventsTestSchemeFile();
     Files.createDirectories(file.getParent());
     try (BufferedWriter writer = Files.newBufferedWriter(file)) {
-      gson.toJson(approvedGroups, EventGroupRemoteDescriptors.class, writer);
+      SerializationHelper.INSTANCE.serialize(writer, approvedGroups);
     }
   }
 }

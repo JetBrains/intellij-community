@@ -24,10 +24,7 @@ import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.debugger.ArrayChunk;
-import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.PyDebuggerException;
-import com.jetbrains.python.debugger.PyFrameAccessor;
+import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.array.AbstractDataViewTable;
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
 import com.jetbrains.python.debugger.array.JBTableWithRowHeaders;
@@ -55,6 +52,7 @@ public class PyDataViewerPanel extends JPanel {
   private JBLabel myErrorLabel;
   @SuppressWarnings("unused") private JBScrollPane myScrollPane;
   protected JPanel bottomPanel;
+  private JPanel myFormatPanel;
   private boolean myColored;
   List<Listener> myListeners;
   private @NlsSafe String myOriginalVarName;
@@ -77,7 +75,12 @@ public class PyDataViewerPanel extends JPanel {
   }
 
   private void setupChangeListener() {
-    myFrameAccessor.addFrameListener(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> updateModel()));
+    myFrameAccessor.addFrameListener(new PyFrameListener() {
+      @Override
+      public void frameChanged() {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> updateModel());
+      }
+    });
   }
 
   private void updateModel() {
@@ -160,7 +163,7 @@ public class PyDataViewerPanel extends JPanel {
   private EditorTextField createEditorField() {
     return new EditorTextField(EditorFactory.getInstance().createDocument(""), myProject, PythonFileType.INSTANCE, false, true) {
       @Override
-      protected EditorEx createEditor() {
+      protected @NotNull EditorEx createEditor() {
         EditorEx editor = super.createEditor();
         editor.getContentComponent().addKeyListener(new KeyAdapter() {
           @Override
@@ -324,6 +327,10 @@ public class PyDataViewerPanel extends JPanel {
 
   public EditorTextField getSliceTextField() {
     return mySliceTextField;
+  }
+
+  public JPanel getFormatPanel() {
+    return myFormatPanel;
   }
 
   @Nullable

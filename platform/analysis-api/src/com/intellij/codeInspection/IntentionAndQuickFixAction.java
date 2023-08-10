@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -26,21 +26,15 @@ import org.jetbrains.annotations.Nullable;
 public abstract class IntentionAndQuickFixAction implements LocalQuickFix, IntentionAction {
 
   @Override
-  @IntentionName
-  @NotNull
-  public abstract String getName();
+  public abstract @IntentionName @NotNull String getName();
 
   @Override
-  @IntentionFamilyName
-  @NotNull
-  public abstract String getFamilyName();
+  public abstract @IntentionFamilyName @NotNull String getFamilyName();
 
   public abstract void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor);
 
   @Override
-  @IntentionName
-  @NotNull
-  public String getText() {
+  public @IntentionName @NotNull String getText() {
     return getName();
   }
 

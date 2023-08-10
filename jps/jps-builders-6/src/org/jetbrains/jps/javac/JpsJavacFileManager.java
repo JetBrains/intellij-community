@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
+import org.jetbrains.jps.javac.Iterators.BooleanFunction;
+import org.jetbrains.jps.javac.Iterators.Function;
 
 import javax.tools.*;
 import java.io.Closeable;
@@ -37,7 +37,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
     StandardLocation.SOURCE_PATH,
     StandardLocation.ANNOTATION_PROCESSOR_PATH
   );
-  private static final FileObjectKindFilter<File> ourKindFilter = new FileObjectKindFilter<File>(new Function<File, String>() {
+  private static final FileObjectKindFilter<File> ourKindFilter = new FileObjectKindFilter<>(new Function<File, String>() {
     @Override
     public String fun(File file) {
       return file.getName();
@@ -48,12 +48,18 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   private final boolean myJavacBefore9;
   private final Collection<? extends JavaSourceTransformer> mySourceTransformers;
   private final FileOperations myFileOperations = new DefaultFileOperations();
-  private final Map<String, Collection<String>> myGeneratedToOriginatingMap = new HashMap<String, Collection<String>>();
+  private final Map<String, Collection<String>> myGeneratedToOriginatingMap = new HashMap<>();
 
   private final Function<File, JavaFileObject> myFileToInputFileObjectConverter = new Function<File, JavaFileObject>() {
     @Override
     public JavaFileObject fun(File file) {
-      return new InputFileObject(file, myEncodingName);
+      return new InputFileObject(file, myEncodingName, false);
+    }
+  };
+  private final Function<File, JavaFileObject> myFileToCachingInputFileObjectConverter = new Function<File, JavaFileObject>() {
+    @Override
+    public JavaFileObject fun(File file) {
+      return new InputFileObject(file, myEncodingName, true);
     }
   };
   private static final Function<String, File> ourPathToFileConverter = new Function<String, File>() {
@@ -69,8 +75,8 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   private int myChecksCounter = 0;
 
   private Iterable<? extends JavaFileObject> myInputSources = Collections.emptyList();
-  private final Map<String, JavaFileObject> myInputSourcesIndex = new HashMap<String, JavaFileObject>();
-  private final List<Closeable> myCloseables = new ArrayList<Closeable>();
+  private final Map<String, JavaFileObject> myInputSourcesIndex = new HashMap<>();
+  private final List<Closeable> myCloseables = new ArrayList<>();
 
   public JpsJavacFileManager(final Context context, boolean javacBefore9, Collection<? extends JavaSourceTransformer> transformers) {
     super(context.getStandardFileManager());
@@ -121,7 +127,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   }
 
   public Iterable<? extends JavaFileObject> setInputSources(Iterable<? extends File> sources) {
-    List<JavaFileObject> allSources = new ArrayList<JavaFileObject>();
+    List<JavaFileObject> allSources = new ArrayList<>();
     for (JavaFileObject file : getJavaFileObjectsFromFiles(sources)) {
       allSources.add(file);
     }
@@ -171,7 +177,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
       }
     }
     if (originatingSources == null) {
-      final Collection<String> originating = myGeneratedToOriginatingMap.get(className != null? className : fileName);
+      final Collection<String> originating = lookupOriginatingNames(className, fileName);
       if (originating != null) {
         for (String origQName : originating) {
           JavaFileObject found = lookupInputSource(origQName);
@@ -200,11 +206,27 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
       }
     }
     final File file = (dir == null? new File(fileName).getAbsoluteFile() : new File(dir, fileName));
-    final boolean isGenerated = (sibling instanceof OutputFileObject && ((OutputFileObject)sibling).getKind() == JavaFileObject.Kind.SOURCE) /*created from generated source*/ ||
-                                myGeneratedToOriginatingMap.containsKey(className != null? className : fileName);
+    final boolean isGenerated = (sibling instanceof OutputFileObject && ((OutputFileObject)sibling).getKind() == JavaFileObject.Kind.SOURCE) /*created from generated source*/ || hasOriginatingNames(className, fileName);
     return new OutputFileObject(
       myContext, dir, fileName, file, kind, className, originatingSources == null? Collections.<URI>emptyList() : originatingSources, myEncodingName, null, location, isGenerated
     );
+  }
+
+  private Collection<String> lookupOriginatingNames(@Nullable String className, String fileName) {
+    if (className != null) {
+      Collection<String> dotsResult = myGeneratedToOriginatingMap.get(className.replace('/', '.'));
+      // normalize classname: eclipse compiler sometimes outputs internal class names
+      return dotsResult != null? dotsResult : myGeneratedToOriginatingMap.get(className.replace('.', '/'));
+    }
+    return myGeneratedToOriginatingMap.get(fileName);
+  }
+
+  private boolean hasOriginatingNames(@Nullable String className, String fileName) {
+    if (className != null) {
+      // normalize classname: eclipse compiler sometimes outputs internal class names
+      return myGeneratedToOriginatingMap.containsKey(className.replace('/', '.')) || myGeneratedToOriginatingMap.containsKey(className.replace('.', '/'));
+    }
+    return myGeneratedToOriginatingMap.containsKey(fileName);
   }
 
   @Nullable
@@ -326,12 +348,12 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
     void reportMessage(final Diagnostic.Kind kind, @Nls String message);
   }
 
-  public final Context getContext() {
+  public Context getContext() {
     return myContext;
   }
 
   @NotNull
-  protected StandardJavaFileManager getStdManager() {
+  StandardJavaFileManager getStdManager() {
     return fileManager;
   }
 
@@ -389,7 +411,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
 
   @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjectsFromFiles(final Iterable<? extends File> files) {
-    return wrapJavaFileObjects(Iterators.map(files, myFileToInputFileObjectConverter));
+    return wrapJavaFileObjects(Iterators.map(files, myFileToCachingInputFileObjectConverter));
   }
 
   @Override
@@ -512,7 +534,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
                   );
                 }
               };
-              return Iterators.map(Iterators.filter(myFileOperations.listFiles(dir, recurse), filter), myFileToInputFileObjectConverter);
+              return Iterators.map(Iterators.filter(myFileOperations.listFiles(dir, recurse), filter), location.isOutputLocation()? myFileToInputFileObjectConverter : myFileToCachingInputFileObjectConverter);
             }
             catch (IOException e) {
               throw new RuntimeException(e);
@@ -545,12 +567,58 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   // this method overrides corresponding API method since javac 9
   public boolean contains(Location location, FileObject fo) throws IOException {
     if (fo instanceof JpsFileObject) {
-      return location.equals(((JpsFileObject)fo).getLocation());
+      return location.equals(((JpsFileObject)fo).getLocation()) || getLocationForModule(location, ((JpsFileObject)fo)) != null;
     }
     return myContainsCall.callDefaultImpl(getStdManager(), "file object " + fo.getClass().getName(), location, fo);
   }
-  private final DelegateCallHandler<JavaFileManager, Boolean> myContainsCall = new DelegateCallHandler<JavaFileManager, Boolean>(
+  private final DelegateCallHandler<JavaFileManager, Boolean> myContainsCall = new DelegateCallHandler<>(
     JavaFileManager.class, "contains", Location.class, FileObject.class
+  );
+
+  // this method overrides corresponding API method since javac 9
+  public Location getLocationForModule(Location location, JavaFileObject fo) throws IOException {
+    if (fo instanceof JpsFileObject) {
+      final File path = fo instanceof InputFileObject? ((InputFileObject)fo).getFile() : fo instanceof OutputFileObject? ((OutputFileObject)fo).getFile() : null;
+      if (path != null) {
+        for (Location loc : Iterators.flat(listLocationsForModules(location))) {
+          for (File root : getLocation(loc)) {
+            if (isAncestor(root, path)) {
+              return loc;
+            }
+          }
+        }
+      }
+      return null;
+    }
+    return myGetLocationForModuleCall.callDefaultImpl(getStdManager(), location, fo);
+  }
+
+  private static boolean isAncestor(File dir, File file) {
+    final String dirPath = FileUtilRt.toCanonicalPath(dir.getAbsolutePath(), File.separatorChar, false);
+    final String filePath = FileUtilRt.toCanonicalPath(file.getAbsolutePath(), File.separatorChar, false);
+    final boolean trailingSlash = dirPath.endsWith("/");
+    if (filePath.length() < (trailingSlash? dirPath.length() : dirPath.length() + 1)) {
+      return false;
+    }
+    if (!filePath.regionMatches(!isFileSystemCaseSensitive, 0, dirPath, 0, dirPath.length())) {
+      return false;
+    }
+    if (!trailingSlash && filePath.charAt(dirPath.length()) != '/') {
+      return false;
+    }
+    return true;
+  }
+
+  private final DelegateCallHandler<JavaFileManager, Location> myGetLocationForModuleCall = new DelegateCallHandler<>(
+    JavaFileManager.class, "getLocationForModule", Location.class, JavaFileObject.class
+  );
+
+  // this method overrides corresponding API method since javac 9
+  public Iterable<Set<Location>> listLocationsForModules(Location location) throws IOException {
+    return myListLocationForModulesCall.callDefaultImpl(getStdManager(), location);
+  }
+  private final DelegateCallHandler<JavaFileManager, Iterable<Set<Location>>> myListLocationForModulesCall = new DelegateCallHandler<>(
+    JavaFileManager.class, "listLocationsForModules", Location.class
   );
 
   public void onOutputFileGenerated(File file) {
@@ -601,7 +669,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
         if (names == null) {
           names = myGeneratedToOriginatingMap.get(classOrResourceName);
           if (names == null) {
-            myGeneratedToOriginatingMap.put(classOrResourceName, names = new HashSet<String>());
+            myGeneratedToOriginatingMap.put(classOrResourceName, names = new HashSet<>());
           }
         }
         names.add(cn);
@@ -611,10 +679,10 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
 
   //-----------------------------------------------------------------------------------
 
-  private final DelegateCallHandler<StandardJavaFileManager, Void> mySetLocationForModuleCall = new DelegateCallHandler<StandardJavaFileManager, Void>(
+  private final DelegateCallHandler<StandardJavaFileManager, Void> mySetLocationForModuleCall = new DelegateCallHandler<>(
     StandardJavaFileManager.class, "setLocationForModule", Location.class, String.class, Collection.class
   );
-  private final DelegateCallHandler<File, Object> myToPathCall = new DelegateCallHandler<File, Object>(File.class, "toPath");
+  private final DelegateCallHandler<File, Object> myToPathCall = new DelegateCallHandler<>(File.class, "toPath");
 
   private void initExplodedModuleNames(final Location modulePathLocation, Iterable<? extends File> path) throws IOException {
     if (mySetLocationForModuleCall.isAvailable() && myToPathCall.isAvailable()) {

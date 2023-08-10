@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes
 
 import com.google.common.primitives.Bytes
@@ -20,23 +20,19 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.jrt.JrtFileSystem
 import com.intellij.pom.Navigatable
 import com.intellij.pom.java.LanguageLevel
-import org.jetbrains.concurrency.asCompletableFuture
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader.MavenLogEntry
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext
-import org.jetbrains.idea.maven.importing.MavenModuleImporter
-import org.jetbrains.idea.maven.importing.MavenProjectModelModifier
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.project.MavenProjectBundle.message
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -55,15 +51,23 @@ class SourceOptionQuickFix : MavenLoggedEventParser {
                             logLine: MavenLogEntry,
                             logEntryReader: MavenLogEntryReader,
                             messageConsumer: Consumer<in BuildEvent?>): Boolean {
-    if (logLine.line.startsWith("Source option 5 is no longer supported. Use 6 or later")) {
+    if (logLine.line.startsWith("Source option 5 is no longer supported.")
+        || logLine.line.startsWith("Source option 1.5 is no longer supported.")) {
       val targetLine = logEntryReader.readLine()
 
-      if (targetLine != null && !targetLine.line.startsWith("Target option 1.5 is no longer supported. Use 1.6 or later.")) {
+      if (targetLine != null && !targetLine.line.startsWith("Target option 1.5 is no longer supported.")) {
         logEntryReader.pushBack()
       }
-      val failedProject = parsingContext.projectsInReactor.last()
+
+      val lastErrorProject = parsingContext.startedProjects.last() + ":"
+      val failedProject = parsingContext.projectsInReactor.find { it.startsWith(lastErrorProject) } ?: return false
+      val mavenProject = MavenProjectsManager.getInstance(parsingContext.ideaProject).findProject(MavenId(failedProject)) ?: return false
+      val moduleJdk = MavenUtil.getModuleJdk(MavenProjectsManager.getInstance(parsingContext.ideaProject), mavenProject) ?: return false
+
       messageConsumer.accept(
-        BuildIssueEventImpl(parentId, Source5BuildIssue(parsingContext.ideaProject, failedProject), MessageEvent.Kind.ERROR));
+        BuildIssueEventImpl(parentId,
+                            SourceLevelBuildIssue(logLine.line, logLine.line, mavenProject, moduleJdk),
+                            MessageEvent.Kind.ERROR))
       return true
     }
 
@@ -72,40 +76,32 @@ class SourceOptionQuickFix : MavenLoggedEventParser {
 
 }
 
-class Source5BuildIssue(project: Project, private val failedProjectId: String) : BuildIssue {
+class SourceLevelBuildIssue(private val message: String,
+                            override val title: String,
+                            private val mavenProject: MavenProject,
+                            private val moduleJdk: Sdk) : BuildIssue {
 
-  override val quickFixes: List<UpdateSourceLevelQuickFix> = prepareQuickFixes(project, failedProjectId)
-  override val title = MavenProjectBundle.message("maven.source.5.not.supported.title")
+  override val quickFixes: List<UpdateSourceLevelQuickFix> = Collections.singletonList(UpdateSourceLevelQuickFix(mavenProject))
   override val description = createDescription()
 
-  private fun createDescription() = quickFixes.map {
-    HtmlChunk.link(it.id, MavenProjectBundle.message("maven.source.5.not.supported.update", it.mavenProject.displayName))
-      .toString()
-  }.joinToString("\n<br/>", prefix = MavenProjectBundle.message("maven.source.5.not.supported.description"))
+  private fun createDescription() = "$message\n<br/>" + quickFixes.map {
+    message("maven.source.level.not.supported.update",
+            LanguageLevel.parse(moduleJdk.versionString)?.toJavaVersion(),
+            it.id, it.mavenProject.displayName)
+  }.joinToString("\n<br/>")
 
 
-  override fun getNavigatable(project: Project): Navigatable? {
-    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId(failedProjectId))
-    return mavenProject?.file?.let { OpenFileDescriptor(project, it) }
-  }
-
-  companion object {
-    private fun prepareQuickFixes(project: Project, failedProjectId: String): List<UpdateSourceLevelQuickFix> {
-      var mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId(failedProjectId));
-      val result = ArrayList<UpdateSourceLevelQuickFix>()
-      while (mavenProject != null) {
-        result.add(UpdateSourceLevelQuickFix(mavenProject))
-        val parentId = mavenProject.parentId
-        mavenProject = parentId?.let { MavenProjectsManager.getInstance(project).findProject(parentId) }
-      }
-      return result
-    }
+  override fun getNavigatable(project: Project): Navigatable {
+    return OpenFileDescriptor(project, mavenProject.file)
   }
 }
 
 typealias MessagePredicate = (String) -> Boolean
 
-class JpsReleaseVersion5QuickFix : BuildIssueContributor {
+/**
+ * @deprecated use {@link JpsLanguageLevelQuickFix.kt
+ */
+class JpsReleaseVersionQuickFix : BuildIssueContributor {
   override fun createBuildIssue(project: Project,
                                 moduleNames: Collection<String>,
                                 title: String,
@@ -113,59 +109,33 @@ class JpsReleaseVersion5QuickFix : BuildIssueContributor {
                                 kind: MessageEvent.Kind,
                                 virtualFile: VirtualFile?,
                                 navigatable: Navigatable?): BuildIssue? {
-    val manager = MavenProjectsManager.getInstance(project);
+    val manager = MavenProjectsManager.getInstance(project)
     if (!manager.isMavenizedProject) return null
 
     if (moduleNames.size != 1) {
       return null
     }
     val moduleName = moduleNames.firstOrNull() ?: return null
-    val predicates = CacheForCompilerErrorMessages.getPredicatesToCheck(project, moduleName);
-    if (!message.contains("release version") || !message.contains("not supported")) return null
+    val predicates = CacheForCompilerErrorMessages.getPredicatesToCheck(project, moduleName)
+    val failedId = extractFailedMavenId(project, moduleName) ?: return null
+    val mavenProject = manager.findProject(failedId) ?: return null
+    val moduleJdk = MavenUtil.getModuleJdk(manager, mavenProject) ?: return null
 
-    val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
-    val failedId = MavenProjectsManager.getInstance(project).findProject(module)?.mavenId ?: return null
-
-    if (predicates.any { it(message) }) return Source5BuildIssue(project, failedId.displayString)
+    if (predicates.any { it(message) }) return SourceLevelBuildIssue(title, message, mavenProject, moduleJdk)
     return null
   }
 
-
+  private fun extractFailedMavenId(project: Project, moduleName: String): MavenId? {
+    val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
+    return MavenProjectsManager.getInstance(project).findProject(module)?.mavenId ?: return null
+  }
 }
 
 class UpdateSourceLevelQuickFix(val mavenProject: MavenProject) : BuildIssueQuickFix {
   override val id = ID + mavenProject.mavenId.displayString
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-
-    val languageLevel = MavenModuleImporter.getLanguageLevel(mavenProject)
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_6)) {
-      Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
-                   MavenProjectBundle.message("maven.quickfix.cannot.update.source.level.already.1.6", mavenProject.displayName),
-                   NotificationType.INFORMATION).notify(project)
-      return CompletableFuture.completedFuture(null)
-    }
-    val module = MavenProjectsManager.getInstance(project).findModule(mavenProject)
-    if (module == null) {
-      Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
-                   MavenProjectBundle.message("maven.quickfix.cannot.update.source.level.module.not.found", mavenProject.displayName),
-                   NotificationType.INFORMATION).notify(project)
-      return CompletableFuture.completedFuture(null)
-    }
-
-    val moduleJdk = MavenUtil.getModuleJdk(MavenProjectsManager.getInstance(project), mavenProject)
-    if (moduleJdk == null) {
-      Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
-                   MavenProjectBundle.message("maven.quickfix.cannot.update.source.level.module.not.found", mavenProject.displayName),
-                   NotificationType.INFORMATION).notify(project)
-      return CompletableFuture.completedFuture(null)
-    }
-
-    val promise = MavenProjectModelModifier(project).changeLanguageLevel(module, LanguageLevel.parse(moduleJdk.versionString)!!)
-    if (promise == null) {
-      return CompletableFuture.completedFuture(null)
-    }
-    OpenFileDescriptor(project, mavenProject.file).navigate(true)
-    return promise.asCompletableFuture()
+    val languageLevelQuickFix = LanguageLevelQuickFixFactory.getInstance(project, mavenProject)
+    return ProcessQuickFix.perform(languageLevelQuickFix, project, mavenProject)
   }
 
   companion object {
@@ -173,7 +143,6 @@ class UpdateSourceLevelQuickFix(val mavenProject: MavenProject) : BuildIssueQuic
   }
 
 }
-
 
 object CacheForCompilerErrorMessages {
   private val key = "compiler.err.unsupported.release.version".encodeToByteArray()
@@ -185,6 +154,8 @@ object CacheForCompilerErrorMessages {
   }
 
   private val DEFAULT_CHECK = listOf<MessagePredicate>(
+    { it.contains("source release") && it.contains("requires target release") },
+    { it.contains("invalid target release") },
     { it.contains("release version") && it.contains("not supported") }, //en
     {
       it.contains("\u30EA\u30EA\u30FC\u30B9\u30FB\u30D0\u30FC\u30B8\u30E7\u30F3")
@@ -198,17 +169,17 @@ object CacheForCompilerErrorMessages {
   fun connectToJdkListener(myProject: Project, disposable: Disposable) {
     myProject.messageBus.connect(disposable).subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
       override fun jdkAdded(jdk: Sdk) {
-        synchronized(map){map.remove(jdk.name)}
+        synchronized(map) { map.remove(jdk.name) }
       }
 
       override fun jdkRemoved(jdk: Sdk) {
-        synchronized(map){map.remove(jdk.name)}
+        synchronized(map) { map.remove(jdk.name) }
       }
 
       override fun jdkNameChanged(jdk: Sdk, previousName: String) {
-        synchronized(map){
+        synchronized(map) {
           val list = map[previousName]
-          if(list!=null){
+          if (list != null) {
             map[jdk.name] = list
           }
         }
@@ -217,15 +188,15 @@ object CacheForCompilerErrorMessages {
   }
 
   fun getPredicatesToCheck(project: Project, moduleName: String): List<MessagePredicate> {
-    val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return DEFAULT_CHECK;
-    val sdk = ModuleRootManager.getInstance(module).sdk ?: return DEFAULT_CHECK;
+    val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return DEFAULT_CHECK
+    val sdk = ModuleRootManager.getInstance(module).sdk ?: return DEFAULT_CHECK
     return synchronized(map) { map.getOrPut(sdk.name) { readFrom(sdk) } }
   }
 
   private fun readFrom(sdk: Sdk): List<MessagePredicate> {
-    val version = JavaSdk.getInstance().getVersion(sdk);
+    val version = JavaSdk.getInstance().getVersion(sdk)
     if (version == null || !version.isAtLeast(JavaSdkVersion.JDK_1_9)) {
-      return DEFAULT_CHECK;
+      return DEFAULT_CHECK
     }
 
     try {
@@ -240,11 +211,10 @@ object CacheForCompilerErrorMessages {
 
     }
     catch (e: Throwable) {
-      MavenLog.LOG.warn(e);
-      return DEFAULT_CHECK;
+      MavenLog.LOG.warn(e)
+      return DEFAULT_CHECK
     }
   }
-
 
   private fun readFromBinaryFile(file: VirtualFile?): MessagePredicate? {
     if (file == null) return null
@@ -252,20 +222,19 @@ object CacheForCompilerErrorMessages {
       val allBytes = VfsUtil.loadBytes(file)
       val indexKey = Bytes.indexOf(allBytes, key)
       if (indexKey == -1) return null
-      val startFrom = indexKey + key.size + 3;
+      val startFrom = indexKey + key.size + 3
       val endIndex = allBytes.findNextSOH(startFrom)
-      if (endIndex == -1) return null
+      if (endIndex == -1 || startFrom == endIndex) return null
       val message = String(allBytes, startFrom, endIndex - startFrom, StandardCharsets.UTF_8)
-      return toMessagePredicate(message);
+      return toMessagePredicate(message)
     }
     catch (e: Throwable) {
-      MavenLog.LOG.warn(e);
+      MavenLog.LOG.warn(e)
       return null
     }
-
   }
 
-  private fun toMessagePredicate(message: String): MessagePredicate? {
+  private fun toMessagePredicate(message: String): MessagePredicate {
     val first = message.substringBefore("{0}")
     val second = message.substringAfter("{0}")
     return { it.contains(first) && it.contains(second) }
@@ -276,12 +245,33 @@ object CacheForCompilerErrorMessages {
     var i = startFrom
     while (i < this.size - 1) {
       if (this[i] == delimiter[0] && this[i + 1] == delimiter[1]) {
-        return i;
+        return i
       }
       i++
     }
     return -1
   }
+}
 
+object ProcessQuickFix {
+  fun perform(languageLevelQuickFix: LanguageLevelQuickFix?, project: Project, mavenProject: MavenProject): CompletableFuture<*> {
+    if (languageLevelQuickFix == null) {
+      Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
+                   message("maven.quickfix.cannot.update.source.level.module.not.found", mavenProject.displayName),
+                   NotificationType.INFORMATION).notify(project)
+      return CompletableFuture.completedFuture(null)
+    }
+
+    val moduleJdk = MavenUtil.getModuleJdk(MavenProjectsManager.getInstance(project), languageLevelQuickFix.mavenProject)
+    if (moduleJdk == null) {
+      Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
+                   message("maven.quickfix.cannot.update.source.level.module.not.found",
+                           languageLevelQuickFix.mavenProject.displayName),
+                   NotificationType.INFORMATION).notify(project)
+      return CompletableFuture.completedFuture(null)
+    }
+    languageLevelQuickFix.perform(LanguageLevel.parse(moduleJdk.versionString)!!)
+    return CompletableFuture.completedFuture(null)
+  }
 }
 

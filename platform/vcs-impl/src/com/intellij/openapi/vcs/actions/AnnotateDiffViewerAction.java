@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.DiffContext;
@@ -7,6 +7,7 @@ import com.intellij.diff.DiffExtension;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.FileContent;
+import com.intellij.diff.merge.MergeThreesideViewer;
 import com.intellij.diff.merge.TextMergeViewer;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
@@ -163,7 +164,8 @@ public class AnnotateDiffViewerAction {
           VcsException exception = loader.getException();
           if (exception != null) {
             Notification notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
-              .createNotification(VcsBundle.message("notification.title.cant.load.annotations"), exception.getMessage(), NotificationType.ERROR, null, "vcs.cannot.load.annotations");
+              .createNotification(VcsBundle.message("notification.title.cant.load.annotations"), exception.getMessage(), NotificationType.ERROR)
+              .setDisplayId(VcsNotificationIdsHolder.CANNOT_LOAD_ANNOTATIONS);
             showNotification(viewer, notification);
             LOG.warn(exception);
             return;
@@ -182,8 +184,7 @@ public class AnnotateDiffViewerAction {
   private static FileAnnotationLoader createThreesideAnnotationsLoader(@NotNull Project project,
                                                                        @NotNull DiffRequest request,
                                                                        @NotNull ThreeSide side) {
-    if (request instanceof ContentDiffRequest) {
-      ContentDiffRequest requestEx = (ContentDiffRequest)request;
+    if (request instanceof ContentDiffRequest requestEx) {
       if (requestEx.getContents().size() == 3) {
         DiffContent content = side.select(requestEx.getContents());
         FileAnnotationLoader loader = createAnnotationsLoader(project, content);
@@ -216,8 +217,7 @@ public class AnnotateDiffViewerAction {
       }
     }
 
-    if (request instanceof ContentDiffRequest) {
-      ContentDiffRequest requestEx = (ContentDiffRequest)request;
+    if (request instanceof ContentDiffRequest requestEx) {
       if (requestEx.getContents().size() == 2) {
         DiffContent content = side.select(requestEx.getContents());
         return createAnnotationsLoader(project, content);
@@ -291,8 +291,7 @@ public class AnnotateDiffViewerAction {
   public static class MyDiffExtension extends DiffExtension {
     @Override
     public void onViewerCreated(@NotNull DiffViewer diffViewer, @NotNull DiffContext context, @NotNull DiffRequest request) {
-      if (diffViewer instanceof DiffViewerBase) {
-        DiffViewerBase viewer = (DiffViewerBase)diffViewer;
+      if (diffViewer instanceof DiffViewerBase viewer) {
         viewer.addListener(new MyDiffViewerListener(viewer));
       }
     }
@@ -461,8 +460,14 @@ public class AnnotateDiffViewerAction {
 
     @Override
     public int getLineNumber(int currentNumber) {
+      return getLineNumber(currentNumber, false);
+    }
+
+    @Override
+    public int getLineNumber(int currentNumber, boolean approximate) {
       int number = myViewer.transferLineFromOnesideStrict(mySide, currentNumber);
-      return number != -1 ? myLocalChangesProvider.getLineNumber(number) : FAKE_LINE_NUMBER;
+      if (number == -1) return FAKE_LINE_NUMBER;
+      return myLocalChangesProvider.getLineNumber(number, approximate);
     }
 
     @Override
@@ -526,7 +531,7 @@ public class AnnotateDiffViewerAction {
     @Override
     @NotNull
     public Class<? extends ThreesideTextDiffViewerEx> getViewerClass() {
-      return TextMergeViewer.MyThreesideViewer.class;
+      return MergeThreesideViewer.class;
     }
 
     @Nullable

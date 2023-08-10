@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.module.Module;
@@ -18,9 +18,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
-/**
- * @author ilyas
- */
 public final class GroovyConfigUtils extends AbstractConfigUtils {
 
   // to avoid java modules deps the same pattern was copied at org.jetbrains.plugins.gradle.service.GradleInstallationManager.GROOVY_ALL_JAR_PATTERN
@@ -35,14 +32,22 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   @NlsSafe public static final String GROOVY2_1 = "2.1";
   @NlsSafe public static final String GROOVY2_2 = "2.2";
   @NlsSafe public static final String GROOVY2_2_2 = "2.2.2";
+  @NlsSafe public static final String GROOVY2_5_2 = "2.5.2";
   @NlsSafe public static final String GROOVY2_3 = "2.3";
   @NlsSafe public static final String GROOVY2_4 = "2.4";
   @NlsSafe public static final String GROOVY2_5 = "2.5";
   @NlsSafe public static final String GROOVY3_0 = "3.0";
+  @NlsSafe public static final String GROOVY4_0 = "4.0";
 
   private static final GroovyConfigUtils ourGroovyConfigUtils = new GroovyConfigUtils();
   @NonNls private static final String LIB = "/lib";
   @NonNls private static final String EMBEDDABLE = "/embeddable";
+
+  @NlsSafe private static final String ALPHA = "alpha";
+  @NlsSafe private static final String BETA = "beta";
+  @NlsSafe private static final String RC = "rc";
+  @NlsSafe private static final String SNAPSHOT = "SNAPSHOT";
+
 
   private GroovyConfigUtils() {}
 
@@ -60,6 +65,19 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
 
   public static boolean isAtLeastGroovy25(@NotNull PsiElement element) {
     return getInstance().isVersionAtLeast(element, GROOVY2_5);
+  }
+
+  public static boolean isAtLeastGroovy40(@NotNull PsiElement element) {
+    return getInstance().isVersionAtLeast(element, GROOVY4_0);
+  }
+
+  public static @NlsSafe String getMavenSdkRepository(@NotNull String groovyVersion) {
+    if (compareSdkVersions(groovyVersion, GROOVY4_0) >= 0) {
+      return "org.apache.groovy";
+    }
+    else {
+      return "org.codehaus.groovy";
+    }
   }
 
   @Override
@@ -102,7 +120,45 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
     if (module == null) return unknownResult;
     final String sdkVersion = getSDKVersion(module);
     if (sdkVersion == null) return unknownResult;
-    return sdkVersion.compareTo(version) >= 0;
+    return compareSdkVersions(sdkVersion, version) >= 0;
+  }
+
+  public static int compareSdkVersions(@NotNull String leftVersion, @NotNull String rightVersion) {
+    String[] leftVersionParts = leftVersion.split("[.-]");
+    String[] rightVersionParts = rightVersion.split("[.-]");
+    int sizes = Math.max(leftVersionParts.length, rightVersionParts.length);
+    for (int i = 0; i < sizes; ++i) {
+      int leftNumber = getVersionPart(leftVersionParts, i);
+      int rightNumber = getVersionPart(rightVersionParts, i);
+      if (leftNumber < rightNumber) {
+        return -1;
+      } else if (leftNumber > rightNumber) {
+        return 1;
+      }
+    }
+    return 0;
+  }
+
+  public static boolean isUnstable(@NotNull String version) {
+    return version.contains(ALPHA) || version.contains(BETA) || version.contains(RC);
+  }
+
+  private static int getVersionPart(String[] parts, int index) {
+    String part = index < parts.length ? parts[index] : "-4";
+    return switch (part) {
+      case SNAPSHOT -> 999;
+      case ALPHA -> -3;
+      case BETA -> -2;
+      case RC -> -1;
+      default -> {
+        try {
+          yield Integer.parseInt(part);
+        }
+        catch (NumberFormatException __) {
+          yield -4;
+        }
+      }
+    };
   }
 
   @NotNull
@@ -121,22 +177,13 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   public boolean isSDKHome(VirtualFile file) {
     if (file != null && file.isDirectory()) {
       final String path = file.getPath();
-      if (LibrariesUtil.getFilesInDirectoryByPattern(path + LIB, GROOVY_JAR_PATTERN).length > 0 ||
-          LibrariesUtil.getFilesInDirectoryByPattern(path + EMBEDDABLE, GROOVY_ALL_JAR_PATTERN).length > 0 ||
-          LibrariesUtil.getFilesInDirectoryByPattern(path, GROOVY_JAR_PATTERN).length > 0) {
-        return true;
-      }
+      GroovyHomeKind kind = GroovyHomeKind.fromString(path);
+      return kind != null;
     }
     return false;
   }
 
-
-  @NotNull
-  public String getSDKLibVersion(Library library) {
-    return getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library));
-  }
-
   public Collection<String> getSDKVersions(Library[] libraries) {
-    return ContainerUtil.map2List(libraries, library -> getSDKLibVersion(library));
+    return ContainerUtil.map(libraries, library -> getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library)));
   }
 }

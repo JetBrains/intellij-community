@@ -5,7 +5,6 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
@@ -14,16 +13,15 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Objects;
 
-/**
- * @author peter
- */
+import static com.intellij.codeWithMe.ClientIdKt.isOnGuest;
+
 final class ActionTracker {
   private final @NotNull MessageBusConnection myConnection;
   private @NotNull List<Integer> myCaretOffsets;
@@ -35,13 +33,14 @@ final class ActionTracker {
 
   ActionTracker(@NotNull Editor editor, @NotNull Disposable parentDisposable) {
     myEditor = editor;
-    myProject = Objects.requireNonNull(editor.getProject());
+    Project project = editor.getProject();
+    myProject = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     myIsDumb = DumbService.getInstance(myProject).isDumb();
 
     myConnection = myProject.getMessageBus().connect(parentDisposable);
     myConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
         myActionsHappened = true;
       }
     });
@@ -76,10 +75,11 @@ final class ActionTracker {
   }
 
   boolean hasAnythingHappened() {
+    boolean hasDocumentOrCaretChanged = myStartDocStamp != docStamp() ||
+                !myCaretOffsets.equals(caretOffsets());
     return myActionsHappened || myIsDumb != DumbService.getInstance(myProject).isDumb() ||
            myEditor.isDisposed() ||
            (myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) ||
-           myStartDocStamp != docStamp() ||
-           !myCaretOffsets.equals(caretOffsets());
+           (hasDocumentOrCaretChanged && !isOnGuest()); //do not track speculative changes on thin client
   }
 }

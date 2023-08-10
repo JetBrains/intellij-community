@@ -17,12 +17,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class ComponentTreeStructure extends AbstractTreeStructure {
-  private static final Logger LOG = Logger.getInstance(ComponentPtr.class);
+  private static final Logger LOG = Logger.getInstance(ComponentTreeStructure.class);
 
   private final Object myRootElement;
   private final GuiEditor myEditor;
@@ -54,12 +50,10 @@ final class ComponentTreeStructure extends AbstractTreeStructure {
       }
       return elements.toArray();
     }
-    else if (element instanceof ComponentPtr) {
-      final ComponentPtr ptr = (ComponentPtr)element;
+    else if (element instanceof ComponentPtr ptr) {
       LOG.assertTrue(ptr.isValid()); // pointer must be valid
       final RadComponent component = ptr.getComponent();
-      if (component instanceof RadContainer) {
-        final RadContainer container = (RadContainer)component;
+      if (component instanceof RadContainer container) {
         final ComponentPtr[] ptrs = new ComponentPtr[container.getComponentCount()];
         for (int i = 0; i < ptrs.length; i++) {
           ptrs[i] = new ComponentPtr(myEditor, container.getComponent(i));
@@ -105,8 +99,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure {
     else if (element instanceof RadButtonGroup) {
       return myEditor.getRootContainer().getButtonGroups();
     }
-    else if (element instanceof ComponentPtr) { // RadContainer is also RadComponent
-      final ComponentPtr ptr = (ComponentPtr)element;
+    else if (element instanceof ComponentPtr ptr) { // RadContainer is also RadComponent
       if (!ptr.isValid()) return myRootElement;
       final RadComponent component = ptr.getComponent();
       if (component instanceof RadRootContainer) {
@@ -123,7 +116,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure {
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
+  public NodeDescriptor<?> createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
     if (element == myRootElement) {
       return new RootDescriptor(parentDescriptor, myRootElement);
     }
@@ -133,8 +126,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure {
     else if (element instanceof LwInspectionSuppression[]) {
       return new SuppressionGroupDescriptor(parentDescriptor, (LwInspectionSuppression[])element);
     }
-    else if (element instanceof LwInspectionSuppression) {
-      final LwInspectionSuppression suppression = (LwInspectionSuppression)element;
+    else if (element instanceof LwInspectionSuppression suppression) {
       RadComponent target = (RadComponent)(suppression.getComponentId() == null
                                            ? null
                                            : FormEditingUtil.findComponent(myEditor.getRootContainer(), suppression.getComponentId()));

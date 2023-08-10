@@ -24,7 +24,7 @@ public class LayeredLexerTest extends TestCase {
     assertEquals("\\n", nextToken(lexer));
     assertEquals("def\"", nextToken(lexer));
     assertEquals(";", nextToken(lexer));
-    assertEquals(null, lexer.getTokenType());
+    assertNull(lexer.getTokenType());
   }
 
   public void testModification() {
@@ -33,12 +33,12 @@ public class LayeredLexerTest extends TestCase {
     assertEquals("=", nextToken(lexer));
     assertEquals("\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"", nextToken(lexer));
     assertEquals(";", nextToken(lexer));
-    assertEquals(null, lexer.getTokenType());
+    assertNull(lexer.getTokenType());
 
     lexer.start(lexer.getBufferSequence(), 2, lexer.getBufferEnd(), (short) 1);
     assertEquals("\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"", nextToken(lexer));
     assertEquals(";", nextToken(lexer));
-    assertEquals(null, lexer.getTokenType());
+    assertNull(lexer.getTokenType());
   }
 
 
@@ -51,7 +51,7 @@ public class LayeredLexerTest extends TestCase {
     assertEquals("\\n", nextToken(lexer));
     assertEquals("def\"", nextToken(lexer));
     assertEquals(";", nextToken(lexer));
-    assertEquals(null, lexer.getTokenType());
+    assertNull(lexer.getTokenType());
   }
 
   public void testInTheAtEnd() {
@@ -63,7 +63,7 @@ public class LayeredLexerTest extends TestCase {
     assertEquals("\\n", nextToken(lexer));
     assertEquals("\"", nextToken(lexer));
     assertEquals(";", nextToken(lexer));
-    assertEquals(null, lexer.getTokenType());
+    assertNull(lexer.getTokenType());
   }
 
   public void testNonTerminated() {
@@ -73,7 +73,7 @@ public class LayeredLexerTest extends TestCase {
     assertEquals("=", nextToken(lexer));
     assertEquals("\"abc", nextToken(lexer));
     assertEquals("\\n", nextToken(lexer));
-    assertEquals(null, lexer.getTokenType());
+    assertNull(lexer.getTokenType());
   }
 
   public void testNonTerminated2() {
@@ -83,7 +83,7 @@ public class LayeredLexerTest extends TestCase {
     assertEquals("=", nextToken(lexer));
     assertEquals("\"abc", nextToken(lexer));
     assertEquals("\\", nextToken(lexer));
-    assertEquals(null, lexer.getTokenType());
+    assertNull(lexer.getTokenType());
   }
 
   public void testUnicode() {
@@ -94,7 +94,7 @@ public class LayeredLexerTest extends TestCase {
     assertEquals("\\uFFFF", nextToken(lexer));
     assertEquals("\"", nextToken(lexer));
     assertEquals(";", nextToken(lexer));
-    assertEquals(null, lexer.getTokenType());
+    assertNull(lexer.getTokenType());
   }
 
   public void testDelegatesWithBigStates() {
@@ -126,11 +126,11 @@ public class LayeredLexerTest extends TestCase {
     for (String tokenText : tokenTexts) {
       assertEquals(tokenText, nextToken(lexer));
     }
-    assertEquals(null, lexer.getTokenType());
+    assertNull(lexer.getTokenType());
   }
 
   private static String nextToken(Lexer lexer) {
-    assertTrue(lexer.getTokenType() != null);
+    assertNotNull(lexer.getTokenType());
     final String s = lexer.getBufferSequence().subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
     lexer.advance();
     return s;

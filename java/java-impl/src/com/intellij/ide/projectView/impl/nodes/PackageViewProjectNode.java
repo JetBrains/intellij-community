@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
@@ -16,6 +16,7 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -29,16 +30,13 @@ public class PackageViewProjectNode extends AbstractProjectNode {
   public boolean canRepresent(Object element) {
     Project project = getValue();
     if (project == element) return true;
-    if (element instanceof PsiDirectory) {
-      PsiDirectory directory = (PsiDirectory)element;
+    if (element instanceof PsiDirectory directory) {
       element = directory.getVirtualFile();
     }
     if (element instanceof VirtualFile) {
       ProjectRootManager manager = project == null || project.isDisposed() ? null : ProjectRootManager.getInstance(project);
       if (manager != null) {
-        for (VirtualFile root : manager.getContentSourceRoots()) {
-          if (element.equals(root)) return true;
-        }
+        return ArrayUtil.contains(element, manager.getContentSourceRoots());
       }
     }
     return false;

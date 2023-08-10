@@ -27,9 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GroovyArgListSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
@@ -40,8 +37,7 @@ public class GroovyArgListSelectioner extends ExtendWordSelectionHandlerBase {
   public List<TextRange> select(@NotNull PsiElement element, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = super.select(element, editorText, cursorOffset, editor);
 
-    if (element instanceof GrArgumentList) {
-      GrArgumentList args = ((GrArgumentList) element);
+    if (element instanceof GrArgumentList args) {
       TextRange range = args.getTextRange();
       if (range.contains(cursorOffset)) {
         PsiElement leftParen = args.getLeftParen();

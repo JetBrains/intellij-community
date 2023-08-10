@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
+import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,7 +30,6 @@ import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -77,7 +77,7 @@ public class GitMergeUpdater extends GitUpdater {
       myProgressIndicator.setText(originalText);
       return result.success()
              ? GitUpdateResult.SUCCESS
-             : handleMergeFailure(mergeLineListener, untrackedFilesDetector, merger, result.getErrorOutputAsJoinedString());
+             : handleMergeFailure(mergeLineListener, untrackedFilesDetector, merger, result);
     }
     catch (ProcessCanceledException pce) {
       cancel();
@@ -89,7 +89,7 @@ public class GitMergeUpdater extends GitUpdater {
   private GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener,
                                              GitMessageWithFilesDetector untrackedFilesWouldBeOverwrittenByMergeDetector,
                                              final GitMerger merger,
-                                             @Nls String errorMessage) {
+                                             GitCommandResult commandResult) {
     final MergeError error = mergeLineListener.getMergeError();
     LOG.info("merge error: " + error);
     if (error == MergeError.CONFLICT) {
@@ -102,10 +102,12 @@ public class GitMergeUpdater extends GitUpdater {
       LOG.info("Local changes would be overwritten by merge");
       final List<FilePath> paths = getFilesOverwrittenByMerge(mergeLineListener.getOutput());
       final Collection<Change> changes = getLocalChangesFilteredByFiles(paths);
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-        ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes);
-        dialog.setDescription(LocalChangesWouldBeOverwrittenHelper.getErrorNotificationDescription());
-        dialog.show();
+      UIUtil.invokeAndWaitIfNeeded(() -> {
+        LoadingCommittedChangeListPanel panel = new LoadingCommittedChangeListPanel(myProject);
+        panel.setChanges(changes, null);
+        panel.setDescription(LocalChangesWouldBeOverwrittenHelper.getErrorNotificationDescription());
+
+        ChangeListViewerDialog.showDialog(myProject, null, panel);
       });
       return GitUpdateResult.ERROR;
     }
@@ -117,9 +119,9 @@ public class GitMergeUpdater extends GitUpdater {
       return GitUpdateResult.ERROR;
     }
     else {
-      LOG.info("Unknown error: " + errorMessage);
+      LOG.info("Unknown error: " + commandResult.getErrorOutputAsJoinedString());
       VcsNotifier.getInstance(myProject)
-        .notifyError(MERGE_ERROR, GitBundle.message("notification.title.error.merging"), errorMessage);
+        .notifyError(MERGE_ERROR, GitBundle.message("notification.title.error.merging"), commandResult.getErrorOutputAsHtmlString());
       return GitUpdateResult.ERROR;
     }
   }

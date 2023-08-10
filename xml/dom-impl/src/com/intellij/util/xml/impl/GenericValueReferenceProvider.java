@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ProcessingContext;
@@ -19,7 +21,7 @@ public final class GenericValueReferenceProvider extends PsiReferenceProvider {
   private final static Logger LOG = Logger.getInstance(GenericValueReferenceProvider.class);
 
   @Override
-  public final PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull final ProcessingContext context) {
     final DomManagerImpl domManager = DomManagerImpl.getDomManager(psiElement.getProject());
 
     final DomInvocationHandler handler;
@@ -52,12 +54,19 @@ public final class GenericValueReferenceProvider extends PsiReferenceProvider {
     final Referencing referencing = handler.getAnnotation(Referencing.class);
     final Object converter;
     if (referencing == null) {
-      converter = WrappingConverter.getDeepestConverter(domValue.getConverter(), domValue);
+      try (AccessToken ignored = ReferenceProvidersRegistry.suppressAssertNotContributingReferences()) {
+        converter = WrappingConverter.getDeepestConverter(domValue.getConverter(), domValue);
+      }
     }
     else {
       converter = ConverterManagerImpl.getOrCreateConverterInstance(referencing.value());
     }
-    PsiReference[] references = createReferences(domValue, (XmlElement)psiElement, converter, handler, domManager);
+
+    PsiReference[] references;
+    try (AccessToken ignored = ReferenceProvidersRegistry.suppressAssertNotContributingReferences()) {
+      references = createReferences(domValue, (XmlElement)psiElement, converter, handler, domManager);
+    }
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (PsiReference reference : references) {
         if (!reference.isSoft()) {
@@ -66,7 +75,7 @@ public final class GenericValueReferenceProvider extends PsiReferenceProvider {
       }
     }
     if (references.length > 0) {
-      if (converter instanceof EnumConverter && !((EnumConverter)converter).isExhaustive()) {
+      if (converter instanceof EnumConverter && !((EnumConverter<?>)converter).isExhaustive()) {
         // will be handled by core XML
         return PsiReference.EMPTY_ARRAY;
       }

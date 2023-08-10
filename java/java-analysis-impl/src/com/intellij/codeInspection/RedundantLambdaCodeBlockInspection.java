@@ -1,8 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -44,7 +46,7 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
         final PsiElement body = expression.getBody();
         final PsiExpression psiExpression = isCodeBlockRedundant(body);
         if (psiExpression != null) {
@@ -55,8 +57,7 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
           } else {
             errorElement = body.getFirstChild();
           }
-          holder.registerProblem(errorElement, JavaAnalysisBundle.message("statement.lambda.can.be.replaced.with.expression.lambda"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
+          holder.registerProblem(errorElement, JavaAnalysisBundle.message("statement.lambda.can.be.replaced.with.expression.lambda"), new ReplaceWithExprFix());
         }
       }
     };
@@ -97,7 +98,7 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
     return false;
   }
 
-  private static class ReplaceWithExprFix implements LocalQuickFix, HighPriorityAction {
+  private static class ReplaceWithExprFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
     @NotNull
     @Override
     public String getFamilyName() {
@@ -105,17 +106,14 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (element != null) {
-        final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
-        if (lambdaExpression != null) {
-          final PsiElement body = lambdaExpression.getBody();
-          if (body != null) {
-            PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
-            if (expression != null) {
-              body.replace(expression);
-            }
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
+      if (lambdaExpression != null) {
+        final PsiElement body = lambdaExpression.getBody();
+        if (body != null) {
+          PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
+          if (expression != null) {
+            body.replace(expression);
           }
         }
       }

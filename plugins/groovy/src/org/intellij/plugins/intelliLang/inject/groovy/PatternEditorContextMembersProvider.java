@@ -52,7 +52,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
     final PsiFile containingFile = place.getContainingFile();
     if (containingFile == null) {
       PsiUtilCore.ensureValid(place);
-      ResolveUtilKt.getLog().error(place.getClass());
+      ResolveUtilKt.getLog().error("Containing file is null for " + place.getClass());
       return;
     }
     final PsiFile file = containingFile.getOriginalFile();
@@ -80,7 +80,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
       map = new SoftFactoryMap<>() {
 
         @Override
-        protected PsiFile create(Class[] key) {
+        protected PsiFile create(Class @NotNull [] key) {
           String text = PatternCompilerFactory.getFactory().getPatternCompiler(key).dumpContextDeclarations();
           return PsiFileFactory.getInstance(project).createFileFromText("context.groovy", GroovyFileType.GROOVY_FILE_TYPE, text);
         }

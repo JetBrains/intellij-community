@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,10 +143,10 @@ public abstract class ModuleInsight {
   }
 
   private void maximizeModuleFolders(@NotNull Collection<ModuleCandidate> modules) {
-    Object2IntOpenHashMap<File> dirToChildRootCount = new Object2IntOpenHashMap<>();
+    Object2IntMap<File> dirToChildRootCount = new Object2IntOpenHashMap<>();
     for (ModuleCandidate module : modules) {
       walkParents(module.myFolder, this::isEntryPointRoot, file -> {
-        dirToChildRootCount.addTo(file, 1);
+        dirToChildRootCount.mergeInt(file, 1, Math::addExact);
       });
     }
     for (ModuleCandidate module : modules) {
@@ -191,6 +192,14 @@ public abstract class ModuleInsight {
       module.setName(suggested);
       moduleNames.add(suggested);
     }
+  }
+
+  Set<String> getExistingModuleNames() {
+    return Collections.unmodifiableSet(myExistingModuleNames);
+  }
+
+  Set<String> getExistingProjectLibraryNames() {
+    return Collections.unmodifiableSet(myExistingProjectLibraryNames);
   }
 
   @NotNull
@@ -473,7 +482,7 @@ public abstract class ModuleInsight {
     }
   }
 
-  protected abstract void scanSourceFileForImportedPackages(final CharSequence chars, Consumer<String> result);
+  protected abstract void scanSourceFileForImportedPackages(final CharSequence chars, Consumer<? super String> result);
 
   private void scanRootForLibraries(File fromRoot) {
     if (isIgnoredName(fromRoot)) {
@@ -523,6 +532,6 @@ public abstract class ModuleInsight {
 
   protected abstract boolean isLibraryFile(final String fileName);
 
-  protected abstract void scanLibraryForDeclaredPackages(File file, Consumer<String> result) throws IOException;
+  protected abstract void scanLibraryForDeclaredPackages(File file, Consumer<? super String> result) throws IOException;
 
 }

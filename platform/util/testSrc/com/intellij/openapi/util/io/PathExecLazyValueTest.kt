@@ -11,11 +11,11 @@ class PathExecLazyValueTest {
   @Test fun positive() {
     val shell = File(if (SystemInfo.isWindows) "C:\\Windows\\System32\\cmd.exe" else "/bin/sh")
     assertTrue(shell.canExecute())
-    assertTrue(PathExecLazyValue.create(shell.name).value)
+    assertTrue(PathExecLazyValue.create(shell.name).get())
   }
 
   @Test fun negative() {
-    assertFalse(PathExecLazyValue.create("no-one-in-his-right-mind-names-an-exec-like-this").value)
+    assertFalse(PathExecLazyValue.create("no-one-in-his-right-mind-names-an-exec-like-this").get())
   }
 
   @Test(expected = IllegalArgumentException::class) fun contract() {

@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyWriteReference;
 
-/**
- * @author ilyas
- */
 public interface GrArgumentLabel extends GroovyPsiElement, GroovyReference {
 
   GrArgumentLabel[] EMPTY_ARRAY = new GrArgumentLabel[0];

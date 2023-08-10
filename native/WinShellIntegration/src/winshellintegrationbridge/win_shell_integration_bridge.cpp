@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include "win_shell_integration_bridge.h"
 #include "winshellintegration.h"            // intellij::ui::win::*
@@ -29,8 +29,12 @@ namespace intellij::ui::win::jni
         }
 
 
-        WideString jStringToWideString(JNIEnv *jEnv, jstring jStr)
+        /// @returns empty optional if \p jStr is a null pointer
+        std::optional<WideString> jStringToWideString(JNIEnv *jEnv, jstring jStr)
         {
+            if (jStr == nullptr)
+                return std::nullopt;
+
             static_assert(
                 sizeof(jchar) == sizeof(WideString::value_type),
                 "Implementation relies on sizeof(jchar) == sizeof(WideString::value_type)"
@@ -156,7 +160,7 @@ namespace intellij::ui::win::jni
             if (jAppUserModelId == nullptr)
                 throw std::logic_error{ "jAppUserModelId == nullptr" };
 
-            const auto appUserModelId = jStringToWideString(jEnv, jAppUserModelId);
+            const auto appUserModelId = jStringToWideString(jEnv, jAppUserModelId).value();
 
             if (Application::getInstance().obtainAppUserModelId() != appUserModelId)
                 Application::getInstance().setAppUserModelId(appUserModelId);
@@ -291,13 +295,21 @@ namespace intellij::ui::win::jni
             auto jTaskClass = jEnv->GetObjectClass(jTask);
             ensureJNINoErrors(*jEnv);
 
-            auto pathFieldId = jEnv->GetFieldID(jTaskClass, "path", "Ljava/lang/String;");
+
+            auto titleFieldId = jEnv->GetFieldID(jTaskClass, "title", "Ljava/lang/String;");
             ensureJNINoErrors(*jEnv);
 
-            auto argsFieldId = jEnv->GetFieldID(jTaskClass, "args", "Ljava/lang/String;");
+            auto pathFieldId = jEnv->GetFieldID(jTaskClass, "executablePath", "Ljava/lang/String;");
             ensureJNINoErrors(*jEnv);
 
-            auto descriptionFieldId = jEnv->GetFieldID(jTaskClass, "description", "Ljava/lang/String;");
+            auto argsFieldId = jEnv->GetFieldID(jTaskClass, "executableArgs", "Ljava/lang/String;");
+            ensureJNINoErrors(*jEnv);
+
+            auto tooltipFieldId = jEnv->GetFieldID(jTaskClass, "tooltip", "Ljava/lang/String;");
+            ensureJNINoErrors(*jEnv);
+
+
+            auto jTaskTitle  = static_cast<jstring>(jEnv->GetObjectField(jTask, titleFieldId));
             ensureJNINoErrors(*jEnv);
 
             auto jTaskPath  = static_cast<jstring>(jEnv->GetObjectField(jTask, pathFieldId));
@@ -306,22 +318,24 @@ namespace intellij::ui::win::jni
             auto jTaskArgs  = static_cast<jstring>(jEnv->GetObjectField(jTask, argsFieldId));
             ensureJNINoErrors(*jEnv);
 
-            auto jTaskDescription  = static_cast<jstring>(jEnv->GetObjectField(jTask, descriptionFieldId));
+            auto jTaskTooltip = static_cast<jstring>(jEnv->GetObjectField(jTask, tooltipFieldId));
             ensureJNINoErrors(*jEnv);
 
-            auto nativeTaskPath = jStringToWideString(jEnv, jTaskPath);
+
+            auto nativeTaskTitle = jStringToWideString(jEnv, jTaskTitle).value();
+            auto nativeTaskPath = jStringToWideString(jEnv, jTaskPath).value();
             auto nativeTaskArgs = jStringToWideString(jEnv, jTaskArgs);
-            auto nativeTaskDescription = jStringToWideString(jEnv, jTaskDescription);
+            auto nativeTaskTooltip = jStringToWideString(jEnv, jTaskTooltip);
 
             // cleanup
-
-            jEnv->DeleteLocalRef(jTaskDescription);
-            ensureJNINoErrors(*jEnv);
 
             jEnv->DeleteLocalRef(jTaskArgs);
             ensureJNINoErrors(*jEnv);
 
             jEnv->DeleteLocalRef(jTaskPath);
+            ensureJNINoErrors(*jEnv);
+
+            jEnv->DeleteLocalRef(jTaskTitle);
             ensureJNINoErrors(*jEnv);
 
             jEnv->DeleteLocalRef(jTaskClass);
@@ -331,8 +345,9 @@ namespace intellij::ui::win::jni
             ensureJNINoErrors(*jEnv);
 
             nativeTasks.emplace_back(
-                JumpTask::startBuilding(std::move(nativeTaskPath), std::move(nativeTaskDescription))
+                JumpTask::startBuilding(std::move(nativeTaskPath), std::move(nativeTaskTitle))
                           .setApplicationArguments(std::move(nativeTaskArgs))
+                          .setDescription(std::move(nativeTaskTooltip))
                           .buildTask(COM_IS_INITIALIZED_IN_THIS_THREAD)
             );
         }

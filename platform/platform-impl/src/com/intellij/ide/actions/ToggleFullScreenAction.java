@@ -4,8 +4,10 @@ package com.intellij.ide.actions;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
@@ -14,10 +16,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author pegov
- */
-final class ToggleFullScreenAction extends DumbAwareAction implements LightEditCompatible {
+final class ToggleFullScreenAction extends DumbAwareAction implements LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     IdeFrameEx frame = getFrameHelper(e.getProject());
@@ -37,7 +36,7 @@ final class ToggleFullScreenAction extends DumbAwareAction implements LightEditC
       isApplicable = frame != null;
     }
 
-    if (e.getPlace() != ActionPlaces.MAIN_TOOLBAR) {
+    if (!ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
       p.setVisible(isApplicable);
     }
     p.setEnabled(isApplicable);
@@ -46,6 +45,11 @@ final class ToggleFullScreenAction extends DumbAwareAction implements LightEditC
       p.setText(frame.isInFullScreen() ? ActionsBundle.message("action.ToggleFullScreen.text.exit")
                                        : ActionsBundle.message("action.ToggleFullScreen.text.enter"));
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Nullable

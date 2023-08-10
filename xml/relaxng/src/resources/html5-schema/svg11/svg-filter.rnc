@@ -39,6 +39,7 @@ grammar {
         | feMorphology
         | feSpecularLighting
         | feTurbulence
+        | feDropShadow
     a:documentation [
         "\x{a}" ~
         "    feConvolveMatrix: Filter Effect Convolve Matrix Element\x{a}" ~
@@ -215,4 +216,24 @@ grammar {
         attribute pointsAtZ { Number.datatype }?,
         attribute specularExponent { Number.datatype }?,
         attribute limitingConeAngle { Number.datatype }?
+    a:documentation [
+        "\x{a}" ~
+        "    feDropShadow: Filter Effects Drop Shadow\x{a}" ~
+        "  "
+    ]
+    SVG.feDropShadow.content = (animate | set)*
+    SVG.feDropShadow.content &= SVG.Description.class*
+    SVG.feDropShadow.content &= SVG.Script.class*
+    feDropShadow =
+        element feDropShadow {
+            attlist.feDropShadow, SVG.feDropShadow.content
+        }
+    attlist.feDropShadow &=
+        SVG.Core.attrib,
+        SVG.Presentation.attrib,
+        SVG.Style.attrib,
+        SVG.FilterPrimitiveWithIn.attrib,
+        attribute stdDeviation { NumberOptionalNumber.datatype }?,
+        attribute dx { Number.datatype }?,
+        attribute dy { Number.datatype }?
 }

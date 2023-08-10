@@ -508,11 +508,6 @@ public class Graphics2DLog extends Graphics2D {
   }
 
   @Override
-  public void finalize() {
-    myPeer.finalize();
-  }
-
-  @Override
   public String toString() {
     return myPeer.toString();
   }

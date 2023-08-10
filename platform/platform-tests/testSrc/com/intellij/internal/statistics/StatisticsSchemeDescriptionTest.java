@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics;
 
-import com.intellij.internal.statistic.FUCounterCollectorTestCase;
+import com.intellij.internal.statistic.FUCollectorTestCase;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.LogEvent;
 import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.fus.reporting.model.lion3.LogEvent;
 import junit.framework.TestCase;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
   public <T> void doTestField(@NotNull EventField<T> field, @NotNull T value, @NotNull String expected) {
     doTestField(field, value, obj -> {
       TestCase.assertNotNull(obj);
-      TestCase.assertEquals(obj.toString(), expected);
+      TestCase.assertEquals(expected, obj.toString());
     });
   }
 
@@ -45,7 +45,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
     EventLogGroup group = new EventLogGroup("group.id", 1);
     EventId1<T> event = group.registerEvent("test.event", field);
 
-    List<LogEvent> events = FUCounterCollectorTestCase.INSTANCE.collectLogEvents(() -> {
+    List<LogEvent> events = FUCollectorTestCase.INSTANCE.collectLogEvents(getTestRootDisposable(), () -> {
       event.log(value);
       return Unit.INSTANCE;
     });
@@ -67,7 +67,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
 
     EventLogGroup group = new EventLogGroup("newGroup", 1);
     StringEventField nameField = EventFields.StringValidatedByEnum("name", "os");
-    StringListEventField versionsField = EventFields.StringListValidatedByCustomRule("versions", "version");
+    StringListEventField versionsField = EventFields.StringListValidatedByCustomRule("versions", CustomValidationRule.class);
     IntEventField intEventField = EventFields.Int("intField");
     EventId2<Integer, ObjectEventData> event =
       group.registerEvent("testEvent", intEventField, new ObjectEventField("obj", nameField, versionsField));
@@ -75,7 +75,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
     int intValue = 43;
     String testName = "testName";
     List<String> versionsValue = Arrays.asList("1", "2");
-    List<LogEvent> events = FUCounterCollectorTestCase.INSTANCE.collectLogEvents(() -> {
+    List<LogEvent> events = FUCollectorTestCase.INSTANCE.collectLogEvents(getTestRootDisposable(), () -> {
       event.log(43, new ObjectEventData(nameField.with("testName"), versionsField.with(Arrays.asList("1", "2"))));
       return Unit.INSTANCE;
     });
@@ -95,7 +95,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
     IntEventField notRegisteredField = EventFields.Int("not_registered");
     EventId1<ObjectEventData> event = group.registerEvent("testEvent", new ObjectEventField("obj", nameField));
 
-    FUCounterCollectorTestCase.INSTANCE.collectLogEvents(() -> {
+    FUCollectorTestCase.INSTANCE.collectLogEvents(getTestRootDisposable(), () -> {
       assertThrows(IllegalArgumentException.class, "Field not_registered is not in allowed object fields", () ->
         event.log(new ObjectEventData(nameField.with("testName"), notRegisteredField.with(1))));
       return Unit.INSTANCE;
@@ -109,7 +109,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
     EventId1<List<? extends ObjectEventData>> event =
       group.registerEvent("testEvent", new ObjectListEventField("objects", nameField, countField));
 
-    List<LogEvent> events = FUCounterCollectorTestCase.INSTANCE.collectLogEvents(() -> {
+    List<LogEvent> events = FUCollectorTestCase.INSTANCE.collectLogEvents(getTestRootDisposable(), () -> {
       ArrayList<ObjectEventData> objects = new ArrayList<>();
       objects.add(new ObjectEventData(nameField.with("testName1"), countField.with(1)));
       objects.add(new ObjectEventData(nameField.with("testName2"), countField.with(2)));
@@ -135,8 +135,32 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
     doTestField(EventFields.Int("count"), 123, "123");
   }
 
+  public void testPrimitiveRoundedIntField() {
+    doTestField(EventFields.RoundedInt("rounded_count"), 123, "128");
+  }
+
+  public void testPrimitiveNegativeAsRoundedIntField() {
+    doTestField(EventFields.RoundedInt("rounded_count"), -1, "-1");
+  }
+
+  public void testPrimitiveZeroAsRoundedIntField() {
+    doTestField(EventFields.RoundedInt("rounded_count"), 0, "0");
+  }
+
   public void testPrimitiveLongField() {
     doTestField(EventFields.Long("duration_ms"), 123L, "123");
+  }
+
+  public void testPrimitiveRoundedLongField() {
+    doTestField(EventFields.RoundedLong("rounded_duration_ms"), 60L, "64");
+  }
+
+  public void testPrimitiveNegativeAsRoundedLongField() {
+    doTestField(EventFields.RoundedLong("rounded_duration_ms"), -1424612L, "-2097152");
+  }
+
+  public void testPrimitiveZeroAsRoundedLongField() {
+    doTestField(EventFields.RoundedLong("rounded_duration_ms"), 0L, "0");
   }
 
   public void testPrimitiveDoubleField() {
@@ -165,17 +189,17 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
 
   public void testStringListField() {
     doTestListField(
-      EventFields.StringListValidatedByCustomRule("errors", "validation_rules"),
-      ContainerUtil.newArrayList("foo", "bar"),
-      ContainerUtil.newArrayList("foo", "bar")
+      EventFields.StringListValidatedByCustomRule("errors", CustomValidationRule.class),
+      List.of("foo", "bar"),
+      List.of("foo", "bar")
     );
   }
 
   public void testLongListField() {
     doTestListField(
       EventFields.LongList("performance"),
-      ContainerUtil.newArrayList(123L, 15L, 123456L),
-      ContainerUtil.newArrayList("123", "15", "123456")
+      List.of(123L, 15L, 123456L),
+      List.of("123", "15", "123456")
     );
   }
 

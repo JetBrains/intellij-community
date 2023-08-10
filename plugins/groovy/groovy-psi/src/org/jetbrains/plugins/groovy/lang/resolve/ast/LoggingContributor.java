@@ -25,9 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-/**
- * @author peter
- */
 public class LoggingContributor implements AstTransformationSupport {
   private static final ImmutableMap<String, String> ourLoggers = ImmutableMap.<String, String>builder().
     put("groovy.util.logging.Log", "java.util.logging.Logger").

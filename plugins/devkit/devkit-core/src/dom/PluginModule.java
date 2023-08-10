@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
@@ -8,9 +8,8 @@ import org.jetbrains.annotations.NotNull;
 @Presentation(icon = "AllIcons.Nodes.Module")
 public interface PluginModule extends DomElement {
 
-  @NotNull
   @Stubbed
   @NameValue
   @Required
-  GenericAttributeValue<String> getValue();
+  @NotNull GenericAttributeValue<String> getValue();
 }

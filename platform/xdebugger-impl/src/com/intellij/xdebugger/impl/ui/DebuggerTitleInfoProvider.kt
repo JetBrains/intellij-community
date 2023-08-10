@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.openapi.Disposable
@@ -9,14 +9,16 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.TitleInfoProvider
 import com.intellij.openapi.wm.impl.simpleTitleParts.RegistryOption
+import com.intellij.openapi.wm.impl.simpleTitleParts.SimpleTitleInfoProvider
+import com.intellij.util.application
+import com.intellij.util.ui.EDT
 import com.intellij.xdebugger.*
+import javax.swing.SwingUtilities
 
-private class DebuggerTitleInfoProvider : TitleInfoProvider {
+private class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption("ide.debug.in.title", null)) {
   companion object {
     private fun getHelper(project: Project) = project.service<DebuggerTitleInfoProviderService>()
   }
-
-  private val option = RegistryOption("ide.debug.in.title", null)
 
   init {
     option.listener = {
@@ -27,24 +29,9 @@ private class DebuggerTitleInfoProvider : TitleInfoProvider {
     }
   }
 
-  private var updateListeners: MutableSet<((provider: TitleInfoProvider) -> Unit)> = HashSet()
-
-  override val borderlessSuffix: String = ""
-  override val borderlessPrefix: String = " "
-
-  override fun addUpdateListener(project: Project, value: (provider: TitleInfoProvider) -> Unit) {
-    updateListeners.add(value)
+  override fun addSubscription(project: Project, disp: Disposable, value: (provider: TitleInfoProvider) -> Unit) {
+    super.addSubscription(project, disp, value)
     updateSubscriptions(project)
-    updateNotify()
-  }
-
-  private fun isEnabled(): Boolean {
-    return option.isActive && updateListeners.isNotEmpty()
-  }
-
-  private fun updateNotify() {
-    updateListeners.forEach { it(this) }
-    TitleInfoProvider.fireConfigurationChanged()
   }
 
   override fun isActive(project: Project): Boolean {
@@ -72,17 +59,26 @@ private class DebuggerTitleInfoProvider : TitleInfoProvider {
     }
   }
 
-  @Service
+  @Service(Service.Level.PROJECT)
   private class DebuggerTitleInfoProviderService(private val project: Project) {
     var debuggerSessionStarted = false
     var subscriptionDisposable: Disposable? = null
 
     fun checkState(provider: DebuggerTitleInfoProvider) {
-      debuggerSessionStarted = XDebuggerManager.getInstance(project)?.let {
-        provider.isEnabled() && it.debugSessions.isNotEmpty()
-      } ?: false
+      fun action() {
+        application.assertIsDispatchThread()
+        debuggerSessionStarted = XDebuggerManager.getInstance(project)?.let {
+          provider.isEnabled() && it.debugSessions.isNotEmpty()
+        } ?: false
+        provider.updateNotify()
+      }
 
-      provider.updateNotify()
+      if (EDT.isCurrentThreadEdt()) {
+        action()
+      } else {
+        // Some debuggers are known to terminate their debug sessions outside the EDT (RIDER-66994). Reschedule title update for this case.
+        SwingUtilities.invokeLater(::action)
+      }
     }
 
     fun addSubscription(provider: DebuggerTitleInfoProvider): Disposable {
@@ -93,6 +89,7 @@ private class DebuggerTitleInfoProvider : TitleInfoProvider {
 
       project.messageBus.connect(disposable).subscribe(XDebuggerManager.TOPIC, object : XDebuggerManagerListener {
         override fun processStarted(debugProcess: XDebugProcess) {
+          application.assertIsDispatchThread()
           debuggerSessionStarted = true
 
           debugProcess.session.addSessionListener(object : XDebugSessionListener {

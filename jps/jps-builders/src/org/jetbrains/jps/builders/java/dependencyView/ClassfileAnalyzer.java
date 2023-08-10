@@ -1,13 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
@@ -16,12 +15,10 @@ import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
-/**
- * @author: db
- */
-class ClassfileAnalyzer {
+final class ClassfileAnalyzer {
   private final static Logger LOG = Logger.getInstance(ClassfileAnalyzer.class);
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
+  private static final String KOTLIN_LAMBDA_USAGE_CLASS_MARKER = "$sam$";
   private static final int ASM_API_VERSION = Opcodes.API_VERSION;
 
   private final DependencyContext myContext;
@@ -89,7 +86,7 @@ class ClassfileAnalyzer {
       private final TypeRepr.ClassType myType;
       private final ElemType myTarget;
 
-      private final TIntHashSet myUsedArguments = new TIntHashSet();
+      private final IntOpenHashSet myUsedArguments = new IntOpenHashSet();
 
       private AnnotationCrawler(final TypeRepr.ClassType type, final ElemType target) {
         super(ASM_API_VERSION);
@@ -117,32 +114,34 @@ class ClassfileAnalyzer {
         else {
           final String name = Type.getType(value.getClass()).getInternalName();
           // only primitive, String, Class, Enum, another Annotation or array of any of these are allowed
-          if (name.equals("java/lang/Integer")) {
-            descriptor.append("I;");
-          }
-          else if (name.equals("java/lang/Short")) {
-            descriptor.append("S;");
-          }
-          else if (name.equals("java/lang/Long")) {
-            descriptor.append("J;");
-          }
-          else if (name.equals("java/lang/Byte")) {
-            descriptor.append("B;");
-          }
-          else if (name.equals("java/lang/Char")) {
-            descriptor.append("C;");
-          }
-          else if (name.equals("java/lang/Boolean")) {
-            descriptor.append("Z;");
-          }
-          else if (name.equals("java/lang/Float")) {
-            descriptor.append("F;");
-          }
-          else if (name.equals("java/lang/Double")) {
-            descriptor.append("D;");
-          }
-          else {
-            descriptor.append("L").append(name).append(";");
+          switch (name) {
+            case "java/lang/Integer":
+              descriptor.append("I;");
+              break;
+            case "java/lang/Short":
+              descriptor.append("S;");
+              break;
+            case "java/lang/Long":
+              descriptor.append("J;");
+              break;
+            case "java/lang/Byte":
+              descriptor.append("B;");
+              break;
+            case "java/lang/Char":
+              descriptor.append("C;");
+              break;
+            case "java/lang/Boolean":
+              descriptor.append("Z;");
+              break;
+            case "java/lang/Float":
+              descriptor.append("F;");
+              break;
+            case "java/lang/Double":
+              descriptor.append("D;");
+              break;
+            default:
+              descriptor.append("L").append(name).append(";");
+              break;
           }
         }
         return descriptor.toString();
@@ -212,13 +211,12 @@ class ClassfileAnalyzer {
 
       @Override
       public void visitEnd() {
-        final TIntHashSet s = myAnnotationArguments.get(myType);
-
+        IntSet s = myAnnotationArguments.get(myType);
         if (s == null) {
           myAnnotationArguments.put(myType, myUsedArguments);
         }
         else {
-          s.retainAll(myUsedArguments.toArray());
+          s.retainAll(myUsedArguments);
         }
       }
     }
@@ -322,18 +320,18 @@ class ClassfileAnalyzer {
     private final Ref<Boolean> myLocalClassFlag = Ref.create(false);
     private final Ref<Boolean> myAnonymousClassFlag = Ref.create(false);
 
-    private final Set<MethodRepr> myMethods = new THashSet<>();
-    private final Set<FieldRepr> myFields = new THashSet<>();
-    private final Set<UsageRepr.Usage> myUsages = new THashSet<>();
+    private final Set<MethodRepr> myMethods = new HashSet<>();
+    private final Set<FieldRepr> myFields = new HashSet<>();
+    private final Set<UsageRepr.Usage> myUsages = new HashSet<>();
     private final Set<ElemType> myTargets = EnumSet.noneOf(ElemType.class);
     private RetentionPolicy myRetentionPolicy = null;
 
-    private final Map<TypeRepr.ClassType, TIntHashSet> myAnnotationArguments = new THashMap<>();
-    private final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new THashMap<>();
-    private final Set<TypeRepr.ClassType> myAnnotations = new THashSet<>();
+    private final Map<TypeRepr.ClassType, IntSet> myAnnotationArguments = new HashMap<>();
+    private final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new HashMap<>();
+    private final Set<TypeRepr.ClassType> myAnnotations = new HashSet<>();
 
-    private final Set<ModuleRequiresRepr> myModuleRequires = new THashSet<>();
-    private final Set<ModulePackageRepr> myModuleExports = new THashSet<>();
+    private final Set<ModuleRequiresRepr> myModuleRequires = new HashSet<>();
+    private final Set<ModulePackageRepr> myModuleExports = new HashSet<>();
 
     ClassCrawler(final int fn, boolean isGenerated) {
       super(ASM_API_VERSION);
@@ -392,10 +390,9 @@ class ClassfileAnalyzer {
     @Override
     public void visitEnd() {
       for (Map.Entry<TypeRepr.ClassType, Set<ElemType>> entry : myAnnotationTargets.entrySet()) {
-        final TypeRepr.ClassType type = entry.getKey();
-        final Set<ElemType> targets = entry.getValue();
-        final TIntHashSet usedArguments = myAnnotationArguments.get(type);
-
+        TypeRepr.ClassType type = entry.getKey();
+        Set<ElemType> targets = entry.getValue();
+        IntSet usedArguments = myAnnotationArguments.get(type);
         myUsages.add(UsageRepr.createAnnotationUsage(myContext, type, usedArguments, targets));
       }
     }
@@ -433,7 +430,7 @@ class ClassfileAnalyzer {
       processSignature(signature);
 
       return new FieldVisitor(ASM_API_VERSION) {
-        final Set<TypeRepr.ClassType> annotations = new THashSet<>();
+        final Set<TypeRepr.ClassType> annotations = new HashSet<>();
 
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
@@ -461,8 +458,8 @@ class ClassfileAnalyzer {
     @Override
     public MethodVisitor visitMethod(final int access, final String n, final String desc, final String signature, final String[] exceptions) {
       final Ref<Object> defaultValue = Ref.create();
-      final Set<TypeRepr.ClassType> annotations = new THashSet<>();
-      final Set<ParamAnnotation> paramAnnotations = new THashSet<>();
+      final Set<TypeRepr.ClassType> annotations = new HashSet<>();
+      final Set<ParamAnnotation> paramAnnotations = new HashSet<>();
       processSignature(signature);
 
       return new MethodVisitor(ASM_API_VERSION) {
@@ -578,12 +575,19 @@ class ClassfileAnalyzer {
 
         @Override
         public void visitTypeInsn(int opcode, String type) {
-          final TypeRepr.AbstractType typ = type.startsWith("[") ? TypeRepr.getType(myContext, type) : TypeRepr.createClassType(
-            myContext, myContext.get(type));
+          final TypeRepr.AbstractType typ = type.startsWith("[")? TypeRepr.getType(myContext, type) : TypeRepr.createClassType(myContext, myContext.get(type));
 
           if (opcode == Opcodes.NEW) {
             myUsages.add(UsageRepr.createClassUsage(myContext, ((TypeRepr.ClassType)typ).className));
             myUsages.add(UsageRepr.createClassNewUsage(myContext, ((TypeRepr.ClassType)typ).className));
+            final int ktLambdaMarker = type.indexOf(KOTLIN_LAMBDA_USAGE_CLASS_MARKER);
+            if (ktLambdaMarker > 0) {
+              final int ifNameStart = ktLambdaMarker + KOTLIN_LAMBDA_USAGE_CLASS_MARKER.length();
+              final int ifNameEnd = type.indexOf("$", ifNameStart);
+              if (ifNameEnd > ifNameStart) {
+                myUsages.add(UsageRepr.createClassNewUsage(myContext, myContext.get(type.substring(ifNameStart, ifNameEnd).replace('_', '/'))));
+              }
+            }
           }
           else if (opcode == Opcodes.ANEWARRAY) {
             if (typ instanceof TypeRepr.ClassType) {
@@ -648,6 +652,8 @@ class ClassfileAnalyzer {
                 final Type samMethodType = (Type)bsmArgs[0];
                 if (samMethodType.getSort() == Type.METHOD) {
                   registerMethodUsage(returnType.getInternalName(), methodName, samMethodType.getDescriptor());
+                  // reflect dynamic proxy instantiation with NewClassUsage
+                  myUsages.add(UsageRepr.createClassNewUsage(myContext, myContext.get(returnType.getInternalName())));
                 }
               }
             }
@@ -658,7 +664,7 @@ class ClassfileAnalyzer {
 
         private void processMethodHandle(Handle handle) {
           final String memberOwner = handle.getOwner();
-          if (myContext.get(memberOwner) != myName) {
+          if (memberOwner != null &&  !memberOwner.equals(myClassNameHolder.get())) {
             // do not register access to own class members
             final String memberName = handle.getName();
             final String memberDescriptor = handle.getDesc();
@@ -715,7 +721,6 @@ class ClassfileAnalyzer {
     }
 
     /**
-     * @param handle
      * @return corresponding field access opcode or -1 if the handle does not represent field access handle
      */
     private int getFieldAccessOpcode(Handle handle) {
@@ -730,7 +735,7 @@ class ClassfileAnalyzer {
 
     @Override
     public void visitInnerClass(String name, String outerName, String innerName, int access) {
-      if (myContext.get(name) == myName) {
+      if (name != null && name.equals(myClassNameHolder.get())) {
         // set outer class name only if we are parsing the real inner class and
         // not the reference to inner class inside some top-level class
         myAccess |= access; // information about some access flags for the inner class is missing from the mask passed to 'visit' method
@@ -762,37 +767,37 @@ class ClassfileAnalyzer {
 
       @Override
       public SignatureVisitor visitClassBound() {
-        return this;
+        return super.visitClassBound();
       }
 
       @Override
       public SignatureVisitor visitInterfaceBound() {
-        return this;
+        return super.visitInterfaceBound();
       }
 
       @Override
       public SignatureVisitor visitSuperclass() {
-        return this;
+        return super.visitSuperclass();
       }
 
       @Override
       public SignatureVisitor visitInterface() {
-        return this;
+        return super.visitInterface();
       }
 
       @Override
       public SignatureVisitor visitParameterType() {
-        return this;
+        return super.visitParameterType();
       }
 
       @Override
       public SignatureVisitor visitReturnType() {
-        return this;
+        return super.visitReturnType();
       }
 
       @Override
       public SignatureVisitor visitExceptionType() {
-        return this;
+        return super.visitExceptionType();
       }
 
       @Override
@@ -803,14 +808,14 @@ class ClassfileAnalyzer {
 
       @Override
       public SignatureVisitor visitArrayType() {
-        return this;
+        return super.visitArrayType();
       }
 
       @Override
       public void visitInnerClassType(String name) { }
 
       @Override
-      public void visitTypeArgument() { }
+      public void visitTypeArgument() { super.visitTypeArgument(); }
 
       @Override
       public SignatureVisitor visitTypeArgument(char wildcard) {
@@ -818,7 +823,7 @@ class ClassfileAnalyzer {
       }
 
       @Override
-      public void visitEnd() { }
+      public void visitEnd() { super.visitEnd(); }
 
       @Override
       public void visitClassType(String name) {

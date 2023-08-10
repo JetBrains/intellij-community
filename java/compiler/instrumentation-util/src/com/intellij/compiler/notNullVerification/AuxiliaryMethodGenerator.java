@@ -19,7 +19,7 @@ final class AuxiliaryMethodGenerator {
 
   private final ClassReader myOriginalClass;
   private final boolean myIsInterface;
-  private final List<ReportingPlace> myReportingPlaces = new ArrayList<ReportingPlace>();
+  private final List<ReportingPlace> myReportingPlaces = new ArrayList<>();
   private String myReportingMethod;
   private int myMaxArgCount;
 
@@ -46,7 +46,7 @@ final class AuxiliaryMethodGenerator {
   }
 
   private Set<String> populateExistingMethods() {
-    final Set<String> existingMethods = new HashSet<String>();
+    final Set<String> existingMethods = new HashSet<>();
     myOriginalClass.accept(new ClassVisitor(API_VERSION) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
@@ -217,7 +217,7 @@ final class AuxiliaryMethodGenerator {
     }
 
     private Map<Label, ReportingPlace> deduplicateLabels(Label[] labels) {
-      Map<Label, ReportingPlace> label2Place = new LinkedHashMap<Label, ReportingPlace>();
+      Map<Label, ReportingPlace> label2Place = new LinkedHashMap<>();
       for (int i = 0; i < labels.length; i++) {
         if (!label2Place.containsKey(labels[i])) {
           label2Place.put(labels[i], myReportingPlaces.get(i));
@@ -227,7 +227,7 @@ final class AuxiliaryMethodGenerator {
     }
 
     private Label[] getCaseLabels() {
-      Map<T, Label> labelsByValue = new HashMap<T, Label>();
+      Map<T, Label> labelsByValue = new HashMap<>();
       Label[] labels = new Label[myReportingPlaces.size()];
       for (int i = 0; i < myReportingPlaces.size(); i++) {
         labels[i] = getOrCreateLabel(labelsByValue, getSwitchedValue(myReportingPlaces.get(i)));

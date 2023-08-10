@@ -1,0 +1,9 @@
+// "Add missing actual declarations" "true"
+
+expect enum class MyEnum {
+    FIRST,
+    SECOND,
+    LAST;
+
+    val num: Int
+}

@@ -26,6 +26,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyImplicitImportNameDefiner;
+import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.types.PyABCUtil;
 import com.jetbrains.python.psi.types.PyType;
@@ -38,9 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-/**
- * @author vlan
- */
 public class PyIterableVariableMacro extends Macro {
   @Override
   public String getName() {
@@ -54,6 +52,9 @@ public class PyIterableVariableMacro extends Macro {
     if (element != null) {
       final List<PsiNamedElement> components = getIterableElements(element);
       if (!components.isEmpty()) {
+        if (components.get(0) instanceof PyNamedParameter namedParameter) {
+          return new PsiElementResult(namedParameter.getNameIdentifier());
+        }
         return new PsiElementResult(components.get(0));
       }
     }

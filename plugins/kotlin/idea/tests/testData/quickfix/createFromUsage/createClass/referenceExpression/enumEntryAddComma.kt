@@ -1,0 +1,9 @@
+// "Create enum constant 'PUBLIC'" "true"
+enum class TopicState {
+    PRIVATE
+}
+
+fun foo() {
+    TopicState.<caret>PUBLIC
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromUsageFix

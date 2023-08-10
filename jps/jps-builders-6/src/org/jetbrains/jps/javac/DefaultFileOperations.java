@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.javac.Iterators.BooleanFunction;
+import org.jetbrains.jps.javac.Iterators.Function;
 
 import javax.tools.*;
 import java.io.File;
@@ -15,33 +15,48 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 final class DefaultFileOperations implements FileOperations {
-  private static final File[] NULL_FILE_ARRAY = new File[0];
+  private static final Iterable<File> NULL_ITERABLE = new Iterable<File>() {
+    @NotNull
+    @Override
+    public Iterator<File> iterator() {
+      return Collections.emptyIterator();
+    }
+
+    @Override
+    public String toString() {
+      return "NULL_ITERABLE";
+    }
+  };
   private static final Archive NULL_ARCHIVE = new Archive() {
     @NotNull
     @Override
-    public Iterable<JavaFileObject> list(String relPath, Set<? extends JavaFileObject.Kind> kinds, boolean recurse) {
+    public Iterable<JavaFileObject> list(String relPath, Set<JavaFileObject.Kind> kinds, boolean recurse) {
       return Collections.emptyList();
     }
     @Override
     public void close(){
     }
+
+    @Override
+    public String toString() {
+      return "NULL_ARCHIVE";
+    }
   };
 
-  private final Map<File, File[]> myDirectoryCache = new HashMap<File, File[]>();
-  private final Map<File, FileOperations.Archive> myArchiveCache = new HashMap<File, FileOperations.Archive>();
-  private final Map<File, Boolean> myIsFile = new HashMap<File, Boolean>();
+  private final Map<File, Iterable<File>> myDirectoryCache = new HashMap<>();
+  private final Map<File, FileOperations.Archive> myArchiveCache = new HashMap<>();
+  private final Map<File, Boolean> myIsFile = new HashMap<>();
 
   @Override
   @NotNull
   public Iterable<File> listFiles(final File file, final boolean recursively) {
-    final Iterable<File> childrenIterable = new Iterable<File>() {
-      @NotNull
+    final Iterable<File> childrenIterable = Iterators.lazy(new Iterators.Provider<Iterable<File>>() {
       @Override
-      public Iterator<File> iterator() {
-        final File[] children = listChildren(file);
-        return (children == null || children.length == 0 ? Collections.<File>emptyList() : Arrays.asList(children)).iterator();
+      public Iterable<File> get() {
+        final Iterable<File> children = listChildren(file);
+        return children == null? Collections.<File>emptyList() : children;
       }
-    };
+    });
     return !recursively? childrenIterable : Iterators.flat(Iterators.map(childrenIterable, new Function<File, Iterable<File>>() {
       @Override
       public Iterable<File> fun(File ff) {
@@ -54,14 +69,14 @@ final class DefaultFileOperations implements FileOperations {
     return Iterators.flat(Iterators.map(Iterators.asIterable(file), new Function<File, Iterable<File>>() {
       @Override
       public Iterable<File> fun(File f) {
-        final File[] children = listChildren(f);
+        final Iterable<File> children = listChildren(f);
         if (children == null) { // not a dir
           return Iterators.asIterable(f);
         }
-        if (children.length == 0) {
-          return Collections.emptyList();
+        if (Iterators.isEmptyCollection(children)) {
+          return children;
         }
-        return Iterators.flat(Iterators.map(Arrays.asList(children), new Function<File, Iterable<File>>() {
+        return Iterators.flat(Iterators.map(children, new Function<File, Iterable<File>>() {
           @Override
           public Iterable<File> fun(File ff) {
             return asRecursiveIterable(ff);
@@ -75,24 +90,21 @@ final class DefaultFileOperations implements FileOperations {
   public boolean isFile(File file) {
     Boolean cachedIsFile = myIsFile.get(file);
     if (cachedIsFile == null) {
-      cachedIsFile = file.isFile();
-      myIsFile.put(file, cachedIsFile);
+      myIsFile.put(file, cachedIsFile = file.isFile());
     }
-    return cachedIsFile == Boolean.TRUE;
+    return cachedIsFile.booleanValue();
   }
 
   @Override
   public void clearCaches(@Nullable File file) {
     if (file != null) {
-      if (myDirectoryCache.remove(file) == null) {
-        // non-null value means the file is a directory and thus it cannot be an archive
-        final Archive arch = myArchiveCache.remove(file);
-        if (arch != null) {
-          try {
-            arch.close();
-          }
-          catch (IOException ignored) {
-          }
+      myDirectoryCache.clear();
+      final Archive arch = myArchiveCache.remove(file);
+      if (arch != null) {
+        try {
+          arch.close();
+        }
+        catch (IOException ignored) {
         }
       }
     }
@@ -140,7 +152,7 @@ final class DefaultFileOperations implements FileOperations {
     return null;
   }
 
-  // true iff this file exists, denotes a file and has jar or zip extension
+  // true iff this file exists, denotes a file and has `jar` or `zip` extension
   private  boolean isJarOrZip(File root) {
     if (!isFile(root)) {
       return false;
@@ -150,21 +162,48 @@ final class DefaultFileOperations implements FileOperations {
   }
 
   @Nullable
-  private File[] listChildren(File file) {
-    File[] cached = myDirectoryCache.get(file);
+  private Iterable<File> listChildren(File file) {
+    Iterable<File> cached = myDirectoryCache.get(file);
     if (cached == null) {
-      cached = file.listFiles();
-      myDirectoryCache.put(file, cached == null ? NULL_FILE_ARRAY : cached);
+      final Iterable<File> parentFiles = lookupCachedParent(file);
+      if (parentFiles == null || (parentFiles != NULL_ITERABLE && !Iterators.isEmptyCollection(parentFiles))) {
+        try {
+          cached = listFiles(file);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+      myDirectoryCache.put(file, cached == null? NULL_ITERABLE : cached);
     }
-    return cached == NULL_FILE_ARRAY ? null : cached;
+    return cached == NULL_ITERABLE? null : cached;
   }
 
+  private Iterable<File> lookupCachedParent(File file) {
+    if (!myDirectoryCache.isEmpty()) {
+      File parent = file.getParentFile();
+      for (int i = 0; i < 10 && parent != null; i++) { // at most 10 levels upwards
+        final Iterable<File> cached = myDirectoryCache.get(parent);
+        if (cached != null) {
+          return cached;
+        }
+        parent = parent.getParentFile();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Iterable<File> listFiles(File file) throws IOException {
+    final File[] files = file.listFiles();
+    return files != null? Arrays.asList(files) : null;
+  }
 
   private static class ZipArchive implements FileOperations.Archive {
     private final ZipFile myZip;
-    private final Map<String, Collection<ZipEntry>> myPaths = new HashMap<String, Collection<ZipEntry>>();
+    private final Map<String, Collection<ZipEntry>> myPaths = new HashMap<>();
     private final Function<ZipEntry, JavaFileObject> myToFileObjectConverter;
-    private static final FileObjectKindFilter<ZipEntry> ourEntryFilter = new FileObjectKindFilter<ZipEntry>(new Function<ZipEntry, String>() {
+    private static final FileObjectKindFilter<ZipEntry> ourEntryFilter = new FileObjectKindFilter<>(new Function<ZipEntry, String>() {
       @Override
       public String fun(ZipEntry zipEntry) {
         return zipEntry.getName();
@@ -180,7 +219,7 @@ final class DefaultFileOperations implements FileOperations {
           final String parent = getParentPath(entry.getName());
           Collection<ZipEntry> children = myPaths.get(parent);
           if (children == null) {
-            children = new ArrayList<ZipEntry>();
+            children = new ArrayList<>();
             myPaths.put(parent, children);
           }
           children.add(entry);
@@ -196,7 +235,7 @@ final class DefaultFileOperations implements FileOperations {
 
     @NotNull
     @Override
-    public Iterable<JavaFileObject> list(final String relPath, Set<? extends JavaFileObject.Kind> kinds, boolean recurse) throws IOException{
+    public Iterable<JavaFileObject> list(final String relPath, Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException{
       final Collection<ZipEntry> entries = myPaths.get(relPath);
       if (entries == null || entries.isEmpty()) {
         return Collections.emptyList();
@@ -242,5 +281,4 @@ final class DefaultFileOperations implements FileOperations {
       return path.substring(0, idx);
     }
   }
-
 }

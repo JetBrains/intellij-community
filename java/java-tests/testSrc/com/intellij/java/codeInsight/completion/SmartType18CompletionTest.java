@@ -19,9 +19,16 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+
+import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement;
 
 public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   @Override
@@ -244,6 +251,7 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     configureByTestName();
     myFixture.complete(CompletionType.SMART, 1);
     myFixture.type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
@@ -256,7 +264,7 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   public void testCollectionsEmptyMap() { doTest(true); }
   @NeedsIndex.ForStandardLibrary
   public void testExpectedSuperOfLowerBound() { 
-    doTest(false);
+    doTest(true);
   }
   public void testLowerBoundOfFreshVariable() { 
     doTest(false);
@@ -352,5 +360,80 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     configureByTestName();
     Lookup lookup = getLookup();
     assertEquals(1, lookup.getItems().stream().filter(item -> item.getLookupString().equals("emptyList")).count());
+  }
+
+  public void testNewClass() {
+    myFixture.configureByText("Test.java", "class MyClass {MyClass() {}} class UseClass {void test() {MyClass obj = <caret>}}");
+    myFixture.complete(CompletionType.SMART);
+    assertEquals(List.of("new MyClass"), myFixture.getLookupElementStrings());
+    LookupElement element = myFixture.getLookupElements()[0];
+    LookupElementPresentation presentation = renderElement(element);
+    assertEquals("new MyClass", presentation.getItemText());
+    myFixture.type('\n');
+    myFixture.checkResult("class MyClass {MyClass() {}} class UseClass {void test() {MyClass obj = new MyClass();}}");
+  }
+
+  public void testNewClassInner() {
+    myFixture.configureByText("Test.java", "class UseClass {class MyClass {MyClass() {}} void test() {MyClass obj = <caret>}}");
+    myFixture.complete(CompletionType.SMART);
+    assertEquals(List.of("new MyClass"), myFixture.getLookupElementStrings());
+    LookupElement element = myFixture.getLookupElements()[0];
+    LookupElementPresentation presentation = renderElement(element);
+    assertEquals("new MyClass", presentation.getItemText());
+    myFixture.type('\n');
+    myFixture.checkResult("class UseClass {class MyClass {MyClass() {}} void test() {MyClass obj = new MyClass();}}");
+  }
+
+  public void testNewClassInnerNoInstance() {
+    myFixture.configureByText("Test.java", "class UseClass {class MyClass {MyClass() {}} static void test() {MyClass obj = <caret>}}");
+    myFixture.complete(CompletionType.SMART);
+    assertEquals(List.of(), myFixture.getLookupElementStrings());
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  public void testNewClassGeneric() {
+    myFixture.configureByText("Test.java", "class MyClass<T> {MyClass() {}} class UseClass {void test() {MyClass<String> obj = <caret>}}");
+    myFixture.complete(CompletionType.SMART);
+    assertEquals(List.of("new MyClass"), myFixture.getLookupElementStrings());
+    LookupElement element = myFixture.getLookupElements()[0];
+    LookupElementPresentation presentation = renderElement(element);
+    assertEquals("new MyClass", presentation.getItemText());
+    assertEquals("<>()", presentation.getTailText());
+    assertEquals("MyClass<String>", presentation.getTypeText());
+    myFixture.type('\n');
+    myFixture.checkResult("class MyClass<T> {MyClass() {}} class UseClass {void test() {MyClass<String> obj = new MyClass<>();}}");
+  }
+
+  @NeedsIndex.Full(reason = "inheritors search")
+  public void testNewClassSubclass() {
+    myFixture.configureByText("Test.java", """
+      public class Test {
+        abstract static class Foo<T> {
+          Foo() {}
+        }
+
+        static class Bar extends Foo<String> {Bar() {}}
+
+        public static void main(String[] args) {
+          Foo<String> foo = <caret>
+
+        }
+      }""");
+    myFixture.complete(CompletionType.SMART, 2);
+    assertEquals(List.of("new Bar"), myFixture.getLookupElementStrings());
+    myFixture.type('\n');
+    myFixture.checkResult("""
+                            public class Test {
+                              abstract static class Foo<T> {
+                                Foo() {}
+                              }
+
+                              static class Bar extends Foo<String> {Bar() {}}
+
+                              public static void main(String[] args) {
+                                Foo<String> foo = new Bar();
+
+                              }
+                            }""");
   }
 }

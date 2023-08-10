@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -93,7 +94,9 @@ public final class InspectionDescriptionInfo {
     return CachedValuesManager.getCachedValue(psiClass, () -> {
       Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
       Extension extension = module == null ? null : doFindExtension(module, psiClass);
-      return CachedValueProvider.Result.create(extension, UastModificationTracker.getInstance(psiClass.getProject()));
+      return CachedValueProvider.Result.create(extension,
+                                               UastModificationTracker.getInstance(psiClass.getProject()),
+                                               psiClass.getManager().getModificationTracker().forLanguage(XMLLanguage.INSTANCE));
     });
   }
 
@@ -117,8 +120,7 @@ public final class InspectionDescriptionInfo {
           PsiElement parent = element.getParent();
           if (parent instanceof XmlAttribute && "implementationClass".equals(((XmlAttribute)parent).getName())) {
             DomElement domElement = DomUtil.getDomElement(parent.getParent());
-            if (domElement instanceof Extension) {
-              Extension extension = (Extension)domElement;
+            if (domElement instanceof Extension extension) {
               ExtensionPoint extensionPoint = extension.getExtensionPoint();
               if (extensionPoint != null &&
                   InheritanceUtil.isInheritor(extensionPoint.getBeanClass().getValue(), InspectionEP.class.getName())) {

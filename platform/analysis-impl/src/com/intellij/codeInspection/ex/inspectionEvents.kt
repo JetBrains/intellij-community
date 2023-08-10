@@ -1,22 +1,37 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
-fun InspectListener.reportWhenInspectionFinished(toolWrapper: InspectionToolWrapper<*, *>,
-                                                 kind: InspectListener.InspectionKind,
-                                                 inspectAction: Runnable) {
-  val start = System.currentTimeMillis()
+import java.util.concurrent.Callable
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
+import com.intellij.util.TimeoutUtil
+
+fun reportWhenInspectionFinished(inspectListener: InspectListener,
+                                 toolWrapper: InspectionToolWrapper<*, *>,
+                                 kind: InspectListener.InspectionKind,
+                                 file: PsiFile?,
+                                 project: Project,
+                                 inspectAction: Callable<Int>) {
+  val start = System.nanoTime()
+  var problemsCount = -1
   try {
-    inspectAction.run()
-  } finally {
-    inspectionFinished(System.currentTimeMillis() - start, Thread.currentThread().id, toolWrapper, kind)
+    problemsCount = inspectAction.call()
+  }
+  finally {
+    inspectListener.inspectionFinished(TimeoutUtil.getDurationMillis(start), Thread.currentThread().id, problemsCount, toolWrapper,
+                                       kind, file, project)
   }
 }
 
-fun InspectListener.reportWhenActivityFinished(activityKind: InspectListener.ActivityKind, activity: Runnable) {
+fun reportWhenActivityFinished(inspectListener: InspectListener,
+                               activityKind: InspectListener.ActivityKind,
+                               project: Project,
+                               activity: Runnable) {
   val start = System.currentTimeMillis()
   try {
     activity.run()
-  } finally {
-    activityFinished(System.currentTimeMillis() - start, Thread.currentThread().id, activityKind)
+  }
+  finally {
+    inspectListener.activityFinished(System.currentTimeMillis() - start, Thread.currentThread().id, activityKind, project)
   }
 }

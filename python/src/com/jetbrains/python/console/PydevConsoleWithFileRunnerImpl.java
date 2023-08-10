@@ -1,15 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.util.Consumer;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.function.Function;
 
 public class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
   @NotNull private final PythonRunConfiguration myConfig;
@@ -21,10 +23,22 @@ public class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
                                         @Nullable String workingDir,
                                         @NotNull Map<String, String> environmentVariables,
                                         @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                        @NotNull Consumer<String> rerunAction,
                                         @NotNull PythonRunConfiguration config,
                                         String... statementsToExecute) {
-    super(project, sdk, consoleType, title, workingDir, environmentVariables, settingsProvider, rerunAction, statementsToExecute);
+    super(project, sdk, consoleType, title, workingDir, environmentVariables, settingsProvider, statementsToExecute);
+    myConfig = config;
+  }
+
+  public PydevConsoleWithFileRunnerImpl(@NotNull Project project,
+                                        @Nullable Sdk sdk,
+                                        @NotNull PyConsoleType consoleType,
+                                        @NotNull @NlsContexts.TabTitle String title,
+                                        @Nullable Function<TargetEnvironment, String> workingDir,
+                                        @NotNull Map<String, String> environmentVariables,
+                                        @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
+                                        @NotNull PythonRunConfiguration config,
+                                        @NotNull Function<TargetEnvironment, @NotNull String> startScriptFun) {
+    super(project, sdk, consoleType, title, workingDir, environmentVariables, settingsProvider, startScriptFun);
     myConfig = config;
   }
 
@@ -34,6 +48,11 @@ public class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
                                                           @NotNull Sdk sdk,
                                                           @NotNull Map<String, String> environmentVariables) {
     return new PythonConsoleWithFileRunParams(myConsoleSettings, workingDir, sdk, environmentVariables);
+  }
+
+  @Override
+  protected final @Nullable Module getModule() {
+    return myConfig.getModule();
   }
 
   public class PythonConsoleWithFileRunParams extends PythonConsoleRunParams {
@@ -52,11 +71,6 @@ public class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
     @Override
     public String getModuleName() {
       return myConfig.getModuleName();
-    }
-
-    @Override
-    public String getWorkingDirectory() {
-      return super.getWorkingDirectory();
     }
 
     @Override

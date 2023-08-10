@@ -86,6 +86,6 @@ public abstract class ModuleElementTypeBase<E extends ModulePackagingElementBase
   public abstract String getElementText(@NotNull String moduleName);
 
   public Icon getElementIcon(@Nullable Module module) {
-    return module != null ? ModuleType.get(module).getIcon() : AllIcons.Modules.Output;
+    return module != null ? ModuleType.get(module).getIcon() : AllIcons.Nodes.Module;
   }
 }

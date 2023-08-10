@@ -1,14 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -24,34 +25,36 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.AppUIUtilKt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Restarter;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
-
-import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.util.containers.ContainerUtil.newHashMap;
 
 public final class CreateDesktopEntryAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CreateDesktopEntryAction.class);
 
   public static boolean isAvailable() {
-    return SystemInfo.isXWindow && !ExternalUpdateManager.isRoaming() && SystemInfo.hasXdgOpen();
+    return SystemInfo.isXWindow && !ExternalUpdateManager.isCreatingDesktopEntries() && SystemInfo.hasXdgOpen();
   }
 
   @Override
   public void update(@NotNull AnActionEvent event) {
     boolean enabled = isAvailable();
     event.getPresentation().setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -71,16 +74,19 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
         try {
           createDesktopEntry(globalEntry);
 
-          String message = ApplicationBundle.message("desktop.entry.success", ApplicationNamesInfo.getInstance().getProductName());
-          Notifications.Bus.notify(
-            new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.desktop.entry.created"), message, NotificationType.INFORMATION),
-            getProject());
+          var title = IdeBundle.message("notification.title.desktop.entry.created");
+          var message = ApplicationBundle.message("desktop.entry.success", ApplicationNamesInfo.getInstance().getProductName());
+          new Notification("System Messages", title, message, NotificationType.INFORMATION).notify(getProject());
         }
         catch (Exception e) {
           reportFailure(e, getProject());
         }
       }
     }.queue();
+  }
+
+  public static @NotNull String getDesktopEntryName() {
+    return AppUIUtil.getFrameClass() + ".desktop";
   }
 
   public static void createDesktopEntry(boolean globalEntry) throws Exception {
@@ -99,12 +105,11 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
     }
   }
 
-  public static void reportFailure(@NotNull Exception e, @Nullable final Project project) {
+  private static void reportFailure(Exception e, @Nullable Project project) {
     LOG.warn(e);
-    final String message = ExceptionUtil.getNonEmptyMessage(e, IdeBundle.message("notification.content.internal error"));
-    Notifications.Bus.notify(
-      new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.desktop.entry.creation.failed"), message, NotificationType.ERROR),
-      project);
+    var title = IdeBundle.message("notification.title.desktop.entry.creation.failed");
+    var message = ExceptionUtil.getNonEmptyMessage(e, IdeBundle.message("notification.content.internal error"));
+    new Notification("System Messages", title, message, NotificationType.ERROR).notify(project);
   }
 
   private static void check() throws ExecutionException, InterruptedException {
@@ -116,30 +121,26 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
     String binPath = PathManager.getBinPath();
     assert new File(binPath).isDirectory() : "Invalid bin path: '" + binPath + "'";
 
-    String iconPath = AppUIUtil.findIcon();
+    String iconPath = AppUIUtilKt.findAppIcon();
     if (iconPath == null) {
       throw new RuntimeException(ApplicationBundle.message("desktop.entry.icon.missing", binPath));
     }
 
-    File starter = Restarter.getIdeStarter();
+    Path starter = Restarter.getIdeStarter();
     if (starter == null) {
       throw new RuntimeException(ApplicationBundle.message("desktop.entry.script.missing", binPath));
     }
-    String execPath = StringUtil.wrapWithDoubleQuote(starter.getPath());
+    String execPath = StringUtil.wrapWithDoubleQuote(starter.toString());
 
     ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
 
     String name = names.getFullProductNameWithEdition();
     String comment = StringUtil.notNullize(names.getMotto(), name);
     String wmClass = AppUIUtil.getFrameClass();
-    Map<String, String> vars = newHashMap(pair("$NAME$", name),
-                                          pair("$SCRIPT$", execPath),
-                                          pair("$ICON$", iconPath),
-                                          pair("$COMMENT$", comment),
-                                          pair("$WM_CLASS$", wmClass));
+    Map<String, String> vars = Map.of("$NAME$", name, "$SCRIPT$", execPath, "$ICON$", iconPath, "$COMMENT$", comment, "$WM_CLASS$", wmClass);
     String content = ExecUtil.loadTemplate(CreateDesktopEntryAction.class.getClassLoader(), "entry.desktop", vars);
-    Path entryFile = Paths.get(PathManager.getTempPath(), wmClass + ".desktop");
-    Files.write(entryFile, content.getBytes(StandardCharsets.UTF_8));
+    Path entryFile = Path.of(PathManager.getTempPath(), getDesktopEntryName());
+    Files.writeString(entryFile, content);
     return entryFile;
   }
 
@@ -162,20 +163,21 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
     }
   }
 
-  private static void exec(GeneralCommandLine command, @Nullable String prompt) throws IOException, ExecutionException {
+  private static void exec(GeneralCommandLine command, @Nls @Nullable String prompt) throws IOException, ExecutionException {
     command.setRedirectErrorStream(true);
-    ProcessOutput result = prompt != null ? ExecUtil.sudoAndGetOutput(command, prompt) : ExecUtil.execAndGetOutput(command);
+    ProcessOutput result = new CapturingProcessHandler(prompt != null ? ExecUtil.sudoCommand(command, prompt) : command).runProcess();
     int exitCode = result.getExitCode();
     if (exitCode != 0) {
       String message = "Command '" + (prompt != null ? "sudo " : "") + command.getCommandLineString() + "' returned " + exitCode;
       String output = result.getStdout();
-      if (!StringUtil.isEmptyOrSpaces(output)) message += "\nOutput: " + output.trim();
+      if (!output.isBlank()) message += "\nOutput: " + output.trim();
       throw new RuntimeException(message);
     }
   }
 
   public static class CreateDesktopEntryDialog extends DialogWrapper {
     private static final @NlsSafe String APP_NAME_PLACEHOLDER = "$APP_NAME$";
+
     private JPanel myContentPane;
     private JLabel myLabel;
     private JCheckBox myGlobalEntryCheckBox;

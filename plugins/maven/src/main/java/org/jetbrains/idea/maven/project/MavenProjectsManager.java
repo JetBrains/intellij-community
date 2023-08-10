@@ -1,33 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
-import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
-import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
@@ -39,51 +31,48 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.NullableConsumer;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
-import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.CacheForCompilerErrorMessages;
-import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
+import org.jetbrains.idea.maven.importing.MavenImportUtil;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
-import org.jetbrains.idea.maven.importing.worktree.IdeModifiableModelsProviderBridge;
-import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
+import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
-import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
+import org.jetbrains.idea.maven.project.auto.reload.MavenProjectManagerWatcher;
+import org.jetbrains.idea.maven.project.importing.FilesList;
+import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
+import org.jetbrains.idea.maven.project.importing.MavenProjectManagerListenerToBusBridge;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @State(name = "MavenProjectsManager")
-public final class MavenProjectsManager extends MavenSimpleProjectComponent
-  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable {
+public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
+  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable, MavenAsyncProjectsManager {
   private static final int IMPORT_DELAY = 1000;
 
   private final ReentrantLock initLock = new ReentrantLock();
@@ -96,34 +85,23 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   private final MavenEmbeddersManager myEmbeddersManager;
 
   private MavenProjectsTree myProjectsTree;
-  private MavenProjectResolver myMavenProjectResolver;
-  private MavenProjectsManagerWatcher myWatcher;
+  private MavenProjectManagerWatcher myWatcher;
 
-  private MavenProjectsProcessor myReadingProcessor;
-  private MavenProjectsProcessor myResolvingProcessor;
-  private MavenProjectsProcessor myPluginsResolvingProcessor;
-  private MavenProjectsProcessor myFoldersResolvingProcessor;
-  private MavenProjectsProcessor myArtifactsDownloadingProcessor;
-  private MavenProjectsProcessor myPostProcessor;
-
-  private MavenMergingUpdateQueue myImportingQueue;
-  private final Object myImportingDataLock = new Object();
-  private final Map<MavenProject, MavenProjectChanges> myProjectsToImport = new LinkedHashMap<>();
-  private final Set<MavenProject> myProjectsToResolve = new LinkedHashSet<>();
-
-  private boolean myImportModuleGroupsRequired = false;
+  protected MavenMergingUpdateQueue myImportingQueue;
 
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ModificationTracker myModificationTracker;
-  private BuildProgressListener myProgressListener;
+  protected BuildProgressListener myProgressListener;
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
-  private volatile MavenSyncConsole mySyncConsole;
+  private final AtomicReference<MavenSyncConsole> mySyncConsole = new AtomicReference<>();
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
+  protected Module myPreviewModule;
+  private transient boolean forceUpdateSnapshots = false;
 
   public static MavenProjectsManager getInstance(@NotNull Project project) {
     return project.getService(MavenProjectsManager.class);
@@ -140,16 +118,24 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     myEmbeddersManager = new MavenEmbeddersManager(project);
     myModificationTracker = new MavenModificationTracker(this);
     myInitializationAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-    mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), this);
+    mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !MavenUtil.isMavenUnitTestModeEnabled(), this);
     myProgressListener = myProject.getService(SyncViewManager.class);
     MavenRehighlighter.install(project, this);
     Disposer.register(this, this::projectClosed);
     CacheForCompilerErrorMessages.connectToJdkListener(project, this);
   }
 
+  @ApiStatus.Internal
+  public abstract void waitForPluginResolution();
+
   @TestOnly
-  public void setProgressListener(SyncViewManager testViewManager){
+  public void setProgressListener(BuildProgressListener testViewManager) {
     myProgressListener = testViewManager;
+  }
+
+  @TestOnly
+  public BuildProgressListener getProgressListener() {
+    return myProgressListener;
   }
 
   @Override
@@ -164,15 +150,23 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   public void loadState(@NotNull MavenProjectsManagerState state) {
     myState = state;
     if (isInitialized()) {
-      applyStateToTree();
-      scheduleUpdateAllProjects(false);
+      applyStateToTree(myProjectsTree, this);
+      scheduleUpdateAllProjects(new MavenImportSpec(false, false, false));
     }
   }
 
   @Override
   public void dispose() {
-    mySyncConsole = null;
+    mySyncConsole.set(null);
     myManagerListeners.clear();
+  }
+
+  public static void setupCreatedMavenProject(@NotNull Project project) {
+    setupCreatedMavenProject(getInstance(project).getImportingSettings());
+  }
+
+  public static void setupCreatedMavenProject(@NotNull MavenImportingSettings settings) {
+    settings.setWorkspaceImportEnabled(true);
   }
 
   public ModificationTracker getModificationTracker() {
@@ -180,11 +174,13 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public MavenGeneralSettings getGeneralSettings() {
-    return getWorkspaceSettings().generalSettings;
+    MavenGeneralSettings generalSettings = getWorkspaceSettings().getGeneralSettings();
+    generalSettings.setProject(myProject);
+    return generalSettings;
   }
 
   public MavenImportingSettings getImportingSettings() {
-    return getWorkspaceSettings().importingSettings;
+    return getWorkspaceSettings().getImportingSettings();
   }
 
   private MavenWorkspaceSettings getWorkspaceSettings() {
@@ -196,14 +192,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public File getLocalRepository() {
-    WSLDistribution wslDistribution = MavenWslUtil.tryGetWslDistribution(myProject);
-    if (wslDistribution == null) {
-      return getGeneralSettings().getEffectiveLocalRepository();
-    }
-    return MavenWslUtil.resolveLocalRepository(wslDistribution,
-                                               null,
-                                               null,
-                                               null);
+    return getGeneralSettings().getEffectiveLocalRepository();
   }
 
   @ApiStatus.Internal
@@ -214,41 +203,33 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void initializeComponent() {
-    if (!isNormalProject()) {
-      return;
-    }
-
-    Runnable runnable = () -> {
-      boolean wasMavenized = !myState.originalFiles.isEmpty();
-      if (!wasMavenized) {
-        return;
-      }
-      initMavenized();
-    };
-
-    StartupManager startupManager = StartupManager.getInstance(myProject);
-    if (startupManager.postStartupActivityPassed()) {
-      ApplicationManager.getApplication().executeOnPooledThread(runnable);
-    } else {
-      startupManager.registerStartupActivity(runnable);
-    }
-  }
-
-  private void initMavenized() {
-    doInit(false);
-  }
-
-  private void initNew(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
-    myState.originalFiles = MavenUtil.collectPaths(files);
-    MavenWorkspaceSettings workspaceSettings = getWorkspaceSettings();
-    workspaceSettings.setEnabledProfiles(explicitProfiles.getEnabledProfiles());
-    workspaceSettings.setDisabledProfiles(explicitProfiles.getDisabledProfiles());
-    doInit(true);
+    //noinspection deprecation
+    ProjectUtilKt.executeOnPooledThread(myProject, () -> {
+      tryInit();
+    });
   }
 
   @TestOnly
   public void initForTests() {
+    init();
+  }
+
+  private void tryInit() {
+    if (!isNormalProject()) {
+      return;
+    }
+    boolean wasMavenized = !myState.originalFiles.isEmpty();
+    if (!wasMavenized) {
+      return;
+    }
+    init();
+  }
+
+  private void init() {
     doInit(false);
+    if (!MavenUtil.isLinearImportEnabled()) {
+      scheduleUpdateAll(new MavenImportSpec(false, false, false));
+    }
   }
 
   private void doInit(final boolean isNew) {
@@ -257,6 +238,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       if (isInitialized.getAndSet(true)) {
         return;
       }
+      initManagerListenerToBusBridge();
+      initBusToManagerListenerBridge();
       initPreloadMavenServices();
       initProjectsTree(!isNew);
       initWorkers();
@@ -264,25 +247,59 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       listenForProjectsTreeChanges();
       registerSyncConsoleListener();
       updateTabTitles();
-
-      MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
-        if (!isUnitTestMode()) {
-          fireActivated();
-          listenForExternalChanges();
-        }
-        scheduleUpdateAllProjects(isNew);
-      });
+      if (isNew) {
+        doActivate();
+      }
     }
     finally {
       initLock.unlock();
     }
   }
 
+  private void doActivate() {
+    fireActivated();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      listenForExternalChanges();
+      MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(null);
+    }
+  }
+
+  protected void onProjectStartup() {
+    if (isInitialized()) {
+      doActivate();
+    }
+  }
+
+  private void initBusToManagerListenerBridge() {
+    if (!MavenUtil.isLinearImportEnabled()) return;
+    myProject.getMessageBus().connect(this).subscribe(MavenImportingManager.LEGACY_PROJECT_MANAGER_LISTENER, new Listener() {
+      @Override
+      public void activated() {
+        fireActivated();
+      }
+
+      @Override
+      public void importAndResolveScheduled() {
+        for (Listener each : myManagerListeners) {
+          each.importAndResolveScheduled();
+        }
+      }
+
+      @Override
+      public void projectImportCompleted() {
+        fireProjectImportCompleted();
+      }
+    });
+  }
+
+  private void initManagerListenerToBusBridge() {
+    if (MavenUtil.isLinearImportEnabled()) return;
+    addManagerListener(new MavenProjectManagerListenerToBusBridge(myProject), this);
+  }
+
   private void initPreloadMavenServices() {
     // init maven tool window
     MavenProjectsNavigator.getInstance(myProject);
-    // init indices manager
-    MavenProjectIndicesManager.getInstance(myProject);
     // add CompileManager before/after tasks
     MavenTasksManager.getInstance(myProject);
     // init maven shortcuts manager to subscribe to KeymapManagerListener
@@ -291,7 +308,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void updateTabTitles() {
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+    if (MavenUtil.isMavenUnitTestModeEnabled() || app.isHeadlessEnvironment()) {
       return;
     }
 
@@ -311,18 +328,19 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     });
   }
 
-  public synchronized MavenSyncConsole getSyncConsole() {
-    if (mySyncConsole == null) {
-      mySyncConsole = new MavenSyncConsole(myProject);
+  public MavenSyncConsole getSyncConsole() {
+    if (null == mySyncConsole.get()) {
+      mySyncConsole.compareAndSet(null, new MavenSyncConsole(myProject));
     }
-    return mySyncConsole;
+    return mySyncConsole.get();
   }
 
-  private void initProjectsTree(boolean tryToLoadExisting) {
+  @NotNull
+  private MavenProjectsTree initProjectsTree(boolean tryToLoadExisting) {
     if (tryToLoadExisting) {
       Path file = getProjectsTreeFile();
       try {
-        if (PathKt.exists(file)) {
+        if (Files.exists(file)) {
           myProjectsTree = MavenProjectsTree.read(myProject, file);
         }
       }
@@ -332,23 +350,23 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     }
 
     if (myProjectsTree == null) myProjectsTree = new MavenProjectsTree(myProject);
-    myMavenProjectResolver = new MavenProjectResolver(myProjectsTree);
-    applyStateToTree();
+    applyStateToTree(myProjectsTree, this);
     myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
+    return myProjectsTree;
   }
 
   private void applyTreeToState() {
     myState.originalFiles = myProjectsTree.getManagedFilesPaths();
-    myState.ignoredFiles = new THashSet<>(myProjectsTree.getIgnoredFilesPaths());
+    myState.ignoredFiles = new HashSet<>(myProjectsTree.getIgnoredFilesPaths());
     myState.ignoredPathMasks = myProjectsTree.getIgnoredFilesPatterns();
   }
 
-  private void applyStateToTree() {
-    MavenWorkspaceSettings settings = getWorkspaceSettings();
+  public static void applyStateToTree(MavenProjectsTree tree, MavenProjectsManager manager) {
+    MavenWorkspaceSettings settings = manager.getWorkspaceSettings();
     MavenExplicitProfiles explicitProfiles = new MavenExplicitProfiles(settings.enabledProfiles, settings.disabledProfiles);
-    myProjectsTree.resetManagedFilesPathsAndProfiles(myState.originalFiles, explicitProfiles);
-    myProjectsTree.setIgnoredFilesPaths(new ArrayList<>(myState.ignoredFiles));
-    myProjectsTree.setIgnoredFilesPatterns(myState.ignoredPathMasks);
+    tree.resetManagedFilesPathsAndProfiles(manager.myState.originalFiles, explicitProfiles);
+    tree.setIgnoredFilesPaths(new ArrayList<>(manager.myState.ignoredFiles));
+    tree.setIgnoredFilesPatterns(manager.myState.ignoredPathMasks);
   }
 
   @Override
@@ -370,157 +388,52 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     });
   }
 
-  private Path getProjectsTreeFile() {
+  @ApiStatus.Internal
+  public Path getProjectsTreeFile() {
     return getProjectsTreesDir().resolve(myProject.getLocationHash()).resolve("tree.dat");
   }
 
   @NotNull
-  private static Path getProjectsTreesDir() {
+  @ApiStatus.Internal
+  public static Path getProjectsTreesDir() {
     return MavenUtil.getPluginSystemDir("Projects");
   }
 
   private void initWorkers() {
-    myReadingProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.reading"), false, myEmbeddersManager);
-    myResolvingProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.resolving"), true, myEmbeddersManager);
-    myPluginsResolvingProcessor =
-      new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true, myEmbeddersManager);
-    myFoldersResolvingProcessor =
-      new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.updating.folders"), true, myEmbeddersManager);
-    myArtifactsDownloadingProcessor =
-      new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.downloading"), true, myEmbeddersManager);
-    myPostProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.post.processing"), true, myEmbeddersManager);
+    myWatcher = new MavenProjectManagerWatcher(myProject, myProjectsTree);
 
-    myWatcher = new MavenProjectsManagerWatcher(myProject, myProjectsTree, getGeneralSettings(), myReadingProcessor);
-
-    myImportingQueue = new MavenMergingUpdateQueue(getClass().getName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode(), this);
+    myImportingQueue =
+      new MavenMergingUpdateQueue(getClass().getName() + ": Importing queue", IMPORT_DELAY, !MavenUtil.isMavenUnitTestModeEnabled(), this);
 
     myImportingQueue.makeUserAware(myProject);
-    myImportingQueue.makeDumbAware(myProject);
     myImportingQueue.makeModalAware(myProject);
   }
 
-  private void listenForSettingsChanges() {
-    getImportingSettings().addListener(new MavenImportingSettings.Listener() {
-      @Override
-      public void createModuleGroupsChanged() {
-        scheduleImportSettings(true);
-      }
-
-      @Override
-      public void createModuleForAggregatorsChanged() {
-        scheduleImportSettings();
-      }
-    });
-  }
+  protected abstract void listenForSettingsChanges();
 
   private void registerSyncConsoleListener() {
+    if (MavenUtil.isLinearImportEnabled()) return;
     myProjectsTreeDispatcher.addListener(new MavenProjectsTree.Listener() {
       @Override
       public void pluginsResolved(@NotNull MavenProject project) {
-        getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN).finish();
+        getSyncConsole().getListener(MavenServerConsoleIndicator.ResolveType.PLUGIN).finish();
       }
 
       @Override
       public void artifactsDownloaded(@NotNull MavenProject project) {
-        getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY).finish();
+        getSyncConsole().getListener(MavenServerConsoleIndicator.ResolveType.DEPENDENCY).finish();
       }
     });
   }
+
   private void listenForProjectsTreeChanges() {
-    myProjectsTree.addListener(new MavenProjectsTree.Listener() {
+    if (MavenUtil.isLinearImportEnabled()) return;
+    myProjectsTreeDispatcher.addListener(new MavenProjectsTree.Listener() {
       @Override
-      public void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored, @NotNull List<MavenProject> unignored, boolean fromImport) {
-        if (!fromImport) scheduleImport();
-      }
-
-      @Override
-      public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
-        myEmbeddersManager.clearCaches();
-
-        unscheduleAllTasks(deleted);
-
-        List<MavenProject> updatedProjects = MavenUtil.collectFirsts(updated);
-
-        // import only updated projects and dependents of them (we need to update faced-deps, packaging etc);
-        List<Pair<MavenProject, MavenProjectChanges>> toImport = new ArrayList<>(updated);
-
-        for (MavenProject eachDependent : myProjectsTree.getDependentProjects(updatedProjects)) {
-          toImport.add(Pair.create(eachDependent, MavenProjectChanges.DEPENDENCIES));
-        }
-
-        // resolve updated, theirs dependents, and dependents of deleted
-        Set<MavenProject> toResolve = new THashSet<>(updatedProjects);
-        toResolve.addAll(myProjectsTree.getDependentProjects(ContainerUtil.concat(updatedProjects, deleted)));
-
-        // do not try to resolve projects with syntactic errors
-        Iterator<MavenProject> it = toResolve.iterator();
-        while (it.hasNext()) {
-          MavenProject each = it.next();
-          if (each.hasReadingProblems()) {
-            getSyncConsole().notifyReadingProblems(each.getFile());
-            it.remove();
-          }
-        }
-
-        if (haveChanges(toImport) || !deleted.isEmpty()) {
-          scheduleForNextImport(toImport);
-        }
-
-        if (!deleted.isEmpty() && !hasScheduledProjects()) {
-          MavenProject project = ObjectUtils.chooseNotNull(ContainerUtil.getFirstItem(toResolve),
-                                                           ContainerUtil.getFirstItem(getNonIgnoredProjects()));
-          if (project != null) {
-            scheduleForNextImport(Pair.create(project, MavenProjectChanges.ALL));
-            scheduleForNextResolve(Collections.singletonList(project));
-          }
-        }
-
-        scheduleForNextResolve(toResolve);
-
-        fireProjectScheduled();
-      }
-
-      private boolean haveChanges(List<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
-        for (MavenProjectChanges each : MavenUtil.collectSeconds(projectsWithChanges)) {
-          if (each.hasChanges()) return true;
-        }
-        return false;
-      }
-
-      @Override
-      public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                  @Nullable NativeMavenProjectHolder nativeMavenProject) {
-        if (nativeMavenProject != null) {
-          if (shouldScheduleProject(projectWithChanges)) {
-            scheduleForNextImport(projectWithChanges);
-
-            MavenImportingSettings importingSettings;
-
-            importingSettings = ReadAction.compute(() -> myProject.isDisposed() ? null : getImportingSettings());
-            if (importingSettings == null) return;
-
-            scheduleArtifactsDownloading(Collections.singleton(projectWithChanges.first),
-                                         null,
-                                         importingSettings.isDownloadSourcesAutomatically(),
-                                         importingSettings.isDownloadDocsAutomatically(),
-                                         null);
-          }
-
-          if (!projectWithChanges.first.hasReadingProblems() && projectWithChanges.first.hasUnresolvedPlugins()) {
-            schedulePluginsResolve(projectWithChanges.first, nativeMavenProject);
-          }
-        }
-      }
-
-      @Override
-      public void foldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-        if (shouldScheduleProject(projectWithChanges)) {
-          scheduleForNextImport(projectWithChanges);
-        }
-      }
-
-      private boolean shouldScheduleProject(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-        return !projectWithChanges.first.hasReadingProblems() && projectWithChanges.second.hasChanges();
+      public void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored,
+                                              @NotNull List<MavenProject> unignored,
+                                              boolean fromImport) {
+        if (!fromImport) scheduleImportChangedProjects();
       }
     }, this);
   }
@@ -539,24 +452,23 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   private void projectClosed() {
     initLock.lock();
     try {
-      if (!isInitialized.getAndSet(false)) return;
+      if (!isInitialized.getAndSet(false)) {
+        return;
+      }
 
-      Disposer.dispose(myImportingQueue);
+      if (myImportingQueue != null) {
+        Disposer.dispose(myImportingQueue);
+      }
 
       myWatcher.stop();
 
-    myReadingProcessor.stop();
-    myResolvingProcessor.stop();
-    myPluginsResolvingProcessor.stop();
-    myFoldersResolvingProcessor.stop();
-    myArtifactsDownloadingProcessor.stop();
-    myPostProcessor.stop();
       mySaveQueue.flush();
 
-      if (isUnitTestMode()) {
+      if (MavenUtil.isMavenUnitTestModeEnabled()) {
         PathKt.delete(getProjectsTreesDir());
       }
-    } finally {
+    }
+    finally {
       initLock.unlock();
     }
   }
@@ -574,49 +486,35 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public boolean isMavenizedModule(@NotNull Module m) {
-    return ReadAction.compute(() -> !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized());
+    return MavenUtil.isMavenizedModule(m);
   }
 
-  public void setMavenizedModules(Collection<Module> modules, boolean mavenized) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    //todo remove 'mergeRootsChangesDuring' call when 'setMavenized' stop firing rootsChanged events (IDEA-250924)
-    ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
-      for (Module m : modules) {
-        if (m.isDisposed()) continue;
-        ExternalSystemModulePropertyManager.getInstance(m).setMavenized(mavenized);
-        // force re-save (since can be stored externally)
-        if (ModuleRootManager.getInstance(m) instanceof ModuleRootManagerImpl) {
-          ((ModuleRootManagerImpl)ModuleRootManager.getInstance(m)).stateChanged();
-        }
-      }
-    });
+  public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
+    doAddManagedFilesWithProfiles(files, profiles, previewModuleToDelete);
+    scheduleUpdateAll(new MavenImportSpec(false, true, false));
   }
 
-  @TestOnly
-  public void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles profiles) {
-    myWatcher.resetManagedFilesAndProfilesInTests(files, profiles);
-  }
-
-  public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles) {
+  protected void doAddManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
+    myPreviewModule = previewModuleToDelete;
     if (!isInitialized()) {
-      initNew(files, profiles);
+      myState.originalFiles = MavenUtil.collectPaths(files);
+      MavenWorkspaceSettings workspaceSettings = getWorkspaceSettings();
+      workspaceSettings.setEnabledProfiles(profiles.getEnabledProfiles());
+      workspaceSettings.setDisabledProfiles(profiles.getDisabledProfiles());
+      doInit(true);
     }
     else {
-      myWatcher.addManagedFilesWithProfiles(files, profiles);
+      myProjectsTree.addManagedFilesWithProfiles(files, profiles);
     }
   }
 
   public void addManagedFiles(@NotNull List<VirtualFile> files) {
-    addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE);
+    addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null);
   }
 
   public void addManagedFilesOrUnignore(@NotNull List<VirtualFile> files) {
     removeIgnoredFilesPaths(MavenUtil.collectPaths(files));
     addManagedFiles(files);
-  }
-
-  public void removeManagedFiles(@NotNull List<VirtualFile> files) {
-    myWatcher.removeManagedFiles(files);
   }
 
   public boolean isManagedFile(@NotNull VirtualFile f) {
@@ -628,10 +526,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   public MavenExplicitProfiles getExplicitProfiles() {
     if (!isInitialized()) return MavenExplicitProfiles.NONE;
     return myProjectsTree.getExplicitProfiles();
-  }
-
-  public void setExplicitProfiles(@NotNull MavenExplicitProfiles profiles) {
-    myWatcher.setExplicitProfiles(profiles);
   }
 
   @NotNull
@@ -702,6 +596,16 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Nullable
   public MavenProject findProject(@NotNull Module module) {
+    MavenProject mavenProject = getMavenProject(module);
+    String moduleName = module.getName();
+    if (mavenProject == null && MavenImportUtil.isMainOrTestSubmodule(moduleName)) {
+      Module parentModule = ModuleManager.getInstance(myProject).findModuleByName(MavenImportUtil.getParentModuleName(moduleName));
+      mavenProject = parentModule != null ? getMavenProject(parentModule) : null;
+    }
+    return mavenProject;
+  }
+
+  private MavenProject getMavenProject(@NotNull Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
       VirtualFile f = findPomFile(module, new MavenModelsProvider() {
         @Override
@@ -719,8 +623,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     });
   }
 
-  @Nullable
-  public Module findModule(@NotNull MavenProject project) {
+  @RequiresReadLock
+  public @Nullable Module findModule(@NotNull MavenProject project) {
     if (!isInitialized()) return null;
     return ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(project.getFile());
   }
@@ -745,7 +649,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       return VirtualFileManager.getInstance().findFileByUrl(pomFileUrl);
     }
     for (VirtualFile root : modelsProvider.getContentRoots(module)) {
-      List<VirtualFile> pomFiles = MavenUtil.streamPomFiles(module.getProject(), root).collect(Collectors.toList());
+      List<VirtualFile> pomFiles = MavenUtil.streamPomFiles(module.getProject(), root).toList();
       if (pomFiles.isEmpty()) {
         continue;
       }
@@ -808,6 +712,12 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     return myProjectsTree.getIgnoredState(project);
   }
 
+  @ApiStatus.Internal
+  public void setIgnoredStateForPoms(@NotNull List<String> pomPaths, boolean ignored) {
+    if (!isInitialized()) return;
+    myProjectsTree.setIgnoredStateForPoms(pomPaths, ignored);
+  }
+
   public void setIgnoredState(@NotNull List<MavenProject> projects, boolean ignored) {
     if (!isInitialized()) return;
     myProjectsTree.setIgnoredState(projects, ignored);
@@ -830,7 +740,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public Set<MavenRemoteRepository> getRemoteRepositories() {
-    Set<MavenRemoteRepository> result = new THashSet<>();
+    Set<MavenRemoteRepository> result = new HashSet<>();
     for (MavenProject each : getProjects()) {
       result.addAll(each.getRemoteRepositories());
     }
@@ -842,40 +752,193 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     return myProjectsTree;
   }
 
-  private void scheduleUpdateAllProjects(boolean forceImportAndResolve) {
-    doScheduleUpdateProjects(null, false, forceImportAndResolve);
+  @ApiStatus.Internal
+  public void setProjectsTree(@NotNull MavenProjectsTree newTree) {
+    if (!isInitialized()) {
+      doInit(true);
+      if (!MavenUtil.isLinearImportEnabled()) {
+        scheduleUpdateAll(new MavenImportSpec(false, true, false));
+      }
+    }
+    newTree.addListenersFrom(myProjectsTree);
+    myProjectsTree = newTree;
+    myWatcher.setProjectTree(newTree);
   }
 
   @ApiStatus.Internal
-  public AsyncPromise<Void> forceUpdateProjects() {
-    return doScheduleUpdateProjects(null, true, true);
+  public EventDispatcher<MavenProjectsTree.Listener> getTreeListenerEventDispatcher() {
+    return myProjectsTreeDispatcher;
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public MavenProjectsTree getProjectsTree() {
+    if (myProjectsTree == null) {
+      return initProjectsTree(true);
+    }
+    return myProjectsTree;
+  }
+
+  @TestOnly
+  public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
+    myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
+    scheduleUpdateAll(new MavenImportSpec(true, true, true));
+  }
+
+  public synchronized void removeManagedFiles(List<VirtualFile> files) {
+    myProjectsTree.removeManagedFiles(files);
+    scheduleUpdateAll(new MavenImportSpec(false, true, true));
+  }
+
+  public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
+    myProjectsTree.setExplicitProfiles(profiles);
+  }
+
+  /**
+   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
+   * if project is closed)
+   */
+  @ApiStatus.Internal
+  public Promise<Void> scheduleUpdateAll(MavenImportSpec spec) {
+    if (MavenUtil.isLinearImportEnabled()) {
+      return MavenImportingManager.getInstance(myProject).scheduleImportAll(spec).getFinishPromise().then(it -> null);
+    }
+
+    return scheduleUpdateAllSuspendable(spec);
+  }
+
+  /**
+   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
+   * if project is closed)
+   */
+  private Promise<Void> scheduleUpdateAllSuspendable(MavenImportSpec spec) {
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      updateAllMavenProjectsSync(spec, promise);
+    }
+    else {
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
+        updateAllMavenProjectsSync(spec, promise);
+      });
+    }
+
+    return promise;
+  }
+
+  private void updateAllMavenProjectsSync(MavenImportSpec spec, AsyncPromise<Void> promise) {
+    try {
+      updateAllMavenProjectsSync(spec);
+      promise.setResult(null);
+    }
+    catch (Exception e) {
+      promise.setError(e);
+    }
+  }
+
+  private void scheduleUpdateAllProjects(MavenImportSpec spec) {
+    scheduleUpdateProjects(List.of(), spec);
+  }
+
+  @ApiStatus.Internal
+  public Promise<Void> scheduleUpdate(
+    @NotNull List<VirtualFile> filesToUpdate,
+    @NotNull List<VirtualFile> filesToDelete,
+    MavenImportSpec spec
+  ) {
+
+    if (MavenUtil.isLinearImportEnabled()) {
+      return MavenImportingManager.getInstance(myProject).scheduleUpdate(filesToUpdate, filesToDelete, spec).getFinishPromise()
+        .then(it -> null);
+    }
+
+    return scheduleUpdateSuspendable(spec, filesToUpdate, filesToDelete);
+  }
+
+  private Promise<Void> scheduleUpdateSuspendable(MavenImportSpec spec,
+                                                  List<VirtualFile> filesToUpdate,
+                                                  List<VirtualFile> filesToDelete) {
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        updateMavenProjectsSync(spec, filesToUpdate, filesToDelete, promise);
+      }
+      else {
+        MavenLog.LOG.warn("updateAllMavenProjectsSync skipped in write action");
+      }
+    }
+    else {
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
+        updateMavenProjectsSync(spec, filesToUpdate, filesToDelete, promise);
+      });
+    }
+
+    return promise;
+  }
+
+  private void updateMavenProjectsSync(MavenImportSpec spec,
+                                       List<VirtualFile> filesToUpdate,
+                                       List<VirtualFile> filesToDelete,
+                                       AsyncPromise<Void> promise) {
+    try {
+      updateMavenProjectsSync(spec, filesToUpdate, filesToDelete);
+      promise.setResult(null);
+    }
+    catch (Exception e) {
+      promise.setError(e);
+    }
+  }
+
+  @ApiStatus.Internal
+  public void forceUpdateProjects() {
+    scheduleUpdateProjects(List.of(), MavenImportSpec.EXPLICIT_IMPORT);
   }
 
   public AsyncPromise<Void> forceUpdateProjects(@NotNull Collection<MavenProject> projects) {
-    return doScheduleUpdateProjects(projects, true, true);
+    return (AsyncPromise<Void>)scheduleUpdateProjects(projects, MavenImportSpec.EXPLICIT_IMPORT);
   }
 
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
+    forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec.EXPLICIT_IMPORT);
+  }
+
+  public void forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec spec) {
+
     if (!isMavenizedProject()) {
       addManagedFiles(collectAllAvailablePomFiles());
     }
-    doScheduleUpdateProjects(null, true, true);
+    if (MavenUtil.isLinearImportEnabled()) {
+      MavenLog.LOG.warn("forceUpdateAllProjectsOrFindAllAvailablePomFiles: Linear Import is enabled");
+      MavenImportingManager.getInstance(myProject)
+        .openProjectAndImport(new FilesList(myProjectsTree.getExistingManagedFiles()), getImportingSettings(), getGeneralSettings(), spec);
+      return;
+    }
+    MavenLog.LOG.warn("forceUpdateAllProjectsOrFindAllAvailablePomFiles: Linear Import is disabled");
+    scheduleUpdateProjects(List.of(), spec);
   }
 
-  private AsyncPromise<Void> doScheduleUpdateProjects(final Collection<MavenProject> projects,
-                                                      final boolean forceUpdate,
-                                                      final boolean forceImportAndResolve) {
+  @ApiStatus.Internal
+  public Promise<Void> scheduleUpdateProjects(
+    @NotNull final Collection<MavenProject> projects,
+    final MavenImportSpec spec
+  ) {
+    if (MavenUtil.isLinearImportEnabled()) {
+      MavenLog.LOG.warn("scheduleUpdateProjects: Linear Import is enabled");
+      return MavenImportingManager.getInstance(myProject)
+        .openProjectAndImport(new FilesList(ContainerUtil.map(projects, MavenProject::getFile)), getImportingSettings(),
+                              getGeneralSettings(), spec).getFinishPromise().then(it -> null);
+    }
+    MavenLog.LOG.warn("scheduleUpdateProjects: Linear Import is disabled");
     MavenDistributionsCache.getInstance(myProject).cleanCaches();
+    MavenWslCache.getInstance().clearCache();
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
-      if (projects == null) {
-        myWatcher.scheduleUpdateAll(forceUpdate, forceImportAndResolve).processed(promise);
+      if (projects.isEmpty()) {
+        scheduleUpdateAll(spec).processed(promise);
       }
       else {
-        myWatcher.scheduleUpdate(MavenUtil.collectFiles(projects),
-                                 Collections.emptyList(),
-                                 forceUpdate,
-                                 forceImportAndResolve).processed(promise);
+        scheduleUpdate(MavenUtil.collectFiles(projects), List.of(), spec).processed(promise);
       }
     });
     return promise;
@@ -884,15 +947,14 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   /**
    * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
    * if project is closed)
+   * @deprecated  Use {@link #updateAllMavenProjectsSync(MavenImportSpec)}}
    */
+  // used in third-party plugins
+  @Deprecated
   public Promise<List<Module>> scheduleImportAndResolve() {
-    MavenSyncConsole console = getSyncConsole();
-    console.startImport(myProgressListener);
-    fireImportAndResolveScheduled();
-    AsyncPromise<List<Module>> promise = scheduleResolve();
-    promise.onProcessed(m -> {
-      completeMavenSyncOnImportCompletion(console);
-    });
+    var promise = new AsyncPromise<List<Module>>();
+    var modules = updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
+    promise.setResult(modules);
     return promise;
   }
 
@@ -904,233 +966,38 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     getSyncConsole().terminated(exitCode);
   }
 
-  private void completeMavenSyncOnImportCompletion(MavenSyncConsole console) {
-    waitForImportCompletion().onProcessed(o -> {
-      console.finishImport();
-    });
-  }
-
   @ApiStatus.Internal
   public Promise<?> waitForImportCompletion() {
+    if (MavenUtil.isLinearImportEnabled()) return MavenImportingManager.getInstance(myProject).getImportFinishPromise();
+
+    waitForPluginResolution();
+
     AsyncPromise<?> promise = new AsyncPromise<>();
-    MavenUtil.runInBackground(myProject, SyncBundle.message("maven.sync.waiting.for.completion"), false, indicator -> {
-      if (myReadingProcessor != null) {
-        myReadingProcessor.waitForCompletion();
-      }
-      if (myArtifactsDownloadingProcessor != null) {
-        myArtifactsDownloadingProcessor.waitForCompletion();
-      }
-      if (myFoldersResolvingProcessor != null) {
-        myFoldersResolvingProcessor.waitForCompletion();
-      }
-      if (myPluginsResolvingProcessor != null) {
-        myPluginsResolvingProcessor.waitForCompletion();
-      }
-      if (myResolvingProcessor != null) {
-        myResolvingProcessor.waitForCompletion();
-      }
-      if (myPostProcessor != null) {
-        myPostProcessor.waitForCompletion();
-      }
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        MavenProgressIndicator.MavenProgressTracker mavenProgressTracker = myProject.getServiceIfCreated(MavenProgressIndicator.MavenProgressTracker.class);
-        if (mavenProgressTracker != null) {
-          mavenProgressTracker.waitForProgressCompletion();
-        }
-        promise.setResult(null);
-      });
-    });
+    promise.setResult(null);
     return promise;
   }
 
-  private AsyncPromise<List<Module>> scheduleResolve() {
-    final AsyncPromise<List<Module>> result = new AsyncPromise<>();
-    runWhenFullyOpen(() -> {
-      LinkedHashSet<MavenProject> toResolve;
-      synchronized (myImportingDataLock) {
-        toResolve = new LinkedHashSet<>(myProjectsToResolve);
-        myProjectsToResolve.clear();
-      }
-      if(toResolve.isEmpty()) {
-        result.setResult(Collections.emptyList());
-        fireProjectImportCompleted();
-        return;
-      }
-
-      final ResolveContext context = new ResolveContext();
-      Runnable onCompletion = () -> {
-        if (hasScheduledProjects()) {
-          scheduleImport().processed(result);
-        }
-        else {
-          result.setResult(Collections.emptyList());
-          fireProjectImportCompleted();
-        }
-      };
-
-      final boolean useSinglePomResolver = Boolean.getBoolean("idea.maven.use.single.pom.resolver");
-      if (useSinglePomResolver) {
-        Iterator<MavenProject> it = toResolve.iterator();
-        while (it.hasNext()) {
-          MavenProject each = it.next();
-          myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(
-            Collections.singleton(each), myProjectsTree, getGeneralSettings(), it.hasNext() ? null : onCompletion, context));
-        }
-      }
-      else {
-        myResolvingProcessor.scheduleTask(
-          new MavenProjectsProcessorResolvingTask(toResolve, myProjectsTree, getGeneralSettings(), onCompletion, context));
-      }
-    });
-    return result;
-  }
-
-  public void evaluateEffectivePom(@NotNull final MavenProject mavenProject, @NotNull final NullableConsumer<? super String> consumer) {
-    runWhenFullyOpen(() -> myResolvingProcessor.scheduleTask(new MavenProjectsProcessorTask() {
-      @Override
-      public void perform(Project project,
-                          MavenEmbeddersManager embeddersManager,
-                          MavenConsole console,
-                          MavenProgressIndicator indicator)
-        throws MavenProcessCanceledException {
-
-        indicator.setText(MavenProjectBundle.message("maven.project.importing.evaluating.effective.pom"));
-
-        myMavenProjectResolver.executeWithEmbedder(mavenProject,
-                                                   getEmbeddersManager(),
-                                                   MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE,
-                                                   console,
-                                                   indicator,
-                                                   new MavenProjectResolver.EmbedderTask() {
-                                                     @Override
-                                                     public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
-                                                       try {
-                                                         MavenExplicitProfiles profiles = mavenProject.getActivatedProfilesIds();
-                                                         String res =
-                                                           embedder
-                                                             .evaluateEffectivePom(mavenProject.getFile(), profiles.getEnabledProfiles(),
-                                                                                   profiles.getDisabledProfiles());
-                                                         consumer.consume(res);
-                                                       }
-                                                       catch (UnsupportedOperationException e) {
-                                                         consumer.consume(null); // null means UnsupportedOperationException
-                                                       }
-                                                     }
-                                                   });
-      }
-    }));
-  }
-
-  @TestOnly
-  public void scheduleResolveInTests(Collection<MavenProject> projects) {
-    scheduleForNextResolve(projects);
-    scheduleResolve();
-  }
-
-  @TestOnly
-  public void scheduleResolveAllInTests() {
-    scheduleResolveInTests(getProjects());
-  }
-
-  public void scheduleFoldersResolve(final Collection<MavenProject> projects) {
-    runWhenFullyOpen(() -> {
-      Iterator<MavenProject> it = projects.iterator();
-      while (it.hasNext()) {
-        MavenProject each = it.next();
-        Runnable onCompletion = it.hasNext() ? null : () -> {
-          if (hasScheduledProjects()) scheduleImport();
-        };
-        myFoldersResolvingProcessor.scheduleTask(
-          new MavenProjectsProcessorFoldersResolvingTask(each, getImportingSettings(), myProjectsTree, onCompletion));
-      }
-    });
-  }
-
+  // used in third-party plugins
   public void scheduleFoldersResolveForAllProjects() {
-    scheduleFoldersResolve(getProjects());
+    MavenProjectsManagerUtilKt.scheduleFoldersResolveForAllProjects(myProject);
   }
 
-  private void schedulePluginsResolve(final MavenProject project, final NativeMavenProjectHolder nativeMavenProject) {
-    runWhenFullyOpen(() -> myPluginsResolvingProcessor
-      .scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project, nativeMavenProject, myProjectsTree)));
-  }
 
-  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects,
-                                           @Nullable final Collection<MavenArtifact> artifacts,
-                                           final boolean sources, final boolean docs,
-                                           @Nullable final AsyncPromise<DownloadResult> result) {
-    if (!sources && !docs) return;
-
-    runWhenFullyOpen(() -> myArtifactsDownloadingProcessor
-      .scheduleTask(
-        new MavenProjectsProcessorArtifactsDownloadingTask(projects, artifacts, myMavenProjectResolver, sources, docs, result)));
-  }
-
-  private void scheduleImportSettings() {
-    scheduleImportSettings(false);
-  }
-
-  private void scheduleImportSettings(boolean importModuleGroupsRequired) {
-    synchronized (myImportingDataLock) {
-      myImportModuleGroupsRequired = importModuleGroupsRequired;
-    }
-    scheduleImport();
-  }
-
-  // TODO merge [result] promises (now, promise will be lost after merge of import requests)
-  private Promise<List<Module>> scheduleImport() {
-    final AsyncPromise<List<Module>> result = new AsyncPromise<>();
+  private void scheduleImportChangedProjects() {
     runWhenFullyOpen(() -> myImportingQueue.queue(new Update(this) {
       @Override
       public void run() {
-        result.setResult(importProjects());
+        importMavenProjectsSync();
         fireProjectImportCompleted();
       }
     }));
-    return result;
   }
 
-  @TestOnly
-  public void scheduleImportInTests(List<VirtualFile> projectFiles) {
-    List<Pair<MavenProject, MavenProjectChanges>> toImport = new ArrayList<>();
-    for (VirtualFile each : projectFiles) {
-      MavenProject project = findProject(each);
-      if (project != null) {
-        toImport.add(Pair.create(project, MavenProjectChanges.ALL));
-      }
-    }
-    scheduleForNextImport(toImport);
-    scheduleImport();
-  }
-
-  private void scheduleForNextImport(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-    scheduleForNextImport(Collections.singletonList(projectWithChanges));
-  }
-
-  private void scheduleForNextImport(Collection<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
-    synchronized (myImportingDataLock) {
-      for (Pair<MavenProject, MavenProjectChanges> each : projectsWithChanges) {
-        MavenProjectChanges changes = each.second.mergedWith(myProjectsToImport.get(each.first));
-        myProjectsToImport.put(each.first, changes);
-      }
-    }
-  }
-
-  private void scheduleForNextResolve(Collection<MavenProject> projects) {
-    synchronized (myImportingDataLock) {
-      myProjectsToResolve.addAll(projects);
-    }
-  }
-
-  public boolean hasScheduledProjects() {
-    if (!isInitialized()) return false;
-    synchronized (myImportingDataLock) {
-      return !myProjectsToImport.isEmpty() || !myProjectsToResolve.isEmpty();
-    }
-  }
+  protected abstract void importMavenProjectsSync();
 
   @TestOnly
   public boolean hasScheduledImportsInTests() {
+    checkNoLegacyImportInNewTests();
     if (!isInitialized()) return false;
     return !myImportingQueue.isEmpty();
   }
@@ -1141,16 +1008,18 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     runWhenFullyOpen(() -> myImportingQueue.flush());
   }
 
-  private void runWhenFullyOpen(final Runnable runnable) {
+  private static void checkNoLegacyImportInNewTests() {
+    if (ApplicationManager.getApplication().isUnitTestMode() && MavenUtil.isLinearImportEnabled()) {
+      throw new IllegalStateException("Do not call this API in tests");
+    }
+  }
+
+  @ApiStatus.Internal
+  public void runWhenFullyOpen(final Runnable runnable) {
     if (!isInitialized()) return; // may be called from scheduleImport after project started closing and before it is closed.
 
-    if (isNoBackgroundMode()) {
-      runnable.run();
-      return;
-    }
-
     final Ref<Runnable> wrapper = new Ref<>();
-    wrapper.set(() -> {
+    wrapper.set((DumbAwareRunnable)() -> {
       if (!StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
         myInitializationAlarm.addRequest(wrapper.get(), 1000);
         return;
@@ -1160,166 +1029,40 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenUtil.runWhenInitialized(myProject, wrapper.get());
   }
 
-  private void schedulePostImportTasks(List<MavenProjectsProcessorTask> postTasks) {
-    for (MavenProjectsProcessorTask each : postTasks) {
-      myPostProcessor.scheduleTask(each);
-    }
-  }
-
-  private void unscheduleAllTasks(List<MavenProject> projects) {
-    for (MavenProject each : projects) {
-      MavenProjectsProcessorEmptyTask dummyTask = new MavenProjectsProcessorEmptyTask(each);
-
-      synchronized (myImportingDataLock) {
-        myProjectsToImport.remove(each);
-        myProjectsToResolve.remove(each);
-      }
-
-      myResolvingProcessor.removeTask(dummyTask);
-      myPluginsResolvingProcessor.removeTask(dummyTask);
-      myFoldersResolvingProcessor.removeTask(dummyTask);
-      myPostProcessor.removeTask(dummyTask);
-    }
-  }
-
-  @TestOnly
-  public void unscheduleAllTasksInTests() {
-    unscheduleAllTasks(getProjects());
-  }
-
-  @TestOnly
-  public void waitForImportFinishCompletion() {
-    completeMavenSyncOnImportCompletion(getSyncConsole());
-  }
-
-
   public void waitForReadingCompletion() {
-    waitForTasksCompletion(null);
-  }
-
-  public void waitForResolvingCompletion() {
-    waitForTasksCompletion(myResolvingProcessor);
-  }
-
-  public void waitForFoldersResolvingCompletion() {
-    waitForTasksCompletion(myFoldersResolvingProcessor);
-  }
-
-  public void waitForPluginsResolvingCompletion() {
-    waitForTasksCompletion(myPluginsResolvingProcessor);
-  }
-
-  public void waitForArtifactsDownloadingCompletion() {
-    waitForTasksCompletion(myArtifactsDownloadingProcessor);
-  }
-
-  public void waitForPostImportTasksCompletion() {
-    myPostProcessor.waitForCompletion();
-  }
-
-  private void waitForTasksCompletion(MavenProjectsProcessor processor) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       FileDocumentManager.getInstance().saveAllDocuments();
     }
+  }
 
-    myReadingProcessor.waitForCompletion();
-    if (processor != null) processor.waitForCompletion();
+  /**
+   * @deprecated This method returns immediately. Kept for compatibility reasons.
+   */
+  @Deprecated(forRemoval = true)
+  public void waitForPostImportTasksCompletion() {
   }
 
   public void updateProjectTargetFolders() {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
 
-      MavenFoldersImporter.updateProjectFolders(myProject, true);
-      VirtualFileManager.getInstance().asyncRefresh(null);
+      MavenProjectImporter.tryUpdateTargetFolders(myProject);
+      VirtualFileManager.getInstance().asyncRefresh();
     });
   }
 
+  /**
+   * @deprecated Use {@link #updateAllMavenProjectsSync(MavenImportSpec)}}
+   */
+  @Deprecated
+  // used in third-party plugins
   public List<Module> importProjects() {
-    if (MavenUtil.newModelEnabled(myProject)) {
-      WorkspaceEntityStorageBuilder builder = WorkspaceEntityStorageBuilder.create();
-      return importProjects(new IdeModifiableModelsProviderBridge(myProject, builder));
-    }
-    else {
-      return importProjects(new IdeModifiableModelsProviderImpl(myProject));
-    }
+    return updateAllMavenProjectsSync(MavenImportSpec.IMPLICIT_IMPORT);
   }
 
-
-  public List<Module> importProjects(final IdeModifiableModelsProvider modelsProvider) {
-    final Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges;
-    final boolean importModuleGroupsRequired;
-    synchronized (myImportingDataLock) {
-      projectsToImportWithChanges = Collections.unmodifiableMap(new LinkedHashMap<>(myProjectsToImport));
-      myProjectsToImport.clear();
-      importModuleGroupsRequired = myImportModuleGroupsRequired;
-      myImportModuleGroupsRequired = false;
-    }
-
-    final Ref<MavenProjectImporter> importer = new Ref<>();
-    final Ref<List<MavenProjectsProcessorTask>> postTasks = new Ref<>();
-
-    final Runnable r = () -> {
-      MavenProjectImporter projectImporter = new MavenProjectImporter(myProject,
-                                                                      myProjectsTree,
-                                                                      getFileToModuleMapping(new MavenModelsProvider() {
-                                                                        @Override
-                                                                        public Module[] getModules() {
-                                                                          return modelsProvider.getModules();
-                                                                        }
-
-                                                                        @Override
-                                                                        public VirtualFile[] getContentRoots(Module module) {
-                                                                          return modelsProvider.getContentRoots(module);
-                                                                        }
-                                                                      }),
-                                                                      projectsToImportWithChanges,
-                                                                      importModuleGroupsRequired,
-                                                                      modelsProvider,
-                                                                      getImportingSettings());
-      importer.set(projectImporter);
-      postTasks.set(projectImporter.importProject());
-    };
-
-    // called from wizard or ui
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      r.run();
-    }
-    else {
-      MavenUtil.runInBackground(myProject, MavenProjectBundle.message("maven.project.importing"), false, new MavenTask() {
-        @Override
-        public void run(MavenProgressIndicator indicator) {
-          r.run();
-        }
-      }).waitFor();
-    }
-
-
-    VirtualFileManager fm = VirtualFileManager.getInstance();
-    if (isNoBackgroundMode() && !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
-      ApplicationManager.getApplication().invokeAndWait(() -> fm.syncRefresh());
-    }
-    else {
-      fm.asyncRefresh(null);
-    }
-
-    if (postTasks.get() != null /*may be null if importing is cancelled*/) {
-      schedulePostImportTasks(postTasks.get());
-    }
-
-    // do not block user too often
-    myImportingQueue.restartTimer();
-
-    MavenProjectImporter projectImporter = importer.get();
-    List<Module> createdModules = projectImporter == null ? Collections.emptyList() : projectImporter.getCreatedModules();
-    if (!projectsToImportWithChanges.isEmpty()) {
-      myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC).importFinished(projectsToImportWithChanges.keySet(), createdModules);
-    }
-    return createdModules;
-  }
-
-  private Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
-    Map<VirtualFile, Module> result = new THashMap<>();
+  @ApiStatus.Internal
+  public Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
+    Map<VirtualFile, Module> result = new HashMap<>();
     for (Module each : modelsProvider.getModules()) {
       VirtualFile f = findPomFile(each, modelsProvider);
       if (f != null) result.put(f, each);
@@ -1334,6 +1077,11 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     return result;
   }
 
+
+  /**
+   * @deprecated use addManagerListener(Listener, Disposable) instead
+   */
+  @Deprecated
   public void addManagerListener(Listener listener) {
     myManagerListeners.add(listener);
   }
@@ -1362,58 +1110,35 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
-  private void fireProjectScheduled() {
-    for (Listener each : myManagerListeners) {
-      each.projectsScheduled();
-    }
-  }
-
-  private void fireImportAndResolveScheduled() {
+  protected void fireImportAndResolveScheduled() {
     for (Listener each : myManagerListeners) {
       each.importAndResolveScheduled();
     }
   }
 
-  private void fireProjectImportCompleted() {
+
+  void fireProjectImportCompleted() {
     for (Listener each : myManagerListeners) {
       each.projectImportCompleted();
     }
+  }
+
+  public void setForceUpdateSnapshots(boolean forceUpdateSnapshots) {
+    this.forceUpdateSnapshots = forceUpdateSnapshots;
+  }
+
+  public boolean getForceUpdateSnapshots() {
+    return forceUpdateSnapshots;
   }
 
   public interface Listener {
     default void activated() {
     }
 
-    default void projectsScheduled() {
-    }
-
     default void importAndResolveScheduled() {
     }
 
     default void projectImportCompleted() {
-    }
-  }
-
-  public static class ExternalWatcherContributor implements ExternalSystemProjectsWatcherImpl.Contributor {
-
-    @Override
-    public void markDirtyAllExternalProjects(@NotNull Project project) {
-      runWhenFullyOpen(project, (manager) -> manager.doScheduleUpdateProjects(null, true, false));
-    }
-
-    @Override
-    public void markDirty(@NotNull Module module) {
-      runWhenFullyOpen(module.getProject(), (manager) -> {
-        MavenProject mavenProject = manager.findProject(module);
-        if (mavenProject != null) {
-          manager.doScheduleUpdateProjects(Collections.singletonList(mavenProject), true, false);
-        }
-      });
-    }
-
-    private static void runWhenFullyOpen(@NotNull Project project, @NotNull Consumer<MavenProjectsManager> consumer) {
-      MavenProjectsManager manager = getInstance(project);
-      manager.runWhenFullyOpen(() -> consumer.accept(manager));
     }
   }
 }

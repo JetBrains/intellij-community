@@ -1,0 +1,10 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.availabilityProvider"
+            interface="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.ParcelizeAvailabilityProvider"
+            dynamic="true"
+            area="IDEA_PROJECT"
+    />
+  </extensionPoints>
+</idea-plugin>

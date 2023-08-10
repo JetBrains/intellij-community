@@ -1,14 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.properties.CommaSeparatedValues;
 import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -17,8 +15,6 @@ import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
-import com.intellij.psi.util.PsiEditorUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SerializationFilter;
@@ -44,8 +40,6 @@ import static com.intellij.psi.codeStyle.CodeStyleDefaults.*;
 /**
  * Common code style settings can be used by several programming languages. Each language may have its own
  * instance of {@code CommonCodeStyleSettings}.
- *
- * @author Rustam Vishnyakov
  */
 public class CommonCodeStyleSettings {
   // Dev. notes:
@@ -139,7 +133,7 @@ public class CommonCodeStyleSettings {
     return commonSettings;
   }
 
-  static void copyPublicFields(Object from, Object to) {
+  protected static void copyPublicFields(Object from, Object to) {
     assert from != to;
     ReflectionUtil.copyFields(to.getClass().getFields(), from, to);
   }
@@ -155,11 +149,6 @@ public class CommonCodeStyleSettings {
     setSoftMargins(source.getSoftMargins());
   }
 
-  @Nullable
-  private CommonCodeStyleSettings getDefaultSettings() {
-    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(getLanguage());
-    return provider == null ? null : provider.getDefaultCommonSettings();
-  }
 
   public void readExternal(Element element) {
     //noinspection deprecation
@@ -179,8 +168,15 @@ public class CommonCodeStyleSettings {
   }
 
   public void writeExternal(Element element) {
-    CommonCodeStyleSettings defaultSettings = getDefaultSettings();
-    Set<String> supportedFields = getSupportedFields();
+    LanguageCodeStyleProvider provider = LanguageCodeStyleProvider.forLanguage(getLanguage());
+    if (provider != null) {
+      writeExternal(element, provider);
+    }
+  }
+
+  public void writeExternal(@NotNull Element element, @NotNull LanguageCodeStyleProvider provider) {
+    CommonCodeStyleSettings defaultSettings = provider.getDefaultCommonSettings();
+    Set<String> supportedFields = provider.getSupportedFields();
     if (supportedFields != null) {
       supportedFields.add("FORCE_REARRANGE_MODE");
     }
@@ -191,7 +187,7 @@ public class CommonCodeStyleSettings {
     DefaultJDOMExternalizer.write(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
     mySoftMargins.serializeInto(element);
     if (myIndentOptions != null) {
-      IndentOptions defaultIndentOptions = defaultSettings != null ? defaultSettings.getIndentOptions() : null;
+      IndentOptions defaultIndentOptions = defaultSettings.getIndentOptions();
       Element indentOptionsElement = new Element(INDENT_OPTIONS_TAG);
       myIndentOptions.serialize(indentOptionsElement, defaultIndentOptions);
       if (!indentOptionsElement.getChildren().isEmpty()) {
@@ -201,23 +197,17 @@ public class CommonCodeStyleSettings {
 
     if (myArrangementSettings != null) {
       Element container = new Element(ARRANGEMENT_ELEMENT_NAME);
-      ArrangementUtil.writeExternal(container, myArrangementSettings, getLanguage());
+      ArrangementUtil.writeExternal(container, myArrangementSettings, provider.getLanguage());
       if (!container.getChildren().isEmpty()) {
         element.addContent(container);
       }
     }
   }
 
-  @Nullable
-  private Set<String> getSupportedFields() {
-    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(getLanguage());
-    return provider == null ? null : provider.getSupportedFields();
-  }
-
-  private static final class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
+  public static final class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
     private final Set<String> mySupportedFieldNames;
 
-    SupportedFieldsDiffFilter(final CommonCodeStyleSettings object,
+    public SupportedFieldsDiffFilter(final CommonCodeStyleSettings object,
                                      Set<String> supportedFiledNames,
                                      final CommonCodeStyleSettings parentObject) {
       super(object, parentObject);
@@ -245,6 +235,9 @@ public class CommonCodeStyleSettings {
    * Tells if a space is added when commenting/uncommenting lines with a line comment.
    */
   public boolean LINE_COMMENT_ADD_SPACE = false;
+  public boolean BLOCK_COMMENT_ADD_SPACE = false;
+
+  public boolean LINE_COMMENT_ADD_SPACE_ON_REFORMAT = false;
 
   public boolean KEEP_LINE_BREAKS = true;
 
@@ -1081,9 +1074,7 @@ public class CommonCodeStyleSettings {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof IndentOptions)) return false;
-
-      IndentOptions that = (IndentOptions)o;
+      if (!(o instanceof IndentOptions that)) return false;
 
       if (CONTINUATION_INDENT_SIZE != that.CONTINUATION_INDENT_SIZE) return false;
       if (INDENT_SIZE != that.INDENT_SIZE) return false;
@@ -1133,10 +1124,19 @@ public class CommonCodeStyleSettings {
       document.putUserData(INDENT_OPTIONS_KEY, this);
     }
 
+    /**
+     * @deprecated Use {@link #retrieveFromAssociatedDocument(Document)}
+     */
     @Nullable
+    @Deprecated
     public static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
       Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       return document != null ? document.getUserData(INDENT_OPTIONS_KEY) : null;
+    }
+
+    @Nullable
+    public static IndentOptions retrieveFromAssociatedDocument(@NotNull Document document) {
+      return document.getUserData(INDENT_OPTIONS_KEY);
     }
 
     /**
@@ -1191,13 +1191,7 @@ public class CommonCodeStyleSettings {
     return mySoftMargins.getValues();
   }
 
-  void setSoftMargins(List<Integer> values) {
+  public void setSoftMargins(List<Integer> values) {
     mySoftMargins.setValues(values);
-  }
-
-  public static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
-    PsiFile psiFile = PsiEditorUtil.getPsiFile(editor);
-    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, tailOffset);
-    return CodeStyle.getLanguageSettings(psiFile, language);
   }
 }

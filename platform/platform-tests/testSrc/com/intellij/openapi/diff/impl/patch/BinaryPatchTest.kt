@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch
 
 import com.intellij.openapi.util.io.FileUtil
@@ -9,7 +9,6 @@ import com.intellij.testFramework.TestDataFile
 import com.intellij.testFramework.TestDataPath
 import java.io.StringWriter
 import java.nio.file.Paths
-import java.util.*
 
 @TestDataPath("\$CONTENT_ROOT/testData/diff/binaryPatch/")
 class BinaryPatchTest : HeavyPlatformTestCase() {
@@ -65,7 +64,7 @@ class BinaryPatchTest : HeavyPlatformTestCase() {
     reader.parseAllPatches()
     val patches = reader.allPatches
     assertTrue(patches.size == 1)
-    assertTrue(Arrays.equals(binaryPatch.afterContent, (patches.first() as BinaryFilePatch).afterContent))
+    assertTrue(binaryPatch.afterContent.contentEquals((patches.first() as BinaryFilePatch).afterContent))
   }
 
   private fun getTestDir(@TestDataFile dirName: String): String {

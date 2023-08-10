@@ -1,23 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github
 
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.RunAll
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.common.runAll
 import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent
-import java.util.*
 
 class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
   private lateinit var editor: Editor
 
   override fun tearDown() {
-    RunAll(
-      ThrowableRunnable { if (::editor.isInitialized) EditorFactory.getInstance().releaseEditor(editor) },
-      ThrowableRunnable { super.tearDown() }
-    ).run()
+    runAll(
+      { invokeAndWaitIfNeeded { if (::editor.isInitialized) EditorFactory.getInstance().releaseEditor(editor) } },
+      { super.tearDown() }
+    )
   }
 
   fun testCreateFromFile() {

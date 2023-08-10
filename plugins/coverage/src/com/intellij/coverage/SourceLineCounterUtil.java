@@ -2,66 +2,33 @@
 package com.intellij.coverage;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
-import org.jetbrains.coverage.gnu.trove.TIntObjectHashMap;
+import com.intellij.rt.coverage.data.ClassData;
+import com.intellij.rt.coverage.data.LineData;
+import com.intellij.rt.coverage.data.ProjectData;
+import com.intellij.rt.coverage.instrumentation.UnloadedUtil;
+import com.intellij.rt.coverage.util.ClassNameUtil;
 import org.jetbrains.coverage.org.objectweb.asm.ClassReader;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public final class SourceLineCounterUtil {
-  public static boolean collectNonCoveredClassInfo(final PackageAnnotator.ClassCoverageInfo classCoverageInfo,
-                                                   final PackageAnnotator.PackageCoverageInfo packageCoverageInfo, byte[] content,
-                                                   final boolean excludeLines,
-                                                   final Condition<? super String> includeDescriptionCondition) {
-    if (content == null) return false;
-    ClassReader reader = new ClassReader(content, 0, content.length);
-
-    SourceLineCounter counter = new SourceLineCounter(null, excludeLines, null);
-    reader.accept(counter, 0);
-    Set<Object> descriptions = new HashSet<>();
-    TIntObjectHashMap lines = counter.getSourceLines();
-    lines.forEachEntry((line, description) -> {
-      if (includeDescriptionCondition.value((String)description)) {
-        classCoverageInfo.totalLineCount++;
-        packageCoverageInfo.totalLineCount++;
-        descriptions.add(description);
-      }
-      return true;
-    });
-
-    classCoverageInfo.totalMethodCount += descriptions.size();
-    packageCoverageInfo.totalMethodCount += descriptions.size();
-
-    if (!counter.isInterface()) {
-      packageCoverageInfo.totalClassCount++;
-    }
-
-    packageCoverageInfo.totalBranchCount += counter.getTotalBranches();
-    classCoverageInfo.totalBranchCount += counter.getTotalBranches();
-
-    return !counter.isInterface();
-  }
 
   public static void collectSrcLinesForUntouchedFiles(final List<? super Integer> uncoveredLines,
-                                                      byte[] content,
-                                                      final boolean excludeLines,
-                                                      final Project project) {
+                                                      byte[] content, final Project project) {
     final ClassReader reader = new ClassReader(content);
-    final SourceLineCounter collector = new SourceLineCounter(null, excludeLines, null);
-    reader.accept(collector, 0);
-
-    String qualifiedName = reader.getClassName();
-    Condition<String> includeDescriptionCondition = description -> !JavaCoverageOptionsProvider.getInstance(project).isGeneratedConstructor(qualifiedName, description);
-    TIntObjectHashMap lines = collector.getSourceLines();
-    lines.forEachEntry((line, description) -> {
-      if (includeDescriptionCondition.value((String)description)) {
-        line--;
-        uncoveredLines.add(line);
+    final String qualifiedName = ClassNameUtil.convertToFQName(reader.getClassName());
+    final ProjectData projectData = new ProjectData();
+    IDEACoverageRunner.setExcludeAnnotations(project, projectData);
+    UnloadedUtil.appendUnloadedClass(projectData, qualifiedName, reader, false, false);
+    final ClassData classData = projectData.getClassData(qualifiedName);
+    if (classData == null || classData.getLines() == null) return;
+    final LineData[] lines = (LineData[])classData.getLines();
+    for (LineData line : lines) {
+      if (line == null) continue;
+      final String description = line.getMethodSignature();
+      if (!JavaCoverageOptionsProvider.getInstance(project).isGeneratedConstructor(qualifiedName, description)) {
+        uncoveredLines.add(line.getLineNumber() - 1);
       }
-      return true;
-    });
+    }
   }
 }

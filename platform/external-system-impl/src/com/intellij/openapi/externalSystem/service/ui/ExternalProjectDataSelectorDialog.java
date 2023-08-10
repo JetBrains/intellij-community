@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -22,7 +23,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -40,6 +40,7 @@ import com.intellij.util.CachedValueImpl;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ import java.util.*;
  */
 public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
   private static final int MAX_PATH_LENGTH = 50;
-  private static final Set<? extends Key<?>> DATA_KEYS = ContainerUtil.set(ProjectKeys.PROJECT, ProjectKeys.MODULE);
+  private static final Set<? extends Key<?>> DATA_KEYS = Set.of(ProjectKeys.PROJECT, ProjectKeys.MODULE);
   private static final com.intellij.openapi.util.Key<DataNode<?>> MODIFIED_NODE_KEY = com.intellij.openapi.util.Key.create("modifiedData");
   private static final com.intellij.openapi.util.Key<DataNodeCheckedTreeNode> CONNECTED_UI_NODE_KEY =
     com.intellij.openapi.util.Key.create("connectedUiNode");
@@ -151,9 +152,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
   private void reloadTree() {
     final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
     final Object root = treeModel.getRoot();
-    if (!(root instanceof CheckedTreeNode)) return;
-
-    final CheckedTreeNode rootNode = (CheckedTreeNode)root;
+    if (!(root instanceof CheckedTreeNode rootNode)) return;
 
     final Couple<CheckedTreeNode> rootAndPreselectedNode = createRoot();
     final CheckedTreeNode rootCopy = rootAndPreselectedNode.first;
@@ -188,14 +187,14 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         projectStructure.setIgnored(notIgnoredNode == null);
 
         // execute when current dialog is closed
-        ExternalSystemUtil.invokeLater(myProject, ModalityState.NON_MODAL, () -> {
+        ExternalSystemUtil.invokeLater(myProject, ModalityState.nonModal(), () -> {
           final ProjectData projectData = projectStructure.getData();
           String title = ExternalSystemBundle.message(
             "progress.refresh.text", projectData.getExternalName(), projectData.getOwner().getReadableName());
           new Task.Backgroundable(myProject, title, true, PerformInBackgroundOption.DEAF) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, myProject, false);
+              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, myProject);
             }
           }.queue();
         });
@@ -223,10 +222,9 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
       @Override
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        if (!(value instanceof DataNodeCheckedTreeNode)) {
+        if (!(value instanceof DataNodeCheckedTreeNode node)) {
           return;
         }
-        final DataNodeCheckedTreeNode node = (DataNodeCheckedTreeNode)value;
 
         String tooltip = null;
         boolean hasErrors = false;
@@ -336,9 +334,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
             rootModuleNode[0] = treeNode;
           }
           String ideGrouping = moduleData.getIdeGrouping();
-          if (ideGrouping != null) {
-            ideGroupingMap.put(ideGrouping, node);
-          }
+          ideGroupingMap.put(ideGrouping, node);
         } else {
           // add elements under module node like web/enterprise artifacts
           DataNode<ModuleData> parentModule = node.getParent(ModuleData.class);
@@ -357,8 +353,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
     for (Map.Entry<String, DataNode<?>> groupingEntry : ideGroupingMap.entrySet()) {
       DataNode node = groupingEntry.getValue();
-      if (!(node.getData() instanceof ModuleData)) continue;
-      ModuleData moduleData = (ModuleData)node.getData();
+      if (!(node.getData() instanceof ModuleData moduleData)) continue;
       String ideParentGrouping = moduleData.getIdeParentGrouping();
       DataNode structuralParent = ideParentGrouping != null ? ideGroupingMap.get(ideParentGrouping) : null;
       DataNodeCheckedTreeNode treeParentNode = structuralParent != null ? treeNodeMap.get(structuralParent) : null;
@@ -692,6 +687,11 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         myShowSelectedRowsOnly = true;
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class UnselectAllButton extends AnActionButton {
@@ -716,17 +716,26 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         reloadTree();
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class ShowSelectedOnlyButton extends ToggleActionButton {
-
     ShowSelectedOnlyButton() {
-      super(ExternalSystemBundle.messagePointer("show.selected.only"), AllIcons.Actions.ShowHiddens);
+      super(ExternalSystemBundle.messagePointer("show.selected.only"), AllIcons.Actions.ToggleVisibility);
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
       return myShowSelectedRowsOnly;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -773,6 +782,11 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean displayTextInToolbar() {
       return true;
     }
@@ -781,7 +795,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
   @Override
   public boolean showAndGet() {
     final BooleanValueHolder result = new BooleanValueHolder(false);
-    DumbService.getInstance(myProject).suspendIndexingAndRun(ExternalSystemBundle.message("activity.name.select.external.data"),
+    UnindexedFilesScannerExecutor.getInstance(myProject).suspendScanningAndIndexingThenRun(ExternalSystemBundle.message("activity.name.select.external.data"),
       () -> result.setValue(super.showAndGet())
     );
     return result.getValue();

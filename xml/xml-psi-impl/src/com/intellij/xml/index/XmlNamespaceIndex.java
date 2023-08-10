@@ -10,7 +10,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -122,7 +121,7 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     if (namespace == null) {
       dtdFiles = FileTypeIndex.getFiles(DTDFileType.INSTANCE, scope);
     } else {
-      dtdFiles = ContainerUtil.filter(FilenameIndex.getVirtualFilesByName(project, namespace, scope), f -> FileTypeRegistry.getInstance().isFileOfType(f, DTDFileType.INSTANCE));
+      dtdFiles = ContainerUtil.filter(FilenameIndex.getVirtualFilesByName(namespace, scope), f -> FileTypeRegistry.getInstance().isFileOfType(f, DTDFileType.INSTANCE));
     }
     return ContainerUtil.map(dtdFiles, resourceFunction);
   }
@@ -212,11 +211,11 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     IndexedRelevantResource<String, XsdNamespaceBuilder> resource =
       Collections.max(resources, (o1, o2) -> {
         if (fileName != null) {
-          int i = Comparing.compare(fileName.equals(o1.getFile().getName()), fileName.equals(o2.getFile().getName()));
+          int i = Boolean.compare(fileName.equals(o1.getFile().getName()), fileName.equals(o2.getFile().getName()));
           if (i != 0) return i;
         }
         if (tagName != null) {
-          int i = Comparing.compare(o1.getValue().hasTag(tagName), o2.getValue().hasTag(tagName));
+          int i = Boolean.compare(o1.getValue().hasTag(tagName), o2.getValue().hasTag(tagName));
           if (i != 0) return i;
         }
         int i = o1.compareTo(o2);

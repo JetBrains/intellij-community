@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.ui.AbstractPainter;
@@ -28,7 +28,7 @@ final class WindowShadowPainter extends AbstractPainter {
           if (root != null) {
             Component pane = root.getGlassPane();
             if (pane instanceof IdeGlassPaneImpl) {
-              WindowShadowPainter painter = ((IdeGlassPaneImpl)pane).myWindowShadowPainter;
+              WindowShadowPainter painter = (WindowShadowPainter)((IdeGlassPaneImpl)pane).getWindowShadowPainter$intellij_platform_ide_impl();
               if (painter != null && pane == painter.myComponent) {
                 List<Rectangle> shadows = painter.myShadows;
                 painter.myShadows = getShadows(pane, (Window)c);
@@ -93,16 +93,13 @@ final class WindowShadowPainter extends AbstractPainter {
   private static Rectangle getShadowBounds(Point point, Window window) {
     if (!window.isShowing()) return null;
     if (!window.isDisplayable()) return null;
-    if (window instanceof Frame) {
-      Frame frame = (Frame)window;
+    if (window instanceof Frame frame) {
       if (!frame.isUndecorated()) return null;
     }
-    if (window instanceof Dialog) {
-      Dialog dialog = (Dialog)window;
+    if (window instanceof Dialog dialog) {
       if (!dialog.isUndecorated()) return null;
     }
-    if (window instanceof RootPaneContainer) {
-      RootPaneContainer container = (RootPaneContainer)window;
+    if (window instanceof RootPaneContainer container) {
       JRootPane root = container.getRootPane();
       if (root != null) {
         Object property = root.getClientProperty("Window.shadow");

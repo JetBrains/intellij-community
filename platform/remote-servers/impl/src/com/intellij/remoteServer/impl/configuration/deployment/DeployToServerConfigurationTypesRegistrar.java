@@ -1,62 +1,105 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.ide.ApplicationInitializedListener;
+import com.intellij.execution.configurations.SyntheticConfigurationTypeProvider;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.remoteServer.ServerType;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.remoteServer.configuration.ServerConfiguration;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class DeployToServerConfigurationTypesRegistrar implements ApplicationInitializedListener {
-  @Override
-  public void componentsInitialized() {
-    //todo[nik] improve this: configuration types should be loaded lazily
-    getConfigurationTypesExtPoint()
-      .registerExtensions(ContainerUtil.map(ServerType.EP_NAME.getExtensionList(), type -> new DeployToServerConfigurationType(type)));
+import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-    ServerType.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<>() {
-        @Override
-        public void extensionAdded(@NotNull ServerType addedServer, @NotNull PluginDescriptor pluginDescriptor) {
-          getConfigurationTypesExtPoint().registerExtension(new DeployToServerConfigurationType(addedServer));
-        }
+public final class DeployToServerConfigurationTypesRegistrar implements Disposable {
 
-        @Override
-        public void extensionRemoved(@NotNull ServerType removedServer, @NotNull PluginDescriptor pluginDescriptor) {
-          DeployToServerConfigurationType deployForServer = findDeployConfigurationType(removedServer);
-          if (deployForServer != null) {
-            getConfigurationTypesExtPoint().unregisterExtension(deployForServer);
-          }
-        }
-      }, null);
+  private static final @NotNull Logger LOG = Logger.getInstance(DeployToServerConfigurationTypesRegistrar.class);
+
+  public static @NotNull DeployToServerConfigurationTypesRegistrar getInstance() {
+    return ApplicationManager.getApplication().getService(DeployToServerConfigurationTypesRegistrar.class);
   }
 
-  @NotNull
-  public static DeployToServerConfigurationType getDeployConfigurationType(@NotNull ServerType<?> serverType) {
-    DeployToServerConfigurationType result = findDeployConfigurationType(serverType);
-    if (result == null) {
-      throw new IllegalArgumentException("Cannot find run configuration type for " + serverType.getClass());
-    }
+  /**
+   * @deprecated Please use {@link #getConfigurationType(ServerType)} directly.
+   */
+  @Deprecated(forRemoval = true)
+  public static @NotNull DeployToServerConfigurationType<?> getDeployConfigurationType(@NotNull ServerType<?> serverType) {
+    return getInstance().getConfigurationType(serverType);
+  }
+
+  private final ConcurrentMap<ServerType<?>, DeployToServerConfigurationType<?>> myConfigurationTypes = new ConcurrentHashMap<>();
+
+  private DeployToServerConfigurationTypesRegistrar() {
+    ServerType.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
+
+      @Override
+      public void extensionAdded(@NotNull ServerType<?> serverType,
+                                 @NotNull PluginDescriptor pluginDescriptor) {
+        registerConfigurationType(serverType);
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull ServerType<?> serverType,
+                                   @NotNull PluginDescriptor pluginDescriptor) {
+        unregisterConfigurationType(serverType);
+      }
+    }, true, this);
+  }
+
+  public <C extends ServerConfiguration> @NotNull DeployToServerConfigurationType<C> getConfigurationType(@NotNull ServerType<C> serverType) {
+    @SuppressWarnings("unchecked") DeployToServerConfigurationType<C> result =
+      (DeployToServerConfigurationType<C>)myConfigurationTypes.get(serverType);
+    LOG.assertTrue(result != null,
+                   "Cannot find run configuration type for server: " + serverType.getId());
     return result;
   }
 
-  @Nullable
-  private static DeployToServerConfigurationType findDeployConfigurationType(@NotNull ServerType<?> serverType) {
-    String serverTypeId = serverType.getId();
-    return (DeployToServerConfigurationType)ConfigurationType.CONFIGURATION_TYPE_EP
-      .findFirstSafe(next -> isDeployForServerType(next, serverTypeId));
+  private void registerConfigurationType(@NotNull ServerType<?> serverType) {
+    DeployToServerConfigurationType<?> configurationType = new DeployToServerConfigurationType<>(serverType);
+
+    try {
+      getConfigurationTypeEP().registerExtension(configurationType);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+
+    myConfigurationTypes.put(serverType, configurationType);
   }
 
-  private static ExtensionPointImpl<ConfigurationType> getConfigurationTypesExtPoint() {
-    return (ExtensionPointImpl<ConfigurationType>)ConfigurationType.CONFIGURATION_TYPE_EP.getPoint();
+  private void unregisterConfigurationType(@NotNull ServerType<?> serverType) {
+    DeployToServerConfigurationType<?> configurationType = myConfigurationTypes.remove(serverType);
+    LOG.assertTrue(configurationType != null,
+                   "Run configuration has not been registered for server: " + serverType.getId());
+
+    try {
+      getConfigurationTypeEP().unregisterExtension(configurationType);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
-  private static boolean isDeployForServerType(@NotNull ConfigurationType configurationType, @NotNull String serverTypeId) {
-    return configurationType instanceof DeployToServerConfigurationType &&
-           ((DeployToServerConfigurationType)configurationType).isForServerType(serverTypeId);
+  @Override
+  public void dispose() {
+    myConfigurationTypes.clear();
+  }
+
+  private static @NotNull ExtensionPointImpl<@NotNull ConfigurationType> getConfigurationTypeEP() {
+    return (ExtensionPointImpl<@NotNull ConfigurationType>)ConfigurationType.CONFIGURATION_TYPE_EP.getPoint();
+  }
+
+  static final class Provider implements SyntheticConfigurationTypeProvider {
+
+    @Override
+    public @NotNull Collection<? extends DeployToServerConfigurationType<?>> getConfigurationTypes() {
+      return getInstance().myConfigurationTypes.values();
+    }
   }
 }

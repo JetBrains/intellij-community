@@ -1,34 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public abstract class FormatterEx implements Formatter {
-  private static FormatterEx myTestInstance;
 
   public static FormatterEx getInstance() {
-    final Application application = ApplicationManager.getApplication();
-    return application == null ? getTestInstance() : (FormatterEx)Formatter.getInstance();
-  }
-
-  private static FormatterEx getTestInstance() {
-    if (myTestInstance == null) {
-      try {
-        myTestInstance = (FormatterEx)Class.forName("com.intellij.formatting.FormatterImpl").newInstance();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return myTestInstance;
+    return (FormatterEx)Formatter.getInstance();
   }
 
   public abstract void format(FormattingModel model,
@@ -49,8 +36,11 @@ public abstract class FormatterEx implements Formatter {
                                        final int offset,
                                        final TextRange affectedRange);
 
-  public abstract boolean isDisabled();
-
+  @Nullable
+  @ApiStatus.Internal
+  public abstract List<String> getLineIndents(final FormattingModel model,
+                                              final CodeStyleSettings settings,
+                                              final CommonCodeStyleSettings.IndentOptions indentOptions);
 
 
   public abstract void adjustLineIndentsForRange(final FormattingModel model,
@@ -63,7 +53,7 @@ public abstract class FormatterEx implements Formatter {
                                          final PsiFile file,
                                          final TextRange textRange);
 
-  public abstract void setProgressTask(@NotNull FormattingProgressTask progressIndicator);
+  public abstract void setProgressTask(@NotNull FormattingProgressCallback progressIndicator);
 
   /**
    * Calculates minimum spacing, allowed by formatting model (in columns) for a block starting at given offset,

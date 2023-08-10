@@ -3,7 +3,7 @@ package com.intellij.ui.mac.touchbar;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface ItemListener {
+interface ItemListener {
   // NOTE: called from AppKit thread
   void onItemEvent(@NotNull TBItem src, int evcode);
 }

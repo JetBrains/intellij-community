@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated Use {@link Compiler#EP_NAME} extension point to register compilers instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface CompilerFactory {
   Compiler[] createCompilers(@NotNull CompilerManager compilerManager);
 }

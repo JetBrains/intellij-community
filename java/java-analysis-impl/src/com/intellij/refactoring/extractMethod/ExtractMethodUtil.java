@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,9 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author ven
- */
 public final class ExtractMethodUtil {
   private static final Logger LOG = Logger.getInstance(ExtractMethodUtil.class);
   private static final Key<PsiMethod> RESOLVE_TARGET_KEY = Key.create("RESOLVE_TARGET_KEY");
@@ -48,8 +45,7 @@ public final class ExtractMethodUtil {
       for (final PsiReference ref : ReferencesSearch.search(overload)) {
         final PsiElement element = ref.getElement();
         final PsiElement parent = element.getParent();
-        if (parent instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression call = (PsiMethodCallExpression)parent;
+        if (parent instanceof PsiMethodCallExpression call) {
           if (PsiTreeUtil.isAncestor(extractedFragment, element, false)) {
             call.putCopyableUserData(RESOLVE_TARGET_KEY, overload);
           } else {
@@ -67,7 +63,7 @@ public final class ExtractMethodUtil {
     assert body != null;
     final JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
 
-      @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      @Override public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         final PsiMethod target = expression.getCopyableUserData(RESOLVE_TARGET_KEY);
         if (target != null) {
@@ -96,6 +92,13 @@ public final class ExtractMethodUtil {
 
   public static void addCastsToEnsureResolveTarget(@NotNull final PsiMethod oldTarget, @NotNull final PsiMethodCallExpression call)
     throws IncorrectOperationException {
+    addCastsToEnsureResolveTarget(oldTarget, PsiSubstitutor.EMPTY, call);
+  }
+
+  public static void addCastsToEnsureResolveTarget(@NotNull final PsiMethod oldTarget,
+                                                   @NotNull PsiSubstitutor oldSubstitutor,
+                                                   @NotNull final PsiMethodCallExpression call)
+    throws IncorrectOperationException {
     final PsiMethod newTarget = call.resolveMethod();
     final PsiManager manager = oldTarget.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
@@ -107,6 +110,7 @@ public final class ExtractMethodUtil {
         for (int i = 0; i < args.length; i++) {
           PsiExpression arg = args[i];
           PsiType paramType = i < oldParameters.length ? oldParameters[i].getType() : oldParameters[oldParameters.length - 1].getType();
+          paramType = oldSubstitutor.substitute(paramType);
           final PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(a)b", null);
           final PsiTypeElement typeElement = cast.getCastType();
           assert typeElement != null;

@@ -15,9 +15,6 @@ interface GHPRCommentService {
     : CompletableFuture<GithubIssueCommentWithHtml>
 
   @CalledInAny
-  fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String>
-
-  @CalledInAny
   fun updateComment(progressIndicator: ProgressIndicator, commentId: String, text: String): CompletableFuture<GHComment>
 
   @CalledInAny

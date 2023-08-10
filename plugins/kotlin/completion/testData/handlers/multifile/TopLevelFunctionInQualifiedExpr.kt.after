@@ -1,0 +1,7 @@
+package some
+
+fun other() {
+    jettesting.data.topLevelFunction()
+}
+
+// FIR_COMPARISON

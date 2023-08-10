@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,12 +21,21 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   private final DataCollectorSystemEventLogger myEventLogger;
   private final EventLogAppConnectionSettings myConnectionSettings;
 
+  /**
+   * @deprecated EventLogApplicationInfo should not depend on recorderId
+   * use {@link EventLogInternalApplicationInfo#EventLogInternalApplicationInfo(boolean)}
+   */
+  @Deprecated(forRemoval = true)
   public EventLogInternalApplicationInfo(@NotNull String recorderId, boolean isTest) {
+    this(isTest);
+  }
+
+  public EventLogInternalApplicationInfo(boolean isTest) {
     myIsTest = isTest;
     myConnectionSettings = new EventLogAppConnectionSettings();
     myEventLogger = new DataCollectorSystemEventLogger() {
       @Override
-      public void logErrorEvent(@NotNull String eventId, @NotNull Throwable exception) {
+      public void logErrorEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull Throwable exception) {
         EventLogSystemLogger.logSystemError(recorderId, eventId, exception.getClass().getName(), -1);
       }
     };

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.CopyProvider;
@@ -58,13 +58,11 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.iterateFiles;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
-/**
- * @author yole
- */
+
 public class CommittedChangesTreeBrowser extends JPanel implements DataProvider, Disposable, DecoratorManager {
   private static final Border RIGHT_BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
 
@@ -183,7 +181,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
 
   private void updateGrouping() {
     if (myGroupingStrategy.changedSinceApply()) {
-      ApplicationManager.getApplication().invokeLater(() -> updateModel(), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> updateModel(), ModalityState.nonModal());
     }
   }
 
@@ -221,6 +219,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
 
   @Override
   public void dispose() {
+    myDetailsView.shutdown();
     myConnection.disconnect();
     mySplitterProportionsData.saveSplitterProportions(this);
     mySplitterProportionsData.externalizeToDimensionService("CommittedChanges.SplitterProportions");
@@ -250,6 +249,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
   @NotNull
   public ChangeListGroupingStrategy getGroupingStrategy() {
     return myGroupingStrategy;
+  }
+
+  @NotNull
+  public Tree getChangesTree() {
+    return myChangesTree;
   }
 
   private void updateBySelectionChange() {
@@ -359,7 +363,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
       menuGroup.add(action);
     }
     menuGroup.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
-    PopupHandler.installPopupHandler(myChangesTree, menuGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myChangesTree, menuGroup, "CommittedChangesTreePopup");
   }
 
   @Override
@@ -417,26 +421,23 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
   @Override
   public Object getData(@NotNull String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId)) {
-      return collectChanges(getSelectedChangeLists(), false).toArray(new Change[0]);
-    }
-    if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
-      return myChangesTree.getSelectionCount() > 0;
+      return collectChanges(getSelectedChangeLists(), false).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     if (VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN.is(dataId)) {
-      return collectChanges(getSelectedChangeLists(), true).toArray(new Change[0]);
+      return collectChanges(getSelectedChangeLists(), true).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       List<CommittedChangeList> changeLists = getSelectedChangeLists();
       return !changeLists.isEmpty() ? changeLists.toArray(new CommittedChangeList[0]) : null;
     }
     if (VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.is(dataId)) {
-      return myDetailsView.getSelectedChanges().toArray(new Change[0]);
+      return myDetailsView.getSelectedChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
-      return getNavigatableArray(myProject, getFiles(changes.stream()));
+      return getNavigatableArray(myProject, iterateFiles(changes));
     }
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
     }
     return null;
@@ -560,7 +561,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
   }
 
   public void setLoading(final boolean value) {
-    runOrInvokeLaterAboveProgress(() -> myChangesTree.setPaintBusy(value), ModalityState.NON_MODAL, myProject);
+    runOrInvokeLaterAboveProgress(() -> myChangesTree.setPaintBusy(value), ModalityState.nonModal(), myProject);
   }
 
   private static class MyRepositoryChangesViewer extends CommittedChangesBrowser {
@@ -568,18 +569,13 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
 
     MyRepositoryChangesViewer(Project project) {
       super(project);
+      setViewerBorder(RIGHT_BORDER);
     }
 
     @Nullable
     @Override
     protected JComponent createHeaderPanel() {
       return myHeaderPanel;
-    }
-
-    @NotNull
-    @Override
-    protected Border createViewerBorder() {
-      return RIGHT_BORDER;
     }
 
     public void syncSizeWithToolbar(@NotNull JComponent toolbar) {

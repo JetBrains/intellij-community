@@ -4,6 +4,7 @@ package com.intellij.ide.dnd;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.ui.treeStructure.Tree;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,12 +22,12 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
     final DnDManager dndManager = new DnDManagerImpl();
     dndManager.registerSource(new DnDSource() {
       @Override
-      public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+      public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
         return true;
       }
 
       @Override
-      public DnDDragStartBean startDragging(DnDAction action, Point point) {
+      public DnDDragStartBean startDragging(DnDAction action, @NotNull Point point) {
         return new DnDDragStartBean(source.getLastSelectedPathComponent().toString());
       }
     }, source);

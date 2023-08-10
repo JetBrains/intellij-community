@@ -20,9 +20,6 @@ import com.intellij.util.xml.Converter;
 
 import java.lang.annotation.Annotation;
 
-/**
- * @author peter
-*/
 public class ConvertAnnotationImpl implements Convert {
   private final Converter myConverter;
   private final boolean mySoft;
@@ -54,9 +51,7 @@ public class ConvertAnnotationImpl implements Convert {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ConvertAnnotationImpl)) return false;
-
-    ConvertAnnotationImpl that = (ConvertAnnotationImpl)o;
+    if (!(o instanceof ConvertAnnotationImpl that)) return false;
 
     if (mySoft != that.mySoft) return false;
     if (!myConverter.getClass().equals(that.myConverter.getClass())) return false;

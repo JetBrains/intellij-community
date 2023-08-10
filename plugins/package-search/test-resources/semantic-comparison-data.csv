@@ -1,0 +1,25 @@
+#version 1 name,version 1 semantic part,version 1 stability,version 1 releaseDate,version 2 name,version 2 semantic part,version 2 stability,version 2 releaseDate,expected compareTo result
+
+#Name is prioritized over timestamp if they're not the same
+1.0.0,1.0.0,%%NULL%%,222222,2.0.0,2.0.0,%%NULL%%,111111,-1
+1.0.0-b01,1.0.0,-b01,222222,1.0.0,1.0.0,%%NULL%%,111111,-1
+
+#If same name and only one of the two has a timestamp, that comes first
+1.0.0,1.0.0,%%NULL%%,%%NULL%%,1.0.0,1.0.0,%%NULL%%,111111,0
+1.0.0-b01,1.0.0,-b01,%%NULL%%,1.0.0-b01,1.0.0,-b01,111111,0
+1.0.0,1.0.0,%%NULL%%,111111,1.0.0,1.0.0,%%NULL%%,%%NULL%%,0
+1.0.0-b01,1.0.0,-b01,111111,1.0.0-b01,1.0.0,-b01,%%NULL%%,0
+
+#If same name and neither has a timestamp, they are identical
+1.0.0,1.0.0,%%NULL%%,%%NULL%%,1.0.0,1.0.0,%%NULL%%,%%NULL%%,0
+1.0.0-b01,1.0.0,-b01,%%NULL%%,1.0.0-b01,1.0.0,-b01,%%NULL%%,0
+1.0.0,1.0.0,%%NULL%%,%%NULL%%,1.0.0,1.0.0,%%NULL%%,%%NULL%%,0
+1.0.0-b01,1.0.0,-b01,%%NULL%%,1.0.0-b01,1.0.0,-b01,%%NULL%%,0
+
+#If same name and both have a timestamp, they are compared by timestamp
+1.0.0,1.0.0,%%NULL%%,111111,1.0.0,1.0.0,%%NULL%%,222222,0
+1.0.0-b01,1.0.0,-b01,111111,1.0.0-b01,1.0.0,-b01,222222,0
+1.0.0,1.0.0,%%NULL%%,222222,1.0.0,1.0.0,%%NULL%%,111111,0
+1.0.0-b01,1.0.0,-b01,222222,1.0.0-b01,1.0.0,-b01,111111,0
+1.0.0,1.0.0,%%NULL%%,111111,1.0.0,1.0.0,%%NULL%%,111111,0
+1.0.0-b01,1.0.0,-b01,111111,1.0.0-b01,1.0.0,-b01,111111,0

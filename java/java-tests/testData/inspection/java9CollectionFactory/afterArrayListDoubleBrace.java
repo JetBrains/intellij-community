@@ -1,4 +1,4 @@
-// "Replace with 'List.of' call" "true"
+// "Replace with 'List.of()' call" "true"
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

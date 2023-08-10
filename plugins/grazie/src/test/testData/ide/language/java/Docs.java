@@ -3,7 +3,14 @@
  * <p>
  * This class has no useful logic; it's just a documentation example.
  *
- * @param T the type of member in this group.
+ * This is thought to be a great news, e.g. a new invention.
+ *
+ * A code example:
+ * <code>
+ *   Item item = env.generateData(Generator.sampledFrom(sys.currentItems), "working on %s item");
+ * </code>
+ *
+ * @param T the type of member in this group. And another sentence.
  */
 class ExampleClassWithNoTypos<T> {
 
@@ -12,7 +19,7 @@ class ExampleClassWithNoTypos<T> {
     /**
      * Creates an empty group.
      *
-     * @param name The name of the group.
+     * @param name The name of the group. And another sentence.
      */
     public ExampleClassWithNoTypos(String name) {
         this.name = name;
@@ -21,18 +28,28 @@ class ExampleClassWithNoTypos<T> {
     /**
      * Adds a [member] to this group.
      *
+     * @param cancellable Whether the progress can be cancelled.
      * @param member member to add
-     * @return the new size of the group.
+     * @return the new size of the group. And another sentence.
      */
-    Integer goodFunction(T member) {
+    Integer goodFunction(boolean cancellable, T member) {
         return 1; // no error comment
     }
+
+    /**
+     * Accepts files for which vcs operations are temporarily blocked.
+     * @return the project instance.
+     */
+    Object some1() { return 42; }
+
+    /** Currently active change list. */
+    class ActiveChangeList {}
 }
 
 /**
- * It is <warning descr="ARTICLE_MISSING">friend</warning> there
+ * It is <warning descr="EN_A_VS_AN">an</warning> friend there
  *
- * This guy <warning descr="MASS_AGREEMENT">have</warning> no useful logic; it's just a documentation example.
+ * </unopenedTag>
  *
  * @param T the <warning descr="KIND_OF_A">type of a</warning> <TYPO descr="Typo: In word 'membr'">membr</TYPO> in this group.
  */
@@ -51,9 +68,10 @@ class ExampleClassWithTypos<T> {
 
     /**
      * It <warning descr="IT_VBZ">add</warning> a [member] to this <TYPO descr="Typo: In word 'grooup'">grooup</TYPO>.
-     *
-     * @param member member to add
-     * @return the new size of <warning descr="DT_DT">a the</warning> group.
+     * <warning descr="UPPERCASE_SENTENCE_START">second</warning> sentence.
+     * 
+     * @param member member to add. And another sentence.
+     * @return the new size of <warning descr="DT_DT">a the</warning> group. <warning descr="UPPERCASE_SENTENCE_START">and</warning> another sentence.
      */
     Integer badFunction(T member) {
         return 1; // It <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO> in the comment
@@ -72,4 +90,11 @@ class ForMultiLanguageSupport {
     // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <warning descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</warning>.
     // das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
     // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <warning descr="MANNSTUNDE">Mannstunden</warning>.
+
+  /**
+   * @throws Exception wenn ein Fehler auftritt
+   */
+  public static void main(String[] args) throws Exception {
+    throw new Exception("Hello World");
+  }
 }

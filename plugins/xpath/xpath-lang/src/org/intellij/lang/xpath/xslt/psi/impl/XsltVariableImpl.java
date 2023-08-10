@@ -19,7 +19,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconManager;
 import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathType;
@@ -41,7 +41,7 @@ public class XsltVariableImpl extends XsltElementImpl implements XsltVariable {
 
     @Override
     public Icon getIcon(int i) {
-        return PlatformIcons.VARIABLE_ICON;
+        return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable);
     }
 
     @Override
@@ -57,10 +57,9 @@ public class XsltVariableImpl extends XsltElementImpl implements XsltVariable {
             return XPathType.fromString(attr.getValue());
         }
         final XPathExpression value = getValue();
-        if (value instanceof XPathVariableReference) {
+        if (value instanceof XPathVariableReference reference) {
             // recursive reference <xsl:variable name="foo" select="$foo" />
-            final XPathVariableReference reference = (XPathVariableReference)value;
-            if (reference.resolve() == this) {
+          if (reference.resolve() == this) {
                 return XPathType.UNKNOWN;
             }
         }

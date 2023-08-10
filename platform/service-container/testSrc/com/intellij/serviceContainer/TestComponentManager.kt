@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.configurationStore.StateStorageManager
@@ -10,11 +10,18 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.messages.MessageBus
+import com.intellij.util.namedChildScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
-internal val testPluginDescriptor = DefaultPluginDescriptor("test")
+val testPluginDescriptor: DefaultPluginDescriptor = DefaultPluginDescriptor("test")
 
-internal class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true) : ComponentManagerImpl(null, setExtensionsRootArea = false /* must work without */) {
+@OptIn(DelicateCoroutinesApi::class)
+@TestOnly
+class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true) :
+  ComponentManagerImpl(null, GlobalScope.namedChildScope("TestComponentManager"), setExtensionsRootArea = false /* must work without */) {
   init {
     registerService(IComponentStore::class.java, TestComponentStore::class.java, testPluginDescriptor, false)
   }
@@ -32,6 +39,9 @@ private class TestComponentStore : IComponentStore {
   }
 
   override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
+  }
+
+  override fun unloadComponent(component: Any) {
   }
 
   override fun initPersistencePlainComponent(component: Any, key: String) {
@@ -52,5 +62,11 @@ private class TestComponentStore : IComponentStore {
   }
 
   override fun removeComponent(name: String) {
+  }
+
+  override fun clearCaches() {
+  }
+
+  override fun release() {
   }
 }

@@ -1,11 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.projectWizard.*;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -206,8 +209,10 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
     final String moduleName = getModuleName();
     final Module module;
     final ProjectStructureConfigurable fromConfigurable = ProjectStructureConfigurable.getInstance(project);
-    if (fromConfigurable != null) {
-      module = fromConfigurable.getModulesConfig().getModule(moduleName);
+    ModifiableModuleModel modifiableModel = fromConfigurable != null ? fromConfigurable.getContext().getModulesConfigurator().getModuleModel()
+                                                                     : null;
+    if (modifiableModel != null) {
+      module = modifiableModel.findModuleByName(moduleName);
     }
     else {
       module = ModuleManager.getInstance(project).findModuleByName(moduleName);
@@ -240,8 +245,8 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
     File moduleFile = new File(moduleFileDirectory, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     if (moduleFile.exists()) {
       int answer = MessageDialogBuilder.yesNo(IdeBundle.message("title.file.already.exists"),
-                                              JavaUiBundle.message("prompt.overwrite.project.file", moduleFile.getAbsolutePath(),
-                                                                   IdeBundle.message("project.new.wizard.module.identification"))).show();
+                                              CoreBundle.message("prompt.overwrite.project.file", moduleFile.getAbsolutePath(),
+                                                                 IdeCoreBundle.message("project.new.wizard.module.identification"))).show();
       if (answer != Messages.YES) {
         return false;
       }

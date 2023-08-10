@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
@@ -46,8 +46,7 @@ public final class NotNullList<E> extends ArrayList<E> {
   }
 
   @Override
-  @NotNull
-  public E get(int index) {
+  public @NotNull E get(int index) {
     return super.get(index);
   }
 
@@ -63,14 +62,12 @@ public final class NotNullList<E> extends ArrayList<E> {
     return super.addAll(index, c);
   }
 
-  @NotNull
   @Override
-  public List<E> subList(int fromIndex, int toIndex) {
+  public @NotNull List<E> subList(int fromIndex, int toIndex) {
     final List<E> subList = super.subList(fromIndex, toIndex);
     return new AbstractList<E>() {
       @Override
-      @NotNull
-      public E get(int index) {
+      public @NotNull E get(int index) {
         return subList.get(index);
       }
 
@@ -100,9 +97,8 @@ public final class NotNullList<E> extends ArrayList<E> {
         return subList.addAll(index, c);
       }
 
-      @NotNull
       @Override
-      public List<E> subList(int fromIndex, int toIndex) {
+      public @NotNull List<E> subList(int fromIndex, int toIndex) {
         return subList.subList(fromIndex, toIndex);
       }
 

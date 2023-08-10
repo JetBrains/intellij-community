@@ -1,15 +1,15 @@
-public class X {
+class X {
   int f(int a) {
     if (a == 0) {
-      return 0;
+      return 0
     }
     else {
-      if (a == 1) {
-        return 2;
+      <spot>if (a == 1) {
+        return 2
       }
       else {
-        return 18;
-      }
+        return 18
+      }</spot>
     }
   }
 }

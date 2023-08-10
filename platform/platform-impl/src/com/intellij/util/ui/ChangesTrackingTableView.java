@@ -64,14 +64,14 @@ public abstract class ChangesTrackingTableView<T> extends TableView<T> {
 
   public static Object getValue(Component component) {
     if (component instanceof CellEditorComponentWithBrowseButton) {
-      final JTextField textField = (JTextField)((CellEditorComponentWithBrowseButton)component).getChildComponent();
+      final JTextField textField = (JTextField)((CellEditorComponentWithBrowseButton<?>)component).getChildComponent();
       return textField.getText();
     }
     else if (component instanceof JTextField) {
       return ((JTextField)component).getText();
     }
     else if (component instanceof JComboBox) {
-      return ((JComboBox)component).getSelectedItem();
+      return ((JComboBox<?>)component).getSelectedItem();
     }
     else if (component instanceof JCheckBox) {
       return Boolean.valueOf(((JCheckBox)component).isSelected());
@@ -81,7 +81,7 @@ public abstract class ChangesTrackingTableView<T> extends TableView<T> {
 
   private static void addChangeListener(final Component component, final ChangeListener listener, Disposable parentDisposable) {
     if (component instanceof CellEditorComponentWithBrowseButton) {
-      addChangeListener(((CellEditorComponentWithBrowseButton)component).getChildComponent(), listener, parentDisposable);
+      addChangeListener(((CellEditorComponentWithBrowseButton<?>)component).getChildComponent(), listener, parentDisposable);
     }
     else if (component instanceof JTextField) {
       final DocumentAdapter documentListener = new DocumentAdapter() {
@@ -106,11 +106,11 @@ public abstract class ChangesTrackingTableView<T> extends TableView<T> {
           listener.stateChanged(new ChangeEvent(component));
         }
       };
-      ((JComboBox)component).addActionListener(comboListener);
+      ((JComboBox<?>)component).addActionListener(comboListener);
       Disposer.register(parentDisposable, new Disposable() {
         @Override
         public void dispose() {
-          ((JComboBox)component).removeActionListener(comboListener);
+          ((JComboBox<?>)component).removeActionListener(comboListener);
         }
       });
     }

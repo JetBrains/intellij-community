@@ -1,13 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.core.CoreBundle;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -26,6 +28,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManager;
@@ -42,10 +45,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.*;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, Disposable {
   static final Logger LOG = Logger.getInstance(PsiDocumentManagerBase.class);
@@ -53,9 +56,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   private final Map<Document, List<Runnable>> myActionsAfterCommit = CollectionFactory.createConcurrentWeakMap();
 
-  protected final Project myProject;
+  final Project myProject;
   private final PsiManager myPsiManager;
-  protected final DocumentCommitProcessor myDocumentCommitProcessor;
+  private final DocumentCommitProcessor myDocumentCommitProcessor;
 
   final Set<Document> myUncommittedDocuments = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap());
   private final Map<Document, UncommittedInfo> myUncommittedInfos = new ConcurrentHashMap<>();
@@ -64,7 +67,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   boolean myStopTrackingDocuments;
   private boolean myPerformBackgroundCommit = true;
 
-  private final ThreadLocal<Boolean> myIsCommitInProgress = new ThreadLocal<>();
+  @SuppressWarnings("ThreadLocalNotStaticFinal")
+  private final ThreadLocal<Integer> myIsCommitInProgress = new ThreadLocal<>();
   private static final ThreadLocal<Boolean> ourIsFullReparseInProgress = new ThreadLocal<>();
   private final PsiToDocumentSynchronizer mySynchronizer;
 
@@ -104,16 +108,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return psiFile;
   }
 
-  public void associatePsi(@NotNull Document document, @Nullable PsiFile file) {
-    if (file != null) {
-      VirtualFile vFile = file.getViewProvider().getVirtualFile();
-      Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(vFile);
-      if (cachedDocument != null && cachedDocument != document) {
-        throw new IllegalStateException("Can't replace existing document");
-      }
-
-      FileDocumentManagerBase.registerDocument(document, vFile);
+  public void associatePsi(@NotNull Document document, @NotNull PsiFile file) {
+    if (file.getProject() != myProject) {
+      throw new IllegalArgumentException("Method associatePsi() called with file from the wrong project. Expected: "+myProject+" but got: "+file.getProject());
     }
+    VirtualFile vFile = file.getViewProvider().getVirtualFile();
+    Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(vFile);
+    if (cachedDocument != null && cachedDocument != document) {
+      throw new IllegalStateException("Can't replace existing document");
+    }
+
+    FileDocumentManagerBase.registerDocument(document, vFile);
   }
 
   @Override
@@ -160,17 +165,28 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
 
     FileViewProvider viewProvider = file.getViewProvider();
-    if (!viewProvider.isEventSystemEnabled()) return null;
+    if (!viewProvider.isEventSystemEnabled()) {
+      return null;
+    }
 
-    document = FileDocumentManager.getInstance().getDocument(viewProvider.getVirtualFile());
+    VirtualFile virtualFile = viewProvider.getVirtualFile();
+    document = FileDocumentManager.getInstance().getDocument(virtualFile, myProject);
     if (document != null) {
       if (document.getTextLength() != file.getTextLength()) {
         String message = "Document/PSI mismatch: " + file + " of " + file.getClass() +
                          "; viewProvider=" + viewProvider +
                          "; uncommitted=" + Arrays.toString(getUncommittedDocuments());
+        String documentText = document.getText();
+        String fileText;
+        try {
+          fileText = file.getText();
+        }
+        catch (AssertionError e) {
+          fileText = "file.getText() failed with an error: " + e;
+        }
         throw new RuntimeExceptionWithAttachments(message,
-                                                  new Attachment("document.txt", document.getText()),
-                                                  new Attachment("psi.txt", file.getText()));
+                                                  new Attachment("document.txt", documentText),
+                                                  new Attachment("psi.txt", fileText));
       }
 
       if (!viewProvider.isPhysical()) {
@@ -192,7 +208,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void commitAllDocuments() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
     if (myUncommittedDocuments.isEmpty()) return;
@@ -204,9 +220,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
           // another thread has just committed it, everything's fine
           continue;
         }
-        @SuppressWarnings("TestOnlyProblems")
-        boolean success = doCommitWithoutReparse(document);
-        LOG.error("Committed document in uncommitted set: " + document + ", force-committed=" + success);
+        LOG.error("Committed document in uncommitted set: " + document);
       }
       else if (!doCommit(document)) {
         LOG.error("Couldn't commit " + document);
@@ -219,7 +233,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public boolean commitAllDocumentsUnderProgress() {
     Application application = ApplicationManager.getApplication();
-    if (application.isWriteThread()) {
+    if (application.isDispatchThread()) {
       if (application.isWriteAccessAllowed()) {
         commitAllDocuments();
         //there are lot of existing actions/processors/tests which execute it under write lock
@@ -259,11 +273,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
                                                                              true, myProject);
   }
 
-  @TestOnly
-  public boolean doCommitWithoutReparse(@NotNull Document document) {
-    return finishCommitInWriteAction(document, Collections.emptyList(), Collections.emptyList(), true, true);
-  }
-
   @Override
   public void performForCommittedDocument(@NotNull Document doc, @NotNull Runnable action) {
     Document document = getTopLevelDocument(doc);
@@ -296,26 +305,28 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (!hasEventSystemEnabledUncommittedDocuments()) {
       if (!isCommitInProgress()) {
         // in case of fireWriteActionFinished() we didn't execute 'actionsWhenAllDocumentsAreCommitted' yet
-        assert actionsWhenAllDocumentsAreCommitted.isEmpty() : actionsWhenAllDocumentsAreCommitted;
+        assert actionsWhenAllDocumentsAreCommitted.isEmpty() : actionsWhenAllDocumentsAreCommitted + "; uncommitted docs: " +
+               StringUtil.join(myUncommittedDocuments, document->document+":isEventSystemEnabled="+isEventSystemEnabled(document)+":virtualFile="+getVirtualFile(document), ",");
       }
       action.run();
       return true;
     }
 
-    checkWeAreOutsideAfterCommitHandler();
+    assertWeAreOutsideAfterCommitHandler();
 
-    actionsWhenAllDocumentsAreCommitted.put(key, action);
+    actionsWhenAllDocumentsAreCommitted.put(key, ClientId.decorateRunnable(action));
     return false;
   }
 
   @ApiStatus.Internal
   public void addRunOnCommit(@NotNull Document document, @NotNull Runnable action) {
-    myActionsAfterCommit.computeIfAbsent(document, __ -> new SmartList<>()).add(action);
+    List<Runnable> actions = myActionsAfterCommit.computeIfAbsent(document, __ -> ContainerUtil.createConcurrentList());
+    actions.add(ThreadContext.captureThreadContext(ClientId.decorateRunnable(action)));
   }
 
-  private List<Runnable> getAndClearActionsAfterCommit(@NotNull Document document) {
+  private @NotNull Runnable @NotNull [] getAndClearActionsAfterCommit(@NotNull Document document) {
     List<Runnable> list = myActionsAfterCommit.remove(document);
-    return list != null ? new ArrayList<>(list) : null;
+    return list == null ? ArrayUtil.EMPTY_RUNNABLE_ARRAY : list.toArray(ArrayUtil.EMPTY_RUNNABLE_ARRAY);
   }
 
   @Override
@@ -343,26 +354,25 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
                        @NotNull Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
     if (isEventSystemEnabled(document)) {
-      ApplicationManager.getApplication().assertIsWriteThread();
+      ApplicationManager.getApplication().assertIsDispatchThread();
     }
     boolean[] ok = {true};
-    Runnable runnable = new DocumentRunnable(document, myProject) {
-      @Override
-      public void run() {
-        ok[0] = finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, synchronously, false);
-      }
-    };
     if (synchronously) {
-      runnable.run();
+      ok[0] = finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, true);
     }
     else {
-      ApplicationManager.getApplication().runWriteAction(runnable);
+      ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, myProject) {
+        @Override
+        public void run() {
+          ok[0] = finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, false);
+        }
+      });
     }
 
     if (ok[0]) {
       // run after commit actions outside write action
       runAfterCommitActions(document);
-      if (DebugUtil.DO_EXPENSIVE_CHECKS && !ApplicationInfoImpl.isInStressTest()) {
+      if (DebugUtil.DO_EXPENSIVE_CHECKS && !ApplicationManagerEx.isInStressTest()) {
         checkAllElementsValid(document, reason);
       }
     }
@@ -372,10 +382,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   protected boolean finishCommitInWriteAction(@NotNull Document document,
                                               @NotNull List<? extends BooleanRunnable> finishProcessors,
                                               @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
-                                              boolean synchronously,
-                                              boolean forceNoPsiCommit) {
+                                              boolean synchronously) {
     if (isEventSystemEnabled(document)) {
-      ApplicationManager.getApplication().assertIsWriteThread();
+      ApplicationManager.getApplication().assertIsDispatchThread();
     }
     if (myProject.isDisposed()) return false;
     assert !(document instanceof DocumentWindow);
@@ -385,36 +394,34 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       getSmartPointerManager().fastenBelts(virtualFile);
     }
 
-    FileViewProvider viewProvider = forceNoPsiCommit ? null : getCachedViewProvider(document);
+    FileViewProvider viewProvider = getCachedViewProvider(document);
 
-    myIsCommitInProgress.set(true);
-    boolean success = true;
-    try {
-      success = ProgressManager.getInstance().computeInNonCancelableSection(() -> {
-        if (viewProvider == null) {
-          handleCommitWithoutPsi(document);
-          return true;
-        }
-        else {
-          return commitToExistingPsi(document, finishProcessors, reparseInjectedProcessors, synchronously, virtualFile);
-        }
-      });
-    }
-    catch (Throwable e) {
+    AtomicBoolean success = new AtomicBoolean(true);
+    executeInsideCommit(()-> {
       try {
-        forceReload(virtualFile, viewProvider);
+        success.set(ProgressManager.getInstance().computeInNonCancelableSection(() -> {
+          if (viewProvider == null) {
+            handleCommitWithoutPsi(document);
+            return true;
+          }
+          return commitToExistingPsi(document, finishProcessors, reparseInjectedProcessors, synchronously, virtualFile);
+        }));
+      }
+      catch (Throwable e) {
+        try {
+          forceReload(virtualFile, viewProvider);
+        }
+        finally {
+          LOG.error("Exception while committing " + viewProvider + ", eventSystemEnabled=" + isEventSystemEnabled(document), e);
+        }
       }
       finally {
-        LOG.error("Exception while committing " + viewProvider + ", eventSystemEnabled=" + isEventSystemEnabled(document), e);
+        if (success.get()) {
+          myUncommittedDocuments.remove(document);
+        }
       }
-    }
-    finally {
-      if (success) {
-        myUncommittedDocuments.remove(document);
-      }
-      myIsCommitInProgress.set(null);
-    }
-    return success;
+    });
+    return success.get();
   }
 
   private boolean commitToExistingPsi(@NotNull Document document,
@@ -469,7 +476,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private boolean doCommit(@NotNull Document document) {
-    assert myIsCommitInProgress.get() == null : "Do not call commitDocument() from inside PSI change listener";
+    assert !isCommitInProgress() : "Do not call commitDocument() from inside PSI change listener";
 
     // otherwise there are many clients calling commitAllDocs() on PSI childrenChanged()
     if (getSynchronizer().isDocumentAffectedByTransactions(document)) return false;
@@ -481,30 +488,38 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return true; // the project must be closing or file deleted
     }
 
-    Runnable runnable = () -> {
-      myIsCommitInProgress.set(true);
-      try {
-        myDocumentCommitProcessor.commitSynchronously(document, myProject, psiFile);
-      }
-      finally {
-        myIsCommitInProgress.set(null);
-      }
-      assert !isInUncommittedSet(document) : "Document :" + document;
-    };
-
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().runWriteAction(runnable);
+      ApplicationManager.getApplication().runWriteAction(() -> doCommit(document, psiFile));
     }
     else {
-      runnable.run();
+      doCommit(document, psiFile);
     }
 
     return true;
   }
 
+  private void doCommit(@NotNull Document document, @NotNull PsiFile psiFile) {
+    assert !isCommitInProgress() : "Do not call commitDocument() from inside PSI change listener";
+    executeInsideCommit(() -> myDocumentCommitProcessor.commitSynchronously(document, myProject, psiFile));
+    assert !isInUncommittedSet(document) : "Document :" + document;
+    runAfterCommitActions(document);
+  }
+
   // true if the PSI is being modified and events being sent
   public boolean isCommitInProgress() {
     return myIsCommitInProgress.get() != null || isFullReparseInProgress();
+  }
+
+  // inside this method isCommitInProgress() == true
+  private void executeInsideCommit(@NotNull Runnable runnable) {
+    Integer counter = myIsCommitInProgress.get();
+    myIsCommitInProgress.set(counter == null ? 1 : counter + 1);
+    try {
+      runnable.run();
+    }
+    finally {
+      myIsCommitInProgress.set(counter);
+    }
   }
 
   @ApiStatus.Internal
@@ -527,7 +542,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public void commitAndRunReadAction(@NotNull Runnable runnable) {
     Application application = ApplicationManager.getApplication();
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (application.isDispatchThread()) {
       commitAllDocuments();
       runnable.run();
       return;
@@ -556,7 +571,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
           return;
         }
 
-        performWhenAllCommitted(() -> semaphore.up(), modality);
+        performWhenAllCommitted(modality, () -> semaphore.up());
       });
 
       while (!semaphore.waitFor(10)) {
@@ -572,12 +587,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
    */
   @Override
   public boolean performWhenAllCommitted(@NotNull Runnable action) {
-    return performWhenAllCommitted(action, ModalityState.defaultModalityState());
+    return performWhenAllCommitted(ModalityState.defaultModalityState(), action);
   }
 
-  private boolean performWhenAllCommitted(@NotNull Runnable action, @NotNull ModalityState modality) {
+  // return true when action is run, false when it's queued to run later
+  private boolean performWhenAllCommitted(@NotNull ModalityState modality, @NotNull Runnable action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    checkWeAreOutsideAfterCommitHandler();
+    assertWeAreOutsideAfterCommitHandler();
 
     assert !myProject.isDisposed() : "Already disposed: " + myProject;
     if (!hasEventSystemEnabledUncommittedDocuments()) {
@@ -589,15 +605,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       actions = new CompositeRunnable();
       actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, actions);
     }
-    actions.add(action);
+    actions.add(ThreadContext.captureThreadContext(ClientId.decorateRunnable(action)));
 
-    if (modality != ModalityState.NON_MODAL && TransactionGuard.getInstance().isWriteSafeModality(modality)) {
+    if (modality != ModalityState.nonModal() && TransactionGuard.getInstance().isWriteSafeModality(modality)) {
       // this client obviously expects all documents to be committed ASAP even inside modal dialog
       for (Document document : myUncommittedDocuments) {
-        if (isEventSystemEnabled(document)) {
-          myDocumentCommitProcessor.commitAsynchronously(myProject, document,
-                                                         "re-added because performWhenAllCommitted("+modality+") was called", modality);
-        }
+        retainProviderAndCommitAsync(document, "re-added because performWhenAllCommitted(" + modality + ") was called", modality);
       }
     }
     return false;
@@ -626,7 +639,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
       @Override
       public String toString() {
-        return "performLaterWhenAllCommitted()";
+        return "performLaterWhenAllCommitted(" + runnable+ ")";
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread() && isInsideCommitHandler()) {
@@ -655,39 +668,36 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (!app.isDispatchThread() && isEventSystemEnabled(document)) {
       // have to run in EDT to guarantee data structure safe access and "execute in EDT" callbacks contract
       app.invokeLater(()-> {
-        if (!myProject.isDisposed() && isCommitted(document)) runAfterCommitActions(document);
+        if (!myProject.isDisposed() && isCommitted(document)) {
+          runAfterCommitActions(document);
+        }
       });
       return;
     }
-    List<Runnable> list = getAndClearActionsAfterCommit(document);
-    if (list != null) {
+    Runnable[] list = getAndClearActionsAfterCommit(document);
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
       for (Runnable runnable : list) {
         runnable.run();
       }
     }
 
-    if (mayRunActionsWhenAllCommitted()) {
-      if (!app.isDispatchThread()) {
-        app.invokeLater(() -> {
-          if (mayRunActionsWhenAllCommitted()) {
-            runActionsWhenAllCommitted();
-          }
-        }, myProject.getDisposed());
-      }
-      else {
-        runActionsWhenAllCommitted();
-      }
+    if (app.isDispatchThread()) {
+      runActionsWhenAllCommitted();
+    }
+    else if (isEventSystemEnabled(document)) {
+      app.invokeLater(() -> runActionsWhenAllCommitted(), myProject.getDisposed());
     }
   }
 
   private void runActionsWhenAllCommitted() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!mayRunActionsWhenAllCommitted()) return;
     List<Runnable> actions = new ArrayList<>(actionsWhenAllDocumentsAreCommitted.values());
     beforeCommitHandler();
     List<Pair<Runnable, Throwable>> exceptions = new ArrayList<>();
     try {
       for (Runnable action : actions) {
-        try {
+        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
           action.run();
         }
         catch (ProcessCanceledException e) {
@@ -711,26 +721,31 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private boolean mayRunActionsWhenAllCommitted() {
-    return myIsCommitInProgress.get() == null &&
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return !isCommitInProgress() &&
            !actionsWhenAllDocumentsAreCommitted.isEmpty() &&
            !hasEventSystemEnabledUncommittedDocuments();
   }
 
   @Override
   public boolean hasEventSystemEnabledUncommittedDocuments() {
-    return ContainerUtil.exists(myUncommittedDocuments, this::isEventSystemEnabled);
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-319884, EA-831652, IDEA-301732, EA-659436, IDEA-307614, EA-773260")) {
+      return ContainerUtil.exists(myUncommittedDocuments, this::isEventSystemEnabled);
+    }
   }
 
   private void beforeCommitHandler() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, EmptyRunnable.getInstance()); // to prevent listeners from registering new actions during firing
   }
-  private void checkWeAreOutsideAfterCommitHandler() {
+  private void assertWeAreOutsideAfterCommitHandler() {
     if (isInsideCommitHandler()) {
       throw new IncorrectOperationException("You must not call performWhenAllCommitted()/cancelAndRunWhenCommitted() from within after-commit handler");
     }
   }
 
   private boolean isInsideCommitHandler() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return actionsWhenAllDocumentsAreCommitted.get(PERFORM_ALWAYS_KEY) == EmptyRunnable.getInstance();
   }
 
@@ -824,16 +839,19 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     assert document instanceof DocumentImpl : document;
     UncommittedInfo info = getUncommittedInfo(document);
     if (info != null) {
-      //noinspection unchecked
-      return (List<DocumentEvent>)info.myEvents.clone();
+      return new ArrayList<>(info.myEvents);
     }
     return Collections.emptyList();
-
   }
 
   @Override
-  public Document @NotNull [] getUncommittedDocuments() {
+  public @NotNull Document @NotNull [] getUncommittedDocuments() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (myUncommittedDocuments.isEmpty()) {
+      // myUncommittedDocuments is ConcurrentRefHashMap, so default toArray iterates it twice, even if collection is empty
+      // (which is a common case during batch code analysis)
+      return Document.EMPTY_ARRAY;
+    }
     Document[] documents = myUncommittedDocuments.toArray(Document.EMPTY_ARRAY);
     return ArrayUtil.stripTrailingNulls(documents);
   }
@@ -861,7 +879,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public boolean hasUncommitedDocuments() {
-    return myIsCommitInProgress.get() == null && !myUncommittedDocuments.isEmpty();
+    return !isCommitInProgress() && !myUncommittedDocuments.isEmpty();
   }
 
   @Override
@@ -928,7 +946,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return;
     }
 
-    boolean commitNecessary = files.stream().noneMatch(file -> PsiToDocumentSynchronizer.isInsideAtomicChange(file) || !(file instanceof PsiFileImpl));
+    boolean commitNecessary =
+      !ContainerUtil.exists(files, file -> PsiToDocumentSynchronizer.isInsideAtomicChange(file) || !(file instanceof PsiFileImpl));
 
     Application application = ApplicationManager.getApplication();
     boolean forceCommit = application.hasWriteAction(ExternalChangeAction.class) &&
@@ -948,8 +967,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       if (forceCommit) {
         commitDocument(document);
       }
-      else if (!document.isInBulkUpdate() && myPerformBackgroundCommit && isEventSystemEnabled(document)) {
-        myDocumentCommitProcessor.commitAsynchronously(myProject, document, event, ModalityState.defaultModalityState());
+      else if (!document.isInBulkUpdate() && myPerformBackgroundCommit) {
+        retainProviderAndCommitAsync(document, event, ModalityState.defaultModalityState());
       }
     }
     else {
@@ -964,10 +983,18 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void bulkUpdateFinished(@NotNull Document document) {
-    if (!isEventSystemEnabled(document)) return;
+    retainProviderAndCommitAsync(document, "Bulk update finished", ModalityState.defaultModalityState());
+  }
 
-    myDocumentCommitProcessor.commitAsynchronously(myProject, document, "Bulk update finished",
-                                                   ModalityState.defaultModalityState());
+  private void retainProviderAndCommitAsync(@NotNull Document document,
+                                            @NotNull Object reason,
+                                            @NotNull ModalityState modality) {
+    FileViewProvider viewProvider = getCachedViewProvider(document);
+    if (viewProvider != null && viewProvider.isEventSystemEnabled()) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      // make cached provider non-gcable temporarily (until commit end) to avoid surprising getCachedProvider()==null
+      myDocumentCommitProcessor.commitAsynchronously(myProject, this, document, reason, modality, viewProvider);
+    }
   }
 
   @ApiStatus.Internal
@@ -1120,7 +1147,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   public void reparseFileFromText(@NotNull PsiFileImpl file) {
-    if (isCommitInProgress() || isFullReparseInProgress()) throw new IllegalStateException("Re-entrant commit is not allowed");
+    if (isCommitInProgress()) throw new IllegalStateException("Re-entrant commit is not allowed");
 
     FileElement node = file.calcTreeElement();
     CharSequence text = node.getChars();
@@ -1138,7 +1165,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   private static final class UncommittedInfo {
     private final FrozenDocument myFrozen;
-    private final ArrayList<DocumentEvent> myEvents = new ArrayList<>();
+    private final List<DocumentEvent> myEvents = new ArrayList<>();
     private final ConcurrentMap<DocumentWindow, DocumentWindow> myFrozenWindows = new ConcurrentHashMap<>();
 
     private UncommittedInfo(@NotNull DocumentImpl original) {
@@ -1160,4 +1187,19 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   public boolean isDefaultProject() {
     return myProject.isDefault();
   }
+
+  public @NonNls String someDocumentDebugInfo(@NotNull Document document) {
+    FileViewProvider viewProvider = getCachedViewProvider(document);
+    return "cachedProvider: " + viewProvider +
+           "; isEventSystemEnabled: " + isEventSystemEnabled(document) +
+           "; isCommitted:"+isCommitted(document)+
+           "; myIsCommitInProgress:"+isCommitInProgress()+
+           "; isInUncommittedSet:"+isInUncommittedSet(document);
+  }
+
+  /**
+   * Try to find the project the {@code virtualFile} belongs to (from the directory structure the file located in) and make sure it's the same as {@link #myProject}
+   */
+  @ApiStatus.Internal
+  public void assertFileIsFromCorrectProject(@NotNull VirtualFile virtualFile) {}
 }

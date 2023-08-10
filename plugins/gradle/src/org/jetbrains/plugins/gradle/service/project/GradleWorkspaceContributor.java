@@ -18,11 +18,9 @@ package org.jetbrains.plugins.gradle.service.project;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectCoordinate;
-import com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceImpl;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkspaceContributor;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -30,23 +28,15 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleWorkspaceContributor implements ExternalProjectsWorkspaceImpl.Contributor {
-  private static final Key<CachedModuleDataFinder> MODULE_DATA_FINDER = Key.create("GradleModuleDataFinder");
+public class GradleWorkspaceContributor implements ExternalSystemWorkspaceContributor {
 
   @Nullable
   @Override
-  public ProjectCoordinate findProjectId(Module module, IdeModifiableModelsProvider modelsProvider) {
+  public ProjectCoordinate findProjectId(Module module) {
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
       return null;
     }
-
-    CachedModuleDataFinder moduleDataFinder = modelsProvider.getUserData(MODULE_DATA_FINDER);
-    if (moduleDataFinder == null) {
-      moduleDataFinder = new CachedModuleDataFinder();
-      modelsProvider.putUserData(MODULE_DATA_FINDER, moduleDataFinder);
-    }
-
-    DataNode<? extends ModuleData> moduleData = moduleDataFinder.findModuleData(module);
+    DataNode<? extends ModuleData> moduleData = CachedModuleDataFinder.getInstance(module.getProject()).findModuleData(module);
     return moduleData != null ? moduleData.getData().getPublication() : null;
   }
 }

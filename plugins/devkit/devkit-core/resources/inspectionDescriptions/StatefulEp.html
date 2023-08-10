@@ -1,6 +1,12 @@
 <html>
 <body>
-Potential memory leak detected. Please don't hold heavy objects in extensions if you're not 100% sure.
-Ideally, extensions should be stateless.
+Reports extensions and quick-fixes holding potentially leaking state.
+<p>
+  Keeping references to <code>PsiElement</code>, <code>PsiReference</code>, or <code>Project</code> instances can result in memory leaks.
+</p>
+<p>
+  Ideally, these should be stateless.
+  For quick-fix, see <code>LocalQuickFixOnPsiElement</code> as a convenient base class.
+</p>
 </body>
 </html>

@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.webcore.packaging;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +23,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
@@ -76,6 +79,12 @@ public class ManagePackagesDialog extends DialogWrapper {
 
   public ManagePackagesDialog(@NotNull Project project, final PackageManagementService packageManagementService,
                               @Nullable final PackageManagementService.Listener packageListener) {
+    this(project, packageManagementService, packageListener, new PackagesNotificationPanel());
+  }
+
+  public ManagePackagesDialog(@NotNull Project project, final PackageManagementService packageManagementService,
+                              @Nullable final PackageManagementService.Listener packageListener,
+                              @NotNull final PackagesNotificationPanel notificationPanel) {
     super(project, true);
     myProject = project;
     myController = packageManagementService;
@@ -84,7 +93,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     init();
     setTitle(IdeBundle.message("available.packages.dialog.title"));
     myPackages = new JBList();
-    myNotificationArea = new PackagesNotificationPanel();
+    myNotificationArea = notificationPanel;
     myNotificationsAreaPlaceholder.add(myNotificationArea.getComponent(), BorderLayout.CENTER);
 
     final AnActionButton reloadButton =
@@ -109,8 +118,12 @@ public class ManagePackagesDialog extends DialogWrapper {
           }
         });
       }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
-    myListSpeedSearch = new ListSpeedSearch(myPackages, o -> {
+    myListSpeedSearch = ListSpeedSearch.installOn(myPackages, o -> {
       if (o instanceof RepoPackage)
         return ((RepoPackage)o).getName();
       return "";
@@ -195,8 +208,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent event) {
         final Object pyPackage = myPackages.getSelectedValue();
-        if (pyPackage instanceof RepoPackage) {
-          RepoPackage repoPackage = (RepoPackage)pyPackage;
+        if (pyPackage instanceof RepoPackage repoPackage) {
 
           String extraOptions = null;
           if (myOptionsCheckBox.isEnabled() && myOptionsCheckBox.isSelected()) {
@@ -264,15 +276,13 @@ public class ManagePackagesDialog extends DialogWrapper {
   private void updateInstalledPackages() {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        final Collection<InstalledPackage> installedPackages = myController.getInstalledPackages();
+        List<String> installedPackages = ContainerUtil.map(myController.getInstalledPackagesList(), InstalledPackage::getName);
         UIUtil.invokeLaterIfNeeded(() -> {
           myInstalledPackages.clear();
-          for (InstalledPackage pkg : installedPackages) {
-            myInstalledPackages.add(pkg.getName());
-          }
+          myInstalledPackages.addAll(installedPackages);
         });
       }
-      catch(IOException e) {
+      catch (ExecutionException e) {
         LOG.info("Error updating list of installed packages", e);
       }
     });

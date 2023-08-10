@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
@@ -35,9 +35,9 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
     var state = refactoringProvider.state
     if (state == null) return
 
-    val declaration = state.declaration
-    if (!declaration.isValid || state.errorLevel == ErrorLevel.INCONSISTENT) return
-    if (hostFile != declaration.containingFile) return
+    val anchor = state.anchor
+    if (!anchor.isValid || state.errorLevel == ErrorLevel.INCONSISTENT) return
+    if (hostFile != anchor.containingFile) return
 
     val refactoringSupport = state.refactoringSupport
 
@@ -67,11 +67,11 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
     val refactoringData = refactoringSupport.availability.detectAvailableRefactoring(state)
 
     // update availability indicator with more precise state that takes into account resolve
-    refactoringProvider.availabilityIndicator.update(declaration, refactoringData, refactoringSupport)
+    refactoringProvider.availabilityIndicator.update(anchor, refactoringData, refactoringSupport)
 
     val range = when (refactoringData) {
       is SuggestedRenameData -> refactoringSupport.nameRange(refactoringData.declaration)!!
-      is SuggestedChangeSignatureData -> refactoringSupport.changeSignatureAvailabilityRange(declaration)!!
+      is SuggestedChangeSignatureData -> refactoringSupport.changeSignatureAvailabilityRange(anchor)!!
       else -> return
     }
 
@@ -85,7 +85,7 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
         refactoringData.oldName,
         refactoringData.declaration.name
       )
-      
+
       is SuggestedChangeSignatureData -> RefactoringBundle.message(
         "suggested.refactoring.change.signature.intention.text",
         refactoringData.nameOfStuffToUpdate
@@ -97,7 +97,7 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
     // we don't add into it if it's empty to keep the color of the bulb
     val collectionToAdd = intentions.errorFixesToShow.takeIf { it.isNotEmpty() }
                           ?: intentions.inspectionFixesToShow
-    collectionToAdd.add(0, HighlightInfo.IntentionActionDescriptor(intention, null, null, icon, null, null, null))
+    collectionToAdd.add(HighlightInfo.IntentionActionDescriptor(intention, null, null, icon, null, null, null))
   }
 
   private class MyIntention(

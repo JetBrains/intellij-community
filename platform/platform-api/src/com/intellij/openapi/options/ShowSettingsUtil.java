@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,9 +38,17 @@ public abstract class ShowSettingsUtil {
                                           @NotNull Predicate<? super Configurable> predicate,
                                           @Nullable Consumer<? super Configurable> additionalConfiguration);
 
+  /**
+   * Show a dialog with a defined configurable.
+   * <p>
+   * editConfigurable method is a good choice to create and show a quick on-call created configurable.
+   * If you'd like to show a configurable that is a part of the settings dialog, prefer using showSettingsDialog method
+   */
   public abstract boolean editConfigurable(Project project, @NotNull Configurable configurable);
 
   public abstract boolean editConfigurable(@Nullable Project project, @NotNull Configurable configurable, @Nullable Runnable advancedInitialization);
+
+  public abstract <T extends Configurable> boolean editConfigurable(@Nullable Project project, @NotNull T configurable, @NotNull Consumer<? super T> advancedInitialization);
 
   public abstract boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable);
 
@@ -61,6 +68,6 @@ public abstract class ShowSettingsUtil {
    * OS-specific name.
    */
   public static @Nls String getSettingsMenuName() {
-    return SystemInfo.isMac ? CommonBundle.message("title.settings.mac") : CommonBundle.message("title.settings");
+    return CommonBundle.settingsTitle();
   }
 }

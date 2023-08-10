@@ -19,15 +19,17 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiUtil
+import com.jetbrains.python.refactoring.PyDefUseUtil
 
 class PyFinalInspection : PyInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
-                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(holder, session)
+                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(holder, PyInspectionVisitor.getContext(session))
 
-  private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
+  private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyClass(node: PyClass) {
       super.visitPyClass(node)
@@ -75,7 +77,7 @@ class PyFinalInspection : PyInspection() {
           .filterIsInstance<PyFunction>()
           .firstOrNull { isFinal(it) }
           ?.let {
-            @NlsSafe val qualifiedName = it.qualifiedName ?: it.containingClass?.name + "." + it.name
+            @NlsSafe val qualifiedName = it.qualifiedName ?: (it.containingClass?.name + "." + it.name)
             registerProblem(node.nameIdentifier,
                             PyPsiBundle.message("INSP.final.method.marked.as.final.should.not.be.overridden", qualifiedName))
           }
@@ -144,7 +146,9 @@ class PyFinalInspection : PyInspection() {
         checkFinalReassignment(node)
       }
 
-      if (isFinal(node) && PyUtil.multiResolveTopPriority(node, resolveContext).any { it != node }) {
+      if (isFinal(node) && PyUtil.multiResolveTopPriority(node, resolveContext).any {
+          it != node && !PyDefUseUtil.isDefinedBefore(node, it)
+        }) {
         registerProblem(node, PyPsiBundle.message("INSP.final.already.declared.name.could.not.be.redefined.as.final"))
       }
     }
@@ -208,7 +212,8 @@ class PyFinalInspection : PyInspection() {
 
       cls.findMethodByName(PyNames.INIT, false, myTypeEvalContext)?.let { init ->
         val attributesInInit = mutableMapOf<String, PyTargetExpression>()
-        PyClassImpl.collectInstanceAttributes(init, attributesInInit, instanceFinals.keys)
+        PyClassImpl.collectInstanceAttributes(init, attributesInInit)
+        attributesInInit.keys.removeAll(instanceFinals.keys)
         instanceFinals += attributesInInit.filterValues { isFinal(it) }
       }
 
@@ -402,7 +407,8 @@ class PyFinalInspection : PyInspection() {
     }
 
     private fun resolvesToFinal(expression: PyExpression?): Boolean {
-      return expression is PyReferenceExpression && eventuallyResolvesToFinal(expression, myTypeEvalContext)
+      return expression is PyReferenceExpression &&
+             resolveToQualifiedNames(expression, myTypeEvalContext).any { it == FINAL || it == FINAL_EXT }
     }
 
     private fun isTopLevelInAnnotationOrTypeComment(node: PyExpression): Boolean {

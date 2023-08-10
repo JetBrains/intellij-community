@@ -25,7 +25,7 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.File;
 import java.util.*;
 
-public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension {
+public final class JpsAntModelSerializerExtension extends JpsModelSerializerExtension {
   @NotNull
   @Override
   public List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {

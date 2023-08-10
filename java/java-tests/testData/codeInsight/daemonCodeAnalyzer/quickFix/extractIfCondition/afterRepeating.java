@@ -1,4 +1,4 @@
-// "Extract if (a)" "true"
+// "Extract if (a)" "true-preview"
 class Test {
   void f(boolean a, boolean b, boolean c){
       /*2*/

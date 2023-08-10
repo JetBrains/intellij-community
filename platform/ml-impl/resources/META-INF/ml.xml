@@ -1,0 +1,17 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.internal.statistic.local.FileTypeUsageSummaryProvider"
+                    serviceImplementation="com.intellij.internal.statistic.local.FileTypeUsageLocalSummary"
+                    testServiceImplementation="com.intellij.internal.statistic.local.TestFileTypeUsageSummaryProvider"/>
+
+    <projectService serviceInterface="com.intellij.internal.statistic.local.LanguageUsageStatisticsProvider"
+                    serviceImplementation="com.intellij.internal.statistic.local.LanguageUsageStatisticsProviderImpl"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.internal.statistic.local.FileTypeSummaryListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    <listener class="com.intellij.internal.statistic.local.LanguageUsageUpdaterListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
+</idea-plugin>

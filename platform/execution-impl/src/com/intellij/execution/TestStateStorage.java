@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -18,10 +18,7 @@ import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 
@@ -45,7 +42,7 @@ public class TestStateStorage implements Disposable {
     public final long configurationHash;
     public final Date date;
     public int failedLine;
-    public final String failedMethod;
+    public String failedMethod;
     public final @NlsSafe String errorMessage;
     public final String topStacktraceLine;
 
@@ -66,7 +63,7 @@ public class TestStateStorage implements Disposable {
   private volatile ScheduledFuture<?> myMapFlusher;
 
   public static TestStateStorage getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, TestStateStorage.class);
+    return project.getService(TestStateStorage.class);
   }
 
   public TestStateStorage(Project project) {
@@ -80,7 +77,7 @@ public class TestStateStorage implements Disposable {
     } catch (IOException e) {
       LOG.error(e);
     }
-    myMapFlusher = FlushingDaemon.everyFiveSeconds(this::flushMap);
+    myMapFlusher = FlushingDaemon.runPeriodically(this::flushMap);
   }
 
   private PersistentHashMap<String, Record> initializeMap() throws IOException {
@@ -116,7 +113,14 @@ public class TestStateStorage implements Disposable {
   @NotNull
   public synchronized Collection<String> getKeys() {
     try {
-      return myMap == null ? Collections.emptyList() : myMap.getAllKeysWithExistingMapping();
+      if (myMap == null) {
+        return Collections.emptyList();
+      }
+      else {
+        List<String> result = new ArrayList<>();
+        myMap.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(result));
+        return result;
+      }
     }
     catch (IOException e) {
       thingsWentWrongLetsReinitialize(e, "Can't get keys");
@@ -152,15 +156,23 @@ public class TestStateStorage implements Disposable {
 
     Map<String, Record> result = new HashMap<>();
     try {
-      for (String key : myMap.getAllKeysWithExistingMapping()) {
-        Record record = myMap.get(key);
+      myMap.processKeysWithExistingMapping(key -> {
+        Record record;
+        try {
+          record = myMap.get(key);
+        }
+        catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
+
         if (record != null && record.date.compareTo(since) > 0) {
           result.put(key, record);
           if (result.size() >= limit) {
-            break;
+            return false;
           }
         }
-      }
+        return true;
+      });
     }
     catch (IOException e) {
       thingsWentWrongLetsReinitialize(e, "Can't get recent tests");

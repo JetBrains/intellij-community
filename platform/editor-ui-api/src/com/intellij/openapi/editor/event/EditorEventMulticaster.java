@@ -54,7 +54,7 @@ public interface EditorEventMulticaster {
   /**
    * @deprecated Use {@link #addSelectionListener(SelectionListener, Disposable)} instead to avoid leaking listeners
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   void addSelectionListener(@NotNull SelectionListener listener);
 
   void addSelectionListener(@NotNull SelectionListener listener, @NotNull Disposable parentDisposable);

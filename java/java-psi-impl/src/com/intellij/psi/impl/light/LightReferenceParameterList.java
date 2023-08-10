@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.StringJoiner;
 
-/**
- *  @author dsl
- */
 public class LightReferenceParameterList extends LightElement implements PsiReferenceParameterList {
   private final PsiTypeElement[] myTypeElements;
   private final String myText;

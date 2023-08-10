@@ -40,8 +40,7 @@ public class ParentElementFilter extends PositionElementFilter{
 
   @Override
   public boolean isAcceptable(Object element, PsiElement scope){
-    if (!(element instanceof PsiElement)) return false;
-    PsiElement context = (PsiElement)element;
+    if (!(element instanceof PsiElement context)) return false;
     for(int i = 0; i < myLevel && context != null; i++){
        context = context.getContext();
     }

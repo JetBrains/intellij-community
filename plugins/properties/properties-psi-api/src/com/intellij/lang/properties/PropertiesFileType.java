@@ -1,57 +1,53 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 public final class PropertiesFileType extends LanguageFileType {
   public static final LanguageFileType INSTANCE = new PropertiesFileType();
-  @NonNls public static final String DEFAULT_EXTENSION = "properties";
-  @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
+  public static final String DEFAULT_EXTENSION = "properties";
+  public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
+  public static final Charset PROPERTIES_DEFAULT_CHARSET = StandardCharsets.ISO_8859_1;
 
   private PropertiesFileType() {
     super(PropertiesLanguage.INSTANCE);
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "Properties";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
-    return PropertiesBundle.message("properties.files.file.type.description");
+  public @NotNull String getDescription() {
+    return PropertiesBundle.message("filetype.properties.description");
   }
 
   @Override
-  @NotNull
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 
   @Override
   public Icon getIcon() {
-    return AllIcons.FileTypes.Properties;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.PropertiesFileType);
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
-    LoadTextUtil.DetectResult guessed = LoadTextUtil.guessFromContent(file, content);
-    Charset charset = guessed.hardCodedCharset == null ? EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file) : guessed.hardCodedCharset;
+  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
+    Charset charset = EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file);
     if (charset == null) {
-      charset = EncodingManager.getInstance().getDefaultCharset();
+      charset = PROPERTIES_DEFAULT_CHARSET;
     }
     if (EncodingRegistry.getInstance().isNative2Ascii(file)) {
       charset = Native2AsciiCharset.wrap(charset);

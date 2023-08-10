@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.Disposable;
@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -93,7 +92,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     ExtensionPoint<UsageGroupingRuleProvider> point = UsageGroupingRuleProvider.EP_NAME.getPoint();
     UsageGroupingRuleProvider provider = new UsageGroupingRuleProvider() {
       @Override
-      public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
+      public @NotNull UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
         return rules;
       }
     };
@@ -136,27 +135,11 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     }
 
     @Override
-    public void update() {
-    }
-
-    @Override
-    public Icon getIcon(boolean isOpen) { return null; }
-    @Override
     @NotNull
-    public String getText(UsageView view) { return String.valueOf(myPower); }
-
-    @Override
-    public FileStatus getFileStatus() {
-      return null;
-    }
-
-    @Override
-    public boolean isValid() {
-      return false;
-    }
+    public String getPresentableGroupText() { return String.valueOf(myPower); }
 
     public String toString() {
-      return getText(null);
+      return getPresentableGroupText();
     }
 
     @Override
@@ -169,91 +152,30 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       return o instanceof LogUsageGroup && myPower == ((LogUsageGroup)o).myPower;
     }
     public int hashCode() { return myPower; }
-
-    @Override
-    public void navigate(boolean requestFocus) { }
-
-    @Override
-    public boolean canNavigate() { return false; }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
-    }
   }
 
   private static class OddEvenGroupingRule extends SingleParentUsageGroupingRule {
     private static final UsageGroup EVEN = new UsageGroup() {
-      @Override
-      public Icon getIcon(boolean isOpen) { return null; }
+
       @Override
       @NotNull
-      public String getText(UsageView view) { return "Even"; }
-
-      @Override
-      public void update() {
-      }
-
-      @Override
-      public FileStatus getFileStatus() {
-        return null;
-      }
-
-      @Override
-      public boolean isValid() {
-        return false;
-      }
-
-      @Override
-      public void navigate(boolean focus) throws UnsupportedOperationException { }
-      @Override
-      public boolean canNavigate() { return false; }
-
-      @Override
-      public boolean canNavigateToSource() {
-        return false;
-      }
+      public String getPresentableGroupText() { return "Even"; }
 
       @Override
       public int compareTo(@NotNull UsageGroup o) { return o == ODD ? -1 : 0; }
-      public String toString() { return getText(null); }
+      public String toString() { return getPresentableGroupText(); }
     };
 
     private static final UsageGroup ODD = new UsageGroup() {
-      @Override
-      public Icon getIcon(boolean isOpen) { return null; }
+
       @Override
       @NotNull
-      public String getText(UsageView view) { return "Odd"; }
-
-      @Override
-      public void update() {
-      }
-
-      @Override
-      public FileStatus getFileStatus() {
-        return null;
-      }
-
-      @Override
-      public boolean isValid() {
-        return false;
-      }
-
-      @Override
-      public void navigate(boolean focus) throws UnsupportedOperationException { }
-      @Override
-      public boolean canNavigate() { return false; }
-
-      @Override
-      public boolean canNavigateToSource() {
-        return false;
-      }
+      public String getPresentableGroupText() { return "Odd"; }
 
       @Override
       public int compareTo(@NotNull UsageGroup o) { return o == EVEN ? 1 : 0; }
       @Override
-      public String toString() { return getText(null); }
+      public String toString() { return getPresentableGroupText(); }
     };
 
     @Nullable
@@ -325,20 +247,6 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
 
     public String toString() {
       return String.valueOf(myId);
-    }
-
-    @Override
-    public void navigate(boolean requestFocus) {
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return false;
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
     }
 
     @Override

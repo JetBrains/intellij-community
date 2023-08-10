@@ -100,7 +100,7 @@ public final class XPathExpressionGenerator {
         }
 
         @Override
-        public void visitXmlAttribute(XmlAttribute attribute) {
+        public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
             uniquePath = getUniquePath(attribute);
             path = getPath(attribute);
         }
@@ -120,8 +120,7 @@ public final class XPathExpressionGenerator {
             String uri = attribute.getNamespace();
             String prefix = MyPsiUtil.getAttributePrefix(attribute);
 
-            if ((uri.length() == 0) || (prefix == null)
-                    || (prefix.length() == 0)) {
+            if (uri.length() == 0 || prefix.length() == 0) {
                 result.append(attribute.getLocalName());
             } else {
                 result.append(attribute.getName());
@@ -145,8 +144,7 @@ public final class XPathExpressionGenerator {
             String uri = attribute.getNamespace();
             String prefix = MyPsiUtil.getAttributePrefix(attribute);
 
-            if ((uri.length() == 0) || (prefix == null)
-                    || (prefix.length() == 0)) {
+            if (uri.length() == 0 || prefix.length() == 0) {
                 result.append(attribute.getLocalName());
             } else {
                 result.append(attribute.getName());
@@ -157,7 +155,7 @@ public final class XPathExpressionGenerator {
 
 
         @Override
-        public void visitXmlTag(XmlTag tag) {
+        public void visitXmlTag(@NotNull XmlTag tag) {
             uniquePath = getUniquePath(tag);
             path = getPath(tag);
         }
@@ -198,7 +196,7 @@ public final class XPathExpressionGenerator {
         }
 
         @Override
-        public void visitXmlComment(XmlComment comment) {
+        public void visitXmlComment(@NotNull XmlComment comment) {
             uniquePath = getUniquePath(comment);
             path = getPath(comment);
         }
@@ -218,7 +216,7 @@ public final class XPathExpressionGenerator {
         }
 
         @Override
-        public void visitXmlText(XmlText text) {
+        public void visitXmlText(@NotNull XmlText text) {
             uniquePath = getUniquePath(text);
             path = getPath(text);
         }
@@ -253,7 +251,7 @@ public final class XPathExpressionGenerator {
             XmlTag parent = processingInstruction.getParentTag();
 
             final String target = PsiDocumentNavigator.getProcessingInstructionTarget(processingInstruction);
-            final String s = target != null ? "'" + target + "'" : "";
+            final String s = "'" + target + "'";
             return makeUnique(((parent != null) && (parent != context)) ? (getUniquePath(parent) + "/processing-instruction(" + s + ")")
                     : "processing-instruction(" + s + ")", processingInstruction);
         }
@@ -272,29 +270,25 @@ public final class XPathExpressionGenerator {
             try {
                 final XPath xPath = xpathSupport.createXPath(file, uniquePath, Namespace.fromMap(usedPrefixes));
                 final Object o = xPath.evaluate(file.getDocument());
-                if (o instanceof List) {
+                if (o instanceof List list) {
                     //noinspection RawUseOfParameterizedType
-                    final List list = (List)o;
-                    if (list.size() > 1) {
-                        if (what instanceof XmlTag) {
-                            final XmlTag tag = (XmlTag)what;
-                            final XmlAttribute[] attributes = tag.getAttributes();
-                            if (attributes.length > 0) {
-                                for (XmlAttribute attribute : attributes) {
-                                    final String name = attribute.getName();
-                                    final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
-                                    if ((attribute.getValue() != null &&
-                                            (descriptor != null && descriptor.hasIdType()) ||
-                                            name.equalsIgnoreCase("id") ||
-                                            name.equalsIgnoreCase("name"))) {
-                                        final StringBuilder buffer = new StringBuilder(uniquePath);
-                                        buffer.append("[@");
-                                        buffer.append(name);
-                                        buffer.append("='");
-                                        buffer.append(attribute.getValue());
-                                        buffer.append("']");
-                                        return buffer.toString();
-                                    }
+                  if (list.size() > 1) {
+                        if (what instanceof XmlTag tag) {
+                          final XmlAttribute[] attributes = tag.getAttributes();
+                            for (XmlAttribute attribute : attributes) {
+                                final String name = attribute.getName();
+                                final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+                                if ((attribute.getValue() != null &&
+                                     (descriptor != null && descriptor.hasIdType()) ||
+                                     name.equalsIgnoreCase("id") ||
+                                     name.equalsIgnoreCase("name"))) {
+                                  final StringBuilder buffer = new StringBuilder(uniquePath);
+                                  buffer.append("[@");
+                                  buffer.append(name);
+                                  buffer.append("='");
+                                  buffer.append(attribute.getValue());
+                                  buffer.append("']");
+                                  return buffer.toString();
                                 }
                             }
                         }

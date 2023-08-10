@@ -1,0 +1,6 @@
+// WITH_STDLIB
+fun test(x: Any) {
+    run {
+        if (x !is String) return
+    }
+}

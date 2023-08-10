@@ -1,4 +1,4 @@
-// "Replace method call with A.newMethod" "false"
+// "Replace method call with 'A.newMethod()'" "false"
 class A {
   {
     boolean b = oldMeth<caret>od(); // invoke here

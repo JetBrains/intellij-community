@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.*;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class GitRollbackEnvironment implements RollbackEnvironment {
   @NotNull private final Project myProject;
 
@@ -59,11 +59,6 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
   }
 
   @Override
-  public void rollbackIfUnchanged(@NotNull VirtualFile file) {
-    // do nothing
-  }
-
-  @Override
   public void rollbackChanges(List<? extends Change> changes,
                               List<VcsException> exceptions,
                               @NotNull RollbackProgressListener listener) {
@@ -76,23 +71,19 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
     // collect changes to revert
     for (Change c : changes) {
       switch (c.getType()) {
-        case NEW:
+        case NEW ->
           // note that this the only change that could happen
           // for HEAD-less working directories.
           registerFile(toUnversion, c.getAfterRevision().getFile(), exceptions);
-          break;
-        case MOVED:
+        case MOVED -> {
           registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
           registerFile(toUnindex, c.getAfterRevision().getFile(), exceptions);
           toDelete.add(c.getAfterRevision().getFile());
-          break;
-        case MODIFICATION:
+        }
+        case MODIFICATION ->
           // note that changes are also removed from index, if they got into index somehow
           registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
-          break;
-        case DELETED:
-          registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
-          break;
+        case DELETED -> registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
       }
     }
     // unindex files
@@ -193,10 +184,8 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
     if (toUnversioned) {
       GitRepository repo = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
       GitUntrackedFilesHolder untrackedFilesHolder = (repo == null ? null : repo.getUntrackedFilesHolder());
-      for (FilePath path : files) {
-        if (untrackedFilesHolder != null) {
-          untrackedFilesHolder.add(path);
-        }
+      if (untrackedFilesHolder != null) {
+        untrackedFilesHolder.add(files);
       }
     }
   }

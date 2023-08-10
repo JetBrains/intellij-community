@@ -8,6 +8,7 @@ import com.intellij.ide.util.PropertyName;
 /**
  * @author Konstantin Bulenkov
  */
+@Deprecated(forRemoval = true)
 public class FavoritesViewSettings implements ViewSettings {
 
   @PropertyName("favorites.view.settings.show.members")
@@ -54,6 +55,11 @@ public class FavoritesViewSettings implements ViewSettings {
   public void setAutoScrollFromSource(boolean autoScrollFromSource) {
     myAutoScrollFromSource = autoScrollFromSource;
     save();
+  }
+
+  @Override
+  public boolean isFlattenPackages() {
+    return myFlattenPackages;
   }
 
   public void setFlattenPackages(boolean flattenPackages) {

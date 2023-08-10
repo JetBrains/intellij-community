@@ -3,16 +3,14 @@ package training.learn.lesson.general
 
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.*
+import training.dsl.LessonUtil.restoreIfModifiedOrMovedIncorrectly
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMovedIncorrectly
+import training.learn.course.KLesson
+import training.util.isToStringContains
+import java.util.concurrent.CompletableFuture
 
-abstract class ContextActionsLesson(module: Module, lang: String) :
-  KLesson("context.actions", LessonsBundle.message("context.actions.lesson.name"), module, lang) {
-
+abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.message("context.actions.lesson.name")) {
   abstract val sample: LessonSample
   abstract val warningQuickFix: String
   abstract val warningPossibleArea: String
@@ -23,14 +21,35 @@ abstract class ContextActionsLesson(module: Module, lang: String) :
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
+
+    if (TaskTestContext.inTestMode) {
+      waitBeforeContinue(1000)
+
+      // For some reason there is no necessary hotfix in intentions, need to force IDE to update it
+      task {
+        val step = CompletableFuture<Boolean>()
+        addStep(step)
+        test {
+          type(" ")
+          invokeActionViaShortcut("BACK_SPACE")
+          taskInvokeLater {
+            step.complete(true)
+          }
+        }
+      }
+    }
+
     lateinit var showIntentionsTaskId: TaskContext.TaskId
     task("ShowIntentionActions") {
       showIntentionsTaskId = taskId
       text(LessonsBundle.message("context.actions.invoke.intentions.for.warning", LessonUtil.actionName(it), action(it)))
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
-        item.toString().contains(warningQuickFix)
+      triggerAndBorderHighlight().listItem { item ->
+        item.isToStringContains(warningQuickFix)
       }
-      restoreIfModifiedOrMovedIncorrectly(warningPossibleArea)
+      restoreIfModifiedOrMovedIncorrectly(warningPossibleArea, sample)
+      test {
+        actions(it)
+      }
     }
 
     var before = ""
@@ -48,16 +67,22 @@ abstract class ContextActionsLesson(module: Module, lang: String) :
         (insideIntention() && before != editor.document.text).also { updateBefore() }
       }
       restoreIfIntentionsPopupClosed(showIntentionsTaskId)
+      test {
+        ideFrame {
+          jListContains(warningQuickFix).item(warningQuickFix).doubleClick()
+        }
+      }
     }
 
     caret(intentionCaret)
     task("ShowIntentionActions") {
       showIntentionsTaskId = taskId
       text(LessonsBundle.message("context.actions.invoke.general.intentions", LessonUtil.actionName(it), action(it)))
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
-        item.toString().contains(intentionText)
+      triggerAndBorderHighlight().listItem { item ->
+        item.isToStringContains(intentionText)
       }
       restoreIfModifiedOrMovedIncorrectly(intentionPossibleArea)
+      test { actions(it) }
     }
 
     prepareRuntimeTask {
@@ -70,6 +95,11 @@ abstract class ContextActionsLesson(module: Module, lang: String) :
         (insideIntention() && before != editor.document.text).also { updateBefore() }
       }
       restoreIfIntentionsPopupClosed(showIntentionsTaskId)
+      test {
+        ideFrame {
+          jListContains(intentionText).item(intentionText).doubleClick()
+        }
+      }
     }
 
     text(LessonsBundle.message("context.actions.refactorings.promotion",
@@ -88,4 +118,9 @@ abstract class ContextActionsLesson(module: Module, lang: String) :
       focusOwner is EditorComponentImpl
     }
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("context.actions.help.intention.actions"),
+         LessonUtil.getHelpLink("intention-actions.html")),
+  )
 }

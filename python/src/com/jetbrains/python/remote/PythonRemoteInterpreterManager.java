@@ -15,7 +15,6 @@ import com.intellij.remote.PathMappingProvider;
 import com.intellij.remote.RemoteMappingsManager;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkProperties;
-import com.intellij.util.PathMapper;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.extensions.python.ProgressManagerExtKt;
@@ -27,6 +26,7 @@ import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.remote.PyRemotePathMapper.PyPathMappingType;
 import kotlin.jvm.functions.Function0;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +36,6 @@ import java.util.Collection;
 public abstract class PythonRemoteInterpreterManager {
   public final static ExtensionPointName<PythonRemoteInterpreterManager> EP_NAME =
     ExtensionPointName.create("Pythonid.remoteInterpreterManager");
-
-  public final static Key<PathMapper> PATH_MAPPING_SETTINGS_KEY = Key.create("PATH_MAPPING_SETTINGS_KEY");
 
   public final static Key<PathMappingSettings> ADDITIONAL_MAPPINGS = Key.create("ADDITIONAL_MAPPINGS");
 
@@ -105,6 +103,10 @@ public abstract class PythonRemoteInterpreterManager {
   @NotNull
   public abstract SdkAdditionalData loadRemoteSdkData(@NotNull Sdk sdk, @Nullable Element additional);
 
+  /**
+   * The method is going to be removed when the flag {@code python.use.targets.api} is eliminated.
+   */
+  @ApiStatus.Obsolete
   @NotNull
   public abstract PyConsoleProcessHandler createConsoleProcessHandler(@NotNull Process process,
                                                                       @NotNull PythonConsoleView view,

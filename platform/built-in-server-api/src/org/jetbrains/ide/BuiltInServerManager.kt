@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.Url
 import io.netty.bootstrap.Bootstrap
+import org.jetbrains.annotations.ApiStatus
 
 import java.net.URLConnection
 
@@ -15,6 +16,15 @@ abstract class BuiltInServerManager {
   }
 
   abstract val port: Int
+
+  /**
+   * Set a port value for built-in server to used.
+   *
+   * @param port - [Integer] value define the port toi use for built-in server, or NULL to ignore overrides.
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  abstract fun overridePort(port: Int?)
 
   abstract val serverDisposable: Disposable?
 

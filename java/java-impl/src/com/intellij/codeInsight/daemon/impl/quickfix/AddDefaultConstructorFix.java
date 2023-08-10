@@ -1,35 +1,33 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.Presentation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AddDefaultConstructorFix extends AddMethodFix {
+  @IntentionName private final String myText;
+
   public AddDefaultConstructorFix(PsiClass aClass) {
-    this(aClass, PsiUtil.getMaximumModifierForMember(aClass, false));
+    this(aClass, PsiUtil.getSuitableModifierForMember(aClass, true));
   }
 
   public AddDefaultConstructorFix(PsiClass aClass, @NotNull @PsiModifier.ModifierConstant final String modifier) {
     super(generateConstructor(aClass.getName(), modifier), aClass);
-    setText(QuickFixBundle.message("add.default.constructor.text", VisibilityUtil.toPresentableText(modifier), aClass.getName()));
+    myText = QuickFixBundle.message("add.default.constructor.text", VisibilityUtil.toPresentableText(modifier), aClass.getName());
+  }
+
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiClass myClass) {
+    return super.getPresentation(context, myClass) == null ? null : Presentation.of(myText);
   }
 
   private static String generateConstructor(final String className, @PsiModifier.ModifierConstant final String modifier) {
@@ -43,5 +41,13 @@ public class AddDefaultConstructorFix extends AddMethodFix {
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.default.constructor.family");
+  }
+
+  /**
+   * @param psiClass PsiClass to add default constructor to
+   * @return added constructor
+   */
+  public static @NotNull PsiMethod addDefaultConstructor(@NotNull PsiClass psiClass) {
+    return new AddDefaultConstructorFix(psiClass).createMethod(psiClass);
   }
 }

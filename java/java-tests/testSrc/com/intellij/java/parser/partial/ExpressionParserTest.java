@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.JavaParsingTestCase;
@@ -21,6 +21,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testCond1() { doParserTest("cond ?"); }
   public void testCond2() { doParserTest("cond ? true"); }
   public void testCond3() { doParserTest("cond ? true :"); }
+  public void testCond4() { doParserTest("cond ? true : false ? true : false"); }
 
   public void testCondOr0() { doParserTest("a || b || c"); }
   public void testCondOr1() { doParserTest("a ||"); }
@@ -34,6 +35,8 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testInstanceOfPattern0() { doParserTest("x instanceof Foo v"); }
   public void testInstanceOfPattern1() { doParserTest("x instanceof final Foo v"); }
   public void testInstanceOfPattern2() { doParserTest("x instanceof @Ann() final Foo v"); }
+  public void testInstanceOfPattern3() { doParserTest("x instanceof (Foo v)"); }
+  public void testInstanceOfPattern4() { doParserTest("x instanceof Foo v && v > 10"); }
 
   public void testNot0() { doParserTest("!!a"); }
   public void testNot1() { doParserTest("!"); }
@@ -67,6 +70,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testNew16() { doParserTest("new C<>()"); }
   public void testNew17() { doParserTest("new Map<String, >()"); }
   public void testNew18() { doParserTest("new int @A [2] @B"); }
+  public void testNew19() { doParserTest("new A(f; o)"); }
 
   public void testExprList0() { doParserTest("f(1,2)"); }
   public void testExprList1() { doParserTest("f("); }
@@ -158,7 +162,28 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testYieldAsExpr2() { doParserTest("yield += 2"); }
   public void testYieldAsExpr3() { doParserTest("yield ? 10 : 20"); }
 
+  public void testStringTemplate1() { doParserTest(); }
+  public void testStringTemplate2() { doParserTest(); }
+  public void testStringTemplate3() { doParserTest(); }
+  public void testStringTemplate4() { doParserTest(); }
+  public void testStringTemplate5() { doParserTest(); }
+  public void testStringTemplate6() { doParserTest(); }
+  public void testStringTemplate7() { doParserTest(); }
+  public void testStringTemplate8() { doParserTest(); }
+  public void testTextBlockTemplate1() { doParserTest(); }
+  public void testTextBlockTemplate2() { doParserTest(); }
+  public void testTextBlockTemplate3() { doParserTest(); }
+  public void testTextBlockTemplate4() { doParserTest(); }
+  public void testTextBlockTemplate5() { doParserTest(); }
+  public void testTextBlockTemplate6() { doParserTest(); }
+  public void testTextBlockTemplate7() { doParserTest(); }
+  public void testTextBlockTemplate8() { doParserTest(); }
+
   private void doParserTest(String text) {
     doParserTest(text, builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder));
+  }
+
+  private void doParserTest() {
+    doParserTest(builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder));
   }
 }

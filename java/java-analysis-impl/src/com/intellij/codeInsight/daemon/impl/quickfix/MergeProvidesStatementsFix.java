@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Pavel.Dolgov
- */
 public class MergeProvidesStatementsFix extends MergeModuleStatementsFix<PsiProvidesStatement> {
   private final String myInterfaceName;
 

@@ -1,19 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.configurationStore.StoreReloadManager;
-import com.intellij.configurationStore.StoreUtil;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.errorTreeView.HotfixData;
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -45,12 +45,15 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.configurationStore.StoreUtilKt.forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod;
+import static com.intellij.openapi.util.Predicates.nonNull;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
+import static com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.UPDATE_ACTIVITY;
 import static com.intellij.util.ui.UIUtil.BR;
 
-public abstract class AbstractCommonUpdateAction extends AbstractVcsAction implements UpdateInBackground {
+public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
   private final static Logger LOG = Logger.getInstance(AbstractCommonUpdateAction.class);
 
   private final boolean myAlwaysVisible;
@@ -62,6 +65,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     myActionInfo = actionInfo;
     myScopeInfo = scopeInfo;
     myAlwaysVisible = alwaysVisible;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private @NlsActions.ActionText String getCompleteActionName(VcsContext dataContext) {
@@ -104,14 +112,21 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
 
       if (ApplicationManager.getApplication().isDispatchThread()) {
         // Not only documents, but also project settings should be saved,
-        // to ensure that if as result of Update some project settings will be changed,
+        // to ensure that if as a result of Update some project settings will be changed,
         // all local changes are saved in prior and do not overwrite remote changes.
         // Also, there is a chance that save during update can break it -
         // we do disable auto saving during update, but still, there is a chance that save will occur.
-        StoreUtil.saveDocumentsAndProjectSettings(project);
+        FileDocumentManager.getInstance().saveAllDocuments();
+        forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project, false);
       }
 
-      Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles, myActionInfo, getTemplatePresentation().getText());
+      Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles, myActionInfo, getTemplatePresentation().getText()) {
+        @Override
+        public void onSuccess() {
+          super.onSuccess();
+          AbstractCommonUpdateAction.this.onSuccess();
+        }
+      };
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         task.run(new EmptyProgressIndicator());
@@ -123,6 +138,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     catch (ProcessCanceledException ignored) {
     }
   }
+
+  protected void onSuccess() {}
 
   private static boolean someSessionWasCanceled(List<? extends UpdateSession> updateSessions) {
     for (UpdateSession updateSession : updateSessions) {
@@ -254,8 +271,10 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       }
     }
 
+    final AbstractVcs singleVcs = vcsManager.getSingleVCS();
     presentation.setVisible(true);
-    presentation.setEnabled(!vcsManager.isBackgroundVcsOperationRunning());
+    presentation.setEnabled(!vcsManager.isBackgroundVcsOperationRunning() &&
+                            (singleVcs == null || !singleVcs.isUpdateActionDisabled()));
   }
 
   private static boolean supportingVcsesAreEmpty(final ProjectLevelVcsManager vcsManager, final ActionInfo actionInfo) {
@@ -293,7 +312,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
                    final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles,
                    final ActionInfo actionInfo,
                    final @NlsContexts.ProgressTitle String actionName) {
-      super(project, actionName, true, VcsConfiguration.getInstance(project).getUpdateOption());
+      super(project, actionName, true);
       myProjectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project);
       myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
       myRoots = roots;
@@ -324,7 +343,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     }
 
     private void runImpl() {
-      StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
+      if (myProject != null) {
+        StoreReloadManager.Companion.getInstance(myProject).blockReloadingProjectOnExternalChanges();
+      }
       myProjectLevelVcsManager.startBackgroundVcsOperation();
 
       myBefore = LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("update.label.before.update"));
@@ -333,7 +354,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       if (progressIndicator != null) {
         progressIndicator.setIndeterminate(false);
       }
-      IdeActivity activity = IdeActivity.started(myProject, "vcs", "update");
+      StructuredIdeActivity activity = UPDATE_ACTIVITY.started(myProject);
       try {
         int toBeProcessed = myVcsToVirtualFiles.size();
         int processed = 0;
@@ -424,7 +445,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       int allFilesCount = getUpdatedFilesCount();
       String additionalContent = nullize(updateSessions.stream().
         map(UpdateSession::getAdditionalNotificationContent).
-        filter(Objects::nonNull).
+        filter(nonNull()).
         collect(Collectors.joining(", ")));
 
       String title = someSessionWasCancelled
@@ -446,7 +467,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
         content += additionalContent;
       }
 
-      return STANDARD_NOTIFICATION.createNotification(title, content, type, null, "vcs.project.partially.updated");
+      return STANDARD_NOTIFICATION.createNotification(title, content, type).setDisplayId(VcsNotificationIdsHolder.PROJECT_PARTIALLY_UPDATED);
     }
 
     private int getUpdatedFilesCount() {
@@ -482,7 +503,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
 
     private void onSuccessImpl(final boolean wasCanceled) {
       if (!myProject.isOpen() || myProject.isDisposed()) {
-        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+        StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
         LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("local.history.update.from.vcs")); // TODO check why this label is needed
         return;
       }
@@ -523,7 +544,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       final boolean updateSuccess = !someSessionWasCancelled && myGroupedExceptions.isEmpty();
 
       if (myProject.isDisposed()) {
-        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+        StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
         return;
       }
 
@@ -553,7 +574,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
           content = getAllFilesAreUpToDateMessage(myRoots);
           type = NotificationType.INFORMATION;
         }
-        VcsNotifier.getInstance(myProject).notify(STANDARD_NOTIFICATION.createNotification(content, type, "vcs.project.update.finished"));
+        VcsNotifier.getInstance(myProject).notify(
+          STANDARD_NOTIFICATION.createNotification(content, type).setDisplayId(VcsNotificationIdsHolder.PROJECT_UPDATE_FINISHED));
       }
       else if (!myUpdatedFiles.isEmpty()) {
 
@@ -573,7 +595,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       }
 
 
-      StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+      StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
 
       if (continueChainFinal && updateSuccess) {
         if (!noMerged) {
@@ -586,7 +608,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
         }
       }
     }
-
 
     private void showContextInterruptedError() {
       gatherContextInterruptedMessages();

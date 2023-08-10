@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * @deprecated Use {@link StateSplitterEx}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface StateSplitter {
   @NotNull
   List<Pair<Element, String>> splitState(@NotNull Element e);

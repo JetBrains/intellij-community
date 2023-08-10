@@ -79,9 +79,8 @@ public final class InspectionUtil {
                 return isSuppressedAt(prevSibling, tool);
             }
         }
-        if (prevSibling instanceof XmlComment) {
-            final XmlComment comment = (XmlComment)prevSibling;
-            final String text = comment.getCommentText();
+        if (prevSibling instanceof XmlComment comment) {
+          final String text = comment.getCommentText();
             final Matcher matcher = SUPPRESSION_PATTERN.matcher(text);
             if (matcher.matches()) {
                 final String[] strings = matcher.group(1).split(",");

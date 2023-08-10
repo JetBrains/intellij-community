@@ -11,7 +11,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestModeFlags;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
-/**
- * @author peter
- */
 public class CompletionAutoPopupTester {
   private final CodeInsightTestFixture myFixture;
 
@@ -32,7 +29,7 @@ public class CompletionAutoPopupTester {
   }
 
   public void runWithAutoPopupEnabled(@NotNull ThrowableRunnable<Throwable> r) throws Throwable {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, true);
     try {
       r.run();
@@ -62,7 +59,7 @@ public class CompletionAutoPopupTester {
       }
       if (j >= 400 && j % 100 == 0) {
         System.out.println("Free memory: " + Runtime.getRuntime().freeMemory() + " of " + Runtime.getRuntime().totalMemory() + "\n");
-        UsefulTestCase.printThreadDump();
+        ThreadUtil.printThreadDump();
         System.out.println("\n\n----------------------------\n\n");
       }
 
@@ -83,13 +80,12 @@ public class CompletionAutoPopupTester {
         committed.set(true);
       });
     })));
-    assert !ApplicationManager.getApplication().isWriteAccessAllowed();
-    assert !ApplicationManager.getApplication().isReadAccessAllowed();
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessNotAllowed();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     long start = System.currentTimeMillis();
     while (!committed.get()) {
       if (System.currentTimeMillis() - start >= 20000) {
-        UsefulTestCase.printThreadDump();
+        ThreadUtil.printThreadDump();
         TestCase.fail("too long waiting for documents to be committed. executed: " + executed + "; run: " + run + "; ");
       }
 

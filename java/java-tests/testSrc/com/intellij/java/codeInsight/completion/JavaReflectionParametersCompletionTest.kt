@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 
 package com.intellij.java.codeInsight.completion
@@ -27,11 +13,8 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.indexing.DumbModeAccessType
-import com.intellij.util.indexing.FileBasedIndex
+import kotlin.math.min
 
-/**
- * @author Pavel.Dolgov
- */
 @NeedsIndex.Full
 class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() {
   override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflectionParameters/"
@@ -50,9 +33,10 @@ class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() 
 
   fun testDeclaredAnnotationsByType() = doTest(0, "Foo.class", "Bar.class")
 
+  @NeedsIndex.SmartMode(reason = "Ordering requires smart mode")
   fun testConstructor() {
     addConstructors()
-    doTest(3, "Construct()", "Construct(int n)", "Construct(java.lang.String s)", "Construct(int n,java.lang.String s)")
+    doTest(1, "Construct()", "Construct(int n,java.lang.String s)", "Construct(int n)", "Construct(java.lang.String s)")
   }
 
   fun testDeclaredConstructor() {
@@ -109,9 +93,8 @@ fun lookupFirstItemsTexts(lookupItems: List<LookupElement?>, maxSize: Int): List
   // PsiJavaCodeReferenceElementImpl.getCanonicalText needs resolve()
   // see JavaReflectionParametersCompletionTest.testConstructor and JavaReflectionParametersCompletionTest.testDeclaredConstructor
   DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable<List<String>, RuntimeException> {
-    lookupItems.subList(0, Math.min(lookupItems.size, maxSize)).map {
-      val obj = it?.`object`
-      when (obj) {
+    lookupItems.subList(0, min(lookupItems.size, maxSize)).map {
+      when (val obj = it?.`object`) {
         is PsiMethod -> {
           obj.name + obj.parameterList.parameters.map { it.type.canonicalText + " " + it.name }
             .joinToString(",", prefix = "(", postfix = ")")

@@ -51,10 +51,9 @@ public class InvertIfIntention extends Intention {
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     PsiElement parent = element.getParent();
 
-    if (!"if".equals(element.getText()) || !(parent instanceof GrIfStatement)) {
+    if (!"if".equals(element.getText()) || !(parent instanceof GrIfStatement parentIf)) {
       throw new IncorrectOperationException("Not invoked on an if");
     }
-    GrIfStatement parentIf = (GrIfStatement)parent;
     GroovyPsiElementFactory groovyPsiElementFactory = GroovyPsiElementFactory.getInstance(project);
 
 
@@ -64,8 +63,7 @@ public class InvertIfIntention extends Intention {
     }
 
     GrExpression negatedCondition = null;
-    if (condition instanceof GrUnaryExpression) {
-      GrUnaryExpression unaryCondition = (GrUnaryExpression)condition;
+    if (condition instanceof GrUnaryExpression unaryCondition) {
       if ("!".equals(unaryCondition.getOperationToken().getText())) {
         negatedCondition = stripParenthesis(unaryCondition.getOperand());
       }

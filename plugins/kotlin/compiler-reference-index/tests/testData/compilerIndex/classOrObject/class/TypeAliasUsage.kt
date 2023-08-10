@@ -1,0 +1,3 @@
+fun t(t: MyAlias) {
+
+}

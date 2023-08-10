@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
@@ -9,50 +9,69 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.tabs.impl.TabLabel
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import java.awt.datatransfer.StringSelection
 
-abstract class CopyPathProvider : DumbAwareAction() {
+abstract class CopyPathProvider : AnAction() {
+  companion object {
+    @JvmField val QUALIFIED_NAME : Key<@NlsSafe String> = Key.create("QUALIFIED_NAME")
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
-    if (!CopyPathsAction.isCopyReferencePopupAvailable()) {
+    val project = e.project ?: run {
       e.presentation.isEnabledAndVisible = false
       return
     }
-
-    val dataContext = e.dataContext
-    val editor = CommonDataKeys.EDITOR.getData(dataContext)
-    val project = e.project
-    e.presentation.isEnabledAndVisible = project != null
-                                         && getQualifiedName(project, getElementsToCopy(editor, dataContext), editor, dataContext) != null
+    val editor = e.getData(CommonDataKeys.EDITOR)
+    val customize = createCustomDataContext(e.dataContext)
+    val elements = try {
+      getElementsToCopy(editor, customize)
+    }
+    catch (e: IndexNotReadyException) {
+      emptyList()
+    }
+    val qName = try {
+      getQualifiedName(project, elements, editor, customize)
+    }
+    catch (e: IndexNotReadyException) {
+      null
+    }
+    e.presentation.isEnabledAndVisible = qName != null
+    e.presentation.putClientProperty(QUALIFIED_NAME, qName)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = getEventProject(e)
-    val dataContext = e.dataContext
-    val editor = CommonDataKeys.EDITOR.getData(dataContext)
+    val project = getEventProject(e) ?: return
+    val editor = e.getData(CommonDataKeys.EDITOR)
 
-    val customDataContext = createCustomDataContext(dataContext)
-    val elements = getElementsToCopy(editor, customDataContext)
-    project?.let {
-      val copy = getQualifiedName(project, elements, editor, customDataContext)
-      CopyPasteManager.getInstance().setContents(StringSelection(copy))
-      CopyReferenceUtil.setStatusBarText(project, IdeBundle.message("message.path.to.fqn.has.been.copied", copy))
-
-      CopyReferenceUtil.highlight(editor, project, elements)
+    val customized = createCustomDataContext(e.dataContext)
+    val elements = try {
+      getElementsToCopy(editor, customized)
     }
+    catch (e: IndexNotReadyException) {
+      emptyList()
+    }
+    val qName = getQualifiedName(project, elements, editor, customized)
+    CopyPasteManager.getInstance().setContents(StringSelection(qName))
+    CopyReferenceUtil.setStatusBarText(project, IdeBundle.message("message.path.to.fqn.has.been.copied", qName))
+
+    CopyReferenceUtil.highlight(editor, project, elements)
   }
 
   private fun createCustomDataContext(dataContext: DataContext): DataContext {
-    val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext)
+    val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)
     if (component !is TabLabel) return dataContext
 
     val file = component.info.`object`
@@ -66,7 +85,7 @@ abstract class CopyPathProvider : DumbAwareAction() {
   }
 
   @NlsSafe
-  open fun getQualifiedName(project: Project, elements: List<PsiElement>, editor: Editor?, dataContext: DataContext): String? {
+  protected open fun getQualifiedName(project: Project, elements: List<PsiElement>, editor: Editor?, dataContext: DataContext): String? {
     if (elements.isEmpty()) {
       return getPathToElement(project, editor?.document?.let { FileDocumentManager.getInstance().getFile(it) }, editor)
     }
@@ -87,20 +106,17 @@ abstract class CopyPathProvider : DumbAwareAction() {
 abstract class DumbAwareCopyPathProvider : CopyPathProvider(), DumbAware
 
 class CopyAbsolutePathProvider : DumbAwareCopyPathProvider() {
-  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?) = virtualFile?.presentableUrl
+  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): @NlsSafe String? = virtualFile?.presentableUrl
 }
 
 class CopyContentRootPathProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project,
                                 virtualFile: VirtualFile?,
                                 editor: Editor?): String? {
-    return virtualFile?.let {
-      ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile, false)?.let { module ->
-        ModuleRootManager.getInstance(module).contentRoots.mapNotNull { root ->
-          VfsUtilCore.getRelativePath(virtualFile, root)
-        }.singleOrNull()
-      }
-    }
+    if (virtualFile == null) return null
+
+    val root = WorkspaceFileIndex.getInstance(project).getContentFileSetRoot(virtualFile, false) ?: return null
+    return VfsUtilCore.getRelativePath(virtualFile, root)
   }
 }
 
@@ -114,13 +130,13 @@ class CopyFileWithLineNumberPathProvider : DumbAwareCopyPathProvider() {
 }
 
 class CopySourceRootPathProvider : DumbAwareCopyPathProvider() {
-  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?) =
+  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): @NlsSafe String? =
     virtualFile?.let {
       VfsUtilCore.getRelativePath(virtualFile, ProjectFileIndex.getInstance(project).getSourceRootForFile(virtualFile) ?: return null)
     }
 }
 
-class CopyTBXReferenceProvider : DumbAwareCopyPathProvider() {
+class CopyTBXReferenceProvider : CopyPathProvider() {
   override fun getQualifiedName(project: Project,
                                 elements: List<PsiElement>,
                                 editor: Editor?,

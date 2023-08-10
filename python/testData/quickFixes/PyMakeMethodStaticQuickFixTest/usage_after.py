@@ -4,4 +4,4 @@ class A:
         return x
 
 
-print A.m(1)
+print(A.m(1))

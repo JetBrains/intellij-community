@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Observable;
+import java.util.stream.Stream;
 
 public abstract class ListTableWithButtons<T> extends Observable {
   private final List<T> myElements = new ArrayList<>();
@@ -91,6 +92,11 @@ public abstract class ListTableWithButtons<T> extends Observable {
     return button -> addNewElement(createElement());
   }
 
+  @Nullable
+  protected AnActionButtonRunnable createEditAction() {
+    return null;
+  }
+
   protected void addNewElement(T newElement) {
     myTableView.stopEditing();
     setModified();
@@ -100,8 +106,9 @@ public abstract class ListTableWithButtons<T> extends Observable {
         myTableView.getTableViewModel().setItems(myElements);
       }
       myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
-      if(shouldEditRowOnCreation())
+      if (shouldEditRowOnCreation()) {
         myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
+      }
       myTableView.getComponent().revalidate();
       myTableView.getComponent().repaint();
     });
@@ -136,6 +143,9 @@ public abstract class ListTableWithButtons<T> extends Observable {
     else if (selectedIndex < myElements.size()) {
       myTableView.getComponent().getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
     }
+
+    myTableView.getComponent().revalidate();
+    myTableView.getComponent().repaint();
   }
 
   @NotNull
@@ -156,30 +166,40 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
   public JComponent getComponent() {
     if (myPanel == null) {
-      myDecorator.setAddAction(createAddAction()).setRemoveAction(createRemoveAction());
-      if(!isUpDownSupported())
+      myDecorator.setAddAction(createAddAction())
+        .setRemoveAction(createRemoveAction())
+        .setEditAction(createEditAction());
+      if (!isUpDownSupported()) {
         myDecorator.disableUpDownActions();
+      }
       myDecorator.addExtraActions(createExtraActions());
       myPanel = myDecorator.createPanel();
-
-      AnActionButton removeButton = ToolbarDecorator.findRemoveButton(myPanel);
-      if (removeButton != null) {
-        removeButton.addCustomUpdater(e -> {
-          List<T> selection = getSelection();
-          if (selection.isEmpty() || !myIsEnabled) return false;
-          for (T t : selection) {
-            if (!canDeleteElement(t)) return false;
-          }
-          return true;
-        });
-      }
-
-      AnActionButton addButton = ToolbarDecorator.findAddButton(myPanel);
-      if (addButton != null) {
-        addButton.addCustomUpdater(e -> myIsEnabled);
-      }
+      configureToolbarButtons(myPanel);
     }
     return myPanel;
+  }
+
+  protected void configureToolbarButtons(@NotNull JPanel panel) {
+    var addButton = ToolbarDecorator.findAddButton(panel);
+    var removeButton = ToolbarDecorator.findRemoveButton(panel);
+    var editButton = ToolbarDecorator.findEditButton(panel);
+    var upButton = ToolbarDecorator.findUpButton(panel);
+    var downButton = ToolbarDecorator.findDownButton(panel);
+
+    Stream.of(addButton, removeButton, editButton, upButton, downButton)
+      .filter(it -> it != null)
+      .forEach(it -> it.addCustomUpdater(e -> myIsEnabled));
+
+    if (removeButton != null) {
+      removeButton.addCustomUpdater(e -> {
+        List<T> selection = getSelection();
+        if (selection.isEmpty()) return false;
+        for (T t : selection) {
+          if (!canDeleteElement(t)) return false;
+        }
+        return true;
+      });
+    }
   }
 
   public CommonActionsPanel getActionsPanel() {
@@ -230,7 +250,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
   @NotNull
   protected List<T> getSelection() {
     int[] selection = myTableView.getComponent().getSelectedRows();
-    if (selection.length == 0) {
+    if (selection.length == 0 || myElements.isEmpty()) {
       return Collections.emptyList();
     }
     else {

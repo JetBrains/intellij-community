@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.NonExtendable
 public class Couple<T> extends Pair<T, T> {
-  private static final Couple<Object> EMPTY_COUPLE = new Couple<Object>(null, null);
+  private static final Couple<Object> EMPTY_COUPLE = new Couple<>(null, null);
 
   public Couple(T first, T second) {
     super(first, second);
@@ -14,7 +14,7 @@ public class Couple<T> extends Pair<T, T> {
 
   @NotNull
   public static <T> Couple<T> of(T first, T second) {
-    return new Couple<T>(first, second);
+    return new Couple<>(first, second);
   }
 
   @NotNull

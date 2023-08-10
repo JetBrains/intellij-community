@@ -1,16 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -23,22 +21,30 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * @deprecated Use {@link InjectedLanguageManager} instead
  */
 @Deprecated
+@ApiStatus.Internal
 public class InjectedLanguageUtilBase {
+  public static final Key<IElementType> INJECTED_FRAGMENT_TYPE = Key.create("INJECTED_FRAGMENT_TYPE");
+
+  private static final Key<CachedValue<InjectionResult>> INJECTION_RESULT_KEY = Key.create("INJECTION_RESULT");
+
   @NotNull
   static PsiElement loadTree(@NotNull PsiElement host, @NotNull PsiFile containingFile) {
     if (containingFile instanceof DummyHolder) {
@@ -62,28 +68,36 @@ public class InjectedLanguageUtilBase {
   public static List<TokenInfo> getHighlightTokens(@NotNull PsiFile file) {
     return file.getUserData(HIGHLIGHT_TOKENS);
   }
-  public static class TokenInfo {
-    @NotNull public final IElementType type;
-    @NotNull public final ProperTextRange rangeInsideInjectionHost;
-    public final int shredIndex;
-    /**
-     * @deprecated Use textAttributesKeys
-     */
-    @Deprecated
-    public final TextAttributes attributes;
-    public final TextAttributesKey @NotNull [] textAttributesKeys;
 
-    public TokenInfo(@NotNull IElementType type,
-                     @NotNull ProperTextRange rangeInsideInjectionHost,
-                     int shredIndex,
-                     @NotNull TextAttributes attributes,
-                     TextAttributesKey @NotNull [] textAttributesKeys) {
-      this.type = type;
-      this.rangeInsideInjectionHost = rangeInsideInjectionHost;
-      this.shredIndex = shredIndex;
-      this.attributes = attributes;
-      this.textAttributesKeys = textAttributesKeys;
+  public static String getUnescapedText(@NotNull PsiFile file, @Nullable PsiElement startElement, @Nullable PsiElement endElement) {
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
+    if (manager.getInjectionHost(file) == null) {
+      return file.getText().substring(startElement == null ? 0 : startElement.getTextRange().getStartOffset(),
+                                      endElement == null ? file.getTextLength() : endElement.getTextRange().getStartOffset());
     }
+    StringBuilder sb = new StringBuilder();
+    file.accept(new PsiRecursiveElementWalkingVisitor() {
+
+      Boolean myState = startElement == null ? Boolean.TRUE : null;
+
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (element == startElement) myState = Boolean.TRUE;
+        if (element == endElement) myState = Boolean.FALSE;
+        if (Boolean.FALSE == myState) return;
+        if (Boolean.TRUE == myState && element.getFirstChild() == null) {
+          sb.append(getUnescapedLeafText(element, false));
+        }
+        else {
+          super.visitElement(element);
+        }
+      }
+    });
+    return sb.toString();
+  }
+
+  public record TokenInfo(@NotNull IElementType type, @NotNull ProperTextRange rangeInsideInjectionHost, int shredIndex,
+                          TextAttributesKey @NotNull [] textAttributesKeys) {
   }
   static void setHighlightTokens(@NotNull PsiFile file, @NotNull List<TokenInfo> tokens) {
     file.putUserData(HIGHLIGHT_TOKENS, tokens);
@@ -95,8 +109,7 @@ public class InjectedLanguageUtilBase {
   }
 
   public static Place getShreds(@NotNull FileViewProvider viewProvider) {
-    if (!(viewProvider instanceof InjectedFileViewProvider)) return null;
-    InjectedFileViewProvider myFileViewProvider = (InjectedFileViewProvider)viewProvider;
+    if (!(viewProvider instanceof InjectedFileViewProvider myFileViewProvider)) return null;
     return getShreds(myFileViewProvider.getDocument());
   }
 
@@ -124,11 +137,11 @@ public class InjectedLanguageUtilBase {
                                   boolean probeUp,
                                   @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     //do not inject into nonphysical files except during completion
-    if (!containingFile.isPhysical() && containingFile.getOriginalFile() == containingFile && ModelBranch.getPsiBranch(containingFile) == null) {
-      final PsiElement context = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
+    if (!containingFile.isPhysical() && containingFile.getOriginalFile() == containingFile) {
+      PsiElement context = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
       if (context == null) return false;
 
-      final PsiFile file = context.getContainingFile();
+      PsiFile file = context.getContainingFile();
       if (file == null || !file.isPhysical() && file.getOriginalFile() == file) return false;
     }
 
@@ -168,7 +181,7 @@ public class InjectedLanguageUtilBase {
   @Nullable
   public static PsiFile findInjectedPsiNoCommit(@NotNull PsiFile host, int offset) {
     PsiElement injected = InjectedLanguageManager.getInstance(host.getProject()).findInjectedElementAt(host, offset);
-    return injected == null ? null : injected.getContainingFile();
+    return injected == null ? null : PsiUtilCore.getTemplateLanguageFile(injected.getContainingFile());
   }
 
   /**
@@ -194,12 +207,21 @@ public class InjectedLanguageUtilBase {
   }
 
   // list of injected fragments injected into this psi element (can be several if some crazy injector calls startInjecting()/doneInjecting()/startInjecting()/doneInjecting())
-  private static final Key<Getter<InjectionResult>> INJECTED_PSI = Key.create("INJECTED_PSI");
+  private static final Key<Supplier<InjectionResult>> INJECTED_PSI = Key.create("INJECTED_PSI");
 
   private static void probeElementsUp(@NotNull PsiElement element,
                                       @NotNull PsiFile hostPsiFile,
                                       boolean probeUp,
                                       @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
+    ReadActionCache.getInstance().allowInWriteAction(
+      () -> probeElementsUpInner(element, hostPsiFile, probeUp, visitor)
+    );
+  }
+
+  private static void probeElementsUpInner(@NotNull PsiElement element,
+                                           @NotNull PsiFile hostPsiFile,
+                                           boolean probeUp,
+                                           @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     element = skipNonInjectablePsi(element, probeUp);
     if (element == null) return;
 
@@ -231,8 +253,7 @@ public class InjectedLanguageUtilBase {
             }
           }
         }
-        if (result.references != null && visitor instanceof InjectedReferenceVisitor) {
-          InjectedReferenceVisitor refVisitor = (InjectedReferenceVisitor)visitor;
+        if (result.references != null && visitor instanceof InjectedReferenceVisitor refVisitor) {
           for (Pair<ReferenceInjector, Place> pair : result.references) {
             Place place = pair.getSecond();
             if (place.isValid()) {
@@ -258,7 +279,7 @@ public class InjectedLanguageUtilBase {
   }
 
   private static void cacheResults(@NotNull PsiElement from, @Nullable PsiElement upUntil, @NotNull PsiFile hostFile, @Nullable InjectionResult result) {
-    Getter<InjectionResult> cachedRef = result == null || result.isEmpty() ? getEmptyInjectionResult(hostFile) : new SoftReference<>(result);
+    Supplier<InjectionResult> cachedRef = result == null || result.isEmpty() ? getEmptyInjectionResult(hostFile) : new SoftReference<>(result);
     for (PsiElement e = from; e != upUntil && e != null; e = e.getParent()) {
       ProgressManager.checkCanceled();
       e.putUserData(INJECTED_PSI, cachedRef);
@@ -281,9 +302,9 @@ public class InjectedLanguageUtilBase {
 
   @NotNull
   private static InjectionResult getEmptyInjectionResult(@NotNull PsiFile host) {
-    return CachedValuesManager.getCachedValue(host, () ->
-      CachedValueProvider.Result.createSingleDependency(new InjectionResult(host, null, null),
-                                                        PsiModificationTracker.MODIFICATION_COUNT));
+    return CachedValuesManager.getCachedValue(host, INJECTION_RESULT_KEY, () ->
+      Result.createSingleDependency(new InjectionResult(host, null, null), PsiModificationTracker.MODIFICATION_COUNT)
+    );
   }
 
   /**
@@ -330,11 +351,11 @@ public class InjectedLanguageUtilBase {
   /**
    * Invocation of this method on uncommitted {@code hostFile} can lead to unexpected results, including throwing an exception!
    */
-  static PsiElement findInjectedElementNoCommit(@NotNull PsiFile hostFile, final int offset) {
+  static PsiElement findInjectedElementNoCommit(@NotNull PsiFile hostFile, int offset) {
     if (hostFile instanceof PsiCompiledElement) return null;
     Project project = hostFile.getProject();
     if (InjectedLanguageManager.getInstance(project).isInjectedFragment(hostFile)) return null;
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Trinity<PsiElement, PsiElement, Language> result = tryOffset(hostFile, offset, documentManager);
     return result.first;
   }
@@ -343,7 +364,7 @@ public class InjectedLanguageUtilBase {
   // since findElementAt() is expensive, we trying to reuse its result
   @NotNull
   private static Trinity<PsiElement, PsiElement, Language> tryOffset(@NotNull PsiFile hostFile,
-                                                                     final int offset,
+                                                                     int offset,
                                                                      @NotNull PsiDocumentManager documentManager) {
     FileViewProvider provider = hostFile.getViewProvider();
     Language leafLanguage = null;
@@ -373,9 +394,9 @@ public class InjectedLanguageUtilBase {
 
   private static PsiElement findInside(@NotNull PsiElement element,
                                        @NotNull PsiFile hostFile,
-                                       final int hostOffset,
-                                       @NotNull final PsiDocumentManager documentManager) {
-    final Ref<PsiElement> out = new Ref<>();
+                                       int hostOffset,
+                                       @NotNull PsiDocumentManager documentManager) {
+    Ref<PsiElement> out = new Ref<>();
     enumerate(element, hostFile, true, (injectedPsi, places) -> {
       for (PsiLanguageInjectionHost.Shred place : places) {
         TextRange hostRange = place.getHost().getTextRange();
@@ -502,11 +523,24 @@ public class InjectedLanguageUtilBase {
   /**
    * @deprecated Use {@link InjectedLanguageManager#getInjectedPsiFiles(PsiElement)} != null instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
     if (!host.isPhysical()) return false;
-    final Ref<Boolean> result = Ref.create(false);
+    Ref<Boolean> result = Ref.create(false);
     enumerate(host, (injectedPsi, places) -> result.set(true));
     return result.get().booleanValue();
+  }
+
+  public static boolean isInInjectedLanguagePrefixSuffix(@NotNull PsiElement element) {
+    PsiFile injectedFile = element.getContainingFile();
+    if (injectedFile == null) return false;
+    Project project = injectedFile.getProject();
+    InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(project);
+    if (!languageManager.isInjectedFragment(injectedFile)) return false;
+    TextRange elementRange = element.getTextRange();
+    List<TextRange> edibles = languageManager.intersectWithAllEditableFragments(injectedFile, elementRange);
+    int combinedEdiblesLength = edibles.stream().mapToInt(TextRange::getLength).sum();
+
+    return combinedEdiblesLength != elementRange.getLength();
   }
 }

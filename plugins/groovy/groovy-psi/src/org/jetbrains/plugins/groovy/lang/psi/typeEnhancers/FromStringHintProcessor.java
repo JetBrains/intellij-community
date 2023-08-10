@@ -42,7 +42,7 @@ public class FromStringHintProcessor extends SignatureHintProcessor {
       catch (IncorrectOperationException e) {
         //do nothing. Just don't throw an exception
       }
-      return new PsiType[]{PsiType.NULL};
+      return new PsiType[]{PsiTypes.nullType()};
     });
   }
 

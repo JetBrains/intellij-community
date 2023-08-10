@@ -1,12 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,18 +29,18 @@ class GroupedResultsSearcher implements SESearcher {
 
   private static final Logger LOG = Logger.getInstance(GroupedResultsSearcher.class);
 
-  @NotNull private final Listener myListener;
+  @NotNull private final SearchListener myListener;
   @NotNull private final Executor myNotificationExecutor;
   @NotNull private final SEResultsEqualityProvider myEqualityProvider;
 
   /**
-   * Creates MultiThreadSearcher with search results {@link Listener} and specifies executor which going to be used to call listener methods.
+   * Creates MultiThreadSearcher with search results {@link SearchListener} and specifies executor which going to be used to call listener methods.
    * Use this constructor when you for example need to receive listener events only in AWT thread
-   * @param listener {@link Listener} to get notifications about searching process
+   * @param listener {@link SearchListener} to get notifications about searching process
    * @param notificationExecutor searcher guarantees that all listener methods will be called only through this executor
    * @param equalityProviders collection of equality providers that checks if found elements are already in the search results
    */
-  GroupedResultsSearcher(@NotNull Listener listener,
+  GroupedResultsSearcher(@NotNull SearchListener listener,
                          @NotNull Executor notificationExecutor,
                          @NotNull Collection<? extends SEResultsEqualityProvider> equalityProviders) {
     myListener = listener;
@@ -65,6 +67,7 @@ class GroupedResultsSearcher implements SESearcher {
       ProgressIndicatorWithCancelListener indicatorWithCancelListener = new ProgressIndicatorWithCancelListener();
       accumulator = new FullSearchResultsAccumulator(contributorsAndLimits, myEqualityProvider, myListener,
                                                                                   myNotificationExecutor, indicatorWithCancelListener);
+      accumulator.startSearch(pattern);
 
       for (SearchEverywhereContributor<?> contributor : contributors) {
         Runnable task = createSearchTask(pattern, accumulator,
@@ -83,6 +86,7 @@ class GroupedResultsSearcher implements SESearcher {
     else {
       indicator = new ProgressIndicatorBase();
       accumulator = new FullSearchResultsAccumulator(contributorsAndLimits, myEqualityProvider, myListener, myNotificationExecutor, indicator);
+      accumulator.startSearch(pattern);
     }
 
     indicator.start();
@@ -110,6 +114,7 @@ class GroupedResultsSearcher implements SESearcher {
     ResultsAccumulator accumulator = new ShowMoreResultsAccumulator(alreadyFound, myEqualityProvider, contributor, newLimit,
                                                                     myListener, myNotificationExecutor, indicator);
     indicator.start();
+    accumulator.startSearch(pattern);
     Runnable task = createSearchTask(pattern, accumulator, indicator, contributor, () -> indicator.stop());
     ApplicationManager.getApplication().executeOnPooledThread(task);
 
@@ -228,14 +233,14 @@ class GroupedResultsSearcher implements SESearcher {
 
   private static abstract class ResultsAccumulator {
     protected final Map<SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> sections;
-    protected final SESearcher.Listener myListener;
+    protected final SearchListener myListener;
     protected final Executor myNotificationExecutor;
     protected final SEResultsEqualityProvider myEqualityProvider;
     protected final ProgressIndicator myProgressIndicator;
 
     ResultsAccumulator(Map<SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> sections,
                        SEResultsEqualityProvider equalityProvider,
-                       Listener listener,
+                       SearchListener listener,
                        Executor notificationExecutor,
                        ProgressIndicator progressIndicator) {
       this.sections = sections;
@@ -256,6 +261,10 @@ class GroupedResultsSearcher implements SESearcher {
     public abstract boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator) throws InterruptedException;
     public abstract void contributorFinished(SearchEverywhereContributor<?> contributor);
     public abstract void setContributorHasMore(SearchEverywhereContributor<?> contributor, boolean hasMore);
+
+    public void startSearch(@NotNull String pattern) {
+      runInNotificationExecutor(() -> myListener.searchStarted(pattern, sections.keySet()));
+    }
   }
 
   private static class ShowMoreResultsAccumulator extends ResultsAccumulator {
@@ -264,7 +273,7 @@ class GroupedResultsSearcher implements SESearcher {
     private volatile boolean hasMore;
 
     ShowMoreResultsAccumulator(Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> alreadyFound, SEResultsEqualityProvider equalityProvider,
-                               SearchEverywhereContributor<?> contributor, int newLimit, Listener listener, Executor notificationExecutor, ProgressIndicator progressIndicator) {
+                               SearchEverywhereContributor<?> contributor, int newLimit, SearchListener listener, Executor notificationExecutor, ProgressIndicator progressIndicator) {
       super(new ConcurrentHashMap<>(alreadyFound), equalityProvider, listener, notificationExecutor, progressIndicator);
       myExpandedContributor = contributor;
       myNewLimit = newLimit;
@@ -275,7 +284,14 @@ class GroupedResultsSearcher implements SESearcher {
       assert contributor == myExpandedContributor; // Only expanded contributor items allowed
 
       Collection<SearchEverywhereFoundElementInfo> section = sections.get(contributor);
-      SearchEverywhereFoundElementInfo newElementInfo = new SearchEverywhereFoundElementInfo(element, priority, contributor);
+      final var mlService = SearchEverywhereMlService.getInstance();
+      final SearchEverywhereFoundElementInfo newElementInfo;
+      if (mlService == null) {
+        newElementInfo = new SearchEverywhereFoundElementInfo(element, priority, contributor);
+      }
+      else {
+        newElementInfo = mlService.createFoundElementInfo(contributor, element, priority);
+      }
 
       if (section.size() >= myNewLimit) {
         return false;
@@ -318,7 +334,10 @@ class GroupedResultsSearcher implements SESearcher {
 
     @Override
     public void contributorFinished(SearchEverywhereContributor<?> contributor) {
-      runInNotificationExecutor(() -> myListener.searchFinished(Collections.singletonMap(contributor, hasMore)));
+      runInNotificationExecutor(() -> {
+        myListener.contributorFinished(contributor, hasMore);
+        myListener.searchFinished(Collections.singletonMap(contributor, hasMore));
+      });
     }
   }
 
@@ -327,12 +346,12 @@ class GroupedResultsSearcher implements SESearcher {
     private final Map<? extends SearchEverywhereContributor<?>, Integer> sectionsLimits;
     private final Map<? extends SearchEverywhereContributor<?>, Condition> conditionsMap;
     private final Map<SearchEverywhereContributor<?>, Boolean> hasMoreMap = new ConcurrentHashMap<>();
-    private final Set<SearchEverywhereContributor<?>> finishedContributorsSet = ContainerUtil.newConcurrentSet();
+    private final Set<SearchEverywhereContributor<?>> finishedContributorsSet = ConcurrentCollectionFactory.createConcurrentSet();
     private final Lock lock = new ReentrantLock();
     private volatile boolean mySearchFinished = false;
 
     FullSearchResultsAccumulator(Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
-                                 SEResultsEqualityProvider equalityProvider, Listener listener, Executor notificationExecutor,
+                                 SEResultsEqualityProvider equalityProvider, SearchListener listener, Executor notificationExecutor,
                                  ProgressIndicator progressIndicator) {
       super(contributorsAndLimits.entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey(), entry -> new ArrayList<>(entry.getValue()))),
             equalityProvider, listener, notificationExecutor, progressIndicator);
@@ -347,15 +366,29 @@ class GroupedResultsSearcher implements SESearcher {
 
     @Override
     public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator) throws InterruptedException {
-      SearchEverywhereFoundElementInfo newElementInfo = new SearchEverywhereFoundElementInfo(element, priority, contributor);
+      final var mlService = SearchEverywhereMlService.getInstance();
+      SearchEverywhereFoundElementInfo newElementInfo;
+      if (mlService == null) {
+        newElementInfo = new SearchEverywhereFoundElementInfo(element, priority, contributor);
+      }
+      else {
+        newElementInfo = mlService.createFoundElementInfo(contributor, element, priority);
+      }
+
       Condition condition = conditionsMap.get(contributor);
       Collection<SearchEverywhereFoundElementInfo> section = sections.get(contributor);
       int limit = sectionsLimits.get(contributor);
 
       lock.lock();
       try {
+        boolean isNotified = false;
         while (section.size() >= limit && !mySearchFinished) {
           indicator.checkCanceled();
+          ProgressManager.checkCanceled();
+          if (!isNotified) {
+            runInNotificationExecutor(() -> myListener.contributorWaits(contributor));
+            isNotified = true;
+          }
           condition.await(100, TimeUnit.MILLISECONDS);
         }
 
@@ -403,6 +436,7 @@ class GroupedResultsSearcher implements SESearcher {
       lock.lock();
       try {
         finishedContributorsSet.add(contributor);
+        runInNotificationExecutor(() -> myListener.contributorFinished(contributor, Optional.ofNullable(hasMoreMap.get(contributor)).orElse(false)));
         stopSearchIfNeeded();
       }
       finally {

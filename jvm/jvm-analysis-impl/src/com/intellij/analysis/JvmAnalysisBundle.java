@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis;
 
 import com.intellij.DynamicBundle;
@@ -12,7 +12,7 @@ public final class JvmAnalysisBundle extends DynamicBundle {
     return ourInstance.getMessage(key, params);
   }
 
-  @NonNls private static final String BUNDLE = "messages.JvmAnalysisBundle";
+  @NonNls public static final String BUNDLE = "messages.JvmAnalysisBundle";
   private static final JvmAnalysisBundle ourInstance = new JvmAnalysisBundle();
 
   private JvmAnalysisBundle() {

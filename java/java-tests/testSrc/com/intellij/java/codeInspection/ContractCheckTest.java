@@ -7,9 +7,6 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class ContractCheckTest extends LightJavaCodeInsightFixtureTestCase {
   @NotNull
   @Override

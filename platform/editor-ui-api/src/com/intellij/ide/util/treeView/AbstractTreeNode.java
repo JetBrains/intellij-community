@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -9,15 +9,18 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.presentation.FilePresentationService;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tree.LeafState;
-import com.intellij.util.SlowOperations;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.util.Collection;
@@ -32,15 +35,14 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   private Object myValue;
   private boolean myNullValueSet;
   private final boolean myNodeWrapper;
-  static final Object TREE_WRAPPER_VALUE = new Object();
+  protected static final Object TREE_WRAPPER_VALUE = new Object();
 
   protected AbstractTreeNode(Project project, @NotNull T value) {
     super(project, null);
     myNodeWrapper = setInternalValue(value);
   }
 
-  @NotNull
-  public abstract Collection<? extends AbstractTreeNode<?>> getChildren();
+  public abstract @NotNull Collection<? extends AbstractTreeNode<?>> getChildren();
 
   protected boolean hasProblemFileBeneath() {
     return false;
@@ -64,11 +66,29 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
   @Override
   protected void postprocess(@NotNull PresentationData presentation) {
+    setFileStatusErrors(presentation);
+    setForcedForeground(presentation);
+    appendInplaceComments(presentation);
+  }
+
+  private void setFileStatusErrors(@NotNull PresentationData presentation) {
     if (hasProblemFileBeneath() ) {
       presentation.setAttributesKey(FILESTATUS_ERRORS);
     }
+  }
 
-    setForcedForeground(presentation);
+  private void appendInplaceComments(@NotNull PresentationData presentation) {
+    appendInplaceComments(new PresentationDataInplaceCommentAppender(presentation));
+  }
+
+  /**
+   * Generates inplace comments and appends it to the given appender.
+   * <p>
+   *   The default implementation does nothing. Subclasses may override this method to append their inplace comments.
+   * </p>
+   * @param appender the appender to append comments to
+   */
+  protected void appendInplaceComments(@NotNull InplaceCommentAppender appender) {
   }
 
   private void setForcedForeground(@NotNull PresentationData presentation) {
@@ -90,9 +110,8 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return !myProject.isDisposed() && getEqualityObject() != null;
   }
 
-  @NotNull
   @Override
-  public LeafState getLeafState() {
+  public @NotNull LeafState getLeafState() {
     if (isAlwaysShowPlus()) return LeafState.NEVER;
     if (isAlwaysLeaf()) return LeafState.ALWAYS;
     return LeafState.DEFAULT;
@@ -111,8 +130,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   }
 
   @Override
-  @Nullable
-  public final AbstractTreeNode<T> getElement() {
+  public final @Nullable AbstractTreeNode<T> getElement() {
     return getEqualityObject() != null ? this : null;
   }
 
@@ -146,7 +164,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
   public final T getValue() {
     Object value = getEqualityObject();
-    return value == null ? null : (T)SlowOperations.allowSlowOperations(() -> TreeAnchorizer.getService().retrieveElement(value));
+    return value == null ? null : (T)TreeAnchorizer.getService().retrieveElement(value);
   }
 
   public final void setValue(T value) {
@@ -179,9 +197,8 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return myNullValueSet ? null : myValue;
   }
 
-  @Nullable
   @TestOnly
-  public String toTestString(@Nullable Queryable.PrintInfo printInfo) {
+  public @Nullable String toTestString(@Nullable Queryable.PrintInfo printInfo) {
     if (getValue() instanceof Queryable) {
       return Queryable.Util.print((Queryable)getValue(), printInfo, this);
     }
@@ -197,10 +214,8 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
    * @deprecated use {@link #toTestString(Queryable.PrintInfo)} instead
    */
   @Deprecated
-  @Nullable
-  @NonNls
   @TestOnly
-  public String getTestPresentation() {
+  public @Nullable @NonNls String getTestPresentation() {
     if (myName != null) {
       return myName;
     }
@@ -210,8 +225,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return null;
   }
 
-  @Nullable
-  public Color getFileStatusColor(final FileStatus status) {
+  public @Nullable Color getFileStatusColor(final FileStatus status) {
     if (FileStatus.NOT_CHANGED.equals(status) && myProject != null && !myProject.isDefault()) {
       final VirtualFile vf = getVirtualFile();
       if (vf != null && vf.isDirectory()) {
@@ -234,22 +248,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return myName;
   }
 
-  @Override
-  public void navigate(boolean requestFocus) {
-  }
-
-  @Override
-  public boolean canNavigate() {
-    return false;
-  }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return false;
-  }
-
-  @Nullable
-  protected final Object getParentValue() {
+  protected final @Nullable Object getParentValue() {
     AbstractTreeNode<?> parent = getParent();
     return parent == null ? null : parent.getValue();
   }
@@ -262,8 +261,67 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   /**
    * @deprecated use {@link #getPresentation()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected String getToolTip() {
     return getPresentation().getTooltip();
   }
+
+  @Override
+  protected @Nullable Color computeBackgroundColor() {
+    Object value = getValue();
+    if (!(value instanceof PsiElement element)) {
+      return null;
+    }
+    return FilePresentationService.getInstance(element.getProject()).getFileBackgroundColor(element);
+  }
+
+  private @Nullable VirtualFile extractFileFromValue() {
+    Object value = getEqualityObject();
+    if (value instanceof SmartPsiElementPointer<?> pointer) {
+      // see #getValue && default implementation of TreeAnchorizer
+      return pointer.getVirtualFile();
+    }
+    return null;
+  }
+
+  /**
+   * This method is intended to optimize a search through a PSI-based nodes.
+   * It can be used within a tree model with file hierarchy (i.e. Project View).
+   */
+  @ApiStatus.Internal
+  public final boolean mayContain(@Nullable Object object) {
+    if (object == null) return false;
+    VirtualFile ancestor = extractFileFromValue();
+    if (ancestor == null) return true; // always search in unknown nodes
+    if (!ancestor.isValid()) return false; // do not search in invalid files
+    if (object instanceof PsiElement) {
+      object = PsiUtilCore.getVirtualFile((PsiElement)object);
+    }
+    if (object instanceof VirtualFile file) {
+      if (!file.isValid()) return false; // do not search for invalid files
+      return VfsUtilCore.isAncestor(ancestor, file, false);
+    }
+    return true; // any custom object can be contained somewhere in a tree
+  }
+
+  private static class PresentationDataInplaceCommentAppender implements InplaceCommentAppender {
+
+    private final @NotNull PresentationData myPresentation;
+
+    PresentationDataInplaceCommentAppender(@NotNull PresentationData presentation) {
+      myPresentation = presentation;
+    }
+
+    @Override
+    public void append(@NotNull @NlsSafe String text, @NotNull SimpleTextAttributes attributes) {
+      if (myPresentation.getColoredText().isEmpty() && myPresentation.getPresentableText() != null) {
+        // Convert plain text into colored text before appending comments.
+        // Keep the plain text (it's used for sorting nodes, for example).
+        myPresentation.addText(myPresentation.getPresentableText(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
+      myPresentation.addText(text, attributes);
+    }
+
+  }
+
 }

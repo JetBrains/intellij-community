@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.editor.Document;
@@ -126,7 +126,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitClass(PsiClass aClass) {
+  public void visitClass(@NotNull PsiClass aClass) {
     boolean isSectionCommentsDetected = registerSectionComments(aClass);
     TextRange range = isSectionCommentsDetected ? getElementRangeWithoutComments(aClass) : aClass.getTextRange();
 
@@ -142,11 +142,11 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitTypeParameter(PsiTypeParameter parameter) {
+  public void visitTypeParameter(@NotNull PsiTypeParameter parameter) {
   }
 
   @Override
-  public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+  public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {
     JavaElementArrangementEntry entry = createNewEntry(aClass.getTextRange(), ANONYMOUS_CLASS, aClass.getName());
     if (entry == null) {
       return;
@@ -162,11 +162,11 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitField(PsiField field) {
+  public void visitField(@NotNull PsiField field) {
     boolean isSectionCommentsDetected = registerSectionComments(field);
 
-    // There is a possible case that more than one field is declared for the same type like 'int i, j;'. We want to process only
-    // the first one then.
+    // There is a possible case that more than one field is declared for the same type like 'int i, j;'.
+    // the case is handled in getFieldWithSiblings().
     PsiElement fieldPrev = getPreviousNonWsComment(field.getPrevSibling(), 0);
     if (PsiUtil.isJavaToken(fieldPrev, JavaTokenType.COMMA)) {
       return;
@@ -229,10 +229,42 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     processEntry(entry, field, field.getInitializer());
     myInfo.onFieldEntryCreated(field, entry);
 
-    List<PsiField> referencedFields = getReferencedFields(field);
+    List<PsiField> referencedFields = new ArrayList<>();
+    for (PsiField adjacentField : getFieldWithSiblings(field)) {
+      referencedFields.addAll(getReferencedFields(adjacentField));
+    }
     for (PsiField referencedField : referencedFields) {
       myInfo.registerFieldInitializationDependency(field, referencedField);
     }
+  }
+
+  /*
+   * Process cases like int a,b,c;
+   */
+  private static List<PsiField> getFieldWithSiblings(@NotNull PsiField field) {
+    List<PsiField> fields = new ArrayList<>();
+    fields.add(field);
+    PsiElement next = getNextAfterWsOrComment(field);
+    while (next != null && PsiUtil.isJavaToken(next, JavaTokenType.COMMA)) {
+      next = getNextAfterWsOrComment(next);
+      if (next instanceof PsiField) {
+        fields.add((PsiField)next);
+      }
+      else {
+        break;
+      }
+      next = getNextAfterWsOrComment(next);
+    }
+    return fields;
+  }
+
+  @Nullable
+  private static PsiElement getNextAfterWsOrComment(@NotNull PsiElement element) {
+    PsiElement next = element.getNextSibling();
+    while (next instanceof PsiWhiteSpace || next instanceof PsiComment) {
+      next = next.getNextSibling();
+    }
+    return next;
   }
 
   @NotNull
@@ -258,7 +290,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
       private static final int MAX_METHOD_LOOKUP_DEPTH = 3;
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         PsiElement ref = expression.resolve();
         if (ref instanceof PsiField && containingClassFields.contains(ref) && hasSameStaticModifier(field, (PsiField)ref)) {
           referencedElements.add((PsiField)ref);
@@ -333,7 +365,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitClassInitializer(PsiClassInitializer initializer) {
+  public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
     JavaElementArrangementEntry entry = createNewEntry(initializer.getTextRange(), INIT_BLOCK, null);
     if (entry == null) {
       return;
@@ -373,7 +405,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitMethod(PsiMethod method) {
+  public void visitMethod(@NotNull PsiMethod method) {
     boolean isSectionCommentsDetected = registerSectionComments(method);
     final TextRange range = isSectionCommentsDetected ? getElementRangeWithoutComments(method)
                                                       : method.getTextRange();
@@ -450,7 +482,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitEnumConstant(PsiEnumConstant enumConstant) {
+  public void visitEnumConstant(@NotNull PsiEnumConstant enumConstant) {
   }
 
   private void processEntry(@Nullable JavaElementArrangementEntry entry,
@@ -546,15 +578,14 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression psiMethodCallExpression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression psiMethodCallExpression) {
       PsiReference reference = psiMethodCallExpression.getMethodExpression().getReference();
       if (reference == null) {
         return;
       }
       PsiElement e = reference.resolve();
-      if (e instanceof PsiMethod) {
+      if (e instanceof PsiMethod m) {
         assert myBaseMethod != null;
-        PsiMethod m = (PsiMethod)e;
         if (m.getContainingClass() == myBaseMethod.getContainingClass()) {
           myInfo.registerMethodCallDependency(myBaseMethod, m);
         }
@@ -569,7 +600,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       PsiMethod method = tryCast(expression.resolve(), PsiMethod.class);
       if (method == null) return;
       assert myBaseMethod != null;

@@ -1,0 +1,10 @@
+# missing from stub
+croniter.croniter.EXPANDERS
+croniter.croniter.HashExpander
+croniter.croniter.VALID_LEN_EXPRESSION
+croniter.croniter.hash_expression_re
+croniter.croniter.only_int_re
+croniter.croniter.special_weekday_re
+croniter.croniter.star_or_int_re
+croniter.croniter.step_search_re
+croniter.croniter.timedelta_to_seconds

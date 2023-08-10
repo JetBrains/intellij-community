@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -58,7 +59,7 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
    * @see PsiManager#dropPsiCaches()
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public void incCounter() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     incCountersInner();
@@ -70,7 +71,7 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
    * @see PsiManager#dropPsiCaches()
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public void incOutOfCodeBlockModificationCounter() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     incCountersInner();
@@ -101,7 +102,7 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
   public static boolean canAffectPsi(@NotNull PsiTreeChangeEventImpl event) {
     PsiTreeChangeEventImpl.PsiEventType code = event.getCode();
     return !(code == BEFORE_PROPERTY_CHANGE ||
-             code == PROPERTY_CHANGED && event.getPropertyName() == PsiTreeChangeEvent.PROP_WRITABLE);
+             code == PROPERTY_CHANGED && Strings.areSameInstance(event.getPropertyName(), PsiTreeChangeEvent.PROP_WRITABLE));
   }
 
   private void incLanguageCounters(@NotNull PsiTreeChangeEventImpl event) {
@@ -109,9 +110,9 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
     String propertyName = event.getPropertyName();
 
     if (code == PROPERTY_CHANGED &&
-        (propertyName == PsiTreeChangeEvent.PROP_UNLOADED_PSI ||
-         propertyName == PsiTreeChangeEvent.PROP_ROOTS ||
-         propertyName == PsiTreeChangeEvent.PROP_FILE_TYPES) ||
+        (Strings.areSameInstance(propertyName, PsiTreeChangeEvent.PROP_UNLOADED_PSI) ||
+         Strings.areSameInstance(propertyName, PsiTreeChangeEvent.PROP_ROOTS) ||
+         Strings.areSameInstance(propertyName, PsiTreeChangeEvent.PROP_FILE_TYPES)) ||
         code == CHILD_REMOVED && event.getChild() instanceof PsiDirectory) {
       myAllLanguagesTracker.incModificationCount();
       return;
@@ -147,27 +148,11 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
   }
 
   @Override
-  public long getOutOfCodeBlockModificationCount() {
-    return myModificationCount.getModificationCount();
-  }
-
-  @Override
-  public long getJavaStructureModificationCount() {
-    return myModificationCount.getModificationCount();
-  }
-
-  @Override
-  public @NotNull ModificationTracker getOutOfCodeBlockModificationTracker() {
-    return myModificationCount;
-  }
-
-  @Override
   public @NotNull ModificationTracker getJavaStructureModificationTracker() {
     return myModificationCount;
   }
 
   // used by Kotlin
-  @SuppressWarnings("WeakerAccess")
   @ApiStatus.Experimental
   public void incLanguageModificationCount(@Nullable Language language) {
     if (language == null) return;

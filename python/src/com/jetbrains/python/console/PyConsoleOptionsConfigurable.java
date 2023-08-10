@@ -90,10 +90,6 @@ public final class PyConsoleOptionsConfigurable extends SearchableConfigurable.P
       public void reset() {
         panel.reset();
       }
-
-      @Override
-      public void disposeUIResources() {
-      }
     };
   }
 
@@ -141,6 +137,8 @@ public final class PyConsoleOptionsConfigurable extends SearchableConfigurable.P
     private JBCheckBox myIpythonEnabledCheckbox;
     private JBCheckBox myShowsVariablesByDefault;
     private JBCheckBox myUseExistingConsole;
+    private JBCheckBox myCommandQueueEnabledCheckbox;
+    private JBCheckBox myAutoCompletionEnabledCheckbox;
     private PyConsoleOptions myOptionsProvider;
 
     public JPanel createPanel(PyConsoleOptions optionsProvider) {
@@ -154,6 +152,8 @@ public final class PyConsoleOptionsConfigurable extends SearchableConfigurable.P
       myOptionsProvider.setIpythonEnabled(myIpythonEnabledCheckbox.isSelected());
       myOptionsProvider.setShowVariablesByDefault(myShowsVariablesByDefault.isSelected());
       myOptionsProvider.setUseExistingConsole(myUseExistingConsole.isSelected());
+      myOptionsProvider.setCommandQueueEnabled(myCommandQueueEnabledCheckbox.isSelected());
+      myOptionsProvider.setAutoCompletionEnabled(myAutoCompletionEnabledCheckbox.isSelected());
     }
 
     public void reset() {
@@ -161,14 +161,17 @@ public final class PyConsoleOptionsConfigurable extends SearchableConfigurable.P
       myIpythonEnabledCheckbox.setSelected(myOptionsProvider.isIpythonEnabled());
       myShowsVariablesByDefault.setSelected(myOptionsProvider.isShowVariableByDefault());
       myUseExistingConsole.setSelected(myOptionsProvider.isUseExistingConsole());
+      myCommandQueueEnabledCheckbox.setSelected(myOptionsProvider.isCommandQueueEnabled());
+      myAutoCompletionEnabledCheckbox.setSelected(myOptionsProvider.isAutoCompletionEnabled());
     }
 
     public boolean isModified() {
       return myShowDebugConsoleByDefault.isSelected() != myOptionsProvider.isShowDebugConsoleByDefault() ||
              myIpythonEnabledCheckbox.isSelected()  != myOptionsProvider.isIpythonEnabled() ||
              myShowsVariablesByDefault.isSelected() != myOptionsProvider.isShowVariableByDefault() ||
-             myUseExistingConsole.isSelected() != myOptionsProvider.isUseExistingConsole();
-
+             myUseExistingConsole.isSelected() != myOptionsProvider.isUseExistingConsole() ||
+             myCommandQueueEnabledCheckbox.isSelected() != myOptionsProvider.isCommandQueueEnabled() ||
+             myAutoCompletionEnabledCheckbox.isSelected() != myOptionsProvider.isAutoCompletionEnabled();
     }
   }
 }

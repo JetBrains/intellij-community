@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-public class ClassRenderer extends NodeRendererImpl{
+public class ClassRenderer extends NodeRendererImpl {
   private static final Logger LOG = Logger.getInstance(ClassRenderer.class);
 
   public static final @NonNls String UNIQUE_ID = "ClassRenderer";
@@ -81,7 +81,7 @@ public class ClassRenderer extends NodeRendererImpl{
 
   @Override
   public ClassRenderer clone() {
-    return (ClassRenderer) super.clone();
+    return (ClassRenderer)super.clone();
   }
 
   @Override
@@ -91,8 +91,8 @@ public class ClassRenderer extends NodeRendererImpl{
   }
 
   private static String calcLabelAsync(ValueDescriptor descriptor,
-                                         EvaluationContext evaluationContext,
-                                         DescriptorLabelListener labelListener)
+                                       EvaluationContext evaluationContext,
+                                       DescriptorLabelListener labelListener)
     throws EvaluateException {
     Value value = descriptor.getValue();
     CompletableFuture<String> future;
@@ -107,8 +107,8 @@ public class ClassRenderer extends NodeRendererImpl{
   }
 
   private static String calcLabelFromFuture(CompletableFuture<String> future,
-                                           ValueDescriptor descriptor,
-                                           DescriptorLabelListener labelListener) {
+                                            ValueDescriptor descriptor,
+                                            DescriptorLabelListener labelListener) {
     if (!future.isDone()) {
       future.whenComplete((s, throwable) -> {
         if (throwable != null) {
@@ -166,12 +166,11 @@ public class ClassRenderer extends NodeRendererImpl{
     final NodeManager nodeManager = builder.getNodeManager();
     final NodeDescriptorFactory nodeDescriptorFactory = builder.getDescriptorManager();
 
-    if (!(value instanceof ObjectReference)) {
+    if (!(value instanceof ObjectReference objRef)) {
       builder.setChildren(Collections.emptyList());
       return;
     }
 
-    final ObjectReference objRef = (ObjectReference)value;
     final ReferenceType refType = objRef.referenceType();
     // default ObjectReference processing
     DebuggerUtilsAsync.allFields(refType)
@@ -286,11 +285,11 @@ public class ClassRenderer extends NodeRendererImpl{
       catch (EvaluateException ignored) {
       }
     }
-    if(!SHOW_STATIC && field.isStatic()) {
+    if (!SHOW_STATIC && field.isStatic()) {
       return false;
     }
 
-    if(!SHOW_STATIC_FINAL && field.isStatic() && field.isFinal()) {
+    if (!SHOW_STATIC_FINAL && field.isStatic() && field.isFinal()) {
       return false;
     }
 

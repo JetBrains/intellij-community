@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include "winshellintegration/application.h"
 #include "winshellintegration/winapi.h"         // SetCurrentProcessExplicitAppUserModelID,
@@ -140,7 +140,7 @@ namespace intellij::ui::win
             auto hr = result.CoCreateInstance(
                 CLSID_EnumerableObjectCollection,
                 nullptr,
-                CLSCTX_INPROC
+                CLSCTX_INPROC_SERVER
             );
 
             if (hr != S_OK)
@@ -190,7 +190,7 @@ namespace intellij::ui::win
             auto hr = result.CoCreateInstance(
                 CLSID_DestinationList,
                 nullptr,
-                CLSCTX_INPROC
+                CLSCTX_INPROC_SERVER
             );
 
             if (hr != S_OK)
@@ -227,7 +227,7 @@ namespace intellij::ui::win
             auto hr = result.CoCreateInstance(
                 CLSID_ApplicationDestinations,
                 nullptr,
-                CLSCTX_INPROC
+                CLSCTX_INPROC_SERVER
             );
 
             if (hr != S_OK)
@@ -411,9 +411,6 @@ namespace intellij::ui::win
                 __func__,
                 applicationCtxName
             );
-
-        // clears all usage data on all Recent items
-        SHAddToRecentDocs(SHARD_PIDL, nullptr);
     }
 
 
@@ -438,10 +435,10 @@ namespace intellij::ui::win
         {
             if (const auto hr = tr->AppendKnownCategory(KDC_RECENT); hr != S_OK)
                 errors::throwCOMException(
-                        hr,
-                        "ICustomDestinationList::AppendKnownCategory(KDC_RECENT) failed",
-                        __func__,
-                        applicationCtxName
+                    hr,
+                    "ICustomDestinationList::AppendKnownCategory(KDC_RECENT) failed",
+                    __func__,
+                    applicationCtxName
                 );
         }
 
@@ -449,10 +446,10 @@ namespace intellij::ui::win
         {
             if (const auto hr = tr->AppendKnownCategory(KDC_FREQUENT); hr != S_OK)
                 errors::throwCOMException(
-                        hr,
-                        "ICustomDestinationList::AppendKnownCategory(KDC_FREQUENT) failed",
-                        __func__,
-                        applicationCtxName
+                    hr,
+                    "ICustomDestinationList::AppendKnownCategory(KDC_FREQUENT) failed",
+                    __func__,
+                    applicationCtxName
                 );
         }
 

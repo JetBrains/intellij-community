@@ -1,16 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.lang.FileASTNode;
-import com.intellij.model.BranchableUsageInfo;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.paths.PsiDynaReference;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -28,7 +29,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.EntryStream;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,34 +130,16 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected boolean canPerformRefactoringInBranch() {
-    return getClass() == MoveFilesOrDirectoriesProcessor.class;
-  }
-
-  @Override
-  protected void performRefactoring(UsageInfo @NotNull [] usages) {
-    performRefactoringInBranch(usages, null);
-  }
-
-  @Override
-  protected void performRefactoringInBranch(UsageInfo @NotNull [] _usages, @Nullable ModelBranch branch) {
+  protected void performRefactoring(UsageInfo @NotNull [] _usages) {
     try {
       List<PsiElement> toChange = new ArrayList<>();
-      for (PsiElement element : myElementsToMove) {
-        if (branch != null) {
-          element = branch.obtainPsiCopy(element);
-        }
-        toChange.add(element);
-      }
+      Collections.addAll(toChange, myElementsToMove);
 
-      PsiDirectory newParent = branch != null ? branch.obtainPsiCopy(myNewParent) : myNewParent;
+      PsiDirectory newParent = myNewParent;
 
       List<UsageInfo> codeUsages = new ArrayList<>();
       List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<>();
       for (UsageInfo usage : _usages) {
-        if (branch != null) {
-          usage = ((BranchableUsageInfo) usage).obtainBranchCopy(branch);
-        }
         if (usage instanceof NonCodeUsageInfo) {
           nonCodeUsages.add((NonCodeUsageInfo)usage);
         }
@@ -165,19 +148,17 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      Map<PsiFile, List<UsageInfo>> foundUsages = branch == null ? myFoundUsages : EntryStream
-        .of(myFoundUsages)
-        .mapValues(infos -> ContainerUtil.map(infos, info -> ((BranchableUsageInfo) info).obtainBranchCopy(branch)))
-        .toMap();
+      //keep hard references to PSI and AST to prevent collecting the object between saving references and restoring
+      Map<PsiFile, FileASTNode> movingFiles = new HashMap<>();
 
-      Map<SmartPsiElementPointer<PsiFile>, FileASTNode> movedFiles = new LinkedHashMap<>();
       final Map<PsiElement, PsiElement> oldToNewMap = new HashMap<>();
       if (mySearchForReferences) {
         for (PsiElement element : toChange) {
           if (element instanceof PsiDirectory) {
-            encodeDirectoryFiles(element, movedFiles);
+            encodeDirectoryFiles(element, movingFiles);
           }
           else if (element instanceof PsiFile) {
+            movingFiles.put((PsiFile)element, ((PsiFile)element).getNode());
             FileReferenceContextUtil.encodeFileReferences(element);
           }
         }
@@ -186,6 +167,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       List<RefactoringElementListener> listeners = ContainerUtil.map(myElementsToMove, item -> getTransaction().getElementListener(item));
 
       List<Runnable> notifyListeners = new ArrayList<>();
+      List<SmartPsiElementPointer<PsiFile>> movedFiles = new ArrayList<>();
       for (int i = 0; i < myElementsToMove.length; i++) {
         PsiElement element = toChange.get(i);
         if (element instanceof PsiDirectory) {
@@ -194,9 +176,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
             processDirectoryFiles(movedFiles, oldToNewMap, psiElement);
           }
         }
-        else if (element instanceof PsiFile) {
-          final PsiFile movedFile = (PsiFile)element;
-          FileASTNode node = movedFile.getNode();
+        else if (element instanceof PsiFile movedFile) {
           MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile, newParent, oldToNewMap);
 
           PsiFile moving = newParent.findFile(movedFile.getName());
@@ -205,8 +185,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
           }
           moving = newParent.findFile(movedFile.getName());
           if (moving != null) {
-            movedFiles.put(SmartPointerManager.createPointer(moving), moving.getNode());
-            Reference.reachabilityFence(node);
+            movedFiles.add(SmartPointerManager.createPointer(moving));
           }
         }
 
@@ -215,7 +194,6 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
           SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
           notifyListeners.add(() -> {
             PsiElement restored = pointer.getElement();
-            if (branch != null && restored != null) restored = branch.findOriginalPsi(restored);
             if (restored != null) {
               listener.elementMoved(restored);
             }
@@ -226,12 +204,10 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       UsageInfo[] usages = codeUsages.toArray(UsageInfo.EMPTY_ARRAY);
       CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
 
-      if (branch == null) {
-        DumbService.getInstance(myProject).completeJustSubmittedTasks();
-      }
+      DumbService.getInstance(myProject).completeJustSubmittedTasks();
 
       // fix references in moved files to outer files
-      for (SmartPsiElementPointer<PsiFile> pointer : movedFiles.keySet()) {
+      for (SmartPsiElementPointer<PsiFile> pointer : movedFiles) {
         PsiFile movedFile = pointer.getElement();
         if (movedFile != null) {
           MoveFileHandler.forElement(movedFile).updateMovedFile(movedFile);
@@ -241,24 +217,15 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
       retargetUsages(usages, oldToNewMap);
 
-      for (Map.Entry<PsiFile, List<UsageInfo>> entry : foundUsages.entrySet()) {
+      for (Map.Entry<PsiFile, List<UsageInfo>> entry : myFoundUsages.entrySet()) {
         MoveFileHandler.forElement(entry.getKey()).retargetUsages(entry.getValue(), oldToNewMap);
       }
 
-      if (branch != null) {
-        RenameUtil.renameNonCodeUsages(myProject, nonCodeUsages.toArray(new NonCodeUsageInfo[0]));
-      } else {
-        myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[0]);
-      }
+      myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[0]);
 
-      if (branch != null) {
-        branch.runAfterMerge(() -> {
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          afterMove(branch, movedFiles.keySet(), notifyListeners);
-        });
-      } else {
-        afterMove(null, movedFiles.keySet(), notifyListeners);
-      }
+      afterMove(movedFiles, notifyListeners);
+
+      Reference.reachabilityFence(movingFiles);
     }
     catch (IncorrectOperationException e) {
       Throwable cause = e.getCause();
@@ -273,16 +240,24 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void afterMove(@Nullable ModelBranch branch, Set<SmartPsiElementPointer<PsiFile>> movedFiles, List<Runnable> notifyListeners) {
+  @Override
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    UsageInfo[] usages = refUsages.get();
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> MoveFileHandler.detectConflicts(myElementsToMove, usages, myNewParent, conflicts)),
+                                                                           RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
+      return false;
+    }
+    return showConflicts(conflicts, usages);
+  }
+
+  private void afterMove(Collection<? extends SmartPsiElementPointer<PsiFile>> movedFiles, List<? extends Runnable> notifyListeners) {
     notifyListeners.forEach(Runnable::run);
     if (myMoveCallback != null) {
       myMoveCallback.refactoringCompleted();
     }
     if (MoveFilesOrDirectoriesDialog.isOpenInEditorProperty()) {
-      List<PsiFile> justFiles = ContainerUtil.mapNotNull(movedFiles, pointer -> {
-        PsiFile element = pointer.getElement();
-        return branch == null || element == null ? element : branch.findOriginalPsi(element);
-      });
+      List<PsiFile> justFiles = ContainerUtil.mapNotNull(movedFiles, pointer -> pointer.getElement());
       ApplicationManager.getApplication().invokeLater(
         () -> EditorHelper.openFilesInEditor(justFiles.stream().filter(PsiElement::isValid).toArray(PsiFile[]::new)));
     }
@@ -310,9 +285,9 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     return data;
   }
 
-  private static void encodeDirectoryFiles(@NotNull PsiElement psiElement, @NotNull Map<SmartPsiElementPointer<PsiFile>, FileASTNode> movedFiles) {
+  private static void encodeDirectoryFiles(@NotNull PsiElement psiElement, @NotNull Map<PsiFile, FileASTNode> movedFiles) {
     if (psiElement instanceof PsiFile) {
-      movedFiles.put(SmartPointerManager.createPointer((PsiFile)psiElement), ((PsiFile)psiElement).getNode());
+      movedFiles.put((PsiFile)psiElement, ((PsiFile)psiElement).getNode());
       FileReferenceContextUtil.encodeFileReferences(psiElement);
     }
     else if (psiElement instanceof PsiDirectory) {
@@ -322,10 +297,9 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private static void processDirectoryFiles(@NotNull Map<SmartPsiElementPointer<PsiFile>, FileASTNode> movedFiles, @NotNull Map<PsiElement, PsiElement> oldToNewMap, @NotNull PsiElement psiElement) {
-    if (psiElement instanceof PsiFile) {
-      final PsiFile movedFile = (PsiFile)psiElement;
-      movedFiles.put(SmartPointerManager.createPointer(movedFile), movedFile.getNode());
+  private static void processDirectoryFiles(@NotNull List<? super SmartPsiElementPointer<PsiFile>> movedFiles, @NotNull Map<PsiElement, PsiElement> oldToNewMap, @NotNull PsiElement psiElement) {
+    if (psiElement instanceof PsiFile movedFile) {
+      movedFiles.add(SmartPointerManager.createPointer(movedFile));
       MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile, movedFile.getParent(), oldToNewMap);
     }
     else if (psiElement instanceof PsiDirectory) {
@@ -337,8 +311,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   protected void retargetUsages(UsageInfo @NotNull [] usages, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
     for (UsageInfo usageInfo : usages) {
-      if (usageInfo instanceof MyUsageInfo) {
-        final MyUsageInfo info = (MyUsageInfo)usageInfo;
+      if (usageInfo instanceof MyUsageInfo info) {
         PsiElement element = info.myTarget;
 
         if (info.getReference() instanceof FileReference || info.getReference() instanceof PsiDynaReference) {
@@ -371,7 +344,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private static class MyUsageInfo extends UsageInfo implements BranchableUsageInfo {
+  private static class MyUsageInfo extends UsageInfo {
     private final PsiElement myTarget;
     final PsiReference myReference;
 
@@ -379,11 +352,6 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       super(reference);
       myReference = reference;
       myTarget = target;
-    }
-
-    @Override
-    public @NotNull UsageInfo obtainBranchCopy(@NotNull ModelBranch branch) {
-      return new MyUsageInfo(branch.obtainReferenceCopy(myReference), branch.obtainPsiCopy(myTarget));
     }
   }
 }

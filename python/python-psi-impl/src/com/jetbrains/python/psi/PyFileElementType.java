@@ -44,9 +44,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   public static final PyFileElementType INSTANCE = new PyFileElementType(PythonLanguage.getInstance());
 
@@ -62,7 +60,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   @Override
   public int getStubVersion() {
     // Don't forget to update versions of indexes that use the updated stub-based elements
-    return 82;
+    return 85;
   }
 
   @Nullable

@@ -35,9 +35,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class Html5CustomAttributeDescriptorsProvider implements XmlAttributeDescriptorsProvider {
   @Override
   public XmlAttributeDescriptor[] getAttributeDescriptors(XmlTag tag) {

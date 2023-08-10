@@ -34,7 +34,7 @@ class Test(unittest.TestCase):
             time.sleep(.3)  #let's give it some time to start the threads
 
             from _pydev_bundle import pydev_localhost
-            interpreter = pydevconsole.InterpreterInterface(threading.currentThread(), rpc_client=rpc_client)
+            interpreter = pydevconsole.InterpreterInterface(threading.current_thread(), rpc_client=rpc_client)
 
             (result,) = interpreter.hello("Hello pydevconsole")
             self.assertEqual(result, "Hello eclipse")
@@ -54,7 +54,7 @@ class Test(unittest.TestCase):
             from _pydev_bundle import pydev_localhost
             from _pydev_bundle.pydev_console_types import CodeFragment
 
-            interpreter = pydevconsole.InterpreterInterface(threading.currentThread(), rpc_client=rpc_client)
+            interpreter = pydevconsole.InterpreterInterface(threading.current_thread(), rpc_client=rpc_client)
             sys.stdout = pydevd_io.IOBuf()
             interpreter.add_exec(CodeFragment('class Foo:\n    CONSTANT=1\n'))
             interpreter.add_exec(CodeFragment('foo=Foo()'))
@@ -147,7 +147,7 @@ class Test(unittest.TestCase):
                 self.requested_input = True
                 return 'input_request'
 
-            def notifyFinished(self, needs_more_input):
+            def notifyFinished(self, needs_more_input, exception_occurred):
                 self.notified_finished += 1
 
             def notifyAboutMagic(self, commands, is_auto_magic):
@@ -191,7 +191,7 @@ class Test(unittest.TestCase):
                 socket_code(socket)
 
         debugger_thread = DebuggerServerThread(debugger_port, socket_code)
-        debugger_thread.setDaemon(True)
+        debugger_thread.daemon = True
         debugger_thread.start()
         return debugger_thread
 
@@ -226,7 +226,7 @@ class Test(unittest.TestCase):
                     pydevconsole.start_server(self.backend_port)
 
             server_thread = ServerThread(port)
-            server_thread.setDaemon(True)
+            server_thread.daemon = True
             server_thread.start()
 
             import time

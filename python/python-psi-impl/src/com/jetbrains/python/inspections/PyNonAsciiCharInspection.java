@@ -17,6 +17,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -24,18 +25,21 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.quickfix.AddEncodingQuickFix;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.jetbrains.python.inspections.PyMandatoryEncodingInspection.defaultEncodingDropDown;
+import static com.jetbrains.python.inspections.PyMandatoryEncodingInspection.encodingFormatDropDown;
 
 /**
  * User : catherine
@@ -47,14 +51,13 @@ public class PyNonAsciiCharInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
-
     @Override
     public void visitComment(@NotNull PsiComment node) {
       checkString(node, node.getText());
@@ -108,15 +111,7 @@ public class PyNonAsciiCharInspection extends PyInspection {
   public int myEncodingFormatIndex = 0;
 
   @Override
-  public JComponent createOptionsPanel() {
-    return PythonUiService.getInstance()
-      .createEncodingsOptionsPanel(PyEncodingUtil.POSSIBLE_ENCODINGS, myDefaultEncoding, PyEncodingUtil.ENCODING_FORMAT,
-                                   myEncodingFormatIndex,
-                                   encoding -> {
-                                     myDefaultEncoding = encoding;
-                                   },
-                                   formatIndex -> {
-                                     myEncodingFormatIndex = formatIndex;
-                                   });
+  public @NotNull OptPane getOptionsPane() {
+    return pane(defaultEncodingDropDown(), encodingFormatDropDown());
   }
 }

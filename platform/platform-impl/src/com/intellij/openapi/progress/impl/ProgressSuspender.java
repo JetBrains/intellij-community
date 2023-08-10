@@ -1,18 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
+import com.intellij.openapi.progress.util.ProgressIndicatorListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +24,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 @ApiStatus.Internal
 public final class ProgressSuspender implements AutoCloseable {
   private static final Key<ProgressSuspender> PROGRESS_SUSPENDER = Key.create("PROGRESS_SUSPENDER");
@@ -39,7 +36,7 @@ public final class ProgressSuspender implements AutoCloseable {
   private final SuspenderListener myPublisher;
   private volatile boolean mySuspended;
   private final CoreProgressManager.CheckCanceledHook myHook = this::freezeIfNeeded;
-  private final Set<ProgressIndicator> myProgresses = ContainerUtil.newConcurrentSet();
+  private final Set<ProgressIndicator> myProgresses = ConcurrentCollectionFactory.createConcurrentSet();
   private final Map<ProgressIndicator, Integer> myProgressesInNonSuspendableSections = new ConcurrentHashMap<>();
   private boolean myClosed;
 
@@ -51,7 +48,7 @@ public final class ProgressSuspender implements AutoCloseable {
 
     attachToProgress(progress);
 
-    new ProgressIndicatorListenerAdapter() {
+    new ProgressIndicatorListener() {
       @Override
       public void cancelled() {
         resumeProcess();
@@ -73,20 +70,29 @@ public final class ProgressSuspender implements AutoCloseable {
     }
   }
 
-  public static ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
-    return new ProgressSuspender((ProgressIndicatorEx)indicator, suspendedText);
+  public static @NotNull ProgressSuspender markSuspendable(@NotNull ProgressIndicatorEx indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
+    return new ProgressSuspender(indicator, suspendedText);
   }
 
-  public void executeNonSuspendableSection(@NotNull ProgressIndicator indicator, @NotNull Runnable runnable) {
-    myProgressesInNonSuspendableSections.compute(indicator, ((__, number) -> (number == null ? 0 : number) + 1));
-    try {
-      runnable.run();
-    } finally {
-      myProgressesInNonSuspendableSections.compute(indicator, (__, number) -> (number == null || number <= 1 ? null : number - 1));
+  @Nullable("When progress indicator cannot be made suspendable (e.g. EmptyProgressIndicator)")
+  public static ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
+    if (indicator instanceof ProgressIndicatorEx indicatorEx) {
+      return markSuspendable(indicatorEx, suspendedText);
+    } else {
+      return null;
     }
   }
 
-  @Nullable
+  public void executeNonSuspendableSection(@NotNull ProgressIndicator indicator, @NotNull Runnable runnable) {
+    myProgressesInNonSuspendableSections.compute(indicator, (__, number) -> (number == null ? 0 : number) + 1);
+    try {
+      runnable.run();
+    }
+    finally {
+      myProgressesInNonSuspendableSections.compute(indicator, (__, number) -> number == null || number <= 1 ? null : number - 1);
+    }
+  }
+
   public static ProgressSuspender getSuspender(@NotNull ProgressIndicator indicator) {
     return indicator instanceof UserDataHolder ? ((UserDataHolder)indicator).getUserData(PROGRESS_SUSPENDER) : null;
   }
@@ -108,6 +114,10 @@ public final class ProgressSuspender implements AutoCloseable {
 
   public boolean isSuspended() {
     return mySuspended;
+  }
+
+  public boolean isClosed() {
+    return myClosed;
   }
 
   /**
@@ -152,11 +162,11 @@ public final class ProgressSuspender implements AutoCloseable {
       return false;
     }
 
-    if (isCurrentThreadHoldingKnownLocks()) {
+    if (myProgressesInNonSuspendableSections.containsKey(current)) {
       return false;
     }
 
-    if (myProgressesInNonSuspendableSections.containsKey(current)) {
+    if (isCurrentThreadHoldingKnownLocks()) {
       return false;
     }
 
@@ -179,10 +189,7 @@ public final class ProgressSuspender implements AutoCloseable {
     }
 
     ThreadInfo[] infos = ManagementFactory.getThreadMXBean().getThreadInfo(new long[]{Thread.currentThread().getId()}, true, false);
-    if (infos.length > 0 && infos[0].getLockedMonitors().length > 0) {
-      return true;
-    }
-    return false;
+    return infos.length > 0 && infos[0].getLockedMonitors().length > 0;
   }
 
   public interface SuspenderListener {

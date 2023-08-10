@@ -22,6 +22,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 /**
  * Calculates some data based on {@link VirtualFile} content, persists it between IDE restarts,
  * and updates it when the content is changed. The data is calculated lazily, when needed, and can be different for different projects.<p/>
@@ -29,18 +31,21 @@ import org.jetbrains.annotations.Nullable;
  * Obtained using {@link GistManager#newVirtualFileGist}.<p/>
  *
  * Tracks VFS content only. Unsaved/uncommitted documents have no effect on the {@link #getFileData} results.
- * Neither do any disk file changes, until VFS refresh has detected them. To work with PSI content, use {@link PsiFileGist}.<p/>
+ * Neither do any disk file changes, until VFS refresh has detected them. To work with PSI content, use
+ * {@link PsiFileGist}.<p/>
  *
- * Please note that every call to {@link #getFileData} means a disk access. Clients that access gists frequently should take care of proper caching themselves. The data is calculated on demand when first requested, so if you need this data for a lot of files at once, this can take some amount of time on the first query. If that's unacceptable from the UX perspective,
- * consider using {@link FileBasedIndexExtension} instead.<p/>
+ * Please note that every call to {@link #getFileData} means disk access. Clients that access gists frequently
+ * should take care of proper caching themselves. The data is calculated on demand when first requested, so if
+ * you need this data for a lot of files at once, this can take some amount of time on the first query. If that's
+ * unacceptable from the UX perspective, consider using {@link FileBasedIndexExtension} instead.<p/>
  *
  * The differences to file-based index:
  * <ul>
  *   <li>Gists have simpler lifecycle and API, but don't provide a possibility for queries across multiple files.</li>
  *   <li>Gists are project-dependent.</li>
- *   <li>Gists are calculated on request for specific files, index processes all files in advance. Thus gists can be used to speed up the indexing phase and move the logic into later stages, when it's beneficial.</li>
+ *   <li>Gists are calculated on request for specific files, index processes all files in advance. Thus gists can be
+ *   used to speed up the indexing phase and move the logic into later stages, when it's beneficial.</li>
  * </ul>
- * @author peter
  */
 @ApiStatus.NonExtendable
 public interface VirtualFileGist<Data> {
@@ -49,6 +54,11 @@ public interface VirtualFileGist<Data> {
    * Calculate or get the cached data by the current virtual file content in the given project (or null, if the data is project-independent).
    */
   Data getFileData(@Nullable Project project, @NotNull VirtualFile file);
+
+  /**
+   * Get the cached data by the virtual file content in the given project (or null, if the data is project-independent).
+   */
+  @Nullable Supplier<Data> getUpToDateOrNull(@Nullable Project project, @NotNull VirtualFile file);
 
   /**
    * Used by {@link VirtualFileGist} to calculate the data when it's needed and to recalculate it after file changes.

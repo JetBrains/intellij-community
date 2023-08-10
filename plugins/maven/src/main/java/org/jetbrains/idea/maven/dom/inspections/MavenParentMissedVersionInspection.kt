@@ -15,7 +15,7 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomElementsInspection
 import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.dom.MavenDomUtil
-import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isConsumerPomResolutionApplicable
+import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 
 class MavenParentMissedVersionInspection : DomElementsInspection<MavenDomProjectModel?>(MavenDomProjectModel::class.java) {
@@ -27,8 +27,7 @@ class MavenParentMissedVersionInspection : DomElementsInspection<MavenDomProject
       return
     }
 
-    if (!parent.version.exists() &&
-        !isConsumerPomResolutionApplicable(domFileElement.file.project)) {
+    if (!parent.version.exists() && !isAutomaticVersionFeatureEnabled(domFileElement.file.virtualFile, domFileElement.file.project)) {
       val version = getParentVersion(domFileElement.file, model)
       listOf(
         holder.createProblem(
@@ -42,8 +41,8 @@ class MavenParentMissedVersionInspection : DomElementsInspection<MavenDomProject
   }
 
   private fun getParentVersion(currentFile: XmlFile, model: MavenDomProjectModel): String {
-    val xmlFileParent = currentFile.parent?.parent?.findFile("pom.xml") as? XmlFile ?: return "";
-    val parentModel = MavenDomUtil.getMavenDomModel(xmlFileParent, MavenDomProjectModel::class.java) ?: return "";
+    val xmlFileParent = currentFile.parent?.parent?.findFile("pom.xml") as? XmlFile ?: return ""
+    val parentModel = MavenDomUtil.getMavenDomModel(xmlFileParent, MavenDomProjectModel::class.java) ?: return ""
     val parentElement = model.mavenParent
     if (parentModel.artifactId.value == parentElement.artifactId.value && parentModel.groupId.value == parentElement.groupId.value) {
       return parentModel.version.value ?: ""

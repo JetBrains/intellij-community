@@ -21,9 +21,7 @@ public final class BoolUtils {
     while (ancestor.getParent() instanceof GrParenthesizedExpression) {
       ancestor = (GrExpression) ancestor.getParent();
     }
-    if (ancestor.getParent() instanceof GrUnaryExpression) {
-      final GrUnaryExpression prefixAncestor =
-          (GrUnaryExpression) ancestor.getParent();
+    if (ancestor.getParent() instanceof GrUnaryExpression prefixAncestor) {
       final IElementType sign = prefixAncestor.getOperationTokenType();
       if (GroovyTokenTypes.mLNOT.equals(sign)) {
         return true;
@@ -38,9 +36,7 @@ public final class BoolUtils {
     while (ancestor.getParent() instanceof GrParenthesizedExpression) {
       ancestor = (GrExpression) ancestor.getParent();
     }
-    if (ancestor.getParent() instanceof GrUnaryExpression) {
-      final GrUnaryExpression prefixAncestor =
-          (GrUnaryExpression) ancestor.getParent();
+    if (ancestor.getParent() instanceof GrUnaryExpression prefixAncestor) {
       final IElementType sign = prefixAncestor.getOperationTokenType();
       if (GroovyTokenTypes.mLNOT.equals(sign)) {
         return prefixAncestor;
@@ -50,10 +46,9 @@ public final class BoolUtils {
   }
 
   public static boolean isNegation(@Nullable PsiElement exp) {
-    if (!(exp instanceof GrUnaryExpression)) {
+    if (!(exp instanceof GrUnaryExpression prefixExp)) {
       return false;
     }
-    final GrUnaryExpression prefixExp = (GrUnaryExpression) exp;
     final IElementType sign = prefixExp.getOperationTokenType();
     return GroovyTokenTypes.mLNOT.equals(sign);
   }

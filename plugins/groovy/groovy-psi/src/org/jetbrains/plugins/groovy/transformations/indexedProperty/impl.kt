@@ -22,8 +22,7 @@ internal fun GrField.getIndexedComponentType() = CachedValuesManager.getCachedVa
 }
 
 private fun doGetIndexedComponentType(field: GrField): PsiType? {
-  val fieldType = field.type
-  return when (fieldType) {
+  return when (val fieldType = field.type) {
     is PsiArrayType -> fieldType.componentType
     is PsiClassType -> PsiUtil.substituteTypeParameter(fieldType, JAVA_UTIL_LIST, 0, true)
     else -> null

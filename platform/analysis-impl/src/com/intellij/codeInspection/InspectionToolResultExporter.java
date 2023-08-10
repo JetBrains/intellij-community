@@ -10,6 +10,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ThreeState;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ public interface InspectionToolResultExporter extends ProblemDescriptionsProcess
                      @NotNull Predicate<? super RefEntity> isEntityExcluded,
                      @NotNull Predicate<? super CommonProblemDescriptor> isProblemExcluded);
 
-  @NotNull InspectionToolWrapper getToolWrapper();
+  @NotNull InspectionToolWrapper<?,?> getToolWrapper();
 
   @NotNull
   SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> getProblemElements();
@@ -51,8 +52,7 @@ public interface InspectionToolResultExporter extends ProblemDescriptionsProcess
                                         @NotNull InspectionToolResultExporter presentation) {
     HighlightSeverity severity = null;
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(presentation.getProject()).getCurrentProfile();
-    if (entity instanceof RefElement) {
-      final RefElement refElement = (RefElement)entity;
+    if (entity instanceof RefElement refElement) {
       severity = presentation.getSeverity(refElement);
     }
     if (severity == null) {
@@ -83,7 +83,8 @@ public interface InspectionToolResultExporter extends ProblemDescriptionsProcess
   @NotNull
   Collection<CommonProblemDescriptor> getProblemDescriptors();
 
-  boolean hasReportedProblems();
+  @NotNull
+  ThreeState hasReportedProblems();
 
   @NotNull
   Collection<RefEntity> getResolvedElements();

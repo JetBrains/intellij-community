@@ -35,8 +35,14 @@ public final class HgConfig {
 
   @Nullable
   public String getDefaultPushPath() {
-    String path = getNamedConfig("paths", "default-push");
-    return path != null ? path : getNamedConfig("paths", "default");
+    String path = getNamedConfig("paths", "default:pushurl");
+    if (path == null) {
+      path = getNamedConfig("paths", "default-push");
+    }
+    if (path == null) {
+      path = getNamedConfig("paths", "default");
+    }
+    return path;
   }
 
   @Nullable

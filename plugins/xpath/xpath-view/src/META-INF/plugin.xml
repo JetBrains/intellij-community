@@ -10,7 +10,7 @@
   <!-- Description -->
   <description><![CDATA[
     Provides a possibility to evaluate XPath expressions against any XML document
-    opened in IDEA. It can also generate and show an XPath expression that matches the current node.
+    opened in IDE. It can also generate and show an XPath expression that matches the current node.
     <p>
     Adds syntax highlighting, analysis, completion, navigation and refactoring of XPath
     expressions and named templates for XSLT documents.</p>
@@ -61,12 +61,15 @@
     <projectService serviceImplementation="org.intellij.plugins.xpathView.XPathProjectComponent"/>
 
     <annotator language="XPath" implementationClass="org.intellij.lang.xpath.validation.XPathAnnotator" />
+
+    <fileType name="XPath" implementationClass="org.intellij.lang.xpath.XPathFileType" fieldName="XPATH" language="XPath" extensions="xpath" />
     <lang.parserDefinition language="XPath" implementationClass="org.intellij.lang.xpath.XPathParserDefinition" />
     <lang.braceMatcher language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathPairedBraceMatcher" />
     <lang.findUsagesProvider language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathFindUsagesProvider" />
     <lang.namesValidator language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathNamesValidator" />
     <lang.syntaxHighlighterFactory language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathSyntaxHighlighterFactory" />
 
+    <fileType name="XPath2" implementationClass="org.intellij.lang.xpath.XPathFileType" fieldName="XPATH2" language="XPath2" extensions="xpath2" />
     <lang.parserDefinition language="XPath2" implementationClass="org.intellij.lang.xpath.XPath2ParserDefinition" />
     <lang.syntaxHighlighterFactory language="XPath2" implementationClass="org.intellij.lang.xpath.XPath2Language$XPathSyntaxHighlighterFactory" />
     <lang.commenter language="XPath2" implementationClass="org.intellij.lang.xpath.XPath2Language$XPath2Commenter" />
@@ -126,20 +129,24 @@
                      key="inspection.xslt.variable.shadowing.display.name" bundle="messages.XPathBundle"/>
 
     <intentionAction>
+      <language>$XSLT</language>
       <className>org.intellij.lang.xpath.xslt.intentions.AddOptionalArgumentsIntention</className>
-      <category>XSLT</category>
+      <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>$XSLT</language>
       <className>org.intellij.lang.xpath.xslt.intentions.ConvertIfToChooseIntention</className>
-      <category>XSLT</category>
+      <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>$XSLT</language>
       <className>org.intellij.lang.xpath.xslt.intentions.ReplaceWithXslAttribute</className>
-      <category>XSLT</category>
+      <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>$XSLT</language>
       <className>org.intellij.lang.xpath.xslt.intentions.InlineXslAttribute</className>
-      <category>XSLT</category>
+      <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
 
     <applicationConfigurable groupId="tools" instance="org.intellij.plugins.xpathView.XPathConfigurable" id="xpath.settings"
@@ -228,7 +235,7 @@
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="RefactoringMenu" />
     </group>
 
-    <group id="XPathView.XSLT.Associations" popup="true"
+    <group id="XPathView.XSLT.Associations" popup="true" icon="XpathIcons.Association"
            class="org.intellij.lang.xpath.xslt.associations.impl.AssociationsGroup">
       <add-to-group group-id="XPathView.EditorPopup" anchor="last"
                     relative-to-action="XPathView.Actions.ShowPathDescription" />

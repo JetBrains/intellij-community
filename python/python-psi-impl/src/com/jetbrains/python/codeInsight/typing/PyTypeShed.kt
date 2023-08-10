@@ -34,18 +34,58 @@ import java.io.File
  *
  * The original Git repo is located [here](https://github.com/JetBrains/typeshed).
  *
- * @author vlan
  */
 object PyTypeShed {
-  private const val ONLY_SUPPORTED_PY2_MINOR = 7
-  private val SUPPORTED_PY3_MINORS = LanguageLevel.SUPPORTED_LEVELS.filter { it.isPy3K }.map { it.minorVersion }
+
+  private val stdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels = mapOf(
+    // name to python versions when this name was introduced and removed
+    "_bootlocale" to (LanguageLevel.PYTHON36 to LanguageLevel.PYTHON39),
+    "_dummy_thread" to (LanguageLevel.PYTHON36 to LanguageLevel.PYTHON38),
+    "_dummy_threading" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON38),
+    "_py_abc" to (LanguageLevel.PYTHON37 to null),
+    "asyncio.mixins" to (LanguageLevel.PYTHON310 to null),  // likely it is ignored now
+    "asyncio.exceptions" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "asyncio.format_helpers" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
+    "asyncio.runners" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
+    "asyncio.staggered" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "asyncio.taskgroups" to (LanguageLevel.PYTHON311 to null),  // likely it is ignored now
+    "asyncio.threads" to (LanguageLevel.PYTHON39 to null),  // likely it is ignored now
+    "asyncio.timeouts" to (LanguageLevel.PYTHON311 to null),  // likely it is ignored now
+    "asyncio.trsock" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "binhex" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON310),
+    "contextvars" to (LanguageLevel.PYTHON37 to null),
+    "dataclasses" to (LanguageLevel.PYTHON37 to null),
+    "distutils.command.bdist_msi" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON310),  // likely it is ignored now
+    "distutils.command.bdist_wininst" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),  // likely it is ignored now
+    "dummy_threading" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON38),
+    "formatter" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
+    "graphlib" to (LanguageLevel.PYTHON39 to null),
+    "importlib.metadata" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "importlib.metadata._meta" to (LanguageLevel.PYTHON310 to null),  // likely it is ignored now
+    "importlib.resources" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
+    "macpath" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON37),
+    "multiprocessing.resource_tracker" to (LanguageLevel.PYTHON38 to null), // likely it is ignored now
+    "multiprocessing.shared_memory" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "parser" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
+    "symbol" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
+    "tomllib" to (LanguageLevel.PYTHON311 to null),
+    "unittest._log" to (LanguageLevel.PYTHON39 to null),  // likely it is ignored now
+    "unittest.async_case" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "wsgiref.types" to (LanguageLevel.PYTHON311 to null),  // likely it is ignored now
+    "zoneinfo" to (LanguageLevel.PYTHON39 to null)
+  )
 
   /**
    * Returns true if we allow to search typeshed for a stub for [name].
    */
-  fun maySearchForStubInRoot(name: QualifiedName, root: VirtualFile, sdk : Sdk): Boolean {
+  fun maySearchForStubInRoot(name: QualifiedName, root: VirtualFile, sdk: Sdk): Boolean {
     if (isInStandardLibrary(root)) {
-        return true
+      val head = name.firstComponent ?: return true
+      val languageLevels = stdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels[head] ?: return true
+      val currentLanguageLevel = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk)
+      return currentLanguageLevel.isAtLeast(languageLevels.first) && languageLevels.second.let {
+        it == null || it.isAtLeast(currentLanguageLevel)
+      }
     }
     if (isInThirdPartyLibraries(root)) {
       if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -55,7 +95,12 @@ object PyTypeShed {
       val alternativePossiblePackages = PyPsiPackageUtil.PACKAGES_TOPLEVEL[possiblePackage] ?: emptyList()
 
       val packageManager = PyPackageManagers.getInstance().forSdk(sdk)
-      val installedPackages = packageManager.packages ?: return true
+      val installedPackages = if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+        packageManager.refreshAndGetPackages(false)
+      }
+      else {
+        packageManager.packages ?: return true
+      }
 
       return packageManager.parseRequirement(possiblePackage)?.match(installedPackages) != null ||
              alternativePossiblePackages.any { PyPsiPackageUtil.findPackage(installedPackages, it) != null }
@@ -68,34 +113,21 @@ object PyTypeShed {
    */
   fun findRootsForSdk(sdk: Sdk): List<VirtualFile> {
     val level = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk)
-    val dir = directory ?: return emptyList()
     return findRootsForLanguageLevel(level)
-        .asSequence()
-        .map { dir.findFileByRelativePath(it) }
-        .filterNotNull()
-        .toList()
   }
 
   /**
    * Returns the list of roots in typeshed for the specified Python language [level].
    */
-  fun findRootsForLanguageLevel(level: LanguageLevel): List<String> {
-    val majorVersion = level.majorVersion
-    val minorVersion = level.minorVersion
+  fun findRootsForLanguageLevel(level: LanguageLevel): List<VirtualFile> {
+    val dir = directory ?: return emptyList()
 
-    val minors = when (majorVersion) {
-      2 -> listOf(ONLY_SUPPORTED_PY2_MINOR)
-      3 -> SUPPORTED_PY3_MINORS.reversed().filter { it <= minorVersion }
-      else -> return emptyList()
-    }
+    val common = sequenceOf(dir.findChild("stdlib"))
+      .plus(dir.findFileByRelativePath("stubs")?.children ?: VirtualFile.EMPTY_ARRAY)
+      .filterNotNull()
+      .toList()
 
-    return minors.map { "stdlib/$majorVersion.$it" } +
-      listOf(
-        "stdlib/$majorVersion",
-        "stdlib/2and3",
-        "third_party/$majorVersion",
-        "third_party/2and3"
-      )
+    return if (level.isPython2) common.flatMap { listOfNotNull(it.findChild("@python2"), it) } else common
   }
 
   /**
@@ -114,7 +146,7 @@ object PyTypeShed {
     StandardFileSystems.local().findFileByPath(path)
   }
 
-  val directoryPath: String?
+  private val directoryPath: String?
     get() {
       val paths = listOf("${PathManager.getConfigPath()}/typeshed",
                          "${PathManager.getConfigPath()}/../typeshed",
@@ -127,7 +159,7 @@ object PyTypeShed {
   /**
    * A shallow check for a [file] being located inside the typeshed third-party stubs.
    */
-  fun isInThirdPartyLibraries(file: VirtualFile): Boolean = "third_party" in file.path
+  fun isInThirdPartyLibraries(file: VirtualFile): Boolean = "stubs" in file.path
 
   fun isInStandardLibrary(file: VirtualFile): Boolean = "stdlib" in file.path
 }

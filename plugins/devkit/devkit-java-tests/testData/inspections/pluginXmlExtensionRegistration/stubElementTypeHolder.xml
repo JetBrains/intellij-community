@@ -1,0 +1,8 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <stubElementTypeHolder externalIdPrefix="XML"/>
+
+    <<warning descr="Define externalIdPrefix attribute, see Stub Indexes">stubElementTypeHolder</warning>/>
+  </extensions>
+</idea-plugin>

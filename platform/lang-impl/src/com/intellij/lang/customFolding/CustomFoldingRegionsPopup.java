@@ -10,16 +10,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Stack;
 
-/**
- * @author Rustam Vishnyakov
- */
 public final class CustomFoldingRegionsPopup {
   public static void show(@NotNull final Collection<? extends FoldingDescriptor> descriptors,
                           @NotNull final Editor editor,

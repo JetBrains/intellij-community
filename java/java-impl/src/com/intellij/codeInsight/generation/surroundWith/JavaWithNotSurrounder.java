@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.util.IncorrectOperationException;
 
 public class JavaWithNotSurrounder extends JavaBooleanExpressionSurrounder {
@@ -35,7 +35,7 @@ public class JavaWithNotSurrounder extends JavaBooleanExpressionSurrounder {
     PsiPrefixExpression prefixExpr = (PsiPrefixExpression)factory.createExpressionFromText("!(a)", null);
     prefixExpr = (PsiPrefixExpression)codeStyleManager.reformat(prefixExpr);
     ((PsiParenthesizedExpression)prefixExpr.getOperand()).getExpression().replace(expr);
-    expr = (PsiExpression)IntroduceVariableBase.replace(expr, prefixExpr, project);
+    expr = (PsiExpression)IntroduceVariableUtil.replace(expr, prefixExpr, project);
     int offset = expr.getTextRange().getEndOffset();
     return new TextRange(offset, offset);
   }

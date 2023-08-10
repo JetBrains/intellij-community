@@ -25,9 +25,9 @@ interface TestDataFile {
   String getName();
 
   class Existing implements TestDataFile {
-    private final VirtualFile myFile;
+    private final @NotNull VirtualFile myFile;
 
-    public Existing(VirtualFile file) {myFile = file;}
+    public Existing(@NotNull VirtualFile file) {myFile = file;}
 
     @Override
     public boolean exists() {

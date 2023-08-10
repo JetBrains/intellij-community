@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Key;
 /**
  * @deprecated Use the {@link GitLineHandlerListener}.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class GitLineHandlerAdapter implements GitLineHandlerListener {
   @Override
   public void onLineAvailable(final String line, final Key outputType) {

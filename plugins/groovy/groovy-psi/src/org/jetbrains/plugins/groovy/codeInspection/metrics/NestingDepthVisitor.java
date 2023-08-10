@@ -52,8 +52,7 @@ class NestingDepthVisitor extends GroovyRecursiveElementVisitor {
   @Override
   public void visitIfStatement(@NotNull GrIfStatement statement) {
     boolean isAlreadyCounted = false;
-    if (statement.getParent() instanceof GrIfStatement) {
-      final GrIfStatement parent = (GrIfStatement) statement.getParent();
+    if (statement.getParent() instanceof GrIfStatement parent) {
       assert parent != null;
       final GrStatement elseBranch = parent.getElseBranch();
       if (statement.equals(elseBranch)) {

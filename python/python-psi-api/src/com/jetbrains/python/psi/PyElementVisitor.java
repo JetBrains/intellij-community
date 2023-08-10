@@ -313,4 +313,76 @@ public class PyElementVisitor extends PsiElementVisitor {
   public void visitPyAssignmentExpression(@NotNull PyAssignmentExpression node) {
     visitPyExpression(node);
   }
+
+  public void visitPyPattern(@NotNull PyPattern node) {
+    visitPyElement(node);
+  }
+
+  public void visitPyAsPattern(@NotNull PyAsPattern node) {
+    visitPyPattern(node);
+  }
+
+  public void visitPyCapturePattern(@NotNull PyCapturePattern node) {
+    visitPyPattern(node);
+  }
+
+  public void visitWildcardPattern(@NotNull PyWildcardPattern node) {
+    visitPyPattern(node);
+  }
+
+  public void visitPyClassPattern(@NotNull PyClassPattern node) {
+    visitPyPattern(node);
+  }
+
+  public void visitPyDoubleStarPattern(@NotNull PyDoubleStarPattern node) {
+    visitPyPattern(node);
+  }
+
+  public void visitPySingleStarPattern(@NotNull PySingleStarPattern node) {
+    visitPyPattern(node);
+  }
+
+  public void visitPyGroupPattern(@NotNull PyGroupPattern node) {
+    visitPyPattern(node);
+  }
+
+  public void visitPyKeyValuePattern(@NotNull PyKeyValuePattern node) {
+    visitPyPattern(node);
+  }
+
+  public void visitPyMappingPattern(@NotNull PyMappingPattern node) {
+    visitPyPattern(node);
+  }
+
+  public void visitPyOrPattern(@NotNull PyOrPattern node) {
+    visitPyPattern(node);
+  }
+
+  public void visitPySequencePattern(@NotNull PySequencePattern node) {
+    visitPyPattern(node);
+  }
+
+  public void visitPyValuePattern(@NotNull PyValuePattern node) {
+    visitPyPattern(node);
+  }
+
+  public void visitPyKeywordPattern(@NotNull PyKeywordPattern node) {
+    visitPyPattern(node);
+  }
+
+  public void visitPyLiteralPattern(@NotNull PyLiteralPattern node) {
+    visitPyPattern(node);
+  }
+
+  public void visitPyPatternArgumentList(@NotNull PyPatternArgumentList node) {
+    visitPyElement(node);
+  }
+
+  public void visitPyMatchStatement(@NotNull PyMatchStatement node) {
+    visitPyStatement(node);
+  }
+
+  public void visitPyCaseClause(@NotNull PyCaseClause node) {
+    visitPyElement(node);
+  }
 }

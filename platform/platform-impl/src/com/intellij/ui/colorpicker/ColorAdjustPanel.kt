@@ -16,10 +16,10 @@
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.ui.colorpicker
 
-import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.VisibleForTesting
 import sun.awt.AWTPermissions
 import java.awt.*
 import javax.swing.BoxLayout
@@ -60,13 +60,13 @@ internal class ColorAdjustPanel(private val model: ColorPickerModel,
   }
 
   @VisibleForTesting
-  val colorIndicator = ColorIndicator().apply {
+  val colorIndicator: ColorIndicator = ColorIndicator().apply {
     border = COLOR_INDICATOR_BORDER
     preferredSize = COLOR_INDICATOR_SIZE
   }
 
   @VisibleForTesting
-  val hueSlider = HueSliderComponent().apply {
+  val hueSlider: HueSliderComponent = HueSliderComponent().apply {
     border = HUE_SLIDER_BORDER
     background = PICKER_BACKGROUND_COLOR
 
@@ -84,7 +84,7 @@ internal class ColorAdjustPanel(private val model: ColorPickerModel,
   }
 
   @VisibleForTesting
-  val alphaSlider = AlphaSliderComponent().apply {
+  val alphaSlider: AlphaSliderComponent = AlphaSliderComponent().apply {
     border = ALPHA_SLIDER_BORDER
     background = PICKER_BACKGROUND_COLOR
 

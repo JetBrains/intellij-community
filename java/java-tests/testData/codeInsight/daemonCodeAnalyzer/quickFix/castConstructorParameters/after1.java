@@ -1,4 +1,4 @@
-// "Cast parameter to 'a'" "true"
+// "Cast argument to 'a'" "true-preview"
 class x {}
 class a extends x {
     a(a a) {}

@@ -98,7 +98,7 @@ public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
 
   protected void registerError(@NotNull PsiElement location,
                                @InspectionMessage @NotNull String description,
-                               LocalQuickFix @Nullable [] fixes,
+                               @NotNull LocalQuickFix @Nullable [] fixes,
                                ProblemHighlightType highlightType) {
     problemsHolder.registerProblem(location, description, highlightType, fixes);
   }
@@ -115,16 +115,16 @@ public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
     registerError(location, description, fix, highlightType);
   }
 
-  private LocalQuickFix @Nullable [] createFixes(@NotNull PsiElement location) {
+  private @NotNull LocalQuickFix @Nullable [] createFixes(@NotNull PsiElement location) {
     if (!onTheFly &&
         inspection.buildQuickFixesOnlyForOnTheFlyErrors()) {
       return null;
     }
-    final GroovyFix fix = inspection.buildFix(location);
+    final LocalQuickFix fix = inspection.buildFix(location);
     if (fix == null) {
       return null;
     }
-    return new GroovyFix[]{fix};
+    return new LocalQuickFix[]{fix};
   }
 
   public int getErrorCount() {

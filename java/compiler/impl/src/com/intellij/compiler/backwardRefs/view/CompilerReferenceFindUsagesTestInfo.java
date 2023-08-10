@@ -3,34 +3,30 @@ package com.intellij.compiler.backwardRefs.view;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import it.unimi.dsi.fastutil.ints.IntIterator;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public final class CompilerReferenceFindUsagesTestInfo {
-  @Nullable private final IntSet myFileIds;
+  @Nullable private final Set<VirtualFile> myFiles;
   @NotNull private final DirtyScopeTestInfo myDirtyScopeInfo;
 
-  public CompilerReferenceFindUsagesTestInfo(@Nullable IntSet occurrencesIds, @NotNull DirtyScopeTestInfo dirtyScopeTestInfo) {
-    myFileIds = occurrencesIds;
+  public CompilerReferenceFindUsagesTestInfo(@Nullable Set<VirtualFile> occurrences, @NotNull DirtyScopeTestInfo dirtyScopeTestInfo) {
+    myFiles = occurrences;
     myDirtyScopeInfo = dirtyScopeTestInfo;
   }
 
   private @NotNull List<VirtualFile> getFilesWithKnownOccurrences() {
-    if (myFileIds == null) {
+    if (myFiles == null) {
       throw new IllegalStateException();
     }
 
-    ManagingFS managingFs = ManagingFS.getInstance();
     List<VirtualFile> list = new ArrayList<>();
-    for (IntIterator iterator = myFileIds.iterator(); iterator.hasNext(); ) {
-      VirtualFile f = managingFs.findFileById(iterator.nextInt());
+    for (VirtualFile f : myFiles) {
       if (f != null && !myDirtyScopeInfo.getDirtyScope().contains(f)) {
         list.add(f);
       }
@@ -51,7 +47,7 @@ public final class CompilerReferenceFindUsagesTestInfo {
   }
 
   private boolean isEnabled() {
-    return myFileIds != null;
+    return myFiles != null;
   }
 
   DefaultMutableTreeNode asTree() {

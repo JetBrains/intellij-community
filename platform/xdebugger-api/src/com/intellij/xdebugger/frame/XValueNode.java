@@ -53,12 +53,6 @@ public interface XValueNode extends Obsolescent {
   void setPresentation(@Nullable Icon icon, @NotNull XValuePresentation presentation, boolean hasChildren);
 
   /**
-   * @deprecated use {@link #setPresentation(Icon, XValuePresentation, boolean)}
-   */
-  @Deprecated
-  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @Nullable String value, boolean hasChildren);
-
-  /**
    * If string representation of the value is too long to show in the tree pass truncated value to {@link #setPresentation(Icon, String, String, boolean)}
    * method and call this method to provide full value.
    * This will add a link to the node and show popup with full value if an user clicks on that link.

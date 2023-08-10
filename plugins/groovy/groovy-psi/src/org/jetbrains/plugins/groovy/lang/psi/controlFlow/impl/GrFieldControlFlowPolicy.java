@@ -12,7 +12,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.isThisRef
 /**
  * @author Max Medvedev
  */
-public class GrFieldControlFlowPolicy implements GrControlFlowPolicy {
+public final class GrFieldControlFlowPolicy implements GrControlFlowPolicy {
   @Override
   public boolean isReferenceAccepted(@NotNull GrReferenceExpression ref) {
     final GrExpression qualifier = ref.getQualifier();

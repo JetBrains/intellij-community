@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.auth
 
 import com.intellij.concurrency.JobScheduler
@@ -31,7 +31,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ThreeState
 import com.intellij.util.io.delete
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.exists
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.proxy.CommonProxy
 import org.jetbrains.annotations.NonNls
@@ -57,6 +56,7 @@ import java.nio.file.Paths
 import java.util.Collections.synchronizedMap
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
+import kotlin.io.path.exists
 
 private val LOG = logger<SvnAuthenticationNotifier>()
 
@@ -149,7 +149,7 @@ class SvnAuthenticationNotifier(project: Project) :
     getApplication().invokeLater(
       {
         outdatedRequests.forEach { removeLazyNotificationByKey(it) }
-      }, ModalityState.NON_MODAL
+      }, ModalityState.nonModal()
     )
   }
 
@@ -262,9 +262,9 @@ class SvnAuthenticationNotifier(project: Project) :
           for (proxy in select) {
             if (HttpConfigurable.isRealProxy(proxy) && Proxy.Type.HTTP == proxy.type()) {
               val address = proxy.address() as InetSocketAddress
-              val password = HttpConfigurable.getInstance().getGenericPassword(address.hostName, address.port)
+              val password = HttpConfigurable.getInstance().getGenericPassword(address.hostString, address.port)
               if (password == null) {
-                CommonProxy.getInstance().noAuthentication("http", address.hostName, address.port)
+                CommonProxy.getInstance().noAuthentication("http", address.hostString, address.port)
                 proxyToRelease = proxy
               }
             }
@@ -293,7 +293,7 @@ class SvnAuthenticationNotifier(project: Project) :
       finally {
         if (!interactive && configuration.isUseDefaultProxy && proxyToRelease != null) {
           val address = proxyToRelease.address() as InetSocketAddress
-          CommonProxy.getInstance().noAuthentication("http", address.hostName, address.port)
+          CommonProxy.getInstance().noAuthentication("http", address.hostString, address.port)
         }
       }
 
@@ -326,7 +326,7 @@ class SvnAuthenticationNotifier(project: Project) :
               configuration.configurationDirectory, { configuration.setConfigurationDirParameters(false, it) }, project, null)
           }
         )
-      }, ModalityState.NON_MODAL, project.disposed)
+      }, ModalityState.nonModal(), project.disposed)
 
     @JvmStatic
     fun clearAuthenticationCache(project: Project, component: Component?, configDirPath: String?) {

@@ -14,19 +14,20 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.PySdkSettings
+import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
+import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.InterpreterType
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.event.DocumentEvent
 
-/**
- * @author vlan
- */
-class PyAddNewVirtualEnvPanel(private val project: Project?,
+open class PyAddNewVirtualEnvPanel(private val project: Project?,
                               private val module: Module?,
                               private val existingSdks: List<Sdk>,
                               newProjectPath: String?,
@@ -44,16 +45,21 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
 
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.new.environment")
   override val icon: Icon = PythonIcons.Python.Virtualenv
-  private val baseSdkField = PySdkPathChoosingComboBox()
-  private val pathField = TextFieldWithBrowseButton().apply {
+  protected val baseSdkField = PySdkPathChoosingComboBox()
+  protected val pathField = TextFieldWithBrowseButton().apply {
     text = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
     addBrowseFolderListener(PySdkBundle.message("python.venv.location.chooser"), null, project,
                             FileChooserDescriptorFactory.createSingleFolderDescriptor())
   }
-  private val inheritSitePackagesField = JBCheckBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"))
+  val inheritSitePackagesField = JBCheckBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"))
   private val makeSharedField = JBCheckBox(PyBundle.message("available.to.all.projects"))
 
   init {
+    layoutComponents()
+    addBaseInterpretersAsync(baseSdkField, existingSdks, module, context)
+  }
+
+  protected open fun layoutComponents() {
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent(PySdkBundle.message("python.venv.location.label"), pathField)
@@ -62,17 +68,24 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)
-    addBaseInterpretersAsync(baseSdkField, existingSdks, module, context)
   }
 
   override fun validateAll(): List<ValidationInfo> =
-    listOfNotNull(validateEnvironmentDirectoryLocation(pathField),
+    listOfNotNull(validateEnvironmentDirectoryLocation(pathField, PlatformAndRoot.local),
                   validateSdkComboBox(baseSdkField, this))
 
   override fun getOrCreateSdk(): Sdk? {
     return PyProjectVirtualEnvConfiguration.createVirtualEnvSynchronously(baseSdkField.selectedSdk, existingSdks, pathField.text,
                                                                           newProjectPath, project, module, context,
                                                                           inheritSitePackagesField.isSelected, makeSharedField.isSelected)
+  }
+
+  override fun getStatisticInfo(): InterpreterStatisticsInfo? {
+    return InterpreterStatisticsInfo(InterpreterType.VIRTUALENV,
+                                     InterpreterTarget.LOCAL,
+                                     inheritSitePackagesField.isSelected,
+                                     makeSharedField.isSelected,
+                                     false)
   }
 
   override fun addChangeListener(listener: Runnable) {

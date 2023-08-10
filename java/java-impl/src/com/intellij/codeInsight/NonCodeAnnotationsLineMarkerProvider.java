@@ -12,16 +12,17 @@ import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.AnnotateIntentionAction;
 import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
 import com.intellij.codeInsight.javadoc.AnnotationDocGenerator;
-import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.codeInsight.javadoc.NonCodeAnnotationGenerator;
-import com.intellij.codeInspection.dataFlow.EditContractIntention;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -80,9 +81,25 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
   }
 
   @Override
-  public LineMarkerInfo<?> getLineMarkerInfo(final @NotNull PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
+    return null;
+  }
+
+  @Override
+  public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements, @NotNull Collection<? super LineMarkerInfo<?>> result) {
+    for (PsiElement element : elements) {
+      LineMarkerInfo<?> info = buildLineMarkerInfo(element);
+      if (info != null) {
+        result.add(info);
+      }
+    }
+  }
+
+  private LineMarkerInfo<?> buildLineMarkerInfo(@NotNull PsiElement element) {
     PsiModifierListOwner owner = getAnnotationOwner(element);
     if (owner == null) return null;
+
+    ProgressManager.checkCanceled();
 
     Collection<AnnotationDocGenerator> nonCodeAnnotations = NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values();
     if (getAnnotationLineMarkerType(nonCodeAnnotations) != myLineMarkerType) {
@@ -90,8 +107,8 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     }
 
     String tooltip = XmlStringUtil.wrapInHtml(
-      NonCodeAnnotationGenerator.getNonCodeHeaderAvalable(nonCodeAnnotations) + CommonXmlStrings.NBSP + JavaBundle.message("non.code.annotations.explanation.full.signature") + "<p>\n" +
-      JavaDocInfoGenerator.generateSignature(owner));
+      NonCodeAnnotationGenerator.getNonCodeHeaderAvailable(nonCodeAnnotations) + CommonXmlStrings.NBSP + JavaBundle.message("non.code.annotations.explanation.full.signature") + "<p>\n" +
+      JavaDocInfoGeneratorFactory.create(owner.getProject(), owner).generateSignature(owner));
     return new LineMarkerInfo<>(element, element.getTextRange(), AllIcons.Gutter.ExtAnnotation, __ -> tooltip, MyIconGutterHandler.INSTANCE,
                                 GutterIconRenderer.Alignment.RIGHT);
   }
@@ -150,8 +167,10 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
 
       if (!actions.isEmpty()) {
         final DefaultActionGroup group = new DefaultActionGroup(actions);
+        DataContext context = EditorUtil.getEditorDataContext(editor);
+
         return JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, group, DataContext.EMPTY_CONTEXT, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
+          .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
       }
 
       return null;
@@ -178,7 +197,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
       List<AnAction> actions = new ArrayList<>();
       for (PsiParameter parameter: method.getParameterList().getParameters()) {
         MakeInferredAnnotationExplicit intention = new MakeInferredAnnotationExplicit();
-        if (intention.isAvailable(project, file, parameter)) {
+        if (intention.isAvailable(file, parameter)) {
           actions.add(new AnAction(JavaBundle.message("action.text.0.on.parameter.1", intention.getText(), parameter.getName())) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
@@ -194,7 +213,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     private static boolean shouldShowInGutterPopup(IntentionAction action) {
       return action instanceof AnnotateIntentionAction ||
              action instanceof DeannotateIntentionAction ||
-             action instanceof EditContractIntention ||
+             action.getClass().getName().equals("com.intellij.codeInspection.dataFlow.EditContractIntention") ||
              action instanceof MakeInferredAnnotationExplicit ||
              action instanceof MakeExternalAnnotationExplicit;
     }

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -20,11 +21,14 @@ import org.jetbrains.jps.api.GlobalOptions;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.util.List;
 
 final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
+  private static final Logger LOG = Logger.getInstance(WslBuildCommandLineBuilder.class);
   private final Project myProject;
   private final @NotNull WSLDistribution myDistribution;
   private final @Nullable ProgressIndicator myProgressIndicator;
@@ -44,14 +48,18 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
     myProgressIndicator = progressIndicator;
     myCommandLine.setExePath(sdkPath);
 
-    String home = distribution.getUserHome();
-    if (home != null) {
-      String pathsSelector = PathManager.getPathsSelector();
-      if (pathsSelector == null) pathsSelector = "." + ApplicationNamesInfo.getInstance().getScriptName();
-      String workingDirectory = PathManager.getDefaultUnixSystemPath(home, pathsSelector) + "/" + BuildManager.SYSTEM_ROOT;
-      myHostWorkingDirectory = myDistribution.getWindowsPath(workingDirectory);
-      myWorkingDirectory = myHostWorkingDirectory != null ? workingDirectory : null;
-
+    Path buildDirectory = getWslBuildSystemDirectory(distribution);
+    if (buildDirectory == null) {
+      LOG.warn("Cannot determine build directory for " + distribution + ", rolling back to LocalBuildSystemDirectory");
+      myHostWorkingDirectory = LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory().toString();
+      myWorkingDirectory = myDistribution.getWslPath(myHostWorkingDirectory);
+      LOG.warn("ClasspathDirectory and myHostClasspathDirectory set to null!");
+      myClasspathDirectory = null;
+      myHostClasspathDirectory = null;
+    }
+    else {
+      myHostWorkingDirectory = buildDirectory.toString();
+      myWorkingDirectory = myDistribution.getWslPath(myHostWorkingDirectory);
       myClasspathDirectory = myWorkingDirectory + "/jps-" + ApplicationInfo.getInstance().getBuild().asString();
       myHostClasspathDirectory = Paths.get(myDistribution.getWindowsPath(myClasspathDirectory));
       if (ApplicationInfo.getInstance().getBuild().isSnapshot() && !CURRENT_SNAPSHOT_COPIED) {
@@ -68,12 +76,6 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
           // ignore
         }
       }
-    }
-    else {
-      myHostWorkingDirectory = BuildManager.getInstance().getBuildSystemDirectory().toString();
-      myWorkingDirectory = myDistribution.getWslPath(myHostWorkingDirectory);
-      myClasspathDirectory = null;
-      myHostClasspathDirectory = null;
     }
   }
 
@@ -97,24 +99,13 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
       }
       Path path = Paths.get(pathName);
       if (myClasspathDirectory != null && myHostClasspathDirectory != null) {
-        Path targetPath = myHostClasspathDirectory.resolve(path.getFileName());
-        try {
-          if (!targetPath.toFile().exists()) {
-            if (!myReportedProgress && myProgressIndicator != null) {
-              myProgressIndicator.setText(JavaCompilerBundle.message("progress.preparing.wsl.build.environment"));
-              myReportedProgress = true;
-            }
-            FileUtil.copyFileOrDir(path.toFile(), targetPath.toFile());
-          }
-          builder.append(myDistribution.getWslPath(targetPath.toString()));
-          continue;
+        Path targetPath = copyPathToTargetIfRequired(path);
+        if (!myReportedProgress && !targetPath.equals(path) && myProgressIndicator != null) {
+          myProgressIndicator.setText(JavaCompilerBundle.message("progress.preparing.wsl.build.environment"));
+          myReportedProgress = true;
         }
-        catch (IOException e) {
-          // fallback to default case
-        }
+        builder.append(myDistribution.getWslPath(targetPath.toString()));
       }
-
-      builder.append(myDistribution.getWslPath(pathName));
     }
     for (String s : classpathInTarget) {
       if (builder.length() > 0) {
@@ -123,6 +114,28 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
       builder.append(myWorkingDirectory).append("/").append(s);
     }
     myCommandLine.addParameter(builder.toString());
+  }
+
+  /**
+   * Copying files to WSL file-system is required because class-files processing works faster this way (Dmitry Jemerov)
+   */
+  @Override
+  public @NotNull Path copyPathToTargetIfRequired(@NotNull Path path) {
+    if (myClasspathDirectory == null || myHostClasspathDirectory == null) {
+      return path;
+    }
+    Path targetFile = myHostClasspathDirectory.resolve(path.getFileName());
+    try {
+      FileTime originalFileTimestamp = Files.getLastModifiedTime(path);
+      FileTime targetFileTimestamp = Files.exists(targetFile) ? Files.getLastModifiedTime(targetFile) : null;
+      if (targetFileTimestamp == null || targetFileTimestamp.compareTo(originalFileTimestamp) < 0) {
+        FileUtil.copyFileOrDir(path.toFile(), targetFile.toFile());
+      }
+    }
+    catch (IOException ignored) {
+      return path;
+    }
+    return targetFile;
   }
 
   @Override
@@ -137,16 +150,17 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
 
   @Override
   public InetAddress getListenAddress() {
-    return myDistribution.getHostIpAddress();
+    try {
+      return myDistribution.getHostIpAddress();
+    }
+    catch (ExecutionException ignored) {
+      return null;
+    }
   }
 
   @Override
   public @NotNull String getHostIp() throws ExecutionException {
-    String hostIp = myDistribution.getHostIp();
-    if (hostIp == null) {
-      throw new ExecutionException(JavaCompilerBundle.message("dialog.message.failed.to.determine.host.ip.for.wsl.jdk"));
-    }
-    return hostIp;
+    return myDistribution.getHostIpAddress().getHostAddress();
   }
 
   @Override
@@ -171,5 +185,21 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
     myDistribution.patchCommandLine(myCommandLine, myProject, options);
 
     return myCommandLine;
+  }
+
+  @Override
+  public void setUnixProcessPriority(int priority) {
+    LocalBuildCommandLineBuilder.setUnixProcessPriority(myCommandLine, priority);
+  }
+
+  @Nullable
+  public static Path getWslBuildSystemDirectory(WSLDistribution distribution) {
+    String pathsSelector = PathManager.getPathsSelector();
+    String wslUserHome = distribution.getUserHome();
+    if (wslUserHome == null) return null;
+    String windowsUserHomePath = distribution.getWindowsPath(wslUserHome);
+    if (pathsSelector == null) pathsSelector = "." + ApplicationNamesInfo.getInstance().getScriptName();
+    String workingDirectory = PathManager.getDefaultUnixSystemPath(windowsUserHomePath, pathsSelector) + "/" + BuildManager.SYSTEM_ROOT;
+    return Paths.get(workingDirectory);
   }
 }

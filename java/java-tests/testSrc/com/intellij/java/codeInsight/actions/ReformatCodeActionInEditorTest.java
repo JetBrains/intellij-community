@@ -115,7 +115,8 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
     doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT).setOptimizeImports(true));
   }
 
-  public void testFormatOptimizeRearrangeVcsChanges() {
+  // Excluded because of IDEA-229587
+  public void _testFormatOptimizeRearrangeVcsChanges() {
     doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT).setOptimizeImports(true).setRearrangeCode(true));
   }
   
@@ -128,7 +129,8 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
     doTest(new ReformatCodeRunOptions(SELECTED_TEXT));
   }
 
-  public void testWrapParamList() {
+  // Excluded because of IDEA-229587
+  public void _testWrapParamList() {
     CodeStyleSettings temp = CodeStyle.createTestSettings();
     CommonCodeStyleSettings javaSettings = temp.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.KEEP_LINE_BREAKS = false;
@@ -148,24 +150,26 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
   public void testReformatWithOptimizeImportMustNotBeCanceledUnexpectedly() {
     CodeStyleSettings temp = CodeStyle.createTestSettings();
     CodeStyle.doWithTemporarySettings(getProject(), temp, () -> {
-      String text = "class X {\n" +
-                    "    void f(Runnable dddd) {\n" +
-                    "        f(()->{});vvdds<caret>\n" +
-                    "    }\n" +
-                    "}";
+      String text = """
+        class X {
+            void f(Runnable dddd) {
+                f(()->{});vvdds<caret>
+            }
+        }""";
       myFixture.configureByText("x.java", text);
       myFixture.type("abc");
 
       LayoutCodeOptions options = new ReformatCodeRunOptions(WHOLE_FILE).setOptimizeImports(true);
       FileInEditorProcessor processor = new FileInEditorProcessor(myFixture.getFile(), myFixture.getEditor(), options);
       processor.processCode();
-      myFixture.checkResult("class X {\n" +
-                            "    void f(Runnable dddd) {\n" +
-                            "        f(() -> {\n" +
-                            "        });\n" +
-                            "        vvddsabc\n" +
-                            "    }\n" +
-                            "}");
+      myFixture.checkResult("""
+                              class X {
+                                  void f(Runnable dddd) {
+                                      f(() -> {
+                                      });
+                                      vvddsabc
+                                  }
+                              }""");
     });
   }
 }

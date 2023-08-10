@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -11,23 +11,20 @@ import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 /**
  * @author Konstantin Bulenkov
  */
-class UpdateManagerUsagesCollector : ApplicationUsagesCollector() {
-  companion object {
-    private val GROUP: EventLogGroup = EventLogGroup("platform.installer", 2)
-    private val UPDATE_MANAGER: EventId1<String?> =
-      GROUP.registerEvent(
-        "Update Manager",
-        EventFields.String("value", arrayListOf("Toolbox App", "Snap", "Other", "IDE"))
-      )
-  }
+internal class UpdateManagerUsagesCollector : ApplicationUsagesCollector() {
+  private val GROUP: EventLogGroup = EventLogGroup("platform.installer", 2)
+  private val UPDATE_MANAGER: EventId1<String?> = GROUP.registerEvent(
+    "Update Manager",
+    EventFields.String("value", arrayListOf("Toolbox App", "Snap", "Other", "IDE"))
+  )
 
   override fun getMetrics(): Set<MetricEvent> = setOf(
     UPDATE_MANAGER.metric(when (ExternalUpdateManager.ACTUAL) {
-      ExternalUpdateManager.TOOLBOX -> "Toolbox App"
-      ExternalUpdateManager.SNAP -> "Snap"
-      ExternalUpdateManager.UNKNOWN -> "Other"
-      null -> "IDE"
-    }))
+                            ExternalUpdateManager.TOOLBOX -> "Toolbox App"
+                            ExternalUpdateManager.SNAP -> "Snap"
+                            ExternalUpdateManager.UNKNOWN -> "Other"
+                            null -> "IDE"
+                          }))
 
   override fun getGroup(): EventLogGroup = GROUP
 }

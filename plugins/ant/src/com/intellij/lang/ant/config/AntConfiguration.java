@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.ant.config;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -29,7 +29,7 @@ public abstract class AntConfiguration extends SimpleModificationTracker {
   private static final Key<Boolean> ANT_SUPPORT_INITIALIZED_KEY = new Key<>("AntSupportInitialized");
   public static void initAntSupport(final Project project) {
     if (!Boolean.TRUE.equals(project.getUserData(ANT_SUPPORT_INITIALIZED_KEY))) {
-      ServiceManager.getService(project, AntConfiguration.class);
+      project.getService(AntConfiguration.class);
       project.putUserData(ANT_SUPPORT_INITIALIZED_KEY, Boolean.TRUE);
     }
   }
@@ -39,7 +39,6 @@ public abstract class AntConfiguration extends SimpleModificationTracker {
   }
 
   /**
-   * @param project
    * @return prefix for all ant actions registered withing this project
    */
   public static String getActionIdPrefix(Project project) {
@@ -75,8 +74,8 @@ public abstract class AntConfiguration extends SimpleModificationTracker {
   @Nullable
   public abstract AntBuildFile findBuildFileByActionId(final String id);
 
-  public abstract boolean executeTargetBeforeCompile(DataContext context);
+  public abstract boolean executeTargetBeforeCompile(CompileContext compileContext, DataContext dataContext);
 
-  public abstract boolean executeTargetAfterCompile(DataContext context);
+  public abstract boolean executeTargetAfterCompile(CompileContext compileContext, DataContext dataContext);
 
 }

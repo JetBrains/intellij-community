@@ -43,8 +43,7 @@ public final class TreeContentProvider extends AbstractTreeStructure {
     if (element == myTreeRoot) {
       return myDesigner.getTreeRoots();
     }
-    if (element instanceof RadComponent) {
-      RadComponent component = (RadComponent)element;
+    if (element instanceof RadComponent component) {
       return component.getTreeChildren();
     }
     throw new IllegalArgumentException("Unknown element: " + element);
@@ -52,8 +51,7 @@ public final class TreeContentProvider extends AbstractTreeStructure {
 
   @Override
   public Object getParentElement(@NotNull Object element) {
-    if (element instanceof RadComponent) {
-      RadComponent component = (RadComponent)element;
+    if (element instanceof RadComponent component) {
       return component.getParent();
     }
     return null;

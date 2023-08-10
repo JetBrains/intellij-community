@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ModuleEx
-import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.io.systemIndependentPath
@@ -18,18 +18,23 @@ import java.nio.file.Path
 import kotlin.concurrent.write
 
 @ApiStatus.Internal
-open class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module) : StateStorageManagerImpl("module", macroSubstitutor, module), RenameableStateStorageManager {
+internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module) :
+  StateStorageManagerImpl(
+    rootTagName = "module",
+    macroSubstitutor = macroSubstitutor,
+    componentManager = module,
+  ), RenameableStateStorageManager {
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation) = StoragePathMacros.MODULE_FILE
 
   // the only macro is supported by ModuleStateStorageManager
-  final override fun expandMacro(collapsedPath: String): Path {
+  override fun expandMacro(collapsedPath: String): Path {
     if (collapsedPath != StoragePathMacros.MODULE_FILE) {
       throw IllegalStateException("Cannot resolve $collapsedPath in $macros")
     }
     return macros.get(0).value
   }
 
-  final override fun rename(newName: String) {
+  override fun rename(newName: String) {
     storageLock.write {
       val storage = getOrCreateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT) as FileBasedStorage
       val file = storage.getVirtualFile(StateStorageOperation.WRITE)
@@ -60,11 +65,9 @@ open class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitu
     }
     finally {
       val requestor = event?.requestor
-      if (requestor == null || requestor !is StateStorage /* not renamed as result of explicit rename */) {
+      if (requestor == null || requestor !is StateStorage /* not renamed as a result of explicit rename */) {
         val module = componentManager as ModuleEx
-        val oldName = module.name
         module.rename(newPath.fileName.toString().removeSuffix(ModuleFileType.DOT_DEFAULT_EXTENSION), false)
-        (ModuleManager.getInstance(module.project) as? ModuleManagerImpl)?.fireModuleRenamedByVfsEvent(module, oldName)
       }
     }
   }
@@ -101,8 +104,18 @@ open class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitu
   override val isExternalSystemStorageEnabled: Boolean
     get() = (componentManager as Module?)?.project?.isExternalStorageEnabled ?: false
 
-  override fun createFileBasedStorage(path: Path, collapsedPath: String, roamingType: RoamingType, rootTagName: String?): StateStorage {
-    return ModuleFileStorage(this, path, collapsedPath, rootTagName, roamingType, getMacroSubstitutor(collapsedPath), if (roamingType == RoamingType.DISABLED) null else compoundStreamProvider)
+  override fun createFileBasedStorage(path: Path,
+                                      collapsedPath: String,
+                                      roamingType: RoamingType,
+                                      usePathMacroManager: Boolean,
+                                      rootTagName: String?): StateStorage {
+    return ModuleFileStorage(storageManager = this,
+                             file = path,
+                             fileSpec = collapsedPath,
+                             rootElementName = rootTagName,
+                             roamingType = roamingType,
+                             pathMacroManager = macroSubstitutor,
+                             provider = if (roamingType == RoamingType.DISABLED) null else compoundStreamProvider)
   }
 
   override fun getFileBasedStorageConfiguration(fileSpec: String) = moduleFileBasedStorageConfiguration
@@ -113,7 +126,8 @@ open class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitu
                                   rootElementName: String?,
                                   roamingType: RoamingType,
                                   pathMacroManager: PathMacroSubstitutor? = null,
-                                  provider: StreamProvider? = null) : MyFileStorage(storageManager, file, fileSpec, rootElementName, roamingType, pathMacroManager, provider) {
+                                  provider: StreamProvider? = null) : MyFileStorage(storageManager, file, fileSpec, rootElementName,
+                                                                                    roamingType, pathMacroManager, provider) {
     override fun handleVirtualFileNotFound() {
       if (storageDataRef.get() == null && !storageManager.isExternalSystemStorageEnabled) {
         throw FileNotFoundException(ConfigurationStoreBundle.message("module.file.does.not.exist.error", file.toString()))
@@ -128,5 +142,5 @@ private val moduleFileBasedStorageConfiguration = object : FileBasedStorageConfi
 
   // use VFS to load module file because it is refreshed and loaded into VFS in any case
   override val isUseVfsForRead: Boolean
-    get() = true
+    get() = false
 }

@@ -42,9 +42,8 @@ public abstract class SimpleTreeStructure extends AbstractTreeStructure {
   }
 
   private static void cleanUpCaches(SimpleNode node) {
-    if (!(node instanceof CachingSimpleNode)) return;
+    if (!(node instanceof CachingSimpleNode cachingNode)) return;
 
-    final CachingSimpleNode cachingNode = ((CachingSimpleNode) node);
     SimpleNode[] cached = cachingNode.getCached();
     if (cached == null) return;
 

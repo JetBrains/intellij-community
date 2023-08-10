@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml;
 
 import com.intellij.openapi.editor.Document;
@@ -18,9 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * @author yole
- */
+
 public abstract class XmlNamespaceHelper {
   private static final ExtensionPointName<XmlNamespaceHelper> EP_NAME = new ExtensionPointName<>("com.intellij.xml.namespaceHelper");
 
@@ -43,8 +41,7 @@ public abstract class XmlNamespaceHelper {
 
   @Nullable
   public String getNamespacePrefix(PsiElement element) {
-    if (element instanceof XmlAttribute) {
-      XmlAttribute attribute = (XmlAttribute)element;
+    if (element instanceof XmlAttribute attribute) {
       String prefix = attribute.getNamespacePrefix();
       if (!StringUtil.isEmpty(prefix)) {
         return prefix;

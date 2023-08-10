@@ -43,8 +43,7 @@ public class SearchResult {
       return true;
     }
 
-    if (target instanceof SearchResult) {
-      SearchResult targetResult = (SearchResult)target;
+    if (target instanceof SearchResult targetResult) {
       if (startPosition.equals(targetResult.startPosition)
           && endPostion.equals(targetResult.endPostion)
           && contextPrefix.equals(targetResult.contextPrefix)

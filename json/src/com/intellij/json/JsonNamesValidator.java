@@ -9,6 +9,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.json.JsonTokenSets.JSON_KEYWORDS;
+
 public class JsonNamesValidator implements NamesValidator {
 
   private final JsonLexer myLexer = new JsonLexer();
@@ -16,7 +18,7 @@ public class JsonNamesValidator implements NamesValidator {
   @Override
   public synchronized boolean isKeyword(@NotNull String name, Project project) {
     myLexer.start(name);
-    return JsonParserDefinition.JSON_KEYWORDS.contains( myLexer.getTokenType() ) && myLexer.getTokenEnd() == name.length();
+    return JSON_KEYWORDS.contains( myLexer.getTokenType() ) && myLexer.getTokenEnd() == name.length();
   }
   @Override
   public synchronized boolean isIdentifier(@NotNull String name, final Project project) {

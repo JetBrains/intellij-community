@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
 import com.intellij.ide.util.BrowseFilesListener
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -14,12 +14,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.SwingUndoUtil
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
+import java.io.File
 import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -28,15 +31,29 @@ import javax.swing.JTextArea
 /**
  * @author gregsh
  */
-class ShowUpdateInfoDialogAction : DumbAwareAction() {
+internal class ShowUpdateInfoDialogAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = e.project != null
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
-    val dialog = MyDialog(e.project)
+    val project = e.project ?: return
+
+    val dialog = MyDialog(project)
     if (dialog.showAndGet()) {
       try {
-        UpdateChecker.testPlatformUpdate(AnAction.getEventProject(e), dialog.updateXmlText(), dialog.patchFilePath(), dialog.forceUpdate())
+        UpdateChecker.testPlatformUpdate(
+          project,
+          dialog.updateXmlText(),
+          dialog.patchFilePath()?.let { File(FileUtil.toSystemDependentName(it)) },
+          dialog.forceUpdate(),
+        )
       }
       catch (ex: Exception) {
-        Messages.showErrorDialog(e.project, "${ex.javaClass.name}: ${ex.message}", "Something Went Wrong")
+        Messages.showErrorDialog(project, "${ex.javaClass.name}: ${ex.message}", "Something Went Wrong")
       }
     }
   }
@@ -47,13 +64,14 @@ class ShowUpdateInfoDialogAction : DumbAwareAction() {
     private var forceUpdate = false
 
     init {
+      @Suppress("DialogTitleCapitalization")
       title = "Updates.xml <channel> Text"
       init()
     }
 
-    override fun createCenterPanel(): JComponent? {
+    override fun createCenterPanel(): JComponent {
       textArea = JTextArea(40, 100)
-      UIUtil.addUndoRedoActions(textArea)
+      SwingUndoUtil.addUndoRedoActions(textArea)
       textArea.wrapStyleWord = true
       textArea.lineWrap = true
 
@@ -72,16 +90,28 @@ class ShowUpdateInfoDialogAction : DumbAwareAction() {
       object : AbstractAction("&Check Updates") {
         override fun actionPerformed(e: ActionEvent?) {
           forceUpdate = false
-          doOKAction()
+          validateAndDoOkAction()
         }
       },
       object : AbstractAction("&Show Dialog") {
         override fun actionPerformed(e: ActionEvent?) {
           forceUpdate = true
-          doOKAction()
+          validateAndDoOkAction()
         }
       },
       cancelAction)
+
+    private fun validateAndDoOkAction() {
+      val info = doValidate()
+      if (info != null) {
+        IdeFocusManager.getInstance(null).requestFocus(textArea, true)
+        updateErrorInfo(listOf(info))
+        startTrackingValidation()
+      }
+      else {
+        doOKAction()
+      }
+    }
 
     override fun doValidate(): ValidationInfo? {
       val text = textArea.text?.trim() ?: ""

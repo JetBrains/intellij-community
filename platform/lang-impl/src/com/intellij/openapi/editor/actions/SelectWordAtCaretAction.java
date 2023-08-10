@@ -5,9 +5,10 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.DumbAware;
@@ -15,20 +16,25 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SelectWordAtCaretAction extends TextComponentEditorAction implements DumbAware {
+public class SelectWordAtCaretAction extends EditorAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   public SelectWordAtCaretAction() {
     super(new DefaultHandler());
     setInjectedContext(true);
   }
 
+  @Override
+  protected @Nullable Editor getEditor(@NotNull DataContext dataContext) {
+    return TextComponentEditorAction.getEditorFromContext(dataContext);
+  }
+
   private static final class DefaultHandler extends EditorActionHandler.ForEachCaret {
     @Override
     public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      assert caret != null;
       Document document = editor.getDocument();
 
       if (EditorUtil.isPasswordEditor(editor)) {
@@ -54,8 +60,6 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
       // add whole line selection
       int line = document.getLineNumber(caretOffset);
       ranges.add(new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line)));
-
-      if (ranges.isEmpty()) return;
 
       final TextRange selectionRange = new TextRange(caret.getSelectionStart(), caret.getSelectionEnd());
 
@@ -106,13 +110,13 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
       int startOffset = editor.logicalPositionToOffset(new LogicalPosition(guide.startLine, 0));
       int endOffset = guide.endLine >= doc.getLineCount() ? doc.getTextLength() : doc.getLineStartOffset(guide.endLine);
 
-      final VirtualFile file = ((EditorEx)editor).getVirtualFile();
+      final VirtualFile file = editor.getVirtualFile();
       if (file != null) {
         // Make sure selection contains closing matching brace.
 
         final CharSequence chars = doc.getCharsSequence();
         int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, endOffset, " \t\n");
-        HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(nonWhitespaceOffset);
+        HighlighterIterator iterator = editor.getHighlighter().createIterator(nonWhitespaceOffset);
         if (BraceMatchingUtil.isRBraceToken(iterator, chars, file.getFileType())) {
           if (editor.offsetToLogicalPosition(iterator.getStart()).column == guide.indentLevel) {
             endOffset = iterator.getEnd();

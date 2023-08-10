@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.Disposable
@@ -145,11 +145,8 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
   @ExperimentalCoroutinesApi
   fun `test withDocumentsCommitted`() {
-    val executor = AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
+    val executor = AppUIExecutor.onUiThread(ModalityState.nonModal())
       .withDocumentsCommitted(project)
-
-    val transactionExecutor = AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
-      .inTransaction(project)
 
     GlobalScope.async(SwingDispatcher) {
       val pdm = PsiDocumentManager.getInstance(project)
@@ -179,17 +176,6 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         assertEquals("ab", document.text)
 
         commitChannel.close()
-      }
-      withContext(transactionExecutor.coroutineDispatchingContext() + job) {
-        while (true) {
-          runWriteAction { pdm.commitAllDocuments() }
-          if (!commitChannel.isClosedForSend) {
-            commitChannel.send(Unit)
-          }
-          else {
-            return@withContext
-          }
-        }
       }
       coroutineContext.cancelChildren()
 

@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.refactoring.JavaFxPropertyElement;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
   public boolean execute(@NotNull final ReferencesSearch.SearchParameters queryParameters,
@@ -35,8 +32,7 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
     if (elementToSearch instanceof PsiMethod) {
       searchMethod((PsiMethod)elementToSearch, queryParameters, consumer);
     }
-    if (elementToSearch instanceof JavaFxPropertyElement) {
-      final JavaFxPropertyElement propertyElement = (JavaFxPropertyElement)elementToSearch;
+    if (elementToSearch instanceof JavaFxPropertyElement propertyElement) {
       final JavaFxPropertyReference propertyReference = propertyElement.getPropertyReference();
       final PsiMethod staticSetter = propertyReference.getStaticSetter();
       if (staticSetter != null) {
@@ -78,9 +74,12 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
         CacheManager.getInstance(project).getVirtualFilesWithWord(className, UsageSearchContext.IN_PLAIN_TEXT, fxmlScope, true));
       if (ArrayUtil.isEmpty(filteredFiles)) return;
 
-      final GlobalSearchScope filteredScope = GlobalSearchScope.filesScope(project, ContainerUtil.newHashSet(filteredFiles));
-      ReadAction.run(() -> CacheManager.getInstance(project).processFilesWithWord(
-        file -> searchMethodInFile(psiMethod, file, consumer), propertyName, UsageSearchContext.IN_PLAIN_TEXT, filteredScope, true));
+      ReadAction.run(() -> {
+        GlobalSearchScope filteredScope = GlobalSearchScope.filesScope(project, ContainerUtil.newHashSet(filteredFiles));
+        CacheManager.getInstance(project).processFilesWithWord(
+          file -> searchMethodInFile(psiMethod, file, consumer), propertyName, UsageSearchContext.IN_PLAIN_TEXT, filteredScope, true
+        );
+      });
     }
   }
 
@@ -90,13 +89,13 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
     final Ref<Boolean> stopped = new Ref<>(false);
     file.accept(new XmlRecursiveElementVisitor() {
       @Override
-      public void visitXmlElement(XmlElement element) {
+      public void visitXmlElement(@NotNull XmlElement element) {
         if (stopped.get()) return;
         super.visitXmlElement(element);
       }
 
       @Override
-      public void visitXmlAttribute(XmlAttribute attribute) {
+      public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
         if (stopped.get()) return;
         final PsiReference[] references = attribute.getReferences();
         for (PsiReference reference : references) {

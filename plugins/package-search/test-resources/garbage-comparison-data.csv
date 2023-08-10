@@ -1,0 +1,25 @@
+#version 1 name,version 1 releaseDate,version 2 name,version 2 releaseDate,expected compareTo result
+
+#Name is prioritized over timestamp if they're not the same
+banana,222222,potato,111111,-1
+banana-b01,222222,banana,111111,-1
+
+#If same name and only one of the two has a timestamp, that comes first
+banana,%%NULL%%,banana,111111,-1
+banana-b01,%%NULL%%,banana-b01,111111,-1
+banana,111111,banana,%%NULL%%,1
+banana-b01,111111,banana-b01,%%NULL%%,1
+
+#If same name and neither has a timestamp, they are identical
+banana,%%NULL%%,banana,%%NULL%%,0
+banana-b01,%%NULL%%,banana-b01,%%NULL%%,0
+banana,%%NULL%%,banana,%%NULL%%,0
+banana-b01,%%NULL%%,banana-b01,%%NULL%%,0
+
+#If same name and both have a timestamp, they are compared by timestamp
+banana,111111,banana,222222,-1
+banana-b01,111111,banana-b01,222222,-1
+banana,222222,banana,111111,1
+banana-b01,222222,banana-b01,111111,1
+banana,111111,banana,111111,0
+banana-b01,111111,banana-b01,111111,0

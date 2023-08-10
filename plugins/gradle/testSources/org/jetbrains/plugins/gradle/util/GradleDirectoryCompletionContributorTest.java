@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.util;
 
+import com.intellij.ide.actions.CreateDirectoryCompletionContributor;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
@@ -45,10 +45,12 @@ public class GradleDirectoryCompletionContributorTest extends GradleImportingTes
   }
 
   private void check(VirtualFile dir, Pair<String, JpsModuleSourceRootType<?>>... expected) {
-    PsiDirectory psiDir = ReadAction.compute(() -> PsiManager.getInstance(myProject).findDirectory(dir));
+    Collection<CreateDirectoryCompletionContributor.Variant> variants = ReadAction.compute(() -> 
+      new GradleDirectoryCompletionContributor().getVariants(PsiManager.getInstance(myProject).findDirectory(dir))
+    );
 
     List<Pair<String, JpsModuleSourceRootType<?>>> map = ContainerUtil.map(
-      new GradleDirectoryCompletionContributor().getVariants(psiDir),
+      variants,
       it -> Pair.create(FileUtil.getRelativePath(dir.getPath(), FileUtil.toSystemIndependentName(it.getPath()), '/'), it.getRootType()));
 
     assertSameElements(map, expected);

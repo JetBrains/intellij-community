@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -23,7 +24,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnselectPreviousOccurrenceAction extends EditorAction {
+public class UnselectPreviousOccurrenceAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   protected UnselectPreviousOccurrenceAction() {
     super(new Handler());
   }

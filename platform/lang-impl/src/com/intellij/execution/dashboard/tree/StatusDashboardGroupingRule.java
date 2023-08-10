@@ -45,8 +45,7 @@ public class StatusDashboardGroupingRule implements RunDashboardGroupingRule {
     if (project != null && !PropertiesComponent.getInstance(project).getBoolean(getName(), true)) {
       return null;
     }
-    if (node instanceof RunDashboardRunConfigurationNode) {
-      RunDashboardRunConfigurationNode runConfigurationNode = (RunDashboardRunConfigurationNode)node;
+    if (node instanceof RunDashboardRunConfigurationNode runConfigurationNode) {
       RunDashboardRunConfigurationStatus status = runConfigurationNode.getStatus();
       return new RunDashboardGroupImpl<>(status, status.getName(), status.getIcon());
     }

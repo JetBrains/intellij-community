@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -29,8 +29,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -56,18 +54,18 @@ import java.util.List;
 import static com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.instantiateAndRun;
 import static org.junit.Assert.*;
 
-/**
- * @author yole
- */
+
 public class EditorTestFixture {
   @NotNull
   private final Project myProject;
+  @NotNull
   private final Editor myEditor;
+  @NotNull
   private final VirtualFile myFile;
 
   private boolean myEmptyLookup;
 
-  public EditorTestFixture(@NotNull Project project, Editor editor, VirtualFile file) {
+  public EditorTestFixture(@NotNull Project project, @NotNull Editor editor, @NotNull VirtualFile file) {
     myProject = project;
     myEditor = editor;
     myFile = file;
@@ -75,7 +73,7 @@ public class EditorTestFixture {
 
   public void type(char c) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      final EditorActionManager actionManager = EditorActionManager.getInstance();
+      EditorActionManager.getInstance();
       if (c == '\b') {
         performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
         return;
@@ -130,14 +128,10 @@ public class EditorTestFixture {
     final ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     final AnAction action = managerEx.getAction(actionId);
     final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
-
-    action.beforeActionPerformedUpdate(event);
-
-    if (!event.getPresentation().isEnabled()) {
+    if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
       return false;
     }
-
-    ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext);
+    ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     return true;
   }
 
@@ -147,7 +141,7 @@ public class EditorTestFixture {
   }
 
   public PsiFile getFile() {
-    return myFile != null ? ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(myFile)) : null;
+    return ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(myFile));
   }
 
   @NotNull
@@ -169,7 +163,7 @@ public class EditorTestFixture {
     return instantiateAndRun(file, editor, ArrayUtilRt.EMPTY_INT_ARRAY, myAllowDirt, readEditorMarkupModel);
   }
 
-  @Nullable
+  @NotNull
   protected Editor getCompletionEditor() {
     return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, getFile());
   }
@@ -191,7 +185,6 @@ public class EditorTestFixture {
     ApplicationManager.getApplication().invokeAndWait(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> {
       final CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(type) {
         @Override
-        @SuppressWarnings("deprecation")
         protected void completionFinished(CompletionProgressIndicator indicator, boolean hasModifiers) {
           myEmptyLookup = indicator.getLookup().getItems().isEmpty();
           super.completionFinished(indicator, hasModifiers);
@@ -256,7 +249,7 @@ public class EditorTestFixture {
     final LookupImpl lookup = getLookup();
     assertNotNull("No lookup is shown", lookup);
 
-    final JList list = lookup.getList();
+    final JList<LookupElement> list = lookup.getList();
     List<String> strings = getLookupElementStrings();
     assertNotNull(strings);
     final List<String> actual = ContainerUtil.getFirstItems(strings, expected.length);
@@ -292,7 +285,7 @@ public class EditorTestFixture {
     if (element == null) {
       fail("element not found in file " + myFile.getName() +
            " at caret position offset " + myEditor.getCaretModel().getOffset() + "," +
-           " psi structure:\n" + DebugUtil.psiToString(getFile(), true, true));
+           " psi structure:\n" + DebugUtil.psiToString(getFile(), false, true));
     }
     return element;
   }
@@ -310,11 +303,10 @@ public class EditorTestFixture {
     List<HighlightInfo> infos = doHighlighting();
     List<IntentionAction> actions = new ArrayList<>();
     for (HighlightInfo info : infos) {
-      if (info.quickFixActionRanges != null) {
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-          actions.add(pair.getFirst().getAction());
-        }
-      }
+      info.findRegisteredQuickFix((descriptor, range) -> {
+        actions.add(descriptor.getAction());
+        return null;
+      });
     }
     return actions;
   }
@@ -325,6 +317,7 @@ public class EditorTestFixture {
     return ContainerUtil.newArrayList(breadcrumbsCollector.computeCrumbs(myFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset(), true));
   }
 
+  @NotNull
   public Editor getEditor() {
     return myEditor;
   }

@@ -19,6 +19,7 @@ import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.model.Property;
 import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -38,6 +39,11 @@ public class RestoreDefault extends AnAction implements IPropertyTableAction {
     presentation.setText(text);
     presentation.setDescription(text);
     presentation.setIcon(AllIcons.General.Reset);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

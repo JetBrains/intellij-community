@@ -59,16 +59,14 @@ public class FileRenderer {
     String comment = null;
     boolean hidden = false;
     boolean valid = true;
-    if (value instanceof FileNode) {
-      FileNode node = (FileNode)value;
+    if (value instanceof FileNode node) {
       icon = node.getIcon();
       name = node.getName();
       comment = node.getComment();
       hidden = node.isHidden();
       valid = node.isValid();
     }
-    else if (value instanceof VirtualFile) {
-      VirtualFile file = (VirtualFile)value;
+    else if (value instanceof VirtualFile file) {
       name = file.getName();
       hidden = isFileHidden(file);
       valid = file.isValid();

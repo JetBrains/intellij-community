@@ -202,11 +202,15 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
       myServerListModel.add(nextAction);
     }
 
+    setSelectedServerItem(newSelection, itemToSelect);
+  }
+
+  protected void setSelectedServerItem(@Nullable RemoteServer<?> newSelection, @Nullable ServerItem itemToSelect) {
     getComboBox().setSelectedItem(itemToSelect);
   }
 
   @NotNull
-  private List<RemoteServer<S>> getSortedServers() {
+  protected List<RemoteServer<S>> getSortedServers() {
     List<RemoteServer<S>> result = new ArrayList<>(RemoteServersManager.getInstance().getServers(myServerType));
     result.sort(SERVERS_COMPARATOR);
     return result;

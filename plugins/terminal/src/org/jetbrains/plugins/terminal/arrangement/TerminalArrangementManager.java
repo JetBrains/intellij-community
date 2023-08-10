@@ -1,21 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.arrangement;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
 import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.TerminalTabState;
-import org.jetbrains.plugins.terminal.TerminalView;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
-import java.nio.file.Path;
 import java.util.List;
 
 @State(name = "TerminalArrangementManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
@@ -70,13 +74,20 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
     TerminalArrangementState arrangementState = new TerminalArrangementState();
     ContentManager contentManager = terminalToolWindow.getContentManager();
     for (Content content : contentManager.getContents()) {
-      JBTerminalWidget terminalWidget = TerminalView.getWidgetByContent(content);
+      AbstractTerminalRunner<?> runner = TerminalToolWindowManager.getRunnerByContent(content);
+      if (runner == null || !runner.isTerminalSessionPersistent()) {
+        continue;
+      }
+      JBTerminalWidget terminalWidget = TerminalToolWindowManager.getWidgetByContent(content);
       if (terminalWidget == null) continue;
+      ShellTerminalWidget shellTerminalWidget = ObjectUtils.tryCast(terminalWidget, ShellTerminalWidget.class);
       TerminalTabState tabState = new TerminalTabState();
       tabState.myTabName = content.getTabName();
+      tabState.myShellCommand = shellTerminalWidget != null ? shellTerminalWidget.getShellCommand() : null;
+      tabState.myIsUserDefinedTabTitle = tabState.myTabName.equals(terminalWidget.getTerminalTitle().getUserDefinedTitle());
       tabState.myWorkingDirectory = myWorkingDirectoryManager.getWorkingDirectory(content);
       tabState.myCommandHistoryFileName = TerminalCommandHistoryManager.getFilename(
-        ShellTerminalWidget.getCommandHistoryFilePath(terminalWidget)
+        shellTerminalWidget != null ? shellTerminalWidget.getCommandHistoryFilePath() : null
       );
       arrangementState.myTabStates.add(tabState);
     }
@@ -85,19 +96,8 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
     return arrangementState;
   }
 
-  public void assignCommandHistoryFile(@NotNull JBTerminalWidget terminalWidget, @Nullable TerminalTabState tabState) {
-    if (isAvailable() && terminalWidget instanceof ShellTerminalWidget) {
-      Path historyFile = TerminalCommandHistoryManager.getInstance().getOrCreateCommandHistoryFile(
-        tabState != null ? tabState.myCommandHistoryFileName : null,
-        myProject
-      );
-      String historyFilePath = historyFile != null ? historyFile.toAbsolutePath().toString() : null;
-      ((ShellTerminalWidget)terminalWidget).setCommandHistoryFilePath(historyFilePath);
-    }
-  }
-
   public static @NotNull TerminalArrangementManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, TerminalArrangementManager.class);
+    return project.getService(TerminalArrangementManager.class);
   }
 
   static boolean isAvailable() {

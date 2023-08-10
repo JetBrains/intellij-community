@@ -12,8 +12,6 @@ import java.io.Serializable;
  * <p/>
  * It's assumed to be safe to use implementations of this interface at hash-based containers (i.e. they are expected to correctly 
  * override {@link #equals(Object)} and {@link #hashCode()}.
- * 
- * @author Denis Zhdanov
  */
 public interface ExternalEntityData extends Serializable {
 

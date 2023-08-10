@@ -19,9 +19,6 @@ import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 
-/**
- * @author irengrig
- */
 public interface TodoTreeBuilderFactory {
   TodoTreeBuilder createTreeBuilder(JTree tree,Project project);
 }

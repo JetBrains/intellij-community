@@ -1,4 +1,4 @@
-// "Remove qualifier" "true"
+// "Remove qualifier" "true-preview"
 
 class i2 {
     class A {

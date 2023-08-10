@@ -15,19 +15,17 @@ import javax.swing.*;
 import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * Describes an element's type in an artifact's output layout.
+ *
+ * @see Artifact
+ * @see PackagingElementFactory
+ * @param <E>
+ */
 public abstract class PackagingElementType<E extends PackagingElement<?>> {
   public static final ExtensionPointName<PackagingElementType> EP_NAME = ExtensionPointName.create("com.intellij.packaging.elementType");
   private final String myId;
   private final Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> myPresentableName;
-
-  /**
-   * @deprecated This constructor is meant to provide the binary compatibility with the external plugins.
-   * Please use the constructor that accepts a messagePointer for {@link PackagingElementType#myPresentableName}
-   */
-  @Deprecated
-  protected PackagingElementType(@NotNull @NonNls String id, @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName) {
-    this(id, () -> presentableName);
-  }
 
   protected PackagingElementType(@NotNull @NonNls String id, @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> presentableName) {
     myId = id;

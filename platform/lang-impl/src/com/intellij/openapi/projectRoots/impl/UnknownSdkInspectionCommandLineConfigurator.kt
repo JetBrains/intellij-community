@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
@@ -10,14 +10,13 @@ import com.intellij.openapi.progress.withPushPop
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.annotations.NotNull
 
 class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProjectConfigurator {
   companion object {
     private val LOG: Logger = logger<UnknownSdkInspectionCommandLineConfigurator>()
 
     fun configureUnknownSdks(project: Project, indicator: ProgressIndicator) {
-      require(!ApplicationManager.getApplication().isWriteThread) {
+      require(!ApplicationManager.getApplication().isWriteIntentLockAcquired) {
         "The code below uses the same GUI thread to complete operations. Running from EDT would deadlock"
       }
       ApplicationManager.getApplication().assertIsNonDispatchThread()
@@ -52,7 +51,7 @@ class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProject
     }
   }
 
-  override fun getName() = "sdk"
+  override fun getName(): String = "sdk"
 
   override fun getDescription(): String = ProjectBundle.message("config.unknown.sdk.commandline.configure")
 
@@ -60,7 +59,7 @@ class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProject
     !ApplicationManager.getApplication().isUnitTestMode
 
   override fun configureEnvironment(context: CommandLineInspectionProjectConfigurator.ConfiguratorContext) {
-    Registry.get("unknown.sdk.auto").setValue(false) // forbid UnknownSdkTracker post startup activity as we run it here
+    System.setProperty("unknown.sdk.auto", false.toString())
   }
 
   override fun configureProject(project: Project, context: CommandLineInspectionProjectConfigurator.ConfiguratorContext) {

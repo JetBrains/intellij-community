@@ -1,4 +1,4 @@
-// "Create field 'i' in 'A'" "true" 
+// "Create field 'i' in 'A'" "true-preview" 
 class A {
     private int i<caret>;
     Object o = new Object() {

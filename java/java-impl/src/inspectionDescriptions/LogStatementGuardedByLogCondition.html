@@ -1,0 +1,43 @@
+<html>
+<body>
+Reports logging calls with non-constant arguments that are not surrounded by a guard condition.
+The evaluation of the arguments of a logging call can be expensive.
+Surrounding a logging call with a guard clause prevents that cost when logging
+is disabled for the level used by the logging statement. This is especially useful for the
+least serious level (trace, debug, finest) of logging calls, because those are
+most often disabled in a production environment.
+<p><b>Example:</b></p>
+<pre><code>
+  <b>public class</b> Principal {
+    <b>void</b> bad(Object object) {
+      <b>if</b> (true) {
+        LOG.debug("log log log " + expensiveCalculation(object));
+      }
+      LOG.debug("some more logging " + expensiveCalculation(1));
+    }
+
+    <b>void</b> good(Object) {
+      <b>if</b> (LOG.isDebug()) {
+        LOG.debug("value: " + expensiveCalculation(object));
+      }
+    }
+  }
+</code></pre>
+<!-- tooltip end -->
+<p>
+  Configure the inspection:
+</p>
+<ul>
+  <li>
+      Use the <b>Logger class name</b> field to specify the logger class name used.
+  </li>
+  <li>
+    <p>
+      Use the table to specify the logging methods this inspection should warn on, with the corresponding log condition text.
+  </li>
+  <li>
+      Use the <b>Flag all unguarded logging calls</b> option to have the inspection flag all unguarded log calls, not only those with non-constant arguments.
+  </li>
+</ul>
+</body>
+</html>

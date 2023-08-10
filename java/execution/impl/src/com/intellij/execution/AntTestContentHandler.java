@@ -50,6 +50,8 @@ public class AntTestContentHandler extends DefaultHandler {
   private static final String DURATION = "time";
   private static final String ERROR = "error";
   private static final String FAILURE = "failure";
+  private static final String SKIPPED = "skipped";
+  private static final String IGNORED = "ignored";
   private static final String OUT = "system-out";
   private static final String ERR = "system-err";
 
@@ -69,7 +71,7 @@ public class AntTestContentHandler extends DefaultHandler {
   public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
     if (TESTSUITE.equals(qName)) {
       String nameValue = attributes.getValue(NAME);
-      final String suiteName = nameValue == null ? null : StringUtil.unescapeXmlEntities(nameValue);
+      final String suiteName = nameValue == null ? "" : StringUtil.unescapeXmlEntities(nameValue);
       String packageValue = attributes.getValue(PACKAGE);
       final String packageName = packageValue == null ? null : StringUtil.unescapeXmlEntities(packageValue);
       myProcessor
@@ -79,7 +81,7 @@ public class AntTestContentHandler extends DefaultHandler {
     }
     else if (TESTCASE.equals(qName)) {
       String nameValue = attributes.getValue(NAME);
-      final String name = nameValue == null ? null : StringUtil.unescapeXmlEntities(nameValue);
+      final String name = nameValue == null ? "" : StringUtil.unescapeXmlEntities(nameValue);
       myCurrentTest = name;
       myStatus = null;
       myDuration = attributes.getValue(DURATION);
@@ -91,6 +93,12 @@ public class AntTestContentHandler extends DefaultHandler {
     }
     else if (ERR.equals(qName)) {
       myErrorOutput = true;
+    }
+    else if (SKIPPED.equals(qName)) {
+      myStatus = TestResultsXmlFormatter.STATUS_SKIPPED;
+    }
+    else if (IGNORED.equals(qName)) {
+      myStatus = TestResultsXmlFormatter.STATUS_IGNORED;
     }
     else if (FAILURE.equals(qName)) {
       myStatus = TestResultsXmlFormatter.STATUS_FAILED;
@@ -115,8 +123,15 @@ public class AntTestContentHandler extends DefaultHandler {
     }
     else if (TESTCASE.equals(qName)) {
       if (myStatus != null) {
-        myProcessor.onTestFailure(
-          new TestFailedEvent(myCurrentTest, "", currentText, myStatus.equals(TestResultsXmlFormatter.STATUS_ERROR), null, null));
+        if (myStatus.equals(TestResultsXmlFormatter.STATUS_ERROR) || myStatus.equals(TestResultsXmlFormatter.STATUS_FAILED)) {
+          myProcessor.onTestFailure(
+            new TestFailedEvent(myCurrentTest, "", currentText, myStatus.equals(TestResultsXmlFormatter.STATUS_ERROR), null, null));
+        }
+        else if (myStatus.equals(TestResultsXmlFormatter.STATUS_IGNORED) || myStatus.equals(TestResultsXmlFormatter.STATUS_SKIPPED)) {
+          myProcessor.onTestIgnored(new TestIgnoredEvent(myCurrentTest, "", currentText));
+        } else {
+          throw new IllegalStateException("Unknown status: " + myStatus);
+        }
       }
       long time;
       try {

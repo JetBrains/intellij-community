@@ -1,9 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.notification;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.NlsContexts.NotificationTitle;
@@ -35,7 +33,8 @@ public class NotificationData implements Disposable {
   private int myLine;
   private int myColumn;
   private boolean myBalloonNotification;
-  @Nullable private String myBalloonGroup;
+  @Nullable private NotificationGroup myBalloonGroup;
+  private boolean myIsSuggestion;
 
   private final Map<String, NotificationListener> myListenerMap;
 
@@ -171,7 +170,7 @@ public class NotificationData implements Disposable {
               if (listener != null) {
                 // Notification here used only to be able to call 'NotificationListener.hyperlinkUpdate'
                 //noinspection UnresolvedPluginConfigReference
-                listener.hyperlinkUpdate(new Notification("", null, NotificationType.INFORMATION),
+                listener.hyperlinkUpdate(new Notification("", "", NotificationType.INFORMATION),
                                          IJSwingUtilities.createHyperlinkEvent(id, listener));
               }
             }
@@ -187,11 +186,11 @@ public class NotificationData implements Disposable {
   }
 
   @Nullable
-  public String getBalloonGroup() {
+  public NotificationGroup getBalloonGroup() {
     return myBalloonGroup;
   }
 
-  public void setBalloonGroup(@Nullable String balloonGroup) {
+  public void setBalloonGroup(NotificationGroup balloonGroup) {
     myBalloonGroup = balloonGroup;
   }
 

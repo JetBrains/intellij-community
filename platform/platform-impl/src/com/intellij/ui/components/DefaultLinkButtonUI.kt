@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf.isAltPressed
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.RectanglePainter
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.CurrentTheme.Link
 import com.intellij.util.ui.UIUtilities
@@ -14,6 +15,7 @@ import java.awt.*
 import java.beans.PropertyChangeEvent
 import java.io.StringReader
 import java.net.URL
+import java.util.function.Supplier
 import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.LookAndFeel.installProperty
@@ -31,15 +33,14 @@ import javax.swing.text.Element
 import javax.swing.text.Position.Bias
 import javax.swing.text.View
 import javax.swing.text.html.HTMLDocument
-import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.ImageView
 import javax.swing.text.html.StyleSheet
 
-class DefaultLinkButtonUI : BasicButtonUI() {
+internal class DefaultLinkButtonUI : BasicButtonUI() {
   companion object {
     @JvmStatic
     @Suppress("UNUSED_PARAMETER")
-    fun createUI(c: JComponent?) = DefaultLinkButtonUI()
+    fun createUI(c: JComponent?): DefaultLinkButtonUI = DefaultLinkButtonUI()
   }
 
   private var cached: View? = null
@@ -51,10 +52,11 @@ class DefaultLinkButtonUI : BasicButtonUI() {
     installProperty(button, "rolloverEnabled", true)
     installProperty(button, "iconTextGap", 4)
     defaultTextShiftOffset = UIManager.getInt("Button.textShiftOffset")
-    if (isUpdateable(button.font)) button.font = UIManager.getFont("Label.font")
-    if (isUpdateable(button.background)) button.background = UIManager.getColor("Label.background")
-    button.foreground = DynamicColor(button)
+    if (!button.isFontSet || button.font is UIResource) button.font = UIManager.getFont("Label.font")!!
+    if (!button.isBackgroundSet || button.background is UIResource) button.background = UIManager.getColor("Label.background")
+    if (!button.isForegroundSet || button.foreground is UIResource) button.foreground = DynamicColor(button)
     button.horizontalAlignment = LEADING
+    button.isRequestFocusEnabled = false
   }
 
   override fun getBaseline(c: JComponent?, width: Int, height: Int): Int {
@@ -101,7 +103,7 @@ class DefaultLinkButtonUI : BasicButtonUI() {
       val hovered = isHovered(button)
       val view = htmlView(button)
       if (view == null) {
-        g.color = button.foreground
+        g.color = getTextColor(button)
         val index = if (isEnabled(button) && isAltPressed()) button.displayedMnemonicIndex else -1
         UIUtilities.drawStringUnderlineCharAt(button, g, layout.text, index, layout.textBounds.x, layout.baseline)
         if (hovered) g.fillRect(layout.textBounds.x, layout.baseline + 1, layout.textBounds.width, 1)
@@ -118,7 +120,7 @@ class DefaultLinkButtonUI : BasicButtonUI() {
     }
     if (g is Graphics2D && isFocused(button)) {
       g.color = Link.FOCUSED_BORDER_COLOR
-      val bounds = button.paintBounds()
+      val bounds = layout.bounds.also { JBInsets.addTo(it, button.focusInsets()) }
       val round = Registry.intValue("ide.link.button.focus.round.arc", 4)
       RectanglePainter.DRAW.paint(g, bounds.x, bounds.y, bounds.width, bounds.height, scale(round))
     }
@@ -162,15 +164,16 @@ private class Layout(button: AbstractButton, viewBounds: Rectangle, val fm: Font
     get() = iconBounds.union(textBounds)
 }
 
-private fun AbstractButton.viewBounds() = paintBounds().also { JBInsets.removeFrom(it, focusInsets()) }
-private fun AbstractButton.paintBounds() = Rectangle(width, height).also { JBInsets.removeFrom(it, insets) }
+private fun AbstractButton.viewBounds() = Rectangle(width, height).also {
+  JBInsets.removeFrom(it, insets)
+  JBInsets.removeFrom(it, focusInsets())
+}
+
 private fun AbstractButton.focusInsets(): Insets? {
   if (!isFocusPainted) return null
   val margin = scale(1)
   return Insets(0, margin, 0, margin)
 }
-
-private fun isUpdateable(property: Any?) = property == null || property is UIResource
 
 private fun isEnabled(button: AbstractButton) = button.model?.isEnabled ?: false
 private fun isHovered(button: AbstractButton) = button.model?.isRollover ?: false
@@ -180,15 +183,19 @@ private fun isFocused(button: AbstractButton) = button.isFocusPainted && button.
 
 // provide dynamic foreground color
 
-private fun getColor(button: AbstractButton) = when {
+private fun getTextColor(button: AbstractButton) = when {
   !isEnabled(button) -> Link.Foreground.DISABLED
+  else -> button.foreground ?: getLinkColor(button)
+}
+
+private fun getLinkColor(button: AbstractButton) = when {
   isPressed(button) -> Link.Foreground.PRESSED
   isHovered(button) -> Link.Foreground.HOVERED
   isVisited(button) -> Link.Foreground.VISITED
   else -> Link.Foreground.ENABLED
 }
 
-private class DynamicColor(button: AbstractButton) : JBColor({ getColor(button) }), UIResource
+private class DynamicColor(button: AbstractButton) : UIResource, JBColor(Supplier { getLinkColor(button) })
 
 // support underlined <html>
 
@@ -198,7 +205,7 @@ private fun createUnderlinedView(button: AbstractButton, text: String): View {
   val styles = StyleSheet()
   styles.addStyleSheet(sharedUnderlineStyles)
   styles.addStyleSheet(sharedEditorKit.styleSheet)
-  styles.addRule(UIUtilities.displayPropertiesToCSS(button.font, button.foreground))
+  styles.addRule(UIUtilities.displayPropertiesToCSS(button.font, getTextColor(button)))
 
   val document = HTMLDocument(styles)
   document.asynchronousLoadPriority = Int.MAX_VALUE // load everything in one chunk
@@ -216,7 +223,7 @@ private fun readSafely(text: String, read: (StringReader) -> Unit) {
   try {
     read(reader)
   }
-  catch (error: Throwable) {
+  catch (_: Throwable) {
   }
   finally {
     reader.close()
@@ -237,22 +244,14 @@ private val sharedUnderlineStyles by lazy {
 }
 
 private val sharedEditorKit by lazy {
-  object : HTMLEditorKit() {
-    override fun getViewFactory() = lazyViewFactory
-
-    private val lazyViewFactory by lazy {
-      object : HTMLEditorKit.HTMLFactory() {
-        override fun create(elem: Element): View {
-          val view = super.create(elem)
-          if (view is ImageView) {
-            // force images to be loaded synchronously
-            view.loadsSynchronously = true
-          }
-          return view
-        }
+  HTMLEditorKitBuilder().withViewFactoryExtensions(
+    { _, view ->
+      if (view is ImageView) {
+        // force images to be loaded synchronously
+        view.loadsSynchronously = true
       }
-    }
-  }
+      view
+    }).build()
 }
 
 private class UnderlinedView(private val button: AbstractButton, private val view: View) : View(null) {

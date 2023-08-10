@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
@@ -14,9 +14,7 @@ import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public abstract class AlignProperty extends Property<RadComponent, Integer> {
   private final boolean myHorizontal;
   private IntEnumRenderer myRenderer;
@@ -49,16 +47,10 @@ public abstract class AlignProperty extends Property<RadComponent, Integer> {
     int fillMask = myHorizontal ? 1 : 2;
     int anchor = 0;
     int fill = 0;
-    switch(value.intValue()) {
-      case GridConstraints.ALIGN_FILL:
-        fill = myHorizontal ? GridConstraints.FILL_HORIZONTAL : GridConstraints.FILL_VERTICAL;
-        break;
-      case GridConstraints.ALIGN_LEFT:
-        anchor = myHorizontal ? GridConstraints.ANCHOR_WEST : GridConstraints.ANCHOR_NORTH;
-        break;
-      case GridConstraints.ALIGN_RIGHT:
-        anchor = myHorizontal ? GridConstraints.ANCHOR_EAST : GridConstraints.ANCHOR_SOUTH;
-        break;
+    switch (value.intValue()) {
+      case GridConstraints.ALIGN_FILL -> fill = myHorizontal ? GridConstraints.FILL_HORIZONTAL : GridConstraints.FILL_VERTICAL;
+      case GridConstraints.ALIGN_LEFT -> anchor = myHorizontal ? GridConstraints.ANCHOR_WEST : GridConstraints.ANCHOR_NORTH;
+      case GridConstraints.ALIGN_RIGHT -> anchor = myHorizontal ? GridConstraints.ANCHOR_EAST : GridConstraints.ANCHOR_SOUTH;
     }
     GridConstraints gc = component.getConstraints();
     GridConstraints oldGC = (GridConstraints) gc.clone();

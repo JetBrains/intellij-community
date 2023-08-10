@@ -1,11 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.highlighting;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -26,9 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class PythonColorsPage implements RainbowColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
     new AttributesDescriptor(PyBundle.message("python.colors.number"), PyHighlighter.PY_NUMBER),
@@ -70,6 +67,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     new AttributesDescriptor(PyBundle.message("python.colors.decorator"), PyHighlighter.PY_DECORATOR),
     new AttributesDescriptor(PyBundle.message("python.colors.class.definition"), PyHighlighter.PY_CLASS_DEFINITION),
     new AttributesDescriptor(PyBundle.message("python.colors.type.annotation"), PyHighlighter.PY_ANNOTATION),
+    new AttributesDescriptor(PyBundle.message("python.colors.local.variables"), PyHighlighter.PY_LOCAL_VARIABLE),
   };
 
   @NonNls private static final Map<String,TextAttributesKey> ourTagToDescriptorMap = ImmutableMap.<String, TextAttributesKey>builder()
@@ -88,7 +86,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     .put("call", PyHighlighter.PY_FUNCTION_CALL)
     .put("mcall", PyHighlighter.PY_METHOD_CALL)
     .put("annotation", PyHighlighter.PY_ANNOTATION)
-    .put("localVar", DefaultLanguageHighlighterColors.LOCAL_VARIABLE)
+    .put("localVar", PyHighlighter.PY_LOCAL_VARIABLE)
     .putAll(RainbowHighlighter.createRainbowHLM())
     .build();
 

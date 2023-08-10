@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
+@Deprecated(forRemoval = true)
 public interface FavoritesListener {
   default void rootsChanged() {
   }

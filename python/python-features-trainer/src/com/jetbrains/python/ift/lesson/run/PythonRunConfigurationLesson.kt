@@ -2,27 +2,54 @@
 package com.jetbrains.python.ift.lesson.run
 
 import com.jetbrains.python.ift.PythonLessonsBundle
-import training.learn.interfaces.Module
+import com.jetbrains.python.run.PythonRunConfiguration
+import training.dsl.*
 import training.learn.lesson.general.run.CommonRunConfigurationLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonSample
-import training.learn.lesson.kimpl.toolWindowShowed
+import training.ui.LearningUiHighlightingManager
 
-class PythonRunConfigurationLesson(module: Module) : CommonRunConfigurationLesson(module, "python.run.configuration", "Python") {
-  override val sample: LessonSample = PythonRunLessonsUtils.demoSample
-  override val demoConfigurationName = PythonRunLessonsUtils.demoConfigurationName
+class PythonRunConfigurationLesson : CommonRunConfigurationLesson("python.run.configuration") {
+  override val demoConfigurationName = "sandbox"
+  
+  override val sample: LessonSample = parseLessonSample("""
+    import sys
+    
+    print('It is a run configurations sample')
+    
+    for s in sys.argv:
+        print('Passed argument: ', s)
+  """.trimIndent())
+
 
   override fun LessonContext.runTask() {
     task("RunClass") {
-      text(PythonLessonsBundle.message("python.run.configuration.lets.run", action(it)))
-      //Wait toolwindow
-      toolWindowShowed("Run")
-      stateCheck {
-        configurations().isNotEmpty()
+      before {
+        LearningUiHighlightingManager.clearHighlights()
       }
+      text(PythonLessonsBundle.message("python.run.configuration.lets.run", action(it)))
+      timerCheck { configurations().isNotEmpty() }
+      //Wait toolwindow
+      checkToolWindowState("Run", true)
       test {
         actions(it)
       }
     }
   }
+
+  override fun LessonContext.addAnotherRunConfiguration() {
+    prepareRuntimeTask {
+      addNewRunConfigurationFromContext { runConfiguration ->
+        runConfiguration.name = demoWithParametersName
+        if (runConfiguration is PythonRunConfiguration) {
+          runConfiguration.setNameChangedByUser(true)
+          runConfiguration.scriptParameters = "hello world"
+        }
+      }
+    }
+  }
+
+  // Redefine the base class links:
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(PythonLessonsBundle.message("python.run.configuration.help.link"),
+         LessonUtil.getHelpLink("pycharm", "code-running-assistance-tutorial.html")),
+  ) + super.helpLinks
 }

@@ -66,7 +66,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   @Override
-  public XmlElement getNameElement() {
+  public @Nullable XmlElement getNameElement() {
     ASTNode child = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     return child == null ? null : (XmlElement)child.getPsi();
   }
@@ -85,7 +85,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   @Override
-  public XmlTag getParent() {
+  public @Nullable XmlTag getParent() {
     final PsiElement parentTag = super.getParent();
     return parentTag instanceof XmlTag ? (XmlTag)parentTag : null; // Invalid elements might belong to DummyHolder instead.
   }

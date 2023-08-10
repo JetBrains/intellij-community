@@ -230,7 +230,6 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
 
   /**
    * Remove all alias-imported Groovy usages from collection
-   * @param results
    */
   static void removeAllAliasImportedUsages(Collection<UsageInfo> results) {
     for (Iterator<UsageInfo> iterator = results.iterator(); iterator.hasNext(); ) {
@@ -243,7 +242,7 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
       final PsiElement element = ref.getElement();
       if (!(element instanceof GrReferenceElement)) continue;
 
-      final GroovyResolveResult resolveResult = ((GrReferenceElement)element).advancedResolve();
+      final GroovyResolveResult resolveResult = ((GrReferenceElement<?>)element).advancedResolve();
       final PsiElement context = resolveResult.getCurrentFileResolveContext();
 
       if ((context instanceof GrImportStatement) && ((GrImportStatement)context).isAliasedImport()) {

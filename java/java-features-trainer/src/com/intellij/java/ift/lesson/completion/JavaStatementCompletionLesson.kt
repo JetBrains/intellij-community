@@ -1,23 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.ift.lesson.completion
 
-import com.intellij.java.ift.JavaLangSupport
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiForStatement
 import com.intellij.psi.util.PsiTreeUtil
-import training.commands.kotlin.TaskRuntimeContext
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import training.learn.lesson.kimpl.parseLessonSample
+import training.dsl.*
+import training.dsl.LessonUtil.checkExpectedStateOfEditor
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.learn.course.KLesson
 
-class JavaStatementCompletionLesson(module: Module)
-  : KLesson("Statement completion", JavaLessonsBundle.message("java.statement.completion.lesson.name"), module, JavaLangSupport.lang) {
+class JavaStatementCompletionLesson
+  : KLesson("Statement completion", JavaLessonsBundle.message("java.statement.completion.lesson.name")) {
 
-  val sample = parseLessonSample("""
+  val sample: LessonSample = parseLessonSample("""
     class PrimeNumbers {
         public static void main(String[] args) {
             System.out.println("Prime numbers between 1 and 100");
@@ -38,7 +34,7 @@ class JavaStatementCompletionLesson(module: Module)
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
     actionTask("EditorCompleteStatement") {
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       JavaLessonsBundle.message("java.statement.completion.complete.for", action(it), code("for"))
     }
     task("EditorCompleteStatement") {
@@ -49,12 +45,30 @@ class JavaStatementCompletionLesson(module: Module)
       proposeRestore {
         checkExpectedStateOfEditor(previous.sample) { typedString -> "if".startsWith(typedString) }
       }
+      test {
+        type("if")
+        actions(it)
+      }
     }
-    actionTask("EditorCompleteStatement") {
-      JavaLessonsBundle.message("java.statement.completion.complete.condition", code("i % j == 0"), action(it), code("if"))
+    task("EditorCompleteStatement") {
+      val code = "i % j == 0"
+      text(JavaLessonsBundle.message("java.statement.completion.complete.condition",
+                                     code(code), action(it), code("if")))
+      trigger(it)
+      test {
+        type(code)
+        actions(it)
+      }
     }
-    actionTask("EditorCompleteStatement") {
-      JavaLessonsBundle.message("java.statement.completion.complete.finish.body", code("isPrime = false; break"), action(it))
+    task("EditorCompleteStatement") {
+      val code = "isPrime = false; break"
+      text(JavaLessonsBundle.message("java.statement.completion.complete.finish.body",
+                                     code(code), action(it)))
+      trigger(it)
+      test {
+        type(code)
+        actions(it)
+      }
     }
   }
 
@@ -70,4 +84,9 @@ class JavaStatementCompletionLesson(module: Module)
 
     return trimmedText == "{if(){}}"
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(JavaLessonsBundle.message("java.statement.completion.help.link"),
+         LessonUtil.getHelpLink("auto-completing-code.html#statements_completion")),
+  )
 }

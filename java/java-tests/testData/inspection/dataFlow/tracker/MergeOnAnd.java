@@ -2,7 +2,7 @@
 Value is always false (bar.equals("Asdasdd") && asdsa.length() == 12; line#32)
   One of the following happens:
     Operand #1 of and-chain is false (bar.equals("Asdasdd"); line#32)
-      According to hard-coded contract, method 'equals' returns 'false' value when this != parameter (equals; line#32)
+      According to hard-coded contract, method 'equals' returns 'false' when bar != "Asdasdd" (equals; line#32)
         One of the following happens:
           'bar' was assigned (=; line#25)
             Values cannot be equal because "asdbar".length != "Asdasdd".length

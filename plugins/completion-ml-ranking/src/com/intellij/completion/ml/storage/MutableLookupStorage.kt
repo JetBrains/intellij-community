@@ -9,7 +9,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.features.ContextFeaturesStorage
-import com.intellij.completion.ml.performance.CompletionPerformanceTracker
+import com.intellij.completion.ml.performance.MLCompletionPerformanceTracker
 import com.intellij.completion.ml.personalization.UserFactorStorage
 import com.intellij.completion.ml.personalization.UserFactorsManager
 import com.intellij.completion.ml.personalization.session.LookupSessionFactorsStorage
@@ -44,7 +44,7 @@ class MutableLookupStorage(
   private var shouldReRank = model != null
 
   private var _loggingEnabled: Boolean = false
-  override val performanceTracker: CompletionPerformanceTracker = CompletionPerformanceTracker()
+  override val performanceTracker: MLCompletionPerformanceTracker = MLCompletionPerformanceTracker()
 
   companion object {
     private val LOG = logger<MutableLookupStorage>()
@@ -133,7 +133,7 @@ class MutableLookupStorage(
   }
 
   fun initUserFactors(project: Project) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ApplicationManager.getApplication().assertReadAccessAllowed()
     if (_userFactors == null && UserFactorsManager.ENABLE_USER_FACTORS) {
       val userFactorValues = mutableMapOf<String, String>()
       val userFactors = UserFactorsManager.getInstance().getAllFactors()

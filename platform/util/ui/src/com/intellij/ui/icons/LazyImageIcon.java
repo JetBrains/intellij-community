@@ -5,7 +5,6 @@ import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleContextSupport;
 import com.intellij.ui.scale.UserScaleContext;
-import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,21 +13,20 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.Reference;
 
-@SuppressWarnings("UnnecessaryFullyQualifiedName")
 @ApiStatus.Internal
 public abstract class LazyImageIcon extends ScaleContextSupport
   implements CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider {
-  protected final Object myLock = new Object();
+  protected final Object lock = new Object();
 
   @Nullable
-  protected volatile Object myRealIcon;
+  protected volatile Object realIcon;
 
   protected LazyImageIcon() {
-    // For instance, ShadowPainter updates the context from outside.
+    // for instance, ShadowPainter updates the context from an outside
     getScaleContext().addUpdateListener(new UserScaleContext.UpdateListener() {
       @Override
       public void contextUpdated() {
-        myRealIcon = null;
+        realIcon = null;
       }
     });
   }
@@ -46,12 +44,7 @@ public abstract class LazyImageIcon extends ScaleContextSupport
   @Override
   public final void paintIcon(Component c, Graphics g, int x, int y) {
     Graphics2D g2d = g instanceof Graphics2D ? (Graphics2D)g : null;
-    ScaleContext ctx = ScaleContext.create(g2d);
-    if (SVGLoader.isSelectionContext()) {
-      getRealIconForSelection(ctx).paintIcon(c, g, x, y);
-    } else {
-      getRealIcon(ctx).paintIcon(c, g, x, y);
-    }
+    getRealIcon(ScaleContext.create(g2d)).paintIcon(c, g, x, y);
   }
 
   @Override
@@ -70,13 +63,9 @@ public abstract class LazyImageIcon extends ScaleContextSupport
   }
 
   @ApiStatus.Internal
-  public final @NotNull ImageIcon getRealIcon() {
+  public final @NotNull Icon getRealIcon() {
     return getRealIcon(null);
   }
 
-  protected abstract @NotNull ImageIcon getRealIcon(@Nullable ScaleContext context);
-
-  protected ImageIcon getRealIconForSelection(@Nullable ScaleContext context) {
-    return getRealIcon(context);
-  }
+  protected abstract @NotNull Icon getRealIcon(@Nullable ScaleContext context);
 }

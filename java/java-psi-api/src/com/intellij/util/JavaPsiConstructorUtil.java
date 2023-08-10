@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +14,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class JavaPsiConstructorUtil {
+
+  private static final @NotNull TokenSet CONSTRUCTOR_CALL_TOKENS = TokenSet.create(JavaTokenType.SUPER_KEYWORD, JavaTokenType.THIS_KEYWORD);
+
   /**
    * Finds call to another constructor within this constructor (either chained or super)
    * @param constructor constructor to search in
@@ -42,7 +47,7 @@ public final class JavaPsiConstructorUtil {
   public static boolean isChainedConstructorCall(@Nullable PsiElement call) {
     if (!(call instanceof PsiMethodCallExpression)) return false;
     PsiElement child = ((PsiMethodCallExpression)call).getMethodExpression().getReferenceNameElement();
-    return child instanceof PsiKeyword && child.textMatches(PsiKeyword.THIS);
+    return PsiUtil.isJavaToken(child, JavaTokenType.THIS_KEYWORD);
   }
 
   /**
@@ -53,7 +58,7 @@ public final class JavaPsiConstructorUtil {
   public static boolean isSuperConstructorCall(@Nullable PsiElement call) {
     if (!(call instanceof PsiMethodCallExpression)) return false;
     PsiElement child = ((PsiMethodCallExpression)call).getMethodExpression().getReferenceNameElement();
-    return child instanceof PsiKeyword && child.textMatches(PsiKeyword.SUPER);
+    return PsiUtil.isJavaToken(child, JavaTokenType.SUPER_KEYWORD);
   }
 
   /**
@@ -64,7 +69,7 @@ public final class JavaPsiConstructorUtil {
   public static boolean isConstructorCall(@Nullable PsiElement call) {
     if (!(call instanceof PsiMethodCallExpression)) return false;
     PsiElement child = ((PsiMethodCallExpression)call).getMethodExpression().getReferenceNameElement();
-    return child instanceof PsiKeyword && (child.textMatches(PsiKeyword.SUPER) || child.textMatches(PsiKeyword.THIS));
+    return PsiUtil.isJavaToken(child, CONSTRUCTOR_CALL_TOKENS);
   }
 
   public static PsiMethod findConstructorInSuper(@NotNull PsiMethod constructor) {

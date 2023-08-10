@@ -17,9 +17,6 @@ package com.intellij.debugger.engine;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author lex
- */
 public class DebugProcessAdapterImpl implements DebugProcessListener {
   //executed in manager thread
   @Override

@@ -21,10 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
- */
 public interface GrWhileStatement extends GrStatement, GrControlStatement, GrLoopStatement {
 
   @Nullable

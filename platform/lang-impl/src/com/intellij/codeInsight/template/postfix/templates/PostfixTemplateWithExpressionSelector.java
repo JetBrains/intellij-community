@@ -25,7 +25,7 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
   /**
    * @deprecated use {@link #PostfixTemplateWithExpressionSelector(String, String, String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected PostfixTemplateWithExpressionSelector(@NotNull @NlsSafe String name,
                                                   @NotNull @NlsSafe String key,
                                                   @NotNull @NlsSafe String example,
@@ -36,7 +36,7 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
   /**
    * @deprecated use {@link #PostfixTemplateWithExpressionSelector(String, String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected PostfixTemplateWithExpressionSelector(@NotNull @NlsSafe String name,
                                                   @NotNull @NlsSafe String example,
                                                   @NotNull PostfixTemplateExpressionSelector selector) {
@@ -63,7 +63,7 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
   }
 
   @Override
-  public final boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     return mySelector.hasExpression(context, copyDocument, newOffset);
   }
 

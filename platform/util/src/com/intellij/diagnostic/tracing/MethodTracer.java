@@ -90,17 +90,6 @@ public class MethodTracer {
 
     private static final MyConcurrentMap<TracerId, MethodTracer> tracersMap = new MyConcurrentMap<>();
 
-    /**
-     * @deprecated Used in 2020.2 performancePlugin
-     */
-    @Deprecated
-    public static MethodTracer getInstance(@NotNull String tracerId,
-                                           @NotNull String simpleClassName,
-                                           @NotNull String presentableMethodName) {
-        TracerId id = new TracerId(tracerId, "", null, "");
-        return isEnabled() ? tracersMap.putIfAbsent(id, new MethodTracer(id, simpleClassName, presentableMethodName)) : empty;
-    }
-
     public static MethodTracer getInstance(@NotNull String className,
                                            @NotNull String simpleClassName,
                                            @NotNull String methodName,

@@ -15,9 +15,9 @@ public class PythonReparseTest extends PyTestCase {
     myFixture.configureByFile("reparse/" + testName + ".py");
     myFixture.type(typedText);
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-    final String actualPsiText = DebugUtil.psiToString(myFixture.getFile(), false);
+    final String actualPsiText = DebugUtil.psiToString(myFixture.getFile(), true);
     myFixture.configureByText(testName + ".py", myFixture.getEditor().getDocument().getText());
-    final String expectedPsiText = DebugUtil.psiToString(myFixture.getFile(), false);
+    final String expectedPsiText = DebugUtil.psiToString(myFixture.getFile(), true);
     assertEquals(expectedPsiText, actualPsiText);
   }
 

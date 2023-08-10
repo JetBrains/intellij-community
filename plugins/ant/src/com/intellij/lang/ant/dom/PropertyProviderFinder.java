@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -120,10 +121,10 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     }
     else if (myStage == Stage.RESOLVE_MAP_BUILDING_STAGE){
       final String declaredTargetName = target.getName().getRawText();
-      String effectiveTargetName = null;
+      String effectiveTargetName;
       final InclusionKind inclusionKind = myNameContext.getCurrentInclusionKind();
       switch (inclusionKind) {
-        case IMPORT:
+        case IMPORT -> {
           final String alias = myNameContext.getShortPrefix() + declaredTargetName;
           if (!myTargetsResolveMap.containsKey(declaredTargetName)) {
             effectiveTargetName = declaredTargetName;
@@ -132,15 +133,9 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
           else {
             effectiveTargetName = alias;
           }
-          break;
-
-        case INCLUDE:
-          effectiveTargetName = myNameContext.getFQPrefix() + declaredTargetName;
-          break;
-
-        default:
-          effectiveTargetName = declaredTargetName;
-          break;
+        }
+        case INCLUDE -> effectiveTargetName = myNameContext.getFQPrefix() + declaredTargetName;
+        default -> effectiveTargetName = declaredTargetName;
       }
       if (effectiveTargetName != null) {
         final AntDomTarget existingTarget = myTargetsResolveMap.get(effectiveTargetName);
@@ -216,8 +211,6 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   }
 
   /**
-   * @param propertiesProvider
-   * @return true if search should be continued and false in order to stop
    */
   protected abstract void propertyProviderFound(PropertiesProvider propertiesProvider);
 
@@ -275,17 +268,12 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   }
 
   /**
-   * @param target
-   * @param taregetEffectiveName
    * @param dependenciesMap Map declared dependency reference->pair[tareget object, effective reference name]
    */
   protected void targetDefined(AntDomTarget target, String taregetEffectiveName, Map<String, Pair<AntDomTarget, String>> dependenciesMap) {
   }
 
   /**
-   * @param existingTarget
-   * @param duplicatingTarget
-   * @param taregetEffectiveName
    */
   protected void duplicateTargetFound(AntDomTarget existingTarget, AntDomTarget duplicatingTarget, String taregetEffectiveName) {
   }
@@ -315,9 +303,8 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     public String calcTargetReferenceText(String targetReferenceText) {
       if (!myPrefixes.isEmpty()) {
         final InclusionKind kind = myPrefixes.getLast().getSecond();
-        switch (kind) {
-          case IMPORT  : return targetReferenceText;
-          case INCLUDE : return getFQPrefix() + targetReferenceText;
+        if (kind == InclusionKind.INCLUDE) {
+          return getFQPrefix() + targetReferenceText;
         }
       }
       return targetReferenceText;

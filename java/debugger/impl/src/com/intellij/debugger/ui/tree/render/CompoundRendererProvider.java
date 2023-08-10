@@ -4,6 +4,7 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NotNull;
@@ -39,11 +40,15 @@ public abstract class CompoundRendererProvider {
   protected FullValueEvaluatorProvider getFullValueEvaluatorProvider() {
     return null;
   }
-
+  
   protected Function<Type, CompletableFuture<Boolean>> getIsApplicableChecker() {
     return null;
   }
 
+  public boolean isApplicable(Project project) {
+    return true;
+  }
+  
   protected boolean isEnabled() {
     return false;
   }

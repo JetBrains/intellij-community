@@ -1,22 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.impl.ToolWindowsPane;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.MyInlineProgressIndicator;
+import com.intellij.toolWindow.ToolWindowPane;
 import com.intellij.ui.BalloonLayoutImpl;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
@@ -28,7 +30,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-class ProcessBalloon {
+final class ProcessBalloon {
   private final List<MyInlineProgressIndicator> myIndicators = new ArrayList<>();
   private final int myMaxVisible;
   private int myVisible;
@@ -47,7 +49,7 @@ class ProcessBalloon {
   public void removeIndicator(@Nullable JRootPane pane, @NotNull MyInlineProgressIndicator indicator) {
     myIndicators.remove(indicator);
 
-    if (indicator.myPresentationModeProgressPanel != null) {
+    if (indicator.presentationModeProgressPanel != null) {
       myVisible--;
 
       if (pane != null && !myIndicators.isEmpty()) {
@@ -60,31 +62,31 @@ class ProcessBalloon {
     List<MyInlineProgressIndicator> indicators = new ArrayList<>();
 
     for (MyInlineProgressIndicator indicator : myIndicators) {
-      if (indicator.myPresentationModeProgressPanel == null) {
+      if (indicator.presentationModeProgressPanel == null) {
         if (myVisible == myMaxVisible) {
           continue;
         }
 
         myVisible++;
 
-        indicator.myPresentationModeProgressPanel = new PresentationModeProgressPanel(indicator);
+        indicator.presentationModeProgressPanel = new PresentationModeProgressPanel(indicator);
         indicator.updateProgressNow();
 
-        indicator.myPresentationModeBalloon = create(pane, indicator, indicator.myPresentationModeProgressPanel.getProgressPanel());
-        indicator.myPresentationModeShowBalloon = true;
+        indicator.presentationModeBalloon = create(pane, indicator, indicator.presentationModeProgressPanel.getProgressPanel());
+        indicator.presentationModeShowBalloon = true;
 
         indicators.add(indicator);
       }
-      else if (!indicator.myPresentationModeBalloon.isDisposed()) {
+      else if (!indicator.presentationModeBalloon.isDisposed()) {
         indicators.add(indicator);
       }
     }
 
     for (MyInlineProgressIndicator indicator : indicators) {
-      if (indicator.myPresentationModeShowBalloon) {
-        indicator.myPresentationModeShowBalloon = false;
+      if (indicator.presentationModeShowBalloon) {
+        indicator.presentationModeShowBalloon = false;
 
-        indicator.myPresentationModeBalloon.show(new PositionTracker<>(getAnchor(pane)) {
+        indicator.presentationModeBalloon.show(new PositionTracker<>(getAnchor(pane)) {
           @Override
           public RelativePoint recalculateLocation(@NotNull Balloon balloon) {
             Component c = getAnchor(pane);
@@ -109,18 +111,20 @@ class ProcessBalloon {
         }, Balloon.Position.above);
       }
       else {
-        indicator.myPresentationModeBalloon.revalidate();
+        indicator.presentationModeBalloon.revalidate();
       }
     }
   }
 
   private static @NotNull Balloon create(@NotNull JRootPane pane, @NotNull Disposable parentDisposable, @NotNull JComponent content) {
+    content.putClientProperty(InfoAndProgressPanel.FAKE_BALLOON, new Object());
+
     Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(content)
       .setFadeoutTime(0)
       .setFillColor(Gray.TRANSPARENT)
       .setShowCallout(false)
       .setBorderColor(Gray.TRANSPARENT)
-      .setBorderInsets(JBUI.emptyInsets())
+      .setBorderInsets(JBInsets.emptyInsets())
       .setAnimationCycle(0)
       .setCloseButtonEnabled(false)
       .setHideOnClickOutside(false)
@@ -159,7 +163,7 @@ class ProcessBalloon {
   }
 
   private static @Nullable BalloonLayoutImpl getBalloonLayout(@NotNull JRootPane pane) {
-    Component parent = UIUtil.findUltimateParent(pane);
+    Component parent = ComponentUtil.findUltimateParent(pane);
     if (parent instanceof IdeFrame) {
       return (BalloonLayoutImpl)((IdeFrame)parent).getBalloonLayout();
     }
@@ -167,20 +171,22 @@ class ProcessBalloon {
   }
 
   private static @NotNull Component getAnchor(@NotNull JRootPane pane) {
-    Component tabWrapper = UIUtil.findComponentOfType(pane, TabbedPaneWrapper.TabWrapper.class);
-    if (tabWrapper != null && tabWrapper.isShowing()) return tabWrapper;
-    EditorsSplitters splitters = UIUtil.findComponentOfType(pane, EditorsSplitters.class);
-    if (splitters != null) {
-      return splitters.isShowing() ? splitters : pane;
+    if (pane instanceof IdeRootPane ideRootPane && !(ideRootPane instanceof LightEditCompatible)) {
+      JComponent component = ideRootPane.getToolWindowPane().getDocumentComponent();
+      return component == null || !component.isShowing() ? pane : component;
     }
-    FileEditorManagerEx ex = FileEditorManagerEx.getInstanceEx(ProjectUtil.guessCurrentProject(pane));
-    if (ex == null) return pane;
-    splitters = ex.getSplitters();
-    return splitters.isShowing() ? splitters : pane;
+
+    Component tabWrapper = UIUtil.findComponentOfType(pane, TabbedPaneWrapper.TabWrapper.class);
+    if (tabWrapper != null && tabWrapper.isShowing()) {
+      return tabWrapper;
+    }
+
+    EditorsSplitters splitters = UIUtil.findComponentOfType(pane, EditorsSplitters.class);
+    return splitters == null || !splitters.isShowing() ? pane : splitters;
   }
 
   private static boolean isBottomSideToolWindowsVisible(@NotNull JRootPane parent) {
-    ToolWindowsPane pane = UIUtil.findComponentOfType(parent, ToolWindowsPane.class);
+    ToolWindowPane pane = UIUtil.findComponentOfType(parent, ToolWindowPane.class);
     return pane != null && pane.isBottomSideToolWindowsVisible();
   }
 }

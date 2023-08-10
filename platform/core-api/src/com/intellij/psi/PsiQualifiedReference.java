@@ -19,9 +19,6 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public interface PsiQualifiedReference extends PsiReference {
   /**
    * Returns the qualifier of the reference (the element representing the content up to the

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.include;
 
 import com.intellij.openapi.Disposable;
@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -26,6 +27,7 @@ import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,6 +84,7 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
     context = context.getOriginalFile();
     VirtualFile contextFile = context.getVirtualFile();
     if (contextFile == null) return;
+    if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() != null) return;
 
     String originalName = context.getName();
     Collection<String> names = getPossibleIncludeNames(context, originalName);
@@ -104,13 +107,12 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
     }
   }
 
-  @NotNull
-  private static Collection<String> getPossibleIncludeNames(@NotNull PsiFile context, @NotNull String originalName) {
+  private static @NotNull Collection<String> getPossibleIncludeNames(@NotNull PsiFile context, @NotNull String originalName) {
     Collection<String> names = new HashSet<>();
     names.add(originalName);
     for (FileIncludeProvider provider : FileIncludeProvider.EP_NAME.getExtensionList()) {
       String newName = provider.getIncludeName(context, originalName);
-      if (newName != originalName) {
+      if (!Strings.areSameInstance(newName, originalName)) {
         names.add(newName);
       }
     }
@@ -163,12 +165,11 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
   }
 
   @Override
-  public PsiFileSystemItem resolveFileInclude(@NotNull final FileIncludeInfo info, @NotNull final PsiFile context) {
+  public PsiFileSystemItem resolveFileInclude(final @NotNull FileIncludeInfo info, final @NotNull PsiFile context) {
     return doResolve(info, context);
   }
 
-  @Nullable
-  private PsiFileSystemItem doResolve(@NotNull final FileIncludeInfo info, @NotNull final PsiFile context) {
+  private @Nullable PsiFileSystemItem doResolve(final @NotNull FileIncludeInfo info, final @NotNull PsiFile context) {
     if (info instanceof FileIncludeInfoImpl) {
       String id = ((FileIncludeInfoImpl)info).providerId;
       FileIncludeProvider provider = id == null ? null : myProviderMap.get(id);
@@ -224,10 +225,8 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
     private void getAllFilesRecursively(@NotNull VirtualFile file, boolean compileTimeOnly, Set<? super VirtualFile> result) {
       if (!result.add(file)) return;
       VirtualFile[] includes = getFiles(file, compileTimeOnly);
-      if (includes.length != 0) {
-        for (VirtualFile include : includes) {
-          getAllFilesRecursively(include, compileTimeOnly, result);
-        }
+      for (VirtualFile include : includes) {
+        getAllFilesRecursively(include, compileTimeOnly, result);
       }
     }
 

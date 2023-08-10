@@ -4,7 +4,6 @@ package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -17,50 +16,43 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class GenerateAction extends DumbAwareAction {
+
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
 
     Project project = Objects.requireNonNull(getEventProject(e));
-    final ListPopup popup =
+    ListPopup popup =
       JBPopupFactory.getInstance().createActionGroupPopup(
-          CodeInsightBundle.message("generate.list.popup.title"),
-                                                          wrapGroup(getGroup(), dataContext, project),
-                                                          dataContext,
-                                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-                                                          false);
+        CodeInsightBundle.message("generate.list.popup.title"),
+        wrapGroup(getGroup(), dataContext, project),
+        dataContext,
+        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+        false);
 
     popup.showInBestPositionFor(dataContext);
   }
 
   @Override
   public void update(@NotNull AnActionEvent event){
-    Presentation presentation = event.getPresentation();
+    Project project = event.getProject();
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
+    boolean enabled = project != null && editor != null &&
+                      !ActionGroupUtil.isGroupEmpty(getGroup(), event);
     if (ActionPlaces.isPopupPlace(event.getPlace())) {
-      Editor editor = event.getData(CommonDataKeys.EDITOR);
-      presentation.setEnabledAndVisible(isEnabled(event) && editor != null);
+      event.getPresentation().setEnabledAndVisible(enabled);
     }
     else {
-      presentation.setEnabled(isEnabled(event));
+      event.getPresentation().setEnabled(enabled);
     }
   }
 
-  private static boolean isEnabled(@NotNull AnActionEvent event) {
-    Project project = event.getProject();
-    if (project == null) {
-      return false;
-    }
-
-    Editor editor = event.getData(CommonDataKeys.EDITOR);
-    if (editor == null) {
-      return false;
-    }
-
-    boolean groupEmpty = ActionGroupUtil.isGroupEmpty(getGroup(), event, LaterInvocator.isInModalContext());
-    return !groupEmpty;
-  }
-
-  private static DefaultActionGroup getGroup() {
+  private static @NotNull DefaultActionGroup getGroup() {
     return (DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_GENERATE);
   }
 
@@ -98,11 +90,12 @@ public class GenerateAction extends DumbAwareAction {
       myEditTemplateAction = editTemplateAction;
       copyFrom(action);
       setPopup(true);
+      getTemplatePresentation().setPerformGroup(true);
     }
 
     @Override
-    public boolean canBePerformed(@NotNull DataContext context) {
-      return true;
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return myAction.getActionUpdateThread();
     }
 
     @Override

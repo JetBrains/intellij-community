@@ -33,7 +33,7 @@ class PrevCallsModelsProviderService {
   private val modelsLoadingQueue = MergingUpdateQueue("ModelsLoadingQueue", 1000, true, null,
                                                       PythonPluginDisposable.getInstance(), null, false)
   private fun createUpdate(identity: Any, runnable: () -> Unit) = object : Update(identity) {
-    override fun canEat(update: Update?) = this == update
+    override fun canEat(update: Update) = this == update
     override fun run() = runnable()
   }
 

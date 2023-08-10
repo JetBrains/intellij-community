@@ -11,10 +11,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ContentEntryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.junit.Assert;
@@ -62,6 +63,9 @@ public final class PsiTestUtil {
   public static void removeAllRoots(@NotNull Module module, Sdk jdk) {
     ModuleRootModificationUtil.updateModel(module, model -> {
       model.clear();
+      if (jdk != null && ApplicationManager.getApplication().isUnitTestMode()) {
+        WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk, module.getProject()));
+      }
       model.setSdk(jdk);
     });
   }
@@ -75,6 +79,13 @@ public final class PsiTestUtil {
   public static SourceFolder addSourceContentToRoots(@NotNull Module module, @NotNull VirtualFile vDir, boolean testSource) {
     Ref<SourceFolder> result = Ref.create();
     ModuleRootModificationUtil.updateModel(module, model -> result.set(model.addContentEntry(vDir).addSourceFolder(vDir, testSource)));
+    return result.get();
+  }
+
+  @NotNull
+  public static SourceFolder addResourceContentToRoots(@NotNull Module module, @NotNull VirtualFile vDir, boolean testResource) {
+    Ref<SourceFolder> result = Ref.create();
+    ModuleRootModificationUtil.updateModel(module, model -> result.set(model.addContentEntry(vDir).addSourceFolder(vDir, testResource? JavaResourceRootType.TEST_RESOURCE: JavaResourceRootType.RESOURCE)));
     return result.get();
   }
 
@@ -122,9 +133,6 @@ public final class PsiTestUtil {
 
     for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
       if (Comparing.equal(entry.getFile(), vDir)) {
-        if (entry instanceof ContentEntryImpl) {
-          Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
-        }
         return entry;
       }
     }
@@ -197,7 +205,7 @@ public final class PsiTestUtil {
   }
 
   public static void checkFileStructure(@NotNull PsiFile file) {
-    compareFromAllRoots(file, f -> DebugUtil.psiTreeToString(f, false));
+    compareFromAllRoots(file, f -> DebugUtil.psiTreeToString(f, true));
   }
 
   private static void compareFromAllRoots(@NotNull PsiFile file, @NotNull Function<? super PsiFile, String> fun) {
@@ -289,20 +297,21 @@ public final class PsiTestUtil {
   public static void addLibrary(@NotNull Disposable parent, @NotNull Module module, String libName, @NotNull String libPath, String @NotNull ... jarArr) {
     Ref<Library> ref = new Ref<>();
     ModuleRootModificationUtil.updateModel(module, model -> ref.set(addLibrary(model, libName, libPath, jarArr)));
-    Disposer.register(parent, () -> {
-      Library library = ref.get();
-      ModuleRootModificationUtil.updateModel(module, model -> {
-        LibraryOrderEntry entry = model.findLibraryOrderEntry(library);
-        if (entry != null) {
-          model.removeOrderEntry(entry);
-        }
-      });
-      WriteCommandAction.runWriteCommandAction(null, ()-> {
-        LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
-        LibraryTable.ModifiableModel model = table.getModifiableModel();
-        model.removeLibrary(library);
-        model.commit();
-      });
+    Disposer.register(parent, () -> removeLibrary(module, ref.get()));
+  }
+
+  public static void removeLibrary(@NotNull Module module, @NotNull Library library) {
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      LibraryOrderEntry entry = model.findLibraryOrderEntry(library);
+      if (entry != null) {
+        model.removeOrderEntry(entry);
+      }
+    });
+    WriteCommandAction.runWriteCommandAction(null, ()-> {
+      LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
+      LibraryTable.ModifiableModel model = table.getModifiableModel();
+      model.removeLibrary(library);
+      model.commit();
     });
   }
 
@@ -397,7 +406,6 @@ public final class PsiTestUtil {
    * @param libName the name of the created library
    * @param libPath the path of a directory
    * @param jarArr the names of jars or subdirectories inside {@code libPath} that will become class roots
-   * @return
    */
   @NotNull
   public static Library addLibrary(@NotNull ModifiableRootModel model,
@@ -442,7 +450,6 @@ public final class PsiTestUtil {
    * @param libDir the path of a directory
    * @param classRoots the names of jars or subdirectories relative to {@code libDir} that will become class roots
    * @param sourceRoots the names of jars or subdirectories relative to {@code libDir} that will become source roots
-   * @return
    */
   public static void addLibrary(@NotNull Module module,
                                 String libName,

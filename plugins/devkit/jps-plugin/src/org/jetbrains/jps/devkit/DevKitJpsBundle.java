@@ -7,15 +7,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.jps.api.JpsDynamicBundle;
 
-public class DevKitJpsBundle extends JpsDynamicBundle {
-  @NonNls
-  private static final String BUNDLE = "messages.DevKitJpsBundle";
-  private static final DevKitJpsBundle INSTANCE = new DevKitJpsBundle();
+public final class DevKitJpsBundle {
+  private static final @NonNls String BUNDLE = "messages.DevKitJpsBundle";
+  private static final JpsDynamicBundle INSTANCE = new JpsDynamicBundle(DevKitJpsBundle.class, BUNDLE);
 
-  private DevKitJpsBundle() { super(BUNDLE); }
+  private DevKitJpsBundle() {}
 
   public static @Nls @NotNull String message(@PropertyKey(resourceBundle = BUNDLE) @NotNull String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
-
 }

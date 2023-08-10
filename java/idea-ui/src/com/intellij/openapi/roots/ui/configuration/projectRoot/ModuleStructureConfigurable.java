@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -6,7 +6,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.actions.AddFacetToModuleAction;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
@@ -18,7 +18,6 @@ import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
@@ -42,6 +41,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,7 +49,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +57,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -94,13 +96,13 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   private final ModuleManager myModuleManager;
 
-  private final FacetEditorFacadeImpl myFacetEditorFacade = new FacetEditorFacadeImpl(this, TREE_UPDATER);
+  private final FacetEditorFacadeImpl myFacetEditorFacade;
 
   private final List<RemoveConfigurableHandler<?>> myRemoveHandlers;
 
-  public ModuleStructureConfigurable(Project project) {
-    super(project);
-
+  public ModuleStructureConfigurable(ProjectStructureConfigurable projectStructureConfigurable) {
+    super(projectStructureConfigurable);
+    myFacetEditorFacade = new FacetEditorFacadeImpl(myProjectStructureConfigurable, TREE_UPDATER);
     myModuleManager = ModuleManager.getInstance(myProject);
     myRemoveHandlers = new ArrayList<>();
     myRemoveHandlers.add(new ModuleRemoveHandler());
@@ -191,7 +193,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   @Override
   protected void updateSelection(@Nullable NamedConfigurable configurable) {
-    FacetStructureConfigurable.getInstance(myProject).disposeMultipleSettingsEditor();
+    myProjectStructureConfigurable.getFacetStructureConfigurable().disposeMultipleSettingsEditor();
     ApplicationManager.getApplication().assertIsDispatchThread();
     super.updateSelection(configurable);
     if (configurable != null) {
@@ -207,7 +209,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   @Override
   protected boolean updateMultiSelection(final List<? extends NamedConfigurable> selectedConfigurables) {
-    return FacetStructureConfigurable.getInstance(myProject).updateMultiSelection(selectedConfigurables, getDetailsComponent());
+    return myProjectStructureConfigurable.getFacetStructureConfigurable().updateMultiSelection(selectedConfigurables, getDetailsComponent());
   }
 
   @Override
@@ -216,15 +218,14 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private void updateModuleEditorSelection(final NamedConfigurable configurable) {
-    if (configurable instanceof ModuleConfigurable) {
-      final ModuleConfigurable moduleConfigurable = (ModuleConfigurable)configurable;
+    if (configurable instanceof ModuleConfigurable moduleConfigurable) {
       final ModuleEditor editor = moduleConfigurable.getModuleEditor();
       if (editor != null) { //already deleted
         editor.init(myHistory);
       }
     }
-    if (configurable instanceof FacetConfigurable) {
-      ((FacetConfigurable)configurable).getEditor().onFacetSelected();
+    if (configurable instanceof FacetConfigurable facetConfigurable) {
+      facetConfigurable.getEditor().onFacetSelected();
     }
   }
 
@@ -340,8 +341,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     addItemsChangeListener(new ItemsChangeListener() {
       @Override
       public void itemChanged(@Nullable Object deletedItem) {
-        if (deletedItem instanceof Library) {
-          final Library library = (Library)deletedItem;
+        if (deletedItem instanceof Library library) {
           final MyNode node = findNodeByObject(myRoot, library);
           if (node != null) {
             final TreeNode parent = node.getParent();
@@ -461,7 +461,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         }
       };
     }
-    final ActionCallback result = ProjectStructureConfigurable.getInstance(myProject).navigateTo(p, true);
+    final ActionCallback result = myProjectStructureConfigurable.navigateTo(p, true);
     return r != null ? result.doWhenDone(r) : result;
   }
 
@@ -469,9 +469,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return ModuleGrouper.instanceFor(myProject, myContext.myModulesConfigurator.getModuleModel());
   }
 
-
+  /**
+   * @deprecated use {@link ProjectStructureConfigurable#getModulesConfig()} instead
+   */
+  @Deprecated(forRemoval = true)
   public static ModuleStructureConfigurable getInstance(final Project project) {
-    return ServiceManager.getService(project, ModuleStructureConfigurable.class);
+    return ProjectStructureConfigurable.getInstance(project).getModulesConfig();
   }
 
   public Project getProject() {
@@ -538,11 +541,37 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return myContext.myModulesConfigurator.getFacetsConfigurator();
   }
 
-  private void addModule(boolean anImport, String defaultModuleName) {
-    final List<Module> modules = myContext.myModulesConfigurator.addModule(myTree, anImport, defaultModuleName);
+  private void addModule(boolean anImport, boolean detectModuleBase) {
+    final List<Module> modules;
+    if (anImport) {
+      modules = myContext.myModulesConfigurator.addImportModule(myTree);
+    } else {
+      // If the user creates a module when selecting an existing module in the project structure dialog,
+      //   they may expect that the new module "will be located under the selected one".
+      // This is not completely correct from the project model point of view, as the modules cannot be located under each other,
+      //   but from the user perspective it makes sense.
+      //
+      // So, here we take the first content root of the selected module and use it as the base path for the new module.
+      // In the majority of cases, there is only one content root, so the new module will be located there.
+      // If there are multiple content roots, it still makes sense to place the new module under some of them.
+      //
+      // The base path is detected only if the add action was executed from the tree context action. If it was executed from the "plus"
+      //   button, we don't detect the module base.
+      String basePath = null;
+      if (detectModuleBase) {
+        Module selectedModule = getSelectedModule();
+        if (selectedModule != null) {
+          VirtualFile file = Arrays.stream(ModuleRootManager.getInstance(selectedModule).getContentRoots()).findFirst().orElse(null);
+          if (file != null) {
+            basePath = file.getPath();
+          }
+        }
+      }
+      modules = myContext.myModulesConfigurator.addNewModule(basePath);
+    }
     if (modules != null && !modules.isEmpty()) {
       //new module wizard may add yet another SDK to the project
-      ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel().syncSdks();
+      myProjectStructureConfigurable.getProjectJdksModel().syncSdks();
       for (Module module : modules) {
         addModuleNode(module);
       }
@@ -706,14 +735,21 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @NotNull
     @Override
     public String getDisplayName() {
+      List<String> parentGroupPath;
       if (parent instanceof ModuleGroupNode) {
         ModuleGroup parentGroup = ((ModuleGroupNode)parent).getModuleGroup();
-        List<String> groupPath = myModuleGroup.getGroupPathList();
-        if (parentGroup != null && ContainerUtil.startsWith(groupPath, parentGroup.getGroupPathList())) {
-          return StringUtil.join(groupPath.subList(parentGroup.getGroupPathList().size(), groupPath.size()), ".");
-        }
+        parentGroupPath = parentGroup != null ? parentGroup.getGroupPathList() : Collections.emptyList();
       }
-      return super.getDisplayName();
+      else {
+        parentGroupPath = Collections.emptyList();
+      }
+      List<String> groupPath = myModuleGroup.getGroupPathList();
+      if (ContainerUtil.startsWith(groupPath, parentGroupPath)) {
+        return StringUtil.join(groupPath.subList(parentGroupPath.size(), groupPath.size()), ".");
+      }
+      else {
+        return StringUtil.join(groupPath, ".");
+      }
     }
 
     @Override
@@ -732,7 +768,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     public boolean remove(@NotNull Collection<? extends Facet> facets) {
       for (Facet<?> facet : facets) {
         List<Facet> removed = myContext.myModulesConfigurator.getFacetsConfigurator().removeFacet(facet);
-        FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
+        myProjectStructureConfigurable.getFacetStructureConfigurable().removeFacetNodes(removed);
       }
       return true;
     }
@@ -746,13 +782,17 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @Override
     public boolean remove(@NotNull Collection<? extends Module> modules) {
       ModulesConfigurator modulesConfigurator = myContext.myModulesConfigurator;
-      List<Module> deleted = modulesConfigurator.deleteModules(modules);
-      if (deleted.isEmpty()) {
-        return false;
-      }
-      for (Module module : deleted) {
+      List<ModuleEditor> moduleEditors = ContainerUtil.mapNotNull(modules, modulesConfigurator::getModuleEditor);
+      if (moduleEditors.isEmpty()) return false;
+      if (!modulesConfigurator.canDeleteModules(moduleEditors)) return false;
+
+      List<Module> modulesToDelete = ContainerUtil.mapNotNull(moduleEditors, ModuleEditor::getModule);
+      for (Module module : modulesToDelete) {
         List<Facet> removed = modulesConfigurator.getFacetsConfigurator().removeAllFacets(module);
-        FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
+        myProjectStructureConfigurable.getFacetStructureConfigurable().removeFacetNodes(removed);
+      }
+      modulesConfigurator.deleteModules(moduleEditors);
+      for (Module module : modulesToDelete) {
         myContext.getDaemonAnalyzer().removeElement(new ModuleProjectStructureElement(myContext, module));
 
         for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
@@ -776,6 +816,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         .ifEq(LangDataKeys.MODULE_CONTEXT_ARRAY).thenGet(this::getModuleContexts)
         .ifEq(LangDataKeys.MODULE_CONTEXT).thenGet(() -> getSelectedModule())
         .ifEq(LangDataKeys.MODIFIABLE_MODULE_MODEL).thenGet(() -> myContext.myModulesConfigurator.getModuleModel())
+        .ifEq(PlatformCoreDataKeys.SELECTED_ITEM).thenGet(() -> getSelectedObject())
         .orNull();
     }
 
@@ -828,6 +869,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myHideModuleGroups;
     }
@@ -852,18 +898,18 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   @Override
-  protected AbstractAddGroup createAddAction() {
+  protected AbstractAddGroup createAddAction(boolean fromPopup) {
     return new AbstractAddGroup(JavaUiBundle.message("add.new.header.text")) {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable
                                     final AnActionEvent e) {
 
-        AnAction addModuleAction = new AddModuleAction(false);
+        AnAction addModuleAction = new AddModuleAction(false, fromPopup);
         addModuleAction.getTemplatePresentation().setText(JavaUiBundle.message("action.text.new.module"));
         List<AnAction> result = new ArrayList<>();
         result.add(addModuleAction);
 
-        AnAction importModuleAction = new AddModuleAction(true);
+        AnAction importModuleAction = new AddModuleAction(true, fromPopup);
         importModuleAction.getTemplatePresentation().setText(JavaUiBundle.message("action.text.import.module"));
         importModuleAction.getTemplatePresentation().setIcon(AllIcons.ToolbarDecorator.Import);
         result.add(importModuleAction);
@@ -922,7 +968,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
       try {
         ModuleEditor moduleEditor = ((ModuleConfigurable)namedConfigurable).getModuleEditor();
-        String modulePresentation = IdeBundle.message("project.new.wizard.module.identification");
+        String modulePresentation = IdeCoreBundle.message("project.new.wizard.module.identification");
         NamePathComponent component = new NamePathComponent(JavaUiBundle.message("label.module.name"),
                                                             JavaUiBundle.message("label.component.file.location", StringUtil.capitalize(modulePresentation)),
                                                             JavaUiBundle
@@ -996,12 +1042,17 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         e.getPresentation().setEnabled(selectedConfigurable instanceof ModuleConfigurable || canBeCopiedByExtension(selectedConfigurable));
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   static final class CopiedModuleBuilder extends ModuleBuilder {
-    @NotNull ModifiableRootModel myRootModel;
-    @NotNull Path myComponentPath;
-    @NotNull Project myProject;
+    @NotNull private final ModifiableRootModel myRootModel;
+    @NotNull private final Path myComponentPath;
+    @NotNull private final Project myProject;
 
     CopiedModuleBuilder(@NotNull ModifiableRootModel rootModel, @NotNull Path componentPath, @NotNull Project project) {
       this.myRootModel = rootModel;
@@ -1021,7 +1072,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       modifiableRootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(true);
 
       modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension.class)
-        .setLanguageLevel(LanguageLevelModuleExtensionImpl.getInstance(myRootModel.getModule()).getLanguageLevel());
+        .setLanguageLevel(LanguageLevelUtil.getCustomLanguageLevel(myRootModel.getModule()));
 
       for (OrderEntry entry : myRootModel.getOrderEntries()) {
         if (entry instanceof JdkOrderEntry) continue;
@@ -1035,7 +1086,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
       VirtualFile content = LocalFileSystem.getInstance().findFileByNioFile(myComponentPath);
       if (content == null) {
-        PathKt.createFile(myComponentPath);
+        try {
+          Files.createFile(NioFiles.createParentDirectories(myComponentPath));
+        }
+        catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
         content = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(myComponentPath);
       }
       modifiableRootModel.addContentEntry(content);
@@ -1049,23 +1105,17 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   private final class AddModuleAction extends AnAction implements DumbAware {
     private final boolean myImport;
+    private final boolean myDetectModuleBase;
 
-    AddModuleAction(boolean anImport) {
+    AddModuleAction(boolean anImport, boolean detectModuleBase) {
       super(JavaUiBundle.message("add.new.module.text.full"), null, AllIcons.Nodes.Module);
       myImport = anImport;
+      myDetectModuleBase = detectModuleBase;
     }
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-      String defaultModuleName = "untitled";
-      MyNode selectedNode = getSelectedNode();
-      if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(myProject) && selectedNode instanceof ModuleGroupNodeImpl) {
-        ModuleGroup group = ((ModuleGroupNode)selectedNode).getModuleGroup();
-        if (group != null && !group.getGroupPathList().isEmpty()) {
-          defaultModuleName = StringUtil.join(group.getGroupPathList(), ".") + ".untitled";
-        }
-      }
-      addModule(myImport, defaultModuleName);
+      addModule(myImport, myDetectModuleBase);
     }
   }
 

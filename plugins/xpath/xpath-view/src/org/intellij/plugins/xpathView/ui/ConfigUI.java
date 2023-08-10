@@ -17,6 +17,7 @@ package org.intellij.plugins.xpathView.ui;
 
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.intellij.plugins.xpathView.Config;
 import org.intellij.plugins.xpathView.XPathBundle;
@@ -33,8 +34,6 @@ public class ConfigUI extends JPanel {
     private JCheckBox useContextAtCursor;
     private JCheckBox highlightStartTagOnly;
     private JCheckBox addErrorStripe;
-    private JCheckBox showInToolbar;
-    private JCheckBox showInMainMenu;
     private ColorPanel chooseHighlight;
     private ColorPanel chooseContext;
 
@@ -48,10 +47,8 @@ public class ConfigUI extends JPanel {
         JPanel c = this;
 
         scrollToFirst = new JCheckBox(XPathBundle.message("settings.scroll.first.hit.into.visible.area"));
-        scrollToFirst.setMnemonic('S');
 
         useContextAtCursor = new JCheckBox(XPathBundle.message("settings.use.node.at.cursor.as.context.node"));
-        useContextAtCursor.setMnemonic('N');
         useContextAtCursor.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -60,17 +57,7 @@ public class ConfigUI extends JPanel {
         });
 
         highlightStartTagOnly = new JCheckBox(XPathBundle.message("settings.highlight.only.start.tag.instead.of.whole.tag.content"));
-        highlightStartTagOnly.setMnemonic('H');
-
         addErrorStripe = new JCheckBox(XPathBundle.message("settings.add.error.stripe.markers.for.each.result"));
-        addErrorStripe.setMnemonic('A');
-
-        showInToolbar = new JCheckBox(XPathBundle.message("settings.show.actions.in.toolbar"));
-        showInToolbar.setMnemonic('T');
-        showInToolbar.setToolTipText(XPathBundle.message("settings.uncheck.to.remove.xpath-related.actions.from.the.toolbar"));
-        showInMainMenu = new JCheckBox(XPathBundle.message("settings.show.actions.in.main.menu"));
-        showInMainMenu.setMnemonic('M');
-        showInMainMenu.setToolTipText(XPathBundle.message("settings.uncheck.to.remove.xpath.related.actions.from.the.main.menubar"));
 
         JPanel settings = new JPanel(new BorderLayout());
         settings.setBorder(IdeBorderFactory.createTitledBorder(XPathBundle.message("settings.settings")));
@@ -84,18 +71,14 @@ public class ConfigUI extends JPanel {
         settings.add(highlightStartTagOnly, BorderLayout.NORTH);
         settings.add(settings = new JPanel(new BorderLayout()), BorderLayout.SOUTH);
         settings.add(addErrorStripe, BorderLayout.NORTH);
-        settings.add(settings = new JPanel(new BorderLayout()), BorderLayout.SOUTH);
-        settings.add(showInToolbar, BorderLayout.NORTH);
-        settings.add(settings = new JPanel(new BorderLayout()), BorderLayout.SOUTH);
-        settings.add(showInMainMenu, BorderLayout.NORTH);
-        settings.add(/*settings = */new JPanel(new BorderLayout()), BorderLayout.SOUTH);
+        settings.add(new JPanel(new BorderLayout()), BorderLayout.SOUTH);
 
         JPanel colors = new JPanel(new GridBagLayout());
         colors.setBorder(IdeBorderFactory.createTitledBorder(XPathBundle.message("settings.colors")));
         c.add(c = new JPanel(new BorderLayout()), BorderLayout.SOUTH);
         c.add(colors, BorderLayout.NORTH);
 
-        Insets emptyInsets = JBUI.emptyInsets();
+      Insets emptyInsets = JBInsets.emptyInsets();
         Insets cpInsets = JBUI.insetsLeft(8);
 
         GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, emptyInsets, 0, 0);
@@ -130,8 +113,6 @@ public class ConfigUI extends JPanel {
         config.setUseContextAtCursor(useContextAtCursor.isSelected());
         config.setScrollToFirst(scrollToFirst.isSelected());
         config.setAddErrorStripe(addErrorStripe.isSelected());
-        config.SHOW_IN_TOOLBAR = showInToolbar.isSelected();
-        config.SHOW_IN_MAIN_MENU = showInMainMenu.isSelected();
         config.getAttributes().setBackgroundColor(chooseHighlight.getSelectedColor());
         if (useContextAtCursor.isSelected()) {
             config.getContextAttributes().setBackgroundColor(chooseContext.getSelectedColor());
@@ -144,8 +125,6 @@ public class ConfigUI extends JPanel {
         highlightStartTagOnly.setSelected(configuration.isHighlightStartTagOnly());
         useContextAtCursor.setSelected(configuration.isUseContextAtCursor());
         addErrorStripe.setSelected(configuration.isAddErrorStripe());
-        showInToolbar.setSelected(configuration.SHOW_IN_TOOLBAR);
-        showInMainMenu.setSelected(configuration.SHOW_IN_MAIN_MENU);
         chooseHighlight.setSelectedColor(configuration.getAttributes().getBackgroundColor());
         chooseContext.setSelectedColor(configuration.getContextAttributes().getBackgroundColor());
         stateChanged();

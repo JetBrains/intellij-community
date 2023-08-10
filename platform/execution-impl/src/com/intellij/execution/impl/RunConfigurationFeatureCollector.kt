@@ -1,20 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.configurations.ConfigurationType
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
 import com.intellij.ide.plugins.PluginFeatureService
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.minutes
 
-class RunConfigurationFeatureCollector : StartupActivity.Background {
-  override fun runActivity(project: Project) {
-    PluginFeatureService.getInstance().collectFeatureMapping(
-      RunManager.CONFIGURATION_TYPE_FEATURE_ID,
-      ConfigurationType.CONFIGURATION_TYPE_EP,
-      ConfigurationType::getId,
-      ConfigurationType::getDisplayName
+private class RunConfigurationFeatureCollector : ProjectActivity {
+  init {
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
+  override suspend fun execute(project: Project) {
+    // no hurry to update current feature mapping of all run configurations types
+    delay(10.minutes)
+
+    PluginFeatureService.instance.collectFeatureMapping(
+      featureType = RunManager.CONFIGURATION_TYPE_FEATURE_ID,
+      ep = ConfigurationType.CONFIGURATION_TYPE_EP,
+      idMapping = ConfigurationType::getId,
+      displayNameMapping = ConfigurationType::getDisplayName,
     )
   }
 }

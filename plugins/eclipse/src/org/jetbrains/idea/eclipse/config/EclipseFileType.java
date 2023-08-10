@@ -5,9 +5,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
 
@@ -29,7 +29,13 @@ public class EclipseFileType implements FileType {
   @Override
   @NotNull
   public String getDescription() {
-    return EclipseBundle.message("eclipse.file.type.descr");
+    return EclipseBundle.message("filetype.eclipse.description");
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getDisplayName() {
+    return EclipseBundle.message("filetype.eclipse.display.name");
   }
 
   @Override
@@ -40,7 +46,6 @@ public class EclipseFileType implements FileType {
   }
 
   @Override
-  @Nullable
   public Icon getIcon() {
     return AllIcons.Providers.Eclipse;
   }

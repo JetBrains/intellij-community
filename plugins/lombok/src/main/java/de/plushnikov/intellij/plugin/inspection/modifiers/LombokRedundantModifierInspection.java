@@ -36,35 +36,35 @@ public abstract class LombokRedundantModifierInspection extends LombokJavaInspec
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
 
       this.visit(aClass);
     }
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       super.visitField(field);
 
       this.visit(field);
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
 
       this.visit(method);
     }
 
     @Override
-    public void visitLocalVariable(PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
 
       this.visit(variable);
     }
 
     @Override
-    public void visitParameter(PsiParameter parameter) {
+    public void visitParameter(@NotNull PsiParameter parameter) {
       super.visitParameter(parameter);
 
       this.visit(parameter);

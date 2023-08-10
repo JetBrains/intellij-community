@@ -1,4 +1,4 @@
-// "Transform body to single exit-point form" "true"
+// "Transform body to single exit-point form" "true-preview"
 class Test {
     String <caret>test2(List<String> list, String foo, String bar) {
         for(String s : list)

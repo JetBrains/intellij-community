@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -6,15 +6,18 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ide.plugins.PluginNode;
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
-import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Date;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -31,19 +35,19 @@ public class LicensePanel extends NonOpaquePanel {
   private final JLabel mySubMessage = new JLabel();
   private final JPanel myPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
   private final JLabel myMessage = new JLabel();
-  private final LinkLabel<Object> myLink = new LinkLabel<>();
+  private final ActionLink myLink = new ActionLink();
+  private Runnable myLinkRunnable;
 
   public LicensePanel(boolean tiny) {
     setLayout(new BorderLayout());
-
-    myLink.setIconTextGap(0);
-    myLink.setHorizontalTextPosition(SwingConstants.LEFT);
 
     add(tiny ? PluginManagerConfigurable.setTinyFont(mySubMessage) : mySubMessage, BorderLayout.NORTH);
     add(myPanel);
 
     myPanel.add(tiny ? PluginManagerConfigurable.setTinyFont(myMessage) : myMessage);
     myPanel.add(tiny ? PluginManagerConfigurable.setTinyFont(myLink) : myLink);
+
+    myLink.addActionListener(e -> myLinkRunnable.run());
 
     hideElements();
   }
@@ -81,7 +85,7 @@ public class LicensePanel extends NonOpaquePanel {
       myMessage.setIcon(warning ? EmptyIcon.ICON_16 : null);
     }
 
-    myMessage.setForeground(errorColor ? DialogWrapper.ERROR_FOREGROUND_COLOR : null);
+    myMessage.setForeground(errorColor ? NamedColorUtil.getErrorForeground() : null);
     myMessage.setVisible(true);
 
     myPanel.setVisible(true);
@@ -114,9 +118,15 @@ public class LicensePanel extends NonOpaquePanel {
   }
 
   public void setLink(@NotNull @Nls String text, @NotNull Runnable action, boolean external) {
+    myLinkRunnable = action;
+
     myLink.setText(text);
-    myLink.setIcon(external ? AllIcons.Ide.External_link_arrow : null);
-    myLink.setListener((__, ___) -> action.run(), null);
+    if (external) {
+      myLink.setExternalLinkIcon();
+    }
+    else {
+      myLink.setIcon(null);
+    }
     myLink.setVisible(true);
 
     myPanel.setVisible(true);
@@ -141,12 +151,26 @@ public class LicensePanel extends NonOpaquePanel {
     myPanel.setVisible(false);
   }
 
-  public void showBuyPlugin(@NotNull Supplier<? extends IdeaPluginDescriptor> getPlugin) {
+  public void showBuyPlugin(@NotNull Supplier<? extends IdeaPluginDescriptor> getPlugin, boolean forUpdate) {
     IdeaPluginDescriptor plugin = getPlugin.get();
 
     setLink(IdeBundle.message("plugins.configurable.buy.the.plugin"), () ->
-      BrowserUtil.browse("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode()), true);
+      BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode())), true);
 
+    if (forUpdate) {
+      updateLink(IdeBundle.message("label.plugin.paid"), false);
+    }
+
+    if (plugin instanceof PluginNode) {
+      List<String> tags = ((PluginNode)plugin).getTags();
+      if (tags.contains(Tags.Freemium.name())) {
+        updateLink(IdeBundle.message(forUpdate ? "label.plugin.freemium" : "plugins.configurable.activate.trial.for.full.access"), false);
+        return;
+      }
+    }
+    if (forUpdate) {
+      return;
+    }
     PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), false), price -> {
       if (plugin == getPlugin.get()) {
         updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), true);
@@ -155,7 +179,8 @@ public class LicensePanel extends NonOpaquePanel {
   }
 
   public static boolean isEA2Product(@Nullable String productCodeOrPluginId) {
-    LicensingFacade instance = LicensingFacade.getInstance();
-    return productCodeOrPluginId != null && instance != null && instance.isEA2Product(productCodeOrPluginId);
+    return productCodeOrPluginId != null &&
+      LicensingFacade.getInstance() != null &&
+      ArrayUtil.contains(productCodeOrPluginId, "DPN", "DC", "DPA", "PDB", "PWS", "PGO", "PPS", "PPC", "PRB", "PSW", "Pythonid");
   }
 }

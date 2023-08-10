@@ -26,13 +26,12 @@ class DataFrameTableCellRenderer extends DataViewCellRenderer implements Colored
 
   @Override
   protected void colorize(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-    if (!(value instanceof TableValueDescriptor)) {
+    if (!(value instanceof TableValueDescriptor descriptor)) {
       this.setBackground(null);
       return;
     }
 
     Color background = null;
-    TableValueDescriptor descriptor = (TableValueDescriptor)value;
 
     if (myColored) {
       try {

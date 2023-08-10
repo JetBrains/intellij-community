@@ -42,5 +42,5 @@ object ApplicationOnlySdkScopeController : SdkScopeController {
    *
    * @param listener the listener
    */
-  override fun addListener(listener: SdkScopeController.SdkScopeChangeListener) = Unit
+  override fun addListener(listener: SdkScopeController.SdkScopeChangeListener): Unit = Unit
 }

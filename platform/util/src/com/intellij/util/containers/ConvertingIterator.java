@@ -17,9 +17,6 @@ package com.intellij.util.containers;
 
 import java.util.Iterator;
 
-/**
- * @author dsl
- */
 public class ConvertingIterator <Domain, Range> implements Iterator<Range> {
   private final Iterator<? extends Domain> myBaseIterator;
   private final Convertor<? super Domain, ? extends Range> myConvertor;

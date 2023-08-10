@@ -1,0 +1,4 @@
+// AFTER-WARNING: The expression is unused
+fun foo(y: Boolean) {
+    y || y
+}

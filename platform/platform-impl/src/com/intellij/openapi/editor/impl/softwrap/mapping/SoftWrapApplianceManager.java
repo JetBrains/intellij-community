@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
-import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorSettings;
@@ -39,8 +40,6 @@ import java.util.List;
  * about parsing and they are free to store necessary information for further usage.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class SoftWrapApplianceManager implements Dumpable {
   private static final Logger LOG = Logger.getInstance(SoftWrapApplianceManager.class);
@@ -97,11 +96,11 @@ public class SoftWrapApplianceManager implements Dumpable {
     myEditor = editor;
     myPainter = painter;
     myDataMapper = dataMapper;
-    myWidthProvider = new DefaultVisibleAreaWidthProvider(editor);
-    myEditor.getScrollingModel().addVisibleAreaListener(e -> {
+    myWidthProvider = new DefaultVisibleAreaWidthProvider();
+    myEditor.getScrollingModel().addVisibleAreaListener(e -> ReadAction.run(() -> {
       updateAvailableArea();
       updateLastTopLeftCornerOffset();
-    });
+    }));
   }
 
   public void registerSoftWrapIfNecessary() {
@@ -206,7 +205,7 @@ public class SoftWrapApplianceManager implements Dumpable {
   private void recalculateSoftWraps(@NotNull IncrementalCacheUpdateEvent event) {
     if (myInProgress) {
       LOG.error("Detected race condition at soft wraps recalculation", new Throwable(),
-                AttachmentFactory.createContext(myEditor.dumpState(), event));
+                AttachmentFactory.createContext(myEditor.dumpState() + "\n" + event));
     }
     myInProgress = true;
     try {
@@ -221,7 +220,7 @@ public class SoftWrapApplianceManager implements Dumpable {
                            myCustomIndentUsedLastTime ? myCustomIndentValueUsedLastTime : -1).generate();
       }
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Soft wrap recalculation done: " + event.toString() + ". " + (event.getActualEndOffset() - event.getStartOffset()) + " characters processed");
+        LOG.debug("Soft wrap recalculation done: " + event + ". " + (event.getActualEndOffset() - event.getStartOffset()) + " characters processed");
       }
       if (event.getActualEndOffset() > endOffsetUpperEstimate) {
         LOG.error("Unexpected error at soft wrap recalculation", new Attachment("softWrapModel.txt", myEditor.getSoftWrapModel().toString()));
@@ -319,12 +318,6 @@ public class SoftWrapApplianceManager implements Dumpable {
       return recalculateSoftWraps(); // Recalculate existing dirty regions if any.
     }
 
-    final JScrollBar scrollBar = myEditor.getScrollPane().getVerticalScrollBar();
-    int verticalScrollBarWidth = scrollBar.getWidth();
-    if (verticalScrollBarWidth <= 0) {
-      verticalScrollBarWidth = scrollBar.getPreferredSize().width;
-    }
-
     // We experienced the following situation:
     //   1. Editor is configured to show scroll bars only when necessary;
     //   2. Editor with active soft wraps is changed in order for the vertical scroll bar to appear;
@@ -337,7 +330,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     // I.e. we have an endless EDT activity that stops only when editor is re-sized in a way to avoid vertical scroll bar.
     // That's why we don't recalculate soft wraps when visual area width is changed to the vertical scroll bar width value assuming
     // that such a situation is triggered by the scroll bar (dis)appearance.
-    if (currentVisibleAreaWidth - myVisibleAreaWidth == verticalScrollBarWidth) {
+    if (currentVisibleAreaWidth - myVisibleAreaWidth == getVerticalScrollBarWidth()) {
       myVisibleAreaWidth = currentVisibleAreaWidth;
       return recalculateSoftWraps();
     }
@@ -479,6 +472,15 @@ public class SoftWrapApplianceManager implements Dumpable {
     myAvailableWidth = width;
   }
 
+  private int getVerticalScrollBarWidth() {
+    JScrollBar scrollBar = myEditor.getScrollPane().getVerticalScrollBar();
+    int width = scrollBar.getWidth();
+    if (width <= 0) {
+      width = scrollBar.getPreferredSize().width;
+    }
+    return width;
+  }
+
   /**
    * This interface is introduced mostly for encapsulating GUI-specific values retrieval and make it possible to write
    * tests for soft wraps processing.
@@ -488,18 +490,25 @@ public class SoftWrapApplianceManager implements Dumpable {
     int getVisibleAreaWidth();
   }
 
-  private static class DefaultVisibleAreaWidthProvider implements VisibleAreaWidthProvider {
-
-    private final EditorImpl myEditor;
-
-    DefaultVisibleAreaWidthProvider(EditorImpl editor) {
-      myEditor = editor;
-    }
+  private class DefaultVisibleAreaWidthProvider implements VisibleAreaWidthProvider {
 
     @Override
     public int getVisibleAreaWidth() {
       Insets insets = myEditor.getContentComponent().getInsets();
-      int width = Math.max(0, myEditor.getScrollingModel().getVisibleArea().width - insets.left - insets.right);
+      int horizontalInsets = insets.left + insets.right;
+      // We don't want soft-wrapped text to go under the scroll bar even if that feature is enabled,
+      // because in this case the scrollbar sometimes prevents the user from placing the caret by
+      // clicking inside wrapped text. Even if the scroll bar is invisible, some of its marks can get
+      // in the way too (errors/warnings, VCS changes, etc.). It's best to soft-wrap earlier.
+      // Example: IDEA-305944 (Code goes under the scrollbar with Soft-Wrap).
+      final var vsbWidth = getVerticalScrollBarWidth();
+      if (horizontalInsets < vsbWidth) {
+        // Guesswork: it isn't easy to figure out whether insets already include the scrollbar width,
+        // as the underlying logic is very complicated. But we can reasonably assume that if they
+        // do NOT include it, they will be very small (most likely zero).
+        horizontalInsets += vsbWidth;
+      }
+      int width = Math.max(0, myEditor.getScrollingModel().getVisibleArea().width - horizontalInsets);
       if (myEditor.isInDistractionFreeMode()) {
         int rightMargin = myEditor.getSettings().getRightMargin(myEditor.getProject());
         if (rightMargin > 0) width = Math.min(width, rightMargin * EditorUtil.getPlainSpaceWidth(myEditor));

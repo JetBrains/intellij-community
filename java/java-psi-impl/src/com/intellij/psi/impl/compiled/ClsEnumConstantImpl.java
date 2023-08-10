@@ -10,12 +10,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-/**
- * @author ven
- */
 public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant {
   public ClsEnumConstantImpl(@NotNull PsiFieldStub stub) {
     super(stub);
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitEnumConstant(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

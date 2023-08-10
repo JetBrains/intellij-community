@@ -1,33 +1,130 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.util.indexing.impl.IndexDebugProperties;
+import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
+import com.intellij.util.io.OpenChannelsCache.FileChannelOperation;
+import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
+import com.intellij.util.io.stats.FilePageCacheStatistics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static com.intellij.util.io.PageCacheUtils.*;
 
 @ApiStatus.Internal
 public final class StorageLockContext {
-  private final boolean myCheckThreadAccess;
-  @NotNull
-  private final ReentrantReadWriteLock myLock;
-  @NotNull
-  private final StorageLock myStorageLock;
+
+  private static final FilePageCache DEFAULT_FILE_PAGE_CACHE = new FilePageCache(FILE_PAGE_CACHE_OLD_CAPACITY_BYTES);
+  private static final @Nullable FilePageCacheLockFree DEFAULT_FILE_PAGE_CACHE_NEW = LOCK_FREE_VFS_ENABLED ?
+                                                                                     new FilePageCacheLockFree(FILE_PAGE_CACHE_NEW_CAPACITY_BYTES) :
+                                                                                     null;
+
+  static final StorageLockContext ourDefaultContext = new StorageLockContext(false);
+
+  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
+
+  private final @NotNull FilePageCache myFilePageCache;
+
+  /** In general, null if {@link PageCacheUtils#LOCK_FREE_VFS_ENABLED} is false */
+  private final @Nullable FilePageCacheLockFree myFilePageCacheLockFree;
+  private final PageContentLockingStrategy.SharedLockLockingStrategy pageContentLockingStrategy = new PageContentLockingStrategy.SharedLockLockingStrategy(myLock);
+
   private final boolean myUseReadWriteLock;
+  private final boolean myCacheChannels;
+  private final boolean myDisableAssertions;
 
-  public StorageLockContext(@NotNull StorageLock lock, boolean checkAccess, boolean useReadWriteLock) {
-    myLock = new ReentrantReadWriteLock();
-    myStorageLock = lock;
-    myCheckThreadAccess = checkAccess;
+
+  @VisibleForTesting
+  StorageLockContext(@NotNull FilePageCache filePageCache,
+                     @Nullable FilePageCacheLockFree filePageCacheLockFree,
+                     boolean useReadWriteLock,
+                     boolean cacheChannels,
+                     boolean disableAssertions) {
+    myFilePageCache = filePageCache;
     myUseReadWriteLock = useReadWriteLock;
+    myCacheChannels = cacheChannels;
+    myDisableAssertions = disableAssertions;
+    myFilePageCacheLockFree = filePageCacheLockFree;
   }
 
-  public StorageLockContext(boolean checkAccess, boolean useReadWriteLock) {
-    this(PagedFileStorage.ourLock, checkAccess, useReadWriteLock);
+  @VisibleForTesting
+  StorageLockContext(@Nullable FilePageCacheLockFree filePageCacheLockFree,
+                     boolean useReadWriteLock,
+                     boolean cacheChannels,
+                     boolean disableAssertions) {
+    this(DEFAULT_FILE_PAGE_CACHE, filePageCacheLockFree, useReadWriteLock, cacheChannels, disableAssertions);
   }
 
-  public StorageLockContext(boolean checkAccess) {
-    this(PagedFileStorage.ourLock, checkAccess, false);
+  public StorageLockContext(boolean useReadWriteLock,
+                            boolean cacheChannels,
+                            boolean disableAssertions) {
+    this(DEFAULT_FILE_PAGE_CACHE,
+         DEFAULT_FILE_PAGE_CACHE_NEW,
+         useReadWriteLock, cacheChannels, disableAssertions);
+  }
+
+  public StorageLockContext(boolean useReadWriteLock,
+                            boolean cacheChannels) {
+    this(useReadWriteLock, cacheChannels, false);
+  }
+
+  public StorageLockContext(boolean useReadWriteLock) {
+    this(useReadWriteLock, false, false);
+  }
+
+  public StorageLockContext() {
+    this(false, false, false);
+  }
+
+  boolean useChannelCache() {
+    return myCacheChannels;
+  }
+
+  public <R> R executeOp(final Path myFile,
+                         final @NotNull FileChannelOperation<R> operation,
+                         final boolean readOnly) throws IOException {
+    //MAYBE RC: both branches should be encapsulated inside OpenChannelsCache
+    //          (and the OpenChannelsCache should be a part of StorageLockContext then)
+    if (useChannelCache()) {
+      return CHANNELS_CACHE.executeOp(myFile, operation, readOnly);
+    }
+    else {
+      getBufferCache().incrementUncachedFileAccess();
+      try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(myFile, readOnly)) {
+        return operation.execute(desc.channel());
+      }
+    }
+  }
+
+  public <R> R executeIdempotentOp(final Path file,
+                                   final @NotNull FileChannelIdempotentOperation<R> operation,
+                                   final boolean readOnly) throws IOException {
+    //MAYBE RC: both branches should be encapsulated inside OpenChannelsCache
+    //          (and the OpenChannelsCache should be a part of StorageLockContext then)
+    if (useChannelCache()) {
+      return CHANNELS_CACHE.executeIdempotentOp(file, operation, readOnly);
+    }
+    else {
+      getBufferCache().incrementUncachedFileAccess();
+      try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(file, readOnly)) {
+        return desc.channel().executeOperation(operation);
+      }
+    }
+  }
+
+  public Lock readLock() {
+    return myUseReadWriteLock ? myLock.readLock() : myLock.writeLock();
+  }
+
+  public Lock writeLock() {
+    return myLock.writeLock();
   }
 
   public void lockRead() {
@@ -51,27 +148,88 @@ public final class StorageLockContext {
   public void lockWrite() {
     myLock.writeLock().lock();
   }
+
   public void unlockWrite() {
     myLock.writeLock().unlock();
   }
 
   @ApiStatus.Internal
   @NotNull
-  StorageLock getStorageLock() {
-    return myStorageLock;
+  FilePageCache getBufferCache() {
+    return myFilePageCache;
+  }
+
+  /** @throws UnsupportedOperationException if new FilePageCache implementation is absent (disabled) */
+  @ApiStatus.Internal
+  public @NotNull FilePageCacheLockFree pageCache() {
+    if (myFilePageCacheLockFree == null) {
+      if (LOCK_FREE_VFS_ENABLED) {
+        throw new UnsupportedOperationException(
+          "lock-free FilePageCache is not available in this storageLockContext."
+        );
+      }
+      throw new UnsupportedOperationException(
+        "lock-free FilePageCache is not available: PageCacheUtils.ENABLE_LOCK_FREE_VFS=false."
+      );
+    }
+    return myFilePageCacheLockFree;
+  }
+
+  @NotNull
+  public PageContentLockingStrategy lockingStrategyWithGlobalLock(){
+    return pageContentLockingStrategy;
   }
 
   @ApiStatus.Internal
-  void checkThreadAccess(boolean read) {
-    if (myCheckThreadAccess) {
-      if (read) {
-        if (myLock.getReadHoldCount() > 0 || myLock.writeLock().isHeldByCurrentThread()) return;
-        throw new IllegalStateException("Must hold StorageLock read lock to access PagedFileStorage");
-      }
-      else {
-        if (myLock.writeLock().isHeldByCurrentThread()) return;
-        throw new IllegalStateException("Must hold StorageLock write lock to access PagedFileStorage");
-      }
+  public void checkWriteAccess() {
+    if (!myDisableAssertions && IndexDebugProperties.DEBUG) {
+      if (myLock.writeLock().isHeldByCurrentThread()) return;
+      throw new IllegalStateException("Must hold StorageLock write lock to access PagedFileStorage");
     }
+  }
+
+  @ApiStatus.Internal
+  public void checkReadAccess() {
+    if (!myDisableAssertions && IndexDebugProperties.DEBUG) {
+      if (myLock.getReadHoldCount() > 0 || myLock.writeLock().isHeldByCurrentThread()) return;
+      throw new IllegalStateException("Must hold StorageLock read lock to access PagedFileStorage");
+    }
+  }
+
+  void assertUnderSegmentAllocationLock() {
+    if (IndexDebugProperties.DEBUG) {
+      myFilePageCache.assertUnderSegmentAllocationLock();
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void forceDirectMemoryCache() {
+    DEFAULT_FILE_PAGE_CACHE.flushBuffers();
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull FilePageCacheStatistics getStatistics() {
+    return DEFAULT_FILE_PAGE_CACHE.getStatistics();
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable com.intellij.util.io.pagecache.FilePageCacheStatistics getNewCacheStatistics() {
+    return DEFAULT_FILE_PAGE_CACHE_NEW != null ? DEFAULT_FILE_PAGE_CACHE_NEW.getStatistics() : null;
+  }
+
+  @ApiStatus.Internal
+  public static void assertNoBuffersLocked() {
+    DEFAULT_FILE_PAGE_CACHE.assertNoBuffersLocked();
+  }
+
+  @ApiStatus.Internal
+  public static long getCacheMaxSize() {
+    return DEFAULT_FILE_PAGE_CACHE.getMaxSize();
+  }
+
+  /** for monitoring purposes only */
+  @ApiStatus.Internal
+  public static ReentrantReadWriteLock defaultContextLock() {
+    return ourDefaultContext.myLock;
   }
 }

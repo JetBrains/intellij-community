@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Waits for the parent process to terminate, then executes specified commands.
 

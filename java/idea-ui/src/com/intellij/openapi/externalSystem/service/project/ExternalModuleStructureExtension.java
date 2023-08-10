@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -148,9 +148,8 @@ public class ExternalModuleStructureExtension extends ModuleStructureExtension {
       AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, systemId);
       Collection projectsSettings = systemSettings.getLinkedProjectsSettings();
       for (Object settings : projectsSettings) {
-        if (settings instanceof ExternalProjectSettings) {
-          ExternalProjectSettings projectSettings = (ExternalProjectSettings)settings;
-          result.put((projectSettings).getExternalProjectPath(), Pair.create(systemId, projectSettings));
+        if (settings instanceof ExternalProjectSettings projectSettings) {
+          result.put(projectSettings.getExternalProjectPath(), Pair.create(systemId, projectSettings));
         }
       }
     }

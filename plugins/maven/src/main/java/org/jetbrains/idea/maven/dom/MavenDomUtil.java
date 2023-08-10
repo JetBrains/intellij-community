@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,6 +40,8 @@ import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.plugins.groovy.MavenGroovyPomCompletionContributor;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenDistribution;
+import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -58,6 +61,7 @@ public final class MavenDomUtil {
                                                                                        "usePluginRegistry", "offline", "pluginGroups",
                                                                                        "servers", "mirrors", "proxies", "profiles",
                                                                                        "activeProfiles");
+  private static final Pattern XML_TAG_NAME_PATTERN = Pattern.compile("(\\S*)\\[(\\d*)\\]\\z");
 
   public static boolean isMavenFile(PsiFile file) {
     return isProjectFile(file) || isProfilesFile(file) || isSettingsFile(file);
@@ -81,6 +85,15 @@ public final class MavenDomUtil {
     if (!(file instanceof XmlFile)) return false;
 
     return MavenConstants.PROFILES_XML.equals(file.getName());
+  }
+
+  public static @Nullable @NlsSafe String getXmlSettingsNameSpace(PsiFile file) {
+    if (!(file instanceof XmlFile)) return null;
+
+    XmlTag rootTag = ((XmlFile)file).getRootTag();
+    if (rootTag == null || !"settings".equals(rootTag.getName())) return null;
+
+    return rootTag.getAttributeValue("xmlns");
   }
 
   public static boolean isSettingsFile(PsiFile file) {
@@ -273,8 +286,6 @@ public final class MavenDomUtil {
     return result;
   }
 
-  private static final Pattern XML_TAG_NAME_PATTERN = Pattern.compile("(\\S*)\\[(\\d*)\\]\\z");
-
   private static Pair<String, Integer> translateTagName(String text) {
     String tagName = text.trim();
     Integer index = null;
@@ -331,9 +342,6 @@ public final class MavenDomUtil {
         if (!resource.isFiltered()) continue;
 
         String resourceDirectory = resource.getDirectory();
-        if (resourceDirectory == null) {
-          continue;
-        }
         VirtualFile resourceDir = LocalFileSystem.getInstance().findFileByPath(resourceDirectory);
         if (resourceDir == null) continue;
 
@@ -480,5 +488,18 @@ public final class MavenDomUtil {
         return "pom.xml"; // ?
       }
     }
+  }
+
+  @Nullable
+  public static String getMavenVersion(@Nullable VirtualFile file, @NotNull Project project) {
+    VirtualFile directory = file == null ? null : file.getParent();
+    MavenDistribution distribution;
+    if (directory == null) {
+      distribution = MavenDistributionsCache.getInstance(project).getSettingsDistribution();
+    }
+    else {
+      distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(directory.getPath());
+    }
+    return distribution.getVersion();
   }
 }

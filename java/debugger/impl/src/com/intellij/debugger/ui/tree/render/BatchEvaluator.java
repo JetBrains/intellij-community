@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -6,16 +6,15 @@ import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
-import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
@@ -64,19 +63,19 @@ public final class BatchEvaluator {
       }
 
       ThreadReference threadReference = thread.getThreadReference();
-      if(threadReference == null) {
+      if (threadReference == null) {
         return false;
       }
 
       try {
         myBatchEvaluatorClass = (ClassType)myDebugProcess.findClass(evaluationContext, BatchEvaluatorServer.class.getName(),
-          evaluationContext.getClassLoader());
+                                                                    evaluationContext.getClassLoader());
       }
       catch (EvaluateException ignored) {
       }
 
       if (myBatchEvaluatorClass != null) {
-          myBatchEvaluatorMethod = DebuggerUtils.findMethod(myBatchEvaluatorClass, "evaluate", "([Ljava/lang/Object;)Ljava/lang/String;");
+        myBatchEvaluatorMethod = DebuggerUtils.findMethod(myBatchEvaluatorClass, "evaluate", "([Ljava/lang/Object;)Ljava/lang/String;");
       }
     }
     return myBatchEvaluatorMethod != null;
@@ -95,31 +94,9 @@ public final class BatchEvaluator {
     else {
       List<ToStringCommand> toStringCommands = myBuffer.get(suspendContext);
       if (toStringCommands == null) {
-        final List<ToStringCommand> commands = new ArrayList<>();
-        toStringCommands = commands;
-        myBuffer.put(suspendContext, commands);
-
-        myDebugProcess.getManagerThread().invokeCommand(new SuspendContextCommand() {
-          @Override
-          public SuspendContext getSuspendContext() {
-            return suspendContext;
-          }
-
-          @Override
-          public void action() {
-            myBuffer.remove(suspendContext);
-
-            if ((commands.size() == 1 && !Registry.is("debugger.batch.evaluation.force")) ||
-                !doEvaluateBatch(commands, evaluationContext)) {
-              commands.forEach(ToStringCommand::action);
-            }
-          }
-
-          @Override
-          public void commandCancelled() {
-            myBuffer.remove(suspendContext);
-          }
-        });
+        toStringCommands = new ArrayList<>();
+        myBuffer.put(suspendContext, toStringCommands);
+        ((DebuggerManagerThreadImpl)myDebugProcess.getManagerThread()).schedule(new BatchEvaluatorCommand(evaluationContext));
       }
 
       toStringCommands.add(command);
@@ -129,7 +106,7 @@ public final class BatchEvaluator {
   public static BatchEvaluator getBatchEvaluator(DebugProcess debugProcess) {
     BatchEvaluator batchEvaluator = debugProcess.getUserData(BATCH_EVALUATOR_KEY);
 
-    if(batchEvaluator == null) {
+    if (batchEvaluator == null) {
       batchEvaluator = new BatchEvaluator(debugProcess);
       debugProcess.putUserData(BATCH_EVALUATOR_KEY, batchEvaluator);
     }
@@ -142,7 +119,7 @@ public final class BatchEvaluator {
         return false;
       }
       DebugProcess debugProcess = evaluationContext.getDebugProcess();
-      List<Value> values = StreamEx.of(requests).map(ToStringCommand::getValue).toList();
+      List<Value> values = ContainerUtil.map(requests, ToStringCommand::getValue);
 
       ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
         evaluationContext,
@@ -193,5 +170,26 @@ public final class BatchEvaluator {
     return false;
   }
 
+  private class BatchEvaluatorCommand extends PossiblySyncCommand {
+    private final EvaluationContext myEvaluationContext;
 
+    BatchEvaluatorCommand(EvaluationContext evaluationContext) {
+      super((SuspendContextImpl)evaluationContext.getSuspendContext());
+      myEvaluationContext = evaluationContext;
+    }
+
+    @Override
+    public void syncAction(@NotNull SuspendContextImpl suspendContext) {
+      List<ToStringCommand> commands = myBuffer.remove(suspendContext);
+
+      if ((commands.size() == 1 && !Registry.is("debugger.batch.evaluation.force")) || !doEvaluateBatch(commands, myEvaluationContext)) {
+        commands.forEach(ToStringCommand::action);
+      }
+    }
+
+    @Override
+    public void commandCancelled() {
+      myBuffer.remove(getSuspendContext());
+    }
+  }
 }

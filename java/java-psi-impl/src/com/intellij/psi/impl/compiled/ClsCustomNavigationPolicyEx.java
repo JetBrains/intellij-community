@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 /** @deprecated use {@link ClsCustomNavigationPolicy} directly */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 @SuppressWarnings("DeprecatedIsStillUsed")
 public abstract class ClsCustomNavigationPolicyEx implements ClsCustomNavigationPolicy {
   public PsiFile getFileNavigationElement(@NotNull ClsFileImpl file) {

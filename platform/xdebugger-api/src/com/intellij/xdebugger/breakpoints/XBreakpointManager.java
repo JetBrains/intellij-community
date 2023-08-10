@@ -48,13 +48,6 @@ public interface XBreakpointManager {
 
   boolean isDefaultBreakpoint(@NotNull XBreakpoint<?> breakpoint);
 
-  /**
-   * @deprecated There could be more than one default breakpoint per type. Use {@link XBreakpointManager#getDefaultBreakpoints} instead
-   */
-  @Deprecated
-  @Nullable
-  <B extends XBreakpoint<?>> B getDefaultBreakpoint(@NotNull XBreakpointType<B, ?> type);
-
   @NotNull
   <B extends XBreakpoint<?>> Set<B> getDefaultBreakpoints(@NotNull XBreakpointType<B, ?> type);
 
@@ -74,13 +67,13 @@ public interface XBreakpointManager {
   /**
    * @deprecated Use {@link XBreakpointListener#TOPIC}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   void addBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener);
 
   /**
    * @deprecated Use {@link XBreakpointListener#TOPIC}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   void removeBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener);
 
   void updateBreakpointPresentation(@NotNull XLineBreakpoint<?> breakpoint, @Nullable Icon icon, @Nullable String errorMessage);

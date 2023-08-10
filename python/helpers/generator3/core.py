@@ -116,6 +116,7 @@ def is_skipped_module(path, f, qname):
 def is_module(d, root):
     return (os.path.exists(os.path.join(root, d, "__init__.py")) or
             os.path.exists(os.path.join(root, d, "__init__.pyc")) or
+            os.path.exists(os.path.join(root, d, "__init__.pyi")) or
             os.path.exists(os.path.join(root, d, "__init__.pyo")) or
             is_valid_implicit_namespace_package_name(d))
 
@@ -221,7 +222,7 @@ def skeleton_status(base_dir, mod_qname, mod_path, sdk_skeleton_state=None):
         used_version = version_to_tuple(used_version)
 
     used_bin_mtime = skeleton_meta.get('bin_mtime')
-    # state.json is normally passed for remote skeletons only. Since we don't have neither cache,
+    # state.json is normally passed for remote skeletons only. Since we have neither cache,
     # nor physical sdk skeletons there, we have to rely on binary modification time to detect
     # outdated skeletons.
     if mod_path and used_bin_mtime is not None and used_bin_mtime < file_modification_timestamp(mod_path):
@@ -366,7 +367,7 @@ def get_module_origin(mod_path, mod_qname):
         return None
 
     if is_test_mode():
-        return get_relative_path_by_qname(mod_path, mod_qname)
+        return get_portable_test_module_path(mod_path, mod_qname)
     return mod_path
 
 
@@ -581,6 +582,24 @@ class SkeletonGenerator(object):
             raise
 
 
+@contextmanager
+def imported_names_collected():
+    imported_names = set()
+
+    class MyFinder(object):
+        # noinspection PyMethodMayBeStatic
+        def find_module(self, fullname, path=None):
+            imported_names.add(fullname)
+            return None
+
+    my_finder = MyFinder()
+    sys.meta_path.insert(0, my_finder)
+    try:
+        yield imported_names
+    finally:
+        sys.meta_path.remove(my_finder)
+
+
 def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
     # type: (str, str, str, str) -> GenerationStatusId
 
@@ -591,32 +610,12 @@ def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
         delete(mod_cache_dir)
     mkdir(mod_cache_dir)
 
-    old_modules = list(sys.modules.keys())
-    imported_module_names = set()
-
-    class MyFinder:
-        # noinspection PyMethodMayBeStatic
-        def find_module(self, fullname, path=None):
-            if fullname != name:
-                imported_module_names.add(fullname)
-            return None
-
-    my_finder = None
-    if hasattr(sys, 'meta_path'):
-        my_finder = MyFinder()
-        sys.meta_path.insert(0, my_finder)
-    else:
-        imported_module_names = None
-
     create_failed_version_stamp(mod_cache_dir, name)
 
     action("importing")
-    __import__(name)  # sys.modules will fill up with what we want
-
-    if my_finder:
-        sys.meta_path.remove(my_finder)
-    if imported_module_names is None:
-        imported_module_names = set(sys.modules.keys()) - set(old_modules)
+    old_modules = list(sys.modules.keys())
+    with imported_names_collected() as imported_module_names:
+        __import__(name)  # sys.modules will fill up with what we want
 
     redo_module(name, mod_file_name, mod_cache_dir, output_dir)
     # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
@@ -626,7 +625,14 @@ def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
     if redo_imports:
         initial_module_set = set(sys.modules)
         for m in list(sys.modules):
-            if m.startswith("pycharm_generator_utils"): continue
+            if not m.startswith(name):
+                continue
+            # Python 2 puts dummy None entries in sys.modules for imports of
+            # top-level modules made from inside packages unless absolute
+            # imports are explicitly enabled.
+            # See https://www.python.org/dev/peps/pep-0328/#relative-imports-and-indirection-entries-in-sys-modules
+            if not sys.modules[m] or m.startswith("generator3"):
+                continue
             action("looking at possible submodule %r", m)
             if m == name or m in old_modules or m in sys.builtin_module_names:
                 continue

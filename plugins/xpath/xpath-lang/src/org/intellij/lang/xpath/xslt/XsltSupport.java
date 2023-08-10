@@ -26,6 +26,7 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.SmartList;
+import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.NanoXmlUtil;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.XPathFile;
@@ -310,7 +311,7 @@ public final class XsltSupport {
   }
 
   public static int getAVTOffset(String value, int i) {
-    do {
+    while (true) {
       i = value.indexOf('{', i);
       if (i != -1 && i == value.indexOf("{{", i)) {
         i += 2;
@@ -319,7 +320,6 @@ public final class XsltSupport {
         break;
       }
     }
-    while (i != -1);
     return i;
   }
 
@@ -351,11 +351,10 @@ public final class XsltSupport {
 
     @Override
     public CachedValueProvider.Result<XsltChecker.LanguageLevel> compute(PsiFile psiFile) {
-      if (!(psiFile instanceof XmlFile)) {
+      if (!(psiFile instanceof XmlFile xmlFile)) {
         return CachedValueProvider.Result.create(XsltChecker.LanguageLevel.NONE, PsiModificationTracker.MODIFICATION_COUNT);
       }
 
-      final XmlFile xmlFile = (XmlFile)psiFile;
       if (psiFile instanceof PsiFileEx) {
         if (((PsiFileEx)psiFile).isContentsLoaded()) {
           final XmlDocument doc = xmlFile.getDocument();
@@ -379,7 +378,8 @@ public final class XsltSupport {
       }
 
       final XsltChecker xsltChecker = new XsltChecker();
-      NanoXmlUtil.parseFile(psiFile, xsltChecker);
+      CharSequenceReader reader = new CharSequenceReader(psiFile.getViewProvider().getContents());
+      NanoXmlUtil.parse(reader, xsltChecker);
       return CachedValueProvider.Result.create(xsltChecker.getLanguageLevel(), psiFile);
     }
   }

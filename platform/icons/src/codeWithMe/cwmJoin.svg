@@ -1,3 +1,4 @@
+<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16">
   <circle fill="#6E6E6E" cx="8" cy="3" r="2"/>
   <path fill="#6E6E6E" d="M10.051,5.178C10.925,5.815,11.5,6.838,11.5,8c0,0.151-0.026,0.295-0.044,0.442C11.908,8.167,12.433,8,13,8	c0-1.701-0.854-3.2-2.152-4.103C10.691,4.391,10.419,4.831,10.051,5.178z"/>

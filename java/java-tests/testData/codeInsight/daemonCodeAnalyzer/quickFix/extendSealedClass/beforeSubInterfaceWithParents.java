@@ -1,4 +1,4 @@
-// "non-sealed" "true"
+// "Make 'Child' extend 'Parent'|->non-sealed" "true-preview"
 sealed interface Parent permits Child<caret>, Foo {}
 
 interface OtherParent {}

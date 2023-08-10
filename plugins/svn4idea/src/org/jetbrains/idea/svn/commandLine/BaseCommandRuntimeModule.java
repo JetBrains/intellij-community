@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public abstract class BaseCommandRuntimeModule implements CommandRuntimeModule {
 
   @NotNull protected final CommandRuntime myRuntime;

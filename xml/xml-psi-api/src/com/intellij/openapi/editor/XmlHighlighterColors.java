@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.html.HTMLLanguage;
@@ -7,9 +7,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 
-/**
- * @author yole
- */
+
 public final class XmlHighlighterColors {
   private XmlHighlighterColors() { }
 
@@ -21,6 +19,8 @@ public final class XmlHighlighterColors {
     TextAttributesKey.createTextAttributesKey("XML_TAG", DefaultLanguageHighlighterColors.MARKUP_TAG);
   public static final TextAttributesKey XML_TAG_NAME =
     TextAttributesKey.createTextAttributesKey("XML_TAG_NAME", DefaultLanguageHighlighterColors.KEYWORD);
+  public static final TextAttributesKey XML_CUSTOM_TAG_NAME =
+    TextAttributesKey.createTextAttributesKey("XML_CUSTOM_TAG_NAME", XML_TAG_NAME);
   public static final TextAttributesKey XML_NS_PREFIX =
     TextAttributesKey.createTextAttributesKey("XML_NS_PREFIX", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
   public static final TextAttributesKey XML_ATTRIBUTE_NAME =
@@ -36,8 +36,13 @@ public final class XmlHighlighterColors {
     TextAttributesKey.createTextAttributesKey("HTML_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
   public static final TextAttributesKey HTML_TAG =
     TextAttributesKey.createTextAttributesKey("HTML_TAG", DefaultLanguageHighlighterColors.MARKUP_TAG);
+  
   public static final TextAttributesKey HTML_TAG_NAME =
     TextAttributesKey.createTextAttributesKey("HTML_TAG_NAME", DefaultLanguageHighlighterColors.KEYWORD);
+  public static final TextAttributesKey HTML_CUSTOM_TAG_NAME = 
+    TextAttributesKey.createTextAttributesKey("HTML_CUSTOM_TAG_NAME", HTML_TAG_NAME);
+  
+  
   public static final TextAttributesKey HTML_ATTRIBUTE_NAME =
     TextAttributesKey.createTextAttributesKey("HTML_ATTRIBUTE_NAME", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
   public static final TextAttributesKey HTML_ATTRIBUTE_VALUE =

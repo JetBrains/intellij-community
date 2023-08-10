@@ -41,7 +41,7 @@ class GitExternalFileNotifierTest : GitSingleRepoTest() {
   }
 
   fun `test no notification after branch checkout`() {
-    val worker = GitBranchWorker(project, git, GitBranchWorkerTest.TestUiHandler())
+    val worker = GitBranchWorker(project, git, GitBranchWorkerTest.TestUiHandler(project))
 
     worker.checkoutNewBranch("new", listOf(repo))
     val file1Name = "file1.txt"
@@ -85,7 +85,11 @@ class GitExternalFileNotifierTest : GitSingleRepoTest() {
   private fun assertAdded(file: File) =
     assertTrue(changeListManager.getStatus(getVirtualFile(file)) == FileStatus.ADDED)
 
-  private fun waitForAllEvents() = GitVcs.getInstance(project).vfsListener.waitForAllEventsProcessedInTestMode()
+  private fun waitForAllEvents() {
+    updateUntrackedFiles()
+    changeListManager.waitEverythingDoneInTestMode()
+    GitVcs.getInstance(project).vfsListener.waitForExternalFilesEventsProcessedInTestMode()
+  }
 
   private fun assertNotificationByMessage(notificationContent: String) =
     vcsNotifier.notifications.find { it.content == notificationContent }

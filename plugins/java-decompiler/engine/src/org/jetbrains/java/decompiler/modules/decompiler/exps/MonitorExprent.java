@@ -4,11 +4,11 @@
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class MonitorExprent extends Exprent {
@@ -61,11 +61,10 @@ public class MonitorExprent extends Exprent {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof MonitorExprent)) return false;
+    if (!(o instanceof MonitorExprent me)) return false;
 
-    MonitorExprent me = (MonitorExprent)o;
     return monType == me.getMonType() &&
-           InterpreterUtil.equalObjects(value, me.getValue());
+           Objects.equals(value, me.getValue());
   }
 
   public int getMonType() {

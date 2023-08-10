@@ -25,9 +25,6 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 
-/**
- * @author vlan
- */
 public class PyiResolveTest extends PyMultiFileResolveTestCase {
   @Override
   protected String getTestDataPath() {

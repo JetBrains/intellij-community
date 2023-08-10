@@ -1,35 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse
 
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.TempDirectoryExtension
+import com.intellij.testFramework.rules.TestNameExtension
 import com.intellij.util.io.copy
-import org.junit.Assume.assumeTrue
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TestName
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.div
 
-@ExperimentalPathApi
+@TestApplication
 class EclipseEmlTest {
   @JvmField
-  @Rule
-  val tempDirectory = TempDirectory()
+  @RegisterExtension
+  val tempDirectory = TempDirectoryExtension()
 
   @JvmField
-  @Rule
-  val testName = TestName()
+  @RegisterExtension
+  val testName = TestNameExtension()
 
   @Test
   fun testSrcInZip() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     doTest()
   }
 
@@ -48,11 +43,4 @@ class EclipseEmlTest {
     val commonRoot = eclipseTestDataRoot / "common" / "testModuleWithClasspathStorage"
     checkEmlFileGeneration(listOf(testRoot, commonRoot), tempDirectory, listOf("test" to "test/$testName"), edit, updateExpectedDir)
   }
-
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
 }

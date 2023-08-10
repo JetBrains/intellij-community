@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.reference.SoftReference;
@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 
-/**
- * @author peter
- */
 final class UserDataInterner {
   private static final Map<MapReference, MapReference> ourCache = new LinkedHashMap<>(20, true) {
     @Override

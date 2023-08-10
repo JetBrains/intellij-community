@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.event;
 
 import com.intellij.openapi.editor.Document;
@@ -11,8 +11,7 @@ public abstract class DocumentEvent extends EventObject {
     super(document);
   }
 
-  @NotNull
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return (Document)getSource();
   }
 
@@ -71,11 +70,9 @@ public abstract class DocumentEvent extends EventObject {
   public abstract int getOldLength();
   public abstract int getNewLength();
 
-  @NotNull
-  public abstract CharSequence getOldFragment();
+  public abstract @NotNull CharSequence getOldFragment();
 
-  @NotNull
-  public abstract CharSequence getNewFragment();
+  public abstract @NotNull CharSequence getNewFragment();
 
   public abstract long getOldTimeStamp();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
@@ -8,15 +8,13 @@ import org.jetbrains.annotations.NotNull;
 final class EmptyFMap implements KeyFMap {
   private static final Key[] EMPTY_KEYS_ARRAY = {};
 
-  @NotNull
   @Override
-  public <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
+  public @NotNull <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
     return new OneElementFMap<>(key, value);
   }
 
-  @NotNull
   @Override
-  public KeyFMap minus(@NotNull Key<?> key) {
+  public @NotNull KeyFMap minus(@NotNull Key<?> key) {
     return this;
   }
 
@@ -31,7 +29,7 @@ final class EmptyFMap implements KeyFMap {
   }
 
   @Override
-  public Key @NotNull [] getKeys() {
+  public @NotNull Key @NotNull [] getKeys() {
     return EMPTY_KEYS_ARRAY;
   }
 
@@ -51,7 +49,7 @@ final class EmptyFMap implements KeyFMap {
   }
 
   @Override
-  public boolean equalsByReference(KeyFMap other) {
+  public boolean equalsByReference(@NotNull KeyFMap other) {
     return other == this;
   }
 

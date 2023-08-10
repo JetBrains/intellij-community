@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-/**
- * @author peter
- */
 public class MockDomFileElement extends UserDataHolderBase implements DomFileElement<DomElement> {
   private DomFileDescription<DomElement> myFileDescription;
 

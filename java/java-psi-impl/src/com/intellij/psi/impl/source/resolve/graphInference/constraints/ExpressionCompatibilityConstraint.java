@@ -56,7 +56,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         }
       }
 
-      if (exprType != null && exprType != PsiType.NULL) {
+      if (exprType != null && exprType != PsiTypes.nullType()) {
         if (exprType instanceof PsiDisjunctionType) {
           exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
         }
@@ -175,7 +175,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         }
         if (callSession.repeatInferencePhases()) {
 
-          if (PsiType.VOID.equals(targetType)) {
+          if (PsiTypes.voidType().equals(targetType)) {
             return callSession;
           }
 
@@ -242,7 +242,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
                                             PsiType returnType,
                                             Set<? super InferenceVariable> result) {
     if (psiExpression instanceof PsiLambdaExpression) {
-      if (!PsiType.VOID.equals(returnType)) {
+      if (!PsiTypes.voidType().equals(returnType)) {
         final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)psiExpression);
         for (PsiExpression expression : returnExpressions) {
           final Set<InferenceVariable> resultInputVars = createSelfConstraint(returnType, expression).getInputVariables(session);

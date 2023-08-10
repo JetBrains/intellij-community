@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.lang.jvm.JvmModifier
@@ -156,7 +156,8 @@ private val ignoredFqnsInSafeCast = setOf(
 )
 
 private fun fallsBackToConstructorCS(clazz: PsiClass, literal: GrListOrMap): Boolean {
-  if (clazz.qualifiedName == JAVA_LANG_CLASS) {
+  if (clazz.qualifiedName in ignoredFqnsInTransformation && clazz.qualifiedName != JAVA_LANG_CHARACTER) {
+    // GROOVY-6802, GROOVY-6803
     return false
   }
   val literalClass = (literal.type as? PsiClassType)?.resolve()

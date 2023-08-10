@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -53,26 +53,32 @@ public abstract class LafManager {
 
   public abstract boolean getAutodetectSupported();
 
-  public abstract void setPreferredDarkLaf(@NotNull UIManager.LookAndFeelInfo myPreferredDarkLaf);
+  public abstract void setPreferredDarkLaf(@NotNull UIManager.LookAndFeelInfo value);
 
-  public abstract void setPreferredLightLaf(@NotNull UIManager.LookAndFeelInfo myPreferredLightLaf);
+  public abstract void setPreferredLightLaf(@NotNull UIManager.LookAndFeelInfo value);
+
+  @ApiStatus.Internal
+  public abstract @Nullable EditorColorsScheme getPreviousSchemeForLaf(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo);
+
+  @ApiStatus.Internal
+  public abstract void setRememberSchemeForLaf(boolean rememberSchemeForLaf);
+
+  @ApiStatus.Internal
+  public abstract void rememberSchemeForLaf(@NotNull EditorColorsScheme scheme);
+
+  @ApiStatus.Internal
+  public void applyDensity() { }
 
   /**
    * @deprecated Use {@link LafManagerListener#TOPIC}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addLafManagerListener(@NotNull LafManagerListener listener);
 
   /**
    * @deprecated Use {@link LafManagerListener#TOPIC}
    */
-  @Deprecated
-  public abstract void addLafManagerListener(@NotNull LafManagerListener listener, @NotNull Disposable disposable);
-
-  /**
-   * @deprecated Use {@link LafManagerListener#TOPIC}
-   */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void removeLafManagerListener(@NotNull LafManagerListener listener);
 
   public static final class LafReference {
@@ -114,4 +120,10 @@ public abstract class LafManager {
       return Objects.hash(name, className, themeId);
     }
   }
+
+  @Nullable
+  public abstract UIManager.LookAndFeelInfo getDefaultLightLaf();
+
+  @Nullable
+  public abstract UIManager.LookAndFeelInfo getDefaultDarkLaf();
 }

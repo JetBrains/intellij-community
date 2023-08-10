@@ -1,43 +1,49 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.application.subscribe
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdateNotification.InstallUpdateNotification
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdateNotification.RejectUpdateNotification
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.util.SystemProperties
 import com.intellij.util.ui.UIUtil
 import org.junit.Assert
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import java.awt.event.KeyEvent
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import javax.swing.JPanel
 
-class JdkUpdateTest : LightPlatformTestCase() {
+@RunsInEdt
+class JdkUpdateTest : BareTestFixtureTestCase() {
   private val myNotifications = Collections.synchronizedList(ArrayList<Notification>())
 
-  override fun setUp() {
-    super.setUp()
+  @Rule @JvmField val tempDir = TempDirectory()
+  @Rule @JvmField val runInEdt = EdtRule()
+
+  @Before fun setUp() {
     service<JdkInstallerStore>().loadState(JdkInstallerState())
 
     val key = "jdk.downloader.home"
-    val oldHome = System.getProperty(key)
-    System.setProperty(key, createTempDir("jdk-install-home").toString())
-    disposeOnTearDown(Disposable {
-      if (oldHome != null) {
-        System.setProperty(key, oldHome)
-      } else {
-        System.clearProperty(key)
-      }
-    })
+    val oldHome = System.setProperty(key, tempDir.newDirectory("jdk-install-home").toString())
+    Disposer.register(testRootDisposable, Disposable { SystemProperties.setProperty(key, oldHome) })
 
     Notifications.TOPIC.subscribe(testRootDisposable, object: Notifications {
       override fun notify(notification: Notification) {
@@ -45,26 +51,24 @@ class JdkUpdateTest : LightPlatformTestCase() {
       }
     })
 
+    doEventsWhile(1)
     listOurNotifications().forEach { it.expire() }
-    UIUtil.dispatchAllInvocationEvents()
+    listOurActions().forEach { it.reachTerminalState() }
+  }
+
+  private fun listOurActions(): List<JdkUpdateNotification> {
+    doEventsWhile(1)
+    return service<JdkUpdaterNotifications>().getActions().map { it.jdkUpdateNotification }.filter { it.isUpdateActionVisible }
   }
 
   private fun listOurNotifications() = myNotifications
     .filter { !it.isExpired }
     .filter { it.groupId == "JDK Update" || it.groupId == "JDK Update Error" }
 
-  private fun listOurExpiredNotifications() = myNotifications
-    .filter { it.isExpired }
-    .filter { it.groupId == "JDK Update" || it.groupId == "JDK Update Error" }
-
-  private fun expectSingleSuggestUpdateNotification() : Notification {
-    return listOurNotifications().single { it.groupId == "JDK Update" }
-  }
-
-  private fun newNotification(sdkName: String, oldVersion: JdkItem = mockZipOld, newVersion: JdkItem = mockZipNew): JdkUpdateNotification {
-    val oldSdk = ProjectJdkTable.getInstance().createSdk(sdkName, JavaSdk.getInstance())
+  private fun newNotification(sdkName: String, oldVersion: JdkItem = mockZipOld, newVersion: JdkItem = mockZipNew): JdkUpdateNotification? {
+    val oldSdk = ProjectJdkTable.getInstance().findJdk(sdkName) ?: ProjectJdkTable.getInstance().createSdk(sdkName, JavaSdk.getInstance())
     oldSdk.sdkModificator.apply {
-      homePath = createTempDir("mock-old-home").toString()
+      homePath = tempDir.newDirectory().toString()
       versionString = oldVersion.versionString
     }.commitChanges()
 
@@ -72,31 +76,30 @@ class JdkUpdateTest : LightPlatformTestCase() {
       Disposer.register(testRootDisposable, oldSdk)
     }
 
-    return JdkUpdateNotification(oldSdk, oldVersion, newVersion) {}
+    val notification = service<JdkUpdaterNotifications>().showNotification(oldSdk, oldVersion, newVersion)
+    doEventsWhile(5)
+    return notification
   }
 
-  fun `test the same popup is not shown twice`() {
-    val notification = newNotification("old-sdk")
+  @Test fun `test the same popup is not shown twice`() {
+    newNotification("old-sdk")
 
-    notification.showNotificationIfAbsent()
-    notification.showNotificationIfAbsent()
-    notification.showNotificationIfAbsent()
-
+    val actions = listOurActions()
     val notifications = listOurNotifications()
-    val expired = listOurExpiredNotifications()
-    Assert.assertEquals("$notifications", 1, notifications.size)
-    Assert.assertEquals("$expired", 0, expired.size)
+    Assert.assertEquals("$notifications", 0, notifications.size)
+    Assert.assertEquals("$actions", 1, actions.size)
   }
 
-  fun `test jdk update`() {
-    val update = newNotification("old-sdk2")
-    update.showNotificationIfAbsent()
+  @Test fun `test jdk update`() {
+    val update = newNotification("old-sdk2")!!
+    Assert.assertEquals(setOf(update), listOurActions().toSet())
 
-    val n = expectSingleSuggestUpdateNotification()
-    n.fireAction<InstallUpdateNotification>()
-    UIUtil.dispatchAllInvocationEvents()
+    update.fireAction()
+    doEventsWhile(5)
 
+    val ourActions = listOurActions()
     val ourNotifications = listOurNotifications()
+    Assert.assertTrue("$ourActions", ourActions.isEmpty())
     Assert.assertTrue("$ourNotifications", ourNotifications.isEmpty())
     Assert.assertEquals(update.newItem.versionString, update.jdk.versionString)
     Assert.assertTrue(update.isTerminated())
@@ -107,90 +110,60 @@ class JdkUpdateTest : LightPlatformTestCase() {
     Assert.assertEquals(service<JdkInstallerStore>().findInstallations(update.oldItem), listOf<Path>())
   }
 
-  fun `test jdk update failed`() {
-    val update = newNotification("old-sdk2", newVersion = mockZipNewBroken)
-    update.showNotificationIfAbsent()
+  @Test fun `test jdk update failed`() {
+    val update = newNotification("old-sdk2", newVersion = mockZipNewBroken)!!
+    Assert.assertEquals(setOf(update), listOurActions().toSet())
 
-    val n = expectSingleSuggestUpdateNotification()
-    n.fireAction<InstallUpdateNotification>()
-    UIUtil.dispatchAllInvocationEvents()
+    update.fireAction()
+    doEventsWhile(2)
 
+    val ourActions = listOurActions()
     val ourNotifications = listOurNotifications()
+    Assert.assertEquals(setOf(update), listOurActions().toSet())
     Assert.assertEquals("$ourNotifications", 1, ourNotifications.size)
     Assert.assertEquals("$ourNotifications", 1, ourNotifications.filter { it.type == NotificationType.ERROR }.size)
     Assert.assertEquals(update.oldItem.versionString, update.jdk.versionString)
     Assert.assertTrue(!update.isTerminated())
-
-    update.showNotificationIfAbsent()
-    Assert.assertEquals("$ourNotifications", ourNotifications, listOurNotifications())
   }
 
-  fun `test reject is not lost`() {
-    val update = newNotification("old-sdk2")
-    update.showNotificationIfAbsent()
-
-    val n = expectSingleSuggestUpdateNotification()
-    n.fireAction<RejectUpdateNotification>()
-    UIUtil.dispatchAllInvocationEvents()
-
-    val ourNotifications = listOurNotifications()
-    Assert.assertTrue("$ourNotifications", ourNotifications.isEmpty())
-    Assert.assertEquals(update.oldItem.versionString, update.jdk.versionString)
-    Assert.assertTrue(update.isTerminated())
-    Assert.assertFalse(service<JdkUpdaterState>().isAllowed(update.jdk, update.newItem))
-  }
-
-  private inline fun <reified T: NotificationAction> Notification.fireAction() {
-    val action = actions.filterIsInstance<T>().single()
-    Notification.fire(this, action)
-  }
-
-
-  fun `test merge notifications correctly`() {
-    val old1 = newNotification("old-1")
+  @Test fun `test merge notifications correctly`() {
+    val old1 = newNotification("old-1")!!
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
 
-    val notifications = listOurNotifications()
-    val expired = listOurExpiredNotifications()
-    Assert.assertEquals("$notifications", 1, notifications.size)
-    Assert.assertEquals("$expired", 0, expired.size)
+    val actions = listOurActions()
+    Assert.assertEquals("$actions", 1, actions.size)
   }
 
-  fun `test merge notifications correctly 2`() {
-    val old1 = newNotification("old-1")
-    val old2 = newNotification("old-2")
+  @Test fun `test merge notifications correctly 2`() {
+    val old1 = newNotification("old-1")!!
+    val old2 = newNotification("old-2")!!
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
     service<JdkUpdaterNotifications>().showNotification(old2.jdk, old2.oldItem, old2.newItem)
     service<JdkUpdaterNotifications>().showNotification(old2.jdk, old2.oldItem, old2.newItem)
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
 
-    val notifications = listOurNotifications()
-    val expired = listOurExpiredNotifications()
-    Assert.assertEquals("$notifications", 2, notifications.size)
-    Assert.assertEquals("$expired", 0, expired.size)
+    val actions = listOurActions()
+    Assert.assertEquals("$actions", 2, actions.size)
   }
 
-  fun `test replace notifications correctly 2`() {
-    val old1 = newNotification("old-1")
+  @Test fun `test replace notifications correctly 2`() {
+    val old1 = newNotification("old-1")!!
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem.copy(jdkVersion = "17.0.777"))
 
-    val notifications = listOurNotifications()
-    val expired = listOurExpiredNotifications()
-    Assert.assertEquals("$notifications", 1, notifications.size)
-    Assert.assertTrue("$notifications", notifications.single().content.contains("17.0.777"))
-    Assert.assertEquals("$expired", 1, expired.size)
-    Assert.assertFalse("$notifications", expired.single().content.contains("17.0.777"))
+    val actions = listOurActions()
+    Assert.assertEquals("$actions", 1, actions.size)
+    Assert.assertTrue("$actions", actions.single().newItem.jdkVersion == "17.0.777")
   }
 
-  fun `test replace notifications correctly 3`() {
-    val old1 = newNotification("old-1")
+  @Test fun `test replace notifications correctly 3`() {
+    val old1 = newNotification("old-1")!!
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
 
-    Assert.assertEquals(1, listOurNotifications().size)
-    Assert.assertEquals(0, listOurExpiredNotifications().size)
+    doEventsWhile(5)
+    Assert.assertEquals(1, listOurActions().size)
 
     runWriteAction {
       old1.jdk.sdkModificator.also { it.versionString = "new JDK version" }.commitChanges()
@@ -198,25 +171,22 @@ class JdkUpdateTest : LightPlatformTestCase() {
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
 
     //notification must expire and update
-    Assert.assertEquals(1, listOurNotifications().size)
-    Assert.assertEquals(1, listOurExpiredNotifications().size)
+    Assert.assertEquals(1, listOurActions().size)
   }
 
-  fun `test replace notifications correctly 4`() {
-    val old1 = newNotification("old-1")
+  @Test fun `test replace notifications correctly 4`() {
+    val old1 = newNotification("old-1")!!
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
 
-    Assert.assertEquals(1, listOurNotifications().size)
-    Assert.assertEquals(0, listOurExpiredNotifications().size)
+    Assert.assertEquals(1, listOurActions().size)
 
     runWriteAction {
-      old1.jdk.sdkModificator.also { it.homePath = it.homePath + "-123" }.commitChanges()
+      old1.jdk.sdkModificator.also { it.homePath += "-123" }.commitChanges()
     }
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
 
     //notification must expire and update
-    Assert.assertEquals(1, listOurNotifications().size)
-    Assert.assertEquals(1, listOurExpiredNotifications().size)
+    Assert.assertEquals(1, listOurActions().size)
   }
 }
 
@@ -270,3 +240,27 @@ private fun jdkItemForTest(url: String,
   sharedIndexAliases = listOf(),
   saveToFile = {}
 )
+
+private fun doEventsWhile(iterations: Int = Int.MAX_VALUE / 2,
+                          condition: () -> Boolean = { true }) {
+  repeat(iterations) {
+    if (!condition()) return
+
+    ApplicationManager.getApplication().invokeAndWait {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+      UIUtil.dispatchAllInvocationEvents()
+    }
+
+    if (!condition()) return
+    Thread.sleep(30)
+  }
+}
+
+private fun runAction(theAction: AnAction) {
+  ApplicationManager.getApplication().invokeAndWait {
+    val event = KeyEvent(JPanel(), 1, 0, 0, 0, ' ')
+    ActionManager.getInstance().tryToExecute(theAction, event, null, null, true)
+  }
+}
+
+private fun JdkUpdateNotification.fireAction() = runAction(updateAction)

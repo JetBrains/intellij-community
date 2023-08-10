@@ -13,7 +13,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.isThisRef
 /**
  * @author Max Medvedev
  */
-public class GrResolverPolicy implements GrControlFlowPolicy {
+public final class GrResolverPolicy implements GrControlFlowPolicy {
   @Override
   public boolean isReferenceAccepted(@NotNull GrReferenceExpression ref) {
     return !ref.isQualified() || isThisRef(ref.getQualifierExpression());

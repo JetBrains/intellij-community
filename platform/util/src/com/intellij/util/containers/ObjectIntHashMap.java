@@ -1,43 +1,114 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
-import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * return -1 instead of 0 if no such mapping exists
+ * @deprecated Use {@link Object2IntOpenHashMap}
  */
-public class ObjectIntHashMap<K> extends TObjectIntHashMap<K> {
-  public ObjectIntHashMap(int initialCapacity) {
-    super(initialCapacity);
-  }
-
-  public ObjectIntHashMap(@NotNull TObjectHashingStrategy<? super K> strategy) {
-    super((TObjectHashingStrategy<K>)strategy);
-  }
-
-  public ObjectIntHashMap(int initialCapacity, @NotNull TObjectHashingStrategy<? super K> strategy) {
-    super(initialCapacity, (TObjectHashingStrategy<K>)strategy);
-  }
-
+@Deprecated
+public class ObjectIntHashMap<K> implements ObjectIntMap<K> {
+  private final Object2IntMap<K> myMap;
   public ObjectIntHashMap() {
-    super();
+    this(10);
+  }
+
+  public ObjectIntHashMap(int initialCapacity) {
+    myMap = new Object2IntOpenHashMap<>(initialCapacity);
+    myMap.defaultReturnValue(-1);
   }
 
   @Override
-  public final int get(K key) {
-    return get(key, -1);
+  public int get(@NotNull K key) {
+    return myMap.getInt(key);
   }
 
-  public final int get(K key, int defaultValue) {
-    int index = index(key);
-    return index < 0 ? defaultValue : _values[index];
+  @Override
+  public int getOrDefault(@NotNull K key, int defaultValue) {
+    return myMap.getOrDefault(key, defaultValue);
   }
 
-  public int put(K key, int value, int defaultValue) {
-    int index = index(key);
-    int prev = super.put(key, value);
-    return index >= 0 ? prev : defaultValue;
+  @Override
+  public int put(@NotNull K key, int value) {
+    return myMap.put(key, value);
+  }
+
+  @Override
+  public int remove(@NotNull K key) {
+    return myMap.removeInt(key);
+  }
+
+  @Override
+  public boolean containsKey(@NotNull K key) {
+    return myMap.containsKey(key);
+  }
+
+  @Override
+  public void clear() {
+    myMap.clear();
+  }
+
+  @Override
+  public @NotNull Set<K> keySet() {
+    return myMap.keySet();
+  }
+
+  @Override
+  public int size() {
+    return myMap.size();
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return myMap.isEmpty();
+  }
+
+  @Override
+  public int @NotNull [] values() {
+    return myMap.values().toIntArray();
+  }
+
+  @Override
+  public boolean containsValue(int value) {
+    return myMap.containsValue(value);
+  }
+
+  @Override
+  public @NotNull Iterable<Entry<K>> entries() {
+    return ContainerUtil.map(myMap.object2IntEntrySet(), e-> new IntEntry(e));
+  }
+
+  /**
+   * @deprecated use {@link #getOrDefault(Object, int)}
+   */
+  @Deprecated
+  public final int get(@NotNull K key, int defaultValue) {
+    return getOrDefault(key, defaultValue);
+  }
+
+  private class IntEntry implements Entry<K> {
+    private final Object2IntMap.Entry<? extends K> myEntry;
+
+    IntEntry(@NotNull Object2IntMap.Entry<? extends K> entry) { myEntry = entry; }
+
+    @Override
+    public @NotNull K getKey() {
+      return myEntry.getKey();
+    }
+
+    @Override
+    public int getValue() {
+      return myEntry.getIntValue();
+    }
+
+    @Override
+    public String toString() {
+      return myEntry.toString();
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style.parameterToEntry;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -59,9 +59,6 @@ import java.util.HashSet;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createTypeByFQClassName;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP;
 
-/**
- * @author ilyas
- */
 public class ConvertParameterToMapEntryIntention extends Intention {
 
   private static final Logger LOG =
@@ -85,7 +82,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     final GrParameter firstParam = getFirstParameter(owner);
 
     switch (analyzeForNamedArguments(owner, occurrences)) {
-      case ERROR: {
+      case ERROR -> {
         final GrNamedElement namedElement = getReferencedElement(owner);
         LOG.assertTrue(namedElement != null);
         final String msg;
@@ -98,16 +95,15 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         showErrorMessage(msg, project);
         return;
       }
-      case MUST_BE_MAP: {
+      case MUST_BE_MAP -> {
         if (firstParam == getAppropriateParameter(element)) {
           final String msg = GroovyBundle.message("convert.cannot.itself");
           showErrorMessage(msg, project);
           return;
         }
         performRefactoring(element, owner, occurrences, false, null, false);
-        break;
       }
-      case IS_NOT_MAP: {
+      case IS_NOT_MAP -> {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
           final @NlsSafe String[] possibleNames = generateValidNames(MY_POSSIBLE_NAMES, firstParam);
 
@@ -134,7 +130,6 @@ public class ConvertParameterToMapEntryIntention extends Intention {
           performRefactoring(element, owner, occurrences, true,
                              (new GroovyValidationUtil.ParameterNameSuggester("attrs", firstParam)).generateName(), true);
         }
-        break;
       }
     }
   }
@@ -280,8 +275,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       final Collection<PsiReference> references = ReferencesSearch.search(param).findAll();
       for (PsiReference ref : references) {
         final PsiElement elt = ref.getElement();
-        if (elt instanceof GrReferenceExpression) {
-          GrReferenceExpression expr = (GrReferenceExpression)elt;
+        if (elt instanceof GrReferenceExpression expr) {
           final GrExpression newExpr = factory.createExpressionFromText(mapName + "." + paramName);
           expr.replaceWithExpression(newExpr, true);
         }
@@ -312,8 +306,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     if (element instanceof GrParameter) {
       return (GrParameter)element;
     }
-    if (element instanceof GrReferenceExpression) {
-      final GrReferenceExpression expr = (GrReferenceExpression)element;
+    if (element instanceof GrReferenceExpression expr) {
       final PsiElement resolved = expr.resolve();
       LOG.assertTrue(resolved instanceof GrParameter);
       return ((GrParameter)resolved);
@@ -338,13 +331,11 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   /**
    * @param owner       Method or closure
    * @param occurrences references to owner
-   * @return true if there we use owner's first parameter as map, false if we need to add ne one as fist map
    */
   private static FIRST_PARAMETER_KIND analyzeForNamedArguments(final GrParameterListOwner owner, final Collection<PsiElement> occurrences) {
     boolean thereAreNamedArguments = false;
     for (PsiElement occurrence : occurrences) {
-      if (occurrence instanceof GrReferenceExpression && occurrence.getParent() instanceof GrCall) {
-        final GrCall call = (GrCall)occurrence.getParent();
+      if (occurrence instanceof GrReferenceExpression && occurrence.getParent() instanceof GrCall call) {
         final GrArgumentList args = call.getArgumentList();
         if (args != null && args.getNamedArguments().length > 0) {
           thereAreNamedArguments = true;
@@ -443,9 +434,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         for (final PsiReference reference : references) {
           ApplicationManager.getApplication().runReadAction(() -> {
             final PsiElement element = reference.getElement();
-            if (element != null) {
-              occurrences.add(element);
-            }
+            occurrences.add(element);
           });
         }
       }
@@ -483,8 +472,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       if (element instanceof GrParameter) {
         parameter = (GrParameter)element;
       }
-      else if (element instanceof GrReferenceExpression) {
-        GrReferenceExpression expr = (GrReferenceExpression)element;
+      else if (element instanceof GrReferenceExpression expr) {
         if (expr.getQualifierExpression() != null) return false;
         final PsiElement resolved = expr.resolve();
         if (resolved instanceof GrParameter) {

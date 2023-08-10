@@ -10,21 +10,19 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.content.BaseLabel
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.UIBundle
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.*
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.learn.course.KLesson
 
-class JavaInheritanceHierarchyLesson(module: Module)
-  : KLesson("java.inheritance.hierarchy.lesson", JavaLessonsBundle.message("java.inheritance.hierarchy.lesson.name"), module, "JAVA") {
-  override val existedFile: String = "src/InheritanceHierarchySample.java"
+class JavaInheritanceHierarchyLesson
+  : KLesson("java.inheritance.hierarchy.lesson", JavaLessonsBundle.message("java.inheritance.hierarchy.lesson.name")) {
+  override val sampleFilePath: String = "src/InheritanceHierarchySample.java"
 
   override val lessonContent: LessonContext.() -> Unit = {
+    sdkConfigurationTasks()
+
     caret("foo(demo)")
 
     actionTask("GotoImplementation") {
@@ -39,13 +37,13 @@ class JavaInheritanceHierarchyLesson(module: Module)
         (virtualFile.name == "DerivedClass1.java" || virtualFile.name == "DerivedClass2.java") && atDeclarationPosition()
       }
 
-      restoreAfterStateBecomeFalse {
+      restoreState(delayMillis = defaultRestoreDelay) {
         focusOwner is EditorComponentImpl
       }
 
       test {
         Thread.sleep(1000)
-        GuiTestUtil.shortcut(Key.ENTER)
+        invokeActionViaShortcut("ENTER")
       }
     }
 
@@ -61,8 +59,8 @@ class JavaInheritanceHierarchyLesson(module: Module)
 
     task("GotoImplementation") {
       text(JavaLessonsBundle.message("java.inheritance.hierarchy.invoke.implementations.again", icon(AllIcons.Gutter.ImplementedMethod),
-                                 action(it)))
-      triggerByUiComponentAndHighlight { ui: InplaceButton ->
+                                     action(it)))
+      triggerAndFullHighlight().component { ui: InplaceButton ->
         ui.toolTipText == IdeBundle.message("show.in.find.window.button.name")
       }
       restoreIfModifiedOrMoved()
@@ -77,7 +75,7 @@ class JavaInheritanceHierarchyLesson(module: Module)
       text(JavaLessonsBundle.message("java.inheritance.hierarchy.open.in.find.tool.window", findToolWindow(),
                                      icon(ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND,
                                                                                                  AllIcons.General.Pin_tab))))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: BaseLabel ->
+      triggerUI().component { ui: BaseLabel ->
         ui.text == (CodeInsightBundle.message("goto.implementation.findUsages.title", "foo")) ||
         ui.text == (JavaAnalysisBundle.message("navigate.to.overridden.methods.title", "foo"))
       }
@@ -94,9 +92,11 @@ class JavaInheritanceHierarchyLesson(module: Module)
       }
     }
 
-    actionTask("HideActiveWindow") {
+    task("HideActiveWindow") {
+      text(JavaLessonsBundle.message("java.inheritance.hierarchy.hide.find.tool.window", action(it), findToolWindow()))
+      checkToolWindowState("Find", false)
       restoreIfModifiedOrMoved()
-      JavaLessonsBundle.message("java.inheritance.hierarchy.hide.find.tool.window", action(it), findToolWindow())
+      test { actions(it) }
     }
 
     actionTask("MethodHierarchy") {
@@ -104,9 +104,11 @@ class JavaInheritanceHierarchyLesson(module: Module)
       JavaLessonsBundle.message("java.inheritance.hierarchy.open.method.hierarchy", action(it))
     }
 
-    actionTask("HideActiveWindow") {
+    task("HideActiveWindow") {
+      text(JavaLessonsBundle.message("java.inheritance.hierarchy.hide.method.hierarchy", hierarchyToolWindow(), action(it)))
+      checkToolWindowState("Hierarchy", false)
       restoreIfModifiedOrMoved()
-      JavaLessonsBundle.message("java.inheritance.hierarchy.hide.method.hierarchy", hierarchyToolWindow(), action(it))
+      test { actions(it) }
     }
 
     actionTask("TypeHierarchy") {
@@ -115,12 +117,12 @@ class JavaInheritanceHierarchyLesson(module: Module)
     }
 
     text(JavaLessonsBundle.message("java.inheritance.hierarchy.last.note",
-                               action("GotoImplementation"),
-                               action("GotoSuperMethod"),
-                               action("MethodHierarchy"),
-                               action("TypeHierarchy"),
-                               action("GotoAction"),
-                               strong("hierarchy")))
+                                   action("GotoImplementation"),
+                                   action("GotoSuperMethod"),
+                                   action("MethodHierarchy"),
+                                   action("TypeHierarchy"),
+                                   action("GotoAction"),
+                                   strong("hierarchy")))
   }
 
   private fun TaskRuntimeContext.atDeclarationPosition(): Boolean {
@@ -131,4 +133,9 @@ class JavaInheritanceHierarchyLesson(module: Module)
 
   private fun TaskContext.findToolWindow() = strong(UIBundle.message("tool.window.name.find"))
   private fun TaskContext.hierarchyToolWindow() = strong(UIBundle.message("tool.window.name.hierarchy"))
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(JavaLessonsBundle.message("java.inheritance.hierarchy.help.link"),
+         LessonUtil.getHelpLink("viewing-structure-and-hierarchy-of-the-source-code.html")),
+  )
 }

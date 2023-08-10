@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.google.common.collect.ImmutableSortedSet;
@@ -31,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrEnumTypeDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.transformations.impl.GroovyObjectTransformationSupport;
 
@@ -39,6 +38,7 @@ import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GroovyToJavaGenerator.convertToJavaIdentifier;
 
 /**
  * @author Maxim.Medvedev
@@ -117,7 +117,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       TypeWriter.writeType(builder, retType, method, classNameProvider);
       builder.append(' ');
     }
-    builder.append(name);
+    builder.append(convertToJavaIdentifier(name));
 
     if (method instanceof GroovyPsiElement) {
       context.searchForLocalVarsToWrap((GroovyPsiElement)method);
@@ -180,7 +180,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       builder.append("this");
     }
     else {
-      if (!PsiType.VOID.equals(context.typeProvider.getReturnType(method))) {
+      if (!PsiTypes.voidType().equals(context.typeProvider.getReturnType(method))) {
         builder.append("return ");
       }
       builder.append(method.getName());
@@ -233,7 +233,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     final PsiFile scriptFile = containingClass.getContainingFile();
     LOG.assertTrue(scriptFile instanceof GroovyFile);
     LOG.assertTrue(((GroovyFile)scriptFile).isScript());
-    final List<GrStatement> exitPoints = ControlFlowUtils.collectReturns(scriptFile);
+    final List<GrStatement> exitPoints = ControlFlowUtils.collectReturns((GroovyFile)scriptFile);
 
 
     ExpressionContext extended = context.extend();
@@ -342,7 +342,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
                                                                 "    super();\n" +
                                                                 "  }\n" +
                                                                 "}");
-      ContainerUtil.addAll(result, tempClass.getCodeConstructors());
+      result = ContainerUtil.append(result, tempClass.getCodeConstructors());
     }
     return result;
   }

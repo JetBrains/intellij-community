@@ -1,10 +1,10 @@
-// "Replace 'switch' with 'if'" "true"
+// "Replace 'switch' with 'if'" "true-preview"
 class X {
   void test4() throws IOException {
     String variable = "abc";
-      if ("abc".equals(variable)) {
+      if (variable.equals("abc")) {
           String s1 = "abcd";
-      } else if ("def".equals(variable)) {
+      } else if (variable.equals("def")) {
           String s1 = "abcd";
           myFunction(s1);
       } else {

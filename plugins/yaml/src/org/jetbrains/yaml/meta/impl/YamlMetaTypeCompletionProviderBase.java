@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -88,7 +89,6 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       }
       if (combinedText.charAt(positionOffset - 1) == ':') {
         trace("Completion rejected: misplaced just after key position : " + YamlDebugUtil.getDebugInfo(params.getPosition()));
-        return;
       }
     }
 
@@ -112,8 +112,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       }
     }
 
-    if (insertedScalar.getParent() instanceof YAMLSequenceItem) {
-      YAMLSequenceItem currentItem = (YAMLSequenceItem)insertedScalar.getParent();
+    if (insertedScalar.getParent() instanceof YAMLSequenceItem currentItem) {
 
       List<YAMLSequenceItem> siblingItems = Optional.ofNullable(currentItem.getParent())
         .filter(YAMLSequence.class::isInstance)
@@ -132,7 +131,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
           .collect(Collectors.toMap(scalar -> scalar.getText().trim(), scalar -> scalar, (oldVal, newVal) -> newVal));
 
       boolean hadScalarInSequenceLookups = addValueCompletions(insertedScalar, metaType, result, siblingValues, params);
-      if (hadScalarInSequenceLookups) {
+      if (hadScalarInSequenceLookups && !(metaType instanceof YamlAnyOfType)) {
         return;
       }
     }
@@ -187,7 +186,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
           LookupElementBuilder l = LookupElementBuilder
             .create(completionPath, completionPath.getName())
             .withIcon(lastField.getLookupIcon())
-            .withInsertHandler(new YamlKeyInsertHandlerImpl(needsSequenceItemMark, pathToInsert.get(0)))
+            .withInsertHandler(createKeyInsertHandler(params.getPosition().getProject(), needsSequenceItemMark, pathToInsert.get(0)))
             .withTypeText(lastField.getDefaultType().getDisplayName(), true)
             .withStrikeoutness(lastField.isDeprecated());
           result.addElement(l);
@@ -197,8 +196,21 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     else {
       filteredList.stream()
         .filter(childField -> !existingByKey.containsKey(childField.getName()))
-        .forEach(childField -> registerBasicKeyCompletion(metaType, childField, result, insertedScalar, needsSequenceItemMark));
+        .forEach(childField -> {
+          var lookups = ContainerUtil.filter(childField.getKeyLookups(metaType, insertedScalar), l -> {
+            return !existingByKey.containsKey(l.getLookupString());
+          });
+
+          registerBasicKeyCompletion(result, lookups,
+                                     createKeyInsertHandler(params.getPosition().getProject(), needsSequenceItemMark, childField));
+        });
     }
+  }
+
+  protected @NotNull InsertHandler<LookupElement> createKeyInsertHandler(@Nullable Project project,
+                                                                         boolean needsSequenceItemMark,
+                                                                         @NotNull Field childField) {
+    return new YamlKeyInsertHandlerImpl(needsSequenceItemMark, childField);
   }
 
   private static boolean needsSequenceItem(@NotNull Field parentField) {
@@ -206,17 +218,11 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
            !parentField.hasRelationSpecificType(Field.Relation.OBJECT_CONTENTS);
   }
 
-  protected void registerBasicKeyCompletion(@NotNull YamlMetaType ownerClass,
-                                            @NotNull Field toBeInserted,
-                                            @NotNull CompletionResultSet result,
-                                            @NotNull PsiElement insertedScalar,
-                                            boolean needsSequenceItemMark) {
-    List<LookupElementBuilder> lookups = toBeInserted.getKeyLookups(ownerClass, insertedScalar);
+  protected void registerBasicKeyCompletion(@NotNull CompletionResultSet result,
+                                            @NotNull List<LookupElementBuilder> lookups,
+                                            @NotNull InsertHandler<LookupElement> insertHandler) {
     if (!lookups.isEmpty()) {
-      InsertHandler<LookupElement> keyInsertHandler = new YamlKeyInsertHandlerImpl(needsSequenceItemMark, toBeInserted);
-      lookups.stream()
-        .map(l -> l.withInsertHandler(keyInsertHandler))
-        .forEach(result::addElement);
+      lookups.stream().map(l -> l.withInsertHandler(insertHandler)).forEach(result::addElement);
     }
   }
 
@@ -252,7 +258,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
                                              @NotNull CompletionResultSet result,
                                              @NotNull Map<String, YAMLScalar> siblings,
                                              @NotNull CompletionParameters completionParameters) {
-    List<? extends LookupElement> lookups = meta.getValueLookups(insertedScalar, new CompletionContextImpl(completionParameters));
+    List<? extends LookupElement> lookups = meta.getValueLookups(insertedScalar, new CompletionContextImpl(completionParameters, result));
     lookups.stream()
       .filter(lookup -> !siblings.containsKey(lookup.getLookupString()))
       .forEach(result::addElement);
@@ -274,11 +280,13 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     private final CompletionType myType;
     private final int myInvocationCount;
     private final String myPrefix;
+    private final CompletionResultSet myCompletionResultSet;
 
-    CompletionContextImpl(CompletionParameters completionParameters) {
+    CompletionContextImpl(CompletionParameters completionParameters, CompletionResultSet completionResultSet) {
       myType = completionParameters.getCompletionType();
       myInvocationCount = completionParameters.getInvocationCount();
       myPrefix = computeCompletionPrefix(completionParameters);
+      myCompletionResultSet = completionResultSet;
     }
 
     @NotNull
@@ -290,6 +298,11 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     @Override
     public int getInvocationCount() {
       return myInvocationCount;
+    }
+
+    @Override
+    public @NotNull CompletionResultSet getCompletionResultSet() {
+      return myCompletionResultSet;
     }
 
     @NotNull

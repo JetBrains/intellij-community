@@ -8,8 +8,6 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 
 /**
  * See org.apache.maven.artifact.Artifact#getDependencyConflictId()
- *
- * @author Sergey Evdokimov
  */
 public class DependencyConflictId {
   private final String groupId;
@@ -71,9 +69,7 @@ public class DependencyConflictId {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof DependencyConflictId)) return false;
-
-    DependencyConflictId id = (DependencyConflictId)o;
+    if (!(o instanceof DependencyConflictId id)) return false;
 
     if (!artifactId.equals(id.artifactId)) return false;
     if (classifier != null ? !classifier.equals(id.classifier) : id.classifier != null) return false;

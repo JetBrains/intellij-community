@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -69,7 +70,7 @@ public class MouseEventAdapter<T> extends MouseAdapter implements MouseInputList
   public void mouseWheelMoved(MouseWheelEvent event) {
     if (event == null || event.isConsumed()) return;
     MouseWheelListener listener = getMouseWheelListener(myAdapter);
-    if (listener != null) listener.mouseWheelMoved(convert(event));
+    if (listener != null) listener.mouseWheelMoved(convertWheel(event));
   }
 
   protected MouseListener getMouseListener(T adapter) {
@@ -77,11 +78,13 @@ public class MouseEventAdapter<T> extends MouseAdapter implements MouseInputList
   }
 
   protected MouseMotionListener getMouseMotionListener(T adapter) {
-    return adapter instanceof MouseMotionListener ? (MouseMotionListener)adapter : null;
+    MouseListener listener = getMouseListener(adapter);
+    return listener instanceof MouseMotionListener ? (MouseMotionListener)listener : null;
   }
 
   protected MouseWheelListener getMouseWheelListener(T adapter) {
-    return adapter instanceof MouseWheelListener ? (MouseWheelListener)adapter : null;
+    MouseListener listener = getMouseListener(adapter);
+    return listener instanceof MouseWheelListener ? (MouseWheelListener)listener : null;
   }
 
   @NotNull
@@ -90,7 +93,7 @@ public class MouseEventAdapter<T> extends MouseAdapter implements MouseInputList
   }
 
   @NotNull
-  protected MouseWheelEvent convert(@NotNull MouseWheelEvent event) {
+  protected MouseWheelEvent convertWheel(@NotNull MouseWheelEvent event) {
     return event;
   }
 
@@ -103,7 +106,7 @@ public class MouseEventAdapter<T> extends MouseAdapter implements MouseInputList
 
   @NotNull
   public static MouseEvent convert(@NotNull MouseEvent event, Component source, int x, int y) {
-    return convert(event, source, event.getID(), event.getWhen(), event.getModifiers() | event.getModifiersEx(), x, y);
+    return convert(event, source, event.getID(), event.getWhen(), UIUtil.getAllModifiers(event), x, y);
   }
 
   @NotNull

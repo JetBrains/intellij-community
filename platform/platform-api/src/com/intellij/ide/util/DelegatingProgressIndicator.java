@@ -20,7 +20,13 @@ public class DelegatingProgressIndicator implements WrappedProgressIndicator, St
 
   public DelegatingProgressIndicator() {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    myIndicator = indicator == null ? new EmptyProgressIndicator() : indicator;
+    if (indicator == null) {
+      myIndicator = new EmptyProgressIndicator();
+    }
+    else {
+      myIndicator = indicator;
+      ProgressManager.assertNotCircular(indicator);
+    }
   }
 
   @Override

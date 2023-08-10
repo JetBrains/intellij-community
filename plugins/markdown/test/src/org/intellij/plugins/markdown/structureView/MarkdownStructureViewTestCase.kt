@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.tree.TreePath
 
 abstract class MarkdownStructureViewTestCase : BasePlatformTestCase() {
@@ -16,7 +15,7 @@ abstract class MarkdownStructureViewTestCase : BasePlatformTestCase() {
     myFixture.configureByFile(getTestName(true) + ".md")
     myFixture.testStructureView { svc: StructureViewComponent ->
       val tree = svc.tree
-      TreeUtil.expandAll(tree)
+      PlatformTestUtil.expandAll(tree)
       PlatformTestUtil.waitForPromise(svc.select(svc.treeModel.currentEditorElement, false))
       assertSameLinesWithFile(
         testDataPath + '/' + getTestName(true) + ".txt",

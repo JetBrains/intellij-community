@@ -68,19 +68,16 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
   @Override
   public void analyze() {
     final PsiManager psiManager = PsiManager.getInstance(getProject());
-    psiManager.startBatchFilesProcessingMode();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
-    try {
+    psiManager.runInBatchFilesMode(() -> {
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
       getScope().acceptIdempotentVisitor(new PsiRecursiveElementVisitor() {
         @Override
         public void visitFile(@NotNull final PsiFile file) {
           visit(file, fileIndex, psiManager);
         }
       });
-    }
-    finally {
-      psiManager.finishBatchFilesProcessingMode();
-    }
+      return null;
+    });
   }
 
   private void visit(@NotNull PsiFile file, @NotNull ProjectFileIndex fileIndex, @NotNull PsiManager psiManager) {

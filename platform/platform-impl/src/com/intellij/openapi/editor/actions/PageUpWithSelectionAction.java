@@ -17,6 +17,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -24,7 +25,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PageUpWithSelectionAction extends EditorAction {
+public class PageUpWithSelectionAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public static class Handler extends EditorActionHandler {
     @Override
     public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {

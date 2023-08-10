@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.icons.AllIcons;
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvider{
   private final SmartPsiElementPointer mySuperClassPointer;
@@ -53,16 +54,11 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
 
   @Override
   public Icon getIcon(boolean open) {
-    switch (myOverrides) {
-      case IMPLEMENTS:
-        return AllIcons.General.ImplementingMethod;
-      case INHERITS:
-        return AllIcons.General.InheritedMethod;
-      case OVERRIDES:
-        return AllIcons.General.OverridingMethod;
-    }
-
-    return null; // Can't be
+    return switch (myOverrides) {
+      case IMPLEMENTS -> AllIcons.General.ImplementingMethod;
+      case INHERITS -> AllIcons.General.InheritedMethod;
+      case OVERRIDES -> AllIcons.General.OverridingMethod;
+    };
   }
 
   @Override
@@ -77,15 +73,9 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof SuperTypeGroup)) return false;
-
-    final SuperTypeGroup superTypeGroup = (SuperTypeGroup)o;
-
-    if (myOverrides != superTypeGroup.myOverrides) return false;
-    final PsiClass superClass = getSuperClass();
-    if (superClass != null ? !superClass .equals(superTypeGroup.getSuperClass() ) : superTypeGroup.getSuperClass()  != null) return false;
-
-    return true;
+    return o instanceof SuperTypeGroup superTypeGroup &&
+           myOverrides == superTypeGroup.myOverrides &&
+           Objects.equals(getSuperClass(), superTypeGroup.getSuperClass());
   }
 
   public int hashCode() {

@@ -1,4 +1,4 @@
-// "Create method 'foo'" "true"
+// "Create method 'foo'" "true-preview"
 class A {
   private List<? extends CharSequence> sequences = null;
 

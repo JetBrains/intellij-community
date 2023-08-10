@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class ZenCodingNode {
   @NotNull
   public abstract List<GenerationNode> expand(int numberInIteration,

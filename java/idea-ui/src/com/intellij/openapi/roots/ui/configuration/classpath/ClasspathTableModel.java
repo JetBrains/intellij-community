@@ -106,7 +106,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
   }
 
   public void init() {
-    final OrderEntry[] orderEntries = myState.getCurrentRootModel().getOrderEntries();
+    final OrderEntry[] orderEntries = myState.getModifiableRootModel().getOrderEntries();
     boolean hasJdkOrderEntry = false;
     List<ClasspathTableItem<?>> items = new ArrayList<>();
     for (final OrderEntry orderEntry : orderEntries) {

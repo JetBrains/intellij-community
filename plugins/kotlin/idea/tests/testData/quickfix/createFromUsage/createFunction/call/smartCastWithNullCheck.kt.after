@@ -1,0 +1,12 @@
+// "Create function 'foo'" "true"
+
+fun test(s: String?) {
+    if (s == null) return
+    foo(s)
+}
+
+fun foo(s: String) {
+    TODO("Not yet implemented")
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix

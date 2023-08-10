@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -43,11 +44,13 @@ public class PythonConsoleTest extends PyEnvTestCase {
     runPythonTest(new PyConsoleTask() {
       @Override
       public void testing() throws Exception {
-        exec("if True:\n" +
-             "  x = 1\n" +
-             "y = x + 100\n" +
-             "for i in range(1):\n" +
-             "  print(y)\n");
+        exec("""
+               if True:
+                 x = 1
+               y = x + 100
+               for i in range(1):
+                 print(y)
+               """);
         waitForOutput("101");
       }
 
@@ -65,9 +68,10 @@ public class PythonConsoleTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         exec("import time");
-        execNoWait("for i in range(10000):\n" +
-                   "  print(i)\n" +
-                   "  time.sleep(0.1)");
+        execNoWait("""
+                     for i in range(10000):
+                       print(i)
+                       time.sleep(0.1)""");
         waitForOutput("3\n4\n5");
         Assert.assertFalse(canExecuteNow());
         interrupt();
@@ -90,8 +94,10 @@ public class PythonConsoleTest extends PyEnvTestCase {
       public void testing() throws Exception {
         exec("x = 96");
         exec("x = x + 1");
-        exec("if True:\n" +
-             "  print(x)\n");
+        exec("""
+               if True:
+                 print(x)
+               """);
         waitForOutput("97");
       }
     });
@@ -264,13 +270,15 @@ public class PythonConsoleTest extends PyEnvTestCase {
     runPythonTest(new PyConsoleTask("/debug") {
       @Override
       public void testing() throws Exception {
-        exec("class Bar:\n" +
-             "    @property\n" +
-             "    def prop(self):\n" +
-             "        x = 238\n" +
-             "        print(x + 1)\n" +
-             "        return \"bar\"\n" +
-             "    \n");
+        exec("""
+               class Bar:
+                   @property
+                   def prop(self):
+                       x = 238
+                       print(x + 1)
+                       return "bar"
+                  \s
+               """);
         exec("bar = Bar()");
         exec("print(\"Hey\")");
         waitForOutput("Hey");
@@ -289,6 +297,11 @@ public class PythonConsoleTest extends PyEnvTestCase {
         String currentOutput = output();
         assertFalse("Property was called for completion", currentOutput.contains("239"));
       }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return ImmutableSet.of("-python3.8", "-python3.9", "-python3.10", "-python3.11", "-python3.12");
+      }
     });
   }
 
@@ -301,9 +314,26 @@ public class PythonConsoleTest extends PyEnvTestCase {
         exec("print(\"Hi\")");
         waitForOutput("Hi");
         addTextToEditor("getenv()");
-        ApplicationManager.getApplication().invokeAndWait(() -> {
+        ApplicationManager.getApplication().runReadAction(() -> {
           checkParameters(7, getConsoleFile(), "key, default=None", new String[]{"key, "});
         });
+      }
+    });
+  }
+
+  @Test
+  public void testCheckForThreadLeaks() {
+    runPythonTest(new PyConsoleTask() {
+      @Override
+      public void testing() throws Exception {
+        exec("x = 42");
+        exec("print(x)");
+        waitForOutput("42");
+      }
+
+      @Override
+      public boolean reportThreadLeaks() {
+        return true;
       }
     });
   }

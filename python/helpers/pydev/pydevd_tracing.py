@@ -2,7 +2,7 @@ import ctypes
 import os
 from _pydev_bundle import pydev_log, pydev_monkey
 from _pydevd_bundle.pydevd_constants import get_frame, IS_PY2, IS_PY37_OR_GREATER, IS_CPYTHON, IS_WINDOWS, IS_LINUX, IS_MACOS, \
-    IS_64BIT_PROCESS
+    IS_64BIT_PROCESS, IS_AARCH64, IS_PYCHARM_ATTACH
 from _pydev_imps._pydev_saved_modules import thread, threading
 
 try:
@@ -99,7 +99,16 @@ def restore_sys_set_trace_func():
 
 
 def load_python_helper_lib():
-    if not IS_CPYTHON or ctypes is None or sys.version_info[:2] > (3, 8):
+    if not IS_CPYTHON:
+        pydev_log.info('Helper lib to set tracing to all threads not loaded: unsupported Python implementation')
+        return None
+
+    if ctypes is None:
+        pydev_log.info('Helper lib to set tracing to all threads not loaded: ctypes not found')
+        return None
+
+    if sys.version_info[:2] > (3, 11):
+        pydev_log.info('Helper lib to set tracing to all threads not loaded: unsupported Python version')
         return None
 
     if IS_WINDOWS:
@@ -112,19 +121,17 @@ def load_python_helper_lib():
 
     elif IS_LINUX:
         if IS_64BIT_PROCESS:
-            suffix = 'amd64'
+            if IS_AARCH64:
+                suffix = 'aarch64'
+            else:
+                suffix = 'amd64'
         else:
             suffix = 'x86'
 
         filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'attach_linux_%s.so' % (suffix,))
 
     elif IS_MACOS:
-        if IS_64BIT_PROCESS:
-            suffix = 'x86_64.dylib'
-        else:
-            suffix = 'x86.dylib'
-
-        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'attach_%s' % (suffix,))
+        filename = os.path.join(os.path.dirname(__file__), 'pydevd_attach_to_process', 'attach.dylib')
 
     else:
         pydev_log.info('Unable to set trace to all threads in platform: %s' % sys.platform)
@@ -173,6 +180,14 @@ def set_trace_to_threads(tracing_func):
         # a call for threading.current_thread() was previously done in that thread,
         # in which case a dummy thread would've been created for it).
         thread_idents = set(sys._current_frames().keys())
+
+        if IS_WINDOWS and IS_PYCHARM_ATTACH:
+            # On Windows, when attaching to a process, some existing threads may not
+            # appear in sys._current_frames()` but be available through the `threading`
+            # facilities. See: PY-44778.
+            thread_idents = thread_idents.union(
+                set(t.ident for t in threading.enumerate()))
+
         thread_idents = thread_idents.difference(
             # Ignore pydevd threads.
             set(t.ident for t in threading.enumerate() if getattr(t, 'pydev_do_not_trace', False))

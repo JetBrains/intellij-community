@@ -1,0 +1,35 @@
+// FILE: test.before.kt
+// "Add 'kotlin.Any' as upper bound for T" "true"
+package p;
+
+class Derived<T> : Base<<caret>T>() {}
+
+// FILE: org/jspecify/nullness/NullMarked.java
+package org.jspecify.nullness;
+
+import static java.lang.annotation.ElementType.MODULE;
+import static java.lang.annotation.ElementType.PACKAGE;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+@Target({TYPE, PACKAGE, MODULE})
+@Retention(RUNTIME)
+public @interface NullMarked {}
+
+// FILE: p/Base.java
+package p;
+
+import org.jspecify.nullness.NullMarked;
+
+@NullMarked
+public class Base<T> {}
+
+// FILE: test.after.kt
+// "Add 'kotlin.Any' as upper bound for T" "true"
+package p;
+
+class Derived<T : Any> : Base<<caret>T>() {}

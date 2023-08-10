@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.module.Module;
@@ -7,32 +7,29 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class UIRootConfigurationAccessor extends RootConfigurationAccessor implements RootConfigurationAccessorForWorkspaceModel {
   private final Project myProject;
-  private final WorkspaceEntityStorageBuilder myActualDiffBuilder;
+  private final MutableEntityStorage myActualDiffBuilder;
 
   public UIRootConfigurationAccessor(@NotNull Project project) {
     this(project, null);
   }
 
-  public UIRootConfigurationAccessor(@NotNull Project project, @Nullable WorkspaceEntityStorageBuilder actualDiffBuilder) {
+  public UIRootConfigurationAccessor(@NotNull Project project, @Nullable MutableEntityStorage actualDiffBuilder) {
     myProject = project;
     myActualDiffBuilder = actualDiffBuilder;
   }
 
   @Override
-  public WorkspaceEntityStorageBuilder getActualDiffBuilder() {
+  public MutableEntityStorage getActualDiffBuilder() {
     return myActualDiffBuilder;
   }
 
@@ -64,7 +61,7 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor imple
   @Override
   public Module getModule(final Module module, final String moduleName) {
     if (module == null) {
-      return ModuleStructureConfigurable.getInstance(myProject).getModule(moduleName);
+      return ProjectStructureConfigurable.getInstance(myProject).getModulesConfig().getModule(moduleName);
     }
     return module;
   }

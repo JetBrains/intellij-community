@@ -65,11 +65,36 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     assertModulesUpToDate();
   }
 
+  public void testForceCompileResourcesAndDoNotCompileSourceFiles() {
+    VirtualFile a = createFile("src/A.java", "class A{}");
+    VirtualFile b = createFile("res/res.properties", "aaa=bbb");
+    Module module = addModule("a", a.getParent(), null, b.getParent());
+    make(module);
+    assertOutput(module, fs().file("A.class").file("res.properties"));
+    final VirtualFile output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module));
+    assertNotNull(output);
+    final VirtualFile classFile = output.findChild("A.class");
+    assertNotNull(classFile);
+    final VirtualFile resOutputFile = output.findChild("res.properties");
+    assertNotNull(resOutputFile);
+    final File classOutputIoFile = new File(classFile.getPath());
+    final long classStampBefore = classOutputIoFile.lastModified();
+
+    deleteFile(resOutputFile);
+    changeFile(a, "class A { }"); // touch java source
+    assertOutput(module, fs().file("A.class"));
+    compile(true, b);
+
+    assertOutput(module, fs().file("A.class").file("res.properties"));
+    final long classStampAfter = classOutputIoFile.lastModified();
+    assertEquals("Java source should not be recompiled", classStampBefore, classStampAfter);
+  }
+
   public void testForceCompileUpToDateFileAndDoNotCompileDependentTestClass() {
     VirtualFile a = createFile("src/A.java", "class A{ public static void foo(int param) {} }");
     final String bText = "class B { void bar() {A.foo(10);}}";
     VirtualFile b = createFile("testSrc/B.java", bText);
-    Module module = addModule("a", a.getParent(), b.getParent());
+    Module module = addModule("a", a.getParent(), b.getParent(), null);
     make(module);
     assertOutput(module, fs().file("A.class"), false);
     assertOutput(module, fs().file("B.class"), true);
@@ -90,6 +115,33 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     compile(true, a);
     assertOutput(module, fs().file("A.class"), false);
     assertOutput(module, fs(), true);  // make sure B is not compiled, even if it is modified
+  }
+
+  public void testMakeProductionClassesOnly() {
+    final String aText = "class A{ public static void foo(int param) {} }";
+    VirtualFile a = createFile("src/A.java", aText);
+    final String bText = "class B { void bar() {A.foo(10);}}";
+    VirtualFile b = createFile("testSrc/B.java", bText);
+    Module module = addModule("a", a.getParent(), b.getParent(), null);
+    make(module);
+    assertOutput(module, fs().file("A.class"), false);
+    assertOutput(module, fs().file("B.class"), true);
+    final VirtualFile output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module, false));
+    assertNotNull(output);
+    final VirtualFile testOutput = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module, true));
+    assertNotNull(testOutput);
+    final VirtualFile classFile = output.findChild("A.class");
+    assertNotNull(classFile);
+    final VirtualFile testClassFile = testOutput.findChild("B.class");
+    assertNotNull(testClassFile);
+    deleteFile(classFile);
+    deleteFile(testClassFile);
+    changeFile(a, aText + "  "); // touch a
+    changeFile(b, bText + "  "); // touch b
+
+    make(getCompilerManager().createModulesCompileScope(new Module[] {module}, false, false, false));
+    assertOutput(module, fs().file("A.class"), false);
+    assertOutput(module, fs(), true); // make sure B is not compiled, even if it is modified
   }
 
   public void testMakeTwoModules() {

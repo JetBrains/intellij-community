@@ -8,9 +8,6 @@ import org.jetbrains.org.objectweb.asm.tree.LabelNode;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author lambdamix
- */
 public class Subroutine {
   LabelNode start;
   boolean[] access;

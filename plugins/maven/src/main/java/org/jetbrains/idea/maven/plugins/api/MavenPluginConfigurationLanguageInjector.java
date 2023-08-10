@@ -24,16 +24,11 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenPluginConfigurationLanguageInjector implements LanguageInjector {
 
   @Override
   public void getLanguagesToInject(@NotNull final PsiLanguageInjectionHost host, @NotNull final InjectedLanguagePlaces injectionPlacesRegistrar) {
-    if (!(host instanceof XmlText)) return;
-
-    final XmlText xmlText = (XmlText)host;
+    if (!(host instanceof XmlText xmlText)) return;
 
     if (!MavenPluginParamInfo.isSimpleText(xmlText)) return;
 

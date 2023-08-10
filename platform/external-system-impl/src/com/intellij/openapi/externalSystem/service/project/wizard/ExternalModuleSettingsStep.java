@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalModuleSettingsStep<S extends ExternalProjectSettings> extends ModuleWizardStep {
 
   public static final Key<Boolean> SKIP_STEP_KEY = Key.create("SKIP_STEP_KEY");

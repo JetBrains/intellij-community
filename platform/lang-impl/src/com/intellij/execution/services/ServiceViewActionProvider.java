@@ -6,11 +6,13 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarSpacer;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +27,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.execution.services.ServiceViewDragHelper.getTheOnlyRootContributor;
@@ -41,17 +43,17 @@ class ServiceViewActionProvider {
     return ourInstance;
   }
 
-  ActionToolbar createServiceToolbar(@NotNull JComponent component) {
+  ActionToolbar createServiceToolbar(@NotNull JComponent component, boolean horizontal) {
     ActionGroup actions = (ActionGroup)ActionManager.getInstance().getAction(SERVICE_VIEW_ITEM_TOOLBAR);
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, actions, false);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, actions, horizontal);
     toolbar.setTargetComponent(component);
     return toolbar;
   }
 
-  JComponent wrapServiceToolbar(@NotNull ActionToolbar toolbar) {
+  JComponent wrapServiceToolbar(@NotNull JComponent toolbarComponent, boolean horizontal) {
     JPanel wrapper = new JPanel(new BorderLayout());
-    wrapper.add(toolbar.getComponent(), BorderLayout.CENTER);
-    toolbar.getComponent().addComponentListener(new ComponentListener() {
+    wrapper.add(toolbarComponent, BorderLayout.CENTER);
+    toolbarComponent.addComponentListener(new ComponentListener() {
       @Override
       public void componentResized(ComponentEvent e) {
       }
@@ -70,16 +72,12 @@ class ServiceViewActionProvider {
         wrapper.setVisible(false);
       }
     });
-    ActionToolbar prototypeToolbar = createPrototypeToolbar();
-    JLabel spacer = new JLabel();
-    spacer.setPreferredSize(new Dimension(prototypeToolbar.getComponent().getPreferredSize().width, 0));
-    wrapper.add(spacer, BorderLayout.SOUTH);
+    wrapper.add(new ActionToolbarSpacer(horizontal), horizontal ? BorderLayout.EAST : BorderLayout.SOUTH);
     return wrapper;
   }
 
   void installPopupHandler(@NotNull JComponent component) {
-    ActionGroup actions = (ActionGroup)ActionManager.getInstance().getAction(SERVICE_VIEW_ITEM_POPUP);
-    PopupHandler.installPopupHandler(component, actions, ActionPlaces.SERVICES_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(component, SERVICE_VIEW_ITEM_POPUP, ActionPlaces.SERVICES_POPUP);
   }
 
   ActionToolbar createMasterComponentToolbar(@NotNull JComponent component) {
@@ -106,18 +104,51 @@ class ServiceViewActionProvider {
   }
 
   List<AnAction> getAdditionalGearActions() {
+    List<AnAction> result = new ArrayList<>();
+    AnAction selectActiveServiceActions = ActionManager.getInstance().getAction("ServiceView.SelectActiveService");
+    ContainerUtil.addIfNotNull(result, selectActiveServiceActions);
+    result.add(Separator.getInstance());
+    AnAction configureServicesActions = ActionManager.getInstance().getAction("ServiceView.ConfigureServices");
+    ContainerUtil.addIfNotNull(result, configureServicesActions);
     AnAction showServicesActions = ActionManager.getInstance().getAction("ServiceView.ShowServices");
-    return showServicesActions == null ? Collections.emptyList() : Collections.singletonList(showServicesActions);
+    ContainerUtil.addIfNotNull(result, showServicesActions);
+    return result;
   }
 
   @Nullable
   static ServiceView getSelectedView(@NotNull AnActionEvent e) {
-    return getSelectedView(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
+    return getSelectedView(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
   }
 
   @Nullable
   static ServiceView getSelectedView(@NotNull DataProvider provider) {
-    return getSelectedView(ObjectUtils.tryCast(provider.getData(PlatformDataKeys.CONTEXT_COMPONENT.getName()), Component.class));
+    return getSelectedView(ObjectUtils.tryCast(provider.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT.getName()), Component.class));
+  }
+
+  static boolean isActionToolBarRequired(JComponent component) {
+    Boolean holder = ClientProperty.get(component, ServiceViewDescriptor.ACTION_HOLDER_KEY);
+    if (Boolean.TRUE == holder) {
+      return false;
+    }
+    while (true) {
+      if (component instanceof JBTabs || component instanceof JTabbedPane) {
+        return false;
+      }
+      if (component.getComponentCount() > 1) {
+        // JBTabs is placed next to some component.
+        return ContainerUtil.filterIsInstance(component.getComponents(), JBTabs.class).size() != 1;
+      }
+      if (component.getComponentCount() != 1) {
+        return true;
+      }
+      Component child = component.getComponent(0);
+      if (child instanceof JComponent childComponent) {
+        component = childComponent;
+      }
+      else {
+        return true;
+      }
+    }
   }
 
   @Nullable
@@ -126,25 +157,6 @@ class ServiceViewActionProvider {
       contextComponent = contextComponent.getParent();
     }
     return (ServiceView)contextComponent;
-  }
-
-  private static final AnAction EMPTY_ACTION = new DumbAwareAction(EmptyIcon.ICON_16) {
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(false);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-    }
-  };
-
-  private static ActionToolbar createPrototypeToolbar() {
-    DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.add(EMPTY_ACTION);
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, actionGroup, false);
-    toolbar.updateActionsImmediately();
-    return toolbar;
   }
 
   private static class ServiceViewTreeExpander extends DefaultTreeExpander {

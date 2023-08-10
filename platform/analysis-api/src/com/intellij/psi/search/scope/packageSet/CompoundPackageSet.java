@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,8 +21,7 @@ public abstract class CompoundPackageSet extends PackageSetBase {
   }
   
   @Override
-  @NotNull
-  public PackageSet createCopy() {
+  public @NotNull PackageSet createCopy() {
     return map(s->s.createCopy());
   }
 
@@ -32,8 +31,7 @@ public abstract class CompoundPackageSet extends PackageSetBase {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     if (myText == null) {
       myText = StringUtil.join(mySets, s->s.getText(), "||");
     }

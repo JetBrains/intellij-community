@@ -29,9 +29,7 @@ public final class ReferenceDescriptor {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ReferenceDescriptor)) return false;
-
-    ReferenceDescriptor that = (ReferenceDescriptor)o;
+    if (!(o instanceof ReferenceDescriptor that)) return false;
 
     if (offset != that.offset) return false;
     return file.equals(that.file);

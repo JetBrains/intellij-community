@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * @author irengrig
- */
 public interface VcsCacheableHistorySessionFactory<Cacheable extends Serializable, T extends VcsAbstractHistorySession> {
 
   T createFromCachedData(@Nullable Cacheable cacheable,
@@ -28,16 +25,6 @@ public interface VcsCacheableHistorySessionFactory<Cacheable extends Serializabl
 
   @Nullable
   default Cacheable getAdditionallyCachedData(T session) {
-    return getAddinionallyCachedData(session);
-  }
-
-  /**
-   * @deprecated implement {@link #getAdditionallyCachedData(VcsAbstractHistorySession)}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @Nullable
-  default Cacheable getAddinionallyCachedData(T session) {
     return null;
   }
 }

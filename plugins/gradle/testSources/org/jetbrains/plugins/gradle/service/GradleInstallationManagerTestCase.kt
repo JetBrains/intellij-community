@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service
 
 import com.intellij.openapi.util.io.FileUtil
@@ -15,9 +15,9 @@ import java.net.URI
 import java.util.*
 
 abstract class GradleInstallationManagerTestCase : LightIdeaTestCase() {
-  fun testGradleVersion(expectedVersion: GradleVersion,
-                        distributionType: DistributionType,
-                        wrapperVersionToGenerate: GradleVersion?) {
+  fun doTestGradleVersion(expectedVersion: GradleVersion,
+                          distributionType: DistributionType,
+                          wrapperVersionToGenerate: GradleVersion?) {
     val settings = GradleProjectSettings().apply {
       externalProjectPath = createUniqueTempDirectory()
       this.distributionType = distributionType
@@ -44,7 +44,7 @@ abstract class GradleInstallationManagerTestCase : LightIdeaTestCase() {
     val wrapperJar = FileUtil.join(wrapperHome, "gradle-wrapper.jar")
     val wrapperProperties = FileUtil.join(wrapperHome, "gradle-wrapper.properties")
     val gradleUserHome = StartParameter.DEFAULT_GRADLE_USER_HOME
-    val distributionPath = getLocalDistributionDir(gradleUserHome, wrapperConfiguration)
+    val distributionPath = getLocalDistributionDir(gradleUserHome, File(externalProjectPath), wrapperConfiguration)
     val gradleHome = FileUtil.join(distributionPath, "gradle-${version.version}")
     val gradleJarFile = FileUtil.join(gradleHome, "lib", "gradle-${version.version}.jar")
 
@@ -58,8 +58,8 @@ abstract class GradleInstallationManagerTestCase : LightIdeaTestCase() {
     return gradleHome
   }
 
-  private fun getLocalDistributionDir(gradleUserHome: File, wrapperConfiguration: WrapperConfiguration): String {
-    val pathAssembler = PathAssembler(gradleUserHome)
+  private fun getLocalDistributionDir(gradleUserHome: File, projectPath: File, wrapperConfiguration: WrapperConfiguration): String {
+    val pathAssembler = PathAssembler(gradleUserHome, projectPath)
     val localDistribution = pathAssembler.getDistribution(wrapperConfiguration)
     return localDistribution.distributionDir.path
   }

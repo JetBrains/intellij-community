@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.application.options.CodeStyle;
@@ -11,10 +11,7 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -34,6 +31,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -50,10 +48,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -94,29 +89,22 @@ public class ImplementationViewComponent extends JPanel {
     return myElements != null && myElements.length > 0;
   }
 
-  private static class FileDescriptor {
-    @NotNull public final VirtualFile myFile;
-    public final ImplementationViewElement myElement;
-
-    FileDescriptor(@NotNull VirtualFile file, ImplementationViewElement element) {
-      myFile = file;
-      myElement = element;
-    }
+  private record FileDescriptor(@NotNull VirtualFile file, int index, @NotNull TargetPresentation element) {
   }
 
-  public ImplementationViewComponent(Collection<ImplementationViewElement> elements,
-                                   final int index) {
+  public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements,
+                                     final int index) {
     this(elements, index, null);
   }
 
-  public ImplementationViewComponent(Collection<ImplementationViewElement> elements, final int index, Consumer<ImplementationViewComponent> openUsageView) {
+  public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements, final int index, Consumer<? super ImplementationViewComponent> openUsageView) {
     super(new BorderLayout());
 
     project = elements.size() > 0 ? elements.iterator().next().getProject() : null;
     factory = EditorFactory.getInstance();
     Document doc = factory.createDocument("");
     doc.setReadOnly(true);
-    myEditor = (EditorEx)factory.createEditor(doc, project);
+    myEditor = (EditorEx)factory.createEditor(doc, project, EditorKind.PREVIEW);
     tuneEditor();
 
     myBinarySwitch = new CardLayout();
@@ -190,13 +178,18 @@ public class ImplementationViewComponent extends JPanel {
     });
   }
 
-  private DefaultActionGroup createGearActionButton(Consumer<ImplementationViewComponent> openUsageView) {
+  private DefaultActionGroup createGearActionButton(Consumer<? super ImplementationViewComponent> openUsageView) {
     DefaultActionGroup gearActions = new DefaultActionGroup() {
       @Override
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().setIcon(AllIcons.Actions.More);
         e.getPresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     };
     gearActions.setPopup(true);
@@ -223,7 +216,7 @@ public class ImplementationViewComponent extends JPanel {
     JLabel label = new JLabel(myElements[myIndex].getPresentableText(), getIconForFile(virtualFile, project), SwingConstants.LEFT);
     mySingleEntryPanel.add(label, BorderLayout.CENTER);
     label.setForeground(FileStatusManager.getInstance(project).getStatus(virtualFile).getColor());
-    
+
     mySingleEntryPanel.add(new JLabel(myElements[myIndex].getLocationText(), myElements[myIndex].getLocationIcon(), SwingConstants.LEFT), BorderLayout.EAST);
     mySingleEntryPanel.setOpaque(false);
     mySingleEntryPanel.setVisible(true);
@@ -259,43 +252,35 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private static ListCellRenderer<FileDescriptor> createRenderer(Project project) {
-    return new LeftRightRenderer<>() {
-      @NotNull
+    ListCellRenderer<FileDescriptor> mainRenderer = new ColoredListCellRenderer<>() {
       @Override
-      protected ListCellRenderer<FileDescriptor> getMainRenderer() {
-        return new ColoredListCellRenderer<>() {
-          @Override
-          protected void customizeCellRenderer(@NotNull JList<? extends FileDescriptor> list,
-                                               FileDescriptor value, int index, boolean selected, boolean hasFocus) {
-            if (value != null) {
-              ImplementationViewElement element = value.myElement;
-              setIcon(getIconForFile(value.myFile, project));
-              append(element.getPresentableText());
-              String presentation = element.getContainerPresentation();
-              if (presentation != null) {
-                append("  ");
-                append(StringUtil.trimStart(StringUtil.trimEnd(presentation, ")"), "("), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-              }
-            }
+      protected void customizeCellRenderer(@NotNull JList<? extends FileDescriptor> list,
+                                           FileDescriptor value, int index, boolean selected, boolean hasFocus) {
+        setBackground(UIUtil.getListBackground(selected, true));
+        if (value != null) {
+          @NotNull TargetPresentation targetPresentation = value.element;
+          setIcon(getIconForFile(value.file, project));
+          append(targetPresentation.getPresentableText());
+          String presentation = targetPresentation.getContainerText();
+          if (presentation != null) {
+            append("  ");
+            append(StringUtil.trimStart(StringUtil.trimEnd(presentation, ")"), "("), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
-        };
-      }
-
-      @NotNull
-      @Override
-      protected ListCellRenderer<FileDescriptor> getRightRenderer() {
-        return new SimpleListCellRenderer<>() {
-          @Override
-          public void customize(@NotNull JList<? extends FileDescriptor> list,
-                                FileDescriptor value, int index, boolean selected, boolean hasFocus) {
-            if (value != null) {
-              setText(value.myElement.getLocationText());
-              setIcon(value.myElement.getLocationIcon());
-            }
-          }
-        };
+        }
       }
     };
+    ListCellRenderer<FileDescriptor> rightRenderer = new SimpleListCellRenderer<>() {
+      @Override
+      public void customize(@NotNull JList<? extends FileDescriptor> list,
+                            FileDescriptor value, int index, boolean selected, boolean hasFocus) {
+        setForeground(UIUtil.getListForeground(selected, true));
+        if (value != null) {
+          setText(value.element.getLocationText());
+          setIcon(value.element.getLocationIcon());
+        }
+      }
+    };
+    return new LeftRightRenderer<>(mainRenderer, rightRenderer);
   }
 
   @TestOnly
@@ -304,7 +289,7 @@ public class ImplementationViewComponent extends JPanel {
     String[] result = new String[model.getSize()];
     for (int i = 0; i < model.getSize(); i++) {
       FileDescriptor o = model.getElementAt(i);
-      result[i] = o.myElement.getPresentableText();
+      result[i] = o.element.getPresentableText();
     }
     return result;
   }
@@ -368,15 +353,24 @@ public class ImplementationViewComponent extends JPanel {
       VirtualFile file = element.getContainingFile();
       if (file == null) continue;
       if (names.size() > 1) {
-        files.add(new FileDescriptor(file, element));
+        files.add(new FileDescriptor(file, candidates.size(), getPresentation(element)));
       }
       else {
-        files.add(new FileDescriptor(file, element.getContainingMemberOrSelf()));
+        files.add(new FileDescriptor(file, candidates.size(), getPresentation(element.getContainingMemberOrSelf())));
       }
       candidates.add(element);
     }
 
     fun.fun(candidates.toArray(new ImplementationViewElement[0]), files);
+  }
+
+  @NotNull
+  private static TargetPresentation getPresentation(ImplementationViewElement element) {
+    return TargetPresentation.builder(element.getPresentableText())
+      .locationText(element.getLocationText(), element.getLocationIcon())
+      .containerText(element.getContainerPresentation())
+      .icon(element.getLocationIcon())
+      .presentation();
   }
 
   private static Icon getIconForFile(VirtualFile virtualFile, Project project) {
@@ -385,6 +379,21 @@ public class ImplementationViewComponent extends JPanel {
 
   public JComponent getPreferredFocusableComponent() {
     return myElements.length > 1 ? myFileChooser : myEditor.getContentComponent();
+  }
+
+  @ApiStatus.Internal
+  public ComboBox<FileDescriptor> getFileChooserComboBox() {
+    return myFileChooser;
+  }
+
+  @ApiStatus.Internal
+  public JPanel getSingleEntryPanel() {
+    return mySingleEntryPanel;
+  }
+
+  @ApiStatus.Internal
+  public JPanel getViewingPanel() {
+    return myViewingPanel;
   }
 
   private void updateControls() {
@@ -415,8 +424,7 @@ public class ImplementationViewComponent extends JPanel {
       }
     }
 
-    final FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, vFile);
-    for (FileEditorProvider provider : providers) {
+    for (FileEditorProvider provider : FileEditorProviderManager.getInstance().getProviderList(project, vFile)) {
       if (provider instanceof QuickDefinitionProvider) {
         updateTextElement(foundElement);
         myBinarySwitch.show(myViewingPanel, TEXT_PAGE_KEY);
@@ -436,7 +444,7 @@ public class ImplementationViewComponent extends JPanel {
   private void replaceEditor(Project project, VirtualFile vFile, ImplementationViewDocumentFactory documentFactory, Document document) {
     myViewingPanel.remove(myEditor.getComponent());
     factory.releaseEditor(myEditor);
-    myEditor = (EditorEx)factory.createEditor(document, project);
+    myEditor = (EditorEx)factory.createEditor(document, project, EditorKind.PREVIEW);
     tuneEditor(vFile);
     documentFactory.tuneEditorBeforeShow(myEditor);
     myViewingPanel.add(myEditor.getComponent(), TEXT_PAGE_KEY);
@@ -509,14 +517,20 @@ public class ImplementationViewComponent extends JPanel {
   @Override
   public void removeNotify() {
     super.removeNotify();
-    if (ScreenUtil.isStandardAddRemoveNotify(this) && !myEditorReleased) {
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      cleanup();
+    }
+  }
+
+  public void cleanup() {
+    if (!myEditorReleased) {
       myEditorReleased = true; // remove notify can be called several times for popup windows
       EditorFactory.getInstance().releaseEditor(myEditor);
       disposeNonTextEditor();
     }
   }
 
-  private ActionToolbar createToolbar(Consumer<ImplementationViewComponent> openUsageView) {
+  private ActionToolbar createToolbar(Consumer<? super ImplementationViewComponent> openUsageView) {
     DefaultActionGroup group = new DefaultActionGroup();
 
     BackAction back = new BackAction();
@@ -544,16 +558,22 @@ public class ImplementationViewComponent extends JPanel {
           presentation.setVisible(false);
         }
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     });
 
     ForwardAction forward = new ForwardAction();
     forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), this);
     group.add(forward);
-    
+
     group.add(createGearActionButton(openUsageView));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(IMPLEMENTATION_VIEW_PLACE, group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.setTargetComponent(myEditor.getContentComponent());
     return toolbar;
   }
 
@@ -597,6 +617,11 @@ public class ImplementationViewComponent extends JPanel {
       presentation.setEnabled(myIndex > 0);
       presentation.setVisible(myElements != null && myElements.length > 1);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
@@ -614,6 +639,11 @@ public class ImplementationViewComponent extends JPanel {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(myElements != null && myIndex < myElements.length - 1);
       presentation.setVisible(myElements != null && myElements.length > 1);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -642,6 +672,11 @@ public class ImplementationViewComponent extends JPanel {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myFileChooser == null || !myFileChooser.isPopupVisible());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

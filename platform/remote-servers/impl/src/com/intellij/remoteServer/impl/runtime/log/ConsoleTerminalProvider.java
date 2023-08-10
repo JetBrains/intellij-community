@@ -10,12 +10,10 @@ import java.io.OutputStream;
 class ConsoleTerminalProvider extends CloudTerminalProvider {
 
   @Override
-  public TerminalHandlerBase createTerminal(@NotNull String presentableName,
+  public @NotNull TerminalHandlerBase createTerminal(@NotNull String presentableName,
                                             @NotNull Project project,
                                             @NotNull InputStream terminalOutput,
-                                            @NotNull OutputStream terminalInput,
-                                            boolean deferTerminalSessionUntilFirstShown) {
-
+                                            @NotNull OutputStream terminalInput) {
     return new ConsoleTerminalHandlerImpl(presentableName, project, terminalOutput, terminalInput);
   }
 

@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -31,6 +31,8 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
+
+import java.util.function.Consumer;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
@@ -161,11 +163,13 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     GrStatement declaration = ((GrStatementOwner)parent).addStatementBefore(generated, anchor);
     declaration = (GrStatement)JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(declaration);
 
+    PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getEditor().getDocument());
+
     return ((GrVariableDeclaration)declaration).getVariables()[0];
   }
 
   @Override
-  protected void showScopeChooser(GrControlFlowOwner[] scopes, Pass<GrControlFlowOwner> callback, Editor editor) {
+  protected void showScopeChooser(GrControlFlowOwner[] scopes, Consumer<? super GrControlFlowOwner> callback, Editor editor) {
     //todo do nothing right now
   }
 

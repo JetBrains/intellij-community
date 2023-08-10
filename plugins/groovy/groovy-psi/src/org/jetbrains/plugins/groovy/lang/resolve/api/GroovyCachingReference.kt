@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.api
 
 import com.intellij.psi.PsiElement
@@ -18,13 +18,13 @@ abstract class GroovyCachingReference<T : PsiElement>(element: T) : GroovyRefere
 
   private object DefaultResolver : GroovyResolver<GroovyCachingReference<*>> {
 
-    override fun resolve(ref: GroovyCachingReference<*>, incomplete: Boolean) = ref.doResolve(incomplete)
+    override fun resolve(ref: GroovyCachingReference<*>, incomplete: Boolean): Array<GroovyResolveResult> = ref.doResolve(incomplete).toTypedArray()
   }
 
   private object DefaultDependentResolver : DependentResolver<GroovyCachingReference<*>>() {
 
-    override fun doResolve(ref: GroovyCachingReference<*>, incomplete: Boolean): Collection<GroovyResolveResult> {
-      return ref.doResolve(incomplete)
+    override fun doResolve(ref: GroovyCachingReference<*>, incomplete: Boolean): Array<GroovyResolveResult> {
+      return ref.doResolve(incomplete).toTypedArray()
     }
 
     override fun collectDependencies(ref: GroovyCachingReference<*>): Collection<PsiPolyVariantReference>? {

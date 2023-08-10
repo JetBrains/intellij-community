@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import training.statistic.FeatureUsageStatisticConsts.ACTION_ID
 
 class ActionIdRuleValidator : CustomValidationRule() {
-  override fun acceptRuleId(ruleId: String?): Boolean = (ACTION_ID == ruleId)
+  override fun getRuleId(): String = ACTION_ID
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
     val anAction = ActionManager.getInstance().getActionOrStub(data)

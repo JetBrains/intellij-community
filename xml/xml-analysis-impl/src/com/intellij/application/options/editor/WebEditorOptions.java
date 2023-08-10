@@ -2,6 +2,7 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -11,7 +12,8 @@ import org.jetbrains.annotations.Nullable;
 
 @State(
   name = "XmlEditorOptions",
-  storages = @Storage("editor.xml")
+  storages = @Storage("editor.xml"),
+  category = SettingsCategory.CODE
 )
 public final class WebEditorOptions implements PersistentStateComponent<WebEditorOptions> {
   private static final boolean myShowCssColorPreviewInGutter = true;
@@ -48,7 +50,7 @@ public final class WebEditorOptions implements PersistentStateComponent<WebEdito
   /**
    * @deprecated use LineMarkerSettings.getSettings().isEnabled(new ColorLineMarkerProvider())
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isShowCssColorPreviewInGutter() {
     return myShowCssColorPreviewInGutter;
   }

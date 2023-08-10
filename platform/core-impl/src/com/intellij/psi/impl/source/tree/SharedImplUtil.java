@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -37,8 +37,7 @@ public final class SharedImplUtil {
     return SourceTreeToPsiMap.treeElementToPsi(element.getFirstChildNode());
   }
 
-  @Nullable
-  public static PsiElement getLastChild(@NotNull ASTNode element) {
+  public static @Nullable PsiElement getLastChild(@NotNull ASTNode element) {
     return SourceTreeToPsiMap.treeElementToPsi(element.getLastChildNode());
   }
 
@@ -85,8 +84,7 @@ public final class SharedImplUtil {
     return null;
   }
 
-  @NotNull
-  public static CharTable findCharTableByTree(ASTNode tree) {
+  public static @NotNull CharTable findCharTableByTree(ASTNode tree) {
     for (ASTNode o = tree; o != null; o = o.getTreeParent()) {
       CharTable charTable = o.getUserData(CharTable.CHAR_TABLE_KEY);
       if (charTable != null) {
@@ -105,7 +103,7 @@ public final class SharedImplUtil {
                                     ASTNode anchor,
                                     Boolean before) throws IncorrectOperationException {
     CheckUtil.checkWritable(thisElement);
-    final CharTable table = findCharTableByTree(SourceTreeToPsiMap.psiElementToTree(thisElement));
+    CharTable table = findCharTableByTree(SourceTreeToPsiMap.psiElementToTree(thisElement));
 
     TreeElement copyFirst = null;
     ASTNode copyLast = null;
@@ -139,7 +137,7 @@ public final class SharedImplUtil {
     return SourceTreeToPsiMap.treeElementToPsi(copyFirst);
   }
 
-  public static PsiManager getManagerByTree(final ASTNode node) {
+  public static PsiManager getManagerByTree(ASTNode node) {
     if(node instanceof FileElement) return node.getPsi().getManager();
     return node.getTreeParent().getPsi().getManager();
   }
@@ -149,7 +147,7 @@ public final class SharedImplUtil {
     if (count == 0) {
       return ASTNode.EMPTY_ARRAY;
     }
-    final ASTNode[] result = new ASTNode[count];
+    ASTNode[] result = new ASTNode[count];
     count = 0;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (child.getElementType() == elementType) {
@@ -175,7 +173,7 @@ public final class SharedImplUtil {
     ASTNode childNode = root.getFirstChildNode();
 
     while (childNode != null) {
-      final PsiElement psi;
+      PsiElement psi;
       if (childNode instanceof PsiElement) {
         psi = (PsiElement)childNode;
       }

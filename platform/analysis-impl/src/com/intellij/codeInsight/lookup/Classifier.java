@@ -24,7 +24,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * @author peter
+ * Methods in this class are not externally synchronized and may be called from several threads;
+ * while this class has no mutable state, thus it's thread-safe, subclasses may not be thread safe.
+ * It's a responsibility of subclasses to synchronize properly.
+ * Please don't call superclass methods like addElement under the lock.
  */
 public abstract class Classifier<T> {
   protected final Classifier<T> myNext;

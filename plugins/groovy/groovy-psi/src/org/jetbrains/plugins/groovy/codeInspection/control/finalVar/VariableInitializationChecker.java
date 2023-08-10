@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
@@ -24,17 +23,17 @@ import java.util.Map;
  */
 public final class VariableInitializationChecker {
 
-  private static boolean isVariableDefinitelyInitialized(@NotNull GrVariable var, Instruction @NotNull [] controlFlow) {
-    DFAEngine<Data> engine = new DFAEngine<>(controlFlow, new MyDfaInstance(VariableDescriptorFactory.createDescriptor(var)), new MySemilattice());
-    final List<Data> result = engine.performDFAWithTimeout();
+  private static boolean isVariableDefinitelyInitialized(@NotNull GrVariable var, GroovyControlFlow controlFlow) {
+    DFAEngine<Boolean> engine = new DFAEngine<>(controlFlow.getFlow(), new MyDfaInstance(controlFlow.getIndex(VariableDescriptorFactory.createDescriptor(var))), new MySemilattice());
+    final List<Boolean> result = engine.performDFAWithTimeout();
     if (result == null) return false;
-
-    return result.get(controlFlow.length - 1).get();
+    Boolean last = result.get(controlFlow.getFlow().length - 1);
+    return last == null ? false : last;
   }
 
   public static boolean isVariableDefinitelyInitializedCached(@NotNull GrVariable var,
                                                               @NotNull GroovyPsiElement context,
-                                                              Instruction @NotNull [] controlFlow) {
+                                                              @NotNull GroovyControlFlow controlFlow) {
     Map<GroovyPsiElement, Boolean> map = CachedValuesManager.getCachedValue(var, () -> Result.create(new HashMap<>(), var));
 
     final Boolean cached = map.get(context);
@@ -46,52 +45,41 @@ public final class VariableInitializationChecker {
     return result;
   }
 
-  private static class MyDfaInstance implements DfaInstance<Data> {
-    MyDfaInstance(VariableDescriptor var) {
+  private static class MyDfaInstance implements DfaInstance<Boolean> {
+    MyDfaInstance(int var) {
       myVar = var;
     }
 
     @Override
-    public void fun(@NotNull Data e, @NotNull Instruction instruction) {
+    public Boolean fun(@NotNull Boolean e, @NotNull Instruction instruction) {
       if (instruction instanceof ReadWriteVariableInstruction &&
-          ((ReadWriteVariableInstruction)instruction).getDescriptor().equals(myVar)) {
-        e.set(true);
+          ((ReadWriteVariableInstruction)instruction).getDescriptor() == myVar) {
+        return true;
       }
+      return e;
     }
 
-    private final VariableDescriptor myVar;
+    private final int myVar;
   }
 
-  private static class MySemilattice implements Semilattice<Data> {
+  private static class MySemilattice implements Semilattice<Boolean> {
 
     @NotNull
     @Override
-    public Data initial() {
-      return new Data(false);
-    }
-
-    @NotNull
-    @Override
-    public Data join(@NotNull List<? extends Data> ins) {
-      if (ins.isEmpty()) return new Data(false);
-
+    public Boolean join(@NotNull List<? extends Boolean> ins) {
+      if (ins.isEmpty()) {
+        return false;
+      }
       boolean b = true;
-      for (Data data : ins) {
-        b &= data.get().booleanValue();
+      for (boolean candidate : ins) {
+        b &= candidate;
       }
-
-      return new Data(b);
+      return b;
     }
 
     @Override
-    public boolean eq(@NotNull Data e1, @NotNull Data e2) {
-      return e1.get().booleanValue() == e2.get().booleanValue();
-    }
-  }
-
-  private static class Data extends Ref<Boolean> {
-    Data(Boolean value) {
-      super(value);
+    public boolean eq(@NotNull Boolean e1, @NotNull Boolean e2) {
+      return e1.equals(e2);
     }
   }
 }

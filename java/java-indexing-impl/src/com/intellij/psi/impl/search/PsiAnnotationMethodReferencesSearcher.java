@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ReadAction;
@@ -39,14 +39,12 @@ public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiR
     return new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(final PsiReference reference) {
-        if (reference instanceof PsiJavaCodeReferenceElement) {
-          PsiJavaCodeReferenceElement javaReference = (PsiJavaCodeReferenceElement)reference;
-          if (javaReference.getParent() instanceof PsiAnnotation) {
-            PsiNameValuePair[] members = ((PsiAnnotation)javaReference.getParent()).getParameterList().getAttributes();
-            if (members.length == 1 && members[0].getNameIdentifier() == null) {
-              PsiReference t = members[0].getReference();
-              if (t != null && !consumer.process(t)) return false;
-            }
+        if (reference instanceof PsiJavaCodeReferenceElement javaReference &&
+            javaReference.getParent() instanceof PsiAnnotation annotation) {
+          PsiNameValuePair[] members = annotation.getParameterList().getAttributes();
+          if (members.length == 1 && members[0].getNameIdentifier() == null) {
+            PsiReference t = members[0].getReference();
+            return t == null || consumer.process(t);
           }
         }
         return true;

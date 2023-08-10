@@ -19,7 +19,7 @@ import static com.intellij.laf.macos.MacIntelliJTextBorder.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJButtonUI extends DarculaButtonUI {
+public final class MacIntelliJButtonUI extends DarculaButtonUI {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     return new MacIntelliJButtonUI();

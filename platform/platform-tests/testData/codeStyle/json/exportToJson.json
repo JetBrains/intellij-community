@@ -3,10 +3,11 @@
   "version": "1.0",
   "codeStyle": {
     "all": {
+      "continuation_indent_size": 8,
       "formatter_off_tag": "@formatter:off",
       "formatter_on_tag": "@formatter:on",
       "formatter_tags_accept_regexp": false,
-      "formatter_tags_enabled": false,
+      "formatter_tags_enabled": true,
       "indent_size": 4,
       "indent_style": "space",
       "max_line_length": 120,
@@ -31,6 +32,7 @@
       "align_attributes": true,
       "align_text": false,
       "attribute_wrap": "normal",
+      "block_comment_add_space": false,
       "block_comment_at_first_column": true,
       "continuation_indent_size": 8,
       "do_not_align_children_of_min_lines": 0,
@@ -112,7 +114,7 @@
       "space_inside_empty_tag": false,
       "tab_width": 4,
       "text_wrap": "normal",
-      "uniform_ident": false,
+      "uniform_indent": false,
       "visual_guides": []
     }
   }

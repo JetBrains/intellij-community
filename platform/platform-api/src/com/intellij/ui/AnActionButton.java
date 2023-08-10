@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
@@ -13,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -24,9 +24,9 @@ import java.util.function.Supplier;
  * @author Konstantin Bulenkov
  */
 public abstract class AnActionButton extends AnAction implements ShortcutProvider {
+  private static final Logger LOG = Logger.getInstance(AnActionButton.class);
   private boolean myEnabled = true;
   private boolean myVisible = true;
-  private ShortcutSet myShortcut;
   private JComponent myContextComponent;
   private Set<AnActionButtonUpdater> myUpdaters;
   private final List<ActionButtonListener> myListeners = new ArrayList<>();
@@ -64,8 +64,9 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   public static AnActionButton fromAction(final AnAction action) {
     final Presentation presentation = action.getTemplatePresentation();
-    final AnActionButtonWrapper button = action instanceof CheckedActionGroup ? new CheckedAnActionButton(presentation, action)
-                                                                              : new AnActionButtonWrapper(presentation, action);
+    final AnActionButtonWrapper button = action instanceof CheckedActionGroup ? new CheckedAnActionButton(presentation, action) :
+                                         action instanceof Toggleable ? new ToggleableButtonWrapper(presentation, action) :
+                                         new AnActionButtonWrapper(presentation, action);
     button.setShortcut(action.getShortcutSet());
     return button;
   }
@@ -94,7 +95,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   @Override
   public final void update(@NotNull AnActionEvent e) {
-    boolean enabled = isEnabled() && isContextComponentOk();
+    boolean enabled = isEnabled();
     if (enabled && myUpdaters != null) {
       for (AnActionButtonUpdater updater : myUpdaters) {
         if (!updater.isEnabled(e)) {
@@ -119,17 +120,15 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   }
 
   public void updateButton(@NotNull AnActionEvent e) {
-    final JComponent component = getContextComponent();
-    e.getPresentation().setEnabled(component != null && component.isShowing() && component.isEnabled());
   }
 
   @Override
   public ShortcutSet getShortcut() {
-    return myShortcut;
+    return getShortcutSet();
   }
 
-  public void setShortcut(ShortcutSet shortcut) {
-    myShortcut = shortcut;
+  public void setShortcut(@NotNull ShortcutSet shortcut) {
+    setShortcutSet(shortcut);
   }
 
   public void setContextComponent(JComponent contextComponent) {
@@ -145,34 +144,14 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     return DataManager.getInstance().getDataContext(getContextComponent());
   }
 
-  private boolean isContextComponentOk() {
-    return myContextComponent == null
-           || (myContextComponent.isVisible() && ComponentUtil.getParentOfType((Class<? extends JLayeredPane>)JLayeredPane.class,
-                                                                               (Component)myContextComponent) != null);
-  }
-
-  @Nullable
+  @NotNull
   public final RelativePoint getPreferredPopupPoint() {
-    Container c = myContextComponent;
-    ActionToolbar toolbar = null;
-    while ((c = c.getParent()) != null) {
-      if (c instanceof JComponent
-          && (toolbar = (ActionToolbar)((JComponent)c).getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY)) != null) {
-        break;
-      }
+    RelativePoint result = CommonActionsPanel.getPreferredPopupPoint(this, myContextComponent);
+    if (result != null) {
+      return result;
     }
-    if (toolbar instanceof JComponent) {
-      for (Component comp : ((JComponent)toolbar).getComponents()) {
-        if (comp instanceof ActionButtonComponent) {
-          if (comp instanceof AnActionHolder) {
-            if (((AnActionHolder)comp).getAction() == this) {
-              return new RelativePoint(comp.getParent(), new Point(comp.getX(), comp.getY() + comp.getHeight()));
-            }
-          }
-        }
-      }
-    }
-    return null;
+    LOG.error("Can't find toolbar button");
+    return RelativePoint.getCenterOf(myContextComponent);
   }
 
   public void addActionButtonListener(ActionButtonListener l, Disposable parentDisposable) {
@@ -206,11 +185,11 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     @Override
     public void updateButton(@NotNull AnActionEvent e) {
       myAction.update(e);
-      final boolean enabled = e.getPresentation().isEnabled();
-      final boolean visible = e.getPresentation().isVisible();
-      if (enabled && visible) {
-        super.updateButton(e);
-      }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return myAction.getActionUpdateThread();
     }
 
     @Override
@@ -225,7 +204,12 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     }
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
+  public static class ToggleableButtonWrapper extends AnActionButtonWrapper implements Toggleable {
+    public ToggleableButtonWrapper(Presentation presentation, @NotNull AnAction action) {
+      super(presentation, action);
+    }
+  }
+
   public static class GroupPopupWrapper extends AnActionButtonWrapper {
     public GroupPopupWrapper(@NotNull ActionGroup group) {
       super(group.getTemplatePresentation(), group);
@@ -235,10 +219,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       RelativePoint relativePoint = getPreferredPopupPoint();
-      if (relativePoint != null) {
-        JBPopupMenu.showAt(relativePoint, ActionManager.getInstance().createActionPopupMenu(
-          e.getPlace(), (ActionGroup)getDelegate()).getComponent());
-      }
+      JBPopupMenu.showAt(relativePoint, ActionManager.getInstance().createActionPopupMenu(
+        e.getPlace(), (ActionGroup)getDelegate()).getComponent());
     }
   }
 

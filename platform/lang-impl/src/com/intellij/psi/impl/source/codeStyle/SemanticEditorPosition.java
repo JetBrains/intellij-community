@@ -1,11 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.HighlighterIteratorWrapper;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,14 +24,14 @@ import static java.lang.Integer.min;
 public final class SemanticEditorPosition {
   public interface SyntaxElement {}
 
-  private final EditorEx myEditor;
+  private final Editor myEditor;
   private final HighlighterIterator myIterator;
   private final CharSequence myChars;
   private final Function<? super IElementType, ? extends SyntaxElement> myTypeMapper;
-  private final BiFunction<? super EditorEx, ? super Integer, ? extends HighlighterIterator> myCreateHighlighterIteratorAtOffset;
+  private final BiFunction<? super Editor, ? super Integer, ? extends HighlighterIterator> myCreateHighlighterIteratorAtOffset;
 
-  private SemanticEditorPosition(@NotNull EditorEx editor, int offset,
-                                 @NotNull BiFunction<? super EditorEx, ? super Integer, ? extends HighlighterIterator> createHighlighterIteratorAtOffset,
+  private SemanticEditorPosition(@NotNull Editor editor, int offset,
+                                 @NotNull BiFunction<? super Editor, ? super Integer, ? extends HighlighterIterator> createHighlighterIteratorAtOffset,
                                  @NotNull Function<? super IElementType, ? extends SyntaxElement> typeMapper) {
     myCreateHighlighterIteratorAtOffset = createHighlighterIteratorAtOffset;
     myEditor = editor;
@@ -135,7 +136,7 @@ public final class SemanticEditorPosition {
     skipParentheses(true, leftParenthesis, rightParenthesis);
   }
 
-  protected void skipParentheses(boolean forward, @NotNull SyntaxElement leftParenthesis, @NotNull SyntaxElement rightParenthesis) {
+  private void skipParentheses(boolean forward, @NotNull SyntaxElement leftParenthesis, @NotNull SyntaxElement rightParenthesis) {
     int parenLevel = 0;
     while (!myIterator.atEnd()) {
       SyntaxElement currElement = map(myIterator.getTokenType());
@@ -202,8 +203,7 @@ public final class SemanticEditorPosition {
     return elementAfterOnSameLine(syntaxElements) != null;
   }
 
-  @Nullable
-  public SyntaxElement elementAfterOnSameLine(SyntaxElement @NotNull ... syntaxElements) {
+  public @Nullable SyntaxElement elementAfterOnSameLine(SyntaxElement @NotNull ... syntaxElements) {
     myIterator.retreat();
     while (!myIterator.atEnd() && !isAtMultiline()) {
       SyntaxElement currElement = map(myIterator.getTokenType());
@@ -234,9 +234,7 @@ public final class SemanticEditorPosition {
   public boolean isAtAnyOf(SyntaxElement @NotNull ... syntaxElements) {
     if (!myIterator.atEnd()) {
       SyntaxElement currElement = map(myIterator.getTokenType());
-      for (SyntaxElement element : syntaxElements) {
-        if (element.equals(currElement)) return true;
-      }
+      return ArrayUtil.contains(currElement, syntaxElements);
     }
     return false;
   }
@@ -261,12 +259,11 @@ public final class SemanticEditorPosition {
     return false;
   }
 
-  public EditorEx getEditor() {
+  public Editor getEditor() {
     return myEditor;
   }
 
-  @Nullable
-  public Language getLanguage() {
+  public @Nullable Language getLanguage() {
     return !myIterator.atEnd() ? myIterator.getTokenType().getLanguage() : null;
   }
 
@@ -277,8 +274,7 @@ public final class SemanticEditorPosition {
     return false;
   }
 
-  @Nullable
-  public SyntaxElement getCurrElement() {
+  public @Nullable SyntaxElement getCurrElement() {
     return !myIterator.atEnd() ? map(myIterator.getTokenType()) : null;
   }
 
@@ -327,10 +323,9 @@ public final class SemanticEditorPosition {
     return position;
   }
 
-  @NotNull
-  public static SemanticEditorPosition createEditorPosition(@NotNull EditorEx editor, int offset,
-                                                            @NotNull BiFunction<? super EditorEx, ? super Integer, ? extends HighlighterIterator> createHighlighterIteratorAtOffset,
-                                                            @NotNull Function<? super IElementType, ? extends SyntaxElement> typeMapper) {
+  public static @NotNull SemanticEditorPosition createEditorPosition(@NotNull Editor editor, int offset,
+                                                                     @NotNull BiFunction<? super Editor, ? super Integer, ? extends HighlighterIterator> createHighlighterIteratorAtOffset,
+                                                                     @NotNull Function<? super IElementType, ? extends SyntaxElement> typeMapper) {
     return new SemanticEditorPosition(editor, offset, createHighlighterIteratorAtOffset, typeMapper);
   }
 }

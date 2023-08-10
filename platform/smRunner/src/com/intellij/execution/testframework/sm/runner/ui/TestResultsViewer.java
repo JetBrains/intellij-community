@@ -19,7 +19,6 @@ public interface TestResultsViewer extends Disposable {
   /**
    * Selects test or suite in Tests tree and notify about selection changed
    *
-   * @param proxy
    */
   void selectAndNotify(@Nullable AbstractTestProxy proxy);
 
@@ -40,12 +39,5 @@ public interface TestResultsViewer extends Disposable {
                             @NotNull TestResultsViewer viewer,
                             @NotNull TestFrameworkRunningModel model) {
     }
-  }
-
-  /**
-   * @deprecated Use {@link EventsListener} directly.
-   */
-  @Deprecated
-  class SMEventsAdapter implements EventsListener {
   }
 }

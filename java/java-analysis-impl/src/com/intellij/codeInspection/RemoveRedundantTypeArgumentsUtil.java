@@ -8,7 +8,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 
 public final class RemoveRedundantTypeArgumentsUtil {
-  private static final Logger LOG = Logger.getInstance(RemoveRedundantTypeArgumentsUtil.class);
 
   public static PsiElement replaceExplicitWithDiamond(PsiElement psiElement) {
     PsiElement replacement = PsiDiamondTypeUtil.createExplicitReplacement(psiElement);

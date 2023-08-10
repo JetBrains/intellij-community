@@ -8,9 +8,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 @State(name = "PyCodeInsightSettings", storages = @Storage("other.xml"))
 public class PyCodeInsightSettings implements PersistentStateComponent<PyCodeInsightSettings> {
   public static PyCodeInsightSettings getInstance() {
@@ -33,11 +31,12 @@ public class PyCodeInsightSettings implements PersistentStateComponent<PyCodeIns
   public boolean RENAME_CLASS_CONTAINING_FILE = true;
   public boolean RENAME_CLASS_INHERITORS = true;
   public boolean RENAME_PARAMETERS_IN_HIERARCHY = true;
-
-  public boolean INSERT_BACKSLASH_ON_WRAP = true;
+  
   public boolean INSERT_SELF_FOR_METHODS = true;
 
   public boolean INSERT_TYPE_DOCSTUB;
+
+  public boolean PARENTHESISE_ON_ENTER = true;
 
   @Override
   public PyCodeInsightSettings getState() {

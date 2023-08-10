@@ -1,7 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
+import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -10,8 +13,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -40,10 +41,10 @@ public abstract class Invoker implements Disposable {
   private final String description;
   private volatile boolean disposed;
 
-  private Invoker(@NotNull String prefix, @NotNull Disposable parent, @NotNull ThreeState useReadAction) {
-    description = "Invoker." + UID.getAndIncrement()+"."+prefix + (useReadAction != ThreeState.UNSURE ? ".ReadAction="+useReadAction : "") + ": "+parent;
+  private Invoker(@NotNull String prefix, @NotNull String parentName, @NotNull ThreeState useReadAction) {
+    String readActionDescriptionPart = useReadAction != ThreeState.UNSURE ? ".ReadAction=" + useReadAction : "";
+    description = "Invoker." + UID.getAndIncrement() + "." + prefix + readActionDescriptionPart + ": " + parentName;
     this.useReadAction = useReadAction;
-    Disposer.register(parent, this);
   }
 
   @Override
@@ -77,8 +78,7 @@ public abstract class Invoker implements Disposable {
    * @param task a task to execute on the valid thread
    * @return an object to control task processing
    */
-  @NotNull
-  public final <T> CancellablePromise<T> compute(@NotNull Supplier<? extends T> task) {
+  public final @NotNull <T> CancellablePromise<T> compute(@NotNull Supplier<? extends T> task) {
     return promise(new Task<>(task));
   }
 
@@ -91,21 +91,8 @@ public abstract class Invoker implements Disposable {
    * @param task a task to execute asynchronously on the valid thread
    * @return an object to control task processing
    */
-  @NotNull
-  public final <T> CancellablePromise<T> computeLater(@NotNull Supplier<? extends T> task) {
-    return computeLater(task, 0);
-  }
-
-  /**
-   * Computes the specified task on the valid thread after the specified delay.
-   *
-   * @param task  a task to execute asynchronously on the valid thread
-   * @param delay milliseconds for the initial delay
-   * @return an object to control task processing
-   */
-  @NotNull
-  public final <T> CancellablePromise<T> computeLater(@NotNull Supplier<? extends T> task, int delay) {
-    return promise(new Task<>(task), delay);
+  public final @NotNull <T> CancellablePromise<T> computeLater(@NotNull Supplier<? extends T> task) {
+    return promise(new Task<>(task), 0);
   }
 
   /**
@@ -115,8 +102,7 @@ public abstract class Invoker implements Disposable {
    * @param task a task to execute on the valid thread
    * @return an object to control task processing
    */
-  @NotNull
-  public final CancellablePromise<?> invoke(@NotNull Runnable task) {
+  public final @NotNull CancellablePromise<?> invoke(@NotNull Runnable task) {
     return compute(new Wrapper(task));
   }
 
@@ -129,8 +115,7 @@ public abstract class Invoker implements Disposable {
    * @param task a task to execute asynchronously on the valid thread
    * @return an object to control task processing
    */
-  @NotNull
-  public final CancellablePromise<?> invokeLater(@NotNull Runnable task) {
+  public final @NotNull CancellablePromise<?> invokeLater(@NotNull Runnable task) {
     return invokeLater(task, 0);
   }
 
@@ -141,9 +126,8 @@ public abstract class Invoker implements Disposable {
    * @param delay milliseconds for the initial delay
    * @return an object to control task processing
    */
-  @NotNull
-  public final CancellablePromise<?> invokeLater(@NotNull Runnable task, int delay) {
-    return computeLater(new Wrapper(task), delay);
+  public final @NotNull CancellablePromise<?> invokeLater(@NotNull Runnable task, int delay) {
+    return promise(new Task<>(new Wrapper(task)), delay);
   }
 
   /**
@@ -154,10 +138,8 @@ public abstract class Invoker implements Disposable {
    * @return an object to control task processing
    * @deprecated use {@link #invoke(Runnable)} or {@link #compute(Supplier)} instead
    */
-  @NotNull
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2021.1")
-  public final CancellablePromise<?> runOrInvokeLater(@NotNull Runnable task) {
+  @Deprecated(forRemoval = true)
+  public final @NotNull CancellablePromise<?> runOrInvokeLater(@NotNull Runnable task) {
     return invoke(task);
   }
 
@@ -194,34 +176,36 @@ public abstract class Invoker implements Disposable {
    * @param attempt an attempt to run the specified task
    */
   private void invokeSafely(@NotNull Task<?> task, int attempt) {
-    try {
-      if (task.canInvoke(disposed)) {
-        if (getApplication() == null) {
-          task.run(); // is not interruptible in tests without application
-        }
-        else if (useReadAction != ThreeState.YES || isDispatchThread()) {
-          ProgressManager.getInstance().runProcess(task, indicator(task.promise));
-        }
-        else if (!runInReadActionWithWriteActionPriority(task, indicator(task.promise))) {
-          offerRestart(task, attempt);
-          return;
-        }
-        task.setResult();
-      }
-    }
-    catch (ProcessCanceledException | IndexNotReadyException exception) {
-      offerRestart(task, attempt);
-    }
-    catch (Throwable throwable) {
+    try (AccessToken ignored = ClientId.withClientId(task.clientId)) {
       try {
-        LOG.error(throwable);
+        if (task.canInvoke(disposed)) {
+          if (getApplication() == null) {
+            task.run(); // is not interruptible in tests without application
+          }
+          else if (useReadAction != ThreeState.YES || isDispatchThread()) {
+            ProgressManager.getInstance().runProcess(task, indicator(task.promise));
+          }
+          else if (!runInReadActionWithWriteActionPriority(task, indicator(task.promise))) {
+            offerRestart(task, attempt);
+            return;
+          }
+          task.setResult();
+        }
+      }
+      catch (ProcessCanceledException | IndexNotReadyException exception) {
+        offerRestart(task, attempt);
+      }
+      catch (Throwable throwable) {
+        try {
+          LOG.error(throwable);
+        }
+        finally {
+          task.promise.setError(throwable);
+        }
       }
       finally {
-        task.promise.setError(throwable);
+        count.decrementAndGet();
       }
-    }
-    finally {
-      count.decrementAndGet();
     }
   }
 
@@ -243,9 +227,10 @@ public abstract class Invoker implements Disposable {
    * @param task a task to execute on the valid thread
    * @return an object to control task processing
    */
-  @NotNull
-  private <T> CancellablePromise<T> promise(@NotNull Task<T> task) {
-    if (!isValidThread()) return promise(task, 0);
+  private @NotNull <T> CancellablePromise<T> promise(@NotNull Task<T> task) {
+    if (!isValidThread()) {
+      return promise(task, 0);
+    }
     count.incrementAndGet();
     invokeSafely(task, 0);
     return task.promise;
@@ -258,10 +243,13 @@ public abstract class Invoker implements Disposable {
    * @param delay milliseconds for the initial delay
    * @return an object to control task processing
    */
-  @NotNull
-  private <T> CancellablePromise<T> promise(@NotNull Task<T> task, int delay) {
-    if (delay < 0) throw new IllegalArgumentException("delay must be non-negative: " + delay);
-    if (task.canInvoke(disposed)) offerSafely(task, 0, delay);
+  private @NotNull <T> CancellablePromise<T> promise(@NotNull Task<T> task, int delay) {
+    if (delay < 0) {
+      throw new IllegalArgumentException("delay must be non-negative: " + delay);
+    }
+    if (task.canInvoke(disposed)) {
+      offerSafely(task, 0, delay);
+    }
     return task.promise;
   }
 
@@ -272,10 +260,12 @@ public abstract class Invoker implements Disposable {
   static final class Task<T> implements Runnable {
     final AsyncPromise<T> promise = new AsyncPromise<>();
     private final Supplier<? extends T> supplier;
+    private final String clientId;
     private volatile T result;
 
     Task(@NotNull Supplier<? extends T> supplier) {
       this.supplier = supplier;
+      this.clientId = ClientId.getCurrentValue();
     }
 
     boolean canRestart(boolean disposed, int attempt) {
@@ -296,8 +286,7 @@ public abstract class Invoker implements Disposable {
         promise.setError("disposed");
         return false; // the current invoker is disposed
       }
-      if (supplier instanceof Obsolescent) {
-        Obsolescent obsolescent = (Obsolescent)supplier;
+      if (supplier instanceof Obsolescent obsolescent) {
         if (obsolescent.isObsolete()) {
           if (LOG.isTraceEnabled()) LOG.debug("Task is obsolete");
           promise.setError("obsolete");
@@ -313,7 +302,9 @@ public abstract class Invoker implements Disposable {
 
     @Override
     public void run() {
-      result = supplier.get();
+      try (AccessToken ignored = ClientId.withClientId(clientId)) {
+        result = supplier.get();
+      }
     }
 
     @Override
@@ -351,8 +342,7 @@ public abstract class Invoker implements Disposable {
   }
 
 
-  @NotNull
-  private ProgressIndicatorBase indicator(@NotNull AsyncPromise<?> promise) {
+  private @NotNull ProgressIndicatorBase indicator(@NotNull AsyncPromise<?> promise) {
     ProgressIndicatorBase indicator = indicators.get(promise);
     if (indicator == null) {
       indicator = new ProgressIndicatorBase(true, false);
@@ -374,10 +364,10 @@ public abstract class Invoker implements Disposable {
      * @param parent a disposable parent object
      * @deprecated use {@link #forEventDispatchThread} instead
      */
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
+    @Deprecated(forRemoval = true)
     public EDT(@NotNull Disposable parent) {
-      super("EDT", parent, ThreeState.UNSURE);
+      super("EDT", parent.toString(), ThreeState.UNSURE);
+      Disposer.register(parent, this);
     }
 
     @Override
@@ -396,64 +386,9 @@ public abstract class Invoker implements Disposable {
     }
   }
 
-  /**
-   * This class is the {@code Invoker} in a single background thread.
-   * This invoker does not need additional synchronization.
-   *
-   * @deprecated use {@link Background#Background(Disposable)} instead
-   */
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2021.1")
-  public static final class BackgroundThread extends Invoker {
-    private final ScheduledExecutorService executor;
-    private volatile Thread thread;
-
-    public BackgroundThread(@NotNull Disposable parent) {
-      super("Background.Thread", parent, ThreeState.YES);
-      executor = AppExecutorUtil.createBoundedScheduledExecutorService(toString(), 1);
-    }
-
-    @Override
-    public void dispose() {
-      super.dispose();
-      executor.shutdown();
-    }
-
-    @Override
-    public boolean isValidThread() {
-      return thread == Thread.currentThread();
-    }
-
-    @Override
-    void offer(@NotNull Runnable runnable, int delay) {
-      schedule(executor, () -> {
-        if (thread != null) LOG.error("unexpected thread: " + thread);
-        try {
-          thread = Thread.currentThread();
-          runnable.run(); // may throw an assertion error
-        }
-        finally {
-          thread = null;
-        }
-      }, delay);
-    }
-  }
-
   public static final class Background extends Invoker {
-    private final Set<Thread> threads = ContainerUtil.newConcurrentSet();
+    private final Set<Thread> threads = ConcurrentCollectionFactory.createConcurrentSet();
     private final ScheduledExecutorService executor;
-
-    /**
-     * Creates the invoker of user read actions on a background thread.
-     *
-     * @param parent a disposable parent object
-     * @deprecated use {@link #forBackgroundThreadWithReadAction} instead
-     */
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public Background(@NotNull Disposable parent) {
-      this(parent, true);
-    }
 
     /**
      * Creates the invoker of user read actions on background threads.
@@ -464,58 +399,15 @@ public abstract class Invoker implements Disposable {
      *                   which allows not to use additional synchronization
      * @deprecated use {@link #forBackgroundPoolWithReadAction} instead
      */
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
+    @Deprecated(forRemoval = true)
     public Background(@NotNull Disposable parent, int maxThreads) {
       this(parent, ThreeState.YES, maxThreads);
     }
 
-    /**
-     * Creates the invoker of user tasks on a background thread.
-     *
-     * @param parent        a disposable parent object
-     * @param useReadAction {@code true} to run user tasks as read actions with write action priority,
-     *                      {@code false} to run user tasks without read locks
-     * @deprecated use {@link #forBackgroundThreadWithReadAction} or {@link #forBackgroundThreadWithoutReadAction} instead
-     */
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public Background(@NotNull Disposable parent, boolean useReadAction) {
-      this(parent, ThreeState.fromBoolean(useReadAction));
-    }
-
-    /**
-     * Creates the invoker of user tasks on a background thread.
-     *
-     * @param parent        a disposable parent object
-     * @param useReadAction {@code YES} to run user tasks as read actions with write action priority,
-     *                      {@code NO} to run user tasks without read locks,
-     *                      {@code UNSURE} does not guarantee that read action is allowed
-     * @deprecated use {@link #forBackgroundThreadWithReadAction} or {@link #forBackgroundThreadWithoutReadAction} instead
-     */
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction) {
-      this(parent, useReadAction, 1);
-    }
-
-    /**
-     * Creates the invoker of user tasks on background threads.
-     *
-     * @param parent        a disposable parent object
-     * @param useReadAction {@code YES} to run user tasks as read actions with write action priority,
-     *                      {@code NO} to run user tasks without read locks,
-     *                      {@code UNSURE} does not guarantee that read action is allowed
-     * @param maxThreads    the number of threads used for parallel calculation,
-     *                      where 1 guarantees sequential calculation,
-     *                      which allows not to use additional synchronization
-     * @deprecated use {@link #forBackgroundThreadWithReadAction} or {@link #forBackgroundThreadWithoutReadAction} instead
-     */
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction, int maxThreads) {
-      super(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", parent, useReadAction);
+    private Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction, int maxThreads) {
+      super(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", String.valueOf(parent.toString()), useReadAction);
       executor = AppExecutorUtil.createBoundedScheduledExecutorService(toString(), maxThreads);
+      Disposer.register(parent, this);
     }
 
     @Override
@@ -560,28 +452,23 @@ public abstract class Invoker implements Disposable {
   }
 
 
-  @NotNull
-  public static Invoker forEventDispatchThread(@NotNull Disposable parent) {
+  public static @NotNull Invoker forEventDispatchThread(@NotNull Disposable parent) {
     return new EDT(parent);
   }
 
-  @NotNull
-  public static Invoker forBackgroundPoolWithReadAction(@NotNull Disposable parent) {
+  public static @NotNull Invoker forBackgroundPoolWithReadAction(@NotNull Disposable parent) {
     return new Background(parent, ThreeState.YES, 8);
   }
 
-  @NotNull
-  public static Invoker forBackgroundPoolWithoutReadAction(@NotNull Disposable parent) {
+  public static @NotNull Invoker forBackgroundPoolWithoutReadAction(@NotNull Disposable parent) {
     return new Background(parent, ThreeState.NO, 8);
   }
 
-  @NotNull
-  public static Invoker forBackgroundThreadWithReadAction(@NotNull Disposable parent) {
+  public static @NotNull Invoker forBackgroundThreadWithReadAction(@NotNull Disposable parent) {
     return new Background(parent, ThreeState.YES, 1);
   }
 
-  @NotNull
-  public static Invoker forBackgroundThreadWithoutReadAction(@NotNull Disposable parent) {
+  public static @NotNull Invoker forBackgroundThreadWithoutReadAction(@NotNull Disposable parent) {
     return new Background(parent, ThreeState.NO, 1);
   }
 }

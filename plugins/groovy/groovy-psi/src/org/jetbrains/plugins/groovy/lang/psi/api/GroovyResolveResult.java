@@ -7,9 +7,6 @@ import com.intellij.psi.ResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public interface GroovyResolveResult extends ResolveResult {
 
   GroovyResolveResult[] EMPTY_ARRAY = new GroovyResolveResult[0];

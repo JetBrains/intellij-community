@@ -15,7 +15,9 @@
  */
 package com.intellij.ui.components;
 
-import javax.accessibility.*;
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 
 public class JBCheckBoxMenuItem extends JCheckBoxMenuItem implements Accessible {

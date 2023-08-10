@@ -118,6 +118,7 @@ public class IdentifierSplitter extends BaseSplitter {
           type == Character.TITLECASE_LETTER ||
           type == Character.OTHER_LETTER ||
           type == Character.MODIFIER_LETTER ||
+          type == Character.NON_SPACING_MARK ||
           type == Character.OTHER_PUNCTUATION
       ) {
         //letter

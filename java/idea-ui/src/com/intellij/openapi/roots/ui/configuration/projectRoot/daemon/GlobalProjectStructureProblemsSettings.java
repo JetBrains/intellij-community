@@ -15,9 +15,10 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 
-@State(name = "ProjectStructureProblems", storages = @Storage("projectStructureProblems.xml"))
+@State(name = "ProjectStructureProblems", storages = @Storage("projectStructureProblems.xml"), category = SettingsCategory.CODE)
 public class GlobalProjectStructureProblemsSettings extends ProjectStructureProblemsSettingsBase {
 }

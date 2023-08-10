@@ -1,20 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.util.AtomicNullableLazyValue;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.execution.wsl.WSLUtil.LOG;
 
@@ -38,8 +49,8 @@ final class WslDistributionDescriptor {
   @Tag("presentable-name")
   private @NlsSafe String myPresentableName;
 
-  private final NotNullLazyValue<String> myMntRootProvider = NotNullLazyValue.atomicLazy(this::computeMntRoot);
-  private final NullableLazyValue<String> myUserHomeProvider = AtomicNullableLazyValue.createValue(this::computeUserHome);
+  private final ClearableLazyValue<String> myMntRootProvider =
+    createAtomicClearableLazyValue(() -> executeOrRunTask(pi -> computeMntRoot(pi)));
 
   /**
    * Necessary for serializer
@@ -49,6 +60,12 @@ final class WslDistributionDescriptor {
 
   WslDistributionDescriptor(@NotNull String msId) {
     this(msId, msId, null, msId);
+  }
+
+  WslDistributionDescriptor(@NotNull String msId,
+                            @Nullable String executablePath,
+                            @NotNull String presentableName) {
+    this(msId, msId, executablePath, presentableName);
   }
 
   WslDistributionDescriptor(@NotNull String id,
@@ -110,41 +127,49 @@ final class WslDistributionDescriptor {
    * @return the mount point for current distribution. Default value of {@code /mnt/} may be overridden with {@code /etc/wsl.conf}
    * @apiNote caches value per IDE run. Meaning - reconfiguring of this option in WSL requires IDE restart.
    */
-  final @NotNull @NlsSafe String getMntRoot() {
+  @NotNull @NlsSafe String getMntRoot() {
     return myMntRootProvider.getValue();
-  }
-
-  public final @Nullable @NlsSafe String getUserHome() {
-    return myUserHomeProvider.getValue();
   }
 
   /**
    * @see #getMntRoot()
    */
-  private @NotNull @NlsSafe String computeMntRoot() {
-    String windowsCurrentDirectory = System.getProperty("user.dir");
+  private @NotNull @NlsSafe String computeMntRoot(@Nullable ProgressIndicator pi) {
+    long startNano = System.nanoTime();
+    String windowsWorkingDirectory = Path.of(".").toAbsolutePath().normalize().toString();
 
-    if (StringUtil.isEmpty(windowsCurrentDirectory) || windowsCurrentDirectory.length() < 3) {
-      LOG.warn("Could not obtain current directory from user.dir (or path is too short): " + windowsCurrentDirectory);
+    if (!OSAgnosticPathUtil.isAbsoluteDosPath(windowsWorkingDirectory)) {
+      LOG.warn("Failed to get WSL mount root for " + getMsId() + ": DOS working directory is expected, but got " + windowsWorkingDirectory);
       return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
     }
 
     WSLCommandLineOptions options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setExecuteCommandInShell(false);
-    String wslCurrentDirectory = readWslOutputLine(options, List.of("pwd"));
-    if (wslCurrentDirectory == null) return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
-
-    String currentPathSuffix = WSLDistribution.convertWindowsPath(windowsCurrentDirectory);
-    if (StringUtil.endsWithIgnoreCase(wslCurrentDirectory, currentPathSuffix)) {
-      return StringUtil.trimEnd(wslCurrentDirectory, currentPathSuffix, true);
+    GeneralCommandLine commandLine = new GeneralCommandLine("pwd");
+    // Use interoperability between Windows and Linux - the Linux process inherits the Windows working directory.
+    commandLine.setWorkDirectory(windowsWorkingDirectory);
+    String linuxWorkingDirectory = readWslOutputLine(options, commandLine, pi);
+    if (linuxWorkingDirectory == null) {
+      LOG.warn("Failed to get WSL mount root for " + getMsId() + ": empty output");
+      return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
     }
-    LOG.warn("Wsl current directory does not ends with windows converted suffix: " +
-             "[pwd=" + wslCurrentDirectory + "; " +
-             "suffix=" + currentPathSuffix + "]");
+
+    String linuxWorkingDirectorySuffix = WSLDistribution.convertWindowsPath(windowsWorkingDirectory);
+    if (StringUtil.endsWithIgnoreCase(linuxWorkingDirectory, linuxWorkingDirectorySuffix)) {
+      String mountRoot = StringUtil.trimEnd(linuxWorkingDirectory, linuxWorkingDirectorySuffix, true);
+      LOG.info("WSL mount root for " + getMsId() + " is " + mountRoot + " (done in " + TimeoutUtil.getDurationMillis(startNano) + " ms)");
+      return mountRoot;
+    }
+    LOG.warn("Failed to get WSL mount root for " + getMsId() + ": Linux working directory does not ends with Windows converted suffix. " +
+             String.join("; ", List.of("Windows pwd=" + windowsWorkingDirectory,
+                                       "Linux pwd=" + linuxWorkingDirectory,
+                                       "expected linux suffix=" + linuxWorkingDirectorySuffix)));
     return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
   }
 
-  private @Nullable String readWslOutputLine(WSLCommandLineOptions options, List<String> command) {
-    List<String> pwdOutputLines = readWSLOutput(options, command);
+  private @Nullable String readWslOutputLine(@NotNull WSLCommandLineOptions options,
+                                             @NotNull GeneralCommandLine commandLine,
+                                             @Nullable ProgressIndicator pi) {
+    List<String> pwdOutputLines = readWslOutput(options, commandLine, pi);
     if (pwdOutputLines == null) return null;
     if (pwdOutputLines.size() != 1) {
       LOG.warn("One line response expected: " +
@@ -156,12 +181,16 @@ final class WslDistributionDescriptor {
     return pwdOutputLines.get(0).trim();
   }
 
-  private @Nullable List<String> readWSLOutput(WSLCommandLineOptions options, List<String> command) {
+  private @Nullable List<String> readWslOutput(@NotNull WSLCommandLineOptions options,
+                                               @NotNull GeneralCommandLine commandLine,
+                                               @Nullable ProgressIndicator pi) {
     WSLDistribution distribution = WslDistributionManager.getInstance().getOrCreateDistributionByMsId(getId());
 
-    ProcessOutput output;
+    final ProcessOutput output;
     try {
-      output = distribution.executeOnWsl(command, options, PROBE_TIMEOUT, null);
+      distribution.patchCommandLine(commandLine, null, options);
+      var processHandler = new CapturingProcessHandler(commandLine);
+      output = pi == null ? processHandler.runProcess(PROBE_TIMEOUT) : processHandler.runProcessWithProgressIndicator(pi, PROBE_TIMEOUT);
     }
     catch (ExecutionException e) {
       LOG.warn("Start failed on " + getId(), e);
@@ -179,14 +208,40 @@ final class WslDistributionDescriptor {
     return output.getStdoutLines();
   }
 
-  private @Nullable String computeUserHome() {
-    return getEnvironmentVariable("HOME");
+  private static <T> T executeOrRunTask(@NotNull Function<? super @Nullable ProgressIndicator, ? extends T> commandRunner) {
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      return commandRunner.apply(null);
+    }
+    return ProgressManager.getInstance().run(new Task.WithResult<>(null, IdeBundle.message("wsl.executing.process"), true) {
+      @Override
+      protected T compute(@NotNull ProgressIndicator indicator) throws RuntimeException {
+        return commandRunner.apply(indicator);
+      }
+    });
   }
 
-  @Nullable String getEnvironmentVariable(String name) {
-    return readWslOutputLine(new WSLCommandLineOptions()
-                               .setExecuteCommandInInteractiveShell(true)
-                               .setExecuteCommandInLoginShell(true),
-                             List.of("printenv", name));
+  public static @NotNull <T> ClearableLazyValue<T> createAtomicClearableLazyValue(@NotNull Supplier<? extends T> computable) {
+    return new ClearableLazyValue<>() {
+      private long myExternalChangesCount = getCurrentExternalChangesCount();
+
+      @Override
+      protected @NotNull T compute() {
+        return computable.get();
+      }
+
+      @Override
+      public synchronized @NotNull T getValue() {
+        final long curExternalChangesCount = getCurrentExternalChangesCount();
+        if (curExternalChangesCount != myExternalChangesCount) {
+          myExternalChangesCount = curExternalChangesCount;
+          drop(); // drop cache
+        }
+        return super.getValue();
+      }
+
+      private long getCurrentExternalChangesCount() {
+        return SaveAndSyncHandler.getInstance().getExternalChangesTracker().getModificationCount();
+      }
+    };
   }
 }

@@ -15,9 +15,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 
 public final class KeyboardGestureProcessor {
-  IdeKeyEventDispatcher myDispatcher;
-
-  StateContext myContext = new StateContext();
+  final IdeKeyEventDispatcher myDispatcher;
+  final StateContext myContext = new StateContext();
 
   final KeyGestureState myWaitForStart = new KeyGestureState.WaitForStart(this);
   final KeyGestureState myModifierPressed = new KeyGestureState.ModifierPressed(this);
@@ -90,55 +89,49 @@ public final class KeyboardGestureProcessor {
       if (isGestureProcessingState) {
         myDispatcher.setState(KeyState.STATE_INIT);
       }
-    } else if (state == myWaitForAction) {
+    }
+    else if (state == myWaitForAction) {
       myDispatcher.setState(KeyState.STATE_KEY_GESTURE_PROCESSOR);
     }
     myState = state;
   }
 
-  private class MyActionProcessor implements ActionProcessor {
+  private class MyActionProcessor extends ActionProcessor {
     @Override
     @NotNull
-    public AnActionEvent createEvent(final InputEvent inputEvent, @NotNull final DataContext context, @NotNull final String place, @NotNull final Presentation presentation,
-                                     @NotNull final ActionManager manager) {
+    public AnActionEvent createEvent(@NotNull InputEvent inputEvent,
+                                     @NotNull DataContext context,
+                                     @NotNull String place,
+                                     @NotNull Presentation presentation,
+                                     @NotNull ActionManager manager) {
       myContext.actionPresentation = presentation;
       myContext.actionPlace = place;
       return myState.createActionEvent();
     }
 
     @Override
-    public void onUpdatePassed(final InputEvent inputEvent, @NotNull final AnAction action, @NotNull final AnActionEvent actionEvent) {
-    }
-
-    @Override
-    public void performAction(final InputEvent e, @NotNull final AnAction action, @NotNull final AnActionEvent actionEvent) {
-      final boolean isGestureAction = action instanceof KeyboardGestureAction;
-      actionEvent.accept(new AnActionEventVisitor() {
+    public void performAction(@NotNull InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent event) {
+      Runnable runnable = () -> super.performAction(inputEvent, action, event);
+      event.accept(new AnActionEventVisitor() {
         @Override
-        public void visitGestureInitEvent(@NotNull final AnActionEvent anActionEvent) {
-          if (isGestureAction) {
-            execute(anActionEvent, action, e);
+        public void visitGestureInitEvent(@NotNull AnActionEvent anActionEvent) {
+          if (action instanceof KeyboardGestureAction) {
+            runnable.run();
           }
         }
 
         @Override
-        public void visitGesturePerformedEvent(@NotNull final AnActionEvent anActionEvent) {
-          execute(anActionEvent, action, e);
+        public void visitGesturePerformedEvent(@NotNull AnActionEvent anActionEvent) {
+          runnable.run();
         }
 
         @Override
-        public void visitGestureFinishEvent(@NotNull final AnActionEvent anActionEvent) {
-          if (isGestureAction) {
-            execute(anActionEvent, action, e);
+        public void visitGestureFinishEvent(@NotNull AnActionEvent anActionEvent) {
+          if (action instanceof KeyboardGestureAction) {
+            runnable.run();
           }
         }
       });
     }
-
-    private void execute(final AnActionEvent anActionEvent, final AnAction action, final InputEvent e) {
-      action.actionPerformed(anActionEvent);
-      e.consume();
-    }
   }
-
 }

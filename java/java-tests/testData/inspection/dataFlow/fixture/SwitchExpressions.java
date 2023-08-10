@@ -30,7 +30,7 @@ public class SwitchExpressionsJava12 {
     int i1 = switch(x) {
       case A -> 1;
       case B -> 2;
-      case C -> 3;
+      case <warning descr="Switch label 'C' is unreachable">C</warning> -> 3;
     };
 
     if (<warning descr="Condition 'i1 == 0' is always 'false'">i1 == 0</warning>) {} // exhaustive

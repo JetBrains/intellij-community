@@ -24,6 +24,7 @@ import java.util.List;
 
 /**
  * Base class for non-line java breakpoint
+ *
  * @author egor
  */
 public abstract class JavaBreakpointTypeBase<T extends JavaBreakpointProperties> extends XBreakpointType<XBreakpoint<T>, T>

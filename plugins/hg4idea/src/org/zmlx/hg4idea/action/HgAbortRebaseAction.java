@@ -16,6 +16,7 @@
 package org.zmlx.hg4idea.action;
 
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -41,7 +42,8 @@ public class HgAbortRebaseAction extends HgProcessStateAction {
   @Override
   protected void execute(@NotNull final Project project,
                          @NotNull Collection<HgRepository> repositories,
-                         @Nullable final HgRepository selectedRepo) {
+                         @Nullable final HgRepository selectedRepo,
+                         @NotNull DataContext dataContext) {
 
     new Task.Backgroundable(project, HgBundle.message("action.hg4idea.Rebase.Abort.progress")) {
       @Override

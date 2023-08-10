@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.create;
 
 import com.intellij.application.options.CodeStyle;
@@ -9,10 +9,7 @@ import com.intellij.lang.Language;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -90,6 +87,12 @@ public final class CreateEditorConfigAction extends AnAction implements DumbAwar
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     if (PlatformUtils.isRider()) {
@@ -98,7 +101,8 @@ public final class CreateEditorConfigAction extends AnAction implements DumbAwar
     }
     IdeView view = getIdeView(e);
     if (view != null) {
-      presentation.setVisible(isAvailableFor(view.getDirectories()));
+      presentation.setVisible(e.getProject() != null &&
+                              isAvailableFor(view.getDirectories()));
     }
     else {
       presentation.setEnabledAndVisible(false);
@@ -121,7 +125,7 @@ public final class CreateEditorConfigAction extends AnAction implements DumbAwar
   }
 
   @Nullable
-  protected IdeView getIdeView(@NotNull AnActionEvent e) {
+  private IdeView getIdeView(@NotNull AnActionEvent e) {
     return e.getData(LangDataKeys.IDE_VIEW);
   }
 

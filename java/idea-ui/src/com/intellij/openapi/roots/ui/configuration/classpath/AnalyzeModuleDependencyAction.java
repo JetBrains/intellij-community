@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,9 +49,9 @@ class AnalyzeModuleDependencyAction extends AnAction {
     if (selectedEntry instanceof ModuleOrderEntry) {
       Module depModule = ((ModuleOrderEntry)selectedEntry).getModule();
       LOG.assertTrue(depModule != null);
-      Map<OrderEntry, OrderEntry> additionalDependencies = JavaProjectRootsUtil
-        .findExportedDependenciesReachableViaThisDependencyOnly(myPanel.getRootModel().getModule(),
-                                                                depModule, modulesProvider);
+      Map<OrderEntry, OrderEntry> additionalDependencies =
+        JavaProjectDependenciesAnalyzer.findExportedDependenciesReachableViaThisDependencyOnly(myPanel.getRootModel().getModule(),
+                                                                                               depModule, modulesProvider);
       additionalScopes = new LinkedHashMap<>();
       for (Map.Entry<OrderEntry, OrderEntry> entry : additionalDependencies.entrySet()) {
         additionalScopes.put(getScopeForOrderEntry(entry.getKey()), entry.getValue());
@@ -70,7 +71,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
         if (usedScopes.contains(mainScope)) {
           Messages.showInfoMessage(myProject,
                                    JavaUiBundle
-                                     .message("message.text.dependencies.were.successfully.collected.in.0.toolwindow", ToolWindowId.DEPENDENCIES),
+                                     .message("message.text.dependencies.were.successfully.collected.in.0.toolwindow", ToolWindowId.ANALYZE_DEPENDENCIES),
                                    getTemplateText());
           return true;
         }
@@ -114,15 +115,14 @@ class AnalyzeModuleDependencyAction extends AnAction {
                                                     );
 
         String[] options = {JavaUiBundle.message("button.text.replace"), JavaUiBundle.message("show.dependencies"), Messages.getCancelButton()};
-        switch (Messages.showDialog(myProject, message, getTemplateText(), options, 0, Messages.getWarningIcon())) {
-          case 0:
+        return switch (Messages.showDialog(myProject, message, getTemplateText(), options, 0, Messages.getWarningIcon())) {
+          case 0 -> {
             InlineModuleDependencyAction.inlineEntry(myPanel, selectedEntry, usedEntries::contains);
-            return false;
-          case 1:
-            return true;
-          default:
-            return false;
-        }
+            yield false;
+          }
+          case 1 -> true;
+          default -> false;
+        };
       }
 
       @Override
@@ -177,7 +177,12 @@ class AnalyzeModuleDependencyAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     final OrderEntry entry = myPanel.getSelectedEntry();
-    e.getPresentation().setVisible(entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null
-                                 || entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() != null);
+    e.getPresentation().setEnabledAndVisible(entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null
+                                             || entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

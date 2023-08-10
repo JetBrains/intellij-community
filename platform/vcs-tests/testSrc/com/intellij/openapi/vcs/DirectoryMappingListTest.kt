@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
@@ -41,9 +42,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   private lateinit var vcsCVS: MockAbstractVcs
 
   override fun setUpProject() {
-    TestLoggerFactory.enableDebugLogging(testRootDisposable,
-                                         "#" + NewMappings::class.java.name,
-                                         "#" + VcsInitialization::class.java.name)
+    TestLoggerFactory.enableDebugLogging(testRootDisposable, NewMappings::class.java, VcsInitialization::class.java)
 
     val root = FileUtil.toSystemIndependentName(VcsTestUtil.getTestDataPath() + BASE_PATH)
     projectRoot = createTestProjectStructure(null, root, false, tempDir)
@@ -470,6 +469,51 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
         }
       }
     }.assertTiming()
+  }
+
+  fun testRootMappingAppliedInSync1() {
+    ApplicationManager.getApplication().assertIsDispatchThread() // updateVcsMappings is sync from BGT
+
+    val children = listOf(
+      "$rootPath/parent/child1",
+      "$rootPath\\parent\\middle\\child2",
+      "$rootPath/parent/middle/child3",
+      "$rootPath/parent/child/inner"
+    )
+    val files = createDirectories(children)
+
+    mappings.freezeMappedRootsUpdate(testRootDisposable)
+    mappings.setMapping("$rootPath/parent", CVS)
+    mappings.setMapping("$rootPath/parent/child", MOCK)
+
+    val awaitedVcsNames = listOf(CVS, CVS, CVS, MOCK)
+    for (i in children.indices) {
+      val mapping = getMappingFor(files[i])
+      assertEquals(awaitedVcsNames[i], mapping?.vcs)
+    }
+  }
+
+  fun testRootMappingAppliedInSync2() {
+    ApplicationManager.getApplication().assertIsDispatchThread() // updateVcsMappings is sync from BGT
+
+    val children = listOf(
+      "$rootPath/parent/child1",
+      "$rootPath\\parent\\middle\\child2",
+      "$rootPath/parent/middle/child3",
+      "$rootPath/parent/child/inner"
+    )
+    val files = createDirectories(children)
+
+    mappings.freezeMappedRootsUpdate(testRootDisposable)
+    mappings.setMapping("", CVS)
+    mappings.setMapping("$rootPath/parent", CVS)
+    mappings.setMapping("$rootPath/parent/child", MOCK)
+
+    val awaitedVcsNames = listOf(CVS, CVS, CVS, MOCK)
+    for (i in children.indices) {
+      val mapping = getMappingFor(files[i])
+      assertEquals(awaitedVcsNames[i], mapping?.vcs)
+    }
   }
 
   private fun createDirectories(paths: List<String>): List<VirtualFile> {

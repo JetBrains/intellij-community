@@ -5,8 +5,6 @@ import com.intellij.filePrediction.FilePredictionBundle
 import com.intellij.filePrediction.FilePredictionNotifications
 import com.intellij.filePrediction.candidates.CompositeCandidateProvider
 import com.intellij.filePrediction.candidates.FilePredictionCandidateProvider
-import com.intellij.filePrediction.candidates.FilePredictionNeighborFilesProvider
-import com.intellij.filePrediction.candidates.FilePredictionReferenceProvider
 import com.intellij.filePrediction.predictor.FilePredictionCandidate
 import com.intellij.filePrediction.predictor.FileUsagePredictorProvider
 import com.intellij.openapi.actionSystem.AnAction
@@ -23,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Iconable.ICON_FLAG_VISIBILITY
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -30,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import kotlin.math.round
 
@@ -44,7 +42,7 @@ class FilePredictionNextCandidatesAction : AnAction() {
       return
     }
 
-    val file: PsiFile? = CommonDataKeys.PSI_FILE.getData(e.dataContext)
+    val file: PsiFile? = e.getData(CommonDataKeys.PSI_FILE)
     val title = FilePredictionBundle.message("file.prediction.predict.next.files.process.title")
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, false) {
       override fun run(indicator: ProgressIndicator) {
@@ -60,16 +58,7 @@ class FilePredictionNextCandidatesAction : AnAction() {
   }
 
   private fun getCandidatesProvider(): FilePredictionCandidateProvider {
-    val useAllCandidates = Registry.get("filePrediction.action.use.all.candidates").asBoolean()
-    if (useAllCandidates) {
-      return CompositeCandidateProvider()
-    }
-
-    val providers = arrayListOf<FilePredictionCandidateProvider>(
-      FilePredictionReferenceProvider(),
-      FilePredictionNeighborFilesProvider()
-    )
-    return FilePredictionCustomCandidateProvider(providers)
+    return CompositeCandidateProvider()
   }
 
   private fun showCandidates(project: Project, context: DataContext, candidates: List<FilePredictionCandidate>) {
@@ -78,10 +67,12 @@ class FilePredictionNextCandidatesAction : AnAction() {
     val requestsCollectionPopup =
       JBPopupFactory.getInstance().createListPopup(object : BaseListPopupStep<FileCandidatePresentation>(title, presentation) {
         override fun getTextFor(value: FileCandidatePresentation?): String {
-          return value?.presentableName?.let {
-            val shortPath = StringUtil.shortenPathWithEllipsis(it, 50)
-            "$shortPath (${roundProbability(value.original)})"
-          } ?: super.getTextFor(value)
+          val presentableName = value?.presentableName
+          if (presentableName != null) {
+            val shortPath = StringUtil.shortenPathWithEllipsis(presentableName, 50)
+            return "$shortPath (${roundProbability(value.original)})"
+          }
+          return super.getTextFor(null)
         }
 
         override fun getIconFor(value: FileCandidatePresentation?): Icon? {
@@ -102,7 +93,7 @@ class FilePredictionNextCandidatesAction : AnAction() {
   private fun calculatePresentation(project: Project, candidate: FilePredictionCandidate): FileCandidatePresentation {
     val file = findSelectedFile(candidate)
     if (file == null) {
-      return FileCandidatePresentation(file, null, candidate.path, candidate)
+      return FileCandidatePresentation(file = null, icon = null, candidate.path, candidate)
     }
 
     val psiFile = PsiManager.getInstance(project).findFile(file)
@@ -128,9 +119,5 @@ class FilePredictionNextCandidatesAction : AnAction() {
 
 private data class FileCandidatePresentation(val file: VirtualFile?,
                                              val icon: Icon?,
-                                             @Nls val presentableName: String,
+                                             @NlsSafe val presentableName: String,
                                              val original: FilePredictionCandidate)
-
-private class FilePredictionCustomCandidateProvider(private val providers: List<FilePredictionCandidateProvider>) : CompositeCandidateProvider() {
-  override fun getProviders() : List<FilePredictionCandidateProvider> = providers
-}

@@ -1,4 +1,4 @@
-// "Make 'C' extend 'java.lang.Throwable'" "true"
+// "Make 'C' extend 'java.lang.Throwable'" "true-preview"
 
 class C extends Throwable {}
 class Main {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing;
 
@@ -20,8 +6,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
+import java.util.function.IntPredicate;
 
 /**
+ * Container for set of pairs (value, valueOriginId).
+ * <br/>
+ * Used in inverted indexes: inverted index has structure [value -> (key, keySourceId)*], so it is implemented
+ * as (persistent) Map[Value -> ValueContainer[Key]).
+ * <br/>
+ * (There is a bit of mess with keys/values labels, since in inverted index keys effectively switch roles
+ * with values)
+ *
  * @author Eugene Zhuravlev
  */
 public abstract class ValueContainer<Value> {
@@ -33,20 +28,12 @@ public abstract class ValueContainer<Value> {
     int size();
   }
 
-  @FunctionalInterface
-  public interface IntPredicate {
-    boolean contains(int id);
-  }
-
-  @NotNull
-  public abstract ValueIterator<Value> getValueIterator();
+  public abstract @NotNull ValueIterator<Value> getValueIterator();
 
   public interface ValueIterator<Value> extends Iterator<Value> {
-    @NotNull
-    IntIterator getInputIdsIterator();
+    @NotNull IntIterator getInputIdsIterator();
 
-    @Nullable
-    IntPredicate getValueAssociationPredicate();
+    @Nullable IntPredicate getValueAssociationPredicate();
   }
 
   public abstract int size();
@@ -56,11 +43,30 @@ public abstract class ValueContainer<Value> {
     boolean perform(int id, T value);
   }
 
+  @FunctionalInterface
+  public interface ThrowableContainerProcessor<V, T extends Throwable> {
+    boolean process(int id, V value) throws T;
+  }
+
   public final boolean forEach(@NotNull ContainerAction<? super Value> action) {
-    for (final ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
-      final Value value = valueIterator.next();
-      for (final IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext();) {
-        if (!action.perform(intIterator.next(), value)) return false;
+    for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+      Value value = valueIterator.next();
+      for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext();) {
+        if (!action.perform(intIterator.next(), value)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  public final <T extends Throwable> boolean process(@NotNull ThrowableContainerProcessor<? super Value, T> action) throws T {
+    for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+      Value value = valueIterator.next();
+      for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext();) {
+        if (!action.process(intIterator.next(), value)) {
+          return false;
+        }
       }
     }
     return true;

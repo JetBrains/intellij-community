@@ -336,8 +336,7 @@ public class TreeTable extends JBTable {
   @Override
   public boolean editCellAt(int row, int column, EventObject e) {
     boolean editResult = super.editCellAt(row, column, e);
-    if (e instanceof MouseEvent && isTreeColumn(column)){
-      MouseEvent me = (MouseEvent)e;
+    if (e instanceof MouseEvent me && isTreeColumn(column)){
       int y = me.getY();
 
       if (getRowHeight() != myTree.getRowHeight()) {

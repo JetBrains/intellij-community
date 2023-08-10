@@ -19,9 +19,6 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class PyiFileType extends PythonFileType {
   @NotNull
   public static final PythonFileType INSTANCE = new PyiFileType();
@@ -39,7 +36,7 @@ public class PyiFileType extends PythonFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return PyPsiBundle.message("python.stub");
+    return PyPsiBundle.message("filetype.python.stub.description");
   }
 
   @NotNull

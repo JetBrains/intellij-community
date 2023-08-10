@@ -39,7 +39,7 @@ public class TwosideContentPanel extends JPanel {
     assert contents.size() == 2;
 
     myPanels = ContainerUtil.map(contents, it -> new DiffContentPanel(it));
-    DiffContentPanel.syncTitleHeights(myPanels);
+    DiffContentLayoutPanel.syncTitleHeights(myPanels);
 
     mySplitter = new DiffSplitter();
     mySplitter.setFirstComponent(Side.LEFT.select(myPanels));
@@ -48,7 +48,7 @@ public class TwosideContentPanel extends JPanel {
     add(mySplitter, BorderLayout.CENTER);
   }
 
-  public void setTitles(@NotNull List<JComponent> titleComponents) {
+  public void setTitles(@NotNull List<? extends JComponent> titleComponents) {
     for (Side side : Side.values()) {
       DiffContentPanel panel = side.select(myPanels);
       JComponent title = side.select(titleComponents);

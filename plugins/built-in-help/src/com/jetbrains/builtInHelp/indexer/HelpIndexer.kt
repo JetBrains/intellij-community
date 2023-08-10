@@ -81,7 +81,7 @@ internal constructor(indexDir: String) {
   companion object {
     private val analyzer = StandardAnalyzer()
 
-    fun doIndex(dirToStore: String, dirToIndex: String) {
+    private fun doIndex(dirToStore: String, dirToIndex: String) {
       val indexer = HelpIndexer(dirToStore)
       indexer.indexFileOrDirectory(dirToIndex)
       indexer.closeIndex()

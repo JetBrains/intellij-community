@@ -7,30 +7,29 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static java.util.Collections.emptySet;
 
 /**
  * @deprecated Use {@link DumbAwareAction} instead.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class AbstractVcsAction extends DumbAwareAction {
 
   @SuppressWarnings("unused") // Required for compatibility with external plugins.
   public static Collection<AbstractVcs> getActiveVcses(@NotNull VcsContext dataContext) {
     Project project = dataContext.getProject();
 
-    return project != null ? newHashSet(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()) : emptySet();
+    return project != null ? ContainerUtil.newHashSet(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()) : emptySet();
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    //noinspection deprecation - required for compatibility with external plugins.
-    performUpdate(e.getPresentation(), VcsContextWrapper.createInstanceOn(e));
+    update(VcsContextWrapper.createInstanceOn(e), e.getPresentation());
   }
 
   @Override
@@ -41,22 +40,4 @@ public abstract class AbstractVcsAction extends DumbAwareAction {
   protected abstract void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation);
 
   protected abstract void actionPerformed(@NotNull VcsContext e);
-
-  /**
-   * @deprecated Only sync update is currently supported by {@link AbstractVcsAction}.
-   */
-  @SuppressWarnings("unused") // Required for compatibility with external plugins.
-  @Deprecated
-  protected boolean forceSyncUpdate(@NotNull AnActionEvent e) {
-    return true;
-  }
-
-
-  /**
-   * @deprecated Use {@link AbstractVcsAction#update(VcsContext, Presentation)}.
-   */
-  @Deprecated
-  protected void performUpdate(@NotNull Presentation presentation, @NotNull VcsContext vcsContext) {
-    update(vcsContext, presentation);
-  }
 }

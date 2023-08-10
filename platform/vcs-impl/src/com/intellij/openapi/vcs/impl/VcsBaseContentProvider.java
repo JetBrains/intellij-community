@@ -9,22 +9,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author irengrig
+ * Can be used to provide "changed lines" in Editor gutter.
+ *
+ * @see LocalLineStatusTrackerProvider
+ * @see VcsBaseContentProviderListener
  */
 public interface VcsBaseContentProvider {
+
   @ApiStatus.Internal
   ProjectExtensionPointName<VcsBaseContentProvider> EP_NAME = new ProjectExtensionPointName<>("com.intellij.vcs.baseContentProvider");
 
-  @Nullable
-  BaseContent getBaseRevision(@NotNull VirtualFile file);
+  @Nullable BaseContent getBaseRevision(@NotNull VirtualFile file);
 
   boolean isSupported(@NotNull VirtualFile file);
 
   interface BaseContent {
-    @NotNull
-    VcsRevisionNumber getRevisionNumber();
 
-    @Nullable
-    String loadContent();
+    @NotNull VcsRevisionNumber getRevisionNumber();
+
+    @Nullable String loadContent();
   }
 }

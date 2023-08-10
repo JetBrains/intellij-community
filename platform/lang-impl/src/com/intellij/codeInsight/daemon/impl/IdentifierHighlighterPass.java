@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -27,14 +28,16 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.AstLoadingFilter;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -43,23 +46,21 @@ import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.ELEMENT_UND
 import static com.intellij.codeInsight.highlighting.HighlightUsagesKt.getUsageRanges;
 import static com.intellij.model.psi.impl.TargetsKt.targetSymbols;
 
-/**
- * @author yole
- */
+
 public class IdentifierHighlighterPass {
   private static final Logger LOG = Logger.getInstance(IdentifierHighlighterPass.class);
 
   private final PsiFile myFile;
   private final Editor myEditor;
-  private final Collection<TextRange> myReadAccessRanges = Collections.synchronizedList(new ArrayList<>());
-  private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedList(new ArrayList<>());
-  private final Collection<TextRange> myCodeBlockMarkerRanges = Collections.synchronizedList(new ArrayList<>());
+  private final Collection<TextRange> myReadAccessRanges = Collections.synchronizedSet(new LinkedHashSet<>());
+  private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedSet(new LinkedHashSet<>());
+  private final Collection<TextRange> myCodeBlockMarkerRanges = Collections.synchronizedSet(new LinkedHashSet<>());
   private final int myCaretOffset;
   private final ProperTextRange myVisibleRange;
 
   /**
    * @param file may be injected fragment, in which case the {@code editor} must be corresponding injected editor and  {@code visibleRange} must have consistent offsets inside the injected document.
-   * In both cases, {@link #doCollectInformation()} will produce and {@link #doApplyInformationToEditor()} will apply HighlightInfos for the host file.
+   * In both cases, {@link #doCollectInformation(HighlightingSession)} will produce and apply HighlightInfos to the host file.
    */
   IdentifierHighlighterPass(@NotNull PsiFile file, @NotNull Editor editor, @NotNull TextRange visibleRange) {
     myFile = file;
@@ -68,8 +69,11 @@ public class IdentifierHighlighterPass {
     myVisibleRange = new ProperTextRange(visibleRange);
   }
 
-  public void doCollectInformation() {
+  public void doCollectInformation(@NotNull HighlightingSession hostSession) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     HighlightUsagesHandlerBase<PsiElement> highlightUsagesHandler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile, myVisibleRange);
+    boolean runFindUsages = true;
     if (highlightUsagesHandler != null) {
       List<PsiElement> targets = highlightUsagesHandler.getTargets();
       highlightUsagesHandler.computeUsages(targets);
@@ -83,69 +87,55 @@ public class IdentifierHighlighterPass {
         LOG.assertTrue(writeUsage != null, "null text range from " + highlightUsagesHandler);
       }
       myWriteAccessRanges.addAll(writeUsages);
-      if (!highlightUsagesHandler.highlightReferences()) return;
+      if (!highlightUsagesHandler.highlightReferences()) {
+        runFindUsages = false;
+      }
     }
 
-    collectCodeBlockMarkerRanges();
-    if (Registry.is("ide.symbol.identifier.highlighting")) {
+    if (runFindUsages) {
+      collectCodeBlockMarkerRanges();
       highlightReferencesAndDeclarations();
     }
-    else {
-      highlightReferencesAndDeclarationsOld();
+
+    if (!myEditor.isDisposed()) {
+      boolean virtSpace = EditorUtil.isCaretInVirtualSpace(myEditor);
+      List<HighlightInfo> infos = virtSpace || isCaretOverCollapsedFoldRegion() ? Collections.emptyList() : getHighlights();
+      PsiFile hostFile = InjectedLanguageManager.getInstance(myFile.getProject()).getTopLevelFile(myFile);
+      Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
+      BackgroundUpdateHighlightersUtil.setHighlightersInRange(hostFile.getTextRange(), infos, (MarkupModelEx)hostEditor.getMarkupModel(), getId(), hostSession);
     }
   }
 
-  private void highlightReferencesAndDeclarationsOld() {
-    int flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED;
-    PsiElement myTarget;
-    try {
-      myTarget = TargetElementUtil.getInstance().findTargetElement(myEditor, flags, myCaretOffset);
-    }
-    catch (IndexNotReadyException e) {
-      return;
-    }
+  @ApiStatus.Internal
+  public Collection<TextRange> getReadAccessRange() {
+    return myReadAccessRanges;
+  }
 
-    if (myTarget == null) {
-      if (!PsiDocumentManager.getInstance(myFile.getProject()).isUncommited(myEditor.getDocument())) {
-        // when document is committed, try to check injected stuff - it's fast
-        Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile, myCaretOffset);
-        myTarget = TargetElementUtil.getInstance().findTargetElement(injectedEditor, flags, injectedEditor.getCaretModel().getOffset());
-      }
-    }
+  @ApiStatus.Internal
+  public Collection<TextRange> getWriteAccessRange() {
+    return myWriteAccessRanges;
+  }
 
-    if (myTarget != null) {
-      highlightTargetUsages(myTarget);
-    }
-    else {
-      PsiReference ref = TargetElementUtil.findReference(myEditor);
-      if (ref instanceof PsiPolyVariantReference) {
-        if (!ref.getElement().isValid()) {
-          throw new PsiInvalidElementAccessException(ref.getElement(), "Invalid element in " + ref + " of " + ref.getClass() + "; editor=" + myEditor);
-        }
-        ResolveResult[] results = ((PsiPolyVariantReference)ref).multiResolve(false);
-        if (results.length > 0) {
-          for (ResolveResult result : results) {
-            PsiElement target = result.getElement();
-            if (target != null) {
-              if (!target.isValid()) {
-                throw new PsiInvalidElementAccessException(target, "Invalid element returned from " + ref + " of " + ref.getClass() + "; editor=" + myEditor);
-              }
-              highlightTargetUsages(target);
-            }
-          }
-        }
-      }
-
-    }
+  @ApiStatus.Internal
+  public Collection<TextRange> getCodeBlockMarkerRanges() {
+    return myCodeBlockMarkerRanges;
   }
 
   /**
    * Collects code block markers ranges to highlight. E.g. if/elsif/else. Collected ranges will be highlighted the same way as braces
    */
   private void collectCodeBlockMarkerRanges() {
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myFile.getProject());
+
     PsiElement contextElement = myFile.findElementAt(
       TargetElementUtil.adjustOffset(myFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset()));
-    myCodeBlockMarkerRanges.addAll(CodeBlockSupportHandler.findMarkersRanges(contextElement));
+    if (contextElement == null) {
+      return;
+    }
+
+    for (TextRange range : CodeBlockSupportHandler.findMarkersRanges(contextElement)) {
+      myCodeBlockMarkerRanges.add(manager.injectedToHost(contextElement, range));
+    }
   }
 
   /**
@@ -167,8 +157,7 @@ public class IdentifierHighlighterPass {
    * @param target target psi element
    * @param psiElement psi element to search in
    */
-  @NotNull
-  public static Collection<TextRange> getUsages(@NotNull PsiElement target, PsiElement psiElement, boolean withDeclarations) {
+  public static @NotNull Collection<TextRange> getUsages(@NotNull PsiElement target, PsiElement psiElement, boolean withDeclarations) {
     List<TextRange> ranges = new ArrayList<>();
     getUsages(target, psiElement, withDeclarations, false, ranges, ranges);
     return ranges;
@@ -215,18 +204,6 @@ public class IdentifierHighlighterPass {
     }
   }
 
-  private void highlightTargetUsages(@NotNull PsiElement target) {
-    AstLoadingFilter.disallowTreeLoading(
-      () -> {
-        getHighlightUsages(target, myFile, true, myReadAccessRanges, myWriteAccessRanges);
-        return null;
-      },
-      () -> "Currently highlighted file: \n" +
-            "psi file: " + myFile + ";\n" +
-            "virtual file: " + myFile.getVirtualFile()
-    );
-  }
-
   private void highlightReferencesAndDeclarations() {
     Collection<Symbol> targetSymbols = getTargetSymbols();
     for (Symbol symbol : targetSymbols) {
@@ -246,7 +223,7 @@ public class IdentifierHighlighterPass {
     //noinspection deprecation
     Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile, myCaretOffset);
     PsiFile injectedFile = PsiDocumentManager.getInstance(myFile.getProject()).getPsiFile(injectedEditor.getDocument());
-    if (injectedFile == null) {
+    if (injectedFile == null || injectedFile == myFile) {
       return Collections.emptyList();
     }
     int injectedOffset = injectedEditor.getCaretModel().getOffset();
@@ -254,39 +231,34 @@ public class IdentifierHighlighterPass {
   }
 
   private void highlightTargetUsages(@NotNull Symbol target) {
-    AstLoadingFilter.disallowTreeLoading(
-      () -> {
-        UsageRanges ranges = getUsageRanges(myFile, target);
-        myReadAccessRanges.addAll(ranges.getReadRanges());
-        myReadAccessRanges.addAll(ranges.getReadDeclarationRanges());
-        myWriteAccessRanges.addAll(ranges.getWriteRanges());
-        myWriteAccessRanges.addAll(ranges.getWriteDeclarationRanges());
-        return null;
-      },
-      () -> "Currently highlighted file: \n" +
-            "psi file: " + myFile + ";\n" +
-            "virtual file: " + myFile.getVirtualFile()
-    );
+    AstLoadingFilter.disallowTreeLoading(() -> {
+      UsageRanges ranges = getUsageRanges(myFile, target);
+      if (ranges == null) {
+        return;
+      }
+      myReadAccessRanges.addAll(ranges.getReadRanges());
+      myReadAccessRanges.addAll(ranges.getReadDeclarationRanges());
+      myWriteAccessRanges.addAll(ranges.getWriteRanges());
+      myWriteAccessRanges.addAll(ranges.getWriteDeclarationRanges());
+    }, () -> "Currently highlighted file: \n" +
+             "psi file: " + myFile + ";\n" +
+             "virtual file: " + myFile.getVirtualFile());
   }
 
   private static volatile int id;
   private int getId() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     int id = IdentifierHighlighterPass.id;
     if (id == 0) {
-      IdentifierHighlighterPass.id = id = ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(
-        myFile.getProject())).getNextAvailableId().incrementAndGet();
+      TextEditorHighlightingPassRegistrarImpl registrar =
+        (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myFile.getProject());
+      synchronized (IdentifierHighlighterPass.class) {
+        id = IdentifierHighlighterPass.id;
+        if (id == 0) {
+          IdentifierHighlighterPass.id = id = registrar.getNextAvailableId();
+        }
+      }
     }
     return id;
-  }
-
-  public void doApplyInformationToEditor() {
-    boolean virtSpace = EditorUtil.isCaretInVirtualSpace(myEditor);
-    List<HighlightInfo> infos = virtSpace || isCaretOverCollapsedFoldRegion() ? Collections.emptyList() : getHighlights();
-    PsiFile hostFile = InjectedLanguageManager.getInstance(myFile.getProject()).getTopLevelFile(myFile);
-    Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
-    UpdateHighlightersUtil.setHighlightersToSingleEditor(myFile.getProject(), hostEditor, 0, hostFile.getTextLength(), infos, hostEditor.getColorsScheme(), getId());
-    doAdditionalCodeBlockHighlighting();
   }
 
   private boolean isCaretOverCollapsedFoldRegion() {
@@ -301,7 +273,7 @@ public class IdentifierHighlighterPass {
    *
    * In brace matching case this is done from {@link BraceHighlightingHandler#highlightBraces(TextRange, TextRange, boolean, boolean, com.intellij.openapi.fileTypes.FileType)}
    */
-  private void doAdditionalCodeBlockHighlighting() {
+  public void doAdditionalCodeBlockHighlighting() {
     if (myCodeBlockMarkerRanges.size() < 2 || !(myEditor instanceof EditorEx)) {
       return;
     }
@@ -318,33 +290,30 @@ public class IdentifierHighlighterPass {
     BraceHighlightingHandler.showScopeHint(myEditor, myFile, leftBraceRange.getStartOffset(), leftBraceRange.getEndOffset());
   }
 
-  @NotNull
-  private List<HighlightInfo> getHighlights() {
+  private @NotNull List<HighlightInfo> getHighlights() {
     if (myReadAccessRanges.isEmpty() && myWriteAccessRanges.isEmpty() && myCodeBlockMarkerRanges.isEmpty()) {
       return Collections.emptyList();
     }
     Set<Pair<Object, TextRange>> existingMarkupTooltips = new HashSet<>();
     for (RangeHighlighter highlighter : myEditor.getMarkupModel().getAllHighlighters()) {
-      existingMarkupTooltips.add(Pair.create(highlighter.getErrorStripeTooltip(), new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset())));
+      existingMarkupTooltips.add(Pair.create(highlighter.getErrorStripeTooltip(), highlighter.getTextRange()));
     }
 
     List<HighlightInfo> result = new ArrayList<>(myReadAccessRanges.size() + myWriteAccessRanges.size() + myCodeBlockMarkerRanges.size());
     for (TextRange range: myReadAccessRanges) {
-      ContainerUtil.addIfNotNull(result, createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_READ, existingMarkupTooltips));
+      result.add(createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_READ, existingMarkupTooltips));
     }
     for (TextRange range: myWriteAccessRanges) {
-      ContainerUtil.addIfNotNull(result, createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE, existingMarkupTooltips));
+      result.add(createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE, existingMarkupTooltips));
     }
     if (CodeInsightSettings.getInstance().HIGHLIGHT_BRACES) {
-      myCodeBlockMarkerRanges.forEach(
-        it -> ContainerUtil.addIfNotNull(result, createHighlightInfo(it, ELEMENT_UNDER_CARET_STRUCTURAL, existingMarkupTooltips)));
+      myCodeBlockMarkerRanges.forEach(range -> result.add(createHighlightInfo(range, ELEMENT_UNDER_CARET_STRUCTURAL, existingMarkupTooltips)));
     }
 
     return result;
   }
 
-  @NotNull
-  private HighlightInfo createHighlightInfo(@NotNull TextRange range, @NotNull HighlightInfoType type, @NotNull Set<Pair<Object, TextRange>> existingMarkupTooltips) {
+  private @NotNull HighlightInfo createHighlightInfo(@NotNull TextRange range, @NotNull HighlightInfoType type, @NotNull Set<Pair<Object, TextRange>> existingMarkupTooltips) {
     int start = range.getStartOffset();
     String tooltip = start <= myEditor.getDocument().getTextLength() ? HighlightHandlerBase.getLineTextErrorStripeTooltip(myEditor.getDocument(), start, false) : null;
     String unescapedTooltip = existingMarkupTooltips.contains(new Pair<Object, TextRange>(tooltip, range)) ? null : tooltip;

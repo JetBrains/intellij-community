@@ -10,11 +10,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-final class TemplateManagerUtilBase {
+public final class TemplateManagerUtilBase {
 
   static final Key<TemplateStateBase> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
 
-  static TemplateStateBase getTemplateState(@NotNull Editor editor) {
+  public static TemplateStateBase getTemplateState(@NotNull Editor editor) {
     UserDataHolder stateHolder = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     TemplateStateBase templateState = stateHolder.getUserData(TEMPLATE_STATE_KEY);
     if (templateState != null && templateState.isDisposed()) {

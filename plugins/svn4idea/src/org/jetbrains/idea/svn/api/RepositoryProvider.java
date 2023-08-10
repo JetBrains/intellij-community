@@ -17,9 +17,6 @@ package org.jetbrains.idea.svn.api;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public interface RepositoryProvider {
 
   @Nullable

@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ComponentModuleRegistrationChecker")
 
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
@@ -13,7 +14,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.*
@@ -24,6 +24,7 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
@@ -36,7 +37,7 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter
 import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
-class ComponentModuleRegistrationChecker(private val moduleToModuleSet: ClearableLazyValue<MutableMap<String, PluginXmlDomInspection.PluginModuleSet>>,
+class ComponentModuleRegistrationChecker(private val moduleToModuleSet: SynchronizedClearableLazy<MutableMap<String, PluginXmlDomInspection.PluginModuleSet>>,
                                          private val ignoredClasses: MutableList<String>,
                                          private val annotationHolder: DomElementAnnotationHolder) {
   fun checkProperModule(extensionPoint: ExtensionPoint) {
@@ -149,7 +150,7 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Clearabl
     val fix = if (modulePluginXmlFile != null) MoveRegistrationQuickFix(pluginXmlModule, modulePluginXmlFile.name) else null
     annotationHolder.createProblem(element, ProblemHighlightType.WARNING,
                                    DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.element.registered.wrong.module", definingModule.name, psiClass.qualifiedName), null,
-                                   fix)
+                                   *LocalQuickFix.notNullElements(fix))
     return true
   }
 
@@ -198,6 +199,10 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Clearabl
 
   inner class MoveRegistrationQuickFix(private val myTargetModule: Module,
                                        private val myTargetFileName: String) : LocalQuickFix {
+
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      return IntentionPreviewInfo.EMPTY
+    }
 
     @Nls
     override fun getName(): String = DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.fix.move.registration.name", myTargetFileName)

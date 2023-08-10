@@ -22,11 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
+import java.util.List;
 
-/**
- * @author peter
- */
 public class JavaClassFindUsagesOptions extends JavaFindUsagesOptions {
   public boolean isMethodsUsages;
   public boolean isFieldsUsages;
@@ -69,18 +66,24 @@ public class JavaClassFindUsagesOptions extends JavaFindUsagesOptions {
   }
 
   @Override
-  protected void addUsageTypes(@NotNull Set<? super String> strings) {
+  protected void addUsageTypes(@NotNull List<? super String> strings) {
     if (isUsages || isMethodsUsages || isFieldsUsages) {
       strings.add(AnalysisBundle.message("find.usages.panel.title.usages"));
     }
     if (isDerivedClasses) {
-      strings.add(JavaAnalysisBundle.message("find.usages.panel.title.derived.classes"));
+      strings.add(JavaAnalysisBundle.message(strings.isEmpty() ?
+                                             "find.usages.panel.title.derived.classes.cap" :
+                                             "find.usages.panel.title.derived.classes"));
     }
     if (isImplementingClasses) {
-      strings.add(JavaAnalysisBundle.message("find.usages.panel.title.implementing.classes"));
+      strings.add(JavaAnalysisBundle.message(strings.isEmpty() ?
+                                             "find.usages.panel.title.implementing.classes.cap" :
+                                             "find.usages.panel.title.implementing.classes"));
     }
     if (isDerivedInterfaces) {
-      strings.add(JavaAnalysisBundle.message("find.usages.panel.title.derived.interfaces"));
+      strings.add(JavaAnalysisBundle.message(strings.isEmpty() ?
+                                             "find.usages.panel.title.derived.interfaces.cap" :
+                                             "find.usages.panel.title.derived.interfaces"));
     }
   }
 

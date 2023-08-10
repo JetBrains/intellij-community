@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 class AnchoredSet {
   private final Set<Object> myAnchors;
 

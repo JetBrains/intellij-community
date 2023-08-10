@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -24,6 +24,11 @@ import java.util.List;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class ShareWholeProject extends AnAction implements DumbAware {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull final AnActionEvent e) {
     final MyChecker checker = new MyChecker();
@@ -91,7 +96,7 @@ public class ShareWholeProject extends AnAction implements DumbAware {
       boolean svnMappedToBase = false;
       for (VcsDirectoryMapping mapping : mappings) {
         final String vcs = mapping.getVcs();
-        if (vcs != null && vcs.length() > 0) {
+        if (vcs.length() > 0) {
           notMapped = false;
           if (SvnVcs.VCS_NAME.equals(vcs)) {
             if (mapping.isDefaultMapping() || baseDir.getPath().equals(mapping.getDirectory())) {
@@ -151,7 +156,7 @@ public class ShareWholeProject extends AnAction implements DumbAware {
             final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
             vcsManager.setDirectoryMappings(Collections.singletonList(VcsDirectoryMapping.createDefault(SvnVcs.VCS_NAME)));
           }
-        }, ModalityState.NON_MODAL, project.getDisposed()));
+        }, ModalityState.nonModal(), project.getDisposed()));
       }
     }
   }

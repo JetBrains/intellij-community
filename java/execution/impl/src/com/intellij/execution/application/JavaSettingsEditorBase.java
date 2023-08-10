@@ -1,25 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
-import com.intellij.diagnostic.logging.LogsFragment;
+import com.intellij.diagnostic.logging.LogsGroupFragment;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaRunConfigurationBase;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.ui.*;
-import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
-import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
-import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 
 public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase> extends RunConfigurationFragmentedEditor<T> {
   public JavaSettingsEditorBase(T runConfiguration) {
@@ -33,39 +28,25 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
     fragments.add(BeforeRunFragment.createBeforeRun(beforeRunComponent, CompileStepBeforeRun.ID));
     fragments.addAll(BeforeRunFragment.createGroup());
 
-    SettingsEditorFragment<T, ModuleClasspathCombo> moduleClasspath = CommonJavaFragments.moduleClasspath(null, null, null);
+    SettingsEditorFragment<T, ModuleClasspathCombo> moduleClasspath = CommonJavaFragments.moduleClasspath();
     ModuleClasspathCombo classpathCombo = moduleClasspath.component();
     Computable<Boolean> hasModule = () -> classpathCombo.getSelectedModule() != null;
 
     fragments.add(CommonTags.parallelRun());
 
-    CommonParameterFragments<T> commonParameterFragments = new CommonParameterFragments<>(getProject(), hasModule);
+    CommonParameterFragments<T> commonParameterFragments = new CommonParameterFragments<>(getProject(), () -> classpathCombo.getSelectedModule());
     fragments.addAll(commonParameterFragments.getFragments());
     fragments.add(CommonJavaFragments.createBuildBeforeRun(beforeRunComponent, this));
 
-    String group = ExecutionBundle.message("group.java.options");
-    RawCommandLineEditor vmOptions = new RawCommandLineEditor();
-    setMinimumWidth(vmOptions, 400);
-    CommonParameterFragments.setMonospaced(vmOptions.getTextField());
-    String message = ExecutionBundle.message("run.configuration.java.vm.parameters.empty.text");
-    vmOptions.getEditorField().getAccessibleContext().setAccessibleName(message);
-    vmOptions.getEditorField().getEmptyText().setText(message);
-    MacrosDialog.addMacroSupport(vmOptions.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
-    FragmentedSettingsUtil.setupPlaceholderVisibility(vmOptions.getEditorField());
-    SettingsEditorFragment<T, RawCommandLineEditor> vmParameters =
-      new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmOptions,
-                                   15,
-                                   (configuration, c) -> c.setText(configuration.getVMParameters()),
-                                   (configuration, c) -> configuration.setVMParameters(c.isVisible() ? c.getText() : null),
-                                   configuration -> isNotEmpty(configuration.getVMParameters()));
-    vmParameters.setHint(ExecutionBundle.message("run.configuration.java.vm.parameters.hint"));
-    vmParameters.setActionHint(ExecutionBundle.message("specify.vm.options.for.running.the.application"));
-    vmParameters.setEditorGetter(editor -> editor.getEditorField());
-    fragments.add(vmParameters);
     fragments.add(moduleClasspath);
+    fragments.add(new ClasspathModifier<>(mySettings));
     customizeFragments(fragments, moduleClasspath, commonParameterFragments);
+    SettingsEditorFragment<T, ?> jrePath = ContainerUtil.find(fragments, f -> CommonJavaFragments.JRE_PATH.equals(f.getId()));
+    JrePathEditor jrePathEditor = jrePath != null && jrePath.getComponent() instanceof JrePathEditor editor ? editor : null;
+    SettingsEditorFragment<T, ?> vmParameters = CommonJavaFragments.vmOptionsEx(mySettings, hasModule, jrePathEditor);
+    fragments.add(vmParameters);
 
-    fragments.add(new LogsFragment<>());
+    fragments.add(new LogsGroupFragment<>());
     return fragments;
   }
 
@@ -104,7 +85,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
   @Override
   public void targetChanged(String targetName) {
     super.targetChanged(targetName);
-    SettingsEditorFragment<T, ?> fragment = ContainerUtil.find(getFragments(), f -> CommonJavaFragments.JRE_PATH == f.getId());
+    SettingsEditorFragment<T, ?> fragment = ContainerUtil.find(getFragments(), f -> CommonJavaFragments.JRE_PATH.equals(f.getId()));
     if (fragment != null) {
       if (((JrePathEditor)fragment.component()).updateModel(getProject(), targetName)) {
         fragment.resetFrom(mySettings);

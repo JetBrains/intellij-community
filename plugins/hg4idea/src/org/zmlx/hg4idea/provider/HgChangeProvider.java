@@ -12,7 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider;
 
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -36,28 +37,35 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.io.File;
 import java.util.*;
 
-public class HgChangeProvider implements ChangeProvider {
-
+public final class HgChangeProvider implements ChangeProvider {
   private final Project myProject;
   private final VcsKey myVcsKey;
 
-  private static final PluginId OUR_PLUGIN_ID = PluginManagerCore.getPluginByClassName(HgChangeProvider.class.getName());
+  private static final PluginId OUR_PLUGIN_ID;
+
+  static {
+    PluginDescriptor plugin = PluginManager.getPluginByClass(HgChangeProvider.class);
+    OUR_PLUGIN_ID = plugin == null ? null : plugin.getPluginId();
+  }
+
   public static final FileStatus COPIED
-    = FileStatusFactory.getInstance().createFileStatus("COPIED",HgBundle.messagePointer("hg4idea.file.status.copied"), OUR_PLUGIN_ID);
+    = FileStatusFactory.getInstance().createFileStatus("COPIED", HgBundle.messagePointer("hg4idea.file.status.copied"), OUR_PLUGIN_ID);
   public static final FileStatus RENAMED
     = FileStatusFactory.getInstance().createFileStatus("RENAMED", HgBundle.messagePointer("hg4idea.file.status.renamed"), OUR_PLUGIN_ID);
 
-  private static final EnumMap<HgFileStatusEnum, HgChangeProcessor> PROCESSORS =
-    new EnumMap<>(HgFileStatusEnum.class);
+  private static class Holder {
+    private static final EnumMap<HgFileStatusEnum, HgChangeProcessor> PROCESSORS =
+      new EnumMap<>(HgFileStatusEnum.class);
 
-  static {
-    PROCESSORS.put(HgFileStatusEnum.ADDED, HgChangeProcessor.ADDED);
-    PROCESSORS.put(HgFileStatusEnum.DELETED, HgChangeProcessor.DELETED);
-    PROCESSORS.put(HgFileStatusEnum.MISSING, HgChangeProcessor.MISSING);
-    PROCESSORS.put(HgFileStatusEnum.COPY, HgChangeProcessor.COPIED);
-    PROCESSORS.put(HgFileStatusEnum.MODIFIED, HgChangeProcessor.MODIFIED);
-    PROCESSORS.put(HgFileStatusEnum.UNMODIFIED, HgChangeProcessor.UNMODIFIED);
-    PROCESSORS.put(HgFileStatusEnum.UNVERSIONED, HgChangeProcessor.UNVERSIONED);
+    static {
+      PROCESSORS.put(HgFileStatusEnum.ADDED, HgChangeProcessor.ADDED);
+      PROCESSORS.put(HgFileStatusEnum.DELETED, HgChangeProcessor.DELETED);
+      PROCESSORS.put(HgFileStatusEnum.MISSING, HgChangeProcessor.MISSING);
+      PROCESSORS.put(HgFileStatusEnum.COPY, HgChangeProcessor.COPIED);
+      PROCESSORS.put(HgFileStatusEnum.MODIFIED, HgChangeProcessor.MODIFIED);
+      PROCESSORS.put(HgFileStatusEnum.UNMODIFIED, HgChangeProcessor.UNMODIFIED);
+      PROCESSORS.put(HgFileStatusEnum.UNVERSIONED, HgChangeProcessor.UNVERSIONED);
+    }
   }
 
   public HgChangeProvider(Project project, VcsKey vcsKey) {
@@ -136,7 +144,7 @@ public class HgChangeProvider implements ChangeProvider {
         continue;
       }
 
-      HgChangeProcessor processor = PROCESSORS.get(status);
+      HgChangeProcessor processor = Holder.PROCESSORS.get(status);
       if (processor != null) {
         processor.process(myProject, myVcsKey, builder,
           workingRevision, parentRevision, beforeFile, afterFile);
@@ -183,7 +191,6 @@ public class HgChangeProvider implements ChangeProvider {
       }
     }
   }
-
 
   private enum HgChangeProcessor {
     ADDED() {
@@ -243,7 +250,7 @@ public class HgChangeProvider implements ChangeProvider {
             vcsKey
           );
         } else {
-          // The original file does not exists so this is a rename.
+          // The original file does not exist so this is a renamed.
           processChange(
             HgContentRevision.create(project, beforeFile, parentRevision),
             HgCurrentContentRevision.create(afterFile, currentNumber),

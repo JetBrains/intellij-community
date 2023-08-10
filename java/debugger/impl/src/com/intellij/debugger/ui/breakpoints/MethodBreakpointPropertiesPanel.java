@@ -113,7 +113,7 @@ public class MethodBreakpointPropertiesPanel extends XBreakpointCustomProperties
     changed = breakpoint.getProperties().WATCH_EXIT != myWatchExitCheckBox.isSelected() || changed;
     breakpoint.getProperties().WATCH_EXIT = myWatchExitCheckBox.isSelected();
     if (changed) {
-      ((XBreakpointBase)breakpoint).fireBreakpointChanged();
+      ((XBreakpointBase<?, ?, ?>)breakpoint).fireBreakpointChanged();
     }
   }
 }

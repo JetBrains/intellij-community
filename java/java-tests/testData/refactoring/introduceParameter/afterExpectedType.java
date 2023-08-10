@@ -1,7 +1,7 @@
 class Test {
     void f (String s) {}
 
-    void u(final String anObject) {
+    void u (final String anObject) {
         f(anObject);
     }
 

@@ -1,52 +1,8 @@
 <idea-plugin>
   <actions>
-
     <group id="ToolsXmlGroup" popup="true" class="com.intellij.xml.actions.XmlActionsGroup">
-      <action id="ValidateXml" class="com.intellij.xml.actions.validate.ValidateXmlAction"/>
-      <action id="GenerateDTD" class="com.intellij.codeInsight.actions.GenerateDTDAction"/>
-      <action id="XSD2Document" class="com.intellij.xml.actions.xmlbeans.GenerateSchemaFromInstanceDocumentAction"/>
-      <action id="Document2XSD" class="com.intellij.xml.actions.xmlbeans.GenerateInstanceDocumentFromSchemaAction"/>
-      <separator/>
-
       <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
     </group>
-
-    <group id="XmlGenerateToolsGroup">
-      <separator/>
-      <reference ref="GenerateDTD" />
-      <reference ref="XSD2Document" />
-      <reference ref="Document2XSD" />
-      <separator/>
-      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-    </group>
-
-    <reference ref="ValidateXml">
-      <add-to-group group-id="EditorPopupMenu.Run" anchor="last"/>
-      <add-to-group group-id="ProjectViewPopupMenuRefactoringGroup" anchor="last"/>
-      <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>
-    </reference>
-
-    <action id="DomElementsTreeView.GotoDomElementDeclarationAction"
-            class="com.intellij.util.xml.tree.actions.GotoDomElementDeclarationAction"
-            use-shortcut-of="EditSource"/>
-
-    <action id="DomElementsTreeView.AddElement" class="com.intellij.util.xml.tree.actions.AddElementInCollectionAction">
-      <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
-    </action>
-    <action id="DomElementsTreeView.DeleteElement" class="com.intellij.util.xml.tree.actions.DeleteDomElement"
-            use-shortcut-of="$Delete"/>
-
-    <group id="DomElementsTreeView.AddElementGroup" class="com.intellij.util.xml.tree.actions.AddDomElementActionGroup"/>
-
-    <group id="DomElementsTreeView.TreePopup">
-      <reference ref="DomElementsTreeView.GotoDomElementDeclarationAction"/>
-
-      <separator/>
-      <reference ref="DomElementsTreeView.AddElementGroup"/>
-      <reference ref="DomElementsTreeView.DeleteElement"/>
-    </group>
-
     <group id="DomCollectionControl">
       <action id="DomCollectionControl.Add" class="com.intellij.util.xml.ui.DomCollectionControl$AddAction">
         <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
@@ -57,7 +13,7 @@
 
     <group id="NewXml">
       <action id="NewHtmlFile" class="com.intellij.ide.actions.CreateHtmlFileAction"/>
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
+      <add-to-group group-id="NewWebDevelopment" anchor="first"/>
     </group>
 
     <group id="NewXmlDescriptor" class="com.intellij.ide.actions.NonTrivialActionGroup" popup="true" icon="AllIcons.FileTypes.Xml">
@@ -114,5 +70,10 @@
         </action>
       </group>
     </group>
+
+    <action id="DisableMinimap" class="com.intellij.ide.minimap.actions.DisableMinimapAction"/>
+    <action id="ToggleMinimap" class="com.intellij.ide.minimap.actions.ToggleMinimapAction"/>
+    <action id="OpenMinimapSettings" class="com.intellij.ide.minimap.actions.OpenMinimapSettingsAction"/>
+    <action id="MoveMinimap" class="com.intellij.ide.minimap.actions.MoveMinimapAction"/>
   </actions>
 </idea-plugin>

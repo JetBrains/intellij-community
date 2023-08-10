@@ -90,7 +90,7 @@ public class CallTracingPropertiesPanel extends XBreakpointCustomPropertiesPanel
     boolean changed = breakpoint.getProperties().setTRACING_START(myStartTracing.isSelected());
     changed = breakpoint.getProperties().setTRACING_END(myEndTracing.isSelected()) || changed;
     if (changed) {
-      ((XBreakpointBase)breakpoint).fireBreakpointChanged();
+      ((XBreakpointBase<?, ?, ?>)breakpoint).fireBreakpointChanged();
     }
   }
 }

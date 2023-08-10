@@ -14,6 +14,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +34,10 @@ public final class TypeInfo {
   public static final TypeInfo[] EMPTY_ARRAY = {};
 
   private static final String[] ourIndexFrequentType;
-  private static final Object2IntOpenHashMap<String> ourFrequentTypeIndex;
+  private static final Object2IntMap<String> ourFrequentTypeIndex;
+  private static final int ourTypeLengthMask;
   static {
+    int typeLengthMask = 0;
     ourIndexFrequentType = new String[]{
       "",
       "boolean", "byte", "char", "double", "float", "int", "long", "null", "short", "void",
@@ -44,9 +47,13 @@ public final class TypeInfo {
 
     ourFrequentTypeIndex = new Object2IntOpenHashMap<>();
     for (int i = 0; i < ourIndexFrequentType.length; i++) {
-      ourFrequentTypeIndex.put(ourIndexFrequentType[i], i);
+      String type = ourIndexFrequentType[i];
+      ourFrequentTypeIndex.put(type, i);
+      assert type.length() < 32;
+      typeLengthMask |= (1 << type.length());
     }
     assert ourFrequentTypeIndex.size() == ourIndexFrequentType.length;
+    ourTypeLengthMask = typeLengthMask;
   }
 
   private static final TypeInfo NULL = new TypeInfo(null);
@@ -252,7 +259,7 @@ public final class TypeInfo {
 
     String text = typeInfo.text;
     byte arrayCount = typeInfo.arrayCount;
-    int frequentIndex = ourFrequentTypeIndex.getInt(text);
+    int frequentIndex = getFrequentIndex(text);
     boolean hasTypeAnnotations = typeInfo.myTypeAnnotations != null && !typeInfo.myTypeAnnotations.isEmpty();
     int flags = (typeInfo.isEllipsis ? HAS_ELLIPSIS : 0) | (arrayCount != 0 ? HAS_ARRAY_COUNT : 0) |
                 (hasTypeAnnotations ? HAS_TYPE_ANNOTATIONS : 0) | frequentIndex;
@@ -271,7 +278,6 @@ public final class TypeInfo {
   }
 
   /**
-   * @param typeInfo
    * @return type text without annotations
    */
   @Nullable
@@ -300,7 +306,11 @@ public final class TypeInfo {
 
   @NotNull
   public static String internFrequentType(@NotNull String type) {
-    int frequentIndex = ourFrequentTypeIndex.getInt(type);
+    int frequentIndex = getFrequentIndex(type);
     return frequentIndex == 0 ? StringUtil.internEmptyString(type) : ourIndexFrequentType[frequentIndex];
+  }
+
+  private static int getFrequentIndex(@NotNull String type) {
+    return (type.length() < 32 && (ourTypeLengthMask & (1 << type.length())) != 0) ? ourFrequentTypeIndex.getInt(type) : 0;
   }
 }

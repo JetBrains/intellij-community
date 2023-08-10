@@ -29,9 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentProvider {
 
   private static final String METACLASS = "metaClass";
@@ -152,10 +149,9 @@ public abstract class GroovyConstructorNamedArgumentProvider extends GroovyNamed
         String propertyName;
         PsiType type;
 
-        if (element instanceof PsiMethod) {
+        if (element instanceof PsiMethod method) {
           if (!myResolveTargetKinds.contains(DeclarationKind.METHOD)) return true;
 
-          PsiMethod method = (PsiMethod)element;
           if (!GroovyPropertyUtils.isSimplePropertySetter(method)) return true;
 
           propertyName = GroovyPropertyUtils.getPropertyNameBySetter(method);

@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.module.JpsModule;
 
-/**
- * @author: db
- */
 public class FieldPropertyTest extends IncrementalTestCase {
   public FieldPropertyTest() {
     super("fieldProperties");

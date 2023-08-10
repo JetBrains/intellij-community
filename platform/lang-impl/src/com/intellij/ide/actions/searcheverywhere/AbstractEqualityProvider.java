@@ -3,7 +3,6 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 public abstract class AbstractEqualityProvider implements SEResultsEqualityProvider {

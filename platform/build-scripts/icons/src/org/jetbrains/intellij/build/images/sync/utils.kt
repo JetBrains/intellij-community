@@ -6,11 +6,8 @@ import java.io.OutputStream
 import java.io.PrintStream
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
 
-internal var logger: Consumer<String> = Consumer { println(it) }
-
-internal fun log(msg: String) = logger.accept(msg)
+internal fun log(msg: String) = println(msg)
 
 internal fun String.splitWithSpace(): List<String> = this.splitNotBlank(" ")
 
@@ -27,7 +24,7 @@ internal fun execute(workingDir: Path?, vararg command: String, withTimer: Boole
       .redirectError(errOutputFile)
       .apply {
         environment()["LANG"] = "en_US.UTF-8"
-        if (environment()["GIT_SSH_COMMAND"].isNullOrEmpty()) {
+        if (environment()["GIT_SSH_COMMAND"].isNullOrEmpty() && environment()["GIT_SSH"].isNullOrEmpty()) {
           environment()["GIT_SSH_COMMAND"] = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
         }
       }.start()

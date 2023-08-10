@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -33,9 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-/**
- * @author ven
- */
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public final class GenericInlineHandler {
   private static final Logger LOG = Logger.getInstance(GenericInlineHandler.class);
@@ -93,6 +92,7 @@ public final class GenericInlineHandler {
         }
 
         Consumer<ProgressIndicator> perform = indicator -> {
+          indicator.setIndeterminate(false);
           for (int i = 0; i < usages.length; i++) {
             indicator.setFraction((double) i / usages.length);
             inlineReference(usages[i], element, inliners);
@@ -106,7 +106,8 @@ public final class GenericInlineHandler {
         if (Registry.is("run.refactorings.under.progress")) {
           ((ApplicationImpl)ApplicationManager.getApplication())
             .runWriteActionWithNonCancellableProgressInDispatchThread(commandName, project, null, perform);
-        } else {
+        }
+        else {
           perform.accept(new EmptyProgressIndicator());
         }
       });
@@ -142,7 +143,7 @@ public final class GenericInlineHandler {
   public static Map<Language, InlineHandler.Inliner> initInliners(PsiElement elementToInline,
                                                                   UsageInfo[] usagesIn,
                                                                   InlineHandler.Settings settings,
-                                                                  MultiMap<PsiElement, String> conflicts,
+                                                                  MultiMap<PsiElement, @DialogMessage String> conflicts,
                                                                   Language... emptyInliners) {
     ArrayList<PsiReference> refs = new ArrayList<>();
     for (UsageInfo info : usagesIn) {
@@ -177,10 +178,10 @@ public final class GenericInlineHandler {
     return inliners;
   }
 
-  public static void collectConflicts(final PsiReference reference,
-                                      final PsiElement element,
-                                      final Map<Language, InlineHandler.Inliner> inliners,
-                                      final MultiMap<PsiElement, String> conflicts) {
+  public static void collectConflicts(PsiReference reference,
+                                      PsiElement element,
+                                      Map<Language, InlineHandler.Inliner> inliners,
+                                      MultiMap<PsiElement, @DialogMessage String> conflicts) {
     final PsiElement referenceElement = reference.getElement();
     final Language language = referenceElement.getLanguage();
     final InlineHandler.Inliner inliner = inliners.get(language);
@@ -193,7 +194,8 @@ public final class GenericInlineHandler {
       }
     }
     else {
-      conflicts.putValue(referenceElement, "Cannot inline reference from " + language.getDisplayName());
+      conflicts.putValue(referenceElement,
+                         RefactoringBundle.message("dialog.message.cannot.inline.reference.from.0", language.getDisplayName()));
     }
   }
 

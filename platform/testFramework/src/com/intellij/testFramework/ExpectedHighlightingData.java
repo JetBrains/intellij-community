@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
-import com.intellij.AbstractBundle;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -19,26 +18,27 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.HashingStrategy;
+import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
-import java.text.MessageFormat;
-import java.text.ParsePosition;
 import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -47,16 +47,26 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static java.util.Comparator.comparingInt;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
+/**
+ * Extracts the markers for the expected highlighting ranges, such as {@code <error descr="..."/>},
+ * and removes them from the document.
+ * <p>
+ * Whether warnings, weak warnings and info are checked depends on the constructor.
+ * In particular, if the document contains markers whose type is disabled,
+ * these markers are not checked.
+ */
 public class ExpectedHighlightingData {
-  public static final String EXPECTED_DUPLICATION_MESSAGE =
-    "Expected duplication problem. Please remove this wrapper, if there is no such problem any more";
+  static final String EXPECTED_DUPLICATION_MESSAGE =
+    "Expected duplication problem. Please remove `ExpectedHighlightingData.expectedDuplicatedHighlighting()` surrounding call, if there is no such problem any more";
 
   private static final String ERROR_MARKER = CodeInsightTestFixture.ERROR_MARKER;
   private static final String WARNING_MARKER = CodeInsightTestFixture.WARNING_MARKER;
   private static final String WEAK_WARNING_MARKER = CodeInsightTestFixture.WEAK_WARNING_MARKER;
   private static final String INFO_MARKER = CodeInsightTestFixture.INFO_MARKER;
+  private static final String TEXT_ATTRIBUTES_MARKER = CodeInsightTestFixture.TEXT_ATTRIBUTES_MARKER;
   private static final String END_LINE_HIGHLIGHT_MARKER = CodeInsightTestFixture.END_LINE_HIGHLIGHT_MARKER;
   private static final String END_LINE_WARNING_MARKER = CodeInsightTestFixture.END_LINE_WARNING_MARKER;
   private static final String INJECT_MARKER = "inject";
@@ -91,7 +101,6 @@ public class ExpectedHighlightingData {
   private final Document myDocument;
   private final String myText;
   private boolean myIgnoreExtraHighlighting;
-  private final ResourceBundle[] myMessageBundles;
 
   public ExpectedHighlightingData(@NotNull Document document, boolean checkWarnings, boolean checkInfos) {
     this(document, checkWarnings, false, checkInfos);
@@ -105,18 +114,16 @@ public class ExpectedHighlightingData {
                                   boolean checkWarnings,
                                   boolean checkWeakWarnings,
                                   boolean checkInfos,
-                                  boolean ignoreExtraHighlighting,
-                                  ResourceBundle... messageBundles) {
-    this(document, messageBundles);
+                                  boolean ignoreExtraHighlighting) {
+    this(document);
     myIgnoreExtraHighlighting = ignoreExtraHighlighting;
     if (checkWarnings) checkWarnings();
     if (checkWeakWarnings) checkWeakWarnings();
     if (checkInfos) checkInfos();
   }
 
-  public ExpectedHighlightingData(@NotNull Document document, ResourceBundle... messageBundles) {
+  public ExpectedHighlightingData(@NotNull Document document) {
     myDocument = document;
-    myMessageBundles = messageBundles;
     myText = document.getText();
 
     registerHighlightingType(ERROR_MARKER, new ExpectedHighlightingSet(HighlightSeverity.ERROR, false, true));
@@ -126,6 +133,7 @@ public class ExpectedHighlightingData {
     registerHighlightingType(HIGHLIGHT_MARKER, new ExpectedHighlightingSet(HighlightInfoType.HIGHLIGHTED_REFERENCE_SEVERITY, false, false));
     registerHighlightingType(INJECTED_SYNTAX_MARKER, new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SYNTAX_SEVERITY, false, false));
     registerHighlightingType(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, false));
+    registerHighlightingType(TEXT_ATTRIBUTES_MARKER, new ExpectedHighlightingSet(HighlightSeverity.TEXT_ATTRIBUTES, false, false));
     registerHighlightingType(SYMBOL_NAME_MARKER, new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, false));
     for (SeveritiesProvider provider : SeveritiesProvider.EP_NAME.getExtensionList()) {
       for (HighlightInfoType type : provider.getSeveritiesHighlightInfoTypes()) {
@@ -143,7 +151,7 @@ public class ExpectedHighlightingData {
 
   public void init() {
     WriteCommandAction.runWriteCommandAction(null, () -> {
-      DocumentUtil.executeInBulk(myDocument, true, () -> {
+      DocumentUtil.executeInBulk(myDocument, () -> {
         extractExpectedLineMarkerSet(myDocument);
         extractExpectedHighlightsSet(myDocument);
       });
@@ -162,6 +170,7 @@ public class ExpectedHighlightingData {
 
   public void checkInfos() {
     registerHighlightingType(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, true));
+    registerHighlightingType(TEXT_ATTRIBUTES_MARKER, new ExpectedHighlightingSet(HighlightSeverity.TEXT_ATTRIBUTES, false, true));
     registerHighlightingType(INJECT_MARKER, new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, true));
     registerHighlightingType(HIGHLIGHT_MARKER, new ExpectedHighlightingSet(HighlightInfoType.HIGHLIGHTED_REFERENCE_SEVERITY, false, true));
   }
@@ -182,7 +191,8 @@ public class ExpectedHighlightingData {
       LineMarkerInfo<?> value = entry.getValue();
       TextRange range = new TextRange(startOffset, endOffset);
       String tooltip = value.getLineMarkerTooltip();
-      MyLineMarkerInfo markerInfo = new MyLineMarkerInfo(range, GutterIconRenderer.Alignment.RIGHT, tooltip);
+      Icon icon = value.getIcon();
+      MyLineMarkerInfo markerInfo = new MyLineMarkerInfo(range, GutterIconRenderer.Alignment.RIGHT, tooltip, icon != null ? icon.toString() : null);
       entry.setValue(markerInfo);
     }
   }
@@ -190,7 +200,7 @@ public class ExpectedHighlightingData {
   private void extractExpectedLineMarkerSet(Document document) {
     String text = document.getText();
 
-    String pat = ".*?((<" + LINE_MARKER + ")(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?>)(.*)";
+    String pat = ".*?((<" + LINE_MARKER + ")(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?(?: icon=\"((?:[^\"\\\\]|\\\\\")*)\")?>)(.*)";
     Pattern openingTagRx = Pattern.compile(pat, Pattern.DOTALL);
     Pattern closingTagRx = Pattern.compile("(.*?)(</" + LINE_MARKER + ">)(.*)", Pattern.DOTALL);
 
@@ -200,7 +210,8 @@ public class ExpectedHighlightingData {
 
       int startOffset = opening.start(1);
       String descr = opening.group(3) != null ? opening.group(3) : ANY_TEXT;
-      String rest = opening.group(4);
+      String icon = opening.group(4) != null ? opening.group(4) : ANY_TEXT;
+      String rest = opening.group(5);
 
       Matcher closing = closingTagRx.matcher(rest);
       if (!closing.matches()) {
@@ -219,7 +230,7 @@ public class ExpectedHighlightingData {
       TextRange range = new TextRange(startOffset, endOffset);
       String tooltip = StringUtil.unescapeStringCharacters(descr);
       LineMarkerInfo<PsiElement> markerInfo =
-        new MyLineMarkerInfo(range, GutterIconRenderer.Alignment.RIGHT, tooltip);
+        new MyLineMarkerInfo(range, GutterIconRenderer.Alignment.RIGHT, tooltip, icon);
       myLineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);
 
       text = document.getText();
@@ -227,24 +238,27 @@ public class ExpectedHighlightingData {
   }
 
   /**
-   * Removes highlights (bounded with <marker>...</marker>) from test case file.
+   * Removes highlights (bounded with {@code <marker>...</marker>}) from test case file.
    */
   private void extractExpectedHighlightsSet(Document document) {
     String text = document.getText();
 
     Set<String> markers = myHighlightingTypes.keySet();
-    String typesRx = "(?:" + StringUtil.join(markers, ")|(?:") + ")";
-    String openingTagRx = "<(" + typesRx + ")" +
-                                "(?:\\s+descr=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
-                                "(?:\\s+type=\"([0-9A-Z_]+)\")?" +
-                                "(?:\\s+foreground=\"([0-9xa-f]+)\")?" +
-                                "(?:\\s+background=\"([0-9xa-f]+)\")?" +
-                                "(?:\\s+effectcolor=\"([0-9xa-f]+)\")?" +
-                                "(?:\\s+effecttype=\"([A-Z]+)\")?" +
-                                "(?:\\s+fonttype=\"([0-9]+)\")?" +
-                                "(?:\\s+textAttributesKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
-                                "(?:\\s+bundleMsg=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
-                                "(/)?>";
+    String typesRx = String.join("|", markers);
+    String openingTagRx = "<(?<marker>" + typesRx + ")" +
+                          "(?:\\s+" +
+                          "(?:descr=\"(?<descr>(?:\\\\\"|[^\"])*)\"" +
+                          "|type=\"(?<type>[0-9A-Z_]+)\"" +
+                          "|foreground=\"(?<foreground>[0-9xa-f]+)\"" +
+                          "|background=\"(?<background>[0-9xa-f]+)\"" +
+                          "|effectcolor=\"(?<effectcolor>[0-9xa-f]+)\"" +
+                          "|effecttype=\"(?<effecttype>[A-Z]+)\"" +
+                          "|fonttype=\"(?<fonttype>[0-9]+)\"" +
+                          "|textAttributesKey=\"(?<textAttributesKey>(?:\\\\\"|[^\"])*)\"" +
+                          "|bundleMsg=\"(?<bundleMsg>(?:\\\\\"|[^\"])*)\"" +
+                          "|tooltip=\"(?<tooltip>(?:\\\\\"|[^\"])*)\"" +
+                          "))*" +
+                          "\\s*(?<closed>/)?>";
 
     Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
     Ref<Integer> textOffset = Ref.create(0);
@@ -258,18 +272,18 @@ public class ExpectedHighlightingData {
   private int extractExpectedHighlight(Matcher matcher, String text, Document document, Ref<Integer> textOffset) {
     document.deleteString(textOffset.get(), textOffset.get() + matcher.end() - matcher.start());
 
-    int groupIdx = 1;
-    String marker = matcher.group(groupIdx++);
-    String descr = matcher.group(groupIdx++);
-    String typeString = matcher.group(groupIdx++);
-    String foregroundColor = matcher.group(groupIdx++);
-    String backgroundColor = matcher.group(groupIdx++);
-    String effectColor = matcher.group(groupIdx++);
-    String effectType = matcher.group(groupIdx++);
-    String fontType = matcher.group(groupIdx++);
-    String attrKey = matcher.group(groupIdx++);
-    String bundleMessage = matcher.group(groupIdx++);
-    boolean closed = matcher.group(groupIdx) != null;
+    String marker = matcher.group("marker");
+    @NlsSafe String descr = matcher.group("descr");
+    String typeString = matcher.group("type");
+    String foregroundColor = matcher.group("foreground");
+    String backgroundColor = matcher.group("background");
+    String effectColor = matcher.group("effectcolor");
+    String effectType = matcher.group("effecttype");
+    String fontType = matcher.group("fonttype");
+    String attrKey = matcher.group("textAttributesKey");
+    String bundleMessage = matcher.group("bundleMsg");
+    @NlsSafe String tooltip = matcher.group("tooltip");
+    boolean closed = matcher.group("closed") != null;
 
     if (descr == null) {
       descr = ANY_TEXT;  // no descr means any string by default
@@ -280,6 +294,17 @@ public class ExpectedHighlightingData {
     if (descr != null) {
       descr = descr.replaceAll("\\\\\\\\\"", "\"");  // replace: \\" to ", doesn't check symbol before sequence \\"
       descr = descr.replaceAll("\\\\\"", "\"");
+    }
+
+    if (tooltip == null) {
+      tooltip = ANY_TEXT;  // no tooltip any string by default
+    }
+    else if (tooltip.equals("null")) {
+      tooltip = null;  // explicit "null" tooltip
+    }
+    if (tooltip != null) {
+      tooltip = tooltip.replaceAll("\\\\\\\\\"", "\"");  // replace: \\" to ", doesn't check symbol before sequence \\"
+      tooltip = tooltip.replaceAll("\\\\\"", "\"");
     }
 
     HighlightInfoType type = WHATEVER;
@@ -297,9 +322,11 @@ public class ExpectedHighlightingData {
 
     TextAttributes forcedAttributes = null;
     if (foregroundColor != null) {
-      @JdkConstants.FontStyle int ft = Integer.parseInt(fontType);
+      @JdkConstants.FontStyle int ft = fontType != null ? Integer.parseInt(fontType) : 0;
       forcedAttributes = new TextAttributes(
-        Color.decode(foregroundColor), Color.decode(backgroundColor), Color.decode(effectColor), EffectType.valueOf(effectType), ft);
+        Color.decode(foregroundColor), backgroundColor != null ? Color.decode(backgroundColor) : null,
+        effectColor != null ? Color.decode(effectColor) : null,
+        effectType != null ? EffectType.valueOf(effectType) : null, ft);
     }
 
     int rangeStart = textOffset.get();
@@ -337,12 +364,16 @@ public class ExpectedHighlightingData {
 
       if (forcedAttributes != null) builder.textAttributes(forcedAttributes);
       if (forcedTextAttributesKey != null) builder.textAttributes(forcedTextAttributesKey);
-      if (bundleMessage != null) {
-        descr = extractDescrFromBundleMessage(bundleMessage);
-      }
       if (descr != null) {
         builder.description(descr);
-        builder.unescapedToolTip(descr);
+      }
+      if (tooltip != null) {
+        if (tooltip.startsWith("<html>")) {
+          builder.escapedToolTip(tooltip);
+        }
+        else {
+          builder.unescapedToolTip(tooltip);
+        }
       }
       if (expectedHighlightingSet.endOfLine) builder.endOfLine();
       HighlightInfo highlightInfo = builder.createUnconditionally();
@@ -350,34 +381,6 @@ public class ExpectedHighlightingData {
     }
 
     return toContinueFrom;
-  }
-
-  @NotNull
-  private String extractDescrFromBundleMessage(String bundleMessage) {
-    String descr = null;
-    List<String> split = StringUtil.split(bundleMessage, "|");
-    String key = split.get(0);
-    List<String> keySplit = StringUtil.split(key, "#");
-    ResourceBundle[] bundles = myMessageBundles;
-    if (keySplit.size() == 2) {
-      key = keySplit.get(1);
-      bundles = new ResourceBundle[]{ResourceBundle.getBundle(keySplit.get(0))};
-    }
-    else {
-      assertEquals("Format for bundleMsg attribute is: [bundleName#] bundleKey [|argument]... ", 1, keySplit.size());
-    }
-
-    assertTrue("messageBundles must be provided for bundleMsg tags in test data", bundles.length > 0);
-    Object[] params = split.stream().skip(1).toArray();
-    for (ResourceBundle bundle : bundles) {
-      String message = AbstractBundle.messageOrDefault(bundle, key, null, params);
-      if (message != null) {
-        if (descr != null) fail("Key " + key + " is not unique in bundles for expected highlighting data");
-        descr = message;
-      }
-    }
-    if (descr == null) fail("Can't find bundle message " + bundleMessage);
-    return descr;
   }
 
   protected HighlightInfoType getTypeByName(String typeString) throws Exception {
@@ -394,7 +397,11 @@ public class ExpectedHighlightingData {
         if (failMessage.length() > 0) failMessage.append('\n');
         failMessage.append(fileName).append("extra ")
           .append(rangeString(text, info.startOffset, info.endOffset))
-          .append(": '").append(info.getLineMarkerTooltip()).append('\'');
+          .append(": '").append(sanitizedLineMarkerTooltip(info)).append('\'');
+        Icon icon = info.getIcon();
+        if (icon != null && !icon.toString().equals(ANY_TEXT)) {
+          failMessage.append(" icon='").append(icon).append('\'');
+        }
       }
     }
 
@@ -403,7 +410,11 @@ public class ExpectedHighlightingData {
         if (failMessage.length() > 0) failMessage.append('\n');
         failMessage.append(fileName).append("missing ")
           .append(rangeString(text, expectedLineMarker.startOffset, expectedLineMarker.endOffset))
-          .append(": '").append(expectedLineMarker.getLineMarkerTooltip()).append('\'');
+          .append(": '").append(sanitizedLineMarkerTooltip(expectedLineMarker)).append('\'');
+        Icon icon = expectedLineMarker.getIcon();
+        if (icon != null && !icon.toString().equals(ANY_TEXT)) {
+          failMessage.append(" icon='").append(icon).append('\'');
+        }
       }
     }
 
@@ -417,6 +428,10 @@ public class ExpectedHighlightingData {
       }
       throw new FileComparisonFailure(failMessage.toString(), myText, getActualLineMarkerFileText(markerInfos), filePath);
     }
+  }
+
+  protected String sanitizedLineMarkerTooltip(@NotNull LineMarkerInfo info) {
+    return info.getLineMarkerTooltip();
   }
 
   @NotNull
@@ -435,7 +450,7 @@ public class ExpectedHighlightingData {
       if (info.second == expectedLineMarker.startOffset) {
         result
           .append("<lineMarker descr=\"")
-          .append(expectedLineMarker.getLineMarkerTooltip())
+          .append(sanitizedLineMarkerTooltip(expectedLineMarker))
           .append("\">");
       }
       else {
@@ -447,17 +462,29 @@ public class ExpectedHighlightingData {
     return result.toString();
   }
 
-  private static boolean containsLineMarker(LineMarkerInfo info, Collection<? extends LineMarkerInfo> where) {
-    String infoTooltip = info.getLineMarkerTooltip();
+  protected boolean containsLineMarker(@NotNull LineMarkerInfo info, Collection<? extends LineMarkerInfo> where) {
+    Icon icon = info.getIcon();
     for (LineMarkerInfo markerInfo : where) {
       if (markerInfo.startOffset == info.startOffset &&
           markerInfo.endOffset == info.endOffset &&
-          matchDescriptions(false, infoTooltip, markerInfo.getLineMarkerTooltip())) {
+          matchLineMarkersTooltip(info, markerInfo) &&
+          matchIcons(icon, markerInfo.getIcon())) {
         return true;
       }
     }
 
     return false;
+  }
+
+  protected boolean matchLineMarkersTooltip(@NotNull LineMarkerInfo info, @NotNull LineMarkerInfo markerInfo) {
+    return matchDescriptions(false, info.getLineMarkerTooltip(), markerInfo.getLineMarkerTooltip());
+  }
+
+  protected static boolean matchIcons(Icon icon1, Icon icon2) {
+    String s1 = String.valueOf(icon1);
+    String s2 = String.valueOf(icon2);
+    if (Comparing.strEqual(s1, s2)) return true;
+    return Comparing.strEqual(ANY_TEXT, s1) || Comparing.strEqual(ANY_TEXT, s2);
   }
 
   public void checkResult(@Nullable PsiFile psiFile, Collection<? extends HighlightInfo> infos, String text) {
@@ -467,15 +494,15 @@ public class ExpectedHighlightingData {
   public void checkResult(@Nullable PsiFile psiFile, Collection<? extends HighlightInfo> infos, String text, @Nullable String filePath) {
     StringBuilder failMessage = new StringBuilder();
 
-    Set<HighlightInfo> expectedFound = new THashSet<>(new TObjectHashingStrategy<>() {
+    Set<HighlightInfo> expectedFound = CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
       @Override
-      public int computeHashCode(HighlightInfo object) {
+      public int hashCode(HighlightInfo object) {
         return object.hashCode();
       }
 
       @Override
       public boolean equals(HighlightInfo o1, HighlightInfo o2) {
-        return haveSamePresentation(o1, o2, true);
+        return o1==null||o2==null?o1==o2:haveSamePresentation(o1, o2, true);
       }
     });
     if (!myIgnoreExtraHighlighting) {
@@ -531,15 +558,15 @@ public class ExpectedHighlightingData {
 
   @NotNull
   private static Set<HighlightInfo> indexInfos(Collection<? extends HighlightInfo> infos) {
-    Set<HighlightInfo> index = new THashSet<>(new TObjectHashingStrategy<>() {
+    Set<HighlightInfo> index = CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
       @Override
-      public int computeHashCode(HighlightInfo object) {
-        return Objects.hash(object.startOffset, object.endOffset); //good enough
+      public int hashCode(HighlightInfo object) {
+        return object == null ? 0 : Objects.hash(object.startOffset, object.endOffset); //good enough
       }
 
       @Override
       public boolean equals(HighlightInfo o1, HighlightInfo o2) {
-        return matchesPattern(o1, o2, false);
+        return o1==null || o2 == null ? o1 == o2 : matchesPattern(o1, o2, false);
       }
     });
     index.addAll(infos);
@@ -569,7 +596,7 @@ public class ExpectedHighlightingData {
   }
 
   private void compareTexts(Collection<? extends HighlightInfo> infos, String text, String failMessage, @Nullable String filePath) {
-    String actual = composeText(myHighlightingTypes, infos, text, myMessageBundles);
+    String actual = composeText(myHighlightingTypes, infos, text);
     if (filePath != null && !myText.equals(actual)) {
       // uncomment to overwrite, don't forget to revert on commit!
       //VfsTestUtil.overwriteTestData(filePath, actual);
@@ -590,15 +617,18 @@ public class ExpectedHighlightingData {
   @NotNull
   public static String composeText(@NotNull Map<String, ExpectedHighlightingSet> types,
                                    @NotNull Collection<? extends HighlightInfo> infos,
-                                   @NotNull String text,
-                                   ResourceBundle @NotNull ... messageBundles) {
+                                   @NotNull String text) {
     // filter highlighting data and map each highlighting to a tag name
     List<Pair<String, ? extends HighlightInfo>> list = infos.stream()
       .map(info -> pair(findTag(types, info), info))
       .filter(p -> p.first != null)
       .collect(Collectors.toList());
     boolean showAttributesKeys =
-      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(i -> i.forcedTextAttributesKey != null);
+      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(info -> info.forcedTextAttributesKey != null || info.type != HighlightInfoType.INFORMATION);
+
+    String anyWrappedInHtml = XmlStringUtil.wrapInHtml(ANY_TEXT);
+    boolean showTooltips =
+      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(info -> !anyWrappedInHtml.equals(info.getToolTip()));
 
     // sort filtered highlighting data by end offset in descending order
     list.sort((o1, o2) -> {
@@ -613,7 +643,7 @@ public class ExpectedHighlightingData {
         if (byStarts != 0) return byStarts;
       }
       else {
-        int byEOL = Comparing.compare(i2.isAfterEndOfLine(), i1.isAfterEndOfLine());
+        int byEOL = Boolean.compare(i2.isAfterEndOfLine(), i1.isAfterEndOfLine());
         if (byEOL != 0) return byEOL;
       }
 
@@ -625,7 +655,7 @@ public class ExpectedHighlightingData {
 
     // combine highlighting data with original text
     StringBuilder sb = new StringBuilder();
-    int[] offsets = composeText(sb, list, 0, text, text.length(), -1, showAttributesKeys, messageBundles);
+    int[] offsets = composeText(sb, list, 0, text, text.length(), -1, showAttributesKeys, showTooltips);
     sb.insert(0, text.substring(0, offsets[1]));
     return sb.toString();
   }
@@ -652,7 +682,7 @@ public class ExpectedHighlightingData {
                                    List<? extends Pair<String, ? extends HighlightInfo>> list, int index,
                                    String text, int endPos, int startPos,
                                    boolean showAttributesKeys,
-                                   ResourceBundle... messageBundles) {
+                                   boolean showTooltip) {
     int i = index;
     while (i < list.size()) {
       Pair<String, ? extends HighlightInfo> pair = list.get(i);
@@ -668,25 +698,26 @@ public class ExpectedHighlightingData {
       sb.insert(0, "</" + severity + '>');
       endPos = info.endOffset;
       if (prev != null && prev.endOffset > info.startOffset) {
-        int[] offsets = composeText(sb, list, i + 1, text, endPos, info.startOffset, showAttributesKeys, messageBundles);
+        int[] offsets = composeText(sb, list, i + 1, text, endPos, info.startOffset, showAttributesKeys, showTooltip);
         i = offsets[0] - 1;
         endPos = offsets[1];
       }
       sb.insert(0, text.substring(info.startOffset, endPos));
 
-      String str = '<' + severity;
+      StringBuilder str = new StringBuilder().append('<').append(severity);
 
-      String bundleMsg = composeBundleMsg(info, messageBundles);
-      if (bundleMsg != null) {
-        str += " bundleMsg=\"" + StringUtil.escapeQuotes(bundleMsg) + '"';
-      }
-      else if (info.getSeverity() != HighlightInfoType.HIGHLIGHTED_REFERENCE_SEVERITY) {
-        str += " descr=\"" + StringUtil.escapeQuotes(String.valueOf(info.getDescription())) + '"';
+      if (info.getSeverity() != HighlightInfoType.HIGHLIGHTED_REFERENCE_SEVERITY) {
+        String description = info.getDescription();
+        String toolTip = info.getToolTip();
+        str.append(" descr=\"").append(StringUtil.escapeQuotes(String.valueOf(description))).append('"');
+        if (showTooltip) {
+          str.append(" tooltip=\"").append(StringUtil.escapeQuotes(String.valueOf(toolTip != null ? XmlStringUtil.stripHtml(toolTip) : null))).append('"');
+        }
       }
       if (showAttributesKeys) {
-        str += " textAttributesKey=\"" + info.forcedTextAttributesKey + '"';
+        str.append(" textAttributesKey=\"").append(ObjectUtils.notNull(info.forcedTextAttributesKey, info.type.getAttributesKey()).getExternalName()).append('"');
       }
-      str += '>';
+      str.append('>');
       sb.insert(0, str);
 
       endPos = info.startOffset;
@@ -694,44 +725,6 @@ public class ExpectedHighlightingData {
     }
 
     return new int[]{i, endPos};
-  }
-
-  private static String composeBundleMsg(HighlightInfo info, ResourceBundle... messageBundles) {
-    String bundleKey = null;
-    Object[] bundleMsgParams = null;
-    for (ResourceBundle bundle : messageBundles) {
-      Enumeration<String> keys = bundle.getKeys();
-      while (keys.hasMoreElements()) {
-        String key = keys.nextElement();
-        ParsePosition position = new ParsePosition(0);
-        String value = bundle.getString(key);
-        Object[] parse;
-        boolean matched;
-        if (value.contains("{0")) {
-          parse = new MessageFormat(value).parse(info.getDescription(), position);
-          matched = parse != null && info.getDescription() != null && position.getIndex() == info.getDescription().length() && position.getErrorIndex() == -1;
-        }
-        else {
-          parse = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-          matched = value.equals(info.getDescription());
-        }
-        if (matched) {
-          if (bundleKey != null) {
-            bundleKey = null;
-            break; // several keys matched, don't suggest bundle key
-          }
-          bundleKey = key;
-          bundleMsgParams = parse;
-        }
-      }
-    }
-    if (bundleKey == null) return null;
-
-    String bundleMsg = bundleKey;
-    if (bundleMsgParams.length > 0) {
-      bundleMsg += '|' + StringUtil.join(ContainerUtil.map(bundleMsgParams, Objects::toString), "|");
-    }
-    return bundleMsg;
   }
 
   private ThreeState expectedInfosContainsInfo(HighlightInfo info, Map<ExpectedHighlightingSet, Set<HighlightInfo>> indexed) {
@@ -765,10 +758,11 @@ public class ExpectedHighlightingData {
     return info1.startOffset == info2.startOffset &&
            info1.endOffset == info2.endOffset &&
            info1.isAfterEndOfLine() == info2.isAfterEndOfLine() &&
-           matchDescriptions(strictMatch, info1.getDescription(), info2.getDescription());
+           matchDescriptions(strictMatch, info1.getDescription(), info2.getDescription()) &&
+           matchTooltips(strictMatch, info1.getToolTip(), info2.getToolTip());
   }
 
-  private static boolean matchDescriptions(boolean strictMatch, String d1, String d2) {
+  protected static boolean matchDescriptions(boolean strictMatch, String d1, String d2) {
     if (Comparing.strEqual(d1, d2)) return true;
     if (strictMatch) return false;
     if (Comparing.strEqual(ANY_TEXT, d1) || Comparing.strEqual(ANY_TEXT, d2)) return true;
@@ -781,6 +775,14 @@ public class ExpectedHighlightingData {
       }
     }
     return false;
+  }
+
+  private static boolean matchTooltips(boolean strictMatch, String t1, String t2) {
+    if (Comparing.strEqual(t1, t2)) return true;
+    if (strictMatch) return false;
+    t1 = t1 != null ? Strings.unescapeXmlEntities(XmlStringUtil.stripHtml(t1)) : null;
+    t2 = t2 != null ? Strings.unescapeXmlEntities(XmlStringUtil.stripHtml(t2)) : null;
+    return matchDescriptions(false, t1, t2);
   }
 
   private static String rangeString(String text, int startOffset, int endOffset) {
@@ -830,11 +832,49 @@ public class ExpectedHighlightingData {
       return null;
     }
   };
+
+  private static class PathIcon implements Icon {
+    private final String path;
+
+    private PathIcon(@NotNull String path) {
+      this.path = path;
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+    }
+
+    @Override
+    public int getIconWidth() {
+      return 16;
+    }
+
+    @Override
+    public int getIconHeight() {
+      return 16;
+    }
+
+    @Override
+    public int hashCode() {
+      return path.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj || (obj instanceof PathIcon && ((PathIcon)obj).path.equals(path));
+    }
+
+    @Override
+    public String toString() {
+      return path;
+    }
+  }
+
   private static class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     private final String myTooltip;
 
-    MyLineMarkerInfo(TextRange range, GutterIconRenderer.Alignment alignment, String tooltip) {
-      super(NULL_POINTER, range, null, null, null, null, alignment);
+    MyLineMarkerInfo(TextRange range, GutterIconRenderer.Alignment alignment, String tooltip, String iconPath) {
+      super(NULL_POINTER, range, new PathIcon(iconPath), null, null, null, alignment);
       myTooltip = tooltip;
     }
 

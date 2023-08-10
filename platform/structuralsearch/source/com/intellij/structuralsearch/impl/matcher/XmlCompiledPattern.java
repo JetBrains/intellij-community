@@ -3,9 +3,6 @@ package com.intellij.structuralsearch.impl.matcher;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author Eugene.Kudelevsky
-*/
 public class XmlCompiledPattern extends CompiledPattern {
   private static final String XML_TYPED_VAR_PREFIX = "__";
 

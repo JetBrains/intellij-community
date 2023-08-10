@@ -1,15 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -18,16 +18,20 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps;
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsKt;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,12 +48,8 @@ import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
 public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel implements Disposable {
   private final Comp myComponent;
   private final FixedSizeButton myBrowseButton;
+  private final ExtendableTextComponent.Extension myInlineButtonExtension;
   private boolean myButtonEnabled = true;
-
-  @ApiStatus.Internal
-  public static boolean isUseInlineBrowserButton() {
-    return !LoadingState.COMPONENTS_REGISTERED.isOccurred() || Experiments.getInstance().isFeatureEnabled("inline.browse.button");
-  }
 
   public ComponentWithBrowseButton(@NotNull Comp component, @Nullable ActionListener browseActionListener) {
     super(new BorderLayout(SystemInfo.isMac || StartupUiUtil.isUnderDarcula() ? 0 : 2, 0));
@@ -57,16 +57,19 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     myComponent = component;
     // required! otherwise JPanel will occasionally gain focus instead of the component
     setFocusable(false);
-    boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent && isUseInlineBrowserButton();
+    boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent;
     if (inlineBrowseButton) {
-      ((ExtendableTextComponent)myComponent).addExtension(ExtendableTextComponent.Extension.create(
-        getDefaultIcon(), getHoveredIcon(), getIconTooltip(), this::notifyActionListeners));
+      myInlineButtonExtension = ExtendableTextComponent.Extension.create(
+        getDefaultIcon(), getHoveredIcon(), getIconTooltip(), this::notifyActionListeners);
+      ((ExtendableTextComponent)myComponent).addExtension(myInlineButtonExtension);
       new DumbAwareAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           notifyActionListeners();
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myComponent);
+    } else {
+      myInlineButtonExtension = null;
     }
     add(myComponent, BorderLayout.CENTER);
 
@@ -89,8 +92,19 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     if (ScreenReader.isActive()) {
       myBrowseButton.setFocusable(true);
       myBrowseButton.getAccessibleContext().setAccessibleName(UIBundle.message("component.with.browse.button.accessible.name"));
+    } else if (Registry.is("ide.browse.button.always.focusable", false)) {
+      myBrowseButton.setFocusable(true);
     }
-    new LazyDisposable(this);
+    LazyDisposable.installOn(this);
+
+    Insets insets = myComponent.getInsets();
+    if (!inlineBrowseButton) {
+      insets.right = myBrowseButton.getInsets().right;
+    }
+    UnscaledGaps visualPaddings = UnscaledGapsKt.toUnscaledGaps(insets);
+    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, component);
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, visualPaddings);
   }
 
   @NotNull
@@ -147,6 +161,17 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   public void setButtonEnabled(boolean buttonEnabled) {
     myButtonEnabled = buttonEnabled;
     setEnabled(isEnabled());
+  }
+
+  public void setButtonVisible(boolean buttonVisible) {
+    myBrowseButton.setVisible(buttonVisible);
+    if (myInlineButtonExtension != null && myComponent instanceof ExtendableTextComponent) {
+      if (buttonVisible) {
+        ((ExtendableTextComponent)myComponent).addExtension(myInlineButtonExtension);
+      } else {
+        ((ExtendableTextComponent)myComponent).removeExtension(myInlineButtonExtension);
+      }
+    }
   }
 
   public void setButtonIcon(@NotNull Icon icon) {
@@ -209,6 +234,15 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
   }
 
+  /**
+   * @deprecated The implementation may attach the button via the
+   * {@link ExtendableTextComponent#addExtension(ExtendableTextComponent.Extension)}
+   * so that the returned button may not be visible to the users
+   *
+   * @see #setButtonVisible
+   * @see #setButtonEnabled
+   */
+  @Deprecated(forRemoval = true)
   public FixedSizeButton getButton() {
     return myBrowseButton;
   }
@@ -220,6 +254,11 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     private final FixedSizeButton myBrowseButton;
     public MyDoClickAction(FixedSizeButton browseButton) {
       myBrowseButton = browseButton;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -288,30 +327,33 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     if (e.isConsumed()) return true;
     return super.processKeyBinding(ks, e, condition, pressed);
   }
-  /**
-   * @deprecated use {@link #addActionListener(ActionListener)} instead
-   */
-  @Deprecated
-  public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener, boolean autoRemoveOnHide) {
-    addActionListener(actionListener);
-  }
 
   private static final class LazyDisposable implements Activatable {
     private final WeakReference<ComponentWithBrowseButton<?>> reference;
 
     private LazyDisposable(ComponentWithBrowseButton<?> component) {
       reference = new WeakReference<>(component);
-      new UiNotifyConnector.Once(component, this);
+    }
+
+    private static void installOn(ComponentWithBrowseButton<?> component) {
+      LazyDisposable disposable = new LazyDisposable(component);
+      UiNotifyConnector.Once.installOn(component, disposable);
     }
 
     @Override
     public void showNotify() {
       ComponentWithBrowseButton<?> component = reference.get();
       if (component == null) return; // component is collected
-      Disposable disposable = ApplicationManager.getApplication() == null ? null :
-                              UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(component));
-      if (disposable == null) return; // parent disposable not found
-      Disposer.register(disposable, component);
+      Application app = ApplicationManager.getApplication();
+      if (app != null) {
+        DataManager dataManager = app.getServiceIfCreated(DataManager.class);
+        if (dataManager != null) {
+          Disposable disposable = UI_DISPOSABLE.getData(dataManager.getDataContext(component));
+          if (disposable != null) {
+            Disposer.register(disposable, component);
+          }
+        }
+      }
     }
   }
 }

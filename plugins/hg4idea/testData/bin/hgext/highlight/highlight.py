@@ -8,55 +8,94 @@
 # The original module was split in an interface and an implementation
 # file to defer pygments loading and speedup extension setup.
 
+from __future__ import absolute_import
+
 from mercurial import demandimport
-demandimport.ignore.extend(['pkgutil', 'pkg_resources', '__main__'])
-from mercurial import util, encoding
 
-from pygments import highlight
-from pygments.util import ClassNotFound
-from pygments.lexers import guess_lexer, guess_lexer_for_filename, TextLexer
-from pygments.formatters import HtmlFormatter
+demandimport.IGNORES.update([b'pkgutil', b'pkg_resources', b'__main__'])
 
-SYNTAX_CSS = ('\n<link rel="stylesheet" href="{url}highlightcss" '
-              'type="text/css" />')
+from mercurial import (
+    encoding,
+    pycompat,
+)
 
-def pygmentize(field, fctx, style, tmpl):
+from mercurial.utils import stringutil
+
+with demandimport.deactivated():
+    import pygments
+    import pygments.formatters
+    import pygments.lexers
+    import pygments.plugin
+    import pygments.util
+
+    for unused in pygments.plugin.find_plugin_lexers():
+        pass
+
+highlight = pygments.highlight
+ClassNotFound = pygments.util.ClassNotFound
+guess_lexer = pygments.lexers.guess_lexer
+guess_lexer_for_filename = pygments.lexers.guess_lexer_for_filename
+TextLexer = pygments.lexers.TextLexer
+HtmlFormatter = pygments.formatters.HtmlFormatter
+
+SYNTAX_CSS = (
+    b'\n<link rel="stylesheet" href="{url}highlightcss" type="text/css" />'
+)
+
+
+def pygmentize(field, fctx, style, tmpl, guessfilenameonly=False):
 
     # append a <link ...> to the syntax highlighting css
-    old_header = tmpl.load('header')
+    tmpl.load(b'header')
+    old_header = tmpl.cache[b'header']
     if SYNTAX_CSS not in old_header:
-        new_header =  old_header + SYNTAX_CSS
-        tmpl.cache['header'] = new_header
+        new_header = old_header + SYNTAX_CSS
+        tmpl.cache[b'header'] = new_header
 
     text = fctx.data()
-    if util.binary(text):
+    if stringutil.binary(text):
         return
+
+    # str.splitlines() != unicode.splitlines() because "reasons"
+    for c in b"\x0c", b"\x1c", b"\x1d", b"\x1e":
+        if c in text:
+            text = text.replace(c, b'')
 
     # Pygments is best used with Unicode strings:
     # <http://pygments.org/docs/unicode/>
-    text = text.decode(encoding.encoding, 'replace')
+    text = text.decode(pycompat.sysstr(encoding.encoding), 'replace')
 
     # To get multi-line strings right, we can't format line-by-line
     try:
-        lexer = guess_lexer_for_filename(fctx.path(), text[:1024],
-                                         stripnl=False)
+        path = pycompat.sysstr(fctx.path())
+        lexer = guess_lexer_for_filename(path, text[:1024], stripnl=False)
     except (ClassNotFound, ValueError):
+        # guess_lexer will return a lexer if *any* lexer matches. There is
+        # no way to specify a minimum match score. This can give a high rate of
+        # false positives on files with an unknown filename pattern.
+        if guessfilenameonly:
+            return
+
         try:
             lexer = guess_lexer(text[:1024], stripnl=False)
         except (ClassNotFound, ValueError):
-            lexer = TextLexer(stripnl=False)
+            # Don't highlight unknown files
+            return
 
-    formatter = HtmlFormatter(style=style)
+    # Don't highlight text files
+    if isinstance(lexer, TextLexer):
+        return
+
+    formatter = HtmlFormatter(nowrap=True, style=pycompat.sysstr(style))
 
     colorized = highlight(text, lexer, formatter)
-    # strip wrapping div
-    colorized = colorized[:colorized.find('\n</pre>')]
-    colorized = colorized[colorized.find('<pre>') + 5:]
-    coloriter = (s.encode(encoding.encoding, 'replace')
-                 for s in colorized.splitlines())
+    coloriter = (
+        s.encode(pycompat.sysstr(encoding.encoding), 'replace')
+        for s in colorized.splitlines()
+    )
 
-    tmpl.filters['colorize'] = lambda x: coloriter.next()
+    tmpl._filters[b'colorize'] = lambda x: next(coloriter)
 
     oldl = tmpl.cache[field]
-    newl = oldl.replace('line|escape', 'line|colorize')
+    newl = oldl.replace(b'line|escape', b'line|colorize')
     tmpl.cache[field] = newl

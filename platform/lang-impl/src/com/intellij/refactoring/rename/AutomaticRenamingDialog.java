@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.*;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.ui.EnableDisableAction;
@@ -38,9 +39,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class AutomaticRenamingDialog extends DialogWrapper {
   private static final int CHECK_COLUMN = 0;
   private static final int OLD_NAME_COLUMN = 1;
@@ -113,7 +111,9 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     panel.add(new JLabel(myRenamer.getDialogDescription()), BorderLayout.CENTER);
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAction(createRenameSelectedAction()).setAsSecondary(true);
-    panel.add(ActionManager.getInstance().createActionToolbar("AutoRenaming", actionGroup, true).getComponent(), BorderLayout.EAST);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("AutoRenaming", actionGroup, true);
+    toolbar.setTargetComponent(myTable);
+    panel.add(toolbar.getComponent(), BorderLayout.EAST);
     final Box box = Box.createHorizontalBox();
     box.add(panel);
     box.add(Box.createHorizontalGlue());
@@ -196,14 +196,19 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     myPanelForPreview.add(myUsagePreviewPanel, BorderLayout.CENTER);
     myUsagePreviewPanel.updateLayout(null);
     myPanelForPreview.add(myUsageFileLabel, BorderLayout.NORTH);
-    mySplitPane.setDividerLocation(0.5);
+    double top = mySplitPane.getTopComponent().getPreferredSize().getHeight();
+    double bottom = mySplitPane.getBottomComponent().getPreferredSize().getHeight();
+    mySplitPane.setDividerLocation(top / (top + bottom));
 
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
 
-    if (myTableModel.getRowCount() != 0) {
-      myTable.getSelectionModel().addSelectionInterval(0, 0);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      SwingUtilities.invokeLater(() -> {
+        if (myTableModel.getRowCount() != 0) {
+          myTable.getSelectionModel().addSelectionInterval(0, 0);
+        }
+      });
     }
-
     myOptionsPanel.setVisible(false);
 
     return myPanel;
@@ -212,7 +217,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   private JPopupMenu compoundPopup() {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(createRenameSelectedAction());
-    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("AutomaticRenamingDialog", group);
     return menu.getComponent();
   }
 
@@ -221,6 +226,11 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       @Override
       protected boolean isValidName(String inputString, int selectedRow) {
         return RenameUtil.isValidName(myProject, myRenames[selectedRow], inputString);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
   }
@@ -297,59 +307,45 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      switch (columnIndex) {
-        case CHECK_COLUMN:
-          return myShouldRename[rowIndex];
-        case OLD_NAME_COLUMN:
-          return "<html><nobr>" + RefactoringUIUtil.getDescription(myRenames[rowIndex], true) + "</nobr></html>";
-        case NEW_NAME_COLUMN:
-          return myNewNames[rowIndex];
-        default:
-          return null;
-      }
+      return switch (columnIndex) {
+        case CHECK_COLUMN -> myShouldRename[rowIndex];
+        case OLD_NAME_COLUMN -> "<html><nobr>" + RefactoringUIUtil.getDescription(myRenames[rowIndex], true) + "</nobr></html>";
+        case NEW_NAME_COLUMN -> myNewNames[rowIndex];
+        default -> null;
+      };
     }
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       switch (columnIndex) {
-        case CHECK_COLUMN:
-          myShouldRename[rowIndex] = ((Boolean)aValue).booleanValue();
-          break;
-        case NEW_NAME_COLUMN:
-          myNewNames[rowIndex] = (String)aValue;
-          break;
+        case CHECK_COLUMN -> myShouldRename[rowIndex] = ((Boolean)aValue).booleanValue();
+        case NEW_NAME_COLUMN -> myNewNames[rowIndex] = (String)aValue;
       }
       handleChanges();
     }
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return columnIndex != OLD_NAME_COLUMN && (myAllowRename || columnIndex != NEW_NAME_COLUMN);
+      return columnIndex != OLD_NAME_COLUMN && (myAllowRename || columnIndex != NEW_NAME_COLUMN)
+        && !(myRenames[rowIndex] instanceof SyntheticElement);
     }
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-      switch (columnIndex) {
-        case CHECK_COLUMN:
-          return Boolean.class;
-        case OLD_NAME_COLUMN:
-        case NEW_NAME_COLUMN:
-          return String.class;
-        default:
-          return null;
-      }
+      return switch (columnIndex) {
+        case CHECK_COLUMN -> Boolean.class;
+        case OLD_NAME_COLUMN, NEW_NAME_COLUMN -> String.class;
+        default -> null;
+      };
     }
 
     @Override
     public String getColumnName(int column) {
-      switch (column) {
-        case OLD_NAME_COLUMN:
-          return RefactoringBundle.message("automatic.renamer.entity.name.column", myRenamer.entityName());
-        case NEW_NAME_COLUMN:
-          return RefactoringBundle.message("automatic.renamer.rename.to.column");
-        default:
-          return " ";
-      }
+      return switch (column) {
+        case OLD_NAME_COLUMN -> RefactoringBundle.message("automatic.renamer.entity.name.column", myRenamer.entityName());
+        case NEW_NAME_COLUMN -> RefactoringBundle.message("automatic.renamer.rename.to.column");
+        default -> " ";
+      };
     }
 
     private MyEnableDisable getSpaceAction() {
@@ -393,11 +389,6 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       String initial = (String)myModel.getValueAt(selectedRows[0], NEW_NAME_COLUMN);
       String newName = Messages.showInputDialog(myTable, RefactoringBundle.message("automatic.renaming.dialog.new.name.label"),
                                                 RefactoringBundle.message("automatic.renaming.dialog.rename.selected.title"), null, initial, new InputValidatorEx() {
-        @Override
-        public boolean checkInput(String inputString) {
-          return getErrorText(inputString) == null;
-        }
-
         @Override
         public boolean canClose(String inputString) {
           return checkInput(inputString);

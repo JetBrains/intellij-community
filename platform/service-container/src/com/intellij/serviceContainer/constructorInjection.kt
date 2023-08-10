@@ -1,10 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.messages.MessageBus
+import kotlinx.coroutines.CoroutineScope
+import org.picocontainer.ComponentAdapter
 import java.io.File
 import java.lang.Deprecated
 import java.lang.reflect.Constructor
@@ -19,11 +23,20 @@ import kotlin.RuntimeException
 import kotlin.Suppress
 import kotlin.let
 
+private val constructorComparator = Comparator<Constructor<*>> { c0, c1 -> c1.parameterCount - c0.parameterCount }
+
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+private val badAppLevelClasses = java.util.Set.of(
+  "com.intellij.execution.executors.DefaultDebugExecutor",
+  "org.apache.http.client.HttpClient",
+  "org.apache.http.impl.client.CloseableHttpClient",
+  "com.intellij.openapi.project.Project"
+)
+
 internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
                                                requestorKey: Any,
                                                pluginId: PluginId,
-                                               componentManager: ComponentManagerImpl,
-                                               parameterResolver: ConstructorParameterResolver): T {
+                                               componentManager: ComponentManagerImpl): T {
   val sortedMatchingConstructors = getSortedMatchingConstructors(aClass)
 
   val parameterTypes: Array<Class<*>>
@@ -33,9 +46,12 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
     parameterTypes = constructor.parameterTypes
   }
   else {
-    // first round - try to find without extensions (because class can have several constructors - we cannot resolve using extension area at first place,
-    // because some another constructor can be satisfiable
-    val result = getGreediestSatisfiableConstructor(aClass, sortedMatchingConstructors, requestorKey, pluginId, componentManager, parameterResolver, false)
+    val result = getGreediestSatisfiableConstructor(aClass = aClass,
+                                                    sortedMatchingConstructors = sortedMatchingConstructors,
+                                                    requestorKey = requestorKey,
+                                                    pluginId = pluginId,
+                                                    componentManager = componentManager,
+                                                    isExtensionSupported = false)
     constructor = result.first
     parameterTypes = result.second
   }
@@ -48,17 +64,35 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
     }
     else {
       var isErrorLogged = false
-      @Suppress("UNCHECKED_CAST")
-      return constructor.newInstance(*Array(parameterTypes.size) {
+      val params: Array<Any?> = Array(parameterTypes.size) {
         val parameterType = parameterTypes.get(it)
-        if (!isErrorLogged && !ComponentManager::class.java.isAssignableFrom(parameterType) && parameterType != MessageBus::class.java) {
-          isErrorLogged = true
-          if (pluginId.idString != "org.jetbrains.kotlin") {
-            LOG.warn("Do not use constructor injection (requestorClass=${aClass.name})")
+        when {
+          ComponentManager::class.java === parameterType -> componentManager
+          parameterType === MessageBus::class.java -> componentManager.messageBus
+          parameterType === CoroutineScope::class.java -> componentManager.instanceCoroutineScope(aClass)
+          else -> {
+            if (!isErrorLogged && !ComponentManager::class.java.isAssignableFrom(parameterType)) {
+              isErrorLogged = true
+              // a special unit test
+              val message = doNotUseConstructorInjectionsMessage("requestorClass=${aClass.name})")
+              if (componentManager.getApplication() == null) {
+                LOG.warn(message)
+              }
+              else {
+                PluginException.logPluginError(LOG, message, null, aClass)
+              }
+            }
+            resolveInstance(componentManager = componentManager,
+                            requestorKey = requestorKey,
+                            requestorClass = aClass,
+                            requestorConstructor = constructor,
+                            expectedType = parameterType,
+                            pluginId = pluginId)
           }
         }
-        parameterResolver.resolveInstance(componentManager, requestorKey, aClass, constructor, parameterType, pluginId)
-      }) as T
+      }
+      @Suppress("UNCHECKED_CAST")
+      return constructor.newInstance(*params) as T
     }
   }
   catch (e: InvocationTargetException) {
@@ -69,7 +103,7 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
   }
 }
 
-internal fun isNotApplicableClass(type: Class<*>): Boolean {
+private fun isNotApplicableClass(type: Class<*>): Boolean {
   return type.isPrimitive || type.isEnum || type.isArray ||
          java.util.Collection::class.java.isAssignableFrom(type) ||
          java.util.Map::class.java.isAssignableFrom(type) ||
@@ -83,7 +117,6 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
                                                requestorKey: Any,
                                                pluginId: PluginId,
                                                componentManager: ComponentManagerImpl,
-                                               parameterResolver: ConstructorParameterResolver,
                                                isExtensionSupported: Boolean): Pair<Constructor<*>, Array<Class<*>>> {
   var conflicts: MutableSet<Constructor<*>>? = null
   var unsatisfiableDependencyTypes: MutableSet<Array<Class<*>>>? = null
@@ -103,7 +136,12 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
     var failedDependency = false
     val parameterTypes = constructor.parameterTypes
 
-    // first, perform fast check to ensure that assert about getComponentAdapterOfType is thrown only if constructor is applicable
+    if (lastIndex > 0 &&
+        (constructor.isAnnotationPresent(NonInjectable::class.java) || constructor.isAnnotationPresent(Deprecated::class.java))) {
+      continue
+    }
+
+    // first, perform fast check to ensure that assert about getComponentAdapterOfType is thrown only if the constructor is applicable
     if (parameterTypes.any(::isNotApplicableClass)) {
       continue
     }
@@ -113,16 +151,17 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
       return Pair(constructor, parameterTypes)
     }
 
-    if (lastIndex > 0 &&
-        (constructor.isAnnotationPresent(NonInjectable::class.java) || constructor.isAnnotationPresent(Deprecated::class.java))) {
-      continue
-    }
-
     someConstructorWasChecked = true
 
     for (expectedType in parameterTypes) {
       // check whether this constructor is satisfiable
-      if (parameterResolver.isResolvable(componentManager, requestorKey, aClass, constructor, expectedType, pluginId, isExtensionSupported)) {
+      if (isResolvable(componentManager = componentManager,
+                       requestorKey = requestorKey,
+                       requestorClass = aClass,
+                       requestorConstructor = constructor,
+                       expectedType = expectedType,
+                       pluginId = pluginId,
+                       isExtensionSupported = isExtensionSupported)) {
         continue
       }
 
@@ -146,7 +185,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
       }
     }
     else if (!failedDependency && lastSatisfiableConstructorSize == parameterTypes.size) {
-      // satisfied and same size as previous one?
+      // satisfied and same size as the previous one?
       if (conflicts == null) {
         conflicts = HashSet()
       }
@@ -164,7 +203,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
 
   when {
     !conflicts.isNullOrEmpty() -> {
-      throw PluginException("Too many satisfiable constructors: ${sortedMatchingConstructors.joinToString { it.toString() }}", pluginId)
+      throw PluginException("Too many satisfiable constructors: ${sortedMatchingConstructors.joinToString()}", pluginId)
     }
     greediestConstructor != null -> {
       return Pair(greediestConstructor, greediestConstructorParameterTypes!!)
@@ -173,10 +212,16 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
       // second (and final) round
       if (isExtensionSupported) {
         throw PluginException("${aClass.name} has unsatisfied dependency: $unsatisfiedDependencyType among unsatisfiable dependencies: " +
-                              "$unsatisfiableDependencyTypes where $componentManager was the leaf container being asked for dependencies.", pluginId)
+                              "$unsatisfiableDependencyTypes where $componentManager was the leaf container being asked for dependencies.",
+                              pluginId)
       }
       else {
-        return getGreediestSatisfiableConstructor(aClass, sortedMatchingConstructors, requestorKey, pluginId, componentManager, parameterResolver, true)
+        return getGreediestSatisfiableConstructor(aClass = aClass,
+                                                  sortedMatchingConstructors = sortedMatchingConstructors,
+                                                  requestorKey = requestorKey,
+                                                  pluginId = pluginId,
+                                                  componentManager = componentManager,
+                                                  isExtensionSupported = true)
       }
     }
     else -> {
@@ -186,12 +231,105 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
   }
 }
 
-private val constructorComparator = Comparator<Constructor<*>> { c0, c1 -> c1.parameterCount - c0.parameterCount }
-
-// filter out all constructors that will definitely not match
-// optimize list of constructors moving the longest at the beginning
+// filter out all constructors that will definitely not match, optimize a list of constructors moving the longest at the beginning
 private fun getSortedMatchingConstructors(componentImplementation: Class<*>): Array<Constructor<*>> {
   val declaredConstructors = componentImplementation.declaredConstructors
   declaredConstructors.sortWith(constructorComparator)
   return declaredConstructors
+}
+
+private fun resolveInstance(componentManager: ComponentManagerImpl,
+                    requestorKey: Any,
+                    requestorClass: Class<*>,
+                    requestorConstructor: Constructor<*>,
+                    expectedType: Class<*>,
+                    pluginId: PluginId): Any? {
+  if (isLightService(expectedType)) {
+    throw PluginException("Constructor injection for light services is not supported " +
+                          "(requestorClass=$requestorClass, requestedService=$expectedType)", pluginId)
+  }
+
+  val adapter = findTargetAdapter(componentManager = componentManager,
+                                  expectedType = expectedType,
+                                  requestorKey = requestorKey,
+                                  requestorClass = requestorClass,
+                                  requestorConstructor = requestorConstructor,
+                                  pluginId = pluginId)
+                ?: return handleUnsatisfiedDependency(componentManager, requestorClass, expectedType, pluginId)
+  return when {
+    adapter is BaseComponentAdapter -> {
+      // project level service Foo wants application level service Bar - adapter component manager should be used instead of current
+      adapter.getInstance(adapter.componentManager, null)
+    }
+    componentManager.parent == null -> adapter.componentInstance
+    else -> componentManager.getComponentInstance(adapter.componentKey)
+  }
+}
+
+private fun handleUnsatisfiedDependency(componentManager: ComponentManagerImpl,
+                                        requestorClass: Class<*>,
+                                        expectedType: Class<*>,
+                                        pluginId: PluginId): Any? {
+  val extension = componentManager.extensionArea.findExtensionByClass(expectedType) ?: return null
+  val message = doNotUseConstructorInjectionsMessage("requestorClass=${requestorClass.name}, extensionClass=${expectedType.name}")
+  val app = componentManager.getApplication()
+  @Suppress("SpellCheckingInspection")
+  if (app != null && app.isUnitTestMode && pluginId.idString != "org.jetbrains.kotlin" && pluginId.idString != "Lombook Plugin") {
+    throw PluginException(message, pluginId)
+  }
+  else {
+    LOG.warn(message)
+  }
+  return extension
+}
+
+private fun isResolvable(componentManager: ComponentManagerImpl,
+                          requestorKey: Any,
+                          requestorClass: Class<*>,
+                          requestorConstructor: Constructor<*>,
+                          expectedType: Class<*>,
+                          pluginId: PluginId,
+                          isExtensionSupported: Boolean): Boolean {
+  if (expectedType === ComponentManager::class.java ||
+      expectedType === CoroutineScope::class.java ||
+      findTargetAdapter(componentManager = componentManager,
+                        expectedType = expectedType,
+                        requestorKey = requestorKey,
+                        requestorClass = requestorClass,
+                        requestorConstructor = requestorConstructor,
+                        pluginId = pluginId) != null) {
+    return true
+  }
+  return isExtensionSupported && componentManager.extensionArea.findExtensionByClass(expectedType) != null
+}
+
+private fun findTargetAdapter(componentManager: ComponentManagerImpl,
+                              expectedType: Class<*>,
+                              requestorKey: Any,
+                              requestorClass: Class<*>,
+                              requestorConstructor: Constructor<*>,
+                              pluginId: PluginId): ComponentAdapter? {
+  val byKey = componentManager.getComponentAdapter(expectedType)
+  if (byKey != null && requestorKey != byKey.componentKey) {
+    return byKey
+  }
+
+  val className = expectedType.name
+  if (componentManager.parent == null) {
+    if (badAppLevelClasses.contains(className)) {
+      return null
+    }
+  }
+  else if (className == "com.intellij.configurationStore.StreamProvider" ||
+           className == "com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl" ||
+           className == "com.intellij.openapi.roots.impl.CompilerModuleExtensionImpl" ||
+           className == "com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl") {
+    return null
+  }
+
+  if (componentManager.isGetComponentAdapterOfTypeCheckEnabled) {
+    LOG.error(PluginException("getComponentAdapterOfType is used to get ${expectedType.name} (requestorClass=${requestorClass.name}, requestorConstructor=${requestorConstructor})." +
+                              "\n\nProbably constructor should be marked as NonInjectable.", pluginId))
+  }
+  return componentManager.getComponentAdapterOfType(expectedType) ?: componentManager.parent?.getComponentAdapterOfType(expectedType)
 }

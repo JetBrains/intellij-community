@@ -7,6 +7,7 @@ import git4idea.GitUtil
 import git4idea.test.TestDialogHandler
 import org.jetbrains.plugins.github.test.GithubGitRepoTest
 import org.jetbrains.plugins.github.ui.GithubShareDialog
+import org.jetbrains.plugins.github.ui.dialog.GithubUntrackedFilesDialog
 
 abstract class GithubShareProjectTestBase : GithubGitRepoTest() {
   protected lateinit var projectName: String
@@ -25,7 +26,7 @@ abstract class GithubShareProjectTestBase : GithubGitRepoTest() {
   }
 
   protected fun registerDefaultUntrackedFilesDialogHandler() {
-    dialogManager.registerDialogHandler(GithubShareAction.GithubUntrackedFilesDialog::class.java,
+    dialogManager.registerDialogHandler(GithubUntrackedFilesDialog::class.java,
                                         TestDialogHandler {
                                           // actually we should ask user for name/email ourselves (like in CommitDialog)
                                           for (repository in GitUtil.getRepositoryManager(myProject).repositories) {
@@ -36,7 +37,7 @@ abstract class GithubShareProjectTestBase : GithubGitRepoTest() {
   }
 
   protected fun registerSelectNoneUntrackedFilesDialogHandler() {
-    dialogManager.registerDialogHandler(GithubShareAction.GithubUntrackedFilesDialog::class.java,
+    dialogManager.registerDialogHandler(GithubUntrackedFilesDialog::class.java,
                                         TestDialogHandler { dialog ->
                                           // actually we should ask user for name/email ourselves (like in CommitDialog)
                                           for (repository in GitUtil.getRepositoryManager(myProject).repositories) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics.fusCollectors
 
 class EventsRateThrottle(
@@ -10,6 +10,7 @@ class EventsRateThrottle(
   private var currentSize = 0
   private var lastIndex = 0
 
+  @Synchronized
   fun tryPass(now: Long): Boolean {
     if (isTimestampApplicable(now)) {
       clearTimestamps(now)

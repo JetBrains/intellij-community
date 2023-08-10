@@ -8,9 +8,6 @@ import com.intellij.psi.PsiJavaToken;
 import com.intellij.structuralsearch.impl.matcher.strategies.JavaMatchingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author Eugene.Kudelevsky
-*/
 public class JavaCompiledPattern extends CompiledPattern {
   public static final String TYPED_VAR_PREFIX = "__$_";
 

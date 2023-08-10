@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
@@ -19,6 +19,7 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.delete
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.safeOutputStream
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jdom.Attribute
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -81,7 +82,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
-    return StateMap.fromMap(FileStorageCoreUtil.load(element, pathMacroSubstitutor, true))
+    return StateMap.fromMap(FileStorageCoreUtil.load(element, pathMacroSubstitutor))
   }
 
   final override fun createSaveSessionProducer(): SaveSessionProducer? {
@@ -98,7 +99,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
       componentNames.addAll(newData.keys())
     }
     else {
-      val changedComponentNames = oldData.getChangedComponentNames(newData)
+      val changedComponentNames = getChangedComponentNames(oldData, newData)
       if (changedComponentNames.isNotEmpty()) {
         LOG.debug { "analyzeExternalChangesAndUpdateIfNeeded: changedComponentNames $changedComponentNames for ${toString()}" }
         componentNames.addAll(changedComponentNames)
@@ -112,7 +113,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     }
   }
 
-  abstract class XmlElementStorageSaveSession<T : XmlElementStorage>(private val originalStates: StateMap, protected val storage: T) : SaveSessionBase() {
+  abstract class XmlElementStorageSaveSessionProducer<T : XmlElementStorage>(private val originalStates: StateMap, protected val storage: T) : SaveSessionProducerBase() {
     private var copiedStates: MutableMap<String, Any>? = null
 
     private var newLiveStates: MutableMap<String, Element>? = HashMap()
@@ -157,7 +158,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
         }
         else if (provider != null && provider.isApplicable(storage.fileSpec, storage.roamingType)) {
           // we should use standard line-separator (\n) - stream provider can share file content on any OS
-          provider.write(storage.fileSpec, writer!!.toBufferExposingByteArray(), storage.roamingType)
+          provider.write(storage.fileSpec, writer!!.toBufferExposingByteArray().toByteArray(), storage.roamingType)
         }
         else {
           isSavedLocally = true
@@ -198,11 +199,6 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
   }
 
   fun updatedFrom(changedComponentNames: MutableSet<String>, deleted: Boolean, useStreamProvider: Boolean) {
-    if (roamingType == RoamingType.DISABLED) {
-      // storage roaming was changed to DISABLED, but settings repository has old state
-      return
-    }
-
     LOG.runAndLogException {
       val newElement = if (deleted) null else loadElement(useStreamProvider)
       val states = storageDataRef.get()
@@ -215,7 +211,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
       }
       else if (states != null) {
         val newStates = loadState(newElement)
-        changedComponentNames.addAll(states.getChangedComponentNames(newStates))
+        changedComponentNames.addAll(getChangedComponentNames(states, newStates))
         setStates(states, newStates)
       }
     }
@@ -299,7 +295,6 @@ private fun save(states: StateMap, newLiveStates: Map<String, Element>): Mutable
     // name attribute should be first
     val elementAttributes = element.attributes
     var nameAttribute = element.getAttribute(FileStorageCoreUtil.NAME)
-    @Suppress("SuspiciousEqualsCombination")
     if (nameAttribute != null && nameAttribute === elementAttributes[0] && componentName == nameAttribute.value) {
       // all is OK
     }
@@ -348,12 +343,13 @@ internal fun Element.normalizeRootName(): Element {
 }
 
 // newStorageData - myStates contains only live (unarchived) states
-private fun StateMap.getChangedComponentNames(newStates: StateMap): Set<String> {
-  val newKeys = newStates.keys()
-  val existingKeys = keys()
+private fun getChangedComponentNames(oldStateMap: StateMap, newStateMap: StateMap): Set<String> {
+  val newKeys = newStateMap.keys()
+  val existingKeys = oldStateMap.keys()
 
   val bothStates = ArrayList<String>(min(newKeys.size, existingKeys.size))
-  val existingKeysSet = if (existingKeys.size < 3) existingKeys.asList() else CollectionFactory.createSmallMemoryFootprintSet(existingKeys.asList())
+  @Suppress("SSBasedInspection")
+  val existingKeysSet = if (existingKeys.size < 3) existingKeys.asList() else ObjectOpenHashSet(existingKeys)
   for (newKey in newKeys) {
     if (existingKeysSet.contains(newKey)) {
       bothStates.add(newKey)
@@ -363,10 +359,12 @@ private fun StateMap.getChangedComponentNames(newStates: StateMap): Set<String> 
   val diffs = CollectionFactory.createSmallMemoryFootprintSet<String>(newKeys.size + existingKeys.size)
   diffs.addAll(newKeys)
   diffs.addAll(existingKeys)
-  diffs.removeAll(bothStates)
+  for (state in bothStates) {
+    diffs.remove(state)
+  }
 
   for (componentName in bothStates) {
-    compare(componentName, newStates, diffs)
+    oldStateMap.compare(componentName, newStateMap, diffs)
   }
   return diffs
 }
@@ -405,27 +403,34 @@ interface DataWriterFilter {
 
 interface DataWriter {
   // LineSeparator cannot be used because custom (with an indent) line separator can be used
-  fun write(output: OutputStream, lineSeparator: String = LineSeparator.LF.separatorString, filter: DataWriterFilter? = null)
+  fun write(output: OutputStream, lineSeparator: LineSeparator = LineSeparator.LF, filter: DataWriterFilter? = null)
 
   fun hasData(filter: DataWriterFilter): Boolean
 }
 
-internal fun DataWriter?.writeTo(file: Path, requestor: Any?, lineSeparator: String = LineSeparator.LF.separatorString) {
+internal fun DataWriter?.writeTo(file: Path,
+                                 requestor: Any?,
+                                 lineSeparator: LineSeparator = LineSeparator.LF,
+                                 useXmlProlog: Boolean = false) {
   if (this == null) {
     file.delete()
   }
   else {
     val safe = SafeWriteRequestor.shouldUseSafeWrite(requestor)
     (if (safe) file.safeOutputStream() else file.outputStream()).use {
+      if (useXmlProlog) {
+        it.write(XML_PROLOG)
+        it.write(lineSeparator.separatorBytes)
+      }
       write(it, lineSeparator)
     }
   }
 }
 
 internal abstract class StringDataWriter : DataWriter {
-  final override fun write(output: OutputStream, lineSeparator: String, filter: DataWriterFilter?) {
+  final override fun write(output: OutputStream, lineSeparator: LineSeparator, filter: DataWriterFilter?) {
     output.bufferedWriter().use {
-      write(it, lineSeparator, filter)
+      write(it, lineSeparator.separatorString, filter)
     }
   }
 
@@ -434,7 +439,7 @@ internal abstract class StringDataWriter : DataWriter {
 
 internal fun DataWriter.toBufferExposingByteArray(lineSeparator: LineSeparator = LineSeparator.LF): BufferExposingByteArrayOutputStream {
   val out = BufferExposingByteArrayOutputStream(1024)
-  out.use { write(out, lineSeparator.separatorString) }
+  out.use { write(out, lineSeparator) }
   return out
 }
 
@@ -443,9 +448,9 @@ internal fun createDataWriterForElement(element: Element, storageFilePathForDebu
   return object: DataWriter {
     override fun hasData(filter: DataWriterFilter) = filter.hasData(element)
 
-    override fun write(output: OutputStream, lineSeparator: String, filter: DataWriterFilter?) {
+    override fun write(output: OutputStream, lineSeparator: LineSeparator, filter: DataWriterFilter?) {
       output.bufferedWriter().use {
-        JbXmlOutputter(lineSeparator, elementFilter = filter?.toElementFilter(), storageFilePathForDebugPurposes = storageFilePathForDebugPurposes).output(element, it)
+        JbXmlOutputter(lineSeparator.separatorString, elementFilter = filter?.toElementFilter(), storageFilePathForDebugPurposes = storageFilePathForDebugPurposes).output(element, it)
       }
     }
   }

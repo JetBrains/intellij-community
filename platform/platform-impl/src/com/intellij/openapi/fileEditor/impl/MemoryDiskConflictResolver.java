@@ -29,9 +29,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 class MemoryDiskConflictResolver {
   private static final Logger LOG = Logger.getInstance(MemoryDiskConflictResolver.class);
 
@@ -55,9 +52,10 @@ class MemoryDiskConflictResolver {
       LOG.info("  oldFileStamp:" + oldFileStamp);
       if (myConflicts.isEmpty()) {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.info("  document content:" + document.getText());
           myConflictAppeared = new Throwable();
         }
-        ApplicationManager.getApplication().invokeLater(this::processConflicts);
+        ApplicationManager.getApplication().invokeLater(() -> processConflicts());
       }
       myConflicts.add(file);
     }

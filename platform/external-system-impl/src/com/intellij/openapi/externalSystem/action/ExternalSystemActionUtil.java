@@ -2,9 +2,9 @@
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
@@ -36,19 +36,13 @@ public final class ExternalSystemActionUtil {
     final ActionManager actionManager = ActionManager.getInstance();
     final AnAction action = actionManager.getAction(actionId);
     if (action != null) {
-      final Presentation presentation = new Presentation();
-      final AnActionEvent event =
-        new AnActionEvent(e, DataManager.getInstance().getDataContext(e.getComponent()), place, presentation, actionManager, 0);
-      action.update(event);
-      if (presentation.isEnabled()) {
-        action.actionPerformed(event);
-      }
+      ActionUtil.invokeAction(action, e.getComponent(), place, e, null);
     }
   }
 
   @Nullable
   public static Module getModule(DataContext context) {
-    final Module module = LangDataKeys.MODULE.getData(context);
+    final Module module = PlatformCoreDataKeys.MODULE.getData(context);
     return module != null ? module : LangDataKeys.MODULE_CONTEXT.getData(context);
   }
 
@@ -166,4 +160,3 @@ public final class ExternalSystemActionUtil {
     return new ExternalTaskExecutionInfo(settings, DefaultRunExecutor.EXECUTOR_ID);
   }
 }
-

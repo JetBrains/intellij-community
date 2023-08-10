@@ -1,12 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.DebugEnvironment;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.NameMapper;
+import com.intellij.debugger.*;
 import com.intellij.debugger.engine.*;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
@@ -39,6 +35,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +64,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       final DebuggerSession session = newContext.getDebuggerSession();
       if (event == DebuggerSession.Event.PAUSE && myDebuggerStateManager.myDebuggerSession != session) {
         // if paused in non-active session; switch current session
-        myDebuggerStateManager.setState(newContext, session != null? session.getState() : DebuggerSession.State.DISPOSED, event, null);
+        myDebuggerStateManager.setState(newContext, session != null ? session.getState() : DebuggerSession.State.DISPOSED, event, null);
         return;
       }
 
@@ -179,7 +176,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   @Override
   @Nullable
   public DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     DebugProcessEvents debugProcess = new DebugProcessEvents(myProject);
     DebuggerSession session = DebuggerSession.create(debugProcess, environment);
     ExecutionResult executionResult = session.getProcess().getExecutionResult();
@@ -187,9 +183,13 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       return null;
     }
     session.getContextManager().addListener(mySessionListener);
-    getContextManager()
-      .setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()),
-                session.getState(), DebuggerSession.Event.CONTEXT, null);
+
+    // the whole method may still be called from EDT, we need to update the state immediately in this case
+    UIUtil.invokeLaterIfNeeded(() -> {
+      getContextManager()
+        .setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()),
+                  session.getState(), DebuggerSession.Event.CONTEXT, null);
+    });
 
     final ProcessHandler processHandler = executionResult.getProcessHandler();
 
@@ -211,7 +211,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
           if (debugProcess != null) {
             // if current thread is a "debugger manager thread", stop will execute synchronously
             // it is KillableColoredProcessHandler responsibility to terminate VM
-            debugProcess.stop(willBeDestroyed && !(processHandler instanceof KillableColoredProcessHandler && ((KillableColoredProcessHandler)processHandler).shouldKillProcessSoftly()));
+            debugProcess.stop(willBeDestroyed &&
+                              !(processHandler instanceof KillableColoredProcessHandler &&
+                                ((KillableColoredProcessHandler)processHandler).shouldKillProcessSoftly()));
 
             // wait at most 10 seconds: the problem is that debugProcess.stop() can hang if there are troubles in the debuggee
             // if processWillTerminate() is called from AWT thread debugProcess.waitFor() will block it and the whole app will hang
@@ -222,7 +224,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
                   indicator.setIndeterminate(false);
                   int wait = 0;
                   while (wait < WAIT_KILL_TIMEOUT && !indicator.isCanceled()) {
-                    indicator.setFraction((double)wait/WAIT_KILL_TIMEOUT);
+                    indicator.setFraction((double)wait / WAIT_KILL_TIMEOUT);
                     debugProcess.waitFor(200);
                     wait += 200;
                   }
@@ -341,18 +343,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     return new RemoteConnectionBuilder(debuggerInServerMode, transport, debugPort)
       .checkValidity(checkValidity)
       .asyncAgent(true)
-      .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
-      .create(parameters);
-  }
-
-  public static RemoteConnection createDebugParameters(final JavaParameters parameters,
-                                                       GenericDebuggerRunnerSettings settings,
-                                                       boolean checkValidity)
-    throws ExecutionException {
-    return new RemoteConnectionBuilder(settings.LOCAL, settings.getTransport(), settings.getDebugPort())
-      .checkValidity(checkValidity)
-      .asyncAgent(true)
-      .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
       .create(parameters);
   }
 
@@ -366,7 +356,10 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     }
 
     @Override
-    public void setState(@NotNull final DebuggerContextImpl context, DebuggerSession.State state, DebuggerSession.Event event, String description) {
+    public void setState(@NotNull final DebuggerContextImpl context,
+                         DebuggerSession.State state,
+                         DebuggerSession.Event event,
+                         String description) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       myDebuggerSession = context.getDebuggerSession();
       if (myDebuggerSession != null) {

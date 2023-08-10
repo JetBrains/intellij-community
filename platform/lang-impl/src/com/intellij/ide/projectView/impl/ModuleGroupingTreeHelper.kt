@@ -212,7 +212,7 @@ class ModuleGroupingTreeHelper<M: Any, N: MutableTreeNode> private constructor(
       convertVirtualGroupToRealNode(group, nodeFromVirtualGroup, node)
     }
     nodeForGroup[group] = node
-    nodeData[node] = ModuleTreeNodeData<M>(null, group)
+    nodeData[node] = ModuleTreeNodeData(null, group)
     return node
   }
 

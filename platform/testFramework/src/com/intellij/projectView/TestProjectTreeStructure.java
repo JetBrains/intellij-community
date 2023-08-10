@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
+import com.intellij.ide.projectView.NodeSortKey;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -20,6 +21,7 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
   protected boolean myHideEmptyMiddlePackages;
   protected boolean myFlattenPackages;
   private boolean myFlattenModules;
+  private NodeSortKey mySortKey = NodeSortKey.BY_NAME;
   protected boolean myShowLibraryContents = true;
 
   public TestProjectTreeStructure(@NotNull Project project, Disposable parentDisposable) {
@@ -27,15 +29,15 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
     Disposer.register(parentDisposable, this);
   }
 
-  public void checkNavigateFromSourceBehaviour(PsiElement element, VirtualFile virtualFile, AbstractProjectViewPSIPane pane) {
+  public void checkNavigateFromSourceBehaviour(PsiElement element, VirtualFile virtualFile, AbstractProjectViewPane pane) {
     Assert.assertNull(ProjectViewTestUtil.getVisiblePath(element, pane));
     pane.select(element, virtualFile, true);
     PlatformTestUtil.waitWhileBusy(pane.getTree());
     Assert.assertTrue(ProjectViewTestUtil.isExpanded(element, pane));
   }
 
-  public AbstractProjectViewPSIPane createPane() {
-    final AbstractProjectViewPSIPane pane = new TestProjectViewPSIPane(myProject, this, 9);
+  public AbstractProjectViewPane createPane() {
+    final TestProjectViewPSIPane pane = new TestProjectViewPSIPane(myProject, this, 9);
     pane.createComponent();
     Disposer.register(this, pane);
     PlatformTestUtil.waitWhileBusy(pane.getTree());
@@ -78,6 +80,16 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
 
   public void setFlattenModules(boolean flattenModules) {
     myFlattenModules = flattenModules;
+  }
+
+  @NotNull
+  @Override
+  public NodeSortKey getSortKey() {
+    return mySortKey;
+  }
+
+  public void setSortKey(NodeSortKey sortKey) {
+    mySortKey = sortKey;
   }
 
   public void setHideEmptyMiddlePackages(boolean hideEmptyMiddlePackages) {

@@ -21,9 +21,8 @@ PsiJavaFile:VarArgBrackets.java
           PsiJavaToken:ELLIPSIS('...')
         PsiWhiteSpace(' ')
         PsiIdentifier:x('x')
-        PsiErrorElement:')' expected
-          PsiJavaToken:LBRACKET('[')
-          PsiJavaToken:RBRACKET(']')
+        PsiJavaToken:LBRACKET('[')
+        PsiJavaToken:RBRACKET(']')
       PsiJavaToken:RPARENTH(')')
     PsiReferenceList
       <empty list>

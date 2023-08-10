@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Declarations")
 
 package com.intellij.model.psi.impl
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.TestOnly
 /**
  * @return collection of declarations found around the given [offset][offsetInFile] in [file][this]
  */
-fun PsiFile.allDeclarationsAround(offsetInFile: Int): Collection<PsiSymbolDeclaration> {
+internal fun PsiFile.allDeclarationsAround(offsetInFile: Int): Collection<PsiSymbolDeclaration> {
   for ((element: PsiElement, offsetInElement: Int) in elementsAroundOffsetUp(offsetInFile)) {
     ProgressManager.checkCanceled()
     val declarations: Collection<PsiSymbolDeclaration> = declarationsInElement(element, offsetInElement)
@@ -28,12 +28,28 @@ fun PsiFile.allDeclarationsAround(offsetInFile: Int): Collection<PsiSymbolDeclar
   return emptyList()
 }
 
+/**
+ * @return `true` if any declaration intersects with [[startOffsetInElement], [endOffsetInElement]), otherwise `false`
+ * @see hasReferencesInElement
+ */
+internal fun hasDeclarationsInElement(element: PsiElement, startOffsetInElement: Int, endOffsetInElement: Int): Boolean {
+  val declarationsInElement = declarationsInElement(element, -1)
+  for (declaration in declarationsInElement) {
+    if (declaration.rangeInDeclaringElement.intersects(startOffsetInElement, endOffsetInElement)) {
+      return true
+    }
+  }
+  return false
+}
+
+internal fun allDeclarationsInElement(element: PsiElement): Collection<PsiSymbolDeclaration> = declarationsInElement(element, -1)
+
 private val declarationProviderEP = ExtensionPointName<PsiSymbolDeclarationProvider>("com.intellij.psi.declarationProvider")
 
 private fun declarationsInElement(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolDeclaration> {
   val result = SmartList<PsiSymbolDeclaration>()
   result.addAll(element.ownDeclarations)
-  for (extension: PsiSymbolDeclarationProvider in declarationProviderEP.iterable) {
+  for (extension: PsiSymbolDeclarationProvider in declarationProviderEP.lazySequence()) {
     ProgressManager.checkCanceled()
     result.addAll(extension.getDeclarations(element, offsetInElement))
   }

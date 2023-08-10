@@ -41,9 +41,8 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
 
   @Override
   public void inlineElement(final Project project, Editor editor, PsiElement psiElement) {
-    if (!(psiElement instanceof IProperty)) return;
+    if (!(psiElement instanceof IProperty property)) return;
 
-    IProperty property = (IProperty)psiElement;
     final String propertyValue = property.getValue();
     if (propertyValue == null) return;
 

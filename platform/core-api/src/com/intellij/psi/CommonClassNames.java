@@ -3,9 +3,6 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public interface CommonClassNames {
   String DEFAULT_PACKAGE = "java.lang";
 
@@ -19,6 +16,7 @@ public interface CommonClassNames {
 
   String JAVA_UTIL_OBJECTS = "java.util.Objects";
 
+  String JAVA_LANG_SYSTEM = "java.lang.System";
   String JAVA_LANG_THROWABLE = "java.lang.Throwable";
   String JAVA_LANG_EXCEPTION = "java.lang.Exception";
   String JAVA_LANG_ERROR = "java.lang.Error";
@@ -48,6 +46,8 @@ public interface CommonClassNames {
   String JAVA_UTIL_MAP_ENTRY = "java.util.Map.Entry";
   String JAVA_UTIL_HASH_MAP = "java.util.HashMap";
   String JAVA_UTIL_LINKED_HASH_MAP = "java.util.LinkedHashMap";
+  String JAVA_UTIL_SORTED_MAP = "java.util.SortedMap";
+  String JAVA_UTIL_NAVIGABLE_MAP = "java.util.NavigableMap";
   String JAVA_UTIL_CONCURRENT_HASH_MAP = "java.util.concurrent.ConcurrentHashMap";
   String JAVA_UTIL_LIST = "java.util.List";
   String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
@@ -56,6 +56,7 @@ public interface CommonClassNames {
   String JAVA_UTIL_HASH_SET = "java.util.HashSet";
   String JAVA_UTIL_LINKED_HASH_SET = "java.util.LinkedHashSet";
   String JAVA_UTIL_SORTED_SET = "java.util.SortedSet";
+  String JAVA_UTIL_NAVIGABLE_SET = "java.util.NavigableSet";
   String JAVA_UTIL_QUEUE = "java.util.Queue";
   String JAVA_UTIL_STACK = "java.util.Stack";
   String JAVA_UTIL_PROPERTIES = "java.util.Properties";
@@ -66,6 +67,8 @@ public interface CommonClassNames {
   String JAVA_UTIL_COMPARATOR = "java.util.Comparator";
 
   String JAVA_UTIL_OPTIONAL = "java.util.Optional";
+
+  String JAVA_UTIL_UUID = "java.util.UUID";
 
   String JAVA_IO_BYTE_ARRAY_OUTPUT_STREAM = "java.io.ByteArrayOutputStream";
   String JAVA_IO_SERIALIZABLE = "java.io.Serializable";
@@ -94,6 +97,8 @@ public interface CommonClassNames {
   String JAVA_LANG_CHAR_SEQUENCE = "java.lang.CharSequence";
   String JAVA_LANG_STRING_BUFFER = "java.lang.StringBuffer";
   String JAVA_LANG_STRING_BUILDER = "java.lang.StringBuilder";
+  String JAVA_LANG_STRING_TEMPLATE = "java.lang.StringTemplate";
+  String JAVA_LANG_STRING_TEMPLATE_PROCESSOR = "java.lang.StringTemplate.Processor";
   String JAVA_LANG_ABSTRACT_STRING_BUILDER = "java.lang.AbstractStringBuilder";
 
   String JAVA_LANG_MATH = "java.lang.Math";
@@ -108,6 +113,16 @@ public interface CommonClassNames {
   String JAVA_LANG_NULL_POINTER_EXCEPTION = "java.lang.NullPointerException";
 
   String JAVA_NIO_CHARSET_CHARSET = "java.nio.charset.Charset";
+
+  String JAVA_NET_URI = "java.net.URI";
+  String JAVA_NET_URL = "java.net.URL";
+
+  String JAVA_TIME_LOCAL_DATE = "java.time.LocalDate";
+  String JAVA_TIME_LOCAL_TIME = "java.time.LocalTime";
+  String JAVA_TIME_LOCAL_DATE_TIME = "java.time.LocalDateTime";
+  String JAVA_TIME_OFFSET_DATE_TIME = "java.time.OffsetDateTime";
+  String JAVA_TIME_OFFSET_TIME = "java.time.OffsetTime";
+  String JAVA_TIME_ZONED_DATE_TIME = "java.time.ZonedDateTime";
 
   String JAVA_UTIL_CONCURRENT_FUTURE = "java.util.concurrent.Future";
   String JAVA_UTIL_CONCURRENT_CALLABLE = "java.util.concurrent.Callable";

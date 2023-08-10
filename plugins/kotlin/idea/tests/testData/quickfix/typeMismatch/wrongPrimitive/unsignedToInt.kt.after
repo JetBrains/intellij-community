@@ -1,0 +1,8 @@
+// "Change to '1'" "true"
+// WITH_STDLIB
+fun foo(param: Int) {}
+
+fun test() {
+    foo(1)
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrongPrimitiveLiteralFix

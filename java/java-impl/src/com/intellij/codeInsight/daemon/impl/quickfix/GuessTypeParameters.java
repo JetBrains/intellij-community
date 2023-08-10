@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -23,9 +23,6 @@ import java.util.Map;
 import static com.intellij.codeInsight.ExpectedTypeInfo.*;
 import static com.intellij.util.containers.ContainerUtil.map;
 
-/**
- * @author ven
-  */
 public class GuessTypeParameters {
 
   private static final Logger LOG = Logger.getInstance(GuessTypeParameters.class);
@@ -53,7 +50,9 @@ public class GuessTypeParameters {
                                          @Nullable PsiElement context,
                                          @NotNull PsiClass targetClass) {
     LOG.assertTrue(typeElement.isValid());
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    if (typeElement.isPhysical()) {
+      ApplicationManager.getApplication().assertWriteAccessAllowed();
+    }
 
     GlobalSearchScope scope = typeElement.getResolveScope();
 
@@ -214,7 +213,7 @@ public class GuessTypeParameters {
 
     @Override
     public PsiType visitType(@NotNull PsiType type) {
-      if (type.equals(PsiType.NULL)) return PsiType.getJavaLangObject(myManager, myResolveScope);
+      if (type.equals(PsiTypes.nullType())) return PsiType.getJavaLangObject(myManager, myResolveScope);
       return type;
     }
 
@@ -242,22 +241,15 @@ public class GuessTypeParameters {
   }
 
   private static boolean matches(@NotNull PsiType type, @NotNull PsiType expectedType, @Type int kind) {
-    switch (kind) {
-      case TYPE_STRICTLY:
-        return type.equals(expectedType);
-      case TYPE_OR_SUBTYPE:
-        return expectedType.isAssignableFrom(type);
-      case TYPE_OR_SUPERTYPE:
-        return type.isAssignableFrom(expectedType);
-      default:
-        return false;
-    }
+    return switch (kind) {
+      case TYPE_STRICTLY -> type.equals(expectedType);
+      case TYPE_OR_SUBTYPE -> expectedType.isAssignableFrom(type);
+      case TYPE_OR_SUPERTYPE -> type.isAssignableFrom(expectedType);
+      default -> false;
+    };
   }
 
   private static boolean hasNullSubstitutions(@NotNull PsiSubstitutor substitutor) {
-    for (PsiType type : substitutor.getSubstitutionMap().values()) {
-      if (type == null) return true;
-    }
-    return false;
+    return substitutor.getSubstitutionMap().containsValue(null);
   }
 }

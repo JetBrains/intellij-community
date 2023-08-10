@@ -29,6 +29,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see com.intellij.diff.requests.ContentDiffRequest
  * @see com.intellij.diff.DiffContentFactory
+ * @see DocumentContent
+ * @see FileContent
+ * @see DirectoryContent
  */
 public interface DiffContent extends UserDataHolder {
   @Nullable
@@ -46,8 +49,11 @@ public interface DiffContent extends UserDataHolder {
   @RequiresEdt
   default void onAssigned(boolean isAssigned) { }
 
+  /**
+   * @deprecated isn't called by the platform anymore
+   */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default OpenFileDescriptor getOpenFileDescriptor() {
     return ObjectUtils.tryCast(getNavigatable(), OpenFileDescriptor.class);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -11,16 +11,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * Manages per-project markup models of documents.
- *
- * @author yole
  */
 public final class DocumentMarkupModel {
   private static final Key<MarkupModelEx> MARKUP_MODEL_KEY = Key.create("DocumentMarkupModel.MarkupModel");
@@ -40,10 +43,11 @@ public final class DocumentMarkupModel {
    * @return the markup model instance.
    * @see com.intellij.openapi.editor.Editor#getMarkupModel()
    */
+  @Contract("_,_,true -> !null")
   public static MarkupModel forDocument(@NotNull Document document, @Nullable Project project, boolean create) {
     if (document instanceof DocumentWindow) {
-      final Document delegate = ((DocumentWindow)document).getDelegate();
-      final MarkupModelEx baseMarkupModel = (MarkupModelEx)forDocument(delegate, project, true);
+      Document delegate = ((DocumentWindow)document).getDelegate();
+      MarkupModelEx baseMarkupModel = (MarkupModelEx)forDocument(delegate, project, true);
       return new MarkupModelWindow(baseMarkupModel, (DocumentWindow) document);
     }
 
@@ -58,7 +62,7 @@ public final class DocumentMarkupModel {
       return markupModel;
     }
 
-    final DocumentMarkupModelManager documentMarkupModelManager =
+    DocumentMarkupModelManager documentMarkupModelManager =
       project.isDisposed() ? null : DocumentMarkupModelManager.getInstance(project);
     if (documentMarkupModelManager == null || documentMarkupModelManager.isDisposed() || project.isDisposed()) {
       return new EmptyMarkupModel(document);
@@ -80,7 +84,23 @@ public final class DocumentMarkupModel {
     return model;
   }
 
-  private static ConcurrentMap<Project, MarkupModelImpl> getMarkupModelMap(@NotNull Document document) {
+  /**
+   * Returns a list of markup models previously created for the specified document
+   * by {@link #forDocument} with {@code create=true}. The result is identical to iterating
+   * over all opened projects and calling {@link #forDocument} with {@code create=false}.
+   */
+  @ApiStatus.Experimental
+  public static @NotNull List<? extends MarkupModel> getExistingMarkupModels(@NotNull Document document) {
+    if (document instanceof DocumentWindow documentWindow) {
+      Document delegate = documentWindow.getDelegate();
+      List<? extends MarkupModel> baseMarkupModels = getExistingMarkupModels(delegate);
+      return ContainerUtil.map(baseMarkupModels, model -> new MarkupModelWindow((MarkupModelEx)model, documentWindow));
+    }
+    ConcurrentMap<Project, MarkupModelImpl> markupModelMap = document.getUserData(MARKUP_MODEL_MAP_KEY);
+    return markupModelMap != null ? List.copyOf(markupModelMap.values()) : Collections.emptyList();
+  }
+
+  private static @NotNull ConcurrentMap<Project, MarkupModelImpl> getMarkupModelMap(@NotNull Document document) {
     ConcurrentMap<Project, MarkupModelImpl> markupModelMap = document.getUserData(MARKUP_MODEL_MAP_KEY);
     if (markupModelMap == null) {
       ConcurrentMap<Project, MarkupModelImpl> newMap = new ConcurrentHashMap<>();

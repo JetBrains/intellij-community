@@ -12,10 +12,11 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +79,6 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
     for (ExcludeEntryDescription description : myExcludeEntryDescriptions) {
       myConfiguration.addExcludeEntryDescription(description.copy(myProject));
     }
-    FileStatusManager.getInstance(myProject).fileStatusesChanged(); // refresh exclude from compile status
   }
 
   @Override
@@ -115,6 +115,7 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
 
     ExcludedEntriesPanel() {
       initPanel();
+      putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
     }
 
     @Override

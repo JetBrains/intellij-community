@@ -60,5 +60,6 @@ abstract class EditorConfigHeaderLineMarkerProviderBase : LineMarkerProvider {
   abstract val searcher: EditorConfigHeaderOverrideSearcherBase
   abstract fun createTooltipProvider(searchResults: List<OverrideSearchResult>): (PsiElement) -> String
   abstract fun getIcon(isPartial: Boolean, element: PsiElement): Icon
-  abstract @Nls fun getFindUsagesTitle(isPartial: Boolean, element: PsiElement): String
+  @Nls
+  abstract fun getFindUsagesTitle(isPartial: Boolean, element: PsiElement): String
 }

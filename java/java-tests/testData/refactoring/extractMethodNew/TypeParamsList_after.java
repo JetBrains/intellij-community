@@ -1,3 +1,5 @@
+import java.util.List;
+
 class Test {
   protected <T extends java.util.List<K>, K> void applyChanges(final T variable) {
                  new Runnable() {
@@ -9,7 +11,7 @@ class Test {
          ;
      }
 
-    private <T extends java.util.List<K>, K> void newMethod(T variable) {
+    private <T extends List<K>, K> void newMethod(T variable) {
         System.out.println(variable);
     }
 }

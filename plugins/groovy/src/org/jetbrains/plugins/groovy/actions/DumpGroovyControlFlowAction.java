@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -60,8 +61,13 @@ public class DumpGroovyControlFlowAction extends AnAction implements DumbAware {
     return result;
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static void passInner(GrControlFlowOwner owner) {
     System.out.println(owner.getText());
-    System.out.println(ControlFlowUtils.dumpControlFlow(owner.getControlFlow()));
+    System.out.println(ControlFlowUtils.dumpControlFlow(ControlFlowUtils.getGroovyControlFlow(owner)));
   }
 }

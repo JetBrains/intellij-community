@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -14,9 +14,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public final class CodeDocumentationUtil {
 
   private CodeDocumentationUtil() {
@@ -54,7 +52,6 @@ public final class CodeDocumentationUtil {
    *
    * @param document    target document
    * @param offset      target offset that identifies line to check and max offset to use during scanning
-   * @return
    */
   @Nullable
   public static String getIndentInsideJavadoc(@NotNull Document document, int offset) {

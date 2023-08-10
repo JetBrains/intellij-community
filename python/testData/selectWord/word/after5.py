@@ -1,5 +1,5 @@
 import os
 
-<selection>def f(arg):
-    print a<caret>rg
-    print "a"</selection>
+def f(arg):
+<selection>    print(a<caret>rg)
+    print("a")</selection>

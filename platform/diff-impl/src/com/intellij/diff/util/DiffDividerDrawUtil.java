@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.diff.util.DiffDrawUtil.MarkerRange;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffDrawUtil.lineToY;
@@ -80,6 +82,8 @@ public final class DiffDividerDrawUtil {
   public static List<DividerPolygon> createVisiblePolygons(@NotNull Editor editor1,
                                                            @NotNull Editor editor2,
                                                            @NotNull DividerPaintable paintable) {
+    if (editor1.isDisposed() || editor2.isDisposed()) return Collections.emptyList();
+
     DividerPaintableHandlerImpl handler = new DividerPaintableHandlerImpl(editor1, editor2);
     paintable.process(handler);
     return handler.getPolygons();
@@ -104,11 +108,11 @@ public final class DiffDividerDrawUtil {
 
     final EditorColorsScheme scheme = editor1.getColorsScheme();
 
-    paintable.process((line1, line2) -> {
+    paintable.process((line1, line2, isHovered) -> {
       if (leftInterval.start > line1 + 1 && rightInterval.start > line2 + 1) return true;
       if (leftInterval.end < line1 && rightInterval.end < line2) return false;
 
-      separators.add(createSeparator(editor1, editor2, line1, line2, height1, height2, scheme));
+      separators.add(createSeparator(editor1, editor2, line1, line2, height1, height2, isHovered, scheme));
       return true;
     });
 
@@ -122,7 +126,7 @@ public final class DiffDividerDrawUtil {
   }
 
   /**
-   * Use EditorInlayFoldingMapper-friendly renderer for folded lines.
+   * Use CustomFoldRegion-friendly renderer for folded lines.
    * We do not use it by default to avoid potential inconsistency with {@link DiffLineMarkerRenderer}.
    *
    * @see DiffDrawUtil#getGutterMarkerPaintRange
@@ -137,22 +141,24 @@ public final class DiffDividerDrawUtil {
 
   @NotNull
   private static DividerSeparator createSeparator(@NotNull Editor editor1, @NotNull Editor editor2,
-                                                  int line1, int line2, int height1, int height2,
+                                                  int line1, int line2, int height1, int height2, boolean isHovered,
                                                   @Nullable EditorColorsScheme scheme) {
     int topOffset1 = getEditorTopOffset(editor1);
     int topOffset2 = getEditorTopOffset(editor2);
     int start1 = lineToY(editor1, line1) + topOffset1;
     int start2 = lineToY(editor2, line2) + topOffset2;
-    return new DividerSeparator(start1, start2, start1 + height1, start2 + height2, scheme);
+    return new DividerSeparator(start1, start2, start1 + height1, start2 + height2, isHovered, scheme);
   }
 
   @NotNull
   private static LineRange getVisibleInterval(Editor editor) {
-    Rectangle area = editor.getScrollingModel().getVisibleArea();
-    if (area.height < 0) return new LineRange(0, 0);
-    LogicalPosition position1 = editor.xyToLogicalPosition(new Point(0, area.y));
-    LogicalPosition position2 = editor.xyToLogicalPosition(new Point(0, area.y + area.height));
-    return new LineRange(position1.line, position2.line);
+    return ReadAction.compute(() -> {
+      Rectangle area = editor.getScrollingModel().getVisibleArea();
+      if (area.height < 0) return new LineRange(0, 0);
+      LogicalPosition position1 = editor.xyToLogicalPosition(new Point(0, area.y));
+      LogicalPosition position2 = editor.xyToLogicalPosition(new Point(0, area.y + area.height));
+      return new LineRange(position1.line, position2.line);
+    });
   }
 
   public interface DividerPaintable {
@@ -167,6 +173,9 @@ public final class DiffDividerDrawUtil {
 
       boolean processExcludable(int startLine1, int endLine1, int startLine2, int endLine2,
                                 @NotNull TextDiffType type, boolean excluded, boolean skipped);
+
+      boolean processAligned(int startLine1, int endLine1, int startLine2, int endLine2,
+                             @NotNull TextDiffType type);
     }
   }
 
@@ -209,14 +218,55 @@ public final class DiffDividerDrawUtil {
       return process(startLine1, endLine1, startLine2, endLine2, new ExcludablePainter(type, excluded, skipped));
     }
 
+    @Override
+    public boolean processAligned(int startLine1, int endLine1, int startLine2, int endLine2,
+                                  @NotNull TextDiffType type) {
+      if (type == TextDiffType.INSERTED || type == TextDiffType.DELETED) {
+        return process(startLine1, endLine1, startLine2, endLine2, new DefaultPainter(type), true);
+      }
+      else {
+        return process(startLine1, endLine1, startLine2, endLine2, type);
+      }
+    }
+
     private boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
                             @NotNull Painter painter) {
+      return process(startLine1, endLine1, startLine2, endLine2, painter, false);
+    }
+
+    private boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
+                            @NotNull Painter painter, boolean withAlignedHeight) {
       if (myLeftInterval.start > endLine1 && myRightInterval.start > endLine2) return true;
       if (myLeftInterval.end < startLine1 && myRightInterval.end < startLine2) return false;
 
-      ContainerUtil.addIfNotNull(myPolygons, createPolygon(myEditor1, myEditor2, startLine1, endLine1, startLine2, endLine2,
-                                                           painter));
+      DividerPolygon polygon = createPolygon(myEditor1, myEditor2, startLine1, endLine1, startLine2, endLine2, painter);
+      if (withAlignedHeight && polygon != null) {
+        int inlayOffset = getInlayOffset(myEditor1, myEditor2, startLine1, startLine2, painter.getType());
+        polygon = polygon.withAlignedHeight(inlayOffset);
+      }
+
+      ContainerUtil.addIfNotNull(myPolygons, polygon);
       return true;
+    }
+
+    private static int getInlayOffset(@NotNull Editor editor1, @NotNull Editor editor2,
+                                      int startLine1, int startLine2,
+                                      @NotNull TextDiffType type) {
+      int visualStartLine1 = EditorUtil.logicalToVisualLine(editor1, startLine1);
+      int visualStartLine2 = EditorUtil.logicalToVisualLine(editor2, startLine2);
+
+      if (type == TextDiffType.INSERTED) {
+        return EditorUtil.getInlaysHeight(editor2, visualStartLine2, true);
+      }
+      if (type == TextDiffType.DELETED) {
+        return EditorUtil.getInlaysHeight(editor1, visualStartLine1, true);
+      }
+      if (type == TextDiffType.MODIFIED) {
+        return Math.max(EditorUtil.getInlaysHeight(editor1, visualStartLine1, true),
+                        EditorUtil.getInlaysHeight(editor2, visualStartLine2, true));
+      }
+
+      return 0;
     }
 
     @Nullable
@@ -277,6 +327,11 @@ public final class DiffDividerDrawUtil {
       public boolean isAlwaysVisible() {
         return true;
       }
+
+      @Override
+      public @NotNull TextDiffType getType() {
+        return myType;
+      }
     }
 
     private static class ResolvablePainter implements Painter {
@@ -306,6 +361,11 @@ public final class DiffDividerDrawUtil {
       @Override
       public boolean isAlwaysVisible() {
         return !myResolved;
+      }
+
+      @Override
+      public @NotNull TextDiffType getType() {
+        return myType;
       }
     }
 
@@ -340,6 +400,11 @@ public final class DiffDividerDrawUtil {
       public boolean isAlwaysVisible() {
         return !mySkipped;
       }
+
+      @Override
+      public @NotNull TextDiffType getType() {
+        return myType;
+      }
     }
 
     private interface Painter {
@@ -350,6 +415,8 @@ public final class DiffDividerDrawUtil {
       boolean isDottedBorder();
 
       boolean isAlwaysVisible();
+
+      @NotNull TextDiffType getType();
     }
   }
 
@@ -357,7 +424,7 @@ public final class DiffDividerDrawUtil {
     void process(@NotNull Handler handler);
 
     interface Handler {
-      boolean process(int line1, int line2);
+      boolean process(int line1, int line2, boolean isHovered);
     }
   }
 
@@ -414,14 +481,51 @@ public final class DiffDividerDrawUtil {
         g.setStroke(BOLD_DOTTED_STROKE);
       }
 
-      if (curve) {
-        DiffDrawUtil.drawCurveTrapezium(g, 0, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor);
-      }
-      else {
-        DiffDrawUtil.drawTrapezium(g, 0, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor);
-      }
+      drawTrapezium(g, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor, curve);
 
       g.setStroke(oldStroke);
+    }
+
+    private static void drawTrapezium(@NotNull Graphics2D g,
+                                      int width,
+                                      int startY1, int endY1,
+                                      int startY2, int endY2,
+                                      @Nullable Color fillColor, @Nullable Color borderColor,
+                                      boolean curve) {
+      if (curve) {
+        DiffDrawUtil.drawCurveTrapezium(g, 0, width, startY1, endY1, startY2, endY2, fillColor, borderColor);
+      }
+      else {
+        DiffDrawUtil.drawTrapezium(g, 0, width, startY1, endY1, startY2, endY2, fillColor, borderColor);
+      }
+    }
+
+    @NotNull
+    public DividerPolygon withAlignedHeight(int inlayOffset) {
+      int delta = (myEnd2 - myStart2) - (myEnd1 - myStart1);
+      if (delta == 0) return this;
+
+      if (myStart2 == myEnd1 && myEnd1 == myEnd2) { //correspond to the last line DELETED change (e.g. last line deleted)
+        return new DividerPolygon(myStart1, myStart2 - (myEnd2 - myStart1), myEnd1, myEnd2, myFillColor, myBorderColor, myDottedBorder);
+      }
+      else if (myEnd1 == myEnd2 && myStart1 == myEnd1) { //correspond to the last line INSERTED change (e.g. added new lines after last line)
+        return new DividerPolygon(myStart1 - (myEnd2 - myStart2), myStart2, myEnd1, myEnd2, myFillColor, myBorderColor, myDottedBorder);
+      }
+      if (delta < 0) {
+        int startDelta = myStart2 == myEnd2 ? 0 : -delta;
+        int endDelta = myStart2 == myEnd2 ? -delta : 0;
+        return new DividerPolygon(myStart1, myStart2 - startDelta + inlayOffset,
+                                  myEnd1, myEnd2 + endDelta + inlayOffset,
+                                  myFillColor, myBorderColor, myDottedBorder);
+      }
+      else {
+        int startDelta = myStart1 == myEnd1 ? 0 : delta;
+        int endDelta = myStart1 == myEnd1 ? delta : 0;
+        int firstLineOffset = (myStart1 == myEnd1 && myStart2 == 0) ? -1 : 0;
+        return new DividerPolygon(myStart1 - startDelta + firstLineOffset + inlayOffset, myStart2,
+                                  myEnd1 + endDelta + firstLineOffset + inlayOffset, myEnd2,
+                                  myFillColor, myBorderColor, myDottedBorder);
+      }
     }
 
     public String toString() {
@@ -435,18 +539,20 @@ public final class DiffDividerDrawUtil {
     private final int myStart2;
     private final int myEnd1;
     private final int myEnd2;
+    private final boolean myIsHovered;
     @Nullable private final EditorColorsScheme myScheme;
 
-    public DividerSeparator(int start1, int start2, int end1, int end2, @Nullable EditorColorsScheme scheme) {
+    public DividerSeparator(int start1, int start2, int end1, int end2, boolean isHovered, @Nullable EditorColorsScheme scheme) {
       myStart1 = start1;
       myStart2 = start2;
       myEnd1 = end1;
       myEnd2 = end2;
+      myIsHovered = isHovered;
       myScheme = scheme;
     }
 
     public void paint(Graphics2D g, int width) {
-      DiffLineSeparatorRenderer.drawConnectorLine(g, 0, width, myStart1, myStart2, myEnd1 - myStart1, myScheme);
+      DiffLineSeparatorRenderer.drawConnectorLine(g, 0, width, myStart1, myStart2, myEnd1 - myStart1, myIsHovered, myScheme);
     }
 
     public String toString() {

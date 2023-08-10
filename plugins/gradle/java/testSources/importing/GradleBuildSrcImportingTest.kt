@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -10,8 +10,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import junit.framework.AssertionFailedError
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
+import java.util.function.Consumer
 
 class GradleBuildSrcImportingTest : GradleImportingTestCase() {
 
@@ -34,20 +36,45 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
   }
 
   @Test
+  fun `test buildSrc project with custom compiler out and not disabled delegation is imported`() {
+    currentExternalProjectSettings.delegatedBuild = false
+    createProjectSubFile("buildSrc/build.gradle",
+                         """
+                           apply plugin: 'idea'
+
+                           idea.module {
+                             outputDir = file("build/foo")
+                             testOutputDir = file("build/bar")
+                           }
+                            """.trimIndent())
+    importProject("apply plugin: 'java'\n")
+
+    assertModuleOutput("project.buildSrc.main", "$projectPath/buildSrc/build/foo", "");
+    assertModuleOutput("project.buildSrc.test", "", "$projectPath/buildSrc/build/bar");
+  }
+
+
+  @Test
   fun `test buildSrc project level dependencies are imported`() {
-    createProjectSubFile("buildSrc/build.gradle", GradleBuildScriptBuilderEx().withJUnit("4.12").generate())
+    val dependency = "junit:junit:4.12"
+    val dependencyName = "Gradle: junit:junit:4.12"
+
+    createBuildFile("buildSrc") {
+      withMavenCentral()
+      addTestImplementationDependency(dependency)
+    }
     importProject("")
     assertModules("project",
                   "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test")
-    val moduleLibDeps = getModuleLibDeps("project.buildSrc.test", "Gradle: junit:junit:4.12")
-    assertThat(moduleLibDeps).hasSize(1).allSatisfy {
+    val moduleLibDeps = getModuleLibDeps("project.buildSrc.test", dependencyName)
+    assertThat(moduleLibDeps).hasSize(1).allSatisfy(Consumer {
       assertThat(it.libraryLevel).isEqualTo("project")
-    }
+    })
   }
 
   @Test
   fun `test explore files after double importing`() {
-    createProjectSubFile("buildSrc/build.gradle", GradleBuildScriptBuilderEx().withJUnit("4.12").generate())
+    createProjectSubFile("buildSrc/build.gradle", createBuildScriptBuilder().withJUnit4().generate())
     importProject("")
     importProject("")
 
@@ -129,6 +156,41 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
     assertModuleLibDep("another-build.buildSrc.main", depJar.presentableUrl, depJar.url)
   }
 
+
+  /**
+   * since 6.7 included builds become "visible" for `buildSrc` project https://docs.gradle.org/6.7-rc-1/release-notes.html#build-src
+   * !!! Note, this is true only for builds included from the "root" build and it becomes visible also for "nested" `buildSrc` projects !!!
+   * Check an edge case of transitive included builds  reaching the buildSrc. Such chain should be ignored, as it may cause failure with Gradle 7.2+
+   * Related issue in Gradle's tracker: https://github.com/gradle/gradle/issues/20898
+   */
+  @TargetVersions("6.7+")
+  @Test
+  fun `test nested buildSrc with a transitive included builds chain reaching it`() {
+    createProjectSubFile("build-plugins/settings.gradle", "")
+    createProjectSubFile("build-plugins/build.gradle", "plugins { id 'groovy-gradle-plugin' }\n")
+    createProjectSubFile("build-plugins/src/main/groovy/myproject.my-test-plugin.gradle",
+                         "plugins { id 'java' }\n" +
+                         "dependencies { implementation files('libs/myLib.jar') }\n")
+
+    createProjectSubFile("another-build/settings.gradle", "")
+    createProjectSubFile("another-build/buildSrc/build.gradle", "plugins { id 'myproject.my-test-plugin' }\n")
+    createProjectSubFile("another-build/buildSrc/settings.gradle", "")
+    val depJar = createProjectJarSubFile("another-build/buildSrc/libs/myLib.jar")
+
+    createProjectSubFile("included-build/settings.gradle", "includeBuild '../another-build'")
+
+    createSettingsFile("includeBuild 'build-plugins'\n" +
+                       "includeBuild 'included-build'")
+
+    importProject("")
+    assertModules("project",
+                  "build-plugins", "build-plugins.main", "build-plugins.test",
+                  "included-build",
+                  "another-build", "another-build.buildSrc", "another-build.buildSrc.main", "another-build.buildSrc.test")
+
+    assertModuleLibDep("another-build.buildSrc.main", depJar.presentableUrl, depJar.url)
+  }
+
   @TargetVersions("6.7+")
   @Test
   fun `test buildSrc project dependencies on projects of build included from the main build`() {
@@ -199,8 +261,74 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
                   "build2.buildSrc", "build2.buildSrc.main", "build2.buildSrc.test")
   }
 
+
+  @Test
+  @TargetVersions("8.0+")
+  fun `test composite members included in build Src are properly imported`() {
+    //createProjectSubFile("gradle.properties", "org.gradle.jvmargs=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005")
+    createSettingsFile("""
+      rootProject.name = "A"
+    """.trimIndent())
+
+    createProjectSubFile("buildSrc/settings.gradle", "includeBuild('../buildSrcIncluded')")
+    createProjectSubFile("buildSrcIncluded/settings.gradle", "rootProject.name='includedFromBuildSrc'")
+
+    importProject("")
+    assertModules("A",
+                  "A.buildSrc", "A.buildSrc.test", "A.buildSrc.main",
+                  "includedFromBuildSrc")
+  }
+
+  /*
+
+  Builds inclusion and buildSrc presence graph
+
+   A--> B--> D--> buildSrc
+   |    └--> buildSrc
+   |
+   └--> C--> D--> buildSrc
+        └--> buildSrc
+   */
+  @Test
+  @TargetVersions("8.0+")
+  fun `test buildSrc in a composite with build names duplication`() {
+    createSettingsFile("""
+      rootProject.name = "A"
+      includeBuild("B")
+      includeBuild("C")
+    """.trimIndent())
+
+    createProjectSubFile("B/settings.gradle", """
+      rootProject.name = "B"
+      includeBuild("D")
+    """.trimIndent())
+
+    createProjectSubFile("B/buildSrc/settings.gradle", "")
+
+    createProjectSubFile("B/D/settings.gradle", "rootProject.name = 'D'")
+    createProjectSubFile("B/D/buildSrc/settings.gradle", "")
+
+
+    createProjectSubFile("C/settings.gradle", """
+      rootProject.name = "C"
+      includeBuild("D")
+    """.trimIndent())
+
+    createProjectSubFile("C/buildSrc/settings.gradle", "")
+
+    createProjectSubFile("C/D/settings.gradle", "rootProject.name = 'D'")
+    createProjectSubFile("C/D/buildSrc/settings.gradle", "")
+
+    importProject("")
+    assertModules("A", "B", "C", "D", "C.D",
+                  "B.buildSrc", "B.buildSrc.main", "B.buildSrc.test",
+                  "C.buildSrc", "C.buildSrc.main", "C.buildSrc.test",
+                  "D.buildSrc", "D.buildSrc.main", "D.buildSrc.test",
+                  "C.D.buildSrc", "C.D.buildSrc.main", "C.D.buildSrc.test")
+  }
+
   private fun assertBuildScriptClassPathContains(moduleName: String, expectedEntries: Collection<VirtualFile>) {
-    val module = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
+    val module = ModuleManager.getInstance(myProject).findModuleByName(moduleName)
     val modulePath = ExternalSystemApiUtil.getExternalProjectPath(module)
                      ?: throw AssertionFailedError("Could not find external project path for module '$moduleName'")
     val entries = GradleBuildClasspathManager.getInstance(myProject).getModuleClasspathEntries(modulePath)

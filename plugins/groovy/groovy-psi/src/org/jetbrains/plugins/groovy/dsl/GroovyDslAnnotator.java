@@ -22,16 +22,12 @@ import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
 import static org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status.*;
 
-/**
- * @author peter
- */
 public class GroovyDslAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
-    if (!(psiElement instanceof GroovyFile)) return;
+    if (!(psiElement instanceof GroovyFile groovyFile)) return;
 
-    final GroovyFile groovyFile = (GroovyFile)psiElement;
     if (!GrFileIndexUtil.isGroovySourceFile(groovyFile)) return;
     
     final VirtualFile vfile = groovyFile.getVirtualFile();

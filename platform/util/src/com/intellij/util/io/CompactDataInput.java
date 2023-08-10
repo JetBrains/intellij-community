@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public final class CompactDataInput implements DataInput {
   @Override
   public int skipBytes(int n) throws IOException {
     int total = 0;
-    int cur = 0;
+    int cur;
 
     while ((total<n) && ((cur = (int) in.skip(n-total)) > 0)) {
         total += cur;
@@ -76,7 +76,7 @@ public final class CompactDataInput implements DataInput {
     int ch2 = in.read();
     if ((ch1 | ch2) < 0)
         throw new EOFException();
-    return (short)((ch1 << 8) + (ch2 << 0));
+    return (short)((ch1 << 8) + ch2);
   }
 
   @Override
@@ -85,7 +85,7 @@ public final class CompactDataInput implements DataInput {
     int ch2 = in.read();
     if ((ch1 | ch2) < 0)
         throw new EOFException();
-    return (ch1 << 8) + (ch2 << 0);
+    return (ch1 << 8) + ch2;
   }
 
   @Override
@@ -94,7 +94,7 @@ public final class CompactDataInput implements DataInput {
     int ch2 = in.read();
     if ((ch1 | ch2) < 0)
         throw new EOFException();
-    return (char)((ch1 << 8) + (ch2 << 0));
+    return (char)((ch1 << 8) + ch2);
   }
 
   @Override
@@ -112,7 +112,7 @@ public final class CompactDataInput implements DataInput {
             ((long)(readBuffer[4] & 255) << 24) +
             ((readBuffer[5] & 255) << 16) +
             ((readBuffer[6] & 255) <<  8) +
-            ((readBuffer[7] & 255) <<  0));
+            ((readBuffer[7] & 255)));
   }
 
   @Override
@@ -130,9 +130,8 @@ public final class CompactDataInput implements DataInput {
     throw new UnsupportedOperationException("readLine is not implemented!");
   }
 
-  @NotNull
   @Override
-  public String readUTF() throws IOException {
+  public @NotNull String readUTF() throws IOException {
     return IOUtil.readUTFFast(readBuffer, this);
   }
 }

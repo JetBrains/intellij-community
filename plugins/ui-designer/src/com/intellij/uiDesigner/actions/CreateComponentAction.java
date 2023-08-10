@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.actions;
 
@@ -18,9 +18,7 @@ import com.intellij.util.Processor;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class CreateComponentAction extends AbstractGuiEditorAction {
   private ComponentItem myLastCreatedComponent = null;
 
@@ -79,8 +77,7 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
           container = editor.getRootContainer();
         }
         if (container instanceof RadRootContainer && container.getComponentCount() == 1 &&
-          container.getComponent(0) instanceof RadContainer) {
-          RadContainer childContainer = (RadContainer)container.getComponent(0);
+            container.getComponent(0) instanceof RadContainer childContainer) {
           dropLocation = childContainer.getDropLocation(null);
         }
         else {
@@ -89,8 +86,7 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
       }
       else {
         final RadRootContainer container = editor.getRootContainer();
-        if (container.getComponentCount() == 1 && container.getComponent(0) instanceof RadContainer) {
-          RadContainer childContainer = (RadContainer)container.getComponent(0);
+        if (container.getComponentCount() == 1 && container.getComponent(0) instanceof RadContainer childContainer) {
           dropLocation = childContainer.getDropLocation(null);
         }
         else {

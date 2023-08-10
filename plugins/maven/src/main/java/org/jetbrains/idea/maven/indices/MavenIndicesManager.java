@@ -1,82 +1,66 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.progress.BackgroundTaskQueue;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.JdomKt;
+import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import gnu.trove.THashSet;
-import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.model.MavenArchetype;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
-import org.jetbrains.idea.maven.server.MavenServerDownloadListener;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
+/**
+ * Main api class for work with maven indices.
+ * <p>
+ * Get current index state, schedule update index list, check MavenId in index, add data to index.
+ */
 public final class MavenIndicesManager implements Disposable {
-  private static final String ELEMENT_ARCHETYPES = "archetypes";
-  private static final String ELEMENT_ARCHETYPE = "archetype";
-  private static final String ELEMENT_GROUP_ID = "groupId";
-  private static final String ELEMENT_ARTIFACT_ID = "artifactId";
-  private static final String ELEMENT_VERSION = "version";
-  private static final String ELEMENT_REPOSITORY = "repository";
-  private static final String ELEMENT_DESCRIPTION = "description";
+  public static final Topic<MavenIndexerListener> INDEXER_TOPIC =
+    new Topic<>(MavenIndexerListener.class.getSimpleName(), MavenIndexerListener.class);
 
-  private static final String LOCAL_REPOSITORY_ID = "local";
+  public interface MavenIndexerListener {
+    void indexUpdated(Set<File> added, Set<File> failedToAdd);
+  }
+
   private final @NotNull Project myProject;
-  private MavenServerDownloadListener myDownloadListener;
+  private final @NotNull MavenIndices myMavenIndices;
 
-  public enum IndexUpdatingState {
-    IDLE, WAITING, UPDATING
-  }
-
-  private volatile Path myTestIndicesDir;
-
-  private volatile MavenIndexerWrapper myIndexer;
-  private volatile MavenIndices myIndices;
-
-  private final Object myUpdatingIndicesLock = new Object();
-  private final List<MavenSearchIndex> myWaitingIndices = new ArrayList<>();
-  private volatile MavenSearchIndex myUpdatingIndex;
+  private final MavenIndexServerDownloadListener myDownloadListener = new MavenIndexServerDownloadListener(this);
+  private final MavenIndexerWrapper myIndexerWrapper;
   private final IndexFixer myIndexFixer = new IndexFixer();
-  private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(null, IndicesBundle.message("maven.indices.updating"));
+  private final MavenIndexUpdateManager myIndexUpdateManager;
 
-  private volatile List<MavenArchetype> myUserArchetypes = new ArrayList<>();
-
-  /**
-   * @deprecated use {@link MavenIndicesManager#getInstance(Project)}
-   */
-  @Deprecated
-  public static MavenIndicesManager getInstance() {
-    // should not be used as it lead to plugin classloader leak on the plugin unload
-    return ProjectManager.getInstance().getDefaultProject().getService(MavenIndicesManager.class);
-  }
 
   public static MavenIndicesManager getInstance(@NotNull Project project) {
     return project.getService(MavenIndicesManager.class);
@@ -84,358 +68,187 @@ public final class MavenIndicesManager implements Disposable {
 
   public MavenIndicesManager(@NotNull Project project) {
     myProject = project;
-  }
+    myIndexerWrapper = MavenServerManager.getInstance().createIndexer(myProject);
+    myIndexUpdateManager = new MavenIndexUpdateManager();
+    myMavenIndices = myIndexerWrapper.getOrCreateIndices();
 
-  @TestOnly
-  public void setTestIndexDir(Path indicesDir) {
-    myTestIndicesDir = indicesDir;
-  }
+    initListeners();
 
-  public void clear() {
-    myUpdatingQueue.clear();
-  }
-
-  private synchronized MavenIndices getIndicesObject() {
-    ensureInitialized();
-    return myIndices;
-  }
-
-  private synchronized void ensureInitialized() {
-    if (myIndices != null) return;
-    myIndexer = MavenServerManager.getInstance().createIndexer(myProject);
-    myDownloadListener = new MavenServerDownloadListener() {
-      @Override
-      public void artifactDownloaded(File file, String relativePath) {
-        addArtifact(file, relativePath);
-      }
-    };
-    MavenServerManager.getInstance().addDownloadListener(myDownloadListener);
-
-    myIndices = new MavenIndices(myIndexer, getIndicesDir().toFile(), new MavenSearchIndex.IndexListener() {
-      @Override
-      public void indexIsBroken(@NotNull MavenSearchIndex index) {
-        if (index instanceof MavenIndex) {
-          scheduleUpdate(null, Collections.singletonList((MavenIndex)index), false);
-        }
-      }
-    });
-
-    loadUserArchetypes();
-  }
-
-  @NotNull
-  private Path getIndicesDir() {
-    return myTestIndicesDir == null
-           ? MavenUtil.getPluginSystemDir("Indices")
-           : myTestIndicesDir;
+    Disposer.register(this, myIndexUpdateManager);
   }
 
   @Override
   public void dispose() {
-    doShutdown();
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      PathKt.delete(getIndicesDir());
-    }
+    myIndexFixer.stop();
+    deleteIndicesDirInUnitTests();
   }
 
-  private synchronized void doShutdown() {
-    if (myDownloadListener != null) {
-      MavenServerManager mavenServerManager = MavenServerManager.getInstanceIfCreated();
-      if (mavenServerManager != null) {
-        mavenServerManager.removeDownloadListener(myDownloadListener);
+  private void deleteIndicesDirInUnitTests() {
+    if (MavenUtil.isMavenUnitTestModeEnabled()) {
+      if (!myMavenIndices.isDisposed()) {
+        var localIndex = myMavenIndices.getIndexHolder().getLocalIndex();
+        if (localIndex != null) {
+          localIndex.closeAndClean();
+        }
       }
-      myDownloadListener = null;
-    }
-
-    if (myIndices != null) {
+      Path dir = getIndicesDir();
       try {
-        myIndices.close();
+        PathKt.delete(dir);
       }
       catch (Exception e) {
-        MavenLog.LOG.error("", e);
-      }
-      myIndices = null;
-    }
-
-    clear();
-    myIndexer = null;
-  }
-
-  @TestOnly
-  public void doShutdownInTests() {
-    doShutdown();
-  }
-
-  public List<MavenIndex> getIndices() {
-    return getIndicesObject().getIndices();
-  }
-
-  public synchronized MavenIndex ensureRemoteIndexExist(@NotNull Pair<String, String> remoteIndexIdAndUrl) {
-    try {
-      MavenIndices indicesObjectCache = getIndicesObject();
-      return indicesObjectCache.add(remoteIndexIdAndUrl.first, remoteIndexIdAndUrl.second, MavenSearchIndex.Kind.REMOTE);
-    }
-    catch (MavenIndexException e) {
-      MavenLog.LOG.warn(e);
-      return null;
-    }
-  }
-
-  @Nullable
-  public synchronized MavenIndex createIndexForLocalRepo(Project project, @Nullable File localRepository) {
-    if (localRepository == null) {
-      return null;
-    }
-    MavenIndices indicesObjectCache = getIndicesObject();
-
-    try {
-      MavenIndex localIndex = indicesObjectCache.add(LOCAL_REPOSITORY_ID, localRepository.getPath(), MavenIndex.Kind.LOCAL);
-      if (localIndex.getUpdateTimestamp() == -1) {
-        scheduleUpdate(project, Collections.singletonList(localIndex));
-      }
-      return localIndex;
-    }
-    catch (MavenIndexException e) {
-      MavenLog.LOG.warn("Cannot create index:" + e.getMessage());
-      return null;
-    }
-  }
-
-  public synchronized List<MavenIndex> ensureIndicesExist(Collection<Pair<String, String>> remoteRepositoriesIdsAndUrls) {
-    // MavenIndices.add method returns an existing index if it has already been added, thus we have to use set here.
-    LinkedHashSet<MavenIndex> result = new LinkedHashSet<>();
-
-    for (Pair<String, String> eachIdAndUrl : remoteRepositoriesIdsAndUrls) {
-      MavenIndex index = ensureRemoteIndexExist(eachIdAndUrl);
-      if (index != null) {
-        result.add(index);
+        // if some files haven't been deleted in the index directory, report them
+        try (Stream<Path> stream = Files.walk(dir)) {
+          var files = stream.map(Path::toString).toList();
+          var message = files.isEmpty()
+                        ? "Failed to delete the index directory"
+                        : "Failed to delete files in the index directory: " + String.join(", ", files);
+          throw new RuntimeException(message, e);
+        }
+        catch (IOException ex) {
+          throw new RuntimeException(ex);
+        }
       }
     }
-    return new ArrayList<>(result);
   }
 
-  private void addArtifact(File artifactFile, String relativePath) {
-    String repositoryPath = getRepositoryUrl(artifactFile, relativePath);
-
-    MavenIndex index = getIndicesObject().find(repositoryPath, MavenSearchIndex.Kind.LOCAL);
-    if (index != null) {
-      index.addArtifact(artifactFile);
+  /**
+   * Get current maven index state.
+   * If index do not initialized yet, then run init async and return empty index state.
+   *
+   * @return MavenIndexHolder
+   */
+  @NotNull
+  public MavenIndexHolder getIndex() {
+    if (myMavenIndices.isNotInit() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      myIndexUpdateManager.scheduleUpdateIndicesList(myProject, null);
     }
+    return myMavenIndices.getIndexHolder();
   }
 
-  public void fixArtifactIndex(File artifactFile, File localRepository) {
-    MavenIndex index = getIndicesObject().find(localRepository.getPath(), MavenSearchIndex.Kind.LOCAL);
-    if (index != null) {
-      myIndexFixer.fixIndex(artifactFile, index);
-    }
+  void updateIndicesListSync() {
+    myMavenIndices.updateIndicesList(myProject);
   }
 
-  private static String getRepositoryUrl(File artifactFile, String name) {
-    List<String> parts = getArtifactParts(name);
-
-    File result = artifactFile;
-    for (int i = 0; i < parts.size(); i++) {
-      result = result.getParentFile();
-    }
-    return result.getPath();
+  public boolean isInit() {
+    return myMavenIndices.isIndicesInit();
   }
 
-  private static List<String> getArtifactParts(String name) {
-    return StringUtil.split(name, "/");
-  }
+  private void initListeners() {
 
-  public Promise<Void> scheduleUpdate(@Nullable Project project, List<MavenIndex> indices) {
-    return scheduleUpdate(project, indices, true);
-  }
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(MavenServerConnector.DOWNLOAD_LISTENER_TOPIC, myDownloadListener);
 
-  private Promise<Void> scheduleUpdate(@Nullable Project project, List<MavenIndex> indices, final boolean fullUpdate) {
-    final List<MavenSearchIndex> toSchedule = new ArrayList<>();
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(MavenIndex.INDEX_IS_BROKEN, new MavenSearchIndexListener(this));
 
-    synchronized (myUpdatingIndicesLock) {
-      for (MavenSearchIndex each : indices) {
-        if (myWaitingIndices.contains(each)) continue;
-        toSchedule.add(each);
-      }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      MavenProjectsManager.getInstance(myProject).addProjectsTreeListener(new MavenProjectsTree.Listener() {
+        @Override
+        public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
+          DependencySearchService.getInstance(myProject).clearCache();
+        }
 
-      myWaitingIndices.addAll(toSchedule);
-    }
-    if (toSchedule.isEmpty()) {
-      return Promises.resolvedPromise();
+        @Override
+        public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                    @Nullable NativeMavenProjectHolder nativeMavenProject) {
+          DependencySearchService.getInstance(myProject).clearCache();
+        }
+      }, this);
+      return;
     }
 
-    final AsyncPromise<Void> promise = new AsyncPromise<>();
-    myUpdatingQueue.run(new Task.Backgroundable(project, IndicesBundle.message("maven.indices.updating"), true) {
+    MavenRepositoryProvider.EP_NAME.addChangeListener(() -> scheduleUpdateIndicesList(null), this);
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+
+    projectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          indicator.setIndeterminate(false);
-          doUpdateIndices(project, toSchedule, fullUpdate, new MavenProgressIndicator(project, indicator, null));
-        }
-        catch (MavenProcessCanceledException ignore) {
-        }
-        finally {
-          promise.setResult(null);
-        }
+      public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                  @Nullable NativeMavenProjectHolder nativeMavenProject) {
+        scheduleUpdateIndicesList(null);
       }
-    });
-    return promise;
+    }, this);
   }
 
-  private void doUpdateIndices(final Project projectOrNull,
-                               List<MavenSearchIndex> indices,
-                               boolean fullUpdate,
-                               MavenProgressIndicator indicator)
-    throws MavenProcessCanceledException {
-    MavenLog.LOG.assertTrue(!fullUpdate || projectOrNull != null);
+  @NotNull
+  Path getIndicesDir() {
+    return MavenIndexerWrapper.getIndicesDir();
+  }
 
-    List<MavenSearchIndex> remainingWaiting = new ArrayList<>(indices);
+  public void addArchetype(@NotNull MavenArchetype archetype) {
+    MavenArchetypeManager.addArchetype(archetype, getUserArchetypesFile());
+  }
 
+  public boolean hasLocalGroupId(@NotNull String groupId) {
+    MavenIndex localIndex = getIndex().getLocalIndex();
+    return localIndex != null && localIndex.hasGroupId(groupId);
+  }
+
+  public boolean hasLocalArtifactId(@Nullable String groupId, @Nullable String artifactId) {
+    MavenIndex localIndex = getIndex().getLocalIndex();
+    return localIndex != null && localIndex.hasArtifactId(groupId, artifactId);
+  }
+
+  public boolean hasLocalVersion(@Nullable String groupId, @Nullable String artifactId, @Nullable String version) {
+    MavenIndex localIndex = getIndex().getLocalIndex();
+    return localIndex != null && localIndex.hasVersion(groupId, artifactId, version);
+  }
+
+  /**
+   * Add artifact info to index async.
+   *
+   */
+  public boolean scheduleArtifactIndexing(@Nullable MavenId mavenId, @NotNull File artifactFile) {
+
+    if (myMavenIndices.isNotInit()) return false;
     try {
-      for (MavenSearchIndex each : indices) {
-        if (indicator.isCanceled()) return;
-
-        indicator.setText(IndicesBundle.message("maven.indices.updating.index",
-                                                each.getRepositoryId(),
-                                                each.getRepositoryPathOrUrl()));
-
-        synchronized (myUpdatingIndicesLock) {
-          remainingWaiting.remove(each);
-          myWaitingIndices.remove(each);
-          myUpdatingIndex = each;
+      MavenIndex localIndex = myMavenIndices.getIndexHolder().getLocalIndex();
+      if (localIndex == null) {
+        return false;
+      }
+      if (mavenId != null) {
+        if (mavenId.getGroupId() == null || mavenId.getArtifactId() == null || mavenId.getVersion() == null) {
+          return false;
         }
-
-        try {
-          MavenIndices.updateOrRepair(each, fullUpdate, fullUpdate ? getMavenSettings(projectOrNull, indicator) : null, indicator);
-          if (projectOrNull != null) {
-            MavenRehighlighter.rehighlight(projectOrNull);
-          }
-        }
-        finally {
-          synchronized (myUpdatingIndicesLock) {
-            myUpdatingIndex = null;
-          }
-        }
-      }
-    }
-    finally {
-      synchronized (myUpdatingIndicesLock) {
-        myWaitingIndices.removeAll(remainingWaiting);
-      }
-    }
-  }
-
-  private static MavenGeneralSettings getMavenSettings(@NotNull final Project project, @NotNull MavenProgressIndicator indicator)
-    throws MavenProcessCanceledException {
-    MavenGeneralSettings settings;
-
-    settings = ReadAction
-      .compute(() -> project.isDisposed() ? null : MavenProjectsManager.getInstance(project).getGeneralSettings().clone());
-
-    if (settings == null) {
-      // project was closed
-      indicator.cancel();
-      indicator.checkCanceled();
-    }
-
-    return settings;
-  }
-
-  public IndexUpdatingState getUpdatingState(MavenSearchIndex index) {
-    synchronized (myUpdatingIndicesLock) {
-      if (myUpdatingIndex == index) return IndexUpdatingState.UPDATING;
-      if (myWaitingIndices.contains(index)) return IndexUpdatingState.WAITING;
-      return IndexUpdatingState.IDLE;
-    }
-  }
-
-  public synchronized Set<MavenArchetype> getArchetypes() {
-    ensureInitialized();
-    Set<MavenArchetype> result = new THashSet<>(myIndexer.getArchetypes());
-    result.addAll(myUserArchetypes);
-    for (MavenIndex index : myIndices.getIndices()) {
-      result.addAll(index.getArchetypes());
-    }
-
-    for (MavenArchetypesProvider each : MavenArchetypesProvider.EP_NAME.getExtensionList()) {
-      result.addAll(each.getArchetypes());
-    }
-    return result;
-  }
-
-  public synchronized void addArchetype(MavenArchetype archetype) {
-    ensureInitialized();
-
-    int idx = myUserArchetypes.indexOf(archetype);
-    if (idx >= 0) {
-      myUserArchetypes.set(idx, archetype);
-    }
-    else {
-      myUserArchetypes.add(archetype);
-    }
-
-    saveUserArchetypes();
-  }
-
-  private void loadUserArchetypes() {
-    try {
-      Path file = getUserArchetypesFile();
-      if (!PathKt.exists(file)) {
-        return;
+        if (localIndex.hasVersion(mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion())) return false;
       }
 
-      // Store artifact to set to remove duplicate created by old IDEA (https://youtrack.jetbrains.com/issue/IDEA-72105)
-      Collection<MavenArchetype> result = new LinkedHashSet<>();
-
-      List<Element> children = JDOMUtil.load(file).getChildren(ELEMENT_ARCHETYPE);
-      for (int i = children.size() - 1; i >= 0; i--) {
-        Element each = children.get(i);
-
-        String groupId = each.getAttributeValue(ELEMENT_GROUP_ID);
-        String artifactId = each.getAttributeValue(ELEMENT_ARTIFACT_ID);
-        String version = each.getAttributeValue(ELEMENT_VERSION);
-        String repository = each.getAttributeValue(ELEMENT_REPOSITORY);
-        String description = each.getAttributeValue(ELEMENT_DESCRIPTION);
-
-        if (StringUtil.isEmptyOrSpaces(groupId)
-            || StringUtil.isEmptyOrSpaces(artifactId)
-            || StringUtil.isEmptyOrSpaces(version)) {
-          continue;
-        }
-
-        result.add(new MavenArchetype(groupId, artifactId, version, repository, description));
-      }
-
-      ArrayList<MavenArchetype> listResult = new ArrayList<>(result);
-      Collections.reverse(listResult);
-
-      myUserArchetypes = listResult;
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
+        myIndexFixer.fixIndex(artifactFile);
+      });
     }
-    catch (IOException | JDOMException e) {
-      MavenLog.LOG.warn(e);
+    catch (AlreadyDisposedException ignore) {
+      return false;
     }
+    return true;
   }
 
-  private void saveUserArchetypes() {
-    Element root = new Element(ELEMENT_ARCHETYPES);
-    for (MavenArchetype each : myUserArchetypes) {
-      Element childElement = new Element(ELEMENT_ARCHETYPE);
-      childElement.setAttribute(ELEMENT_GROUP_ID, each.groupId);
-      childElement.setAttribute(ELEMENT_ARTIFACT_ID, each.artifactId);
-      childElement.setAttribute(ELEMENT_VERSION, each.version);
-      if (each.repository != null) {
-        childElement.setAttribute(ELEMENT_REPOSITORY, each.repository);
-      }
-      if (each.description != null) {
-        childElement.setAttribute(ELEMENT_DESCRIPTION, each.description);
-      }
-      root.addContent(childElement);
-    }
-    try {
-      JdomKt.write(root, getUserArchetypesFile());
-    }
-    catch (IOException e) {
-      MavenLog.LOG.warn(e);
-    }
+  /**
+   * Schedule update all indices content async.
+   */
+  public void scheduleUpdateContentAll() {
+    myIndexUpdateManager.scheduleUpdateContent(myProject,
+                                               ContainerUtil.map(myMavenIndices.getIndices(), MavenIndex::getRepositoryPathOrUrl));
+  }
+
+  /**
+   * Schedule update indices content async.
+   */
+  public CompletableFuture<?> scheduleUpdateContent(@NotNull List<MavenIndex> indices) {
+    return myIndexUpdateManager.scheduleUpdateContent(myProject, ContainerUtil.map(indices, MavenIndex::getRepositoryPathOrUrl));
+  }
+
+  /**
+   * Schedule update indices list {@link MavenIndices} async.
+   *
+   *
+   * @param consumer - consumer for new indices.
+   */
+  public void scheduleUpdateIndicesList(@Nullable Consumer<? super List<MavenIndex>> consumer) {
+    myIndexUpdateManager.scheduleUpdateIndicesList(myProject, consumer);
+  }
+
+  public MavenIndexUpdateManager.IndexUpdatingState getUpdatingState(@NotNull MavenSearchIndex index) {
+    return myIndexUpdateManager.getUpdatingState(index);
   }
 
   @NotNull
@@ -443,37 +256,127 @@ public final class MavenIndicesManager implements Disposable {
     return getIndicesDir().resolve("UserArchetypes.xml");
   }
 
-
   private final class IndexFixer {
-    private final Set<String> indexedCache = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
-    private final ConcurrentLinkedQueue<Pair<File, MavenIndex>> queueToAdd = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<File> queueToAdd = new ConcurrentLinkedQueue<>();
     private final MergingUpdateQueue myMergingUpdateQueue;
+    private final AddToIndexRunnable taskConsumer = new AddToIndexRunnable();
+    private final AtomicBoolean stopped = new AtomicBoolean(false);
 
     private IndexFixer() {
-      myMergingUpdateQueue =
-        new MergingUpdateQueue(this.getClass().getName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, MavenIndicesManager.this, null,
-                               false).usePassThroughInUnitTestMode();
+      myMergingUpdateQueue = new MergingUpdateQueue(
+        this.getClass().getName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, MavenIndicesManager.this, null, false
+      ).usePassThroughInUnitTestMode();
     }
 
-    public void fixIndex(File file, MavenIndex index) {
-      if (indexedCache.contains(file.getName())) {
-        return;
-      }
-      queueToAdd.add(new Pair.NonNull<>(file, index));
+    public void fixIndex(@NotNull File file) {
+      if (stopped.get()) return;
 
-      myMergingUpdateQueue.queue(Update.create(this, new AddToIndexRunnable()));
+      queueToAdd.add(file);
+      myMergingUpdateQueue.queue(new Update(this) {
+        @Override
+        public void run() {
+          taskConsumer.run();
+        }
+
+        @Override
+        public boolean isDisposed() {
+          return myMavenIndices.isDisposed();
+        }
+      });
+    }
+
+    public void stop() {
+      stopped.set(true);
     }
 
     private class AddToIndexRunnable implements Runnable {
 
       @Override
       public void run() {
-        Pair<File, MavenIndex> elementToAdd;
-        while ((elementToAdd = queueToAdd.poll()) != null) {
-          elementToAdd.second.addArtifact(elementToAdd.first);
-          indexedCache.add(elementToAdd.first.getName());
+        MavenIndex localIndex = myMavenIndices.getIndexHolder().getLocalIndex();
+        if (localIndex == null) return;
+
+        Set<File> addedFiles = new TreeSet<>();
+        Set<File> failedToAddFiles = new TreeSet<>();
+
+        synchronized (queueToAdd) {
+          if (stopped.get()) return;
+          if (queueToAdd.isEmpty()) return;
+
+          Set<File> filesToAddNow = new TreeSet<>();
+          File elementToAdd;
+          while ((elementToAdd = queueToAdd.poll()) != null) {
+            filesToAddNow.add(elementToAdd);
+          }
+          if (filesToAddNow.isEmpty()) return;
+
+          Set<File> retryElements = new TreeSet<>();
+          var addArtifactResponses = localIndex.tryAddArtifacts(filesToAddNow);
+          for (var addArtifactResponse : addArtifactResponses) {
+            var file = addArtifactResponse.artifactFile();
+            var added = addArtifactResponse.indexedMavenId() != null;
+            if (added) {
+              addedFiles.add(file);
+            }
+            else {
+              retryElements.add(file);
+            }
+          }
+
+          if (!retryElements.isEmpty()) {
+            if (retryElements.size() < 10_000) {
+              queueToAdd.addAll(retryElements);
+            }
+            else {
+              MavenLog.LOG.error("Failed to index artifacts: " + retryElements.size());
+              failedToAddFiles.addAll(retryElements);
+            }
+          }
+        }
+
+        fireUpdated(addedFiles, failedToAddFiles);
+      }
+
+      private void fireUpdated(Set<File> added, Set<File> failedToAdd) {
+        if (stopped.get()) return;
+
+        if (!added.isEmpty() || !failedToAdd.isEmpty()) {
+          ApplicationManager.getApplication().getMessageBus().syncPublisher(INDEXER_TOPIC).indexUpdated(added, failedToAdd);
         }
       }
     }
+  }
+
+  private static class MavenIndexServerDownloadListener implements MavenServerDownloadListener {
+    private final MavenIndicesManager myManager;
+
+    private MavenIndexServerDownloadListener(MavenIndicesManager manager) {
+      myManager = manager;
+    }
+
+    @Override
+    public void artifactDownloaded(File file, String relativePath) {
+      myManager.scheduleArtifactIndexing(null, file);
+    }
+  }
+
+  private static class MavenSearchIndexListener implements MavenSearchIndex.IndexListener {
+    private final MavenIndicesManager myManager;
+
+    private MavenSearchIndexListener(MavenIndicesManager manager) {
+      myManager = manager;
+    }
+
+    @Override
+    public void indexIsBroken(@NotNull MavenSearchIndex index) {
+      if (index instanceof MavenIndex) {
+        myManager.myIndexUpdateManager.scheduleUpdateContent(myManager.myProject, List.of(index.getRepositoryPathOrUrl()), false);
+      }
+    }
+  }
+
+  @TestOnly
+  public void waitForBackgroundTasksInTests() {
+    myIndexUpdateManager.waitForBackgroundTasksInTests();
   }
 }

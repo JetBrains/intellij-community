@@ -34,8 +34,7 @@ public final class ChangeListScope extends FilteredNamedScope implements Weighed
   @Override
   public boolean equals(Object object) {
     if (object == this) return true;
-    if (object instanceof ChangeListScope) {
-      ChangeListScope scope = (ChangeListScope)object;
+    if (object instanceof ChangeListScope scope) {
       return scope.getIcon() == getIcon() && scope.getScopeId().equals(getScopeId());
     }
     return false;

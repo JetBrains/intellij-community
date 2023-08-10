@@ -27,8 +27,6 @@ import java.util.List;
  * Encapsulates logic of merging set of changes into particular text.
  * <p/>
  * Thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class BulkChangesMerger {
 

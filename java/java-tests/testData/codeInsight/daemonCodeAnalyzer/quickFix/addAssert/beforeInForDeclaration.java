@@ -1,4 +1,4 @@
-// "Assert 'list != null'" "true"
+// "Assert 'list != null'" "true-preview"
 import java.util.List;
 
 class A{

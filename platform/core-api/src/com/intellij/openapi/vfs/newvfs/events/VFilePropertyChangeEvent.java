@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.util.Comparing;
@@ -87,9 +87,8 @@ public final class VFilePropertyChangeEvent extends VFileEvent {
     return VirtualFile.PROP_NAME.equals(myPropertyName) && getRequestor() != FileContentUtilCore.FORCE_RELOAD_REQUESTOR;
   }
 
-  @NotNull
   @Override
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
@@ -101,27 +100,23 @@ public final class VFilePropertyChangeEvent extends VFileEvent {
     return myOldValue;
   }
 
-  @NotNull
   @VirtualFile.PropName
-  public String getPropertyName() {
+  public @NotNull String getPropertyName() {
     return myPropertyName;
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     return computePath();
   }
 
-  @NotNull
   @Override
-  protected String computePath() {
+  protected @NotNull String computePath() {
     return myFile.getPath();
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 
@@ -154,25 +149,21 @@ public final class VFilePropertyChangeEvent extends VFileEvent {
     return result;
   }
 
-  @NotNull
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return "VfsEvent[property(" + myPropertyName + ") changed for '" + myFile + "': " + myOldValue + " -> " + myNewValue + ']';
   }
 
-  @NotNull
-  public String getOldPath() {
+  public @NotNull String getOldPath() {
     return getPathWithFileName(myOldValue);
   }
 
-  @NotNull
-  public String getNewPath() {
+  public @NotNull String getNewPath() {
     return getPathWithFileName(myNewValue);
   }
 
   /** Replaces file name in {@code myFile} path with {@code fileName}, if an event is a rename event; leaves path as is otherwise */
-  @NotNull
-  private String getPathWithFileName(Object fileName) {
+  private @NotNull String getPathWithFileName(Object fileName) {
     if (VirtualFile.PROP_NAME.equals(myPropertyName)) {
       // fileName must be String, according to `checkPropertyValuesCorrect` implementation
       VirtualFile parent = myFile.getParent();

@@ -111,7 +111,7 @@ public class GenerationNode extends UserDataHolderBase {
     if (myTemplateToken != null) {
       XmlTag tag = myTemplateToken.getXmlTag();
       if (tag != null) {
-        return HtmlUtil.isHtmlBlockTagL(tag.getName());
+        return HtmlUtil.isHtmlBlockTag(tag.getName(), true);
       }
     }
     return false;
@@ -198,7 +198,6 @@ public class GenerationNode extends UserDataHolderBase {
     }
     LiveTemplateBuilder.Marker marker = offset < builder.length() ? builder.createMarker(offset) : null;
 
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0, myChildrenSize = myChildren.size(); i < myChildrenSize; i++) {
       GenerationNode child = myChildren.get(i);
       TemplateImpl childTemplate = child.generate(callback, generator, filters, !myContainsSurroundedTextMarker, segmentsLimit);
@@ -278,7 +277,7 @@ public class GenerationNode extends UserDataHolderBase {
       }
       XmlTag tag1 = hasChildren ? expandEmptyTagIfNecessary(tag) : tag;
       setAttributeValues(tag1, attributes, callback, zenCodingGenerator.isHtml(callback));
-      token.setTemplateText(tag1.getContainingFile().getText(), callback);
+      token.setTemplateText(tag1.getContainingFile().getText(), callback.getFile());
     }
     template = zenCodingGenerator.generateTemplate(token, hasChildren, callback.getContext());
     removeVariablesWhichHasNoSegment(template);

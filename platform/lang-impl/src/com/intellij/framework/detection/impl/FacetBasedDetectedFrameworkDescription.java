@@ -36,12 +36,12 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
   private static final Logger LOG = Logger.getInstance(FacetBasedDetectedFrameworkDescription.class);
   private final FacetBasedFrameworkDetector<F, C> myDetector;
   private final C myConfiguration;
-  private final Set<VirtualFile> myRelatedFiles;
+  private final Set<? extends VirtualFile> myRelatedFiles;
   private final FacetType<F,C> myFacetType;
 
   public FacetBasedDetectedFrameworkDescription(FacetBasedFrameworkDetector<F, C> detector,
                                                 @NotNull C configuration,
-                                                Set<VirtualFile> files) {
+                                                Set<? extends VirtualFile> files) {
     myDetector = detector;
     myConfiguration = configuration;
     myRelatedFiles = files;
@@ -86,8 +86,7 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
       }
     }
     for (DetectedFrameworkDescription framework : allDetectedFrameworks) {
-      if (framework instanceof FacetBasedDetectedFrameworkDescription<?, ?>) {
-        final FacetBasedDetectedFrameworkDescription<?, ?> description = (FacetBasedDetectedFrameworkDescription<?, ?>)framework;
+      if (framework instanceof FacetBasedDetectedFrameworkDescription<?, ?> description) {
         if (underlyingId.equals(description.myFacetType.getId()) &&
             myDetector.isSuitableUnderlyingFacetConfiguration(description.getConfiguration(), myConfiguration, myRelatedFiles)) {
           return true;
@@ -103,7 +102,7 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
   protected void doSetup(ModifiableModelsProvider modifiableModelsProvider, final Module module) {
     final ModifiableFacetModel model = modifiableModelsProvider.getFacetModifiableModel(module);
     final String name = UniqueNameGenerator.generateUniqueName(myFacetType.getDefaultFacetName(),
-                                                               s -> FacetManager.getInstance(module).findFacet(myFacetType.getId(), s) == null);
+                                                               s -> model.findFacet(myFacetType.getId(), s) == null);
     final F facet = FacetManager.getInstance(module).createFacet(myFacetType, name, myConfiguration,
                                                                  findUnderlyingFacet(module));
     model.addFacet(facet);
@@ -130,10 +129,9 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof FacetBasedDetectedFrameworkDescription)) {
+    if (!(obj instanceof FacetBasedDetectedFrameworkDescription other)) {
       return false;
     }
-    final FacetBasedDetectedFrameworkDescription other = (FacetBasedDetectedFrameworkDescription)obj;
     return getModuleName().equals(other.getModuleName()) && myFacetType.equals(other.myFacetType) && myRelatedFiles.equals(other.myRelatedFiles);
   }
 

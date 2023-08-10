@@ -1,0 +1,26 @@
+// ERROR: Unresolved reference: javaClass
+// ERROR: Unresolved reference: javaClass
+
+open class Base<T>(t: T) {
+    override fun hashCode(): Int = 0
+    override fun equals(foo: Any?) = false
+}
+
+class WithConstructor(x: Int, s: String) : Base<Int>(3) {
+    val x: Int = 0
+    val s: String = ""
+
+    override fun hashCode(): Int = 1
+    override fun equals(foo: Any?): Boolean {
+        if (this === foo) return true
+        if (javaClass != foo?.javaClass) return false
+        if (!super.equals(foo)) return false
+
+        foo as WithConstructor
+
+        if (x != foo.x) return false
+        if (s != foo.s) return false
+
+        return true
+    }
+}

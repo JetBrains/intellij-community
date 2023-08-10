@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.icons.AllIcons;
@@ -26,20 +26,20 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
   private MethodHierarchyTreeStructure myTreeStructure;
 
   MethodHierarchyNodeDescriptor(@NotNull Project project,
-                                final HierarchyNodeDescriptor parentDescriptor,
+                                HierarchyNodeDescriptor parentDescriptor,
                                 @NotNull PsiElement aClass,
-                                final boolean isBase,
+                                boolean isBase,
                                 @NotNull MethodHierarchyTreeStructure treeStructure) {
     super(project, parentDescriptor, aClass, isBase);
     myTreeStructure = treeStructure;
   }
 
-  public final void setTreeStructure(final MethodHierarchyTreeStructure treeStructure) {
+  public void setTreeStructure(MethodHierarchyTreeStructure treeStructure) {
     myTreeStructure = treeStructure;
   }
 
   @Nullable
-  PsiMethod getMethod(final PsiClass aClass, final boolean checkBases) {
+  PsiMethod getMethod(PsiClass aClass, boolean checkBases) {
     try {
       return MethodHierarchyUtil.findBaseMethodInClass(myTreeStructure.getBaseMethod(), aClass, checkBases);
     }
@@ -48,25 +48,25 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
     }
   }
 
-  public final PsiElement getPsiClass() {
+  public PsiElement getPsiClass() {
     return getPsiElement();
   }
 
   /**
    * Element for OpenFileDescriptor
    */
-  public final PsiElement getTargetElement() {
-    final PsiElement element = getPsiClass();
+  public PsiElement getTargetElement() {
+    PsiElement element = getPsiClass();
     if (!(element instanceof PsiClass)) return element;
-    final PsiClass aClass = (PsiClass)getPsiClass();
+    PsiClass aClass = (PsiClass)getPsiClass();
     if (!aClass.isValid()) return null;
-    final PsiMethod method = getMethod(aClass, false);
+    PsiMethod method = getMethod(aClass, false);
     if (method != null) return method;
     return aClass;
   }
 
   @Override
-  public final boolean update() {
+  public boolean update() {
     int flags = Iconable.ICON_FLAG_VISIBILITY;
     if (isMarkReadOnly()){
       flags |= Iconable.ICON_FLAG_READ_STATUS;
@@ -74,14 +74,14 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
 
     boolean changes = super.update();
 
-    final PsiElement psiClass = getPsiClass();
+    PsiElement psiClass = getPsiClass();
 
     if (psiClass == null){
       return invalidElement();
     }
 
-    final Icon newRawIcon = psiClass.getIcon(flags);
-    final Icon newStateIcon = psiClass instanceof PsiClass ? calculateState((PsiClass)psiClass) : AllIcons.Hierarchy.MethodDefined;
+    Icon newRawIcon = psiClass.getIcon(flags);
+    Icon newStateIcon = psiClass instanceof PsiClass ? calculateState((PsiClass)psiClass) : AllIcons.Hierarchy.MethodDefined;
 
     if (changes || newRawIcon != myRawIcon || newStateIcon != myStateIcon) {
       changes = true;
@@ -102,7 +102,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
       setIcon(newIcon);
     }
 
-    final CompositeAppearance oldText = myHighlightedText;
+    CompositeAppearance oldText = myHighlightedText;
 
     myHighlightedText = new CompositeAppearance();
     TextAttributes classNameAttributes = null;
@@ -123,8 +123,8 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
     return changes;
   }
 
-  private Icon calculateState(final PsiClass psiClass) {
-    final PsiMethod method = getMethod(psiClass, false);
+  private Icon calculateState(PsiClass psiClass) {
+    PsiMethod method = getMethod(psiClass, false);
     if (method != null) {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return null;
@@ -136,12 +136,12 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
       return AllIcons.Hierarchy.MethodNotDefined;
     }
 
-    final boolean isAbstractClass = psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
+    boolean isAbstractClass = psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
 
     // was it implemented is in superclasses?
-    final PsiMethod baseClassMethod = getMethod(psiClass, true);
+    PsiMethod baseClassMethod = getMethod(psiClass, true);
 
-    final boolean hasBaseImplementation = baseClassMethod != null && !baseClassMethod.hasModifierProperty(PsiModifier.ABSTRACT);
+    boolean hasBaseImplementation = baseClassMethod != null && !baseClassMethod.hasModifierProperty(PsiModifier.ABSTRACT);
 
     if (hasBaseImplementation || isAbstractClass) {
       return AllIcons.Hierarchy.MethodNotDefined;

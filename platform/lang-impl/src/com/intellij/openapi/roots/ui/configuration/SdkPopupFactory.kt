@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -41,7 +41,7 @@ interface SdkPopupFactory {
 
   companion object {
     @JvmStatic
-    fun newBuilder() = service<SdkPopupFactory>().createBuilder()
+    fun newBuilder(): SdkPopupBuilder = service<SdkPopupFactory>().createBuilder()
   }
 }
 
@@ -127,6 +127,18 @@ interface SdkPopupBuilder {
 
   @Contract(pure = true)
   fun withSdkFilter(filter: Condition<Sdk>): SdkPopupBuilder
+
+  interface SuggestedSdk {
+    val type: SdkTypeId
+    val versionString: String
+    val homePath: String
+  }
+
+  @Contract(pure = true)
+  fun withSuggestedSdkFilter(filter: Condition<SuggestedSdk>): SdkPopupBuilder
+
+  fun withNoAddActions() : SdkPopupBuilder
+  fun withNoDownlaodActions() : SdkPopupBuilder
 
   /**
    * Executed when an item is selected in the popup (and popup is closing),

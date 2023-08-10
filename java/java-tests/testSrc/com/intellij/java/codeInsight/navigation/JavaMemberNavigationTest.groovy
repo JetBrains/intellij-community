@@ -7,9 +7,6 @@ import com.intellij.codeInsight.navigation.MethodUpDownUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class JavaMemberNavigationTest extends LightJavaCodeInsightFixtureTestCase {
   

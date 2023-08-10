@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -39,7 +41,7 @@ public class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalIns
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         if (PsiDiamondTypeUtil.canCollapseToDiamond(expression, expression, null)) {
           final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
           LOG.assertTrue(classReference != null);
@@ -54,13 +56,13 @@ public class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalIns
           final PsiElement lastChild = parameterList.getLastChild();
           final TextRange range = new TextRange(firstChild != null && firstChild.getNode().getElementType() == JavaTokenType.LT ? 1 : 0,
                                                 parameterList.getTextLength() - (lastChild != null && lastChild.getNode().getElementType() == JavaTokenType.GT ? 1 : 0));
-          holder.registerProblem(parameterList, JavaAnalysisBundle.message("explicit.type.argument.ref.loc.can.be.replaced.with"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, range, new ReplaceWithDiamondFix());
+          holder.registerProblem(parameterList, range, JavaAnalysisBundle.message("explicit.type.argument.ref.loc.can.be.replaced.with"), new ReplaceWithDiamondFix());
         }
       }
     };
   }
 
-  private static class ReplaceWithDiamondFix implements LocalQuickFix, HighPriorityAction {
+  private static class ReplaceWithDiamondFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
     @NotNull
     @Override
     public String getFamilyName() {
@@ -68,8 +70,7 @@ public class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiNewExpression newExpression =
         PsiTreeUtil.getParentOfType(RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(element), PsiNewExpression.class);
       if (newExpression != null) {

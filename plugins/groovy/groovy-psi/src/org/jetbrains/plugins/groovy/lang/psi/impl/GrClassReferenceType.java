@@ -11,9 +11,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 
-/**
- * @author ven
- */
 public final class GrClassReferenceType extends PsiClassType {
 
   private final @NotNull GrCodeReferenceElement myReferenceElement;

@@ -1,10 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
+import com.intellij.codeInsight.hints.InlayHintsProviderExtension
+import com.intellij.codeInsight.hints.InlayHintsProviderExtensionBean
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.lang.Language
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.util.containers.MultiMap
 import junit.framework.TestCase
 
 class InlaySettingsTest : LightPlatformTestCase() {
@@ -54,8 +58,60 @@ class InlaySettingsTest : LightPlatformTestCase() {
     val language = Language.ANY
     val key = SettingsKey<Any>("foo")
     assertTrue(settings.hintsEnabled(key, language))
+    assertTrue(settings.hintsShouldBeShown(key, language))
     settings.setHintsEnabledForLanguage(language, false)
     assertTrue(settings.hintsEnabled(key, language))
     assertFalse(settings.hintsShouldBeShown(key, language))
+  }
+
+  fun testAllProviders() {
+    val all = Language.getRegisteredLanguages().flatMap { lang: Language ->
+      InlaySettingsProvider.EP.getExtensions().flatMap {
+        it.createModels(project, lang).map { model -> Pair(model, lang) }
+      }
+    }
+
+    val names = all.map { it.first.name }.toSortedSet().sortedByDescending { all.count { pair -> pair.first.name == it } }
+    for (name in names) {
+      val models = all.filter { pair -> pair.first.name == name }
+      val s = "$name ${models.size} languages" + " (" + StringUtil.join(models.map { it.second.displayName }, ", ") + ")"
+      println(s)
+      val options = MultiMap<String, Language>()
+      for (model in models.filter { it.first.cases.isNotEmpty() }) {
+        options.putValue(StringUtil.join(model.first.cases.map { it.name }, ", "), model.second)
+      }
+      for (opt in options.keySet()) {
+        val languages = StringUtil.join(options[opt].map { language -> language.displayName }, ", ")
+        println("     Options for ${options[opt].size} languages ($languages): $opt")
+      }
+    }
+  }
+
+  fun testFindSettingsGetsValueFromCache() {
+    val hintsSettings = InlayHintsSettings()
+    val key = SettingsKey<Int>("foo")
+    val settings = hintsSettings.findSettings(key, Language.ANY, createSettings = { 10 })
+    TestCase.assertEquals(10, settings)
+
+    val settingsRepeated = hintsSettings.findSettings(key, Language.ANY, createSettings = { 5 }) // uses not the lambda, but cached
+    TestCase.assertEquals(10, settingsRepeated)
+  }
+
+  fun testDisabledByDefault() {
+    val hintsSettings = InlayHintsSettings()
+    val key = SettingsKey<Int>("foo")
+    val inlayProviderName = InlayHintsProviderExtension.inlayProviderName
+    val bean = InlayHintsProviderExtensionBean()
+    bean.isEnabledByDefault = false
+    bean.settingsKeyId = "foo"
+    bean.language = Language.ANY.id
+    inlayProviderName.point.registerExtension(bean, testRootDisposable)
+
+
+    TestCase.assertFalse("Disabled by default hints must be disabled", hintsSettings.hintsEnabled(key, Language.ANY))
+
+    hintsSettings.changeHintTypeStatus(key, Language.ANY, true)
+
+    TestCase.assertTrue("After enabling even disabled hints must be enabled", hintsSettings.hintsEnabled(key, Language.ANY))
   }
 }

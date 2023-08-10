@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.CommonBundle;
@@ -33,8 +33,6 @@ import java.util.List;
 
 /**
  * Runs a process and prints the output in a content tab within the Run toolwindow.
- *
- * @author yole
  */
 public class RunContentExecutor implements Disposable {
   private final Project myProject;
@@ -147,13 +145,10 @@ public class RunContentExecutor implements Disposable {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
     panel.add(view.getComponent(), BorderLayout.CENTER);
-    panel.add(createToolbar(actions), BorderLayout.WEST);
-    return panel;
-  }
-
-  private static JComponent createToolbar(ActionGroup actions) {
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("RunContentExecutor", actions, false);
-    return actionToolbar.getComponent();
+    actionToolbar.setTargetComponent(panel);
+    panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
+    return panel;
   }
 
   @Override
@@ -186,6 +181,11 @@ public class RunContentExecutor implements Disposable {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isDumbAware() {
       return true;
     }
@@ -206,6 +206,11 @@ public class RunContentExecutor implements Disposable {
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setVisible(myStopAction != null);
       e.getPresentation().setEnabled(myStopEnabled != null && myStopEnabled.compute());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

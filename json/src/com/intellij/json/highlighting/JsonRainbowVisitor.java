@@ -7,7 +7,6 @@ import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +20,7 @@ public class JsonRainbowVisitor extends RainbowVisitor {
 
     private static Map<String, Set<String>> createBlacklist() {
       Map<String, Set<String>> blacklist = new HashMap<>();
-      blacklist.put("package.json", ContainerUtil.set("/dependencies",
+      blacklist.put("package.json", Set.of("/dependencies",
                                                       "/devDependencies",
                                                       "/peerDependencies",
                                                       "/scripts",

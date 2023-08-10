@@ -21,18 +21,14 @@ import org.editorconfig.language.util.EditorConfigVfsUtil
 class EditorConfigFindVariableUsagesHandler(element: EditorConfigDescribableElement) : FindUsagesHandler(element) {
   override fun processElementUsages(element: PsiElement, processor: Processor<in UsageInfo>, options: FindUsagesOptions) =
     runReadAction {
-      val id = getId(element) ?: return@runReadAction false
-      findAllUsages(element, id).map(::UsageInfo).forEach {
-        val shouldContinue = processor.process(it)
-        if (!shouldContinue) return@runReadAction false
-      }
-
-      return@runReadAction true
+      getId(element)?.let { id -> findAllUsages(element, id) }
+        ?.map(::UsageInfo)
+        ?.all(processor::process) == true
     }
 
   override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope) =
     runReadAction {
-      searchScope as? LocalSearchScope ?: return@runReadAction emptyList<PsiReference>()
+      if (searchScope !is LocalSearchScope) return@runReadAction emptyList<PsiReference>()
       val id = getId(target) ?: return@runReadAction emptyList<PsiReference>()
       searchScope.scope.asSequence()
         .flatMap { PsiTreeUtil.findChildrenOfType(it, EditorConfigDescribableElement::class.java).asSequence() }
@@ -49,10 +45,9 @@ class EditorConfigFindVariableUsagesHandler(element: EditorConfigDescribableElem
       .filter { matches(it, id, element) }
 
   private fun matches(element: PsiElement, id: String, template: PsiElement): Boolean {
-    element as? EditorConfigDescribableElement ?: return false
+    if (element !is EditorConfigDescribableElement) return false
     if (!textMatchesToIgnoreCase(element, template)) return false
-    val descriptor = element.getDescriptor(false)
-    return when (descriptor) {
+    return when (val descriptor = element.getDescriptor(false)) {
       is EditorConfigDeclarationDescriptor -> descriptor.id == id
       is EditorConfigReferenceDescriptor -> descriptor.id == id
       else -> false
@@ -61,9 +56,8 @@ class EditorConfigFindVariableUsagesHandler(element: EditorConfigDescribableElem
 
   companion object {
     fun getId(element: PsiElement): String? {
-      element as? EditorConfigDescribableElement ?: return null
-      val descriptor = element.getDescriptor(false)
-      return when (descriptor) {
+      if (element !is EditorConfigDescribableElement) return null
+      return when (val descriptor = element.getDescriptor(false)) {
         is EditorConfigDeclarationDescriptor -> descriptor.id
         is EditorConfigReferenceDescriptor -> descriptor.id
         else -> null

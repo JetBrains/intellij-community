@@ -4,14 +4,18 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
 
 public class EnhancedSwitchMigrationInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
+    EnhancedSwitchMigrationInspection inspection = new EnhancedSwitchMigrationInspection();
+    inspection.myMaxNumberStatementsForBranch = 20;
     return new LocalInspectionTool[]{
-      new EnhancedSwitchMigrationInspection()
+      inspection
     };
   }
 
@@ -21,7 +25,7 @@ public class EnhancedSwitchMigrationInspectionTest extends LightQuickFixParamete
   }
 
   @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_14;
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
   }
 }

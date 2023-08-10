@@ -6,12 +6,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.TestEnv;
+import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.settings.PySteppingFilter;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
@@ -21,7 +19,9 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class PythonDebuggerSteppingTest extends PyEnvTestCase {
 
@@ -41,13 +41,11 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
       Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_AND_SKELETONS);
       SdkModificator modificator = sdk.getSdkModificator();
-      List<VirtualFile> typeshedRoots = PyTypeShed.INSTANCE.findRootsForSdk(sdk);
-      typeshedRoots.forEach(root -> modificator.addRoot(root.getPath(), OrderRootType.CLASSES));
       ApplicationManager.getApplication().invokeAndWait(modificator::commitChanges);
       super.runTestOn(sdk.getHomePath(), sdk);
     }
 
-    void assertSmartStepIntoVariants(@NotNull String... expectedFunctionNames) {
+    void assertSmartStepIntoVariants(@NotNull String @NotNull ... expectedFunctionNames) {
       ReadAction.run(() -> {
         List<?> variants = getSmartStepIntoVariants();
 
@@ -151,6 +149,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepInto() {
     runPythonTest(new PyDebuggerTask("/debug", "test3.py") {
@@ -196,9 +195,15 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         resume();
         waitForTerminate();
       }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return ImmutableSet.of("-python3.9", "-python3.10", "-python3.11", "-python3.12");
+      }
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoVariants() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into.py") {
@@ -248,6 +253,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoWithStepInto() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into.py") {
@@ -306,6 +312,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoConstructor() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_constructor.py") {
@@ -347,6 +354,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoChain() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_chain.py") {
@@ -382,6 +390,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoCondition() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_condition.py") {
@@ -401,6 +410,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoGenExpr() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_genexpr.py") {
@@ -436,6 +446,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoDecorator1() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_decorator1.py") {
@@ -485,11 +496,12 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
 
       @Override
       public @NotNull Set<String> getTags() {
-        ImmutableSet.Builder<String> builder = ImmutableSet.builder();
-        builder.addAll(super.getTags());
-        builder.add("-python2");
-        builder.add("-django");
-        return builder.build();
+        return ImmutableSet.<String>builder().addAll(super.getTags())
+          .add("-python2.7")
+          .add("-django")
+          .add("-python3.11") // PY-57113
+          .add("-python3.12")
+          .build();
       }
     });
   }
@@ -521,11 +533,12 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
 
       @Override
       public @NotNull Set<String> getTags() {
-        return ImmutableSet.of("python2.7");
+        return ImmutableSet.<String>builder().addAll(super.getTags()).add("python2.7").build();
       }
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoNativeFunction() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_native_function.py") {
@@ -557,6 +570,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoNativeFunctionInReturn() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_native_function_in_return.py") {
@@ -589,6 +603,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoAnotherModule() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_another_module.py") {
@@ -616,6 +631,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoMultiline1() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_multiline1.py") {
@@ -643,6 +659,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoMultiline2Python3() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_multiline2.py") {
@@ -664,7 +681,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
 
       @Override
       public @NotNull Set<String> getTags() {
-        return ImmutableSet.of("python3");
+        return ImmutableSet.<String>builder().addAll(super.getTags()).add("python3").build();
       }
     });
   }
@@ -688,12 +705,12 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
 
       @Override
       public @NotNull Set<String> getTags() {
-        return ImmutableSet.of("python2.7");
+        return ImmutableSet.<String>builder().addAll(super.getTags()).add("python2.7").build();
       }
     });
   }
 
-
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoBinaryOperator1() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_binary_operator1.py") {
@@ -715,6 +732,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoBinaryOperator2() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_binary_operator2.py") {
@@ -748,6 +766,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoBinaryOperator3() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_binary_operator3.py") {
@@ -769,6 +788,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoComparisonOperator() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_comparison_operator.py") {
@@ -795,6 +815,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoUnaryOperator() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_unary_operator.py") {
@@ -838,6 +859,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoInheritancePython3() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_inheritance.py") {
@@ -870,11 +892,10 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
 
       @Override
       public @NotNull Set<String> getTags() {
-        ImmutableSet.Builder<String> builder = ImmutableSet.builder();
-        builder.addAll(super.getTags());
-        builder.add("-python2.7");
-        builder.add("-django");
-        return builder.build();
+        return ImmutableSet.<String>builder().addAll(super.getTags())
+          .add("-python2.7")
+          .add("-django")
+          .build();
       }
     });
   }
@@ -908,7 +929,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
 
       @Override
       public @NotNull Set<String> getTags() {
-        return ImmutableSet.of("python2.7");
+        return ImmutableSet.<String>builder().addAll(super.getTags()).add("python2.7").build();
       }
     });
   }
@@ -1015,7 +1036,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-python2.7");
+        return ImmutableSet.<String>builder().addAll(super.getTags()).add("-python2.7").build();
       }
     });
   }
@@ -1024,7 +1045,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
   public void testStepOverAwait() {
     runPythonTest(new PyDebuggerTask("/debug/stepping", "test_step_over_await.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(10);
       }
 
@@ -1033,19 +1054,17 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         waitForPause();
         stepOver();
         waitForPause();
-        stepOver();
-        waitForPause();
         eval("result").hasValue("3");
         stepOver();
         waitForPause();
-        eval("z").hasValue("42");  // check that we haven't got into the `asyncio` machinery
+        eval("z").hasValue("42");  // Check that we haven't fallen into the `asyncio` machinery.
         resume();
         waitForTerminate();
       }
 
       @Override
       public @NotNull Set<String> getTags() {
-        return ImmutableSet.of("-python2.7");
+        return Set.of("-python2.7");
       }
     });
   }
@@ -1054,7 +1073,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
   public void testStepOverOutsideProject() {
     runPythonTest(new PyDebuggerTask("/debug/stepping/", "test_step_over_outside_project_scope.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(3);
       }
 

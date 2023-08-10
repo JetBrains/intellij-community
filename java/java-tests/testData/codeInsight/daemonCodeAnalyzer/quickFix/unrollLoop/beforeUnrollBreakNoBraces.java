@@ -1,4 +1,4 @@
-// "Unroll loop" "true"
+// "Unroll loop" "true-preview"
 class Test {
   void test(String s1, String s2, String s3) {
     fo<caret>r(String s : new String[] {s1, s2, s3})

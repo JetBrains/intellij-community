@@ -1,21 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 
 interface StoreReloadManager {
   companion object {
-    @JvmStatic
-    fun getInstance() = service<StoreReloadManager>()
+    fun getInstance(project: Project): StoreReloadManager = project.service<StoreReloadManager>()
   }
 
-  fun reloadProject(project: Project)
+  fun reloadProject()
 
   fun blockReloadingProjectOnExternalChanges()
 
@@ -27,12 +25,12 @@ interface StoreReloadManager {
   @ApiStatus.Internal
   fun scheduleProcessingChangedFiles()
 
-  @TestOnly
-  fun flushChangedProjectFileAlarm()
-
-  fun saveChangedProjectFile(file: VirtualFile, project: Project)
+  fun saveChangedProjectFile(file: VirtualFile)
 
   suspend fun reloadChangedStorageFiles()
 
-  fun storageFilesChanged(componentManagerToStorages: Map<ComponentManager, Collection<StateStorage>>)
+  fun storageFilesChanged(store: IComponentStore, storages: Collection<StateStorage>)
+  
+  @ApiStatus.Internal
+  fun storageFilesBatchProcessing(batchStorageEvents: Map<IComponentStore, Collection<StateStorage>>)
 }

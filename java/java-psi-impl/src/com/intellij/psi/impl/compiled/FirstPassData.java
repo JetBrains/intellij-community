@@ -36,19 +36,24 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
     }
   }
 
-  private static final FirstPassData NO_DATA = new FirstPassData(Collections.emptyMap(), null, Collections.emptySet());
-  private static final FirstPassData EMPTY = new FirstPassData(Collections.emptyMap(), null, Collections.emptySet());
+  private static final FirstPassData NO_DATA = new FirstPassData(Collections.emptyMap(), null, Collections.emptySet(), true, false);
+  private static final FirstPassData EMPTY = new FirstPassData(Collections.emptyMap(), null, Collections.emptySet(), true, false);
   private final @NotNull Map<String, InnerClassEntry> myMap;
   private final @NotNull Set<String> myNonStatic;
   private final @NotNull Set<ObjectMethod> mySyntheticMethods;
   private final @Nullable String myVarArgRecordComponent;
+  private final boolean myTrustInnerClasses;
+  private final boolean mySealed;
 
   private FirstPassData(@NotNull Map<String, InnerClassEntry> map,
                         @Nullable String component,
-                        @NotNull Set<ObjectMethod> syntheticMethods) {
+                        @NotNull Set<ObjectMethod> syntheticMethods,
+                        boolean trustInnerClasses, boolean sealed) {
     myMap = map;
     myVarArgRecordComponent = component;
     mySyntheticMethods = syntheticMethods;
+    myTrustInnerClasses = trustInnerClasses;
+    mySealed = sealed;
     if (!map.isEmpty()) {
       List<String> jvmNames = EntryStream.of(map).filterValues(e -> !e.myStatic).keys().toList();
       myNonStatic = ContainerUtil.map2Set(jvmNames, this::mapJvmClassNameToJava);
@@ -82,6 +87,13 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
    */
   boolean isVarArgComponent(@NotNull String componentName) {
     return componentName.equals(myVarArgRecordComponent);
+  }
+
+  /**
+   * @return true if class is sealed (has at least one permitted subclass)
+   */
+  boolean isSealed() {
+    return mySealed;
   }
 
   /**
@@ -129,7 +141,7 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
           myMap.put(className, new InnerClassEntry(className, null, true));
         }
       }
-      else if (useGuesser) {
+      else if (useGuesser || !myTrustInnerClasses) {
         return StubBuildingVisitor.GUESSING_MAPPER.fun(jvmName);
       }
     }
@@ -165,6 +177,8 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
       Set<ObjectMethod> syntheticSignatures;
       StringBuilder canonicalSignature;
       String lastComponent;
+      boolean trustInnerClasses = true;
+      boolean sealed = false;
 
       FirstPassVisitor() {
         super(Opcodes.API_VERSION);
@@ -177,6 +191,19 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
           canonicalSignature = new StringBuilder("(");
           syntheticSignatures = EnumSet.noneOf(ObjectMethod.class);
         }
+      }
+
+      @Override
+      public void visitSource(String source, String debug) {
+        if (source != null && StringUtil.endsWithIgnoreCase(source, ".groovy")) {
+          trustInnerClasses = false;
+        }
+        super.visitSource(source, debug);
+      }
+
+      @Override
+      public void visitPermittedSubclass(String permittedSubclass) {
+        sealed = true;
       }
 
       @Override
@@ -227,7 +254,7 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
 
     FirstPassVisitor visitor = new FirstPassVisitor();
     try {
-      new ClassReader(classBytes).accept(visitor, ClsFileImpl.EMPTY_ATTRIBUTES, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+      new ClassReader(classBytes).accept(visitor, ClsFileImpl.EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
     }
     catch (Exception ex) {
       LOG.debug(ex);
@@ -240,10 +267,10 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
       }
     }
     Set<ObjectMethod> syntheticMethods = visitor.syntheticSignatures == null ? Collections.emptySet() : visitor.syntheticSignatures;
-    if (varArgComponent == null && visitor.mapping.isEmpty() && syntheticMethods.isEmpty()) {
+    if (varArgComponent == null && visitor.mapping.isEmpty() && syntheticMethods.isEmpty() && visitor.trustInnerClasses && !visitor.sealed) {
       return EMPTY;
     }
-    return new FirstPassData(visitor.mapping, varArgComponent, syntheticMethods);
+    return new FirstPassData(visitor.mapping, varArgComponent, syntheticMethods, visitor.trustInnerClasses, visitor.sealed);
   }
   
   private enum ObjectMethod {

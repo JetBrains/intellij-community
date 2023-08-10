@@ -3,25 +3,25 @@ package com.intellij.util.indexing.diagnostic.dump
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePath
 import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePaths
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
-import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 class IndexContentDiagnosticBuilder(private val project: Project) {
-  private val allIndexedFilePaths: MutableSet<IndexedFilePath> = ContainerUtil.newConcurrentSet()
-  private val filesFromUnsupportedFileSystems: MutableSet<IndexedFilePath> = ContainerUtil.newConcurrentSet()
+  private val allIndexedFilePaths: MutableSet<IndexedFilePath> = ConcurrentCollectionFactory.createConcurrentSet()
+  private val filesFromUnsupportedFileSystems: MutableSet<IndexedFilePath> = ConcurrentCollectionFactory.createConcurrentSet()
   private val projectIndexedFileProviderDebugNameToFileIds: MutableMap<String, MutableSet<Int>> = ConcurrentHashMap<String, MutableSet<Int>>()
 
   fun addFile(file: VirtualFile, providerName: String) {
@@ -31,7 +31,7 @@ class IndexContentDiagnosticBuilder(private val project: Project) {
     val indexedFilePath = IndexedFilePaths.createIndexedFilePath(file, project)
     if (PortableFilePaths.isSupportedFileSystem(file)) {
       allIndexedFilePaths += indexedFilePath
-      projectIndexedFileProviderDebugNameToFileIds.getOrPut(providerName) { ContainerUtil.newConcurrentSet() } += indexedFilePath.originalFileSystemId
+      projectIndexedFileProviderDebugNameToFileIds.getOrPut(providerName) { ConcurrentCollectionFactory.createConcurrentSet() } += indexedFilePath.originalFileSystemId
     }
     else {
       // TODO: consider not excluding any file systems.
@@ -51,8 +51,7 @@ object IndexContentDiagnosticDumper {
   private val jacksonObjectMapper = jacksonObjectMapper()
 
   fun getIndexContentDiagnosticForProject(project: Project, indicator: ProgressIndicator): IndexContentDiagnostic {
-    val providers = (FileBasedIndex.getInstance() as FileBasedIndexImpl).getOrderedIndexableFilesProviders(project)
-    val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
+    val providers = (FileBasedIndex.getInstance() as FileBasedIndexImpl).getIndexableFilesProviders(project)
 
     indicator.text = IndexingBundle.message("index.content.diagnostic.dumping")
     indicator.isIndeterminate = false
@@ -67,7 +66,7 @@ object IndexContentDiagnosticDumper {
         provider.iterateFiles(project, { fileOrDir ->
           builder.addFile(fileOrDir, provider.debugName)
           true
-        }, indexableFilesDeduplicateFilter)
+        }, VirtualFileFilter.ALL)
         indicator.fraction = processed.incrementAndGet().toDouble() / providers.size
       }
     })

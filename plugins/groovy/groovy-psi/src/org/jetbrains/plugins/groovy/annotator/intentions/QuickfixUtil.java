@@ -56,9 +56,8 @@ public final class QuickfixUtil {
     //todo: look more carefully
     GrExpression qualifierExpression = refExpr.getQualifierExpression();
 
-    if (!(qualifierExpression instanceof GrReferenceExpression)) return false;
+    if (!(qualifierExpression instanceof GrReferenceExpression referenceExpression)) return false;
 
-    GrReferenceExpression referenceExpression = (GrReferenceExpression)qualifierExpression;
     GroovyPsiElement resolvedElement = ResolveUtil.resolveProperty(referenceExpression, referenceExpression.getReferenceName());
 
     if (resolvedElement == null) return false;
@@ -168,7 +167,7 @@ public final class QuickfixUtil {
     return ContainerUtil.map(fixes, it -> new LocalQuickFixAsIntentionAdapter(it, descriptor));
   }
 
-  public static LocalQuickFix @NotNull [] intentionsToFixes(@NotNull PsiElement highlightElement, @NotNull List<? extends IntentionAction> actions) {
+  public static @NotNull LocalQuickFix @NotNull [] intentionsToFixes(@NotNull PsiElement highlightElement, @NotNull List<? extends IntentionAction> actions) {
     return wrapToQuickFixes(actions, highlightElement.getContainingFile()).toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 }

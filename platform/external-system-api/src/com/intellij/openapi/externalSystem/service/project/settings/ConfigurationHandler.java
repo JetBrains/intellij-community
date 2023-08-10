@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service.project.settings;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData;
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
@@ -27,16 +28,34 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Vladislav.Soroka
+ * Handles and applies custom configuration data that defines on build tool side.
+ * For example, we can define run configuration in build scripts and put this run configuration data into {@link ConfigurationData}.
+ * On IDE side we describes {@link ConfigurationHandler} which processes this data and creates run configuration.
+ * Reply part already implemented by com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationHandler.
+ * <p>
+ * Note: {@link ConfigurationData}'s structure is unspecified. So it can keep any serializable data which can help update IDE model.
+ *
+ * @see ProjectKeys#CONFIGURATION
  */
 @ApiStatus.Experimental
 public interface ConfigurationHandler {
   ExtensionPointName<ConfigurationHandler> EP_NAME = ExtensionPointName.create("com.intellij.externalSystemConfigurationHandler");
 
+  /**
+   * @see ConfigurationHandler#apply(Project, ProjectData, IdeModifiableModelsProvider, ConfigurationData)
+   */
   default void apply(@NotNull Project project,
                      @NotNull IdeModifiableModelsProvider modelsProvider,
-                     @NotNull ConfigurationData configuration) {}
+                     @NotNull ConfigurationData configuration) { }
 
+  /**
+   * Applies custom configuration into project wide IDE model.
+   *
+   * @param project        is a project level service container.
+   * @param projectData    is a common project data that was collected on build tool side.
+   * @param modelsProvider is a IDE modifiable model to apply custom configurations.
+   * @param configuration  is a configurations to apply.
+   */
   default void apply(@NotNull Project project,
                      @Nullable ProjectData projectData,
                      @NotNull IdeModifiableModelsProvider modelsProvider,
@@ -44,9 +63,16 @@ public interface ConfigurationHandler {
     apply(project, modelsProvider, configuration);
   }
 
+  /**
+   * Applies custom configuration into module wide IDE model.
+   *
+   * @param module         is a module level service container.
+   * @param modelsProvider is a IDE modifiable model to apply custom configurations.
+   * @param configuration  is a configurations to apply.
+   */
   default void apply(@NotNull Module module,
                      @NotNull IdeModifiableModelsProvider modelsProvider,
-                     @NotNull ConfigurationData configuration) {}
+                     @NotNull ConfigurationData configuration) { }
 
   /**
    * Configures the <code>project</code> after a successful project import.

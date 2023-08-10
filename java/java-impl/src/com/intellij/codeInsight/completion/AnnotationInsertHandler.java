@@ -2,15 +2,11 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author peter
-*/
 class AnnotationInsertHandler implements InsertHandler<JavaPsiClassReferenceElement> {
   private static final Logger LOG = Logger.getInstance(AnnotationInsertHandler.class);
   static final AnnotationInsertHandler INSTANCE = new AnnotationInsertHandler();
@@ -39,7 +35,7 @@ class AnnotationInsertHandler implements InsertHandler<JavaPsiClassReferenceElem
   }
 
   private static boolean isAtTokenNeeded(InsertionContext myContext) {
-    HighlighterIterator iterator = ((EditorEx)myContext.getEditor()).getHighlighter().createIterator(myContext.getStartOffset());
+    HighlighterIterator iterator = myContext.getEditor().getHighlighter().createIterator(myContext.getStartOffset());
     LOG.assertTrue(iterator.getTokenType() == JavaTokenType.IDENTIFIER);
     iterator.retreat();
     if (iterator.getTokenType() == TokenType.WHITE_SPACE) iterator.retreat();

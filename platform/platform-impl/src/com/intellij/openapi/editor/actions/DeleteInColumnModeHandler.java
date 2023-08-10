@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DeleteInColumnModeHandler extends EditorWriteActionHandler {
@@ -18,7 +19,7 @@ public class DeleteInColumnModeHandler extends EditorWriteActionHandler {
   public DeleteInColumnModeHandler(EditorActionHandler handler) {myOriginalHandler = handler;}
 
   @Override
-  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     if (editor.isColumnMode() && caret == null && editor.getCaretModel().getCaretCount() > 1) {
       EditorUIUtil.hideCursorInEditor(editor);
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);

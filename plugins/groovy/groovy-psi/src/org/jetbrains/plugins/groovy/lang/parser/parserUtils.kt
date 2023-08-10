@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GroovyParserUtils")
 @file:Suppress("UNUSED_PARAMETER", "LiftReturnOrAssignment")
 
@@ -28,7 +28,7 @@ import java.util.*
 
 private val PsiBuilder.groovyParser: GroovyParser get() = (this as Builder).parser as GroovyParser
 
-private val collapseHook = Hook<IElementType> { _, marker: Marker?, elementType: IElementType ->
+private val collapseHook = Hook { _, marker: Marker?, elementType: IElementType ->
   marker ?: return@Hook null
   val newMarker = marker.precede()
   marker.drop()
@@ -41,16 +41,28 @@ fun parseBlockLazy(builder: PsiBuilder, level: Int, deepParser: Parser, elementT
     deepParser.parse(builder, level + 1)
   }
   else {
-    register_hook_(builder, collapseHook, elementType)
-    parseBlockLazy(builder, T_LBRACE, T_RBRACE, elementType) != null
+    val contextAwareElementType = induceContext(elementType, builder)
+    register_hook_(builder, collapseHook, contextAwareElementType)
+    parseBlockLazy(builder, T_LBRACE, T_RBRACE, contextAwareElementType) != null
   }
+}
+
+private fun induceContext(elementType: IElementType, builder: PsiBuilder) : IElementType = if (builder[insideSwitchExpression]) {
+  when(elementType) {
+    OPEN_BLOCK -> OPEN_BLOCK_SWITCH_AWARE
+    BLOCK_LAMBDA_BODY -> BLOCK_LAMBDA_BODY_SWITCH_AWARE
+    CLOSURE -> CLOSURE_SWITCH_AWARE
+    else -> elementType
+  }
+} else {
+  elementType
 }
 
 fun extendedStatement(builder: PsiBuilder, level: Int): Boolean = builder.groovyParser.parseExtendedStatement(builder)
 
 fun extendedSeparator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf { builder.groovyParser.isExtendedSeparator(tokenType) }
 
-private val currentClassNames: Key<Deque<String>> = KeyWithDefaultValue.create("groovy.parse.class.name") { LinkedList<String>() }
+private val currentClassNames: Key<Deque<String>> = KeyWithDefaultValue.create("groovy.parse.class.name") { LinkedList() }
 private val parseDiamonds: Key<Boolean> = Key.create("groovy.parse.diamonds")
 private val parseArguments: Key<Boolean> = Key.create("groovy.parse.arguments")
 private val parseApplicationArguments: Key<Boolean> = Key.create("groovy.parse.application.arguments")
@@ -64,10 +76,13 @@ private val referenceHadTypeArguments: Key<Boolean> = Key.create("groovy.parse.r
 private val referenceWasQualified: Key<Boolean> = Key.create("groovy.parse.ref.was.qualified")
 private val parseClosureParameter: Key<Boolean> = Key.create("groovy.parse.closure.parameter")
 private val parseNlBeforeClosureArgument: Key<Boolean> = Key.create("groovy.parse.nl.before.closure.argument")
-private val parseNlBeforeAnonymousBody: Key<Boolean> = Key.create("groovy.parse.nl.before.anonymous.body")
+private val insideParentheses: Key<Boolean> = Key.create("groovy.parse.inside.parentheses")
+private val insideSwitchExpression: Key<Boolean> = Key.create("groovy.parse.inside.switch.expression")
+private val forbidLambdaExpression: Key<Boolean> = Key.create("groovy.parse.defer.lambda.expressions")
+private val compactConstructors: Key<Boolean> = Key.create("groovy.parse.contracted.constructors")
 
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
-  if (builder.tokenType === IDENTIFIER) {
+  if (builder.tokenType === IDENTIFIER || builder.tokenType === KW_RECORD) {
     builder[currentClassNames]!!.push(builder.tokenText)
     builder.advanceLexer()
     return true
@@ -144,7 +159,7 @@ fun codeReferenceIdentifier(builder: PsiBuilder, level: Int, identifier: Parser)
 
 private fun PsiBuilder.isNextTokenCapitalized(): Boolean {
   val text = tokenText
-  return text != null && text.isNotEmpty() && text != DUMMY_IDENTIFIER_TRIMMED && text.first().isUpperCase()
+  return !text.isNullOrEmpty() && text != DUMMY_IDENTIFIER_TRIMMED && text.first().isUpperCase()
 }
 
 fun definitelyTypeElement(builder: PsiBuilder, level: Int, typeElement: Parser, check: Parser): Boolean {
@@ -441,7 +456,7 @@ private fun castOperandCheckInner(builder: PsiBuilder): Boolean {
 }
 
 fun isAfterClosure(builder: PsiBuilder, level: Int): Boolean {
-  return builder.latestDoneMarker?.tokenType == CLOSURE
+  return builder.latestDoneMarker?.tokenType is GrClosureElementType
 }
 
 fun isParameterizedClosure(builder: PsiBuilder, level: Int): Boolean {
@@ -537,12 +552,48 @@ fun isBlockParseable(text: CharSequence): Boolean {
   }
 }
 
-fun enableNlBeforeAnonymousBody(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
-  return builder.withKey(parseNlBeforeAnonymousBody, true) {
+fun insideParentheses(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
+  // enables 'yield' keyword in this and all inner code blocks
+  return builder.withKey(insideParentheses, true) {
     parser.parse(builder, level)
   }
 }
 
-fun nlBeforeAnonymousBody(builder: PsiBuilder, level: Int, newLine: Parser): Boolean {
-  return !builder[parseNlBeforeAnonymousBody] || newLine.parse(builder, level)
+fun insideParentheses(builder: PsiBuilder, level: Int): Boolean = builder[insideParentheses]
+
+fun insideSwitchExpression(builder: PsiBuilder, level: Int, parser: Parser): Boolean = builder.withKey(insideSwitchExpression, true) {
+  parser.parse(builder, level)
+}
+
+fun insideSwitchExpression(builder: PsiBuilder, level: Int): Boolean = builder[insideSwitchExpression]
+
+/**
+ * Suppose we have a case section 'case a -> 10' somewhere inside the switch expression.
+ * Then, as an expression list is expected after 'case', the token set 'a -> 10' is recognized as a lambda expression.
+ * This function forbid the choice of lambda expression, making unqualified reference an only choice
+ */
+fun forbidLambdaExpressions(builder: PsiBuilder, level: Int, parser : Parser): Boolean {
+  return builder.withKey(forbidLambdaExpression, true) {
+    parser.parse(builder, level)
+  }
+}
+
+fun isLambdaExpressionAllowed(builder : PsiBuilder, level: Int) : Boolean {
+  return !builder[forbidLambdaExpression]
+}
+
+fun enableCompactConstructors(builder : PsiBuilder, level : Int, parser : Parser) : Boolean {
+  return builder.withKey(compactConstructors, true) {
+    parser.parse(builder, level)
+  }
+}
+
+fun disableCompactConstructors(builder : PsiBuilder, level : Int, parser : Parser) : Boolean {
+  return builder.withKey(compactConstructors, false) {
+    parser.parse(builder, level)
+  }
+}
+
+fun isCompactConstructorAllowed(builder: PsiBuilder, level : Int) : Boolean {
+  return builder[compactConstructors]
 }

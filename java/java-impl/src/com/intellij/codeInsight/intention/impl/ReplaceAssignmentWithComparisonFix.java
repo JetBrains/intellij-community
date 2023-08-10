@@ -1,44 +1,31 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ReplaceAssignmentWithComparisonFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class ReplaceAssignmentWithComparisonFix extends PsiUpdateModCommandAction<PsiAssignmentExpression> {
   public ReplaceAssignmentWithComparisonFix(@NotNull PsiAssignmentExpression expr) {
     super(expr);
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiAssignmentExpression assignmentExpression, @NotNull ModPsiUpdater updater) {
+    Project project = context.project();
     PsiBinaryExpression
-      comparisonExpr = (PsiBinaryExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText("a==b", startElement);
-    PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)startElement;
+      comparisonExpr = (PsiBinaryExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText("a==b", assignmentExpression);
     comparisonExpr.getLOperand().replace(assignmentExpression.getLExpression());
     PsiExpression rOperand = comparisonExpr.getROperand();
     assert rOperand != null;
@@ -48,10 +35,9 @@ public class ReplaceAssignmentWithComparisonFix extends LocalQuickFixAndIntentio
     CodeStyleManager.getInstance(project).reformat(assignmentExpression.replace(comparisonExpr));
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return getFamilyName();
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiAssignmentExpression element) {
+    return Presentation.of(getFamilyName()).withFixAllOption(this);
   }
 
   @Nls

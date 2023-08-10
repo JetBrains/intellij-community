@@ -11,8 +11,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -186,7 +185,7 @@ public final class JavaMethodContractUtil {
       try {
         final int paramCount = method.getParameterList().getParametersCount();
         List<StandardMethodContract> parsed = StandardMethodContract.parseContract(text);
-        if (parsed.stream().allMatch(c -> c.getParameterCount() == paramCount)) {
+        if (ContainerUtil.and(parsed, c -> c.getParameterCount() == paramCount)) {
           return parsed;
         }
       }
@@ -226,7 +225,7 @@ public final class JavaMethodContractUtil {
     List<ContractValue> failConditions = new ArrayList<>();
     for (MethodContract contract : contracts) {
       List<ContractValue> conditions = contract.getConditions();
-      if (conditions.isEmpty() || conditions.stream().allMatch(c -> failConditions.stream().anyMatch(c::isExclusive))) {
+      if (conditions.isEmpty() || ContainerUtil.and(conditions, c -> failConditions.stream().anyMatch(c::isExclusive))) {
         return contract.getReturnValue();
       }
       if (contract.getReturnValue().isFail()) {
@@ -256,16 +255,6 @@ public final class JavaMethodContractUtil {
     List<? extends MethodContract> contracts = getMethodCallContracts(call);
     ContractReturnValue returnValue = getNonFailingReturnValue(contracts);
     if (returnValue == null) return null;
-    if (returnValue.equals(ContractReturnValue.returnThis())) {
-      return ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
-    }
-    if (returnValue instanceof ContractReturnValue.ParameterReturnValue) {
-      int number = ((ContractReturnValue.ParameterReturnValue)returnValue).getParameterNumber();
-      PsiExpression[] args = call.getArgumentList().getExpressions();
-      if (args.length <= number) return null;
-      if (args.length == number + 1 && MethodCallUtils.isVarArgCall(call)) return null;
-      return args[number];
-    }
-    return null;
+    return returnValue.findPlace(call);
   }
 }

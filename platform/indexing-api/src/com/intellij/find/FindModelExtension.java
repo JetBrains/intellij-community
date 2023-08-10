@@ -8,9 +8,9 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public interface FindModelExtension {
   ExtensionPointName<FindModelExtension> EP_NAME = ExtensionPointName.create("com.intellij.findModelExtension");
 
-  boolean iterateAdditionalFiles(@NotNull FindModel findModel, @NotNull Project project, @NotNull Processor<VirtualFile> consumer);
+  boolean iterateAdditionalFiles(@NotNull FindModel findModel, @NotNull Project project, @NotNull Processor<? super VirtualFile> consumer);
 }

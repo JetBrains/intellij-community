@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
@@ -23,7 +23,7 @@ class GrAnnotatorImpl : Annotator {
     if (FileIndexFacade.getInstance(file.project).isInLibrarySource(file.virtualFile)) {
       return
     }
-    if (element is GroovyPsiElement) {
+    if (element is GroovyPsiElement && !element.isFake()) {
       element.accept(GroovyAnnotator(holder))
       if (isCompileStatic(element)) {
         element.accept(GroovyStaticTypeCheckVisitor(holder))

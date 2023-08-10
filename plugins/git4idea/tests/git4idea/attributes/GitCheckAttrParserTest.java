@@ -12,9 +12,12 @@ public class GitCheckAttrParserTest {
 
   @Test
   public void test() {
-    String output = "\norg/example/MyClass.java: crlf: unset\n" +
-                    "org/example/MyClass.java: diff: java\n" +
-                    "org/example/MyClass.java: myAttr: set\n";
+    String output = """
+
+      org/example/MyClass.java: crlf: unset
+      org/example/MyClass.java: diff: java
+      org/example/MyClass.java: myAttr: set
+      """;
     GitCheckAttrParser parse = GitCheckAttrParser.parse(Arrays.asList(output.split("\n")));
     String path = "org/example/MyClass.java";
     assertTrue("Missing path", parse.getAttributes().containsKey(path));

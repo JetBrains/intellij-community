@@ -13,7 +13,6 @@ import com.intellij.openapi.keymap.impl.ui.Hyperlink;
 import com.intellij.openapi.keymap.impl.ui.KeymapListener;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.ex.Settings;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
@@ -27,7 +26,6 @@ import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenPlugin;
-import org.jetbrains.idea.maven.navigator.MavenProjectsStructure;
 import org.jetbrains.idea.maven.navigator.SelectMavenGoalDialog;
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -59,10 +57,9 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
     for (String eachId : getActionIdList(project, null)) {
       AnAction eachAction = actionManager.getAction(eachId);
 
-      if (!(eachAction instanceof MavenGoalAction)) continue;
+      if (!(eachAction instanceof MavenGoalAction mavenAction)) continue;
       if (condition != null && !condition.value(actionManager.getActionOrStub(eachId))) continue;
 
-      MavenGoalAction mavenAction = (MavenGoalAction)eachAction;
       MavenProject mavenProject = mavenAction.getMavenProject();
       Set<Pair<String, String>> actions = projectToActionsMapping.get(mavenProject);
       if (actions == null) {
@@ -93,7 +90,7 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
       public void onClick(MouseEvent e) {
         SelectMavenGoalDialog dialog = new SelectMavenGoalDialog(project);
         if (dialog.showAndGet() && dialog.getResult() != null) {
-          MavenProjectsStructure.GoalNode goalNode = dialog.getResult();
+          var goalNode = dialog.getResult();
           String goal = goalNode.getGoal();
           String actionId = MavenShortcutsManager.getInstance(project).getActionId(goalNode.getProjectPath(), goal);
           getOrRegisterAction(goalNode.getMavenProject(), actionId, goal);
@@ -132,6 +129,11 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
   private static void createActions(Project project, List<? extends MavenProject> mavenProjects) {
     ActionManager actionManager = ActionManager.getInstance();
     MavenShortcutsManager shortcutsManager = MavenShortcutsManager.getInstance(project);
+
+    var actionManagerActionsExist = !actionManager.getActionIdList(MavenShortcutsManager.ACTION_ID_PREFIX).isEmpty();
+    var shortcutsManagerActionsExist = shortcutsManager.hasShortcuts();
+    if (!actionManagerActionsExist && !shortcutsManagerActionsExist) return;
+
     for (MavenProject eachProject : mavenProjects) {
       //noinspection TestOnlyProblems
       String actionIdPrefix = getActionPrefix(project, eachProject);

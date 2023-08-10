@@ -17,7 +17,7 @@ class OutputTest : BaseSMTRunnerTestCase() {
     child.setFinished()
     suite.addStdOutput("after test finished\n")
 
-    val printer = MockPrinter(true)
+    val printer = MockPrinter()
     suite.printOn(printer)
 
     assertEquals("before test started\ninside test\nafter test finished\n", printer.stdOut)
@@ -39,7 +39,7 @@ class OutputTest : BaseSMTRunnerTestCase() {
     child.setTestFailed("fail", null, false)
     suite.addStdOutput("after test finished\n")
 
-    val printer = MockPrinter(true)
+    val printer = MockPrinter()
     suite.printOn(printer)
 
     assertEquals("before test started\ninside test\nafter test finished\n", printer.stdOut)
@@ -63,7 +63,7 @@ class OutputTest : BaseSMTRunnerTestCase() {
       suite.flush()
       suite.addStdOutput("after test finished\n")
 
-      val printer = MockPrinter(true)
+      val printer = MockPrinter()
       suite.printOn(printer)
 
       assertEquals("before test started\ninside test\nafter test finished\n", printer.stdOut)

@@ -1,20 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images.sync.dotnet
 
-import org.jetbrains.intellij.build.images.generateIconsClasses
+import org.jetbrains.intellij.build.images.generateIconClasses
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
 import org.jetbrains.intellij.build.images.sync.*
+import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.exists
+import kotlin.io.path.name
 
-fun main() = DotnetIconSync.sync()
+object DotnetIconSync {
 
-internal object DotnetIconSync {
+  @JvmStatic
+  fun main(args: Array<String>) = sync()
+
   private class SyncPath(val iconsPath: String, val devPath: String)
 
+  private const val RIDER_ICONS_RELATIVE_PATH = "Rider/Frontend/rider/icons"
+
   private val syncPaths = listOf(
-    SyncPath("rider", "Rider/rider/icons/resources/rider"),
-    SyncPath("net", "Rider/rider/icons/resources/resharper")
+    SyncPath("rider", "$RIDER_ICONS_RELATIVE_PATH/resources/rider"),
+    SyncPath("net", "$RIDER_ICONS_RELATIVE_PATH/resources/resharper")
   )
 
   private val committer by lazy(::triggeredBy)
@@ -48,6 +55,7 @@ internal object DotnetIconSync {
       transformIconsToIdeaFormat()
       syncPaths.forEach(this::sync)
       generateClasses()
+      RiderIconsJsonGenerator.generate(context.devRepoRoot.resolve(RIDER_ICONS_RELATIVE_PATH))
       if (stageChanges().isEmpty()) {
         println("Nothing to commit")
       }
@@ -78,28 +86,39 @@ internal object DotnetIconSync {
     context.devRepoDir = context.devRepoRoot.resolve(path.devPath)
     context.iconRepoDir = context.iconRepo.resolve(path.iconsPath)
     context.devRepoDir.toFile().walkTopDown().forEach {
-      if (isImage(it)) {
+      if (isImage(it.toPath())) {
         it.delete() || error("Unable to delete $it")
       }
     }
     context.iconRepoDir.toFile().walkTopDown().forEach {
-      if (isImage(it) && context.iconFilter(it.toPath())) {
+      if (isImage(it.toPath()) && context.iconFilter(it.toPath())) {
         val target = context.devRepoDir.resolve(context.iconRepoDir.relativize(it.toPath()))
         it.copyTo(target.toFile(), overwrite = true)
       }
     }
   }
 
+  private fun findProjectHomePath(devRepoDir: Path): String {
+    var currentPath = devRepoDir
+    while (currentPath.parent != null) {
+      if (currentPath.resolve("Frontend").resolve(".idea").exists()) {
+        return currentPath.resolve("Frontend").toAbsolutePath().toString()
+      }
+      currentPath = currentPath.parent
+    }
+    error("can't find project home path for devRepoDir: $devRepoDir")
+  }
+
   private fun generateClasses() {
     step("Generating classes..")
-    generateIconsClasses(dbFile = null, config = DotnetIconsClasses(context.devRepoDir.toAbsolutePath().toString()))
+    generateIconClasses(config = DotnetIconClasses(findProjectHomePath(context.devRepoDir)))
   }
 
   private fun stageChanges(): Collection<String> {
     step("Staging changes..")
     val changes = gitStatus(context.devRepoRoot, includeUntracked = true).all().filter {
       val file = context.devRepoRoot.resolve(it)
-      isImage(file) || file.toString().endsWith(".java")
+      isImage(file) || file.toString().endsWith(".java") || file.name == RiderIconsJsonGenerator.GENERATED_FILE_NAME
     }
     if (changes.isNotEmpty()) {
       stageFiles(changes, context.devRepoRoot)

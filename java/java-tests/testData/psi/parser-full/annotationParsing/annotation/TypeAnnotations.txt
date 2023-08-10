@@ -577,21 +577,20 @@ PsiJavaFile:TypeAnnotations.java
               PsiWhiteSpace(' ')
               PsiKeyword:instanceof('instanceof')
               PsiWhiteSpace(' ')
-              PsiTypeTestPattern
-                PsiTypeElement:@NonNull String
-                  PsiAnnotation
-                    PsiJavaToken:AT('@')
-                    PsiJavaCodeReferenceElement:NonNull
-                      PsiIdentifier:NonNull('NonNull')
-                      PsiReferenceParameterList
-                        <empty list>
-                    PsiAnnotationParameterList
-                      <empty list>
-                  PsiWhiteSpace(' ')
-                  PsiJavaCodeReferenceElement:String
-                    PsiIdentifier:String('String')
+              PsiTypeElement:@NonNull String
+                PsiAnnotation
+                  PsiJavaToken:AT('@')
+                  PsiJavaCodeReferenceElement:NonNull
+                    PsiIdentifier:NonNull('NonNull')
                     PsiReferenceParameterList
                       <empty list>
+                  PsiAnnotationParameterList
+                    <empty list>
+                PsiWhiteSpace(' ')
+                PsiJavaCodeReferenceElement:String
+                  PsiIdentifier:String('String')
+                  PsiReferenceParameterList
+                    <empty list>
           PsiJavaToken:SEMICOLON(';')
         PsiWhiteSpace('\n    ')
         PsiExpressionStatement

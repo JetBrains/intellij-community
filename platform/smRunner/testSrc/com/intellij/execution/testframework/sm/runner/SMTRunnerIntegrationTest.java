@@ -14,6 +14,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.Locale;
 
 public class SMTRunnerIntegrationTest extends LightPlatformTestCase {
 
@@ -92,11 +93,101 @@ public class SMTRunnerIntegrationTest extends LightPlatformTestCase {
     assertState(1, 0, 1, ColorProgressBar.GREEN);
   }
 
+  public void testSuitePassedFailedIgnored() {
+    notifyStdoutLineAvailable("##teamcity[enteredTheMatrix]");
+    notifyStdoutLineAvailable("##teamcity[testingStarted]");
+
+    int finishedTests = 0;
+    int failedTests = 0;
+    int ignoredTests = 0;
+    int topLevelChildrenCount = 0;
+    {
+      notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='1' parentNodeId='0' name='test1']");
+      topLevelChildrenCount++;
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
+      notifyStdoutLineAvailable("##teamcity[testFinished nodeId='1']");
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
+    }
+    {
+      notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='2' parentNodeId='0' name='test2']");
+      topLevelChildrenCount++;
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
+      notifyStdoutLineAvailable("##teamcity[testFailed nodeId='2' message='failed']");
+      failedTests++;
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.RED);
+    }
+    {
+      notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='3' parentNodeId='0' name='test3']");
+      topLevelChildrenCount++;
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.RED);
+      notifyStdoutLineAvailable("##teamcity[testIgnored nodeId='3']");
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.RED);
+    }
+
+    notifyStdoutLineAvailable("##teamcity[testingFinished]");
+  }
+
+  public void testIgnoredTestings() {
+    notifyStdoutLineAvailable("##teamcity[enteredTheMatrix]");
+    notifyStdoutLineAvailable("##teamcity[testingStarted]");
+
+    int topLevelChildrenCount = 0;
+    int ignoredTests = 0;
+    {
+      // empty suite1 with ignored state
+      notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='1' parentNodeId='0' name='suite1']");
+      ++topLevelChildrenCount;
+      assertState(0, 0, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
+      notifyStdoutLineAvailable("##teamcity[testIgnored nodeId='1' name='suite1']");
+      assertState(0, 0, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
+    }
+    {
+      // non-empty suite2 with ignored test21
+      notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='2' parentNodeId='0' name='suite2']");
+      ++topLevelChildrenCount;
+      assertState(0, 0, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
+      {
+        notifyStdoutLineAvailable("##teamcity[testStarted nodeId='21' parentNodeId='2' name='test21']");
+        assertState(0, 0, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
+        notifyStdoutLineAvailable("##teamcity[testIgnored nodeId='21' name='test21']");
+        ++ignoredTests;
+        assertState(ignoredTests, 0, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
+      }
+      notifyStdoutLineAvailable("##teamcity[testSuiteFinished nodeId='2']");
+      assertState(ignoredTests, 0, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
+    }
+
+    notifyStdoutLineAvailable("##teamcity[testingFinished]");
+  }
+
   private void assertState(int finishedTests, int failedTests, int topLevelChildrenCount, @NotNull Color statusColor) {
-    assertEquals(finishedTests, myResultsViewer.getFinishedTestCount());
-    assertEquals(failedTests, myResultsViewer.getFailedTestCount());
-    assertEquals(topLevelChildrenCount, myRootNode.getChildren().size());
-    assertEquals(statusColor, myResultsViewer.getTestsStatusColor());
+    assertState(finishedTests,
+                failedTests,
+                0,
+                topLevelChildrenCount,
+                statusColor);
+  }
+
+  private void assertState(int finishedTests,
+                           int failedTests,
+                           int ignoredTests,
+                           int topLevelChildrenCount,
+                           @NotNull Color statusColor) {
+    assertEquals(stringify(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, statusColor),
+                 stringify(myResultsViewer.getFinishedTestCount(),
+                           myResultsViewer.getFailedTestCount(),
+                           myResultsViewer.getIgnoredTestCount(),
+                           myRootNode.getChildren().size(),
+                           myResultsViewer.getTestsStatusColor()));
+  }
+
+  private static String stringify(int finishedTests,
+                                  int failedTests,
+                                  int ignoredTests,
+                                  int topLevelChildrenCount,
+                                  @NotNull Color statusColor) {
+    return String.format(Locale.US, "finishedTests=%d failedTests=%d ignoredTests=%d topLevelChildrenCount=%d color=%s",
+                         finishedTests, failedTests, ignoredTests, topLevelChildrenCount, statusColor);
   }
 
   private void notifyStdoutLineAvailable(@NotNull String line) {

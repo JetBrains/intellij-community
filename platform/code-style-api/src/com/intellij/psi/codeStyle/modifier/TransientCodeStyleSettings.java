@@ -3,8 +3,11 @@ package com.intellij.psi.codeStyle.modifier;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
@@ -24,13 +27,25 @@ import java.util.List;
  * @see CodeStyleSettingsModifier
  */
 public final class TransientCodeStyleSettings extends CodeStyleSettings {
-  private final WeakReference<PsiFile> myPsiFileRef;
-  private CodeStyleSettingsModifier myModifier;
+  private final WeakReference<FileViewProvider> myViewProviderRef;
+  private CodeStyleSettingsModifier             myModifier;
   private final List<Object> myDependencies = new ArrayList<>();
 
+  /**
+   * @deprecated Use {@link #TransientCodeStyleSettings(FileViewProvider,CodeStyleSettings)}
+   */
+  @Deprecated
   public TransientCodeStyleSettings(@NotNull PsiFile psiFile, @NotNull CodeStyleSettings settings) {
     super(true, false);
-    myPsiFileRef = new WeakReference<>(psiFile);
+    myViewProviderRef = new WeakReference<>(psiFile.getViewProvider());
+    copyFrom(settings);
+    myDependencies.add(settings.getModificationTracker());
+  }
+
+
+  public TransientCodeStyleSettings(@NotNull FileViewProvider viewProvider, @NotNull CodeStyleSettings settings) {
+    super(true, false);
+    myViewProviderRef = new WeakReference<>(viewProvider);
     copyFrom(settings);
     myDependencies.add(settings.getModificationTracker());
   }
@@ -50,12 +65,14 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
    */
   @Nullable
   public PsiFile getPsiFile() {
-    return myPsiFileRef.get();
+    FileViewProvider viewProvider = myViewProviderRef.get();
+    return viewProvider != null ? viewProvider.getPsi(viewProvider.getBaseLanguage()) : null;
   }
 
   @NotNull
   @Override
-  public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file,
+  public IndentOptions getIndentOptionsByFile(@NotNull Project project,
+                                              @Nullable VirtualFile file,
                                               @Nullable TextRange formatRange,
                                               boolean ignoreDocOptions,
                                               @Nullable Processor<? super FileIndentOptionsProvider> providerProcessor) {
@@ -66,11 +83,21 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
     return OTHER_INDENT_OPTIONS;
   }
 
+  /**
+   * @deprecated Use {@link #applyIndentOptionsFromProviders(Project, VirtualFile)}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @ApiStatus.Internal
   public void applyIndentOptionsFromProviders(@NotNull PsiFile file) {
+    applyIndentOptionsFromProviders(file.getProject(), file.getVirtualFile());
+  }
+
+  @ApiStatus.Internal
+  public void applyIndentOptionsFromProviders(@NotNull Project project, @NotNull VirtualFile file) {
     for (FileIndentOptionsProvider provider : FileIndentOptionsProvider.EP_NAME.getExtensionList()) {
       if (provider.useOnFullReformat()) {
-        IndentOptions indentOptions = provider.getIndentOptions(this, file);
+        IndentOptions indentOptions = provider.getIndentOptions(project, this, file);
         if (indentOptions != null) {
           IndentOptions targetOptions = getIndentOptions(file.getFileType());
           if (targetOptions != indentOptions) {

@@ -1,0 +1,7 @@
+<table class="slogEntry parity{parity}">
+ <tr>
+  <td class="age">{date|rfc822date}</td>
+  <td class="author">{author|person}</td>
+  <td class="node"><a href="{url|urlescape}rev/{node|short}{sessionvars%urlparameter}">{desc|strip|firstline|escape|nonempty}</a></td>
+ </tr>
+</table>

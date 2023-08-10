@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
@@ -20,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.JavaXmlDocumentKt;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +21,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.StringReader;
 
@@ -51,7 +36,7 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
   @Override
   public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
     if (isApplicable(file) && isMvnDependency(text)) {
-      GradleActionsUsagesCollector.trigger(project, GradleActionsUsagesCollector.ActionID.PasteMvnDependency);
+      GradleActionsUsagesCollector.trigger(project, GradleActionsUsagesCollector.PASTE_MAVEN_DEPENDENCY);
       GradleVersion gradleVersion = GradleUtil.getGradleVersion(project, file);
       return toGradleDependency(text, gradleVersion);
     }
@@ -73,16 +58,13 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
 
   @ApiStatus.Internal
   public static @NotNull String toGradleDependency(@NotNull String mavenDependency, @NotNull GradleVersion gradleVersion) {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    factory.setValidating(false);
-
     try {
-      DocumentBuilder builder = factory.newDocumentBuilder();
+      DocumentBuilder builder = JavaXmlDocumentKt.createDocumentBuilder();
       Document document = builder.parse(new InputSource(new StringReader(mavenDependency)));
       String gradleDependency = extractGradleDependency(document, gradleVersion);
       return gradleDependency != null ? gradleDependency : mavenDependency;
     }
-    catch (ParserConfigurationException | SAXException | IOException ignored) {
+    catch (SAXException | IOException ignored) {
     }
 
     return mavenDependency;
@@ -106,17 +88,13 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
   private static String getScope(@NotNull Document document, @NotNull GradleVersion gradleVersion) {
     String scope = firstOrEmpty(document.getElementsByTagName("scope"));
     boolean isSupportedImplementation = GradleUtil.isSupportedImplementationScope(gradleVersion);
-    switch (scope) {
-      case "test":
-        return isSupportedImplementation ? "testImplementation" : "testCompile";
-      case "provided":
-        return "compileOnly";
-      case "runtime":
-        return "runtime";
-      case "compile":
-      default:
-        return isSupportedImplementation ? "implementation" : "compile";
-    }
+    return switch (scope) {
+      case "test" -> isSupportedImplementation ? "testImplementation" : "testCompile";
+      case "provided" -> "compileOnly";
+      case "runtime" -> "runtime";
+      case "compile" -> isSupportedImplementation ? "implementation" : "compile";
+      default -> isSupportedImplementation ? "implementation" : "compile";
+    };
   }
 
   private static String getVersion(@NotNull Document document) {

@@ -3,10 +3,9 @@ package org.jetbrains.uast.test.java
 
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import junit.framework.TestCase
 import org.jetbrains.uast.*
-import org.jetbrains.uast.java.*
 
 abstract class JavaUJumpExpressionBase : AbstractJavaUastLightTest() {
   protected inline fun <reified TElement : UElement, reified TJumpFromElement> doTest(fileSource: String) {
@@ -25,7 +24,7 @@ abstract class JavaUJumpExpressionBase : AbstractJavaUastLightTest() {
 }
 
 class JavaUJumpExpressionTest : JavaUJumpExpressionBase() {
-  fun `test break`() = doTest<UBreakExpression, JavaUForExpression>("""
+  fun `test break`() = doTest<UBreakExpression, UForExpression>("""
       class Break {
         static void a() {
           while (true) {
@@ -37,7 +36,7 @@ class JavaUJumpExpressionTest : JavaUJumpExpressionBase() {
       }
     """)
 
-  fun `test break with label`() = doTest<UBreakExpression, JavaUWhileExpression>("""
+  fun `test break with label`() = doTest<UBreakExpression, UWhileExpression>("""
       class Break {
         static void a() {
           a: while (true) {
@@ -49,7 +48,7 @@ class JavaUJumpExpressionTest : JavaUJumpExpressionBase() {
       }
     """)
 
-  fun `test break in switch`() = doTest<UBreakExpression, JavaUSwitchExpression>("""
+  fun `test break in switch`() = doTest<UBreakExpression, USwitchExpression>("""
       class Break {
         static void a() {
           while (true) {
@@ -61,7 +60,7 @@ class JavaUJumpExpressionTest : JavaUJumpExpressionBase() {
       }
     """)
 
-  fun `test continue`() = doTest<UContinueExpression, JavaUForExpression>("""
+  fun `test continue`() = doTest<UContinueExpression, UForExpression>("""
       class Break {
         static void a() {
           while (true) {
@@ -73,7 +72,7 @@ class JavaUJumpExpressionTest : JavaUJumpExpressionBase() {
       }
     """)
 
-  fun `test continue with label`() = doTest<UContinueExpression, JavaUWhileExpression>("""
+  fun `test continue with label`() = doTest<UContinueExpression, UWhileExpression>("""
       class Break {
         static void a() {
           a: while (true) {
@@ -85,7 +84,7 @@ class JavaUJumpExpressionTest : JavaUJumpExpressionBase() {
       }
     """)
 
-  fun `test return`() = doTest<UReturnExpression, JavaUMethod>("""
+  fun `test return`() = doTest<UReturnExpression, UMethod>("""
     class Break {
         static void a() {
           ret<caret>urn;
@@ -93,7 +92,7 @@ class JavaUJumpExpressionTest : JavaUJumpExpressionBase() {
       }
   """)
 
-  fun `test return from lambda`() = doTest<UReturnExpression, JavaULambdaExpression>("""
+  fun `test return from lambda`() = doTest<UReturnExpression, ULambdaExpression>("""
     class Break {
         static void a() {
           Supplier a = () -> {
@@ -103,7 +102,7 @@ class JavaUJumpExpressionTest : JavaUJumpExpressionBase() {
       }
   """)
 
-  fun `test return from inner method`() = doTest<UReturnExpression, JavaUMethod>("""
+  fun `test return from inner method`() = doTest<UReturnExpression, UMethod>("""
     class Break {
       static Consumer a = (b) -> {
         new Object() {
@@ -119,7 +118,7 @@ class JavaUJumpExpressionTest : JavaUJumpExpressionBase() {
     val lambda = JavaPsiFacade.getElementFactory(project).createExpressionFromText("() -> 10", null)
                    .toUElementOfType<ULambdaExpression>() ?: fail("cannot create lambda")
 
-    val returnExpr = (lambda.body as? UBlockExpression)?.expressions?.singleOrNull()?.castSafelyTo<UReturnExpression>()
+    val returnExpr = (lambda.body as? UBlockExpression)?.expressions?.singleOrNull()?.asSafely<UReturnExpression>()
     TestCase.assertEquals((returnExpr as? UJumpExpression)?.jumpTarget, lambda)
   }
 
@@ -150,7 +149,7 @@ class JavaUJumpExpressionTest : JavaUJumpExpressionBase() {
 
 class Java13UJumpExpressionTest : JavaUJumpExpressionBase() {
 
-  fun `test break in switch`() = doTest<UYieldExpression, JavaUSwitchExpression>("""
+  fun `test break in switch`() = doTest<UYieldExpression, USwitchExpression>("""
       class Break {
         static void a() {
           while (true) {

@@ -1,15 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,10 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -29,11 +39,21 @@ public class FragmentHintManager {
   private final List<SettingsEditorFragment<?, ?>> myFragments = new ArrayList<>();
   private final @NotNull Consumer<? super String> myHintConsumer;
   private final String myDefaultHint;
+  private final String myConfigId;
+  private int myHintNumber;
+  private long myHintsShownTime;
 
-  public FragmentHintManager(@NotNull Consumer<? super @NlsContexts.DialogMessage String> hintConsumer, @NlsContexts.DialogMessage @Nullable String defaultHint) {
+  public FragmentHintManager(@NotNull Consumer<? super @NlsContexts.DialogMessage String> hintConsumer,
+                             @NlsContexts.DialogMessage @Nullable String defaultHint,
+                             @Nullable String configId, @NotNull Disposable disposable) {
     myHintConsumer = hintConsumer;
     myDefaultHint = defaultHint;
+    myConfigId = configId;
     hintConsumer.consume(defaultHint);
+
+    AWTEventListener listener = event -> processKeyEvent((KeyEvent)event);
+    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.KEY_EVENT_MASK);
+    Disposer.register(disposable, () -> Toolkit.getDefaultToolkit().removeAWTEventListener(listener));
   }
 
   public void registerFragments(Collection<? extends SettingsEditorFragment<?, ?>> fragments) {
@@ -77,8 +97,8 @@ public class FragmentHintManager {
     if (component instanceof LabeledComponent) {
       component = ((LabeledComponent<?>)component).getComponent();
     }
-    if (component instanceof RawCommandLineEditor) {
-      component = ((RawCommandLineEditor)component).getEditorField();
+    if (component instanceof FragmentWrapper wrapper) {
+      component = wrapper.getComponentToRegister();
     }
     if (component instanceof ComponentWithBrowseButton) {
       component = ((ComponentWithBrowseButton<?>)component).getChildComponent();
@@ -98,12 +118,64 @@ public class FragmentHintManager {
       }
     }
     if (fragment != null) {
-      ShortcutSet shortcut = ActionUtil.getMnemonicAsShortcut(new EmptyAction(fragment.getName(), null, null));
-      if (shortcut != null && shortcut.getShortcuts().length > 0) {
-        String text = KeymapUtil.getShortcutsText(new Shortcut[]{ArrayUtil.getLastElement(shortcut.getShortcuts())});
-        hint = hint == null ? text : hint + ". " + text;
+      String text = getShortcutText(fragment);
+      if (text != null) {
+        hint = hint == null ? text : StringUtil.trimEnd(hint, ".") + ". " + text;
       }
     }
     myHintConsumer.consume(hint == null ? myDefaultHint : hint);
+  }
+
+  private static @Nullable @NlsSafe String getShortcutText(@NotNull SettingsEditorFragment<?, ?> fragment) {
+    ShortcutSet shortcut = ActionUtil.getMnemonicAsShortcut(new EmptyAction(fragment.getName(), null, null));
+    if (shortcut != null && shortcut.getShortcuts().length > 0) {
+      return KeymapUtil.getShortcutsText(new Shortcut[]{ArrayUtil.getLastElement(shortcut.getShortcuts())});
+    }
+    return null;
+  }
+
+  private void processKeyEvent(KeyEvent keyEvent) {
+    if (keyEvent.getKeyCode() != KeyEvent.VK_ALT) return;
+    if (keyEvent.getID() == KeyEvent.KEY_PRESSED) {
+      myHintNumber = 0;
+      myHintsShownTime = System.currentTimeMillis();
+      for (SettingsEditorFragment<?, ?> fragment : myFragments) {
+        JComponent component = fragment.getComponent();
+        Window window = ComponentUtil.getWindow(component);
+        if (window == null || !window.isFocused()) {
+          return;
+        }
+        if (fragment.isSelected() && fragment.getName() != null && component.getRootPane() != null) {
+          JComponent hintComponent = createHintComponent(fragment);
+          Rectangle rect = component.getVisibleRect();
+          if (rect.height < component.getHeight()) {
+            continue; // scrolled out
+          }
+          RelativePoint point = new RelativePoint(component, new Point(rect.x + rect.width - hintComponent.getPreferredSize().width,
+                                                                       rect.y - hintComponent.getPreferredSize().height + 5));
+          HintManager.getInstance().showHint(hintComponent, point, HintManager.HIDE_BY_ANY_KEY, -1);
+          myHintNumber++;
+        }
+      }
+    }
+    else if (keyEvent.getID() == KeyEvent.KEY_RELEASED && myHintNumber > 0) {
+      HintManager.getInstance().hideAllHints();
+      Project project = DataManager.getInstance().getDataContext(keyEvent.getComponent()).getData(CommonDataKeys.PROJECT);
+      FragmentStatisticsService.getInstance().logHintsShown(project, myConfigId, myHintNumber, System.currentTimeMillis() - myHintsShownTime);
+      myHintsShownTime = 0;
+      myHintNumber = 0;
+    }
+  }
+
+  private static JComponent createHintComponent(SettingsEditorFragment<?, ?> fragment) {
+    SimpleColoredComponent component = new SimpleColoredComponent();
+    component.append(fragment.getName().replace("\u001b", ""), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    String shortcutText = getShortcutText(fragment);
+    if (shortcutText != null) {
+      String last = StringUtil.last(shortcutText, 1, false).toString();
+      component.append(" " + StringUtil.trimEnd(shortcutText, last), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      component.append(last);
+    }
+    return component;
   }
 }

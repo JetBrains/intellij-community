@@ -1,0 +1,5 @@
+// FIX: Convert sealed subclass to object
+
+sealed class Sealed
+
+private data object SubSealed : Sealed()

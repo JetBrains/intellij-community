@@ -23,9 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-/**
- * @author peter
- */
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.INVALID_INSIDE_REFERENCE;
+
 public class GroovyBackspaceHandler extends BackspaceHandlerDelegate {
   private boolean myToDeleteGt;
 
@@ -44,7 +43,7 @@ public class GroovyBackspaceHandler extends BackspaceHandlerDelegate {
     char c1 = chars.charAt(offset);
     if (c == '<' && myToDeleteGt) {
       if (c1 != '>') return true;
-      TypedHandlerUtil.handleGenericLTDeletion(editor, offset, GroovyTokenTypes.mLT, GroovyTokenTypes.mGT, GroovyTypedHandler.INVALID_INSIDE_REFERENCE);
+      TypedHandlerUtil.handleGenericLTDeletion(editor, offset, GroovyTokenTypes.mLT, GroovyTokenTypes.mGT, INVALID_INSIDE_REFERENCE);
       return true;
     }
     return false;

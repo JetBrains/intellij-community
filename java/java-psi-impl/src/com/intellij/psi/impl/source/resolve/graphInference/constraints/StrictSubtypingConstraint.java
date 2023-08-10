@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.core.JavaPsiBundle;
@@ -23,10 +9,9 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class StrictSubtypingConstraint implements ConstraintFormula {
   private PsiType myS;
@@ -71,10 +56,10 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
       return TypeConversionUtil.isAssignable(myT, myS);
     }
 
-    if (PsiType.NULL.equals(myT) || myT == null) return false;
-    if (PsiType.NULL.equals(myS) || myS == null || myT.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return true;
+    if (PsiTypes.nullType().equals(myT) || myT == null) return false;
+    if (PsiTypes.nullType().equals(myS) || myS == null || myT.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return true;
 
-    if (PsiType.VOID.equals(myS) ^ PsiType.VOID.equals(myT)) return false;
+    if (PsiTypes.voidType().equals(myS) ^ PsiTypes.voidType().equals(myT)) return false;
 
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
     if (inferenceVariable != null) {
@@ -109,8 +94,8 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
       if (CClass != null) {
         if (CClass instanceof PsiTypeParameter) {
           if (myS instanceof PsiIntersectionType) {
-            for (PsiType conjunct : ((PsiIntersectionType)myS).getConjuncts()) {
-              if (myT.equals(conjunct)) return true;
+            if (ArrayUtil.contains(myT, ((PsiIntersectionType)myS).getConjuncts())) {
+              return true;
             }
           }
           final PsiType lowerBound = TypeConversionUtil.getInferredLowerBoundForSynthetic((PsiTypeParameter)CClass);
@@ -133,14 +118,16 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
         if (SClass == null) return false;
 
-        if (((PsiClassType)myT).isRaw()) {
+        if (((PsiClassType)myT).isRaw() || myCapture && sType.isRaw()) {
           return InheritanceUtil.isInheritorOrSelf(SClass, CClass, true);
         }
 
         PsiSubstitutor substitutor = SResult.getSubstitutor();
+        Map<PsiTypeParameter, PsiType> map = new HashMap<>(); 
         for (PsiTypeParameter typeParameter : SClass.getTypeParameters()) {
-          substitutor = substitutor.put(typeParameter, substitutor.substituteWithBoundsPromotion(typeParameter));
+          map.put(typeParameter, substitutor.substituteWithBoundsPromotion(typeParameter));
         }
+        substitutor = substitutor.putAll(map);
 
         final PsiSubstitutor tSubstitutor = TResult.getSubstitutor();
         final PsiSubstitutor sSubstitutor = TypeConversionUtil.getClassSubstitutor(CClass, SClass, substitutor);
@@ -168,7 +155,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
     if (myT instanceof PsiCapturedWildcardType) {
       PsiType lowerBound = ((PsiCapturedWildcardType)myT).getLowerBound();
-      if (lowerBound != PsiType.NULL) {
+      if (lowerBound != PsiTypes.nullType()) {
         constraints.add(new StrictSubtypingConstraint(lowerBound, myS, myCapture));
       }
     }

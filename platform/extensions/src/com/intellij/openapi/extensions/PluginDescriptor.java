@@ -1,17 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.util.NlsSafe;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Date;
 
 public interface PluginDescriptor {
-  PluginId getPluginId();
+  @NotNull PluginId getPluginId();
 
-  ClassLoader getPluginClassLoader();
+  @Nullable ClassLoader getPluginClassLoader();
+
+  @ApiStatus.Experimental
+  default @NotNull ClassLoader getClassLoader() {
+    ClassLoader classLoader = getPluginClassLoader();
+    return classLoader == null ? getClass().getClassLoader() : classLoader;
+  }
 
   default boolean isBundled() {
     return false;
@@ -28,18 +37,15 @@ public interface PluginDescriptor {
 
   Path getPluginPath();
 
-  @Nullable
-  @Nls String getDescription();
+  @Nullable @Nls String getDescription();
 
-  String getChangeNotes();
+  @Nullable String getChangeNotes();
 
   @NlsSafe String getName();
 
-  @Nullable
-  String getProductCode();
+  @Nullable String getProductCode();
 
-  @Nullable
-  Date getReleaseDate();
+  @Nullable Date getReleaseDate();
 
   int getReleaseVersion();
 
@@ -49,47 +55,41 @@ public interface PluginDescriptor {
    * @deprecated Do not use.
    */
   @Deprecated
-  default PluginId @NotNull [] getDependentPluginIds() {
-    return PluginId.EMPTY_ARRAY;
-  }
-
-  /**
-   * @deprecated Do not use.
-   */
-  @Deprecated
   PluginId @NotNull [] getOptionalDependentPluginIds();
 
-  @NlsSafe String getVendor();
+  @Nullable @NlsSafe String getVendor();
 
   //TODO: remove default implementation in 2021.3
-  @NlsSafe default String getOrganization() {
-    return "";
+  default @Nullable @NlsSafe String getOrganization() {
+    return null;
   }
 
   @NlsSafe String getVersion();
 
   @Nullable String getResourceBundleBaseName();
 
-  @NlsSafe String getCategory();
+  @Nullable @NlsSafe String getCategory();
 
-  String getVendorEmail();
+  default @Nullable @Nls String getDisplayCategory() { return getCategory(); }
 
-  String getVendorUrl();
+  @Nullable String getVendorEmail();
 
-  String getUrl();
+  @Nullable String getVendorUrl();
+
+  @Nullable String getUrl();
 
   /**
    * @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  default String getDownloads() {
+  @ApiStatus.ScheduledForRemoval
+  default @Nullable String getDownloads() {
     return null;
   }
 
-  @NlsSafe String getSinceBuild();
+  @Nullable @NlsSafe String getSinceBuild();
 
-  @NlsSafe String getUntilBuild();
+  @Nullable @NlsSafe String getUntilBuild();
 
   default boolean allowBundledUpdate() {
     return false;
@@ -98,6 +98,7 @@ public interface PluginDescriptor {
   /**
    * If true, this plugin is hidden from the list of installed plugins in Settings | Plugins.
    */
+  @ApiStatus.Internal
   default boolean isImplementationDetail() {
     return false;
   }

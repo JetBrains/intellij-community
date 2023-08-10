@@ -22,12 +22,15 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeUtils
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import git4idea.i18n.GitBundle
+import java.util.function.Function
+import javax.swing.JComponent
 import javax.swing.JFrame
 
 object MergeConflictResolveUtil {
@@ -98,8 +101,15 @@ object MergeConflictResolveUtil {
     }
   }
 
+  private fun getActiveMergeWindow(file: VirtualFile): WindowWrapper? {
+    return file.getUserData(ACTIVE_MERGE_WINDOW)?.takeIf { !it.isDisposed }
+  }
+
+  internal fun hasActiveMergeWindow(file: VirtualFile) = getActiveMergeWindow(file) != null
+
   private fun focusActiveMergeWindow(file: VirtualFile?): Boolean {
-    val wrapper = file?.getUserData(ACTIVE_MERGE_WINDOW) ?: return false
+    if (file == null) return false
+    val wrapper = getActiveMergeWindow(file) ?: return false
     UIUtil.toFront(wrapper.window)
     return true
   }
@@ -131,17 +141,22 @@ object MergeConflictResolveUtil {
   }
 
 
-  class NotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>() {
-    private val KEY = Key.create<EditorNotificationPanel>("MergeConflictResolveUtil.NotificationProvider")
+  class NotificationProvider : EditorNotificationProvider {
+    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+      return Function { createNotificationPanel(file) }
+    }
 
-    override fun getKey(): Key<EditorNotificationPanel> = KEY
+    private fun createNotificationPanel(file: VirtualFile): EditorNotificationPanel? {
+      if (!hasActiveMergeWindow(file)) return null
 
-    override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
-      val wrapper = file.getUserData(ACTIVE_MERGE_WINDOW) ?: return null
-      val panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN)
-      panel.setText(GitBundle.message("link.label.editor.notification.merge.conflicts.resolve.in.progress"))
-      panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.resolve.in.progress.focus.window")) { UIUtil.toFront(wrapper.window) }
-      panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.resolve.in.progress.cancel.resolve")) { wrapper.close() }
+      val panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN, EditorNotificationPanel.Status.Info)
+      panel.text = GitBundle.message("link.label.editor.notification.merge.conflicts.resolve.in.progress")
+      panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.resolve.in.progress.focus.window")) {
+        UIUtil.toFront(getActiveMergeWindow(file)?.window)
+      }
+      panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.resolve.in.progress.cancel.resolve")) {
+        getActiveMergeWindow(file)?.close()
+      }
       return panel
     }
   }

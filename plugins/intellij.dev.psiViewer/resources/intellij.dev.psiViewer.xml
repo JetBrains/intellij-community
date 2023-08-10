@@ -1,0 +1,16 @@
+<idea-plugin package="com.intellij.dev.psiViewer">
+  <resource-bundle>messages.DevPsiViewerBundle</resource-bundle>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.dev.psiViewer.extension" dynamic="true"
+                    interface="com.intellij.dev.psiViewer.PsiViewerExtension"/>
+  </extensionPoints>
+  <actions>
+    <group id="Dev.PsiViewerActions">
+      <separator/>
+      <action id="PsiViewer" class="com.intellij.dev.psiViewer.PsiViewerAction"/>
+      <action id="PsiViewerForContext" class="com.intellij.dev.psiViewer.PsiViewerAction$ForContext"/>
+      <separator/>
+      <add-to-group group-id="ToolsMenu" anchor="first"/>
+    </group>
+  </actions>
+</idea-plugin>

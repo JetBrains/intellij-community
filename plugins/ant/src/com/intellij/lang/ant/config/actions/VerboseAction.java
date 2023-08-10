@@ -17,6 +17,7 @@ package com.intellij.lang.ant.config.actions;
 
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.execution.AntBuildMessageView;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import icons.AntIcons;
@@ -39,5 +40,10 @@ public final class VerboseAction extends ToggleAction {
   @Override
   public void setSelected(@NotNull AnActionEvent event, boolean flag) {
     myAntBuildMessageView.setVerboseMode(flag);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

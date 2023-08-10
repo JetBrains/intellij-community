@@ -31,7 +31,6 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  * @author Mikhail Golubev
  */
 public class JsonCompletionContributor extends CompletionContributor {
-
   private static final PsiElementPattern.Capture<PsiElement> AFTER_COLON_IN_PROPERTY = psiElement()
     .afterLeaf(":").withSuperParent(2, JsonProperty.class)
     .andNot(psiElement().withParent(JsonStringLiteral.class));
@@ -45,7 +44,7 @@ public class JsonCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC, AFTER_COMMA_OR_BRACKET_IN_ARRAY, MyKeywordsCompletionProvider.INSTANCE);
   }
 
-  private static class MyKeywordsCompletionProvider extends CompletionProvider<CompletionParameters> {
+  private static final class MyKeywordsCompletionProvider extends CompletionProvider<CompletionParameters> {
     private static final MyKeywordsCompletionProvider INSTANCE = new MyKeywordsCompletionProvider();
     private static final String[] KEYWORDS = new String[]{"null", "true", "false"};
 

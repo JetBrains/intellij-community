@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.tree.AbstractTreeNodeVisitor;
-import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +23,21 @@ class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
   ProjectViewNodeVisitor(@NotNull PsiElement element, @Nullable VirtualFile file, @Nullable Predicate<? super TreePath> predicate) {
     super(createPointer(element)::getElement, predicate);
     this.file = file;
-    LOG.debug("create visitor for element: " + element);
+    LOG.debug("create visitor for element: ", element);
+  }
+
+  ProjectViewNodeVisitor(@NotNull SmartPsiElementPointer<?> pointer, @Nullable VirtualFile file, @Nullable Predicate<? super TreePath> predicate) {
+    super(pointer::getElement, predicate);
+    this.file = file;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("create visitor for element: ", pointer.getElement());
+    }
+  }
+
+  ProjectViewNodeVisitor(@NotNull SmartPsiElementPointer<?> pointer) {
+    super(pointer::getElement, null);
+    this.file = null;
+    LOG.debug("create visitor for pointer: ", pointer);
   }
 
   /**
@@ -36,6 +50,7 @@ class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
 
   @Override
   protected boolean contains(@NotNull AbstractTreeNode node, @NotNull PsiElement element) {
+    if (!node.mayContain(element)) return false;
     return node instanceof ProjectViewNode && contains((ProjectViewNode)node, element) || super.contains(node, element);
   }
 
@@ -55,6 +70,6 @@ class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
 
   @Override
   protected boolean isAncestor(@NotNull PsiElement content, @NotNull PsiElement element) {
-    return SlowOperations.allowSlowOperations(() -> PsiTreeUtil.isAncestor(content, element, true));
+    return PsiTreeUtil.isAncestor(content, element, true);
   }
 }

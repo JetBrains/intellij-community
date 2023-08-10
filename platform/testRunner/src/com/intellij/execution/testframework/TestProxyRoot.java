@@ -23,4 +23,6 @@ public interface TestProxyRoot {
   String getComment();
 
   void setHandler(ProcessHandler handler);
+
+  TestConsoleProperties getTestConsoleProperties();
 }

@@ -14,9 +14,6 @@ import java.util.regex.Pattern;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CmdVersionClient extends BaseSvnClient implements VersionClient {
 
   private static final Pattern VERSION = Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+)");

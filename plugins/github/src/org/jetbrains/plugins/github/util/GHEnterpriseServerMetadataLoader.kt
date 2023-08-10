@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
+import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
+import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.progress.ProgressManager
@@ -31,6 +33,15 @@ class GHEnterpriseServerMetadataLoader : Disposable {
         apiRequestExecutor.execute(it, GithubApiRequest.Get.json<GHEnterpriseServerMeta>(metaUrl))
       }
     }
+  }
+
+  @CalledInAny
+  internal fun findRequestByEndpointUrl(url: String): CompletableFuture<GHEnterpriseServerMeta>? {
+    for ((server, request) in serverMetadataRequests) {
+      val serverUrl = server.toUrl()
+      if (url.startsWith(serverUrl)) return request
+    }
+    return null
   }
 
   override fun dispose() {}

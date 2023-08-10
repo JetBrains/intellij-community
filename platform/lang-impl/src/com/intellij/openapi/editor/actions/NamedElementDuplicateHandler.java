@@ -18,13 +18,10 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -34,9 +31,6 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class NamedElementDuplicateHandler extends EditorWriteActionHandler.ForEachCaret {
   private final EditorActionHandler myOriginal;
 
@@ -52,13 +46,11 @@ public class NamedElementDuplicateHandler extends EditorWriteActionHandler.ForEa
   @Override
   public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     Project project = editor.getProject();
-    if (project != null && !editor.getSelectionModel().hasSelection()) {
+    if (project != null && !caret.hasSelection()) {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file != null) {
-        VisualPosition caretPosition = editor.getCaretModel().getVisualPosition();
-        Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcSurroundingRange(editor, caretPosition, caretPosition);
-        TextRange toDuplicate = new TextRange(editor.logicalPositionToOffset(lines.first), editor.logicalPositionToOffset(lines.second));
+        TextRange toDuplicate = EditorUtil.calcCaretLineTextRange(caret);
 
         PsiElement name = findNameIdentifier(editor, file, toDuplicate);
         if (name != null && !name.getTextRange().containsOffset(editor.getCaretModel().getOffset())) {

@@ -7,9 +7,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class MavenCompletionReferenceProvider implements MavenParamReferenceProvider {
 
   protected abstract Object[] getVariants(@NotNull PsiReferenceBase reference);

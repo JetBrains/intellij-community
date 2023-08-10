@@ -40,6 +40,10 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   @NotNull
   public abstract OutgoingCommitsProvider<Repo, Source, Target> getOutgoingCommitsProvider();
 
+  public boolean canBePushed(@NotNull Repo repository, @NotNull Source source, @NotNull Target target) {
+    return true;
+  }
+
   /**
    * @return Default push destination
    */
@@ -51,7 +55,7 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
    * @return Push destination for source
    */
   @Nullable
-  public Target getDefaultTarget(@NotNull Repo repository, @NotNull Source source) {return null;}
+  public Target getDefaultTarget(@NotNull Repo repository, @NotNull Source source) { return null; }
 
   /**
    * @return current source(branch) for repository
@@ -93,5 +97,4 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   public boolean mayChangeTargetsSync() {
     return false;
   }
-
 }

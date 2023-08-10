@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitTestUtil")
 
 package git4idea.test
@@ -177,7 +177,7 @@ fun GitPlatformTest.makeCommit(author: VcsUser, file: String): String {
 }
 
 fun findGitLogProvider(project: Project): GitLogProvider {
-  val providers = VcsLogProvider.LOG_PROVIDER_EP.getExtensions(project)
+  val providers = VcsLogProvider.LOG_PROVIDER_EP.getExtensionList(project)
     .filter { provider -> provider.supportedVcs == GitVcs.getKey() }
   assertEquals("Incorrect number of GitLogProviders", 1, providers.size)
   return providers[0] as GitLogProvider

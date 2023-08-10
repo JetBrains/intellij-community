@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsListener
+import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.messages.MessageBusConnection
@@ -21,8 +21,8 @@ class TodoViewChangesSupportImpl : TodoViewChangesSupport() {
     return ChangeListTodosPanel.getTabName(project)
   }
 
-  override fun createPanel(project: Project, settings: TodoPanelSettings, content: Content, factory: TodoTreeBuilderFactory): TodoPanel {
-    return object : ChangeListTodosPanel(project, settings, content) {
+  override fun createPanel(todoView: TodoView, settings: TodoPanelSettings, content: Content, factory: TodoTreeBuilderFactory): TodoPanel {
+    return object : ChangeListTodosPanel(todoView, settings, content) {
       override fun createTreeBuilder(tree: JTree, project: Project): TodoTreeBuilder {
         val builder = factory.createTreeBuilder(tree, project)
         builder.init()
@@ -31,8 +31,8 @@ class TodoViewChangesSupportImpl : TodoViewChangesSupport() {
     }
   }
 
-  override fun createPanel(project: Project, settings: TodoPanelSettings, content: Content): TodoPanel {
-    return createPanel(project, settings, content, TodoTreeBuilderFactory { tree, p -> ChangeListTodosTreeBuilder(tree, p) })
+  override fun createPanel(todoView: TodoView, settings: TodoPanelSettings, content: Content): TodoPanel {
+    return createPanel(todoView, settings, content, TodoTreeBuilderFactory { tree, p -> ChangeListTodosTreeBuilder(tree, p) })
   }
 
   override fun installListener(project: Project,
@@ -47,12 +47,12 @@ class TodoViewChangesSupportImpl : TodoViewChangesSupport() {
   private class MyVcsListener(
     private val project: Project,
     private val contentManagerFunc: () -> ContentManager?,
-    private val contentFunc: () -> Content) : VcsListener, Listener {
+    private val contentFunc: () -> Content) : VcsMappingListener, Listener {
 
     private var myIsVisible = false
 
     override fun setVisible(value: Boolean) {
-      myIsVisible = value;
+      myIsVisible = value
     }
 
     override fun directoryMappingChanged() {
@@ -74,7 +74,7 @@ class TodoViewChangesSupportImpl : TodoViewChangesSupport() {
             contentManager.addContent(content)
             myIsVisible = true
           }
-        }, ModalityState.NON_MODAL)
+        }, ModalityState.nonModal())
     }
   }
 }

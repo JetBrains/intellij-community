@@ -119,7 +119,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
         process.getSession().updateBreakpointPresentation(((XLineBreakpoint)myXBreakpoint), myIcon, myInvalidMessage);
       }
     }
-    if (debugProcess != null && debugProcess.getVirtualMachineProxy().canBeModified()) {
+    if (debugProcess != null && debugProcess.getVirtualMachineProxy().canBeModified() && !isObsolete()) {
       myClassName = JVMNameUtil.getSourcePositionClassDisplayName(debugProcess, getSourcePosition());
       myPackageName = JVMNameUtil.getSourcePositionPackageDisplayName(debugProcess, getSourcePosition());
     }

@@ -221,9 +221,8 @@ public class XPathEvalAction extends XPathAction {
             LOG.debug("result = " + result);
             LOG.assertTrue(result != null, "null result?");
 
-            if (result instanceof List<?>) {
-                final List<?> list = (List<?>)result;
-                if (!list.isEmpty()) {
+            if (result instanceof List<?> list) {
+              if (!list.isEmpty()) {
                     if (cfg.HIGHLIGHT_RESULTS) {
                         highlightResult(contextNode, editor, list);
                     }
@@ -372,10 +371,9 @@ public class XPathEvalAction extends XPathAction {
         for (final Object o : list) {
             LOG.assertTrue(o != null, "null element?");
 
-            if (o instanceof PsiElement) {
-                final PsiElement element = (PsiElement)o;
+            if (o instanceof PsiElement element) {
 
-                if (element.getContainingFile() == contextNode.getContainingFile()) {
+              if (element.getContainingFile() == contextNode.getContainingFile()) {
                     lowestOffset = highlightElement(editor, element, cfg, lowestOffset);
                 }
             } else {
@@ -432,20 +430,6 @@ public class XPathEvalAction extends XPathAction {
         public ItemPresentation getPresentation() {
             return myItemPresentation;
         }
-
-        @Override
-        public void navigate(boolean requestFocus) {
-        }
-
-        @Override
-        public boolean canNavigate() {
-            return false;
-        }
-
-        @Override
-        public boolean canNavigateToSource() {
-            return false;
-        }
     }
 
     private static class MyUsageSearcher implements UsageSearcher {
@@ -492,9 +476,8 @@ public class XPathEvalAction extends XPathAction {
                 for (int i = 0; i < size; i++) {
                     indicator.checkCanceled();
                     Object o = list.get(i);
-                    if (o instanceof PsiElement) {
-                        final PsiElement element = (PsiElement)o;
-                        processor.process(new UsageInfo2UsageAdapter(new UsageInfo(element)));
+                    if (o instanceof PsiElement element) {
+                      processor.process(new UsageInfo2UsageAdapter(new UsageInfo(element)));
                         indicator.setText2(element.getContainingFile().getName());
                     }
                     indicator.setFraction(i / (double)size);

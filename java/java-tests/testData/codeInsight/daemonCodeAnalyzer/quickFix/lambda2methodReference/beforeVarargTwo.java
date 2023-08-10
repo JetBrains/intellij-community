@@ -1,4 +1,4 @@
-// "Replace lambda with method reference" "true"
+// "Replace lambda with method reference" "true-preview"
 import java.util.function.BiFunction;
 import java.util.Arrays;
 import java.util.List;

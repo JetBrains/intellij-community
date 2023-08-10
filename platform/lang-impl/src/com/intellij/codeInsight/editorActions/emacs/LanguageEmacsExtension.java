@@ -17,9 +17,6 @@ package com.intellij.codeInsight.editorActions.emacs;
 
 import com.intellij.lang.LanguageExtension;
 
-/**
- * @author Denis Zhdanov
- */
 public class LanguageEmacsExtension extends LanguageExtension<EmacsProcessingHandler> {
   public static final LanguageEmacsExtension INSTANCE = new LanguageEmacsExtension();
 

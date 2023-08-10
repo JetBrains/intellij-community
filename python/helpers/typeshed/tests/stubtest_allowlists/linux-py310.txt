@@ -1,0 +1,23 @@
+_?curses.color_pair
+(os|posix).EFD_CLOEXEC
+(os|posix).EFD_NONBLOCK
+(os|posix).EFD_SEMAPHORE
+(os|posix).SPLICE_F_MORE
+(os|posix).SPLICE_F_MOVE
+(os|posix).SPLICE_F_NONBLOCK
+(os|posix).setresgid
+(os|posix).setresuid
+(os|posix).sendfile
+(os|posix).eventfd
+(os|posix).eventfd_read
+(os|posix).eventfd_write
+(os|posix).splice
+signal.sigtimedwait
+signal.sigwaitinfo
+select.epoll.register
+
+# ==========
+# Allowlist entries that cannot or should not be fixed
+# ==========
+
+distutils.command.bdist_msi  # Only available on Windows and Python 3.10 and below

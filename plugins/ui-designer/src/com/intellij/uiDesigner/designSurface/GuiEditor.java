@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -82,9 +82,6 @@ import java.util.*;
  * {@code GuiEditor} is a panel with border layout. It has palette at the north,
  * tree of component with property editor at the west and editor area at the center.
  * This editor area contains internal component where user edit the UI.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade, DataProvider, ModuleProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(GuiEditor.class);
@@ -115,16 +112,16 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   /**
    * This is the topmost layer. It gets and redispatch all incoming events
    */
-  private static final Integer LAYER_GLASS = new Integer(JLayeredPane.DRAG_LAYER.intValue() + 100);
+  private static final Integer LAYER_GLASS = Integer.valueOf(JLayeredPane.DRAG_LAYER.intValue() + 100);
   /**
    * This layer contains all "active" decorators. This layer should be over
    * LAYER_GLASS because active decorators must get AWT events to work correctly.
    */
-  private static final Integer LAYER_ACTIVE_DECORATION = new Integer(LAYER_GLASS.intValue() + 100);
+  private static final Integer LAYER_ACTIVE_DECORATION = Integer.valueOf(LAYER_GLASS.intValue() + 100);
   /**
    * This layer contains all inplace editors.
    */
-  private static final Integer LAYER_INPLACE_EDITING = new Integer(LAYER_ACTIVE_DECORATION.intValue() + 100);
+  private static final Integer LAYER_INPLACE_EDITING = Integer.valueOf(LAYER_ACTIVE_DECORATION.intValue() + 100);
 
   private final EventListenerList myListenerList;
   /**
@@ -173,7 +170,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   private final DocumentListener myDocumentListener;
   private final CardLayout myCardLayout = new CardLayout();
   private final Disposable myContentSplitterDisposable = Disposer.newDisposable();
-  private final ThreeComponentsSplitter myContentSplitter = new ThreeComponentsSplitter(myContentSplitterDisposable);
+  private final ThreeComponentsSplitter myContentSplitter = new ThreeComponentsSplitter();
   private final JPanel myCardPanel = new JPanel(myCardLayout);
 
   @NonNls private static final String CARD_VALID = "valid";
@@ -322,7 +319,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     gbc.weighty = 1.0;
 
     myScrollPane = ScrollPaneFactory.createScrollPane(myLayeredPane);
-    myScrollPane.setBackground(new JBColor(() -> EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()));
+    myScrollPane.setBackground(JBColor.lazy(() -> EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()));
     panel.add(myScrollPane, gbc);
     myHorzCaptionPanel.attachToScrollPane(myScrollPane);
     myVertCaptionPanel.attachToScrollPane(myScrollPane);
@@ -342,6 +339,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
     myDropTargetListener = new DesignDropTargetListener(this);
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      //noinspection ResultOfObjectAllocationIgnored
       new DropTarget(getGlassLayer(), DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
     }
 
@@ -502,10 +500,9 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
       }
     }
 
-    if (component instanceof RadContainer) {
+    if (component instanceof RadContainer container) {
       component.refresh();
 
-      final RadContainer container = (RadContainer)component;
       for (int i = container.getComponentCount() - 1; i >= 0; i--) {
         refreshImpl(container.getComponent(i));
       }
@@ -514,7 +511,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
   @Override
   public Object getData(@NotNull final String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }
 
@@ -689,8 +686,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
       final RadComponent radComponent = (RadComponent)component;
       boolean componentModified = false;
       for (IProperty prop : component.getModifiedProperties()) {
-        if (prop instanceof IntroStringProperty) {
-          IntroStringProperty strProp = (IntroStringProperty)prop;
+        if (prop instanceof IntroStringProperty strProp) {
           componentModified = strProp.refreshValue(radComponent) || componentModified;
         }
       }
@@ -908,8 +904,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   private Map<String, String> saveTabbedPaneSelectedTabs() {
     final Map<String, String> result = new HashMap<>();
     FormEditingUtil.iterate(getRootContainer(), component -> {
-      if (component instanceof RadTabbedPane) {
-        RadTabbedPane tabbedPane = (RadTabbedPane)component;
+      if (component instanceof RadTabbedPane tabbedPane) {
         RadComponent c = tabbedPane.getSelectedTab();
         if (c != null) {
           result.put(tabbedPane.getId(), c.getId());
@@ -922,8 +917,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
   private void restoreTabbedPaneSelectedTabs(final Map<String, String> tabbedPaneSelectedTabs) {
     FormEditingUtil.iterate(getRootContainer(), component -> {
-      if (component instanceof RadTabbedPane) {
-        RadTabbedPane tabbedPane = (RadTabbedPane)component;
+      if (component instanceof RadTabbedPane tabbedPane) {
         String selectedTabId = tabbedPaneSelectedTabs.get(tabbedPane.getId());
         if (selectedTabId != null) {
           for (RadComponent c : tabbedPane.getComponents()) {
@@ -1026,15 +1020,8 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   private final class MyLayeredPane extends JBLayeredPane implements Scrollable {
-    /**
-     * All components allocate whole pane's area.
-     */
-    @Override
-    public void doLayout() {
-      for (int i = getComponentCount() - 1; i >= 0; i--) {
-        final Component component = getComponent(i);
-        component.setBounds(0, 0, getWidth(), getHeight());
-      }
+    private MyLayeredPane() {
+      setFullOverlayLayout(true); // All components allocate whole pane's area.
     }
 
     @Override
@@ -1101,6 +1088,11 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull final AnActionEvent e) {
       PropertyInspector inspector = DesignerToolWindowManager.getInstance(GuiEditor.this).getPropertyInspector();
       e.getPresentation().setEnabled(inspector != null && !inspector.isEditing());
@@ -1111,6 +1103,11 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
    * Allows "DEL" button to work through the standard mechanism
    */
   private final class MyDeleteProvider implements DeleteProvider {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     @Override
     public void deleteElement(@NotNull final DataContext dataContext) {
       if (!ensureEditable()) {

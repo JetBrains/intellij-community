@@ -20,7 +20,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,26 +33,8 @@ import java.util.Collection;
 public class DummyCompileContext implements CompileContext {
   private final Project myProject;
 
-  /**
-   * @deprecated use {@link #create(Project)} instead
-   */
-  @Deprecated
-  public DummyCompileContext() {
-    this(ProjectManager.getInstance().getDefaultProject());
-  }
-
   protected DummyCompileContext(Project project) {
     myProject = project;
-  }
-
-  /**
-   * @deprecated use {@link #create(Project)} instead
-   * @return
-   */
-  @Deprecated
-  @NotNull
-  public static DummyCompileContext getInstance() {
-    return new DummyCompileContext(ProjectManager.getInstance().getDefaultProject());
   }
 
   @NotNull

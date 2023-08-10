@@ -1,8 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class StoragePathMacros {
   /**
-   * {@link Project#getWorkspaceFile() Workspace} file key.
+   * {@link com.intellij.openapi.project.Project#getWorkspaceFile() Workspace} file key.
    * {@code 'Workspace file'} holds settings that are local to a particular environment and should not be shared with another
    * team members.
    */
@@ -29,7 +27,7 @@ public final class StoragePathMacros {
   public static final String CACHE_FILE = "$CACHE_FILE$";
 
   /**
-   * Applicable only for project-level.
+   * Same as {@link #WORKSPACE_FILE}, but stored per-product. Applicable only for project-level.
    */
   @NotNull
   public static final String PRODUCT_WORKSPACE_FILE = "$PRODUCT_WORKSPACE_FILE$";
@@ -40,7 +38,7 @@ public final class StoragePathMacros {
   /**
    * Application level non-roamable storage.
    */
-  public static final String NON_ROAMABLE_FILE = PathManager.DEFAULT_OPTIONS_FILE;
+  public static final String NON_ROAMABLE_FILE = "other.xml";
 
   private StoragePathMacros() {
   }

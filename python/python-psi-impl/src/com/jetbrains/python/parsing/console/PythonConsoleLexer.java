@@ -16,14 +16,25 @@
 package com.jetbrains.python.parsing.console;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.MergeFunction;
 import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
+import com.jetbrains.python.lexer.PythonLexerKind;
 import com.jetbrains.python.psi.PyElementType;
 
 import java.util.Map;
 
+import static com.jetbrains.python.PyTokenTypes.*;
+import static com.jetbrains.python.parsing.console.PyConsoleTokenTypes.MAGIC_COMMAND_LINE;
+import static com.jetbrains.python.parsing.console.PyConsoleTokenTypes.SHELL_COMMAND;
+
 public class PythonConsoleLexer extends PythonIndentingLexer {
+  public PythonConsoleLexer() {
+    super(PythonLexerKind.CONSOLE);
+  }
+
   private final static Map<String, PyElementType> SPECIAL_IPYTHON_SYMBOLS = ImmutableMap.of(
     "?", PyConsoleTokenTypes.QUESTION_MARK,
     "!", PyConsoleTokenTypes.PLING,
@@ -36,11 +47,36 @@ public class PythonConsoleLexer extends PythonIndentingLexer {
   @Override
   public IElementType getTokenType() {
     IElementType type = super.getTokenType();
-    if (type == PyTokenTypes.BAD_CHARACTER && isSpecialSymbols(getTokenText())) {
+    if (type == BAD_CHARACTER && isSpecialSymbols(getTokenText())) {
       type = getElementType(getTokenText());
     }
 
     return type;
+  }
+
+  @Override
+  public MergeFunction getMergeFunction() {
+    MergeFunction origMergeFunction = super.getMergeFunction();
+    return (type, originalLexer) -> {
+      if (type == BAD_CHARACTER && getElementType(getBaseTokenText()) == PyConsoleTokenTypes.PLING) {
+        collectFullLine(originalLexer);
+        return SHELL_COMMAND;
+      }
+      if (type == PERC &&
+          (getBaseTokenStart() == 0 || (!myTokenQueue.isEmpty() && Iterables.getLast(myTokenQueue).getType() == STATEMENT_BREAK))) {
+        collectFullLine(originalLexer);
+        return MAGIC_COMMAND_LINE;
+      }
+      return origMergeFunction.merge(type, originalLexer);
+    };
+  }
+
+  private static void collectFullLine(Lexer originalLexer) {
+    while (originalLexer.getTokenType() != LINE_BREAK &&
+           originalLexer.getTokenType() != STATEMENT_BREAK &&
+           originalLexer.getTokenType() != null) {
+      originalLexer.advance();
+    }
   }
 
   public static PyElementType getElementType(String token) {

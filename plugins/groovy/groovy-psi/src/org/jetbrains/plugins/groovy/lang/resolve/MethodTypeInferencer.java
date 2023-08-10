@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -28,9 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import java.util.List;
 
-/**
- * @author ven
- */
 public class MethodTypeInferencer implements Computable<PsiType> {
   private final GrStatementOwner myBlock;
 
@@ -42,7 +40,7 @@ public class MethodTypeInferencer implements Computable<PsiType> {
   @Nullable
   public PsiType compute() {
     List<GrStatement> returns = ControlFlowUtils.collectReturns(myBlock);
-    if (returns.isEmpty()) return PsiType.VOID;
+    if (returns.isEmpty()) return PsiTypes.voidType();
 
     PsiType result = null;
     PsiManager manager = myBlock.getManager();

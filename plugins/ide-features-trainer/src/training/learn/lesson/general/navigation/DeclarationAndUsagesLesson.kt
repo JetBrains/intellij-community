@@ -2,33 +2,41 @@
 package training.learn.lesson.general.navigation
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.find.FindBundle
+import com.intellij.find.FindSettings
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.testGuiFramework.framework.GuiTestUtil.shortcut
-import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.UIBundle
 import com.intellij.ui.table.JBTable
-import training.commands.kotlin.TaskRuntimeContext
-import training.learn.LearnBundle
+import training.dsl.*
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import training.learn.lesson.kimpl.closeAllFindTabs
+import training.learn.course.KLesson
+import training.util.isToStringContains
 
-abstract class DeclarationAndUsagesLesson(module: Module, lang: String)
-  : KLesson("Declaration and usages", LessonsBundle.message("declaration.and.usages.lesson.name"), module, lang) {
+abstract class DeclarationAndUsagesLesson
+  : KLesson("Declaration and usages", LessonsBundle.message("declaration.and.usages.lesson.name")) {
   abstract fun LessonContext.setInitialPosition()
-  abstract override val existedFile: String
+  abstract override val sampleFilePath: String
+  abstract val entityName: String
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {
+      sdkConfigurationTasks()
+
       setInitialPosition()
+
+      prepareRuntimeTask {
+        val focusManager = IdeFocusManager.getInstance(project)
+        if (focusManager.focusOwner != editor.contentComponent) {
+          focusManager.requestFocus(editor.contentComponent, true)
+        }
+      }
 
       task("GotoDeclaration") {
         text(LessonsBundle.message("declaration.and.usages.jump.to.declaration", action(it)))
@@ -39,24 +47,22 @@ abstract class DeclarationAndUsagesLesson(module: Module, lang: String)
         test { actions(it) }
       }
 
-      task("GotoDeclaration") {
-        text(LessonsBundle.message("declaration.and.usages.show.usages", action(it)))
-        trigger(it, { state() }) l@{ before, now ->
-          if (before == null || now == null) {
-            return@l false
-          }
-
-          val navigationElement = before.target.navigationElement
-          return@l navigationElement == now.target.navigationElement &&
-                   isInsidePsi(navigationElement, before.position) &&
-                   !isInsidePsi(navigationElement, now.position)
+      task("GotoDeclaration") { actionId ->
+        text(LessonsBundle.message("declaration.and.usages.show.usages", action(actionId)))
+        stateCheck l@{
+          val curEditor = editor
+          val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(curEditor.document) ?: return@l false
+          val offset = curEditor.caretModel.offset
+          val element = psiFile.findElementAt(offset) ?: return@l false
+          val parentExpr = getParentExpression(element) ?: return@l false
+          parentExpr.text.endsWith(entityName)
         }
         restoreIfModifiedOrMoved()
         test {
-          actions(it)
+          actions(actionId)
           ideFrame {
             waitComponent(JBTable::class.java, "ShowUsagesTable")
-            shortcut(Key.ENTER)
+            invokeActionViaShortcut("ENTER")
           }
         }
       }
@@ -67,8 +73,8 @@ abstract class DeclarationAndUsagesLesson(module: Module, lang: String)
         }
         text(LessonsBundle.message("declaration.and.usages.find.usages", action(it)))
 
-        triggerByUiComponentAndHighlight { ui: BaseLabel ->
-          ui.text?.contains(LearnBundle.message("usages.tab.name")) ?: false
+        triggerAndFullHighlight().component { ui: BaseLabel ->
+          ui.javaClass.simpleName == "ContentTabLabel" && ui.text.isToStringContains(entityName)
         }
         restoreIfModifiedOrMoved()
         test {
@@ -83,12 +89,14 @@ abstract class DeclarationAndUsagesLesson(module: Module, lang: String)
             previous.ui?.let { usagesTab -> jComponent(usagesTab).rightClick() }
           }
         }
-        triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionMenuItem ->
-          ui.text?.contains(pinTabText) ?: false
+        triggerAndBorderHighlight().component { ui: ActionMenuItem ->
+          ui.text.isToStringContains(pinTabText)
         }
         restoreByUi()
         text(LessonsBundle.message("declaration.and.usages.pin.motivation", strong(UIBundle.message("tool.window.name.find"))))
-        text(LessonsBundle.message("declaration.and.usages.right.click.tab", strong(LearnBundle.message("usages.tab.name"))))
+        text(LessonsBundle.message("declaration.and.usages.right.click.tab",
+                                   strong(FindBundle.message("find.usages.of.element.in.scope.panel.title",
+                                                             entityName, FindSettings.getInstance().defaultScopeName))))
       }
 
       task("PinToolwindowTab") {
@@ -102,8 +110,10 @@ abstract class DeclarationAndUsagesLesson(module: Module, lang: String)
         }
       }
 
-      actionTask("HideActiveWindow") {
-        LessonsBundle.message("declaration.and.usages.hide.view", action(it))
+      task("HideActiveWindow") {
+        text(LessonsBundle.message("declaration.and.usages.hide.view", action(it)))
+        checkToolWindowState("Find", false)
+        test { actions(it) }
       }
 
       actionTask("ActivateFindToolWindow") {
@@ -111,6 +121,8 @@ abstract class DeclarationAndUsagesLesson(module: Module, lang: String)
                               action(it), strong(UIBundle.message("tool.window.name.find")))
       }
     }
+
+  protected abstract fun getParentExpression(element: PsiElement): PsiElement?
 
   private fun TaskRuntimeContext.state(): MyInfo? {
     val flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED or TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
@@ -133,4 +145,9 @@ abstract class DeclarationAndUsagesLesson(module: Module, lang: String)
   private data class MyInfo(val target: PsiElement, val position: MyPosition)
 
   private data class MyPosition(val file: PsiFile, val offset: Int)
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("declaration.and.usages.help.link"),
+         LessonUtil.getHelpLink("navigating-through-the-source-code.html#go_to_declaration")),
+  )
 }

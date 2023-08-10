@@ -1,0 +1,24 @@
+{header}
+<title>{repo|escape}: files for changeset {node|short}</title>
+</head>
+<body>
+
+<div class="buttons">
+<a href="{url|urlescape}log/{symrev}{sessionvars%urlparameter}">changelog</a>
+<a href="{url|urlescape}shortlog/{symrev}{sessionvars%urlparameter}">shortlog</a>
+<a href="{url|urlescape}graph/{symrev}{sessionvars%urlparameter}">graph</a>
+<a href="{url|urlescape}tags{sessionvars%urlparameter}">tags</a>
+<a href="{url|urlescape}branches{sessionvars%urlparameter}">branches</a>
+<a href="{url|urlescape}rev/{symrev}{sessionvars%urlparameter}">changeset</a>
+{archives%archiveentry}
+<a href="{url|urlescape}help{sessionvars%urlparameter}">help</a>
+</div>
+
+<h2><a href="/">Mercurial</a> {pathdef%breadcrumb} / files for changeset <a href="{url|urlescape}rev/{node|short}">{node|short}</a>: {path|escape}</h2>
+
+<table cellpadding="0" cellspacing="0">
+{ifeq(path, up, '', updirentry)}
+{dentries%direntry}
+{fentries%fileentry}
+</table>
+{footer}

@@ -18,9 +18,6 @@ package com.intellij.ide.highlighter.custom.tokens;
 
 import com.intellij.psi.CustomHighlighterTokenType;
 
-/**
- * @author peter
- */
 public class PunctuationParser extends TokenParser {
   @Override
   public boolean hasToken(int position) {

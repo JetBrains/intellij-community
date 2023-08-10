@@ -1,4 +1,4 @@
-// "Add 'catch' clause(s)" "true"
+// "Add 'catch' clause(s)" "true-preview"
 import java.io.IOException;
 import java.util.function.Supplier;
 
@@ -15,7 +15,7 @@ class C {
         } catch (IOException e) {
           throw new RuntimeException();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
       };
     } catch( Exception e) {

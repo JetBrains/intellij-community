@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
@@ -22,8 +22,10 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +40,7 @@ import static com.intellij.compiler.options.CompilerOptionsFilter.Setting;
 public class CompilerUIConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance(CompilerUIConfigurable.class);
 
-  private static final Set<Setting> EXTERNAL_BUILD_SETTINGS = EnumSet.of(
+  static final Set<Setting> EXTERNAL_BUILD_SETTINGS = EnumSet.of(
     Setting.EXTERNAL_BUILD, Setting.AUTO_MAKE, Setting.PARALLEL_COMPILATION, Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE,
     Setting.HEAP_SIZE, Setting.COMPILER_VM_OPTIONS
   );
@@ -57,9 +59,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JCheckBox            myCbEnableAutomake;
   private JCheckBox            myCbParallelCompilation;
   private JTextField           mySharedHeapSizeField;
-  private JTextField           mySharedVMOptionsField;
+  private ExpandableTextField  mySharedVMOptionsField;
   private JTextField           myHeapSizeField;
-  private JTextField           myVMOptionsField;
+  private ExpandableTextField  myVMOptionsField;
   private JLabel               mySharedHeapSizeLabel;
   private JLabel               mySharedVMOptionsLabel;
   private JLabel               myHeapSizeLabel;
@@ -86,7 +88,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     DocumentAdapter updateStateListener = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        mySharedVMOptionsField.setEnabled(myVMOptionsField.getDocument().getLength() == 0);
+        mySharedVMOptionsField.setEditable(myVMOptionsField.getDocument().getLength() == 0);
+        mySharedVMOptionsField.setBackground(myVMOptionsField.getDocument().getLength() == 0 ?
+                                             UIUtil.getTextFieldBackground() : UIUtil.getTextFieldDisabledBackground());
         mySharedHeapSizeField.setEnabled(
           myHeapSizeField.getDocument().getLength() == 0 &&
           ContainerUtil.find(ParametersListUtil.parse(myVMOptionsField.getText()),
@@ -97,7 +101,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myVMOptionsField.getDocument().addDocumentListener(updateStateListener);
     myHeapSizeField.getDocument().addDocumentListener(updateStateListener);
     myConfigureAnnotations.addActionListener(e -> {
-      NullableNotNullDialog.showDialogWithInstrumentationOptions(myPanel);
+      NullableNotNullDialog.showDialogWithInstrumentationOptions(myProject);
       myCbAssertNotNull.setSelected(!NullableNotNullManager.getInstance(myProject).getInstrumentedNotNulls().isEmpty());
     });
   }
@@ -128,17 +132,17 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       }
     }
 
-    Map<Setting, Collection<JComponent>> controls = new HashMap<>();
-    controls.put(Setting.RESOURCE_PATTERNS, ContainerUtil.newArrayList(myResourcePatternsLabel, myResourcePatternsField, myPatternLegendLabel));
-    controls.put(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD, Collections.singleton(myCbClearOutputDirectory));
-    controls.put(Setting.ADD_NOT_NULL_ASSERTIONS, Collections.singleton(myAssertNotNullPanel));
-    controls.put(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR, Collections.singleton(myCbAutoShowFirstError));
-    controls.put(Setting.DISPLAY_NOTIFICATION_POPUP, Collections.singleton(myCbDisplayNotificationPopup));
-    controls.put(Setting.AUTO_MAKE, ContainerUtil.newArrayList(myCbEnableAutomake, myEnableAutomakeLegendLabel));
-    controls.put(Setting.PARALLEL_COMPILATION, ContainerUtil.newArrayList(myCbParallelCompilation, myParallelCompilationLegendLabel));
-    controls.put(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE, ContainerUtil.newArrayList(myCbRebuildOnDependencyChange));
-    controls.put(Setting.HEAP_SIZE, ContainerUtil.newArrayList(myHeapSizeLabel, myHeapSizeField, mySharedHeapSizeLabel, mySharedHeapSizeField));
-    controls.put(Setting.COMPILER_VM_OPTIONS, ContainerUtil.newArrayList(myVMOptionsLabel, myVMOptionsField, mySharedVMOptionsLabel, mySharedVMOptionsField));
+    Map<Setting, Collection<JComponent>> controls = Map.ofEntries(
+    Map.entry(Setting.RESOURCE_PATTERNS, List.of(myResourcePatternsLabel, myResourcePatternsField, myPatternLegendLabel)),
+    Map.entry(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD, Collections.singleton(myCbClearOutputDirectory)),
+    Map.entry(Setting.ADD_NOT_NULL_ASSERTIONS, Collections.singleton(myAssertNotNullPanel)),
+    Map.entry(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR, Collections.singleton(myCbAutoShowFirstError)),
+    Map.entry(Setting.DISPLAY_NOTIFICATION_POPUP, Collections.singleton(myCbDisplayNotificationPopup)),
+    Map.entry(Setting.AUTO_MAKE, List.of(myCbEnableAutomake, myEnableAutomakeLegendLabel)),
+    Map.entry(Setting.PARALLEL_COMPILATION, List.of(myCbParallelCompilation, myParallelCompilationLegendLabel)),
+    Map.entry(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE, List.of(myCbRebuildOnDependencyChange)),
+    Map.entry(Setting.HEAP_SIZE, List.of(myHeapSizeLabel, myHeapSizeField, mySharedHeapSizeLabel, mySharedHeapSizeField)),
+    Map.entry(Setting.COMPILER_VM_OPTIONS, List.of(myVMOptionsLabel, myVMOptionsField, mySharedVMOptionsLabel, mySharedVMOptionsField)));
 
     for (Setting setting : myDisabledSettings) {
       Collection<JComponent> components = controls.get(setting);
@@ -334,6 +338,10 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   @Override
   public JComponent createComponent() {
     return myPanel;
+  }
+
+  JCheckBox getBuildOnSaveCheckBox() {
+    return myCbEnableAutomake;
   }
 
   private void createUIComponents() {

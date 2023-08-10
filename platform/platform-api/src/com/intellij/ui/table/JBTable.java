@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -24,6 +23,7 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -64,7 +64,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private int myRowHeight = -1;
   private boolean myRowHeightIsExplicitlySet;
   private boolean myRowHeightIsComputing;
-  private boolean myUiUpdating = true;
+  private boolean myUiUpdating;
 
   private Integer myMinRowHeight;
   private boolean myStriped;
@@ -77,6 +77,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private TableCell rollOverCell;
 
   private final Color disabledForeground = JBColor.namedColor("Table.disabledForeground", JBColor.gray);
+  private boolean myShowLastHorizontalLine;
+
+  private ValueScaler myValueScaler;
 
   public JBTable() {
     this(new DefaultTableModel());
@@ -111,7 +114,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       }
     };
 
-    myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
+    putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, myEmptyText.getWrappedFragmentsIterable());
+
+    myExpandableItemsHandler = createExpandableItemsHandler();
 
     setFillsViewportHeight(true);
 
@@ -175,18 +180,23 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     myUiUpdating = false;
 
-    new MyCellEditorRemover();
+    new MyCellEditorRemover().setupListeners();
   }
 
   protected void onTableChanged(@NotNull TableModelEvent e) {
     if (!myRowHeightIsExplicitlySet) {
-      myRowHeight = -1;
+      setRowHeightWithScaler(-1);
     }
     if (e.getType() == TableModelEvent.DELETE && isEmpty() ||
         e.getType() == TableModelEvent.INSERT && !isEmpty() ||
         e.getType() == TableModelEvent.UPDATE) {
       UIUtil.repaintViewport(this);
     }
+  }
+
+  @NotNull
+  protected ExpandableItemsHandler<TableCell> createExpandableItemsHandler() {
+    return ExpandableItemsHandlerFactory.install(this);
   }
 
   public int getVisibleRowCount() {
@@ -214,8 +224,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     Dimension size = super.getPreferredSize();
     if (myAdditionalRowsCount == 0) return size;
     int additionalHeight = myAdditionalRowsCount * getRowHeight();
-    Container parent = getParent();
-    int visibleAreaHeight = parent instanceof JViewport ? parent.getSize().height : 0;
+    JViewport viewport = ComponentUtil.getViewport(this);
+    int visibleAreaHeight = viewport == null ? 0 : viewport.getHeight();
     if (visibleAreaHeight > 0) additionalHeight = Math.min(visibleAreaHeight - rowHeight, additionalHeight);
     return new Dimension(size.width, size.height + additionalHeight);
   }
@@ -230,7 +240,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (myRowHeight < 0) {
       try {
         myRowHeightIsComputing = true;
-        myRowHeight = calculateRowHeight();
+        setRowHeightWithScaler(calculateRowHeight());
       }
       finally {
         myRowHeightIsComputing = false;
@@ -284,11 +294,17 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @Override
   public void setRowHeight(int rowHeight) {
     if (!myUiUpdating) {
-      myRowHeight = rowHeight;
+      setRowHeightWithScaler(rowHeight);
       myRowHeightIsExplicitlySet = true;
     }
     // call super to clean rowModel
     super.setRowHeight(rowHeight);
+  }
+
+  private void setRowHeightWithScaler(int rowHeight) {
+    myRowHeight = rowHeight;
+    if (myRowHeight < 0) myValueScaler = null;
+    else myValueScaler = new ValueScaler(myRowHeight);
   }
 
   @Override
@@ -296,7 +312,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     myUiUpdating = true;
     try {
       super.updateUI();
+
       myMinRowHeight = null;
+      if (!myRowHeightIsExplicitlySet) setRowHeightWithScaler(-1);
+      else if (myValueScaler != null) myRowHeight = myValueScaler.get();
     }
     finally {
       myUiUpdating = false;
@@ -330,7 +349,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (!forceVisibleRowCount) {
       visibleRows = Math.min(modelRows, visibleRows);
     }
-    int fixedWidth = base != null && base.width > 0 ? base.width : JBUI.scale(100);
+    int fixedWidth = base != null && base.width > 0 ? base.width : getPreferredWidth(this);
     Dimension size;
     if (modelRows == 0) {
       int fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
@@ -353,6 +372,23 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return size;
   }
 
+  private static int getPreferredWidth(@NotNull JTable table) {
+    JTableHeader header = table.getTableHeader();
+    if (header != null) {
+      Dimension size = header.getPreferredSize();
+      if (size != null && size.width > 0) return size.width;
+    }
+    int width = 0;
+    TableColumnModel model = table.getColumnModel();
+    if (model != null) {
+      for (int i = 0; i < model.getColumnCount(); i++) {
+        TableColumn column = model.getColumn(i);
+        if (column != null) width += Math.max(column.getWidth(), column.getPreferredWidth());
+      }
+    }
+    return width > 0 ? width : JBUI.scale(100);
+  }
+
   public boolean isEmpty() {
     return getRowCount() == 0;
   }
@@ -361,8 +397,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public void setModel(@NotNull TableModel model) {
     super.setModel(model);
 
-    if (model instanceof SortableColumnModel) {
-      final SortableColumnModel sortableModel = (SortableColumnModel)model;
+    if (model instanceof SortableColumnModel sortableModel) {
       if (sortableModel.isSortable()) {
         final TableRowSorter<TableModel> rowSorter = createRowSorter(model);
         rowSorter.setSortsOnUpdates(isSortOnUpdates());
@@ -393,6 +428,14 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       GraphicsUtil.setupAntialiasing(g);
     }
     super.paintComponent(g);
+    if (!showHorizontalLines && myShowLastHorizontalLine && getRowCount() > 0 && getColumnCount() > 0) {
+      Color color = g.getColor();
+      Rectangle leftCell = getCellRect(getRowCount() - 1, 0, true);
+      Rectangle rightCell = getCellRect(getRowCount() - 1, getColumnCount() - 1, true);
+      g.setColor(getGridColor());
+      SwingUtilities2.drawHLine(g, leftCell.x, rightCell.x + rightCell.width, leftCell.y + leftCell.height);
+      g.setColor(color);
+    }
     getEmptyText().paint(this, g);
   }
 
@@ -490,7 +533,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       if (myBusyIcon != null) {
         remove(myBusyIcon);
-        Disposer.dispose(myBusyIcon);
+        myBusyIcon.dispose();
         myBusyIcon = null;
       }
     }
@@ -594,9 +637,25 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public void setShowVerticalLines(boolean showVerticalLines) {
     if (!showVerticalLines) {
       getColumnModel().setColumnMargin(0);
-      setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
+      setIntercellSpacing(new Dimension(0, getIntercellSpacing().height));
     }
     super.setShowVerticalLines(showVerticalLines);
+  }
+
+  @Override
+  public void setShowHorizontalLines(boolean showHorizontalLines) {
+    if (!showHorizontalLines) {
+      setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
+    }
+    super.setShowHorizontalLines(showHorizontalLines);
+  }
+
+  public void setShowLastHorizontalLine(boolean showLastHorizontalLine) {
+    myShowLastHorizontalLine = showLastHorizontalLine;
+  }
+
+  public boolean getShowLastHorizontalLine() {
+    return myShowLastHorizontalLine;
   }
 
   @Override
@@ -635,11 +694,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       add(editorComp);
       editorComp.validate();
 
-      if (surrendersFocusOnKeyStroke()) {
+      if (surrendersFocusOnKeyStroke() && !(editorComp instanceof AbstractButton)) {
         // this replaces focus request in JTable.processKeyBinding
-        final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(this);
-        focusManager.setTypeaheadEnabled(false);
-        focusManager.requestFocus(editorComp, true).doWhenProcessed(() -> focusManager.setTypeaheadEnabled(true));
+        IdeFocusManager.findInstanceByComponent(this).requestFocus(editorComp, true);
       }
 
       setCellEditor(editor);
@@ -679,11 +736,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
     Component result = super.prepareRenderer(renderer, row, column);
 
-    if (result instanceof JComponent && !isCellSelected(row, column)) {
-      JComponent component = (JComponent)result;
+    if (result instanceof JComponent component && !isCellSelected(row, column)) {
       if (isStriped()) {
         if (isTableDecorationSupported()) {
-          setRendererBackground(component, row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor());
+          setRendererBackground(component, row % 2 == 1 ? getBackground() : ObjectUtils.chooseNotNull(getStripeColor(), getBackground()));
         }
       }
       else {
@@ -712,6 +768,11 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return result;
   }
 
+  @Nullable
+  protected Color getStripeColor() {
+    return UIUtil.getDecoratedRowColor();
+  }
+
   /**
    * This method is intended to override default hovered background.
    *
@@ -726,7 +787,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     forEachComponent(container, child -> child.setBackground(background));
   }
 
-  private static void forEachComponent(@NotNull Container container, @NotNull Consumer<Component> consumer) {
+  private static void forEachComponent(@NotNull Container container, @NotNull Consumer<? super Component> consumer) {
     consumer.accept(container);
     for (Component component : container.getComponents()) {
       consumer.accept(component);
@@ -749,9 +810,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private final class MyCellEditorRemover implements PropertyChangeListener, Activatable {
     private boolean myIsActive = false;
 
-    MyCellEditorRemover() {
+    private void setupListeners() {
       addPropertyChangeListener("tableCellEditor", this);
-      new UiNotifyConnector(JBTable.this, this);
+      UiNotifyConnector.installOn(JBTable.this, this);
     }
 
     public void activate() {
@@ -810,7 +871,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         @Override
         public void run() {
           Component c = focusManager.getFocusOwner();
-          if (UIUtil.isMeaninglessFocusOwner(c)) {
+          if (ComponentUtil.isMeaninglessFocusOwner(c)) {
             // this allows using popup menus and menu bar without stopping cell editing
             return;
           }
@@ -864,7 +925,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   protected TableRowSorter<TableModel> createRowSorter(final TableModel model) {
     return new DefaultColumnInfoBasedRowSorter(model);
   }
@@ -971,8 +1032,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
-  protected class JBTableHeader extends JTableHeader {
-
+  protected class JBTableHeader extends JTableHeader implements ComponentWithExpandableItems<TableColumn> {
+    private final ExpandableItemsHandler<TableColumn> myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
     private final Color disabledForeground = JBColor.namedColor("TableHeader.disabledForeground", JBColor.gray);
 
     public JBTableHeader() {
@@ -996,12 +1057,11 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
                                                        int row,
                                                        int column) {
           Component delegate = renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-          if (!(delegate instanceof JLabel)) return delegate;
+          if (!(delegate instanceof JLabel cmp)) return delegate;
 
-          JLabel cmp = (JLabel)delegate;
           cmp.setHorizontalAlignment(SwingConstants.LEFT);
           Border border = cmp.getBorder();
-          JBEmptyBorder indent = JBUI.Borders.emptyLeft(8);
+          JBEmptyBorder indent = JBUI.Borders.empty(0, 8);
           border = JBUI.Borders.merge(border, indent, true);
           cmp.setBorder(border);
 
@@ -1011,6 +1071,16 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         }
       };
       setDefaultRenderer(newRenderer);
+    }
+
+    @Override
+    public @NotNull ExpandableItemsHandler<TableColumn> getExpandableItemsHandler() {
+      return myExpandableItemsHandler;
+    }
+
+    @Override
+    public void setExpandableItemsEnabled(boolean enabled) {
+      myExpandableItemsHandler.setEnabled(enabled);
     }
 
     @Override
@@ -1351,6 +1421,14 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
    * are created in all code paths.
    */
   protected class AccessibleJBTable extends AccessibleJTable {
+
+    @Override
+    public Accessible getAccessibleAt(int r, int c) {
+      if (r >= 0 && c < 0) c = 0;
+      if (r < 0 && c >= 0) r = 0;
+      return super.getAccessibleAt(r, c);
+    }
+
     @Override
     public Accessible getAccessibleChild(int i) {
       if (i < 0 || i >= getAccessibleChildrenCount()) {
@@ -1428,7 +1506,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           return c.getAccessibleContext();
         }
         // Note: don't call "super" as 1) we know for sure the cell is not accessible
-        // and 2) the super implementation is incorrect anyways
+        // and 2) the super implementation is incorrect anyway
         return null;
       }
     }
@@ -1487,9 +1565,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
       for (int row : rows) {
         if (myTable.editCellAt(row, myColumnIndex)) {
-          TableCellEditor editor = myTable.getCellEditor();
-          if (editor instanceof DefaultCellEditor) {
-            ObjectUtils.consumeIfCast(((DefaultCellEditor)editor).getComponent(), JCheckBox.class, box -> box.setSelected(!box.isSelected()));
+          if (myTable.getCellEditor() instanceof DefaultCellEditor defaultCellEditor &&
+              defaultCellEditor.getComponent() instanceof JCheckBox checkBox) {
+            checkBox.setSelected(!checkBox.isSelected());
           }
           stopEditing(myTable);
           e.consume();

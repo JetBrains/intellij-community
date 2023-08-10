@@ -1,0 +1,58 @@
+language: python
+sudo: false
+
+stages:
+  - name: test
+  - name: deploy to pypi
+    if: type = push AND tag =~ ^\d+\.\d+\.\d+
+
+jobs:
+  fast_finish: true
+  include:
+    - env: TOXENV=flake8
+
+    - env: TOXENV=pypy
+      python: pypy3
+
+    - env: TOXENV=pypy3
+      python: pypy3
+
+    - env: TOXENV=py27
+      python: "2.7"
+      after_success: &after_success
+        - pip install coveralls
+        - coveralls
+
+    - env: TOXENV=py33
+      python: "3.3"
+      after_success: *after_success
+
+    - env: TOXENV=py34
+      python: "3.4"
+      after_success: *after_success
+
+    - env: TOXENV=py35
+      python: "3.5"
+      after_success: *after_success
+
+    - env: TOXENV=py36
+      python: "3.6"
+      after_success: *after_success
+
+    - stage: deploy to pypi
+      install: pip install "setuptools >= 36.2.7"
+      script: skip
+      deploy:
+        provider: pypi
+        user: agronholm
+        password:
+          secure: QZ5qoxsrzns/b27adWNzh/OAJp86yRuxTyAFhvas/pbkiALdlT/+PGyhJBnpe+7WBTWnkIXl+YU//voJ0btf6DJcWwgRavMsy22LJJPkvvK+2DHiZ//DbpLbqKWc74y4moce29BCajFTm9JkVwcL2dgN9WuZt+Tay0efcP4sESLxo5lIGdlaQbu+9zVs61Z4Ov+yyEMO/j3LeKshNmUq+84CveQWMiXndXBfJX5TWwjahmUNDp5fMctJxr4fqgL4HCTVQhU79dPc00yDEGS45QkpP8JDrF1DQvU5Ht4COz/Lvzt11pwsAvws2ddclqBUCQsGaWvEWH5rxZTYx/MaMVdTctaUVNoT0wnFUsXXZkomQV0x8vb5RtRLDrKwXosXlSEqnRyiKhdgHGoswHvB7XF5BtQ5RmydRX77pwEGmFd3lqRif2bos0MEeOJA8Xds0TGOKO4PyokBnj/a0tjT2LEVxObmTT6grz5QPXi386AWgxbNl0Lp7cnkSpCqC1hEHVqrDlbtu7uvfGwwe/sYlEcQ07PNCvFoR2GXJawbeHmJRfz+KXjffrt2yCzc671FL1goUysHKdBCppvUInI8FCMQpVWEh5MmQJKB4IpDrhqfo0VS+NNZgZ8lFStq27Pmwqf1HUTGlaDi9VQ0Vo7tW5j4JbD/JvOQSb3j9DjUFps=
+        distributions: sdist bdist_wheel
+        on:
+          tags: true
+
+install:
+  - pip install "setuptools >= 36.2.7"
+  - pip install tox
+
+script: tox

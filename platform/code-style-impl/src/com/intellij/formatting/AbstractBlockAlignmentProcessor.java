@@ -28,7 +28,7 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
     if (indent == null) {
       return Result.TARGET_BLOCK_PROCESSED_NOT_ALIGNED;
     }
-    WhiteSpace whiteSpace = context.targetBlock.getWhiteSpace();
+    WhiteSpace whiteSpace = context.targetBlock().getWhiteSpace();
     if (whiteSpace.containsLineFeeds() && applyIndentToTheFirstBlockOnLine(indent, context)) {
       return Result.TARGET_BLOCK_ALIGNED;
     }
@@ -49,11 +49,11 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
       return Result.TARGET_BLOCK_ALIGNED;
     }
 
-    if (!context.alignment.isAllowBackwardShift()) {
+    if (!context.alignment().isAllowBackwardShift()) {
       return Result.TARGET_BLOCK_PROCESSED_NOT_ALIGNED;
     }
 
-    LeafBlockWrapper offsetResponsibleBlock = context.alignment.getOffsetRespBlockBefore(context.targetBlock);
+    LeafBlockWrapper offsetResponsibleBlock = context.alignment().getOffsetRespBlockBefore(context.targetBlock());
     if (offsetResponsibleBlock == null) {
       return Result.TARGET_BLOCK_PROCESSED_NOT_ALIGNED;
     }
@@ -63,7 +63,7 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
       return Result.UNABLE_TO_ALIGN_BACKWARD_BLOCK;
     }
 
-    if (!CoreFormatterUtil.allowBackwardAlignment(offsetResponsibleBlock, context.targetBlock, context.alignmentMappings)) {
+    if (!CoreFormatterUtil.allowBackwardAlignment(offsetResponsibleBlock, context.targetBlock(), context.alignmentMappings())) {
       return Result.UNABLE_TO_ALIGN_BACKWARD_BLOCK;
     }
 
@@ -75,8 +75,8 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
     // new 'i1' position. That changes 'i3' position as well that causes 'i1' to be shifted right one more time.
     // Hence, we have endless cycle here. We remember information about blocks that caused indentation change because of
     // alignment of blocks located before them and skip alignment every time we detect an endless cycle.
-    Set<LeafBlockWrapper> blocksCausedRealignment = context.backwardShiftedAlignedBlocks.get(offsetResponsibleBlock);
-    if (blocksCausedRealignment != null && blocksCausedRealignment.contains(context.targetBlock)) {
+    Set<LeafBlockWrapper> blocksCausedRealignment = context.backwardShiftedAlignedBlocks().get(offsetResponsibleBlock);
+    if (blocksCausedRealignment != null && blocksCausedRealignment.contains(context.targetBlock())) {
       return Result.RECURSION_DETECTED;
     }
 

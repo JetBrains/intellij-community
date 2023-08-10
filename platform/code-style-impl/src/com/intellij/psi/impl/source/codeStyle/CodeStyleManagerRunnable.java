@@ -43,8 +43,7 @@ abstract class CodeStyleManagerRunnable<T> {
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myCodeStyleManager.getProject());
     Document document = documentManager.getDocument(file);
-    if (document instanceof DocumentWindow) {
-      final DocumentWindow documentWindow = (DocumentWindow)document;
+    if (document instanceof DocumentWindow documentWindow) {
       final PsiFile topLevelFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
       if (!file.equals(topLevelFile)) {
         if (range != null) {
@@ -53,6 +52,7 @@ abstract class CodeStyleManagerRunnable<T> {
         if (offset != -1) {
           offset = documentWindow.injectedToHost(offset);
         }
+        // see `InjectedLanguageBlockBuilder` to configure injected blocks formatting in the host formatter
         return adjustResultForInjected(perform(topLevelFile, offset, range, defaultValue), documentWindow);
       }
     }
@@ -65,7 +65,7 @@ abstract class CodeStyleManagerRunnable<T> {
 
     PsiElement element = null;
     if (offset != -1) {
-      element = CodeStyleManagerImpl.findElementInTreeWithFormatterEnabled(file, offset);
+      element = CoreCodeStyleUtil.findElementInTreeWithFormatterEnabled(file, offset);
       if (element == null && offset != file.getTextLength()) {
         return defaultValue;
       }
@@ -80,7 +80,7 @@ abstract class CodeStyleManagerRunnable<T> {
       mySettings = CodeStyle.getSettings(file);
 
       mySignificantRange = offset != -1 ? getSignificantRange(file, offset) : null;
-      myIndentOptions = mySettings.getIndentOptionsByFile(file, mySignificantRange);
+      myIndentOptions = CodeFormatterFacade.getIndentOptions(mySettings, myCodeStyleManager.getProject(), file, document, mySignificantRange);
 
       FormattingMode currentMode = myCodeStyleManager.getCurrentFormattingMode();
       myCodeStyleManager.setCurrentFormattingMode(myMode);
@@ -143,7 +143,7 @@ abstract class CodeStyleManagerRunnable<T> {
 
   private static TextRange getSignificantRange(final PsiFile file, final int offset) {
     final ASTNode elementAtOffset =
-      SourceTreeToPsiMap.psiElementToTree(CodeStyleManagerImpl.findElementInTreeWithFormatterEnabled(file, offset));
+      SourceTreeToPsiMap.psiElementToTree(CoreCodeStyleUtil.findElementInTreeWithFormatterEnabled(file, offset));
     if (elementAtOffset == null) {
       int significantRangeStart = CharArrayUtil.shiftBackward(file.getText(), offset - 1, "\n\r\t ");
       return new TextRange(Math.max(significantRangeStart, 0), offset);

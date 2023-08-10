@@ -57,6 +57,11 @@ public class MultilineEditor extends JPanel {
             ActionUtil.copyFrom(this, id);
             registerCustomShortcutSet(getShortcutSet(), component);
         }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
     }
 
     public MultilineEditor(Document document, Project project, FileType fileType, EditorModel model) {
@@ -64,7 +69,7 @@ public class MultilineEditor extends JPanel {
         this.myModel = model;
         myEditorTextField = new EditorTextField(document, project, fileType) {
           @Override
-          protected EditorEx createEditor() {
+          protected @NotNull EditorEx createEditor() {
               final EditorEx editor = super.createEditor();
 
               editor.setHorizontalScrollbarVisible(true);

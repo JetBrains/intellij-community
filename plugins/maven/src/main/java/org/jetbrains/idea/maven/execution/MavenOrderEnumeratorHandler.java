@@ -18,15 +18,14 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEnumerationHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
 
   public static class FactoryImpl extends OrderEnumerationHandler.Factory {
     @Override
     public boolean isApplicable(@NotNull Module module) {
-      final MavenProjectsManager manager = MavenProjectsManager.getInstance(module.getProject());
-      return manager.isMavenizedModule(module);
+      return MavenUtil.isMavenizedModule(module);
     }
 
     @NotNull
@@ -50,6 +49,11 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
 
   @Override
   public boolean shouldProcessDependenciesRecursively() {
+    return false;
+  }
+
+  @Override
+  public boolean areResourceFilesFromSourceRootsCopiedToOutput() {
     return false;
   }
 }

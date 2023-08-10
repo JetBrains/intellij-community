@@ -27,9 +27,7 @@ import com.jetbrains.python.psi.PyElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class Parsing {
   protected ParsingContext myContext;
   protected SyntaxTreeBuilder myBuilder;
@@ -54,6 +52,10 @@ public class Parsing {
 
   public FunctionParsing getFunctionParser() {
     return getParsingContext().getFunctionParser();
+  }
+
+  public @NotNull PatternParsing getPatternParser() {
+    return getParsingContext().getPatternParser();
   }
 
   protected boolean checkMatches(final IElementType token, @NotNull @ParsingError String message) {

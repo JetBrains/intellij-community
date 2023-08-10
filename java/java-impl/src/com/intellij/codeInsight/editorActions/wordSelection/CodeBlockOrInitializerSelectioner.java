@@ -18,6 +18,7 @@ package com.intellij.codeInsight.editorActions.wordSelection;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -65,18 +66,14 @@ public class CodeBlockOrInitializerSelectioner extends BasicSelectioner {
     for (int i = 0; i < children.length; i++) {
       PsiElement child = children[i];
 
-      if (child instanceof PsiJavaToken) {
-        PsiJavaToken token = (PsiJavaToken)child;
+      if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACE)) {
+        int j = i + 1;
 
-        if (token.getTokenType() == JavaTokenType.LBRACE) {
-          int j = i + 1;
-
-          while (children[j] instanceof PsiWhiteSpace) {
-            j++;
-          }
-
-          start = children[j].getTextRange().getStartOffset();
+        while (children[j] instanceof PsiWhiteSpace) {
+          j++;
         }
+
+        start = children[j].getTextRange().getStartOffset();
       }
     }
     return start;
@@ -87,18 +84,14 @@ public class CodeBlockOrInitializerSelectioner extends BasicSelectioner {
     for (int i = 0; i < children.length; i++) {
       PsiElement child = children[i];
 
-      if (child instanceof PsiJavaToken) {
-        PsiJavaToken token = (PsiJavaToken)child;
+      if (PsiUtil.isJavaToken(child, JavaTokenType.RBRACE)) {
+        int j = i - 1;
 
-        if (token.getTokenType() == JavaTokenType.RBRACE) {
-          int j = i - 1;
-
-          while (children[j] instanceof PsiWhiteSpace && children[j].getTextRange().getStartOffset() > startOffset) {
-            j--;
-          }
-
-          end = children[j].getTextRange().getEndOffset();
+        while (children[j] instanceof PsiWhiteSpace && children[j].getTextRange().getStartOffset() > startOffset) {
+          j--;
         }
+
+        end = children[j].getTextRange().getEndOffset();
       }
     }
     return end;

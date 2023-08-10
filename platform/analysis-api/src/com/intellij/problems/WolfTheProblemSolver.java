@@ -1,23 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.problems;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 
 public abstract class WolfTheProblemSolver {
-  protected static final ExtensionPointName<Condition<VirtualFile>> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.problemFileHighlightFilter");
+  protected static final ExtensionPointName<Condition<VirtualFile>> FILTER_EP_NAME = new ExtensionPointName<>("com.intellij.problemFileHighlightFilter");
 
   public static WolfTheProblemSolver getInstance(Project project) {
-    return project.getComponent(WolfTheProblemSolver.class);
+    return project.getService(WolfTheProblemSolver.class);
+  }
+
+  public static @Nullable WolfTheProblemSolver getInstanceIfCreated(Project project) {
+    return project.getServiceIfCreated(WolfTheProblemSolver.class);
   }
 
   public abstract boolean isProblemFile(@NotNull VirtualFile virtualFile);
@@ -55,20 +58,14 @@ public abstract class WolfTheProblemSolver {
   /**
    * @deprecated use {@link com.intellij.problems.ProblemListener} directly
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract static class ProblemListener implements com.intellij.problems.ProblemListener {
     @Override
-    public void problemsAppeared(@NotNull VirtualFile file) {}
+    public void problemsAppeared(@NotNull VirtualFile file) { com.intellij.problems.ProblemListener.super.problemsAppeared(file); }
 
     @Override
-    public void problemsDisappeared(@NotNull VirtualFile file) {}
+    public void problemsDisappeared(@NotNull VirtualFile file) { com.intellij.problems.ProblemListener.super.problemsDisappeared(file); }
   }
-
-  /**
-   * @deprecated Use message bus {@link ProblemListener#TOPIC} instead.
-   */
-  @Deprecated
-  public abstract void addProblemListener(@NotNull ProblemListener listener, @NotNull Disposable parentDisposable);
 
   public abstract void queue(@NotNull VirtualFile suspiciousFile);
 }

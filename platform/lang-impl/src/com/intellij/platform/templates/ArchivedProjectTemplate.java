@@ -64,7 +64,7 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
   @NotNull
   @Override
   public ModuleBuilder createModuleBuilder() {
-    return new TemplateModuleBuilder(this, getModuleType(), getInputFields());
+    return new TemplateModuleBuilder(this, null, null);
   }
 
   @NotNull

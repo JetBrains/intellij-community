@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -9,7 +9,7 @@ import java.io.IOError;
 import java.io.UncheckedIOException;
 import java.nio.file.*;
 
-public class IoErrorText {
+public final class IoErrorText {
   /**
    * In general, NIO2 exception messages are pretty informative, but special cases may miss a description and only report a path.
    */

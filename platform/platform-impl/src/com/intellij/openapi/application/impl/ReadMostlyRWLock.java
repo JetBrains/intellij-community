@@ -1,26 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
-import com.intellij.openapi.application.AccessToken;
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -29,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
+
+import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.cancelActionsToBeCancelledBeforeWrite;
 
 /**
  * Read-Write lock optimised for mostly reads.
@@ -40,31 +31,40 @@ import java.util.concurrent.locks.LockSupport;
  * <br>
  * Based on paper <a href="http://mcg.cs.tau.ac.il/papers/ppopp2013-rwlocks.pdf">"NUMA-Aware Reader-Writer Locks" by Calciu, Dice, Lev, Luchangco, Marathe, Shavit.</a><br>
  * The elevator pitch explanation of the algorithm:<br>
- * Read lock: flips {@link Reader#readRequested} bit in its own thread local {@link Reader} structure and waits for writer to release its lock by checking {@link #writeRequested}.<br>
- * Write lock: sets global {@link #writeRequested} bit and waits for all readers (in global {@link #readers} list) to release their locks by checking {@link Reader#readRequested} for all readers.
+ * Read lock: flips {@link Reader#readRequested} bit in its own thread local {@link Reader} structure and waits for writer to release its lock by checking {@link #isWriteRequested()}.<br>
+ * Write lock: sets global {@link #isWriteRequested()} and waits for all readers (in global {@link #readers} list) to release their locks by checking {@link Reader#readRequested} for all readers.
  */
-class ReadMostlyRWLock {
-  final Thread writeThread;
-  @VisibleForTesting
-  volatile boolean writeRequested;  // this writer is requesting or obtained the write access
-  private final AtomicBoolean writeIntent = new AtomicBoolean(false);
-  private volatile boolean writeAcquired;   // this writer obtained the write lock
+final class ReadMostlyRWLock {
+
+  private static final byte INITIAL = 0;
+  private static final byte WRITE_REQUESTED = 1; // this writer is requesting or obtained the write access
+  private static final byte WRITE_ACQUIRED = 2; // this writer obtained the write lock
+
+  @NotNull final Thread writeThread;
+  private final AtomicBoolean writeIntent = new AtomicBoolean(!StartupUtil.isImplicitReadOnEDTDisabled());
   // All reader threads are registered here. Dead readers are garbage collected in writeUnlock().
   private final ConcurrentList<Reader> readers = ContainerUtil.createConcurrentList();
+
+  @MagicConstant(intValues = {INITIAL, WRITE_REQUESTED, WRITE_ACQUIRED})
+  private volatile byte writeState;
 
   private volatile boolean writeSuspended;
   // time stamp (nanoTime) of the last check for dead reader threads in writeUnlock().
   // (we have to reduce frequency of this "dead readers GC" activity because Thread.isAlive() turned out to be too expensive)
   private volatile long deadReadersGCStamp;
 
+  // This flag should be set by write thread only, but can be checked by any thread
+  // for example in startRead() method. Should be volatile.
+  private volatile boolean allowImplicitRead = true;
+
   ReadMostlyRWLock(@NotNull Thread writeThread) {
     this.writeThread = writeThread;
   }
 
   // Each reader thread has instance of this struct in its thread local. it's also added to global "readers" list.
-  private static class Reader {
+  static final class Reader {
     @NotNull private final Thread thread;   // its thread
-    private volatile boolean readRequested; // this reader is requesting or obtained read access. Written by reader thread only, read by writer.
+    volatile boolean readRequested; // this reader is requesting or obtained read access. Written by reader thread only, read by writer.
     private volatile boolean blocked;       // this reader is blocked waiting for the writer thread to release write lock. Written by reader thread only, read by writer.
     private boolean impatientReads; // true if should throw PCE on contented read lock
     Reader(@NotNull Thread readerThread) {
@@ -94,34 +94,65 @@ class ReadMostlyRWLock {
     return Thread.currentThread() == writeThread;
   }
 
+  boolean isReadAllowed() {
+    return isReadGrantedByStrongerLock() || isReadLockedByThisThread();
+  }
+
   boolean isReadLockedByThisThread() {
-    checkReadThreadAccess();
-    Reader status = R.get();
-    return status.readRequested;
-  }
-
-  boolean checkReadLockedByThisThreadAndNoPendingWrites() throws ApplicationUtil.CannotRunReadActionException {
-    checkReadThreadAccess();
-    Reader status = R.get();
-    throwIfImpatient(status);
-    return status.readRequested;
-  }
-
-  void readLock() {
-    checkReadThreadAccess();
-    Reader status = R.get();
-    throwIfImpatient(status);
-
-    if (tryReadLock(status)) {
-      return;
+    // If implicit read lock is disabled, don't check for write thread, check for true read lock
+    if (allowImplicitRead) {
+      checkReadThreadAccess();
     }
-    for (int iter = 0; ; iter++) {
-      if (tryReadLock(status)) {
-        break;
-      }
+    Reader status = R.get();
+    return status.readRequested;
+  }
 
-      ProgressManager.checkCanceled();
-      waitABit(status, iter);
+  // null means lock already acquired, Reader means lock acquired successfully
+  Reader startRead() {
+    if (isReadGrantedByStrongerLock())
+      return null;
+    Reader status = R.get();
+    throwIfImpatient(status);
+    if (status.readRequested) return null;
+
+    if (!tryReadLock(status)) {
+      ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
+      for (int iter = 0; ; iter++) {
+        if (tryReadLock(status)) {
+          break;
+        }
+        // do not run any checkCanceled hooks to avoid deadlock
+        if (progress != null && progress.isCanceled() && !ProgressManager.getInstance().isInNonCancelableSection()) {
+          throw new ProcessCanceledException();
+        }
+        waitABit(status, iter);
+      }
+    }
+    return status;
+  }
+
+  // return tristate: null means lock already acquired, Reader with readRequested==true means lock was successfully acquired, Reader with readRequested==false means lock was not acquired
+  Reader startTryRead() {
+    if (isReadGrantedByStrongerLock())
+      return null;
+    Reader status = R.get();
+    throwIfImpatient(status);
+    if (status.readRequested) return null;
+
+    tryReadLock(status);
+    return status;
+  }
+
+  void endRead(Reader status) {
+    // If implicit read lock is disabled, don't check for write thread, check for true read lock
+    if (allowImplicitRead) {
+      checkReadThreadAccess();
+    }
+    if (status != null) {
+      status.readRequested = false;
+    }
+    if (isWriteRequested()) {
+      LockSupport.unpark(writeThread);  // parked by writeLock()
     }
   }
 
@@ -143,7 +174,7 @@ class ReadMostlyRWLock {
 
   private void throwIfImpatient(Reader status) throws ApplicationUtil.CannotRunReadActionException {
     // when client explicitly runs in non-cancelable block do not throw from within nested read actions
-    if (status.impatientReads && writeRequested && !ProgressManager.getInstance().isInNonCancelableSection() && CoreProgressManager.ENABLED) {
+    if (status.impatientReads && isWriteRequested() && !ProgressManager.getInstance().isInNonCancelableSection()) {
       throw ApplicationUtil.CannotRunReadActionException.create();
     }
   }
@@ -159,7 +190,10 @@ class ReadMostlyRWLock {
    * if there is a pending write lock request.
    */
   void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
-    checkReadThreadAccess();
+    // If implicit read lock is disabled, don't check for write thread, check for true read lock
+    if (allowImplicitRead) {
+      checkReadThreadAccess();
+    }
     Reader status = R.get();
     boolean old = status.impatientReads;
     try {
@@ -171,26 +205,11 @@ class ReadMostlyRWLock {
     }
   }
 
-  void readUnlock() {
-    checkReadThreadAccess();
-    Reader status = R.get();
-    status.readRequested = false;
-    if (writeRequested) {
-      LockSupport.unpark(writeThread);  // parked by writeLock()
-    }
-  }
-
-  boolean tryReadLock() {
-    checkReadThreadAccess();
-    Reader status = R.get();
-    return tryReadLock(status);
-  }
-
   private boolean tryReadLock(Reader status) {
     throwIfImpatient(status);
-    if (!writeRequested) {
+    if (!isWriteRequested()) {
       status.readRequested = true;
-      if (!writeRequested) {
+      if (!isWriteRequested()) {
         return true;
       }
       status.readRequested = false;
@@ -201,11 +220,12 @@ class ReadMostlyRWLock {
   private static final int SPIN_TO_WAIT_FOR_LOCK = 100;
 
   void writeIntentLock() {
-    //checkWriteThreadAccess();
+    checkWriteThreadAccess();
+    checkReadIsNotHeld("Write Intent");
+
     for (int iter=0; ;iter++) {
       if (writeIntent.compareAndSet(false, true)) {
-        assert !writeRequested;
-        assert !writeAcquired;
+        assertInitialWriteState();
 
         break;
       }
@@ -222,8 +242,7 @@ class ReadMostlyRWLock {
   void writeIntentUnlock() {
     checkWriteThreadAccess();
 
-    assert !writeAcquired;
-    assert !writeRequested;
+    assertInitialWriteState();
 
     writeIntent.set(false);
     LockSupport.unpark(writeThread);
@@ -231,13 +250,13 @@ class ReadMostlyRWLock {
 
   void writeLock() {
     checkWriteThreadAccess();
-    assert !writeRequested;
-    assert !writeAcquired;
+    checkReadIsNotHeld("Write");
+    assertInitialWriteState();
 
-    writeRequested = true;
+    writeState = WRITE_REQUESTED;
     for (int iter=0; ;iter++) {
       if (areAllReadersIdle()) {
-        writeAcquired = true;
+        writeState = WRITE_ACQUIRED;
         break;
       }
 
@@ -250,23 +269,23 @@ class ReadMostlyRWLock {
     }
   }
 
-  AccessToken writeSuspend() {
+  void writeSuspendWhilePumpingIdeEventQueueHopingForTheBest(@NotNull Runnable runnable) {
     boolean prev = writeSuspended;
     writeSuspended = true;
     writeUnlock();
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        writeLock();
-        writeSuspended = prev;
-      }
-    };
+    try {
+      runnable.run();
+    }
+    finally {
+      cancelActionsToBeCancelledBeforeWrite();
+      writeLock();
+      writeSuspended = prev;
+    }
   }
 
   void writeUnlock() {
     checkWriteThreadAccess();
-    writeAcquired = false;
-    writeRequested = false;
+    writeState = INITIAL;
     List<Reader> dead;
     long current = System.nanoTime();
     if (current - deadReadersGCStamp > 1_000_000) {
@@ -295,6 +314,13 @@ class ReadMostlyRWLock {
     }
   }
 
+  private void checkReadIsNotHeld(String want) {
+    Reader r = R.get();
+    if (r.readRequested) {
+      throw new IllegalStateException("Current thread: " + Thread.currentThread() + " holds read lock and requests " + want);
+    }
+  }
+
   private void checkReadThreadAccess() {
     if (Thread.currentThread() == writeThread) {
       throw new IllegalStateException("Must not start read from the write thread: "+Thread.currentThread());
@@ -311,16 +337,51 @@ class ReadMostlyRWLock {
     return true;
   }
 
-  boolean isWriteLocked() {
-    return writeAcquired;
+  private void assertInitialWriteState() {
+    assert writeState == INITIAL;
+  }
+
+  @VisibleForTesting
+  boolean isWriteRequested() {
+    return writeState != INITIAL;
+  }
+
+  boolean isWriteAcquired() {
+    return writeState == WRITE_ACQUIRED;
+  }
+
+  boolean isWriteIntentLocked() {
+    return writeIntent.get();
+  }
+
+  boolean isImplicitReadAllowed() {
+    return allowImplicitRead;
+  }
+
+  void setAllowImplicitRead(boolean enable) {
+    allowImplicitRead = enable;
+  }
+
+  private boolean isReadGrantedByStrongerLock() {
+    // We have read lock, if:
+    // (a) This is write thread
+    //    AND
+    // (b.1) Implicit read lock is enabled
+    //   OR
+    // (b.2) Explicit write lock has been acquired.
+    //   OR
+    // (b.3) Explicit write intent lock has been acquired
+    return isWriteThread() && (isImplicitReadAllowed() || isWriteAcquired() || isWriteIntentLocked());
   }
 
   @Override
   public String toString() {
     return "ReadMostlyRWLock{" +
            "writeThread=" + writeThread +
-           ", writeRequested=" + writeRequested +
-           ", writeAcquired=" + writeAcquired +
+           ", writeRequested=" + isWriteRequested() +
+           ", writeIntended=" + writeIntent.get() +
+           ", writeAcquired=" + isWriteAcquired() +
+           ", implicitRead=" + allowImplicitRead +
            ", readers=" + readers +
            ", writeSuspended=" + writeSuspended +
            '}';

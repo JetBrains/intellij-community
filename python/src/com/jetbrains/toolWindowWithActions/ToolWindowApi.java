@@ -43,12 +43,13 @@ final class ToolWindowApi {
    * @param project    project
    * @param windowName name to be used as id (and shown to user)
    */
-  ToolWindowApi(@NotNull final Project project, @NotNull final String windowName) {
+  ToolWindowApi(@NotNull final Project project, @NotNull final String windowName, @NotNull Icon icon) {
 
     myToolWindowManager = ToolWindowManager.getInstance(project);
     ToolWindow window = myToolWindowManager.getToolWindow(windowName);
     if (window == null) {
       window = myToolWindowManager.registerToolWindow(windowName, true, ToolWindowAnchor.BOTTOM);
+      window.setIcon(icon);
     }
     window.activate(null);
 

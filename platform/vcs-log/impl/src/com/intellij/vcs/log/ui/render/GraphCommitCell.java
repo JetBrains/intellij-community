@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -9,9 +10,9 @@ import java.util.Collection;
 
 public class GraphCommitCell {
 
-  @NotNull private final String myText;
-  @NotNull private final Collection<VcsRef> myRefsToThisCommit;
-  @NotNull private final Collection<? extends PrintElement> myPrintElements;
+  private final @NotNull String myText;
+  private final @NotNull Collection<VcsRef> myRefsToThisCommit;
+  private final @NotNull Collection<? extends PrintElement> myPrintElements;
 
   public GraphCommitCell(@NotNull String text,
                          @NotNull Collection<VcsRef> refsToThisCommit,
@@ -21,19 +22,15 @@ public class GraphCommitCell {
     myPrintElements = printElements;
   }
 
-  @NotNull
-  @NlsSafe
-  public String getText() {
+  public @NotNull @NlsSafe String getText() {
     return myText;
   }
 
-  @NotNull
-  public Collection<VcsRef> getRefsToThisCommit() {
+  public @NotNull Collection<VcsRef> getRefsToThisCommit() {
     return myRefsToThisCommit;
   }
 
-  @NotNull
-  public Collection<? extends PrintElement> getPrintElements() {
+  public @NotNull Collection<? extends PrintElement> getPrintElements() {
     return myPrintElements;
   }
 

@@ -20,9 +20,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class RootDomParentStrategy implements DomParentStrategy {
   private final DomFileElementImpl myFileElement;
 
@@ -76,9 +73,7 @@ public class RootDomParentStrategy implements DomParentStrategy {
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof RootDomParentStrategy)) return false;
-
-    final RootDomParentStrategy that = (RootDomParentStrategy)o;
+    if (!(o instanceof RootDomParentStrategy that)) return false;
 
     if (!myFileElement.equals(that.myFileElement)) return false;
 

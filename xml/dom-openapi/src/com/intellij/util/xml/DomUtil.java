@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,8 +14,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,14 +26,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author peter
- */
+// used externally
+@ApiStatus.NonExtendable
 public class DomUtil {
   public static final TypeVariable<Class<GenericValue>> GENERIC_VALUE_TYPE_VARIABLE = GenericValue.class.getTypeParameters()[0];
   private static final Class<Void> DUMMY = void.class;
@@ -45,7 +45,30 @@ public class DomUtil {
     }
   );
   private static final ConcurrentMap<Couple<Type>, Class<?>> ourVariableSubstitutions =
-    ConcurrentFactoryMap.createMap(key -> ReflectionUtil.substituteGenericType(key.first, key.second));
+    ConcurrentFactoryMap.createMap(key -> doSubstituteGenericType(key.first, key.second));
+
+  private static @Nullable Class<?> doSubstituteGenericType(@NotNull Type genericType, @NotNull Type classType) {
+    if (genericType instanceof TypeVariable) {
+      final Class<?> aClass = ClassUtil.getRawType(classType);
+      final Type type = ClassUtil.resolveVariable((TypeVariable<?>)genericType, aClass, true);
+      if (type instanceof Class) {
+        return (Class<?>)type;
+      }
+      if (type instanceof ParameterizedType) {
+        return (Class<?>)((ParameterizedType)type).getRawType();
+      }
+      if (type instanceof TypeVariable && classType instanceof ParameterizedType) {
+        final int index = ArrayUtilRt.find(aClass.getTypeParameters(), type);
+        if (index >= 0) {
+          return ClassUtil.getRawType(((ParameterizedType)classType).getActualTypeArguments()[index]);
+        }
+      }
+    }
+    else {
+      return ClassUtil.getRawType(genericType);
+    }
+    return null;
+  }
 
   public static Class<?> extractParameterClassFromGenericType(Type type) {
     return getGenericValueParameter(type);
@@ -64,43 +87,6 @@ public class DomUtil {
       }
     }
     return null;
-  }
-
-  public static String @NotNull [] getElementNames(@NotNull Collection<? extends DomElement> list) {
-    ArrayList<String> result = new ArrayList<>(list.size());
-    if (list.size() > 0) {
-      for (DomElement element: list) {
-        String name = element.getGenericInfo().getElementName(element);
-        if (name != null) {
-          result.add(name);
-        }
-      }
-    }
-    return ArrayUtilRt.toStringArray(result);
-  }
-
-  @NotNull
-  public static List<XmlTag> getElementTags(@NotNull Collection<? extends DomElement> list) {
-    ArrayList<XmlTag> result = new ArrayList<>(list.size());
-    for (DomElement element: list) {
-      XmlTag tag = element.getXmlTag();
-      if (tag != null) {
-        result.add(tag);
-      }
-    }
-    return result;
-  }
-
-  public static XmlTag @NotNull [] getElementTags(DomElement @NotNull [] list) {
-    XmlTag[] result = new XmlTag[list.length];
-    int i = 0;
-    for (DomElement element: list) {
-      XmlTag tag = element.getXmlTag();
-      if (tag != null) {
-        result[i++] = tag;
-      }
-    }
-    return result;
   }
 
   @Nullable
@@ -156,8 +142,7 @@ public class DomUtil {
 
   @Nullable
   public static XmlElement getValueElement(GenericDomValue<?> domValue) {
-    if (domValue instanceof GenericAttributeValue) {
-      GenericAttributeValue<?> value = (GenericAttributeValue<?>)domValue;
+    if (domValue instanceof GenericAttributeValue<?> value) {
       XmlAttributeValue attributeValue = value.getXmlAttributeValue();
       return attributeValue == null ? value.getXmlAttribute() : attributeValue;
     } else {
@@ -227,8 +212,7 @@ public class DomUtil {
     }
 
     final XmlElement xmlElement = parent.getXmlElement();
-    if (xmlElement instanceof XmlTag) {
-      XmlTag tag = (XmlTag) xmlElement;
+    if (xmlElement instanceof XmlTag tag) {
       final DomManager domManager = parent.getManager();
       final SmartList<DomElement> result = new SmartList<>();
       if (attributes) {

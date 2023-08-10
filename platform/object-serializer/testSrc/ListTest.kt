@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -8,6 +8,7 @@ import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.SmartList
 import com.intellij.util.io.readChars
 import com.intellij.util.io.write
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -102,6 +103,16 @@ class ListTest {
   }
 
   @Test
+  fun `bean implementing Collection`() {
+    data class TestBean(private val backingList: List<String>) : Collection<String> by backingList
+
+    val bean = TestBean(listOf("1", "a"))
+    val deserializedBean = test(bean)
+    assertThat(deserializedBean).isEqualTo(bean)
+  }
+
+  @Ignore
+  @Test
   fun `parameterized array`() {
     class TestBean<T> {
       @JvmField
@@ -111,7 +122,8 @@ class ListTest {
     val bean = TestBean<String>()
     bean.list = arrayOf("bar")
     val deserializedBean = test(bean, defaultTestWriteConfiguration.copy(allowAnySubTypes = true))
-    assertThat(deserializedBean.list!!.first()).isEqualTo("bar")
+    val array = deserializedBean.list!!
+    assertThat(array.first()).isEqualTo("bar")
   }
 
   @Test
@@ -122,9 +134,9 @@ class ListTest {
     file.writeList(list, String::class.java, configuration = configuration)
     assertThat(file.file.readChars().trim()).isEqualTo(StringUtil.convertLineSeparators("""
     {
-      version: 42,
-      formatVersion: 3,
-      data: [
+      version:42,
+      formatVersion:3,
+      data:[
         foo,
         bar
       ]
@@ -132,7 +144,7 @@ class ListTest {
     """.trimIndent()))
     assertThat(file.readList(String::class.java)).isEqualTo(list)
 
-    // test that we can read regardless of compressed setting
+    // test that we can read regardless of the compressed setting
     VersionedFile(file.file, 42, isCompressed = true).writeList(list, String::class.java, configuration = configuration)
     assertThat(VersionedFile(file.file, 42, isCompressed = false).readList(String::class.java)).isEqualTo(list)
   }

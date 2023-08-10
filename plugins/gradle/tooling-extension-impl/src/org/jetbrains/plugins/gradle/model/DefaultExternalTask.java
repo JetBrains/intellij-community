@@ -15,7 +15,10 @@ public final class DefaultExternalTask implements ExternalTask {
   private String group;
   @Nullable
   private String type;
+
   private boolean isTest;
+
+  private boolean isJvmTest;
 
   public DefaultExternalTask() {
   }
@@ -27,6 +30,7 @@ public final class DefaultExternalTask implements ExternalTask {
     group = externalTask.getGroup();
     type = externalTask.getType();
     isTest = externalTask.isTest();
+    isJvmTest = externalTask.isJvmTest();
   }
 
   @NotNull
@@ -86,5 +90,14 @@ public final class DefaultExternalTask implements ExternalTask {
 
   public void setTest(boolean test) {
     isTest = test;
+  }
+
+  @Override
+  public boolean isJvmTest() {
+    return isJvmTest;
+  }
+
+  public void setJvmTest(boolean test) {
+    isJvmTest = test;
   }
 }

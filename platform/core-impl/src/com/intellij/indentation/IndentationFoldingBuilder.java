@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.indentation;
 
 import com.intellij.lang.ASTNode;
@@ -25,10 +25,10 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull ASTNode astNode, @NotNull Document document) {
     List<FoldingDescriptor> descriptors = new LinkedList<>();
     collectDescriptors(astNode, descriptors);
-    return descriptors.toArray(FoldingDescriptor.EMPTY);
+    return descriptors.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }
 
-  private void collectDescriptors(@NotNull final ASTNode node, @NotNull final List<? super FoldingDescriptor> descriptors) {
+  private void collectDescriptors(final @NotNull ASTNode node, final @NotNull List<? super FoldingDescriptor> descriptors) {
     final Queue<ASTNode> toProcess = new LinkedList<>();
     toProcess.add(node);
     while (!toProcess.isEmpty()) {
@@ -46,8 +46,7 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
   }
 
   @Override
-  @Nullable
-  public String getPlaceholderText(@NotNull final ASTNode node) {
+  public @Nullable String getPlaceholderText(final @NotNull ASTNode node) {
     final StringBuilder builder = new StringBuilder();
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
@@ -70,8 +69,7 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
     return builder.toString();
   }
 
-  @NotNull
-  private static String getFirstNonEmptyLine(@NotNull final String text) {
+  private static @NotNull String getFirstNonEmptyLine(final @NotNull String text) {
     int start = 0;
     int end;
     while ((end = text.indexOf('\n', start)) != -1 && start >= end) {

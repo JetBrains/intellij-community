@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
@@ -22,12 +8,16 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 /**
- * @author Eugene Zhuravlev
+ * Descriptor for serializing identifiers. Use {@link #INSTANCE}.
+ *
+ * @see CaseInsensitiveEnumeratorStringDescriptor
  */
 public class EnumeratorStringDescriptor implements KeyDescriptor<String> {
   private static class EnumeratorStringDescriptorImpl
     extends EnumeratorStringDescriptor
-    implements DifferentSerializableBytesImplyNonEqualityPolicy {}
+    implements DifferentSerializableBytesImplyNonEqualityPolicy {
+  }
+
   public static final EnumeratorStringDescriptor INSTANCE = new EnumeratorStringDescriptorImpl();
 
   @Override
@@ -41,12 +31,12 @@ public class EnumeratorStringDescriptor implements KeyDescriptor<String> {
   }
 
   @Override
-  public void save(@NotNull final DataOutput storage, @NotNull final String value) throws IOException {
+  public void save(final @NotNull DataOutput storage, final @NotNull String value) throws IOException {
     IOUtil.writeUTF(storage, value);
   }
 
   @Override
-  public String read(@NotNull final DataInput storage) throws IOException {
+  public String read(final @NotNull DataInput storage) throws IOException {
     return IOUtil.readUTF(storage);
   }
 }

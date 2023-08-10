@@ -79,11 +79,12 @@ public class XmlTextTest extends LightJavaCodeInsightTestCase {
 
   public void testXmlAttributeEscaperCalculatesDisplayToPhysicalCorrectlyInPresenseOfXmlEntities() {
     @Language("HTML")
-    String xml = "<!DOCTYPE html>\n" +
-                 "<html xmlns=\"http://www.w3.org/1999/xhtml\"\n" +
-                 "\txmlns:th=\"http://www.thymeleaf.org\">\n" +
-                 "  <td style=\"text-align: right\" th:utext=\"'&euro; ' + ${{item.netPrice}}\">XXX</td>\n" +
-                 "</html>";
+    String xml = """
+      <!DOCTYPE html>
+      <html xmlns="http://www.w3.org/1999/xhtml"
+      \txmlns:th="http://www.thymeleaf.org">
+        <td style="text-align: right" th:utext="'&euro; ' + ${{item.netPrice}}">XXX</td>
+      </html>""";
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("foo.xml", XmlFileType.INSTANCE, xml);
     XmlTag root = file.getDocument().getRootTag();
     XmlTag tag = root.findFirstSubTag("td");

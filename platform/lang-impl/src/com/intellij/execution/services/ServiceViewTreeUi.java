@@ -2,15 +2,17 @@
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.navigationToolbar.NavBarBorder;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,11 +27,13 @@ class ServiceViewTreeUi implements ServiceViewUi {
   private final Splitter mySplitter;
   private final JPanel myMasterPanel;
   private final JPanel myDetailsPanel;
+  private final JPanel myContentComponentPanel;
   private final JPanel myNavBarPanel;
   private final JBPanelWithEmptyText myMessagePanel = new JBPanelWithEmptyText().withEmptyText(
     ExecutionBundle.message("service.view.empty.selection.text"));
   private final Set<JComponent> myDetailsComponents = ContainerUtil.createWeakSet();
   private ActionToolbar myServiceActionToolbar;
+  private JComponent myServiceActionToolbarWrapper;
   private ActionToolbar myMasterActionToolbar;
 
   ServiceViewTreeUi(@NotNull ServiceViewState state) {
@@ -44,11 +48,20 @@ class ServiceViewTreeUi implements ServiceViewUi {
     myContentPanel.setContent(mySplitter);
 
     myMasterPanel = new JPanel(new BorderLayout());
+    DataManager.registerDataProvider(myMasterPanel, dataId -> {
+      if (ServiceViewActionUtils.IS_FROM_TREE_KEY.is(dataId)) {
+        return true;
+      }
+      return null;
+    });
+
     mySplitter.setFirstComponent(myMasterPanel);
 
     myDetailsPanel = new JPanel(new BorderLayout());
+    myContentComponentPanel = new JPanel(new BorderLayout());
     myMessagePanel.setFocusable(true);
-    myDetailsPanel.add(myMessagePanel, BorderLayout.CENTER);
+    myContentComponentPanel.add(myMessagePanel, BorderLayout.CENTER);
+    myDetailsPanel.add(myContentComponentPanel, BorderLayout.CENTER);
     mySplitter.setSecondComponent(myDetailsPanel);
 
     if (state.showServicesTree) {
@@ -60,7 +73,7 @@ class ServiceViewTreeUi implements ServiceViewUi {
 
     ComponentUtil
       .putClientProperty(myMainPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<? extends Component>)(Iterable<JComponent>)() ->
-        JBIterable.from(myDetailsComponents).append(myMessagePanel).filter(component -> myDetailsPanel != component.getParent()).iterator());
+        JBIterable.from(myDetailsComponents).append(myMessagePanel).filter(component -> myContentComponentPanel != component.getParent()).iterator());
   }
 
   @NotNull
@@ -76,8 +89,16 @@ class ServiceViewTreeUi implements ServiceViewUi {
 
   @Override
   public void setServiceToolbar(@NotNull ServiceViewActionProvider actionProvider) {
-    myServiceActionToolbar = actionProvider.createServiceToolbar(myMainPanel);
-    myContentPanel.setToolbar(actionProvider.wrapServiceToolbar(myServiceActionToolbar));
+    boolean inDetails = ServiceViewUIUtils.isNewServicesUIEnabled();
+    myServiceActionToolbar = actionProvider.createServiceToolbar(myMainPanel, inDetails);
+    if (inDetails) {
+      JComponent wrapper = ServiceViewUIUtils.wrapServicesAligned(myServiceActionToolbar);
+      myServiceActionToolbarWrapper = actionProvider.wrapServiceToolbar(wrapper, inDetails);
+      myDetailsPanel.add(myServiceActionToolbarWrapper, BorderLayout.NORTH);
+    }
+    else {
+      myContentPanel.setToolbar(actionProvider.wrapServiceToolbar(myServiceActionToolbar.getComponent(), inDetails));
+    }
   }
 
   @Override
@@ -85,9 +106,8 @@ class ServiceViewTreeUi implements ServiceViewUi {
     myMasterPanel.add(ScrollPaneFactory.createScrollPane(component, SideBorder.TOP), BorderLayout.CENTER);
 
     myMasterActionToolbar = actionProvider.createMasterComponentToolbar(component);
-    JComponent toolbarComponent = myMasterActionToolbar.getComponent();
-    toolbarComponent.setBorder(JBUI.Borders.empty(1, 0, 2, 0));
-    myMasterPanel.add(toolbarComponent, BorderLayout.NORTH);
+    myMasterPanel.add(ServiceViewUIUtils.wrapServicesAligned(myMasterActionToolbar), BorderLayout.NORTH);
+    myMasterPanel.updateUI();
 
     actionProvider.installPopupHandler(component);
   }
@@ -124,31 +144,44 @@ class ServiceViewTreeUi implements ServiceViewUi {
     if (component == null) {
       component = myMessagePanel;
     }
-    if (component.getParent() == myDetailsPanel) return;
+    if (component.getParent() != myContentComponentPanel) {
+      if (ServiceViewUIUtils.isNewServicesUIEnabled()) {
+        boolean visible = ServiceViewActionProvider.isActionToolBarRequired(component);
+        myServiceActionToolbarWrapper.setVisible(visible);
+        if (visible) {
+          myContentComponentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+        }
+        else {
+          myContentComponentPanel.setBorder(null);
+        }
+      }
 
-    myDetailsComponents.add(component);
-    myDetailsPanel.removeAll();
-    myDetailsPanel.add(component, BorderLayout.CENTER);
-    myDetailsPanel.revalidate();
-    myDetailsPanel.repaint();
-
+      myDetailsComponents.add(component);
+      myContentComponentPanel.removeAll();
+      myContentComponentPanel.add(component, BorderLayout.CENTER);
+      myContentComponentPanel.revalidate();
+      myContentComponentPanel.repaint();
+    }
     ActionToolbar serviceActionToolbar = myServiceActionToolbar;
     if (serviceActionToolbar != null) {
+      ((ActionToolbarImpl)serviceActionToolbar).clearPresentationCache();
       serviceActionToolbar.updateActionsImmediately();
     }
-    ActionToolbar masterActionToolbar = myMasterActionToolbar;
-    if (masterActionToolbar != null) {
-      masterActionToolbar.updateActionsImmediately();
-    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ActionToolbar masterActionToolbar = myMasterActionToolbar;
+      if (masterActionToolbar != null) {
+        masterActionToolbar.updateActionsImmediately();
+      }
+    });
   }
 
   @Nullable
   @Override
   public JComponent getDetailsComponent() {
-    int count = myDetailsPanel.getComponentCount();
+    int count = myContentComponentPanel.getComponentCount();
     if (count == 0) return null;
 
-    Component component = myDetailsPanel.getComponent(0);
+    Component component = myContentComponentPanel.getComponent(0);
     return component == myMessagePanel ? null : (JComponent)component;
   }
 }

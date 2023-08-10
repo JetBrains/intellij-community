@@ -1,18 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.dashboard.actions.ExecutorAction;
 import com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule.FolderDashboardGroup;
 import com.intellij.execution.dashboard.tree.GroupingNode;
 import com.intellij.execution.dashboard.tree.RunConfigurationNode;
 import com.intellij.execution.dashboard.tree.RunDashboardGroupImpl;
 import com.intellij.execution.dashboard.tree.RunDashboardStatusFilter;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.services.*;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -26,19 +27,24 @@ import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,38 +52,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-import static com.intellij.execution.dashboard.RunDashboardCustomizer.NODE_LINKS;
-import static com.intellij.execution.dashboard.RunDashboardManagerImpl.findActionToolbar;
-import static com.intellij.execution.dashboard.RunDashboardManagerImpl.getRunnerLayoutUi;
-import static com.intellij.openapi.actionSystem.ActionPlaces.RUN_DASHBOARD_POPUP;
-
-public class RunDashboardServiceViewContributor
+public final class RunDashboardServiceViewContributor
   implements ServiceViewGroupingContributor<RunDashboardServiceViewContributor.RunConfigurationContributor, GroupingNode> {
 
-  @NonNls private static final String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
+  @NonNls static final String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
 
-  private static final ServiceViewDescriptor CONTRIBUTOR_DESCRIPTOR =
-    new SimpleServiceViewDescriptor("Run Dashboard", AllIcons.Actions.Execute) {
-      @Override
-      public ActionGroup getToolbarActions() {
-        return RunDashboardServiceViewContributor.getToolbarActions(null);
-      }
-
-      @Override
-      public ActionGroup getPopupActions() {
-        return RunDashboardServiceViewContributor.getPopupActions();
-      }
-
-      @Override
-      public DataProvider getDataProvider() {
-        return id -> PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(id) ? new RunDashboardServiceViewDeleteProvider() : null;
-      }
-    };
+  private static final Key<DefaultActionGroup> MORE_ACTION_GROUP_KEY = Key.create("ServicesMoreActionGroup");
 
   @NotNull
   @Override
   public ServiceViewDescriptor getViewDescriptor(@NotNull Project project) {
-    return CONTRIBUTOR_DESCRIPTOR;
+    return new RunDashboardContributorViewDescriptor(project);
   }
 
   @NotNull
@@ -124,32 +109,31 @@ public class RunDashboardServiceViewContributor
     return new RunDashboardGroupViewDescriptor(node);
   }
 
-  @NotNull
-  private static JComponent createEmptyContent() {
-    JPanel panel = new JBPanelWithEmptyText().withEmptyText(ExecutionBundle.message("run.dashboard.not.started.configuration.message"));
-    panel.setFocusable(true);
-    return panel;
-  }
-
   private static ActionGroup getToolbarActions(@Nullable RunContentDescriptor descriptor) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
 
     List<AnAction> leftToolbarActions = null;
-    RunnerLayoutUiImpl ui = getRunnerLayoutUi(descriptor);
+    RunnerLayoutUiImpl ui = RunDashboardManagerImpl.getRunnerLayoutUi(descriptor);
     if (ui != null) {
       leftToolbarActions = ui.getActions();
     }
     else {
-      ActionToolbar toolbar = findActionToolbar(descriptor);
+      ActionToolbar toolbar = RunDashboardManagerImpl.findActionToolbar(descriptor);
       if (toolbar != null) {
         leftToolbarActions = toolbar.getActions();
       }
     }
 
     if (leftToolbarActions != null) {
+      if (leftToolbarActions.size() == 1 && leftToolbarActions.get(0) instanceof ActionGroup) {
+        leftToolbarActions = Arrays.asList(((ActionGroup)leftToolbarActions.get(0)).getChildren(null));
+      }
       for (AnAction action : leftToolbarActions) {
-        if (!(action instanceof StopAction) && !(action instanceof FakeRerunAction)) {
+        if (action instanceof MoreActionGroup) {
+          actionGroup.add(getServicesMoreActionGroup((MoreActionGroup)action, descriptor));
+        }
+        else if (!(action instanceof StopAction) && !(action instanceof FakeRerunAction) && !(action instanceof ExecutorAction)) {
           actionGroup.add(action);
         }
       }
@@ -157,12 +141,28 @@ public class RunDashboardServiceViewContributor
     return actionGroup;
   }
 
+  private static DefaultActionGroup getServicesMoreActionGroup(MoreActionGroup contentGroup, RunContentDescriptor descriptor) {
+    if (descriptor == null) return contentGroup;
+
+    Content content = descriptor.getAttachedContent();
+    if (content == null) return contentGroup;
+
+    DefaultActionGroup moreGroup = content.getUserData(MORE_ACTION_GROUP_KEY);
+    if (moreGroup == null) {
+      moreGroup = new MoreActionGroup(false);
+      content.putUserData(MORE_ACTION_GROUP_KEY, moreGroup);
+    }
+    moreGroup.removeAll();
+    moreGroup.addAll(contentGroup.getChildren(null));
+    return moreGroup;
+  }
+
   private static ActionGroup getPopupActions() {
     DefaultActionGroup actions = new DefaultActionGroup();
     ActionManager actionManager = ActionManager.getInstance();
     actions.add(actionManager.getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
     actions.addSeparator();
-    actions.add(actionManager.getAction(RUN_DASHBOARD_POPUP));
+    actions.add(actionManager.getAction(ActionPlaces.RUN_DASHBOARD_POPUP));
     return actions;
   }
 
@@ -171,10 +171,9 @@ public class RunDashboardServiceViewContributor
     Object object = event.getAttachedObject();
     if (!(object instanceof DataProvider)) return null;
 
-    Object data = ((DataProvider)object).getData(PlatformDataKeys.SELECTED_ITEMS.getName());
-    if (!(data instanceof Object[])) return null;
+    Object data = ((DataProvider)object).getData(PlatformCoreDataKeys.SELECTED_ITEMS.getName());
+    if (!(data instanceof Object[] items)) return null;
 
-    Object[] items = (Object[])data;
     if (items.length != 1) return null;
 
     RunDashboardRunConfigurationNode node = ObjectUtils.tryCast(items[0], RunDashboardRunConfigurationNode.class);
@@ -201,11 +200,27 @@ public class RunDashboardServiceViewContributor
 
     @Override
     public JComponent getContentComponent() {
+      RunDashboardManagerImpl manager = ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject()));
+      RunDashboardComponentWrapper wrapper = manager.getContentWrapper();
       Content content = myNode.getContent();
-      if (content == null) return createEmptyContent();
+      if (content == null) {
+        wrapper.setContent(manager.getEmptyContent());
+        wrapper.setContentId(null);
+      }
+      else {
+        ContentManager contentManager = content.getManager();
+        if (contentManager == null) return null;
 
-      ContentManager contentManager = content.getManager();
-      return contentManager == null ? null : contentManager.getComponent();
+        wrapper.setContent(contentManager.getComponent());
+        wrapper.setContentId(getContentId());
+      }
+      return wrapper;
+    }
+
+    private Integer getContentId() {
+      RunContentDescriptor descriptor = myNode.getDescriptor();
+      ProcessHandler handler = descriptor == null ? null : descriptor.getProcessHandler();
+      return handler == null ? null : handler.hashCode();
     }
 
     @NotNull
@@ -249,7 +264,7 @@ public class RunDashboardServiceViewContributor
     }
 
     @Override
-    public void onNodeSelected() {
+    public void onNodeSelected(List<Object> selectedServices) {
       Content content = myNode.getContent();
       if (content == null) return;
 
@@ -267,46 +282,50 @@ public class RunDashboardServiceViewContributor
     @Nullable
     @Override
     public Navigatable getNavigatable() {
-      for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
-        PsiElement psiElement = customizer.getPsiElement(myNode);
-        if (psiElement != null) {
-          return new Navigatable() {
-            @Override
-            public void navigate(boolean requestFocus) {
-              PsiNavigateUtil.navigate(psiElement, requestFocus);
-            }
-
-            @Override
-            public boolean canNavigate() {
-              return true;
-            }
-
-            @Override
-            public boolean canNavigateToSource() {
-              return true;
-            }
-          };
+      NullableLazyValue<PsiElement> value = NullableLazyValue.lazyNullable(() -> {
+        for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
+          PsiElement psiElement = customizer.getPsiElement(myNode);
+          if (psiElement != null) return psiElement;
         }
-      }
-      return null;
+        return null;
+      });
+      return new Navigatable() {
+        @Override
+        public void navigate(boolean requestFocus) {
+          PsiNavigateUtil.navigate(value.getValue(), requestFocus);
+        }
+
+        @Override
+        public boolean canNavigate() {
+          return value.getValue() != null;
+        }
+
+        @Override
+        public boolean canNavigateToSource() {
+          return canNavigate();
+        }
+      };
+
     }
 
     @Nullable
     @Override
     public VirtualFile getVirtualFile() {
-      for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
-        PsiElement psiElement = customizer.getPsiElement(myNode);
-        if (psiElement != null) {
-          return PsiUtilCore.getVirtualFile(psiElement);
+      return ReadAction.compute(() -> {
+        for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
+          PsiElement psiElement = customizer.getPsiElement(myNode);
+          if (psiElement != null) {
+            return PsiUtilCore.getVirtualFile(psiElement);
+          }
         }
-      }
-      return null;
+        return null;
+      });
     }
 
     @Nullable
     @Override
     public Object getPresentationTag(Object fragment) {
-      Map<Object, Object> links = myNode.getUserData(NODE_LINKS);
+      Map<Object, Object> links = myNode.getUserData(RunDashboardCustomizer.NODE_LINKS);
       return links == null ? null : links.get(fragment);
     }
 
@@ -355,7 +374,7 @@ public class RunDashboardServiceViewContributor
       try {
         node.getConfigurationSettings().setFolderName(myNode.getConfigurationSettings().getFolderName());
 
-        TObjectIntHashMap<RunnerAndConfigurationSettings> indices = new TObjectIntHashMap<>();
+        Object2IntMap<RunnerAndConfigurationSettings> indices = new Object2IntOpenHashMap<>();
         int i = 0;
         for (RunnerAndConfigurationSettings each : runManager.getAllSettings()) {
           if (each.equals(node.getConfigurationSettings())) continue;
@@ -374,7 +393,7 @@ public class RunDashboardServiceViewContributor
             indices.put(each, i++);
           }
         }
-        runManager.setOrder(Comparator.comparingInt(indices::get));
+        runManager.setOrder(Comparator.comparingInt(indices::getInt));
       }
       finally {
         runManager.fireEndUpdate();
@@ -446,6 +465,11 @@ public class RunDashboardServiceViewContributor
         };
       }
       return null;
+    }
+
+    @Override
+    public @Nullable JComponent getContentComponent() {
+      return ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getEmptyContent();
     }
 
     private static String getId(GroupingNode node) {
@@ -589,7 +613,63 @@ public class RunDashboardServiceViewContributor
         public Runnable getRemover() {
           return service instanceof RunDashboardNode ? ((RunDashboardNode)service).getRemover() : null;
         }
+
+        @Override
+        public @Nullable JComponent getContentComponent() {
+          return ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getEmptyContent();
+        }
       };
+    }
+  }
+
+  private static class RunDashboardContributorViewDescriptor extends SimpleServiceViewDescriptor
+    implements ServiceViewToolWindowDescriptor {
+    private final Project myProject;
+
+    RunDashboardContributorViewDescriptor(@NotNull Project project) {
+      super("Run Dashboard", AllIcons.Actions.Execute);
+      myProject = project;
+    }
+
+    @Override
+    public ActionGroup getToolbarActions() {
+      return RunDashboardServiceViewContributor.getToolbarActions(null);
+    }
+
+    @Override
+    public ActionGroup getPopupActions() {
+      return RunDashboardServiceViewContributor.getPopupActions();
+    }
+
+    @Override
+    public DataProvider getDataProvider() {
+      return id -> PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(id) ? new RunDashboardServiceViewDeleteProvider() : null;
+    }
+
+    @Override
+    public @Nullable JComponent getContentComponent() {
+      return ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myProject)).getEmptyContent();
+    }
+
+    @Override
+    public @NotNull String getToolWindowId() {
+      return getId();
+    }
+
+    @Override
+    public @NotNull Icon getToolWindowIcon() {
+      return AllIcons.Toolwindows.ToolWindowRun;
+    }
+
+    @Override
+    public @NotNull String getStripeTitle() {
+      @NlsSafe String title = getToolWindowId();
+      return title;
+    }
+
+    @Override
+    public boolean isExclusionAllowed() {
+      return false;
     }
   }
 }

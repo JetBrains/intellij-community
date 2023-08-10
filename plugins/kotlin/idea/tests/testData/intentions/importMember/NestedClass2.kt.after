@@ -1,0 +1,18 @@
+// INTENTION_TEXT: "Add import for 'ppp.Foo.Bar'"
+// WITH_STDLIB
+// AFTER-WARNING: Check for instance is always 'true'
+package ppp
+
+import ppp.Foo.Bar
+
+sealed class Foo {
+    class Bar(val x: Int) : Foo()
+}
+
+fun test() {
+    val foo = Bar(5)
+
+    when (foo) {
+        is <caret>Bar -> println(foo.x)
+    }
+}

@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.serialization.ClassUtil;
 import com.intellij.serialization.MutableAccessor;
+import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +20,7 @@ final class AttributeBinding extends BasePrimitiveBinding {
 
   @Override
   public @Nullable Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
-    Object value = myAccessor.read(o);
+    Object value = accessor.read(o);
     if (value == null) {
       return null;
     }
@@ -34,19 +36,39 @@ final class AttributeBinding extends BasePrimitiveBinding {
         return null;
       }
     }
-    return new org.jdom.Attribute(myName, stringValue);
+    return new org.jdom.Attribute(name, stringValue);
+  }
+
+  @Override
+  public @NotNull Object deserialize(@NotNull Object context, @NotNull Element element) {
+    return context;
+  }
+
+  @Override
+  public @NotNull Object deserialize(@NotNull Object context, @NotNull XmlElement element) {
+    return context;
   }
 
   void set(@NotNull Object host, @NotNull String value) {
-    if (myConverter == null) {
-      XmlSerializerImpl.doSet(host, value, myAccessor, valueClass);
+    if (converter == null) {
+      XmlSerializerImpl.doSet(host, value, accessor, valueClass);
     }
     else {
-      myAccessor.set(host, myConverter.fromString(value));
+      accessor.set(host, converter.fromString(value));
     }
   }
 
   public String toString() {
-    return "AttributeBinding[" + myName + "]";
+    return "AttributeBinding[" + name + "]";
+  }
+
+  @Override
+  public boolean isBoundTo(@NotNull Element element) {
+    return false;
+  }
+
+  @Override
+  public boolean isBoundTo(@NotNull XmlElement element) {
+    return false;
   }
 }

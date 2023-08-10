@@ -54,7 +54,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
     super(manager, null, context, table, null, language(context, JavaLanguage.INSTANCE));
   }
 
-  JavaDummyHolder(@NotNull PsiManager manager, final CharTable table) {
+  JavaDummyHolder(@NotNull PsiManager manager, CharTable table) {
     super(manager, null, null, table, null, JavaLanguage.INSTANCE);
   }
 
@@ -63,7 +63,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
     PsiElement context = getContext();
     String className = aClass.getName();
     if (context != null && className != null) {
-      final PsiClass resolved = JavaPsiFacade.getInstance(getProject()).getResolveHelper().resolveReferencedClass(className, context);
+      PsiClass resolved = JavaPsiFacade.getInstance(getProject()).getResolveHelper().resolveReferencedClass(className, context);
       if (resolved != null) {
         return getManager().areElementsEquivalent(aClass, resolved);
       }
@@ -94,8 +94,8 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
-      final NameHint nameHint = processor.getHint(NameHint.KEY);
-      final String name = nameHint != null ? nameHint.getName(state) : null;
+      NameHint nameHint = processor.getHint(NameHint.KEY);
+      String name = nameHint != null ? nameHint.getName(state) : null;
       //"pseudo-imports"
       if (name != null) {
         PsiClass imported = myPseudoImports.get(name);
@@ -121,13 +121,13 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
   public boolean isSamePackage(PsiElement other) {
     PsiElement myContext = getContext();
     if (other instanceof DummyHolder) {
-      final PsiElement otherContext = other.getContext();
+      PsiElement otherContext = other.getContext();
       if (myContext == null || otherContext == null) return myContext == otherContext;
       return JavaPsiFacade.getInstance(myContext.getProject()).arePackagesTheSame(myContext, otherContext);
     }
     if (other instanceof PsiJavaFile) {
       if (myContext != null) return JavaPsiFacade.getInstance(myContext.getProject()).arePackagesTheSame(myContext, other);
-      final String packageName = ((PsiJavaFile)other).getPackageName();
+      String packageName = ((PsiJavaFile)other).getPackageName();
       return packageName.isEmpty();
     }
     return false;
@@ -141,7 +141,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
 
 
   @Override
-  public void setOriginalFile(@NotNull final PsiFile originalFile) {
+  public void setOriginalFile(@NotNull PsiFile originalFile) {
     super.setOriginalFile(originalFile);
     putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, PsiUtil.getLanguageLevel(originalFile));
   }

@@ -2,29 +2,30 @@
 package com.intellij.grazie
 
 import com.intellij.grazie.jlanguage.Lang
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.grazie.remote.GrazieRemote
-import com.intellij.ide.plugins.CannotUnloadPluginException
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.delete
-import com.intellij.util.io.isFile
 import com.intellij.util.lang.UrlClassLoader
 import org.languagetool.Language
 import org.languagetool.Languages
 import java.io.InputStream
-import java.net.Authenticator
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import kotlin.io.path.isRegularFile
 
-internal object GrazieDynamic : DynamicPluginListener {
+@ApiStatus.Internal
+object GrazieDynamic : DynamicPluginListener {
   private val myDynClassLoaders by lazy {
     val oldFiles = Files.walk(dynamicFolder).filter { file ->
-      file.isFile() && Lang.values().all { it.remote.file.toAbsolutePath() != file.toAbsolutePath() }
+      file.isRegularFile() && Lang.values().all { it.remote.file.toAbsolutePath() != file.toAbsolutePath() }
     }
 
     for (file in oldFiles) {
@@ -37,22 +38,31 @@ internal object GrazieDynamic : DynamicPluginListener {
     hashSetOf<ClassLoader>(
       UrlClassLoader.build()
         .parent(GraziePlugin.classLoader)
-        .files(GrazieRemote.allAvailableLocally().map { it.remote.file }).get()
+        .files(collectValidLocalBundles()).get()
     )
+  }
+
+  private fun collectValidLocalBundles(): List<Path> {
+    val languages = GrazieRemote.allAvailableLocally()
+    val bundles = buildSet {
+      for (language in languages) {
+        val path = language.remote.file
+        if (language.isEnglish() || GrazieRemote.isValidBundleForLanguage(language, path)) {
+          add(path)
+        } else {
+          thisLogger().error("""
+          Skipping local bundle $path for language ${language.nativeName}. 
+          Failed to verify integrity of local language bundle before adding it to class loader.
+          """.trimIndent())
+        }
+      }
+    }
+    return bundles.toList()
   }
 
   override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
     if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
       myDynClassLoaders.clear()
-      Authenticator.setDefault(null)
-    }
-  }
-
-  override fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) {
-    if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
-      if (Lang.isAnyLanguageLoadExceptEnglish()) {
-        throw CannotUnloadPluginException("Grazie can unload only English language")
-      }
     }
   }
 
@@ -61,19 +71,30 @@ internal object GrazieDynamic : DynamicPluginListener {
   private val dynClassLoaders: Set<ClassLoader>
     get() = myDynClassLoaders.toSet()
 
+  private fun getDynamicFolderPath(): Path {
+    val customFolder = System.getProperty("grazie.dynamic.customJarDirectory")
+    if (customFolder != null) {
+      return Path.of(customFolder)
+    }
+    return Paths.get(PathManager.getSystemPath(), "grazie")
+  }
+
   val dynamicFolder: Path
     get() {
-      val result = Paths.get(PathManager.getSystemPath(), "grazie")
+      val result = getDynamicFolderPath()
       Files.createDirectories(result)
       return result
     }
 
   fun loadLang(lang: Lang): Language? {
-    lang.remote.langsClasses.forEach { className ->
+    for (className in lang.remote.langsClasses) {
       try {
         Languages.getOrAddLanguageByClassName("org.languagetool.language.$className")
-      } catch (e: RuntimeException) {
-        if (e.cause !is ClassNotFoundException) throw e
+      }
+      catch (e: RuntimeException) {
+        if (e.cause !is ClassNotFoundException) {
+          throw e
+        }
       }
     }
     return Languages.get().find { it::class.java.simpleName == lang.className }

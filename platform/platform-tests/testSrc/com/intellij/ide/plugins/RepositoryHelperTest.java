@@ -1,11 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.rules.TempDirectory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -16,11 +20,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static com.intellij.ide.plugins.BrokenPluginFileKt.updateBrokenPlugins;
+import static org.junit.Assert.*;
 
 public class RepositoryHelperTest {
-  @Rule public TempDirectory tempDir = new TempDirectory();
+  @Rule
+  public TempDirectory tempDir = new TempDirectory();
+
+  @ClassRule
+  public static final ApplicationRule appRule = new ApplicationRule();
 
   @Test(expected = IOException.class)
   public void testEmpty() throws IOException {
@@ -29,49 +37,49 @@ public class RepositoryHelperTest {
 
   @Test
   public void testWrongFormat() throws IOException {
-    List<IdeaPluginDescriptor> list = loadPlugins("<?xml version=\"1.0\" encoding=\"UTF-8\"?><root/>");
-    assertEquals(0, list.size());
+    List<PluginNode> list = loadPlugins("<?xml version=\"1.0\" encoding=\"UTF-8\"?><root/>");
+    assertTrue(list.isEmpty());
   }
 
   @Test(expected = IOException.class)
   public void testFormatErrors() throws IOException {
-    List<IdeaPluginDescriptor> list = loadPlugins("<?xml version=\"1.0\" encoding=\"UTF-8\"?><id>42</id>");
-    assertEquals(0, list.size());
+    List<PluginNode> list = loadPlugins("<?xml version=\"1.0\" encoding=\"UTF-8\"?><id>42</id>");
+    assertTrue(list.isEmpty());
   }
 
   @Test
   public void testFullFormat() throws IOException {
-    List<IdeaPluginDescriptor> list = loadPlugins(
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<plugin-repository>\n" +
-      "  <ff>\"J2EE\"</ff>\n" +
-      "  <category name=\"J2EE\">\n" +
-      "    <idea-plugin downloads=\"1\" size=\"1024\" date=\"1119060380000\" url=\"\">\n" +
-      "      <name>AWS Manager</name>\n" +
-      "      <id>com.jetbrains.ec2manager2</id>\n" +
-      "      <description>...</description>\n" +
-      "      <version>1.0.5</version>\n" +
-      "      <vendor email=\"michael.golubev@jetbrains.com\" url=\"http://www.jetbrains.com\">JetBrains</vendor>\n" +
-      "      <idea-version min=\"n/a\" max=\"n/a\" since-build=\"133.193\"/>\n" +
-      "      <change-notes>...</change-notes>\n" +
-      "      <depends>com.intellij.javaee</depends>\n" +
-      "      <rating>3.5</rating>\n" +
-      "      <download-url>plugin.zip</download-url>\n" +
-      "    </idea-plugin>\n" +
-      "    <idea-plugin downloads=\"6182\" size=\"131276\" date=\"1386612959000\" url=\"\">\n" +
-      "      <name>tc Server Support</name>\n" +
-      "      <id>com.intellij.tc.server</id>\n" +
-      "      <description>...</description>\n" +
-      "      <version>1.2</version>\n" +
-      "      <vendor email=\"\" url=\"http://www.jetbrains.com\">JetBrains</vendor>\n" +
-      "      <idea-version min=\"n/a\" max=\"n/a\" since-build=\"133.193\"/>\n" +
-      "      <change-notes>...</change-notes>\n" +
-      "      <depends>com.intellij.javaee</depends>\n" +
-      "      <rating>00</rating>\n" +
-      "      <downloadUrl>plugin.zip</downloadUrl>\n" +
-      "    </idea-plugin>" +
-      "  </category>\n" +
-      "</plugin-repository>");
+    List<PluginNode> list = loadPlugins(
+      """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <plugin-repository>
+          <ff>"J2EE"</ff>
+          <category name="J2EE">
+            <idea-plugin downloads="1" size="1024" date="1119060380000" url="">
+              <name>AWS Manager</name>
+              <id>com.jetbrains.ec2manager2</id>
+              <description>...</description>
+              <version>1.0.5</version>
+              <vendor email="michael.golubev@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
+              <idea-version min="n/a" max="n/a" since-build="133.193"/>
+              <change-notes>...</change-notes>
+              <depends>com.intellij.javaee</depends>
+              <rating>3.5</rating>
+              <download-url>plugin.zip</download-url>
+            </idea-plugin>
+            <idea-plugin downloads="6182" size="131276" date="1386612959000" url="">
+              <name>tc Server Support</name>
+              <id>com.intellij.tc.server</id>
+              <description>...</description>
+              <version>1.2</version>
+              <vendor email="" url="http://www.jetbrains.com">JetBrains</vendor>
+              <idea-version min="n/a" max="n/a" since-build="133.193"/>
+              <change-notes>...</change-notes>
+              <depends>com.intellij.javaee</depends>
+              <rating>00</rating>
+              <downloadUrl>plugin.zip</downloadUrl>
+            </idea-plugin>  </category>
+        </plugin-repository>""");
     assertEquals("Loaded plugins: " + StringUtil.join(list, IdeaPluginDescriptor::getName, ", "), 2, list.size());
   }
 
@@ -80,9 +88,9 @@ public class RepositoryHelperTest {
     String id = "BrokenPlugin";
     String version = "1.0";
     Map<PluginId, Set<String>> brokenPluginsMap = Collections.singletonMap(PluginId.getId(id), Collections.singleton(version));
-    PluginManagerCore.updateBrokenPlugins(brokenPluginsMap);
+    updateBrokenPlugins(brokenPluginsMap);
 
-    List<IdeaPluginDescriptor> list = loadPlugins(
+    List<PluginNode> list = loadPlugins(
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
       "<plugin-repository>\n" +
       "  <category name=\"Whatever\">\n" +
@@ -103,25 +111,28 @@ public class RepositoryHelperTest {
 
   @Test
   public void testSimpleFormat() throws IOException {
-    List<IdeaPluginDescriptor> list = loadPlugins(
-      "<plugins>\n" +
-      "  <plugin id=\"my.plugin.1\" url=\"plugin1.zip\" version=\"1.2.3\"/>\n" +
-      "  <plugin id=\"my.plugin.2\" url=\"plugin2.jar\" version=\"4.5.6\">\n" +
-      "    <description>...</description>\n" +
-      "    <depends>my.plugin.1</depends>\n" +
-      "  </plugin>\n" +
-      "  <plugin name=\"broken\"/>\n" +
-      "</plugins>");
+    List<PluginNode> list = loadPlugins(
+      """
+        <plugins>
+          <plugin id="my.plugin.1" url="plugin1.zip" version="1.2.3"/>
+          <plugin id="my.plugin.2" url="plugin2.jar" version="4.5.6">
+            <description>...</description>
+            <depends>my.plugin.1</depends>
+          </plugin>
+          <plugin name="broken"/>
+        </plugins>""");
     assertEquals(2, list.size());
   }
 
   @Test
   public void testSimpleFormatWithProlog() throws IOException {
-    List<IdeaPluginDescriptor> list = loadPlugins(
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<plugins>\n" +
-      "  <plugin id=\"org.jetbrains.kotlin\" url=\"kotlin-plugin-0.9.999.zip\" version=\"0.9.999\" />\n" +
-      "</plugins>\n");
+    List<PluginNode> list = loadPlugins(
+      """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <plugins>
+          <plugin id="org.jetbrains.kotlin" url="kotlin-plugin-0.9.999.zip" version="0.9.999" />
+        </plugins>
+        """);
     assertEquals(1, list.size());
   }
 
@@ -138,7 +149,7 @@ public class RepositoryHelperTest {
   @Test
   public void testListFiltering() throws IOException {
     int current = PluginManagerCore.getBuildNumber().getComponents()[0], next = current + 1;
-    List<IdeaPluginDescriptor> list = loadPlugins(
+    List<PluginNode> list = loadPlugins(
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
       "<plugin-repository>\n" +
       "  <category name=\"Test\">\n" +
@@ -162,11 +173,12 @@ public class RepositoryHelperTest {
     assertEquals("0.2", list.get(0).getVersion());
   }
 
-  private List<IdeaPluginDescriptor> loadPlugins(String data) throws IOException {
+  private @NotNull List<PluginNode> loadPlugins(@NotNull String data) throws IOException {
     return loadPlugins(data, null);
   }
 
-  private List<IdeaPluginDescriptor> loadPlugins(String data, BuildNumber build) throws IOException {
+  private @NotNull List<PluginNode> loadPlugins(@NotNull String data,
+                                                @Nullable BuildNumber build) throws IOException {
     File tempFile = tempDir.newFile("repo.xml");
     FileUtil.writeToFile(tempFile, data);
     String url = tempFile.toURI().toURL().toString();

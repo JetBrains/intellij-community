@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LossyEncodingInspection;
@@ -120,7 +121,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     assertEquals(StandardCharsets.UTF_8, virtualFile.getCharset());
 
     doHighlighting();
-    List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileLevelHighlights(getProject(), getFile());
+    List<HighlightInfo> infos = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerEx.getInstanceEx(getProject())).getFileLevelHighlights(getProject(), getFile());
     HighlightInfo info = assertOneElement(infos);
     assertEquals("The file was loaded in a wrong encoding: 'UTF-8'", info.getDescription());
   }
@@ -144,7 +145,7 @@ public class LossyEncodingTest extends DaemonAnalyzerTestCase {
     final Document document = Objects.requireNonNull(FileDocumentManager.getInstance().getDocument(virtualFile));
     assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(document));
     doHighlighting();
-    List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileLevelHighlights(getProject(), getFile());
+    List<HighlightInfo> infos = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerEx.getInstanceEx(getProject())).getFileLevelHighlights(getProject(), getFile());
     assertEmpty(infos);
   }
 }

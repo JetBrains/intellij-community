@@ -3,24 +3,21 @@ package com.intellij.java.ift.lesson.navigation
 
 import com.intellij.find.SearchTextArea
 import com.intellij.java.ift.JavaLessonsBundle
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.impl.actionButton
-import com.intellij.testGuiFramework.util.Key
 import com.intellij.usageView.UsageViewBundle
-import training.learn.interfaces.LessonType
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import training.learn.lesson.kimpl.parseLessonSample
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.parseLessonSample
+import training.learn.course.KLesson
+import training.learn.course.LessonType
 
-class JavaOccurrencesLesson(module: Module)
-  : KLesson("java.occurrences.lesson", JavaLessonsBundle.message("java.find.occurrences.lesson.name"), module, "JAVA") {
+class JavaOccurrencesLesson
+  : KLesson("java.occurrences.lesson", JavaLessonsBundle.message("java.find.occurrences.lesson.name")) {
 
-  override val lessonType = LessonType.SINGLE_EDITOR
+  override val lessonType: LessonType = LessonType.SINGLE_EDITOR
 
-  val sample = parseLessonSample("""
+  val sample: LessonSample = parseLessonSample("""
     class OccurrencesDemo {
         final private String DATABASE = "MyDataBase";
         DataEntry myPerson;
@@ -65,8 +62,8 @@ class JavaOccurrencesLesson(module: Module)
 
     task("Find") {
       text(JavaLessonsBundle.message("java.find.occurrences.invoke.find", code("cellphone"), action(it)))
-      triggerByUiComponentAndHighlight(false, false) { _: SearchTextArea -> true }
-      restoreIfModifiedOrMoved()
+      triggerUI().component { _: SearchTextArea -> true }
+      restoreIfModifiedOrMoved(sample)
       test { actions(it) }
     }
     task("FindNext") {
@@ -96,7 +93,7 @@ class JavaOccurrencesLesson(module: Module)
       stateCheck {
         editor.headerComponent == null
       }
-      test { GuiTestUtil.shortcut(Key.ESCAPE) }
+      test { invokeActionViaShortcut("ESCAPE") }
     }
     actionTask("FindNext") {
       JavaLessonsBundle.message("java.find.occurrences.find.next.in.editor", action(it))
@@ -106,4 +103,9 @@ class JavaOccurrencesLesson(module: Module)
     }
     text(JavaLessonsBundle.message("java.find.occurrences.note.about.cyclic", action("FindNext"), action("FindPrevious")))
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(JavaLessonsBundle.message("java.find.help.link"),
+         LessonUtil.getHelpLink("finding-and-replacing-text-in-file.html")),
+  )
 }

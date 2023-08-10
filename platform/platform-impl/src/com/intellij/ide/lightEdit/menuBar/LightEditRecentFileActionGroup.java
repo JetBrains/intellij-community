@@ -1,16 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.menuBar;
 
 import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.actions.RecentProjectsGroup;
-import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
-import com.intellij.ide.lightEdit.LightEditUtil;
+import com.intellij.ide.lightEdit.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.DumbAware;
@@ -33,7 +29,7 @@ import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.Re
 /**
  * @see RecentProjectsGroup
  */
-class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisibleActionGroup {
+final class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisibleActionGroup {
   LightEditRecentFileActionGroup() {
     super(ApplicationBundle.messagePointer("light.edit.action.recentFile.text"), true);
   }
@@ -61,7 +57,7 @@ class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, A
   private static List<VirtualFile> getRecentFiles(@NotNull Project project) {
     List<VirtualFile> historyFiles = EditorHistoryManager.getInstance(project).getFileList();
     LinkedHashSet<VirtualFile> result = new LinkedHashSet<>(historyFiles);
-    result.removeAll(Arrays.asList(FileEditorManager.getInstance(project).getOpenFiles()));
+    Arrays.asList(FileEditorManager.getInstance(project).getOpenFiles()).forEach(result::remove);
     return ContainerUtil.reverse(new ArrayList<>(result));
   }
 
@@ -80,8 +76,14 @@ class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, A
         presentation.setEnabled(false);
         return;
       }
-      presentation.setText(UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, myFile), false);
+      String path = UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, myFile);
+      presentation.setText(path);
       presentation.setIcon(IconUtil.getIcon(myFile, Iconable.ICON_FLAG_READ_STATUS, project));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -90,7 +92,7 @@ class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, A
       if (project != null) {
         LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, myFile);
         LightEditFeatureUsagesUtil.logFileOpen(project, RecentFiles);
-        new OpenFileDescriptor(project, myFile).navigate(true);
+        LightEditService.getInstance().openFile(myFile);
       }
     }
   }

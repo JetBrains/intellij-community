@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 
 internal class FilePredictionFeaturesValidator : CustomValidationRule() {
-  override fun acceptRuleId(ruleId: String?): Boolean = ruleId == "file_features"
+  override fun getRuleId(): String = "file_features"
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
     data.split(';', ',').forEach {

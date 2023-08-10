@@ -10,7 +10,7 @@ import java.awt.geom.Rectangle2D
 import javax.swing.JComponent
 
 // TODO replace arrow with specific icon when it's ready
-class MacIntelliJOptionButtonUI : DarculaOptionButtonUI() {
+internal class MacIntelliJOptionButtonUI : DarculaOptionButtonUI() {
   override val arrowButtonPreferredSize: Dimension get() = Dimension(scale(21), optionButton.preferredSize.height)
 
   override val showPopupXOffset: Int = scale(3)

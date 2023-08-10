@@ -1,0 +1,1 @@
+internal val x: Stri<caret>ng = ""

@@ -16,10 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.extract;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +74,7 @@ public class InitialInfo implements ExtractInfoHelper {
     }
 
     PsiType outputType = inferOutputType(outputInfos, statements, returnStatements, myHasReturnValue, stringPartInfo);
-    myOutputType = outputType != null ? outputType : PsiType.VOID;
+    myOutputType = outputType != null ? outputType : PsiTypes.voidType();
   }
 
   @Nullable
@@ -89,7 +86,7 @@ public class InitialInfo implements ExtractInfoHelper {
     if (stringPartInfo != null) {
       return stringPartInfo.getLiteral().getType();
     }
-    PsiType outputType = PsiType.VOID;
+    PsiType outputType = PsiTypes.voidType();
     if (outputInfos.length > 0) {
       if (outputInfos.length == 1) {
         outputType = outputInfos[0].getType();

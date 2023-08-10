@@ -1,6 +1,6 @@
 public class CustomContracts {
   public void testSubstring(String s) {
-    if (s.<warning descr="The call to 'substring' always fails as index is out of bounds">substring</warning>(-1).length() == 0) {
+    if (s.<warning descr="The call to 'substring' always fails as an argument is out of bounds">substring</warning>(-1).length() == 0) {
       System.out.println("Oops");
     }
   }

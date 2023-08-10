@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsContexts.ColumnName;
@@ -13,20 +13,20 @@ import java.util.Comparator;
 import java.util.Objects;
 
 public abstract class ColumnInfo<Item, Aspect> {
-  private @ColumnName String myName;
-  public static final ColumnInfo[] EMPTY_ARRAY = new ColumnInfo[0];
+  public static final ColumnInfo<?, ?>[] EMPTY_ARRAY = new ColumnInfo[0];
 
-  @SuppressWarnings("unchecked")
   public static <I, A> @NotNull ColumnInfo<I, A> @NotNull [] emptyArray() {
-    return EMPTY_ARRAY;
+    @SuppressWarnings("unchecked") ColumnInfo<I, A>[] array = (ColumnInfo<I, A>[])EMPTY_ARRAY;
+    return array;
   }
+
+  private @ColumnName String myName;
 
   public ColumnInfo(@ColumnName String name) {
     myName = name;
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return null;
   }
 
@@ -34,15 +34,13 @@ public abstract class ColumnInfo<Item, Aspect> {
     return getName();
   }
 
-  @Nullable
-  public abstract Aspect valueOf(Item item);
+  public abstract @Nullable Aspect valueOf(Item item);
 
   public final boolean isSortable() {
     return getComparator() != null;
   }
 
-  @Nullable
-  public Comparator<Item> getComparator(){
+  public @Nullable Comparator<Item> getComparator(){
     return null;
   }
 
@@ -58,16 +56,13 @@ public abstract class ColumnInfo<Item, Aspect> {
     return false;
   }
 
-  public void setValue(Item item, Aspect value) {
-
-  }
+  public void setValue(Item item, Aspect value) { }
 
   /**
    * @see com.intellij.util.ui.table.IconTableCellRenderer
    * @see com.intellij.util.ui.LocalPathCellEditor
    */
-  @Nullable
-  public TableCellRenderer getRenderer(Item item) {
+  public @Nullable TableCellRenderer getRenderer(Item item) {
     return null;
   }
 
@@ -75,21 +70,15 @@ public abstract class ColumnInfo<Item, Aspect> {
     return renderer;
   }
 
-  /**
-   * @see ComboBoxTableCellEditor
-   */
-  @Nullable
-  public TableCellEditor getEditor(Item item) {
+  public @Nullable TableCellEditor getEditor(Item item) {
     return null;
   }
 
-  @Nullable
-  public String getMaxStringValue() {
+  public @Nullable String getMaxStringValue() {
     return null;
   }
 
-  @Nullable
-  public String getPreferredStringValue() {
+  public @Nullable String getPreferredStringValue() {
     return null;
   }
 
@@ -105,23 +94,16 @@ public abstract class ColumnInfo<Item, Aspect> {
     myName = s;
   }
 
-  @Tooltip
-  @Nullable
-  public String getTooltipText() {
+  public @Tooltip @Nullable String getTooltipText() {
     return null;
   }
 
+  @Override
   public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    final ColumnInfo that = (ColumnInfo)o;
-
-    if (!Objects.equals(myName, that.myName)) return false;
-
-    return true;
+    return this == o || o != null && getClass() == o.getClass() && Objects.equals(myName, ((ColumnInfo<?, ?>)o).myName);
   }
 
+  @Override
   public int hashCode() {
     return myName != null ? myName.hashCode() : 0;
   }

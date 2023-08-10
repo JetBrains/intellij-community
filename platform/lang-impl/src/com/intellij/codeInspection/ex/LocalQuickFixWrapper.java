@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -11,7 +10,14 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.ModCommandExecutor.BatchExecutionResult;
+import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -24,12 +30,12 @@ import java.util.List;
 import java.util.Set;
 
 public class LocalQuickFixWrapper extends QuickFixAction {
-  private final QuickFix myFix;
+  private final QuickFix<?> myFix;
 
-  public LocalQuickFixWrapper(@NotNull QuickFix fix, @NotNull InspectionToolWrapper toolWrapper) {
-    super(fix.getName(), toolWrapper);
+  public LocalQuickFixWrapper(@NotNull QuickFix<?> fix, @NotNull InspectionToolWrapper<?,?> toolWrapper) {
+    super(StringUtil.escapeMnemonics(fix.getName()),
+          fix instanceof Iconable ? ((Iconable)fix).getIcon(0) : null, null, toolWrapper);
     myFix = fix;
-    setText(StringUtil.escapeMnemonics(myFix.getName()));
   }
 
   public void setText(@NotNull @NlsActions.ActionText String text) {
@@ -42,13 +48,13 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   }
 
   @NotNull
-  public QuickFix getFix() {
+  public QuickFix<?> getFix() {
     return myFix;
   }
 
   @Nullable
-  private QuickFix getWorkingQuickFix(QuickFix @NotNull [] fixes) {
-    for (QuickFix fix : fixes) {
+  private QuickFix<?> getWorkingQuickFix(QuickFix<?> @NotNull [] fixes) {
+    for (QuickFix<?> fix : fixes) {
       if (fix.getFamilyName().equals(myFix.getFamilyName())) {
         return fix;
       }
@@ -62,10 +68,10 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   }
 
   @Override
-  protected void applyFix(@NotNull final Project project,
-                          @NotNull final GlobalInspectionContextImpl context,
-                          final CommonProblemDescriptor @NotNull [] descriptors,
-                          @NotNull final Set<? super PsiElement> ignoredElements) {
+  protected @NotNull BatchExecutionResult applyFix(@NotNull final Project project,
+                                                   @NotNull final GlobalInspectionContextImpl context,
+                                                   final CommonProblemDescriptor @NotNull [] descriptors,
+                                                   @NotNull final Set<? super PsiElement> ignoredElements) {
     if (myFix instanceof BatchQuickFix) {
       final List<PsiElement> collectedElementsToIgnore = new ArrayList<>();
       final Runnable refreshViews = () -> {
@@ -82,20 +88,36 @@ public class LocalQuickFixWrapper extends QuickFixAction {
 
         removeElements(refElements, project, myToolWrapper);
       };
+      Runnable fixApplicator = () -> ((BatchQuickFix)myFix).applyFix(project, descriptors, collectedElementsToIgnore, refreshViews);
+      if (myFix.startInWriteAction()) {
+        WriteCommandAction.writeCommandAction(project).run(() -> {
+          fixApplicator.run();
+        });
+      } else {
+        fixApplicator.run();
+      }
 
-      ((BatchQuickFix)myFix).applyFix(project, descriptors, collectedElementsToIgnore, refreshViews);
-      return;
+      return ModCommandExecutor.Result.SUCCESS;
     }
 
     boolean restart = false;
+    BatchExecutionResult result = ModCommandExecutor.Result.NOTHING;
     for (CommonProblemDescriptor descriptor : descriptors) {
       if (descriptor == null) continue;
-      final QuickFix[] fixes = descriptor.getFixes();
+      final QuickFix<?>[] fixes = descriptor.getFixes();
       if (fixes != null) {
         final QuickFix fix = getWorkingQuickFix(fixes);
         if (fix != null) {
-          //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
-          fix.applyFix(project, descriptor);
+          if (fix instanceof ModCommandQuickFix modCommandQuickFix) {
+            ProblemDescriptor problemDescriptor = (ProblemDescriptor)descriptor;
+            ModCommand command = modCommandQuickFix.perform(project, problemDescriptor);
+            result = result.compose(
+              ModCommandExecutor.getInstance().executeInBatch(ActionContext.from(problemDescriptor), command));
+          } else {
+            //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
+            fix.applyFix(project, descriptor);
+            result = ModCommandExecutor.Result.SUCCESS;
+          }
           restart = true;
           ignore(ignoredElements, descriptor, true, context);
         }
@@ -104,6 +126,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     if (restart) {
       DaemonCodeAnalyzer.getInstance(project).restart();
     }
+    return result;
   }
 
   @Override
@@ -132,8 +155,8 @@ public class LocalQuickFixWrapper extends QuickFixAction {
       InspectionToolPresentation presentation = context.getPresentation(myToolWrapper);
       presentation.resolveProblem(descriptor);
     }
-    if (descriptor instanceof ProblemDescriptor) {
-      PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+    if (descriptor instanceof ProblemDescriptor problemDescriptor) {
+      PsiElement element = problemDescriptor.getPsiElement();
       if (element != null) {
         ignoredElements.add(element);
       }

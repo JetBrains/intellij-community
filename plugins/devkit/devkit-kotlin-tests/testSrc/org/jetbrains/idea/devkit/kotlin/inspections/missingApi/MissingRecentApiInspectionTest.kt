@@ -60,6 +60,9 @@ class MissingRecentApiInspectionTest : PluginModuleTestCase() {
     try {
       myFixture.disableInspections(inspection)
     }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
     finally {
       super.tearDown()
     }

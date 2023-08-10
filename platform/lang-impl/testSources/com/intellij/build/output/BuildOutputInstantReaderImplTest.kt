@@ -44,7 +44,7 @@ class BuildOutputInstantReaderImplTest {
     val predicate: (String) -> Boolean = { it.startsWith("[warning]") }
     val parser = BuildOutputParser { line, reader, c ->
       var next: String? = line
-      var count = 0;
+      var count = 0
       while (next != null) {
         if (predicate(next)) {
           count++
@@ -52,7 +52,7 @@ class BuildOutputInstantReaderImplTest {
         }
         else {
           if (count != 0) {
-            c.accept(MessageEventImpl(Object(), WARNING, "test", "lines of warns:" + count, null))
+            c.accept(MessageEventImpl(Object(), WARNING, "test", "lines of warns:$count", null))
             reader.pushBack()
             return@BuildOutputParser true
           }

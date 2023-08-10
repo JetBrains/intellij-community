@@ -3,9 +3,7 @@ package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,13 +19,20 @@ public interface BlockingMethodChecker {
    */
   boolean isApplicable(@NotNull PsiFile file);
 
-  boolean isMethodBlocking(@NotNull PsiMethod method);
+  default boolean isMethodBlocking(@NotNull MethodContext methodContext) {
+    return false;
+  }
+
+  default boolean isMethodNonBlocking(@NotNull MethodContext methodContext) {
+    return false;
+  }
 
   /**
-   * @param element PsiElement (e.g. method call or reference) which is located in "non-blocking" code fragment
-   * @return empty array if cannot provide any fixes, non-empty array of quick fixes otherwise
+   * @param elementContext metadata that provides info about inspection settings and PsiElement (e.g. method call or reference)
+   *                      which is located in "non-blocking" code fragment
+   * @return empty array if one cannot provide any fixes, non-empty array of quick fixes otherwise
    */
-  default LocalQuickFix @NotNull [] getQuickFixesFor(@NotNull PsiElement element) {
+  default LocalQuickFix @NotNull [] getQuickFixesFor(@NotNull ElementContext elementContext) {
     return LocalQuickFix.EMPTY_ARRAY;
   }
 }

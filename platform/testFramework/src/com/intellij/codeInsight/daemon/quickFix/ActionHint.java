@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -8,8 +9,10 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,12 +36,15 @@ public final class ActionHint {
   private final boolean myShouldPresent;
   private final ProblemHighlightType myHighlightType;
   private final boolean myExactMatch;
+  private final boolean myCheckPreview;
 
-  private ActionHint(@NotNull String expectedText, boolean shouldPresent, ProblemHighlightType severity, boolean exactMatch) {
+  private ActionHint(@NotNull String expectedText, boolean shouldPresent, ProblemHighlightType severity, boolean exactMatch,
+                     boolean preview) {
     myExpectedText = expectedText;
     myShouldPresent = shouldPresent;
     myHighlightType = severity;
     myExactMatch = exactMatch;
+    myCheckPreview = preview;
   }
 
   /**
@@ -65,8 +71,17 @@ public final class ActionHint {
   }
 
   /**
+   * @return true if generated intention preview should be checked
+   */
+  public boolean shouldCheckPreview() {
+    return myCheckPreview;
+  }
+
+  /**
    * Finds the action which matches this ActionHint and returns it or returns null
    * if this ActionHint asserts that no action should be present.
+   * <p>
+   * Use {@link #findAndCheck(Collection, ActionContext, Supplier)} if you expect multistep action 
    *
    * @param actions actions collection to search inside
    * @param infoSupplier a supplier which provides additional info which will be appended to exception message if check fails
@@ -75,39 +90,97 @@ public final class ActionHint {
    */
   @Nullable
   public IntentionAction findAndCheck(@NotNull Collection<? extends IntentionAction> actions, @NotNull Supplier<String> infoSupplier) {
-    IntentionAction result = actions.stream().filter(t -> {
-      String text = t.getText();
-      return myExactMatch ? text.equals(myExpectedText) : text.startsWith(myExpectedText);
-    }).findFirst().orElse(null);
+    return findAndCheck(actions, null, infoSupplier);
+  }
+
+  /**
+   * Finds the action which matches this ActionHint and returns it or returns null
+   * if this ActionHint asserts that no action should be present.
+   *
+   * @param actions      actions collection to search inside
+   * @param context      action execution context
+   * @param infoSupplier a supplier which provides additional info which will be appended to exception message if check fails
+   * @return the action or null
+   * @throws AssertionError if no action is found, but it should present, or if action is found, but it should not present.
+   */
+  @Nullable
+  public IntentionAction findAndCheck(@NotNull Collection<? extends IntentionAction> actions,
+                                      @Nullable ActionContext context,
+                                      @NotNull Supplier<String> infoSupplier) {
+    String[] steps = myExpectedText.split("\\|->");
+    CommonIntentionAction found = null;
+    Collection<? extends CommonIntentionAction> commonActions = actions;
+    for (int i = 0; i < steps.length; i++) {
+      String curStep = steps[i];
+      found = ContainerUtil.find(commonActions, t -> {
+        String text = getActionText(context, t);
+        return myExactMatch ? text.equals(curStep) : text.startsWith(curStep);
+      });
+      if (i == steps.length - 1) break;
+      if (context == null) {
+        fail("Action context is not supplied");
+      }
+      if (found == null) {
+        fail(exceptionHeader(curStep) + " not found\nAvailable actions: " +
+             commonActions.stream().map(act -> getActionText(context, act)).collect(Collectors.joining(", ", "[", "]\n")) +
+             infoSupplier.get());
+      }
+      ModCommandAction action = found.asModCommandAction();
+      if (action == null) {
+        fail(exceptionHeader(curStep) + " is not ModCommandAction");
+      }
+      ModCommand command = action.perform(context);
+      if (!(command instanceof ModChooseAction chooseAction)) {
+        fail(exceptionHeader(curStep) + " does not produce a chooser");
+        return null;
+      }
+      commonActions = chooseAction.actions();
+    }
+    IntentionAction result = found == null ? null : found.asIntention();
+    String lastStep = steps[steps.length - 1];
     if(myShouldPresent) {
       if(result == null) {
-        fail(exceptionHeader() + " not found\nAvailable actions: " +
+        fail(exceptionHeader(lastStep) + " not found\nAvailable actions: " +
              actions.stream().map(IntentionAction::getText).collect(Collectors.joining(", ", "[", "]\n")) +
              infoSupplier.get());
       }
       else if(myHighlightType != null) {
         result = IntentionActionDelegate.unwrap(result);
-        if(!(result instanceof QuickFixWrapper)) {
-          fail(exceptionHeader() + " is not a LocalQuickFix, but " + result.getClass().getName() +
+        ProblemHighlightType actualType = QuickFixWrapper.getHighlightType(result);
+        if (actualType == null) {
+          fail(exceptionHeader(lastStep) + " is not a LocalQuickFix, but " + result.getClass().getName() +
                "\nExpected LocalQuickFix with ProblemHighlightType=" + myHighlightType + "\n" +
                infoSupplier.get());
         }
-        ProblemHighlightType actualType = ((QuickFixWrapper)result).getHighlightType();
         if(actualType != myHighlightType) {
-          fail(exceptionHeader() + " has wrong ProblemHighlightType.\nExpected: " + myHighlightType +
+          fail(exceptionHeader(lastStep) + " has wrong ProblemHighlightType.\nExpected: " + myHighlightType +
                "\nActual: " + actualType + "\n" + infoSupplier.get());
         }
       }
     }
     else if(result != null) {
-      fail(exceptionHeader() + " is present, but should not\n" + infoSupplier.get());
+      fail(exceptionHeader(lastStep) + " is present, but should not\n" + infoSupplier.get());
     }
     return result;
   }
 
+  private static @NotNull String getActionText(@Nullable ActionContext context, CommonIntentionAction t) {
+    if (t instanceof IntentionAction intention) {
+      return intention.getText();
+    }
+    if (!(t instanceof ModCommandAction action)) {
+      throw new AssertionError("Action is not ModCommandAction: " + t);
+    }
+    if (context == null) {
+      fail("Context is not specified for ModCommandAction");
+    }
+    Presentation presentation = action.getPresentation(context);
+    return presentation == null ? "(unavailable) " + action.getFamilyName() : presentation.name();
+  }
+
   @NotNull
-  private String exceptionHeader() {
-    return "Action with " + (myExactMatch ? "text" : "prefix") + " '" + myExpectedText + "'";
+  private String exceptionHeader(String text) {
+    return "Action with " + (myExactMatch ? "text" : "prefix") + " '" + text + "'";
   }
 
   @NotNull
@@ -120,7 +193,7 @@ public final class ActionHint {
    * <p>
    * Currently the following syntax is supported:
    * </p>
-   * {@code // "quick-fix name or intention text" "true|false|<ProblemHighlightType>"}
+   * {@code // "quick-fix name or intention text[|->next step]" "true|false|<ProblemHighlightType>[-preview]"}
    * <p>
    * (replace // with line comment prefix in the corresponding language if necessary).
    * If {@link ProblemHighlightType} enum value is specified instead of true/false
@@ -146,14 +219,16 @@ public final class ActionHint {
 
     assert comment != null : commenter;
     // "quick fix action text to perform" "should be available"
-    Pattern pattern = Pattern.compile("^" + Pattern.quote(comment) + " \"(.*)\" \"(\\w+)\".*", Pattern.DOTALL);
+    Pattern pattern = Pattern.compile("^" + Pattern.quote(comment) + " \"(.*)\" \"(\\w+)(?:-(\\w+))?\".*", Pattern.DOTALL);
     Matcher matcher = pattern.matcher(contents);
     TestCase.assertTrue("No comment found in " + file.getVirtualFile(), matcher.matches());
     final String text = matcher.group(1);
     String state = matcher.group(2);
+    String previewState = matcher.group(3);
+    boolean checkPreview = "preview".equals(previewState);
     if(state.equals("true") || state.equals("false")) {
-      return new ActionHint(text, Boolean.parseBoolean(state), null, exactMatch);
+      return new ActionHint(text, Boolean.parseBoolean(state), null, exactMatch, checkPreview);
     }
-    return new ActionHint(text, true, ProblemHighlightType.valueOf(state), exactMatch);
+    return new ActionHint(text, true, ProblemHighlightType.valueOf(state), exactMatch, checkPreview);
   }
 }

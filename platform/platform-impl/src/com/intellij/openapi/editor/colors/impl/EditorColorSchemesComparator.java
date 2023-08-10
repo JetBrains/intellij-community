@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Comparator;
 
 import static com.intellij.openapi.editor.colors.EditorColorsScheme.DEFAULT_SCHEME_NAME;
@@ -38,6 +40,12 @@ public final class EditorColorSchemesComparator implements Comparator<EditorColo
         return DEFAULT_SCHEME_NAME.equals(original.getName()) ? DEFAULT_SCHEME : ONE_OF_DEFAULT_SCHEMES;
       }
       if (original instanceof ReadOnlyColorsScheme) {
+        if (ExperimentalUI.isNewUI()) {
+          int i = Arrays.asList("High contrast", "Dark", "Light").indexOf(original.getName());
+          if (i >= 0) {
+            return -(i + 1);
+          }
+        }
         return BUNDLED_SCHEME;
       }
     }

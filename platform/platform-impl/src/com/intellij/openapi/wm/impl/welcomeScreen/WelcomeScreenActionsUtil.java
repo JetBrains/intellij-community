@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.IdeBundle;
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Couple;
 import com.intellij.ui.AnActionButton;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -30,7 +31,7 @@ import java.util.function.Function;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getActionsButtonBackground;
 
-public class WelcomeScreenActionsUtil {
+public final class WelcomeScreenActionsUtil {
 
   public static void collectAllActions(@NotNull DefaultActionGroup group, @NotNull ActionGroup actionGroup) {
     for (AnAction action : actionGroup.getChildren(null)) {
@@ -75,6 +76,11 @@ public class WelcomeScreenActionsUtil {
       UIUtil.setEnabled(myButton, e.getPresentation().isEnabled(), true);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     public static ToolbarTextButtonWrapper wrapAsTextButton(@NotNull AnAction action) {
       return new ToolbarTextButtonWrapper(Collections.singletonList(action));
     }
@@ -93,7 +99,7 @@ public class WelcomeScreenActionsUtil {
   static void performAnActionForComponent(@NotNull AnAction action, @NotNull Component component) {
     DataContext context = ActionToolbar.getDataContextFor(component);
     AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, context);
-    ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent, context);
+    ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
   }
 
   static class LargeIconWithTextWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
@@ -108,7 +114,15 @@ public class WelcomeScreenActionsUtil {
       myIconButton.setHorizontalAlignment(SwingConstants.CENTER);
       myIconButton.setOpaque(false);
       myIconButton.setPreferredSize(new JBDimension(60, 60));
-      myIconButton.putClientProperty("JButton.focusedBackgroundColor", getActionsButtonBackground(true));
+
+      if (ExperimentalUI.isNewUI()) {
+        myIconButton.putClientProperty("JButton.focusedBackgroundColor", getActionsButtonBackground(false));
+        myIconButton.putClientProperty("JButton.outlineFocusColor", WelcomeScreenUIManager.getActionsButtonSelectionBorder());
+        myIconButton.putClientProperty("JButton.outlineFocusSize", JBUI.scale(2));
+      }
+      else {
+        myIconButton.putClientProperty("JButton.focusedBackgroundColor", getActionsButtonBackground(true));
+      }
       myIconButton.putClientProperty("JButton.backgroundColor", getActionsButtonBackground(false));
 
       myIconButton.addFocusListener(new FocusListener() {
@@ -124,21 +138,25 @@ public class WelcomeScreenActionsUtil {
       });
       myIconButton.addActionListener(l -> performAnActionForComponent(action, myIconButton));
       Wrapper iconWrapper = new Wrapper(myIconButton);
+      iconWrapper.setFocusable(false);
       iconWrapper.setBorder(JBUI.Borders.empty(0, 30));
 
       myLabel = new JBLabel(Objects.requireNonNull(getTemplateText()), SwingConstants.CENTER);
       myLabel.setOpaque(false);
 
       myPanel = new NonOpaquePanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, JBUI.scale(12), false, false));
+      myPanel.setFocusable(false);
       myPanel.add(iconWrapper);
       myPanel.add(myLabel);
       myIconButton.getAccessibleContext().setAccessibleName(myLabel.getText());
     }
 
-    void updateIconBackground(boolean selected) {
-      myIconButton.setSelected(selected);
-      myIconButton.putClientProperty("JButton.backgroundColor", getActionsButtonBackground(selected));
-      myIconButton.repaint();
+    private void updateIconBackground(boolean selected) {
+      if (!ExperimentalUI.isNewUI()) {
+        myIconButton.setSelected(selected);
+        myIconButton.putClientProperty("JButton.backgroundColor", getActionsButtonBackground(selected));
+        myIconButton.repaint();
+      }
     }
 
     @Override
@@ -155,6 +173,11 @@ public class WelcomeScreenActionsUtil {
       UIUtil.setEnabled(myPanel, e.getPresentation().isEnabled(), true);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     public static @NotNull LargeIconWithTextWrapper wrapAsBigIconWithText(AnAction action) {
       return new LargeIconWithTextWrapper(action);
     }
@@ -168,12 +191,8 @@ public class WelcomeScreenActionsUtil {
     AnAction[] actions = group.getChildren(null);
 
     DefaultActionGroup main = new DefaultActionGroup();
-    DefaultActionGroup more = new DefaultActionGroup(IdeBundle.message("welcome.screen.more.actions.link.text"), true) {
-      @Override
-      public boolean hideIfNoVisibleChildren() {
-        return true;
-      }
-    };
+    DefaultActionGroup more = new DefaultActionGroup(IdeBundle.message("welcome.screen.more.actions.link.text"), true);
+    more.getTemplatePresentation().setHideGroupIfEmpty(true);
     for (AnAction child : actions) {
       if (!isActionAvailable(child)) continue;
       if (main.getChildrenCount() < mainButtonsNum) {

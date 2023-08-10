@@ -58,11 +58,12 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   /**
    * Launch process, setup history, actions etc.
    *
-   * @throws ExecutionException
    */
   public void initAndRun() throws ExecutionException {
     // Create Server process
     final Process process = createProcess();
+    if (process == null) return;
+
     UIUtil.invokeLaterIfNeeded(() -> {
       // Init console view
       myConsoleView = createConsoleView();

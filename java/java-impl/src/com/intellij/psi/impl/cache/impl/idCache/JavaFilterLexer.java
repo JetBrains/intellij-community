@@ -25,9 +25,6 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
-/**
- * @author ven
- */
 public class JavaFilterLexer extends BaseFilterLexer {
   private static final TokenSet ourSkipWordsScanSet = TokenSet.orSet(
     TokenSet.create(

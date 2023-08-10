@@ -1,27 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
-import com.intellij.diff.DiffContentFactoryImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
 import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader
 import com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader.ContentInfo
 import com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader.TrackerContent
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsFileUtil
+import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitContentRevision
 import git4idea.GitUtil
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.repo.GitRepositoryManager
-import git4idea.repo.GitSubmodule
 import git4idea.util.GitFileUtils
 import java.nio.charset.Charset
 
@@ -77,20 +77,21 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file) ?: return null
 
     val indexFileRefresher = GitIndexFileSystemRefresher.getInstance(project)
-    val indexFile = indexFileRefresher.getFile(repository.root, status.path(ContentVersion.STAGED))
+    val indexFile = indexFileRefresher.getFile(repository.root, status.path(ContentVersion.STAGED)) ?: return null
     val indexDocument = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile) } ?: return null
+    indexDocument.putUserData(LineStatusTrackerBase.SEPARATE_UNDO_STACK, Registry.`is`("git.stage.separate.undo.stack"))
 
     if (!status.has(ContentVersion.HEAD)) return StagedTrackerContent("", indexDocument)
 
     try {
       val bytes = GitFileUtils.getFileContent(project, repository.root, GitUtil.HEAD,
                                               VcsFileUtil.relativePath(repository.root, status.path(ContentVersion.HEAD)))
-      val charset: Charset = DiffContentFactoryImpl.guessCharset(project, bytes, filePath)
-      val headContent = CharsetToolkit.decodeString(bytes, charset)
+      val headContent = VcsImplUtil.loadTextFromBytes(project, bytes, filePath)
       val correctedText = StringUtil.convertLineSeparators(headContent)
 
       return StagedTrackerContent(correctedText, indexDocument)
-    } catch (e : VcsException) {
+    }
+    catch (e: VcsException) {
       LOG.warn("Can't load base revision content for ${file.path} with status $status", e)
       return null
     }

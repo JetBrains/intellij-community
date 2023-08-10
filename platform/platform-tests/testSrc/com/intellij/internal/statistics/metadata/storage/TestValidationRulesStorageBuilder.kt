@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.metadata.storage
 
-import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence
 import com.intellij.internal.statistic.eventLog.validator.storage.EventLogMetadataLoader
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesPersistedStorage
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence
 
 class TestValidationRulesStorageBuilder(private val recorderId: String = "TEST") {
   private var cachedContent: String? = ""
@@ -67,5 +67,5 @@ private class TestEventLogMetadaLoader(private val provider: () -> String, priva
 
   override fun getLastModifiedOnServer(): Long = lastModified
 
-  override fun getOptionValue(name: String): String? = null
+  override fun getOptionValues(): Map<String, String> = emptyMap()
 }

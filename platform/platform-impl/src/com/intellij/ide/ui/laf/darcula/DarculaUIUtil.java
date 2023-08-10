@@ -36,6 +36,14 @@ import java.util.Locale;
  */
 @SuppressWarnings("UnregisteredNamedColor")
 public final class DarculaUIUtil {
+
+  private static final @NotNull JBColor DISABLED_BORDER_BORDER =
+    JBColor.namedColor("Component.disabledBorderColor", JBColor.namedColor("Outline.disabledColor", Gray.xCF));
+  private static final @NotNull JBColor BORDER_COLOR =
+    JBColor.namedColor("Component.borderColor", JBColor.namedColor("Outline.color", Gray.xBF));
+  private static final @NotNull JBColor FOCUSED_BORDER_COLOR =
+    JBColor.namedColor("Component.focusedBorderColor", JBColor.namedColor("Outline.focusedColor", 0x87AFDA));
+
   public enum Outline {
     error {
       @Override
@@ -86,19 +94,23 @@ public final class DarculaUIUtil {
     JComponent component = ObjectUtils.tryCast(c, JComponent.class);
 
     if (component != null) {
-      String outline = ObjectUtils.tryCast(component.getClientProperty("JComponent.outline"), String.class);
+      Outline outline = getOutline(component);
 
       if (outline != null) {
-        if (outline.equals("error")) {
-          return Outline.error;
-        }
-        else if (outline.equals("warning")) {
-          return Outline.warning;
-        }
+        return outline;
       }
     }
 
     return Outline.focus;
+  }
+
+  public static @Nullable Outline getOutline(@NotNull JComponent component) {
+    String outline = ObjectUtils.tryCast(component.getClientProperty("JComponent.outline"), String.class);
+    return outline == null ? null : Outline.valueOf(outline);
+  }
+
+  public static boolean isWarningOrError(@Nullable Outline outline) {
+    return outline == DarculaUIUtil.Outline.error || outline == DarculaUIUtil.Outline.warning;
   }
 
   public static void paintTag(Graphics2D g2, float width, float height, boolean hasFocus, Outline type) {
@@ -130,6 +142,11 @@ public final class DarculaUIUtil {
   @SuppressWarnings("SuspiciousNameCombination")
   public static void doPaint(Graphics2D g, int width, int height, float arc, boolean symmetric) {
     float bw = UIUtil.isUnderDefaultMacTheme() ? JBUIScale.scale(3) : BW.getFloat();
+    doPaint(g, width, height, arc, bw, symmetric);
+  }
+
+  @SuppressWarnings("SuspiciousNameCombination")
+  public static void doPaint(Graphics2D g, int width, int height, float arc, float bw, boolean symmetric) {
     float f = UIUtil.isRetina(g) ? 0.5f : 1.0f;
     float lw = UIUtil.isUnderDefaultMacTheme() ? JBUIScale.scale(f) : LW.getFloat();
 
@@ -203,9 +220,9 @@ public final class DarculaUIUtil {
       border.append(new Rectangle2D.Float(0, 0, r.width, r.height), false);
       border.append(new Rectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2), false);
 
-      Object op = ((JComponent)c).getClientProperty("JComponent.outline");
+      Outline op = getOutline((JComponent)c);
       if (op != null || hasFocus) {
-        Outline outline = op == null ? Outline.focus : Outline.valueOf(op.toString());
+        Outline outline = op == null ? Outline.focus : op;
         outline.setGraphicsColor(g2, true);
         g2.fill(border);
       }
@@ -254,6 +271,10 @@ public final class DarculaUIUtil {
            ComponentUtil.findParentByCondition(c, p -> p instanceof JTable) != null;
   }
 
+  public static boolean isBorderless(Component c) {
+    return ((JComponent)c).getClientProperty("JComboBox.isBorderless") == Boolean.TRUE;
+  }
+
   public static final JBValue MINIMUM_WIDTH = new JBValue.Float(49); // 72px total
   public static final JBValue MINIMUM_HEIGHT = new JBValue.Float(24);
   public static final JBValue COMPACT_HEIGHT = new JBValue.Float(20);
@@ -269,10 +290,8 @@ public final class DarculaUIUtil {
   }
 
   public static Color getOutlineColor(boolean enabled, boolean focused) {
-    return enabled ?
-           focused ? JBColor.namedColor("Component.focusedBorderColor", JBColor.namedColor("Outline.focusedColor", 0x87AFDA)) :
-           JBColor.namedColor("Component.borderColor", JBColor.namedColor("Outline.color", Gray.xBF)) :
-           JBColor.namedColor("Component.disabledBorderColor", JBColor.namedColor("Outline.disabledColor", Gray.xCF));
+    if (enabled) return focused ? FOCUSED_BORDER_COLOR : BORDER_COLOR;
+    return DISABLED_BORDER_BORDER;
   }
 
   public static Dimension maximize(@Nullable Dimension s1, @NotNull Dimension s2) {

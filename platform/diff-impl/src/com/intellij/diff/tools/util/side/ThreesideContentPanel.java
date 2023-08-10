@@ -42,13 +42,13 @@ public class ThreesideContentPanel extends JPanel {
     assert contents.size() == 3;
 
     myPanels = ContainerUtil.map(contents, it -> new DiffContentPanel(it));
-    DiffContentPanel.syncTitleHeights(myPanels);
+    DiffContentLayoutPanel.syncTitleHeights(myPanels);
 
     mySplitter = new ThreeDiffSplitter(myPanels);
     add(mySplitter, BorderLayout.CENTER);
   }
 
-  public void setTitles(@NotNull List<JComponent> titleComponents) {
+  public void setTitles(@NotNull List<? extends JComponent> titleComponents) {
     for (ThreeSide side : ThreeSide.values()) {
       DiffContentPanel panel = side.select(myPanels);
       JComponent title = side.select(titleComponents);

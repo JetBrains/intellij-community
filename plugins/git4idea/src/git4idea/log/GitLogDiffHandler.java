@@ -11,7 +11,6 @@ import com.intellij.diff.chains.SimpleDiffRequestProducer;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.vcs.CompareWithLocalDialog;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -21,6 +20,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.CompareWithLocalDialog;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogDiffHandler;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -39,7 +39,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
-import static com.intellij.diff.DiffRequestFactoryImpl.*;
+import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
+import static com.intellij.diff.DiffRequestFactoryImpl.getTitle;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class GitLogDiffHandler implements VcsLogDiffHandler {
@@ -107,14 +108,19 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
       boolean isWithLocal = rightRevision == null;
       Collection<FilePath> filePaths = affectedPaths != null ? affectedPaths : Collections.singleton(VcsUtil.getFilePath(root));
 
+      String leftRevisionTitle = leftRevision.toShortString();
       String rightRevisionTitle = isWithLocal
                                   ? GitBundle.message("git.log.diff.handler.local.version.name")
                                   : rightRevision.toShortString();
-      String dialogTitle = GitBundle.message("git.log.diff.handler.paths.diff.title", leftRevision.toShortString(),
-                                             rightRevisionTitle,
-                                             getTitleForPaths(root, affectedPaths));
+      String dialogTitle = affectedPaths != null
+                           ? GitBundle.message("git.log.diff.handler.changes.between.revisions.in.paths.title",
+                                               leftRevisionTitle, rightRevisionTitle, getTitleForPaths(root, affectedPaths))
+                           : GitBundle.message("git.log.diff.handler.changes.between.revisions.title",
+                                               leftRevisionTitle, rightRevisionTitle);
+      CompareWithLocalDialog.LocalContent localContentSide = isWithLocal ? CompareWithLocalDialog.LocalContent.AFTER
+                                                                         : CompareWithLocalDialog.LocalContent.NONE;
 
-      CompareWithLocalDialog.showDialog(myProject, dialogTitle, CompareWithLocalDialog.LocalContent.AFTER, () -> {
+      CompareWithLocalDialog.showChanges(myProject, dialogTitle, localContentSide, () -> {
         if (isWithLocal) {
           return GitChangeUtils.getDiffWithWorkingDir(myProject, root, leftRevision.asString(), filePaths, false);
         }
@@ -126,8 +132,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
   }
 
   @NotNull
-  private static String getTitleForPaths(@NotNull VirtualFile root, @Nullable Collection<? extends FilePath> filePaths) {
-    if (filePaths == null) return getContentTitle(VcsUtil.getFilePath(root));
+  private static String getTitleForPaths(@NotNull VirtualFile root, @NotNull Collection<? extends FilePath> filePaths) {
     String joinedPaths = StringUtil.join(filePaths, path -> VcsFileUtil.relativePath(root, path), ", ");
     return StringUtil.shortenTextWithEllipsis(joinedPaths, 100, 0);
   }

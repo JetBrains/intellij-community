@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.xml.XmlElementDescriptor.EMPTY_ARRAY;
 
-/**
- * @author Irina.Chernushina on 3/21/2018.
- */
 public final class XmlDescriptorUtil {
   public static XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
     XmlDocumentImpl xmlDocument = PsiTreeUtil.getParentOfType(context, XmlDocumentImpl.class);

@@ -28,10 +28,6 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class QuickFixManager <T extends JComponent>{
   private static final Logger LOG = Logger.getInstance(QuickFixManager.class);
 
@@ -62,7 +58,7 @@ public abstract class QuickFixManager <T extends JComponent>{
     myComponent.addFocusListener(new FocusListenerImpl(this));
 
     // Alt+Enter
-    new ShowHintAction(this, component);
+    new ShowHintAction(this).registerShortcutSet(component);
 
     viewPort.addChangeListener(new ChangeListener() {
       @Override

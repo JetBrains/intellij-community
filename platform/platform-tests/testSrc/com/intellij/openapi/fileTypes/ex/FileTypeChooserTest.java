@@ -17,9 +17,6 @@ package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.testFramework.LightPlatformTestCase;
 
-/**
- * @author Nikolay Matveev
- */
 public class FileTypeChooserTest extends LightPlatformTestCase {
 
   public void testSuggestPatterns() {

@@ -1,15 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.vcs.log.util.StopWatchScopeKt.*;
 
 @NonNls
 public final class StopWatch {
@@ -21,10 +25,13 @@ public final class StopWatch {
   private static final String M_SEC_FORMAT = "%03d";
 
   private final long myStartTime;
+
+  private final Span mySpan;
   @NotNull private final String myOperation;
   @NotNull private final Map<VirtualFile, Long> myDurationPerRoot;
 
   private StopWatch(@NotNull String operation) {
+    mySpan = TelemetryManager.getInstance().getTracer(StopWatchScope).spanBuilder(operation).startSpan();
     myOperation = operation;
     myStartTime = System.currentTimeMillis();
     myDurationPerRoot = new HashMap<>();
@@ -54,6 +61,7 @@ public final class StopWatch {
   }
 
   public void report(@NotNull Logger logger) {
+    mySpan.end();
     String message = myOperation + " took " + formatTime(System.currentTimeMillis() - myStartTime);
     if (myDurationPerRoot.size() > 1) {
       message += "\n" + StringUtil.join(myDurationPerRoot.entrySet(),

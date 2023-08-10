@@ -39,9 +39,10 @@ public class ServerUnavailableCallbackTest extends SvnTestCase {
     },
     {
       // SVN 1.7 "DNS lookup failure"
-      "svn: E175002: Unable to connect to a repository at URL 'https://a.b.c.d/svn/foobar/trunk'\n" +
-      "svn: E175002: OPTIONS of 'https://a.b.c.d/svn/foobar/trunk': Could not resolve hostname `a.b.c.d': No such host is known.\n" +
-      " (https://a.b.c.d)",
+      """
+svn: E175002: Unable to connect to a repository at URL 'https://a.b.c.d/svn/foobar/trunk'
+svn: E175002: OPTIONS of 'https://a.b.c.d/svn/foobar/trunk': Could not resolve hostname `a.b.c.d': No such host is known.
+ (https://a.b.c.d)""",
       "Unable to connect to a repository at URL 'https://a.b.c.d/svn/foobar/trunk':\n" +
       "No such host is known."
     },

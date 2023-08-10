@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,10 +41,7 @@ public final class NullUtils {
    *         otherwise <tt>true</tt>
    */
   public static boolean hasNull(Object @NotNull ... objects) {
-    for (Object object : objects) {
-      if (object == null) return true;
-    }
-    return false;
+    return ArrayUtil.contains(null, objects);
   }
 
   /**

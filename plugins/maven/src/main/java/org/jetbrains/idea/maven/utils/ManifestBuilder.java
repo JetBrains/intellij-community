@@ -2,9 +2,7 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.codehaus.plexus.archiver.jar.Manifest;
 import org.codehaus.plexus.archiver.jar.ManifestException;
 import org.jdom.Element;
@@ -28,13 +26,7 @@ import static org.codehaus.plexus.archiver.jar.Manifest.Attribute;
  */
 public class ManifestBuilder {
 
-  private static final Map<String, String> PACKAGING_PLUGINS = ContainerUtil.newHashMap(
-    Pair.create("jar", "maven-jar-plugin"),
-    Pair.create("ejb", "maven-ejb-plugin"),
-    Pair.create("ejb-client", "maven-ejb-plugin"),
-    Pair.create("war", "maven-war-plugin"),
-    Pair.create("ear", "maven-ear-plugin")
-  );
+  private static final Map<String, String> PACKAGING_PLUGINS = Map.of("jar", "maven-jar-plugin", "ejb", "maven-ejb-plugin", "ejb-client", "maven-ejb-plugin", "war", "maven-war-plugin", "ear", "maven-ear-plugin");
 
   @NotNull private final MavenProject myMavenProject;
   @Nullable private String myJdkVersion;
@@ -209,14 +201,14 @@ public class ManifestBuilder {
     final Manifest manifest = new Manifest();
 
     boolean isAddDefaultSpecificationEntries =
-      Boolean.valueOf(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addDefaultSpecificationEntries", "false"));
+      Boolean.parseBoolean(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addDefaultSpecificationEntries", "false"));
     if (isAddDefaultSpecificationEntries) {
       addManifestAttribute(manifest, entries, "Specification-Title", mavenProject.getName());
       addManifestAttribute(manifest, entries, "Specification-Version", mavenProject.getMavenId().getVersion());
     }
 
     boolean isAddDefaultImplementationEntries =
-      Boolean.valueOf(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addDefaultImplementationEntries", "false"));
+      Boolean.parseBoolean(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addDefaultImplementationEntries", "false"));
     if (isAddDefaultImplementationEntries) {
       addManifestAttribute(manifest, entries, "Implementation-Title", mavenProject.getName());
       addManifestAttribute(manifest, entries, "Implementation-Version", mavenProject.getMavenId().getVersion());
@@ -233,7 +225,7 @@ public class ManifestBuilder {
       addManifestAttribute(manifest, entries, "Main-Class", mainClass);
     }
 
-    boolean isAddClasspath = Boolean.valueOf(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addClasspath", "false"));
+    boolean isAddClasspath = Boolean.parseBoolean(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addClasspath", "false"));
     if (isAddClasspath) {
       final ManifestImporter manifestImporter = ManifestImporter.getManifestImporter(mavenProject.getPackaging());
       String classpath = manifestImporter.getClasspath(mavenProject, manifestConfiguration);

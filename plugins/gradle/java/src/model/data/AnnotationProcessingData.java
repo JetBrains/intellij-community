@@ -6,11 +6,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.serialization.PropertyMapping;
 import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.ArrayList;
 import java.util.Collection;
-
-import static com.intellij.util.containers.ContainerUtil.immutableList;
+import java.util.List;
 
 public final class AnnotationProcessingData {
   public static final Key<AnnotationProcessingData> KEY = Key.create(AnnotationProcessingData.class, ExternalSystemConstants.UNORDERED);
@@ -22,22 +21,21 @@ public final class AnnotationProcessingData {
   private final Collection<String> path;
   private final Collection<String> arguments;
 
-  public static AnnotationProcessingData create(@NotNull Collection<String> path,
-                       @NotNull Collection<String> arguments) {
+  public static AnnotationProcessingData create(@NotNull Collection<String> path, @NotNull Collection<String> arguments) {
     return ourInterner.intern(new AnnotationProcessingData(path, arguments));
   }
 
   @PropertyMapping({"path", "arguments"})
-  private AnnotationProcessingData(@NotNull Collection<String> path,
-                                  @NotNull Collection<String> arguments) {
-    this.path = immutableList(new ArrayList<>(path));
-    this.arguments = immutableList(new ArrayList<>(arguments));
+  private AnnotationProcessingData(@NotNull Collection<String> path, @NotNull Collection<String> arguments) {
+    this.path = List.copyOf(path);
+    this.arguments = List.copyOf(arguments);
   }
 
   /**
    * Annotation processor arguments
    * @return immutable collection of arguments
    */
+  @Unmodifiable
   public Collection<String> getArguments() {
     return arguments;
   }
@@ -46,6 +44,7 @@ public final class AnnotationProcessingData {
    * Annotation processor path
    * @return immutable collection of path elements
    */
+  @Unmodifiable
   public Collection<String> getPath() {
     return path;
   }

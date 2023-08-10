@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.impl;
 
 import com.intellij.conversion.ConversionResult;
@@ -85,10 +85,10 @@ final class ConversionResultImpl implements ConversionResult {
         ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
         changeListManager.addUnversionedFiles(null, new ArrayList<>(selected));
       }
-    }, ModalityState.NON_MODAL, project.getDisposed());
+    }, ModalityState.nonModal(), project.getDisposed());
   }
 
-  private static boolean containsFilesUnderVcs(@NotNull List<VirtualFile> files, Project project) {
+  private static boolean containsFilesUnderVcs(@NotNull List<? extends VirtualFile> files, Project project) {
     if (files.isEmpty()) {
       return false;
     }
@@ -102,7 +102,7 @@ final class ConversionResultImpl implements ConversionResult {
     return false;
   }
 
-  private static @NotNull List<VirtualFile> findVirtualFiles(@NotNull Collection<Path> files) {
+  private static @NotNull List<VirtualFile> findVirtualFiles(@NotNull Collection<? extends Path> files) {
     List<VirtualFile> result = new ArrayList<>(files.size());
     for (Path file : files) {
       VirtualFile element = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);

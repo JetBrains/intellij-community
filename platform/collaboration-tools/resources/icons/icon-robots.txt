@@ -1,0 +1,1 @@
+deprecated: review/branch.svg; use DvcsImplIcons.BranchLabel instead

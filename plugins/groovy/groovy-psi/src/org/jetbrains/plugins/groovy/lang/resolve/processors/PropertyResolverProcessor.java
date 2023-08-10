@@ -15,9 +15,6 @@ import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_PROPERTY;
 
-/**
- * @author ven
- */
 public class PropertyResolverProcessor extends ResolverProcessorImpl implements DynamicMembersHint {
 
   public PropertyResolverProcessor(String name, PsiElement place) {

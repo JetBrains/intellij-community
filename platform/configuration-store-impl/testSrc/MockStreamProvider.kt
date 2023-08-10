@@ -1,17 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
 import com.intellij.util.io.*
 import java.io.InputStream
 import java.nio.file.NoSuchFileException
+import java.nio.file.OpenOption
 import java.nio.file.Path
+import kotlin.io.path.inputStream
+import kotlin.io.path.isHidden
 
 class MockStreamProvider(private val dir: Path) : StreamProvider {
   override val isExclusive = true
 
-  override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-    dir.resolve(fileSpec).write(content, 0, size)
+  override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
+    dir.resolve(fileSpec).write(content)
   }
 
   override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
@@ -39,6 +42,7 @@ class MockStreamProvider(private val dir: Path) : StreamProvider {
           continue
         }
 
+        arrayOf<OpenOption>()
         if (!file.inputStream().use { processor(file.fileName.toString(), it, false) }) {
           break
         }

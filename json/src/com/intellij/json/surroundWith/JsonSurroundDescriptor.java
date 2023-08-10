@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -58,7 +58,7 @@ public class JsonSurroundDescriptor implements SurroundDescriptor {
   }
 
   private static <T extends PsiElement> PsiElement @NotNull [] collectElements(int endOffset, @NotNull T property, @NotNull Class<T> kind) {
-    final List<T> properties = ContainerUtil.newArrayList(property);
+    final List<T> properties = new SmartList<>(property);
     PsiElement nextSibling = property.getNextSibling();
     while (nextSibling != null && nextSibling.getTextRange().getEndOffset() <= endOffset) {
       if (kind.isInstance(nextSibling)) {

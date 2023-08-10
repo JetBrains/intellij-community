@@ -106,8 +106,7 @@ public class AntCreatePropertyFix implements LocalQuickFix {
       });
     }
     else {
-      if (containingFile instanceof XmlFile) {
-        final XmlFile xmlFile = (XmlFile)containingFile;
+      if (containingFile instanceof XmlFile xmlFile) {
         final XmlTag rootTag = xmlFile.getRootTag();
         if (!modificationService.prepareFileForWrite(xmlFile)) {
           return;

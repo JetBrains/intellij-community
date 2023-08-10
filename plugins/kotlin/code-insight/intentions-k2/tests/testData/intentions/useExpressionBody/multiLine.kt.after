@@ -1,0 +1,4 @@
+// IS_APPLICABLE: true
+
+fun Int?.orZero(): Int = this
+       ?: 0

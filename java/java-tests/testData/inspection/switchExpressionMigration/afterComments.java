@@ -1,13 +1,13 @@
-// "Replace with enhanced 'switch' statement" "true"
+// "Replace with enhanced 'switch' statement" "true-preview"
 class X {
   private static void test(String... commands) {
     for (String command : commands) {
         switch (command) {
             case "Say hello" ->
-                    // line contains no height
+                // line contains no height
                     System.out.printf("Hello, %s!%n", System.getProperty("user.name"));
             case "Exit" ->
-                    // line contains no code
+                // line contains no code
                     System.out.println("Goodbye.");
             case "Multiline" -> {
                 // a

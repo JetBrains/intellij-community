@@ -21,6 +21,11 @@ import java.util.Set;
 public abstract class AbstractExcludeFromRunAction<T extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>> extends AnAction {
   private static final Logger LOG = Logger.getInstance(AbstractExcludeFromRunAction.class);
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   protected abstract Set<String> getPattern(T configuration);
   protected abstract boolean isPatternBasedConfiguration(RunConfiguration configuration);
 
@@ -49,7 +54,7 @@ public abstract class AbstractExcludeFromRunAction<T extends ModuleBasedConfigur
       if (isPatternBasedConfiguration(configuration)) {
         final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(dataContext);
         if (testProxy != null) {
-          final Location location = testProxy.getLocation(project, ((T)configuration).getConfigurationModule().getSearchScope());
+          final Location<?> location = testProxy.getLocation(project, ((T)configuration).getConfigurationModule().getSearchScope());
           if (location != null) {
             final PsiElement psiElement = location.getPsiElement();
             if (psiElement instanceof PsiClass && getPattern((T)configuration).contains(((PsiClass)psiElement).getQualifiedName())) {

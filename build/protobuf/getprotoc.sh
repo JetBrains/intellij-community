@@ -1,5 +1,7 @@
+# Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 # Usage: . "$(git rev-parse --show-toplevel)/build/protobuf/getprotoc.sh"
-PROTOC_VERSION=${PROTOC_VERSION:-3.13.0}
+PROTOC_VERSION=${PROTOC_VERSION:-3.23.4}
 
 PROTOC_BIN_DIR="${PROTOC_BIN_DIR:-$(git rev-parse --show-toplevel)/build/protobuf/bin}"
 PROTOC_CACHE_DIR="${PROTOC_CACHE_DIR:-$(dirname "$PROTOC_BIN_DIR")/cache}"
@@ -24,7 +26,7 @@ getprotoc() {
   rm -f "$_protoc_exe.tmp"
   test -f "$_protoc_exe" && mv -f "$_protoc_exe" "$_protoc_exe.tmp"
 
-  tar --strip-components 1 -xf "$PROTOC_CACHE_DIR/$_protoc_zip_name" -C "$PROTOC_BIN_DIR" bin/protoc || (
+  unzip -j "$PROTOC_CACHE_DIR/$_protoc_zip_name" -d "$PROTOC_BIN_DIR" bin/protoc || (
     test -f "$_protoc_exe.tmp" && mv -f "$_protoc_exe.tmp" "$_protoc_exe"
     rm -f "$PROTOC_CACHE_DIR/$_protoc_zip_name"
     exit 1
@@ -38,8 +40,6 @@ getprotoc() {
   fi
 }
 
-getprotoc 3.5.1
-mv -f "$PROTOC_BIN_DIR/protoc-3.5.1" "$PROTOC_BIN_DIR/protoc-java6"
 getprotoc
 
 export PATH="$PROTOC_BIN_DIR:$PATH"

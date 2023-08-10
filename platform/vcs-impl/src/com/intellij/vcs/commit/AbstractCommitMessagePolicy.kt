@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -15,20 +16,22 @@ abstract class AbstractCommitMessagePolicy(protected val project: Project) {
   protected val vcsConfiguration: VcsConfiguration get() = VcsConfiguration.getInstance(project)
   protected val changeListManager: ChangeListManager get() = ChangeListManager.getInstance(project)
 
-  protected fun save(changeListName: String, commitMessage: String) {
-    changeListManager.editComment(changeListName, commitMessage)
-  }
-
-  protected fun getCommitMessageFor(changeList: LocalChangeList): String? {
-    CommitMessageProvider.EXTENSION_POINT_NAME.extensionList.forEach { provider ->
-      val providerMessage = provider.getCommitMessage(changeList, project)
-      if (providerMessage != null) return providerMessage
-    }
+  protected fun getCommitMessageForList(changeList: LocalChangeList): String? {
+    val providerMessage = getCommitMessageFromProvider(changeList)
+    if (providerMessage != null) return providerMessage
 
     val changeListDescription = changeList.comment
     if (!changeListDescription.isNullOrBlank()) return changeListDescription
 
     return if (!changeList.hasDefaultName()) changeList.name else null
+  }
+
+  protected fun getCommitMessageFromProvider(changeList: LocalChangeList): String? {
+    CommitMessageProvider.EXTENSION_POINT_NAME.extensionList.forEach { provider ->
+      val providerMessage = provider.getCommitMessage(changeList, project)
+      if (providerMessage != null) return providerMessage
+    }
+    return null
   }
 
   protected fun getCommitMessageFromVcs(changes: List<Change>): String? {
@@ -41,4 +44,12 @@ abstract class AbstractCommitMessagePolicy(protected val project: Project) {
 
   private fun getCommitMessageFromVcs(vcs: AbstractVcs, changes: List<Change>): String? =
     vcs.checkinEnvironment?.getDefaultMessageFor(ChangesUtil.getPaths(changes).toTypedArray())
+
+  protected fun listenForDelayedProviders(commitMessageUi: CommitMessageUi, disposable: Disposable) {
+    CommitMessageProvider.EXTENSION_POINT_NAME.forEachExtensionSafe { extension ->
+      if (extension is DelayedCommitMessageProvider) {
+        extension.init(project, commitMessageUi, disposable)
+      }
+    }
+  }
 }

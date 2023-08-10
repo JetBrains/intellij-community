@@ -1,22 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
+import com.intellij.util.asSafely
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType
 import org.jetbrains.plugins.groovy.lang.psi.util.isCompileStatic
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.getSmartReturnTypeInContext
 
 class DefaultMethodCallTypeCalculator : GrTypeCalculator<GrMethodCall> {
 
@@ -30,7 +33,7 @@ class DefaultMethodCallTypeCalculator : GrTypeCalculator<GrMethodCall> {
     for (result in results) {
       type = TypesUtil.getLeastUpperBoundNullable(type, getTypeFromResult(result, arguments, expression), expression.manager)
     }
-    return type
+    return type?.boxIfNecessary(expression)
   }
 }
 
@@ -56,7 +59,7 @@ fun getTypeFromCandidate(result: GroovyMethodResult, context: PsiElement): PsiTy
   for (ext in ep.extensions) {
     return ext.getType(receiverType, method, arguments, context) ?: continue
   }
-  return getSmartReturnType(method)
+  return getSmartReturnTypeInContext(method, context)
 }
 
 private val ep: ExtensionPointName<GrCallTypeCalculator> = ExtensionPointName.create("org.intellij.groovy.callTypeCalculator")
@@ -77,7 +80,18 @@ private fun getTypeFromPropertyCall(element: PsiElement?, arguments: Arguments?,
 }
 
 fun PsiType?.devoid(context: PsiElement): PsiType? {
-  return if (this == PsiType.VOID && !isCompileStatic(context)) PsiType.NULL else this
+  return if (this == PsiTypes.voidType() && !isCompileStatic(context)) PsiTypes.nullType() else this
+}
+
+private fun PsiType.boxIfNecessary(call: GrMethodCall) : PsiType {
+  if (this !is PsiPrimitiveType) {
+    return this
+  }
+  return if (call.invokedExpression.asSafely<GrReferenceExpression>()?.dotTokenType == GroovyElementTypes.T_SAFE_DOT) {
+    this.box(call)
+  } else {
+    this
+  }
 }
 
 private fun hasGenerics(type: PsiType): Boolean {

@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +10,8 @@ import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.incremental.LineOutputWriter;
+import org.jetbrains.jps.javac.Iterators.BooleanFunction;
+import org.jetbrains.jps.javac.Iterators.Function;
 
 import javax.annotation.processing.Processor;
 import javax.tools.*;
@@ -26,17 +26,24 @@ import java.util.*;
  */
 public final class JavacMain {
   //private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
-  private static final Set<String> FILTERED_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+  private static final Set<String> FILTERED_OPTIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
     "-d", "-classpath", "-cp", "--class-path", "-bootclasspath", "--boot-class-path"
   )));
-  private static final Set<String> FILTERED_SINGLE_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+  private static final Set<String> FILTERED_SINGLE_OPTIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
     /*javac options*/  "-verbose", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source"
   )));
-  private static final Set<String> FILE_MANAGER_EARLY_INIT_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+  private static final Set<String> FILE_MANAGER_EARLY_INIT_OPTIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
     "-encoding", "-extdirs", "-endorseddirs", "-processorpath", "--processor-path", "--processor-module-path", "-s", "-d", "-h"
   )));
 
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
+  private static final boolean JAVA_RUNTIME_PRE_9 =
+    JAVA_RUNTIME_VERSION.startsWith("1.8.") ||
+    JAVA_RUNTIME_VERSION.startsWith("8.")   ||
+    JAVA_RUNTIME_VERSION.startsWith("1.7.") ||
+    JAVA_RUNTIME_VERSION.startsWith("7.")   ||
+    JAVA_RUNTIME_VERSION.startsWith("1.6.") ||
+    JAVA_RUNTIME_VERSION.startsWith("6.");
 
   public static final String TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY = "jps.track.ap.dependencies";
   public static final boolean TRACK_AP_GENERATED_DEPENDENCIES = Boolean.parseBoolean(System.getProperty(TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY, "true"));
@@ -66,7 +73,7 @@ public final class JavacMain {
     }
 
     final boolean usingJavac = compilingTool instanceof JavacCompilerTool;
-    final boolean javacBefore9 = isJavacBefore9(compilingTool);
+    final boolean javacBefore9 = usingJavac && JAVA_RUNTIME_PRE_9; // since java 9 internal API's used by the optimizedFileManager have changed
     final JpsJavacFileManager fileManager = new JpsJavacFileManager(
       new ContextImpl(compiler, diagnosticConsumer, outputSink, modulePath, canceledStatus), javacBefore9, JavaSourceTransformer.getTransformers()
     );
@@ -151,8 +158,10 @@ public final class JavacMain {
         try {
           fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
           if (!usingJavac &&
-            isAnnotationProcessingEnabled && !Iterators.contains(_options, "-processorpath") &&
-              (javacBefore9 || (!Iterators.contains(_options, "--processor-module-path") && getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null))) {
+              isAnnotationProcessingEnabled &&
+              !Iterators.contains(_options, "-processorpath") &&
+              !Iterators.contains(_options, "--processor-module-path") &&
+              getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null) {
             // for non-javac file manager ensure annotation processor path defaults to classpath
             fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
           }
@@ -178,15 +187,15 @@ public final class JavacMain {
         }
       }
 
-      final WrappedProcessorsContainer wrappedProcessors;
+      final APIWrappers.ProcessingContext procContext;
       final DiagnosticOutputConsumer diagnosticListener;
       if (TRACK_AP_GENERATED_DEPENDENCIES && isAnnotationProcessingEnabled) {
+        procContext = new APIWrappers.ProcessingContext(fileManager);
         // use real processor class names and not names of processor wrappers
-        wrappedProcessors = new WrappedProcessorsContainer();
-        diagnosticListener = APIWrappers.newDiagnosticListenerWrapper(diagnosticConsumer, wrappedProcessors);
+        diagnosticListener = APIWrappers.newDiagnosticListenerWrapper(procContext, diagnosticConsumer);
       }
       else {
-        wrappedProcessors = null;
+        procContext = null;
         diagnosticListener = diagnosticConsumer;
       }
 
@@ -221,19 +230,15 @@ public final class JavacMain {
       }
 
       if (TRACK_AP_GENERATED_DEPENDENCIES && isAnnotationProcessingEnabled) {
-        final Iterable<Processor> processors = lookupAnnotationProcessors(fileManager, getAnnotationProcessorNames(_options));
+        final Iterable<Processor> processors = lookupAnnotationProcessors(procContext, getAnnotationProcessorNames(_options));
         if (processors != null) {
-          wrappedProcessors.setProcessors(processors);
           task.setProcessors(processors);
         }
       }
 
       return task.call();
     }
-    catch(IllegalArgumentException e) {
-      diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
-    }
-    catch(IllegalStateException e) {
+    catch(IllegalArgumentException | IllegalStateException e) {
       diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
     }
     catch (CompilationCanceledException e) {
@@ -263,34 +268,19 @@ public final class JavacMain {
     return false;
   }
 
-  private static class WrappedProcessorsContainer implements Iterable<Processor> {
-    Iterable<Processor> myDelegate;
-
-    public void setProcessors(Iterable<Processor> delegate) {
-      myDelegate = delegate;
-    }
-
-    @NotNull
-    @Override
-    public Iterator<Processor> iterator() {
-      final Iterable<Processor> delegate = myDelegate;
-      return delegate == null? Collections.<Processor>emptyList().iterator() : delegate.iterator();
-    }
-  }
-
   @Nullable
-  private static Iterable<Processor> lookupAnnotationProcessors(final JpsJavacFileManager fileManager, @Nullable Iterable<String> processorNames) {
+  private static Iterable<Processor> lookupAnnotationProcessors(final APIWrappers.ProcessingContext procContext, @Nullable Iterable<String> processorNames) {
     try {
       Iterable<Processor> processors = null;
 
-      if (hasLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH")) {
+      if (hasLocation(procContext.getFileManager(), "ANNOTATION_PROCESSOR_MODULE_PATH")) {
         // this is equivalent to
         //processors = fileManager.getServiceLoader(StandardLocation.locationFor("ANNOTATION_PROCESSOR_MODULE_PATH"), Processor.class);
         // if java modules are involved, they should be properly handled by the fileManager
 
         //noinspection unchecked
         processors = (ServiceLoader<Processor>)JavaFileManager.class.getMethod("getServiceLoader", JavaFileManager.Location.class, Class.class).invoke(
-          fileManager, StandardLocation.locationFor("ANNOTATION_PROCESSOR_MODULE_PATH"), Processor.class
+          procContext.getFileManager(), StandardLocation.locationFor("ANNOTATION_PROCESSOR_MODULE_PATH"), Processor.class
         );
         if (processorNames != null) {
           processors = Iterators.filterWithOrder(processors, Iterators.map(processorNames, new Function<String, BooleanFunction<? super Processor>>() {
@@ -307,13 +297,13 @@ public final class JavacMain {
         }
       }
       else {
-        final ClassLoader processorClassLoader = fileManager.getClassLoader(
+        final ClassLoader processorClassLoader = procContext.getFileManager().getClassLoader(
           // If processorpath is not explicitly set, use the classpath.
-          fileManager.hasLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) ? StandardLocation.ANNOTATION_PROCESSOR_PATH : StandardLocation.CLASS_PATH
+          procContext.getFileManager().hasLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) ? StandardLocation.ANNOTATION_PROCESSOR_PATH : StandardLocation.CLASS_PATH
         );
         if (processorClassLoader != null) {
           if (processorNames != null) {
-            final List<Processor> loaded = new ArrayList<Processor>();
+            final List<Processor> loaded = new ArrayList<>();
             for (String procName : processorNames) {
               loaded.add((Processor)processorClassLoader.loadClass(procName).getDeclaredConstructor().newInstance());
             }
@@ -326,12 +316,7 @@ public final class JavacMain {
       }
 
       if (processors != null) {
-        return Iterators.map(processors, new Function<Processor, Processor>() {
-          @Override
-          public Processor fun(Processor processor) {
-            return APIWrappers.newProcessorWrapper(processor, fileManager);
-          }
-        });
+        return procContext.wrapProcessors(processors);
       }
     }
     catch (RuntimeException e) {
@@ -400,7 +385,7 @@ public final class JavacMain {
           putMethod.invoke(contextObject, JavaFileManager.class, APIWrappers.wrap(StandardJavaFileManager.class, currentManager, Object.class, delegateTo));
         }
         else {
-          installCallDispatcherRecursively(currentManager, delegateTo, new HashSet<Object>());
+          installCallDispatcherRecursively(currentManager, delegateTo, new HashSet<>());
         }
       }
     }
@@ -496,21 +481,12 @@ public final class JavacMain {
     return location != null && fileManager.hasLocation(location);
   }
 
-  // methods added to newer versions of StandardJavaFileManager interfaces have default implementations that
-  // do not delegate to corresponding methods of FileManager's base implementation
-  // this proxy object makes sure the calls, not implemented in our file manager, are dispatched further to the base file manager implementation
-
-  private static boolean isJavacBefore9(JavaCompilingTool compilingTool) {
-    // since java 9 internal API's used by the optimizedFileManager have changed
-    return compilingTool instanceof JavacCompilerTool && (JAVA_RUNTIME_VERSION.startsWith("1.8.") || JAVA_RUNTIME_VERSION.startsWith("1.7.") || JAVA_RUNTIME_VERSION.startsWith("1.6."));
-  }
-
   private static boolean isAnnotationProcessingEnabled(final Iterable<String> options) {
     return !Iterators.contains(options, "-proc:none");
   }
 
   private static Iterable<String> prepareOptions(final Iterable<? extends String> options, @NotNull JavaCompilingTool compilingTool) {
-    final List<String> result = new ArrayList<String>(compilingTool.getDefaultCompilerOptions());
+    final List<String> result = new ArrayList<>(compilingTool.getDefaultCompilerOptions());
     boolean skip = false;
     for (String option : options) {
       if (FILTERED_OPTIONS.contains(option)) {
@@ -529,7 +505,7 @@ public final class JavacMain {
   }
 
   private static Iterable<? extends File> buildPlatformClasspath(Iterable<? extends File> platformClasspath, Iterable<String> options) {
-    final Map<PathOption, String> argsMap = new HashMap<PathOption, String>();
+    final Map<PathOption, String> argsMap = new HashMap<>();
     for (Iterator<String> iterator = options.iterator(); iterator.hasNext(); ) {
       final String arg = iterator.next();
       for (PathOption pathOption : PathOption.values()) {
@@ -542,7 +518,7 @@ public final class JavacMain {
       return platformClasspath;
     }
 
-    final List<File> result = new ArrayList<File>();
+    final List<File> result = new ArrayList<>();
     appendFiles(argsMap, PathOption.PREPEND_CP, result, false);
     appendFiles(argsMap, PathOption.ENDORSED, result, true);
     appendFiles(argsMap, PathOption.D_ENDORSED, result, true);

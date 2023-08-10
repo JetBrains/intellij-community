@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.meta;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,7 +25,7 @@ public final class MetaRegistry extends MetaDataRegistrar {
   private static final List<MyBinding> ourBindings = ContainerUtil.createLockFreeCopyOnWriteList();
   private static volatile boolean ourContributorsLoaded;
 
-  public static PsiMetaData getMeta(final PsiElement element) {
+  public static PsiMetaData getMeta(PsiElement element) {
     return getMetaBase(element);
   }
 
@@ -53,8 +53,7 @@ public final class MetaRegistry extends MetaDataRegistrar {
     }
   }
 
-  @Nullable
-  public static PsiMetaData getMetaBase(PsiElement element) {
+  public static @Nullable PsiMetaData getMetaBase(PsiElement element) {
     ProgressIndicatorProvider.checkCanceled();
     return CachedValuesManager.getCachedValue(element, () -> {
       ensureContributorsLoaded();

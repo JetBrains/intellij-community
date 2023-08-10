@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -59,7 +59,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
   private final JTextField myDescription;
   private final Editor myTemplateEditor;
 
-  private JComboBox myExpandByCombo;
+  private JComboBox<String> myExpandByCombo;
   private final @NlsContexts.ListItem String myDefaultShortcutItem;
   private JCheckBox myCbReformat;
 
@@ -105,7 +105,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
       }
     });
 
-    new UiNotifyConnector(this, new Activatable() {
+    UiNotifyConnector.installOn(this, new Activatable() {
       @Override
       public void hideNotify() {
         disposeContextPopup();
@@ -238,6 +238,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
         }
       }
     });
+    myExpandByCombo.setSelectedItem(getShortcutText());
     expandWithLabel.setLabelFor(myExpandByCombo);
 
     panel.add(myExpandByCombo, gbConstraints);
@@ -249,6 +250,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     gbConstraints.gridy++;
     gbConstraints.gridwidth = 3;
     myCbReformat = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.reformat.according.to.style"));
+    myCbReformat.setSelected(myTemplate.isToReformat());
     panel.add(myCbReformat, gbConstraints);
 
     for (final TemplateOptionalProcessor processor: myOptions.keySet()) {
@@ -350,7 +352,10 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     });
 
     updateLabel.run();
-    return new FormBuilder().addLabeledComponent(ctxLabel, change).getPanel();
+    return new FormBuilder()
+      .addComponent(ctxLabel)
+      .addComponent(change)
+      .getPanel();
   }
 
   @NotNull
@@ -381,13 +386,13 @@ public final class LiveTemplateSettingsEditor extends JPanel {
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         final Object o = ((DefaultMutableTreeNode)value).getUserObject();
         if (o instanceof Pair) {
-          getTextRenderer().append((String)((Pair)o).second);
+          getTextRenderer().append((String)((Pair<?, ?>)o).second);
         }
       }
     }, root) {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
-        final TemplateContextType type = (TemplateContextType)((Pair)node.getUserObject()).first;
+        final TemplateContextType type = (TemplateContextType)((Pair<?, ?>)node.getUserObject()).first;
         if (type != null) {
           boolean enabled = node.isChecked();
           context.setEnabled(type, enabled);
@@ -398,7 +403,6 @@ public final class LiveTemplateSettingsEditor extends JPanel {
           }
         }
         onChange.run();
-
       }
     };
 
@@ -475,22 +479,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
   void resetUi() {
     myKeyField.setText(myTemplate.getKey());
     myDescription.setText(myTemplate.getDescription());
-
-    if(myTemplate.getShortcutChar() == TemplateSettings.DEFAULT_CHAR) {
-      myExpandByCombo.setSelectedItem(myDefaultShortcutItem);
-    }
-    else if(myTemplate.getShortcutChar() == TemplateSettings.TAB_CHAR) {
-      myExpandByCombo.setSelectedItem(getTab());
-    }
-    else if(myTemplate.getShortcutChar() == TemplateSettings.ENTER_CHAR) {
-      myExpandByCombo.setSelectedItem(getEnter());
-    }
-    else if (myTemplate.getShortcutChar() == TemplateSettings.SPACE_CHAR) {
-      myExpandByCombo.setSelectedItem(getSpace());
-    }
-    else {
-      myExpandByCombo.setSelectedItem(getNone());
-    }
+    myExpandByCombo.setSelectedItem(getShortcutText());
 
     CommandProcessor.getInstance().executeCommand(
       null, () -> ApplicationManager.getApplication().runWriteAction(() -> {
@@ -513,6 +502,16 @@ public final class LiveTemplateSettingsEditor extends JPanel {
 
     updateHighlighter();
     validateEditVariablesButton();
+  }
+
+  private @NlsContexts.ListItem String getShortcutText() {
+    return switch (myTemplate.getShortcutChar()) {
+      case TemplateSettings.DEFAULT_CHAR -> myDefaultShortcutItem;
+      case TemplateSettings.TAB_CHAR -> getTab();
+      case TemplateSettings.ENTER_CHAR -> getEnter();
+      case TemplateSettings.SPACE_CHAR -> getSpace();
+      default -> getNone();
+    };
   }
 
   private void editVariables() {
@@ -600,4 +599,3 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     return CodeInsightBundle.message("template.shortcut.none");
   }
 }
-

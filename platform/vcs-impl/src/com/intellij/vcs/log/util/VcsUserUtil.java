@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcs.log.VcsUser;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +67,9 @@ public final class VcsUserUtil {
   public static String getNameInStandardForm(@NotNull String name) {
     Couple<String> firstAndLastName = getFirstAndLastName(name);
     if (firstAndLastName != null) {
-      return StringUtil.toLowerCase(firstAndLastName.first) + " " + StringUtil.toLowerCase(firstAndLastName.second); // synonyms detection is currently english-only
+      return StringUtil.toLowerCase(firstAndLastName.first) +
+             " " +
+             StringUtil.toLowerCase(firstAndLastName.second); // synonyms detection is currently english-only
     }
     return nameToLowerCase(name);
   }
@@ -99,14 +101,16 @@ public final class VcsUserUtil {
     return StringUtil.toLowerCase(email);
   }
 
-  public static class VcsUserHashingStrategy implements TObjectHashingStrategy<VcsUser> {
+  public static class VcsUserHashingStrategy implements Hash.Strategy<VcsUser> {
     @Override
-    public int computeHashCode(VcsUser user) {
-      return getNameInStandardForm(getName(user)).hashCode();
+    public int hashCode(@Nullable VcsUser user) {
+      return user != null ? getNameInStandardForm(getName(user)).hashCode() : 0;
     }
 
     @Override
-    public boolean equals(VcsUser user1, VcsUser user2) {
+    public boolean equals(@Nullable VcsUser user1, @Nullable VcsUser user2) {
+      if (user1 == user2) return true;
+      if (user1 == null || user2 == null) return false;
       return isSamePerson(user1, user2);
     }
   }

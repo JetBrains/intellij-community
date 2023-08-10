@@ -18,9 +18,9 @@ import git4idea.GitContentRevision
 import git4idea.index.ui.GitFileStatusNode
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import java.util.*
 
 class GitAddAction : StagingAreaOperationAction(GitAddOperation)
+class GitAddWithoutContent : StagingAreaOperationAction(GitAddWithoutContentOperation)
 class GitResetAction : StagingAreaOperationAction(GitResetOperation)
 class GitRevertAction : StagingAreaOperationAction(GitRevertOperation)
 

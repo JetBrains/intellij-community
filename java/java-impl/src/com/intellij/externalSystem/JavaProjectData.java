@@ -50,9 +50,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
   /**
    * @deprecated use {@link JavaProjectData#JavaProjectData(ProjectSystemId, String, LanguageLevel, String)} instead
    */
-  @NotNull
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @SuppressWarnings("DeprecatedIsStillUsed")
   public JavaProjectData(
     @NotNull ProjectSystemId owner,
@@ -82,8 +80,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
    * @deprecated use {@link ProjectSdkData#getSdkName()} instead
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public JavaSdkVersion getJdkVersion() {
     return jdkVersion;
   }
@@ -94,32 +91,10 @@ public final class JavaProjectData extends AbstractExternalEntityData {
   }
 
   /**
-   * @deprecated use {@link ProjectSdkData#setSdkName} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public void setJdkVersion(@NotNull JavaSdkVersion jdkVersion) {
-    isSetJdkVersion = true;
-    this.jdkVersion = jdkVersion;
-  }
-
-  /**
-   * @deprecated use {@link ProjectSdkData#setSdkName} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public void setJdkVersion(@Nullable String jdk) {
-    JavaSdkVersion sdkVersion = resolveSdkVersion(jdk);
-    if (sdkVersion == null) return;
-    setJdkVersion(sdkVersion);
-  }
-
-  /**
    * @deprecated needed to support backward compatibility
    */
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public static JavaSdkVersion resolveSdkVersion(@Nullable String jdk) {
     if (jdk == null) {
       return null;

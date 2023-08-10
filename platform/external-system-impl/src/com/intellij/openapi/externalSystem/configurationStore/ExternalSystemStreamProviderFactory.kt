@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.ProjectTopics
+import com.intellij.configurationStore.FileStorageAnnotation
 import com.intellij.configurationStore.StateStorageManager
 import com.intellij.configurationStore.StreamProviderFactory
 import com.intellij.openapi.components.*
@@ -48,9 +49,17 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
   override fun customizeStorageSpecs(component: PersistentStateComponent<*>, storageManager: StateStorageManager, stateSpec: State, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
     val componentManager = storageManager.componentManager ?: return null
     val project = componentManager as? Project ?: (componentManager as Module).project
-    // we store isExternalStorageEnabled option in the project workspace file, so, for such components external storage is always disabled and not applicable
-    if ((storages.size == 1 && storages.first().value == StoragePathMacros.WORKSPACE_FILE) || !project.isExternalStorageEnabled) {
-      return null
+
+    if (storages.size == 1) {
+      val storage = storages.first()
+      // do not customize project file storage spec, see ProjectStoreBase.PROJECT_FILE_STORAGE_ANNOTATION
+      if (storage is FileStorageAnnotation && storage.value == "\$PROJECT_FILE$" && !storage.deprecated) {
+        return null
+      }
+      // we store isExternalStorageEnabled option in the project workspace file, so, for such components external storage is always disabled and not applicable
+      if (storage.value == StoragePathMacros.WORKSPACE_FILE || !project.isExternalStorageEnabled) {
+        return null
+      }
     }
 
     if (componentManager is Project) {

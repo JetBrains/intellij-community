@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenTestRunningConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myMainPanel;
 
@@ -74,11 +71,6 @@ public class MavenTestRunningConfigurable implements SearchableConfigurable, Con
     MavenTestRunningSettings projectSettings = MavenProjectSettings.getInstance(myProject).getTestRunningSettings();
 
     return !projectSettings.equals(uiSettings);
-  }
-
-  @Override
-  public void disposeUIResources() {
-
   }
 
   @NotNull

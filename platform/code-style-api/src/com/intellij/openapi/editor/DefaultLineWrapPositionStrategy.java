@@ -18,8 +18,6 @@ package com.intellij.openapi.editor;
 /**
  * Default {@link LineWrapPositionStrategy} implementation. Is assumed to provide language-agnostic algorithm that may
  * be used with almost any kind of text.
- *
- * @author Denis Zhdanov
  */
 public class DefaultLineWrapPositionStrategy extends GenericLineWrapPositionStrategy {
 

@@ -22,7 +22,7 @@ public class VariableNode extends Expression {
     if (myInitialValue != null){
       return myInitialValue.calculateQuickResult(context);
     }
-    return TemplateManagerUtilBase.getTemplateState(context.getEditor()).getVariableValue(getName());
+    return context.getVariableValue(getName());
   }
 
   @Override

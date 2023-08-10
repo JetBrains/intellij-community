@@ -16,14 +16,12 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
@@ -72,20 +70,19 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
       () -> {
         PsiManager psiManager = PsiManager.getInstance(myProject);
-        Stream<VirtualFile> stream = history.stream();
+        StreamEx<VirtualFile> stream = StreamEx.of(history);
         if (!StringUtil.isEmptyOrSpaces(searchString)) {
           stream = stream.filter(file -> matcher.matches(file.getName()));
         }
-        res.addAll(stream.filter(vf -> !opened.contains(vf) && vf.isValid())
-                     .distinct()
-                     .map(vf -> {
-                       PsiFile f = psiManager.findFile(vf);
-                       String name = vf.getName();
-                       return f == null ? null : new FoundItemDescriptor<Object>(f, matcher.matchingDegree(name));
-                     })
-                     .filter(file -> file != null)
-                     .collect(Collectors.toList())
-        );
+        stream.filter(vf -> !opened.contains(vf) && vf.isValid())
+          .distinct()
+          .map(vf -> {
+            PsiFile f = psiManager.findFile(vf);
+            String name = vf.getName();
+            return f == null ? null : new FoundItemDescriptor<Object>(f, matcher.matchingDegree(name));
+          })
+          .nonNull()
+          .into(res);
 
         ContainerUtil.process(res, consumer);
       }, progressIndicator);
@@ -100,17 +97,14 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   }
 
   @Override
-  public boolean isEmptyPatternSupported() {
-    return true;
-  }
-
-  @Override
   public boolean isShownInSeparateTab() {
     return false;
   }
 
-  @Override
-  protected @Nullable SearchEverywhereCommandInfo getFilterCommand() {
-    return null;
+  public static class Factory implements SearchEverywhereContributorFactory<Object> {
+    @Override
+    public @NotNull SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
+      return PSIPresentationBgRendererWrapper.wrapIfNecessary(new RecentFilesSEContributor(initEvent));
+    }
   }
 }

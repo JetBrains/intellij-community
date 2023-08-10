@@ -92,8 +92,10 @@ class VcsPreviewPanel implements PreviewPanel {
       .append(VcsBundle.message("vcs.preview.panel.line.with.modified.whitespaces.and.deletion.after")).append(nn)
       .append(VcsBundle.message("vcs.preview.panel.deleted.ignored.line.below")).append(nn)
       .append(VcsBundle.message("vcs.preview.panel.modified.ignored.line")).append(nn)
-      .append(VcsBundle.message("vcs.preview.panel.added.ignored.line")).append(nn);
-    int additionalLines = Math.max(0, AnnotationsSettings.getInstance().getOrderedColors(colorsScheme).size() - StringUtil.countNewLines(sb));
+      .append(VcsBundle.message("vcs.preview.panel.added.ignored.line")).append(nn)
+      .append(VcsBundle.message("vcs.preview.panel.last.commit.modified.line")).append(nn);
+    int additionalLines = Math.max(0, AnnotationsSettings.getInstance().getOrderedColors(colorsScheme).size() -
+                                      StringUtil.countNewLines(sb));
     sb.append(StringUtil.repeat(n, additionalLines));
 
     myEditor.getDocument().setText(sb);
@@ -104,15 +106,18 @@ class VcsPreviewPanel implements PreviewPanel {
     addHighlighter(createModifiedRange(2, Range.MODIFIED), false, EditorColors.MODIFIED_LINES_COLOR);
     addHighlighter(createModifiedRange(4, Range.INSERTED), false, EditorColors.ADDED_LINES_COLOR);
     addHighlighter(createModifiedRange(6, Range.EQUAL), false, EditorColors.WHITESPACES_MODIFIED_LINES_COLOR);
-    addHighlighter(createModifiedRange(8, Range.INSERTED, Range.EQUAL, Range.DELETED), false, EditorColors.WHITESPACES_MODIFIED_LINES_COLOR);
+    addHighlighter(createModifiedRange(8, Range.INSERTED, Range.EQUAL, Range.DELETED), false,
+                   EditorColors.WHITESPACES_MODIFIED_LINES_COLOR);
 
     addHighlighter(new Range(12, 12, 0, 1), true, EditorColors.IGNORED_DELETED_LINES_BORDER_COLOR);
     addHighlighter(createModifiedRange(13, Range.MODIFIED), true, EditorColors.IGNORED_MODIFIED_LINES_BORDER_COLOR);
     addHighlighter(new Range(15, 16, 0, 0), true, EditorColors.IGNORED_ADDED_LINES_BORDER_COLOR);
 
+    int lastCommitLine = 17;
+
     List<Color> annotationColors = AnnotationsSettings.getInstance().getOrderedColors(colorsScheme);
     List<Integer> anchorIndexes = AnnotationsSettings.getInstance().getAnchorIndexes(colorsScheme);
-    myEditor.getGutterComponentEx().registerTextAnnotation(new MyTextAnnotationGutterProvider(annotationColors, anchorIndexes));
+    myEditor.getGutterComponentEx().registerTextAnnotation(new MyTextAnnotationGutterProvider(annotationColors, anchorIndexes, lastCommitLine));
   }
 
   @NotNull
@@ -122,15 +127,11 @@ class VcsPreviewPanel implements PreviewPanel {
     int currentInnerLine = 0;
     for (byte type : inner) {
       switch (type) {
-        case Range.EQUAL:
-        case Range.INSERTED:
-        case Range.MODIFIED:
+        case Range.EQUAL, Range.INSERTED, Range.MODIFIED -> {
           innerRanges.add(new InnerRange(currentInnerLine, currentInnerLine + 1, type));
           currentInnerLine++;
-          break;
-        case Range.DELETED:
-          innerRanges.add(new InnerRange(currentInnerLine, currentInnerLine, type));
-          break;
+        }
+        case Range.DELETED -> innerRanges.add(new InnerRange(currentInnerLine, currentInnerLine, type));
       }
     }
 
@@ -182,10 +183,14 @@ class VcsPreviewPanel implements PreviewPanel {
   private static class MyTextAnnotationGutterProvider implements TextAnnotationGutterProvider {
     @NotNull private final List<? extends Color> myBackgroundColors;
     @NotNull private final List<Integer> myAnchorIndexes;
+    private final int myLastCommitLine;
 
-    MyTextAnnotationGutterProvider(@NotNull List<? extends Color> backgroundColors, @NotNull List<Integer> anchorIndexes) {
+    MyTextAnnotationGutterProvider(@NotNull List<? extends Color> backgroundColors,
+                                   @NotNull List<Integer> anchorIndexes,
+                                   int lastCommitLine) {
       myBackgroundColors = backgroundColors;
       myAnchorIndexes = anchorIndexes;
+      myLastCommitLine = lastCommitLine;
     }
 
     @Nullable
@@ -214,7 +219,7 @@ class VcsPreviewPanel implements PreviewPanel {
     @Nullable
     @Override
     public ColorKey getColor(int line, Editor editor) {
-      return EditorColors.ANNOTATIONS_COLOR;
+      return myLastCommitLine == line ? EditorColors.ANNOTATIONS_LAST_COMMIT_COLOR : EditorColors.ANNOTATIONS_COLOR;
     }
 
     @Nullable

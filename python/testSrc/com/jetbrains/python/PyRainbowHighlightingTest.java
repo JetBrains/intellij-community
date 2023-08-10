@@ -10,110 +10,126 @@ public class PyRainbowHighlightingTest extends PyTestCase {
   // positive tests
 
   public void testParameters() {
-    doTest("def foo(<rainbow color='ff000001'>p1</rainbow>, <rainbow color='ff000002'>p2</rainbow>):\n" +
-           "    print <rainbow color='ff000001'>p1</rainbow>\n" +
-           "    print <rainbow color='ff000002'>p2</rainbow>");
+    doTest("""
+             def foo(<rainbow color='ff000001'>p1</rainbow>, <rainbow color='ff000002'>p2</rainbow>):
+                 print <rainbow color='ff000001'>p1</rainbow>
+                 print <rainbow color='ff000002'>p2</rainbow>""");
   }
 
   public void testParameterReassignmentDoesntChangeColors() {
-    doTest("def foo(<rainbow color='ff000001'>p</rainbow>):\n" +
-           "    print <rainbow color='ff000001'>p</rainbow>\n" +
-           "    <rainbow color='ff000001'>p</rainbow> = \"2\"\n" +
-           "    print <rainbow color='ff000001'>p</rainbow>");
+    doTest("""
+             def foo(<rainbow color='ff000001'>p</rainbow>):
+                 print <rainbow color='ff000001'>p</rainbow>
+                 <rainbow color='ff000001'>p</rainbow> = "2"
+                 print <rainbow color='ff000001'>p</rainbow>""");
   }
 
   public void testPositionalAndKeywordParameters() {
-    doTest("def foo(*<rainbow color='ff000003'>args</rainbow>, **<rainbow color='ff000004'>kwargs</rainbow>):\n" +
-           "    print <rainbow color='ff000003'>args</rainbow>\n" +
-           "    print <rainbow color='ff000004'>kwargs</rainbow>\n");
+    doTest("""
+             def foo(*<rainbow color='ff000003'>args</rainbow>, **<rainbow color='ff000004'>kwargs</rainbow>):
+                 print <rainbow color='ff000003'>args</rainbow>
+                 print <rainbow color='ff000004'>kwargs</rainbow>
+             """);
   }
 
   public void testLocalVariables() {
-    doTest("def foo():\n" +
-           "    <rainbow color='ff000001'>p1</rainbow> = \"1\"\n" +
-           "    <rainbow color='ff000002'>p2</rainbow> = \"2\"\n" +
-           "    print <rainbow color='ff000001'>p1</rainbow>\n" +
-           "    print <rainbow color='ff000002'>p2</rainbow>");
+    doTest("""
+             def foo():
+                 <rainbow color='ff000001'>p1</rainbow> = "1"
+                 <rainbow color='ff000002'>p2</rainbow> = "2"
+                 print <rainbow color='ff000001'>p1</rainbow>
+                 print <rainbow color='ff000002'>p2</rainbow>""");
   }
 
   public void testLocalVariableReassignmentDoesntChangeColors() {
-    doTest("def foo():\n" +
-           "    <rainbow color='ff000001'>t</rainbow> = \"1\"\n" +
-           "    print <rainbow color='ff000001'>t</rainbow>\n" +
-           "    <rainbow color='ff000001'>t</rainbow> = \"2\"\n" +
-           "    print <rainbow color='ff000001'>t</rainbow>");
+    doTest("""
+             def foo():
+                 <rainbow color='ff000001'>t</rainbow> = "1"
+                 print <rainbow color='ff000001'>t</rainbow>
+                 <rainbow color='ff000001'>t</rainbow> = "2"
+                 print <rainbow color='ff000001'>t</rainbow>""");
   }
 
   public void testTopLevelVariable() {
-    doTest("<rainbow color='ff000003'>a</rainbow> = 1\n" +
-           "def foo():\n" +
-           "    print <rainbow color='ff000003'>a</rainbow>");
+    doTest("""
+             <rainbow color='ff000003'>a</rainbow> = 1
+             def foo():
+                 print <rainbow color='ff000003'>a</rainbow>""");
   }
 
   public void testTopLevelVariableReassignmentDoesntChangeColors() {
-    doTest("<rainbow color='ff000003'>a</rainbow> = 10\n" +
-           "print <rainbow color='ff000003'>a</rainbow>\n" +
-           "<rainbow color='ff000003'>a</rainbow> = 11\n" +
-           "print <rainbow color='ff000003'>a</rainbow>");
+    doTest("""
+             <rainbow color='ff000003'>a</rainbow> = 10
+             print <rainbow color='ff000003'>a</rainbow>
+             <rainbow color='ff000003'>a</rainbow> = 11
+             print <rainbow color='ff000003'>a</rainbow>""");
   }
 
   public void testLocalLambdaParametersHaveOwnColors() {
-    doTest("def foo():\n" +
-           "    <rainbow color='ff000001'>l</rainbow> = 5\n" +
-           "    <rainbow color='ff000002'>m</rainbow> = 5\n" +
-           "    <rainbow color='ff000003'>n1</rainbow> = 10\n" +
-           "    <rainbow color='ff000004'>n2</rainbow> = 10\n" +
-           "    map(lambda <rainbow color='ff000002'>n1</rainbow>, <rainbow color='ff000001'>n2</rainbow>: <rainbow color='ff000002'>n1</rainbow> * <rainbow color='ff000001'>n2</rainbow>, zip(range(10), range(10)))");
+    doTest("""
+             def foo():
+                 <rainbow color='ff000001'>l</rainbow> = 5
+                 <rainbow color='ff000002'>m</rainbow> = 5
+                 <rainbow color='ff000003'>n1</rainbow> = 10
+                 <rainbow color='ff000004'>n2</rainbow> = 10
+                 map(lambda <rainbow color='ff000002'>n1</rainbow>, <rainbow color='ff000001'>n2</rainbow>: <rainbow color='ff000002'>n1</rainbow> * <rainbow color='ff000001'>n2</rainbow>, zip(range(10), range(10)))""");
   }
 
   public void testTopLevelLambdaParametersHaveOwnColors() {
-    doTest("<rainbow color='ff000004'>l</rainbow> = 5\n" +
-           "<rainbow color='ff000001'>m</rainbow> = 5\n" +
-           "<rainbow color='ff000002'>n1</rainbow> = 10\n" +
-           "<rainbow color='ff000003'>n2</rainbow> = 10\n" +
-           "map(lambda <rainbow color='ff000002'>n1</rainbow>, <rainbow color='ff000001'>n2</rainbow>: <rainbow color='ff000002'>n1</rainbow> * <rainbow color='ff000001'>n2</rainbow>, zip(range(10), range(10)))");
+    doTest("""
+             <rainbow color='ff000004'>l</rainbow> = 5
+             <rainbow color='ff000001'>m</rainbow> = 5
+             <rainbow color='ff000002'>n1</rainbow> = 10
+             <rainbow color='ff000003'>n2</rainbow> = 10
+             map(lambda <rainbow color='ff000002'>n1</rainbow>, <rainbow color='ff000001'>n2</rainbow>: <rainbow color='ff000002'>n1</rainbow> * <rainbow color='ff000001'>n2</rainbow>, zip(range(10), range(10)))""");
   }
 
   public void testSameNameLocalAndTopLevelVariableHaveDifferentColors() {
-    doTest("<rainbow color='ff000004'>l</rainbow> = 5\n" +
-           "<rainbow color='ff000001'>g</rainbow> = 10\n" +
-           "def foo():\n" +
-           "    <rainbow color='ff000004'>g</rainbow> = 20");
+    doTest("""
+             <rainbow color='ff000004'>l</rainbow> = 5
+             <rainbow color='ff000001'>g</rainbow> = 10
+             def foo():
+                 <rainbow color='ff000004'>g</rainbow> = 20""");
   }
 
   public void testSameNameLocalAndGlobalVariableHaveSameColors() {
-    doTest("<rainbow color='ff000004'>l</rainbow> = 5\n" +
-           "def foo():\n" +
-           "    global <rainbow color='ff000001'>g</rainbow>\n" +
-           "    <rainbow color='ff000001'>g</rainbow> = 20");
+    doTest("""
+             <rainbow color='ff000004'>l</rainbow> = 5
+             def foo():
+                 global <rainbow color='ff000001'>g</rainbow>
+                 <rainbow color='ff000001'>g</rainbow> = 20""");
   }
 
   public void testSameNameOuterAndNonLocalVariableAndItsReferenceHaveSameColors() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON34,
-      () -> doTest("def outer():\n" +
-                   "    <rainbow color='ff000001'>another</rainbow> = None\n" +
-                   "    <rainbow color='ff000002'>another2</rainbow> = None\n" +
-                   "    <rainbow color='ff000003'>another3</rainbow> = None\n" +
-                   "    <rainbow color='ff000004'>from_outer</rainbow> = 1\n" +
-                   "    def nested():\n" +
-                   "        nonlocal <rainbow color='ff000004'>from_outer</rainbow>\n" +
-                   "        print(<rainbow color='ff000004'>from_outer</rainbow>)\n")
+      () -> doTest("""
+                     def outer():
+                         <rainbow color='ff000001'>another</rainbow> = None
+                         <rainbow color='ff000002'>another2</rainbow> = None
+                         <rainbow color='ff000003'>another3</rainbow> = None
+                         <rainbow color='ff000004'>from_outer</rainbow> = 1
+                         def nested():
+                             nonlocal <rainbow color='ff000004'>from_outer</rainbow>
+                             print(<rainbow color='ff000004'>from_outer</rainbow>)
+                     """)
     );
   }
 
   public void testSameNameOuterAndNonLocalVariableAndItsReferenceAfterReassignmentHaveSameColors() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON34,
-      () -> doTest("def outer():\n" +
-                   "    <rainbow color='ff000001'>another</rainbow> = None\n" +
-                   "    <rainbow color='ff000002'>another2</rainbow> = None\n" +
-                   "    <rainbow color='ff000003'>another3</rainbow> = None\n" +
-                   "    <rainbow color='ff000004'>from_outer</rainbow> = 1\n" +
-                   "    def nested():\n" +
-                   "        nonlocal <rainbow color='ff000004'>from_outer</rainbow>\n" +
-                   "        <rainbow color='ff000004'>from_outer</rainbow> = 2\n" +
-                   "        print(<rainbow color='ff000004'>from_outer</rainbow>)\n")
+      () -> doTest("""
+                     def outer():
+                         <rainbow color='ff000001'>another</rainbow> = None
+                         <rainbow color='ff000002'>another2</rainbow> = None
+                         <rainbow color='ff000003'>another3</rainbow> = None
+                         <rainbow color='ff000004'>from_outer</rainbow> = 1
+                         def nested():
+                             nonlocal <rainbow color='ff000004'>from_outer</rainbow>
+                             <rainbow color='ff000004'>from_outer</rainbow> = 2
+                             print(<rainbow color='ff000004'>from_outer</rainbow>)
+                     """)
     );
   }
 
@@ -123,9 +139,10 @@ public class PyRainbowHighlightingTest extends PyTestCase {
   }
 
   public void testVariableAfterAugAssignment() {
-    doTest("<rainbow color='ff000002'>index</rainbow> = 1\n" +
-           "<rainbow color='ff000002'>index</rainbow> += 1\n" +
-           "print(<rainbow color='ff000002'>index</rainbow>)");
+    doTest("""
+             <rainbow color='ff000002'>index</rainbow> = 1
+             <rainbow color='ff000002'>index</rainbow> += 1
+             print(<rainbow color='ff000002'>index</rainbow>)""");
   }
 
   public void testVariableInsideLambda() {
@@ -134,73 +151,83 @@ public class PyRainbowHighlightingTest extends PyTestCase {
 
   // EA-96587
   public void testEa96587() {
-    doTest("<rainbow color='ff000003'>a</rainbow> = 10\n" +
-           "<rainbow color='ff000003'>a</rainbow> += 10\n" +
-           "for <rainbow color='ff000004'>i</rainbow> in range(10):\n" +
-           "    <rainbow color='ff000003'>a</rainbow> += 10\n" +
-           "    <rainbow color='ff000003'>a</rainbow> += 10");
+    doTest("""
+             <rainbow color='ff000003'>a</rainbow> = 10
+             <rainbow color='ff000003'>a</rainbow> += 10
+             for <rainbow color='ff000004'>i</rainbow> in range(10):
+                 <rainbow color='ff000003'>a</rainbow> += 10
+                 <rainbow color='ff000003'>a</rainbow> += 10""");
   }
 
   // negative tests
 
   public void testSelfParameter() {
-    doTest("class A:\n" +
-           "    def foo(self):\n" +
-           "        print self");
+    doTest("""
+             class A:
+                 def foo(self):
+                     print self""");
   }
 
   public void testAttributesAsReferences() {
-    doTest("class A:\n" +
-           "    def foo(self, <rainbow color='ff000001'>p</rainbow>):\n" +
-           "        print self.q\n" +
-           "        print <rainbow color='ff000001'>p</rainbow>.q");
+    doTest("""
+             class A:
+                 def foo(self, <rainbow color='ff000001'>p</rainbow>):
+                     print self.q
+                     print <rainbow color='ff000001'>p</rainbow>.q""");
   }
 
   public void testClassLevelAttributeAsReference() {
-    doTest("class A:\n" +
-           "    var_a = 10\n" +
-           "    def foo(self):\n" +
-           "        print self.var_a");
+    doTest("""
+             class A:
+                 var_a = 10
+                 def foo(self):
+                     print self.var_a""");
   }
 
   public void testAttributesAsTargets() {
-    doTest("class A:\n" +
-           "    def foo(self, <rainbow color='ff000001'>p</rainbow>):\n" +
-           "        self.q = 10\n" +
-           "        <rainbow color='ff000001'>p</rainbow>.q = 10");
+    doTest("""
+             class A:
+                 def foo(self, <rainbow color='ff000001'>p</rainbow>):
+                     self.q = 10
+                     <rainbow color='ff000001'>p</rainbow>.q = 10""");
   }
 
   public void testClassLevelAttributeAsTarget() {
-    doTest("class A:\n" +
-           "    var_a = 10\n" +
-           "    def foo(self):\n" +
-           "        self.var_a = 10");
+    doTest("""
+             class A:
+                 var_a = 10
+                 def foo(self):
+                     self.var_a = 10""");
   }
 
   public void testClassAsCallee() {
-    doTest("class A:\n" +
-           "    def foo(self):\n" +
-           "        print A()");
+    doTest("""
+             class A:
+                 def foo(self):
+                     print A()""");
   }
 
   public void testFunctionAsCallee() {
-    doTest("def foo():\n" +
-           "    pass\n" +
-           "def bar():\n" +
-           "    print foo()");
+    doTest("""
+             def foo():
+                 pass
+             def bar():
+                 print foo()""");
   }
 
   public void testClassAsVariable() {
-    doTest("class A:\n" +
-           "    def foo(self):\n" +
-           "        print A");
+    doTest("""
+             class A:
+                 def foo(self):
+                     print A""");
   }
 
   public void testFunctionAsVariable() {
-    doTest("def foo():\n" +
-           "    pass\n" +
-           "def bar():\n" +
-           "    print foo");
+    doTest("""
+             def foo():
+                 pass
+             def bar():
+                 print foo""");
   }
 
   public void testNoneAsReference() {

@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.log;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -140,7 +139,7 @@ public final class HgHistoryUtil {
 
     HgRevisionNumber vcsRevisionNumber = revision.getRevisionNumber();
     List<? extends HgRevisionNumber> parents = vcsRevisionNumber.getParents();
-    for (HgRevisionNumber parent : parents.stream().skip(1).collect(Collectors.toList())) {
+    for (HgRevisionNumber parent : parents.stream().skip(1).toList()) {
       reportedChanges.add(getChangesFromParent(project, root, vcsRevisionNumber, parent));
     }
 
@@ -154,8 +153,8 @@ public final class HgHistoryUtil {
   }
 
   @NotNull
-  protected static List<VcsFileStatusInfo> getChangesFromParent(@NotNull Project project, @NotNull VirtualFile root,
-                                                                @NotNull HgRevisionNumber commit, @NotNull HgRevisionNumber parent) {
+  private static List<VcsFileStatusInfo> getChangesFromParent(@NotNull Project project, @NotNull VirtualFile root,
+                                                              @NotNull HgRevisionNumber commit, @NotNull HgRevisionNumber parent) {
     HgStatusCommand status = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(true)
       .baseRevision(parent).targetRevision(commit).build(project);
     return convertHgChanges(status.executeInCurrentThread(root));
@@ -202,12 +201,12 @@ public final class HgHistoryUtil {
       String firstPath;
       String secondPath;
       switch (type) {
-        case DELETED:
+        case DELETED -> {
           firstPath = change.beforeFile().getRelativePath();
           secondPath = null;
           if (copied.contains(firstPath)) continue; // file was renamed
-          break;
-        case MOVED:
+        }
+        case MOVED -> {
           firstPath = change.beforeFile().getRelativePath();
           secondPath = change.afterFile().getRelativePath();
           if (!deleted.contains(firstPath)) {
@@ -215,13 +214,12 @@ public final class HgHistoryUtil {
             firstPath = change.afterFile().getRelativePath();
             secondPath = null;
           }
-          break;
-        case MODIFICATION:
-        case NEW:
-        default:
+        }
+        //case MODIFICATION, NEW ->
+        default -> {
           firstPath = change.afterFile().getRelativePath();
           secondPath = null;
-          break;
+        }
       }
       result.add(new VcsFileStatusInfo(type, Objects.requireNonNull(firstPath), secondPath));
     }
@@ -230,22 +228,13 @@ public final class HgHistoryUtil {
 
   @Nullable
   private static Change.Type getType(@NotNull HgFileStatusEnum status) {
-    switch (status) {
-      case ADDED:
-        return Change.Type.NEW;
-      case MODIFIED:
-        return Change.Type.MODIFICATION;
-      case DELETED:
-        return Change.Type.DELETED;
-      case COPY:
-        return Change.Type.MOVED;
-      case UNVERSIONED:
-      case MISSING:
-      case UNMODIFIED:
-      case IGNORED:
-        return null;
-    }
-    return null;
+    return switch (status) {
+      case ADDED -> Change.Type.NEW;
+      case MODIFIED -> Change.Type.MODIFICATION;
+      case DELETED -> Change.Type.DELETED;
+      case COPY -> Change.Type.MOVED;
+      case UNVERSIONED, MISSING, UNMODIFIED, IGNORED -> null;
+    };
   }
 
 
@@ -429,7 +418,7 @@ public final class HgHistoryUtil {
   @Nullable
   static VcsLogObjectsFactory getObjectsFactoryWithDisposeCheck(Project project) {
     if (!project.isDisposed()) {
-      return ServiceManager.getService(project, VcsLogObjectsFactory.class);
+      return project.getService(VcsLogObjectsFactory.class);
     }
     return null;
   }

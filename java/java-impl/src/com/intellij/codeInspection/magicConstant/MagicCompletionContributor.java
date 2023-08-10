@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -24,30 +10,37 @@ import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-
-public class MagicCompletionContributor extends CompletionContributor implements DumbAware {
+public final class MagicCompletionContributor extends CompletionContributor implements DumbAware {
   private static final ElementPattern<PsiElement> IN_METHOD_CALL_ARGUMENT =
-    psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiExpressionList.class).withParent(PsiCall.class)));
+    PlatformPatterns.psiElement().withParent(PlatformPatterns.psiElement(PsiReferenceExpression.class).inside(
+      PlatformPatterns.psiElement(PsiExpressionList.class).withParent(PsiCall.class)));
   private static final ElementPattern<PsiElement> IN_BINARY_COMPARISON =
-    psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiPolyadicExpression.class)));
+    PlatformPatterns.psiElement().withParent(
+      PlatformPatterns.psiElement(PsiReferenceExpression.class).inside(PlatformPatterns.psiElement(PsiPolyadicExpression.class)));
   private static final ElementPattern<PsiElement> IN_ASSIGNMENT =
-    psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiAssignmentExpression.class)));
+    PlatformPatterns.psiElement().withParent(
+      PlatformPatterns.psiElement(PsiReferenceExpression.class).inside(PlatformPatterns.psiElement(PsiAssignmentExpression.class)));
+  private static final ElementPattern<PsiElement> IN_VARIABLE =
+    PlatformPatterns.psiElement().withParent(
+      PlatformPatterns.psiElement(PsiReferenceExpression.class).withParent(PlatformPatterns.psiElement(PsiVariable.class)));
   private static final ElementPattern<PsiElement> IN_RETURN =
-    psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiReturnStatement.class)));
+    PlatformPatterns.psiElement().withParent(
+      PlatformPatterns.psiElement(PsiReferenceExpression.class).inside(PlatformPatterns.psiElement(PsiReturnStatement.class)));
   private static final ElementPattern<PsiElement> IN_ANNOTATION_INITIALIZER =
-    psiElement().afterLeaf("=").withParent(PsiReferenceExpression.class).withSuperParent(2,PsiNameValuePair.class).withSuperParent(3,PsiAnnotationParameterList.class).withSuperParent(4,PsiAnnotation.class);
+    PlatformPatterns
+      .psiElement().afterLeaf("=").withParent(PsiReferenceExpression.class).withSuperParent(2, PsiNameValuePair.class).withSuperParent(3, PsiAnnotationParameterList.class).withSuperParent(4, PsiAnnotation.class);
   private static final int PRIORITY = 100;
 
   @Override
@@ -68,7 +61,7 @@ public class MagicCompletionContributor extends CompletionContributor implements
   public static MagicConstantUtils.AllowedValues getAllowedValues(@NotNull PsiElement pos) {
     MagicConstantUtils.AllowedValues allowedValues = null;
     for (Pair<PsiModifierListOwner, PsiType> pair : getMembersWithAllowedValues(pos)) {
-      MagicConstantUtils.AllowedValues values = MagicConstantUtils.getAllowedValues(pair.first, pair.second);
+      MagicConstantUtils.AllowedValues values = MagicConstantUtils.getAllowedValues(pair.first, pair.second, pos);
       if (values == null) continue;
       if (allowedValues == null) {
         allowedValues = values;
@@ -96,32 +89,36 @@ public class MagicCompletionContributor extends CompletionContributor implements
 
   @NotNull
   public static List<Pair<PsiModifierListOwner, PsiType>> getMembersWithAllowedValues(@NotNull PsiElement pos) {
-    Set<Pair<PsiModifierListOwner, PsiType>> result = new THashSet<>();
+    Set<Pair<PsiModifierListOwner, PsiType>> result = new HashSet<>();
     if (IN_METHOD_CALL_ARGUMENT.accepts(pos)) {
       PsiCall call = PsiTreeUtil.getParentOfType(pos, PsiCall.class);
-      if (!(call instanceof PsiExpression)) return Collections.emptyList();
-      PsiType type = ((PsiExpression)call).getType();
+      if (call == null) return Collections.emptyList();
 
       PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(call.getProject()).getResolveHelper();
-      JavaResolveResult[] methods = call instanceof PsiMethodCallExpression
-                                    ? ((PsiMethodCallExpression)call).getMethodExpression().multiResolve(true)
-                                    : call instanceof PsiNewExpression && type instanceof PsiClassType
-                                      ? resolveHelper.multiResolveConstructor((PsiClassType)type, call.getArgumentList(), call)
-                                      : JavaResolveResult.EMPTY_ARRAY;
+      JavaResolveResult[] methods = getMethodCandidates(call, resolveHelper);
       for (JavaResolveResult resolveResult : methods) {
         PsiElement element = resolveResult.getElement();
-        if (!(element instanceof PsiMethod)) return Collections.emptyList();
-        PsiMethod method = (PsiMethod)element;
+        if (!(element instanceof PsiMethod method)) return Collections.emptyList();
         if (!resolveHelper.isAccessible(method, call, null)) continue;
         PsiElement argument = pos;
-        while (!(argument.getContext() instanceof PsiExpressionList)) argument = argument.getContext();
-        PsiExpressionList list = (PsiExpressionList)argument.getContext();
+        while (!(argument.getContext() instanceof PsiExpressionList list)) argument = argument.getContext();
         int i = ArrayUtil.indexOf(list.getExpressions(), argument);
         if (i == -1) continue;
         PsiParameter[] params = method.getParameterList().getParameters();
-        if (i >= params.length) continue;
-        PsiParameter parameter = params[i];
-        result.add(Pair.create(parameter, parameter.getType()));
+        PsiParameter parameter;
+        PsiType parameterType;
+        if (method.isVarArgs() && i >= params.length - 1) {
+          parameter = ArrayUtil.getLastElement(params);
+          parameterType = ((PsiEllipsisType)parameter.getType()).getComponentType();
+        }
+        else if (i < params.length) {
+          parameter = params[i];
+          parameterType = parameter.getType();
+        }
+        else {
+          continue;
+        }
+        result.add(Pair.create(parameter, parameterType));
       }
     }
     else if (IN_BINARY_COMPARISON.accepts(pos)) {
@@ -151,6 +148,10 @@ public class MagicCompletionContributor extends CompletionContributor implements
         result.add(Pair.create(resolved, l.getType()));
       }
     }
+    else if (IN_VARIABLE.accepts(pos)) {
+      PsiVariable variable = PsiTreeUtil.getParentOfType(pos, PsiVariable.class);
+      result.add(Pair.create(variable, variable.getType()));
+    }
     else if (IN_RETURN.accepts(pos)) {
       PsiReturnStatement statement = PsiTreeUtil.getParentOfType(pos, PsiReturnStatement.class);
       PsiExpression l = statement == null ? null : statement.getReturnValue();
@@ -179,13 +180,33 @@ public class MagicCompletionContributor extends CompletionContributor implements
     return new ArrayList<>(result);
   }
 
+  private static @NotNull JavaResolveResult @NotNull [] getMethodCandidates(PsiCall call, PsiResolveHelper resolveHelper) {
+    if (call instanceof PsiMethodCallExpression) {
+      return ((PsiMethodCallExpression)call).getMethodExpression().multiResolve(true);
+    }
+    if (call instanceof PsiNewExpression) {
+      PsiType type = ((PsiExpression)call).getType();
+      PsiExpressionList argumentList = call.getArgumentList();
+      if (type instanceof PsiClassType && argumentList != null) {
+        return resolveHelper.multiResolveConstructor((PsiClassType)type, argumentList, call);
+      }
+    }
+    if (call instanceof PsiEnumConstant) {
+      JavaResolveResult result = call.resolveMethodGenerics();
+      if (result != JavaResolveResult.EMPTY) {
+        return new JavaResolveResult[]{result};
+      }
+    }
+    return JavaResolveResult.EMPTY_ARRAY;
+  }
+
   private static void addCompletionVariants(@NotNull final CompletionParameters parameters,
                                             @NotNull final CompletionResultSet result,
                                             PsiElement pos,
                                             MagicConstantUtils.AllowedValues allowedValues) {
-    final Set<PsiElement> allowed = new THashSet<>(new TObjectHashingStrategy<>() {
+    final Set<PsiElement> allowed = CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
       @Override
-      public int computeHashCode(PsiElement object) {
+      public int hashCode(PsiElement object) {
         return 0;
       }
 

@@ -18,9 +18,6 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class EditorNavigationDelegateAdapter implements EditorNavigationDelegate {
 
   @NotNull

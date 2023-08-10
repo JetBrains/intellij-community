@@ -28,7 +28,7 @@ public final class YouTrackFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return TaskBundle.message("label.youtrack.query");
+    return TaskBundle.message("filetype.youtrack.query.description");
   }
 
   @NotNull
@@ -38,7 +38,7 @@ public final class YouTrackFileType extends LanguageFileType {
   }
 
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return TasksCoreIcons.Youtrack;
   }
 }

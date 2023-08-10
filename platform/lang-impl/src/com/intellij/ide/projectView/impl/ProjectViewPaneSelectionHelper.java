@@ -5,7 +5,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,20 +43,8 @@ public abstract class ProjectViewPaneSelectionHelper {
     return selectionDescriptor.originalTreePaths;
   }
 
-  public static class SelectionDescriptor {
-    @Nullable
-    public final PsiElement targetPsiElement;
-    @Nullable
-    public final VirtualFile targetVirtualFile;
-    @NotNull
-    public final List<TreePath> originalTreePaths;
-
-    public SelectionDescriptor(@Nullable PsiElement targetPsiElement,
+  public record SelectionDescriptor(@Nullable PsiElement targetPsiElement,
                                @Nullable VirtualFile targetVirtualFile,
                                @NotNull List<TreePath> originalTreePaths) {
-      this.targetPsiElement = targetPsiElement;
-      this.targetVirtualFile = targetVirtualFile;
-      this.originalTreePaths = ContainerUtil.immutableList(originalTreePaths);
-    }
   }
 }

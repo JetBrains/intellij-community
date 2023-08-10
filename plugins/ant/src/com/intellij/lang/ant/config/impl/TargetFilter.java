@@ -39,7 +39,7 @@ public final class TargetFilter implements JDOMExternalizable, Externalizer.Skip
   @Override
   public void readExternal(Element element) {
     myTargetName = element.getAttributeValue(FILTER_TARGET_NAME);
-    myVisible = Boolean.valueOf(element.getAttributeValue(FILTER_IS_VISIBLE));
+    myVisible = Boolean.parseBoolean(element.getAttributeValue(FILTER_IS_VISIBLE));
   }
 
   @Override

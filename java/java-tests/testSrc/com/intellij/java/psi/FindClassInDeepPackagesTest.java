@@ -28,9 +28,6 @@ import com.intellij.testFramework.JavaPsiTestCase;
 
 import java.io.File;
 
-/**
- *  @author dsl
- */
 public class FindClassInDeepPackagesTest extends JavaPsiTestCase {
   @Override
   protected void setUpJdk() {

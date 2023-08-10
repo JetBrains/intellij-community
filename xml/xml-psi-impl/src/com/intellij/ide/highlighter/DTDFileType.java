@@ -25,7 +25,7 @@ public final class DTDFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return XmlPsiBundle.message("filetype.description.dtd");
+    return XmlPsiBundle.message("filetype.dtd.description");
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.lang.Language;
@@ -10,7 +10,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -22,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 public class LightVirtualFile extends LightVirtualFileBase {
   private CharSequence myContent;
   private Language myLanguage;
+  private long myCachedLength = Long.MIN_VALUE;
 
   public LightVirtualFile() {
     this("");
@@ -39,30 +42,36 @@ public class LightVirtualFile extends LightVirtualFileBase {
     this(name, fileType, text, LocalTimeCounter.currentTime());
   }
 
-  public LightVirtualFile(VirtualFile original, @NotNull CharSequence text, long modificationStamp) {
+  public LightVirtualFile(@NotNull VirtualFile original, @NotNull CharSequence text, long modificationStamp) {
     this(original.getName(), original.getFileType(), text, modificationStamp);
     setCharset(original.getCharset());
   }
 
-  public LightVirtualFile(@NlsSafe @NotNull String name, FileType fileType, @NotNull CharSequence text, long modificationStamp) {
+  public LightVirtualFile(@NlsSafe @NotNull String name, @Nullable FileType fileType, @NotNull CharSequence text, long modificationStamp) {
     this(name, fileType, text, CharsetUtil.extractCharsetFromFileContent(null, null, fileType, text), modificationStamp);
   }
 
   public LightVirtualFile(@NlsSafe @NotNull String name,
-                          FileType fileType,
+                          @Nullable FileType fileType,
                           @NlsSafe @NotNull CharSequence text,
                           Charset charset,
                           long modificationStamp) {
     super(name, fileType, modificationStamp);
-    myContent = text;
+    setContentImpl(text);
     setCharset(charset);
   }
 
   public LightVirtualFile(@NlsSafe @NotNull String name, @NotNull Language language, @NlsSafe @NotNull CharSequence text) {
     super(name, null, LocalTimeCounter.currentTime());
-    myContent = text;
+    setContentImpl(text);
     setLanguage(language);
     setCharset(StandardCharsets.UTF_8);
+  }
+
+  @Override
+  protected void storeCharset(Charset charset) {
+    super.storeCharset(charset);
+    myCachedLength = Long.MIN_VALUE;
   }
 
   public Language getLanguage() {
@@ -84,6 +93,14 @@ public class LightVirtualFile extends LightVirtualFileBase {
   }
 
   @Override
+  public long getLength() {
+    if (myCachedLength == Long.MIN_VALUE) {
+      myCachedLength = super.getLength();
+    }
+    return myCachedLength;
+  }
+
+  @Override
   public @NotNull OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
     assertWritable();
     return VfsUtilCore.outputStreamAddingBOM(new ByteArrayOutputStream() {
@@ -93,7 +110,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
 
         setModificationStamp(newModificationStamp);
         try {
-          myContent = toString(getCharset().name());
+          setContentImpl(toString(getCharset().name()));
         }
         catch (UnsupportedEncodingException e) {
           throw new RuntimeException(e);
@@ -111,8 +128,13 @@ public class LightVirtualFile extends LightVirtualFileBase {
 
   public void setContent(Object requestor, @NotNull CharSequence content, boolean fireEvent) {
     assertWritable();
-    myContent = content;
+    setContentImpl(content);
     setModificationStamp(LocalTimeCounter.currentTime());
+  }
+
+  private void setContentImpl(@NotNull CharSequence content) {
+    myContent = content;
+    myCachedLength = Long.MIN_VALUE;
   }
 
   public @NotNull CharSequence getContent() {
@@ -123,8 +145,29 @@ public class LightVirtualFile extends LightVirtualFileBase {
     return ThreeState.UNSURE;
   }
 
+  /**
+   * @return true if this virtual file is considered a non-physical,
+   * and changes in the file should not produce events and
+   * can be performed outside of write action.
+   */
+  public boolean shouldSkipEventSystem() {
+    return false;
+  } 
+
   @Override
   public String toString() {
     return "LightVirtualFile: " + getPresentableUrl();
+  }
+
+  /**
+   * Determines if the given virtual file should be treated as non-physical one
+   *
+   * @param virtualFile the virtual file to check
+   * @return true if the virtual file is an instance of LightVirtualFile and {@link #shouldSkipEventSystem()} method returns true,
+   * false otherwise
+   */
+  @Contract("null -> false")
+  public static boolean shouldSkipEventSystem(@Nullable VirtualFile virtualFile) {
+    return virtualFile instanceof LightVirtualFile && ((LightVirtualFile)virtualFile).shouldSkipEventSystem();
   }
 }

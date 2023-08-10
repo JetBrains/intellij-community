@@ -1,14 +1,23 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
+import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.childScope
+import com.intellij.util.io.await
 import com.intellij.util.messages.MessageBus
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
-import org.jetbrains.plugins.github.util.completionOnEdt
 import java.util.concurrent.CompletableFuture
 
 class GHPRStateDataProviderImpl(private val stateService: GHPRStateService,
@@ -56,16 +65,34 @@ class GHPRStateDataProviderImpl(private val stateService: GHPRStateService,
     }
   }
 
-  override fun loadMergeabilityState(): CompletableFuture<GHPRMergeabilityState> = mergeabilityStateRequestValue.value
+  override val mergeabilityState: Flow<Result<GHPRMergeabilityState>> = callbackFlow {
+    val listenerDisposable = Disposer.newDisposable()
+    var loaderScope = childScope()
+    mergeabilityStateRequestValue.addDropEventListener(listenerDisposable) {
+      loaderScope.cancel()
+      loaderScope = childScope()
+      loaderScope.launch {
+        val result = runCatching {
+          mergeabilityStateRequestValue.value.await()
+        }
+        ensureActive()
+        send(result)
+      }
+    }
+    val result = runCatching {
+      mergeabilityStateRequestValue.value.await()
+    }
+    send(result)
+    awaitClose {
+      Disposer.dispose(listenerDisposable)
+    }
+  }
 
   override fun reloadMergeabilityState() {
     if (baseBranchProtectionRulesRequestValue.lastLoadedValue == null)
       baseBranchProtectionRulesRequestValue.drop()
     mergeabilityStateRequestValue.drop()
   }
-
-  override fun addMergeabilityStateListener(disposable: Disposable, listener: () -> Unit) =
-    mergeabilityStateRequestValue.addDropEventListener(disposable, listener)
 
   override fun close(progressIndicator: ProgressIndicator): CompletableFuture<Unit> =
     stateService.close(progressIndicator, pullRequestId).notifyState()

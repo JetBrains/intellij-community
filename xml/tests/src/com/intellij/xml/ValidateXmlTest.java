@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
@@ -211,7 +211,7 @@ public class ValidateXmlTest extends JavaCodeInsightTestCase {
     perform("Alternative.xsd", "(41:83) cvc-complex-type.2.4.a: Invalid content was found starting with element '{\"http://www.w3.org/2001/XMLSchema\":alternative}'. One of '{\"http://www.w3.org/2001/XMLSchema\":annotation, \"http://www.w3.org/2001/XMLSchema\":simpleType, \"http://www.w3.org/2001/XMLSchema\":complexType, \"http://www.w3.org/2001/XMLSchema\":unique, \"http://www.w3.org/2001/XMLSchema\":key, \"http://www.w3.org/2001/XMLSchema\":keyref}' is expected.");
     ExternalResourceManagerEx.getInstanceEx().setXmlSchemaVersion(ExternalResourceManagerEx.XMLSchemaVersion.XMLSchema_1_1, getProject());
     perform("Alternative.xsd", "XMLSchema.xsd:(936:30) rcase-Recurse.2: There is not a complete functional mapping between the particles.\n" +
-                               "XMLSchema.xsd:(936:30) derivation-ok-restriction.5.4.2: Error for type 'all'.  The particle of the type is not a valid restriction of the particle of the base.");
+                               "XMLSchema.xsd:(936:30) derivation-ok-restriction.5.4.2: Error for type 'all'. The particle of the type is not a valid restriction of the particle of the base.");
   }
 
   public void testRelativePath() throws Throwable {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -6,6 +6,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +14,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "DebuggerSettings", storages = @Storage("debugger.xml"))
+@State(name = "DebuggerSettings", storages = @Storage("debugger.xml"), category = SettingsCategory.TOOLS)
 public class DebuggerSettings implements Cloneable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DebuggerSettings.class);
   public static final int SOCKET_TRANSPORT = 0;
@@ -66,10 +66,8 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @OptionTag("DEBUGGER_TRANSPORT")
   private int DEBUGGER_TRANSPORT;
 
-  public boolean FORCE_CLASSIC_VM = true;
   public boolean DISABLE_JIT;
   public boolean SHOW_ALTERNATIVE_SOURCE = true;
-  public boolean HOTSWAP_IN_BACKGROUND = true;
   public volatile boolean ENABLE_MEMORY_AGENT =
     ApplicationManager.getApplication().isEAP() && !ApplicationManager.getApplication().isUnitTestMode();
   public boolean ALWAYS_SMART_STEP_INTO = true;
@@ -77,6 +75,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public boolean SKIP_CONSTRUCTORS;
   public boolean SKIP_GETTERS;
   public boolean SKIP_CLASSLOADERS = true;
+  public boolean SHOW_TYPES = true;
 
   public String RUN_HOTSWAP_AFTER_COMPILE = RUN_HOTSWAP_ASK;
   public boolean COMPILE_BEFORE_HOTSWAP = true;
@@ -90,6 +89,9 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   public String EVALUATE_FINALLY_ON_POP_FRAME = EVALUATE_FINALLY_ASK;
 
+  /**
+   * Whether we resume only current thread during the stepping.
+   */
   public boolean RESUME_ONLY_CURRENT_THREAD = false;
 
   private ClassFilter[] mySteppingFilters = DEFAULT_STEPPING_FILTERS;
@@ -160,31 +162,29 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof DebuggerSettings)) return false;
-    DebuggerSettings secondSettings = (DebuggerSettings)obj;
+    if (!(obj instanceof DebuggerSettings secondSettings)) return false;
 
     return
       TRACING_FILTERS_ENABLED == secondSettings.TRACING_FILTERS_ENABLED &&
       DEBUGGER_TRANSPORT == secondSettings.DEBUGGER_TRANSPORT &&
       StringUtil.equals(EVALUATE_FINALLY_ON_POP_FRAME, secondSettings.EVALUATE_FINALLY_ON_POP_FRAME) &&
-      FORCE_CLASSIC_VM == secondSettings.FORCE_CLASSIC_VM &&
       DISABLE_JIT == secondSettings.DISABLE_JIT &&
       SHOW_ALTERNATIVE_SOURCE == secondSettings.SHOW_ALTERNATIVE_SOURCE &&
       KILL_PROCESS_IMMEDIATELY == secondSettings.KILL_PROCESS_IMMEDIATELY &&
       ALWAYS_DEBUG == secondSettings.ALWAYS_DEBUG &&
-      HOTSWAP_IN_BACKGROUND == secondSettings.HOTSWAP_IN_BACKGROUND &&
       ENABLE_MEMORY_AGENT == secondSettings.ENABLE_MEMORY_AGENT &&
       ALWAYS_SMART_STEP_INTO == secondSettings.ALWAYS_SMART_STEP_INTO &&
       SKIP_SYNTHETIC_METHODS == secondSettings.SKIP_SYNTHETIC_METHODS &&
       SKIP_CLASSLOADERS == secondSettings.SKIP_CLASSLOADERS &&
       SKIP_CONSTRUCTORS == secondSettings.SKIP_CONSTRUCTORS &&
       SKIP_GETTERS == secondSettings.SKIP_GETTERS &&
+      SHOW_TYPES == secondSettings.SHOW_TYPES &&
       RESUME_ONLY_CURRENT_THREAD == secondSettings.RESUME_ONLY_CURRENT_THREAD &&
       COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
       HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&
-      (Objects.equals(RUN_HOTSWAP_AFTER_COMPILE, secondSettings.RUN_HOTSWAP_AFTER_COMPILE)) &&
+      Objects.equals(RUN_HOTSWAP_AFTER_COMPILE, secondSettings.RUN_HOTSWAP_AFTER_COMPILE) &&
       DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters) &&
-      myCapturePoints.equals(((DebuggerSettings)obj).myCapturePoints);
+      myCapturePoints.equals(secondSettings.myCapturePoints);
   }
 
   @Override
@@ -258,7 +258,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       mySelectedTab = element.getAttributeValue("selected");
       final String split = element.getAttributeValue("split");
       if (split != null) {
-        mySplitProportion = Double.valueOf(split);
+        mySplitProportion = Double.parseDouble(split);
       }
       myDetached = Boolean.parseBoolean(element.getAttributeValue("detached"));
       myHorizontalToolbar = !"false".equalsIgnoreCase(element.getAttributeValue("horizontal"));
@@ -335,7 +335,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
     }
   }
 
-  public interface CapturePointsSettingsListener extends EventListener{
+  public interface CapturePointsSettingsListener extends EventListener {
     void capturePointsChanged();
   }
 

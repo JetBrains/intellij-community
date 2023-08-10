@@ -1,0 +1,10 @@
+{
+    "mainFile": "MainClass.kt",
+    "usages": [
+        "ConstructorUsage.kt",
+        "JavaConstructorUsage.java",
+        "JavaTypeUsage.java",
+        "TypeUsage.kt"
+    ],
+    "ignoreK2Compiler": "KTIJ-24833"
+}

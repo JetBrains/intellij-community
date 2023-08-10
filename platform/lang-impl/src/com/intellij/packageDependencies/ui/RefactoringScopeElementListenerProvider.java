@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +17,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import org.jetbrains.annotations.NotNull;
 
-public class RefactoringScopeElementListenerProvider implements RefactoringElementListenerProvider {
+public final class RefactoringScopeElementListenerProvider implements RefactoringElementListenerProvider {
   private static final Logger LOG = Logger.getInstance(RefactoringScopeElementListenerProvider.class);
 
   private enum ReferenceKind {QUALIFIED_NAME, FILE_PATH}
@@ -38,7 +38,7 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
   private static void registerListeners(PsiElement element,
                                         RefactoringElementListenerComposite result,
                                         PsiFile containingFile,
-                                        ReferenceKind referenceKind) {
+                                        @NotNull ReferenceKind referenceKind) {
     String oldName = getQualifiedName(element, referenceKind);
     for (final NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(element.getProject())) {
       final NamedScope[] scopes = holder.getEditableScopes();
@@ -52,7 +52,7 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
     }
   }
 
-  private static String getQualifiedName(PsiElement element, ReferenceKind referenceKind) {
+  private static String getQualifiedName(@NotNull PsiElement element, @NotNull ReferenceKind referenceKind) {
     if (referenceKind == ReferenceKind.QUALIFIED_NAME) {
       return element instanceof PsiQualifiedNamedElement ? ((PsiQualifiedNamedElement)element).getQualifiedName() : null;
     }
@@ -66,17 +66,18 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
     }
   }
 
-  private static PackageSet updateNameInPattern(PackageSet packageSet, String oldName, String newName) {
+  private static PackageSet updateNameInPattern(@NotNull PackageSet packageSet, String oldName, @NotNull String newName) {
     if ((packageSet instanceof PatternBasedPackageSet) && ((PatternBasedPackageSet)packageSet).isOn(oldName)) {
       return ((PatternBasedPackageSet)packageSet).updatePattern(oldName, newName);
     }
     return packageSet;
   }
 
-  private static void registerListeners(PackageSet packageSet,
-                                        RefactoringElementListenerComposite result,
-                                        OldScopeDescriptor descriptor,
-                                        String oldQualifiedName, ReferenceKind referenceKind) {
+  private static void registerListeners(@NotNull PackageSet packageSet,
+                                        @NotNull RefactoringElementListenerComposite result,
+                                        @NotNull OldScopeDescriptor descriptor,
+                                        String oldQualifiedName,
+                                        @NotNull ReferenceKind referenceKind) {
     NamedScope oldScope = descriptor.getOldScope();
     PackageSet oldSet = oldScope.getValue();
     if (oldSet != null && packageSet.anyMatches(set -> set instanceof PatternBasedPackageSet && ((PatternBasedPackageSet)set).isOn(oldQualifiedName))) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index
 
 import com.intellij.diff.DiffContentFactory
@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
@@ -107,7 +108,8 @@ private fun stagedDiffContent(project: Project, root: VirtualFile, status: GitFi
   }
 
   val indexFile = stagedContentFile(project, root, status)
-  return DiffContentFactory.getInstance().create(project, indexFile)
+  val highlightFile = if (!Registry.`is`("git.stage.navigate.to.index.file")) status.path.virtualFile else indexFile
+  return DiffContentFactory.getInstance().create(project, indexFile, highlightFile)
 }
 
 @Throws(VcsException::class)
@@ -133,9 +135,10 @@ private fun headContentBytes(project: Project, root: VirtualFile, status: GitFil
 }
 
 @Throws(VcsException::class)
-private fun stagedContentFile(project: Project, root: VirtualFile, statusNode: GitFileStatus): VirtualFile {
-  val filePath = statusNode.path(ContentVersion.STAGED)
+private fun stagedContentFile(project: Project, root: VirtualFile, status: GitFileStatus): VirtualFile {
+  val filePath = status.path(ContentVersion.STAGED)
   return GitIndexFileSystemRefresher.getInstance(project).getFile(root, filePath)
+         ?: throw VcsException(GitBundle.message("stage.diff.staged.content.exception.message", status.path))
 }
 
 fun compareHeadWithStaged(project: Project, root: VirtualFile, status: GitFileStatus): DiffRequest {
@@ -208,7 +211,7 @@ class MergedProducer(private val project: Project,
                         ChangeDiffRequestProducer.getBaseVersion(),
                         ChangeDiffRequestProducer.getServerVersion())
     val contents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST).map {
-      DiffContentFactory.getInstance().createFromBytes(project, it, statusNode.filePath.fileType, statusNode.filePath.name)
+      DiffContentFactory.getInstance().createFromBytes(project, it, statusNode.filePath)
     }
     val request = SimpleDiffRequest(title, contents, titles)
     putRevisionInfos(request, mergeData)
@@ -273,7 +276,7 @@ abstract class GitFileStatusNodeProducerBase(val statusNode: GitFileStatusNode) 
     return statusNode.filePath.presentableUrl
   }
 
-  override fun getPopupTag(): ChangesBrowserNode.Tag? {
+  override fun getTag(): ChangesBrowserNode.Tag? {
     return getTag(kind)
   }
 
@@ -310,23 +313,8 @@ private class StagedContentRevision(val project: Project, val root: VirtualFile,
   override fun getContentAsBytes(): ByteArray = stagedContentFile(project, root, status).contentsToByteArray()
 }
 
-private class KindTag(private val kind: NodeKind) : ChangesBrowserNode.Tag {
-  override fun toString(): String = GitBundle.message(kind.key)
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as KindTag
-
-    if (kind != other.kind) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int {
-    return kind.hashCode()
-  }
+internal class KindTag(kind: NodeKind) : ChangesBrowserNode.ValueTag<NodeKind>(kind) {
+  override fun toString(): String = GitBundle.message(value.key)
 
   companion object {
     private val tags = NodeKind.values().associateWith { KindTag(it) }

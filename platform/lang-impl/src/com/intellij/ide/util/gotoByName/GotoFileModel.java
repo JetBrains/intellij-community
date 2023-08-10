@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
@@ -65,8 +64,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
 
   @Override
   protected boolean acceptItem(final NavigationItem item) {
-    if (item instanceof PsiFile) {
-      final PsiFile file = (PsiFile)item;
+    if (item instanceof PsiFile file) {
       final Collection<FileTypeRef> types = getFilterItems();
       // if language substitutors are used, PsiFile.getFileType() can be different from
       // PsiFile.getVirtualFile().getFileType()
@@ -99,7 +97,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
 
   @Override
   public String getCheckBoxName() {
-    if (NonProjectScopeDisablerEP.isSearchInNonProjectDisabled()) {
+    if (NonProjectScopeDisablerEP.EP_NAME.getExtensionList().stream().anyMatch(ep -> ep.disable)) {
       return null;
     }
     return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.files");
@@ -138,18 +136,13 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
     return new GotoFileCellRenderer(myMaxSize) {
       @NotNull
       @Override
-      protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
+      public ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
         ItemMatchers defaultMatchers = super.getItemMatchers(list, value);
         if (!(value instanceof PsiFileSystemItem)) return defaultMatchers;
 
         return convertToFileItemMatchers(defaultMatchers, (PsiFileSystemItem) value, GotoFileModel.this);
       }
     };
-  }
-
-  @Override
-  public boolean sameNamesForProjectAndLibraries() {
-    return false;
   }
 
   @Override
@@ -210,8 +203,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
                                                                                   @NotNull PsiFileSystemItem value,
                                                                                   @NotNull GotoFileModel model) {
     String shortName = model.getElementName(value);
-    String fullName = model.getFullName(value);
-    if (shortName != null && fullName != null && defaultMatchers.nameMatcher instanceof MinusculeMatcher) {
+    if (shortName != null && defaultMatchers.nameMatcher instanceof MinusculeMatcher) {
       String sanitized = GotoFileItemProvider
         .getSanitizedPattern(((MinusculeMatcher)defaultMatchers.nameMatcher).getPattern(), model);
       for (int i = sanitized.lastIndexOf('/') + 1; i < sanitized.length() - 1; i++) {
@@ -234,7 +226,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
 
     @Override
     public @NlsContexts.Label @NotNull String getDescription() {
-      return IdeBundle.message("search.everywhere.directory.file.type.desc");
+      return IdeBundle.message("filetype.search.everywhere.directory.description");
     }
 
     @Override
@@ -243,7 +235,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
     }
 
     @Override
-    public @Nullable Icon getIcon() {
+    public Icon getIcon() {
       return PlatformIcons.FOLDER_ICON;
     }
 

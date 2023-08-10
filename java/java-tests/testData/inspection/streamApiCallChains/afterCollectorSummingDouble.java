@@ -1,4 +1,4 @@
-// "Replace 'collect(summingDouble())' with 'mapToDouble().sum()'" "true"
+// "Replace 'collect(summingDouble())' with 'mapToDouble().sum()'" "true-preview"
 
 import java.util.stream.*;
 

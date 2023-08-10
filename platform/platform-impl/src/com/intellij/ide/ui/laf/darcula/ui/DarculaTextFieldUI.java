@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MacUIUtil;
@@ -17,6 +18,8 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
+
+
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     return new DarculaTextFieldUI();
@@ -24,12 +27,15 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   @Override
   protected int getMinimumHeight(int textHeight) {
-    Insets i = getComponent().getInsets();
     JComponent c = getComponent();
-    int minHeight = (isCompact(c) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + i.top + i.bottom;
-    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) || ComponentUtil.getParentOfType((Class<? extends JSpinner>)JSpinner.class,
-                                                                                             (Component)c) != null ?
-           textHeight : minHeight;
+    if (DarculaEditorTextFieldBorder.isComboBoxEditor(c) ||
+        ComponentUtil.getParentOfType((Class<? extends JSpinner>)JSpinner.class, (Component)c) != null ||
+        ClientProperty.isTrue(c, "TextField.NoMinHeightBounds")) {
+      return textHeight;
+    }
+
+    Insets i = getComponent().getInsets();
+    return (isCompact(c) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + i.top + i.bottom;
   }
 
   @Override
@@ -69,7 +75,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
       g2.translate(r.x, r.y);
 
       if (component.isEnabled() && component.isEditable()) {
-        float arc = isSearchField(component) ? COMPONENT_ARC.getFloat() : 0.0f;
+        float arc = isSearchField(component) || DarculaTextFieldProperties.isTextFieldRounded(component) ? COMPONENT_ARC.getFloat() : 0.0f;
         float bw = bw();
 
         g2.setColor(component.getBackground());

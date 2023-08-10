@@ -1,23 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
 /**
  * Base class for local inspections.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections.html">Code Inspections (IntelliJ Platform Docs)</a>
+ * @see GlobalInspectionTool
  */
 public abstract class LocalInspectionTool extends InspectionProfileEntry {
   public static final LocalInspectionTool[] EMPTY_ARRAY = new LocalInspectionTool[0];
@@ -35,8 +35,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   /**
    * Pattern used for inspection ID validation.
    */
-  @NonNls @Language("RegExp")
-  public static final String VALID_ID_PATTERN = "[a-zA-Z_0-9.-]+";
+  @Language("RegExp") public static final @NonNls String VALID_ID_PATTERN = "[a-zA-Z_0-9.-]+";
   private static final Pattern COMPILED_VALID_ID_PATTERN = Pattern.compile(VALID_ID_PATTERN);
 
   public static boolean isValidID(@NotNull String id) {
@@ -44,7 +43,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
-   * If you want to change suppression id you have to define it in XML as well.
+   * If you want to change the suppression ID, you have to define it in XML as well.
    *
    * <p>Inspection tool ID is a descriptive name to be used in "suppress" comments and annotations.
    * <p>It must satisfy {@link #VALID_ID_PATTERN} regexp pattern.
@@ -52,11 +51,9 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    *
    * @return inspection tool ID.
    */
-  @NonNls
-  @NotNull
-  public String getID() {
+  public @NonNls @NotNull String getID() {
     if (myNameProvider instanceof LocalDefaultNameProvider) {
-      final String id = ((LocalDefaultNameProvider)myNameProvider).getDefaultID();
+      String id = ((LocalDefaultNameProvider)myNameProvider).getDefaultID();
       if (id != null) {
         return id;
       }
@@ -64,16 +61,13 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     return getShortName();
   }
 
-  @NotNull
   @Override
-  protected final String getSuppressId() {
+  public final @NotNull String getSuppressId() {
     return getID();
   }
 
   @Override
-  @NonNls
-  @Nullable
-  public String getAlternativeID() {
+  public @NonNls @Nullable String getAlternativeID() {
     if (myNameProvider instanceof LocalDefaultNameProvider) {
       return ((LocalDefaultNameProvider)myNameProvider).getDefaultAlternativeID();
     }
@@ -84,11 +78,11 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * Override and return {@code true} if your inspection (unlike almost all others)
    * must be called for every element in the whole file for each change, whatever small it was.
    * <p>
-   * For example, 'Field can be local' inspection can report the field declaration when reference to it was added inside method hundreds lines below.
-   * Hence, this inspection must be rerun on every change.
+   * For example, 'Field can be local' inspection should revisit the field declaration,
+   * when the reference to it is added hundreds lines below, from inside some other method.
    * <p>
    * Please note that re-scanning the whole file can take considerable time and thus seriously impact the responsiveness, so
-   * beg please use this mechanism once in a blue moon.
+   * please return {@code true} from this method only when absolutely necessary.
    *
    * @return true if inspection should be called for every element.
    */
@@ -109,43 +103,43 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
-   * Override to provide your own inspection visitor, if you need to store additional state in the
-   * LocalInspectionToolSession user data or get information about the inspection scope.
-   * Created visitor must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
+   * Override to provide your own inspection visitor if you need to store additional state in the
+   * {@link LocalInspectionToolSession} user data or get information about the inspection scope.
+   * Created visitor must not be recursive (e.g., it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
+   * If the inspection should not run in the given context return {@link PsiElementVisitor#EMPTY_VISITOR}
    *
-   * @param holder     where visitor will register problems found.
+   * @param holder     where the visitor will register problems it found.
    * @param isOnTheFly true if inspection was run in non-batch mode
    * @param session    the session in the context of which the tool runs.
    * @return not-null visitor for this inspection.
    * @see PsiRecursiveVisitor
    */
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return buildVisitor(holder, isOnTheFly);
   }
 
   /**
    * Override to provide your own inspection visitor.
-   * Created visitor must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
+   * Created visitor must not be recursive (e.g., it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
+   * If the inspection should not run in the given context return {@link PsiElementVisitor#EMPTY_VISITOR}
    *
-   * @param holder     where visitor will register problems found.
+   * @param holder     where the visitor will register problems it found.
    * @param isOnTheFly true if inspection was run in non-batch mode
    * @return not-null visitor for this inspection.
    * @see PsiRecursiveVisitor
    */
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
       public void visitFile(@NotNull PsiFile file) {
         addDescriptors(checkFile(file, holder.getManager(), isOnTheFly));
       }
 
-      private void addDescriptors(final ProblemDescriptor[] descriptors) {
+      private void addDescriptors(ProblemDescriptor @Nullable [] descriptors) {
         if (descriptors != null) {
           for (ProblemDescriptor descriptor : descriptors) {
             if (descriptor != null) {
@@ -153,7 +147,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
             }
             else {
               Class<?> inspectionToolClass = LocalInspectionTool.this.getClass();
-              LOG.error(PluginException.createByClass("Array returned from checkFile() method of " + inspectionToolClass + " contains null element",
+              LOG.error(PluginException.createByClass("Array returned from checkFile() method of " + inspectionToolClass + " contains null element: " +
+                                                      Arrays.toString(descriptors),
                                                       null, inspectionToolClass));
             }
           }
@@ -164,67 +159,31 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   /**
    * Returns problem container (e.g., method, class, file) that is used as inspection view tree node.
-   *
+   * <p>
    * Consider {@link com.intellij.codeInspection.lang.RefManagerExtension#getElementContainer(PsiElement)}
-   * to override container element for any inspection for given language.
+   * to override the container element for any inspection for given language.
    *
    * @param psiElement: problem element
    * @return problem container element
    */
-  @Nullable
-  public PsiNamedElement getProblemElement(@NotNull PsiElement psiElement) {
+  public @Nullable PsiNamedElement getProblemElement(@NotNull PsiElement psiElement) {
     return psiElement.getContainingFile();
   }
 
+  /**
+   * Called before this inspection tool's visitor started processing any PSI elements the IDE wanted it to process in this session.
+   * There are no guarantees about which thread it's called from or whether there is a read/write action it's called under.
+   */
   public void inspectionStarted(@NotNull LocalInspectionToolSession session, boolean isOnTheFly) {}
 
+  /**
+   * Called when this inspection tool's visitor finished processing all the PSI elements the IDE wanted to process in this session.
+   * There are no guarantees about which thread it's called from or whether there is a read/write action it's called under.
+   */
   public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
   }
 
-  @NotNull
-  public List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
-    final ProblemsHolder holder = new ProblemsHolder(manager, file, false);
-    LocalInspectionToolSession session = new LocalInspectionToolSession(file, 0, file.getTextLength());
-    final PsiElementVisitor customVisitor = buildVisitor(holder, false, session);
-    LOG.assertTrue(!(customVisitor instanceof PsiRecursiveVisitor),
-                   "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive: " + customVisitor);
-
-    if (customVisitor == PsiElementVisitor.EMPTY_VISITOR) {
-      return Collections.emptyList();
-    }
-
-    inspectionStarted(session, false);
-
-    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(holder.getProject());
-    file.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(@NotNull PsiElement element) {
-        element.accept(customVisitor);
-        processInjectedFile(element);
-
-        super.visitElement(element);
-      }
-
-      private void processInjectedFile(PsiElement element) {
-        if (element instanceof PsiLanguageInjectionHost) {
-          final List<Pair<PsiElement, TextRange>> files = injectedLanguageManager.getInjectedPsiFiles(element);
-          if (files != null) {
-            for (Pair<PsiElement, TextRange> pair : files) {
-              pair.first.accept(new PsiRecursiveElementWalkingVisitor() {
-                @Override
-                public void visitElement(@NotNull PsiElement injectedElement) {
-                  injectedElement.accept(customVisitor);
-                  super.visitElement(injectedElement);
-                }
-              });
-            }
-          }
-        }
-      }
-    });
-
-    inspectionFinished(session, holder);
-
-    return holder.getResults();
+  public @NotNull List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
+    return manager.defaultProcessFile(this, file);
   }
 }

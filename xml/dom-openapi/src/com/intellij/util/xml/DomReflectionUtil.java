@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,8 @@ public final class DomReflectionUtil {
       methods[i] = getter;
       aClass = getter.getReturnType();
       if (List.class.isAssignableFrom(aClass)) {
-        aClass = ReflectionUtil.getRawType(Objects.requireNonNull(extractCollectionElementType(getter.getGenericReturnType())));
+        @NotNull Type type = Objects.requireNonNull(extractCollectionElementType(getter.getGenericReturnType()));
+        aClass = ClassUtil.getRawType(type);
       }
     }
     return methods;
@@ -74,9 +76,6 @@ public final class DomReflectionUtil {
     catch (IllegalArgumentException e) {
       throw new RuntimeException("Calling method " + method + " on object " + object + " with arguments " + Arrays.asList(args), e);
     }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
     catch (InvocationTargetException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof ProcessCanceledException) {
@@ -94,22 +93,20 @@ public final class DomReflectionUtil {
   }
 
   public static @Nullable Type extractCollectionElementType(Type returnType) {
-    if (!(returnType instanceof ParameterizedType)) {
+    if (!(returnType instanceof ParameterizedType parameterizedType)) {
       return null;
     }
 
-    ParameterizedType parameterizedType = (ParameterizedType)returnType;
     Type rawType = parameterizedType.getRawType();
-    if (!(rawType instanceof Class)) {
+    if (!(rawType instanceof Class<?> rawClass)) {
       return null;
     }
 
-    Class<?> rawClass = (Class<?>)rawType;
     if (!List.class.equals(rawClass) && !Collection.class.equals(rawClass)) {
       return null;
     }
 
-    final Type[] arguments = ReflectionUtil.getActualTypeArguments(parameterizedType);
+    final Type[] arguments = parameterizedType.getActualTypeArguments();
     if (arguments.length == 1) {
       final Type argument = arguments[0];
       if (argument instanceof WildcardType) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.AppTopics;
@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FileContentUtil;
+import com.intellij.util.InjectionUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
@@ -51,29 +52,40 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
-      public void fileContentLoaded(@NotNull final VirtualFile virtualFile, @NotNull Document document) {
+      public void fileContentLoaded(final @NotNull VirtualFile virtualFile, @NotNull Document document) {
         PsiFile psiFile = ReadAction.compute(() -> myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile));
         fireDocumentCreated(document, psiFile);
       }
     });
   }
 
-  @Nullable
   @Override
-  public PsiFile getPsiFile(@NotNull Document document) {
+  public @Nullable PsiFile getPsiFile(@NotNull Document document) {
     final PsiFile psiFile = super.getPsiFile(document);
     if (myUnitTestMode) {
-      final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-      if (virtualFile != null && virtualFile.isValid()) {
-        Collection<Project> projects = ProjectLocator.getInstance().getProjectsForFile(virtualFile);
-        if (!projects.isEmpty() && !projects.contains(myProject)) {
-          LOG.error("Trying to get PSI for an alien project. VirtualFile=" + virtualFile +
-                    ";\n myProject=" + myProject +
-                    ";\n projects returned: " + projects);
-        }
+      VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+      if (virtualFile != null) {
+        assertFileIsFromCorrectProject(virtualFile);
       }
     }
     return psiFile;
+  }
+
+  @Override
+  public void assertFileIsFromCorrectProject(@NotNull VirtualFile virtualFile) {
+    if (myUnitTestMode && virtualFile.isValid()) {
+      Collection<Project> projects = ProjectLocator.getInstance().getProjectsForFile(virtualFile);
+      boolean isMyProject = projects.isEmpty() || projects.contains(myProject)
+                            // set aside the use-case for lazy developers who just don't care to retrieve the correct project for the file
+                            // and use DefaultProjectFactory.getDefaultProject() because why bother
+                            || myProject.isDefault();
+      if (!isMyProject) {
+        LOG.error("Trying to get PSI for an alien project. VirtualFile=" +
+                  virtualFile + ";" +
+                  " project=" + myProject + " (" + myProject.getBasePath() + ")"
+                  + "; but the file actually belongs to " + StringUtil.join(projects, p -> p + " (" + p.getBasePath() + ")", ","));
+      }
+    }
   }
 
   @Override
@@ -101,7 +113,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
         // commit one document to avoid OOME
         for (Document document : myUncommittedDocuments) {
           if (document != event.getDocument()) {
-            doCommitWithoutReparse(document);
+            commitDocument(document);
             break;
           }
         }
@@ -110,7 +122,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   }
 
   @Override
-  protected void beforeDocumentChangeOnUnlockedDocument(@NotNull final FileViewProvider viewProvider) {
+  protected void beforeDocumentChangeOnUnlockedDocument(final @NotNull FileViewProvider viewProvider) {
     PostprocessReformattingAspect.getInstance(myProject).assertDocumentChangeIsAllowed(viewProvider);
     super.beforeDocumentChangeOnUnlockedDocument(viewProvider);
   }
@@ -120,9 +132,8 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   protected boolean finishCommitInWriteAction(@NotNull Document document,
                                               @NotNull List<? extends BooleanRunnable> finishProcessors,
                                               @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
-                                              boolean synchronously,
-                                              boolean forceNoPsiCommit) {
-    boolean success = super.finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, synchronously, forceNoPsiCommit);
+                                              boolean synchronously) {
+    boolean success = super.finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, synchronously);
     PsiFile file = getCachedPsiFile(document);
     if (file != null) {
       InjectedLanguageManagerImpl.clearInvalidInjections(file);
@@ -141,11 +152,20 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
 
   @Override
   public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
-    if (doc instanceof DocumentWindow) {
-      doc = ((DocumentWindow)doc).getDelegate();
-    }
     PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(myProject);
-    FileViewProvider viewProvider = getCachedViewProvider(doc);
+    FileViewProvider viewProvider;
+    if (doc instanceof DocumentWindow) {
+      Document topDoc = ((DocumentWindow)doc).getDelegate();
+      FileViewProvider topViewProvider = getCachedViewProvider(topDoc);
+      if (topViewProvider != null && InjectionUtils.shouldFormatOnlyInjectedCode(topViewProvider)) {
+        viewProvider = getCachedViewProvider(doc);
+      } else {
+        viewProvider = topViewProvider;
+      }
+    } else {
+      viewProvider = getCachedViewProvider(doc);
+    }
+
     if (viewProvider != null && component != null) {
       component.doPostponedFormatting(viewProvider);
     }
@@ -181,9 +201,8 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     return result;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return super.toString() + " for the project " + myProject + ".";
   }
 
@@ -192,9 +211,8 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
   }
 
-  @NotNull
   @Override
-  protected DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
+  protected @NotNull DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
     return InjectedLanguageManager.getInstance(myProject).freezeWindow(document);
   }
 

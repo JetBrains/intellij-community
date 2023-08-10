@@ -139,7 +139,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
   private void updateOutputPathPresentation() {
     if (getCompilerExtension().isCompilerOutputPathInherited()) {
-      ProjectConfigurable projectConfig = ProjectStructureConfigurable.getInstance(myProject).getProjectConfig();
+      ProjectConfigurable projectConfig = ((ModulesConfigurator)getState().getModulesProvider()).getProjectStructureConfigurable().getProjectConfig();
       if (projectConfig == null) {
         return;
       }

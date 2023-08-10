@@ -1,14 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.PushSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -16,37 +15,38 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.EditSourceForDialogAction;
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
-import kotlin.Unit;
+import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
@@ -55,12 +55,13 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 
-public final class PushLog extends JPanel implements DataProvider {
+public final class PushLog extends JPanel implements Disposable, DataProvider {
   @NonNls private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   @NonNls private static final String START_EDITING = "startEditing";
   @NonNls private static final String TREE_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Tree.Proportion";
   @NonNls private static final String DETAILS_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Details.Proportion";
-  private final SimpleChangesBrowser myChangesBrowser;
+  private final PushLogChangesBrowser myChangesBrowser;
+  private final JBLoadingPanel myChangesLoadingPane;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
   private final JScrollPane myScrollPane;
@@ -69,9 +70,14 @@ public final class PushLog extends JPanel implements DataProvider {
   private boolean myShouldRepaint = false;
   private boolean mySyncStrategy;
   @Nullable private @Nls String mySyncRenderedText;
+  private final @NotNull Project myProject;
   private final boolean myAllowSyncStrategy;
 
-  public PushLog(Project project, final CheckedTreeNode root, final boolean allowSyncStrategy) {
+  public PushLog(@NotNull Project project,
+                 @NotNull CheckedTreeNode root,
+                 @NotNull ModalityState modalityState,
+                 boolean allowSyncStrategy) {
+    myProject = project;
     myAllowSyncStrategy = allowSyncStrategy;
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
     treeModel.nodeStructureChanged(root);
@@ -140,7 +146,7 @@ public final class PushLog extends JPanel implements DataProvider {
 
       @Override
       protected void installSpeedSearch() {
-        new TreeSpeedSearch(this, path -> {
+        TreeSpeedSearch.installOn(this, false, path -> {
           Object pathComponent = path.getLastPathComponent();
           if (pathComponent instanceof RepositoryNode) {
             return ((RepositoryNode)pathComponent).getRepositoryName();
@@ -202,7 +208,7 @@ public final class PushLog extends JPanel implements DataProvider {
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        updateChangesView();
+        onSelectionChanges();
       }
     });
     myTree.addFocusListener(new FocusAdapter() {
@@ -224,22 +230,20 @@ public final class PushLog extends JPanel implements DataProvider {
     collapseAll.registerCustomShortcutSet(ActionManager.getInstance().getAction(ACTION_COLLAPSE_ALL).getShortcutSet(), myTree);
 
     ToolTipManager.sharedInstance().registerComponent(myTree);
-    PopupHandler.installPopupHandler(myTree, VcsLogActionPlaces.POPUP_ACTION_GROUP, CONTEXT_MENU);
+    PopupHandler.installPopupMenu(myTree, VcsLogActionIds.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
-    myChangesBrowser = new SimpleChangesBrowser(project, false, false) {
-      @NotNull
-      @Override
-      protected Border createViewerBorder() {
-        return IdeBorderFactory.createBorder(SideBorder.TOP);
-      }
-    };
+    myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
+                                              ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+
+    myChangesBrowser = new PushLogChangesBrowser(project, false, false, myChangesLoadingPane);
+    myChangesBrowser.hideViewerBorder();
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), myTree);
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser);
     myChangesBrowser.addToolbarAction(editSourceAction);
     setDefaultEmptyText();
 
-    myDetailsPanel = new CommitDetailsPanel(project, e -> Unit.INSTANCE);
+    myDetailsPanel = new CommitDetailsPanel();
     JScrollPane detailsScrollPane =
       new JBScrollPane(myDetailsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     detailsScrollPane.setBorder(JBUI.Borders.empty());
@@ -248,7 +252,8 @@ public final class PushLog extends JPanel implements DataProvider {
     detailsContentPanel.addToCenter(detailsScrollPane);
 
     JBSplitter detailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.67f);
-    detailsSplitter.setFirstComponent(myChangesBrowser);
+    detailsSplitter.setFirstComponent(myChangesLoadingPane);
+    myChangesLoadingPane.add(myChangesBrowser);
 
     myShowDetailsAction = new MyShowDetailsAction(project, (state) -> {
       detailsSplitter.setSecondComponent(state ? detailsContentPanel : null);
@@ -287,8 +292,13 @@ public final class PushLog extends JPanel implements DataProvider {
 
     setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
     setLayout(new BorderLayout());
-    add(splitter);
+    add(splitter, BorderLayout.CENTER);
     myTree.setRowHeight(0);
+  }
+
+  @Override
+  public void dispose() {
+    myChangesBrowser.shutdown();
   }
 
   public void highlightNodeOrFirst(@Nullable RepositoryNode repositoryNode, boolean shouldScrollTo) {
@@ -310,22 +320,16 @@ public final class PushLog extends JPanel implements DataProvider {
     labelPanel.setBackground(RenderingUtil.getBackground(myTree));
     final LinkLabel<String> linkLabel = new LinkLabel<>(DvcsBundle.message("push.edit.all.targets"), null);
     linkLabel.setBorder(JBUI.Borders.empty(2));
-    linkLabel.setListener(new LinkListener<>() {
-      @Override
-      public void linkSelected(LinkLabel<String> aSource, String aLinkData) {
-        if (linkLabel.isEnabled()) {
-          startSyncEditing();
-        }
+    linkLabel.setListener((aSource, aLinkData) -> {
+      if (linkLabel.isEnabled()) {
+        startSyncEditing();
       }
     }, null);
-    myTree.addPropertyChangeListener(PushLogTreeUtil.EDIT_MODE_PROP, new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        Boolean editMode = (Boolean)evt.getNewValue();
-        linkLabel.setEnabled(!editMode);
-        linkLabel.setPaintUnderline(!editMode);
-        linkLabel.repaint();
-      }
+    myTree.addPropertyChangeListener(PushLogTreeUtil.EDIT_MODE_PROP, evt -> {
+      Boolean editMode = (Boolean)evt.getNewValue();
+      linkLabel.setEnabled(!editMode);
+      linkLabel.setPaintUnderline(!editMode);
+      linkLabel.repaint();
     });
     labelPanel.add(linkLabel, BorderLayout.EAST);
     return labelPanel;
@@ -340,7 +344,7 @@ public final class PushLog extends JPanel implements DataProvider {
   }
 
   @NotNull
-  private static List<Change> collectAllChanges(@NotNull List<? extends CommitNode> commitNodes) {
+  static List<Change> collectAllChanges(@NotNull List<? extends CommitNode> commitNodes) {
     return CommittedChangesTreeBrowser.zipChanges(collectChanges(commitNodes));
   }
 
@@ -400,17 +404,33 @@ public final class PushLog extends JPanel implements DataProvider {
     return sorted;
   }
 
-  private void updateChangesView() {
+  public void setBusyLoading(boolean paintBusy) {
+    myTree.setPaintBusy(paintBusy);
+  }
+
+  private void onSelectionChanges() {
     List<CommitNode> commitNodes = getSelectedCommitNodes();
+    updateChangesView(commitNodes);
+    updateDetailsPanel(commitNodes);
+  }
+
+  private void updateChangesView(@NotNull List<? extends CommitNode> commitNodes) {
     if (!commitNodes.isEmpty()) {
       myChangesBrowser.getViewer().setEmptyText(DvcsBundle.message("push.no.differences"));
     }
     else {
       setDefaultEmptyText();
     }
-    myChangesBrowser.setChangesToDisplay(collectAllChanges(commitNodes));
+
+    myChangesBrowser.setCommitsToDisplay(commitNodes);
+  }
+
+  private void updateDetailsPanel(@NotNull List<? extends CommitNode> commitNodes) {
     if (commitNodes.size() == 1 && getSelectedTreeNodes().stream().noneMatch(it -> it instanceof RepositoryNode)) {
-      myDetailsPanel.setCommit(commitNodes.get(0).getUserObject());
+      VcsFullCommitDetails commitDetails = commitNodes.get(0).getUserObject();
+      CommitPresentationUtil.CommitPresentation presentation =
+        CommitPresentationUtil.buildPresentation(myProject, commitDetails, new HashSet<>());
+      myDetailsPanel.setCommit(presentation);
       myShowDetailsAction.setEnabled(true);
     }
     else {
@@ -428,7 +448,7 @@ public final class PushLog extends JPanel implements DataProvider {
   public Object getData(@NotNull String id) {
     if (VcsDataKeys.CHANGES.is(id)) {
       List<CommitNode> commitNodes = getSelectedCommitNodes();
-      return collectAllChanges(commitNodes).toArray(new Change[0]);
+      return collectAllChanges(commitNodes).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(id)) {
       List<CommitNode> commitNodes = getSelectedCommitNodes();
@@ -436,6 +456,10 @@ public final class PushLog extends JPanel implements DataProvider {
         Hash hash = commitNode.getUserObject().getId();
         return new TextRevisionNumber(hash.asString(), hash.toShortString());
       });
+    }
+    else if (VcsDataKeys.VCS_COMMIT_SUBJECTS.is(id)) {
+      List<CommitNode> commitNodes = getSelectedCommitNodes();
+      return ContainerUtil.map2Array(commitNodes, String.class, commitNode -> commitNode.getUserObject().getSubject());
     }
     return null;
   }
@@ -467,11 +491,11 @@ public final class PushLog extends JPanel implements DataProvider {
 
   @Override
   protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-    if (e.getKeyCode() == KeyEvent.VK_ENTER && myTree.isEditing() && e.getModifiers() == 0 && pressed) {
+    if (e.getKeyCode() == KeyEvent.VK_ENTER && myTree.isEditing() && e.getModifiersEx() == 0 && pressed) {
       myTree.stopEditing();
       return true;
     }
-    if (myAllowSyncStrategy && e.getKeyCode() == KeyEvent.VK_F2 && e.getModifiers() == InputEvent.ALT_MASK && pressed) {
+    if (myAllowSyncStrategy && e.getKeyCode() == KeyEvent.VK_F2 && e.getModifiersEx() == InputEvent.ALT_DOWN_MASK && pressed) {
       startSyncEditing();
       return true;
     }
@@ -497,8 +521,7 @@ public final class PushLog extends JPanel implements DataProvider {
   @Nullable
   private DefaultMutableTreeNode getFirstNodeToEdit() {
     // start edit last selected component if editable
-    if (myTree.getLastSelectedPathComponent() instanceof RepositoryNode) {
-      RepositoryNode selectedNode = ((RepositoryNode)myTree.getLastSelectedPathComponent());
+    if (myTree.getLastSelectedPathComponent() instanceof RepositoryNode selectedNode) {
       if (selectedNode.isEditableNow()) return selectedNode;
     }
     List<RepositoryNode> repositoryNodes = getChildNodesByType((DefaultMutableTreeNode)myTree.getModel().getRoot(),
@@ -535,7 +558,7 @@ public final class PushLog extends JPanel implements DataProvider {
       refreshNode(parentNode);
       TreePath path = TreeUtil.getPathFromRoot(parentNode);
       if (myTree.getSelectionModel().isPathSelected(path)) {
-        updateChangesView();
+        onSelectionChanges();
       }
     }
     else {
@@ -609,10 +632,9 @@ public final class PushLog extends JPanel implements DataProvider {
       // it depends on LaF, OS and isItRenderedPane, see com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder.
       // null border works as expected always.
       ColoredTreeCellRenderer renderer = getTextRenderer();
-      renderer.setIpad(JBUI.emptyInsets());
-      if (value instanceof RepositoryNode) {
+      renderer.setIpad(JBInsets.emptyInsets());
+      if (value instanceof RepositoryNode valueNode) {
         //todo simplify, remove instance of
-        RepositoryNode valueNode = (RepositoryNode)value;
         boolean isCheckboxVisible = valueNode.isCheckboxVisible();
         myCheckbox.setVisible(isCheckboxVisible);
         if (!isCheckboxVisible) {
@@ -644,11 +666,11 @@ public final class PushLog extends JPanel implements DataProvider {
 
   private class MyTreeCellEditor extends AbstractCellEditor implements TreeCellEditor {
 
-    private RepositoryWithBranchPanel myValue;
+    private RepositoryWithBranchPanel<?> myValue;
 
     @Override
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
-      RepositoryWithBranchPanel panel = (RepositoryWithBranchPanel)((DefaultMutableTreeNode)value).getUserObject();
+      RepositoryWithBranchPanel<?> panel = (RepositoryWithBranchPanel<?>)((DefaultMutableTreeNode)value).getUserObject();
       myValue = panel;
       myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, false, true);
       return panel.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row, true);
@@ -656,8 +678,7 @@ public final class PushLog extends JPanel implements DataProvider {
 
     @Override
     public boolean isCellEditable(EventObject anEvent) {
-      if (anEvent instanceof MouseEvent) {
-        MouseEvent me = ((MouseEvent)anEvent);
+      if (anEvent instanceof MouseEvent me) {
         final TreePath path = myTree.getClosestPathForLocation(me.getX(), me.getY());
         final int row = myTree.getRowForLocation(me.getX(), me.getY());
         myTree.getCellRenderer().getTreeCellRendererComponent(myTree, path.getLastPathComponent(), false, false, true, row, true);
@@ -685,7 +706,7 @@ public final class PushLog extends JPanel implements DataProvider {
     private final ComponentListener myTreeSizeListener = new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
-        // invalidate, revalidate etc may have no 'size' effects, you need to manually invalidateSizes before.
+        // invalidate, revalidate etc. may have no 'size' effects, you need to manually invalidateSizes before.
         updateSizes();
       }
     };
@@ -752,16 +773,21 @@ public final class PushLog extends JPanel implements DataProvider {
 
   private static class MyShowDetailsAction extends ToggleActionButton implements DumbAware {
     @NotNull private final PushSettings mySettings;
-    @NotNull private final Consumer<Boolean> myOnUpdate;
+    private final @NotNull Consumer<? super Boolean> myOnUpdate;
 
-    MyShowDetailsAction(@NotNull Project project, @NotNull Consumer<Boolean> onUpdate) {
+    MyShowDetailsAction(@NotNull Project project, @NotNull Consumer<? super Boolean> onUpdate) {
       super(DvcsBundle.message("push.show.details"), AllIcons.Actions.PreviewDetailsVertically);
-      mySettings = ServiceManager.getService(project, PushSettings.class);
+      mySettings = project.getService(PushSettings.class);
       myOnUpdate = onUpdate;
     }
 
     private boolean getValue() {
       return mySettings.getShowDetailsInPushDialog();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

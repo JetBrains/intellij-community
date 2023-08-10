@@ -1,15 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.ui.IdeUICustomization
 
 /**
  * @author Konstantin Bulenkov
  */
 class CloseOtherProjectsAction : CloseProjectsActionBase() {
-  override fun canClose(project: Project, currentProject: Project) = project !== currentProject
+  init {
+    val uiCustomization = IdeUICustomization.getInstance()
+    templatePresentation.setText(uiCustomization.projectMessagePointer("action.close.other.projects.text"))
+    templatePresentation.setDescription(uiCustomization.projectMessagePointer("action.close.other.projects.description"))
+  }
 
-  override fun shouldShow(e: AnActionEvent) = ProjectManager.getInstance().openProjects.size > 1
+  override fun canClose(project: Project, currentProject: Project): Boolean = project !== currentProject
+
+  override fun shouldShow(e: AnActionEvent): Boolean = ProjectManager.getInstance().openProjects.size > 1
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }

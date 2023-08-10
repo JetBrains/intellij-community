@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization;
 
 import com.intellij.openapi.util.Couple;
@@ -13,6 +13,7 @@ import java.awt.*;
 import java.lang.reflect.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @ApiStatus.Internal
 public class PropertyCollector {
@@ -24,7 +25,7 @@ public class PropertyCollector {
    */
   public static final byte COLLECT_PRIVATE_FIELDS = 0x02;
   /**
-   * Annotated field, or if type is Collection or Map, is collected regardless of this flag.
+   * Annotated field, or if a type is Collection or Map, is collected regardless of this flag.
    */
   public static final byte COLLECT_FINAL_FIELDS = 0x04;
 
@@ -42,7 +43,7 @@ public class PropertyCollector {
   }
 
   /**
-   * Result is not cached because caller should cache it if needed.
+   * Result is not cached because callers should cache it if needed.
    */
   public @NotNull List<MutableAccessor> collect(@NotNull Class<?> aClass) {
     return doCollect(aClass, configuration, classToOwnFields);
@@ -54,7 +55,7 @@ public class PropertyCollector {
     List<MutableAccessor> accessors = new ArrayList<>();
 
     Map<String, Pair<Method, Method>> nameToAccessors;
-    // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
+    // special case for Rectangle.class to avoid infinite recursion during serialization due to `bounds()` method
     if (!configuration.collectAccessors || aClass == Rectangle.class) {
       nameToAccessors = Collections.emptyMap();
     }
@@ -64,13 +65,18 @@ public class PropertyCollector {
 
     int propertyAccessorCount = accessors.size();
     Class<?> currentClass = aClass;
+    // AtomicReference is a superclass of UserDataHolderBase which is a superclass of many serializable objects,
+    // and we mustn't consider AtomicReference.getOpaque etc. as serializable properties
     do {
       accessors.addAll(classToOwnFields == null ? doCollectOwnFields(currentClass, configuration) : classToOwnFields.get(currentClass));
     }
-    while ((currentClass = currentClass.getSuperclass()) != null && !configuration.isAnnotatedAsTransient(currentClass) && currentClass != Object.class);
+    while ((currentClass = currentClass.getSuperclass()) != null &&
+           currentClass != Object.class &&
+           currentClass != AtomicReference.class &&
+           !configuration.isAnnotatedAsTransient(currentClass));
 
-    // if there are field accessor and property accessor, prefer field - Kotlin generates private var and getter/setter, but annotation moved to var, not to getter/setter
-    // so, we must remove duplicated accessor
+    // if there are field accessor and property accessor, prefer field - Kotlin generates private var and getter/setter,
+    // but annotation moved to var, not to getter/setter, so, we must remove duplicated accessor
     for (int j = propertyAccessorCount; j < accessors.size(); j++) {
       String name = accessors.get(j).getName();
       if (nameToAccessors.containsKey(name)) {
@@ -175,9 +181,13 @@ public class PropertyCollector {
     if (getter == null || configuration.isAnnotatedAsTransient(getter)) {
       return false;
     }
+    if (getter.getDeclaringClass() == AtomicReference.class) {
+      return false;
+    }
 
     if (setter == null) {
-      // check hasStoreAnnotations to ensure that this addition will not lead to regression (since there is a chance that there is some existing not-annotated list getters without setter)
+      // check hasStoreAnnotations to ensure that this addition will not lead to regression
+      // (since there is a chance that there are some existing not-annotated list getters without setter)
       return (Collection.class.isAssignableFrom(getter.getReturnType()) || Map.class.isAssignableFrom(getter.getReturnType())) &&
              configuration.hasStoreAnnotations(getter);
     }

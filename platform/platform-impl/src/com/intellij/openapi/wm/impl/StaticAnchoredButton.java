@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -7,9 +7,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import java.awt.event.MouseEvent;
+import java.awt.*;
 
-public class StaticAnchoredButton extends AnchoredButton {
+public final class StaticAnchoredButton extends AnchoredButton {
   @NotNull
   private ToolWindowAnchor myToolWindowAnchor;
   private int myMnemonic2;
@@ -71,7 +71,7 @@ public class StaticAnchoredButton extends AnchoredButton {
     setBorder(border);
     setRolloverEnabled(true);
     setOpaque(false);
-    enableEvents(MouseEvent.MOUSE_EVENT_MASK);
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK);
   }
 
   @Override

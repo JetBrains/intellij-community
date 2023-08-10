@@ -17,9 +17,6 @@ package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
-/**
- * @author irengrig
- */
 public class VcsUsualLineAnnotationData implements VcsLineAnnotationData {
   private final VcsRevisionNumber[] myData;
 

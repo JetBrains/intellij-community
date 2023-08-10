@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.compound
 
 import com.intellij.execution.*
@@ -7,6 +7,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.compareTypesForUi
+import com.intellij.execution.runToolbar.RunToolbarProcessData
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
@@ -15,14 +16,13 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.TestOnly
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
-import kotlin.collections.LinkedHashMap
 
 data class SettingsAndEffectiveTarget(val configuration: RunConfiguration, val target: ExecutionTarget)
 
@@ -107,25 +107,21 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
     }
   }
 
-  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
-    try {
-      checkConfiguration()
-    }
-    catch (e: RuntimeConfigurationException) {
-      throw ExecutionException(e.message)
-    }
-
+  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState {
     promptUserToUseRunDashboard(project, getConfigurationsWithEffectiveRunTargets().map {
       it.configuration.type
     })
 
     return RunProfileState { _, _ ->
       ApplicationManager.getApplication().invokeLater {
+        val compoundSettings = RunManagerImpl.getInstanceImpl(project).findSettings(this)
+
         val groupId = ExecutionEnvironment.getNextUnusedExecutionId()
         for ((configuration, target) in getConfigurationsWithEffectiveRunTargets()) {
           val settings = RunManagerImpl.getInstanceImpl(project).findSettings(configuration) ?: continue
-          ExecutionUtil.runConfiguration(settings, executor, target, groupId)
-        }
+          ExecutionUtil.doRunConfiguration(settings, executor, target, groupId,
+                                           null, RunToolbarProcessData.prepareBaseSettingCustomization(compoundSettings))}
+
       }
       null
     }
@@ -141,7 +137,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
     }
   }
 
-  override fun getState(): CompoundRunConfigurationOptions? {
+  override fun getState(): CompoundRunConfigurationOptions {
     if (isDirty.compareAndSet(true, false)) {
       options.configurations.clear()
       for (entry in sortedConfigurationsWithTargets) {
@@ -152,7 +148,8 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
   }
 
   override fun loadState(state: CompoundRunConfigurationOptions) {
-    super.loadState(state)
+    options.configurations.clear()
+    options.configurations.addAll(state.configurations)
     sortedConfigurationsWithTargets.clear()
     isInitialized = false
   }
@@ -164,22 +161,33 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
   }
 
   override fun getExecutorIcon(configuration: RunConfiguration, executor: Executor): Icon {
-    return when {
-      DefaultRunExecutor.EXECUTOR_ID == executor.id && hasRunningSingletons() -> AllIcons.Actions.Restart
-      else -> executor.icon
+    return if (!hasRunningSingletons(executor)) {
+      executor.icon
+    }
+    else {
+      if (!ExperimentalUI.isNewUI() && DefaultRunExecutor.EXECUTOR_ID == executor.id) {
+        AllIcons.Actions.Restart
+      }
+      else if (ExperimentalUI.isNewUI() && executor.rerunIcon != executor.icon) {
+        executor.rerunIcon
+      }
+      else {
+        ExecutionUtil.getLiveIndicator(executor.icon)
+      }
     }
   }
 
-  private fun hasRunningSingletons(): Boolean {
+  fun hasRunningSingletons(executor: Executor?): Boolean {
     val project = project
     if (project.isDisposed) {
       return false
     }
 
-    return ExecutionManagerImpl.getInstance(project).getRunningDescriptors(Condition { s ->
+    val executionManager = ExecutionManagerImpl.getInstance(project)
+    val runningDescriptors = executionManager.getRunningDescriptors(Condition { s ->
       val manager = RunManagerImpl.getInstanceImpl(project)
       for ((configuration, _) in sortedConfigurationsWithTargets) {
-        if (configuration is CompoundRunConfiguration && configuration.hasRunningSingletons()) {
+        if (configuration is CompoundRunConfiguration && configuration.hasRunningSingletons(executor)) {
           return@Condition true
         }
 
@@ -189,7 +197,10 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
         }
       }
       false
-    }).isNotEmpty()
+    })
+    return if (executor != null)
+      runningDescriptors.any { executionManager.getExecutors(it).contains(executor) }
+    else runningDescriptors.isNotEmpty()
   }
 }
 

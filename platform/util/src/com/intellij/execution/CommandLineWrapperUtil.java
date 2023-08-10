@@ -30,7 +30,8 @@ public final class CommandLineWrapperUtil {
     for (String path : pathList) {
       if (classPath.length() > 0) classPath.append(' ');
       File classpathElement = new File(path);
-      @SuppressWarnings("deprecation") String url = (notEscape ? classpathElement.toURL() : classpathElement.toURI().toURL()).toString();
+      //noinspection deprecation
+      String url = (notEscape ? classpathElement.toURL() : classpathElement.toURI().toURL()).toString();
       classPath.append(url);
     }
     fillClasspathJarFile(manifest, classPath.toString(), outputJar);

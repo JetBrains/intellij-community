@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log.drop
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -12,12 +12,12 @@ import git4idea.rebase.log.notifySuccess
 
 internal class GitDropLogAction : GitMultipleCommitEditingAction() {
   override fun update(e: AnActionEvent, commitEditingData: MultipleCommitEditingData) {
-    e.presentation.text = GitBundle.message("rebase.log.drop.action.custom.text", commitEditingData.selectedCommitList.size)
+    e.presentation.text = GitBundle.message("rebase.log.drop.action.custom.text", commitEditingData.selection.size)
   }
 
   override fun actionPerformedAfterChecks(commitEditingData: MultipleCommitEditingData) {
     val project = commitEditingData.project
-    val commitDetails = getOrLoadDetails(project, commitEditingData.logData, commitEditingData.selectedCommitList)
+    val commitDetails = getOrLoadDetails(project, commitEditingData.logData, commitEditingData.selection)
     object : Task.Backgroundable(project, GitBundle.message("rebase.log.drop.progress.indicator.title", commitDetails.size)) {
       override fun run(indicator: ProgressIndicator) {
         val operationResult = GitDropOperation(commitEditingData.repository).execute(commitDetails)

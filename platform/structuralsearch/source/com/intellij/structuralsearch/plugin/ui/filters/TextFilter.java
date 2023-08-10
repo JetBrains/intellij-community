@@ -1,16 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -18,13 +19,28 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings("ComponentNotRegistered")
 public class TextFilter extends FilterAction {
 
   boolean myShowHierarchy;
 
   public TextFilter() {
     super(SSRBundle.messagePointer("text.filter.name"));
+  }
+
+  @Override
+  public @NotNull String getShortText(NamedScriptableDefinition variable) {
+    if (!(variable instanceof MatchVariableConstraint constraint)) {
+      return "";
+    }
+    final String text = constraint.getRegExp();
+    if (text.isEmpty()) {
+      return constraint.isWithinHierarchy() ? SSRBundle.message("hierarchy.tooltip.message") : "";
+    }
+    return SSRBundle.message("text.tooltip.message",
+                             constraint.isInvertRegExp() ? 1 : 0,
+                             text,
+                             constraint.isWholeWordsOnly() ? 1 : 0,
+                             constraint.isWithinHierarchy() ? 1 : 0);
   }
 
   @Override
@@ -49,9 +65,8 @@ public class TextFilter extends FilterAction {
     if (!(myTable.getVariable() instanceof MatchVariableConstraint)) {
       return false;
     }
-    final StructuralSearchProfile profile = myTable.getProfile();
-    myShowHierarchy = profile.isApplicableConstraint(UIUtil.TEXT_HIERARCHY, nodes, completePattern, target);
-    return profile.isApplicableConstraint(UIUtil.TEXT, nodes, completePattern, target);
+    myShowHierarchy = isApplicableConstraint(UIUtil.TEXT_HIERARCHY, nodes, completePattern, target);
+    return isApplicableConstraint(UIUtil.TEXT, nodes, completePattern, target);
   }
 
   @Override

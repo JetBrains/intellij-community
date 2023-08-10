@@ -1,14 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
+import com.intellij.codeInsight.daemon.impl.analysis.VirtualManifestProvider
 import com.intellij.codeInsight.intention.IntentionActionDelegate
+import com.intellij.codeInspection.IllegalDependencyOnInternalPackageInspection
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.JavaCompilerConfigurationProxy
+import com.intellij.psi.PsiJavaModule
+import com.intellij.psi.PsiManager
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.ProjectScope
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.testFramework.ExtensionTestUtil
 import org.assertj.core.api.Assertions.assertThat
 import java.util.jar.JarFile
 
@@ -20,12 +32,21 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("module-info.java", "module M3 { }", M3)
   }
 
+  private fun withCompileArguments(module: Module = getModule(), vararg arguments: String, test: () -> Unit) {
+    try {
+      JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, arguments.toList())
+      test()
+    } finally {
+      JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, emptyList())
+    }
+  }
+
   fun testPackageStatement() {
     highlight("package pkg;")
     highlight("""
         <error descr="A module file should not have 'package' statement">package pkg;</error>
         module M { }""".trimIndent())
-    fixes("<caret>package pkg;\nmodule M { }", arrayOf("DeleteElementFix"))
+    fixes("<caret>package pkg;\nmodule M { }", arrayOf("DeleteElementFix", "FixAllHighlightingProblems"))
   }
 
   fun testSoftKeywords() {
@@ -35,6 +56,16 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     assertEquals(2, keywords.size)
     assertEquals(TextRange(0, 6), TextRange(keywords[0].startOffset, keywords[0].endOffset))
     assertEquals(TextRange(11, 18), TextRange(keywords[1].startOffset, keywords[1].endOffset))
+  }
+
+  fun testDependencyOnIllegalPackage() {
+    addFile("a/secret/Secret.java", "package a.secret;\npublic class Secret {}", M4)
+    addFile("module-info.java", "module M4 { exports pkg.module; }", M4)
+    myFixture.enableInspections(IllegalDependencyOnInternalPackageInspection())
+    myFixture.configureByText("C.java", "package pkg;\n" +
+                                        "import a.secret.*;\n" +
+                                        "public class C {<error descr=\"Illegal dependency: module 'M4' doesn't export package 'a.secret'\">Secret</error> s; }")
+    myFixture.checkHighlighting()
   }
 
   fun testWrongFileName() {
@@ -48,7 +79,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testFileDuplicateInTestRoot() {
     addTestFile("module-info.java", """module M.test { }""")
-    highlight("""<error descr="'module-info.java' already exists in the module">module M</error> { }""")
+    highlight("""module M { }""")
+  }
+
+  fun testFileDuplicateInResourceRoot() {
+    addResourceFile("module-info.java", """module M.test { }""")
+    highlight("""module M { }""")
   }
 
   fun testWrongFileLocation() {
@@ -116,7 +152,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           requires <error descr="Module is not in dependencies: M3">M3</error>;
           requires <warning descr="Ambiguous module reference: lib.auto">lib.auto</warning>;
           requires lib.multi.release;
-          requires lib.named;
+          requires <warning descr="Ambiguous module reference: lib.named">lib.named</warning>;
           requires lib.claimed;
           requires all.fours;
         }""".trimIndent())
@@ -328,6 +364,58 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("test.java", highlightText, M_TEST, isTest = true)
   }
 
+  fun testPatchingJavaBase() {
+    highlight("Main.java", """
+      package <error descr="Package 'lang' exists in another module: java.base">java.lang</error>;
+      public class Main {}
+    """.trimIndent())
+    withCompileArguments(module, "--patch-module=java.base=/src") {
+      highlight("Main.java", """
+       package java.lang;
+       public class Main {}
+     """.trimIndent())
+    }
+  }
+
+  fun testAddReadsDependingOnSourceModule() {
+    addFile("pkg/m4/C4.java", """
+      package pkg.m4;     
+      public class C4 { }
+    """.trimIndent(), M4)
+    myFixture.addFileToProject("module-info.java", "module M { }")
+    highlight("TestFoo.java", """
+      import <error descr="Package 'pkg.m4' is declared in the unnamed module, but module 'M' does not read it">pkg.m4</error>.C4;
+      public class TestFoo { }
+    """.trimIndent())
+    withCompileArguments(module, "--add-reads", "M=ALL-UNNAMED") {
+      highlight("TestBar.java", """
+        import pkg.m4.C4;
+        public class TestBar { }
+    """.trimIndent())
+    }
+  }
+
+  fun testAddReadsDependingOnLibrary() {
+    myFixture.addFileToProject("module-info.java", "module M { }")
+    highlight("TestFoo.java", """
+      import <error descr="Package 'pkg.lib2' is declared in module 'lib.auto', but module 'M' does not read it">pkg.lib2</error>.LC2;
+      public class TestFoo { }
+    """.trimIndent())
+    withCompileArguments(module, "--add-reads", "M=ALL-UNNAMED") {
+      highlight("TestBar.java", """
+        import pkg.lib2.LC2; 
+        public class TestBar { }
+    """.trimIndent())
+    }
+  }
+
+  fun testNoModuleInfoSamePackageAsInAttachedLibraryWithModuleInfo() {
+    highlight("Main.java", """
+      package lib.named;
+      public class Main {}
+    """.trimIndent())
+  }
+
   fun testPrivateJdkPackage() {
     addFile("module-info.java", "module M { }")
     highlight("test.java", """
@@ -371,7 +459,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testCorrectedType() {
     addFile("module-info.java", "module M { requires M6; requires lib.named; }")
-    
+
     addFile("module-info.java", "module M6 {  requires lib.named; exports pkg;}", M6)
     addFile("pkg/A.java", "package pkg; public class A {public static void foo(java.util.function.Supplier<pkg.lib1.LC1> f){}}", M6)
     highlight("pkg/Usage.java","import pkg.lib1.LC1; class Usage { {pkg.A.foo(LC1::new);} }")
@@ -480,6 +568,109 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
+  fun testAutomaticModuleFromIdeaModule() {
+    highlight("module-info.java", """
+        module M {
+          requires ${M6.moduleName.replace('_', '.')};  // `light.idea.test.m6`
+          requires <error descr="Module not found: m42">m42</error>;
+        }""".trimIndent())
+
+    addFile("p/B.java", "package p; public class B {}", module = M6)
+    addFile("p/C.java", "package p; public class C {}", module = M4)
+    highlight("A.java", """
+        public class A extends p.B {
+          private <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.C c;
+        }
+        """.trimIndent())
+  }
+
+  fun testAutomaticModuleFromManifest() {
+    addResourceFile(JarFile.MANIFEST_NAME, "Automatic-Module-Name: m6.bar\n", module = M6)
+    highlight("module-info.java", "module M { requires m6.bar; }")
+
+    addFile("p/B.java", "package p; public class B {}", module = M6)
+    addFile("p/C.java", "package p; public class C {}", module = M4)
+    highlight("A.java", """
+        public class A extends p.B {
+          private <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.C c;
+        }
+        """.trimIndent())
+  }
+
+  fun testAutomaticModuleFromVirtualManifest() {
+    val m6Attributes = mapOf(PsiJavaModule.AUTO_MODULE_NAME to "m6.bar")
+    val attributesMap = mapOf(M6.moduleName to m6Attributes)
+    ExtensionTestUtil.maskExtensions(VirtualManifestProvider.EP_NAME, listOf(TestVirtualManifestProvider(attributesMap)),
+                                     testRootDisposable)
+    highlight("module-info.java", "module M { requires m6.bar; }")
+
+    addFile("p/B.java", "package p; public class B {}", module = M6)
+    addFile("p/C.java", "package p; public class C {}", module = M4)
+    highlight("A.java", """
+        public class A extends p.B {
+          private <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.C c;
+        }
+        """.trimIndent())
+  }
+
+  fun testAutomaticModuleWithoutVirtualManifest() {
+    ExtensionTestUtil.maskExtensions(VirtualManifestProvider.EP_NAME, listOf(TestVirtualManifestProvider(emptyMap())), testRootDisposable)
+    highlight("module-info.java", "module M { requires <error descr=\"Module not found: m6.bar\">m6.bar</error>; }")
+
+    addFile("p/B.java", "package p; public class B {}", module = M6)
+    addFile("p/C.java", "package p; public class C {}", module = M4)
+    highlight("A.java", """
+        public class A extends <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.B {
+          private <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.C c;
+        }
+        """.trimIndent())
+  }
+
+  fun testAutomaticModuleFromManifestHighlighting() {
+    addResourceFile(JarFile.MANIFEST_NAME, "Automatic-Module-Name: m6.bar\n", module = M6)
+    addFile("p/B.java", "package p; public class B {}", M7)
+    addFile("module-info.java", "module M4 { exports p; }", M7)
+    highlight("A.java", """
+        public class A extends p.B {}
+        """.trimIndent(), M6, false)
+  }
+
+  fun testLightModuleDescriptorCaching() {
+    val libClass = myFixture.javaFacade.findClass("pkg.lib2.LC2", ProjectScope.getLibrariesScope(project))!!
+    val libModule = JavaModuleGraphUtil.findDescriptorByElement(libClass)!!
+
+    PsiManager.getInstance(project).dropPsiCaches()
+    assertSame(libModule, JavaModuleGraphUtil.findDescriptorByElement(libClass)!!)
+
+    ProjectRootManager.getInstance(project).incModificationCount()
+    assertNotSame(libModule, JavaModuleGraphUtil.findDescriptorByElement(libClass)!!)
+  }
+
+  fun testModuleInSources() {
+    val classInLibrary = myFixture.javaFacade.findClass("lib.named.C", GlobalSearchScope.allScope(project))!!
+    val elementInSources = classInLibrary.navigationElement
+    assertThat(JavaModuleGraphUtil.findDescriptorByFile(PsiUtilCore.getVirtualFile(elementInSources), project)).isNotNull
+  }
+
+  fun testMultiReleaseJarParts() {
+    addFile("pkg/I.java", """
+      package pkg;
+      public interface I {
+        String m();
+      }""".trimIndent(), MR_MAIN)
+    addFile("pkg/Impl.java", """
+      package pkg;
+      public class Impl implements I {
+        public String m() { return "main impl"; }
+      }""".trimIndent(), MR_MAIN)
+    addFile("module-info.java", "module light.idea.test.mr { }", MR_JAVA9)
+    highlight("pkg/Impl.java", """
+      package pkg;
+      public class Impl implements I {
+        public String m() { return "alt impl"; }
+      }""".trimIndent(), MR_JAVA9)
+  }
+
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 
@@ -492,10 +683,13 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   private fun fixes(path: String, text: String, fixes: Array<String>) {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
-    val available = myFixture.availableIntentions
-      .map { IntentionActionDelegate.unwrap(it)::class.java.simpleName }
-      .filter { it != "GutterIntentionAction" && it != "PackageSearchQuickFix" }
-    assertThat(available).containsExactlyInAnyOrder(*fixes)
+    val availableIntentions = myFixture.availableIntentions
+    val available = availableIntentions
+      .map { (it.asModCommandAction() ?: IntentionActionDelegate.unwrap(it))::class.java }
+      .filter { it.name.startsWith("com.intellij.codeInsight.") &&
+                !(it.name.startsWith("com.intellij.codeInsight.intention.impl.") && it.name.endsWith("Action"))}
+      .map { it.simpleName }
+    assertThat(available).describedAs(availableIntentions.toString()).containsExactlyInAnyOrder(*fixes)
   }
   //</editor-fold>
 }

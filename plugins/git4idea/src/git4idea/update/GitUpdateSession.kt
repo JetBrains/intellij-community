@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update
 
 import com.intellij.dvcs.DvcsUtil.getShortNames
@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.update.UpdateSession
 import com.intellij.util.containers.MultiMap
+import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import java.util.function.Supplier
@@ -61,28 +62,38 @@ class GitUpdateSession(private val project: Project,
 
   override fun showNotification() {
     if (notificationData != null) {
-      val notification = prepareNotification(notificationData.updatedFilesCount, notificationData.receivedCommitsCount,
+      val notification = prepareNotification(notificationData.updatedFilesCount,
+                                             notificationData.receivedCommitsCount,
                                              notificationData.filteredCommitsCount)
+
       notification.addAction(NotificationAction.createSimple(Supplier { GitBundle.message("action.NotificationAction.GitUpdateSession.text.view.commits") },
                                                              notificationData.viewCommitAction))
+
+      GitPostUpdateHandler.getActions(project, notificationData.ranges).forEach { notification.addAction(it) }
+
       VcsNotifier.getInstance(project).notify(notification)
     }
   }
 
-  private fun prepareNotification(updatedFilesNumber: Int, updatedCommitsNumber: Int, filteredCommitsNumber: Int?): Notification {
+  private fun prepareNotification(updatedFilesNumber: Int,
+                                  updatedCommitsNumber: Int,
+                                  filteredCommitsNumber: Int?): Notification {
     val title: String
     var content: String?
     val type: NotificationType
+    val displayId: String
     val mainMessage = getTitleForUpdateNotification(updatedFilesNumber, updatedCommitsNumber)
     if (isCanceled) {
       title = GitBundle.message("git.update.project.partially.updated.title")
       content = mainMessage
       type = NotificationType.WARNING
+      displayId = GitNotificationIdsHolder.PROJECT_PARTIALLY_UPDATED
     }
     else {
       title = mainMessage
       content = getBodyForUpdateNotification(filteredCommitsNumber)
       type = NotificationType.INFORMATION
+      displayId = GitNotificationIdsHolder.PROJECT_UPDATED
     }
 
     val additionalContent = additionalNotificationContent
@@ -93,7 +104,7 @@ class GitUpdateSession(private val project: Project,
       content += additionalContent
     }
 
-    return VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, type, null)
+    return VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, type).also { it.setDisplayId(displayId) }
   }
 }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
@@ -21,6 +7,7 @@ import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -50,18 +37,15 @@ import java.util.NoSuchElementException;
  */
 public abstract class JBIterator<E> implements Iterator<E> {
 
-  @NotNull
-  public static <E extends JBIterator<?>> JBIterable<E> cursor(@NotNull E iterator) {
+  public static @NotNull <E extends JBIterator<?>> JBIterable<E> cursor(@NotNull E iterator) {
     return JBIterable.generate(iterator, Functions.id()).intercept(CURSOR_NEXT);
   }
 
-  @NotNull
-  public static <E> JBIterator<E> from(@NotNull final Iterator<? extends E> it) {
+  public static @NotNull <E> JBIterator<E> from(final @NotNull Iterator<? extends E> it) {
     return it instanceof JBIterator ? (JBIterator<E>)it : wrap(it);
   }
 
-  @NotNull
-  static <E> JBIterator<E> wrap(@NotNull final Iterator<? extends E> it) {
+  static @NotNull <E> JBIterator<E> wrap(final @NotNull Iterator<? extends E> it) {
     return new JBIterator<E>() {
       @Override
       protected E nextImpl() {
@@ -90,8 +74,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   /**
    * Notifies the iterator that there's no more elements.
    */
-  @Nullable
-  protected final E stop() {
+  protected final @Nullable E stop() {
     myNext = Do.STOP;
     return null;
   }
@@ -99,8 +82,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   /**
    * Notifies the iterator to skip and re-invoke nextImpl().
    */
-  @Nullable
-  protected final E skip() {
+  protected final @Nullable E skip() {
     myNext = Do.SKIP;
     return null;
   }
@@ -154,7 +136,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
         if (op.impl == null) {
           // rollback all prepended takeWhile conditions if nextImpl() votes SKIP
           for (Op op2 = myFirstOp; op2.impl instanceof CountDown; op2 = op2.nextOp) {
-            ((CountDown)op2.impl).cur ++;
+            ((CountDown<?>)op2.impl).cur ++;
           }
         }
         op = null;
@@ -163,44 +145,36 @@ public abstract class JBIterator<E> implements Iterator<E> {
     myNext = o;
   }
 
-  @NotNull
-  public final <T> JBIterator<T> map(@NotNull Function<? super E, ? extends T> function) {
+  public final @NotNull <T> JBIterator<T> map(@NotNull Function<? super E, ? extends T> function) {
     return addOp(true, new MapOp<E, T>(function));
   }
 
-  @NotNull
-  public final JBIterator<E> filter(@NotNull Condition<? super E> condition) {
+  public final @NotNull JBIterator<E> filter(@NotNull Condition<? super E> condition) {
     return addOp(true, new FilterOp<E>(condition));
   }
 
-  @NotNull
-  public final <T> JBIterator<T> filterMap(@NotNull Function<? super E, ? extends T> function) {
+  public final @NotNull <T> JBIterator<T> filterMap(@NotNull Function<? super E, ? extends T> function) {
     return addOp(true, new FilterMapOp<E, T>(function));
   }
 
-  @NotNull
-  public final JBIterator<E> take(int count) {
+  public final @NotNull JBIterator<E> take(int count) {
     // add first so that the underlying iterator stay on 'count' position
     return addOp(!(myLastOp instanceof NextOp), new WhileOp<>(new CountDown<>(count)));
   }
 
-  @NotNull
-  public final JBIterator<E> takeWhile(@NotNull Condition<? super E> condition) {
+  public final @NotNull JBIterator<E> takeWhile(@NotNull Condition<? super E> condition) {
     return addOp(true, new WhileOp<E>(condition));
   }
 
-  @NotNull
-  public final JBIterator<E> skip(int count) {
+  public final @NotNull JBIterator<E> skip(int count) {
     return skipWhile(new CountDown<>(count));
   }
 
-  @NotNull
-  public final JBIterator<E> skipWhile(@NotNull final Condition<? super E> condition) {
+  public final @NotNull JBIterator<E> skipWhile(final @NotNull Condition<? super E> condition) {
     return addOp(true, new SkipOp<E>(condition));
   }
 
-  @NotNull
-  private <T> T addOp(boolean last, @NotNull Op op) {
+  private @NotNull <T> T addOp(boolean last, @NotNull Op op) {
     if (op.impl == null) {
       myFirstOp = myLastOp = op;
     }
@@ -220,8 +194,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
-  public final List<E> toList() {
+  public final @NotNull @Unmodifiable List<E> toList() {
     return Collections.unmodifiableList(ContainerUtil.newArrayList(JBIterable.once(this)));
   }
 
@@ -231,21 +204,18 @@ public abstract class JBIterator<E> implements Iterator<E> {
     return "{cur=" + myCurrent + "; next=" + myNext + (ops.size() < 2 ? "" : "; ops=" + ops) + "}";
   }
 
-  @NotNull
-  public final JBIterable<Function<Object, Object>> getTransformations() {
+  public final @NotNull JBIterable<Function<Object, Object>> getTransformations() {
     return (JBIterable<Function<Object, Object>>)(JBIterable)operationsImpl().map(op -> op.impl).filter(Function.class);
   }
 
-  @NotNull
-  private JBIterable<Op> operationsImpl() {
+  private @NotNull JBIterable<Op> operationsImpl() {
     return JBIterable.generate(myFirstOp, op -> op.nextOp);
   }
 
-  @NotNull
-  static String toShortString(@NotNull Object o) {
+  static @NotNull String toShortString(@NotNull Object o) {
     String name = o.getClass().getName();
     int idx = name.lastIndexOf('$');
-    if (idx > 0 && idx < name.length() && StringUtil.isJavaIdentifierStart(name.charAt(idx + 1))) {
+    if (idx > 0 && idx + 1 < name.length() && StringUtil.isJavaIdentifierStart(name.charAt(idx + 1))) {
       return name.substring(idx + 1);
     }
     return name.substring(name.lastIndexOf('.') + 1);
@@ -285,7 +255,9 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
     @Override
     public boolean value(A a) {
-      return cur > 0 && cur-- != 0;
+      if (cur <= 0) return false;
+      cur--;
+      return true;
     }
   }
 
@@ -370,12 +342,13 @@ public abstract class JBIterator<E> implements Iterator<E> {
     @Override
     Object apply(Object o) {
       JBIterator<?> it = (JBIterator<?>)o;
-      return ((advanced = nextOp != null) ? it.advance() : it.hasNext()) ? it : stop();
+      advanced = nextOp != null;
+      return (advanced ? it.advance() : it.hasNext()) ? it : stop();
     }
 
     void advance(Object o) {
       if (advanced || !(o instanceof JBIterator)) return;
-      ((JBIterator)o).advance();
+      ((JBIterator<?>)o).advance();
       advanced = true;
     }
   }

@@ -1,22 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.daemon.impl.actions.DisableHighlightingIntentionAction;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
+import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.RangeMarker;
@@ -25,47 +27,53 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
+import java.util.function.BiFunction;
 
 import static com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import static com.intellij.openapi.util.NlsContexts.Tooltip;
 
+@ApiStatus.NonExtendable
 public class HighlightInfo implements Segment {
   private static final Logger LOG = Logger.getInstance(HighlightInfo.class);
 
   // optimization: if tooltip contains this marker object, then it replaced with description field in getTooltip()
   private static final String DESCRIPTION_PLACEHOLDER = "\u0000";
 
-  private static final byte BIJECTIVE_MASK = 0x1;
-  private static final byte HAS_HINT_MASK = 0x2;
-  private static final byte FROM_INJECTION_MASK = 0x4;
-  private static final byte AFTER_END_OF_LINE_MASK = 0x8;
-  private static final byte FILE_LEVEL_ANNOTATION_MASK = 0x10;
-  private static final byte NEEDS_UPDATE_ON_TYPING_MASK = 0x20;
+  private static final byte HAS_HINT_MASK = 0x1;
+  private static final byte FROM_INJECTION_MASK = 0x2;
+  private static final byte AFTER_END_OF_LINE_MASK = 0x4;
+  private static final byte FILE_LEVEL_ANNOTATION_MASK = 0x8;
+  private static final byte NEEDS_UPDATE_ON_TYPING_MASK = 0x10;
+  /** true if this HighlightInfo was created as an error for some unresolved reference, so there likely will be some "Import" quickfixes after {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider} being asked about em */
+  private static final byte UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK = 0x20;
 
-  @MagicConstant(intValues = {
-    BIJECTIVE_MASK, HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK})
-  private @interface FlagConstant { }
+  // this HighlightInfo was created during visiting PsiElement 'element' with element.getTextRange() = TextRange(startOffset+visitingRangeDeltaStartOffset, endOffset+visitingRangeDeltaEndOffset)
+  private int visitingRangeDeltaStartOffset;
+  private int visitingRangeDeltaEndOffset;
+
+  @MagicConstant(intValues = {HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK,
+    UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK})
+  private @interface FlagConstant {
+  }
 
   public final TextAttributes forcedTextAttributes;
   public final TextAttributesKey forcedTextAttributesKey;
@@ -74,8 +82,54 @@ public class HighlightInfo implements Segment {
   public final int startOffset;
   public final int endOffset;
 
+  /**
+   * @deprecated use {@link #findRegisteredQuickFix(BiFunction)} instead
+   */
+  @Deprecated
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
+  /**
+   * @deprecated use {@link #findRegisteredQuickFix(BiFunction)} instead
+   */
+  @Deprecated
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
+
+  /**
+   * Find the quickfix (among ones added by {@link #registerFix}) selected by returning non-null value from the {@code predicate}
+   * and return that value, or null if the quickfix was not found.
+   */
+  public <T> T findRegisteredQuickFix(@NotNull BiFunction<? super @NotNull IntentionActionDescriptor, ? super @NotNull TextRange, ? extends @Nullable T> predicate) {
+    Set<IntentionActionDescriptor> processed = new HashSet<>();
+    List<Pair<IntentionActionDescriptor, RangeMarker>> markers;
+    List<Pair<IntentionActionDescriptor, TextRange>> ranges;
+    synchronized (this) {
+      markers = quickFixActionMarkers;
+      ranges = quickFixActionRanges;
+    }
+    // prefer range markers as having more actual offsets
+    T result = find(markers, processed, predicate);
+    if (result != null) return result;
+    return find(ranges, processed, predicate);
+  }
+
+  @Nullable
+  private static <T> T find(@Nullable List<? extends Pair<IntentionActionDescriptor, ? extends Segment>> markers,
+                            @NotNull Set<? super IntentionActionDescriptor> processed,
+                            @NotNull BiFunction<? super @NotNull IntentionActionDescriptor, ? super @NotNull TextRange, ? extends T> predicate) {
+    if (markers != null) {
+      for (Pair<IntentionActionDescriptor, ? extends Segment> pair : markers) {
+        Segment segment = pair.second;
+        TextRange range = segment instanceof RangeMarker ? ((RangeMarker)segment).isValid() ? ((RangeMarker)segment).getTextRange() : null : (TextRange)segment;
+        if (range == null) continue;
+        IntentionActionDescriptor descriptor = pair.first;
+        if (!processed.add(descriptor)) continue;
+        T result = predicate.apply(descriptor, range);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    return null;
+  }
 
   private final @DetailedDescription String description;
   private final @Tooltip String toolTip;
@@ -84,24 +138,38 @@ public class HighlightInfo implements Segment {
   private final GutterMark gutterIconRenderer;
   private final ProblemGroup myProblemGroup;
   private final String inspectionToolId;
-
   private int group;
-  private int fixStartOffset;
-  private int fixEndOffset;
+  /**
+   * Quick fix text range: the range within which the Alt-Enter should open the quick fix popup.
+   * Might be bigger than (getStartOffset(), getEndOffset()) when it's deemed more usable,
+   * e.g., when "import class" fix wanted to be Alt-Entered from everywhere at the same line.
+   *
+   */
+  private long fixRange;
   /**
    * @see FlagConstant for allowed values
    */
   private volatile byte myFlags;
 
   final int navigationShift;
-  JComponent fileLevelComponent;
-  @Nullable("null means it the same as highlighter")
-  RangeMarker fixMarker;
-  @Nullable
-  volatile RangeHighlighterEx highlighter; // modified in EDT only
-  @Nullable
-  PsiElement psiElement;
 
+  private @Nullable Object fileLevelComponentsStorage;
+
+  @Nullable("null means it the same as highlighter")
+  private RangeMarker fixMarker;
+  volatile RangeHighlighterEx highlighter;
+  @Nullable
+  final PsiElement psiElement;
+  /**
+   * in case this HighlightInfo is created to highlight unresolved reference, store this reference here to be able to call {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider} later
+   */
+  final PsiReference unresolvedReference;
+
+  /**
+   * @deprecated Do not create manually, use {@link #newHighlightInfo(HighlightInfoType)} instead
+   */
+  @Deprecated
+  @ApiStatus.Internal
   protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
                           @Nullable TextAttributesKey forcedTextAttributesKey,
                           @NotNull HighlightInfoType type,
@@ -114,10 +182,12 @@ public class HighlightInfo implements Segment {
                           @Nullable Boolean needsUpdateOnTyping,
                           boolean isFileLevelAnnotation,
                           int navigationShift,
-                          ProblemGroup problemGroup,
+                          @Nullable ProblemGroup problemGroup,
                           @Nullable String inspectionToolId,
-                          GutterMark gutterIconRenderer,
-                          int group) {
+                          @Nullable GutterMark gutterIconRenderer,
+                          int group,
+                          @Nullable PsiReference unresolvedReference,
+                          @Nullable PsiElement psiElement) {
     if (startOffset < 0 || startOffset > endOffset) {
       LOG.error("Incorrect highlightInfo bounds. description="+escapedDescription+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
     }
@@ -126,20 +196,21 @@ public class HighlightInfo implements Segment {
     this.type = type;
     this.startOffset = startOffset;
     this.endOffset = endOffset;
-    fixStartOffset = startOffset;
-    fixEndOffset = endOffset;
+    fixRange = TextRangeScalarUtil.toScalarRange(startOffset, endOffset);
     description = escapedDescription;
-    // optimization: do not retain extra memory if can recompute
+    // optimization: do not retain extra memory if we can recompute
     toolTip = encodeTooltip(escapedToolTip, escapedDescription);
     this.severity = severity;
-    setFlag(AFTER_END_OF_LINE_MASK, afterEndOfLine);
-    setFlag(NEEDS_UPDATE_ON_TYPING_MASK, calcNeedUpdateOnTyping(needsUpdateOnTyping, type));
-    setFlag(FILE_LEVEL_ANNOTATION_MASK, isFileLevelAnnotation);
+    myFlags = (byte)((afterEndOfLine ? AFTER_END_OF_LINE_MASK : 0) |
+                     (calcNeedUpdateOnTyping(needsUpdateOnTyping, type) ? NEEDS_UPDATE_ON_TYPING_MASK : 0) |
+                     (isFileLevelAnnotation ? FILE_LEVEL_ANNOTATION_MASK : 0));
     this.navigationShift = navigationShift;
     myProblemGroup = problemGroup;
     this.gutterIconRenderer = gutterIconRenderer;
     this.inspectionToolId = inspectionToolId;
     this.group = group;
+    this.unresolvedReference = unresolvedReference;
+    this.psiElement = psiElement;
   }
 
   /**
@@ -152,45 +223,107 @@ public class HighlightInfo implements Segment {
   }
 
   @NotNull
-  ProperTextRange getFixTextRange() {
-    return new ProperTextRange(fixStartOffset, fixEndOffset);
+  TextRange getFixTextRange() {
+    return TextRangeScalarUtil.create(fixRange);
   }
 
-  void setFromInjection(boolean fromInjection) {
-    setFlag(FROM_INJECTION_MASK, fromInjection);
+  void markFromInjection() {
+    setFlag(FROM_INJECTION_MASK, true);
+  }
+
+  void addFileLeverComponent(@NotNull FileEditor fileEditor, @NotNull JComponent component) {
+    if (fileLevelComponentsStorage == null) {
+      fileLevelComponentsStorage = new Pair<>(fileEditor, component);
+    }
+    else if (fileLevelComponentsStorage instanceof Pair) {
+      //noinspection unchecked
+      Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
+      Map<FileEditor, JComponent> map = new HashMap<>();
+      map.put(pair.first, pair.second);
+      map.put(fileEditor, component);
+      fileLevelComponentsStorage = map;
+    }
+    else if (fileLevelComponentsStorage instanceof Map) {
+      //noinspection unchecked
+      ((Map<FileEditor, JComponent>)fileLevelComponentsStorage).put(fileEditor, component);
+    }
+    else {
+      LOG.error(new IllegalStateException("fileLevelComponents=" + fileLevelComponentsStorage));
+    }
+  }
+
+  void removeFileLeverComponent(@NotNull FileEditor fileEditor) {
+    if (fileLevelComponentsStorage instanceof Pair) {
+      //noinspection unchecked
+      Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
+      if (pair.first == fileEditor) {
+        fileLevelComponentsStorage = null;
+      }
+    }
+    else if (fileLevelComponentsStorage instanceof Map) {
+      //noinspection unchecked
+      ((Map<FileEditor, JComponent>)fileLevelComponentsStorage).remove(fileEditor);
+    }
+  }
+
+  @Nullable JComponent getFileLevelComponent(@NotNull FileEditor fileEditor) {
+    if (fileLevelComponentsStorage == null) {
+      return null;
+    }
+    else if (fileLevelComponentsStorage instanceof Pair) {
+      //noinspection unchecked
+      Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
+      return pair.first == fileEditor ? pair.second : null;
+    }
+    else if (fileLevelComponentsStorage instanceof Map) {
+      //noinspection unchecked
+      return ((Map<FileEditor, JComponent>)fileLevelComponentsStorage).get(fileEditor);
+    }
+    else {
+      LOG.error(new IllegalStateException("fileLevelComponents=" + fileLevelComponentsStorage));
+      return null;
+    }
   }
 
   @Nullable
   public @Tooltip String getToolTip() {
     String toolTip = this.toolTip;
     String description = this.description;
-    if (toolTip == null || description == null || !toolTip.contains(DESCRIPTION_PLACEHOLDER)) return toolTip;
-    String decoded = StringUtil.replace(toolTip, DESCRIPTION_PLACEHOLDER, XmlStringUtil.escapeString(description));
-    return XmlStringUtil.wrapInHtml(decoded);
+
+    if (toolTip == null) return null;
+
+    String wrapped = XmlStringUtil.wrapInHtml(toolTip);
+    if (description == null || !wrapped.contains(DESCRIPTION_PLACEHOLDER)) {
+      return wrapped;
+    }
+
+    String decoded = StringUtil.replace(wrapped, DESCRIPTION_PLACEHOLDER, XmlStringUtil.escapeString(description));
+    return decoded;
   }
 
   /**
    * Encodes \p tooltip so that substrings equal to a \p description
    * are replaced with the special placeholder to reduce size of the
-   * tooltip. If encoding takes place, <html></html> tags are
-   * stripped of the tooltip.
+   * tooltip. <html></html> tags are stripped of the tooltip.
    *
-   * @param tooltip - html text
+   * @param tooltip     - html text
    * @param description - plain text (not escaped)
-   *
    * @return encoded tooltip (stripped html text with one or more placeholder characters)
-   *         or tooltip without changes.
+   * or tooltip without changes.
    */
-  private static @Tooltip String encodeTooltip(@Tooltip String tooltip, @DetailedDescription String description) {
-    if (tooltip == null || description == null || description.isEmpty()) return tooltip;
+  @Nullable
+  private static @Tooltip String encodeTooltip(@Nullable @Tooltip String tooltip, @Nullable @DetailedDescription String description) {
+    if (tooltip == null) return null;
 
-    String encoded = StringUtil.replace(tooltip, XmlStringUtil.escapeString(description), DESCRIPTION_PLACEHOLDER);
-    //noinspection StringEquality
-    if (encoded == tooltip) {
-      return tooltip;
+    String stripped = XmlStringUtil.stripHtml(tooltip);
+    if (description == null || description.isEmpty()) return stripped;
+
+    String encoded = StringUtil.replace(stripped, XmlStringUtil.escapeString(description), DESCRIPTION_PLACEHOLDER);
+    if (Strings.areSameInstance(encoded, stripped)) {
+      return stripped;
     }
     if (encoded.equals(DESCRIPTION_PLACEHOLDER)) encoded = DESCRIPTION_PLACEHOLDER;
-    return XmlStringUtil.stripHtml(encoded);
+    return encoded;
   }
 
   public @DetailedDescription String getDescription() {
@@ -208,6 +341,7 @@ public class HighlightInfo implements Segment {
   }
 
   private void setFlag(@FlagConstant byte mask, boolean value) {
+    //noinspection NonAtomicOperationOnVolatileField
     myFlags = BitUtil.set(myFlags, mask, value);
   }
 
@@ -215,12 +349,15 @@ public class HighlightInfo implements Segment {
     return isFlagSet(FILE_LEVEL_ANNOTATION_MASK);
   }
 
-  boolean isBijective() {
-    return isFlagSet(BIJECTIVE_MASK);
+  void setVisitingTextRange(long range) {
+    visitingRangeDeltaStartOffset = TextRangeScalarUtil.startOffset(range) - getStartOffset();
+    visitingRangeDeltaEndOffset = TextRangeScalarUtil.endOffset(range) - getEndOffset();
   }
 
-  void setBijective(boolean bijective) {
-    setFlag(BIJECTIVE_MASK, bijective);
+  long getVisitingTextRange() {
+    int visitStart = getActualStartOffset() + visitingRangeDeltaStartOffset;
+    int visitEnd = getActualEndOffset() + visitingRangeDeltaEndOffset;
+    return TextRange.isProperRange(visitStart, visitEnd) ? TextRangeScalarUtil.toScalarRange(visitStart, visitEnd) : -1;
   }
 
   @NotNull
@@ -228,16 +365,11 @@ public class HighlightInfo implements Segment {
     return severity;
   }
 
-  @Nullable
   public RangeHighlighterEx getHighlighter() {
     return highlighter;
   }
 
-  /**
-   * Modified only in EDT.
-   */
   public void setHighlighter(@Nullable RangeHighlighterEx highlighter) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     this.highlighter = highlighter;
   }
 
@@ -271,8 +403,8 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  @SuppressWarnings("deprecation")
-  Color getErrorStripeMarkColor(@NotNull PsiElement element, @Nullable("when null, the global scheme will be used") EditorColorsScheme colorsScheme) {
+  Color getErrorStripeMarkColor(@NotNull PsiElement element,
+                                @Nullable("when null, the global scheme will be used") EditorColorsScheme colorsScheme) {
     if (forcedTextAttributes != null) {
       return forcedTextAttributes.getErrorStripeColor();
     }
@@ -295,10 +427,12 @@ public class HighlightInfo implements Segment {
     if (getSeverity() == HighlightSeverity.WARNING) {
       return scheme.getAttributes(CodeInsightColors.WARNINGS_ATTRIBUTES).getErrorStripeColor();
     }
-    if (getSeverity() == HighlightSeverity.INFO){
+    //noinspection deprecation
+    if (getSeverity() == HighlightSeverity.INFO) {
+      //noinspection deprecation
       return scheme.getAttributes(CodeInsightColors.INFO_ATTRIBUTES).getErrorStripeColor();
     }
-    if (getSeverity() == HighlightSeverity.WEAK_WARNING){
+    if (getSeverity() == HighlightSeverity.WEAK_WARNING) {
       return scheme.getAttributes(CodeInsightColors.WEAK_WARNING_ATTRIBUTES).getErrorStripeColor();
     }
     if (getSeverity() == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) {
@@ -314,18 +448,13 @@ public class HighlightInfo implements Segment {
     return customScheme != null ? customScheme : EditorColorsManager.getInstance().getGlobalScheme();
   }
 
-  @Nullable
-  private static @Tooltip String htmlEscapeToolTip(@Nullable @Tooltip String unescapedTooltip) {
-    return unescapedTooltip == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(unescapedTooltip));
-  }
-
   public boolean needUpdateOnTyping() {
     return isFlagSet(NEEDS_UPDATE_ON_TYPING_MASK);
   }
 
   private static boolean calcNeedUpdateOnTyping(@Nullable Boolean needsUpdateOnTyping, HighlightInfoType type) {
     if (needsUpdateOnTyping != null) {
-      return needsUpdateOnTyping.booleanValue();
+      return needsUpdateOnTyping;
     }
     if (type instanceof HighlightInfoType.UpdateOnTypingSuppressible) {
       return ((HighlightInfoType.UpdateOnTypingSuppressible)type).needsUpdateOnTyping();
@@ -336,8 +465,7 @@ public class HighlightInfo implements Segment {
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (!(obj instanceof HighlightInfo)) return false;
-    HighlightInfo info = (HighlightInfo)obj;
+    if (!(obj instanceof HighlightInfo info)) return false;
 
     return info.getSeverity() == getSeverity() &&
            info.startOffset == startOffset &&
@@ -369,16 +497,18 @@ public class HighlightInfo implements Segment {
 
   @Override
   public @NonNls String toString() {
-    String s = "HighlightInfo(" + startOffset + "," + endOffset+")";
+    String s = "HighlightInfo(" + startOffset + "," + endOffset + ")";
     if (getActualStartOffset() != startOffset || getActualEndOffset() != endOffset) {
       s += "; actual: (" + getActualStartOffset() + "," + getActualEndOffset() + ")";
     }
     if (highlighter != null) s += " text='" + getText() + "'";
-    if (getDescription() != null) s+= ", description='" + getDescription() + "'";
-    s += " severity=" + getSeverity();
-    s += " group=" + getGroup();
-    if (quickFixActionRanges != null) {
-      s+= "; quickFixes: "+quickFixActionRanges;
+    if (getDescription() != null) s += ", description='" + getDescription() + "'";
+    s += "; severity=" + getSeverity();
+    s += "; group=" + getGroup();
+    synchronized (this) {
+      if (quickFixActionRanges != null) {
+        s += "; quickFixes: " + quickFixActionRanges;
+      }
     }
     if (gutterIconRenderer != null) {
       s += "; gutter: " + gutterIconRenderer;
@@ -388,278 +518,83 @@ public class HighlightInfo implements Segment {
 
   @NotNull
   public static Builder newHighlightInfo(@NotNull HighlightInfoType type) {
-    return new B(type);
+    return new HighlightInfoB(type);
   }
 
   void setGroup(int group) {
     this.group = group;
   }
 
+  @ApiStatus.NonExtendable
   public interface Builder {
     // only one 'range' call allowed
     @NotNull Builder range(@NotNull TextRange textRange);
+
     @NotNull Builder range(@NotNull ASTNode node);
+
     @NotNull Builder range(@NotNull PsiElement element);
+
     @NotNull Builder range(@NotNull PsiElement element, @NotNull TextRange rangeInElement);
+
     @NotNull Builder range(@NotNull PsiElement element, int start, int end);
+
     @NotNull Builder range(int start, int end);
 
     @NotNull Builder gutterIconRenderer(@NotNull GutterIconRenderer gutterIconRenderer);
+
     @NotNull Builder problemGroup(@NotNull ProblemGroup problemGroup);
+
     @NotNull Builder inspectionToolId(@NotNull String inspectionTool);
 
     // only one allowed
     @NotNull Builder description(@DetailedDescription @NotNull String description);
+
     @NotNull Builder descriptionAndTooltip(@DetailedDescription @NotNull String description);
 
     // only one allowed
     @NotNull Builder textAttributes(@NotNull TextAttributes attributes);
+
     @NotNull Builder textAttributes(@NotNull TextAttributesKey attributesKey);
 
     // only one allowed
     @NotNull Builder unescapedToolTip(@Tooltip @NotNull String unescapedToolTip);
+
     @NotNull Builder escapedToolTip(@Tooltip @NotNull String escapedToolTip);
 
     @NotNull Builder endOfLine();
+
     @NotNull Builder needsUpdateOnTyping(boolean update);
+
     @NotNull Builder severity(@NotNull HighlightSeverity severity);
+
     @NotNull Builder fileLevelAnnotation();
+
     @NotNull Builder navigationShift(int navigationShift);
+
     @NotNull Builder group(int group);
+
+    @NotNull
+    Builder registerFix(@NotNull IntentionAction action,
+                        @Nullable List<? extends IntentionAction> options,
+                        @Nullable @Nls String displayName,
+                        @Nullable TextRange fixRange,
+                        @Nullable HighlightDisplayKey key);
+
+    @NotNull
+    @ApiStatus.Experimental
+    default Builder registerFix(@NotNull ModCommandAction action,
+                        @Nullable List<? extends IntentionAction> options,
+                        @Nullable @Nls String displayName,
+                        @Nullable TextRange fixRange,
+                        @Nullable HighlightDisplayKey key) {
+      return registerFix(action.asIntention(), options, displayName, fixRange, key);
+    }
 
     @Nullable("null means filtered out")
     HighlightInfo create();
 
     @NotNull
     HighlightInfo createUnconditionally();
-  }
-
-  private static boolean isAcceptedByFilters(@NotNull HighlightInfo info, @Nullable PsiElement psiElement) {
-    PsiFile file = psiElement == null ? null : psiElement.getContainingFile();
-    for (HighlightInfoFilter filter : HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions()) {
-      if (!filter.accept(info, file)) {
-        return false;
-      }
-    }
-    info.psiElement = psiElement;
-    return true;
-  }
-
-  private static final class B implements Builder {
-    private Boolean myNeedsUpdateOnTyping;
-    private TextAttributes forcedTextAttributes;
-    private TextAttributesKey forcedTextAttributesKey;
-
-    private final HighlightInfoType type;
-    private int startOffset = -1;
-    private int endOffset = -1;
-
-    private @DetailedDescription String escapedDescription;
-    private @Tooltip String escapedToolTip;
-    private HighlightSeverity severity;
-
-    private boolean isAfterEndOfLine;
-    private boolean isFileLevelAnnotation;
-    private int navigationShift;
-
-    private GutterIconRenderer gutterIconRenderer;
-    private ProblemGroup problemGroup;
-    private String inspectionToolId;
-    private PsiElement psiElement;
-    private int group;
-
-    private B(@NotNull HighlightInfoType type) {
-      this.type = type;
-    }
-
-    @NotNull
-    @Override
-    public Builder gutterIconRenderer(@NotNull GutterIconRenderer gutterIconRenderer) {
-      assert this.gutterIconRenderer == null : "gutterIconRenderer already set";
-      this.gutterIconRenderer = gutterIconRenderer;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder problemGroup(@NotNull ProblemGroup problemGroup) {
-      assert this.problemGroup == null : "problemGroup already set";
-      this.problemGroup = problemGroup;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder inspectionToolId(@NotNull String inspectionToolId) {
-      assert this.inspectionToolId == null : "inspectionToolId already set";
-      this.inspectionToolId = inspectionToolId;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder description(@NotNull String description) {
-      assert escapedDescription == null : "description already set";
-      escapedDescription = description;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder descriptionAndTooltip(@NotNull String description) {
-      return description(description).unescapedToolTip(description);
-    }
-
-    @NotNull
-    @Override
-    public Builder textAttributes(@NotNull TextAttributes attributes) {
-      assert forcedTextAttributes == null : "textAttributes already set";
-      forcedTextAttributes = attributes;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder textAttributes(@NotNull TextAttributesKey attributesKey) {
-      assert forcedTextAttributesKey == null : "textAttributesKey already set";
-      forcedTextAttributesKey = attributesKey;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder unescapedToolTip(@NotNull String unescapedToolTip) {
-      assert escapedToolTip == null : "Tooltip was already set";
-      escapedToolTip = htmlEscapeToolTip(unescapedToolTip);
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder escapedToolTip(@NotNull String escapedToolTip) {
-      assert this.escapedToolTip == null : "Tooltip was already set";
-      this.escapedToolTip = escapedToolTip;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder range(int start, int end) {
-      assert startOffset == -1 && endOffset == -1 : "Offsets already set";
-
-      startOffset = start;
-      endOffset = end;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder range(@NotNull TextRange textRange) {
-      assert startOffset == -1 && endOffset == -1 : "Offsets already set";
-      startOffset = textRange.getStartOffset();
-      endOffset = textRange.getEndOffset();
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder range(@NotNull ASTNode node) {
-      return range(node.getPsi());
-    }
-
-    @NotNull
-    @Override
-    public Builder range(@NotNull PsiElement element) {
-      assert psiElement == null : " psiElement already set";
-      psiElement = element;
-      return range(element.getTextRange());
-    }
-
-    @NotNull
-    @Override
-    public Builder range(@NotNull PsiElement element, @NotNull TextRange rangeInElement) {
-      TextRange absoluteRange = rangeInElement.shiftRight(element.getTextRange().getStartOffset());
-      return range(element, absoluteRange.getStartOffset(), absoluteRange.getEndOffset());
-    }
-
-    @NotNull
-    @Override
-    public Builder range(@NotNull PsiElement element, int start, int end) {
-      assert psiElement == null : " psiElement already set";
-      psiElement = element;
-      return range(start, end);
-    }
-
-    @NotNull
-    @Override
-    public Builder endOfLine() {
-      isAfterEndOfLine = true;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder needsUpdateOnTyping(boolean update) {
-      assert myNeedsUpdateOnTyping == null : " needsUpdateOnTyping already set";
-      myNeedsUpdateOnTyping = update;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder severity(@NotNull HighlightSeverity severity) {
-      assert this.severity == null : " severity already set";
-      this.severity = severity;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder fileLevelAnnotation() {
-      isFileLevelAnnotation = true;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder navigationShift(int navigationShift) {
-      this.navigationShift = navigationShift;
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public Builder group(int group) {
-      this.group = group;
-      return this;
-    }
-
-    @Nullable
-    @Override
-    public HighlightInfo create() {
-      HighlightInfo info = createUnconditionally();
-      LOG.assertTrue(psiElement != null ||
-                     severity == HighlightInfoType.SYMBOL_TYPE_SEVERITY ||
-                     severity == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY ||
-                     ArrayUtil.find(HighlightSeverity.DEFAULT_SEVERITIES, severity) != -1,
-                     "Custom type requires not-null element to detect its text attributes");
-
-      if (!isAcceptedByFilters(info, psiElement)) return null;
-
-      return info;
-    }
-
-    @NotNull
-    @Override
-    public HighlightInfo createUnconditionally() {
-      if (severity == null) {
-        severity = type.getSeverity(psiElement);
-      }
-
-      return new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, escapedDescription,
-                               escapedToolTip, severity, isAfterEndOfLine, myNeedsUpdateOnTyping, isFileLevelAnnotation, navigationShift,
-                               problemGroup, inspectionToolId, gutterIconRenderer, group);
-    }
   }
 
   public GutterMark getGutterIconRenderer() {
@@ -682,24 +617,27 @@ public class HighlightInfo implements Segment {
     TextAttributesKey key = annotation.getTextAttributes();
     TextAttributesKey forcedAttributesKey = forcedAttributes == null && key != HighlighterColors.NO_HIGHLIGHTING ? key : null;
 
+    PsiReference unresolvedReference = annotation.getUnresolvedReference();
+    PsiElement psiElement = unresolvedReference == null ? null : unresolvedReference.getElement();
     HighlightInfo info = new HighlightInfo(
       forcedAttributes, forcedAttributesKey, convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
-      annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping(),
-      annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), null, annotation.getGutterIconRenderer(), Pass.UPDATE_ALL);
+      annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(),
+      annotation.needsUpdateOnTyping(),
+      annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), null, annotation.getGutterIconRenderer(), Pass.UPDATE_ALL,
+      unresolvedReference, psiElement);
 
     List<? extends Annotation.QuickFixInfo> fixes = batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes();
     if (fixes != null) {
       for (Annotation.QuickFixInfo quickFixInfo : fixes) {
         TextRange range = quickFixInfo.textRange;
-        HighlightDisplayKey k = quickFixInfo.key != null ? quickFixInfo.key : HighlightDisplayKey.find(ANNOTATOR_INSPECTION_SHORT_NAME);
+        HighlightDisplayKey k = quickFixInfo.key != null ? quickFixInfo.key
+                                                         : HighlightDisplayKey.find(HighlightVisitorBasedInspection.SHORT_NAME);
         info.registerFix(quickFixInfo.quickFix, null, HighlightDisplayKey.getDisplayNameByKey(k), range, k);
       }
     }
 
     return info;
   }
-
-  private static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
 
   @NotNull
   private static HighlightInfoType convertType(@NotNull Annotation annotation) {
@@ -714,17 +652,18 @@ public class HighlightInfo implements Segment {
     if (problemHighlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
     if (problemHighlightType == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
     if (problemHighlightType == ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL) return HighlightInfoType.MARKED_FOR_REMOVAL;
+    if (problemHighlightType == ProblemHighlightType.POSSIBLE_PROBLEM) return HighlightInfoType.POSSIBLE_PROBLEM;
     return convertSeverity(severity);
   }
 
   @NotNull
   public static HighlightInfoType convertSeverity(@NotNull HighlightSeverity severity) {
     //noinspection deprecation
-    return severity == HighlightSeverity.ERROR? HighlightInfoType.ERROR :
+    return severity == HighlightSeverity.ERROR ? HighlightInfoType.ERROR :
            severity == HighlightSeverity.WARNING ? HighlightInfoType.WARNING :
            severity == HighlightSeverity.INFO ? HighlightInfoType.INFO :
            severity == HighlightSeverity.WEAK_WARNING ? HighlightInfoType.WEAK_WARNING :
-           severity ==HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING ? HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER :
+           severity == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING ? HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER :
            HighlightInfoType.INFORMATION;
   }
 
@@ -738,7 +677,7 @@ public class HighlightInfo implements Segment {
 
   @NotNull
   public static ProblemHighlightType convertSeverityToProblemHighlight(@NotNull HighlightSeverity severity) {
-    //noinspection deprecation
+    //noinspection deprecation,removal
     return severity == HighlightSeverity.ERROR ? ProblemHighlightType.ERROR :
            severity == HighlightSeverity.WARNING ? ProblemHighlightType.WARNING :
            severity == HighlightSeverity.INFO ? ProblemHighlightType.INFO :
@@ -757,6 +696,7 @@ public class HighlightInfo implements Segment {
     RangeHighlighterEx h = highlighter;
     return h == null || !h.isValid() ? startOffset : h.getStartOffset();
   }
+
   public int getActualEndOffset() {
     RangeHighlighterEx h = highlighter;
     return h == null || !h.isValid() ? endOffset : h.getEndOffset();
@@ -764,16 +704,17 @@ public class HighlightInfo implements Segment {
 
   public static class IntentionActionDescriptor {
     private final IntentionAction myAction;
-    private volatile List<IntentionAction> myOptions;
-    private volatile HighlightDisplayKey myKey;
+    volatile List<? extends IntentionAction> myOptions;
+    final @Nullable HighlightDisplayKey myKey;
     private final ProblemGroup myProblemGroup;
     private final HighlightSeverity mySeverity;
     private final @Nls String myDisplayName;
     private final Icon myIcon;
     private Boolean myCanCleanup;
+    private int myProblemOffset = -1;
 
     public IntentionActionDescriptor(@NotNull IntentionAction action,
-                                     @Nullable List<IntentionAction> options,
+                                     @Nullable List<? extends IntentionAction> options,
                                      @Nullable @Nls String displayName,
                                      @Nullable Icon icon,
                                      @Nullable HighlightDisplayKey key,
@@ -789,15 +730,15 @@ public class HighlightInfo implements Segment {
     }
 
     @Nullable IntentionActionDescriptor copyWithEmptyAction() {
+      if (myKey == null || myKey.getID().equals(HighlightVisitorBasedInspection.SHORT_NAME)) {
+        // No need to show "Inspection 'Annotator' options" quick fix, it wouldn't be actionable.
+        return null;
+      }
+
       String displayName = HighlightDisplayKey.getDisplayNameByKey(myKey);
       if (displayName == null) return null;
-      return new IntentionActionDescriptor(new EmptyIntentionAction(displayName),
-                                           myOptions,
-                                           myDisplayName,
-                                           myIcon,
-                                           myKey,
-                                           myProblemGroup,
-                                           mySeverity);
+      return new IntentionActionDescriptor(new EmptyIntentionAction(displayName), myOptions, myDisplayName, myIcon,
+                                           myKey, myProblemGroup, mySeverity);
     }
 
     @NotNull
@@ -816,24 +757,26 @@ public class HighlightInfo implements Segment {
     boolean canCleanup(@NotNull PsiElement element) {
       if (myCanCleanup == null) {
         InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
-        HighlightDisplayKey key = myKey;
-        if (key == null) {
+        if (myKey == null) {
           myCanCleanup = false;
         }
         else {
-          InspectionToolWrapper toolWrapper = profile.getInspectionTool(key.toString(), element);
+          InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(myKey.toString(), element);
           myCanCleanup = toolWrapper != null && toolWrapper.isCleanupTool();
         }
       }
       return myCanCleanup;
     }
 
-    @Nullable
-    public List<IntentionAction> getOptions(@NotNull PsiElement element, @Nullable Editor editor) {
+    @NotNull
+    public Iterable<? extends IntentionAction> getOptions(@NotNull PsiElement element, @Nullable Editor editor) {
       if (editor != null && Boolean.FALSE.equals(editor.getUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY))) {
-        return null;
+        return Collections.emptyList();
       }
-      List<IntentionAction> options = myOptions;
+      List<? extends IntentionAction> options = myOptions;
+      if (options != null) {
+        return options;
+      }
       HighlightDisplayKey key = myKey;
       if (myProblemGroup != null) {
         String problemName = myProblemGroup.getProblemName();
@@ -842,13 +785,24 @@ public class HighlightInfo implements Segment {
           key = problemGroupKey;
         }
       }
-      if (options != null || key == null) {
-        return options;
+      IntentionAction action = IntentionActionDelegate.unwrap(myAction);
+      if (action instanceof IntentionActionWithOptions wo) {
+        if (key == null || wo.getCombiningPolicy() == IntentionActionWithOptions.CombiningPolicy.IntentionOptionsOnly) {
+          options = wo.getOptions();
+          if (!options.isEmpty()) {
+            return updateOptions(options);
+          }
+        }
       }
+
+      if (key == null) {
+        return Collections.emptyList();
+      }
+
       IntentionManager intentionManager = IntentionManager.getInstance();
       List<IntentionAction> newOptions = intentionManager.getStandardIntentionOptions(key, element);
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
-      InspectionToolWrapper toolWrapper = profile.getInspectionTool(key.toString(), element);
+      InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(key.toString(), element);
       if (!(toolWrapper instanceof LocalInspectionToolWrapper)) {
         HighlightDisplayKey idKey = HighlightDisplayKey.findById(key.toString());
         if (idKey != null) {
@@ -856,13 +810,13 @@ public class HighlightInfo implements Segment {
         }
       }
       if (toolWrapper != null) {
-
         myCanCleanup = toolWrapper.isCleanupTool();
 
         IntentionAction fixAllIntention = intentionManager.createFixAllIntention(toolWrapper, myAction);
-        InspectionProfileEntry wrappedTool = toolWrapper instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)toolWrapper).getTool()
-                                                                                               : ((GlobalInspectionToolWrapper)toolWrapper).getTool();
-        if (wrappedTool instanceof DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection) {
+        InspectionProfileEntry wrappedTool =
+          toolWrapper instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)toolWrapper).getTool()
+                                                            : ((GlobalInspectionToolWrapper)toolWrapper).getTool();
+        if (wrappedTool instanceof HighlightVisitorBasedInspection) {
           List<IntentionAction> actions = Collections.emptyList();
           if (myProblemGroup instanceof SuppressableProblemGroup) {
             actions = Arrays.asList(((SuppressableProblemGroup)myProblemGroup).getSuppressActions(element));
@@ -878,6 +832,10 @@ public class HighlightInfo implements Segment {
           }
           return actions;
         }
+
+        if (!(action instanceof EmptyIntentionAction)) {
+          newOptions.add(new DisableHighlightingIntentionAction(toolWrapper.getShortName()));
+        }
         ContainerUtil.addIfNotNull(newOptions, fixAllIntention);
         if (wrappedTool instanceof CustomSuppressableInspectionTool) {
           IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)wrappedTool).getSuppressActions(element);
@@ -891,22 +849,21 @@ public class HighlightInfo implements Segment {
             newOptions.addAll(ContainerUtil.map(suppressFixes, SuppressIntentionActionFromFix::convertBatchToSuppressIntentionAction));
           }
         }
-
       }
       if (myProblemGroup instanceof SuppressableProblemGroup) {
         IntentionAction[] suppressActions = ((SuppressableProblemGroup)myProblemGroup).getSuppressActions(element);
         ContainerUtil.addAll(newOptions, suppressActions);
       }
 
-      //noinspection SynchronizeOnThis
-      synchronized (this) {
-        options = myOptions;
-        if (options == null) {
-          myOptions = options = newOptions;
-        }
-        myKey = null;
-      }
+      return updateOptions(newOptions);
+    }
 
+    @NotNull
+    private synchronized List<? extends IntentionAction> updateOptions(@NotNull List<? extends IntentionAction> newOptions) {
+      List<? extends IntentionAction> options = myOptions;
+      if (options == null) {
+        myOptions = options = newOptions;
+      }
       return options;
     }
 
@@ -917,8 +874,12 @@ public class HighlightInfo implements Segment {
 
     @Override
     public String toString() {
-      String text = getAction().getText();
-      return "descriptor: " + (text.isEmpty() ? getAction().getClass() : text);
+      ModCommandAction modCommandAction = getAction().asModCommandAction();
+      LocalQuickFix fix = QuickFixWrapper.unwrap(getAction());
+      Object action = fix != null ? fix : 
+                      modCommandAction != null ? modCommandAction : 
+                      IntentionActionDelegate.unwrap(getAction());
+      return "IntentionActionDescriptor: " + action.getClass();
     }
 
     @Nullable
@@ -929,6 +890,19 @@ public class HighlightInfo implements Segment {
     @Override
     public boolean equals(Object obj) {
       return obj instanceof IntentionActionDescriptor && myAction.equals(((IntentionActionDescriptor)obj).myAction);
+    }
+
+    @Nullable
+    public String getToolId() {
+      return myKey != null ? myKey.getID() : null;
+    }
+
+    public int getProblemOffset() {
+      return myProblemOffset;
+    }
+
+    public void setProblemOffset(int problemOffset) {
+      myProblemOffset = problemOffset;
     }
   }
 
@@ -958,31 +932,161 @@ public class HighlightInfo implements Segment {
       throw new RuntimeException("info not applied yet");
     }
     if (!highlighter.isValid()) return "";
-    return highlighter.getDocument().getText(TextRange.create(highlighter));
+    return highlighter.getDocument().getText(highlighter.getTextRange());
   }
 
-  public void registerFix(@Nullable IntentionAction action,
-                          @Nullable List<IntentionAction> options,
+  /**
+   * @deprecated Use {@link Builder#registerFix(IntentionAction, List, String, TextRange, HighlightDisplayKey)} instead
+   */
+  @Deprecated
+  public synchronized // synchronized to avoid concurrent access to quickFix* fields; TODO rework to lock-free
+  void registerFix(@Nullable IntentionAction action,
+                          @Nullable List<? extends IntentionAction> options,
                           @Nullable @Nls String displayName,
                           @Nullable TextRange fixRange,
                           @Nullable HighlightDisplayKey key) {
     if (action == null) return;
-    if (fixRange == null) fixRange = new TextRange(startOffset, endOffset);
+    if (fixRange == null) fixRange = new TextRange(getActualStartOffset(), getActualEndOffset());
     if (quickFixActionRanges == null) {
       quickFixActionRanges = ContainerUtil.createLockFreeCopyOnWriteList();
     }
-    IntentionActionDescriptor desc = new IntentionActionDescriptor(action, options, displayName, null, key, getProblemGroup(), getSeverity());
+    IntentionActionDescriptor desc =
+      new IntentionActionDescriptor(action, options, displayName, null, key, getProblemGroup(), getSeverity());
     quickFixActionRanges.add(Pair.create(desc, fixRange));
-    fixStartOffset = Math.min (fixStartOffset, fixRange.getStartOffset());
-    fixEndOffset = Math.max (fixEndOffset, fixRange.getEndOffset());
+    if (fixMarker != null && fixMarker.isValid()) {
+      this.fixRange = TextRangeScalarUtil.toScalarRange(fixMarker);
+    }
+    else {
+      RangeMarker fixMarker = this.fixMarker;
+      RangeHighlighterEx highlighter = this.highlighter;
+      Document document = fixMarker != null ? fixMarker.getDocument() :
+                          highlighter != null ? highlighter.getDocument() :
+                          quickFixActionMarkers != null && !quickFixActionMarkers.isEmpty() && quickFixActionMarkers.get(0).getSecond() != null ? quickFixActionMarkers.get(0).getSecond().getDocument() :
+                          null;
+      if (document != null) {
+        // coerce fixRange inside document
+        int newEnd = Math.min(document.getTextLength(), TextRangeScalarUtil.endOffset(this.fixRange));
+        int newStart = Math.min(newEnd, TextRangeScalarUtil.startOffset(this.fixRange));
+        this.fixRange = TextRangeScalarUtil.toScalarRange(newStart, newEnd);
+      }
+    }
+    this.fixRange = TextRangeScalarUtil.union(this.fixRange, TextRangeScalarUtil.toScalarRange(fixRange));
     if (action instanceof HintAction) {
       setHint(true);
     }
+    RangeHighlighterEx myHighlighter = highlighter;
+    if (myHighlighter != null && myHighlighter.isValid()) {
+      // highlighter already has been created, we need to update quickFixActionMarkers
+      long highlighterRange = TextRangeScalarUtil.toScalarRange(myHighlighter);
+      Long2ObjectMap<RangeMarker> cache = reuseRangeMarkerCacheIfCreated(highlighterRange);
+      updateQuickFixFields(myHighlighter.getDocument(), cache, highlighterRange);
+    }
   }
 
-  public void unregisterQuickFix(@NotNull Condition<? super IntentionAction> condition) {
+  @NotNull
+  private Long2ObjectMap<RangeMarker> reuseRangeMarkerCacheIfCreated(long targetRange) {
+    Long2ObjectMap<RangeMarker> cache = new Long2ObjectOpenHashMap<>();
+    if (quickFixActionMarkers != null) {
+      for (Pair<IntentionActionDescriptor, RangeMarker> pair : quickFixActionMarkers) {
+        RangeMarker marker = pair.getSecond();
+        if (marker.isValid() && TextRangeScalarUtil.toScalarRange(marker) == targetRange) {
+          cache.put(targetRange, marker);
+          break;
+        }
+      }
+    }
+    return cache;
+  }
+
+  public synchronized //TODO rework to lock-free
+  void unregisterQuickFix(@NotNull Condition<? super IntentionAction> condition) {
     if (quickFixActionRanges != null) {
       quickFixActionRanges.removeIf(pair -> condition.value(pair.first.getAction()));
     }
+    if (quickFixActionMarkers != null) {
+      quickFixActionMarkers.removeIf(pair -> condition.value(pair.first.getAction()));
+    }
+  }
+
+  public synchronized IntentionAction getSameFamilyFix(@NotNull IntentionActionWithFixAllOption action) {
+    if (quickFixActionRanges == null) return null;
+    for (Pair<IntentionActionDescriptor, TextRange> range : quickFixActionRanges) {
+      IntentionAction other = IntentionActionDelegate.unwrap(range.first.myAction);
+      if (other instanceof IntentionActionWithFixAllOption &&
+          action.belongsToMyFamily((IntentionActionWithFixAllOption)other)) return other;
+    }
+    return null;
+  }
+
+
+  boolean containsOffset(int offset, boolean includeFixRange) {
+    RangeHighlighterEx highlighter = getHighlighter();
+    if (highlighter == null || !highlighter.isValid()) return false;
+    int startOffset = highlighter.getStartOffset();
+    int endOffset = highlighter.getEndOffset();
+    if (startOffset <= offset && offset <= endOffset) {
+      return true;
+    }
+    if (!includeFixRange) return false;
+    RangeMarker fixMarker = this.fixMarker;
+    if (fixMarker != null) {  // null means its range is the same as highlighter
+      if (!fixMarker.isValid()) return false;
+      startOffset = fixMarker.getStartOffset();
+      endOffset = fixMarker.getEndOffset();
+      return startOffset <= offset && offset <= endOffset;
+    }
+    return TextRangeScalarUtil.containsOffset(fixRange, offset);
+  }
+  @NotNull
+  private static RangeMarker getOrCreate(@NotNull Document document,
+                                         @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
+                                         long textRange) {
+    return range2markerCache.computeIfAbsent(textRange, __ -> document.createRangeMarker(TextRangeScalarUtil.startOffset(textRange),
+                                                                                           TextRangeScalarUtil.endOffset(textRange)));
+  }
+
+  // convert ranges to markers: from quickFixRanges -> quickFixMarkers and fixRange -> fixMarker
+  // TODO rework to lock-free
+  synchronized void updateQuickFixFields(@NotNull Document document,
+                                         @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
+                                         long finalHighlighterRange) {
+    if (quickFixActionMarkers != null && quickFixActionRanges != null && quickFixActionRanges.size() == quickFixActionMarkers.size() +1) {
+      // markers already created, make quickFixRanges <-> quickFixMarkers consistent by adding new marker to the quickFixMarkers if necessary
+      Pair<IntentionActionDescriptor, TextRange> last = ContainerUtil.getLastItem(quickFixActionRanges);
+      Segment textRange = last.getSecond();
+      if (textRange.getEndOffset() <= document.getTextLength()) {
+        RangeMarker marker = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(textRange));
+        quickFixActionMarkers.add(Pair.create(last.getFirst(), marker));
+      }
+      return;
+    }
+    if (quickFixActionRanges != null && quickFixActionMarkers == null) {
+      List<Pair<IntentionActionDescriptor, RangeMarker>> list = new ArrayList<>(quickFixActionRanges.size());
+      for (Pair<IntentionActionDescriptor, TextRange> pair : quickFixActionRanges) {
+        TextRange textRange = pair.second;
+        if (textRange.getEndOffset() > document.getTextLength()) continue;
+        RangeMarker marker = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(textRange));
+        list.add(Pair.create(pair.first, marker));
+      }
+      quickFixActionMarkers = ContainerUtil.createLockFreeCopyOnWriteList(list);
+    }
+    if (fixRange == finalHighlighterRange) {
+      fixMarker = null; // null means it the same as highlighter's range
+    }
+    else if (TextRangeScalarUtil.endOffset(fixRange) <= document.getTextLength()) {
+      fixMarker = getOrCreate(document, range2markerCache, fixRange);
+    }
+  }
+
+  @ApiStatus.Internal
+  boolean isUnresolvedReference() {
+    return unresolvedReference != null || type.getAttributesKey().equals(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
+  }
+
+  boolean isUnresolvedReferenceQuickFixesComputed() {
+    return isFlagSet(UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK);
+  }
+  void setUnresolvedReferenceQuickFixesComputed() {
+    setFlag(UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK, true);
   }
 }

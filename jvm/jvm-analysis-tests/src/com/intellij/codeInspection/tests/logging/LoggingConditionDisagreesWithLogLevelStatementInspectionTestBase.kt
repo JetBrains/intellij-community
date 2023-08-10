@@ -1,0 +1,7 @@
+package com.intellij.codeInspection.tests.logging
+
+import com.intellij.codeInspection.logging.LoggingConditionDisagreesWithLogLevelStatementInspection
+
+abstract class LoggingConditionDisagreesWithLogLevelStatementInspectionTestBase : LoggingInspectionTestBase(){
+  override val inspection = LoggingConditionDisagreesWithLogLevelStatementInspection()
+}

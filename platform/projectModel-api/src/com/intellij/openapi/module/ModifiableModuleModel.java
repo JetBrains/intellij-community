@@ -10,7 +10,6 @@ import org.jetbrains.annotations.SystemIndependent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Map;
 
 /**
  * Represents the model for the list of modules in a project, or a temporary copy
@@ -56,13 +55,6 @@ public interface ModifiableModuleModel {
   default Module newNonPersistentModule(@NotNull String moduleName, @NotNull String moduleTypeId) {
     throw new UnsupportedOperationException();
   }
-
-  /**
-   * @deprecated use {@link #newModule(String, String)} instead
-   */
-  @Deprecated
-  @NotNull
-  Module newModule(@NotNull String filePath, @NotNull String moduleTypeId, @Nullable Map<String, String> options);
 
   /**
    * Loads a module from an .iml file with the specified path and adds it to the project.
@@ -147,8 +139,20 @@ public interface ModifiableModuleModel {
 
   String @Nullable [] getModuleGroupPath(@NotNull Module module);
 
+  /**
+   * Returns {@code true} if at least one of the modules has an explicitly specified module group. Note that explicit module groups are 
+   * replaced by automatic grouping, so this method is left for compatibility with some old projects only.
+   */
+  @ApiStatus.Internal
   boolean hasModuleGroups();
 
+  /**
+   * Set or remove explicit module group for {@code module}.
+   * @deprecated explicit module groups are replaced by automatic module grouping accordingly to qualified names of modules 
+   * ([IDEA-166061](https://youtrack.jetbrains.com/issue/IDEA-166061) for details), so this method must not be used anymore, group names 
+   * must be prepended to the module name, separated by dots, instead.
+   */
+  @Deprecated
   void setModuleGroupPath(@NotNull Module module, String @Nullable("null means remove") [] groupPath);
 
   @NotNull

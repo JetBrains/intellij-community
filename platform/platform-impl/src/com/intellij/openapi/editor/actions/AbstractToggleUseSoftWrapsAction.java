@@ -19,11 +19,13 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.DumbAware;
@@ -34,10 +36,9 @@ import java.awt.*;
 
 /**
  * Provides common functionality for {@code 'toggle soft wraps usage'} actions.
- *
- * @author Denis Zhdanov
  */
-public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction implements DumbAware, LightEditCompatible {
+public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction implements DumbAware, LightEditCompatible,
+                                                                                       ActionRemoteBehaviorSpecification.Frontend {
 
   private final SoftWrapAppliancePlaces myAppliancePlace;
   private final boolean myGlobal;
@@ -71,8 +72,12 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
-    if (myGlobal) return EditorSettingsExternalizable.getInstance().isUseSoftWraps(myAppliancePlace);
     Editor editor = getEditor(e);
+    if (myGlobal) {
+      boolean selected = EditorSettingsExternalizable.getInstance().isUseSoftWraps(myAppliancePlace);
+      selected |= (editor != null && Boolean.TRUE.equals(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS)));
+      return selected;
+    }
     return editor != null && editor.getSettings().isUseSoftWraps();
   }
 
@@ -83,7 +88,9 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
       return;
     }
 
-    toggleSoftWraps(editor, myGlobal ? myAppliancePlace : null, state);
+    toggleSoftWraps(editor, myGlobal && !Boolean.TRUE.equals(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS))
+                            ? myAppliancePlace
+                            : null, state);
   }
 
   public static void toggleSoftWraps(@NotNull Editor editor, @Nullable SoftWrapAppliancePlaces places, boolean state) {
@@ -97,6 +104,9 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
     }
     if (editor.getSettings().isUseSoftWraps() != state) {
       editor.getSettings().setUseSoftWraps(state);
+      if (!state && Boolean.TRUE.equals(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS))) {
+        editor.putUserData(EditorImpl.FORCED_SOFT_WRAPS, Boolean.FALSE);
+      }
     }
 
     editor.getScrollingModel().disableAnimation();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -10,16 +10,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.util.NlsContexts.Command;
@@ -57,62 +56,61 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
   private static final class BuilderImpl implements Builder {
     private final Project myProject;
-    private final PsiFile[] myPsiFiles;
+    private final Collection<? extends PsiElement> myPsiElements;
     private @Command String myCommandName = getDefaultCommandName();
     private String myGroupId = DEFAULT_GROUP_ID;
     private UndoConfirmationPolicy myUndoConfirmationPolicy;
     private boolean myGlobalUndoAction;
     private boolean myShouldRecordActionForActiveDocument = true;
 
-    private BuilderImpl(Project project, PsiFile @NotNull ... files) {
+    private BuilderImpl(Project project, @NotNull Collection<? extends PsiElement> elements) {
       myProject = project;
-      myPsiFiles = files;
+      myPsiElements = elements;
     }
 
-    @NotNull
+    private BuilderImpl(Project project, PsiElement @NotNull ... elements) {
+      myProject = project;
+      myPsiElements = Arrays.asList(elements);
+    }
+
     @Override
-    public Builder withName(@Command String name) {
+    public @NotNull Builder withName(@Command String name) {
       myCommandName = name;
       return this;
     }
 
-    @NotNull
     @Override
-    public Builder withGlobalUndo() {
+    public @NotNull Builder withGlobalUndo() {
       myGlobalUndoAction = true;
       return this;
     }
 
-    @NotNull
     @Override
-    public Builder shouldRecordActionForActiveDocument(boolean value) {
+    public @NotNull Builder shouldRecordActionForActiveDocument(boolean value) {
       myShouldRecordActionForActiveDocument = value;
       return this;
     }
 
-    @NotNull
     @Override
-    public Builder withUndoConfirmationPolicy(@NotNull UndoConfirmationPolicy policy) {
+    public @NotNull Builder withUndoConfirmationPolicy(@NotNull UndoConfirmationPolicy policy) {
       if (myUndoConfirmationPolicy != null) throw new IllegalStateException("do not call withUndoConfirmationPolicy() several times");
       myUndoConfirmationPolicy = policy;
       return this;
     }
 
-    @NotNull
     @Override
-    public Builder withGroupId(String groupId) {
+    public @NotNull Builder withGroupId(String groupId) {
       myGroupId = groupId;
       return this;
     }
 
     @Override
-    public <E extends Throwable> void run(@NotNull final ThrowableRunnable<E> action) throws E {
+    public <E extends Throwable> void run(final @NotNull ThrowableRunnable<E> action) throws E {
       Application application = ApplicationManager.getApplication();
       boolean dispatchThread = application.isDispatchThread();
 
       if (!dispatchThread && application.isReadAccessAllowed()) {
-        LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
-        throw new IllegalStateException();
+        throw new IllegalStateException("Must not start write action from within read action in the other thread - deadlock is coming");
       }
 
       AtomicReference<E> thrown = new AtomicReference<>();
@@ -121,9 +119,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       }
       else {
         try {
-          ApplicationManager.getApplication().invokeAndWait(() -> {
-            thrown.set(doRunWriteCommandAction(action));
-          });
+          ApplicationManager.getApplication().invokeAndWait(() -> thrown.set(doRunWriteCommandAction(action)));
         }
         catch (ProcessCanceledException ignored) {
         }
@@ -134,13 +130,15 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }
 
     private <E extends Throwable> E doRunWriteCommandAction(@NotNull ThrowableRunnable<E> action) {
-      if (myPsiFiles.length > 0 && !FileModificationService.getInstance().preparePsiElementsForWrite(myPsiFiles)) {
+      if (myPsiElements.size() > 0 && !FileModificationService.getInstance().preparePsiElementsForWrite(myPsiElements)) {
         return null;
       }
 
       AtomicReference<Throwable> thrown = new AtomicReference<>();
       Runnable wrappedRunnable = () -> {
-        if (myGlobalUndoAction) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
+        if (myGlobalUndoAction) {
+          CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
+        }
         ApplicationManager.getApplication().runWriteAction(() -> {
           try {
             action.run();
@@ -153,33 +151,36 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       CommandProcessor.getInstance().executeCommand(myProject, wrappedRunnable, myCommandName, myGroupId,
                                                     ObjectUtils.notNull(myUndoConfirmationPolicy, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION),
                                                     myShouldRecordActionForActiveDocument);
+      //noinspection unchecked
       return (E)thrown.get();
     }
 
     @Override
-    public <R, E extends Throwable> R compute(@NotNull final ThrowableComputable<R, E> action) throws E {
+    public <R, E extends Throwable> R compute(final @NotNull ThrowableComputable<R, E> action) throws E {
       AtomicReference<R> result = new AtomicReference<>();
       run(() -> result.set(action.compute()));
       return result.get();
     }
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static Builder writeCommandAction(Project project) {
+  public static @NotNull Builder writeCommandAction(Project project) {
     return new BuilderImpl(project);
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static Builder writeCommandAction(@NotNull PsiFile first, PsiFile @NotNull ... others) {
+  public static @NotNull Builder writeCommandAction(@NotNull PsiFile first, PsiFile @NotNull ... others) {
     return new BuilderImpl(first.getProject(), ArrayUtil.prepend(first, others));
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static Builder writeCommandAction(Project project, PsiFile @NotNull ... files) {
+  public static @NotNull Builder writeCommandAction(Project project, PsiFile @NotNull ... files) {
     return new BuilderImpl(project, files);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull Builder writeCommandAction(Project project, Collection<? extends PsiElement> elementsToMakeWritable) {
+    return new BuilderImpl(project, elementsToMakeWritable);
   }
 
   private final @Command String myCommandName;
@@ -207,6 +208,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .withName(commandName).withGroupId(groupID).run()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   protected WriteCommandAction(@Nullable Project project,
                                @Nullable @Command String commandName,
                                @Nullable String groupID,
@@ -233,15 +235,13 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@code #writeCommandAction(Project).run()} or compute() instead
    */
   @Deprecated
-  @NotNull
   @Override
-  public RunResult<T> execute() {
+  public @NotNull RunResult<T> execute() {
     Application application = ApplicationManager.getApplication();
     boolean dispatchThread = application.isDispatchThread();
 
     if (!dispatchThread && application.isReadAccessAllowed()) {
-      LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
-      throw new IllegalStateException();
+      throw new IllegalStateException("Must not start write action from within read action in the other thread - deadlock is coming");
     }
 
     final RunResult<T> result = new RunResult<>(this);
@@ -275,6 +275,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project)}.withGlobalUndo() instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   protected boolean isGlobalUndoAction() {
     return false;
   }
@@ -285,8 +286,8 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project)}.withUndoConfirmationPolicy() instead
    */
   @Deprecated
-  @NotNull
-  protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
+  @ApiStatus.ScheduledForRemoval
+  protected @NotNull UndoConfirmationPolicy getUndoConfirmationPolicy() {
     return UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION;
   }
 
@@ -341,18 +342,18 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   public static void runWriteCommandAction(Project project,
-                                           @Nullable @Command final String commandName,
-                                           @Nullable final String groupID,
-                                           @NotNull final Runnable runnable,
+                                           final @Nullable @Command String commandName,
+                                           final @Nullable String groupID,
+                                           final @NotNull Runnable runnable,
                                            PsiFile @NotNull ... files) {
     writeCommandAction(project, files).withName(commandName).withGroupId(groupID).run(() -> runnable.run());
   }
 
-  public static <T> T runWriteCommandAction(Project project, @NotNull final Computable<T> computable) {
+  public static <T> T runWriteCommandAction(Project project, final @NotNull Computable<T> computable) {
     return writeCommandAction(project).compute(() -> computable.compute());
   }
 
-  public static <T, E extends Throwable> T runWriteCommandAction(Project project, @NotNull final ThrowableComputable<T, E> computable)
+  public static <T, E extends Throwable> T runWriteCommandAction(Project project, final @NotNull ThrowableComputable<T, E> computable)
     throws E {
     return writeCommandAction(project).compute(computable);
   }

@@ -1,81 +1,63 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public final class AddMethodBodyFix implements IntentionAction {
-  private final PsiMethod myMethod;
+import java.util.Objects;
+
+public final class AddMethodBodyFix extends PsiUpdateModCommandAction<PsiMethod> {
+  private final @Nls String myText;
 
   public AddMethodBodyFix(@NotNull PsiMethod method) {
-    myMethod = method;
+    super(method);
+    myText = QuickFixBundle.message("add.method.body.text");
+  }
+
+  public AddMethodBodyFix(@NotNull PsiMethod method, @NotNull @Nls String text) {
+    super(method);
+    myText = text;
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    return QuickFixBundle.message("add.method.body.text");
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethod method) {
+    if (method.getBody() != null || method.getContainingClass() == null) return null;
+    return Presentation.of(getFamilyName()).withFixAllOption(this);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return getText();
+    return myText;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myMethod.isValid() &&
-           myMethod.getBody() == null &&
-           myMethod.getContainingClass() != null &&
-           BaseIntentionAction.canModify(myMethod);
-  }
-
-  @NotNull
-  @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myMethod;
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiUtil.setModifierProperty(myMethod, PsiModifier.ABSTRACT, false);
-    CreateFromUsageUtils.setupMethodBody(myMethod);
-    CreateFromUsageUtils.setupEditor(myMethod, editor);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Override
-  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new AddMethodBodyFix(PsiTreeUtil.findSameElementInCopy(myMethod, target));
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethod method, @NotNull ModPsiUpdater updater) {
+    PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, false);
+    PsiClass aClass = method.getContainingClass();
+    if (Objects.requireNonNull(aClass).isInterface() &&
+        !method.hasModifierProperty(PsiModifier.STATIC) &&
+        !method.hasModifierProperty(PsiModifier.DEFAULT) &&
+        !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, true);
+    }
+    CreateFromUsageUtils.setupMethodBody(method, updater);
+    if (method.getContainingFile().getOriginalFile() == context.file()) {
+      PsiCodeBlock body = method.getBody();
+      if (body != null) {
+        CreateFromUsageUtils.setupEditor(body, updater);
+      }
+    }
   }
 }

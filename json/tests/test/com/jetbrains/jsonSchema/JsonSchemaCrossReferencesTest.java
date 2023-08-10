@@ -34,9 +34,6 @@ import org.junit.Assert;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author Irina.Chernushina on 3/28/2016.
- */
 public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
   private final static String BASE_PATH = "/tests/testData/jsonSchema/crossReferences";
 
@@ -101,10 +98,10 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void doCheck() throws Exception {
+      public void doCheck() {
         final VirtualFile moduleFile = locateFileUnderTestRoot("/");
         assertNotNull(moduleFile);
-        checkSchemaCompletion(moduleFile, "basePropertiesSchema.json", false);
+        checkSchemaCompletion(moduleFile, "basePropertiesSchema.json");
       }
     });
   }
@@ -132,15 +129,15 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void doCheck() throws Exception {
+      public void doCheck() {
         final VirtualFile moduleFile = locateFileUnderTestRoot("/");
         assertNotNull(moduleFile);
-        checkSchemaCompletion(moduleFile, "baseSchema.json", true);
+        checkSchemaCompletion(moduleFile, "baseSchema.json");
       }
     });
   }
 
-  private void checkSchemaCompletion(VirtualFile moduleFile, final String fileName, boolean delayAfterUpdate) throws InterruptedException {
+  private void checkSchemaCompletion(VirtualFile moduleFile, final String fileName) {
     myFixture.doHighlighting();
     complete();
     assertStringItems("\"one\"", "\"two\"");
@@ -161,11 +158,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }));
     JsonSchemaService.Impl.get(getProject()).reset();
 
-    if (delayAfterUpdate) {
-      // give time for vfs callbacks to finish
-      Thread.sleep(400);
-    }
-
     myFixture.doHighlighting();
     complete();
     assertStringItems("\"one1\"", "\"two1\"");
@@ -185,10 +177,11 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertNotNull(referenceAt);
         final PsiElement resolve = referenceAt.resolve();
         Assert.assertNotNull(resolve);
-        Assert.assertEquals("{\n" +
-                            "      \"type\": \"string\",\n" +
-                            "      \"enum\": [\"one\", \"two\"]\n" +
-                            "    }", resolve.getText());
+        Assert.assertEquals("""
+                              {
+                                    "type": "string",
+                                    "enum": ["one", "two"]
+                                  }""", resolve.getText());
       }
 
       @Override
@@ -238,11 +231,12 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertNotNull(referenceAt);
         final PsiElement resolve = referenceAt.resolve();
         Assert.assertNotNull(resolve);
-        Assert.assertTrue(StringUtil.equalsIgnoreWhitespaces("{\n" +
-                            "            \"type\": \"array\",\n" +
-                            "            \"minItems\": 1,\n" +
-                            "            \"uniqueItems\": true\n" +
-                            "        }", resolve.getText()));
+        Assert.assertTrue(StringUtil.equalsIgnoreWhitespaces("""
+                                                               {
+                                                                           "type": "array",
+                                                                           "minItems": 1,
+                                                                           "uniqueItems": true
+                                                                       }""", resolve.getText()));
       }
     });
   }
@@ -508,9 +502,10 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertNotNull(referenceAt);
         final PsiElement resolve = referenceAt.resolve();
         Assert.assertNotNull(resolve);
-        Assert.assertEquals("{\n" +
-                            "      \"enum\": [1,4,8]\n" +
-                            "    }", resolve.getText());
+        Assert.assertEquals("""
+                              {
+                                    "enum": [1,4,8]
+                                  }""", resolve.getText());
         final PsiElement parent = resolve.getParent();
         Assert.assertTrue(parent instanceof JsonProperty);
         final JsonValue value = ((JsonProperty)parent).getValue();
@@ -607,10 +602,11 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       Assert.assertEquals("#/definitions/" + positiveOrNonNegative, reference.getCanonicalText());
       final PsiElement resolve = reference.resolve();
       Assert.assertNotNull(resolve);
-      Assert.assertTrue(StringUtil.equalsIgnoreWhitespaces("{\n" +
-                          "            \"type\": \"integer\",\n" +
-                          "            \"minimum\": 0\n" +
-                          "        }", resolve.getText()));
+      Assert.assertTrue(StringUtil.equalsIgnoreWhitespaces("""
+                                                             {
+                                                                         "type": "integer",
+                                                                         "minimum": 0
+                                                                     }""", resolve.getText()));
       Assert.assertTrue(resolve.getParent() instanceof JsonProperty);
       Assert.assertEquals(positiveOrNonNegative, ((JsonProperty)resolve.getParent()).getName());
     }
@@ -632,15 +628,16 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        final String midia = "{\n" +
-                             "      \"properties\": {\n" +
-                             "        \"mittel\" : {\n" +
-                             "          \"type\": [\"integer\", \"boolean\"],\n" +
-                             "          \"description\": \"this is found!\",\n" +
-                             "          \"enum\": [1,2, false]\n" +
-                             "        }\n" +
-                             "      }\n" +
-                             "    }";
+        final String midia = """
+          {
+                "properties": {
+                  "mittel" : {
+                    "type": ["integer", "boolean"],
+                    "description": "this is found!",
+                    "enum": [1,2, false]
+                  }
+                }
+              }""";
         checkNavigationTo(midia, "midia", getCaretOffset(), JsonSchemaObject.DEFINITIONS, true);
       }
     });
@@ -679,9 +676,10 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        checkNavigationTo("{\n" +
-                          "      \"$ref\": \"#/definitions/one\"\n" +
-                          "    }", "all", getCaretOffset(), JsonSchemaObject.DEFINITIONS, true);
+        checkNavigationTo("""
+                            {
+                                  "$ref": "#/definitions/one"
+                                }""", "all", getCaretOffset(), JsonSchemaObject.DEFINITIONS, true);
       }
     });
   }
@@ -727,17 +725,18 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         final Collection<JsonStringLiteral> strings = PsiTreeUtil.findChildrenOfType(myFixture.getFile(), JsonStringLiteral.class);
         final List<JsonStringLiteral> list = ContainerUtil.filter(strings, expression -> expression.getText().contains("#/definitions"));
         Assert.assertEquals(3, list.size());
-        list.forEach(literal -> checkNavigationTo("{\n" +
-                                                  "      \"type\": \"object\",\n" +
-                                                  "      \"properties\": {\n" +
-                                                  "        \"id\": {\n" +
-                                                  "          \"type\": \"string\"\n" +
-                                                  "        },\n" +
-                                                  "        \"range\": {\n" +
-                                                  "          \"type\": \"string\"\n" +
-                                                  "        }\n" +
-                                                  "      }\n" +
-                                                  "    }", "cycle.schema", literal.getTextRange().getEndOffset() - 1,
+        list.forEach(literal -> checkNavigationTo("""
+                                                    {
+                                                          "type": "object",
+                                                          "properties": {
+                                                            "id": {
+                                                              "type": "string"
+                                                            },
+                                                            "range": {
+                                                              "type": "string"
+                                                            }
+                                                          }
+                                                        }""", "cycle.schema", literal.getTextRange().getEndOffset() - 1,
                                                   JsonSchemaObject.DEFINITIONS, true));
       }
     });

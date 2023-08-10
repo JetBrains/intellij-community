@@ -8,8 +8,17 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
 public final class IndexingDataKeys {
+  /**
+   * Use {@link FileContent#getFile()}} or {@link PsiFile#getVirtualFile()} instead.
+   */
   public static final Key<VirtualFile> VIRTUAL_FILE = new Key<>("Context virtual file");
+  /**
+   * Use {@link FileContent#getPsiFile()} instead.
+   */
   public static final Key<PsiFile> PSI_FILE = new Key<>("PSI for stubs");
+  /**
+   * Use {@link FileContent#getContentAsText()} instead.
+   */
   public static final Key<CharSequence> FILE_TEXT_CONTENT_KEY = Key.create("file text content cached by stub indexer");
   public static final Key<Boolean> REBUILD_REQUESTED = Key.create("index.rebuild.requested");
 }

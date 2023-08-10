@@ -23,9 +23,6 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 
-/**
- * @author ven
- */
 public class MockIntroduceFieldHandler extends IntroduceFieldHandler {
   private final InitializationPlace myInitializationPlace;
   private final boolean myDeclareStatic;

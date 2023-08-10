@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.util.ui.JBInsets;
@@ -18,7 +18,11 @@ public class CellRendererPanel extends JPanel {
   private boolean mySelected;
 
   public CellRendererPanel() {
-    super(null); // we do the layout ourselves
+    this(null);
+  }
+
+  public CellRendererPanel(LayoutManager lm) {
+    super(lm);
     super.setOpaque(false); // to be consistent with #isOpaque
     super.setFont(null);
   }
@@ -58,6 +62,7 @@ public class CellRendererPanel extends JPanel {
   // BEGIN no validation methods --------------
   @Override
   public void doLayout() {
+    if (getWidth() == 0 || getHeight() == 0) return;
     synchronized (getTreeLock()) {
       int count = getComponentCount();
       if (count == 1) {
@@ -66,14 +71,14 @@ public class CellRendererPanel extends JPanel {
         JComponent child = (JComponent)getComponent(0);
         reshapeImpl(child, bounds.x, bounds.y, bounds.width, bounds.height);
         invalidateLayout(child);
-        child.doLayout();
+        child.validate();
       }
       else {
         invalidateLayout(this);
         super.doLayout();
         for (int i = 0; i < count; i++) {
           Component c = getComponent(i);
-          c.doLayout();
+          c.validate();
         }
       }
     }

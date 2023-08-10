@@ -22,7 +22,7 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.find.actions.ResolverKt.searchTargets;
+import static com.intellij.find.actions.ResolverKt.allTargets;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_HIGHLIGHT_USAGES_IN_FILE;
 
 public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAware {
@@ -50,7 +50,7 @@ public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAwar
 
     UsageTarget[] usageTargets = UsageView.USAGE_TARGETS_KEY.getData(dataContext);
     if (usageTargets != null) {
-      FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
+      FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
       if (fileEditor != null) {
         usageTargets[0].findUsagesInEditor(fileEditor);
       }
@@ -69,6 +69,13 @@ public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAwar
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return Registry.is("ide.find.in.file.highlight.usages") ?
+           ActionManager.getInstance().getAction(ACTION_HIGHLIGHT_USAGES_IN_FILE).getActionUpdateThread() :
+           ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent event) {
     if (Registry.is("ide.find.in.file.highlight.usages")) {
       ActionManager.getInstance().getAction(ACTION_HIGHLIGHT_USAGES_IN_FILE).update(event);
@@ -84,28 +91,24 @@ public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAwar
         Boolean.TRUE.equals(dataContext.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
       return false;
     }
+    return canFindUsages(project, dataContext) ||
+           !allTargets(dataContext).isEmpty();
+  }
 
-    if (!searchTargets(dataContext).isEmpty()) {
-      return true;
-    }
-
+  private static boolean canFindUsages(@NotNull Project project, @NotNull DataContext dataContext) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
-      UsageTarget[] target = UsageView.USAGE_TARGETS_KEY.getData(dataContext);
-      return target != null && target.length > 0;
+      return false;
     }
-    else {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file == null) {
-        return false;
-      }
-
-      Language language = PsiUtilBase.getLanguageInEditor(editor, project);
-      if (language == null) {
-        language = file.getLanguage();
-      }
-      return !(LanguageFindUsages.INSTANCE.forLanguage(language) instanceof EmptyFindUsagesProvider);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (file == null) {
+      return false;
     }
+    Language language = PsiUtilBase.getLanguageInEditor(editor, project);
+    if (language == null) {
+      language = file.getLanguage();
+    }
+    return !(LanguageFindUsages.INSTANCE.forLanguage(language) instanceof EmptyFindUsagesProvider);
   }
 
   public static void updateFindUsagesAction(@NotNull AnActionEvent event) {

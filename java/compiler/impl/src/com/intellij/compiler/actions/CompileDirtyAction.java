@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class CompileDirtyAction extends CompileActionBase {
 
   @Override
-  protected void doAction(DataContext dataContext, Project project) {
+  protected void doAction(@NotNull DataContext dataContext, Project project) {
     ProjectTaskManager.getInstance(project).buildAllModules();
   }
 

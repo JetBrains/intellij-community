@@ -1,30 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.colors.ReaderModeStatsCollector
-import com.intellij.codeInsight.actions.ReaderModeSettings.Companion.applyReaderMode
 import com.intellij.codeInsight.actions.ReaderModeSettingsListener.Companion.applyToAllEditors
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.DataManager
-import com.intellij.ide.IdeBundle
-import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.fileEditor.ClientFileEditorManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.options.ex.Settings
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.Disposer
-import com.intellij.ui.HyperlinkLabel
+import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
-import com.intellij.util.ui.UIUtil
 import java.beans.PropertyChangeListener
 import java.util.*
-import javax.swing.event.HyperlinkListener
 
 interface ReaderModeListener : EventListener {
   fun modeChanged(project: Project)
@@ -33,61 +29,61 @@ interface ReaderModeListener : EventListener {
 class ReaderModeSettingsListener : ReaderModeListener {
   companion object {
     @Topic.ProjectLevel
-    @JvmStatic
-    val TOPIC = Topic(ReaderModeListener::class.java, Topic.BroadcastDirection.NONE)
+    @JvmField
+    val TOPIC: Topic<ReaderModeListener> = Topic(ReaderModeListener::class.java, Topic.BroadcastDirection.NONE)
 
-    fun applyToAllEditors(project: Project, preferGlobalSettings: Boolean = false) {
-      FileEditorManager.getInstance(project).allEditors.forEach {
-        if (it !is PsiAwareTextEditorImpl) return
-        applyReaderMode(project, it.editor, it.file, fileIsOpenAlready = true, preferGlobalSettings = preferGlobalSettings)
+    @RequiresEdt
+    fun applyToAllEditors(project: Project) {
+      for (editor in FileEditorManager.getInstance(project).allEditors) {
+        if ((ClientFileEditorManager.getClientId(editor) ?: ClientId.localId) != ClientId.current) continue
+        if (editor is TextEditor) {
+          ReaderModeSettings.applyReaderMode(project, editor.editor, editor.file, fileIsOpenAlready = true)
+        }
       }
 
-      EditorFactory.getInstance().allEditors.forEach {
-        if (it !is EditorImpl) return
-        applyReaderMode(project, it, FileDocumentManager.getInstance().getFile(it.document),
-                        fileIsOpenAlready = true, preferGlobalSettings = preferGlobalSettings)
+      for (editor in ClientEditorManager.getCurrentInstance().editors()) {
+        if (editor !is EditorImpl) continue
+        if (editor.getProject() != project) continue
+
+        ReaderModeSettings.applyReaderMode(project, editor, FileDocumentManager.getInstance().getFile(editor.document), fileIsOpenAlready = true)
       }
     }
 
-    fun createReaderModeComment() = HyperlinkLabel().apply {
-      setTextWithHyperlink(IdeBundle.message("checkbox.also.in.reader.mode"))
-      font = UIUtil.getFont(UIUtil.FontSize.SMALL, font)
-      foreground = UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER)
-      addHyperlinkListener(HyperlinkListener {
-        DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context ->
-          context?.let { dataContext ->
-            Settings.KEY.getData(dataContext)?.let { settings ->
-              settings.select(settings.find("editor.reader.mode"))
-              ReaderModeStatsCollector.logSeeAlsoNavigation()
-            }
+    fun goToEditorReaderMode() {
+      DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context ->
+        context?.let { dataContext ->
+          Settings.KEY.getData(dataContext)?.let { settings ->
+            settings.select(settings.find("editor.reader.mode"))
+            ReaderModeStatsCollector.logSeeAlsoNavigation()
           }
         }
-      })
+      }
     }
   }
 
-  override fun modeChanged(project: Project) = applyToAllEditors(project)
+  override fun modeChanged(project: Project) {
+    if (!project.isDefault) {
+      applyToAllEditors(project)
+    }
+  }
 }
 
-internal class ReaderModeEditorSettingsListener : StartupActivity, DumbAware {
-  override fun runActivity(project: Project) {
+private class ReaderModeEditorSettingsListener : ProjectActivity {
+  override suspend fun execute(project: Project) {
     val propertyChangeListener = PropertyChangeListener { event ->
       when (event.propertyName) {
         EditorSettingsExternalizable.PROP_DOC_COMMENT_RENDERING -> {
-          ReaderModeSettings.instance(project).showRenderedDocs = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled
-          applyToAllEditors(project, true)
+          ReaderModeSettings.getInstance(project).showRenderedDocs = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled
+          applyToAllEditors(project)
         }
       }
     }
     EditorSettingsExternalizable.getInstance().addPropertyChangeListener(propertyChangeListener, project)
 
     val fontPreferences = AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl
-    fontPreferences.changeListener = Runnable {
-      fontPreferences.changeListener
-      ReaderModeSettings.instance(project).showLigatures = fontPreferences.useLigatures()
-      applyToAllEditors(project, true)
-    }
-
-    Disposer.register(project) { fontPreferences.changeListener = null }
+    fontPreferences.addChangeListener({
+      ReaderModeSettings.getInstance(project).showLigatures = fontPreferences.useLigatures()
+      applyToAllEditors(project)
+    }, project)
   }
 }

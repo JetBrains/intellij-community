@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinc.kotlin-scripting-compiler-impl" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:1.9.20-dev-8143">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.9.20-dev-8143/kotlin-scripting-compiler-impl-1.9.20-dev-8143.jar">
+          <sha256sum>fbba3ed8915bc536f6d8033363f2b27652f16604df87c1a292dd1d14a88b73a3</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.9.20-dev-8143/kotlin-scripting-compiler-impl-1.9.20-dev-8143.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.9.20-dev-8143/kotlin-scripting-compiler-impl-1.9.20-dev-8143-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

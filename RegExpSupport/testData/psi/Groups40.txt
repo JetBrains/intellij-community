@@ -32,7 +32,7 @@ REGEXP_FILE
             PsiElement(CHARACTER)('n')
         PsiElement(UNION)('|')
         RegExpBranchImpl: <{>
-          PsiErrorElement:Dangling metacharacter
+          PsiErrorElement:Unexpected start of quantifier '{'
             <empty list>
           PsiElement(LBRACE)('{')
         PsiErrorElement:')' expected

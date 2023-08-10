@@ -2,9 +2,9 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionGroupUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +22,12 @@ public class NonTrivialActionGroup extends DefaultActionGroup implements DumbAwa
   }
 
   @Override
+  public final @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setVisible(!ActionGroupUtil.isGroupEmpty(this, e, LaterInvocator.isInModalContext()));
+    e.getPresentation().setEnabledAndVisible(!ActionGroupUtil.isGroupEmpty(this, e));
   }
 }

@@ -4,10 +4,9 @@ package com.intellij.coverage;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -16,7 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.rt.coverage.instrumentation.SaveHook;
+import com.intellij.rt.coverage.instrumentation.UnloadedUtil;
 import jetbrains.coverage.report.ClassInfo;
 import jetbrains.coverage.report.ReportBuilderFactory;
 import jetbrains.coverage.report.SourceCodeProvider;
@@ -31,6 +30,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Roman.Chernyatchik
@@ -48,28 +48,32 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   }
 
   public abstract void appendCoverageArgument(final String sessionDataFilePath, final String @Nullable [] patterns, final SimpleJavaParameters parameters,
-                                              final boolean collectLineInfo, final boolean isSampling);
+                                              final boolean testTracking, final boolean branchCoverage);
 
   public void appendCoverageArgument(final String sessionDataFilePath,
                                      final String @Nullable [] patterns,
                                      String[] excludePatterns,
                                      final SimpleJavaParameters parameters,
-                                     final boolean collectLineInfo,
-                                     final boolean isSampling,
-                                     String sourceMapPath) {
-    appendCoverageArgument(sessionDataFilePath, patterns, parameters, collectLineInfo, isSampling);
+                                     final boolean testTracking,
+                                     final boolean branchCoverage,
+                                     String sourceMapPath,
+                                     final Project project) {
+    appendCoverageArgument(sessionDataFilePath, patterns, parameters, testTracking, branchCoverage);
   }
 
-  public boolean isBranchInfoAvailable(boolean sampling) {
-    return !sampling;
+  public boolean isBranchInfoAvailable(boolean branchCoverage) {
+    return branchCoverage;
   }
 
   public void generateReport(CoverageSuitesBundle suite, Project project) throws IOException {
+    final long startNs = System.nanoTime();
     final ProjectData projectData = suite.getCoverageData();
+    if (projectData == null) return;
+    IDEACoverageRunner.setExcludeAnnotations(project, projectData);
+    UnloadedUtil.appendUnloaded(projectData, new IdeaClassFinder(project, suite), false, suite.isBranchCoverage());
+
+    final long generationStartNs = System.nanoTime();
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
-    final File tempFile = FileUtil.createTempFile("temp", "");
-    tempFile.deleteOnExit();
-    new SaveHook(tempFile, true, new IdeaClassFinder(project, suite)).save(projectData);
     final HTMLReportBuilder builder = ReportBuilderFactory.createHTMLReportBuilder();
     builder.setReportDir(new File(settings.OUTPUT_DIRECTORY));
     final SourceCodeProvider sourceCodeProvider = classname -> DumbService.getInstance(project).runReadActionInSmartMode(() -> {
@@ -95,7 +99,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
               if (project.isDisposed()) return null;
               return psiFacade.findClass(aClass.getFQName(), productionScope);
             });
-            if (psiClass == null || !suite.getCoverageEngine().acceptedByFilters(psiClass.getContainingFile(), suite)) {
+            if (psiClass == null || !suite.getCoverageEngine().acceptedByFilters(ReadAction.compute(() -> psiClass.getContainingFile()), suite)) {
               iterator.remove();
             }
           }
@@ -103,6 +107,10 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
         return classes;
       }
     });
+    final long endNs = System.nanoTime();
+    final long timeMs = TimeUnit.NANOSECONDS.toMillis(endNs - startNs);
+    final long generationTimeMs = TimeUnit.NANOSECONDS.toMillis(endNs - generationStartNs);
+    CoverageLogger.logHTMLReport(project, timeMs, generationTimeMs);
   }
 
   @Nullable
@@ -114,17 +122,18 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     FileUtil.writeToFile(tempFile, (arg + "\n").getBytes(StandardCharsets.UTF_8), true);
   }
 
+  @NotNull
   protected static File createTempFile() throws IOException {
     File tempFile = FileUtil.createTempFile("coverage", "args");
-    if (!SystemInfo.isWindows && tempFile.getAbsolutePath().contains(" ")) {
-      tempFile = FileUtil.createTempFile(new File(PathManager.getSystemPath(), "coverage"), "coverage", "args", true);
-      if (tempFile.getAbsolutePath().contains(" ")) {
-        final String userDefined = System.getProperty(JAVA_COVERAGE_AGENT_AGENT_PATH);
-        if (userDefined != null && new File(userDefined).isDirectory()) {
-          tempFile = FileUtil.createTempFile(new File(userDefined), "coverage", "args", true);
-        }
-      }
+    if (tempFile.getAbsolutePath().contains(" ")) {
+      String path = JavaExecutionUtil.handleSpacesInAgentPath(tempFile.getAbsolutePath(), "coverage", JAVA_COVERAGE_AGENT_AGENT_PATH);
+      if (path == null) throw new IOException("Cannot create temporary file without spaces in path.");
+      tempFile = new File(path);
     }
     return tempFile;
+  }
+
+  public boolean shouldProcessUnloadedClasses() {
+    return true;
   }
 }

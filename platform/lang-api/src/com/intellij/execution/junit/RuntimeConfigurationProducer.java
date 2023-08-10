@@ -124,7 +124,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
     if (context != null) {
       final RunConfiguration original = context.getOriginalConfiguration(myConfigurationFactory.getType());
       if (original != null) {
-        final RunConfiguration c = original instanceof DelegatingRuntimeConfiguration? ((DelegatingRuntimeConfiguration)original).getPeer() : original;
+        final RunConfiguration c = original instanceof DelegatingRuntimeConfiguration ? ((DelegatingRuntimeConfiguration<?>)original).getPeer() : original;
         return RunManager.getInstance(project).createConfiguration(c.clone(), myConfigurationFactory);
       }
     }

@@ -19,16 +19,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.ui.treeStructure.SimpleNodeVisitor;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 public class SelectFromMavenProjectsDialog extends DialogWrapper {
@@ -37,13 +41,13 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
 
   public SelectFromMavenProjectsDialog(Project project,
                                        @NlsContexts.DialogTitle String title,
-                                       final Class<? extends MavenProjectsStructure.MavenSimpleNode> nodeClass) {
-    this(project, title, nodeClass, null);
+                                       MavenProjectsStructure.MavenStructureDisplayMode displayMode) {
+    this(project, title, displayMode, null);
   }
 
   public SelectFromMavenProjectsDialog(Project project,
                                        @NlsContexts.DialogTitle String title,
-                                       final Class<? extends MavenProjectsStructure.MavenSimpleNode> nodeClass,
+                                       MavenProjectsStructure.MavenStructureDisplayMode displayMode,
                                        @Nullable NodeSelector selector) {
     super(project, false);
     mySelector = selector;
@@ -53,37 +57,23 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
     MavenProjectsStructure treeStructure = new MavenProjectsStructure(project,
+                                                                      displayMode,
                                                                       MavenProjectsManager.getInstance(project),
                                                                       MavenTasksManager.getInstance(project),
                                                                       MavenShortcutsManager.getInstance(project),
                                                                       MavenProjectsNavigator.getInstance(project),
-                                                                      myTree) {
-      @Override
-      protected Class<? extends MavenSimpleNode>[] getVisibleNodesClasses() {
-        //noinspection unchecked
-        return new Class[]{nodeClass};
-      }
-
-      @Override
-      protected boolean showDescriptions() {
-        return false;
-      }
-
-      @Override
-      protected boolean showOnlyBasicPhases() {
-        return false;
-      }
-    };
+                                                                      myTree);
     treeStructure.update();
 
     if (mySelector != null) {
       final SimpleNode[] selection = new SimpleNode[]{null};
-      treeStructure.accept(new SimpleNodeVisitor() {
+      treeStructure.accept(new TreeVisitor() {
         @Override
-        public boolean accept(SimpleNode each) {
-          if (!mySelector.shouldSelect(each)) return false;
-          selection[0] = each;
-          return true;
+        public @NotNull Action visit(@NotNull TreePath path) {
+          SimpleNode node = (SimpleNode)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+          if (!mySelector.shouldSelect(node)) return Action.CONTINUE;
+          selection[0] = node;
+          return Action.INTERRUPT;
         }
       });
       if (selection[0] != null) {

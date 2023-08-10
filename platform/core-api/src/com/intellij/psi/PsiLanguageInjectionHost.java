@@ -5,13 +5,14 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.model.psi.PsiExternalReferenceHost;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
- * Marks PSI element as (potentially) containing text in other language.
+ * Marks PSI element as (potentially) containing text in another language.
  * Injected language PSI does not embed into the PSI tree of the hosting element,
  * but is used by the IDE for highlighting, completion and other code insight actions.
  * <p>
@@ -51,9 +52,10 @@ public interface PsiLanguageInjectionHost extends PsiExternalReferenceHost {
 
   @FunctionalInterface
   interface InjectedPsiVisitor {
-    void visit(@NotNull PsiFile injectedPsi, @NotNull List<Shred> places);
+    void visit(@NotNull PsiFile injectedPsi, @NotNull List<? extends Shred> places);
   }
 
+  @ApiStatus.NonExtendable
   interface Shred {
     @Nullable("returns null when the host document marker is invalid")
     Segment getHostRangeMarker();

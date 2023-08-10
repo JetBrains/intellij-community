@@ -6,18 +6,15 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.refactoring.rename.RenameProcessor
-import com.intellij.testGuiFramework.impl.button
 import com.intellij.util.ui.UIUtil
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.*
+import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
+import training.learn.course.KLesson
 import javax.swing.JDialog
 
-class JavaRenameLesson(module: Module)
-  : KLesson("Refactorings.Rename", LessonsBundle.message("rename.lesson.name"), module, "JAVA") {
+class JavaRenameLesson
+  : KLesson("Refactorings.Rename", LessonsBundle.message("rename.lesson.name")) {
   private val initialName = "stylus"
 
   private val template = """
@@ -64,6 +61,8 @@ class JavaRenameLesson(module: Module)
     val newNameExample = "pencil"
 
     prepareSample(sample)
+    showWarningIfInplaceRefactoringsDisabled()
+
     lateinit var startId: TaskContext.TaskId
     task("RenameElement") {
       startId = taskId
@@ -77,13 +76,18 @@ class JavaRenameLesson(module: Module)
       }
     }
 
+    task {
+      stateCheck { TemplateManagerImpl.getInstance(project).getActiveTemplate(editor) != null }
+      restoreByTimer()
+    }
+
     task("NextTemplateVariable") {
       triggers(it)
       text(JavaLessonsBundle.message("java.rename.type.new.name", code(newNameExample), LessonUtil.rawEnter()))
-      restoreAfterStateBecomeFalse {
+      restoreAfterStateBecomeFalse(restoreId = startId) {
         TemplateManagerImpl.getTemplateState(editor) == null
       }
-      test {
+      test(waitEditorToBeReady = false) {
         type(newNameExample)
         actions(it)
       }
@@ -101,7 +105,7 @@ class JavaRenameLesson(module: Module)
     task {
       val okButtonText = CommonBundle.getOkButtonText()
       text(JavaLessonsBundle.message("java.rename.confirm.accessors.rename",
-                                 LessonUtil.rawEnter(), strong(okButtonText)))
+                                     LessonUtil.rawEnter(), strong(okButtonText)))
       stateCheck {
         val fieldName = getFieldName()
         val shouldBe = fieldName?.let { replaceTemplate(it).replace("<caret>", "").replace("<caret id=2/>", "") }
@@ -112,17 +116,19 @@ class JavaRenameLesson(module: Module)
           it.className.contains(RenameProcessor::class.simpleName!!)
         }
       }
-      test {
+      test(waitEditorToBeReady = false) {
         ideFrame {
           button(okButtonText).click()
         }
       }
     }
+
+    restoreRefactoringOptionsInformer()
   }
 
   private fun TaskRuntimeContext.getFieldName(): String? {
     val charsSequence = editor.document.charsSequence
-    // get position of declaration because it should not shifted after rename
+    // get position of declaration because it should not shift after rename
     val start = sample.getPosition(2).startOffset
     val end = charsSequence.indexOf(';', start).takeIf { it > 0 } ?: return null
     val newName = charsSequence.subSequence(start, end)
@@ -130,4 +136,9 @@ class JavaRenameLesson(module: Module)
     if (!Character.isJavaIdentifierStart(newName[0]) || newName.any { !Character.isJavaIdentifierPart(it) }) return null
     return newName.toString()
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("rename.help.link"),
+         LessonUtil.getHelpLink("rename-refactorings.html")),
+  )
 }

@@ -21,6 +21,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
 
 import javax.xml.namespace.QName;
 import java.util.*;
@@ -56,7 +57,7 @@ public final class NamespaceCollector extends XmlRecursiveElementVisitor {
     }
 
     @Override
-    public void visitXmlAttribute(XmlAttribute xmlAttribute) {
+    public void visitXmlAttribute(@NotNull XmlAttribute xmlAttribute) {
         if (xmlAttribute.isNamespaceDeclaration()) {
             LOG.debug("Namespace: " + xmlAttribute.getLocalName() + " => " + xmlAttribute.getValue());
             addNamespace(xmlAttribute.getLocalName(), xmlAttribute.getValue());
@@ -66,7 +67,7 @@ public final class NamespaceCollector extends XmlRecursiveElementVisitor {
     }
 
     @Override
-    public void visitXmlTag(XmlTag tag) {
+    public void visitXmlTag(@NotNull XmlTag tag) {
         final Map<String, String> namespaceDeclarations = tag.getLocalNamespaceDeclarations();
         final Set<String> localPrefixes = namespaceDeclarations.keySet();
         for (String prefix : localPrefixes) {

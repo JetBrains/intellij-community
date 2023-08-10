@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
  * Represents the state and settings of a "choose by name" popup from the point of view of the logic which fills it with items.
  *
  * @see DefaultChooseByNameItemProvider#filterElements(ChooseByNameViewModel, String, boolean, ProgressIndicator, PsiElement, Processor)
- * @author yole
  */
 public interface ChooseByNameViewModel {
   Project getProject();

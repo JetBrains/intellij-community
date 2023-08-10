@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
@@ -23,13 +9,11 @@ import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.MethodBreakpoint;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 public class ToggleMethodBreakpointAction extends AnAction {
 
   @Override
-  public void update(@NotNull AnActionEvent event){
+  public void update(@NotNull AnActionEvent event) {
     boolean toEnable = getPlace(event) != null;
 
     if (ActionPlaces.isPopupPlace(event.getPlace())) {
@@ -56,6 +40,10 @@ public class ToggleMethodBreakpointAction extends AnAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -69,9 +57,9 @@ public class ToggleMethodBreakpointAction extends AnAction {
     }
     final BreakpointManager manager = debugManager.getBreakpointManager();
     final PlaceInDocument place = getPlace(e);
-    if(place != null && DocumentUtil.isValidOffset(place.getOffset(), place.getDocument())) {
+    if (place != null && DocumentUtil.isValidOffset(place.getOffset(), place.getDocument())) {
       Breakpoint breakpoint = manager.findBreakpoint(place.getDocument(), place.getOffset(), MethodBreakpoint.CATEGORY);
-      if(breakpoint == null) {
+      if (breakpoint == null) {
         manager.addMethodBreakpoint(place.getDocument(), place.getDocument().getLineNumber(place.getOffset()));
       }
       else {
@@ -83,7 +71,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
   @Nullable
   private static PlaceInDocument getPlace(AnActionEvent event) {
     final Project project = event.getData(CommonDataKeys.PROJECT);
-    if(project == null) {
+    if (project == null) {
       return null;
     }
 
@@ -92,10 +80,10 @@ public class ToggleMethodBreakpointAction extends AnAction {
 
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
-        ActionPlaces.FAVORITES_VIEW_POPUP.equals(event.getPlace()) ||
+        ActionPlaces.BOOKMARKS_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.NAVIGATION_BAR_POPUP.equals(event.getPlace())) {
       final PsiElement psiElement = event.getData(CommonDataKeys.PSI_ELEMENT);
-      if(psiElement instanceof PsiMethod) {
+      if (psiElement instanceof PsiMethod) {
         final PsiFile containingFile = psiElement.getContainingFile();
         if (containingFile != null) {
           method = psiElement;
@@ -104,10 +92,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
       }
     }
     else {
-      Editor editor = event.getData(CommonDataKeys.EDITOR);
-      if(editor == null) {
-        editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-      }
+      Editor editor = getEditor(event);
       if (editor != null) {
         document = editor.getDocument();
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -125,12 +110,18 @@ public class ToggleMethodBreakpointAction extends AnAction {
   }
 
   @Nullable
+  static Editor getEditor(AnActionEvent event) {
+    @Nullable FileEditor editor = event.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR);
+    return editor instanceof TextEditor ? ((TextEditor)editor).getEditor() : null;
+  }
+
+  @Nullable
   private static PsiMethod findMethod(Project project, Editor editor) {
     if (editor == null) {
       return null;
     }
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if(psiFile == null) {
+    if (psiFile == null) {
       return null;
     }
     final int offset = CharArrayUtil.shiftForward(editor.getDocument().getCharsSequence(), editor.getCaretModel().getOffset(), " \t");

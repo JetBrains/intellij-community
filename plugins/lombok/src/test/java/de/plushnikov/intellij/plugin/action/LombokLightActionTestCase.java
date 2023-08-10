@@ -17,7 +17,7 @@ public abstract class LombokLightActionTestCase extends AbstractLombokLightCodeI
   protected void doTest() throws Exception {
     myFixture.configureByFile("/before" + getTestName(false) + ".java");
     performActionTest();
-    checkResultByFile( "/after" + getTestName(false) + ".java");
+    myFixture.checkResultByFile("/after" + getTestName(false) + ".java", true);
   }
 
   private void performActionTest() throws TimeoutException, ExecutionException {
@@ -25,7 +25,7 @@ public abstract class LombokLightActionTestCase extends AbstractLombokLightCodeI
 
     Promise<DataContext> contextResult = DataManager.getInstance().getDataContextFromFocusAsync();
     AnActionEvent anActionEvent = new AnActionEvent(null, contextResult.blockingGet(10, TimeUnit.SECONDS),
-      "", anAction.getTemplatePresentation(), ActionManager.getInstance(), 0);
+      "", anAction.getTemplatePresentation().clone(), ActionManager.getInstance(), 0);
 
     anAction.actionPerformed(anActionEvent);
     FileDocumentManager.getInstance().saveAllDocuments();

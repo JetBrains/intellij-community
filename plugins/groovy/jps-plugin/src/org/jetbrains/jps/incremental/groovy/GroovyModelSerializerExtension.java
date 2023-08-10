@@ -11,11 +11,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author peter
- */
-public class GroovyModelSerializerExtension extends JpsModelSerializerExtension {
-
+public final class GroovyModelSerializerExtension extends JpsModelSerializerExtension {
   @NotNull
   @Override
   public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {

@@ -13,11 +13,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuildListener;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompileContextImpl;
-import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
@@ -32,16 +32,19 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.function.Function;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jetbrains.jps.incremental.IncProjectBuilder.MAX_BUILDER_THREADS;
-import static org.jetbrains.jps.incremental.storage.MurmurHashingService.HASH_SIZE;
-import static org.jetbrains.jps.incremental.storage.MurmurHashingService.getStringHash;
+import static org.jetbrains.jps.incremental.storage.Xxh3HashingService.getStringHash;
 import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHES;
 
 /**
@@ -66,7 +69,7 @@ public class BuildTargetSourcesState implements BuildListener {
   private final Map<String, BuildTarget<?>> myChangedBuildTargets;
   // Some modules can have same out folder for different BuildTarget's to avoid extra hash calculation collection will be used
   // There are no pre-calculated hashes for entries from this collection in FileStampStorage
-  private final Map<String, byte[]> myCalculatedHashes;
+  private final Map<String, Long> myCalculatedHashes;
   private final PathRelativizerService myRelativizer;
   private final BuildTargetIndex myBuildTargetIndex;
   private final BuildRootIndex myBuildRootIndex;
@@ -107,7 +110,8 @@ public class BuildTargetSourcesState implements BuildListener {
     List<BuildTarget<?>> buildTargets;
     if (targetTypeHashMap.isEmpty()) {
       buildTargets = myBuildTargetIndex.getAllTargets();
-    } else {
+    }
+    else {
       List<BuildTarget<?>> changedBuildTargets = new ArrayList<>(myChangedBuildTargets.values());
       LOG.info("List of changed build targets: " + changedBuildTargets);
       buildTargets = changedBuildTargets;
@@ -115,18 +119,16 @@ public class BuildTargetSourcesState implements BuildListener {
 
     ContainerUtil.map(buildTargets, target -> {
       return myParallelBuildExecutor.submit(() -> {
-        BuildTargetType<?> buildTargetType = target.getTargetType();
-        String typeTypeId = buildTargetType.getTypeId();
+        String targetTypeId = target.getTargetType().getTypeId();
 
         getBuildTargetHash(target, myContext).ifPresent(buildTargetHash -> {
-          String hexString = StringUtil.toHexString(buildTargetHash);
-
           // Now in project each build target has single output root
           String relativePath = target.getOutputRoots(myContext).stream()
-                                                                .map(file -> myRelativizer.toRelative(file.getAbsolutePath()))
-                                                                .findFirst().orElse("");
+            .map(file -> myRelativizer.toRelative(file.getAbsolutePath()))
+            .findFirst().orElse("");
           synchronized (targetTypeHashMap) {
-            targetTypeHashMap.computeIfAbsent(typeTypeId, key -> new HashMap<>()).put(target.getId(), new BuildTargetState(hexString, relativePath));
+            targetTypeHashMap.computeIfAbsent(targetTypeId, key -> new HashMap<>()).put(target.getId(), new BuildTargetState(buildTargetHash.toString(),
+                                                                                                                             relativePath));
           }
         });
       });
@@ -138,7 +140,7 @@ public class BuildTargetSourcesState implements BuildListener {
         LOG.warn("Unable to get the result from future", e);
       }
     });
-
+    clearRemovedBuildTargets(targetTypeHashMap);
     try {
       FileUtil.writeToFile(myTargetStateStorage, gson.toJson(targetTypeHashMap));
     }
@@ -146,6 +148,16 @@ public class BuildTargetSourcesState implements BuildListener {
       LOG.warn("Unable to save sources state", e);
     }
     LOG.info("Build target sources report took: " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + " ms");
+  }
+
+  private void clearRemovedBuildTargets(Map<String, Map<String, BuildTargetState>> targetsMap) {
+    var allTargets = myBuildTargetIndex.getAllTargets().stream()
+      .collect(Collectors.groupingBy(it -> it.getTargetType().getTypeId(),
+                                     Collectors.mapping(it -> it.getId(), Collectors.toList())));
+    targetsMap.keySet().removeIf(targetTypeId -> !allTargets.containsKey(targetTypeId));
+    targetsMap.forEach((targetTypeId, targetStates) -> {
+      targetStates.keySet().removeIf(targetId -> !allTargets.get(targetTypeId).contains(targetId));
+    });
   }
 
   public void clearSourcesState() {
@@ -177,111 +189,111 @@ public class BuildTargetSourcesState implements BuildListener {
       });
   }
 
-  @NotNull
-  private Optional<byte[]> getBuildTargetHash(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
-    Function<File, List<byte[]>> compilationOutputHashCalculationFunction = rootFile -> {
-      try {
-        if (!rootFile.exists()) return null;
+  private List<Long> compilationOutputHash(File rootFile, BuildTarget<?> target) {
+    try {
+      if (!rootFile.exists()) return null;
 
-        List<byte[]> targetRootHashes = new ArrayList<>();
-        Files.walkFileTree(rootFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
-          @Override
-          public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-            return FileVisitResult.CONTINUE;
-          }
+      List<Long> targetRootHashes = new ArrayList<>();
+      Files.walkFileTree(rootFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+          return FileVisitResult.CONTINUE;
+        }
 
-          @Override
-          public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
-            String filePathString = path.toString();
-            if (filePathString.endsWith(".class")) {
-              byte[] calculatedHash = myCalculatedHashes.get(filePathString);
-              if (calculatedHash != null) {
-                targetRootHashes.add(calculatedHash);
-              }
-              else {
-                File file = path.toFile();
-                getOutputFileHash(file, rootFile).ifPresent(hash -> {
-                  targetRootHashes.add(hash);
-                  myCalculatedHashes.put(filePathString, hash);
-                });
-              }
+        @Override
+        public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+          String filePathString = path.toString();
+          if (filePathString.endsWith(".class")) {
+            Long calculatedHash = myCalculatedHashes.get(filePathString);
+            if (calculatedHash != null) {
+              targetRootHashes.add(calculatedHash);
             }
-            return FileVisitResult.CONTINUE;
+            else {
+              File file = path.toFile();
+              long hash = getOutputFileHash(file, rootFile);
+              targetRootHashes.add(hash);
+              myCalculatedHashes.put(filePathString, hash);
+            }
           }
-        });
-        return targetRootHashes;
-      }
-      catch (IOException e) {
-        LOG.warn("Couldn't calculate build target hash for : " + target.getPresentableName(), e);
-        return null;
-      }
-    };
+          return FileVisitResult.CONTINUE;
+        }
+      });
+      return targetRootHashes;
+    }
+    catch (IOException e) {
+      LOG.warn("Couldn't calculate build target hash for : " + target.getPresentableName(), e);
+      return null;
+    }
+  }
 
-    Function<BuildRootDescriptor, List<byte[]>> sourceRootHashCalculationFunction = rootDescriptor -> {
-      try {
-        File rootFile = rootDescriptor.getRootFile();
-        if (!rootFile.exists() || rootFile.getAbsolutePath().startsWith(myOutputFolderPath)) return null;
+  private List<Long> sourceRootHash(BuildRootDescriptor rootDescriptor, BuildTarget<?> target) {
+    try {
+      File rootFile = rootDescriptor.getRootFile();
+      if (!rootFile.exists() || rootFile.getAbsolutePath().startsWith(myOutputFolderPath)) return null;
 
-        List<byte[]> targetRootHashes = new ArrayList<>();
-        Files.walkFileTree(rootFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
-          @Override
-          public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-            return myBuildRootIndex.isDirectoryAccepted(dir.toFile(), rootDescriptor)
-                   ? FileVisitResult.CONTINUE
-                   : FileVisitResult.SKIP_SUBTREE;
-          }
+      List<Long> targetRootHashes = new ArrayList<>();
+      Files.walkFileTree(rootFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+          return myBuildRootIndex.isDirectoryAccepted(dir.toFile(), rootDescriptor)
+                 ? FileVisitResult.CONTINUE
+                 : FileVisitResult.SKIP_SUBTREE;
+        }
 
-          @Override
-          public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
-            final File file = path.toFile();
-            if (!myBuildRootIndex.isFileAccepted(file, rootDescriptor)) return FileVisitResult.CONTINUE;
-            getFileHash(target, file, rootFile).ifPresent(targetRootHashes::add);
-            return FileVisitResult.CONTINUE;
-          }
-        });
-        return targetRootHashes;
-      }
-      catch (IOException e) {
-        LOG.warn("Couldn't calculate build target hash for : " + target.getPresentableName(), e);
-        return null;
-      }
-    };
-    return Stream.concat(target.getOutputRoots(context).stream().map(compilationOutputHashCalculationFunction),
-                         myBuildRootIndex.getTargetRoots(target, context).stream().map(sourceRootHashCalculationFunction))
-      .filter(it -> !ContainerUtil.isEmpty(it))
-      .flatMap(List::stream)
-      .reduce(BuildTargetSourcesState::sum);
+        @Override
+        public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+          final File file = path.toFile();
+          if (!myBuildRootIndex.isFileAccepted(file, rootDescriptor)) return FileVisitResult.CONTINUE;
+          getFileHash(target, file, rootFile).ifPresent(targetRootHashes::add);
+          return FileVisitResult.CONTINUE;
+        }
+      });
+      return targetRootHashes;
+    }
+    catch (IOException e) {
+      LOG.warn("Couldn't calculate build target hash for : " + target.getPresentableName(), e);
+      return null;
+    }
   }
 
   @NotNull
-  private Optional<byte[]> getFileHash(@NotNull BuildTarget<?> target, @NotNull File file, @NotNull File rootPath) throws IOException {
+  private Optional<Long> getBuildTargetHash(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
+    long[] longs = Stream.concat(target.getOutputRoots(context).stream().map(it -> compilationOutputHash(it, target)),
+                                 myBuildRootIndex.getTargetRoots(target, context).stream().map(it -> sourceRootHash(it, target)))
+      .filter(it -> !ContainerUtil.isEmpty(it))
+      .flatMap(List::stream)
+      .mapToLong(x -> x)
+      .toArray();
+    if (longs.length == 0) return Optional.empty();
+    return Optional.of(Xxh3HashingService.getLongsHash(longs));
+  }
+
+  @NotNull
+  private Optional<Long> getFileHash(@NotNull BuildTarget<?> target, @NotNull File file, @NotNull File rootPath) throws IOException {
     StampsStorage<? extends StampsStorage.Stamp> storage = myProjectStamps.getStampStorage();
     assert storage instanceof FileStampStorage;
     FileStampStorage fileStampStorage = (FileStampStorage)storage;
-    byte[] fileHash = fileStampStorage.getStoredFileHash(file, target);
+    Long fileHash = fileStampStorage.getStoredFileHash(file, target);
     if (fileHash == null) {
       return Optional.empty();
     }
 
-    byte[] stringHash = getStringHash(toRelative(file, rootPath));
-    return Optional.of(sum(stringHash, fileHash));
+    String relativePath = toRelative(file, rootPath);
+    if (relativePath.isEmpty()) return Optional.empty();
+    long stringHash = getStringHash(relativePath);
+    return Optional.of(Xxh3HashingService.getLongsHash(stringHash, fileHash));
   }
 
-  @NotNull
-  private static Optional<byte[]> getOutputFileHash(@NotNull File file, @NotNull File rootPath) throws IOException {
-    byte[] fileHash = MurmurHashingService.getFileHash(file);
-    if (fileHash == null) {
-      return Optional.empty();
-    }
-
-    byte[] stringHash = getStringHash(toRelative(file, rootPath));
-    return Optional.of(sum(stringHash, fileHash));
+  private static long getOutputFileHash(@NotNull File file, @NotNull File rootPath) throws IOException {
+    long fileHash = Xxh3HashingService.getFileHash(file);
+    long stringHash = getStringHash(toRelative(file, rootPath));
+    return Xxh3HashingService.getLongsHash(stringHash, fileHash);
   }
 
   @NotNull
   private Map<String, Map<String, BuildTargetState>> loadCurrentTargetState() {
     if (!myTargetStateStorage.exists()) return new HashMap<>();
-    try (BufferedReader bufferedReader = new BufferedReader(new FileReader(myTargetStateStorage))) {
+    try (BufferedReader bufferedReader = new BufferedReader(new FileReader(myTargetStateStorage, StandardCharsets.UTF_8))) {
       Map<String, Map<String, BuildTargetState>> result = gson.fromJson(bufferedReader, myTokenType);
       if (result != null) return result;
     }
@@ -307,23 +319,5 @@ public class BuildTargetSourcesState implements BuildListener {
     String url = projectExtension.getOutputUrl();
     if (StringUtil.isEmpty(url)) return "";
     return JpsPathUtil.urlToFile(url).getAbsolutePath();
-  }
-
-  private static byte @NotNull [] sum(byte[] firstHash, byte[] secondHash) {
-    byte[] result = firstHash != null ? firstHash : new byte[HASH_SIZE];
-    for (int i = 0; i < result.length; i++) {
-      result[i] += secondHash[i];
-    }
-    return result;
-  }
-
-  private static final class BuildTargetState {
-    private final String hash;
-    private final String relativePath;
-
-    private BuildTargetState(String hash, String relativePath) {
-      this.hash = hash;
-      this.relativePath = relativePath;
-    }
   }
 }

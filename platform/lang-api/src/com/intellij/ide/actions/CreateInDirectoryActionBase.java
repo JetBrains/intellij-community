@@ -32,6 +32,11 @@ public abstract class CreateInDirectoryActionBase extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull final AnActionEvent e) {
     boolean enabled = isAvailable(e);
 

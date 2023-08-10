@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class LineBreakpoint
@@ -6,13 +6,15 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,12 +23,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
@@ -34,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
@@ -42,6 +45,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
@@ -51,12 +55,19 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class LineBreakpoint<P extends JavaBreakpointProperties> extends BreakpointWithHighlighter<P> {
+  private final boolean myIgnoreSameLineLocations;
+
   static final Logger LOG = Logger.getInstance(LineBreakpoint.class);
 
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
 
   protected LineBreakpoint(Project project, XBreakpoint xBreakpoint) {
+    this(project, xBreakpoint, true);
+  }
+
+  protected LineBreakpoint(Project project, XBreakpoint xBreakpoint, boolean ignoreSameLineLocations) {
     super(project, xBreakpoint);
+    myIgnoreSameLineLocations = ignoreSameLineLocations;
   }
 
   @Override
@@ -99,17 +110,37 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       return;
     }
     try {
-      List<Location> locations = debugProcess.getPositionManager().locationsOfLine(classType, getSourcePosition());
+      SourcePosition position = getSourcePosition();
+      List<Location> locations = debugProcess.getPositionManager().locationsOfLine(classType, position);
       if (!locations.isEmpty()) {
+        VirtualMachineProxyImpl vm = debugProcess.getVirtualMachineProxy();
         locations = StreamEx.of(locations).peek(loc -> {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Found location [codeIndex=" + loc.codeIndex() +
                       "] for reference type " + classType.name() +
                       " at line " + getLineIndex() +
-                      "; isObsolete: " + (debugProcess.getVirtualMachineProxy().versionHigher("1.4") && loc.method().isObsolete()));
+                      "; isObsolete: " + (vm.versionHigher("1.4") && loc.method().isObsolete()));
           }
         }).filter(l -> acceptLocation(debugProcess, classType, l)).toList();
-        locations = MethodBytecodeUtil.removeSameLineLocations(locations);
+
+        if (getProperties() instanceof JavaLineBreakpointProperties props && props.isConditionalReturn()) {
+          if (DebuggerUtils.isAndroidVM(vm.getVirtualMachine())) {
+            XDebuggerManagerImpl.getNotificationGroup()
+              .createNotification(JavaDebuggerBundle.message("message.conditional.return.breakpoint.on.android"), MessageType.INFO)
+              .notify(debugProcess.getProject());
+          }
+          else if (vm.canGetBytecodes() && vm.canGetConstantPool()) {
+            locations = locations.stream()
+              .map(l -> l.method())
+              .distinct()
+              .flatMap(m -> JavaLineBreakpointType.collectInlineConditionalReturnLocations(m, position.getLine() + 1))
+              .toList();
+          }
+        }
+        else if (myIgnoreSameLineLocations) {
+          locations = MethodBytecodeUtil.removeSameLineLocations(locations);
+        }
+
         for (Location loc : locations) {
           createLocationBreakpointRequest(this, loc, debugProcess);
           if (LOG.isDebugEnabled()) {
@@ -147,13 +178,14 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       }
       // there's a chance to add a breakpoint when the class is prepared
     }
-    catch(Exception ex) {
+    catch (Exception ex) {
       LOG.info(ex);
     }
     updateUI();
   }
 
   private static final Pattern ourAnonymousPattern = Pattern.compile(".*\\$\\d*$");
+
   private static boolean isAnonymousClass(ReferenceType classType) {
     if (classType instanceof ClassType) {
       return ourAnonymousPattern.matcher(classType.name()).matches();
@@ -162,10 +194,10 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   }
 
   protected boolean acceptLocation(final DebugProcessImpl debugProcess, ReferenceType classType, final Location loc) {
-    Method method = loc.method();
     // Some frameworks may create synthetic methods with lines mapped to user code, see IDEA-143852
     // if (DebuggerUtils.isSynthetic(method)) { return false; }
     if (isAnonymousClass(classType)) {
+      Method method = loc.method();
       if ((method.isConstructor() && loc.codeIndex() == 0) || method.isBridge()) return false;
     }
     SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
@@ -200,7 +232,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
         // apply filtering to breakpoints from content sources only, not for sources attached to libraries
         final Collection<VirtualFile> candidates = findClassCandidatesInSourceContent(className, debugProcess.getSearchScope(), fileIndex);
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Found "+ (candidates == null? "null" : candidates.size()) + " candidate containing files for class " + className);
+          LOG.debug("Found " + (candidates == null ? "null" : candidates.size()) + " candidate containing files for class " + className);
         }
         if (candidates == null) {
           // If no candidates are found in scope then assume that class is loaded dynamically and allow breakpoint
@@ -233,7 +265,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
                     "; contains=" + contains +
                     "; contentRoot=" + contentRoot +
                     "; module = " + module +
-                    "; all files in index are: " + files+
+                    "; all files in index are: " + files +
                     "; all possible files are: " + allFiles
           );
         }
@@ -247,11 +279,11 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   @Nullable
   private Collection<VirtualFile> findClassCandidatesInSourceContent(final String className, final GlobalSearchScope scope, final ProjectFileIndex fileIndex) {
     final int dollarIndex = className.indexOf("$");
-    final String topLevelClassName = dollarIndex >= 0? className.substring(0, dollarIndex) : className;
+    final String topLevelClassName = dollarIndex >= 0 ? className.substring(0, dollarIndex) : className;
     return ReadAction.compute(() -> {
       final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(topLevelClassName, scope);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Found "+ classes.length + " classes " + topLevelClassName + " in scope "+scope);
+        LOG.debug("Found " + classes.length + " classes " + topLevelClassName + " in scope " + scope);
       }
       if (classes.length == 0) {
         return null;
@@ -298,13 +330,13 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   }
 
   private @NlsContexts.Label String getDisplayInfoInternal(boolean showPackageInfo, int totalTextLength) {
-    if(isValid()) {
+    if (isValid()) {
       final int lineNumber = getLineIndex() + 1;
       String className = getClassName();
       final boolean hasClassInfo = className != null && className.length() > 0;
       final String methodName = getMethodName();
-      final String displayName = methodName != null? methodName + "()" : null;
-      final boolean hasMethodInfo = displayName != null && displayName.length() > 0;
+      final String displayName = methodName != null ? methodName + "()" : null;
+      final boolean hasMethodInfo = displayName != null;
       if (hasClassInfo || hasMethodInfo) {
         final StringBuilder info = new StringBuilder();
         boolean isFile = getFileName().equals(className);
@@ -328,7 +360,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
           info.append(className);
         }
-        if(hasMethodInfo) {
+        if (hasMethodInfo) {
           if (isFile) {
             info.append(":");
           }
@@ -355,7 +387,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     if (file instanceof PsiClassOwner) {
       return ReadAction.compute(() -> {
         PsiMethod method = DebuggerUtilsEx.findPsiMethod(file, offset);
-        return method != null? method.getName() : null;
+        return method != null ? method.getName() : null;
       });
     }
     return null;
@@ -398,7 +430,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       return false;
     }
     final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
-    final LineBreakpoint breakpointAtLine = breakpointManager.findBreakpoint( document, document.getLineStartOffset(lineIndex), CATEGORY);
+    final LineBreakpoint breakpointAtLine = breakpointManager.findBreakpoint(document, document.getLineStartOffset(lineIndex), CATEGORY);
     if (breakpointAtLine != null) {
       // there already exists a line breakpoint at this line
       return false;
@@ -411,7 +443,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
         return true;
       }
       PsiElement child = element;
-      while(element != null) {
+      while (element != null) {
 
         final int offset = element.getTextOffset();
         if (offset >= 0) {
@@ -423,9 +455,9 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
         element = element.getParent();
       }
 
-      if(child instanceof PsiMethod && child.getTextRange().getEndOffset() >= document.getLineEndOffset(lineIndex)) {
+      if (child instanceof PsiMethod && child.getTextRange().getEndOffset() >= document.getLineEndOffset(lineIndex)) {
         PsiCodeBlock body = ((PsiMethod)child).getBody();
-        if(body == null) {
+        if (body == null) {
           canAdd[0] = false;
         }
         else {

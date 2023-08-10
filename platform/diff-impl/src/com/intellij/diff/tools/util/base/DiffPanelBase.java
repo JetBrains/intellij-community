@@ -30,6 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class DiffPanelBase extends JPanel implements DataProvider {
   @Nullable protected final Project myProject;
@@ -47,6 +48,7 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
 
   @NotNull protected final CardLayout myCardLayout;
 
+  @SuppressWarnings("NotNullFieldNotInitialized") // field initialized in concrete constructors
   @NotNull protected String myCurrentCard;
 
   public DiffPanelBase(@Nullable Project project,
@@ -82,6 +84,8 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
   }
 
   protected void setCurrentCard(@NotNull String card, boolean keepFocus) {
+    if (Objects.equals(myCurrentCard, card)) return;
+
     Runnable task = () -> {
       myCardLayout.show(myContentPanel, card);
       myCurrentCard = card;
@@ -118,13 +122,15 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
     updateNotifications();
   }
 
-  public void addNotification(@NotNull JComponent notification) {
+  public void addNotification(@Nullable JComponent notification) {
+    if (notification == null) return;
     myNotifications.add(notification);
     updateNotifications();
   }
 
   private void updateNotifications() {
-    List<JComponent> notifications = ContainerUtil.concat(myPersistentNotifications, myNotifications);
+    List<JComponent> notifications = new ArrayList<>(ContainerUtil.concat(myPersistentNotifications, myNotifications));
+    notifications = DiffUtil.wrapEditorNotificationBorders(notifications);
     myNotificationsPanel.setContent(DiffUtil.createStackedComponents(notifications, DiffUtil.TITLE_GAP));
     validate();
     repaint();

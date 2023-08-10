@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -13,14 +14,13 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.commit.CommitWorkflowHandler;
+import com.intellij.vcs.commit.CommitWorkflowUi;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public interface VcsDataKeys {
   DataKey<VcsKey> VCS = DataKey.create("VCS");
 
@@ -31,6 +31,7 @@ public interface VcsDataKeys {
    * @see com.intellij.openapi.vcs.history.VcsRevisionNumberArrayRule
    */
   DataKey<VcsRevisionNumber[]> VCS_REVISION_NUMBERS = DataKey.create("VCS_REVISION_NUMBERS");
+  DataKey<String[]> VCS_COMMIT_SUBJECTS = DataKey.create("VCS_COMMIT_SUBJECTS");
 
   DataKey<File> IO_FILE = DataKey.create("IO_FILE");
   DataKey<File[]> IO_FILE_ARRAY = DataKey.create("IO_FILE_ARRAY");
@@ -84,28 +85,14 @@ public interface VcsDataKeys {
   DataKey<Change[]> CHANGES_WITH_MOVED_CHILDREN = DataKey.create("ChangeListView.ChangesWithDetails");
   DataKey<List<VirtualFile>> MODIFIED_WITHOUT_EDITING_DATA_KEY = DataKey.create("ChangeListView.ModifiedWithoutEditing");
 
-  /**
-   * Fast check for {@link #CHANGES} non-emptiness.
-   */
-  DataKey<Boolean> HAVE_SELECTED_CHANGES = DataKey.create("ChangeListView.HaveSelectedChanges");
-  /**
-   * Fast check for {@link #MODIFIED_WITHOUT_EDITING_DATA_KEY} non-emptiness.
-   */
-  DataKey<Boolean> HAVE_MODIFIED_WITHOUT_EDITING = DataKey.create("ChangeListView.HaveModifiedWithoutEditing");
-  /**
-   * Fast check for {@link com.intellij.openapi.vcs.changes.ui.ChangesListView#MISSING_FILES_DATA_KEY} non-emptiness.
-   * <p>
-   * See 80ee021430c03deef9b4378d124e1b603e207955 for {@link com.intellij.openapi.vcs.changes.ui.ChangesListView#LOCALLY_DELETED_CHANGES}
-   * vs {@link com.intellij.openapi.vcs.changes.ui.ChangesListView#MISSING_FILES_DATA_KEY} origins.
-   */
-  DataKey<Boolean> HAVE_LOCALLY_DELETED = DataKey.create("ChangeListView.HaveLocallyDeleted");
-
   DataKey<Change> CURRENT_CHANGE = DataKey.create("vcs.CurrentChange");
   DataKey<VirtualFile> CURRENT_UNVERSIONED = DataKey.create("ChangeListView.CurrentUnversionedFile");
 
   DataKey<String> PRESET_COMMIT_MESSAGE = DataKey.create("PRESET_COMMIT_MESSAGE");
   DataKey<CommitMessageI> COMMIT_MESSAGE_CONTROL = DataKey.create("COMMIT_MESSAGE_CONTROL");
+  DataKey<Document> COMMIT_MESSAGE_DOCUMENT = DataKey.create("COMMIT_MESSAGE_DOCUMENT");
   DataKey<CommitWorkflowHandler> COMMIT_WORKFLOW_HANDLER = DataKey.create("Vcs.CommitWorkflowHandler");
+  DataKey<CommitWorkflowUi> COMMIT_WORKFLOW_UI = DataKey.create("Vcs.CommitWorkflowUI");
 
   DataKey<VcsHistorySession> HISTORY_SESSION = DataKey.create("VCS_HISTORY_SESSION");
   /**

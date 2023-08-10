@@ -1,4 +1,4 @@
-// "Replace with count()" "false"
+// "Collapse loop with stream 'count()'" "false"
 
 public class Main {
   public long test(String[] array) {

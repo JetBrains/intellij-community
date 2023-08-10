@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.dnd.*;
@@ -6,7 +6,6 @@ import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -14,7 +13,6 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListActions;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,16 +22,13 @@ import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
 import java.awt.event.*;
 
-/**
- * @author yole
- */
+
 public final class PaletteComponentList extends JBList {
   private final Project myProject;
   private final PaletteWindow myPalette;
   private final PaletteGroup myGroup;
   private int myHoverIndex = -1;
   private int myBeforeClickSelectedRow = -1;
-  private int myDropTargetIndex = -1;
   private boolean myNeedClearSelection = false;
 
   public PaletteComponentList(Project project, PaletteWindow palette, PaletteGroup group) {
@@ -92,7 +87,7 @@ public final class PaletteComponentList extends JBList {
             PaletteItem item = items [index];
             ActionGroup group1 = item.getPopupActionGroup();
             if (group1 != null) {
-              ActionPopupMenu popupMenu1 = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group1);
+              ActionPopupMenu popupMenu1 = ActionManager.getInstance().createActionPopupMenu("PaletteComponentList", group1);
               popupMenu1.getComponent().show(comp, x, y);
             }
           }
@@ -145,13 +140,6 @@ public final class PaletteComponentList extends JBList {
     }
   }
 
-  private void setDropTargetIndex(final int index) {
-    if (index != myDropTargetIndex) {
-      myDropTargetIndex = index;
-      repaint();
-    }
-  }
-
   @Override public void updateUI() {
     setUI(new ComponentListUI());
     invalidate();
@@ -194,28 +182,6 @@ public final class PaletteComponentList extends JBList {
     setSelectedIndex(indexToSelect);
     if (indexToSelect >= 0) {
       ensureIndexIsVisible(indexToSelect);
-    }
-  }
-
-  @Override protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    if (myDropTargetIndex >= 0) {
-      int dropLineY;
-      Rectangle rc;
-      if (myDropTargetIndex == myGroup.getItems().length) {
-        rc = getCellBounds(myDropTargetIndex-1, myDropTargetIndex-1);
-        dropLineY = (int)rc.getMaxY()-1;
-      }
-      else {
-        rc = getCellBounds(myDropTargetIndex, myDropTargetIndex);
-        dropLineY = rc.y;
-      }
-      Graphics2D g2d = (Graphics2D) g;
-      g2d.setColor(PlatformColors.BLUE);
-      g2d.setStroke(new BasicStroke(2.0f));
-      g2d.drawLine(rc.x, dropLineY, rc.x+rc.width, dropLineY);
-      g2d.drawLine(rc.x, dropLineY-2, rc.x, dropLineY+2);
-      g2d.drawLine(rc.x+rc.width, dropLineY-2, rc.x+rc.width, dropLineY+2);
     }
   }
 
@@ -374,13 +340,13 @@ public final class PaletteComponentList extends JBList {
 
   private class MyDnDSource implements DnDSource {
     @Override
-    public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+    public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
       int index = locationToIndex(dragOrigin);
       return index >= 0 && myGroup.getItems() [index].startDragging() != null;
     }
 
     @Override
-    public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+    public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
       int index = locationToIndex(dragOrigin);
       if (index < 0) return null;
       return myGroup.getItems() [index].startDragging();

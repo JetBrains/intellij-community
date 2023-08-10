@@ -26,6 +26,8 @@ interface PythonCommonCodeInsightTestFixture {
 
   val testRootDisposable: Disposable
 
+  val caretOffset: Int
+
   fun setUp() {
   }
 

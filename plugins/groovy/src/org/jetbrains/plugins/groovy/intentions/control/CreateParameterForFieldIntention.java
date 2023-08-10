@@ -142,7 +142,7 @@ public class CreateParameterForFieldIntention extends Intention {
     PsiClassType[] exceptionTypes = constructor.getThrowsList().getReferencedTypes();
     ThrownExceptionInfo[] thrownExceptionInfos = new ThrownExceptionInfo[exceptionTypes.length];
     for (int i = 0; i < exceptionTypes.length; i++) {
-      new JavaThrownExceptionInfo(i, exceptionTypes[i]);
+      thrownExceptionInfos[i] = new JavaThrownExceptionInfo(i, exceptionTypes[i]);
     }
 
     final GrChangeInfoImpl grChangeInfo = new GrChangeInfoImpl(constructor, null, null, constructor.getName(), parameters, thrownExceptionInfos, false);

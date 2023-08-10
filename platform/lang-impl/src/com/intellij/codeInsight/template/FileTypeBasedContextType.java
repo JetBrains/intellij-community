@@ -30,6 +30,15 @@ import org.jetbrains.annotations.NotNull;
 public abstract class FileTypeBasedContextType extends TemplateContextType {
   private final LanguageFileType myFileType;
 
+  protected FileTypeBasedContextType(@NotNull @NlsContexts.Label String presentableName, @NotNull LanguageFileType fileType) {
+    super(presentableName);
+    myFileType = fileType;
+  }
+
+  /**
+   * @deprecated Set contextId in plugin.xml instead
+   */
+  @Deprecated
   protected FileTypeBasedContextType(@NotNull @NonNls String id, @NotNull @NlsContexts.Label String presentableName, @NotNull LanguageFileType fileType) {
     super(id, presentableName);
     myFileType = fileType;

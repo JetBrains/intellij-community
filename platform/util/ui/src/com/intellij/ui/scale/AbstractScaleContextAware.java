@@ -6,35 +6,34 @@ import org.jetbrains.annotations.Nullable;
 
 // [tav] todo: [User]ScaleContext is thread-unsafe, should it be thread-safe?
 public abstract class AbstractScaleContextAware<T extends UserScaleContext> implements ScaleContextAware {
-  private final @NotNull T myScaleContext;
+  private final @NotNull T scaleContext;
 
   protected AbstractScaleContextAware(@NotNull T context) {
-    myScaleContext = context;
+    scaleContext = context;
   }
 
-  @NotNull
   @Override
-  public final T getScaleContext() {
-    return myScaleContext;
+  public final @NotNull T getScaleContext() {
+    return scaleContext;
   }
 
   @Override
   public final boolean updateScaleContext(@Nullable UserScaleContext ctx) {
-    return myScaleContext.update(ctx);
+    return scaleContext.update(ctx);
   }
 
   @Override
   public final double getScale(@NotNull ScaleType type) {
-    return getScaleContext().getScale(type);
+    return scaleContext.getScale(type);
   }
 
   @Override
   public final double getScale(@NotNull DerivedScaleType type) {
-    return getScaleContext().getScale(type);
+    return scaleContext.getScale(type);
   }
 
   @Override
   public final boolean setScale(@NotNull Scale scale) {
-    return getScaleContext().setScale(scale);
+    return scaleContext.setScale(scale);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.problems
 
 import com.intellij.codeInsight.daemon.problems.Problem
@@ -15,7 +15,6 @@ import com.intellij.refactoring.move.moveInner.MoveInnerImpl
 import com.intellij.refactoring.openapi.impl.MoveInnerRefactoringImpl
 
 internal class ClassProblemsTest : ProjectProblemsViewTest() {
-
   fun testRename() = doClassTest { psiClass, factory ->
     psiClass.nameIdentifier?.replace(factory.createIdentifier("Bar"))
   }

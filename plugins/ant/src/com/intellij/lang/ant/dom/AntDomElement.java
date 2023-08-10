@@ -127,7 +127,7 @@ public abstract class AntDomElement implements DomElement {
 
       @Override
       public void remove() {
-        throw new UnsupportedOperationException("remove");
+        Iterator.super.remove();
       }
     };
   }

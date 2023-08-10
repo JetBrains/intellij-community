@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinc.kotlin-compiler-tests" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-tests-for-ide:1.9.20-dev-8143">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/1.9.20-dev-8143/kotlin-compiler-tests-for-ide-1.9.20-dev-8143.jar">
+          <sha256sum>4690fd58984f14ade528fd4b9871120275c57af5ece530ec1c46b0fc0a5ea568</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/1.9.20-dev-8143/kotlin-compiler-tests-for-ide-1.9.20-dev-8143.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/1.9.20-dev-8143/kotlin-compiler-tests-for-ide-1.9.20-dev-8143-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

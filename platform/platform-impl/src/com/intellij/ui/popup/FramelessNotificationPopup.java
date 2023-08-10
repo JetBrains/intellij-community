@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -21,12 +20,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class FramelessNotificationPopup {
+final class FramelessNotificationPopup {
   private final JComponent myContent;
   public static final Dimension myPreferredContentSize = JBUI.size(300, 100);
   private final JBPopup myPopup;
   private int myTimerTick;
-  private final Color myBackgroud;
+  private final Color background;
   private final boolean myUseDefaultPreferredSize;
   private final static int FADE_IN_TICKS = 60;
   private final static int SHOW_TIME_TICKS = FADE_IN_TICKS + 300;
@@ -54,16 +53,12 @@ public class FramelessNotificationPopup {
   private final Timer myFadeInTimer;
   private final ActionListener myActionListener;
 
-  public FramelessNotificationPopup(final JComponent owner, final JComponent content, Color backgroud) {
-    this(owner, content, backgroud, true, null);
-  }
-
   FramelessNotificationPopup(final JComponent owner,
                              final JComponent content,
-                             Color backgroud,
+                             Color background,
                              boolean useDefaultPreferredSize,
                              final ActionListener listener) {
-    myBackgroud = backgroud;
+    this.background = background;
     myUseDefaultPreferredSize = useDefaultPreferredSize;
     myContent = new ContentComponent(content);
 
@@ -107,7 +102,7 @@ public class FramelessNotificationPopup {
     ContentComponent(JComponent content) {
       super(new BorderLayout());
       add(content, BorderLayout.CENTER);
-      setBackground(myBackgroud);
+      setBackground(background);
 
       myMouseListener = new MouseAdapter() {
         @Override

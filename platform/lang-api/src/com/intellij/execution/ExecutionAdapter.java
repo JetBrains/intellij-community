@@ -18,6 +18,6 @@ package com.intellij.execution;
 /**
  * @deprecated use {@link ExecutionListener} directly
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class ExecutionAdapter implements ExecutionListener {
 }

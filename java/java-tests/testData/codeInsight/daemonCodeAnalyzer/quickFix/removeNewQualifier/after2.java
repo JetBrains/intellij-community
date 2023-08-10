@@ -1,4 +1,4 @@
-// "Remove qualifier" "true"
+// "Remove qualifier" "true-preview"
 
     static class A {
         static class B {

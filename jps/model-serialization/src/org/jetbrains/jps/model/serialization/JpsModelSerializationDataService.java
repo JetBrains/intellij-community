@@ -10,6 +10,7 @@ import org.jetbrains.jps.model.serialization.impl.JpsModuleSerializationDataExte
 import org.jetbrains.jps.model.serialization.impl.JpsPathVariablesConfigurationImpl;
 import org.jetbrains.jps.model.serialization.impl.JpsProjectSerializationDataExtensionImpl;
 import org.jetbrains.jps.model.serialization.module.JpsModuleSerializationDataExtension;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.util.HashMap;
@@ -22,6 +23,9 @@ public final class JpsModelSerializationDataService {
     JpsPathVariablesConfiguration configuration = getPathVariablesConfiguration(global);
     if (configuration != null) {
       pathVariables.putAll(configuration.getAllUserVariables());
+    }
+    for (JpsPathMacroContributor extension : JpsServiceManager.getInstance().getExtensions(JpsPathMacroContributor.class)) {
+      pathVariables.putAll(extension.getPathMacros());
     }
     return pathVariables;
   }

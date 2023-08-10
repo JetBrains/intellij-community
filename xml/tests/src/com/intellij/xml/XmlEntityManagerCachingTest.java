@@ -22,9 +22,6 @@ import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
 
 import java.io.File;
 
-/**
- * @author ibessonov
- */
 public class XmlEntityManagerCachingTest extends BasePlatformTestCase {
 
   public void testXmlEntityManagerCaching() {

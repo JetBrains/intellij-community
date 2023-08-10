@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author irengrig
- */
 public interface ChangesViewI {
   void scheduleRefresh();
   void selectFile(VirtualFile vFile);

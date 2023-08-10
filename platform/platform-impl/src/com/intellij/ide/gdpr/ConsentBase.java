@@ -3,7 +3,6 @@ package com.intellij.ide.gdpr;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 06-Dec-17
  */
 abstract class ConsentBase {
   private final String myId;

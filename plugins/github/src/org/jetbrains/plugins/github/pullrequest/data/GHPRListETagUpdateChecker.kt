@@ -12,7 +12,7 @@ import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
 import java.util.concurrent.ScheduledFuture
@@ -56,7 +56,7 @@ class GHPRListETagUpdateChecker(private val progressManager: ProgressManager,
 
   private fun loadListETag(indicator: ProgressIndicator): String? =
     progressManager.runProcess(Computable {
-      requestExecutor.execute(GithubApiRequests.Repos.PullRequests.getListETag(serverPath, repoPath))
+      requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.getListETag(serverPath, repoPath))
     }, indicator)
 
   override fun stop() {

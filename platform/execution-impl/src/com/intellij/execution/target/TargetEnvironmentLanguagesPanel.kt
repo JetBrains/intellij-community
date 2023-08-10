@@ -2,6 +2,7 @@
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.Configurable
@@ -10,7 +11,9 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Font
@@ -49,6 +52,10 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
   }
 
   fun disposeUIResources() {
+    clearLanguagePanels()
+  }
+
+  private fun clearLanguagePanels() {
     languagePanels.forEach { it.configurable.disposeUIResources() }
     languagePanels.clear()
   }
@@ -64,7 +71,7 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
   }
 
   private fun recreateRuntimePanels() {
-    languagePanels.clear()
+    clearLanguagePanels()
     with(mainPanel) {
       removeAll()
       languagesList.resolvedConfigs().forEach {
@@ -89,11 +96,16 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
       row {
         val separator = TitledSeparator(language.getRuntimeType().configurableDescription)
         separator.titleFont = separator.titleFont.deriveFont(Font.BOLD)
-        separator(CCFlags.growX, CCFlags.pushX)
-        gearButton(DuplicateRuntimeAction(language), RemoveRuntimeAction(language))
+        cell(separator)
+          .gap(RightGap.SMALL)
+          .align(AlignX.FILL)
+          .resizableColumn()
+        actionsButton(DuplicateRuntimeAction(language), RemoveRuntimeAction(language))
+      }
+      indent {
         row {
           val languageUI = configurable.createComponent() ?: throw IllegalStateException("for runtime: $language")
-          languageUI(CCFlags.growX)
+          cell(languageUI).align(AlignX.FILL)
         }
       }
     }
@@ -146,6 +158,8 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
       val lastLanguage = languagesList.resolvedConfigs().none { it != language }
       e.presentation.isEnabled = !lastLanguage
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }
 
   private data class LanguagePanel(val language: LanguageRuntimeConfiguration,

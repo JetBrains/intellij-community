@@ -2,12 +2,18 @@
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
-data class JsonPercentages(val part: Long, val total: Long) {
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class JsonPercentages(val part: Long = 0, val total: Long = 0) {
+
+  val partition: Double
+    @JsonIgnore
+    get() = if (total == 0L) 1.0 else part.toDouble() / total
 
   val doublePercentages: Double
     @JsonIgnore
-    get() = if (total == 0L) 100.0 else part.toDouble() / total * 100
+    get() = partition * 100
 
   fun presentablePercentages(): String =
     when {

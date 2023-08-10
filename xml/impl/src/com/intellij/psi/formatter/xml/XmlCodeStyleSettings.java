@@ -23,7 +23,6 @@ import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 
 /**
  * Moved from CodeStyleSettings
- * @author Rustam Vishnyakov
  */
 public class XmlCodeStyleSettings extends CustomCodeStyleSettings {
 
@@ -39,7 +38,6 @@ public class XmlCodeStyleSettings extends CustomCodeStyleSettings {
   public int XML_ATTRIBUTE_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
   @Property(externalName = "text_wrap")
-  @WrapConstant
   public int XML_TEXT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
   @Property(externalName = "keep_line_breaks")
@@ -71,9 +69,6 @@ public class XmlCodeStyleSettings extends CustomCodeStyleSettings {
 
   @Property(externalName = "keep_whitespaces_around_cdata")
   public int XML_WHITE_SPACE_AROUND_CDATA = WS_AROUND_CDATA_PRESERVE;
-
-  @Deprecated
-  public boolean XML_LEGACY_SETTINGS_IMPORTED = false;
 
   public XmlCodeStyleSettings(CodeStyleSettings container) {
     super("XML", container);

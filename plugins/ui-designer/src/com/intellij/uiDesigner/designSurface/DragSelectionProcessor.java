@@ -14,10 +14,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class DragSelectionProcessor extends EventProcessor {
   private static final Logger LOG = Logger.getInstance(DragSelectionProcessor.class);
 

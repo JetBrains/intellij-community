@@ -1,17 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,15 +32,11 @@ public final class IntentionSettingsPanel implements MasterDetails {
   private final Alarm myResetAlarm = new Alarm();
 
   public IntentionSettingsPanel() {
-    myDescriptionPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      CodeInsightBundle.message("dialog.intention.settings.description.panel.title"), false, JBUI.insetsTop(8)).setShowLine(false));
-
     myIntentionSettingsTree = new IntentionSettingsTree() {
       @Override
       protected void selectionChanged(Object selected) {
-        if (selected instanceof IntentionActionMetaData) {
-          final IntentionActionMetaData actionMetaData = (IntentionActionMetaData)selected;
-          final Runnable runnable = () -> {
+        if (selected instanceof IntentionActionMetaData actionMetaData) {
+          Runnable runnable = () -> {
             intentionSelected(actionMetaData);
             if (myDetailsComponent != null) {
               String[] text = ArrayUtil.append(actionMetaData.myCategory, actionMetaData.getFamily());
@@ -62,7 +55,7 @@ public final class IntentionSettingsPanel implements MasterDetails {
       }
 
       @Override
-      protected List<IntentionActionMetaData> filterModel(String filter, final boolean force) {
+      protected List<IntentionActionMetaData> filterModel(String filter, boolean force) {
         List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
         if (filter == null || filter.length() == 0) {
           return list;
@@ -72,13 +65,13 @@ public final class IntentionSettingsPanel implements MasterDetails {
         List<Set<String>> keySetList = SearchUtil.findKeys(filter, quoted);
         List<IntentionActionMetaData> result = new ArrayList<>();
         for (IntentionActionMetaData metaData : list) {
-          if (isIntentionAccepted(metaData, filter, force, keySetList, quoted)){
+          if (isIntentionAccepted(metaData, filter, force, keySetList, quoted)) {
             result.add(metaData);
           }
         }
-        final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
-        if (force && result.isEmpty()){
-          if (filters.size() > 1){
+        Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
+        if (force && result.isEmpty()) {
+          if (filters.size() > 1) {
             result = filterModel(filter, false);
           }
         }
@@ -104,7 +97,6 @@ public final class IntentionSettingsPanel implements MasterDetails {
 
   public void reset() {
     myIntentionSettingsTree.reset();
-    SwingUtilities.invokeLater(() -> myIntentionDescriptionPanel.init(myPanel.getWidth() / 2));
   }
 
   @Override
@@ -136,7 +128,7 @@ public final class IntentionSettingsPanel implements MasterDetails {
     return myPanel;
   }
 
-  public JTree getIntentionTree(){
+  public JTree getIntentionTree() {
     return myIntentionSettingsTree.getTree();
   }
 
@@ -174,10 +166,11 @@ public final class IntentionSettingsPanel implements MasterDetails {
         }
       }
       try {
-        final TextDescriptor description = metaData.getDescription();
-        if (StringUtil.containsIgnoreCase(description.getText(), stripped)){
+        TextDescriptor description = metaData.getDescription();
+        if (StringUtil.containsIgnoreCase(description.getText(), stripped)) {
           if (!forceInclude) return true;
-        } else if (forceInclude) return false;
+        }
+        else if (forceInclude) return false;
       }
       catch (IOException e) {
         //skip then
@@ -198,7 +191,7 @@ public final class IntentionSettingsPanel implements MasterDetails {
     return forceInclude;
   }
 
-  public Runnable showOption(final String option) {
+  public Runnable showOption(String option) {
     return () -> {
       myIntentionSettingsTree.filter(myIntentionSettingsTree.filterModel(option, true));
       myIntentionSettingsTree.setFilter(option);

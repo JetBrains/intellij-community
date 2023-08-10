@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
@@ -7,7 +7,6 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
-import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
 import com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy;
 import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
@@ -17,7 +16,9 @@ import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -26,11 +27,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.platform.backend.navigation.NavigationRequest;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +50,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @author Roman Chernyatchik
  */
-public class SMTestProxy extends AbstractTestProxy {
+public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   public static final Key<String> NODE_ID = Key.create("test.proxy.id");
 
   private static final Logger LOG = Logger.getInstance(SMTestProxy.class.getName());
@@ -61,7 +64,7 @@ public class SMTestProxy extends AbstractTestProxy {
   private List<SMTestProxy> myChildren;
   private SMTestProxy myParent;
 
-  private AbstractState myState = NotRunState.getInstance();
+  private volatile AbstractState myState = NotRunState.getInstance();
   private Long myDuration = null; // duration is unknown
   private boolean myDurationIsCached = false; // is used for separating unknown and unset duration
   private boolean myHasCriticalErrors = false;
@@ -269,6 +272,41 @@ public class SMTestProxy extends AbstractTestProxy {
     return myConfig;
   }
 
+  private Navigatable getNavigatable() {
+    SMRootTestProxy root = getRoot();
+    if (root == null) return null;
+    return TestsUIUtil.getOpenFileDescriptor(this, root.myTestConsoleProperties);
+  }
+
+  @Override
+  public @Nullable NavigationRequest navigationRequest() {
+    Navigatable navigatable = getNavigatable();
+    return navigatable == null ? null : navigatable.navigationRequest();
+  }
+
+  @Override
+  public void navigate(boolean requestFocus) {
+    ReadAction.nonBlocking(() -> getNavigatable())
+      .expireWith(this)
+      .coalesceBy(this)
+      .finishOnUiThread(ModalityState.nonModal(), navigatable -> {
+      if (navigatable != null) {
+        navigatable.navigate(requestFocus);
+      }
+    }).submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  @Override
+  public boolean canNavigate() {
+    Navigatable navigatable = getNavigatable();
+    return navigatable != null && navigatable.canNavigate();
+  }
+
+  @Override
+  public boolean canNavigateToSource() {
+    return canNavigate();
+  }
+
   @Override
   @Nullable
   public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
@@ -317,9 +355,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
     String stacktrace = myStacktrace;
     if (stacktrace != null && properties instanceof SMStacktraceParser && isLeaf()) {
-      Navigatable result = properties instanceof SMStacktraceParserEx ?
-                           ((SMStacktraceParserEx)properties).getErrorNavigatable(location, stacktrace) :
-                             ((SMStacktraceParser)properties).getErrorNavigatable(location.getProject(), stacktrace);
+      Navigatable result = ((SMStacktraceParser)properties).getErrorNavigatable(location, stacktrace);
       if (result != null) {
         return result;
       }
@@ -394,22 +430,14 @@ public class SMTestProxy extends AbstractTestProxy {
   @Nullable
   @Override
   public String getDurationString(TestConsoleProperties consoleProperties) {
-    switch (getMagnitudeInfo()) {
-      case PASSED_INDEX:
-        return !isSubjectToHide(consoleProperties) ? getDurationString() : null;
-      case RUNNING_INDEX:
+    return switch (getMagnitudeInfo()) {
+      case PASSED_INDEX -> !isSubjectToHide(consoleProperties) ? getDurationString() : null;
+      case RUNNING_INDEX ->
         // pad duration with zeros, like "1m 02 s 003 ms" to avoid annoying flickering
-        return !isSubjectToHide(consoleProperties) ? getDurationPaddedString() : null;
-      case COMPLETE_INDEX:
-      case FAILED_INDEX:
-      case ERROR_INDEX:
-      case IGNORED_INDEX:
-      case SKIPPED_INDEX:
-      case TERMINATED_INDEX:
-        return getDurationString();
-      default:
-        return null;
-    }
+        !isSubjectToHide(consoleProperties) ? getDurationPaddedString() : null;
+      case COMPLETE_INDEX, FAILED_INDEX, ERROR_INDEX, IGNORED_INDEX, SKIPPED_INDEX, TERMINATED_INDEX -> getDurationString();
+      default -> null;
+    };
   }
 
   private boolean isSubjectToHide(TestConsoleProperties consoleProperties) {
@@ -492,7 +520,7 @@ public class SMTestProxy extends AbstractTestProxy {
     fireOnNewPrintable(myState);
   }
 
-  public void setTestFailed(@NotNull String localizedMessage, @Nullable String stackTrace, boolean testError) {
+  public void setTestFailed(@Nullable String localizedMessage, @Nullable String stackTrace, boolean testError) {
     setStacktraceIfNotSet(stackTrace);
     myErrorMessage = localizedMessage;
     TestFailedState failedState = testError ? new TestErrorState(localizedMessage, stackTrace) 
@@ -516,46 +544,52 @@ public class SMTestProxy extends AbstractTestProxy {
     }
   }
 
-  public void setTestComparisonFailed(@NotNull final String localizedMessage,
+  public void setTestComparisonFailed(@Nullable final String localizedMessage,
                                       @Nullable final String stackTrace,
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText) {
     setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, null, null, true);
   }
 
-  public void setTestComparisonFailed(@NotNull final String localizedMessage,
+  public void setTestComparisonFailed(@Nullable final String localizedMessage,
                                       @Nullable final String stackTrace,
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText,
                                       @NotNull final TestFailedEvent event) {
-    TestComparisionFailedState comparisionFailedState =
-      setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, event.getExpectedFilePath(), event.getActualFilePath(),
-                              event.shouldPrintExpectedAndActualValues());
-    comparisionFailedState.setToDeleteExpectedFile(event.isExpectedFileTemp());
-    comparisionFailedState.setToDeleteActualFile(event.isActualFileTemp());
+    TestComparisonFailedState comparisonFailedState = setTestComparisonFailed(
+      localizedMessage,
+      stackTrace,
+      actualText,
+      expectedText,
+      event.getActualFilePath(),
+      event.getExpectedFilePath(),
+      event.shouldPrintExpectedAndActualValues()
+    );
+    comparisonFailedState.setToDeleteExpectedFile(event.isExpectedFileTemp());
+    comparisonFailedState.setToDeleteActualFile(event.isActualFileTemp());
   }
 
-  public TestComparisionFailedState setTestComparisonFailed(@NotNull final String localizedMessage,
-                                                            @Nullable final String stackTrace,
-                                                            @NotNull final String actualText,
-                                                            @NotNull final String expectedText,
-                                                            @Nullable final String expectedFilePath,
-                                                            @Nullable final String actualFilePath,
-                                                            boolean printExpectedAndActualValues) {
+  public TestComparisonFailedState setTestComparisonFailed(
+    @Nullable final String localizedMessage,
+    @Nullable final String stackTrace,
+    @NotNull final String actualText,
+    @NotNull final String expectedText,
+    @Nullable final String actualFilePath,
+    @Nullable final String expectedFilePath,
+    boolean printExpectedAndActualValues
+  ) {
     setStacktraceIfNotSet(stackTrace);
     myErrorMessage = localizedMessage;
-    final TestComparisionFailedState comparisionFailedState = new TestComparisionFailedState(
+    final TestComparisonFailedState comparisonFailedState = new TestComparisonFailedState(
       localizedMessage, stackTrace, actualText, expectedText, printExpectedAndActualValues,
       expectedFilePath, actualFilePath
     );
-    DiffHyperlink hyperlink = comparisionFailedState.getHyperlink();
-    if (hyperlink != null) {
-      hyperlink.setTestProxyName(getName());
-    }
+    DiffHyperlink hyperlink = comparisonFailedState.getHyperlink();
+    hyperlink.setTestProxy(this);
 
-    updateFailedState(comparisionFailedState);
-    fireOnNewPrintable(comparisionFailedState);
-    return comparisionFailedState;
+    updateFailedState(comparisonFailedState);
+    fireOnNewPrintable(comparisonFailedState);
+    return comparisonFailedState;
   }
 
   @Override
@@ -577,16 +611,14 @@ public class SMTestProxy extends AbstractTestProxy {
     myParent = parent;
   }
 
-  public List<? extends SMTestProxy> collectChildren(@Nullable final Filter<SMTestProxy> filter) {
+  public List<? extends SMTestProxy> collectChildren(final @Nullable Filter<? super SMTestProxy> filter) {
     return filterChildren(filter, collectChildren());
   }
 
   public List<? extends SMTestProxy> collectChildren() {
     final List<? extends SMTestProxy> allChildren = getChildren();
 
-    final List<SMTestProxy> result = new ArrayList<>();
-
-    result.addAll(allChildren);
+    final List<SMTestProxy> result = new ArrayList<>(allChildren);
 
     for (SMTestProxy p : allChildren) {
       result.addAll(p.collectChildren());
@@ -720,27 +752,32 @@ public class SMTestProxy extends AbstractTestProxy {
     }
   }
 
-  @NotNull
-  public @NlsSafe String getPresentableName() {
+  public @NotNull @NlsSafe String getPresentableName() {
     if (myPresentableName == null) {
-      if (myPreservePresentableName) {
-        myPresentableName = TestsPresentationUtil.getPresentableNameTrimmedOnly(this);
-      } else {
-        myPresentableName = TestsPresentationUtil.getPresentableName(this);
-      }
+      setPresentableName(getName());
     }
     return myPresentableName;
+  }
+
+  public void setPresentableName(final @Nullable String name) {
+    myPresentableName = calculatePresentableName(this, name);
+  }
+
+  private static @NotNull String calculatePresentableName(final @NotNull SMTestProxy proxy, final @Nullable String name) {
+    return proxy.isPreservePresentableName() ? TestsPresentationUtil.getPresentableNameTrimmedOnly(name)
+                                             : TestsPresentationUtil.getPresentableName(proxy, name);
   }
 
   @Override
   @Nullable
   public DiffHyperlink getDiffViewerProvider() {
-    if (myState instanceof TestComparisionFailedState) {
-      return ((TestComparisionFailedState)myState).getHyperlink();
+    AbstractState state = myState;
+    if (state instanceof TestComparisonFailedState) {
+      return ((TestComparisonFailedState)state).getHyperlink();
     }
 
-    if (myState instanceof CompoundTestFailedState) {
-      return ContainerUtil.getFirstItem(((CompoundTestFailedState)myState).getHyperlinks());
+    if (state instanceof CompoundTestFailedState) {
+      return ContainerUtil.getFirstItem(((CompoundTestFailedState)state).getHyperlinks());
     }
 
     return null;
@@ -749,8 +786,9 @@ public class SMTestProxy extends AbstractTestProxy {
   @NotNull
   @Override
   public List<DiffHyperlink> getDiffViewerProviders() {
-    if (myState instanceof CompoundTestFailedState) {
-      return ((CompoundTestFailedState)myState).getHyperlinks();
+    AbstractState state = myState;
+    if (state instanceof CompoundTestFailedState) {
+      return ((CompoundTestFailedState)state).getHyperlinks();
     }
     return super.getDiffViewerProviders();
   }
@@ -906,7 +944,6 @@ public class SMTestProxy extends AbstractTestProxy {
 
   /**
    * Recursively invalidates cached duration for container(parent) suites or updates their value
-   * @param duration
    */
   private void invalidateCachedDurationForContainerSuites(long duration) {
     // Manual duration does not need any automatic calculation
@@ -934,11 +971,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public SMRootTestProxy getRoot() {
-    SMTestProxy parent = getParent();
-    while (parent != null && !(parent instanceof SMRootTestProxy)) {
-      parent = parent.getParent();
-    }
-    return parent != null ? (SMRootTestProxy)parent : null;
+    return (SMRootTestProxy)getTestRoot(this);
   }
 
   public static class SMRootTestProxy extends SMTestProxy implements TestProxyRoot {
@@ -1002,12 +1035,12 @@ public class SMTestProxy extends AbstractTestProxy {
         ExecutionEnvironment executionEnvironment = null;
         if (myConsole != null) {
           DataContext consoleContext = DataManager.getInstance().getDataContext(myConsole);
-          executionEnvironment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(consoleContext);
+          executionEnvironment = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(consoleContext);
           if (executionEnvironment == null) {
             ViewContext viewContext = ViewContext.CONTEXT_KEY.getData(consoleContext);
             if (viewContext != null) {
               JComponent tabsComponent = viewContext.getContentManager().getComponent();
-              executionEnvironment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(tabsComponent));
+              executionEnvironment = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(tabsComponent));
             }
           }
         }
@@ -1082,6 +1115,7 @@ public class SMTestProxy extends AbstractTestProxy {
       myTestConsoleProperties = properties;
     }
 
+    @Override
     public TestConsoleProperties getTestConsoleProperties() {
       return myTestConsoleProperties;
     }

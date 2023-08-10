@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.eventLog.fus
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.sun.jna.platform.win32.Advapi32Util
@@ -17,7 +18,19 @@ object MachineIdManager {
   private val macMachineIdPattern = Pattern.compile("\"IOPlatformUUID\"\\s*=\\s*\"(?<machineId>.*)\"")
   private val linuxMachineIdPaths = listOf("/etc/machine-id", "/var/lib/dbus/machine-id")
 
-  fun getMachineId(): String? {
+  /**
+   * @param purpose What id will be used for, shouldn't be empty.
+   * @return Anonymized machine id or null If getting machine id was failed.
+   */
+  fun getAnonymizedMachineId(purpose: String, salt: String): String? {
+    if (purpose.isEmpty()) {
+      throw IllegalArgumentException("Argument [purpose] should not be empty.")
+    }
+    val machineId = getMachineId() ?: return null
+    return EventLogConfiguration.hashSha256((System.getProperty("user.name") + purpose + salt).toByteArray(), machineId)
+  }
+
+  private fun getMachineId(): String? {
     return try {
       when {
         SystemInfo.isWindows -> {

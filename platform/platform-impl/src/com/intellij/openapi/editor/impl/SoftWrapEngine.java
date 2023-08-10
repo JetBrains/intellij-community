@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Class that calculates soft wrap positions for a given text fragment and available visible width.
  */
-public class SoftWrapEngine {
+public final class SoftWrapEngine {
   private static final int BASIC_LOOK_BACK_LENGTH = 10;
 
   private final EditorImpl myEditor;

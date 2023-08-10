@@ -1,28 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jdkEx;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.MethodInvocator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.awt.AWTAccessor;
 
+import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 /**
  * Provides extensions for OpenJDK API, implemented in JetBrains JDK.
  * For OpenJDK defaults to some meaningful results where applicable or otherwise throws runtime exception.
+ * <p>
+ * WARNING: For internal usage only.
  *
  * @author tav
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public final class JdkEx {
+  private static final Logger LOG = Logger.getInstance(JdkEx.class);
+
   @SuppressWarnings("unused")
-  @NotNull
-  public static InputEventEx getInputEventEx() {
+  public static @NotNull InputEventEx getInputEventEx() {
     if (SystemInfo.isJetBrainsJvm) {
       return new JBInputEventEx();
     }
@@ -36,41 +41,20 @@ public final class JdkEx {
     return new DefDisplayModeEx();
   }
 
-  // CUSTOM DECOR SUPPORT {{
-
-  public static boolean isCustomDecorationSupported() {
-    if (SystemInfo.isJetBrainsJvm && SystemInfo.isWin10OrNewer) {
-      return MyCustomDecorMethods.SET_HAS_CUSTOM_DECORATION.isAvailable();
+  public static void setTransparent(@NotNull JWindow window) {
+    // disable -Dswing.bufferPerWindow=true for the window
+    JComponent rootPane = window.getRootPane();
+    if (rootPane != null) {
+      rootPane.setDoubleBuffered(false);
     }
-    return false;
-  }
+    JComponent contentPane = (JComponent)window.getContentPane();
+    if (contentPane != null) {
+      contentPane.setDoubleBuffered(false);
+    }
 
-  public static void setHasCustomDecoration(@NotNull Window window) {
-    if (!isCustomDecorationSupported()) return;
-    MyCustomDecorMethods.SET_HAS_CUSTOM_DECORATION.invoke(window);
+    //noinspection UseJBColor
+    window.setBackground(new Color(1, 1, 1, 0));
   }
-
-  public static void setCustomDecorationHitTestSpots(@NotNull Window window, @NotNull List<Rectangle> spots) {
-    if (!isCustomDecorationSupported()) return;
-    MyCustomDecorMethods.SET_CUSTOM_DECORATION_HITTEST_SPOTS.invoke(AWTAccessor.getComponentAccessor().getPeer(window), spots);
-  }
-
-  public static void setCustomDecorationTitleBarHeight(@NotNull Window window, int height) {
-    if (!isCustomDecorationSupported()) return;
-    MyCustomDecorMethods.SET_CUSTOM_DECORATION_TITLEBAR_HEIGHT.invoke(AWTAccessor.getComponentAccessor().getPeer(window), height);
-  }
-
-  // lazy init
-  private static final class MyCustomDecorMethods {
-    public static final MyMethod SET_HAS_CUSTOM_DECORATION =
-      MyMethod.create(Window.class, "setHasCustomDecoration");
-    public static final MyMethod SET_CUSTOM_DECORATION_HITTEST_SPOTS =
-      MyMethod.create("sun.awt.windows.WWindowPeer", "setCustomDecorationHitTestSpots", List.class);
-    public static final MyMethod SET_CUSTOM_DECORATION_TITLEBAR_HEIGHT =
-      MyMethod.create("sun.awt.windows.WWindowPeer","setCustomDecorationTitleBarHeight", int.class);
-  }
-
-  // }} CUSTOM DECOR SUPPORT
 
   private static final class MyMethod {
     private static final MyMethod EMPTY_INSTANCE = new MyMethod(null);
@@ -98,8 +82,7 @@ public final class JdkEx {
       return myInvocator != null && myInvocator.isAvailable();
     }
 
-    @Nullable
-    public Object invoke(Object object, Object... arguments) {
+    public @Nullable Object invoke(Object object, Object... arguments) {
       if (isAvailable()) {
         //noinspection ConstantConditions
         return myInvocator.invoke(object, arguments);
@@ -125,20 +108,33 @@ public final class JdkEx {
 
   private static MethodInvocator mySetTabbingMode;
 
-  @Nullable
-  private static MethodInvocator getTabbingModeInvocator() {
-    if (!SystemInfo.isJetBrainsJvm || !SystemInfo.isMacOSBigSur || !Registry.is("ide.mac.bigsur.window.with.tabs.enabled", true)) {
+  private static @Nullable MethodInvocator getTabbingModeInvocator() {
+    if ((ExperimentalUI.isNewUI() && !Registry.is("ide.mac.os.wintabs.version2", true)) ||
+        !SystemInfo.isJetBrainsJvm ||
+        !SystemInfo.isMacOSBigSur ||
+        !Registry.is("ide.mac.bigsur.window.with.tabs.enabled", true)) {
+      if (SystemInfoRt.isMac) {
+        LOG.info("=== TabbingMode: disabled (" +
+                 SystemInfo.isJetBrainsJvm + "," +
+                 SystemInfo.isMacOSBigSur + "," +
+                 Registry.is("ide.mac.bigsur.window.with.tabs.enabled") + "," +
+                 ExperimentalUI.isNewUI() +
+                 Registry.is("ide.mac.os.wintabs.version2") + ") ===");
+      }
       return null;
     }
     if (mySetTabbingMode == null) {
       try {
         mySetTabbingMode = new MethodInvocator(false, Class.forName("java.awt.Window"), "setTabbingMode");
         if (mySetTabbingMode.isAvailable()) {
+          LOG.info("=== TabbingMode: available ===");
           return mySetTabbingMode;
         }
       }
-      catch (ClassNotFoundException ignore) {
+      catch (ClassNotFoundException e) {
+        LOG.error(e);
       }
+      LOG.info("=== TabbingMode: not available ===");
       return null;
     }
     return mySetTabbingMode.isAvailable() ? mySetTabbingMode : null;
@@ -148,20 +144,25 @@ public final class JdkEx {
     return getTabbingModeInvocator() != null;
   }
 
-  public static boolean setTabbingMode(@NotNull Window window, @Nullable Runnable moveTabToNewWindowCallback) {
+  public static boolean setTabbingMode(@NotNull Window window, @NotNull String windowId, @Nullable Runnable moveTabToNewWindowCallback) {
     MethodInvocator invocator = getTabbingModeInvocator();
     if (invocator != null) {
       invocator.invoke(window);
+      ((RootPaneContainer)window).getRootPane().putClientProperty("JavaWindowTabbingIdentifier", windowId);
+
       if (moveTabToNewWindowCallback != null) {
         try {
           new MethodInvocator(false, Class.forName("java.awt.Window"), "setMoveTabToNewWindowCallback", Runnable.class)
             .invoke(window, moveTabToNewWindowCallback);
         }
-        catch (ClassNotFoundException ignore) {
+        catch (ClassNotFoundException e) {
+          LOG.error(e);
         }
       }
+      LOG.info("=== TabbingMode: on ===");
       return true;
     }
+    LOG.info("=== TabbingMode: off ===");
     return false;
   }
 }

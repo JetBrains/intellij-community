@@ -4,6 +4,8 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionAction;
 import com.intellij.ide.actions.SetShortcutAction;
+import com.intellij.ide.actions.searcheverywhere.footer.ActionExtendedInfoKt;
+import com.intellij.ide.actions.searcheverywhere.footer.ActionHistoryManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -18,12 +20,15 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,15 +36,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.lang.ref.WeakReference;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText;
 
 public class ActionSearchEverywhereContributor implements WeightedSearchEverywhereContributor<GotoActionModel.MatchedValue>,
-                                                          LightEditCompatible {
+                                                          LightEditCompatible, SearchEverywhereExtendedInfoProvider {
 
   private static final Logger LOG = Logger.getInstance(ActionSearchEverywhereContributor.class);
 
@@ -49,11 +54,23 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
   private final GotoActionItemProvider myProvider;
   protected boolean myDisabledActions;
 
+  public ActionSearchEverywhereContributor(ActionSearchEverywhereContributor other) {
+    myProject = other.myProject;
+    myContextComponent = other.myContextComponent;
+    myModel = other.myModel;
+    myProvider = other.myProvider;
+    myDisabledActions = other.myDisabledActions;
+  }
+
   public ActionSearchEverywhereContributor(Project project, Component contextComponent, Editor editor) {
     myProject = project;
     myContextComponent = new WeakReference<>(contextComponent);
     myModel = new GotoActionModel(project, contextComponent, editor);
     myProvider = new GotoActionItemProvider(myModel);
+  }
+
+  protected GotoActionModel getModel()  {
+    return myModel;
   }
 
   @NotNull
@@ -62,13 +79,22 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     return IdeBundle.message("search.everywhere.group.name.actions");
   }
 
-  @NotNull
+  @Nullable
   @Override
   public String getAdvertisement() {
+    if (SearchEverywhereUI.isExtendedInfoEnabled()) return null;
+
     ShortcutSet altEnterShortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
     @NlsSafe String altEnter = getFirstKeyboardShortcutText(altEnterShortcutSet);
     return IdeBundle.message("press.0.to.assign.a.shortcut", altEnter);
   }
+
+  @Nls
+  @Override
+  public @Nullable ExtendedInfo createExtendedInfo() {
+    return ActionExtendedInfoKt.createActionExtendedInfo(myProject);
+  }
+
 
   @NlsContexts.Checkbox
   public String includeNonProjectItemsText() {
@@ -91,26 +117,48 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
                                     @NotNull Processor<? super FoundItemDescriptor<GotoActionModel.MatchedValue>> consumer) {
 
     if (StringUtil.isEmptyOrSpaces(pattern)) {
+      if (isRecentEnabled()) {
+        Set<String> actionIDs = ActionHistoryManager.getInstance().getState().getIds();
+        Predicate<GotoActionModel.MatchedValue> actionDegreePredicate =
+          element -> {
+            if (!myDisabledActions && !((GotoActionModel.ActionWrapper)element.value).isAvailable()) return true;
+
+            AnAction action = getAction(element);
+            if (action == null) return true;
+
+            String id = ActionManager.getInstance().getId(action);
+            int degree = actionIDs.stream().toList().indexOf(id);
+
+            return consumer.process(new FoundItemDescriptor<>(element, degree));
+          };
+
+        myProvider.processActions(pattern, actionDegreePredicate, new HashSet<>(actionIDs));
+      }
       return;
     }
 
-    myProvider.filterElements(pattern, element -> {
-      if (progressIndicator.isCanceled()) return false;
+    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      myProvider.filterElements(pattern, element -> {
+        if (progressIndicator.isCanceled()) return false;
 
-      if (!myDisabledActions &&
-          element.value instanceof GotoActionModel.ActionWrapper &&
-          !((GotoActionModel.ActionWrapper)element.value).isAvailable()) {
-        return true;
-      }
+        if (element == null) {
+          LOG.error("Null action has been returned from model");
+          return true;
+        }
 
-      if (element == null) {
-        LOG.error("Null action has been returned from model");
-        return true;
-      }
+        final boolean isActionWrapper = element.value instanceof GotoActionModel.ActionWrapper;
+        if (!myDisabledActions && isActionWrapper && !((GotoActionModel.ActionWrapper)element.value).isAvailable()) {
+          return true;
+        }
 
-      FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
-      return consumer.process(descriptor);
-    });
+        final var descriptor = new FoundItemDescriptor<GotoActionModel.MatchedValue>(element, element.getMatchingDegree());
+        return consumer.process(descriptor);
+      });
+    }, progressIndicator);
+  }
+
+  private static boolean isRecentEnabled() {
+    return Registry.is("search.everywhere.recents") || ApplicationManager.getApplication().isInternal();
   }
 
   @NotNull
@@ -149,51 +197,62 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
   @Override
   public Object getDataForItem(@NotNull GotoActionModel.MatchedValue element, @NotNull String dataId) {
-    if (SetShortcutAction.SELECTED_ACTION.is(dataId)) {
-      return getAction(element);
-    }
+    return SetShortcutAction.SELECTED_ACTION.is(dataId) ? getAction(element) : null;
+  }
 
-    if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId)) {
-      AnAction action = getAction(element);
-      if (action != null) {
-        String description = action.getTemplatePresentation().getDescription();
-        if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
-          String presentableId = StringUtil.notNullize(ActionManager.getInstance().getId(action), "class: " + action.getClass().getName());
-          return String.format("[%s] %s", presentableId, StringUtil.notNullize(description));
-        }
-        return description;
-      }
+  @Override
+  public @Nullable String getItemDescription(@NotNull GotoActionModel.MatchedValue element) {
+    AnAction action = getAction(element);
+    if (action == null) {
+      return null;
     }
-
-    return null;
+    String description = action.getTemplatePresentation().getDescription();
+    if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
+      String presentableId = StringUtil.notNullize(ActionManager.getInstance().getId(action), "class: " + action.getClass().getName());
+      return String.format("[%s] %s", presentableId, StringUtil.notNullize(description));
+    }
+    return description;
   }
 
   @Override
   public boolean processSelectedItem(@NotNull GotoActionModel.MatchedValue item, int modifiers, @NotNull String text) {
     if (modifiers == InputEvent.ALT_MASK) {
-      showAssignShortcutDialog(item);
+      showAssignShortcutDialog(myProject, item);
       return true;
     }
 
     Object selected = item.value;
 
-    if (selected instanceof BooleanOptionDescription) {
-      final BooleanOptionDescription option = (BooleanOptionDescription)selected;
+    if (selected instanceof BooleanOptionDescription option) {
       if (selected instanceof BooleanOptionDescription.RequiresRebuild) {
-        myModel.clearActions();           // release references to plugin actions so that the plugin can be unloaded successfully
+        myModel.clearCaches(); // release references to plugin actions so that the plugin can be unloaded successfully
         myProvider.clearIntentions();
       }
       option.setOptionState(!option.isOptionEnabled());
-      if (selected instanceof BooleanOptionDescription.RequiresRebuild) {
-        myModel.rebuildActions();
-      }
       return false;
+    }
+
+    if (isRecentEnabled()) {
+      saveRecentAction(item);
     }
 
     GotoActionAction.openOptionOrPerformAction(selected, text, myProject, myContextComponent.get(), modifiers);
     boolean inplaceChange = selected instanceof GotoActionModel.ActionWrapper
                             && ((GotoActionModel.ActionWrapper)selected).getAction() instanceof ToggleAction;
     return !inplaceChange;
+  }
+
+  private static void saveRecentAction(@NotNull GotoActionModel.MatchedValue selected) {
+    AnAction action = getAction(selected);
+    if (action == null) return;
+
+    String id = ActionManager.getInstance().getId(action);
+    if (id == null) return;
+
+    Set<String> ids = ActionHistoryManager.getInstance().getState().getIds();
+    if (ids.size() < Registry.intValue("search.everywhere.recents.limit")) {
+      ids.add(id);
+    }
   }
 
   @Nullable
@@ -205,7 +264,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     return value instanceof AnAction ? (AnAction)value : null;
   }
 
-  private void showAssignShortcutDialog(@NotNull GotoActionModel.MatchedValue value) {
+  public static void showAssignShortcutDialog(@Nullable Project myProject, @NotNull GotoActionModel.MatchedValue value) {
     AnAction action = getAction(value);
     if (action == null) return;
 
@@ -232,13 +291,13 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     public SearchEverywhereContributor<GotoActionModel.MatchedValue> createContributor(@NotNull AnActionEvent initEvent) {
       return new ActionSearchEverywhereContributor(
         initEvent.getProject(),
-        initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT),
+        initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT),
         initEvent.getData(CommonDataKeys.EDITOR));
     }
+  }
 
-    @Override
-    public @NotNull SearchEverywhereTabDescriptor getTab() {
-      return SearchEverywhereTabDescriptor.IDE;
-    }
+  @Override
+  public boolean isEmptyPatternSupported() {
+    return true;
   }
 }

@@ -75,7 +75,7 @@ public interface Git {
                                                 @Nullable List<String> relativePaths) throws VcsException;
 
   @NotNull
-  GitCommandResult clone(@NotNull Project project, @NotNull File parentDirectory, @NotNull String url, @NotNull String clonedDirectoryName,
+  GitCommandResult clone(@Nullable Project project, @NotNull File parentDirectory, @NotNull String url, @NotNull String clonedDirectoryName,
                          GitLineHandlerListener @NotNull ... progressListeners);
 
   @NotNull
@@ -162,14 +162,6 @@ public interface Git {
 
   @NotNull
   GitCommandResult show(@NotNull GitRepository repository, String @NotNull ... params);
-
-  /**
-   * @deprecated Use {@link #cherryPick(GitRepository, String, boolean, boolean, GitLineHandlerListener...)}
-   */
-  @Deprecated
-  @NotNull
-  GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
-                              GitLineHandlerListener @NotNull ... listeners);
 
   @NotNull
   GitCommandResult cherryPick(@NotNull GitRepository repository,

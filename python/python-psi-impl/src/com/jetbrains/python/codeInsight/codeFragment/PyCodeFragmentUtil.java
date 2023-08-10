@@ -42,7 +42,6 @@ public final class PyCodeFragmentUtil {
     final List<Instruction> subGraph = getFragmentSubGraph(graph, start, end);
     final AnalysisResult subGraphAnalysis = analyseSubGraph(subGraph, start, end);
     if ((subGraphAnalysis.regularExits > 0 && subGraphAnalysis.returns > 0) ||
-        subGraphAnalysis.targetInstructions > 1 ||
         subGraphAnalysis.outerLoopBreaks > 0) {
       throw new CannotCreateCodeFragmentException(PyPsiBundle.message("refactoring.extract.method.error.interrupted.execution.flow"));
     }
@@ -142,8 +141,7 @@ public final class PyCodeFragmentUtil {
     }
     // Hack for including inner assert type instructions that can point to elements outside of the selected scope
     for (Instruction instruction : graph) {
-      if (instruction instanceof ReadWriteInstruction) {
-        final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
+      if (instruction instanceof ReadWriteInstruction readWriteInstruction) {
         if (readWriteInstruction.getAccess().isAssertTypeAccess()) {
           boolean innerAssertType = true;
           for (Instruction next : readWriteInstruction.allSucc()) {
@@ -163,15 +161,13 @@ public final class PyCodeFragmentUtil {
 
   private static class AnalysisResult {
     private final int starImports;
-    private final int targetInstructions;
     private final int regularExits;
     private final int returns;
     private final int outerLoopBreaks;
     private final int yieldExpressions;
 
-    AnalysisResult(int starImports, int targetInstructions, int returns, int regularExits, int outerLoopBreaks, int yieldExpressions) {
+    AnalysisResult(int starImports, int returns, int regularExits, int outerLoopBreaks, int yieldExpressions) {
       this.starImports = starImports;
-      this.targetInstructions = targetInstructions;
       this.regularExits = regularExits;
       this.returns = returns;
       this.outerLoopBreaks = outerLoopBreaks;
@@ -183,7 +179,6 @@ public final class PyCodeFragmentUtil {
   private static AnalysisResult analyseSubGraph(@NotNull List<Instruction> subGraph, int start, int end) {
     int returnSources = 0;
     int regularSources = 0;
-    final Set<Instruction> targetInstructions = new HashSet<>();
     int starImports = 0;
     int outerLoopBreaks = 0;
     int yieldExpressions = 0;
@@ -196,18 +191,6 @@ public final class PyCodeFragmentUtil {
 
       final PyReturnStatement returnStatement = PsiTreeUtil.getParentOfType(source, PyReturnStatement.class, false);
       final boolean isExceptTarget = target instanceof PyExceptPart || target instanceof PyFinallyPart;
-      final boolean isLoopTarget = target instanceof PyWhileStatement || PyForStatementNavigator.getPyForStatementByIterable(target) != null;
-
-      final PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(source, PyBinaryExpression.class);
-      final boolean isOppositeBinaryTarget =
-        binaryExpression != null &&
-        ArrayUtil.contains(binaryExpression.getOperator(), PyTokenTypes.AND_KEYWORD, PyTokenTypes.OR_KEYWORD) &&
-        binaryExpression.getLeftExpression() == source &&
-        binaryExpression.getRightExpression() == target;
-
-      if (target != null && !isExceptTarget && !isLoopTarget && !isOppositeBinaryTarget) {
-        targetInstructions.add(targetInstruction);
-      }
 
       if (returnStatement != null && CodeFragmentUtil.getPosition(returnStatement, start, end) == Position.INSIDE) {
         returnSources++;
@@ -219,8 +202,7 @@ public final class PyCodeFragmentUtil {
 
     final Set<PsiElement> subGraphElements = getSubGraphElements(subGraph);
     for (PsiElement element : subGraphElements) {
-      if (element instanceof PyFromImportStatement) {
-        final PyFromImportStatement fromImportStatement = (PyFromImportStatement)element;
+      if (element instanceof PyFromImportStatement fromImportStatement) {
         if (fromImportStatement.getStarImportElement() != null) {
           starImports++;
         }
@@ -236,7 +218,7 @@ public final class PyCodeFragmentUtil {
       }
     }
 
-    return new AnalysisResult(starImports, targetInstructions.size(), returnSources, regularSources, outerLoopBreaks, yieldExpressions);
+    return new AnalysisResult(starImports, returnSources, regularSources, outerLoopBreaks, yieldExpressions);
   }
 
   @NotNull
@@ -407,8 +389,7 @@ public final class PyCodeFragmentUtil {
   private static List<Instruction> getReadInstructions(@NotNull List<Instruction> subGraph) {
     final List<Instruction> result = new ArrayList<>();
     for (Instruction instruction : subGraph) {
-      if (instruction instanceof ReadWriteInstruction) {
-        final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
+      if (instruction instanceof ReadWriteInstruction readWriteInstruction) {
         if (readWriteInstruction.getAccess().isReadAccess()) {
           result.add(readWriteInstruction);
         }
@@ -421,8 +402,7 @@ public final class PyCodeFragmentUtil {
   private static List<Instruction> getWriteInstructions(@NotNull List<Instruction> subGraph) {
     final List<Instruction> result = new ArrayList<>();
     for (Instruction instruction : subGraph) {
-      if (instruction instanceof ReadWriteInstruction) {
-        final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
+      if (instruction instanceof ReadWriteInstruction readWriteInstruction) {
         if (readWriteInstruction.getAccess().isWriteAccess()) {
           result.add(readWriteInstruction);
         }

@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoComponent;
@@ -11,6 +12,7 @@ import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.codeInspection.DataFlowInspection8Test;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -80,14 +82,16 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   public void testWhenInferenceIsBoundedByEqualsBound() {
     EditorHintFixture hintFixture = new EditorHintFixture(getTestRootDisposable());
     myFixture.configureByText("x.java",
-                                        "import java.util.function.Function;\n" +
-                                        "import java.util.function.Supplier;\n" +
-                                        "class X {\n" +
-                                        "    public <K> void foo(Supplier<K> extractKey, Function<String, K> right) {}\n" +
-                                        "    public void bar(Function<String, Integer> right) {\n" +
-                                        "        foo(<caret>() -> 1, right);\n" +
-                                        "    }\n" +
-                                        "}\n");
+                              """
+                                import java.util.function.Function;
+                                import java.util.function.Supplier;
+                                class X {
+                                    public <K> void foo(Supplier<K> extractKey, Function<String, K> right) {}
+                                    public void bar(Function<String, Integer> right) {
+                                        foo(<caret>() -> 1, right);
+                                    }
+                                }
+                                """);
 
     showParameterInfo();
     assertEquals("<html><b>Supplier&lt;Integer&gt; extractKey</b>, Function&lt;String, Integer&gt; right</html>", hintFixture.getCurrentHintText());
@@ -107,6 +111,10 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
 
   public void testOverloadWithVarargsSingleArg() {
     doTest2CandidatesWithPreselection();
+  }
+ 
+  public void testOverloadWithOneIncompatibleVarargs() {
+    assertNotNull(doTest2CandidatesWithPreselection().getHighlightedParameter());
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -131,14 +139,15 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   public void testSuperConstructorCalls() {
     EditorHintFixture hintFixture = new EditorHintFixture(getTestRootDisposable());
     myFixture.configureByText("x.java",
-                              "class A {\n" +
-                              "       public A(String s, int... p) {}\n" +
-                              "   }\n" +
-                              "   class B extends A {\n" +
-                              "       public B() {\n" +
-                              "           super(<caret>\"a\", 1);\n" +
-                              "       }\n" +
-                              "   }");
+                              """
+                                class A {
+                                       public A(String s, int... p) {}
+                                   }
+                                   class B extends A {
+                                       public B() {
+                                           super(<caret>"a", 1);
+                                       }
+                                   }""");
     showParameterInfo();
     assertEquals("<html><b>String s</b>, int... p</html>", hintFixture.getCurrentHintText());
   }
@@ -147,14 +156,15 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   public void testCompletionPolicyWithLowerBounds() {
     EditorHintFixture hintFixture = new EditorHintFixture(getTestRootDisposable());
     myFixture.configureByText("x.java",
-                              "class B {\n" +
-                              "  static <T> T[] foo(T[] args, int l) {\n" +
-                              "    return null;\n" +
-                              "  }\n" +
-                              "  void f(String[] args) {\n" +
-                              "    String[] a = foo(args, args.len<caret>gth);\n" +
-                              "  }\n" +
-                              "}");
+                              """
+                                class B {
+                                  static <T> T[] foo(T[] args, int l) {
+                                    return null;
+                                  }
+                                  void f(String[] args) {
+                                    String[] a = foo(args, args.len<caret>gth);
+                                  }
+                                }""");
     showParameterInfo();
     assertEquals("<html>String[] args, <b>int l</b></html>", hintFixture.getCurrentHintText());
   }
@@ -178,7 +188,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                 updateParameterInfoContext.isUIComponentEnabled(2));
   }
 
-  private void doTest2CandidatesWithPreselection() {
+  private MockUpdateParameterInfoContext doTest2CandidatesWithPreselection() {
     myFixture.configureByFile(getTestName(false) + ".java");
 
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
@@ -192,6 +202,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, -1);
     MockUpdateParameterInfoContext updateParameterInfoContext = updateParameterInfo(handler, list, itemsToShow);
     assertTrue(updateParameterInfoContext.isUIComponentEnabled(0) || updateParameterInfoContext.isUIComponentEnabled(1));
+    return updateParameterInfoContext;
   }
 
   @NotNull
@@ -316,20 +327,21 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
 
   @NeedsIndex.ForStandardLibrary
   public void testInferredParametersInNestedCallsNoOverloads() {
-    myFixture.configureByText("a.java", "import java.util.function.Consumer;\n" +
-                                        "class A {\n" +
-                                        "        interface Context<T> {\n" +
-                                        "        }\n" +
-                                        "        static <A> Context<A> withProvider(Consumer<A> consumer) {\n" +
-                                        "            return null;\n" +
-                                        "        }\n" +
-                                        "        static <T> Context<T> withContext(Class<T> clazz, Context<T> context) {\n" +
-                                        "            return null;\n" +
-                                        "        }\n" +
-                                        "        public static void testInference() {\n" +
-                                        "            withContext(String.class, withProvider(<caret>));\n" +
-                                        "        }\n" +
-                                        "}");
+    myFixture.configureByText("a.java", """
+      import java.util.function.Consumer;
+      class A {
+              interface Context<T> {
+              }
+              static <A> Context<A> withProvider(Consumer<A> consumer) {
+                  return null;
+              }
+              static <T> Context<T> withContext(Class<T> clazz, Context<T> context) {
+                  return null;
+              }
+              public static void testInference() {
+                  withContext(String.class, withProvider(<caret>));
+              }
+      }""");
     assertEquals("<html>Consumer&lt;String&gt; consumer</html>", parameterPresentation(-1));
   }
 
@@ -440,22 +452,25 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   }
 
   public void testHighlightCurrentParameterAfterTypingFirstArgumentOfThree() {
-    configureJava("class A {\n" +
-                  "    void foo() {}\n" +
-                  "    void foo(int a, int b, int c) {}\n" +
-                  "    {\n" +
-                  "        foo(<caret>)\n" +
-                  "    }\n" +
-                  "}");
+    configureJava("""
+                    class A {
+                        void foo() {}
+                        void foo(int a, int b, int c) {}
+                        {
+                            foo(<caret>)
+                        }
+                    }""");
     showParameterInfo();
-    checkHintContents("[<html>&lt;no parameters&gt;</html>]\n" +
-                      "-\n" +
-                      "<html><b>int a</b>, int b, int c</html>");
+    checkHintContents("""
+                        [<html>&lt;no parameters&gt;</html>]
+                        -
+                        <html><b>int a</b>, int b, int c</html>""");
     type("1, ");
     waitForAllAsyncStuff();
-    checkHintContents("<html><font color=a8a8a8>&lt;no parameters&gt;</font></html>\n" +
-                      "-\n" +
-                      "<html>int a, <b>int b</b>, int c</html>");
+    checkHintContents("""
+                        <html><font color=a8a8a8>&lt;no parameters&gt;</font></html>
+                        -
+                        <html>int a, <b>int b</b>, int c</html>""");
   }
 
   private String removeAnnotationsIfDumb(String s) {
@@ -470,23 +485,24 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     checkResult("class C { void m() { System.out.print('a<caret>'); } }");
     showParameterInfo();
     checkHintContents(removeAnnotationsIfDumb(
-      "<html><b>boolean b</b></html>\n" +
-      "-\n" +
-      "[<html><b>char c</b></html>]\n" +
-      "-\n" +
-      "<html><b>int i</b></html>\n" +
-      "-\n" +
-      "<html><b>long l</b></html>\n" +
-      "-\n" +
-      "<html><b>float v</b></html>\n" +
-      "-\n" +
-      "<html><b>double v</b></html>\n" +
-      "-\n" +
-      "<html><b>@NotNull char[] chars</b></html>\n" +
-      "-\n" +
-      "<html><b>@Nullable String s</b></html>\n" +
-      "-\n" +
-      "<html><b>@Nullable Object o</b></html>"
+      """
+        <html><b>boolean b</b></html>
+        -
+        [<html><b>char c</b></html>]
+        -
+        <html><b>int i</b></html>
+        -
+        <html><b>long l</b></html>
+        -
+        <html><b>float v</b></html>
+        -
+        <html><b>double v</b></html>
+        -
+        <html><b>@NotNull char[] chars</b></html>
+        -
+        <html><b>@Nullable String s</b></html>
+        -
+        <html><b>@Nullable Object o</b></html>"""
     ));
   }
 
@@ -498,17 +514,19 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   }
 
   public void testVarargWithArrayArgument() {
-    configureJava("class C {\n" +
-                  "  void some(int a) {}\n" +
-                  "  void some(String... b) {}\n" +
-                  "  void m(String[] c) {\n" +
-                  "    some(c<caret>);\n" +
-                  "  }\n" +
-                  "}");
+    configureJava("""
+                    class C {
+                      void some(int a) {}
+                      void some(String... b) {}
+                      void m(String[] c) {
+                        some(c<caret>);
+                      }
+                    }""");
     showParameterInfo();
-    checkHintContents("<html><b>int a</b></html>\n" +
-                      "-\n" +
-                      "[<html><b>String... b</b></html>]");
+    checkHintContents("""
+                        <html><b>int a</b></html>
+                        -
+                        [<html><b>String... b</b></html>]""");
   }
 
   public void testDoNotShowUnrelatedInfoOnTyping() {
@@ -516,6 +534,52 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     type('(');
     waitForAllAsyncStuff();
     checkHintContents(null);
+  }
+
+  @NeedsIndex.SmartMode(reason = "MethodParameterInfoHandler.appendModifierList doesn't work in dumb mode")
+  public void testInferredAnnotation() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("tu", myFixture);
+    NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
+    String defaultNotNull = nnnManager.getDefaultNotNull();
+    nnnManager.setDefaultNotNull("tu.NotNull");
+    try {
+      configureJava("""
+                      class X {
+                          public static void main(String[] args) {
+                              System.out.println(getSomething(<caret>));
+                          }
+                                          
+                          public static String getSomething(Something l) {
+                              return l.toString();
+                          }
+                      }
+                      """);
+      showParameterInfo();
+      checkHintContents("<html><b>@NotNull Something l</b></html>");
+    }
+    finally {
+      nnnManager.setDefaultNotNull(defaultNotNull);
+    }
+  }
+
+  @NeedsIndex.SmartMode(reason = "MethodParameterInfoHandler.appendModifierList doesn't work in dumb mode")
+  public void testQualifierTypeUse() {
+    configureJava("""
+                    import java.lang.annotation.*;
+                    import java.util.Map;
+                    class X {
+                        void foo(@NotNull Map.Entry p, @NotNull Map m, Map.Entry p1, Map.@NotNull Entry p2) {
+                    
+                            foo(<caret>);
+                        }
+                    }
+                    
+                    @Documented
+                    @Target({ElementType.TYPE_USE, ElementType.PARAMETER})
+                    @interface NotNull {}
+                    """);
+    showParameterInfo();
+    checkHintContents("<html><b>@NotNull Map.Entry p</b>, @NotNull Map m, Entry p1, @NotNull Entry p2</html>");
   }
 
   public void testCustomHandlerHighlighterWithEscaping() {

@@ -1,4 +1,4 @@
-// "Move assignment to field declaration" "true"
+// "Move assignment to field declaration" "true-preview"
 
 class X {
     // Create default runnable
@@ -12,7 +12,7 @@ class X {
       }
     };
   X() {
-      <caret>//
+    <caret>  //
   }
 
   void x() {

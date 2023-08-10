@@ -43,4 +43,9 @@ public class CloseActiveTabAction extends AnAction implements DumbAware {
       presentation.setEnabled(PlatformDataKeys.TOOL_WINDOW.getData(context) != null);
     }
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
 }

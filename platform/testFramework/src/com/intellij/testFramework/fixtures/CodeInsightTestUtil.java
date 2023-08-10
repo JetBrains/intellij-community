@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
-import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
@@ -18,27 +19,31 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationSession;
-import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.annotation.*;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.EdtTestUtil;
@@ -48,7 +53,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ComponentPopupBuilderImpl;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.Functions;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +64,8 @@ import org.junit.Assert;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 import static junit.framework.Assert.assertTrue;
@@ -110,6 +117,7 @@ public final class CodeInsightTestUtil {
       Assert.fail("Action not found: " + action + " in place: " + element + " among " + availableIntentions);
     }
     fixture.launchAction(intentionAction);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     fixture.checkResultByFile(after, false);
   }
 
@@ -186,9 +194,25 @@ public final class CodeInsightTestUtil {
     fixture.checkResultByFile(after, false);
   }
 
-  @TestOnly
   public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, CodeInsightTestFixture fixture) {
-    doInlineRename(handler, newName, fixture.getEditor(), fixture.getElementAtCaret());
+    PsiElement elementAtCaret = fixture.getElementAtCaret();
+    Editor editorForElement = openEditorFor(elementAtCaret);
+    doInlineRename(handler, newName, editorForElement, elementAtCaret);
+  }
+
+  @NotNull
+  public static Editor openEditorFor(@NotNull PsiElement elementAtCaret) {
+    // sometimes the element found by TargetElementUtil may belong to the other editor, e.g, in case of an injected element
+    // but inplace rename requires that both element and the editor must be consistent
+    Editor editorForElement = PsiEditorUtil.getInstance().findEditorByPsiElement(elementAtCaret);
+    if (editorForElement == null) {
+      PsiFile containingFile = elementAtCaret.getContainingFile();
+      VirtualFile virtualFile = containingFile.getVirtualFile();
+      Project project = containingFile.getProject();
+      editorForElement = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
+      editorForElement.getCaretModel().moveToOffset(elementAtCaret.getTextOffset());
+    }
+    return editorForElement;
   }
 
   public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, @NotNull Editor editor, PsiElement elementAtCaret) {
@@ -201,13 +225,17 @@ public final class CodeInsightTestUtil {
    * @return true if the refactoring was performed, false otherwise
    */
   @TestOnly
-  public static boolean tryInlineRename(VariableInplaceRenameHandler handler, final String newName, @NotNull Editor editor, PsiElement elementAtCaret) {
+  public static boolean tryInlineRename(VariableInplaceRenameHandler handler,
+                                        final String newName,
+                                        @NotNull Editor editor,
+                                        @NotNull PsiElement elementAtCaret) {
     Project project = editor.getProject();
     Disposable disposable = Disposer.newDisposable();
     try {
       TemplateManagerImpl.setTemplateTesting(disposable);
+      DataContext context = DataManager.getInstance().getDataContext(editor.getComponent());
       InplaceRefactoring renamer =
-        handler.doRename(elementAtCaret, editor, DataManager.getInstance().getDataContext(editor.getComponent()));
+        handler.doRename(Objects.requireNonNullElse(PsiElementRenameHandler.getElement(context), elementAtCaret), editor, context);
       if (editor instanceof EditorWindow) {
         editor = ((EditorWindow)editor).getDelegate();
       }
@@ -265,6 +293,7 @@ public final class CodeInsightTestUtil {
   @TestOnly
   public static GotoTargetHandler.GotoData gotoImplementation(Editor editor, PsiFile file) {
     GotoTargetHandler.GotoData data = new GotoImplementationHandler().getSourceAndTargetElements(editor, file);
+    data.initPresentations();
     if (data.listUpdaterTask != null) {
       JBList<Object> list = new JBList<>();
       CollectionListModel<Object> model = new CollectionListModel<>(new ArrayList<>());
@@ -293,9 +322,43 @@ public final class CodeInsightTestUtil {
                                                                 @NotNull Consumer<? super Out> resultChecker) {
     Out result = annotator.doAnnotate(in);
     resultChecker.accept(result);
-    AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(psiFile));
-    ApplicationManager.getApplication().runReadAction(() -> annotationHolder.applyExternalAnnotatorWithContext(psiFile, annotator, result));
-    annotationHolder.assertAllAnnotationsCreated();
-    return ContainerUtil.immutableList(annotationHolder);
+    return AnnotationSessionImpl.computeWithSession(psiFile, false, annotationHolder -> {
+      ApplicationManager.getApplication().runReadAction(() -> annotationHolder.applyExternalAnnotatorWithContext(psiFile, annotator, result));
+      annotationHolder.assertAllAnnotationsCreated();
+      return List.copyOf(annotationHolder);
+    });
+  }
+
+  /**
+   * Create AnnotationHolder, run {@code annotator} in it on passed {@code elements} and return created Annotations
+   */
+  @NotNull
+  public static List<Annotation> testAnnotator(@NotNull Annotator annotator, @NotNull PsiElement @NotNull... elements) {
+    PsiFile psiFile = elements[0].getContainingFile();
+    return AnnotationSessionImpl.computeWithSession(psiFile, false, annotationHolder -> {
+      for (PsiElement element : elements) {
+        annotationHolder.runAnnotatorWithContext(element, annotator);
+      }
+      annotationHolder.assertAllAnnotationsCreated();
+      return List.copyOf(annotationHolder);
+    });
+  }
+
+  public static void runIdentifierHighlighterPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().createHighlightingPass(psiFile, editor, psiFile.getTextRange());
+    assert pass != null;
+    try {
+      ReadAction.nonBlocking(() -> {
+        DaemonProgressIndicator indicator = new DaemonProgressIndicator();
+        ProgressManager.getInstance().runProcess(() -> {
+          HighlightingSessionImpl.runInsideHighlightingSession(psiFile, editor.getColorsScheme(), ProperTextRange.create(psiFile.getTextRange()), false, session -> {
+            pass.doCollectInformation(session);
+          });
+        }, indicator);
+      }).submit(AppExecutorUtil.getAppExecutorService()).get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

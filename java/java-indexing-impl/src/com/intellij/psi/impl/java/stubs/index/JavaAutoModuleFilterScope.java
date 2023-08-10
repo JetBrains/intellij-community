@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
@@ -22,8 +22,15 @@ class JavaAutoModuleFilterScope extends DelegatingGlobalSearchScope {
     VirtualFile root = file;
     if (!file.isDirectory()) {
       root = file.getParent().getParent();
+      if (root == null) {
+        return false;
+      }
       Project project = getProject();
-      if (project == null || !root.equals(ProjectFileIndex.getInstance(project).getSourceRootForFile(file))) {
+      if (project == null) {
+        return false;
+      }
+      ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+      if (!root.equals(fileIndex.getSourceRootForFile(file)) && !root.equals(fileIndex.getClassRootForFile(file))) {
         return false;
       }
     }

@@ -38,7 +38,7 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   private final DocumentWindow myDocument;
   private final MarkupModelEx myHostModel;
 
-  public MarkupModelWindow(MarkupModelEx editorMarkupModel, final DocumentWindow document) {
+  public MarkupModelWindow(@NotNull MarkupModelEx editorMarkupModel, @NotNull DocumentWindow document) {
     myDocument = document;
     myHostModel = editorMarkupModel;
   }
@@ -174,33 +174,5 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
     // todo convert
     return myHostModel.overlappingIterator(startOffset, endOffset);
-  }
-
-  @NotNull
-  @Override
-  public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
-                                                                int endOffset,
-                                                                boolean onlyRenderedInGutter) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged) {
-
-  }
-
-  @Override
-  public void fireAfterAdded(@NotNull RangeHighlighterEx segmentHighlighter) {
-
-  }
-
-  @Override
-  public void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
-
-  }
-
-  @Override
-  public void addRangeHighlighter(@NotNull RangeHighlighterEx marker, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-
   }
 }

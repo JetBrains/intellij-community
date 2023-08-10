@@ -65,8 +65,8 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
             // containing all of them, not just the first one as found by findInfo()
             HighlightInfo fullInfo = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project))
               .findHighlightByOffset(editor.getDocument(), editor.getCaretModel().getOffset(), false);
-            DaemonTooltipUtil.showInfoTooltip(fullInfo != null ? fullInfo : infoToGo,
-                                              editor, editor.getCaretModel().getOffset(), false, true);
+            HighlightInfo info = fullInfo != null ? fullInfo : infoToGo;
+            EditorMouseHoverPopupManager.getInstance().showInfoTooltip(editor, info, editor.getCaretModel().getOffset(), false, true);
           }
         });
         return;

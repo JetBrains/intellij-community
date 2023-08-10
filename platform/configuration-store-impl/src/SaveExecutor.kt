@@ -1,14 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.util.SmartList
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -21,16 +20,17 @@ internal interface SaveExecutor {
 
 @ApiStatus.Internal
 open class SaveSessionProducerManager : SaveExecutor {
-  private val producers = LinkedHashMap<StateStorage, SaveSessionProducer>()
+  private val producers = Collections.synchronizedMap(LinkedHashMap<StateStorage, SaveSessionProducer>())
 
-  // actually, all storages for component store shares the same value, but for flexibility and to simplify code, just compute on the fly
+  // actually, all storages for component store share the same value, but for flexibility and to simplify code, just compute on the fly
   private var isVfsRequired = false
 
   fun getProducer(storage: StateStorage): SaveSessionProducer? {
     var producer = producers.get(storage)
     if (producer == null) {
       producer = storage.createSaveSessionProducer() ?: return null
-      producers.put(storage, producer)
+      val prev = producers.put(storage, producer)
+      check(prev == null)
       if (storage.isUseVfsForWrite) {
         isVfsRequired = true
       }
@@ -38,50 +38,44 @@ open class SaveSessionProducerManager : SaveExecutor {
     return producer
   }
 
-  private inline fun processSaveSessions(processor: (SaveSession) -> Unit): Boolean {
+  internal fun collectSaveSessions(result: MutableCollection<SaveSession>) {
     if (producers.isEmpty()) {
-      return false
+      return
     }
 
-    var isChanged = false
     for (session in producers.values) {
-      processor(session.createSaveSession() ?: continue)
-      isChanged = true
-    }
-    return isChanged
-  }
-
-  fun collectSaveSessions(result: MutableList<SaveSession>) {
-    processSaveSessions {
-      result.add(it)
+      result.add(session.createSaveSession() ?: continue)
     }
   }
 
   override suspend fun save(): SaveResult {
-    val saveSessions = SmartList<SaveSession>()
-    collectSaveSessions(saveSessions)
+    if (producers.isEmpty()) {
+      return SaveResult.EMPTY
+    }
+
+    val saveSessions = ArrayList<SaveSession>()
+    for (session in producers.values) {
+      saveSessions.add(session.createSaveSession() ?: continue)
+    }
+
     if (saveSessions.isEmpty()) {
       return SaveResult.EMPTY
     }
 
-    val task = {
-      val result = SaveResult()
-      saveSessions(saveSessions, result)
-      result
-    }
-
+    val result = SaveResult()
     if (isVfsRequired) {
-      return withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-        runWriteAction(task)
+      writeAction {
+        saveSessions(saveSessions, result)
       }
     }
     else {
-      return task()
+      saveSessions(saveSessions, result)
     }
+    return result
   }
 }
 
-internal fun saveSessions(saveSessions: List<SaveSession>, result: SaveResult) {
+internal fun saveSessions(saveSessions: Collection<SaveSession>, result: SaveResult) {
   for (saveSession in saveSessions) {
     executeSave(saveSession, result)
   }
@@ -96,6 +90,9 @@ internal fun executeSave(session: SaveSession, result: SaveResult) {
     result.addReadOnlyFile(SaveSessionAndFile(e.session ?: session, e.file))
   }
   catch (e: ProcessCanceledException) {
+    throw e
+  }
+  catch (e: CancellationException) {
     throw e
   }
   catch (e: Exception) {

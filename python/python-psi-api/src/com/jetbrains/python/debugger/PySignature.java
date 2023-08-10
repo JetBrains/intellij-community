@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class PySignature {
@@ -108,11 +108,11 @@ public class PySignature {
     @NotNull
     private static List<String> parseTypes(@NotNull String type) {
       if (type.startsWith(UNION_PREFIX) && type.endsWith("]")) {
-        return Lists.newArrayList(type.substring(UNION_PREFIX.length(), type.length() - 1).split("\\s*,\\s*"));
+        return new ArrayList<>(Arrays.asList(type.substring(UNION_PREFIX.length(), type.length() - 1).split("\\s*,\\s*")));
       }
       else {
         String[] parts = type.split(" or ");
-        return Lists.newArrayList(parts);
+        return new ArrayList<>(Arrays.asList(parts));
       }
     }
 

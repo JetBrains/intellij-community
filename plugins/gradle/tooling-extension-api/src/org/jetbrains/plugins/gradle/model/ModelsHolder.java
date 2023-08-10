@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectIdentifier;
@@ -23,14 +24,14 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
 import org.jetbrains.plugins.gradle.tooling.serialization.ToolingSerializer;
 
-import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * @author Vladislav.Soroka
@@ -38,19 +39,22 @@ import java.util.Map;
 public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel> implements Serializable {
 
   @NotNull private final B myRootModel;
-  @NotNull private final Map<String, Object> myModelsById = new LinkedHashMap<String, Object>();
+  @NotNull private final Map<String, Object> myModelsById = new LinkedHashMap<>();
   @Nullable private ToolingSerializer mySerializer;
+  @Nullable private Consumer<Object> myPathsConverter;
 
   public ModelsHolder(@NotNull B rootModel) {
     myRootModel = rootModel;
   }
 
   @ApiStatus.Internal
-  public void initToolingSerializer(SerializationService<?>... additionalSerializerServices) {
+  public void initToolingSerializer() {
     mySerializer = new ToolingSerializer();
-    for (SerializationService<?> service : additionalSerializerServices) {
-      mySerializer.register(service);
-    }
+  }
+
+  @ApiStatus.Internal
+  void applyPathsConverter(@NotNull Consumer<Object> pathsConverter) {
+    myPathsConverter = pathsConverter;
   }
 
   @NotNull
@@ -116,18 +120,47 @@ public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel>
         try {
           T deserializedData = mySerializer.read((byte[])entry.getValue(), modelClazz);
           if (modelClazz.isInstance(deserializedData)) {
+            if (myPathsConverter != null) {
+              myPathsConverter.accept(deserializedData);
+            }
             myModelsById.put(key, deserializedData);
           }
           else {
             iterator.remove();
           }
         }
-        catch (IOException e) {
-          //noinspection UseOfSystemOutOrSystemErr
-          System.err.println(e.getMessage());
+        catch (Exception e) {
+          reportError(entry.getKey(), e);
           iterator.remove();
         }
       }
+    }
+  }
+
+  private void reportError(String key, Exception e) {
+    //noinspection UseOfSystemOutOrSystemErr
+    System.err.println(e.getMessage());
+    tryReportingViaIdeaLogger(e, key);
+  }
+
+  /**
+   * Try to report error to IDEA logging subsystem.
+   * <p>
+   * The ModelsHolder can be used both, in Gradle Daemon process and in IntelliJ IDEA process.
+   * In latter case, it would be good to report errors to IDEA log, as failure to deserialize an entity
+   * can lead to unexpected behavior (e.g., broken project model after import
+   * @param e the exception
+   * @param key key (name of the model) that was not possible to deserialize.
+   */
+  private void tryReportingViaIdeaLogger(Exception e, String key) {
+    try {
+      Class<? extends ModelsHolder> aClass = getClass();
+      Class<?> loggerClazz = aClass.getClassLoader().loadClass("com.intellij.openapi.diagnostic.Logger");
+      Method getInstanceMethod = loggerClazz.getMethod("getInstance", Class.class);
+      Object logger = getInstanceMethod.invoke(null, aClass);
+      Method errorMethod = loggerClazz.getMethod("error", String.class, Throwable.class);
+      errorMethod.invoke(logger, "Failed to parse model with key [" + key + "]", e);
+    } catch (Exception ignore) {
     }
   }
 
@@ -158,16 +191,24 @@ public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel>
   }
 
   @NotNull
-  private static String extractMapKey(@NotNull Class modelClazz, @NotNull ProjectIdentifier projectIdentifier) {
-    String prefix = getModelKeyPrefix(modelClazz);
-    BuildIdentifier buildIdentifier = projectIdentifier.getBuildIdentifier();
-    return prefix + '/' + (buildIdentifier.getRootDir().getPath().hashCode() + projectIdentifier.getProjectPath());
+  private String extractMapKey(@NotNull Class modelClazz, @NotNull ProjectIdentifier projectIdentifier) {
+    String modelKeyPrefix = getModelKeyPrefix(modelClazz);
+    String buildKeyPrefix = getBuildKeyPrefix(projectIdentifier.getBuildIdentifier());
+    return modelKeyPrefix + '/' + (buildKeyPrefix + projectIdentifier.getProjectPath());
   }
 
   @NotNull
-  private static String extractMapKey(@NotNull Class modelClazz, @NotNull BuildIdentifier buildIdentifier) {
-    String prefix = getModelKeyPrefix(modelClazz);
-    return prefix + '/' + buildIdentifier.getRootDir().getPath().hashCode() + ":";
+  private String extractMapKey(@NotNull Class modelClazz, @NotNull BuildIdentifier buildIdentifier) {
+    String modelKeyPrefix = getModelKeyPrefix(modelClazz);
+    String buildKeyPrefix = getBuildKeyPrefix(buildIdentifier);
+    return modelKeyPrefix + '/' + buildKeyPrefix + ":";
+  }
+
+  @NotNull
+  protected String getBuildKeyPrefix(@NotNull BuildIdentifier buildIdentifier) {
+    String path = buildIdentifier.getRootDir().getPath();
+    String systemIndependentName = FileUtilRt.toSystemIndependentName(path);
+    return String.valueOf(systemIndependentName.hashCode());
   }
 
   private ProjectIdentifier getProjectIdentifier(@NotNull P project) {

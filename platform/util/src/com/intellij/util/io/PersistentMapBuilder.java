@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -8,16 +9,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.ExecutorService;
 
 /**
  * A builder helper for {@link PersistentHashMap}
+ *
  * @see PersistentHashMap
  */
 @ApiStatus.Experimental
 public final class PersistentMapBuilder<Key, Value> {
-  @NotNull private final Path myFile;
-  @NotNull private final KeyDescriptor<Key> myKeyDescriptor;
-  @NotNull private final DataExternalizer<Value> myValueExternalizer;
+  private final @NotNull Path myFile;
+  private final @NotNull KeyDescriptor<Key> myKeyDescriptor;
+  private final @NotNull DataExternalizer<Value> myValueExternalizer;
 
   private Integer myInitialSize;
   private Integer myVersion;
@@ -25,24 +28,50 @@ public final class PersistentMapBuilder<Key, Value> {
   private Boolean myInlineValues;
   private Boolean myIsReadOnly;
   private Boolean myHasChunks;
-  private IOCancellationCallback myCancellationCallback;
-  private Boolean myCompactOnClose = null;
+  private Boolean myCompactOnClose;
+  private @NotNull ExecutorService myWalExecutor;
+  private boolean myEnableWal;
+
+  private PersistentMapBuilder(final @NotNull Path file,
+                               final @NotNull KeyDescriptor<Key> keyDescriptor,
+                               final @NotNull DataExternalizer<Value> valueExternalizer,
+                               final Integer initialSize,
+                               final Integer version,
+                               final StorageLockContext lockContext,
+                               final Boolean inlineValues,
+                               final Boolean isReadOnly,
+                               final Boolean hasChunks,
+                               final Boolean compactOnClose,
+                               final @NotNull ExecutorService walExecutor,
+                               final boolean enableWal) {
+    myFile = file;
+    myKeyDescriptor = keyDescriptor;
+    myValueExternalizer = valueExternalizer;
+    myInitialSize = initialSize;
+    myVersion = version;
+    myLockContext = lockContext;
+    myInlineValues = inlineValues;
+    myIsReadOnly = isReadOnly;
+    myHasChunks = hasChunks;
+    myCompactOnClose = compactOnClose;
+    myWalExecutor = walExecutor;
+    myEnableWal = enableWal;
+  }
 
   private PersistentMapBuilder(@NotNull Path file,
                                @NotNull KeyDescriptor<Key> keyDescriptor,
                                @NotNull DataExternalizer<Value> valueExternalizer) {
-    myFile = file;
-    myKeyDescriptor = keyDescriptor;
-    myValueExternalizer = valueExternalizer;
+    this(file, keyDescriptor, valueExternalizer,
+         null, null, null, null, null, null, null,
+         ConcurrencyUtil.newSameThreadExecutorService(),
+         false);
   }
 
-  @NotNull
-  public PersistentHashMap<Key, Value> build() throws IOException {
+  public @NotNull PersistentHashMap<Key, Value> build() throws IOException {
     return new PersistentHashMap<>(buildImplementation());
   }
 
-  @NotNull
-  private PersistentMapBase<Key, Value> buildImplementation() throws IOException {
+  public @NotNull PersistentMapBase<Key, Value> buildImplementation() throws IOException {
     Boolean oldHasNoChunksValue = null;
     if (myHasChunks != null) {
       oldHasNoChunksValue = PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.get();
@@ -51,11 +80,6 @@ public final class PersistentMapBuilder<Key, Value> {
     Boolean previousReadOnly = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get();
     PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(myIsReadOnly);
 
-    IOCancellationCallback previousIoCancellationCallback = null;
-    if (myCancellationCallback != null) {
-      previousIoCancellationCallback = PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.get();
-      PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(myCancellationCallback);
-    }
     try {
       if (SystemProperties.getBooleanProperty("idea.use.in.memory.persistent.map", false)) {
         return new PersistentMapInMemory<>(this);
@@ -68,60 +92,57 @@ public final class PersistentMapBuilder<Key, Value> {
         PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(oldHasNoChunksValue);
       }
       PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(previousReadOnly);
-
-      if (myCancellationCallback != null) {
-        PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(previousIoCancellationCallback);
-      }
     }
   }
 
-  @NotNull
-  public Path getFile() {
+  public @NotNull Path getFile() {
     return myFile;
   }
 
-  @NotNull
-  public KeyDescriptor<Key> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<Key> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
-  @NotNull
-  public DataExternalizer<Value> getValueExternalizer() {
+  public @NotNull DataExternalizer<Value> getValueExternalizer() {
     return myValueExternalizer;
   }
 
-  @NotNull
-  public static <Key, Value> PersistentMapBuilder<Key, Value> newBuilder(@NotNull Path file,
-                                                                         @NotNull KeyDescriptor<Key> keyDescriptor,
-                                                                         @NotNull DataExternalizer<Value> valueExternalizer) {
+  public static @NotNull <Key, Value> PersistentMapBuilder<Key, Value> newBuilder(@NotNull Path file,
+                                                                                  @NotNull KeyDescriptor<Key> keyDescriptor,
+                                                                                  @NotNull DataExternalizer<Value> valueExternalizer) {
     return new PersistentMapBuilder<>(file, keyDescriptor, valueExternalizer);
   }
 
-  @NotNull
-  public PersistentMapBuilder<Key, Value> withInitialSize(int initialSize) {
+  public @NotNull PersistentMapBuilder<Key, Value> withInitialSize(int initialSize) {
     myInitialSize = initialSize;
     return this;
   }
 
-  @NotNull
-  public PersistentMapBuilder<Key, Value> withVersion(int version) {
+  public @NotNull PersistentMapBuilder<Key, Value> withVersion(int version) {
     myVersion = version;
     return this;
   }
 
-  @NotNull
-  public PersistentMapBuilder<Key, Value> withReadonly(boolean readonly) {
+  public @NotNull PersistentMapBuilder<Key, Value> withReadonly(boolean readonly) {
     myIsReadOnly = readonly;
     return this;
   }
 
-  @NotNull
-  public PersistentMapBuilder<Key, Value> readonly() {
+  public @NotNull PersistentMapBuilder<Key, Value> readonly() {
     return withReadonly(true);
   }
 
-  @NotNull
-  public PersistentMapBuilder<Key, Value> inlineValues(boolean inlineValues) {
+  public @NotNull PersistentMapBuilder<Key, Value> withWal(boolean enableWal) {
+    myEnableWal = enableWal;
+    return this;
+  }
+
+  public @NotNull PersistentMapBuilder<Key, Value> withWalExecutor(@NotNull ExecutorService service) {
+    myWalExecutor = service;
+    return this;
+  }
+
+  public @NotNull PersistentMapBuilder<Key, Value> inlineValues(boolean inlineValues) {
     if (inlineValues && !(myValueExternalizer instanceof IntInlineKeyDescriptor)) {
       throw new IllegalStateException("can't inline values for externalizer " + myValueExternalizer.getClass());
     }
@@ -129,42 +150,31 @@ public final class PersistentMapBuilder<Key, Value> {
     return this;
   }
 
-  @NotNull
-  public PersistentMapBuilder<Key, Value> inlineValues() {
+  public @NotNull PersistentMapBuilder<Key, Value> inlineValues() {
     return inlineValues(true);
   }
 
-  @NotNull
-  public PersistentMapBuilder<Key, Value> withStorageLockContext(@Nullable StorageLockContext context) {
+  public @NotNull PersistentMapBuilder<Key, Value> withStorageLockContext(@Nullable StorageLockContext context) {
     myLockContext = context;
     return this;
   }
 
-  @NotNull
-  public PersistentMapBuilder<Key, Value> hasChunks(boolean hasChunks) {
+  public @NotNull PersistentMapBuilder<Key, Value> hasChunks(boolean hasChunks) {
     myHasChunks = hasChunks;
     return this;
   }
-  @NotNull
-  public PersistentMapBuilder<Key, Value> hasNoChunks() {
+
+  public @NotNull PersistentMapBuilder<Key, Value> hasNoChunks() {
     myHasChunks = false;
     return this;
   }
 
-  @NotNull
-  public PersistentMapBuilder<Key, Value> withIoCancellationCallback(@NotNull IOCancellationCallback ioCancellationCallback) {
-    myCancellationCallback = ioCancellationCallback;
-    return this;
-  }
-
-  @NotNull
-  public PersistentMapBuilder<Key, Value> withCompactOnClose(boolean compactOnClose) {
+  public @NotNull PersistentMapBuilder<Key, Value> withCompactOnClose(boolean compactOnClose) {
     myCompactOnClose = compactOnClose;
     return this;
   }
 
-  @NotNull
-  public PersistentMapBuilder<Key, Value> compactOnClose() {
+  public @NotNull PersistentMapBuilder<Key, Value> compactOnClose() {
     return withCompactOnClose(true);
   }
 
@@ -193,8 +203,36 @@ public final class PersistentMapBuilder<Key, Value> {
     return defaultCompactOnClose;
   }
 
-  @Nullable
-  public StorageLockContext getLockContext() {
+  public boolean isEnableWal() {
+    return myEnableWal;
+  }
+
+  public @NotNull ExecutorService getWalExecutor() {
+    return myWalExecutor;
+  }
+
+  public @Nullable StorageLockContext getLockContext() {
     return myLockContext;
+  }
+
+  /**
+   * Since builder is not immutable, it is quite useful to have defensive copy of it
+   *
+   * @return shallow copy of this builder.
+   */
+  public PersistentMapBuilder<Key, Value> copy() {
+    return new PersistentMapBuilder<>(
+      myFile, myKeyDescriptor, myValueExternalizer,
+      myInitialSize, myVersion, myLockContext, myInlineValues, myIsReadOnly, myHasChunks, myCompactOnClose,
+      myWalExecutor, myEnableWal
+    );
+  }
+
+  public @NotNull PersistentMapBuilder<Key, Value> copyWithFile(final @NotNull Path file) {
+    return new PersistentMapBuilder<>(
+      file, myKeyDescriptor, myValueExternalizer,
+      myInitialSize, myVersion, myLockContext, myInlineValues, myIsReadOnly, myHasChunks, myCompactOnClose,
+      myWalExecutor, myEnableWal
+    );
   }
 }

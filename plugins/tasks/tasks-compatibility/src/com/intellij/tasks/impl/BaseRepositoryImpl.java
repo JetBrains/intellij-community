@@ -1,17 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * Base class for HTTP-based repositories functioning over Apache Commons HttpClient 3.1.
@@ -22,8 +23,7 @@ import java.nio.charset.StandardCharsets;
  * @author Dmitry Avdeev
  * @deprecated Upgrade your clients to use Apache HttpClient 4.x or other transport libraries.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class BaseRepositoryImpl extends BaseRepository {
   private final HttpClient myClient;
 
@@ -145,7 +145,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
 
   @Override
   public void setPassword(String password) {
-    if (!password.equals(getPassword())) {
+    if (!Objects.equals(password, getPassword())) {
       super.setPassword(password);
       reconfigureClient();
     }

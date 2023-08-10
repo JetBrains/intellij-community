@@ -1,0 +1,3 @@
+def foo() {
+  <spot>expr</spot>$key
+}

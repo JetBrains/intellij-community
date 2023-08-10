@@ -1,11 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
+
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Comparator;
 
 /**
  * Class containing info about found elements
  */
+@ApiStatus.Internal
 public class SearchEverywhereFoundElementInfo {
   public final int priority;
   public final Object element;
@@ -27,6 +30,11 @@ public class SearchEverywhereFoundElementInfo {
 
   public SearchEverywhereContributor<?> getContributor() {
     return contributor;
+  }
+
+  public String getDescription() {
+    return "contributor: " + (contributor != null ? contributor.getSearchProviderId() : "null") + "\n" +
+           "weight: " + priority + "\n";
   }
 
   public static final Comparator<SearchEverywhereFoundElementInfo> COMPARATOR = (o1, o2) -> {

@@ -155,10 +155,9 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     if (this == o) {
       return 0;
     }
-    if (!(o instanceof HgRevisionNumber)) {
+    if (!(o instanceof HgRevisionNumber other)) {
       return -1;
     }
-    final HgRevisionNumber other = (HgRevisionNumber) o;
     if (changeset.equals(other.changeset)) {
       return 0;
     }
@@ -213,10 +212,9 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     if (object == this) {
       return true;
     }
-    if (!(object instanceof HgRevisionNumber)) {
+    if (!(object instanceof HgRevisionNumber that)) {
       return false;
     }
-    HgRevisionNumber that = (HgRevisionNumber) object;
     return compareTo(that) == 0;
   }
 

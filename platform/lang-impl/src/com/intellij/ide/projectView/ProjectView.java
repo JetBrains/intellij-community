@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView;
 
@@ -59,8 +59,6 @@ public abstract class ProjectView {
    */
   public abstract void changeView(@NotNull String viewId, @Nullable String subId);
 
-  public abstract void changeView();
-
   public abstract void refresh();
 
   public abstract boolean isAutoscrollToSource(String paneId);
@@ -113,6 +111,8 @@ public abstract class ProjectView {
 
   public abstract boolean isShowURL(String paneId);
 
+  public abstract boolean isShowScratchesAndConsoles(String paneId);
+
   public abstract void addProjectPane(@NotNull AbstractProjectViewPane pane);
 
   public abstract void removeProjectPane(@NotNull AbstractProjectViewPane pane);
@@ -138,7 +138,13 @@ public abstract class ProjectView {
   public abstract void setManualOrder(@NotNull String paneId, boolean enabled);
 
   public abstract boolean isSortByType(String paneId);
+
   public abstract void setSortByType(@NotNull String paneId, final boolean sortByType);
+
+  @NotNull
+  public abstract NodeSortKey getSortKey(String paneId);
+
+  public abstract void setSortKey(@NotNull String paneId, @NotNull NodeSortKey sortKey);
 
   public abstract AbstractProjectViewPane getCurrentProjectViewPane();
 

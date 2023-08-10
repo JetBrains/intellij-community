@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -12,6 +13,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
@@ -22,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
@@ -54,12 +57,12 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC = new Topic<>(AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   public PsiManagerImpl(@NotNull Project project) {
-    // we need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
+    // we need to initialize PsiBuilderFactory service, so it won't initialize under PsiLock from ChameleonTransform
     PsiBuilderFactory.getInstance();
 
     myProject = project;
     myFileIndex = NotNullLazyValue.createValue(() -> FileIndexFacade.getInstance(project));
-    myModificationTracker = PsiModificationTracker.SERVICE.getInstance(project);
+    myModificationTracker = PsiModificationTracker.getInstance(project);
 
     myFileManager = new FileManagerImpl(this, myFileIndex);
 
@@ -112,9 +115,14 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
+  public @Nullable FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile) {
+    return myFileManager.findCachedViewProvider(vFile);
+  }
+
+  @Override
   @TestOnly
   public void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, @NotNull Disposable parentDisposable) {
-    // Find something to ensure there's no changed files waiting to be processed in repository indices.
+    // Find something to ensure there are no changed files waiting to be processed in repository indices.
     myAssertOnFileLoadingFilter = filter;
     Disposer.register(parentDisposable, () -> myAssertOnFileLoadingFilter = VirtualFileFilter.NONE);
   }
@@ -125,14 +133,12 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   @Override
-  @NotNull
-  public FileManager getFileManager() {
+  public @NotNull FileManager getFileManager() {
     return myFileManager;
   }
 
@@ -149,14 +155,14 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
+  @RequiresReadLock
   public PsiFile findFile(@NotNull VirtualFile file) {
     ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findFile(file);
   }
 
-  @NotNull
   @Override
-  public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
+  public @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findViewProvider(file);
   }
@@ -178,7 +184,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
-  public void addPsiTreeChangeListener(@NotNull final PsiTreeChangeListener listener, @NotNull Disposable parentDisposable) {
+  public void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener, @NotNull Disposable parentDisposable) {
     addPsiTreeChangeListener(listener);
     Disposer.register(parentDisposable, () -> removePsiTreeChangeListener(listener));
   }
@@ -189,7 +195,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   private static @NonNls String logPsi(@Nullable PsiElement element) {
-    return element == null ? " null" : element.getClass().getName();
+    return element == null ? "null" : element.getClass().getName();
   }
 
   @Override
@@ -412,7 +418,12 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
       }
     }
     catch (Throwable e) {
-      LOG.error(e);
+      if (e instanceof ControlFlowException) {
+        LOG.warn(e);
+      }
+      else {
+        LOG.error(e);
+      }
     }
   }
 
@@ -427,8 +438,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
-  @NotNull
-  public PsiModificationTracker getModificationTracker() {
+  public @NotNull PsiModificationTracker getModificationTracker() {
     return myModificationTracker;
   }
 
@@ -441,6 +451,17 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   public void finishBatchFilesProcessingMode() {
     int after = myBatchFilesProcessingModeCount.decrementAndGet();
     LOG.assertTrue(after >= 0);
+  }
+
+  @Override
+  public <T> T runInBatchFilesMode(@NotNull Computable<T> runnable) {
+    startBatchFilesProcessingMode();
+    try {
+      return runnable.compute();
+    }
+    finally {
+      finishBatchFilesProcessingMode();
+    }
   }
 
   @Override

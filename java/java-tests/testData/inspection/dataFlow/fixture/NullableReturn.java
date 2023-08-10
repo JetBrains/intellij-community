@@ -5,8 +5,7 @@ import org.jetbrains.annotations.NotNull;
 class NullableReturn {
   @NotNull Object test(Object o, Object o2, Object o3) {
     Object x = o == null ? o3 : o2;
-    // probably ephemeral (e.g. o3 could be never null; o2 only), but it's ok to warn in the absence of nullity annotations
-    return x == null ? <warning descr="Expression 'o3' might evaluate to null but is returned by the method declared as @NotNull">o3</warning> : x;
+    return x == null ? o3 : x;
   }
 
   interface Context {}

@@ -4,9 +4,6 @@ package com.intellij.platform.templates.github;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Simonchik
- */
 public final class Outcome<V> {
 
   private final V myData;

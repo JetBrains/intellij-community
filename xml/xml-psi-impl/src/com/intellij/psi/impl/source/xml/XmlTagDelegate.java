@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -8,6 +8,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -40,6 +41,8 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
 @ApiStatus.Experimental
 public abstract class XmlTagDelegate {
@@ -159,6 +162,11 @@ public abstract class XmlTagDelegate {
 
     if (hints.offsetInElement == null || inStartTag || inEndTag || isInsideXmlText(hints.offsetInElement)) {
       Collections.addAll(refs, ReferenceProvidersRegistry.getReferencesFromProviders(myTag, hints));
+    }
+
+    Integer offset = hints.offsetInElement;
+    if (offset != null) {
+      return PsiDynaReference.filterByOffset(refs.toArray(PsiReference.EMPTY_ARRAY), offset);
     }
 
     return refs.toArray(PsiReference.EMPTY_ARRAY);
@@ -306,19 +314,19 @@ public abstract class XmlTagDelegate {
 
   @NotNull
   private static Map<String, NullableLazyValue<XmlNSDescriptor>> initializeSchema(@NotNull final XmlTag tag,
-                                                                            @Nullable final String namespace,
-                                                                            @Nullable final String version,
-                                                                            @NotNull final Set<String> fileLocations,
-                                                                            @Nullable Map<String, NullableLazyValue<XmlNSDescriptor>> map,
-                                                                            final boolean nsDecl) {
+                                                                                  @Nullable final String namespace,
+                                                                                  @Nullable final String version,
+                                                                                  @NotNull final Set<String> fileLocations,
+                                                                                  @Nullable Map<String, NullableLazyValue<XmlNSDescriptor>> map,
+                                                                                  final boolean nsDecl) {
     if (map == null) {
       map = new HashMap<>();
     }
 
     // We put cached value in any case to cause its value update on e.g. mapping change
-    map.put(namespace, NullableLazyValue.createValue(() -> {
+    map.put(namespace, lazyNullable(() -> {
       List<XmlNSDescriptor> descriptors =
-      ContainerUtil.mapNotNull(fileLocations, s->getDescriptor(tag, retrieveFile(tag, s, version, namespace, nsDecl), s, namespace));
+        ContainerUtil.mapNotNull(fileLocations, s -> getDescriptor(tag, retrieveFile(tag, s, version, namespace, nsDecl), s, namespace));
 
       XmlNSDescriptor descriptor = null;
       if (descriptors.size() == 1) {
@@ -614,7 +622,11 @@ public abstract class XmlTagDelegate {
   }
 
   protected XmlTag @NotNull [] findSubTags(@NotNull final String name, @Nullable final String namespace) {
-    final XmlTag[] subTags = myTag.getSubTags();
+    return findSubTags(name, namespace, myTag.getSubTags());
+  }
+
+  @NotNull
+  public static XmlTag[] findSubTags(@NotNull String name, @Nullable String namespace, XmlTag[] subTags) {
     final List<XmlTag> result = new ArrayList<>();
     for (final XmlTag subTag : subTags) {
       if (namespace == null) {
@@ -656,8 +668,7 @@ public abstract class XmlTagDelegate {
 
     for (final XmlAttribute attribute : attributes) {
       final ASTNode child = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute.getNode());
-      if (child instanceof LeafElement) {
-        final LeafElement attrNameElement = (LeafElement)child;
+      if (child instanceof LeafElement attrNameElement) {
         if ((caseSensitive && Comparing.equal(attrNameElement.getChars(), qname) ||
              !caseSensitive && Comparing.equal(attrNameElement.getChars(), qname, false))) {
           return attribute;
@@ -983,13 +994,13 @@ public abstract class XmlTagDelegate {
     ASTNode endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(myTag.getNode());
     if (endTagStart == null) {
       final XmlTag tagFromText = createTagFromText("<" + myTag.getName() + "></" + myTag.getName() + ">");
-      final ASTNode startTagStart = XmlChildRole.START_TAG_END_FINDER.findChild(tagFromText.getNode());
+      final ASTNode startTagEnd = XmlChildRole.START_TAG_END_FINDER.findChild(tagFromText.getNode());
       endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(tagFromText.getNode());
-      assert startTagStart != null : tagFromText.getText();
+      assert startTagEnd != null : tagFromText.getText();
       assert endTagStart != null : tagFromText.getText();
       final LeafElement emptyTagEnd = (LeafElement)XmlChildRole.EMPTY_TAG_END_FINDER.findChild(myTag.getNode());
       if (emptyTagEnd != null) myTag.getNode().removeChild(emptyTagEnd);
-      myTag.getNode().addChildren(startTagStart, null, null);
+      myTag.getNode().addChildren(startTagEnd, null, null);
     }
     return endTagStart;
   }

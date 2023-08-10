@@ -1,4 +1,4 @@
-// "Replace StringTokenizer delimiters parameter with unique symbols" "false"
+// "Remove duplication from 'delimiters' argument" "false"
 import java.util.StringTokenizer;
 
 class A {

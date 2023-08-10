@@ -1,10 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.usages.api
 
 import com.intellij.model.Pointer
-import com.intellij.navigation.TargetPopupPresentation
+import com.intellij.model.search.SearchRequest
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Represents the search implementation (the usage handler and the text search strings)
@@ -19,38 +22,38 @@ interface SearchTarget {
 
   /**
    * Returning [LocalSearchScope] will also make search scope unavailable to change in the UI.
-   * Maximal scope is used to rerun Show Usages if user scope differs from maximal scope.
+   * Maximal scope is used to rerun Show Usages if the user scope differs from maximal scope.
    *
    * @return maximal search scope where this usage handler might yield any results, or `null` to search everywhere
    */
-  @JvmDefault
   val maximalSearchScope: SearchScope?
     get() = null
 
   /**
    * @return presentation to be displayed in the disambiguation popup
    * when several [different][equals] targets exist to choose from,
-   * or in the Usage View (only [icon][TargetPopupPresentation.icon]
-   * and [presentable text][TargetPopupPresentation.presentableText] are used)
+   * or in the Usage View (only [icon][TargetPresentation.icon]
+   * and [presentable text][TargetPresentation.presentableText] are used)
    */
-  val presentation: TargetPopupPresentation
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  fun presentation(): TargetPresentation
 
   /**
    * @see UsageHandler.createEmptyUsageHandler
    */
-  val usageHandler: UsageHandler<*>
+  val usageHandler: UsageHandler
 
   /**
    * Text doesn't contain references by design (e.g. plain text or markdown),
    * but there might exist occurrences which are feasible to find/rename,
-   * e.g fully qualified name of a Java class or package.
+   * e.g. fully qualified name of a Java class or package.
    *
    * Returning non-empty collection will enable "Search for text occurrences" checkbox in the UI.
    *
    * @return collection of strings to search for text occurrences
    */
-  @JvmDefault
-  val textSearchStrings: Collection<String>
+  val textSearchRequests: Collection<SearchRequest>
     get() = emptyList()
 
   /**

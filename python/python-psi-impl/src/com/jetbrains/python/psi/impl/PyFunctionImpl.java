@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Key;
@@ -13,6 +12,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -47,9 +47,6 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsModifierWrappingCall;
 
-/**
- * Implements PyFunction.
- */
 public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements PyFunction {
 
   private static final Key<CachedValue<List<PyAssignmentStatement>>>
@@ -68,20 +65,18 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   private class CachedStructuredDocStringProvider implements CachedValueProvider<StructuredDocString> {
-    @Nullable
     @Override
-    public Result<StructuredDocString> compute() {
+    public @Nullable Result<StructuredDocString> compute() {
       final PyFunctionImpl f = PyFunctionImpl.this;
       return Result.create(DocStringUtil.getStructuredDocString(f), f);
     }
   }
 
-  @NotNull private final CachedStructuredDocStringProvider myCachedStructuredDocStringProvider = new CachedStructuredDocStringProvider();
-  @Nullable private volatile Boolean myIsGenerator;
+  private final @NotNull CachedStructuredDocStringProvider myCachedStructuredDocStringProvider = new CachedStructuredDocStringProvider();
+  private volatile @Nullable Boolean myIsGenerator;
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     final PyFunctionStub stub = getStub();
     if (stub != null) {
       return stub.getName();
@@ -92,15 +87,13 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Override
-  @Nullable
-  public PsiElement getNameIdentifier() {
+  public @Nullable PsiElement getNameIdentifier() {
     final ASTNode nameNode = getNameNode();
     return nameNode != null ? nameNode.getPsi() : null;
   }
 
   @Override
-  @NotNull
-  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     final ASTNode nameElement = PyUtil.createNewName(this, name);
     final ASTNode nameNode = getNameNode();
     if (nameNode != null) {
@@ -125,15 +118,15 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
       return PlatformIcons.PROPERTY_ICON;
     }
+    IconManager iconManager = IconManager.getInstance();
     if (getContainingClass() != null) {
-      return PlatformIcons.METHOD_ICON;
+      return iconManager.getPlatformIcon(com.intellij.ui.PlatformIcons.Method);
     }
-    return AllIcons.Nodes.Function;
+    return iconManager.getPlatformIcon(com.intellij.ui.PlatformIcons.Function);
   }
 
   @Override
-  @Nullable
-  public ASTNode getNameNode() {
+  public @Nullable ASTNode getNameNode() {
     ASTNode id = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
     if (id == null) {
       ASTNode error = getNode().findChildByType(TokenType.ERROR_ELEMENT);
@@ -145,14 +138,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Override
-  @NotNull
-  public PyParameterList getParameterList() {
+  public @NotNull PyParameterList getParameterList() {
     return getRequiredStubOrPsiChild(PyElementTypes.PARAMETER_LIST);
   }
 
-  @NotNull
   @Override
-  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
+  public @NotNull List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return Optional
       .ofNullable(context.getType(this))
       .filter(PyCallableType.class::isInstance)
@@ -162,16 +153,14 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Override
-  @NotNull
-  public PyStatementList getStatementList() {
+  public @NotNull PyStatementList getStatementList() {
     final PyStatementList statementList = childToPsi(PyElementTypes.STATEMENT_LIST);
     assert statementList != null : "Statement list missing for function " + getText();
     return statementList;
   }
 
   @Override
-  @Nullable
-  public PyClass getContainingClass() {
+  public @Nullable PyClass getContainingClass() {
     final PyFunctionStub stub = getStub();
     if (stub != null) {
       final StubElement parentStub = stub.getParentStub();
@@ -190,14 +179,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Override
-  @Nullable
-  public PyDecoratorList getDecoratorList() {
+  public @Nullable PyDecoratorList getDecoratorList() {
     return getStubOrPsiChild(PyElementTypes.DECORATOR_LIST); // PsiTreeUtil.getChildOfType(this, PyDecoratorList.class);
   }
 
-  @Nullable
   @Override
-  public PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public @Nullable PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     for (PyTypeProvider typeProvider : PyTypeProvider.EP_NAME.getExtensionList()) {
       final Ref<PyType> returnTypeRef = typeProvider.getReturnType(this, context);
       if (returnTypeRef != null) {
@@ -223,9 +210,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return PyTypingTypeProvider.toAsyncIfNeeded(this, inferredType);
   }
 
-  @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
+  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     for (PyTypeProvider typeProvider : PyTypeProvider.EP_NAME.getExtensionList()) {
       final Ref<PyType> typeRef = typeProvider.getCallType(this, callSite, context);
       if (typeRef != null) {
@@ -247,8 +233,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return getCallType(receiver, allMappedParameters, context);
   }
 
-  @Nullable
-  private static PyType derefType(@NotNull Ref<PyType> typeRef, @NotNull PyTypeProvider typeProvider) {
+  private static @Nullable PyType derefType(@NotNull Ref<PyType> typeRef, @NotNull PyTypeProvider typeProvider) {
     final PyType type = typeRef.get();
     if (type != null) {
       type.assertValid(typeProvider.toString());
@@ -256,23 +241,23 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return type;
   }
 
-  @Nullable
   @Override
-  public PyType getCallType(@Nullable PyExpression receiver,
-                            @NotNull Map<PyExpression, PyCallableParameter> parameters,
-                            @NotNull TypeEvalContext context) {
+  public @Nullable PyType getCallType(@Nullable PyExpression receiver,
+                                      @NotNull Map<PyExpression, PyCallableParameter> parameters,
+                                      @NotNull TypeEvalContext context) {
     return analyzeCallType(PyUtil.getReturnTypeToAnalyzeAsCallType(this, context), receiver, parameters, context);
   }
 
-  @Nullable
-  private PyType analyzeCallType(@Nullable PyType type,
-                                 @Nullable PyExpression receiver,
-                                 @NotNull Map<PyExpression, PyCallableParameter> parameters,
-                                 @NotNull TypeEvalContext context) {
+  private @Nullable PyType analyzeCallType(@Nullable PyType type,
+                                           @Nullable PyExpression receiver,
+                                           @NotNull Map<PyExpression, PyCallableParameter> parameters,
+                                           @NotNull TypeEvalContext context) {
     if (PyTypeChecker.hasGenerics(type, context)) {
-      final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, parameters, context);
+      final var substitutions = PyTypeChecker.unifyGenericCall(receiver, parameters, context);
       if (substitutions != null) {
-        type = PyTypeChecker.substitute(type, substitutions, context);
+        final var substitutionsWithUnresolvedReturnGenerics =
+          PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(getParameters(context), type, substitutions, context);
+        type = PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);
       }
       else {
         type = null;
@@ -290,45 +275,29 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   public ItemPresentation getPresentation() {
     return new PyElementPresentation(this) {
-      @NotNull
       @Override
-      public String getPresentableText() {
+      public @NotNull String getPresentableText() {
         return notNullize(getName(), PyNames.UNNAMED_ELEMENT) + getParameterList().getPresentableText(true);
-      }
-
-      @Nullable
-      @Override
-      public String getLocationString() {
-        final PyClass containingClass = getContainingClass();
-        final String packageForFile = getPackageForFile(getContainingFile());
-        if (containingClass != null && packageForFile != null) {
-          return String.format("(%s in %s)", containingClass.getName(), packageForFile);
-        }
-        return super.getLocationString();
       }
     };
   }
 
-  @Nullable
-  private PyType replaceSelf(@Nullable PyType returnType, @Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
+  private @Nullable PyType replaceSelf(@Nullable PyType returnType, @Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
     return replaceSelf(returnType, receiver, context, true);
   }
 
-  @Nullable
-  private PyType replaceSelf(@Nullable PyType returnType,
-                             @Nullable PyExpression receiver,
-                             @NotNull TypeEvalContext context,
-                             boolean allowCoroutineOrGenerator) {
+  private @Nullable PyType replaceSelf(@Nullable PyType returnType,
+                                       @Nullable PyExpression receiver,
+                                       @NotNull TypeEvalContext context,
+                                       boolean allowCoroutineOrGenerator) {
     if (receiver != null) {
       // TODO: Currently we substitute only simple subclass types and unions, but we could handle collection types as well
-      if (returnType instanceof PyClassType) {
-        final PyClassType returnClassType = (PyClassType)returnType;
+      if (returnType instanceof PyClassType returnClassType) {
 
         if (returnClassType.getPyClass() == getContainingClass()) {
           final PyType receiverType = context.getType(receiver);
 
-          if (receiverType instanceof PyClassType) {
-            final PyClassType receiverClassType = (PyClassType)receiverType;
+          if (receiverType instanceof PyClassType receiverClassType) {
 
             if (receiverClassType.getPyClass() != returnClassType.getPyClass() &&
                 PyTypeChecker.match(returnClassType.toClass(), receiverClassType.toClass(), context)) {
@@ -366,8 +335,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return false;
   }
 
-  @Nullable
-  private Ref<? extends PyType> getYieldStatementType(@NotNull final TypeEvalContext context) {
+  private @Nullable Ref<? extends PyType> getYieldStatementType(final @NotNull TypeEvalContext context) {
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
     final PyStatementList statements = getStatementList();
     final Set<PyType> types = new LinkedHashSet<>();
@@ -407,8 +375,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Override
-  @Nullable
-  public PyType getReturnStatementType(@NotNull TypeEvalContext context) {
+  public @Nullable PyType getReturnStatementType(@NotNull TypeEvalContext context) {
     final ReturnVisitor visitor = new ReturnVisitor(this, context);
     final PyStatementList statements = getStatementList();
     statements.accept(visitor);
@@ -422,8 +389,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Override
-  @Nullable
-  public PyFunction asMethod() {
+  public @Nullable PyFunction asMethod() {
     if (getContainingClass() != null) {
       return this;
     }
@@ -432,9 +398,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     }
   }
 
-  @Nullable
   @Override
-  public String getDeprecationMessage() {
+  public @Nullable String getDeprecationMessage() {
     PyFunctionStub stub = getStub();
     if (stub != null) {
       return stub.getDeprecationMessage();
@@ -442,8 +407,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return extractDeprecationMessage();
   }
 
-  @Nullable
-  public String extractDeprecationMessage() {
+  public @Nullable String extractDeprecationMessage() {
     PyStatementList statementList = getStatementList();
     return extractDeprecationMessage(Arrays.asList(statementList.getStatements()));
   }
@@ -459,13 +423,10 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return new PyFunctionTypeImpl(this);
   }
 
-  @Nullable
-  public static String extractDeprecationMessage(List<? extends PyStatement> statements) {
+  public static @Nullable String extractDeprecationMessage(List<? extends PyStatement> statements) {
     for (PyStatement statement : statements) {
-      if (statement instanceof PyExpressionStatement) {
-        PyExpressionStatement expressionStatement = (PyExpressionStatement)statement;
-        if (expressionStatement.getExpression() instanceof PyCallExpression) {
-          PyCallExpression callExpression = (PyCallExpression)expressionStatement.getExpression();
+      if (statement instanceof PyExpressionStatement expressionStatement) {
+        if (expressionStatement.getExpression() instanceof PyCallExpression callExpression) {
           if (callExpression.isCalleeText(PyNames.WARN)) {
             PyReferenceExpression warningClass = callExpression.getArgument(1, PyReferenceExpression.class);
             if (warningClass != null && (PyNames.DEPRECATION_WARNING.equals(warningClass.getReferencedName()) ||
@@ -488,9 +449,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return DocStringUtil.getDocStringValue(this);
   }
 
-  @Nullable
   @Override
-  public StructuredDocString getStructuredDocString() {
+  public @Nullable StructuredDocString getStructuredDocString() {
     return CachedValuesManager.getCachedValue(this, myCachedStructuredDocStringProvider);
   }
 
@@ -558,8 +518,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Override
-  @Nullable
-  public PyStringLiteralExpression getDocStringExpression() {
+  public @Nullable PyStringLiteralExpression getDocStringExpression() {
     final PyStatementList stmtList = getStatementList();
     return DocStringUtil.findDocStringExpression(stmtList);
   }
@@ -577,8 +536,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Override
-  @Nullable
-  public Property getProperty() {
+  public @Nullable Property getProperty() {
     final PyClass containingClass = getContainingClass();
     if (containingClass != null) {
       return containingClass.findPropertyByCallable(this);
@@ -591,15 +549,13 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return getStubOrPsiChild(PyElementTypes.ANNOTATION);
   }
 
-  @Nullable
   @Override
-  public String getAnnotationValue() {
+  public @Nullable String getAnnotationValue() {
     return getAnnotationContentFromStubOrPsi(this);
   }
 
-  @Nullable
   @Override
-  public PsiComment getTypeComment() {
+  public @Nullable PsiComment getTypeComment() {
     final PsiComment inlineComment = PyUtil.getCommentOnHeaderLine(this);
     if (inlineComment != null && PyTypingTypeProvider.getTypeCommentValue(inlineComment.getText()) != null) {
       return inlineComment;
@@ -615,15 +571,13 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return null;
   }
 
-  @Nullable
   @Override
-  public String getTypeCommentAnnotation() {
+  public @Nullable String getTypeCommentAnnotation() {
     return getTypeCommentAnnotationFromStubOrPsi(this);
   }
 
-  @NotNull
   @Override
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(this);
     if (scopeOwner instanceof PyFunction) {
       return new LocalSearchScope(scopeOwner);
@@ -637,8 +591,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
    * @return a flag describing what was detected.
    */
   @Override
-  @Nullable
-  public Modifier getModifier() {
+  public @Nullable Modifier getModifier() {
     final String deconame = getClassOrStaticMethodDecorator();
     if (PyNames.CLASSMETHOD.equals(deconame)) {
       return CLASSMETHOD;
@@ -802,8 +755,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return false;
   }
 
-  @Nullable
-  private static Modifier getModifierFromStub(@NotNull PyFunctionStub stub) {
+  private static @Nullable Modifier getModifierFromStub(@NotNull PyFunctionStub stub) {
     return JBIterable
       .of(stub.getParentStub())
       .flatMap((StubElement element) -> (List<StubElement>)element.getChildrenStubs())
@@ -844,8 +796,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
    *
    * @return name of the built-in decorator, or null (even if there are non-built-in decorators).
    */
-  @Nullable
-  private String getClassOrStaticMethodDecorator() {
+  private @Nullable String getClassOrStaticMethodDecorator() {
     PyDecoratorList decolist = getDecoratorList();
     if (decolist != null) {
       PyDecorator[] decos = decolist.getDecorators();
@@ -868,15 +819,13 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return null;
   }
 
-  @Nullable
   @Override
-  public String getQualifiedName() {
+  public @Nullable String getQualifiedName() {
     return QualifiedNameFinder.getQualifiedName(this);
   }
 
-  @NotNull
   @Override
-  public List<PyAssignmentStatement> findAttributes() {
+  public @NotNull List<PyAssignmentStatement> findAttributes() {
     /*
      * TODO: This method if insanely heavy since it unstubs foreign files.
      * Need to save stubs and use them somehow.
@@ -891,8 +840,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   /**
    * @param self should be this
    */
-  @NotNull
-  private static List<PyAssignmentStatement> findAttributesStatic(@NotNull final PsiElement self) {
+  private static @NotNull List<PyAssignmentStatement> findAttributesStatic(final @NotNull PsiElement self) {
     final List<PyAssignmentStatement> result = new ArrayList<>();
     for (final PyAssignmentStatement statement : new PsiQuery<>(self).siblings(PyAssignmentStatement.class)
       .getElements()) {
@@ -915,9 +863,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return result;
   }
 
-  @NotNull
   @Override
-  public ProtectionLevel getProtectionLevel() {
+  public @NotNull ProtectionLevel getProtectionLevel() {
     final int underscoreLevels = PyUtil.getInitialUnderscores(getName());
     for (final ProtectionLevel level : ProtectionLevel.values()) {
       if (level.getUnderscoreLevel() == underscoreLevels) {

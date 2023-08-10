@@ -28,7 +28,7 @@ public class ServiceViewTreeLinkMouseListener extends RepaintLinkMouseListenerBa
       myTree.dispatchEvent(new MouseEvent((Component)e.getSource(), MouseEvent.MOUSE_ENTERED, e.getWhen(), e.getModifiers(),
                                           e.getX(), e.getY(), e.getClickCount(), e.isPopupTrigger(), e.getButton()));
     }
-    // Repaint all tree since nodes which cursor just leaved should be repaint too.
+    // Repaint all tree since nodes which cursor just leaved should be repainted too.
     myTree.repaint();
   }
 

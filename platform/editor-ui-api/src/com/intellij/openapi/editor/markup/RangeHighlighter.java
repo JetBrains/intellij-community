@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.RangeMarker;
@@ -57,9 +57,8 @@ public interface RangeHighlighter extends RangeMarker {
   /**
    * @deprecated Use the overload with {@link EditorColorsScheme} and prefer using {@link #getTextAttributesKey()}
    */
-  @Nullable
   @Deprecated
-  default TextAttributes getTextAttributes() {
+  default @Nullable TextAttributes getTextAttributes() {
     return getTextAttributes(null);
   }
 
@@ -123,9 +122,8 @@ public interface RangeHighlighter extends RangeMarker {
   /**
    * @deprecated Use the overload with {@link EditorColorsScheme}
    */
-  @Deprecated
-  @Nullable
-  default Color getErrorStripeMarkColor() {
+  @Deprecated(forRemoval = true)
+  default @Nullable Color getErrorStripeMarkColor() {
     return getErrorStripeMarkColor(null);
   }
 

@@ -66,6 +66,6 @@ public class ProxyExceptionsTest {
     List<Proxy> proxies = mySelector.select(new URI(s));
     Assert.assertTrue(proxies.size() == 1);
     Assert.assertEquals(Proxy.Type.HTTP, proxies.get(0).type());
-    Assert.assertEquals(myConfigurable.PROXY_HOST, ((InetSocketAddress) proxies.get(0).address()).getHostName());
+    Assert.assertEquals(myConfigurable.PROXY_HOST, ((InetSocketAddress) proxies.get(0).address()).getHostString());
   }
 }

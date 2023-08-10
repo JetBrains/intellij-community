@@ -15,12 +15,14 @@ import java.util.Set;
 
 public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigurable, OptionsContainingConfigurable {
   private CodeStyleAbstractPanel myPanel;
+  @NotNull
   private final CodeStyleSettings mySettings;
   private final CodeStyleSettings myCloneSettings;
   private final @NlsContexts.ConfigurableName String myDisplayName;
 
-  public CodeStyleAbstractConfigurable(@NotNull CodeStyleSettings settings, CodeStyleSettings cloneSettings,
-                                       final @NlsContexts.ConfigurableName String displayName) {
+  public CodeStyleAbstractConfigurable(@NotNull CodeStyleSettings settings,
+                                       @NotNull CodeStyleSettings cloneSettings,
+                                       @NlsContexts.ConfigurableName String displayName) {
     mySettings = settings;
     myCloneSettings = cloneSettings;
     myDisplayName = displayName;
@@ -37,7 +39,8 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
     return myPanel.getPanel();
   }
 
-  protected abstract CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings);
+  @NotNull
+  protected abstract CodeStyleAbstractPanel createPanel(@NotNull CodeStyleSettings settings);
 
   @Override
   public void apply() throws ConfigurationException {

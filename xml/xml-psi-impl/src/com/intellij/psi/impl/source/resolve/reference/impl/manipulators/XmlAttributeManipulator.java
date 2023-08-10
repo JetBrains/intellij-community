@@ -74,9 +74,6 @@ public class XmlAttributeManipulator extends AbstractElementManipulator<XmlAttri
     final XmlAttributeValue value = attribute.getValueElement();
     if (value == null) return TextRange.from(0, 0);
     TextRange range = attribute.getValueTextRange();
-    if (range == null) {
-      LOG.error("Null range in " + attribute + " '" + attribute.getText() + "'");
-    }
     return range.shiftRight(value.getStartOffsetInParent());
   }
 }

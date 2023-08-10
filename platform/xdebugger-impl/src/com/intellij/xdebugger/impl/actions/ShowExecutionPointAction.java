@@ -19,6 +19,7 @@ import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowExecutionPointAction extends XDebuggerActionBase {
+
   @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {

@@ -1,4 +1,4 @@
-// "Create local variable 'a'" "true"
+// "Create local variable 'a'" "true-preview"
 public class A {
     void foo() {
         <caret>a = get();

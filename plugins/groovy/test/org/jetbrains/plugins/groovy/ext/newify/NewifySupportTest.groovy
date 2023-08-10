@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.newify
 
 import com.intellij.psi.PsiMethod
@@ -34,41 +34,41 @@ public class A2 {
   }
 
   void testAutoNewify() {
-    testHighlighting """
+    doTestHighlighting """
 @Newify
 class B {
   def a = A.new()
   def i = Integer.new(1)
 }
 """
-    testHighlighting """
+    doTestHighlighting """
 @Newify
 class B {
   def a = A.new("B")
 }
 """
 
-    testHighlighting """
+    doTestHighlighting """
 @Newify
 class B {
   def a = A.new(name :"bar")
 }
 """
 
-    testHighlighting """
+    doTestHighlighting """
 class B {
   @Newify
   def a = A.new(name :"bar")
 }
 """
 
-    testHighlighting """
+    doTestHighlighting """
 class B {
   @Newify
   def a (){ return A.new(name :"bar")}
 }
 """
-    testHighlighting """
+    doTestHighlighting """
 class B {
   @Newify(value = A, auto = false)
   def a (){ return A.<warning>new</warning>()}
@@ -77,41 +77,41 @@ class B {
   }
 
   void testAutoNewifyImplicitConstructor() {
-    testHighlighting """
+    doTestHighlighting """
 @Newify
 class B {
   def a = A2.new()
 }
 """
-    testHighlighting """
+    doTestHighlighting """
 @Newify
 class B {
   def a = A2.new<warning>("B")</warning>
 }
 """
 
-    testHighlighting """
+    doTestHighlighting """
 @Newify
 class B {
   def a = A2.new(name :"bar")
 }
 """
 
-    testHighlighting """
+    doTestHighlighting """
 class B {
   @Newify(B)
   def b = B()
 }
 """
 
-    testHighlighting """
+    doTestHighlighting """
 class B {
   @Newify
   def a = B.new()
 }
 """
 
-    testHighlighting """
+    doTestHighlighting """
 class B2 {
   String str
   @Newify
@@ -119,7 +119,7 @@ class B2 {
 }
 """
 
-    testHighlighting """
+    doTestHighlighting """
 class B {
   @Newify(value = A2, auto = false)
   def a (){ return A2.<warning>new</warning>()}
@@ -128,7 +128,7 @@ class B {
   }
 
   void testNewifyByClass() {
-    testHighlighting """
+    doTestHighlighting """
 @Newify([A, Integer])
 class B {
   def a = A()
@@ -136,34 +136,34 @@ class B {
 }
 """
 
-    testHighlighting """
+    doTestHighlighting """
 @Newify(A)
 class B {
   def a = A("B")
 }
 """
 
-    testHighlighting """
+    doTestHighlighting """
 @Newify(A)
 class B {
   def a = A(name :"bar")
 }
 """
 
-    testHighlighting """
+    doTestHighlighting """
 class B {
   @Newify(A)
   def a = A(name :"bar")
 }
 """
 
-    testHighlighting """
+    doTestHighlighting """
 class B {
   @Newify(A)
   def a (){ return A(name :"bar")}
 }
 """
-    testHighlighting """
+    doTestHighlighting """
 class B {
   @Newify
   def a (){ return <warning descr="Cannot resolve symbol 'A'">A</warning>()}
@@ -172,7 +172,7 @@ class B {
   }
 
   void testNewifyMapLookup() {
-    testHighlighting """
+    doTestHighlighting """
 @Newify(A)
 class B {
   def a = A(<caret>)
@@ -186,7 +186,7 @@ class B {
   }
 
   void testNewifyElementsKind() {
-    testHighlighting """
+    doTestHighlighting """
 @Newify(A)
 class B {
   def a = <caret>A()
@@ -197,7 +197,7 @@ class B {
   }
 
   void testNewifyElementsKind2() {
-    testHighlighting """
+    doTestHighlighting """
 @Newify(A)
 class B {
   def a = A.ne<caret>w()
@@ -234,7 +234,7 @@ class B {
   }
 
   void testNewifyAutoMapLookup() {
-    testHighlighting """
+    doTestHighlighting """
 @Newify(A)
 class B {
   def a = A.new(<caret>)
@@ -248,7 +248,7 @@ class B {
   }
 
   void 'test newify supports regex patterns'() {
-    testHighlighting """
+    doTestHighlighting """
 @Newify(pattern = /[A-Z].*/)
 class B {
   def a = A()
@@ -258,7 +258,7 @@ class B {
 """
 
 
-    testHighlighting """
+    doTestHighlighting """
 @Newify(pattern = "A")
 class B {
   def a = A("B")
@@ -267,7 +267,7 @@ class B {
   }
 
   void 'test newify should not throw on incorrect regex'() {
-    testHighlighting """
+    doTestHighlighting """
 @Newify(pattern = "<error>*</error>")
 class B {
   def a = <warning descr="Cannot resolve symbol 'A'">A</warning>()
@@ -275,7 +275,7 @@ class B {
   }
 
   void 'test non-static classes are not available in static context'() {
-    testHighlighting """
+    doTestHighlighting """
 class Z {
     class Inner {
     }
@@ -288,7 +288,7 @@ class Z {
   }
 
   void 'test no error for multiple constructors and named arguments'() {
-    testHighlighting """
+    doTestHighlighting """
 class Rr {
     Rr() {}
     Rr(s) {}

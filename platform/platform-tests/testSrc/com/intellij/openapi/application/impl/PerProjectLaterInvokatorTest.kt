@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ModalityStateListener
 import com.intellij.openapi.application.impl.LaterInvocator.*
+import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import junit.framework.TestCase
@@ -56,21 +43,21 @@ class RunnableActionsTest : HeavyPlatformTestCase() {
     val project = getProject()
     Testable()
       .suspendEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(1), ModalityState.NON_MODAL) }
+      .execute { invokeLater(ModalityState.nonModal(), Conditions.alwaysFalse<Any>(), NumberedRunnable.withNumber(1)) }
       .flushEDT()
       .execute { enterModal(myApplicationModalDialog) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(2), ModalityState.current()) }
+      .execute { invokeLater(ModalityState.current(), Conditions.alwaysFalse<Any>(), NumberedRunnable.withNumber(2)) }
       .flushEDT()
       .execute { enterModal(project, myPerProjectModalDialog) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(3), ModalityState.NON_MODAL) }
+      .execute { invokeLater(ModalityState.nonModal(), Conditions.alwaysFalse<Any>(), NumberedRunnable.withNumber(3)) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(4), ModalityState.current()) }
+      .execute { invokeLater(ModalityState.current(), Conditions.alwaysFalse<Any>(), NumberedRunnable.withNumber(4)) }
       .flushEDT()
       .execute { leaveModal(project, myPerProjectModalDialog) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(5), ModalityState.NON_MODAL) }
+      .execute { invokeLater(ModalityState.nonModal(), Conditions.alwaysFalse<Any>(), NumberedRunnable.withNumber(5)) }
       .flushEDT()
       .execute { leaveModal(myApplicationModalDialog) }
       .flushEDT()

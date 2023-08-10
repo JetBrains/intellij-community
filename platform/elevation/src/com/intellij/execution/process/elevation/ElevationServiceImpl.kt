@@ -1,23 +1,46 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.elevation
 
+import com.intellij.application.subscribe
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ElevationService
-import com.intellij.execution.process.SelfKiller
 import com.intellij.execution.process.elevation.settings.ElevationSettings
-import com.intellij.execution.process.mediator.MediatedProcessHandler
-import com.intellij.execution.process.mediator.ProcessMediatorClientManager
 import com.intellij.execution.process.mediator.client.MediatedProcess
+import com.intellij.execution.process.mediator.client.MediatedProcessHandler
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.QuotaExceededException
+import com.intellij.execution.process.mediator.daemon.QuotaOptions
+import com.intellij.execution.process.mediator.launcher.ProcessMediatorConnection
+import com.intellij.execution.process.mediator.launcher.ProcessMediatorConnectionManager
+import com.intellij.execution.process.mediator.launcher.startInProcessServer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.CoroutineScope
+import java.util.concurrent.RejectedExecutionException
 
-class ElevationServiceImpl : ElevationService, Disposable {
-  private val clientManager = ProcessMediatorClientManager().also {
+class ElevationServiceImpl(private val cs: CoroutineScope) : ElevationService, Disposable {
+
+  private val connectionManager = ProcessMediatorConnectionManager {
+    val clientBuilder = ProcessMediatorClient.Builder(cs, ElevationSettings.getInstance().quotaOptions)
+
+    val debug = false
+    if (debug) ProcessMediatorConnection.startInProcessServer(cs, clientBuilder = clientBuilder)
+    else ElevationDaemonProcessLauncher(clientBuilder)
+      .launchWithProgress(ElevationBundle.message("progress.title.starting.elevation.daemon"))
+  }.apply {
+    ElevationSettings.Listener.TOPIC.subscribe(this, object : ElevationSettings.Listener {
+      override fun onDaemonQuotaOptionsChanged(oldValue: QuotaOptions, newValue: QuotaOptions) {
+        adjustQuota(newValue)
+      }
+    })
+  }.also {
     Disposer.register(this, it)
+  }
+
+  override fun authorizeService() {
+    connectionManager.launchDaemonAndConnectIfNeeded()
   }
 
   override fun createProcessHandler(commandLine: GeneralCommandLine): MediatedProcessHandler {
@@ -31,10 +54,8 @@ class ElevationServiceImpl : ElevationService, Disposable {
       throw ProcessCanceledException()
     }
     return tryRelaunchingDaemonUntilHaveQuotaPermit { client ->
-      object : MediatedProcess(client, processBuilder), SelfKiller {
-        init {
-          ElevationLogger.LOG.info("Created process PID ${pid()}")
-        }
+      MediatedProcess.create(client, processBuilder).apply {
+        ElevationLogger.LOG.info("Created process PID ${pid()}")
       }
     }
   }
@@ -42,14 +63,16 @@ class ElevationServiceImpl : ElevationService, Disposable {
   private fun <R> tryRelaunchingDaemonUntilHaveQuotaPermit(block: (ProcessMediatorClient) -> R): R {
     val maxAttempts = MAX_RELAUNCHING_DAEMON_UNTIL_HAVE_QUOTA_PERMIT_ATTEMPTS
     for (attempt in 1..maxAttempts) {
-      val client = clientManager.launchDaemonAndConnectClientIfNeeded()
+      val connection = connectionManager.launchDaemonAndConnectIfNeeded()
       try {
-        return block(client)
+        return block(connection.client)
       }
-      catch (e: QuotaExceededException) {
-        if (attempt > 1) ElevationLogger.LOG.warn("Repeated quota exceeded error after $attempt attempts; " +
+      catch (e: Exception) {
+        if (e !is RejectedExecutionException &&
+            e !is QuotaExceededException) throw e
+        if (attempt > 1) ElevationLogger.LOG.warn("Repeated launch error after $attempt attempts; " +
                                                   "quota options: ${ElevationSettings.getInstance().quotaOptions}", e)
-        clientManager.parkClient(client)
+        connectionManager.parkConnection(connection)
       }
     }
     throw ExecutionException(ElevationBundle.message("dialog.message.unable.to.configure.elevation.daemon.after.attempts",

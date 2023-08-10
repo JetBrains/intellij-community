@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.util.treeView.FileNameComparator;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -14,25 +15,25 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.DirtyUI;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.*;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
+import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
@@ -60,60 +61,83 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   protected static final int DEFAULT_SORT_WEIGHT = 10;
   protected static final int IGNORED_SORT_WEIGHT = 11;
 
-  public static final Convertor<TreePath, String> TO_TEXT_CONVERTER =
-    path -> ((ChangesBrowserNode)path.getLastPathComponent()).getTextPresentation();
+  private static final Color UNKNOWN_COLOR = JBColor.marker("ChangesBrowserNode::UNKNOWN_COLOR");
 
-  private SimpleTextAttributes myAttributes;
+  public static final Convertor<TreePath, String> TO_TEXT_CONVERTER =
+    path -> ((ChangesBrowserNode<?>)path.getLastPathComponent()).getTextPresentation();
 
   private int myFileCount = -1;
   private int myDirectoryCount = -1;
   private boolean myHelper;
+  private Color myBackgroundColor = UNKNOWN_COLOR;
   @NotNull private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   protected ChangesBrowserNode(T userObject) {
     super(userObject);
-    myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+  }
+
+  @RequiresBackgroundThread
+  protected void preparePresentationDataCaches(@NotNull Project project) {
+    getBackgroundColorCached(project);
+  }
+
+  /**
+   * see {@link TreeModelBuilder#precalculateFileColors(Project, ChangesBrowserNode)}
+   */
+  @ApiStatus.Internal
+  final Color getBackgroundColorCached(@NotNull Project project) {
+    Color backgroundColor = myBackgroundColor;
+    if (backgroundColor == UNKNOWN_COLOR) {
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-318216, EA-829418")) {
+        backgroundColor = getBackgroundColor(project);
+      }
+      myBackgroundColor = backgroundColor;
+    }
+
+    return backgroundColor;
   }
 
   @NotNull
-  public static ChangesBrowserNode createRoot() {
-    ChangesBrowserNode root = new ChangesBrowserRootNode();
+  public static ChangesBrowserNode<?> createRoot() {
+    ChangesBrowserNode<?> root = new ChangesBrowserRootNode();
     root.markAsHelperNode();
     return root;
   }
 
   @NotNull
-  public static ChangesBrowserNode createChange(@Nullable Project project, @NotNull Change userObject) {
+  public static ChangesBrowserNode<?> createChange(@Nullable Project project, @NotNull Change userObject) {
     return new ChangesBrowserChangeNode(project, userObject, null);
   }
 
   @NotNull
-  public static ChangesBrowserNode createFile(@Nullable Project project, @NotNull VirtualFile userObject) {
+  public static ChangesBrowserNode<?> createFile(@Nullable Project project, @NotNull VirtualFile userObject) {
     return new ChangesBrowserFileNode(project, userObject);
   }
 
   @NotNull
-  public static ChangesBrowserNode createFilePath(@NotNull FilePath userObject, @Nullable FileStatus status) {
+  public static ChangesBrowserNode<?> createFilePath(@NotNull FilePath userObject, @Nullable FileStatus status) {
     return new ChangesBrowserFilePathNode(userObject, status);
   }
 
   @NotNull
-  public static ChangesBrowserNode createFilePath(@NotNull FilePath userObject) {
+  public static ChangesBrowserNode<?> createFilePath(@NotNull FilePath userObject) {
     return createFilePath(userObject, null);
   }
 
   @NotNull
-  public static ChangesBrowserNode createLogicallyLocked(@Nullable Project project, @NotNull VirtualFile file, @NotNull LogicalLock lock) {
+  public static ChangesBrowserNode<?> createLogicallyLocked(@Nullable Project project,
+                                                            @NotNull VirtualFile file,
+                                                            @NotNull LogicalLock lock) {
     return new ChangesBrowserLogicallyLockedFile(project, file, lock);
   }
 
   @NotNull
-  public static ChangesBrowserNode createLockedFolders(@NotNull Project project) {
+  public static ChangesBrowserNode<?> createLockedFolders(@NotNull Project project) {
     return new ChangesBrowserLockedFoldersNode(project);
   }
 
   @NotNull
-  public static ChangesBrowserNode createLocallyDeleted(@NotNull LocallyDeletedChange change) {
+  public static ChangesBrowserNode<?> createLocallyDeleted(@NotNull LocallyDeletedChange change) {
     return new ChangesBrowserLocallyDeletedNode(change);
   }
 
@@ -147,13 +171,13 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   @Override
   public void insert(MutableTreeNode newChild, int childIndex) {
     super.insert(newChild, childIndex);
-    resetFileCounters();
+    resetCounters();
   }
 
   @Override
   public void remove(int childIndex) {
     super.remove(childIndex);
-    resetFileCounters();
+    resetCounters();
   }
 
   protected boolean isFile() {
@@ -164,7 +188,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return false;
   }
 
-  public void markAsHelperNode() {
+  public final void markAsHelperNode() {
     myHelper = true;
   }
 
@@ -174,26 +198,30 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
 
   public int getFileCount() {
     if (myFileCount == -1) {
-      myFileCount = (isFile() ? 1 : 0) + toStream(children()).mapToInt(ChangesBrowserNode::getFileCount).sum();
+      myFileCount = (isFile() ? 1 : 0) + sumForChildren(ChangesBrowserNode::getFileCount);
     }
     return myFileCount;
   }
 
   public int getDirectoryCount() {
     if (myDirectoryCount == -1) {
-      myDirectoryCount = (isDirectory() ? 1 : 0) + toStream(children()).mapToInt(ChangesBrowserNode::getDirectoryCount).sum();
+      myDirectoryCount = (isDirectory() ? 1 : 0) + sumForChildren(ChangesBrowserNode::getDirectoryCount);
     }
     return myDirectoryCount;
   }
 
-  private void resetFileCounters() {
+  protected void resetCounters() {
     myFileCount = -1;
     myDirectoryCount = -1;
   }
 
-  @NotNull
-  public Stream<ChangesBrowserNode<?>> getNodesUnderStream() {
-    return toStream(preorderEnumeration());
+  private int sumForChildren(@NotNull ToIntFunction<? super ChangesBrowserNode<?>> counter) {
+    int sum = 0;
+    for (int i = 0; i < getChildCount(); i++) {
+      ChangesBrowserNode<?> child = (ChangesBrowserNode<?>)getChildAt(i);
+      sum += counter.applyAsInt(child);
+    }
+    return sum;
   }
 
   @NotNull
@@ -207,40 +235,34 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   }
 
   public @NotNull JBIterable<?> traverseObjectsUnder() {
-    return TreeUtil.treeNodeTraverser(this).traverse().map(TreeUtil::getUserObject);
+    return traverse().map(TreeUtil::getUserObject);
   }
 
-  @NotNull
-  public List<VirtualFile> getAllFilesUnder() {
-    return getFilesUnderStream().collect(Collectors.toList());
+  public @NotNull JBIterable<ChangesBrowserNode<?>> traverse() {
+    JBIterable<?> iterable = TreeUtil.treeNodeTraverser(this).preOrderDfsTraversal();
+    //noinspection unchecked
+    return (JBIterable<ChangesBrowserNode<?>>)iterable;
   }
 
-  @NotNull
-  public Stream<VirtualFile> getFilesUnderStream() {
-    return StreamEx.of(traverseObjectsUnder().filter(VirtualFile.class).filter(VirtualFile::isValid).iterator());
+  public @NotNull JBIterable<ChangesBrowserNode<?>> iterateNodeChildren() {
+    JBIterable<?> iterable = TreeUtil.nodeChildren(this);
+    //noinspection unchecked
+    return (JBIterable<ChangesBrowserNode<?>>)iterable;
   }
 
-  @NotNull
-  public List<FilePath> getAllFilePathsUnder() {
-    return getFilePathsUnderStream().collect(Collectors.toList());
+  public @NotNull JBIterable<VirtualFile> iterateFilesUnder() {
+    return traverseObjectsUnder().filter(VirtualFile.class).filter(VirtualFile::isValid);
   }
 
-  @NotNull
-  public Stream<FilePath> getFilePathsUnderStream() {
-    return toStream(preorderEnumeration())
+  public @NotNull JBIterable<FilePath> iterateFilePathsUnder() {
+    return traverse()
       .filter(ChangesBrowserNode::isLeaf)
       .map(ChangesBrowserNode::getUserObject)
-      .select(FilePath.class);
-  }
-
-  @NotNull
-  private static StreamEx<ChangesBrowserNode<?>> toStream(@NotNull Enumeration enumeration) {
-    //noinspection unchecked
-    return StreamEx.<ChangesBrowserNode>of(enumeration);
+      .filter(FilePath.class);
   }
 
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
-    renderer.append(getTextPresentation(), myAttributes);
+    renderer.append(getTextPresentation());
     appendCount(renderer);
   }
 
@@ -274,9 +296,8 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   /**
    * Used by speedsearch, copy-to-clipboard and default renderer.
    */
-  @Nls
-  public String getTextPresentation() {
-    DeprecatedMethodException.report("Please implement `ChangesBrowserNode#getTextPresentation()` explicitly. " + this.getClass());
+  public @Nls String getTextPresentation() {
+    PluginException.reportDeprecatedDefault(getClass(), "getTextPresentation", "A proper implementation required");
     return userObject == null ? "" : userObject.toString(); //NON-NLS
   }
 
@@ -312,30 +333,20 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return ChangesComparator.getFilePathComparator(true).compare(path1, path2);
   }
 
-  public void setAttributes(@NotNull SimpleTextAttributes attributes) {
-    myAttributes = attributes;
-  }
-
-  @NotNull
-  protected SimpleTextAttributes getAttributes() {
-    return myAttributes;
-  }
-
   protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable FilePath parentPath) {
     if (parentPath != null) {
-      appendParentPath(renderer, parentPath.getPresentableUrl());
+      String presentablePath = VcsUtil.getPresentablePath(renderer.getProject(), parentPath, true, true);
+      if (presentablePath.isEmpty()) return;
+      renderer.append(spaceAndThinSpace() + presentablePath, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
   }
 
   protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable VirtualFile parentPath) {
     if (parentPath != null) {
-      appendParentPath(renderer, parentPath.getPresentableUrl());
+      String presentablePath = VcsUtil.getPresentablePath(renderer.getProject(), parentPath, true, true);
+      if (presentablePath.isEmpty()) return;
+      renderer.append(spaceAndThinSpace() + presentablePath, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
-  }
-
-  private static void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull String parentPath) {
-    renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentPath),
-                    SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   protected void appendUpdatingState(@NotNull ChangesBrowserNodeRenderer renderer) {
@@ -348,6 +359,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return getBackgroundColorFor(project, getUserObject());
   }
 
+  @DirtyUI
   @Nullable
   protected static Color getBackgroundColorFor(@NotNull Project project, @Nullable Object object) {
     VirtualFile file;
@@ -397,23 +409,21 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     }
   }
 
-  public static class WrapperTag implements Tag {
+  public static class WrapperTag extends ValueTag<Object> {
     public static Tag wrap(@Nullable Object object) {
       if (object == null) return null;
       if (object instanceof Tag) return (Tag)object;
       return new WrapperTag(object);
     }
 
-    private final @NotNull Object myValue;
-
-    public WrapperTag(@NotNull Object value) {
-      myValue = value;
+    private WrapperTag(@NotNull Object value) {
+      super(value);
     }
 
     @Nls
     @Override
     public String toString() {
-      return myValue.toString(); //NON-NLS
+      return value.toString(); //NON-NLS
     }
   }
 
@@ -431,5 +441,82 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     public String toString() {
       return VcsBundle.message(myKey);
     }
+  }
+
+  public static abstract class ValueTag<T> implements ChangesBrowserNode.Tag {
+    public final T value;
+
+    public ValueTag(@NotNull T value) {
+      this.value = value;
+    }
+
+    @NotNull
+    protected T getValue() {
+      return value;
+    }
+
+    @Override
+    public final boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ValueTag<?> tag = (ValueTag<?>)o;
+      return Objects.equals(value, tag.value);
+    }
+
+    @Override
+    public final int hashCode() {
+      return Objects.hash(value);
+    }
+  }
+
+
+  /**
+   * @deprecated Use {@link #iterateFilesUnder()}
+   */
+  @NotNull
+  @Deprecated(forRemoval = true)
+  public List<VirtualFile> getAllFilesUnder() {
+    return iterateFilesUnder().toList();
+  }
+
+  /**
+   * @deprecated Use {@link #iterateFilesUnder()}
+   */
+  @NotNull
+  @Deprecated(forRemoval = true)
+  public Stream<VirtualFile> getFilesUnderStream() {
+    return iterateFilesUnder().toStream();
+  }
+
+  /**
+   * @deprecated Use {@link #iterateFilePathsUnder()}
+   */
+  @NotNull
+  @Deprecated(forRemoval = true)
+  public List<FilePath> getAllFilePathsUnder() {
+    return iterateFilePathsUnder().toList();
+  }
+
+  /**
+   * @deprecated Use {@link #iterateFilePathsUnder()}
+   */
+  @NotNull
+  @Deprecated(forRemoval = true)
+  public Stream<FilePath> getFilePathsUnderStream() {
+    return iterateFilePathsUnder().toStream();
+  }
+
+  /**
+   * @deprecated Use {@link #traverse()}
+   */
+  @NotNull
+  @Deprecated(forRemoval = true)
+  public Stream<ChangesBrowserNode<?>> getNodesUnderStream() {
+    return traverse().toStream();
+  }
+
+  interface NodeWithFilePath {
+    @NotNull
+    FilePath getNodeFilePath();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindInProjectSearchEngine;
@@ -40,7 +40,7 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
     MyFindInProjectSearcher(@NotNull Project project, @NotNull FindModel findModel) {
       myProject = project;
       myFindModel = findModel;
-      myFileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
+      myFileIndex = ProjectFileIndex.getInstance(myProject);
       myTextSearchService = TextSearchService.getInstance();
       String stringToFind = findModel.getStringToFind();
 
@@ -127,12 +127,7 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
     }
 
     private static boolean hasTrigrams(@NotNull String text) {
-      return !TrigramBuilder.processTrigrams(text, new TrigramBuilder.TrigramProcessor() {
-        @Override
-        public boolean test(int value) {
-          return false;
-        }
-      });
+      return !TrigramBuilder.getTrigrams(text).isEmpty();
     }
 
     @NotNull

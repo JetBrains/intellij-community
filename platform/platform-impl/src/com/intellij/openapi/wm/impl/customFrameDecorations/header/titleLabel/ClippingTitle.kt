@@ -10,7 +10,7 @@ import javax.swing.JComponent
 
 internal open class ClippingTitle(prefix: String = " - ", suffix: String = "") : DefaultPartTitle(prefix, suffix), ShrinkingTitlePart {
   companion object {
-    const val ellipsisSymbol = "\u2026"
+    const val ellipsisSymbol: String = "\u2026"
 
     @Contract(pure = true)
     fun clipString(component: JComponent, string: String, maxWidth: Int, fileSeparatorChar: String = File.separator): String {

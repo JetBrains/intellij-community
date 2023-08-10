@@ -1,4 +1,4 @@
-// "Replace with lambda" "true"
+// "Replace with lambda" "true-preview"
 class Test2 {
 
     void foo(final List<PatchLogger> loggers) {

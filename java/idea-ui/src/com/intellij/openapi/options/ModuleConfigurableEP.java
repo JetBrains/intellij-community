@@ -7,7 +7,7 @@ import com.intellij.openapi.module.Module;
  * @deprecated use {@link com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider} instead
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class ModuleConfigurableEP extends ConfigurableEP<Configurable> {
   public ModuleConfigurableEP(Module module) {
     super(module);

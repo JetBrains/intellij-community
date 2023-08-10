@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.mediator.grpc
 
 import com.intellij.execution.process.mediator.daemon.QuotaExceededException
@@ -131,9 +131,9 @@ data class ExceptionAsStatus private constructor(val status: Status,
           else -> throw e
         }
         val code = status.code
-        @Suppress("NON_EXHAUSTIVE_WHEN")
         when (code) {
           OK, UNKNOWN, INTERNAL, UNAUTHENTICATED -> throw e
+          else -> {}
         }
         val description = status.description
 

@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.util.ArrayUtil;
+
 import java.lang.ref.SoftReference;
 
 public final class ThreadLocalCachedByteArray {
@@ -23,7 +25,7 @@ public final class ThreadLocalCachedByteArray {
   public byte[] getBuffer(int size) {
     byte[] value = com.intellij.reference.SoftReference.dereference(myThreadLocal.get());
     if (value == null || value.length <= size) {
-      value = new byte[size];
+      value = ArrayUtil.newByteArray(size);
       myThreadLocal.set(new SoftReference<>(value));
     }
 

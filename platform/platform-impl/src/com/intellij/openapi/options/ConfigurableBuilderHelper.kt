@@ -2,14 +2,14 @@
 package com.intellij.openapi.options
 
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
 
 class ConfigurableBuilderHelper {
   companion object {
     @JvmStatic
-    internal fun RowBuilder.buildFieldsPanel(@NlsContexts.BorderTitle title: String?, fields: List<ConfigurableBuilder.BeanField<*, *>>) {
+    internal fun Panel.buildFieldsPanel(@NlsContexts.BorderTitle title: String?, fields: List<ConfigurableBuilder.BeanField<*, *>>) {
       if (title != null) {
-        titledRow(title) {
+        group(title) {
           appendFields(fields)
         }
       }
@@ -18,12 +18,12 @@ class ConfigurableBuilderHelper {
       }
     }
 
-    private fun RowBuilder.appendFields(fields: List<ConfigurableBuilder.BeanField<*, *>>) {
+    private fun Panel.appendFields(fields: List<ConfigurableBuilder.BeanField<*, *>>) {
       for (field in fields) {
         row {
-          component(field.component)
+          cell(field.component)
             .onApply { field.apply() }
-            .onIsModified { field.isModified() }
+            .onIsModified { field.isModified }
             .onReset { field.reset() }
         }
       }

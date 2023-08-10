@@ -25,9 +25,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
 public class PyDoubleStarExpressionImpl extends PyElementImpl implements PyDoubleStarExpression {
   public PyDoubleStarExpressionImpl(ASTNode astNode) {
     super(astNode);

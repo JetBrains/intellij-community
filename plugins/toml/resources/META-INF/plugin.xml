@@ -1,0 +1,74 @@
+<idea-plugin package="org.toml">
+    <id>org.toml.lang</id>
+    <name>Toml</name>
+    <vendor>JetBrains</vendor>
+    <category>Languages</category>
+
+    <description><![CDATA[
+      Adds support for the <a href="https://toml.io/en/">TOML</a> configuration file syntax.
+    ]]></description>
+
+    <dependencies>
+        <plugin id="com.intellij.modules.lang"/>
+    </dependencies>
+
+    <content>
+        <module name="intellij.toml.json"/>
+    </content>
+
+    <resource-bundle>messages.TomlBundle</resource-bundle>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType name="TOML"
+                  language="TOML"
+                  implementationClass="org.toml.lang.psi.TomlFileType"
+                  fieldName="INSTANCE"
+                  extensions="toml"
+                  fileNames="Cargo.lock;Cargo.toml.orig;Gopkg.lock;Pipfile;poetry.lock"/>
+        <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.parse.TomlParserDefinition"/>
+        <lang.ast.factory language="TOML" implementationClass="org.toml.lang.psi.impl.TomlASTFactory"/>
+        <lang.syntaxHighlighter language="TOML" implementationClass="org.toml.ide.TomlHighlighter"/>
+        <lang.commenter language="TOML" implementationClass="org.toml.ide.TomlCommenter"/>
+        <lang.braceMatcher language="TOML" implementationClass="org.toml.ide.TomlBraceMatcher"/>
+        <lang.quoteHandler language="TOML" implementationClass="org.toml.ide.TomlQuoteHandler"/>
+        <lang.elementManipulator forClass="org.toml.lang.psi.TomlLiteral"
+                                 implementationClass="org.toml.lang.psi.TomlStringLiteralManipulator"/>
+
+        <lang.findUsagesProvider language="TOML" implementationClass="org.toml.ide.search.TomlFindUsagesProvider"/>
+
+        <!-- Formatting -->
+        <lang.formatter language="TOML" implementationClass="org.toml.ide.formatter.TomlFormattingModelBuilder"/>
+        <langCodeStyleSettingsProvider
+            implementation="org.toml.ide.formatter.settings.TomlLanguageCodeStyleSettingsProvider"/>
+
+        <!-- Folding -->
+        <lang.foldingBuilder language="TOML" implementationClass="org.toml.ide.folding.TomlFoldingBuilder"/>
+
+        <colorSettingsPage implementation="org.toml.ide.colors.TomlColorSettingsPage"/>
+        <indexPatternBuilder implementation="org.toml.ide.todo.TomlTodoIndexPatternBuilder"/>
+        <todoIndexer filetype="TOML" implementationClass="org.toml.ide.todo.TomlTodoIndexer"/>
+
+        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlAnnotator"/>
+        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlHighlightingAnnotator"/>
+
+        <extendWordSelectionHandler implementation="org.toml.ide.wordSelection.TomlStringLiteralSelectionHandler"/>
+
+        <psi.referenceContributor language="TOML"
+                                  implementation="org.toml.ide.resolve.TomlReferenceContributor"/>
+
+        <localInspection language="TOML"
+                         groupKey="inspection.group.toml"
+                         key="inspection.toml.unresolved.reference.display.name"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.toml.ide.inspections.TomlUnresolvedReferenceInspection"/>
+
+        <intentionAction>
+            <language>TOML</language>
+            <className>org.toml.ide.intentions.TomlExpandInlineTableIntention</className>
+            <categoryKey>intention.category.toml</categoryKey>
+        </intentionAction>
+
+        <registryKey key="org.toml.json.schema" defaultValue="true" description="JSON schemas support for TOML"/>
+        <iconMapper mappingFile="TomlIconMappings.json"/>
+    </extensions>
+</idea-plugin>

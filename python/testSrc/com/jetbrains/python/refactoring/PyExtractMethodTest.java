@@ -10,9 +10,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodUtil;
 
 public class PyExtractMethodTest extends LightMarkedTestCase {
-  private void doTest(String newName, LanguageLevel level) {
-    runWithLanguageLevel(level, () -> doTest(newName));
-  }
 
   private void doTest(String newName) {
     final String testName = getTestName(false);
@@ -111,7 +108,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   }
 
   public void testWrongSelectionIfPart() {
-    doFail("bar", "Cannot perform extract method using the selected element(s)");
+    doFail("bar", "Cannot perform the Extract Method refactoring using the selected elements");
   }
 
   public void testWrongSelectionFromImportStar() {
@@ -208,22 +205,24 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
 
   // PY-6625
   public void testNonlocal() {
-    doTest("baz", LanguageLevel.PYTHON34);
+    doTest("baz");
   }
 
   // PY-7381
   public void testYield() {
-    doFail("bar", "Cannot perform refactoring with a 'yield' statement inside a code block");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      doFail("bar", "Cannot perform refactoring with a 'yield' statement inside a code block");
+    });
   }
 
   // PY-7382
   public void testYield33() {
-    doTest("bar", LanguageLevel.PYTHON34);
+    doTest("bar");
   }
 
   // PY-7399
   public void testYieldFrom33() {
-    doTest("bar", LanguageLevel.PYTHON34);
+    doTest("bar");
   }
 
   public void testDuplicateSingleLine() {
@@ -256,12 +255,31 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doFail("foo", "Cannot perform refactoring at a class level");
   }
 
+  // PY-9045
+  public void testIfConditionExpression() {
+    doTest("bar");
+  }
+
+  // PY-9045
+  public void testIfElseConditionExpression() {
+    doTest("bar");
+  }
+
+  // PY-9045
+  public void testConditionOfConditionalExpression() {
+    doTest("bar");
+  }
+
+  public void testSimilarBinaryExpressions() {
+    doTest("bar");
+  }
+
   public void testAsyncDef() {
-    doTest("bar", LanguageLevel.PYTHON35);
+    doTest("bar");
   }
 
   public void testAwaitExpression() {
-    doTest("bar", LanguageLevel.PYTHON35);
+    doTest("bar");
   }
 
   public void testCommentsPrecedingSourceStatement() {

@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.statistics.StatisticsManager
@@ -12,9 +13,6 @@ import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.testFramework.NeedsIndex
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class SignatureCompletionTest extends LightFixtureCompletionTestCase {
 
@@ -58,6 +56,7 @@ class SignatureCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.type('\n')
     checkResult()
     myFixture.type('\n')
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     checkResultByFile(getTestName(false) + "_afterTemplate.java")
   }
 

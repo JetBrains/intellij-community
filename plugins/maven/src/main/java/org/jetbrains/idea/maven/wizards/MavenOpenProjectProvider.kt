@@ -3,14 +3,17 @@ package org.jetbrains.idea.maven.wizards
 
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportBuilder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.nio.file.Path
 
-internal class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
+class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
   override val systemId: ProjectSystemId = MavenUtil.SYSTEM_ID
 
   val builder: MavenProjectBuilder
@@ -20,17 +23,24 @@ internal class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
     return MavenUtil.isPomFile(file)
   }
 
-  override fun linkAndRefreshProject(projectDirectory: Path, project: Project) {
-    val builder = builder
-    try {
-      builder.isUpdate = false
-      builder.setFileToImport(projectDirectory)
-      if (builder.validate(null, project)) {
-        builder.commit(project, null, ModulesProvider.EMPTY_MODULES_PROVIDER)
-      }
+  override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
+    val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+    cs.launch {
+      withContext(Dispatchers.Default) {
+        linkToExistingProjectAsync(projectFile, project)
     }
-    finally {
-      builder.cleanup()
     }
   }
+
+  override suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
+    LOG.debug("Link Maven project '$projectFile' to existing project ${project.name}")
+
+    val projectRoot = if (projectFile.isDirectory) projectFile else projectFile.parent
+
+    if (ExternalSystemTrustedProjectDialog.confirmLinkingUntrustedProjectAsync(project, systemId, projectRoot.toNioPath())) {
+      val asyncBuilder = MavenProjectAsyncBuilder()
+      asyncBuilder.commit(project, projectFile, null)
+    }
+  }
+
 }

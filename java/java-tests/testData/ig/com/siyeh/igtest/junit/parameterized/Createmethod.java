@@ -1,0 +1,2 @@
+@org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
+public class <warning descr="Parameterized test class 'Createmethod' lacks data provider method annotated with '@Parameters'"><caret>Createmethod</warning> {}

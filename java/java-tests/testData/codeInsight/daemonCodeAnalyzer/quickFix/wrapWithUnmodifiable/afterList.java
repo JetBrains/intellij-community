@@ -1,4 +1,4 @@
-// "Wrap with unmodifiable list" "true"
+// "Wrap with unmodifiable list" "true-preview"
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;

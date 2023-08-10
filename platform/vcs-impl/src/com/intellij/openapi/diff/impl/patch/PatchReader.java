@@ -2,6 +2,7 @@
 package com.intellij.openapi.diff.impl.patch;
 
 import com.google.common.collect.Iterables;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -367,16 +368,12 @@ public final class PatchReader {
           break;
         }
         switch (lastLine.getType()) {
-          case CONTEXT:
+          case CONTEXT -> {
             before++;
             after++;
-            break;
-          case ADD:
-            after++;
-            break;
-          case REMOVE:
-            before++;
-            break;
+          }
+          case ADD -> after++;
+          case REMOVE -> before++;
         }
         hunk.addLine(lastLine);
       }
@@ -551,7 +548,7 @@ public final class PatchReader {
         pos = fileName.indexOf(' ');
       }
       if (pos >= 0) {
-        String versionId = fileName.substring(pos).trim();
+        @NlsSafe String versionId = fileName.substring(pos).trim();
         fileName = fileName.substring(0, pos);
         if (versionId.length() > 0 && !ourEmptyRevisionInfoPattern.matcher(versionId).matches()) {
           if (before) {

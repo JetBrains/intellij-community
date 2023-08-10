@@ -1,24 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class WslDistributionManager implements Disposable {
-
   static final Logger LOG = Logger.getInstance(WslDistributionManager.class);
   private static final Object LOCK = new Object();
 
@@ -27,8 +28,8 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   private volatile CachedDistributions myInstalledDistributions;
-  private final Map<String, WSLDistribution> myMsIdToDistributionCache = ContainerUtil.createConcurrentWeakMap(
-    CaseInsensitiveStringHashingStrategy.INSTANCE);
+  private volatile List<WSLDistribution> myLastInstalledDistributions;
+  private final Map<String, WSLDistribution> myMsIdToDistributionCache = CollectionFactory.createConcurrentWeakCaseInsensitiveMap();
 
   @Override
   public void dispose() {
@@ -44,11 +45,20 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   /**
+   * @return last loaded list of installed distributions or {@code null} if it hasn't been loaded yet.
+   * Please note the returned list might be out-of-date. To get the up-to-date list, please use {@link #getInstalledDistributionsFuture}.
+   */
+  public @Nullable List<WSLDistribution> getLastInstalledDistributions() {
+    return myLastInstalledDistributions;
+  }
+
+  /**
    * @return list of installed WSL distributions by parsing output of `wsl.exe -l`. Please call it
-   * on a pooled thread and outside of the read action as it runs a process under the hood.
+   * on a pooled thread and outside the read action as it runs a process under the hood.
    * @see #getInstalledDistributionsFuture
    */
   public @NotNull List<WSLDistribution> getInstalledDistributions() {
+    if (!isAvailable()) return List.of();
     CachedDistributions cachedDistributions = myInstalledDistributions;
     if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
       return cachedDistributions.myInstalledDistributions;
@@ -59,17 +69,23 @@ public abstract class WslDistributionManager implements Disposable {
       if (cachedDistributions == null) {
         cachedDistributions = new CachedDistributions(loadInstalledDistributions());
         myInstalledDistributions = cachedDistributions;
+        myLastInstalledDistributions = cachedDistributions.myInstalledDistributions;
       }
     }
     return cachedDistributions.myInstalledDistributions;
   }
 
   public @NotNull CompletableFuture<List<WSLDistribution>> getInstalledDistributionsFuture() {
+    if (!isAvailable()) return CompletableFuture.completedFuture(List.of());
     CachedDistributions cachedDistributions = myInstalledDistributions;
     if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
       return CompletableFuture.completedFuture(cachedDistributions.myInstalledDistributions);
     }
     return CompletableFuture.supplyAsync(this::getInstalledDistributions, AppExecutorUtil.getAppExecutorService());
+  }
+
+  protected boolean isAvailable() {
+    return WSLUtil.isSystemCompatible();
   }
 
   /**
@@ -100,17 +116,52 @@ public abstract class WslDistributionManager implements Disposable {
     return d;
   }
 
-  public static boolean isWslPath(@NotNull String path) {
-    return FileUtil.toSystemDependentName(path).startsWith(WSLDistribution.UNC_PREFIX);
-  }
-
   private @NotNull List<WSLDistribution> loadInstalledDistributions() {
+    if (!isWslExeSupported()) {
+      //noinspection removal
+      return WSLUtil.getAvailableDistributions();
+    }
+
+    // we assume that after "2004" Windows release wsl.exe and all required flags are available
+    if (Registry.is("wsl.list.prefer.verbose.output", true)) {
+      try {
+        final var result = loadInstalledDistributionsWithVersions();
+        return ContainerUtil.map(result, data -> {
+          final WSLDistribution distribution = getOrCreateDistributionByMsId(data.getDistributionName(), true);
+          distribution.setVersion(data.getVersion());
+          return distribution;
+        });
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+      }
+      catch (IllegalStateException e) {
+        LOG.error(e);
+      }
+    }
+    // fallback: using loadInstalledDistributionMsIds in case of execution exception or parsing error
     return ContainerUtil.map(loadInstalledDistributionMsIds(), (msId) -> {
       return getOrCreateDistributionByMsId(msId, true);
     });
   }
 
+  protected boolean isWslExeSupported() {
+    Long windowsBuild = SystemInfo.getWinBuildNumber();
+    if (windowsBuild != null && windowsBuild > 0 && windowsBuild < 19041) {
+      WSLUtil.WSLToolFlags wslTool = WSLUtil.getWSLToolFlags();
+      return wslTool != null && (wslTool.isVerboseFlagAvailable || wslTool.isQuietFlagAvailable);
+    }
+    return true;
+  }
+
   protected abstract @NotNull List<String> loadInstalledDistributionMsIds();
+
+  /**
+   * @throws IOException if an execution error occurs
+   * @throws IllegalStateException if a parsing error occurs
+   */
+  public abstract @NotNull List<WslDistributionAndVersion> loadInstalledDistributionsWithVersions()
+    throws IOException, IllegalStateException;
 
   private static class CachedDistributions {
     private final @NotNull List<WSLDistribution> myInstalledDistributions;

@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -14,8 +14,8 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- *  @author dsl
- */
 public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMoveDestination {
   private final VirtualFile mySourceRoot;
 
@@ -42,26 +39,27 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
 
   @Override
   public PsiDirectory getTargetIfExists(PsiDirectory source) {
-    return RefactoringUtil.findPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
+    return CommonJavaRefactoringUtil.findPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
   }
 
   @Override
   public PsiDirectory getTargetIfExists(@NotNull PsiFile source) {
-    return RefactoringUtil.findPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
+    return CommonJavaRefactoringUtil.findPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
   }
 
   @Override
   public PsiDirectory getTargetDirectory(@Nullable PsiDirectory source) throws IncorrectOperationException {
-    return getDirectory(source);
+    return getDirectory();
   }
 
   @Override
   public PsiDirectory getTargetDirectory(PsiFile source) throws IncorrectOperationException {
-    return getDirectory(source);
+    return getDirectory();
   }
 
   @Override
   @Nullable
+  @NlsContexts.DialogMessage
   public String verify(PsiFile source) {
     return checkCanCreateInSourceRoot(mySourceRoot);
   }
@@ -79,7 +77,8 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
   @Override
   public void analyzeModuleConflicts(@NotNull final Collection<? extends PsiElement> elements,
                                      @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
-    RefactoringConflictsUtil.analyzeModuleConflicts(getTargetPackage().getManager().getProject(), elements, usages, mySourceRoot, conflicts);
+    RefactoringConflictsUtil.getInstance()
+      .analyzeModuleConflicts(getTargetPackage().getManager().getProject(), elements, usages, mySourceRoot, conflicts);
   }
 
   @Override
@@ -95,14 +94,9 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
   }
 
   PsiDirectory myTargetDirectory;
-  private PsiDirectory getDirectory(@Nullable PsiElement source) throws IncorrectOperationException {
+  private PsiDirectory getDirectory() throws IncorrectOperationException {
     if (myTargetDirectory == null) {
-      VirtualFile sourceRoot = mySourceRoot;
-      ModelBranch branch = source == null ? null : ModelBranch.getPsiBranch(source);
-      if (branch != null) {
-        sourceRoot = branch.findFileCopy(mySourceRoot);
-      }
-      myTargetDirectory = RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, sourceRoot);
+      myTargetDirectory = CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
     }
     return myTargetDirectory;
   }

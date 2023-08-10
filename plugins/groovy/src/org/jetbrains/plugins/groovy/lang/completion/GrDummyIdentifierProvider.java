@@ -18,14 +18,13 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -53,13 +52,13 @@ public class GrDummyIdentifierProvider {
 
         return CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
       }
-      else if (isIdentifierBeforeLParenth()) {
+      else if (isIdentifierBeforeLParenth(position)) {
         return setCorrectCase() + ";";
       }
       else if (GroovyCompletionUtil.isInPossibleClosureParameter(position)) {
         return setCorrectCase() + "->";
       }
-      else if (isBeforeAssign()) {
+      else if (isIdentifierBeforeAssign(position)) {
         return CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
       }
       else {
@@ -67,22 +66,6 @@ public class GrDummyIdentifierProvider {
       }
     }
     return null;
-  }
-
-  private boolean isBeforeAssign() {
-    //<caret>String name=
-    HighlighterIterator iterator = ((EditorEx)myContext.getEditor()).getHighlighter().createIterator(myContext.getStartOffset());
-    if (iterator.atEnd()) return false;
-
-    if (iterator.getTokenType() == GroovyTokenTypes.mIDENT) {
-      iterator.advance();
-    }
-
-    while (!iterator.atEnd() && TokenSets.WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
-      iterator.advance();
-    }
-
-    return !iterator.atEnd() && iterator.getTokenType() == GroovyTokenTypes.mASSIGN;
   }
 
   @NotNull
@@ -96,18 +79,27 @@ public class GrDummyIdentifierProvider {
     return Character.isUpperCase(text.charAt(0)) ? CompletionInitializationContext.DUMMY_IDENTIFIER : DUMMY_IDENTIFIER_DECAPITALIZED;
   }
 
-  private boolean isIdentifierBeforeLParenth() { //<caret>String name=
-    HighlighterIterator iterator = ((EditorEx)myContext.getEditor()).getHighlighter().createIterator(myContext.getStartOffset());
-    if (iterator.atEnd()) return false;
+  private static boolean isIdentifierBeforeAssign(@Nullable PsiElement position) {
+    ASTNode node = findNodeAfterIdent(position);
+    return node != null && node.getElementType() == GroovyTokenTypes.mASSIGN;
+  }
 
-    if (iterator.getTokenType() == GroovyTokenTypes.mIDENT) {
-      iterator.advance();
+  private static boolean isIdentifierBeforeLParenth(@Nullable PsiElement position) {
+    //<caret>String name=
+    ASTNode node = findNodeAfterIdent(position);
+    return node != null && node.getElementType() == GroovyTokenTypes.mLPAREN;
+  }
+
+  @Nullable
+  private static ASTNode findNodeAfterIdent(@Nullable PsiElement position) {
+    if (position == null) {
+      return null;
     }
-
-    while (!iterator.atEnd() && TokenSets.WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
-      iterator.advance();
+    ASTNode node = position.getNode();
+    if (node.getElementType() == GroovyTokenTypes.mIDENT) {
+      node = TreeUtil.nextLeaf(node);
     }
-
-    return !iterator.atEnd() && iterator.getTokenType() == GroovyTokenTypes.mLPAREN;
+    node = TreeUtil.skipWhitespaceAndComments(node, true);
+    return node;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author yole
- */
 public abstract class FileIndexFacade {
   protected final Project myProject;
 
@@ -28,6 +25,7 @@ public abstract class FileIndexFacade {
   public abstract boolean isInContent(@NotNull VirtualFile file);
   public abstract boolean isInSource(@NotNull VirtualFile file);
   public abstract boolean isInSourceContent(@NotNull VirtualFile file);
+  public abstract boolean isInLibrary(@NotNull VirtualFile file);
   public abstract boolean isInLibraryClasses(@NotNull VirtualFile file);
 
   public abstract boolean isInLibrarySource(@NotNull VirtualFile file);

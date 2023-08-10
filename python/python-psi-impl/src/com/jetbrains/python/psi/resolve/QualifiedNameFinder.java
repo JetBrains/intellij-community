@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -34,10 +33,8 @@ import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author yole
- */
-public class QualifiedNameFinder {
+
+public final class QualifiedNameFinder {
   /**
    * Looks for a way to import given file.
    *
@@ -257,7 +254,7 @@ public class QualifiedNameFinder {
 
     public QualifiedNameBasedScope(@NotNull Project project) {
       super(project);
-      myProjectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+      myProjectFileIndex = ProjectFileIndex.getInstance(project);
     }
 
     @Override
@@ -295,8 +292,7 @@ public class QualifiedNameFinder {
 
   @Nullable
   private static QualifiedName computeQualifiedNameInRoot(@NotNull VirtualFile root, @NotNull VirtualFile file) {
-    VirtualFile effectiveRoot = ModelBranchUtil.obtainCopyFromTheSameBranch(file, root);
-    String relativePath = VfsUtilCore.getRelativePath(file, effectiveRoot, VfsUtilCore.VFS_SEPARATOR_CHAR);
+    String relativePath = VfsUtilCore.getRelativePath(file, root, VfsUtilCore.VFS_SEPARATOR_CHAR);
     if (StringUtil.isEmpty(relativePath)) {
       return null;
     }

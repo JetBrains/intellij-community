@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.Disposable;
@@ -16,12 +16,14 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -46,7 +48,7 @@ final class WatchRootsManager {
     myFileWatcher = fileWatcher;
     ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         synchronized (myLock) {
           if (myWatcherRequiresUpdate) {
             updateFileWatcher();
@@ -130,17 +132,16 @@ final class WatchRootsManager {
       synchronized (myLock) {
         if (!myWatcherRequiresUpdate) return null;
         myWatcherRequiresUpdate = false;
-        return createCanonicalPathMap(myFlatWatchRoots.navigableKeySet(), myOptimizedRecursiveWatchRoots,
-                                      myPathMappings, File.separatorChar == '\\');
+        var convert = File.separatorChar == '\\';
+        return createCanonicalPathMap(myFlatWatchRoots.navigableKeySet(), myOptimizedRecursiveWatchRoots, myPathMappings, convert);
       }
     });
   }
 
-  @NotNull
-  static CanonicalPathMap createCanonicalPathMap(@NotNull Set<String> flatWatchRoots,
-                                                 @NotNull Set<String> optimizedRecursiveWatchRoots,
-                                                 @NotNull Collection<Pair<String, String>> pathMappings,
-                                                 boolean convertToForwardSlashes) {
+  static @NotNull CanonicalPathMap createCanonicalPathMap(@NotNull Set<String> flatWatchRoots,
+                                                          @NotNull Set<String> optimizedRecursiveWatchRoots,
+                                                          @NotNull Collection<Pair<String, String>> pathMappings,
+                                                          boolean convertToForwardSlashes) {
     NavigableSet<@SystemDependent String> optimizedRecursiveWatchRootsCopy = WatchRootsUtil.createFileNavigableSet();
     List<Pair<@SystemDependent String, @SystemDependent String>> initialMappings = new ArrayList<>(pathMappings.size());
 
@@ -173,7 +174,7 @@ final class WatchRootsManager {
       String watchRoot = prepareWatchRoot(root);
       if (watchRoot == null) continue;
 
-      List<WatchRequest> requests = roots.computeIfAbsent(watchRoot, (key) -> new SmartList<>());
+      List<WatchRequest> requests = roots.computeIfAbsent(watchRoot, __ -> new SmartList<>());
       boolean foundSameRequest = false;
       if (!requestsToRemove.isEmpty()) {
         for (WatchRequest currentRequest : requests) {
@@ -218,10 +219,8 @@ final class WatchRootsManager {
     int index = root.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (index >= 0) root = root.substring(0, index);
     try {
-      Path rootPath = Paths.get(FileUtil.toSystemDependentName(root));
-      if (!rootPath.isAbsolute()) {
-        throw new InvalidPathException(root, "Watch roots should be absolute");
-      }
+      Path rootPath = Path.of(FileUtil.toSystemDependentName(root));
+      if (!rootPath.isAbsolute()) throw new InvalidPathException(root, "Watch roots should be absolute");
       return FileUtil.toSystemIndependentName(rootPath.toString());
     }
     catch (InvalidPathException e) {
@@ -261,7 +260,7 @@ final class WatchRootsManager {
   private void addWatchSymlinkRequest(@NotNull WatchSymlinkRequest request) {
     String watchRoot = request.getRootPath();
     Map<String, List<WatchRequest>> roots = request.isToWatchRecursively() ? myRecursiveWatchRoots : myFlatWatchRoots;
-    List<WatchRequest> requests = roots.computeIfAbsent(watchRoot, (key) -> new SmartList<>());
+    List<WatchRequest> requests = roots.computeIfAbsent(watchRoot, __ -> new SmartList<>());
     requests.add(request);
     if (requests.size() == 1 && !WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, watchRoot)) {
       if (request.isToWatchRecursively()) {
@@ -411,7 +410,6 @@ final class WatchRootsManager {
     }
 
     @Override
-    @NonNls
     public String toString() {
       return "SymlinkData{" + id + ", " + path + " -> " + target + '}';
     }

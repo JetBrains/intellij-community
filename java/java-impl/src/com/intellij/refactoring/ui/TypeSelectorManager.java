@@ -18,9 +18,6 @@ package com.intellij.refactoring.ui;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public interface TypeSelectorManager {
   TypeSelector getTypeSelector();
 

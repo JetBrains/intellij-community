@@ -1,9 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
-/**
- * @author peter
- */
 public final class EnumDataDescriptor<T extends Enum> extends InlineKeyDescriptor<T> {
   private final Class<T> myEnumClass;
 

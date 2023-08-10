@@ -9,15 +9,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.JBIterable;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Iterator;
 
 import static com.intellij.psi.util.PsiUtil.hasDefaultConstructor;
 
-/**
- *  @author dsl
- */
 public class PsiUtilTest extends LightJavaCodeInsightFixtureTestCase {
   public void testTypeParameterIterator() {
     PsiClass classA = createClass("class A<T> {}");
@@ -75,7 +74,7 @@ public class PsiUtilTest extends LightJavaCodeInsightFixtureTestCase {
     return ((PsiJavaFile)myFixture.configureByText("A.java", text)).getClasses()[0];
   }
 
-  private PsiClass createClass(String text) throws IncorrectOperationException {
+  private PsiClass createClass(@NotNull @Language("JAVA") String text) throws IncorrectOperationException {
     return JavaPsiFacade.getElementFactory(getProject()).createClassFromText(text, null).getInnerClasses()[0];
   }
 

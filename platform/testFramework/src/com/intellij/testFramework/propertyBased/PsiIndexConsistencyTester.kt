@@ -1,15 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.propertyBased
 
 import com.intellij.lang.Language
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
@@ -59,12 +62,12 @@ object PsiIndexConsistencyTester {
 
 
   open class Model(val vFile: VirtualFile, val fixture: CodeInsightTestFixture) {
-    val refs = hashMapOf<RefKind, Any?>()
-    val project = fixture.project!!
+    val refs: HashMap<RefKind, Any?> = hashMapOf()
+    val project: Project = fixture.project!!
 
-    fun findPsiFile(language: Language? = null) = findViewProvider().let { vp -> vp.getPsi(language ?: vp.baseLanguage) }!!
+    fun findPsiFile(language: Language? = null): PsiFile = findViewProvider().let { vp -> vp.getPsi(language ?: vp.baseLanguage) }!!
     private fun findViewProvider() = PsiManager.getInstance(project).findViewProvider(vFile)!!
-    fun getDocument() = FileDocumentManager.getInstance().getDocument(vFile)!!
+    fun getDocument(): Document = FileDocumentManager.getInstance().getDocument(vFile)!!
     fun isCommitted(): Boolean {
       val document = FileDocumentManager.getInstance().getCachedDocument(vFile)
       return document == null || PsiDocumentManager.getInstance(project).isCommitted(document)
@@ -90,7 +93,7 @@ object PsiIndexConsistencyTester {
     }
 
     object Gc: SimpleAction() {
-      override fun performAction(model: Model) = GCUtil.tryGcSoftlyReachableObjects()
+      override fun performAction(model: Model): Unit = GCUtil.tryGcSoftlyReachableObjects()
     }
     object Commit: SimpleAction() {
       override fun performAction(model: Model) {
@@ -106,7 +109,7 @@ object PsiIndexConsistencyTester {
       }
     }
     object PostponedFormatting: SimpleAction() {
-      override fun performAction(model: Model) =
+      override fun performAction(model: Model): Unit =
         PostprocessReformattingAspect.getInstance(model.project).doPostponedFormatting()
     }
     object ReparseFile : SimpleAction() {
@@ -192,10 +195,10 @@ object PsiIndexConsistencyTester {
     }
 
     object PsiFileRef : RefKind() {
-      override fun loadRef(model: Model): Any? = model.findPsiFile()
+      override fun loadRef(model: Model): Any = model.findPsiFile()
     }
     object DocumentRef : RefKind() {
-      override fun loadRef(model: Model): Any? = model.getDocument()
+      override fun loadRef(model: Model): Any = model.getDocument()
     }
     object DirRef : RefKind() {
       override fun loadRef(model: Model): Any? = model.findPsiFile().containingDirectory

@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.newEditor.ConfigurableMarkerProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
@@ -16,16 +16,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
+public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchicalConfigurable, ConfigurableMarkerProvider {
   static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
-  @Nullable
-  public static <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep) {
+  public static @Nullable <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep) {
     return wrapConfigurable(ep, false);
   }
 
-  @Nullable
-  public static <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep, boolean settings) {
+  public static @Nullable <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep, boolean settings) {
     if (!ep.canCreateConfigurable()) {
       return null;
     }
@@ -36,8 +34,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     return createConfigurable(ep, LOG.isDebugEnabled());
   }
 
-  @Nullable
-  private static <T extends UnnamedConfigurable> T createConfigurable(@NotNull ConfigurableEP<T> ep, boolean log) {
+  private static @Nullable <T extends UnnamedConfigurable> T createConfigurable(@NotNull ConfigurableEP<T> ep, boolean log) {
     long time = System.currentTimeMillis();
     T configurable = ep.createConfigurable();
     if (configurable instanceof Configurable) {
@@ -76,23 +73,28 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
            (configurable instanceof ConfigurableWrapper && ((ConfigurableWrapper)configurable).myEp.nonDefaultProject);
   }
 
-  @Nullable
-  public static <T> T cast(@NotNull Class<T> type, UnnamedConfigurable configurable) {
-    if (configurable instanceof ConfigurableWrapper) {
-      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+  @Override
+  public void focusOn(@Nls @NotNull String label) {
+    Configurable unwrapped = cast(Configurable.class, this);
+    if (unwrapped != null && unwrapped != this) {
+      unwrapped.focusOn(label);
+    }
+  }
+
+  public static @Nullable <T> T cast(@NotNull Class<T> type, @Nullable UnnamedConfigurable configurable) {
+    if (configurable instanceof ConfigurableWrapper wrapper) {
       if (wrapper.myConfigurable == null) {
         Class<?> configurableType = wrapper.getExtensionPoint().getConfigurableType();
         if (configurableType != null) {
           if (!type.isAssignableFrom(configurableType)) {
-            return null; // do not create configurable that cannot be cast to the specified type
+            // do not create configurable that cannot be cast to the specified type
+            return null;
           }
         }
       }
       configurable = wrapper.getConfigurable();
     }
-    return type.isInstance(configurable)
-           ? type.cast(configurable)
-           : null;
+    return type.isInstance(configurable) ? type.cast(configurable) : null;
   }
 
   private final ConfigurableEP<?> myEp;
@@ -103,11 +105,9 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     myWeight = ep.groupWeight;
   }
 
-  @Nullable
-  private UnnamedConfigurable myConfigurable;
+  private @Nullable UnnamedConfigurable myConfigurable;
 
-  @Nullable
-  public UnnamedConfigurable getRawConfigurable() {
+  public @Nullable UnnamedConfigurable getRawConfigurable() {
     return myConfigurable;
   }
 
@@ -115,7 +115,14 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     if (myConfigurable == null) {
       myConfigurable = createConfigurable(myEp, false);
       if (myConfigurable == null) {
-        LOG.error("Can't instantiate configurable for " + myEp);
+        String message = "Can't instantiate configurable for " + myEp;
+        PluginDescriptor pluginDescriptor = myEp.getPluginDescriptor();
+        if (pluginDescriptor != null) {
+          LOG.error(new PluginException(message, pluginDescriptor.getPluginId()));
+        }
+        else {
+          LOG.error(message);
+        }
       }
       else if (LOG.isDebugEnabled()) {
         LOG.debug("created configurable for " + myConfigurable.getClass());
@@ -129,16 +136,24 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     return myWeight;
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nullable String getDisplayNameFast() {
+    return myEp.displayName == null && myEp.key == null ? null : myEp.getDisplayName();
+  }
+
+  @Override
+  public @Nls String getDisplayName() {
     if (myEp.displayName == null && myEp.key == null) {
       boolean loaded = myConfigurable != null;
       Configurable configurable = cast(Configurable.class, this);
       if (configurable != null) {
         String name = configurable.getDisplayName();
-        if (!loaded && LOG.isDebugEnabled()) {
-          LOG.debug("XML does not provide displayName for " + configurable.getClass());
+        if (!loaded) {
+          String message = "No display name specified in plugin descriptor XML file for configurable " + configurable.getClass().getName() + ";\n" +
+                           "specify it using 'displayName' or 'key' attribute to avoid necessity to load the configurable class when Settings dialog is opened";
+          PluginDescriptor pluginDescriptor = myEp.getPluginDescriptor();
+          PluginId pluginId = pluginDescriptor != null ? pluginDescriptor.getPluginId() : null;
+          LOG.error(new PluginException(message, pluginId));
         }
         return name;
       }
@@ -150,21 +165,18 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     return myEp.providerClass;
   }
 
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myEp.getProject();
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     UnnamedConfigurable configurable = getConfigurable();
     return configurable instanceof Configurable ? ((Configurable)configurable).getHelpTopic() : null;
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     UnnamedConfigurable configurable = getConfigurable();
     return configurable == null ? null : configurable.createComponent();
   }
@@ -201,9 +213,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     }
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     if (myEp.id != null) {
       return myEp.id;
     }
@@ -224,15 +235,16 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
              : myEp.implementationClass;
   }
 
-  @NotNull
-  public ConfigurableEP<?> getExtensionPoint() {
+  public @NotNull ConfigurableEP<?> getExtensionPoint() {
     return myEp;
   }
 
+  @Override
   public String getParentId() {
     return myEp.parentId;
   }
 
+  @Override
   public ConfigurableWrapper addChild(Configurable configurable) {
     return new CompositeWrapper(myEp, configurable);
   }
@@ -242,22 +254,32 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     return getDisplayName();
   }
 
-  @Nullable
   @Override
-  public Runnable enableSearch(String option) {
+  public @Nullable Runnable enableSearch(String option) {
     final UnnamedConfigurable configurable = getConfigurable();
     return configurable instanceof SearchableConfigurable ? ((SearchableConfigurable)configurable).enableSearch(option) : null;
   }
 
-  @NotNull
   @Override
-  public Class<?> getOriginalClass() {
+  public @NotNull Class<?> getOriginalClass() {
     final UnnamedConfigurable configurable = getConfigurable();
     return configurable instanceof SearchableConfigurable
            ? ((SearchableConfigurable)configurable).getOriginalClass()
            : configurable != null
              ? configurable.getClass()
              : getClass();
+  }
+
+  private @Nls @Nullable String markerText = null;
+
+  @Override
+  public @Nls @Nullable String getMarkerText() {
+    return markerText;
+  }
+
+  @Override
+  public void setMarkerText(@Nls @Nullable String text) {
+    markerText = text;
   }
 
   private static final class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {

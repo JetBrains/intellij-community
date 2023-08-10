@@ -16,9 +16,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 
 import java.io.IOException;
 
-/**
- * @author ilyas
- */
 public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, GrEnumConstant> {
 
   public GrEnumConstantElementType(String debugName) {

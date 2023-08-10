@@ -7,8 +7,6 @@ import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
-import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
-import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
@@ -21,19 +19,13 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.*;
 
 public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTemplate {
-  /**
-   * @deprecated use {@link JavaPostfixTemplatesUtils}
-   */
-  @Deprecated public static final Condition<PsiElement> IS_NUMBER_OR_ARRAY_OR_ITERABLE =
-    element -> IS_ITERABLE_OR_ARRAY.value(element) || IS_NUMBER.value(element);
-    
   protected ForIndexedPostfixTemplate(@NotNull String templateName, @NotNull String templateText, @NotNull String example,
                                       @NotNull JavaPostfixTemplateProvider provider) {
     super(templateName, templateText, example,
           ContainerUtil.newHashSet(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition(),
                                    new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNumberExpressionCondition(),
                                    new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition(
-                                     CommonClassNames.JAVA_LANG_ITERABLE)),
+                                     CommonClassNames.JAVA_UTIL_LIST)),
           LanguageLevel.JDK_1_3, true, provider);
   }
 

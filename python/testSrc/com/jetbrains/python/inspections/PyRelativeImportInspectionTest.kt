@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
-import com.intellij.application.options.RegistryManager
+import com.intellij.openapi.util.registry.RegistryManager
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.fixtures.PyInspectionTestCase
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService
@@ -11,14 +11,19 @@ import org.jetbrains.annotations.NonNls
 class PyRelativeImportInspectionTest: PyInspectionTestCase() {
   override fun setUp() {
     super.setUp()
-    setLanguageLevel(LanguageLevel.getLatest())
-    RegistryManager.getInstance()["python.explicit.namespace.packages"].resetToDefault()
+    RegistryManager.getInstance().get("python.explicit.namespace.packages").resetToDefault()
   }
 
   override fun tearDown() {
-    setLanguageLevel(LanguageLevel.getDefault())
-    RegistryManager.getInstance()["python.explicit.namespace.packages"].resetToDefault()
-    super.tearDown()
+    try {
+      RegistryManager.getInstance().get("python.explicit.namespace.packages").resetToDefault()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   override fun getInspectionClass(): Class<out PyInspection> {
@@ -63,7 +68,7 @@ class PyRelativeImportInspectionTest: PyInspectionTestCase() {
   }
 
   fun testPlainDirectoryDottedImportRegistryOffNoInspection() {
-    RegistryManager.getInstance()["python.explicit.namespace.packages"].setValue(false)
+    RegistryManager.getInstance().get("python.explicit.namespace.packages").setValue(false)
     doMultiFileTest("$PLAIN_DIR/dottedImport.py")
   }
 
@@ -97,12 +102,12 @@ class PyRelativeImportInspectionTest: PyInspectionTestCase() {
   }
 
   fun testNamespacePackageSameDirectoryImportRegistryOffNoInspection() {
-    RegistryManager.getInstance()["python.explicit.namespace.packages"].setValue(false)
+    RegistryManager.getInstance().get("python.explicit.namespace.packages").setValue(false)
     doNamespacePackageTest("$NAMESPACE_PACK_DIR/mod.py", NAMESPACE_PACK_DIR)
   }
 
   fun testNestedNamespacePackageSameDirectoryImportRegistryOffNoInspection() {
-    RegistryManager.getInstance()["python.explicit.namespace.packages"].setValue(false)
+    RegistryManager.getInstance().get("python.explicit.namespace.packages").setValue(false)
     doNamespacePackageTest("$NAMESPACE_PACK_DIR/nestedNamespacePackage/mod.py", NAMESPACE_PACK_DIR)
   }
 

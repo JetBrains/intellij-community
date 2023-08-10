@@ -61,8 +61,7 @@ public class FilterInfo implements JDOMExternalizable {
   }
 
   public boolean equals(Object object) {
-    if (!(object instanceof FilterInfo)) return false;
-    FilterInfo other = (FilterInfo)object;
+    if (!(object instanceof FilterInfo other)) return false;
     return Objects.equals(myName, other.myName) &&
            Objects.equals(myDescription, other.myDescription) &&
            Objects.equals(myRegExp, other.myRegExp);

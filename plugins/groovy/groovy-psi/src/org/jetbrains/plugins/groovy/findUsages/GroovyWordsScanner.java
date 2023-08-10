@@ -14,9 +14,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_SQ;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TSQ;
 
-/**
- * @author ven
-*/
 class GroovyWordsScanner extends VersionedWordsScanner {
   private Lexer myLexer;
 

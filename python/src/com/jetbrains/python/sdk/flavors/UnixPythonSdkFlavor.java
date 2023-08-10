@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.openapi.module.Module;
@@ -8,17 +8,22 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-/**
- * @author yole
- */
-public final class UnixPythonSdkFlavor extends CPythonSdkFlavor {
+
+public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
+  private final static Pattern PYTHON_3_RE = Pattern.compile("(python-?3\\.(\\d){1,2})|(python-?3)");
+
   private UnixPythonSdkFlavor() {
   }
 
@@ -33,11 +38,20 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor {
     return SystemInfo.isUnix && !SystemInfo.isMac;
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
+  }
+
+  @Override
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+    return ContainerUtil.map(getDefaultUnixPythons(null), Path::of);
+  }
+
+  @NotNull
+  public static Set<String> getDefaultUnixPythons(@Nullable String rootPrefix) {
     Set<String> candidates = new HashSet<>();
-    collectUnixPythons("/usr/bin", candidates);
+    collectUnixPythons((rootPrefix != null ? rootPrefix : "") + "/usr/bin", candidates);
     return candidates;
   }
 
@@ -52,16 +66,8 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor {
       for (VirtualFile child : suspects) {
         if (!child.isDirectory()) {
           final String childName = StringUtil.toLowerCase(child.getName());
-          for (String name : NAMES) {
-            if (childName.startsWith(name) || PYTHON_RE.matcher(childName).matches()) {
-              final String childPath = child.getPath();
-              if (!childName.endsWith("-config") &&
-                  !childName.startsWith("pythonw") &&
-                  !childName.endsWith("m")) {
-                candidates.add(childPath);
-              }
-              break;
-            }
+          if (ArrayUtil.contains(childName, NAMES) || PYTHON_3_RE.matcher(childName).matches()) {
+            candidates.add(child.getPath());
           }
         }
       }

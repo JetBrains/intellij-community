@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.icons.HiDPIImage;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleType;
@@ -19,6 +20,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.*;
 
+import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 import static java.lang.Math.min;
 
 /**
@@ -28,10 +30,9 @@ public final class ImageUtil {
   /**
    * Creates a HiDPI-aware BufferedImage in device scale.
    *
-   * @param width the width in user coordinate space
+   * @param width  the width in user coordinate space
    * @param height the height in user coordinate space
-   * @param type the type of the image
-   *
+   * @param type   the type of the image
    * @return a HiDPI-aware BufferedImage in device scale
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
@@ -42,17 +43,16 @@ public final class ImageUtil {
   /**
    * Creates a HiDPI-aware BufferedImage in the graphics config scale.
    *
-   * @param gc the graphics config
-   * @param width the width in user coordinate space
+   * @param gc     the graphics config
+   * @param width  the width in user coordinate space
    * @param height the height in user coordinate space
-   * @param type the type of the image
-   *
+   * @param type   the type of the image
    * @return a HiDPI-aware BufferedImage in the graphics scale
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
   public static @NotNull BufferedImage createImage(@Nullable GraphicsConfiguration gc, int width, int height, int type) {
     if (JreHiDpiUtil.isJreHiDPI(gc)) {
-      return new JBHiDPIScaledImage(gc, width, height, type);
+      return new HiDPIImage(gc, width, height, type);
     }
     else {
       //noinspection UndesirableClassUsage
@@ -64,9 +64,13 @@ public final class ImageUtil {
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    * @see #createImage(ScaleContext, double, double, int, PaintUtil.RoundingMode)
    */
-  public static @NotNull BufferedImage createImage(ScaleContext context, double width, double height, int type, @NotNull PaintUtil.RoundingMode rm) {
+  public static @NotNull BufferedImage createImage(ScaleContext context,
+                                                   double width,
+                                                   double height,
+                                                   int type,
+                                                   @NotNull PaintUtil.RoundingMode rm) {
     if (StartupUiUtil.isJreHiDPI(context)) {
-      return new JBHiDPIScaledImage(context, width, height, type, rm);
+      return new HiDPIImage(context, width, height, type, rm);
     }
     else {
       //noinspection UndesirableClassUsage
@@ -77,29 +81,25 @@ public final class ImageUtil {
   /**
    * Creates a HiDPI-aware BufferedImage in the graphics device scale.
    *
-   * @param g the graphics of the target device
-   * @param width the width in user coordinate space
+   * @param g      the graphics of the target device
+   * @param width  the width in user coordinate space
    * @param height the height in user coordinate space
-   * @param type the type of the image
-   *
+   * @param type   the type of the image
    * @return a HiDPI-aware BufferedImage in the graphics scale
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
-  @NotNull
-  public static BufferedImage createImage(Graphics g, int width, int height, int type) {
+  public static @NotNull BufferedImage createImage(Graphics g, int width, int height, int type) {
     return createImage(g, width, height, type, PaintUtil.RoundingMode.FLOOR);
   }
 
   /**
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
-   * @see #createImage(GraphicsConfiguration, double, double, int, PaintUtil.RoundingMode)
+   * @see #createImage(GraphicsConfiguration, int, int, int)
    */
-  @NotNull
-  public static BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull PaintUtil.RoundingMode rm) {
-    if (g instanceof Graphics2D) {
-      Graphics2D g2d = (Graphics2D)g;
+  public static @NotNull BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull PaintUtil.RoundingMode rm) {
+    if (g instanceof Graphics2D g2d) {
       if (JreHiDpiUtil.isJreHiDPI(g2d)) {
-        return RetinaImage.create(g2d, width, height, type, rm);
+        return new HiDPIImage(g2d, width, height, type, rm);
       }
       //noinspection UndesirableClassUsage
       return new BufferedImage(rm.round(width), rm.round(height), type);
@@ -107,22 +107,23 @@ public final class ImageUtil {
     return createImage(rm.round(width), rm.round(height), type);
   }
 
-  @NotNull
-  public static BufferedImage toBufferedImage(@NotNull Image image) {
-    return toBufferedImage(image, false);
+  public static @NotNull BufferedImage toBufferedImage(@NotNull Image image) {
+    return toBufferedImage(image, false, false);
   }
 
-  @NotNull
-  public static BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize) {
-    if (image instanceof JBHiDPIScaledImage) {
-      JBHiDPIScaledImage jbImage = (JBHiDPIScaledImage)image;
+  public static @NotNull BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize) {
+    return toBufferedImage(image, inUserSize, false);
+  }
+
+  public static @NotNull BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize, boolean ensureOneComponent) {
+    if (image instanceof JBHiDPIScaledImage jbImage) {
       Image delegate = jbImage.getDelegate();
       if (delegate != null) image = delegate;
       if (inUserSize) {
         image = scaleImage(image, 1 / jbImage.getScale());
       }
     }
-    if (image instanceof BufferedImage) {
+    if (image instanceof BufferedImage && (!ensureOneComponent || ((BufferedImage)image).getColorModel().getNumComponents() == 1)) {
       return (BufferedImage)image;
     }
 
@@ -135,14 +136,17 @@ public final class ImageUtil {
         public int getWidth() {
           return Math.max(width, 0);
         }
+
         @Override
         public int getHeight() {
           return Math.max(height, 0);
         }
+
         @Override
         public int getWidth(ImageObserver observer) {
           return Math.max(width, 0);
         }
+
         @Override
         public int getHeight(ImageObserver observer) {
           return Math.max(height, 0);
@@ -168,7 +172,9 @@ public final class ImageUtil {
   public static int getRealWidth(@NotNull Image image) {
     if (image instanceof JBHiDPIScaledImage) {
       Image img = ((JBHiDPIScaledImage)image).getDelegate();
-      if (img != null) image = img;
+      if (img != null) {
+        image = img;
+      }
     }
     return image.getWidth(null);
   }
@@ -183,14 +189,14 @@ public final class ImageUtil {
 
   public static int getUserWidth(@NotNull Image image) {
     if (image instanceof JBHiDPIScaledImage) {
-      return ((JBHiDPIScaledImage)image).getUserWidth(null);
+      return ((JBHiDPIScaledImage)image).getUserWidth();
     }
     return image.getWidth(null);
   }
 
   public static int getUserHeight(@NotNull Image image) {
     if (image instanceof JBHiDPIScaledImage) {
-      return ((JBHiDPIScaledImage)image).getUserHeight(null);
+      return ((JBHiDPIScaledImage)image).getUserHeight();
     }
     return image.getHeight(null);
   }
@@ -212,7 +218,7 @@ public final class ImageUtil {
   /**
    * Scales the image taking into account its HiDPI awareness.
    *
-   * @param width target user width
+   * @param width  target user width
    * @param height target user height
    */
   public static Image scaleImage(Image image, int width, int height) {
@@ -246,9 +252,9 @@ public final class ImageUtil {
    * However, the real with/height may lose precision (as it is integer) and as the result the reconstructed user width/height
    * may differ from the original values. To avoid the loss this method version accepts the original user width/height.
    *
-   * @param image the raw image to wrap
-   * @param context the scale context to match
-   * @param userWidth the expected user width of the wrapped image
+   * @param image      the raw image to wrap
+   * @param context    the scale context to match
+   * @param userWidth  the expected user width of the wrapped image
    * @param userHeight the expected user height of the wrapped image
    */
   @Contract("null, _, _, _ -> null; !null, _, _, _ -> !null")
@@ -257,43 +263,58 @@ public final class ImageUtil {
       return null;
     }
     if (StartupUiUtil.isJreHiDPI(context)) {
-      return new JBHiDPIScaledImage(image, userWidth, userHeight, BufferedImage.TYPE_INT_ARGB);
+      return new HiDPIImage(image, userWidth, userHeight, BufferedImage.TYPE_INT_ARGB);
     }
     return image;
   }
 
-  @NotNull
-  public static BufferedImage createCircleImage(@NotNull BufferedImage image) {
+  // NB: Execution may take more than 50ms, so if a lot of images should be resized, it is better to call it in background thread
+  public static @NotNull Image resize(@NotNull Image image, int size, @NotNull ScaleContext scaleContext) {
+    Image hidpiImage = ensureHiDPI(image, scaleContext);
+    int scaledSize = (int)scaleContext.apply(size, USR_SCALE);
+    return scaleImage(hidpiImage, scaledSize, scaledSize);
+  }
+
+  public static @NotNull BufferedImage createCircleImage(@NotNull BufferedImage image) {
     int size = min(image.getWidth(), image.getHeight());
     Area avatarOvalArea = new Area(new Ellipse2D.Double(0.0, 0.0, size, size));
 
-    return createImageByMask(image, avatarOvalArea);
+    return clipImage(image, avatarOvalArea);
   }
 
-  @NotNull
-  public static BufferedImage createRoundedImage(@NotNull BufferedImage image, double arc) {
+  public static @NotNull BufferedImage createRoundedImage(@NotNull BufferedImage image, double arc) {
     int size = min(image.getWidth(), image.getHeight());
     Area avatarOvalArea = new Area(new RoundRectangle2D.Double(0.0, 0.0, size, size, arc, arc));
-    return createImageByMask(image, avatarOvalArea);
+    return clipImage(image, avatarOvalArea);
   }
 
-  @NotNull
-  public static BufferedImage createImageByMask(@NotNull BufferedImage image, @NotNull Area area) {
-    int size = min(image.getWidth(), image.getHeight());
-    BufferedImage mask = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-    Graphics2D g2 = mask.createGraphics();
-    applyQualityRenderingHints(g2);
-    g2.fill(area);
+  public static @NotNull BufferedImage clipImage(@NotNull BufferedImage image, @NotNull Shape clip) {
+    if (image instanceof JBHiDPIScaledImage scaledImage) {
+      Image delegate = scaledImage.getDelegate();
+      if (delegate == null) return doClipImage(scaledImage, clip);
+      BufferedImage clippedImage = doClipImage(toBufferedImage(delegate), clip);
+      return new JBHiDPIScaledImage(clippedImage,
+                                    ScaleContext.create(ScaleType.SYS_SCALE.of(scaledImage.getScale())),
+                                    scaledImage.getType());
+    }
 
-    BufferedImage shapedImage = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-    g2 = shapedImage.createGraphics();
-    applyQualityRenderingHints(g2);
-    g2.drawImage(image, 0, 0, null);
-    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.DST_IN));
-    g2.drawImage(mask, 0, 0, null);
-    g2.dispose();
+    return doClipImage(image, clip);
+  }
 
-    return shapedImage;
+
+  private static @NotNull BufferedImage doClipImage(@NotNull BufferedImage image, @NotNull Shape clip) {
+    @SuppressWarnings("UndesirableClassUsage")
+    BufferedImage newImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    Graphics2D g = newImage.createGraphics();
+    try {
+      applyQualityRenderingHints(g);
+      g.setPaint(new TexturePaint(image, new Rectangle(0, 0, image.getWidth(), image.getHeight())));
+      g.fill(clip);
+      return newImage;
+    }
+    finally {
+      g.dispose();
+    }
   }
 
   public static void applyQualityRenderingHints(@NotNull Graphics2D g2) {

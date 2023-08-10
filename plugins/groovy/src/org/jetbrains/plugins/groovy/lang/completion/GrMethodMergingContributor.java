@@ -47,11 +47,10 @@ public class GrMethodMergingContributor extends CompletionContributor {
       final ArrayList<PsiMethod> allMethods = new ArrayList<>();
       for (LookupElement item : items) {
         Object o = item.getPsiElement();
-        if (item.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) != null || !(o instanceof PsiMethod)) {
+        if (item.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) != null || !(o instanceof PsiMethod method)) {
           return AutoCompletionDecision.SHOW_LOOKUP;
         }
 
-        PsiMethod method = (PsiMethod)o;
         String name = JavaMethodMergingContributor.joinLookupStrings(item);
 
         if (commonName != null && !commonName.equals(name)) {

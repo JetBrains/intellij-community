@@ -76,7 +76,7 @@ public final class ChromeSettings extends BrowserSpecificSettings {
 
   @Override
   @NotNull
-  @XMap(propertyElementName = ("environment-variables"))
+  @XMap(propertyElementName = "environment-variables")
   public Map<String, String> getEnvironmentVariables() {
     return myEnvironmentVariables;
   }

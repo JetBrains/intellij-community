@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * @author ilyas
- */
 public interface GrAssertStatement extends GrStatement {
   @Nullable
   GrExpression getAssertion();

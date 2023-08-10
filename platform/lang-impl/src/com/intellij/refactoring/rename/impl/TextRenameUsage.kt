@@ -1,53 +1,37 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.find.usages.api.PsiUsage
+import com.intellij.find.usages.api.ReadWriteUsage
+import com.intellij.find.usages.api.UsageAccess
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import com.intellij.refactoring.rename.api.FileOperation
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage.FileUpdater
 import com.intellij.refactoring.rename.api.PsiRenameUsage
-import com.intellij.util.text.StringOperation
-
-internal typealias TextReplacement = (newName: String) -> String?
+import com.intellij.refactoring.rename.api.ReplaceTextTargetContext
+import com.intellij.usages.impl.rules.UsageType
 
 internal class TextRenameUsage(
   private val psiUsage: PsiUsage,
-  private val textReplacement: TextReplacement
+  override val fileUpdater: FileUpdater,
+  val context: ReplaceTextTargetContext,
 ) : PsiRenameUsage, ModifiableRenameUsage {
 
-  override val declaration: Boolean get() = false
+  override val declaration: Boolean get() = psiUsage.declaration
 
   override val file: PsiFile get() = psiUsage.file
 
   override val range: TextRange get() = psiUsage.range
 
-  override fun createPointer(): Pointer<out TextRenameUsage> = TextUsagePointer(psiUsage, textReplacement)
+  override val usageType: UsageType? get() = psiUsage.usageType
 
-  private class TextUsagePointer(psiUsage: PsiUsage, private val textReplacement: TextReplacement) : Pointer<TextRenameUsage> {
-
-    private val myTextUsagePointer: Pointer<out PsiUsage> = psiUsage.createPointer()
-
-    override fun dereference(): TextRenameUsage? {
-      return myTextUsagePointer.dereference()?.let {
-        TextRenameUsage(it, textReplacement)
-      }
-    }
-  }
-
-  override val fileUpdater: FileUpdater get() = TextUsageUpdater
-
-  private object TextUsageUpdater : FileUpdater {
-
-    override fun prepareFileUpdate(usage: ModifiableRenameUsage, newName: String): Collection<FileOperation> {
-      usage as TextRenameUsage
-      val newText: String = usage.textReplacement(newName) ?: return emptyList()
-      return listOf(FileOperation.modifyFile(
-        usage.file,
-        StringOperation.replace(usage.range, newText)
-      ))
+  override fun createPointer(): Pointer<out TextRenameUsage> {
+    val fileUpdater = fileUpdater // don't capture `this`
+    val context = context
+    return Pointer.delegatingPointer(psiUsage.createPointer()) {
+      TextRenameUsage(it, fileUpdater, context)
     }
   }
 }

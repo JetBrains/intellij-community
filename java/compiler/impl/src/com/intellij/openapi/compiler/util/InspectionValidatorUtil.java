@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.compiler.util;
 
 import com.intellij.compiler.impl.FileSetCompileScope;
@@ -11,15 +11,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.descriptors.ConfigFile;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
-/**
- * @author peter
- */
 public final class InspectionValidatorUtil {
   private InspectionValidatorUtil() {
   }
@@ -39,8 +37,8 @@ public final class InspectionValidatorUtil {
 
   public static Collection<VirtualFile> expandCompileScopeIfNeeded(final Collection<VirtualFile> result, final CompileContext context) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(context.getProject()).getFileIndex();
-    final THashSet<VirtualFile> set = new THashSet<>();
-    final THashSet<Module> modules = new THashSet<>();
+    final Set<VirtualFile> set = new HashSet<>();
+    final Set<Module> modules = new HashSet<>();
     for (VirtualFile file : result) {
       if (index.getSourceRootForFile(file) == null) {
         set.add(file);
@@ -48,7 +46,7 @@ public final class InspectionValidatorUtil {
       }
     }
     if (!set.isEmpty()) {
-      ((CompileContextEx)context).addScope(new FileSetCompileScope(set, modules.toArray(new Module[modules.size()])));
+      ((CompileContextEx)context).addScope(new FileSetCompileScope(set, modules.toArray(Module.EMPTY_ARRAY)));
     }
     return result;
   }

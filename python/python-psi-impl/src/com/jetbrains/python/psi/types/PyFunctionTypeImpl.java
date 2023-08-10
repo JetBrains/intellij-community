@@ -21,7 +21,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * Type of a particular function that is represented as a {@link PyCallable} in the PSI tree.
  *
- * @author vlan
  */
 public class PyFunctionTypeImpl implements PyFunctionType {
   @NotNull private final PyCallable myCallable;
@@ -109,7 +108,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
         qualifier = location.getQualifier();
       }
       else {
-        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
         qualifier = ContainerUtil.getLastItem(location.followAssignmentsChain(resolveContext).getQualifiers());
       }
       if (qualifier != null) {

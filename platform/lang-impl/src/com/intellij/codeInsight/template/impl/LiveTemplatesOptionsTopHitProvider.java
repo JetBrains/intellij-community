@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.ide.ui.OptionsTopHitProvider;
@@ -25,13 +25,13 @@ final class LiveTemplatesOptionsTopHitProvider implements OptionsTopHitProvider.
     if (settings == null) {
       return Collections.emptyList();
     }
-    Collection<BooleanOptionDescription> options = new ArrayList<>();
+    Collection<OptionDescription> options = new ArrayList<>();
     for (TemplateGroup group : settings.getTemplateGroups()) {
       for (final TemplateImpl element : group.getElements()) {
         options.add(new Option(element));
       }
     }
-    return Collections.unmodifiableCollection(options);
+    return options;
   }
 
   private static final class Option extends BooleanOptionDescription {

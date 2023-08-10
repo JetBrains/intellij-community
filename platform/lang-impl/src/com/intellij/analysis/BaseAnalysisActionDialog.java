@@ -1,34 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis;
 
 import com.intellij.analysis.dialog.ModelScopeItem;
 import com.intellij.analysis.dialog.ModelScopeItemPresenter;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.find.FindSettings;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.util.RadioUpDownListener;
-import com.intellij.ui.TitledSeparator;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 
 
@@ -39,9 +32,11 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private final boolean myRememberScope;
   private final boolean myShowInspectTestSource;
   private final @NlsContexts.Separator String myScopeTitle;
+  @NotNull
   private final Project myProject;
-  private final ButtonGroup myGroup = new ButtonGroup();
+  private final ArrayList<JRadioButton> radioButtons = new ArrayList<>();
   private final JCheckBox myInspectTestSource = new JCheckBox();
+  private final JCheckBox myAnalyzeInjectedCode = new JCheckBox();
   private final List<ModelScopeItemView> myViewItems;
 
   /**
@@ -97,84 +92,36 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     init();
     setTitle(title);
+    setResizable(false);
+    setOKButtonText(getOKButtonText());
   }
 
   @Override
   protected JComponent createCenterPanel() {
-    BorderLayoutPanel panel = new BorderLayoutPanel();
-    TitledSeparator titledSeparator = new TitledSeparator();
-    titledSeparator.setText(myScopeTitle);
-    panel.addToTop(titledSeparator);
-
-    JPanel scopesPanel = new JPanel(new GridBagLayout());
-    panel.addToCenter(scopesPanel);
-
-    int maxColumns = myViewItems.stream()
-                       .mapToInt(x -> x.additionalComponents.size())
-                       .max().orElse(0) + 1;
-
-    int gridY = 0;
-    JRadioButton[] buttons = new JRadioButton[myViewItems.size()];
-    GridBagConstraints gbc = new GridBagConstraints();
-    for (ModelScopeItemView x: myViewItems) {
-      JRadioButton button = x.button;
-      List<JComponent> components = x.additionalComponents;
-
-      int gridX = 0;
-      buttons[gridY] = button;
-      myGroup.add(button);
-      int countExtraColumns = components.size();
-
-      gbc.gridy = gridY;
-      gbc.gridx = gridX;
-      gbc.gridwidth = countExtraColumns == 0 ? maxColumns : 1;
-      gbc.weightx = 0.0D;
-      gbc.fill = 0;
-      gbc.anchor = GridBagConstraints.WEST;
-      gbc.insets = JBUI.insetsLeft(10);
-      scopesPanel.add(button, gbc);
-      gridX++;
-
-      for (JComponent c : components) {
-        if (c instanceof Disposable) {
-          Disposer.register(myDisposable, (Disposable)c);
-        }
-        gbc.gridy = gridY;
-        gbc.gridx = gridX;
-        gbc.gridwidth = 1;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.EAST;
-        gbc.insets = JBUI.insetsLeft(5);
-        scopesPanel.add(c, gbc);
-        gridX++;
-      }
-      gridY++;
-    }
-
     myInspectTestSource.setText(CodeInsightBundle.message("scope.option.include.test.sources"));
     myInspectTestSource.setSelected(myOptions.ANALYZE_TEST_SOURCES);
     myInspectTestSource.setVisible(myShowInspectTestSource);
-    gbc.gridy = gridY;
-    gbc.gridx = 0;
-    gbc.gridwidth = maxColumns;
-    gbc.weightx = 1.0;
-    gbc.fill = 0;
-    gbc.anchor = GridBagConstraints.WEST;
-    gbc.insets = JBUI.insetsLeft(10);
-    scopesPanel.add(myInspectTestSource, gbc);
+    myAnalyzeInjectedCode.setText(CodeInsightBundle.message("scope.option.analyze.injected.code"));
+    myAnalyzeInjectedCode.setSelected(myOptions.ANALYZE_INJECTED_CODE);
+    myAnalyzeInjectedCode.setVisible(false);
+
+    JPanel panel = new BaseAnalysisActionDialogUI().panel(myScopeTitle, myViewItems, myInspectTestSource,
+                                                          myAnalyzeInjectedCode, radioButtons, myDisposable,
+                                                          getAdditionalActionSettings(myProject));
 
     preselectButton();
+    RadioUpDownListener.installOn(radioButtons.toArray(new JRadioButton[0]));
 
-    BorderLayoutPanel wholePanel = new BorderLayoutPanel();
-    wholePanel.addToTop(panel);
-    final JComponent additionalPanel = getAdditionalActionSettings(myProject);
-    if (additionalPanel != null) {
-      wholePanel.addToCenter(additionalPanel);
-    }
-    new RadioUpDownListener(buttons);
+    panel.setPreferredSize(panel.getMinimumSize());
+    return panel;
+  }
 
-    return wholePanel;
+  public void setShowInspectInjectedCode(boolean showInspectInjectedCode) {
+    myAnalyzeInjectedCode.setVisible(showInspectInjectedCode);
+  }
+  
+  public void setAnalyzeInjectedCode(boolean selected) {
+    myAnalyzeInjectedCode.setSelected(selected);
   }
 
   private void preselectButton() {
@@ -211,9 +158,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    final Enumeration<AbstractButton> enumeration = myGroup.getElements();
-    while (enumeration.hasMoreElements()) {
-      final AbstractButton button = enumeration.nextElement();
+    for (JRadioButton button : radioButtons) {
       if (button.isSelected()) {
         return button;
       }
@@ -235,27 +180,12 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       .findFirst().map(x -> x.button.isSelected()).orElse(false);
   }
 
-  public boolean isModuleScopeSelected() {
-    return myViewItems.stream()
-      .filter(x -> x.scopeId == AnalysisScope.MODULE)
-      .findFirst().map(x -> x.button.isSelected()).orElse(false);
-  }
-
-  public boolean isUncommittedFilesSelected(){
-    return myViewItems.stream()
-      .filter(x -> x.scopeId == AnalysisScope.UNCOMMITTED_FILES)
-      .findFirst().map(x -> x.button.isSelected()).orElse(false);
-  }
-
-  @Nullable
-  public SearchScope getCustomScope(){
-    return myViewItems.stream()
-      .filter(x -> x.scopeId == AnalysisScope.CUSTOM && x.button.isSelected())
-      .findFirst().map(x -> x.model.getScope().toSearchScope()).orElse(null);
-  }
-
   public boolean isInspectTestSources() {
     return myInspectTestSource.isSelected();
+  }
+
+  public boolean isAnalyzeInjectedCode() {
+    return !myAnalyzeInjectedCode.isVisible() || myAnalyzeInjectedCode.isSelected();
   }
 
   public AnalysisScope getScope(@NotNull AnalysisScope defaultScope) {
@@ -286,12 +216,25 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       scope.setIncludeTestSource(isInspectTestSources());
     }
 
+    if (myAnalyzeInjectedCode.isVisible()) {
+      boolean analyzeInjectedCode = isAnalyzeInjectedCode();
+      if (myRememberScope) {
+        myOptions.ANALYZE_INJECTED_CODE = analyzeInjectedCode;
+      }
+      scope.setAnalyzeInjectedCode(analyzeInjectedCode);
+    }
+
     FindSettings.getInstance().setDefaultScopeName(scope.getDisplayName());
     return scope;
   }
 
   @Nullable
-  protected JComponent getAdditionalActionSettings(final Project project) {
+  protected JComponent getAdditionalActionSettings(@NotNull Project project) {
     return null;
+  }
+
+  @NotNull
+  public @Nls String getOKButtonText() {
+    return CodeInsightBundle.message("action.analyze.verb");
   }
 }

@@ -42,8 +42,10 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
   }
 
   public void testStaticPropertiesCustomLayout() {
-    myFixture.addClass("import javafx.scene.layout.GridPane;\n" +
-                       "public class MyGridPane extends GridPane {}\n");
+    myFixture.addClass("""
+                         import javafx.scene.layout.GridPane;
+                         public class MyGridPane extends GridPane {}
+                         """);
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
   }
 
@@ -229,14 +231,13 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
   }
 
   public void testInstantiationAcceptanceWithNameArg() {
-    myFixture.addClass("package p;\n" +
-                       "public class Root extends javafx.scene.layout.GridPane{\n" +
-                       "  public Root(@javafx.beans.NamedArg(\"axis\") javafx.scene.Node node ) {\n" +
-                       "    super(node);\n" +
-                       "  }\n" +
-                       "  public javafx.beans.property.Property<javafx.scene.Node> axis;" +
-                       "  public void setAxis() {}" +
-                       "} ");
+    myFixture.addClass("""
+                         package p;
+                         public class Root extends javafx.scene.layout.GridPane{
+                           public Root(@javafx.beans.NamedArg("axis") javafx.scene.Node node ) {
+                             super(node);
+                           }
+                           public javafx.beans.property.Property<javafx.scene.Node> axis;  public void setAxis() {}}\s""");
     doTest(getTestName(true) + ".fxml");
   }
 
@@ -411,14 +412,18 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
   }
 
   public void testCharsetInInclude() {
-    myFixture.addFileToProject("sample.fxml", "<?import javafx.scene.layout.GridPane?>\n" +
-                                                 "<fx:root type=\"javafx.scene.layout.GridPane\" xmlns:fx=\"http://javafx.com/fxml\"/>\n");
+    myFixture.addFileToProject("sample.fxml", """
+      <?import javafx.scene.layout.GridPane?>
+      <fx:root type="javafx.scene.layout.GridPane" xmlns:fx="http://javafx.com/fxml"/>
+      """);
     doWarningsTest();
   }
 
   public void testIncludedForm() {
-    myFixture.addFileToProject("sample.fxml", "<?import javafx.scene.layout.GridPane?>\n" +
-                                              "<fx:root type=\"javafx.scene.layout.GridPane\" xmlns:fx=\"http://javafx.com/fxml\"/>\n");
+    myFixture.addFileToProject("sample.fxml", """
+      <?import javafx.scene.layout.GridPane?>
+      <fx:root type="javafx.scene.layout.GridPane" xmlns:fx="http://javafx.com/fxml"/>
+      """);
     doWarningsTest();
   }
 
@@ -465,19 +470,22 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     final String superclass = getTestName(false);
     myFixture.copyFileToProject(superclass + ".java");
     myFixture.addClass("public class SubclassingController extends " + superclass + " {}");
-    myFixture.addFileToProject("sample.fxml", "<?import javafx.scene.layout.VBox?>\n" +
-                                              "<?import javafx.scene.control.Button?>\n" +
-                                              "<VBox xmlns:fx=\"http://javafx.com/fxml/1\" xmlns=\"http://javafx.com/javafx/8\"\n" +
-                                              "      fx:controller=\"SubclassingController\">\n" +
-                                              "    <Button fx:id=\"inheritedButton\" onAction=\"#onAction\"/>\n" +
-                                              "</VBox>");
+    myFixture.addFileToProject("sample.fxml", """
+      <?import javafx.scene.layout.VBox?>
+      <?import javafx.scene.control.Button?>
+      <VBox xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8"
+            fx:controller="SubclassingController">
+          <Button fx:id="inheritedButton" onAction="#onAction"/>
+      </VBox>""");
 
     myFixture.testHighlighting(true, true, true, superclass + ".java");
   }
 
   public void testResourceKeyInAttribute() {
-    myFixture.addFileToProject("messages.properties", "string.key=My text\n" +
-                                                      "double.key=123.456\n");
+    myFixture.addFileToProject("messages.properties", """
+      string.key=My text
+      double.key=123.456
+      """);
     doTest();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.*;
@@ -11,7 +11,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.tabs.JBTabsPresentation;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +22,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider {
-  private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true, this);
+public final class GridImpl extends Wrapper implements Grid, Disposable, DataProvider {
+  private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true);
   private final Splitter mySplitter = new Splitter(true);
 
   private final Map<PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new EnumMap<>(PlaceInGrid.class);
@@ -66,7 +66,9 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   public void addNotify() {
     super.addNotify();
 
-    processAddToUi(true);
+    if (UIUtil.getParentOfType(JBRunnerTabs.class, this) != null) {
+      processAddToUi(true);
+    }
   }
 
   @Override
@@ -144,8 +146,13 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   }
 
   public boolean updateGridUI() {
+    var isHidden = myViewContext.getLayoutSettings().isTabLabelsHidden();
     for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
-      cell.setHideTabs(myContents.size() == 1);
+      if (isHidden) {
+        cell.setHideTabs(cell.getContentCount() == 1);
+      } else {
+        cell.setHideTabs(myContents.size() == 1);
+      }
     }
 
     final Content onlyContent = myContents.get(0);
@@ -240,7 +247,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
             Content[] contents = myContentProvider.getContents();
             if (contents != null && contents.length > 0) {
               Component preferred = contents[first ? 0 : contents.length - 1].getPreferredFocusableComponent();
-              if (preferred != null && accept(preferred)) {
+              if (preferred != null && preferred.isShowing() && accept(preferred)) {
                 return preferred;
               }
             }
@@ -275,20 +282,6 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
           return ActionCallback.DONE;
         }
       };
-    }
-
-    @Override
-    public void doLayout() {
-      super.doLayout();
-      Component child = getComponentCount() == 1 ? getComponent(0) : null;
-      if (child instanceof JBTabsPresentation) {
-        if (!((JBTabsPresentation)child).isHideTabs()) {
-          Rectangle bounds = child.getBounds();
-          bounds.y --;
-          bounds.height ++;
-          child.setBounds(bounds);
-        }
-      }
     }
   }
 
@@ -336,17 +329,10 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     final TabImpl tab = (TabImpl)getTab();
     if (tab != null) {
       switch (placeInGrid) {
-        case left:
-          setLeftProportion(tab.getLeftProportion());
-          break;
-        case right:
-          setRightProportion(tab.getRightProportion());
-          break;
-        case bottom:
-          mySplitter.setProportion(tab.getBottomProportion());
-          break;
-        case center:
-          break;
+        case left -> setLeftProportion(tab.getLeftProportion());
+        case right -> setRightProportion(tab.getRightProportion());
+        case bottom -> mySplitter.setProportion(tab.getBottomProportion());
+        case center -> {}
       }
     }
   }

@@ -1,11 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolService
-import com.intellij.navigation.*
+import com.intellij.navigation.NavigatableSymbol
+import com.intellij.navigation.SymbolNavigationProvider
+import com.intellij.navigation.SymbolNavigationService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
+import com.intellij.platform.backend.navigation.NavigationTarget
+import com.intellij.platform.backend.presentation.TargetPresentationBuilder
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
@@ -24,6 +29,9 @@ class SymbolNavigationServiceImpl : SymbolNavigationService {
     if (symbol is NavigatableSymbol) {
       result += symbol.getNavigationTargets(project)
     }
+    if (symbol is NavigationTarget) {
+      result += symbol
+    }
     val element = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
     if (element != null) {
       result += PsiElementNavigationTarget(element)
@@ -35,7 +43,11 @@ class SymbolNavigationServiceImpl : SymbolNavigationService {
     return PsiFileNavigationTarget(file)
   }
 
-  override fun presentationBuilder(presentableText: @Nls String): TargetPopupPresentationBuilder {
-    return TargetPopupPresentationBuilderImpl(presentableText = presentableText)
+  override fun psiElementNavigationTarget(element: PsiElement): NavigationTarget {
+    return PsiElementNavigationTarget(element)
+  }
+
+  override fun presentationBuilder(presentableText: @Nls String): TargetPresentationBuilder {
+    return TargetPresentationBuilderImpl(presentableText = presentableText)
   }
 }

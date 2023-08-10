@@ -18,9 +18,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpre
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_INSTANCEOF;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT_INSTANCEOF;
 
-/**
- * @author ven
- */
 public class GrInstanceofExpressionImpl extends GrExpressionImpl implements GrInstanceOfExpression {
 
   private static final TokenSet INSTANCEOF_TOKENS = TokenSet.create(KW_INSTANCEOF, T_NOT_INSTANCEOF);

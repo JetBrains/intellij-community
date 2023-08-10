@@ -5,7 +5,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 
 import javax.swing.*;
@@ -17,7 +16,7 @@ import java.awt.geom.RoundRectangle2D;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
+public final class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
   public static final Icon DEFAULT_ICON = JBUIScale.scaleIcon(EmptyIcon.create(22));
 
   public MacIntelliJCheckBoxUI(JCheckBox c) {
@@ -45,13 +44,13 @@ public class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
     try {
       String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
 
-      Object op = b.getClientProperty("JComponent.outline");
+      DarculaUIUtil.Outline op = DarculaUIUtil.getOutline(b);
       boolean hasFocus = op == null && b.hasFocus();
       Icon icon = MacIconLookup.getIcon(iconName, selected || isIndeterminate(b), hasFocus, b.isEnabled());
       icon.paintIcon(b, g2, iconRect.x, iconRect.y);
 
       if (op != null) {
-        DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, b.hasFocus());
+        op.setGraphicsColor(g2, b.hasFocus());
         Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         outline.append(new RoundRectangle2D.Float(
           iconRect.x + JBUIScale.scale(1), iconRect.y + JBUIScale.scale(1), JBUIScale.scale(20), JBUIScale.scale(20), JBUIScale.scale(12),

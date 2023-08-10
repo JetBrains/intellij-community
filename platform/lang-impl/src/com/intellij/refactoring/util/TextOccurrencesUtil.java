@@ -30,23 +30,15 @@ public final class TextOccurrencesUtil {
     TextOccurrencesUtilBase.addTextOccurrences(element, stringToSearch, searchScope, results, factory);
   }
 
-    /** @deprecated Use {@link TextOccurrencesUtil#processUsagesInStringsAndComments(
-     * PsiElement, SearchScope, String, boolean, PairProcessor)} */
-  @Deprecated
-  public static boolean processUsagesInStringsAndComments(@NotNull PsiElement element,
-                                                          @NotNull String stringToSearch,
-                                                          boolean ignoreReferences,
-                                                          @NotNull PairProcessor<? super PsiElement, ? super TextRange> processor) {
-    return processUsagesInStringsAndComments(element, GlobalSearchScope.projectScope(element.getProject()),
-                                             stringToSearch, ignoreReferences, processor);
-  }
-
+  /**
+   * @param includeReferences usage with a reference at offset would be skipped iff {@code includeReferences == false}
+   */
   public static boolean processUsagesInStringsAndComments(@NotNull PsiElement element,
                                                           @NotNull SearchScope searchScope,
                                                           @NotNull String stringToSearch,
-                                                          boolean ignoreReferences,
+                                                          boolean includeReferences,
                                                           @NotNull PairProcessor<? super PsiElement, ? super TextRange> processor) {
-    return TextOccurrencesUtilBase.processUsagesInStringsAndComments(element, searchScope, stringToSearch, ignoreReferences, processor);
+    return TextOccurrencesUtilBase.processUsagesInStringsAndComments(element, searchScope, stringToSearch, includeReferences, processor);
   }
 
   public static void addUsagesInStringsAndComments(@NotNull PsiElement element,

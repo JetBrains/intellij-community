@@ -27,9 +27,6 @@ import org.jetbrains.idea.svn.SvnUtil;
 import java.util.List;
 import java.util.regex.Matcher;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class TerminalProcessHandler extends SvnProcessHandler {
 
   private final List<InteractiveCommandListener> myInteractiveListeners = ContainerUtil.createLockFreeCopyOnWriteList();

@@ -1,0 +1,4 @@
+Searched references to KotlinDataClass
+Searched references to parameter k of test(k: KotlinDataClass) in non-Java files
+Used plain search of parameter foo of KotlinDataClass(val foo: Int, val bar: String) in LocalSearchScope:
+    CLASS:KotlinDataClass

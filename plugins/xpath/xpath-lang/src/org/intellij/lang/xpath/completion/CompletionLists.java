@@ -21,8 +21,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathTokenTypes;
@@ -148,7 +148,7 @@ public final class CompletionLists {
           final String name = ((PsiNamedElement)o).getName();
           lookups.add(new VariableLookup("$" + name, type, ((PsiNamedElement)o).getIcon(0), (PsiElement)o));
         } else {
-          lookups.add(new VariableLookup("$" + o, PlatformIcons.VARIABLE_ICON));
+          lookups.add(new VariableLookup("$" + o, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable)));
         }
       }
       return lookups;
@@ -202,15 +202,16 @@ public final class CompletionLists {
             lp = PsiTreeUtil.getParentOfType(lp == null ? element : lp, XPathLocationPath.class, true);
           } while (lp != null && lp.getPrevSibling() == null);
 
-          check = lp == null || (sibling = lp.getPrevSibling()) != null;
-        }
-        if (check) {
-          if (sibling instanceof XPathToken && XPathTokenTypes.PATH_OPS.contains(((XPathToken)sibling).getTokenType())) {
-            // xx/yy<caret> : prevSibl = /
-          } else {
-            list.addAll(getFunctionCompletions(element));
-            list.addAll(getVariableCompletions(element));
+          if (lp != null) {
+            sibling = lp.getPrevSibling();
           }
+        }
+        if (sibling instanceof XPathToken && XPathTokenTypes.PATH_OPS.contains(((XPathToken)sibling).getTokenType())) {
+          // xx/yy<caret> : prevSibl = /
+        }
+        else {
+          list.addAll(getFunctionCompletions(element));
+          list.addAll(getVariableCompletions(element));
         }
       }
       if (principalType == XPathNodeTest.PrincipalType.ELEMENT && prefixedName.getPrefix() == null) {
@@ -290,8 +291,7 @@ public final class CompletionLists {
       xpathFile.accept(new PsiRecursiveElementVisitor() {
         @Override
         public void visitElement(@NotNull PsiElement e) {
-          if (e instanceof XPathNodeTest) {
-            final XPathNodeTest nodeTest = (XPathNodeTest)e;
+          if (e instanceof XPathNodeTest nodeTest) {
 
             final XPathNodeTest.PrincipalType _principalType = nodeTest.getPrincipalType();
             if (_principalType == principalType) {

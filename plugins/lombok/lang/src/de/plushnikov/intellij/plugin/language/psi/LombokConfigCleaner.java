@@ -7,8 +7,6 @@ import com.intellij.psi.PsiElement;
 
 public interface LombokConfigCleaner extends PsiElement {
 
-  //WARNING: getKey(...) is skipped
-  //matching getKey(LombokConfigCleaner, ...)
-  //methods are not found in LombokConfigPsiUtil
+  String getKey();
 
 }

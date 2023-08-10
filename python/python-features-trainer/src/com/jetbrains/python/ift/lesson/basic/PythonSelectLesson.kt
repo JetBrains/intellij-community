@@ -2,12 +2,11 @@
 package com.jetbrains.python.ift.lesson.basic
 
 import org.jetbrains.annotations.Nls
-import training.learn.interfaces.Module
+import training.dsl.LessonSample
+import training.dsl.parseLessonSample
 import training.learn.lesson.general.NewSelectLesson
-import training.learn.lesson.kimpl.LessonSample
-import training.learn.lesson.kimpl.parseLessonSample
 
-class PythonSelectLesson(module: Module) : NewSelectLesson(module, "Python") {
+class PythonSelectLesson : NewSelectLesson() {
   override val selectArgument = "\"$selectString\""
   override val selectCall = """some_method("$firstString", $selectArgument, "$thirdString")"""
 
@@ -26,5 +25,5 @@ class PythonSelectLesson(module: Module) : NewSelectLesson(module, "Python") {
   override val selectIf = sample.getPosition(1).selection!!.let { sample.text.substring(it.first, it.second) }
 
   @Nls
-  override val numberOfSelectsForWholeCall = 2
+  override val numberOfSelectsForWholeCall = 4
 }

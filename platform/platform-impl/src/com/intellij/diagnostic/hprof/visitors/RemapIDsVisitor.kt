@@ -15,6 +15,7 @@
  */
 package com.intellij.diagnostic.hprof.visitors
 
+import com.intellij.diagnostic.hprof.classstore.HProfMetadata
 import com.intellij.diagnostic.hprof.parser.*
 import com.intellij.diagnostic.hprof.util.FileBackedHashMap
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap
@@ -22,7 +23,7 @@ import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.util.function.LongUnaryOperator
 
-internal abstract class RemapIDsVisitor : HProfVisitor() {
+abstract class RemapIDsVisitor : HProfVisitor() {
   private var currentID = 0
 
   override fun preVisit() {
@@ -88,7 +89,13 @@ internal abstract class RemapIDsVisitor : HProfVisitor() {
 
         override fun getRemappingFunction(): LongUnaryOperator {
           return LongUnaryOperator { operand ->
-            if (operand == 0L) 0L else remapIDsMap[operand]!!.int.toLong()
+            if (operand == 0L) 0L else
+            {
+              if (remapIDsMap.containsKey(operand))
+                remapIDsMap[operand]!!.int.toLong()
+              else
+                throw HProfMetadata.RemapException()
+            }
           }
         }
       }

@@ -27,6 +27,8 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -41,6 +43,10 @@ public interface DebuggableRunConfiguration extends RunConfiguration {
     catch (IOException e) {
       throw new ExecutionException(XDebuggerBundle.message("error.message.cannot.find.available.port"), e);
     }
+  }
+
+  default Promise<InetSocketAddress> computeDebugAddressAsync(RunProfileState state) throws ExecutionException {
+    return Promises.resolvedPromise(computeDebugAddress(state));
   }
 
   @NotNull

@@ -11,8 +11,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.replaceBody
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipWhitespacesAndComments
 
-abstract class GrWhileStatementBase(node: ASTNode) : GroovyPsiElementImpl(node), GrLoopStatement {
-
+internal abstract class GrWhileStatementBase(node: ASTNode) : GroovyPsiElementImpl(node), GrLoopStatement {
+  @Suppress("MemberVisibilityCanBePrivate")
   fun getLParenth(): PsiElement? = findChildByType(T_LPAREN)
 
   fun getCondition(): GrExpression? = skipWhitespacesAndComments(getLParenth()?.nextSibling, true) as? GrExpression

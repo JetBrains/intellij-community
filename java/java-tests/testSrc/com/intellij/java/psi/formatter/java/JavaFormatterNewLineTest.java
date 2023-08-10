@@ -22,8 +22,6 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * Is intended to hold specific java formatting tests for {@code 'Place on New Line'} settings (
  * {@code Project Settings - Code Style - Alignment and Braces - Place on New Line}).
- *
- * @author Denis Zhdanov
  */
 public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 
@@ -31,14 +29,16 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     getSettings().ELSE_ON_NEW_LINE = true;
 
     doMethodTest(
-      "if (b) {\n" +
-      "} else {\n" +
-      "}",
+      """
+        if (b) {
+        } else {
+        }""",
 
-      "if (b) {\n" +
-      "}\n" +
-      "else {\n" +
-      "}"
+      """
+        if (b) {
+        }
+        else {
+        }"""
     );
   }
 
@@ -48,14 +48,16 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 
     // Inspired by IDEA-47809
     doMethodTest(
-      "if (b) {\n" +
-      "}\n" +
-      "else {\n" +
-      "}",
+      """
+        if (b) {
+        }
+        else {
+        }""",
 
-      "if (b) {\n" +
-      "} else {\n" +
-      "}"
+      """
+        if (b) {
+        } else {
+        }"""
     );
   }
 
@@ -63,14 +65,16 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     getSettings().CATCH_ON_NEW_LINE = true;
 
     doMethodTest(
-      "try {\n" +
-      "} catch (Exception e) {\n" +
-      "}",
+      """
+        try {
+        } catch (Exception e) {
+        }""",
 
-      "try {\n" +
-      "}\n" +
-      "catch (Exception e) {\n" +
-      "}"
+      """
+        try {
+        }
+        catch (Exception e) {
+        }"""
     );
   }
 
@@ -80,14 +84,16 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 
     // Inspired by IDEA-47809
     doMethodTest(
-      "try {\n" +
-      "}\n" +
-      "catch (Exception e) {\n" +
-      "}",
+      """
+        try {
+        }
+        catch (Exception e) {
+        }""",
 
-      "try {\n" +
-      "} catch (Exception e) {\n" +
-      "}"
+      """
+        try {
+        } catch (Exception e) {
+        }"""
     );
   }
 
@@ -95,14 +101,16 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     getSettings().FINALLY_ON_NEW_LINE = true;
 
     doMethodTest(
-      "try {\n" +
-      "} finally {\n" +
-      "}",
+      """
+        try {
+        } finally {
+        }""",
 
-      "try {\n" +
-      "}\n" +
-      "finally {\n" +
-      "}"
+      """
+        try {
+        }
+        finally {
+        }"""
     );
   }
 
@@ -112,14 +120,16 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 
     // Inspired by IDEA-47809
     doMethodTest(
-      "try {\n" +
-      "}\n" +
-      "finally {\n" +
-      "}",
+      """
+        try {
+        }
+        finally {
+        }""",
 
-      "try {\n" +
-      "} finally {\n" +
-      "}"
+      """
+        try {
+        } finally {
+        }"""
     );
   }
 
@@ -130,17 +140,19 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     getSettings().KEEP_LINE_BREAKS = true;
 
     doMethodTest(
-      "try {\n" +
-      "}\n" +
-      "catch (Exception e) {\n" +
-      "}\n" +
-      "finally {\n" +
-      "}",
+      """
+        try {
+        }
+        catch (Exception e) {
+        }
+        finally {
+        }""",
 
-      "try {\n" +
-      "} catch (Exception e) {\n" +
-      "} finally {\n" +
-      "}"
+      """
+        try {
+        } catch (Exception e) {
+        } finally {
+        }"""
     );
   }
 
@@ -152,11 +164,12 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
       "new Expectations() {\n" +
       "    {foo();}};",
 
-      "new Expectations() {\n" +
-      "    {\n" +
-      "        foo();\n" +
-      "    }\n" +
-      "};"
+      """
+        new Expectations() {
+            {
+                foo();
+            }
+        };"""
     );
   }
 
@@ -171,24 +184,26 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     getSettings().ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true;
     getSettings().ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true;
     doTextTest(
-               "public @interface Ann\n" +
-               "{\n" +
-               "int[] x = { 1, 2 };\n" +
-               "\n" +
-               "Mode[] modes () default { @Mode(value = 1), @Mode(value = 2) };\n" +
-               "}",
+      """
+        public @interface Ann
+        {
+        int[] x = { 1, 2 };
 
-               "public @interface Ann {\n" +
-               "    int[] x = {\n" +
-               "            1,\n" +
-               "            2\n" +
-               "    };\n" +
-               "\n" +
-               "    Mode[] modes() default {\n" +
-               "            @Mode(value = 1),\n" +
-               "            @Mode(value = 2)\n" +
-               "    };\n" +
-               "}"
+        Mode[] modes () default { @Mode(value = 1), @Mode(value = 2) };
+        }""",
+
+      """
+        public @interface Ann {
+            int[] x = {
+                    1,
+                    2
+            };
+
+            Mode[] modes() default {
+                    @Mode(value = 1),
+                    @Mode(value = 2)
+            };
+        }"""
     );
   }
 

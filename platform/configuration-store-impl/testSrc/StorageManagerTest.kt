@@ -2,13 +2,14 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ProjectRule
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
-import java.nio.file.Paths
+import java.nio.file.Path
 import kotlin.properties.Delegates
 
 internal class StorageManagerTest {
@@ -24,8 +25,8 @@ internal class StorageManagerTest {
 
   @Before
   fun setUp() {
-    storageManager = StateStorageManagerImpl("foo")
-    storageManager.setMacros(listOf(Macro(MACRO, Paths.get("/temp/m1"))))
+    storageManager = StateStorageManagerImpl("foo", componentManager = null)
+    storageManager.setMacros(listOf(Macro(MACRO, Path.of("/temp/m1"))))
   }
 
   @Test
@@ -46,13 +47,13 @@ internal class StorageManagerTest {
       TestCase.fail("Exception expected")
     }
     catch (e: IllegalStateException) {
-      assertThat(e.message).isEqualTo("Cannot resolve \$UNKNOWN_MACRO\$/test.xml in [Macro(key=\$MACRO1\$, value=/temp/m1)]")
+      assertThat(e.message).isEqualTo("Cannot resolve \$UNKNOWN_MACRO\$/test.xml in [Macro(key=\$MACRO1\$, value=${FileUtil.toSystemDependentName("/temp/m1")})]")
     }
   }
 
   @Test
   fun `create file storage macro substituted when expansion has$`() {
-    storageManager.setMacros(listOf(Macro("\$DOLLAR_MACRO$", Paths.get("/temp/d$"))))
+    storageManager.setMacros(listOf(Macro("\$DOLLAR_MACRO$", Path.of("/temp/d$"))))
     assertThat(storageManager.getOrCreateStorage("\$DOLLAR_MACRO$/test.xml", RoamingType.DEFAULT)).isNotNull()
   }
 }

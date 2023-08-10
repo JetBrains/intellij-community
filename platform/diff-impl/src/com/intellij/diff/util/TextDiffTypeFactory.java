@@ -11,14 +11,12 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public final class TextDiffTypeFactory {
@@ -31,27 +29,8 @@ public final class TextDiffTypeFactory {
   @NotNull public static final TextDiffTypeImpl CONFLICT =
     new TextDiffTypeImpl(DiffColors.DIFF_CONFLICT, DiffBundle.message("diff.type.conflict.name"));
 
-  private static final TextDiffTypeFactory ourInstance = new TextDiffTypeFactory();
-  private final List<TextDiffTypeImpl> myTypes = new ArrayList<>();
-
-  private TextDiffTypeFactory() {
-    ContainerUtil.addAll(myTypes, INSERTED, DELETED, MODIFIED, CONFLICT);
-  }
-
-  @NotNull
-  public synchronized TextDiffType createTextDiffType(@NonNls @NotNull TextAttributesKey key,
-                                                      @NotNull @Nls String name) {
-    TextDiffTypeImpl type = new TextDiffTypeImpl(key, name);
-    myTypes.add(type);
-    return type;
-  }
-
-  public synchronized TextDiffTypeImpl[] getAllDiffTypes() {
-    return myTypes.toArray(new TextDiffTypeImpl[0]);
-  }
-
-  public static TextDiffTypeFactory getInstance() {
-    return ourInstance;
+  public static @NotNull List<TextDiffTypeImpl> getAllDiffTypes() {
+    return Arrays.asList(INSERTED, DELETED, MODIFIED, CONFLICT);
   }
 
   public static class TextDiffTypeImpl implements TextDiffType {

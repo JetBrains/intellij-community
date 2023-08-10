@@ -8,9 +8,6 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Sergey Evdokimov
- */
 public class FilePattern {
   @XCollection(elementName = "pattern", style = XCollection.Style.v2)
   public Set<String> includes = new HashSet<>();

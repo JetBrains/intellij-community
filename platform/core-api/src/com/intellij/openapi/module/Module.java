@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.Disposable;
@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
@@ -16,39 +17,43 @@ import java.nio.file.Path;
 /**
  * Represents a module in an IDEA project.
  *
- * @see ModuleManager#getModules()
- * @see ModuleComponent
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/module.html">IntelliJ Platform Docs</a>
  */
-@SuppressWarnings("DeprecatedIsStillUsed")
 public interface Module extends ComponentManager, AreaInstance, Disposable {
   /**
-   * The empty array of modules which cab be reused to avoid unnecessary allocations.
+   * The empty array of modules which can be reused to avoid unnecessary allocations.
    */
   Module[] EMPTY_ARRAY = new Module[0];
 
   @NonNls String ELEMENT_TYPE = "type";
 
   /**
-   * Returns the {@code VirtualFile} for the module .iml file. Note that location if .iml file may not be related to location of the module
-   * files, it may be stored in a different directory, under .idea/modules or doesn't exist at all if the module configuration is imported
-   * from external project system (e.g. Gradle). So only internal subsystems which deal with serialization are supposed to use this method.
+   * @deprecated Module level message bus is deprecated. Please use application- or project- level.
+   */
+  @Override
+  @Deprecated
+  @NotNull MessageBus getMessageBus();
+
+  /**
+   * Returns the {@code VirtualFile} for the module {@code .iml} file. Note that location if {@code .iml} file may not be related to location of the module
+   * files, it may be stored in a different directory, under {@code .idea/modules} or doesn't exist at all if the module configuration is imported
+   * from external project system (e.g., Gradle). So only internal subsystems which deal with serialization are supposed to use this method.
    * If you need to find a directory (directories) where source files for the module are located, get its {@link com.intellij.openapi.roots.ModuleRootModel#getContentRoots() content roots}.
-   * If you need to get just some directory near to module files (e.g. to select by default in a file chooser), use {@link com.intellij.openapi.project.ProjectUtil#guessModuleDir(com.intellij.openapi.module.Module)}.
+   * If you need to get just some directory near to module files (e.g., to select by default in a file chooser), use {@link com.intellij.openapi.project.ProjectUtil#guessModuleDir(Module)}.
    */
   @ApiStatus.Internal
   @Nullable VirtualFile getModuleFile();
 
   /**
-   * Returns path to the module .iml file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
+   * Returns path to the module {@code .iml} file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
    */
   @ApiStatus.Internal
-  @SystemIndependent @NonNls 
-  default @NotNull String getModuleFilePath() {
+  default @SystemIndependent @NonNls @NotNull String getModuleFilePath() {
     return getModuleNioFile().toString().replace(File.separatorChar, '/');
   }
 
   /**
-   * Returns path to the module .iml file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
+   * Returns path to the module {@code .iml} file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
    */
   @ApiStatus.Internal
   @NotNull Path getModuleNioFile();
@@ -76,14 +81,6 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   boolean isDisposed();
 
   boolean isLoaded();
-
-  /**
-   * @deprecated Please store options in your own {@link com.intellij.openapi.components.PersistentStateComponent}
-   */
-  @Deprecated
-  default void clearOption(@NotNull String key) {
-    setOption(key, null);
-  }
 
   /**
    * @deprecated Please store options in your own {@link com.intellij.openapi.components.PersistentStateComponent}
@@ -162,14 +159,37 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   @NotNull
   GlobalSearchScope getModuleRuntimeScope(boolean includeTests);
 
-  @Nullable @NonNls
-  default String getModuleTypeName() {
-    //noinspection deprecation
+  /**
+   * @return scope including only production sources.
+   */
+  default @NotNull GlobalSearchScope getModuleProductionSourceScope() {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  /**
+   * @return scope including only test sources.
+   */
+  default @NotNull GlobalSearchScope getModuleTestSourceScope() {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+
+  /**
+   * This method isn't supposed to be used from plugins. If you really need to determine the type of a module, use
+   * {@link com.intellij.openapi.module.ModuleType#get(Module) ModuleType.get}. However, it would be better to make your functionality work regardless
+   * of type of the module, see {@link com.intellij.openapi.module.ModuleType ModuleType}'s javadoc for details.
+   */
+  @ApiStatus.Internal
+  default @Nullable @NonNls String getModuleTypeName() {
     return getOptionValue(ELEMENT_TYPE);
   }
 
+  /**
+   * This method isn't supposed to be used from plugins, module type should be passed as a parameter to {@link com.intellij.openapi.module.ModuleManager#newModule}
+   * when module is created.
+   */
+  @ApiStatus.Internal
   default void setModuleType(@NotNull @NonNls String name) {
-    //noinspection deprecation
     setOption(ELEMENT_TYPE, name);
   }
 }

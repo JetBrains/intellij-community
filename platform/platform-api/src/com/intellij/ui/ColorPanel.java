@@ -66,7 +66,7 @@ public class ColorPanel extends JComponent {
   public void onPressed() {
     if (myEditable && isEnabled()) {
       RelativePoint location = new RelativePoint(this, new Point(getWidth() / 2, getHeight()));
-      ColorChooserService.getInstance().showColorPickerPopup(null, myColor, new ColorListener() {
+      ColorChooserService.getInstance().showPopup(null, myColor, new ColorListener() {
         @Override
         public void colorChanged(Color color, Object source) {
           setSelectedColor(color);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xdebugger;
 
@@ -7,6 +7,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -24,9 +27,17 @@ import java.util.Comparator;
 import java.util.List;
 
 public abstract class XDebuggerUtil {
+
   public static XDebuggerUtil getInstance() {
     return ApplicationManager.getApplication().getService(XDebuggerUtil.class);
   }
+
+  @Nullable
+  public FileEditor getSelectedEditor(Project project, VirtualFile file) {
+    return FileEditorManager.getInstance(project).getSelectedEditor(file);
+  }
+
+  public abstract Editor openTextEditor(@NotNull OpenFileDescriptor descriptor);
 
   public abstract XLineBreakpointType<?>[] getLineBreakpointTypes();
 
@@ -92,9 +103,11 @@ public abstract class XDebuggerUtil {
 
   public abstract <B extends XLineBreakpoint<?>> List<XBreakpointGroupingRule<B, ?>> getGroupingByFileRuleAsList();
 
+  /**
+   * @deprecated use {@link XBreakpointType#getBreakpointComparator()}
+   */
+  @Deprecated(forRemoval = true)
   public abstract <B extends XBreakpoint<?>> Comparator<B> getDefaultBreakpointComparator(XBreakpointType<B, ?> type);
-
-  public abstract <P extends XBreakpointProperties> Comparator<XLineBreakpoint<P>> getDefaultLineBreakpointComparator();
 
   public abstract <T extends XDebuggerSettings<?>> T getDebuggerSettings(Class<T> aClass);
 

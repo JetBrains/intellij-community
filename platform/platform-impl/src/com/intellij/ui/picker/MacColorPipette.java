@@ -1,14 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.picker;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ColorPicker;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
-import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.ui.mac.foundation.FoundationLibrary;
-import com.intellij.ui.mac.foundation.ID;
-import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.ui.mac.foundation.*;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
@@ -35,7 +32,7 @@ public class MacColorPipette extends ColorPipetteBase {
   private static final int SIZE = PIXELS * ZOOM;
   private static final int DIALOG_SIZE = SIZE + 20;
 
-  @SuppressWarnings("UseJBColor") private final Color myTransparentColor = new Color(0, 0, 0, 1);
+  @SuppressWarnings("UseJBColor") private static final Color TRANSPARENT_COLOR = new Color(0, 0, 0, 1);
 
   public MacColorPipette(@NotNull ColorPicker picker, @NotNull ColorListener listener) {
     super(picker, listener);
@@ -55,18 +52,10 @@ public class MacColorPipette extends ColorPipetteBase {
           Point location = updateLocation();
           if (myRobot != null && location != null) {
             switch (event.getKeyCode()) {
-              case KeyEvent.VK_DOWN:
-                myRobot.mouseMove(location.x, location.y + diff);
-                break;
-              case KeyEvent.VK_UP:
-                myRobot.mouseMove(location.x, location.y - diff);
-                break;
-              case KeyEvent.VK_LEFT:
-                myRobot.mouseMove(location.x - diff, location.y);
-                break;
-              case KeyEvent.VK_RIGHT:
-                myRobot.mouseMove(location.x + diff, location.y);
-                break;
+              case KeyEvent.VK_DOWN -> myRobot.mouseMove(location.x, location.y + diff);
+              case KeyEvent.VK_UP -> myRobot.mouseMove(location.x, location.y - diff);
+              case KeyEvent.VK_LEFT -> myRobot.mouseMove(location.x - diff, location.y);
+              case KeyEvent.VK_RIGHT -> myRobot.mouseMove(location.x + diff, location.y);
             }
             updateLocation();
           }
@@ -121,7 +110,7 @@ public class MacColorPipette extends ColorPipetteBase {
       };
       pickerDialog.add(label);
       pickerDialog.setSize(DIALOG_SIZE, DIALOG_SIZE);
-      pickerDialog.setBackground(myTransparentColor);
+      pickerDialog.setBackground(TRANSPARENT_COLOR);
 
       BufferedImage emptyImage = UIUtil.createImage(pickerDialog, 1, 1, Transparency.TRANSLUCENT);
       pickerDialog.setCursor(myParent.getToolkit().createCustomCursor(emptyImage, new Point(0, 0), "ColorPicker"));
@@ -130,11 +119,10 @@ public class MacColorPipette extends ColorPipetteBase {
   }
 
   private static void applyRenderingHints(@NotNull Graphics graphics) {
-    if (!(graphics instanceof Graphics2D)) {
+    if (!(graphics instanceof Graphics2D g2d)) {
       return;
     }
 
-    Graphics2D g2d = (Graphics2D)graphics;
     GraphicsUtil.applyRenderingHints(g2d);
     g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -189,14 +177,14 @@ public class MacColorPipette extends ColorPipetteBase {
     ID pool = Foundation.invoke("NSAutoreleasePool", "new");
     try {
       ID windowId = belowWindow != null ? MacUtil.findWindowFromJavaWindow(belowWindow) : null;
-      Foundation.NSRect nsRect = new Foundation.NSRect(rect.x, rect.y, rect.width, rect.height);
+      CoreGraphics.CGRect cgRect = new CoreGraphics.CGRect(rect.x, rect.y, rect.width, rect.height);
       ID cgWindowId = windowId != null ? Foundation.invoke(windowId, "windowNumber") : ID.NIL;
-      int windowListOptions = cgWindowId != null
+      int windowListOptions = cgWindowId != ID.NIL
                               ? FoundationLibrary.kCGWindowListOptionOnScreenBelowWindow
-                              : FoundationLibrary.kCGWindowListOptionAll;
-      int windowImageOptions = FoundationLibrary.kCGWindowImageNominalResolution;
-      ID cgImageRef = Foundation.cgWindowListCreateImage(nsRect, windowListOptions, cgWindowId, windowImageOptions);
+                              : FoundationLibrary.kCGWindowListOptionOnScreenOnly;
 
+      int windowImageOptions = FoundationLibrary.kCGWindowImageNominalResolution;
+      ID cgImageRef = CoreGraphics.cgWindowListCreateImage(cgRect, windowListOptions, cgWindowId, windowImageOptions);
       ID bitmapRep = Foundation.invoke(Foundation.invoke("NSBitmapImageRep", "alloc"), "initWithCGImage:", cgImageRef);
       ID nsImage = Foundation.invoke(Foundation.invoke("NSImage", "alloc"), "init");
       Foundation.invoke(nsImage, "addRepresentation:", bitmapRep);

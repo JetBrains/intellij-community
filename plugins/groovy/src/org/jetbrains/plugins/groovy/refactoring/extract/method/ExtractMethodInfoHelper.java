@@ -25,9 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInfoHelperBase;
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
 
-/**
- * @author ilyas
- */
 public class ExtractMethodInfoHelper extends ExtractInfoHelperBase {
 
   private final boolean myIsStatic;

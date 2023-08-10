@@ -22,7 +22,7 @@ class MarkdownEmbeddedHtmlTest : BasePlatformTestCase() {
     val name = getTestName(true)
     val file = myFixture.configureByFile("$name.md")
 
-    val psi = DebugUtil.psiToString(file.viewProvider.getPsi(HTMLLanguage.INSTANCE), false, false)
+    val psi = DebugUtil.psiToString(file.viewProvider.getPsi(HTMLLanguage.INSTANCE), true, false)
     val tree = myFixture.configureByFile("$name.txt").text
 
     TestCase.assertEquals(psi, tree)

@@ -1,14 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.debug;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.python.PythonHelper;
+import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.run.*;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
 
 public class PyDebuggerTask extends PyCustomConfigDebuggerTask {
@@ -50,10 +55,16 @@ public class PyDebuggerTask extends PyCustomConfigDebuggerTask {
     mySettings = RunManager.getInstance(getProject()).createConfiguration("test", factory);
     PythonRunConfiguration runConfiguration = (PythonRunConfiguration)mySettings.getConfiguration();
     runConfiguration.setSdkHome(sdkHome);
+    runConfiguration.setSdk(existingSdk);
     runConfiguration.setScriptName(getScriptName());
     runConfiguration.setWorkingDirectory(myFixture.getTempDirPath());
     runConfiguration.setScriptParameters(getScriptParameters());
+    runConfiguration.setEnvs(getEnvs());
     return runConfiguration;
+  }
+
+  protected @NotNull Map<String, String> getEnvs() {
+    return ImmutableMap.of();
   }
 
   @Override
@@ -84,5 +95,17 @@ public class PyDebuggerTask extends PyCustomConfigDebuggerTask {
 
   public @Nullable PythonRunConfiguration getRunConfiguration() {
     return myRunConfiguration != null ? (PythonRunConfiguration)myRunConfiguration : null;
+  }
+
+  @Override
+  @NotNull
+  protected String output() {
+    String consoleNotAvailableMessage = "Console output not available.";
+    if (mySession != null && mySession.getConsoleView() != null) {
+      PythonDebugLanguageConsoleView pydevConsoleView = (PythonDebugLanguageConsoleView)mySession.getConsoleView();
+      ConsoleViewImpl consoleView = pydevConsoleView.getTextConsole();
+      return consoleView != null ? XDebuggerTestUtil.getConsoleText(consoleView) : consoleNotAvailableMessage;
+    }
+    return consoleNotAvailableMessage;
   }
 }

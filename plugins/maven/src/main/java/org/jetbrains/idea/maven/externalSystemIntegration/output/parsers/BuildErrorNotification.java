@@ -127,7 +127,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
 
   private static int atoi(String s) {
     try {
-      return Integer.valueOf(s);
+      return Integer.parseInt(s);
     }
     catch (NumberFormatException ignore) {
       return 0;

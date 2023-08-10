@@ -1,61 +1,67 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.UiActivityMonitor;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.commands.*;
-import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.StringTokenizer;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 public class PlaybackRunner {
+  private PlaybackCommandReporter commandStartStopProcessor = PlaybackCommandReporter.EMPTY_PLAYBACK_COMMAND_REPORTER;
+
   private static final Logger LOG = Logger.getInstance(PlaybackRunner.class);
 
   private Robot myRobot;
 
   private final String myScript;
-  private final StatusCallback myCallback;
+  private final StatusCallback callback;
 
-  private final List<CommandDescriptor> myCommands = new ArrayList<>();
-  private ActionCallback myActionCallback;
-  private boolean myStopRequested;
+  private final List<CommandDescriptor> commands = new ArrayList<>();
+  private CompletableFuture<?> actionCallback;
+  private boolean isStopRequested;
 
-  private final boolean myUseDirectActionCall;
-  private final boolean myUseTypingTargets;
+  private final boolean useDirectActionCall;
+  private final boolean useTypingTargets;
 
   private File myScriptDir;
-  private final boolean myStopOnAppDeactivation;
-  private final ApplicationActivationListener myAppListener;
+  private final boolean stopOnAppDeactivation;
+  private final ApplicationActivationListener appListener;
 
-  private final HashSet<Class<?>> myFacadeClasses = new HashSet<>();
-  private final ArrayList<StageInfo> myCurrentStageDepth = new ArrayList<>();
-  private final ArrayList<StageInfo> myPassedStages = new ArrayList<>();
+  private final HashSet<Class<?>> facadeClasses = new HashSet<>();
+  private final ArrayList<StageInfo> currentStageDepth = new ArrayList<>();
+  private final ArrayList<StageInfo> passedStages = new ArrayList<>();
 
   private long myContextTimestamp;
 
-  private final Map<String, String> myRegistryValues = new HashMap<>();
+  private final Map<String, String> registryValues = new HashMap<>();
 
-  protected final Disposable myOnStop = Disposer.newDisposable();
+  protected final CheckedDisposable onStop = Disposer.newCheckedDisposable();
 
   public PlaybackRunner(String script,
                         StatusCallback callback,
@@ -63,212 +69,253 @@ public class PlaybackRunner {
                         boolean stopOnAppDeactivation,
                         boolean useTypingTargets) {
     myScript = script;
-    myCallback = callback;
-    myUseDirectActionCall = useDirectActionCall;
-    myUseTypingTargets = useTypingTargets;
-    myStopOnAppDeactivation = stopOnAppDeactivation;
-    myAppListener = new ApplicationActivationListener() {
+    this.callback = callback;
+    this.useDirectActionCall = useDirectActionCall;
+    this.useTypingTargets = useTypingTargets;
+    this.stopOnAppDeactivation = stopOnAppDeactivation;
+    appListener = new ApplicationActivationListener() {
       @Override
       public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
-        if (myStopOnAppDeactivation) {
-          myCallback.message(null, "App lost focus, stopping...", StatusCallback.Type.message);
+        if (PlaybackRunner.this.stopOnAppDeactivation) {
+          PlaybackRunner.this.callback.message(null, "App lost focus, stopping...", StatusCallback.Type.message);
           stop();
         }
       }
     };
   }
 
-  public ActionCallback run() {
-    myStopRequested = false;
+  public CompletableFuture<?> run() {
+    commandStartStopProcessor.startOfScript(getProject());
+    isStopRequested = false;
 
-    myRegistryValues.clear();
-    final UiActivityMonitor activityMonitor = UiActivityMonitor.getInstance();
+    registryValues.clear();
+    UiActivityMonitor activityMonitor = UiActivityMonitor.getInstance();
     activityMonitor.clear();
     activityMonitor.setActive(true);
-    myCurrentStageDepth.clear();
-    myPassedStages.clear();
+    currentStageDepth.clear();
+    passedStages.clear();
     myContextTimestamp++;
 
-    subscribeListeners(ApplicationManager.getApplication().getMessageBus().connect(myOnStop));
-    Disposer.register(myOnStop, () -> {
+    subscribeListeners(ApplicationManager.getApplication().getMessageBus().connect(onStop));
+    Disposer.register(onStop, () -> {
+      commandStartStopProcessor.endOfScript(getProject());
       onStop();
     });
 
-    try {
-      myActionCallback = new ActionCallback();
-      myActionCallback.doWhenProcessed(() -> {
-        Disposer.dispose(myOnStop);
+    actionCallback = new CompletableFuture<>();
+    actionCallback.handle((o, throwable) -> {
+      try {
+        if (throwable != null) {
+          commandStartStopProcessor.scriptCanceled();
+        }
+      }
+      finally {
+        Disposer.dispose(onStop);
 
         SwingUtilities.invokeLater(() -> {
           activityMonitor.setActive(false);
           restoreRegistryValues();
         });
-      });
+      }
+      return null;
+    });
 
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      try {
         myRobot = new Robot();
       }
-
-      try {
-        myCommands.addAll(includeScript(myScript, getScriptDir()));
+      catch (AWTException e) {
+        LOG.info(e);
       }
-      catch (Exception e) {
-        String message = "Failed to parse script commands: " + myScript;
-        LOG.error(message, e);
-        myActionCallback.reject(message + ": " + e.getMessage());
-        return myActionCallback;
-      }
-
-      new Thread("playback runner") {
-        @Override
-        public void run() {
-          if (myUseDirectActionCall) {
-            executeFrom(0, getScriptDir());
-          }
-          else {
-            IdeEventQueue.getInstance().doWhenReady(() -> executeFrom(0, getScriptDir()));
-          }
-        }
-      }.start();
-    }
-    catch (AWTException e) {
-      LOG.error(e);
     }
 
-    return myActionCallback;
+    try {
+      commands.addAll(includeScript(myScript, getScriptDir()));
+    }
+    catch (Exception e) {
+      String message = "Failed to parse script commands: " + myScript;
+      LOG.error(message, e);
+      actionCallback.completeExceptionally(new RuntimeException(message, e));
+      return actionCallback;
+    }
+
+    new Thread(null, Context.current().wrap(() -> {
+      if (useDirectActionCall) {
+        executeFrom(0, getScriptDir());
+      }
+      else {
+        IdeEventQueue.getInstance().doWhenReady(Context.current().wrap(() -> executeFrom(0, getScriptDir())));
+      }
+    }), "playback runner").start();
+
+    return actionCallback;
   }
 
   private void restoreRegistryValues() {
-    final Set<String> storedKeys = myRegistryValues.keySet();
+    Set<String> storedKeys = registryValues.keySet();
     for (String each : storedKeys) {
-      Registry.get(each).setValue(myRegistryValues.get(each));
+      Registry.get(each).setValue(registryValues.get(each));
     }
   }
 
-  private void executeFrom(final int cmdIndex, File baseDir) {
-    if (cmdIndex < myCommands.size()) {
-      CommandDescriptor commandDescriptor = myCommands.get(cmdIndex);
-      final PlaybackCommand cmd = createCommand(commandDescriptor.fullLine, commandDescriptor.line, commandDescriptor.scriptDir);
-      if (myStopRequested) {
-        myCallback.message(null, "Stopped", StatusCallback.Type.message);
-        myActionCallback.setRejected();
+  private void executeFrom(final int commandIndex, File baseDir) {
+    if (commandIndex >= commands.size()) {
+      callback.message(null, "Finished OK " + passedStages.size() + " tests", StatusCallback.Type.message);
+      actionCallback.complete(null);
+      return;
+    }
+
+    CommandDescriptor commandDescriptor = commands.get(commandIndex);
+
+    PlaybackCommand command = createCommand(commandDescriptor.fullLine, commandDescriptor.line, commandDescriptor.scriptDir);
+    if (isStopRequested || command == null) {
+      callback.message(null, "Stopped", StatusCallback.Type.message);
+      actionCallback.cancel(false);
+      return;
+    }
+
+    @SuppressWarnings("unchecked")
+    Set<Class<?>> facadeClassesClone = (Set<Class<?>>)facadeClasses.clone();
+    PlaybackContext context = new PlaybackContext(this, callback, commandIndex, myRobot, useDirectActionCall, useTypingTargets, command,
+                                                  baseDir, facadeClassesClone) {
+      private final long myTimeStamp = myContextTimestamp;
+
+      @Override
+      public void pushStage(StageInfo info) {
+        currentStageDepth.add(info);
+      }
+
+      @Override
+      public StageInfo popStage() {
+        if (!currentStageDepth.isEmpty()) {
+          return currentStageDepth.remove(currentStageDepth.size() - 1);
+        }
+
+        return null;
+      }
+
+      @Override
+      public int getCurrentStageDepth() {
+        return currentStageDepth.size();
+      }
+
+      @Override
+      public void addPassed(StageInfo stage) {
+        passedStages.add(stage);
+      }
+
+      @Override
+      public boolean isDisposed() {
+        return myTimeStamp != myContextTimestamp;
+      }
+
+      @Override
+      public void storeRegistryValue(String key) {
+        if (!registryValues.containsKey(key)) {
+          registryValues.put(key, Registry.stringValue(key));
+        }
+      }
+
+      @Override
+      public void setProject(@Nullable Project project) {
+        myRunner.setProject(project);
+      }
+
+      @Override
+      public @NotNull Project getProject() {
+        Project project = myRunner.getProject();
+        if (project == null) {
+          throw new IllegalStateException(
+            "Project is null. Use a project-aware runner and check if its project has been set up properly");
+        }
+        return project;
+      }
+    };
+
+    commandStartStopProcessor.startOfCommand(commandDescriptor.fullLine);
+
+    CompletableFuture<?> commandFuture = command.execute(context);
+    Context initialContext = Context.current();
+    commandFuture.whenComplete((result, error) -> {
+      if (error != null) {
+        commandStartStopProcessor.endOfCommand(error.getMessage());
+        callback.message(null, "Stopped: " + error, StatusCallback.Type.message);
+        LOG.warn("Callback step stopped with error: " + error, error);
+        actionCallback.completeExceptionally(error);
         return;
       }
-      @SuppressWarnings("unchecked")
-      Set<Class<?>> facadeClassesClone = (Set<Class<?>>)myFacadeClasses.clone();
-      PlaybackContext context =
-        new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, myUseTypingTargets, cmd, baseDir,
-                            facadeClassesClone) {
-          private final long myTimeStamp = myContextTimestamp;
 
-          @Override
-          public void pushStage(StageInfo info) {
-            myCurrentStageDepth.add(info);
-          }
-
-          @Override
-          public StageInfo popStage() {
-            if (myCurrentStageDepth.size() > 0) {
-              return myCurrentStageDepth.remove(myCurrentStageDepth.size() - 1);
+      commandStartStopProcessor.endOfCommand(null);
+      try (Scope ignored = initialContext.makeCurrent()) {
+        if (command.canGoFurther()) {
+          int delay = getDelay(command);
+          if (delay > 0) {
+            if (SwingUtilities.isEventDispatchThread()) {
+              EdtScheduledExecutorService.getInstance().schedule(Context.current().wrap(() -> {
+                if (!onStop.isDisposed()) {
+                  executeFrom(commandIndex + 1, context.getBaseDir());
+                }
+              }), delay, TimeUnit.MILLISECONDS);
             }
-
-            return null;
-          }
-
-          @Override
-          public int getCurrentStageDepth() {
-            return myCurrentStageDepth.size();
-          }
-
-          @Override
-          public void addPassed(StageInfo stage) {
-            myPassedStages.add(stage);
-          }
-
-          @Override
-          public boolean isDisposed() {
-            return myTimeStamp != myContextTimestamp;
-          }
-
-          @Override
-          public void storeRegistryValue(String key) {
-            if (!myRegistryValues.containsKey(key)) {
-              myRegistryValues.put(key, Registry.stringValue(key));
+            else {
+              LockSupport.parkUntil(System.currentTimeMillis() + delay);
+              executeFrom(commandIndex + 1, context.getBaseDir());
             }
-          }
-
-          @Override
-          public void setProject(@Nullable Project project) {
-            myRunner.setProject(project);
-          }
-
-          @Override
-          @NotNull
-          public Project getProject() {
-            Project project = myRunner.getProject();
-            if (project == null) {
-              throw new IllegalStateException("Project is null. Use a project-aware runner and check if its project has been set up properly");
-            }
-            return project;
-          }
-        };
-      final Promise<Object> cmdCallback = cmd.execute(context);
-      cmdCallback
-        .onSuccess(it -> {
-          if (cmd.canGoFurther()) {
-            executeFrom(cmdIndex + 1, context.getBaseDir());
           }
           else {
-            myCallback.message(null, "Stopped: cannot go further", StatusCallback.Type.message);
-            myActionCallback.setDone();
+            executeFrom(commandIndex + 1, context.getBaseDir());
           }
-        })
-        .onError(error -> {
-          myCallback.message(null, "Stopped: " + error, StatusCallback.Type.message);
-          LOG.warn("Callback step stopped with error: " + error, error);
-          myActionCallback.reject(error.getMessage());
-        });
-    }
-    else {
-      myCallback.message(null, "Finished OK " + myPassedStages.size() + " tests", StatusCallback.Type.message);
-      myActionCallback.setDone();
-    }
+        }
+        else {
+          callback.message(null, "Stopped: cannot go further", StatusCallback.Type.message);
+          actionCallback.complete(null);
+        }
+      }
+    });
+  }
+
+  public int getDelay(@NotNull PlaybackCommand command) {
+    //noinspection SpellCheckingInspection
+    return command instanceof TypeCommand ? Registry.intValue("actionSystem.playback.typecommand.delay") : 0;
   }
 
   protected void setProject(@Nullable Project project) {
   }
 
-  @Nullable
-  protected Project getProject() {
+  protected @Nullable Project getProject() {
     return null;
   }
 
   protected void subscribeListeners(MessageBusConnection connection) {
-    connection.subscribe(ApplicationActivationListener.TOPIC, myAppListener);
+    connection.subscribe(ApplicationActivationListener.TOPIC, appListener);
+  }
+
+  public PlaybackRunner setCommandStartStopProcessor(@NotNull PlaybackCommandReporter commandStartStopProcessor) {
+    this.commandStartStopProcessor = commandStartStopProcessor;
+    return this;
   }
 
   protected void onStop() {
-    myCommands.clear();
+    commands.clear();
   }
 
-  @NotNull
-  private List<CommandDescriptor> includeScript(String scriptText, File scriptDir) {
+  static final String INCLUDE_CMD = AbstractCommand.CMD_PREFIX + "include";
+  static final String IMPORT_CALL_CMD = AbstractCommand.CMD_PREFIX + "importCall";
+
+  private @NotNull List<CommandDescriptor> includeScript(String scriptText, File scriptDir) {
     List<CommandDescriptor> commands = new ArrayList<>();
     final StringTokenizer tokens = new StringTokenizer(scriptText, "\n");
     int line = 0;
     while (tokens.hasMoreTokens()) {
       final String eachLine = tokens.nextToken();
 
-      String includeCmd = AbstractCommand.CMD_PREFIX + "include";
-      String importCallCmd = AbstractCommand.CMD_PREFIX + "importCall";
-
-      if (eachLine.startsWith(includeCmd)) {
-        File file = new PathMacro().setScriptDir(scriptDir).resolveFile(eachLine.substring(includeCmd.length()).trim(), scriptDir);
+      if (eachLine.startsWith(INCLUDE_CMD)) {
+        File file = new PathMacro().setScriptDir(scriptDir).resolveFile(eachLine.substring(INCLUDE_CMD.length()).trim(), scriptDir);
         if (!file.exists()) {
           throw new RuntimeException("Cannot find file to include at line " + line + ": " + file.getAbsolutePath());
         }
         try {
-          String include = FileUtil.loadFile(file);
+          String include = FileUtil.loadFile(file, true);
           commands.add(new CommandDescriptor(PrintCommand.PREFIX + " " + eachLine, line, scriptDir));
           List<CommandDescriptor> includeCommands = includeScript(include, file.getParentFile());
           commands.addAll(includeCommands);
@@ -277,15 +324,15 @@ public class PlaybackRunner {
           throw new RuntimeException("Error reading file at line " + line + ": " + file.getAbsolutePath());
         }
       }
-      else if (eachLine.startsWith(importCallCmd)) {
-        String className = eachLine.substring(importCallCmd.length()).trim();
+      else if (eachLine.startsWith(IMPORT_CALL_CMD)) {
+        String className = eachLine.substring(IMPORT_CALL_CMD.length()).trim();
         try {
           Class<?> facadeClass = Class.forName(className);
-          myFacadeClasses.add(facadeClass);
+          facadeClasses.add(facadeClass);
           commands.add(new CommandDescriptor(PrintCommand.PREFIX + " " + eachLine, line++, scriptDir));
         }
         catch (ClassNotFoundException e) {
-          throw new RuntimeException("Cannot find class at line " + line +": " + className);
+          throw new RuntimeException("Cannot find class at line " + line + ": " + className);
         }
       }
       else {
@@ -300,20 +347,10 @@ public class PlaybackRunner {
    * We do not create instances of commands beforehand because
    * command classes may be provided by plugins and may prevent plugin from unloading [IDEA-259898].
    */
-  private static class CommandDescriptor {
-    public final String fullLine;
-    public final int line;
-    public final File scriptDir;
-
-    private CommandDescriptor(String fullLine, int line, File scriptDir) {
-      this.fullLine = fullLine;
-      this.line = line;
-      this.scriptDir = scriptDir;
-    }
+  private record CommandDescriptor(String fullLine, int line, File scriptDir) {
   }
 
-  @NotNull
-  protected PlaybackCommand createCommand(String string, int line, File scriptDir) {
+  protected @Nullable PlaybackCommand createCommand(String string, int line, File scriptDir) {
     AbstractCommand cmd;
 
     if (string.startsWith(RegistryValueCommand.PREFIX)) {
@@ -359,16 +396,23 @@ public class PlaybackRunner {
       cmd = new PrintCommand(string.substring(PrintCommand.PREFIX.length() + 1), line);
     }
     else {
-      cmd = new AlphaNumericTypeCommand(string, line);
+      if (string.startsWith(AbstractCommand.CMD_PREFIX)) {
+        cmd = null;
+        LOG.error("Command " + string + " is not found");
+      }
+      else {
+        cmd = new AlphaNumericTypeCommand(string, line);
+      }
     }
-
-    cmd.setScriptDir(scriptDir);
+    if (cmd != null) {
+      cmd.setScriptDir(scriptDir);
+    }
 
     return cmd;
   }
 
   public void stop() {
-    myStopRequested = true;
+    isStopRequested = true;
   }
 
   public File getScriptDir() {
@@ -380,14 +424,11 @@ public class PlaybackRunner {
   }
 
   public interface StatusCallback {
-
     enum Type {message, error, code, test}
 
     void message(@Nullable PlaybackContext context, String text, Type type);
 
     abstract class Edt implements StatusCallback {
-
-
       @Override
       public final void message(final PlaybackContext context,
                                 final String text,

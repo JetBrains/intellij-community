@@ -54,7 +54,8 @@ public interface TabOutScopesTracker {
   }
 
   /**
-   * Same as {@link #registerEmptyScope(Editor, int)} but allows to set custom caret shift on exiting the scope. This is for the cases when scope suffix contains more than one character (e.g. a closing parenthesis and a semicolon).
+   * Same as {@link #registerEmptyScope(Editor, int)} but allows setting custom caret shift on exiting the scope.
+   * This is for the cases when scope suffix contains more than one character (e.g. a closing parenthesis and a semicolon).
    *
    * @param tabOutOffset position where caret should be moved when Tab is used to exit the scope (should be larger than {@code offset})
    */
@@ -67,6 +68,8 @@ public interface TabOutScopesTracker {
    * the scope).
    */
   boolean hasScopeEndingAt(@NotNull Editor editor, int offset);
+
+  int getScopeEndingAt(@NotNull Editor editor, int offset);
 
   /**
    * Removes a tracked scope (if any) ending at the given offset.

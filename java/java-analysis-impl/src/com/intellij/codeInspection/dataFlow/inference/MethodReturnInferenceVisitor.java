@@ -68,7 +68,7 @@ class MethodReturnInferenceVisitor {
       return ReturnValue.UNKNOWN;
     }
     IElementType type = expr.getTokenType();
-    if (isNullLiteral(expr)) {
+    if (isNullLiteralExpression(tree, expr)) {
       return ReturnValue.NULLABLE;
     }
     if (type == LAMBDA_EXPRESSION || type == NEW_EXPRESSION || type == METHOD_REF_EXPRESSION ||
@@ -360,7 +360,7 @@ class MethodReturnInferenceVisitor {
     if (type == BINARY_EXPRESSION || type == POLYADIC_EXPRESSION) {
       List<LighterASTNode> operands = getExpressionChildren(tree, expr);
       if (firstChildOfType(tree, expr, negated ? JavaTokenType.EQEQ : JavaTokenType.NE) != null) {
-        return operands.size() == 2 && isNullLiteral(operands.get(1)) && isReferenceToLocal(operands.get(0), var);
+        return operands.size() == 2 && isNullLiteralExpression(tree, operands.get(1)) && isReferenceToLocal(operands.get(0), var);
       }
 
       if (firstChildOfType(tree, expr, negated ? JavaTokenType.OROR : JavaTokenType.ANDAND) == null) return false;
@@ -384,10 +384,6 @@ class MethodReturnInferenceVisitor {
            Objects.requireNonNull(tree.getParent(operand)).getTokenType() != METHOD_CALL_EXPRESSION &&
            findExpressionChild(tree, operand) == null && // non-qualified
            Objects.equals(getNameIdentifierText(tree, operand), getNameIdentifierText(tree, var));
-  }
-
-  private boolean isNullLiteral(@NotNull LighterASTNode value) {
-    return value.getTokenType() == LITERAL_EXPRESSION && tree.getChildren(value).get(0).getTokenType() == JavaTokenType.NULL_KEYWORD;
   }
 
   @Nullable

@@ -21,9 +21,6 @@ import javax.swing.*;
 import javax.swing.plaf.ButtonUI;
 import java.awt.*;
 
-/**
- * @author spleaner
- */
 public class StickyButton extends JToggleButton {
 
   public StickyButton(final @NlsContexts.Button String text) {

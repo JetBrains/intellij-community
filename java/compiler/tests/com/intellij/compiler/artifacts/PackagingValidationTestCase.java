@@ -16,8 +16,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class PackagingValidationTestCase extends PackagingElementsTestCase {
-  protected PackagingValidationTestCase() {
+  @Override
+  protected void setUp() throws Exception {
     mySetupModule = true;
+    super.setUp();
   }
 
   protected MockArtifactProblemsHolder validate(CompositePackagingElement<?> root, final ArtifactType artifactType) {
@@ -57,7 +59,7 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
     }
 
     public void assertProblems(String... expectedMessages) {
-      Set<String> expected = ContainerUtil.set(expectedMessages);
+      Set<String> expected = ContainerUtil.newHashSet(expectedMessages);
       outer:
       for (String problem : myProblems) {
         for (String message : expected) {

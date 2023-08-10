@@ -1,0 +1,1 @@
+This text has four<selection>  <caret>  </selection>inner whitespaces

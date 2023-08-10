@@ -1,24 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "NotificationConfiguration", storages = @Storage("notifications.xml"))
+@State(name = "NotificationConfiguration", storages = @Storage("notifications.xml"), category = SettingsCategory.UI)
 public final class NotificationsConfigurationImpl extends NotificationsConfiguration implements PersistentStateComponent<Element>, Disposable {
-  private static final Logger LOG = Logger.getInstance(NotificationsConfiguration.class);
+  private static final Logger LOG = Logger.getInstance(NotificationsConfigurationImpl.class);
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";
   private static final String SYSTEM_NOTIFICATIONS_ATTRIBUTE = "systemNotifications";
+  private static final String NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE = "notificationsAnnouncingMode";
 
   private static final Comparator<NotificationSettings> NOTIFICATION_SETTINGS_COMPARATOR =
     (o1, o2) -> o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
@@ -26,8 +28,11 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   private final Map<String, NotificationSettings> myIdToSettingsMap = new HashMap<>();
   private final Map<String, String> myToolWindowCapable = new HashMap<>();
 
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   public boolean SHOW_BALLOONS = true;
   public boolean SYSTEM_NOTIFICATIONS = true;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private NotificationAnnouncingMode NOTIFICATION_ANNOUNCING_MODE;
 
   public static NotificationsConfigurationImpl getInstanceImpl() {
     return (NotificationsConfigurationImpl)getNotificationsConfiguration();
@@ -52,9 +57,10 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
 
   public synchronized NotificationSettings[] getAllSettings() {
     Collection<NotificationSettings> settings = new HashSet<>(myIdToSettingsMap.values());
-    Iterable<NotificationGroup> notificationGroups = NotificationGroup.getAllRegisteredGroups();
-    for (NotificationGroup group : notificationGroups) {
-      if (group.getDisplayId().startsWith(LIGHTWEIGHT_PREFIX)) continue;
+    for (NotificationGroup group : NotificationGroup.Companion.getAllRegisteredGroups()) {
+      if (group.getDisplayId().startsWith(LIGHTWEIGHT_PREFIX) || group.isHideFromSettings()) {
+        continue;
+      }
       settings.add(getSettings(group.getDisplayId()));
     }
     NotificationSettings[] result = settings.toArray(new NotificationSettings[0]);
@@ -74,8 +80,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   }
 
   @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
-  @NotNull
-  public static NotificationSettings getSettings(@NotNull String groupId) {
+  public static @NotNull NotificationSettings getSettings(@NotNull String groupId) {
     NotificationSettings settings;
     NotificationsConfigurationImpl impl = getInstanceImpl();
     synchronized (impl) {
@@ -99,16 +104,12 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   }
 
   @Override
-  public void register(@NotNull
-                       final String groupDisplayName, @NotNull
-                       final NotificationDisplayType displayType) {
+  public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType displayType) {
     register(groupDisplayName, displayType, true);
   }
 
   @Override
-  public void register(@NotNull String groupDisplayName,
-                       @NotNull NotificationDisplayType displayType,
-                       boolean shouldLog) {
+  public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType displayType, boolean shouldLog) {
     register(groupDisplayName, displayType, shouldLog, false);
   }
 
@@ -117,9 +118,18 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
                        @NotNull NotificationDisplayType displayType,
                        boolean shouldLog,
                        boolean shouldReadAloud) {
+    register(groupDisplayName, displayType, shouldLog, shouldReadAloud, null);
+  }
+
+  @Override
+  public void register(@NotNull String groupDisplayName,
+                       @NotNull NotificationDisplayType displayType,
+                       boolean shouldLog,
+                       boolean shouldReadAloud,
+                       @Nullable String toolWindowId) {
     if (!isRegistered(groupDisplayName)) {
       // register a new group and remember these settings as default
-      new NotificationGroup(groupDisplayName, displayType, shouldLog);
+      new NotificationGroup(groupDisplayName, displayType, shouldLog, toolWindowId);
       // and decide whether to save them explicitly (in case of non-default shouldReadAloud)
       changeSettings(groupDisplayName, displayType, shouldLog, shouldReadAloud);
     }
@@ -131,11 +141,38 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   }
 
   @Override
-  public void changeSettings(String groupDisplayName, NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud) {
-    changeSettings(new NotificationSettings(groupDisplayName, displayType, shouldLog, shouldReadAloud));
+  public boolean areNotificationsEnabled() {
+    return SHOW_BALLOONS;
   }
 
-  public synchronized void changeSettings(NotificationSettings settings) {
+  @Override
+  public @NotNull NotificationAnnouncingMode getNotificationAnnouncingMode() {
+    if (NOTIFICATION_ANNOUNCING_MODE != null) return NOTIFICATION_ANNOUNCING_MODE;
+    else if (SystemInfo.isWindows) return NotificationAnnouncingMode.NONE;
+    else return NotificationAnnouncingMode.MEDIUM;
+  }
+
+  @Override
+  public void setNotificationAnnouncingMode(@NotNull NotificationAnnouncingMode mode) {
+    NOTIFICATION_ANNOUNCING_MODE = mode;
+  }
+
+  @Override
+  public @NotNull NotificationDisplayType getDisplayType(@NotNull String groupId) {
+    return getSettings(groupId).getDisplayType();
+  }
+
+  @Override
+  public void setDisplayType(@NotNull String groupId, @NotNull NotificationDisplayType displayType) {
+    changeSettings(getSettings(groupId).withDisplayType(displayType));
+  }
+
+  @Override
+  public void changeSettings(@NotNull String groupId, @NotNull NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud) {
+    changeSettings(new NotificationSettings(groupId, displayType, shouldLog, shouldReadAloud));
+  }
+
+  public synchronized void changeSettings(@NotNull NotificationSettings settings) {
     String groupDisplayName = settings.getGroupId();
     if (settings.equals(getDefaultSettings(groupDisplayName))) {
       myIdToSettingsMap.remove(groupDisplayName);
@@ -145,9 +182,8 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
     }
   }
 
-  public synchronized boolean isRegistered(@NotNull
-                                           final String id) {
-    return myIdToSettingsMap.containsKey(id) || NotificationGroup.findRegisteredGroup(id) != null;
+  public synchronized boolean isRegistered(@NotNull String id) {
+    return myIdToSettingsMap.containsKey(id) || NotificationGroup.isGroupRegistered(id);
   }
 
   @Override
@@ -170,16 +206,20 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
       element.setAttribute(SYSTEM_NOTIFICATIONS_ATTRIBUTE, "false");
     }
 
+    if (NOTIFICATION_ANNOUNCING_MODE != null) {
+      element.setAttribute(NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE, NOTIFICATION_ANNOUNCING_MODE.getStringValue());
+    }
+
     return element;
   }
 
   @Override
-  public synchronized void loadState(@NotNull final Element state) {
+  public synchronized void loadState(@NotNull Element state) {
     myIdToSettingsMap.clear();
     for (Element child : state.getChildren("notification")) {
-      final NotificationSettings settings = NotificationSettings.Companion.load(child);
+      NotificationSettings settings = NotificationSettings.Companion.load(child);
       if (settings != null) {
-        final String id = settings.getGroupId();
+        String id = settings.getGroupId();
         LOG.assertTrue(!myIdToSettingsMap.containsKey(id), String.format("Settings for '%s' already loaded!", id));
         myIdToSettingsMap.put(id, settings);
       }
@@ -194,6 +234,11 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
     if ("false".equals(state.getAttributeValue(SYSTEM_NOTIFICATIONS_ATTRIBUTE))) {
       //noinspection NonPrivateFieldAccessedInSynchronizedContext
       SYSTEM_NOTIFICATIONS = false;
+    }
+
+    NotificationAnnouncingMode announcingMode = NotificationAnnouncingMode.get(state.getAttributeValue(NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE));
+    if (announcingMode != null) {
+      NOTIFICATION_ANNOUNCING_MODE = announcingMode;
     }
   }
 }

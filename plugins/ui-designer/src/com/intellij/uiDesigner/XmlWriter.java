@@ -20,19 +20,16 @@ import com.intellij.uiDesigner.lw.ColorDescriptor;
 import com.intellij.uiDesigner.lw.FontDescriptor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.containers.BooleanStack;
+import com.intellij.util.containers.Stack;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
-import java.util.Stack;
 
 /**
  * This is utility for serialization of component hierarchy.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public final class XmlWriter{
   private static final int INDENT = 2;

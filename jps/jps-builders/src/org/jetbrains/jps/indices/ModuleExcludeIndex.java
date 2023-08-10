@@ -15,9 +15,11 @@
  */
 package org.jetbrains.jps.indices;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.Collection;
 
 /**
@@ -37,9 +39,16 @@ public interface ModuleExcludeIndex {
   boolean isExcludedFromModule(File file, JpsModule module);
 
   /**
-   * Returns the list of exclude roots for a specified module.
+   * Returns the list of exclude roots for a specified module. Note that files may be excluded from the module content by patterns, so
+   * it makes sense to used this method together with {@link #getModuleFileFilterHonorExclusionPatterns}.
    */
   Collection<File> getModuleExcludes(JpsModule module);
+
+  /**
+   * Returns filter which accepts files located under module content roots and aren't excluded by exclusion patterns for that module. For
+   * performance reasons, this method doesn't take into account {@link #getModuleExcludes excluded roots}.
+   */
+  @NotNull FileFilter getModuleFileFilterHonorExclusionPatterns(@NotNull JpsModule module);
 
   /**
    * Checks if the specified file is under the content of any module in the project and not under an exclude root.

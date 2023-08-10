@@ -1,10 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.memory.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -32,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.TimeUnit;
@@ -147,13 +149,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
 
     mySingleAlarm.setDelay((int)TimeUnit.MILLISECONDS.toMillis(500));
 
-    myTable.addMouseListener(new PopupHandler() {
-      @Override
-      public void invokePopup(Component comp, int x, int y) {
-        ActionPopupMenu menu = createContextMenu();
-        menu.getComponent().show(comp, x, y);
-      }
-    });
+    PopupHandler.installPopupMenu(myTable, "MemoryView.ClassesPopupActionGroup", "MemoryView.ClassesPopupActionGroup");
 
     final JScrollPane scroll = ScrollPaneFactory.createScrollPane(myTable, SideBorder.TOP);
     final DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("MemoryView.SettingsPopupActionGroup");
@@ -192,7 +188,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     final XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
     if (ref != null && debugSession != null && debugSession.isSuspended()) {
       if (!ref.canGetInstanceInfo()) {
-        XDebuggerManagerImpl.NOTIFICATION_GROUP
+        XDebuggerManagerImpl.getNotificationGroup()
           .createNotification(XDebuggerBundle.message("memory.unable.to.get.instances.of.class", ref.name()),
                               NotificationType.INFORMATION).notify(debugSession.getProject());
         return;
@@ -231,13 +227,6 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
 
     return session != null;
   }
-
-  private static ActionPopupMenu createContextMenu() {
-    final ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("MemoryView.ClassesPopupActionGroup");
-    return ActionManager.getInstance().createActionPopupMenu("MemoryView.ClassesPopupActionGroup", group);
-  }
-
-
 
   protected void doActivate() {
     myDebugSessionListener.setActive(true);

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.action
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -27,4 +28,6 @@ class ShowCommonExternalSystemSettingsAction : DumbAwareAction() {
     val showSettingsUtil = ShowSettingsUtil.getInstance()
     showSettingsUtil.showSettingsDialog(project, ExternalSystemBundle.message("settings.build.tools.display.name"))
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }

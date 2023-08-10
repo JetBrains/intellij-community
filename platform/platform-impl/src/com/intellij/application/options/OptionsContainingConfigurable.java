@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,18 +8,16 @@ import java.util.Map;
 import java.util.Set;
 
 public interface OptionsContainingConfigurable {
-  OptionsContainingConfigurable EMPTY = () -> Collections.emptySet();
-
   @NotNull
-  Set<String> processListOptions();
+  default Set<String> processListOptions() {
+    return Collections.emptySet();
+  }
 
   /**
    * @return A map of paths each having a set of options which belong to it, for e.g. a tab name and options under
    *         the tab.
    */
-  @NotNull
-  default Map<String,Set<String>> processListOptionsWithPaths() {
+  default @NotNull Map<String,Set<String>> processListOptionsWithPaths() {
     return Collections.emptyMap();
   }
-
 }

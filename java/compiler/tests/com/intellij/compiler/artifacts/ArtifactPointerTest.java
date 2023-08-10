@@ -1,7 +1,6 @@
 package com.intellij.compiler.artifacts;
 
 import com.intellij.packaging.artifacts.*;
-import com.intellij.packaging.impl.artifacts.ArtifactPointerImpl;
 import com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 
@@ -130,26 +129,34 @@ public class ArtifactPointerTest extends ArtifactsTestCase {
     commitModel(model);
 
     assertSame(artifact, pointer.getArtifact());
-    Map.Entry<Artifact, ArtifactPointerImpl> mapping = assertOneElement(getPointerManager().getPointers().entrySet());
-    assertSame(artifact, mapping.getKey());
+    Map.Entry<String, ? extends ArtifactPointer> mapping = assertOneElement(getPointerManager().getResolvedPointers());
+    assertEquals(artifact.getName(), mapping.getKey());
+    assertSame(artifact, mapping.getValue().getArtifact());
     assertSame(pointer, mapping.getValue());
   }
 
   public void testSurviveAfterCommit() {
-    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
-    final ModifiableArtifact a = model.addArtifact("a", PlainArtifactType.getInstance());
-    final ArtifactPointer pointer = getPointerManager().createPointer(a);
-    assertSame(a, pointer.getArtifact());
-    assertSame(a, pointer.findArtifact(model));
-    model.getOrCreateModifiableArtifact(a).setName("b");
-    assertEquals("b", pointer.getArtifactName(model));
-
-    assertSame(pointer, getPointerManager().createPointer(a));
-
+    ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+    model.addArtifact("a", PlainArtifactType.getInstance());
     commitModel(model);
-    Map.Entry<Artifact, ArtifactPointerImpl> mapping = assertOneElement(getPointerManager().getPointers().entrySet());
-    assertSame(a, mapping.getKey());
+
+    Artifact artifact = ArtifactManager.getInstance(myProject).findArtifact("a");
+    ArtifactPointer pointer = getPointerManager().createPointer(artifact);
+    assertSame(artifact, pointer.getArtifact());
+    assertSame(artifact, pointer.findArtifact(getArtifactManager()));
+
+    ModifiableArtifactModel model2 = getArtifactManager().createModifiableModel();
+    model2.getOrCreateModifiableArtifact(artifact).setName("b");
+    assertEquals("b", pointer.getArtifactName(model2));
+    commitModel(model2);
+
+    assertSame(pointer, getPointerManager().createPointer(artifact));
+    Map.Entry<String, ? extends ArtifactPointer> mapping = assertOneElement(getPointerManager().getResolvedPointers());
+    assertEquals("b", mapping.getKey());
+    assertEquals("b", artifact.getName());
+    assertSame(artifact, mapping.getValue().getArtifact());
     assertSame(pointer, mapping.getValue());
+    assertSame(pointer, getPointerManager().createPointer("b"));
 
     final Artifact b = getArtifactManager().findArtifact("b");
     assertNotNull(b);
@@ -180,7 +187,7 @@ public class ArtifactPointerTest extends ArtifactsTestCase {
     assertSame(artifact, pointer.getArtifact());
     model.dispose();
     assertNull(pointer.getArtifact());
-    assertTrue(getPointerManager().getPointers().isEmpty());
+    assertTrue(getPointerManager().getResolvedPointers().isEmpty());
   }
 
   public void testDisposePointerForModifiableCopyAfterCommit() {
@@ -191,8 +198,9 @@ public class ArtifactPointerTest extends ArtifactsTestCase {
     assertSame(modifiable, pointer.getArtifact());
     commitModel(model);
     assertSame(a, pointer.getArtifact());
-    Map.Entry<Artifact, ArtifactPointerImpl> mapping = assertOneElement(getPointerManager().getPointers().entrySet());
-    assertSame(a, mapping.getKey());
+    Map.Entry<String, ? extends ArtifactPointer> mapping = assertOneElement(getPointerManager().getResolvedPointers());
+    assertEquals(a.getName(), mapping.getKey());
+    assertSame(a, mapping.getValue().getArtifact());
     assertSame(pointer, mapping.getValue());
   }
 

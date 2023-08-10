@@ -1,4 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.SerializableScheme
@@ -12,21 +14,24 @@ import com.intellij.execution.configuration.PersistentAwareRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeState
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
-import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.text.nullize
 import org.jdom.Element
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.asCompletableFuture
 import org.jetbrains.jps.model.serialization.PathMacroUtil
-import java.util.*
 
 private const val RUNNER_ID = "RunnerId"
 
@@ -38,6 +43,7 @@ const val DUMMY_ELEMENT_NAME: String = "dummy"
 private const val TEMPORARY_ATTRIBUTE = "temporary"
 private const val EDIT_BEFORE_RUN = "editBeforeRun"
 private const val ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun"
+private const val FOCUS_TOOLWINDOW_BEFORE_RUN = "focusToolWindowBeforeRun"
 
 private const val TEMP_CONFIGURATION = "tempConfiguration"
 internal const val TEMPLATE_FLAG_ATTRIBUTE = "default"
@@ -53,7 +59,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   private var _configuration: RunConfiguration? = null,
   private var isTemplate: Boolean = false,
   private var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE
-) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
+) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme, Scheme {
 
   init {
     (_configuration as? PersistentAwareRunConfiguration)?.setTemplate(isTemplate)
@@ -69,7 +75,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
         }
       }
       // we cannot use here configuration.type.id because it will break previously stored list of stored settings
-      @Suppress("DEPRECATION")
       return "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
     }
   }
@@ -85,10 +90,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   private var pathIfStoredInArbitraryFile: String? = null
   private var isEditBeforeRun = false
   private var isActivateToolWindowBeforeRun = true
+  private var isFocusToolWindowBeforeRun = false
   private var wasSingletonSpecifiedExplicitly = false
   private var folderName: String? = null
 
   private var uniqueId: String? = null
+
+  var filePathIfRunningCurrentFile: String? = null
 
   override fun getFactory() = _configuration?.factory ?: UnknownConfigurationType.getInstance()
 
@@ -135,7 +143,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   override fun createFactory(): Factory<RunnerAndConfigurationSettings> {
     return Factory {
       val configuration = configuration
-      RunnerAndConfigurationSettingsImpl(manager, configuration.factory!!.createConfiguration(ExecutionBundle.message("default.run.configuration.name"), configuration))
+      RunnerAndConfigurationSettingsImpl(manager, configuration.factory!!.createConfiguration("", configuration), isTemplate)
     }
   }
 
@@ -161,7 +169,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     // check name if configuration name was changed not using our setName
     if (result == null || !result.contains(configuration.name)) {
       val configuration = configuration
-      @Suppress("DEPRECATION")
       result = getUniqueIdFor(configuration)
       uniqueId = result
     }
@@ -180,6 +187,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
   override fun isActivateToolWindowBeforeRun() = isActivateToolWindowBeforeRun
 
+  override fun setFocusToolWindowBeforeRun(value: Boolean) {
+    isFocusToolWindowBeforeRun = value
+  }
+
+  override fun isFocusToolWindowBeforeRun() = isFocusToolWindowBeforeRun
+
   override fun setFolderName(value: String?) {
     folderName = value
   }
@@ -196,12 +209,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
       level = if (element.getAttributeBooleanValue(TEMPORARY_ATTRIBUTE) || TEMP_CONFIGURATION == element.name) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
     }
 
-    isEditBeforeRun = (element.getAttributeBooleanValue(EDIT_BEFORE_RUN))
+    isEditBeforeRun = element.getAttributeBooleanValue(EDIT_BEFORE_RUN)
     val value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN)
-    @Suppress("PlatformExtensionReceiverOfInline")
     isActivateToolWindowBeforeRun = value == null || value.toBoolean()
+    isFocusToolWindowBeforeRun = element.getAttributeBooleanValue(FOCUS_TOOLWINDOW_BEFORE_RUN)
     folderName = element.getAttributeValue(FOLDER_NAME)
-    val factory = manager.getFactory(element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE), element.getAttributeValue(FACTORY_NAME_ATTRIBUTE), !isTemplate) ?: return
+    val factory = manager.getFactory(element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE), element.getAttributeValue(FACTORY_NAME_ATTRIBUTE), !isTemplate)
 
     val configuration = factory.createTemplateConfiguration(manager.project, manager)
     if (!isTemplate) {
@@ -233,7 +246,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
     else {
       wasSingletonSpecifiedExplicitly = true
-      @Suppress("PlatformExtensionReceiverOfInline")
       configuration.isAllowRunningInParallel = !singletonStr.toBoolean()
     }
 
@@ -276,6 +288,9 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
       if (!isActivateToolWindowBeforeRun) {
         element.setAttribute(ACTIVATE_TOOLWINDOW_BEFORE_RUN, "false")
       }
+      if (isFocusToolWindowBeforeRun) {
+        element.setAttribute(FOCUS_TOOLWINDOW_BEFORE_RUN, "true")
+      }
       if (wasSingletonSpecifiedExplicitly || configuration.isAllowRunningInParallel != factory.singletonPolicy.isAllowRunningInParallel) {
         element.setAttribute(SINGLETON, (!configuration.isAllowRunningInParallel).toString())
       }
@@ -292,7 +307,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
 
     if (configuration.type.isManaged) {
-      manager.writeBeforeRunTasks(configuration)?.let {
+      manager.writeBeforeRunTasks(configuration).let {
         element.addContent(it)
       }
     }
@@ -326,12 +341,24 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
   override fun checkSettings(executor: Executor?) {
     val configuration = configuration
-    var warning: RuntimeConfigurationWarning?
+    var warning: RuntimeConfigurationException? = null
 
-    warning = doCheck { runReadAction { configuration.checkConfiguration() } }
+     ReadAction.nonBlocking {
+      try {
+        val dataContextFromFocusAsync = DataManager.getInstance().dataContextFromFocusAsync
+        val dataContext = ProgressIndicatorUtils.awaitWithCheckCanceled(dataContextFromFocusAsync.asCompletableFuture())
+
+        ExecutionManagerImpl.withEnvironmentDataContext(dataContext).use {
+          configuration.checkConfiguration()
+        }
+      }
+      catch (e: RuntimeConfigurationException) {
+        warning = e
+      }
+    }.executeSynchronously()
     if (configuration !is RunConfigurationBase<*>) {
       if (warning != null) {
-        throw warning
+        throw warning as RuntimeConfigurationException
       }
       return
     }
@@ -366,7 +393,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
 
     if (warning != null) {
-      throw warning
+      throw warning as RuntimeConfigurationException
     }
   }
 
@@ -484,13 +511,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
         if (runner == null) {
           iterator.remove()
         }
-        @Suppress("IfThenToSafeAccess")
         add(state, runner, if (runner == null) null else createSettings(runner))
       }
     }
 
     private fun findRunner(runnerId: String): ProgramRunner<*>? {
-      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.iterable.filter { runnerId == it.runnerId }
+      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.lazySequence().filter { runnerId == it.runnerId }.toList()
       return when {
         runnersById.isEmpty() -> null
         runnersById.size == 1 -> runnersById.firstOrNull()
@@ -583,7 +609,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
 // always write method element for shared settings for now due to preserve backward compatibility
 private val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
-  get() = ApplicationManager.getApplication().isUnitTestMode || isStoredInLocalWorkspace
+  get() = ApplicationManager.getApplication().isUnitTestMode && writeDefaultAttributeWithFalseValueInTests || isStoredInLocalWorkspace
+
+@set:TestOnly
+var writeDefaultAttributeWithFalseValueInTests: Boolean = true
 
 fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
   when (configuration) {

@@ -45,7 +45,7 @@ object GroovyMethodCallPattern : GroovyExpressionPattern<GrCallExpression, Groov
   fun withMethod(methodPattern: ElementPattern<out PsiMethod>): GroovyMethodCallPattern {
     return with(object : PatternCondition<GrCallExpression>("methodCall") {
       override fun accepts(callExpression: GrCallExpression, context: ProcessingContext): Boolean {
-        for (result in callExpression.getCallVariants(null)) {
+        for (result in callExpression.getCallVariants(null, false)) {
           if (methodPattern.accepts(result.element, context)) {
             return true
           }

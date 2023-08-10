@@ -1,19 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collection;
@@ -29,8 +25,7 @@ public final class JpsFileTargetContextUtils {
    * @see com.intellij.codeInsight.daemon.quickFix.CreateFilePathFix
    * @see com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider
    */
-  @NotNull
-  public static Collection<FileTargetContext> prepareTargetContexts(@NotNull Project project,
+  public static @NotNull Collection<FileTargetContext> prepareTargetContexts(@NotNull Project project,
                                                                     @NotNull VirtualFile file,
                                                                     @NotNull Collection<FileTargetContext> targetContexts) {
     // here we try to sort target locations depending on src/test origin
@@ -51,31 +46,22 @@ public final class JpsFileTargetContextUtils {
         }
       }
 
-      if (tc.getJpsModuleSourceRoot() == null) {
-        return true;
-      }
-      JavaSourceRootProperties srcProperties = tc.getJpsModuleSourceRoot().getProperties(JavaModuleSourceRootTypes.SOURCES);
-      if (srcProperties == null) {
-        return true;
-      }
-
-      return !srcProperties.isForGeneratedSources();
+      return !tc.isInGeneratedSource();
     });
 
     // sort only if we have different source root types
-    if (hasEqualSourceRootTypes(targetContextWrappers)) {
-      return targetContexts;
+    if (!hasEqualSourceRootTypes(targetContextWrappers)) {
+      // if file is under sources root then src/resources directories at the top
+      // if file is under test sources root then test/resources directories at the top
+      if (projectFileIndex.isInTestSourceContent(file)) {
+        targetContextWrappers = ContainerUtil.sorted(targetContextWrappers, JpsFileTargetContextUtils::compareTargetsForTests);
+      }
+      else {
+        // it could be a file from web resource root, it is not in source content, thus we do not check isInSourceContent(file)
+        targetContextWrappers = ContainerUtil.sorted(targetContextWrappers, JpsFileTargetContextUtils::compareTargetsForProduction);
+      }
     }
 
-    // if file is under sources root then src/resources directories at the top
-    // if file is under test sources root then test/resources directories at the top
-    if (projectFileIndex.isInTestSourceContent(file)) {
-      targetContextWrappers.sort(JpsFileTargetContextUtils::compareTargetsForTests);
-    }
-    else {
-      // it could be a file from web resource root, it is not in source content, thus we do not check isInSourceContent(file)
-      targetContextWrappers.sort(JpsFileTargetContextUtils::compareTargetsForProduction);
-    }
     return ContainerUtil.map(targetContextWrappers, FileTargetContextWrapper::getTargetContext);
   }
 
@@ -100,24 +86,19 @@ public final class JpsFileTargetContextUtils {
     return true;
   }
 
-  private static List<FileTargetContextWrapper> findSourceRootTypes(Collection<FileTargetContext> targetContexts) {
+  private static List<FileTargetContextWrapper> findSourceRootTypes(Collection<? extends FileTargetContext> targetContexts) {
     return ContainerUtil.map(targetContexts, c -> {
       Project project = c.getFileSystemItem().getProject();
 
-      SourceFolder sourceFolder = null;
       VirtualFile file = c.getFileSystemItem().getVirtualFile();
       if (file != null) {
-        sourceFolder = getSourceFolder(project, file);
+        ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+        return new FileTargetContextWrapper(c, fileIndex.getContainingSourceRootType(file), fileIndex.isInGeneratedSources(file));
       }
-
-      return new FileTargetContextWrapper(c, sourceFolder);
+      else {
+        return new FileTargetContextWrapper(c, null, false);
+      }
     });
-  }
-
-  @Nullable
-  private static SourceFolder getSourceFolder(@NotNull Project project, @NotNull VirtualFile directory) {
-    ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
-    return projectFileIndex.getSourceFolder(directory);
   }
 
   private static int compareTargetsForTests(@NotNull FileTargetContextWrapper d1, @NotNull FileTargetContextWrapper d2) {
@@ -194,24 +175,25 @@ public final class JpsFileTargetContextUtils {
 
   private static final class FileTargetContextWrapper {
     private final FileTargetContext myTargetContext;
-    private final SourceFolder mySourceFolder;
+    private final JpsModuleSourceRootType<?> mySourceRootType;
+    private final boolean myInGeneratedSource;
 
-    private FileTargetContextWrapper(FileTargetContext context, @Nullable SourceFolder sourceFolder) {
+    private FileTargetContextWrapper(@NotNull FileTargetContext context, @Nullable JpsModuleSourceRootType<?> sourceRootType, boolean inGeneratedSource) {
       myTargetContext = context;
-      mySourceFolder = sourceFolder;
+      mySourceRootType = sourceRootType;
+      myInGeneratedSource = inGeneratedSource;
     }
 
     public FileTargetContext getTargetContext() {
       return myTargetContext;
     }
 
-    @Nullable
-    public JpsModuleSourceRootType<?> getSourceRootType() {
-      return mySourceFolder != null ? mySourceFolder.getRootType() : null;
+    public @Nullable JpsModuleSourceRootType<?> getSourceRootType() {
+      return mySourceRootType;
     }
 
-    public JpsModuleSourceRoot getJpsModuleSourceRoot() {
-      return mySourceFolder != null ? mySourceFolder.getJpsElement() : null;
+    private boolean isInGeneratedSource() {
+      return myInGeneratedSource;
     }
   }
 }

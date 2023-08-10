@@ -2,12 +2,11 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
@@ -60,9 +59,9 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     }
   };
 
-  public JdkListConfigurable(@NotNull Project project) {
-    super(project);
-    myJdksTreeModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
+  public JdkListConfigurable(ProjectStructureConfigurable projectStructureConfigurable) {
+    super(projectStructureConfigurable);
+    myJdksTreeModel = projectStructureConfigurable.getProjectJdksModel();
   }
 
   @Override
@@ -164,11 +163,6 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return super.isModified() || myJdksTreeModel.isModified();
   }
 
-  public static JdkListConfigurable getInstance(Project project) {
-    return ServiceManager.getService(project, JdkListConfigurable.class);
-  }
-
-
   @NotNull
   @Override
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
@@ -181,7 +175,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
-  public AbstractAddGroup createAddAction() {
+  public AbstractAddGroup createAddAction(boolean fromPopup) {
     return null;
   }
 
@@ -228,6 +222,11 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(true);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

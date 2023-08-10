@@ -1,0 +1,6 @@
+class  HelloWorld {
+   void
+        f(
+                             ) {
+   }
+   }

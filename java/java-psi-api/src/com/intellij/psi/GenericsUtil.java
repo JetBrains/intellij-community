@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author ven
- */
 public final class GenericsUtil {
 
   private static final Logger LOG = Logger.getInstance(GenericsUtil.class);
@@ -47,6 +44,13 @@ public final class GenericsUtil {
     }
     if (type2 instanceof PsiCapturedWildcardType) {
       return getLeastUpperBound(type1, ((PsiCapturedWildcardType)type2).getUpperBound(), compared, manager);
+    }
+
+    if (type1 instanceof PsiDisjunctionType) {
+      return getLeastUpperBound(((PsiDisjunctionType)type1).getLeastUpperBound(), type2, compared, manager);
+    }
+    if (type2 instanceof PsiDisjunctionType) {
+      return getLeastUpperBound(type1, ((PsiDisjunctionType)type2).getLeastUpperBound(), compared, manager);
     }
 
     if (type1 instanceof PsiWildcardType) {
@@ -596,7 +600,7 @@ public final class GenericsUtil {
       PsiType argSubstitution = expectedType.getSubstitutor().substitute(parameter);
       PsiType substitution = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper()
         .getSubstitutionForTypeParameter(typeParam, paramSubstitution, argSubstitution, true, PsiUtil.getLanguageLevel(context));
-      if (substitution != null && substitution != PsiType.NULL) {
+      if (substitution != null && substitution != PsiTypes.nullType()) {
         return substitution;
       }
     }
@@ -620,7 +624,6 @@ public final class GenericsUtil {
   }
 
   /**
-   * @param type
    * @return type where "? extends FinalClass" components are replaced with "FinalClass" components.
    */
   public static @NotNull PsiType eliminateExtendsFinalWildcard(@NotNull PsiType type) {

@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
@@ -89,19 +88,4 @@ public class FoldingPopupManager implements EditorMouseListener, EditorMouseMoti
     if (e.getEditor().getUserData(DISABLED) != null) return;
     TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP, e.getMouseEvent(), true);
   }
-
-  @Override
-  public void mouseDragged(@NotNull EditorMouseEvent e) {}
-
-  @Override
-  public void mousePressed(@NotNull EditorMouseEvent e) {}
-
-  @Override
-  public void mouseClicked(@NotNull EditorMouseEvent e) {}
-
-  @Override
-  public void mouseReleased(@NotNull EditorMouseEvent e) {}
-
-  @Override
-  public void mouseEntered(@NotNull EditorMouseEvent e) {}
 }

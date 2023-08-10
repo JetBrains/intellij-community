@@ -17,9 +17,9 @@ package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.TooltipTitle;
 import com.intellij.openapi.util.NlsContexts.LinkLabel;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
-import com.intellij.ide.TooltipTitle;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -73,9 +73,18 @@ public class ContextHelpLabel extends JBLabel {
                                                 @Tooltip @NotNull String description,
                                                 @LinkLabel @NotNull String linkText,
                                                 @NotNull Runnable linkAction) {
-    return new ContextHelpLabel(new HelpTooltip().setDescription(description).setTitle(title).setLink(linkText, linkAction));
+    return createWithLink(title, description, linkText, false, linkAction);
+  }
+
+  @NotNull
+  public static ContextHelpLabel createWithLink(@TooltipTitle @Nullable String title,
+                                                @Tooltip @NotNull String description,
+                                                @LinkLabel @NotNull String linkText,
+                                                boolean linkIsExternal,
+                                                @NotNull Runnable linkAction) {
+    return new ContextHelpLabel(new HelpTooltip().setDescription(description).setTitle(title).setLink(linkText, linkAction, linkIsExternal));
   }
 
   @Override
-  public void setPreferredSize(Dimension size) {}
+  public void setPreferredSize(Dimension size) { }
 }

@@ -1,16 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
 import com.intellij.model.Pointer
-import com.intellij.model.presentation.PresentableSymbol
 import com.intellij.navigation.NavigatableSymbol
-import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.SymbolNavigationService
-import com.intellij.navigation.TargetPopupPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -20,8 +18,7 @@ import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCach
 @Internal
 abstract class GradleProjectSymbol(
   protected val rootProjectPath: String
-) : PresentableSymbol,
-    NavigatableSymbol,
+) : NavigatableSymbol,
     SearchTarget {
 
   init {
@@ -48,16 +45,7 @@ abstract class GradleProjectSymbol(
 
   protected abstract fun externalProject(rootProject: ExternalProject): ExternalProject?
 
-  override val usageHandler: UsageHandler<*> get() = UsageHandler.createEmptyUsageHandler(projectName)
-
-  override val presentation: TargetPopupPresentation
-    get() {
-      val presentation = symbolPresentation
-      return TargetPopupPresentation
-        .builder(presentation.longDescription)
-        .icon(presentation.icon)
-        .presentation()
-    }
+  override val usageHandler: UsageHandler get() = UsageHandler.createEmptyUsageHandler(projectName)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -65,9 +53,7 @@ abstract class GradleProjectSymbol(
 
     other as GradleProjectSymbol
 
-    if (rootProjectPath != other.rootProjectPath) return false
-
-    return true
+    return rootProjectPath == other.rootProjectPath
   }
 
   override fun hashCode(): Int {

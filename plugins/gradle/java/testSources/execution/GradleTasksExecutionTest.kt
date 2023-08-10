@@ -2,22 +2,71 @@
 package org.jetbrains.plugins.gradle.execution
 
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.internal.statistic.FUCollectorTestCase
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.task.TaskCallback
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.runTask
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import junit.framework.AssertionFailedError
+import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.statistics.GradleExecutionPerformanceCollector
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 import org.junit.runners.Parameterized
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
 
 class GradleTasksExecutionTest : GradleImportingTestCase() {
+
+  @Test
+  fun `test fus contains only well known task metrics`() {
+    val buildScript = createBuildScriptBuilder()
+      .withTask("userDefinedTask") {
+        code("dependsOn { subprojects.collect { \"\$it.name:clean\"} }\n  dependsOn { subprojects.collect { \"\$it.name:build\"} }")
+      }
+      .allprojects { withJavaPlugin() }
+      .project(":projectA", Consumer<TestGradleBuildScriptBuilder> { it: TestGradleBuildScriptBuilder -> it.withIdeaPlugin() })
+      .project(":projectB", Consumer<TestGradleBuildScriptBuilder> { it: TestGradleBuildScriptBuilder ->
+        it.withTask("customTaskFromProjectB")
+        it.withPostfix { code("tasks.findByName('build').dependsOn('customTaskFromProjectB')") }
+      })
+      .project(":projectC", Consumer<TestGradleBuildScriptBuilder> { it: TestGradleBuildScriptBuilder ->
+        it.withTask("customTaskFromProjectC")
+        it.withPostfix { code("tasks.findByName('clean').dependsOn('customTaskFromProjectC')") }
+      })
+      .generate()
+    createProjectSubFile("build.gradle", buildScript)
+    createSettingsFile("include 'projectA', 'projectB', 'projectC'")
+    val events: List<LogEvent> = collectGradlePerformanceEvents {
+      assertThat(runTaskAndGetErrorOutput(projectPath, "userDefinedTask")).isEmpty()
+    }
+    val executedGradleTasks = events.filter { it.event.id == "task.executed" }.map { it.event.data["name"].toString() }
+    val expectedGradleTasks = listOf("compileJava", "processResources", "classes", "jar", "assemble", "compileTestJava",
+                                     "processTestResources", "testClasses", "test", "check", "build", "clean", "other")
+    assertCollection(executedGradleTasks, expectedGradleTasks)
+    val executedStages = events.groupingBy { it.event.id }.eachCount()
+    val expectedStages = setOf("execution.completed", "build.loaded", "settings.evaluated", "project.loaded",
+                               "task.graph.calculated", "container.callback.executed", "task.executed", "task.graph.executed")
+    assertCollection(executedStages.keys, expectedStages)
+    executedStages.forEach { (name, count) ->
+      if (name != "task.executed") {
+        TestCase.assertEquals(1, count)
+      }
+    }
+  }
 
   @Test
   fun `run task with specified build file test`() {
@@ -37,6 +86,96 @@ class GradleTasksExecutionTest : GradleImportingTestCase() {
 
     assertThat(runTaskAndGetErrorOutput("$projectPath/build.gradle", "myTask", "-b foo")).contains("The specified build file",
                                                                                                    "foo' does not exist.")
+  }
+
+  @Test
+  fun `run task from subproject`() {
+    createProjectSubFile("settings.gradle", "include('m1:m2:m3')")
+    createProjectSubFile("buildSrc/settings.gradle", "rootProject.name='my-conventions'")
+    createProjectSubFile("m1/m2/m3/build.gradle", """
+tasks.register("hello-module") {
+    doLast {
+        logger.lifecycle("expected!")
+    }
+}
+    """.trimIndent())
+    importProject()
+
+    val taskData: TaskData = ExternalSystemApiUtil
+      .findProjectTasks(myProject, GradleConstants.SYSTEM_ID, "$projectPath/m1/m2/m3")
+      .find { it.name == "hello-module" } ?: throw AssertionFailedError("Task 'hello-module' not found")
+
+    val output = runTask(taskData)
+    assertThat(output).contains("expected!");
+  }
+
+  // Checks the workaround for IDEA-316566 IDEA-317008
+  @Test
+  fun `run task from misconfigured subproject with explicit script parameter`() {
+    val properSettingsFilePaths = createProjectSubFile("settings.gradle", """
+      rootProject.name = "rootProject"
+      include('projectA')
+      include('projectB')
+    """.trimIndent()).canonicalPath
+    createProjectSubFile("projectB/build.gradle", """
+    """.trimIndent())
+    createProjectSubFile("projectA/build.gradle", """
+      plugins {
+        id 'java-library'
+      }
+      
+      dependencies {
+        implementation(project(':projectB'))
+      }
+      
+      tasks.register("hello") {
+          doLast {
+              configurations.implementation.allArtifacts
+              logger.lifecycle("expected!")
+          }
+      }
+    """.trimIndent())
+     //--- following settings.gradle files are not expected in regular gradle projects
+     //but may appear e.g. when IDEA "new module" wizard creates a spring subproject using vendor's API
+    createProjectSubFile("projectA/settings.gradle", """
+      rootProject.name = "projectA"
+    """.trimIndent())
+    createProjectSubFile("projectB/settings.gradle", """
+      rootProject.name = "projectB"
+    """.trimIndent())
+
+    importProject()
+
+    val taskData: TaskData = ExternalSystemApiUtil
+                               .findProjectTasks(myProject, GradleConstants.SYSTEM_ID, "$projectPath/projectA")
+                               .find { it.name == "hello" } ?: throw AssertionFailedError("Task 'hello' not found")
+
+    // this script parameter allows to skip malicious settings.gradle files.
+    val output = runTask(taskData, "--settings-file \"$properSettingsFilePaths\"")
+    assertThat(output).contains("expected!")
+  }
+
+  private fun runTask(taskData: TaskData, scriptParameters: String = ""): String {
+    val taskExecutionInfo = ExternalSystemActionUtil.buildTaskInfo(taskData)
+    taskExecutionInfo.settings.scriptParameters = scriptParameters
+
+    val notificationManager = ApplicationManager.getApplication().getService(
+      ExternalSystemProgressNotificationManager::class.java)
+    val taskOutput = java.lang.StringBuilder()
+    val listener: ExternalSystemTaskNotificationListenerAdapter = object : ExternalSystemTaskNotificationListenerAdapter() {
+      override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+        taskOutput.append(text)
+      }
+    }
+    notificationManager.addNotificationListener(listener)
+    try {
+      runTask(taskExecutionInfo.settings, taskExecutionInfo.executorId, myProject, GradleConstants.SYSTEM_ID, null,
+              ProgressExecutionMode.NO_PROGRESS_SYNC)
+    }
+    finally {
+      notificationManager.removeNotificationListener(listener)
+    }
+    return taskOutput.toString()
   }
 
   private fun runTaskAndGetErrorOutput(projectPath: String, taskName: String, scriptParameters: String = ""): String {
@@ -74,6 +213,10 @@ class GradleTasksExecutionTest : GradleImportingTestCase() {
       notificationManager.removeNotificationListener(stdErrListener)
     }
   }
+
+  private fun collectGradlePerformanceEvents(runnable: () -> Unit): List<LogEvent> = FUCollectorTestCase
+    .collectLogEvents(getTestRootDisposable(), runnable)
+    .filter { it.group.id == GradleExecutionPerformanceCollector.GROUP.id }
 
   companion object {
     /**

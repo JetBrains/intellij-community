@@ -9,23 +9,20 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class ScriptDebuggerBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.ScriptDebuggerBundle";
-  private static final ScriptDebuggerBundle INSTANCE = new ScriptDebuggerBundle();
+public final class ScriptDebuggerBundle {
+  private static final @NonNls String BUNDLE = "messages.ScriptDebuggerBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(ScriptDebuggerBundle.class, BUNDLE);
 
   private ScriptDebuggerBundle() {
-    super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls
+  public static @NotNull @Nls
   String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
-                                                     Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                              Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

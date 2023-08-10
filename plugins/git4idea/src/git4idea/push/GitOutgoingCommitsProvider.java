@@ -22,7 +22,6 @@ import com.intellij.dvcs.push.VcsError;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.GitCommit;
-import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
@@ -30,8 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
-
-import static git4idea.GitUtil.HEAD;
 
 public class GitOutgoingCommitsProvider extends OutgoingCommitsProvider<GitRepository, GitPushSource, GitPushTarget> {
 
@@ -45,8 +42,8 @@ public class GitOutgoingCommitsProvider extends OutgoingCommitsProvider<GitRepos
   @Override
   public OutgoingResult getOutgoingCommits(@NotNull GitRepository repository, @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec,
                                            boolean initial) {
-    GitLocalBranch branch = pushSpec.getSource().getBranch();
-    String source = branch.equals(repository.getCurrentBranch()) ? HEAD : branch.getFullName();
+    GitPushSource gitPushSource = pushSpec.getSource();
+    String source = gitPushSource.getRevision();
     GitPushTarget target = pushSpec.getTarget();
     String destination = target.getBranch().getFullName();
     try {

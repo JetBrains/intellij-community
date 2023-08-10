@@ -3,13 +3,14 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class MoveDownWithSelectionAndScrollAction extends EditorAction {
+public class MoveDownWithSelectionAndScrollAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public MoveDownWithSelectionAndScrollAction() {
     super(new Handler());
   }

@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -8,7 +7,6 @@ import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -18,7 +16,8 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +66,7 @@ public class OptimizeImportsAction extends AnAction {
       return;
     }
     else {
-      Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
+      Project projectContext = PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext);
       Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
       if (projectContext != null || moduleContext != null) {
@@ -135,7 +134,7 @@ public class OptimizeImportsAction extends AnAction {
           LayoutCodeInfoCollector collector = optimizer.getInfoCollector();
           if (collector != null) {
             String info = collector.getOptimizeImportsNotification();
-            if (!editor.isDisposed() && EditorActivityManager.getInstance().isVisible(editor)) {
+            if (!editor.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
               String message = info != null ? info : CodeInsightBundle.message("hint.text.no.unused.imports.found");
               FileInEditorProcessor.showHint(editor, message, null);
             }
@@ -144,6 +143,11 @@ public class OptimizeImportsAction extends AnAction {
       }
       optimizer.run();
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -199,7 +203,7 @@ public class OptimizeImportsAction extends AnAction {
       // skip. Both directories and single files are supported.
     }
     else if (LangDataKeys.MODULE_CONTEXT.getData(dataContext) == null &&
-             PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
+             PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) {
         return false;
@@ -262,19 +266,16 @@ public class OptimizeImportsAction extends AnAction {
     @Nullable
     @Override
     protected JComponent createCenterPanel() {
-      JPanel panel = new JPanel();
-      BoxLayout layout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-      panel.setLayout(layout);
-
-      panel.add(new JLabel(myText));
       myOnlyVcsCheckBox = new JCheckBox(CodeInsightBundle.message("process.scope.changed.files"));
-      boolean lastRunVcsChangedTextEnabled = myLastRunOptions.getLastTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
-
       myOnlyVcsCheckBox.setEnabled(myContextHasChanges);
+      boolean lastRunVcsChangedTextEnabled = myLastRunOptions.getLastTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
       myOnlyVcsCheckBox.setSelected(myContextHasChanges && lastRunVcsChangedTextEnabled);
-      myOnlyVcsCheckBox.setBorder(JBUI.Borders.emptyLeft(10));
-      panel.add(myOnlyVcsCheckBox);
-      return panel;
+
+      return new FormBuilder()
+        .addComponent(new JLabel(myText))
+        .setVerticalGap(UIUtil.LARGE_VGAP)
+        .addComponent(myOnlyVcsCheckBox)
+        .getPanel();
     }
 
     @Nullable

@@ -27,7 +27,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.ide.projectWizard.NewProjectWizardConstants.Generators;
+
 public class EmptyWebProjectTemplate extends WebProjectTemplate<Object> {
+
+  @Override
+  public String getId() {
+    return Generators.EMPTY_WEB_PROJECT;
+  }
+
   @Nls
   @NotNull
   @Override

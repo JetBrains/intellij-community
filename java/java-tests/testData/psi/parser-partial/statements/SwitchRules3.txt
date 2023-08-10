@@ -2,7 +2,7 @@ PsiJavaFile:SwitchRules3.java
   PsiSwitchLabeledRule
     PsiKeyword:case('case')
     PsiWhiteSpace(' ')
-    PsiExpressionList
+    PsiCaseLabelElementList
       PsiLiteralExpression:1
         PsiJavaToken:INTEGER_LITERAL('1')
     PsiWhiteSpace(' ')

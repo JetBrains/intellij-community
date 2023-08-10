@@ -31,6 +31,7 @@ import org.apache.xerces.xni.XNIException;
 import org.apache.xerces.xni.parser.XMLEntityResolver;
 import org.apache.xerces.xni.parser.XMLInputSource;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -257,17 +258,11 @@ public class XmlResourceResolver implements XMLEntityResolver {
 
     if (psiFile == null) {
       if (publicId != null && publicId.contains(":/")) {
-        try {
-          myErrorReporter.processError(
-            new SAXParseException(XmlPsiBundle.message("xml.inspections.validate.external.resource.is.not.registered", publicId), publicId, null, 0, 0), ValidateXmlActionHandler.ProblemType.ERROR);
-        }
-        catch (SAXException ignore) {
-
-        }
-        final XMLInputSource source = new XMLInputSource(xmlResourceIdentifier);
-        source.setPublicId(publicId);
-        source.setCharacterStream(new StringReader(""));
-        return source;
+        return reportUnresolvedUrl(xmlResourceIdentifier, publicId, "");
+      }
+      String expandedSystemId = xmlResourceIdentifier.getExpandedSystemId();
+      if (expandedSystemId != null && isHttpUrl(expandedSystemId)) {
+        return reportUnresolvedUrl(xmlResourceIdentifier, publicId, "unresolved");
       }
       return null;
     }
@@ -286,6 +281,30 @@ public class XmlResourceResolver implements XMLEntityResolver {
     source.setCharacterStream(new StringReader(psiFile.getText()));
 
     return source;
+  }
+
+  @NotNull
+  private XMLInputSource reportUnresolvedUrl(XMLResourceIdentifier xmlResourceIdentifier, String publicId, String defaultText) {
+    try {
+      myErrorReporter.processError(
+        new SAXParseException(XmlPsiBundle.message("xml.inspections.validate.external.resource.is.not.registered", publicId), publicId, null, 0, 0), ValidateXmlActionHandler.ProblemType.ERROR);
+    }
+    catch (SAXException ignore) {
+    }
+    final XMLInputSource source = new XMLInputSource(xmlResourceIdentifier);
+    source.setPublicId(publicId);
+    source.setCharacterStream(new StringReader(defaultText));
+    return source;
+  }
+
+  private static boolean isHttpUrl(@NotNull String url) {
+    try {
+      String protocol = new URL(url).getProtocol();
+      return protocol.equals("http") || protocol.equals("https");
+    }
+    catch (MalformedURLException e) {
+      return false;
+    }
   }
 
   private static PsiFile resolveByLocation(PsiFile baseFile, String location) {

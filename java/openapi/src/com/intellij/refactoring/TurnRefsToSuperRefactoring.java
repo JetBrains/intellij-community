@@ -17,9 +17,6 @@ package com.intellij.refactoring;
 
 import com.intellij.psi.PsiClass;
 
-/**
- * @author dsl
- */
 public interface TurnRefsToSuperRefactoring extends Refactoring {
   PsiClass getSuper();
   PsiClass getTarget();

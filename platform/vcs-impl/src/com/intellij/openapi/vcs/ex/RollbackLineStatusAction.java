@@ -39,12 +39,4 @@ public class RollbackLineStatusAction extends LineStatusActionBase {
     if (editor != null) DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
     tracker.rollbackChanges(range);
   }
-
-  /**
-   * @deprecated Use {@link #rollback(LineStatusTrackerI, Range, Editor)}
-   */
-  @Deprecated
-  public static void rollback(@NotNull LineStatusTrackerBase<?> tracker, @NotNull Range range, @Nullable Editor editor) {
-    rollback((LineStatusTrackerI<?>)tracker, range, editor);
-  }
 }

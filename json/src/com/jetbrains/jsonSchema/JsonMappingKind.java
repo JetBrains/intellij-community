@@ -14,15 +14,11 @@ public enum JsonMappingKind {
   Directory;
 
   public @Nls String getDescription() {
-    switch (this) {
-      case File:
-        return JsonBundle.message("schema.mapping.file");
-      case Pattern:
-        return JsonBundle.message("schema.mapping.pattern");
-      case Directory:
-        return JsonBundle.message("schema.mapping.directory");
-    }
-    return "";
+    return switch (this) {
+      case File -> JsonBundle.message("schema.mapping.file");
+      case Pattern -> JsonBundle.message("schema.mapping.pattern");
+      case Directory -> JsonBundle.message("schema.mapping.directory");
+    };
   }
 
   public @Nls String getPrefix() {
@@ -30,14 +26,10 @@ public enum JsonMappingKind {
   }
 
   public Icon getIcon() {
-    switch (this) {
-      case File:
-        return AllIcons.FileTypes.Any_type;
-      case Pattern:
-        return AllIcons.FileTypes.Unknown;
-      case Directory:
-        return AllIcons.Nodes.Folder;
-    }
-    return null;
+    return switch (this) {
+      case File -> AllIcons.FileTypes.Any_type;
+      case Pattern -> AllIcons.FileTypes.Unknown;
+      case Directory -> AllIcons.Nodes.Folder;
+    };
   }
 }

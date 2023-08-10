@@ -115,7 +115,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     }
   }
 
-  private static boolean checkSchemaNamespace(String name, @NotNull XmlTag context){
+  private static boolean checkSchemaNamespace(@NotNull String name, @NotNull XmlTag context){
     final String namespace = context.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(name));
     if(namespace.length() > 0){
       return checkSchemaNamespace(namespace);
@@ -518,7 +518,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   @Override
-  public TypeDescriptor getTypeDescriptor(final String name, XmlTag context) {
+  public TypeDescriptor getTypeDescriptor(@NotNull String name, XmlTag context) {
     if(checkSchemaNamespace(name, context)){
       final String localNameByQualifiedName = XmlUtil.findLocalNameByQualifiedName(name);
 
@@ -760,8 +760,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     final String namespace = tag.getNamespace();
     while(parent instanceof XmlTag && !namespace.equals(((XmlTag)parent).getNamespace()))
       parent = parent.getContext();
-    if (parent instanceof XmlTag) {
-      final XmlTag parentTag = (XmlTag)parent;
+    if (parent instanceof XmlTag parentTag) {
       final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
 
       if(parentDescriptor != null){
@@ -861,8 +860,6 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   private boolean initSubstitutes() {
     if (mySubstitutions == null && myTag != null) {
       mySubstitutions = new MultiMap<>();
-
-      if (myTag == null) return false;
 
       XmlTag[] tags = myTag.getSubTags();
 

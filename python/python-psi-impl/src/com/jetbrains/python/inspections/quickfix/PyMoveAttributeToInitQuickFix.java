@@ -29,8 +29,7 @@ public class PyMoveAttributeToInitQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    if (!(element instanceof PyTargetExpression)) return;
-    final PyTargetExpression targetExpression = (PyTargetExpression)element;
+    if (!(element instanceof PyTargetExpression targetExpression)) return;
 
     final PyClass containingClass = targetExpression.getContainingClass();
     final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);

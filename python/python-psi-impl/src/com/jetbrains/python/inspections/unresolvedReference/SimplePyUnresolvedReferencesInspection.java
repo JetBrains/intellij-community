@@ -2,6 +2,9 @@ package com.jetbrains.python.inspections.unresolvedReference;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.jetbrains.python.inspections.PyInspection;
+import com.jetbrains.python.inspections.PyInspectionVisitor;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +14,7 @@ public class SimplePyUnresolvedReferencesInspection extends PyUnresolvedReferenc
   @Override
   protected PyUnresolvedReferencesVisitor createVisitor(@NotNull ProblemsHolder holder,
                                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, this, PyInspectionVisitor.getContext(session));
   }
 
   @Nullable
@@ -21,8 +24,10 @@ public class SimplePyUnresolvedReferencesInspection extends PyUnresolvedReferenc
   }
 
   public static class Visitor extends PyUnresolvedReferencesVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session, Collections.emptyList());
+    public Visitor(@Nullable ProblemsHolder holder,
+                   @NotNull PyInspection inspection,
+                   @NotNull TypeEvalContext context) {
+      super(holder, Collections.emptyList(), inspection, context);
     }
   }
 }

@@ -20,6 +20,6 @@ public class NotImplementedHierarchyBrowser implements HierarchyBrowser {
   }
 
   @Override
-  public void setContent(Content content) {
+  public void setContent(@NotNull Content content) {
   }
 }

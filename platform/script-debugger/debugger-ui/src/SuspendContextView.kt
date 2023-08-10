@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
@@ -35,7 +35,7 @@ abstract class SuspendContextView(protected val debugProcess: MultiVmDebugProces
                                   @Volatile var activeVm: Vm)
   : XSuspendContext() {
 
-  private val stacks: MutableMap<Vm, ScriptExecutionStack> = Collections.synchronizedMap(LinkedHashMap<Vm, ScriptExecutionStack>())
+  private val stacks: MutableMap<Vm, ScriptExecutionStack> = Collections.synchronizedMap(LinkedHashMap())
 
   init {
     val mainVm = debugProcess.mainVm
@@ -43,18 +43,17 @@ abstract class SuspendContextView(protected val debugProcess: MultiVmDebugProces
     if (mainVm != null && !vmList.isEmpty()) {
       // main vm should go first
       vmList.forEach {
-        val context = it.suspendContextManager.context
-
-        val stack: ScriptExecutionStack =
-          if (context == null) {
-            RunningThreadExecutionStackView(it)
-          }
-          else if (context == activeStack.suspendContext) {
-            activeStack
-          }
-          else {
-            logger<SuspendContextView>().error("Paused VM was lost.")
-            InactiveAtBreakpointExecutionStackView(it)
+        val stack: ScriptExecutionStack = when (it.suspendContextManager.context) {
+            null -> {
+              RunningThreadExecutionStackView(it)
+            }
+            activeStack.suspendContext -> {
+              activeStack
+            }
+            else -> {
+              logger<SuspendContextView>().error("Paused VM was lost.")
+              InactiveAtBreakpointExecutionStackView(it)
+            }
           }
         stacks[it] = stack
       }
@@ -232,7 +231,7 @@ class ExecutionStackView(val suspendContext: SuspendContext<*>,
 }
 
 private val ASYNC_HEADER_ATTRIBUTES = SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE or SimpleTextAttributes.STYLE_BOLD,
-                                                           UIUtil.getInactiveTextColor())
+                                                           NamedColorUtil.getInactiveTextColor())
 
 private class AsyncFramesHeader(val asyncFunctionName: String) : XStackFrame(), XDebuggerFramesList.ItemWithCustomBackgroundColor {
   override fun customizePresentation(component: ColoredTextContainer) {

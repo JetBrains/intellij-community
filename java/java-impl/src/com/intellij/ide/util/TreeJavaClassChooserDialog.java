@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
@@ -14,9 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Query;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,9 +73,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
   @Override
   @Nullable
   protected PsiClass getSelectedFromTreeUserObject(DefaultMutableTreeNode node) {
-    Object userObject = node.getUserObject();
-    if (!(userObject instanceof ClassTreeNode)) return null;
-    ClassTreeNode descriptor = (ClassTreeNode)userObject;
+    if (!(node.getUserObject() instanceof ClassTreeNode descriptor)) return null;
     return descriptor.getPsiClass();
   }
 
@@ -92,7 +88,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
       return cache
         .getClassesByName(name, checkBoxState ? searchScope : GlobalSearchScope.projectScope(getProject()).intersectWith(searchScope));
     });
-    return ContainerUtil.newArrayList(classes);
+    return List.of(classes);
   }
 
   @NotNull

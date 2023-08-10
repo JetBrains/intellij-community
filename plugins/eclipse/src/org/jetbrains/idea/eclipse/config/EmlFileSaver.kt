@@ -1,6 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
+import com.intellij.java.workspace.entities.asJavaSourceRoot
+import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.components.PathMacroMap
 import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.OrderRootType
@@ -9,16 +11,20 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.workspaceModel.ide.impl.jps.serialization.getLegacyLibraryName
-import com.intellij.workspaceModel.ide.impl.virtualFile
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.eclipse.IdeaXml.*
 import org.jetbrains.idea.eclipse.conversion.EPathUtil
 import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 
 /**
  * Saves additional module configuration from [ModuleEntity] to *.eml file
@@ -53,7 +59,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
         is ModuleDependencyItem.Exportable.LibraryDependency -> {
           val libTag = Element("lib")
           val library = moduleLibraries[dep.library.name]
-          val libName = getLegacyLibraryName(dep.library) ?: generateLibName(library)
+          val libName = LibraryNameGenerator.getLegacyLibraryName(dep.library) ?: generateLibName(library)
           libTag.setAttribute("name", libName)
           libTag.setAttribute("scope", dep.scope.name)
           when (val tableId = dep.library.tableId) {
@@ -88,6 +94,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
             root.addContent(libTag)
           }
         }
+        else -> {}
       }
     }
     if (libLevels.isNotEmpty()) {
@@ -124,7 +131,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
     module.contentRoots.forEach { contentRoot ->
       val contentRootTag = Element(CONTENT_ENTRY_TAG).setAttribute(URL_ATTR, contentRoot.url.url)
       contentRoot.sourceRoots.forEach { sourceRoot ->
-        if (sourceRoot.tests) {
+        if (sourceRoot.rootType == JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID) {
           contentRootTag.addContent(Element(TEST_FOLDER_TAG).setAttribute(URL_ATTR, sourceRoot.url.url))
         }
         val packagePrefix = sourceRoot.asJavaSourceRoot()?.packagePrefix
@@ -135,9 +142,9 @@ internal class EmlFileSaver(private val module: ModuleEntity,
       }
       val rootFile = contentRoot.url.virtualFile
       contentRoot.excludedUrls.forEach { excluded ->
-        val excludedFile = excluded.virtualFile
+        val excludedFile = excluded.url.virtualFile
         if (rootFile == null || excludedFile == null || VfsUtilCore.isAncestor(rootFile, excludedFile, false)) {
-          contentRootTag.addContent(Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTR, excluded.url))
+          contentRootTag.addContent(Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTR, excluded.url.url))
         }
       }
       if (!JDOMUtil.isEmpty(contentRootTag)) {
@@ -157,11 +164,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
       if (javaSettings.excludeOutput) {
         root.addContent(Element(EXCLUDE_OUTPUT_TAG))
       }
-    }
-
-    module.customImlData?.rootManagerTagCustomData?.let { languageLevelTagString ->
-      val tag = JDOMUtil.load(languageLevelTagString)
-      tag.getAttributeValue("LANGUAGE_LEVEL")?.let {
+      javaSettings.languageLevelId?.let {
         root.setAttribute("LANGUAGE_LEVEL", it)
       }
     }

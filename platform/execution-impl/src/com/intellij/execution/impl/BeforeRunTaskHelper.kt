@@ -38,7 +38,7 @@ internal fun getHardcodedBeforeRunTasks(configuration: RunConfiguration, factory
       factory.configureBeforeRunTaskDefaults(provider.id, task)
       if (task.isEnabled) {
         if (result == null) {
-          result = SmartList<BeforeRunTask<*>>()
+          result = SmartList()
         }
         result.add(task)
       }

@@ -18,9 +18,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvider {
 
   @Override
@@ -48,7 +45,7 @@ public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvid
         if (argumentName != null && !argumentName.equals(propertyName)) continue;
 
         PsiType methodReturnType = method.getReturnType();
-        if (methodReturnType != null && !PsiType.VOID.equals(methodReturnType)) continue;
+        if (methodReturnType != null && !PsiTypes.voidType().equals(methodReturnType)) continue;
 
         PsiParameter[] parameters = method.getParameterList().getParameters();
 

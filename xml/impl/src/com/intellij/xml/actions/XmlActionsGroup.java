@@ -15,16 +15,22 @@
  */
 package com.intellij.xml.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class XmlActionsGroup extends DefaultActionGroup {
-  public XmlActionsGroup() {
+final class XmlActionsGroup extends DefaultActionGroup {
+  XmlActionsGroup() {
     super();
     getTemplatePresentation().setText(XmlBundle.message("xml.actions"));
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }

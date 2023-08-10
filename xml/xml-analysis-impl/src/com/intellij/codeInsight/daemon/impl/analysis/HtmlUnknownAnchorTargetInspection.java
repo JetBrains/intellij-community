@@ -19,9 +19,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.xml.util.AnchorReference;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class HtmlUnknownAnchorTargetInspection extends XmlPathReferenceInspection {
   @NotNull
   @Override

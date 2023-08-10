@@ -19,6 +19,7 @@
 
 package org.intellij.plugins.relaxNG.xml.dom;
 
+import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.intellij.plugins.relaxNG.xml.dom.names.OpenNameClasses;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,6 @@ public interface RngAttribute extends OpenNameClasses, RngOpenPatterns {
    * @return the value of the name child.
    */
   @NotNull
-  @com.intellij.util.xml.Attribute("name")
+  @Attribute("name")
   GenericAttributeValue<String> getNameAttr();
 }

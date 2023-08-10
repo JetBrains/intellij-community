@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -10,13 +11,13 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -25,19 +26,32 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
+
+import static com.intellij.openapi.editor.impl.InlayKeys.OFFSET_BEFORE_DISPOSAL;
 
 public final class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, Disposable, Dumpable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
-  private static final Comparator<InlineInlayImpl> INLINE_ELEMENTS_COMPARATOR = Comparator.comparingInt((InlineInlayImpl i) -> i.getOffset())
+
+  private static final Comparator<InlineInlayImpl> INLINE_ELEMENTS_COMPARATOR = Comparator
+    .comparingInt((InlineInlayImpl i) -> i.getOffset())
     .thenComparing(i -> i.isRelatedToPrecedingText())
     .thenComparing(i -> -i.myPriority);
-  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_PRIORITY_COMPARATOR = Comparator.comparingInt(i -> -i.myPriority);
-  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_COMPARATOR = Comparator.comparing((BlockInlayImpl i) -> i.getPlacement())
+  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_PRIORITY_COMPARATOR = Comparator
+    .comparingInt(i -> -i.myPriority);
+  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_COMPARATOR = Comparator
+    .comparing((BlockInlayImpl i) -> i.getPlacement())
     .thenComparing(i -> i.getPlacement() == Inlay.Placement.ABOVE_LINE ? i.myPriority : -i.myPriority);
-  private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR =
-    Comparator.comparingInt((AfterLineEndInlayImpl i) -> i.getOffset()).thenComparing(i -> !i.isSoftWrappable()).thenComparingInt(i -> i.myOrder);
-  private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_COMPARATOR =
-    Comparator.comparing((AfterLineEndInlayImpl i) -> !i.isSoftWrappable()).thenComparingInt(i -> i.myOrder);
+  private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR = Comparator
+    .comparingInt((AfterLineEndInlayImpl i) -> i.getOffset())
+    .thenComparing(i -> !i.mySoftWrappable)
+    .thenComparingInt(i -> -i.myPriority)
+    .thenComparingInt(i -> i.myOrder);
+  private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_COMPARATOR = Comparator
+    .comparing((AfterLineEndInlayImpl i) -> !i.mySoftWrappable)
+    .thenComparingInt(i -> -i.myPriority)
+    .thenComparingInt(i -> i.myOrder);
+
   private static final Processor<InlayImpl> UPDATE_PROCESSOR = inlay -> {
     inlay.update();
     return true;
@@ -144,6 +158,14 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return inlay;
   }
 
+  @Nullable
+  @Override
+  public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                           @NotNull InlayProperties properties,
+                                                                           @NotNull T renderer) {
+    return addInlineElement(offset, properties.isRelatedToPrecedingText(), properties.getPriority(), renderer);
+  }
+
   @Override
   public <T extends EditorCustomElementRenderer> @NotNull Inlay<T> addBlockElement(int offset,
                                                                                    boolean relatesToPrecedingText,
@@ -153,19 +175,24 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return addBlockElement(offset, relatesToPrecedingText, showAbove, false, priority, renderer);
   }
 
-  /**
-   * Add block inlay and specify its relationship with collapsed foldings.
-   *
-   * This method may be removed in future.
-   *
-   * @param showWhenFolded if true the returned inlay will be shown even if corresponding offset is in collapsed area
-   */
+  @Override
   public <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
-                                                                          boolean relatesToPrecedingText,
-                                                                          boolean showAbove,
-                                                                          boolean showWhenFolded,
-                                                                          int priority,
+                                                                          @NotNull InlayProperties properties,
                                                                           @NotNull T renderer) {
+    return addBlockElement(offset,
+                           properties.isRelatedToPrecedingText(),
+                           properties.isShownAbove(),
+                           properties.isShownWhenFolded(),
+                           properties.getPriority(),
+                           renderer);
+  }
+
+  private <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
+                                                                           boolean relatesToPrecedingText,
+                                                                           boolean showAbove,
+                                                                           boolean showWhenFolded,
+                                                                           int priority,
+                                                                           @NotNull T renderer) {
     EditorImpl.assertIsDispatchThread();
     offset = Math.max(0, Math.min(myEditor.getDocument().getTextLength(), offset));
     BlockInlayImpl<T> inlay = new BlockInlayImpl<>(myEditor, offset, relatesToPrecedingText, showAbove, showWhenFolded, priority, renderer);
@@ -177,25 +204,28 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   public <T extends EditorCustomElementRenderer> @NotNull Inlay<T> addAfterLineEndElement(int offset,
                                                                                           boolean relatesToPrecedingText,
                                                                                           @NotNull T renderer) {
-   return addAfterLineEndElement(offset, relatesToPrecedingText, false, true, renderer);
+   return addAfterLineEndElement(offset, relatesToPrecedingText, true, 0, renderer);
+  }
+
+  @Override
+  public <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
+                                                                                 @NotNull InlayProperties properties,
+                                                                                 @NotNull T renderer) {
+    return addAfterLineEndElement(offset, properties.isRelatedToPrecedingText(), !properties.isSoftWrappingDisabled(),
+                                  properties.getPriority(), renderer);
   }
 
 
-  public @NotNull <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndDebuggerHint(int offset,
-                                                                                               boolean insertFirst,
-                                                                                               @NotNull T renderer) {
-    return addAfterLineEndElement(offset, false, insertFirst, false, renderer);
-  }
-
-  private  @NotNull <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
+  private @NotNull <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
                                                                                            boolean relatesToPrecedingText,
-                                                                                           boolean insertFirst,
                                                                                            boolean softWrappable,
+                                                                                           int priority,
                                                                                            @NotNull T renderer) {
     EditorImpl.assertIsDispatchThread();
     Document document = myEditor.getDocument();
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
-    AfterLineEndInlayImpl<T> inlay = new AfterLineEndInlayImpl<>(myEditor, offset, relatesToPrecedingText, insertFirst, softWrappable, renderer);
+    AfterLineEndInlayImpl<T> inlay = new AfterLineEndInlayImpl<>(myEditor, offset, relatesToPrecedingText, softWrappable, priority,
+                                                                 renderer);
     notifyAdded(inlay);
     return inlay;
   }
@@ -203,7 +233,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   @NotNull
   @Override
   public List<Inlay<?>> getInlineElementsInRange(int startOffset, int endOffset) {
-    List<InlineInlayImpl<?>> range = getElementsInRange(myInlineElementsTree, startOffset, endOffset, inlay -> true, INLINE_ELEMENTS_COMPARATOR);
+    List<InlineInlayImpl<?>> range = getElementsInRange(myInlineElementsTree, startOffset, endOffset, Predicates.alwaysTrue(),
+                                                        INLINE_ELEMENTS_COMPARATOR);
     //noinspection unchecked
     return (List)range;
   }
@@ -222,7 +253,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   @Override
   public List<Inlay<?>> getBlockElementsInRange(int startOffset, int endOffset) {
     List<BlockInlayImpl<?>> range =
-      getElementsInRange(myBlockElementsTree, startOffset, endOffset, inlay -> true, BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
+      getElementsInRange(myBlockElementsTree, startOffset, endOffset, Predicates.alwaysTrue(), BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
     //noinspection unchecked
     return (List)range;
   }
@@ -230,8 +261,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   @NotNull
   @Override
   public <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
-    List<BlockInlayImpl<?>> range = getElementsInRange(myBlockElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),
-                                                    BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
+    List<BlockInlayImpl<?>> range = getElementsInRange(myBlockElementsTree, startOffset, endOffset,
+                                                       inlay -> type.isInstance(inlay.myRenderer), BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
     //noinspection unchecked
     return (List)range;
   }
@@ -271,7 +302,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return (List)result;
   }
 
-  public int getHeightOfBlockElementsBeforeVisualLine(int visualLine) {
+  @ApiStatus.Internal
+  public int getHeightOfBlockElementsBeforeVisualLine(int visualLine, int startOffset, int prevFoldRegionIndex) {
     if (visualLine < 0 || !hasBlockElements()) return 0;
     int visibleLineCount = myEditor.getVisibleLineCount();
     if (visualLine >= visibleLineCount) {
@@ -279,12 +311,11 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
              myEditor.getFoldingModel().getTotalHeightOfFoldedBlockInlays();
     }
     int[] result = {0};
-    int startOffset = myEditor.visualLineStartOffset(visualLine);
     int endOffset = visualLine >= visibleLineCount - 1 ? myEditor.getDocument().getTextLength()
                                                        : myEditor.visualLineStartOffset(visualLine + 1) - 1;
     if (visualLine > 0) {
       result[0] += myBlockElementsTree.getSumOfValuesUpToOffset(startOffset - 1) -
-                   myEditor.getFoldingModel().getHeightOfFoldedBlockInlaysBefore(startOffset);
+                   myEditor.getFoldingModel().getHeightOfFoldedBlockInlaysBefore(prevFoldRegionIndex);
     }
     myBlockElementsTree.processOverlappingWith(startOffset, endOffset, inlay -> {
       if (inlay.myShowAbove && !EditorUtil.isInlayFolded(inlay)) {
@@ -344,78 +375,82 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   }
 
   Inlay getElementAt(@NotNull EditorLocation location, boolean ignoreBlockElementWidth) {
-    Insets insets = myEditor.getContentComponent().getInsets();
-    Point point = location.getPoint();
-    if (point.y < insets.top) return null; // can happen for mouse drag events
-    int relX = point.x - insets.left;
-    if (relX < 0) return null;
+    return ReadAction.compute(() -> {
+      Insets insets = myEditor.getContentComponent().getInsets();
+      Point point = location.getPoint();
+      if (point.y < insets.top) return null; // can happen for mouse drag events
+      int relX = point.x - insets.left;
+      if (relX < 0) return null;
 
-    boolean hasInlineElements = hasInlineElements();
-    boolean hasBlockElements = hasBlockElements();
-    boolean hasAfterLineEndElements = hasAfterLineEndElements();
-    if (!hasInlineElements && !hasBlockElements && !hasAfterLineEndElements) return null;
+      boolean hasInlineElements = hasInlineElements();
+      boolean hasBlockElements = hasBlockElements();
+      boolean hasAfterLineEndElements = hasAfterLineEndElements();
+      if (!hasInlineElements && !hasBlockElements && !hasAfterLineEndElements) return null;
 
-    VisualPosition visualPosition = location.getVisualPosition();
-    if (hasBlockElements) {
-      int visualLine = visualPosition.line;
-      int baseY = location.getVisualLineBaseY();
-      if (point.y < baseY) {
-        List<Inlay<?>> inlays = getBlockElementsForVisualLine(visualLine, true);
-        int yDiff = baseY - point.y;
-        for (int i = inlays.size() - 1; i >= 0; i--) {
-          Inlay inlay = inlays.get(i);
-          yDiff -= inlay.getHeightInPixels();
-          if (yDiff <= 0) {
-            return ignoreBlockElementWidth || relX < inlay.getWidthInPixels() ? inlay : null;
-          }
-        }
-        LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", baseY=" + baseY + ", " + inlays,
-                  new Attachment("editorState.txt", myEditor.dumpState()));
-        return null;
-      }
-      else {
-        int lineBottom = baseY + myEditor.getLineHeight();
-        if (point.y >= lineBottom) {
-          List<Inlay<?>> inlays = getBlockElementsForVisualLine(visualLine, false);
-          int yDiff = point.y - lineBottom;
-          for (Inlay inlay : inlays) {
+      VisualPosition visualPosition = location.getVisualPosition();
+      if (hasBlockElements) {
+        int visualLine = visualPosition.line;
+        int baseY = location.getVisualLineStartY();
+        if (point.y < baseY) {
+          List<Inlay<?>> inlays = getBlockElementsForVisualLine(visualLine, true);
+          int yDiff = baseY - point.y;
+          for (int i = inlays.size() - 1; i >= 0; i--) {
+            Inlay inlay = inlays.get(i);
             yDiff -= inlay.getHeightInPixels();
-            if (yDiff < 0) {
-              return relX < inlay.getWidthInPixels() ? inlay : null;
+            if (yDiff <= 0) {
+              return ignoreBlockElementWidth || relX < inlay.getWidthInPixels() ? inlay : null;
             }
           }
-          LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", lineBottom=" + lineBottom + ", " + inlays,
+          LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", baseY=" + baseY + ", " + inlays,
                     new Attachment("editorState.txt", myEditor.dumpState()));
           return null;
         }
-      }
-    }
-    if (hasInlineElements) {
-      int offset = location.getOffset();
-      List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
-      if (!inlays.isEmpty()) {
-        VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
-        Point inlayPoint = myEditor.visualPositionToXY(startVisualPosition);
-        if (point.y < inlayPoint.y || point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
-        Inlay<?> inlay = findInlay(inlays, point.x, inlayPoint.x);
-        if (inlay != null) return inlay;
-      }
-    }
-    if (hasAfterLineEndElements) {
-      int offset = location.getOffset();
-      int logicalLine = myEditor.getDocument().getLineNumber(offset);
-      if (offset == myEditor.getDocument().getLineEndOffset(logicalLine) && !myEditor.getFoldingModel().isOffsetCollapsed(offset)) {
-        List<Inlay<?>> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
-        if (!inlays.isEmpty()) {
-          Rectangle bounds = inlays.get(0).getBounds();
-          assert bounds != null;
-          if (point.y < bounds.y || point.y >= bounds.y + bounds.height) return null;
-          Inlay<?> inlay = findInlay(inlays, point.x, bounds.x);
-          if (inlay != null) return inlay;
+        else {
+          int lineBottom = location.getVisualLineEndY();
+          if (point.y >= lineBottom) {
+            List<Inlay<?>> inlays = getBlockElementsForVisualLine(visualLine, false);
+            int yDiff = point.y - lineBottom;
+            for (Inlay inlay : inlays) {
+              yDiff -= inlay.getHeightInPixels();
+              if (yDiff < 0) {
+                return relX < inlay.getWidthInPixels() ? inlay : null;
+              }
+            }
+            LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", lineBottom=" + lineBottom + ", " + inlays,
+                      new Attachment("editorState.txt", myEditor.dumpState()));
+            return null;
+          }
         }
       }
-    }
-    return null;
+      if (hasInlineElements) {
+        if (location.getCollapsedRegion() == null) {
+          int offset = location.getOffset();
+          List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
+          if (!inlays.isEmpty()) {
+            VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
+            Point inlayPoint = myEditor.visualPositionToXY(startVisualPosition);
+            if (point.y < inlayPoint.y || point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
+            Inlay<?> inlay = findInlay(inlays, point.x, inlayPoint.x);
+            if (inlay != null) return inlay;
+          }
+        }
+      }
+      if (hasAfterLineEndElements) {
+        int offset = location.getOffset();
+        int logicalLine = myEditor.getDocument().getLineNumber(offset);
+        if (offset == myEditor.getDocument().getLineEndOffset(logicalLine) && location.getCollapsedRegion() == null) {
+          List<Inlay<?>> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
+          if (!inlays.isEmpty()) {
+            Rectangle bounds = inlays.get(0).getBounds();
+            assert bounds != null;
+            if (point.y < bounds.y || point.y >= bounds.y + bounds.height) return null;
+            Inlay<?> inlay = findInlay(inlays, point.x, bounds.x);
+            if (inlay != null) return inlay;
+          }
+        }
+      }
+      return null;
+    });
   }
 
   private static Inlay<?> findInlay(List<? extends Inlay<?>> inlays, int x, int startX) {
@@ -432,7 +467,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   public List<Inlay<?>> getAfterLineEndElementsInRange(int startOffset, int endOffset) {
     if (!hasAfterLineEndElements()) return Collections.emptyList();
     List<AfterLineEndInlayImpl<?>> range =
-      getElementsInRange(myAfterLineEndElementsTree, startOffset, endOffset, inlay -> true, AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR);
+      getElementsInRange(myAfterLineEndElementsTree, startOffset, endOffset, Predicates.alwaysTrue(), AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR);
     //noinspection unchecked
     return (List)range;
   }
@@ -467,6 +502,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return (List)result;
   }
 
+  @Override
   public boolean hasAfterLineEndElements() {
     return myAfterLineEndElementsTree.size() > 0;
   }
@@ -572,8 +608,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
         void addIntervalsFrom(@NotNull IntervalNode<InlineInlayImpl<?>> otherNode) {
           super.addIntervalsFrom(otherNode);
           if (myPutMergedIntervalsAtBeginning) {
-            List<Getter<InlineInlayImpl<?>>> added = ContainerUtil.subList(intervals, intervals.size() - otherNode.intervals.size());
-            List<Getter<InlineInlayImpl<?>>> addedCopy = new ArrayList<>(added);
+            List<Supplier<? extends InlineInlayImpl<?>>> added = ContainerUtil.subList(intervals, intervals.size() - otherNode.intervals.size());
+            List<Supplier<? extends InlineInlayImpl<?>>> addedCopy = new ArrayList<>(added);
             added.clear();
             intervals.addAll(0, addedCopy);
           }
@@ -582,8 +618,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull InlineInlayImpl inlay, @NotNull @NonNls Object reason) {
-      if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
+    void fireBeforeRemoved(@NotNull InlineInlayImpl inlay) {
+      if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         if (myMoveInProgress) {
           // delay notification about invalidated inlay - folding model is not consistent at this point
           // (FoldingModelImpl.moveTextHappened hasn't been called yet at this point)
@@ -602,8 +638,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull BlockInlayImpl inlay, @NotNull @NonNls Object reason) {
-      if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
+    void fireBeforeRemoved(@NotNull BlockInlayImpl inlay) {
+      if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }
     }
@@ -615,8 +651,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl inlay, @NotNull @NonNls Object reason) {
-      if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
+    void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl inlay) {
+      if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }
     }

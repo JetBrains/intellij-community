@@ -7,7 +7,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.serialization.Property;
 import com.intellij.serialization.PropertyMapping;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,9 +19,6 @@ import java.util.Map;
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 
-/**
- * @author Denis Zhdanov
- */
 @SuppressWarnings("JavadocReference")
 public class ModuleData extends AbstractNamedData implements Named, ExternalConfigPathAware, Identifiable {
   @NotNull private final Map<ExternalSystemSourceType, String> compileOutputPaths = new HashMap<>();
@@ -208,56 +204,60 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     return ideModuleGroup;
   }
 
+  /**
+   * Set or remove explicit module group for this module.
+   *
+   * @deprecated explicit module groups are replaced by automatic module grouping accordingly to qualified names of modules
+   * ([IDEA-166061](https://youtrack.jetbrains.com/issue/IDEA-166061) for details), so this method must not be used anymore, group names
+   * must be prepended to the module name, separated by dots, instead.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public void setIdeModuleGroup(String @Nullable [] ideModuleGroup) {
     this.ideModuleGroup = ideModuleGroup;
   }
 
   /**
-   * @deprecated use {@link JavaModuleData#getLanguageLevel())} instead
+   * @deprecated use {@link JavaModuleData#getLanguageLevel} instead
    */
   @Nullable
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public String getSourceCompatibility() {
     return sourceCompatibility;
   }
 
   /**
-   * @deprecated use {@link JavaModuleData#setLanguageLevel(LanguageLevel))} instead
+   * @deprecated use {@link JavaModuleData#setLanguageLevel} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public void setSourceCompatibility(@Nullable String sourceCompatibility) {
     this.isSetSourceCompatibility = true;
     this.sourceCompatibility = sourceCompatibility;
   }
 
   /**
-   * @deprecated use {@link JavaModuleData#getTargetBytecodeVersion())} instead
+   * @deprecated use {@link JavaModuleData#getTargetBytecodeVersion} instead
    */
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public String getTargetCompatibility() {
     return targetCompatibility;
   }
 
   /**
-   * @deprecated use {@link JavaModuleData#setTargetBytecodeVersion(String))} instead
+   * @deprecated use {@link JavaModuleData#setTargetBytecodeVersion} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public void setTargetCompatibility(@Nullable String targetCompatibility) {
     this.isSetTargetCompatibility = true;
     this.targetCompatibility = targetCompatibility;
   }
 
   /**
-   * @deprecated use {@link ModuleSdkData#getSdkName)} instead
+   * @deprecated use {@link ModuleSdkData#getSdkName} instead
    */
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public String getSdkName() {
     return sdkName;
   }
@@ -265,8 +265,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   /**
    * @deprecated use {@link ModuleSdkData#setSdkName} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public void setSdkName(@Nullable String sdkName) {
     this.isSetSdkName = true;
     this.sdkName = sdkName;
@@ -274,44 +273,38 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   // Remove it in version 2021.1
   //<editor-fold desc="Backward compatibility preserving methods">
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("MissingDeprecatedAnnotation")
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
   public void internalSetSourceCompatibility(@Nullable String sourceCompatibility) {
     this.sourceCompatibility = sourceCompatibility;
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("MissingDeprecatedAnnotation")
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
   public void internalSetTargetCompatibility(@Nullable String targetCompatibility) {
     this.targetCompatibility = targetCompatibility;
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("MissingDeprecatedAnnotation")
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
   public void internalSetSdkName(@Nullable String sdkName) {
     this.sdkName = sdkName;
   }
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @SuppressWarnings("MissingDeprecatedAnnotation")
   public boolean isSetSourceCompatibility() {
     return isSetSourceCompatibility;
   }
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @SuppressWarnings("MissingDeprecatedAnnotation")
   public boolean isSetTargetCompatibility() {
     return isSetTargetCompatibility;
   }
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("MissingDeprecatedAnnotation")
+  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
   public boolean isSetSdkName() {
     return isSetSdkName;
   }
@@ -338,7 +331,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.moduleName = moduleName;
   }
 
-  @Nullable
+  @NotNull
   public String getIdeGrouping() {
     if (ideModuleGroup != null) {
       return join(ideModuleGroup, ".");
@@ -364,10 +357,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof ModuleData)) return false;
+    if (!(o instanceof ModuleData that)) return false;
     if (!super.equals(o)) return false;
-
-    ModuleData that = (ModuleData)o;
 
     if (!id.equals(that.id)) return false;
     if (!externalConfigPath.equals(that.externalConfigPath)) return false;

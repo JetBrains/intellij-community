@@ -14,10 +14,13 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
 /**
@@ -27,15 +30,21 @@ public abstract class ToolbarUpdater implements Activatable {
   private final JComponent myComponent;
 
   private final KeymapManagerListener myKeymapManagerListener = new MyKeymapManagerListener();
-  private final TimerListener myTimerListener = new MyTimerListener();
-  private final WeakTimerListener myWeakTimerListener;
+  private final TimerListener myTimerListener;
 
   private boolean myListenersArmed;
 
   public ToolbarUpdater(@NotNull JComponent component) {
+    this(component, null);
+  }
+
+  /**
+   * @param internalDescription used for debugging
+   */
+  public ToolbarUpdater(@NotNull JComponent component, @Nullable @NonNls String internalDescription) {
     myComponent = component;
-    myWeakTimerListener = new WeakTimerListener(myTimerListener);
-    new UiNotifyConnector(component, this);
+    myTimerListener = new MyTimerListener(this, internalDescription);
+    UiNotifyConnector.installOn(component, this);
   }
 
   @Override
@@ -46,8 +55,7 @@ public abstract class ToolbarUpdater implements Activatable {
 
     myListenersArmed = true;
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.addTimerListener(500, myWeakTimerListener);
-    actionManager.addTransparentTimerListener(500, myWeakTimerListener);
+    actionManager.addTimerListener(myTimerListener);
     KeymapManagerEx.getInstanceEx().addWeakListener(myKeymapManagerListener);
     updateActionTooltips();
   }
@@ -60,25 +68,20 @@ public abstract class ToolbarUpdater implements Activatable {
 
     myListenersArmed = false;
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.removeTimerListener(myWeakTimerListener);
-    actionManager.removeTransparentTimerListener(myWeakTimerListener);
+    actionManager.removeTimerListener(myTimerListener);
     KeymapManagerEx.getInstanceEx().removeWeakListener(myKeymapManagerListener);
   }
 
   public void updateActions(boolean now, boolean forced, boolean includeInvisible) {
-    updateActions(now, false, forced, includeInvisible);
-  }
-
-  private void updateActions(boolean now, boolean transparentOnly, boolean forced, boolean includeInvisible) {
-    Runnable updateRunnable = new MyUpdateRunnable(this, transparentOnly, forced, includeInvisible);
-    Application app = ApplicationManager.getApplication();
-    if (now || (app.isUnitTestMode() && app.isDispatchThread())) {
+    Runnable updateRunnable = new MyUpdateRunnable(this, forced, includeInvisible);
+    Application application = ApplicationManager.getApplication();
+    if (now || application.isUnitTestMode() && application.isDispatchThread()) {
       updateRunnable.run();
     }
-    else if (!app.isHeadlessEnvironment()) {
+    else if (!application.isHeadlessEnvironment()) {
       IdeFocusManager focusManager = IdeFocusManager.getInstance(null);
-      if (app.isDispatchThread() && myComponent.isShowing()) {
-        focusManager.doWhenFocusSettlesDown(updateRunnable);
+      if (application.isDispatchThread()) {
+        application.runReadAction(() -> focusManager.doWhenFocusSettlesDown(updateRunnable));
       }
       else {
         UiNotifyConnector.doWhenFirstShown(myComponent, () -> focusManager.doWhenFocusSettlesDown(updateRunnable));
@@ -86,7 +89,7 @@ public abstract class ToolbarUpdater implements Activatable {
     }
   }
 
-  protected abstract void updateActionsImpl(boolean transparentOnly, boolean forced);
+  protected abstract void updateActionsImpl(boolean forced);
 
   protected void updateActionTooltips() {
     for (ActionButton actionButton : UIUtil.uiTraverser(myComponent).preOrderDfsTraversal().filter(ActionButton.class)) {
@@ -101,16 +104,29 @@ public abstract class ToolbarUpdater implements Activatable {
     }
   }
 
-  private final class MyTimerListener implements TimerListener {
+  private static final class MyTimerListener implements TimerListener {
+    private final Reference<ToolbarUpdater> myReference;
+    @SuppressWarnings({"unused", "FieldCanBeLocal"}) private final @Nullable @NonNls String myDescription; // input for curiosity
+
+    private MyTimerListener(@NotNull ToolbarUpdater updater,
+                            @Nullable @NonNls String internalDescription) {
+      myReference = new WeakReference<>(updater);
+      myDescription = internalDescription;
+    }
 
     @Override
     public ModalityState getModalityState() {
-      return ModalityState.stateForComponent(myComponent);
+      ToolbarUpdater updater = myReference.get();
+      if (updater == null) return null;
+      return ModalityState.stateForComponent(updater.myComponent);
     }
 
     @Override
     public void run() {
-      if (!myComponent.isShowing()) {
+      ToolbarUpdater updater = myReference.get();
+      if (updater == null) return;
+
+      if (!updater.myComponent.isShowing()) {
         return;
       }
 
@@ -123,16 +139,15 @@ public abstract class ToolbarUpdater implements Activatable {
 
       // don't update toolbar if there is currently active modal dialog
       Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-      if (window instanceof Dialog && ((Dialog)window).isModal() && !SwingUtilities.isDescendingFrom(myComponent, window)) {
+      if (window instanceof Dialog && ((Dialog)window).isModal() && !SwingUtilities.isDescendingFrom(updater.myComponent, window)) {
         return;
       }
 
-      updateActions(false, ActionManagerEx.getInstanceEx().isTransparentOnlyActionsUpdateNow(), false);
+      updater.updateActions(false, false, false);
     }
   }
 
   private static final class MyUpdateRunnable implements Runnable {
-    private final boolean myTransparentOnly;
     private final boolean myForced;
 
     @NotNull
@@ -140,8 +155,7 @@ public abstract class ToolbarUpdater implements Activatable {
     private final boolean myIncludeInvisible;
     private final int myHash;
 
-    MyUpdateRunnable(@NotNull ToolbarUpdater updater, boolean transparentOnly, boolean forced, boolean includeInvisible) {
-      myTransparentOnly = transparentOnly;
+    MyUpdateRunnable(@NotNull ToolbarUpdater updater, boolean forced, boolean includeInvisible) {
       myForced = forced;
       myIncludeInvisible = includeInvisible;
       myHash = updater.hashCode();
@@ -152,18 +166,20 @@ public abstract class ToolbarUpdater implements Activatable {
     @Override
     public void run() {
       ToolbarUpdater updater = myUpdaterRef.get();
-      if (updater == null || (!updater.myComponent.isVisible() && !ApplicationManager.getApplication().isUnitTestMode() && !myIncludeInvisible)) {
+      JComponent component = updater == null ? null : updater.myComponent;
+      if (component == null ||
+          !ApplicationManager.getApplication().isUnitTestMode() &&
+          !UIUtil.isShowing(component) && (!component.isDisplayable() || !myIncludeInvisible)) {
         return;
       }
 
-      updater.updateActionsImpl(myTransparentOnly, myForced);
+      updater.updateActionsImpl(myForced);
     }
 
     @Override
     public boolean equals(Object obj) {
-      if (!(obj instanceof MyUpdateRunnable)) return false;
+      if (!(obj instanceof MyUpdateRunnable that)) return false;
 
-      MyUpdateRunnable that = (MyUpdateRunnable)obj;
       if (myHash != that.myHash) return false;
 
       ToolbarUpdater updater1 = myUpdaterRef.get();

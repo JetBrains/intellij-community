@@ -5,9 +5,17 @@ package com.intellij.history.core;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.LocalFilePath;
+import com.intellij.openapi.vcs.UrlFilePath;
+import com.intellij.openapi.vfs.VersionManagingFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.List;
 
 public final class Paths {
   public static final char DELIM = '/';
@@ -55,10 +63,23 @@ public final class Paths {
 
   public static Iterable<String> split(String path) {
     String root = FileUtil.extractRootPath(path);
-    if (root == null) return StringUtil.tokenize(path, String.valueOf(DELIM));
+    if (root == null) return splitInner(path);
+    if (root.length() + 1 == path.length() && path.endsWith("/")) {
+      return Collections.singleton(root);
+    }
 
-    Iterable<String> tail = StringUtil.tokenize(path.substring(root.length()), String.valueOf(DELIM));
-    return ContainerUtil.concat(Collections.singleton(root), tail);
+    List<String> tail = splitInner(path.substring(root.length()));
+    return ContainerUtil.concat(Collections.singletonList(root), tail);
+  }
+
+  @NotNull
+  private static List<String> splitInner(String path) {
+    if (path.isEmpty()) return Collections.emptyList();
+    int s = 0;
+    int e = path.length();
+    if (path.charAt(0) == '/') ++s;
+    if (e > s && path.charAt(e - 1) == '/') --e;
+    return StringUtil.split(path.substring(s, e), String.valueOf(DELIM), true, false);
   }
 
   public static boolean isParent(String parent, String path) {
@@ -91,5 +112,22 @@ public final class Paths {
 
   public static void useSystemCaseSensitivity() {
     myIsCaseSensitive = SystemInfo.isFileSystemCaseSensitive;
+  }
+
+  @NotNull
+  public static FilePath createDvcsFilePath(@NotNull String path, boolean isDirectory) {
+    return path.contains(URLUtil.SCHEME_SEPARATOR)
+           ? new UrlFilePath(path, isDirectory)
+           : new LocalFilePath(path, isDirectory);
+  }
+
+  @NotNull
+  public static FilePath createDvcsFilePath(@NotNull VirtualFile file) {
+    if (VersionManagingFileSystem.isEnforcedNonLocal(file)) {
+      return new UrlFilePath(file.getUrl(), file.isDirectory());
+    }
+    else {
+      return new LocalFilePath(file.getPath(), file.isDirectory());
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.vcs.log.graph.impl.print
 
@@ -13,107 +13,110 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.elements.GraphNode
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator
-import com.intellij.vcs.log.graph.api.printer.PrintElementManager
+import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
 import com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl
 import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils.*
 import com.intellij.vcs.log.graph.utils.NormalEdge
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.sqrt
 
-internal class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: LinearGraph,
-                                                      private val printElementManager: PrintElementManager,
-                                                      private val longEdgeSize: Int,
-                                                      private val visiblePartSize: Int,
-                                                      private val edgeWithArrowSize: Int) : PrintElementGenerator {
+internal class PrintElementGeneratorImpl @VisibleForTesting constructor(private val linearGraph: LinearGraph,
+                                                                        private val presentationManager: PrintElementPresentationManager,
+                                                                        private val elementComparator: Comparator<GraphElement>,
+                                                                        private val longEdgeSize: Int,
+                                                                        private val visiblePartSize: Int,
+                                                                        private val edgeWithArrowSize: Int) : PrintElementGenerator {
   private val cache = SLRUMap<Int, List<GraphElement>>(CACHE_SIZE, CACHE_SIZE * 2)
   private val edgesInRowGenerator = EdgesInRowGenerator(linearGraph)
-  private val elementComparator: Comparator<GraphElement>
-    get() = printElementManager.graphElementComparator
 
-  private var recommendedWidth = 0
+  val recommendedWidth by lazy { calculateRecommendedWidth() }
 
   constructor(graph: LinearGraph,
-              printElementManager: PrintElementManager,
-              showLongEdges: Boolean) :
-    this(graph, printElementManager,
+              presentationManager: PrintElementPresentationManager,
+              showLongEdges: Boolean,
+              elementComparator: Comparator<GraphElement>) :
+    this(graph, presentationManager, elementComparator,
          if (showLongEdges) VERY_LONG_EDGE_SIZE else LONG_EDGE_SIZE,
          if (showLongEdges) VERY_LONG_EDGE_PART_SIZE else LONG_EDGE_PART_SIZE,
          if (showLongEdges) LONG_EDGE_SIZE else Integer.MAX_VALUE)
 
-  fun getRecommendedWidth(): Int {
-    if (recommendedWidth <= 0) {
-      val n = Math.min(SAMPLE_SIZE, linearGraph.nodesCount())
+  private fun calculateRecommendedWidth(): Int {
+    val nodesCount = linearGraph.nodesCount()
+    if (nodesCount == 0) return 0
+    if (nodesCount == 1) return 1
 
-      var sum = 0.0
-      var sumSquares = 0.0
-      var edgesCount = 0
-      val currentNormalEdges = CollectionFactory.createSmallMemoryFootprintSet<NormalEdge>()
+    val n = min(SAMPLE_SIZE, nodesCount)
 
-      for (i in 0 until n) {
-        val adjacentEdges = linearGraph.getAdjacentEdges(i, EdgeFilter.ALL)
-        var upArrows = 0
-        var downArrows = 0
-        for (e in adjacentEdges) {
-          val normalEdge = asNormalEdge(e)
-          if (normalEdge != null) {
-            if (isEdgeUp(e, i)) {
-              currentNormalEdges.remove(normalEdge)
-            }
-            else {
-              currentNormalEdges.add(normalEdge)
-            }
+    var sum = 0.0
+    var sumSquares = 0.0
+    var edgesCount = 0
+    val currentNormalEdges = CollectionFactory.createSmallMemoryFootprintSet<NormalEdge>()
+
+    for (i in 0 until n) {
+      val adjacentEdges = linearGraph.getAdjacentEdges(i, EdgeFilter.ALL)
+      var upArrows = 0
+      var downArrows = 0
+      for (e in adjacentEdges) {
+        val normalEdge = asNormalEdge(e)
+        if (normalEdge != null) {
+          if (isEdgeUp(e, i)) {
+            currentNormalEdges.remove(normalEdge)
           }
           else {
-            if (e.type == GraphEdgeType.DOTTED_ARROW_UP) {
-              upArrows++
-            }
-            else {
-              downArrows++
-            }
+            currentNormalEdges.add(normalEdge)
           }
         }
-
-        var newEdgesCount = 0
-        for (e in currentNormalEdges) {
-          if (isEdgeVisibleInRow(e, i)) {
-            newEdgesCount++
+        else {
+          if (e.type == GraphEdgeType.DOTTED_ARROW_UP) {
+            upArrows++
           }
           else {
-            val arrow = getArrowType(e, i)
-            if (arrow === EdgePrintElement.Type.DOWN) {
-              downArrows++
-            }
-            else if (arrow === EdgePrintElement.Type.UP) {
-              upArrows++
-            }
+            downArrows++
           }
         }
+      }
 
-        /*
-         * 0 <= K < 1; weight is an arithmetic progression, starting at 2 / ( n * (k + 1)) ending at k * 2 / ( n * (k + 1))
-         * this formula ensures that sum of all weights is 1
-         */
-        val width = Math.max(edgesCount + upArrows, newEdgesCount + downArrows)
-        val weight = 2 / (n * (K + 1)) * (1 + (K - 1) * i / (n - 1))
-        sum += width * weight
-        sumSquares += width.toDouble() * width.toDouble() * weight
-
-        edgesCount = newEdgesCount
+      var newEdgesCount = 0
+      for (e in currentNormalEdges) {
+        if (isEdgeVisibleInRow(e, i)) {
+          newEdgesCount++
+        }
+        else {
+          val arrow = getArrowType(e, i)
+          if (arrow === EdgePrintElement.Type.DOWN) {
+            downArrows++
+          }
+          else if (arrow === EdgePrintElement.Type.UP) {
+            upArrows++
+          }
+        }
       }
 
       /*
+         * 0 <= K < 1; weight is an arithmetic progression, starting at 2 / ( n * (k + 1)) ending at k * 2 / ( n * (k + 1))
+         * this formula ensures that sum of all weights is 1
+         */
+      val width = max(edgesCount + upArrows, newEdgesCount + downArrows)
+      val weight = 2 / (n * (K + 1)) * (1 + (K - 1) * i / (n - 1))
+      sum += width * weight
+      sumSquares += width.toDouble() * width.toDouble() * weight
+
+      edgesCount = newEdgesCount
+    }
+
+    /*
       weighted variance calculation described here:
       http://stackoverflow.com/questions/30383270/how-do-i-calculate-the-standard-deviation-between-weighted-measurements
        s*/
-      val average = sum
-      val deviation = Math.sqrt(sumSquares - average * average)
-      recommendedWidth = Math.round(average + deviation).toInt()
-    }
-
-    return recommendedWidth
+    val average = sum
+    val deviation = sqrt(sumSquares - average * average)
+    return Math.round(average + deviation).toInt()
   }
 
   private fun collectElements(rowIndex: Int, builder: PrintElementBuilder) {
@@ -261,7 +264,7 @@ internal class PrintElementGeneratorImpl @TestOnly constructor(private val linea
   }
 
   private fun getAttachmentDistance(e1: NormalEdge, rowIndex: Int): Int {
-    return Math.min(rowIndex - e1.up, e1.down - rowIndex)
+    return min(rowIndex - e1.up, e1.down - rowIndex)
   }
 
   private inner class PrintElementBuilder(private val rowIndex: Int) {
@@ -269,23 +272,19 @@ internal class PrintElementGeneratorImpl @TestOnly constructor(private val linea
     private val result = ArrayList<PrintElementWithGraphElement>()
     private val nodes = ArrayList<PrintElementWithGraphElement>() // nodes at the end, to be drawn over the edges
     fun consumeNode(node: GraphNode, position: Int) {
-      nodes.add(SimplePrintElementImpl(rowIndex, position, node, printElementManager))
+      nodes.add(SimplePrintElementImpl(rowIndex, position, node, presentationManager))
     }
 
     fun consumeDownEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {
-      result.add(EdgePrintElementImpl(rowIndex, upPosition, downPosition, EdgePrintElement.Type.DOWN, edge, hasArrow,
-                                      printElementManager))
+      result.add(EdgePrintElementImpl(rowIndex, upPosition, downPosition, EdgePrintElement.Type.DOWN, edge, hasArrow, presentationManager))
     }
 
     fun consumeUpEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {
-      result.add(EdgePrintElementImpl(rowIndex, downPosition, upPosition, EdgePrintElement.Type.UP, edge, hasArrow,
-                                      printElementManager))
+      result.add(EdgePrintElementImpl(rowIndex, downPosition, upPosition, EdgePrintElement.Type.UP, edge, hasArrow, presentationManager))
     }
 
     fun consumeArrow(edge: GraphEdge, position: Int, arrowType: EdgePrintElement.Type) {
-      result.add(TerminalEdgePrintElement(rowIndex, position,
-                                          arrowType, edge,
-                                          printElementManager))
+      result.add(TerminalEdgePrintElement(rowIndex, position, arrowType, edge, presentationManager))
     }
 
     fun build(): Collection<PrintElementWithGraphElement> {

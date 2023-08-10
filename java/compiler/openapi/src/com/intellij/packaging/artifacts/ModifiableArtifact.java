@@ -28,7 +28,7 @@ public interface ModifiableArtifact extends Artifact {
 
   void setName(@NotNull @NlsSafe String name);
 
-  void setRootElement(CompositePackagingElement<?> root);
+  void setRootElement(@NotNull CompositePackagingElement<?> root);
 
   /**
    * Sets custom properties corresponding to {@code provider} in the artifact configuration. If {@code properties} is {@code null} custom

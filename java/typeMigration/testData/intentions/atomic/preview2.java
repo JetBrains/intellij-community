@@ -1,0 +1,1 @@
+AtomicReferenceArray<Object> field = new AtomicReferenceArray<>(...)

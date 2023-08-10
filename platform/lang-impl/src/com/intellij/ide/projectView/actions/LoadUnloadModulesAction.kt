@@ -4,9 +4,7 @@ package com.intellij.ide.projectView.actions
 import com.intellij.ide.actions.OpenModuleSettingsAction
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.idea.ActionsBundle.actionText
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
@@ -16,6 +14,10 @@ private const val ACTION_ID = "LoadUnloadModules"
 class LoadUnloadModulesAction : DumbAwareAction(actionText(ACTION_ID)) {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isEnabled(e)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   private fun isEnabled(e: AnActionEvent): Boolean {
@@ -30,7 +32,7 @@ class LoadUnloadModulesAction : DumbAwareAction(actionText(ACTION_ID)) {
 
   override fun actionPerformed(e: AnActionEvent) {
     val selectedModuleName = e.getData(LangDataKeys.MODULE_CONTEXT)?.name ?: getSelectedUnloadedModuleName(e)
-                             ?: e.getData(LangDataKeys.MODULE)?.name
+                             ?: e.getData(PlatformCoreDataKeys.MODULE)?.name
     ConfigureUnloadedModulesDialog(e.project!!, selectedModuleName).show()
   }
 

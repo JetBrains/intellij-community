@@ -25,7 +25,7 @@ import java.util.Map;
  */
 public class LogAgentManager {
 
-  private final Map<String, List<LogPipeBase>> myDeploymentName2ActiveLogPipes = new HashMap<String, List<LogPipeBase>>();
+  private final Map<String, List<LogPipeBase>> myDeploymentName2ActiveLogPipes = new HashMap<>();
 
   public void startListeningLog(String deploymentName, LogPipeProvider provider) {
     stopListeningLog(deploymentName);
@@ -39,7 +39,7 @@ public class LogAgentManager {
   }
 
   private void doStartListeningLog(String deploymentName, LogPipeProvider provider) {
-    ArrayList<LogPipeBase> pipes = new ArrayList<LogPipeBase>(provider.createLogPipes(deploymentName));
+    ArrayList<LogPipeBase> pipes = new ArrayList<>(provider.createLogPipes(deploymentName));
     myDeploymentName2ActiveLogPipes.put(deploymentName, pipes);
     for (LogPipeBase pipe : pipes) {
       pipe.open();
@@ -47,7 +47,7 @@ public class LogAgentManager {
   }
 
   public void stopListeningAllLogs() {
-    for (String deploymentName : new ArrayList<String>(myDeploymentName2ActiveLogPipes.keySet())) {
+    for (String deploymentName : new ArrayList<>(myDeploymentName2ActiveLogPipes.keySet())) {
       stopListeningLog(deploymentName);
     }
   }

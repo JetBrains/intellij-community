@@ -3,6 +3,9 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -12,17 +15,19 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
@@ -44,7 +50,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   public XDebuggerExpressionComboBox(@NotNull Project project, @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
                                      @Nullable XSourcePosition sourcePosition, boolean showEditor, boolean languageInside) {
     super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition);
-    myComboBox = new ComboBox<>(myModel, 100);
+    myComboBox = createComboBox(myModel, 100);
     myComboBox.setEditable(true);
     myExpression = XExpressionImpl.EMPTY_EXPRESSION;
     Dimension minimumSize = new Dimension(myComboBox.getMinimumSize());
@@ -54,6 +60,10 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     fillComboBox();
     myComponent = JBUI.Panels.simplePanel().addToTop(myComboBox);
     setExpression(myExpression);
+  }
+
+  protected ComboBox<XExpression> createComboBox(CollectionComboBoxModel<XExpression> model, int width) {
+    return new ComboBox<>(model, width);
   }
 
   public ComboBox getComboBox() {
@@ -68,7 +78,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   @Override
   @Nullable
   public Editor getEditor() {
-    return myEditor.getEditorTextField().getEditor();
+    return myEditor.getEditorTextField().getEditor(true);
   }
 
   @Override
@@ -97,7 +107,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     myComboBox.setEditor(myEditor);
     //myEditor.setItem(myExpression);
     myComboBox.setRenderer(new EditorComboBoxRenderer(myEditor));
-    myComboBox.setMaximumRowCount(XDebuggerHistoryManager.MAX_RECENT_EXPRESSIONS);
+    myComboBox.setMaximumRowCount(10);
   }
 
   @Override
@@ -147,6 +157,29 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     editor.getColorsScheme().setEditorFontSize(Math.min(myComboBox.getFont().getSize(), EditorUtil.getEditorFont().getSize()));
   }
 
+  // Workaround for IDEA-273987, IDEA-278153.
+  // Should be removed after IDEA-285001 is fixed
+  public void fixEditorNotReleasedFalsePositiveException(@NotNull Project project, @NotNull Disposable parentDisposable) {
+    EditorTextField field = ObjectUtils.tryCast(getEditorComponent(), EditorTextField.class);
+    if (field == null) return;
+    Disposable disposable = Disposer.newDisposable("XDebuggerExpressionComboBox Disposable");
+    Disposer.register(parentDisposable, () -> {
+      // In case the project is closing this block is called
+      // from the BaseContentCloseListener#disposeContent
+      // and then removes editor with EditorComboBox#releaseLater.
+      // The latter causes a false-positive exception (IDEA-273987) that editor is not released
+      // when validation is running (see  IDEA-285001).
+      // Until IDEA-285001 is fixed this one is scheduled for next EDT call
+      // to let Disposer.register(session.getProject(), disposable) dispose an editor
+      // with correct way when project is closed.
+      // If this one is triggered because the tool window is closed
+      // then it's ok to release it later.
+      ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(disposable));
+    });
+    Disposer.register(project, disposable);
+    field.setDisposedWith(disposable);
+  }
+
   private class XDebuggerComboBoxEditor implements ComboBoxEditor {
     private final JComponent myPanel;
     private final EditorComboBoxEditor myDelegate;
@@ -162,24 +195,28 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
           }
           foldNewLines(editor);
           editor.getFilteredDocumentMarkupModel().addMarkupModelListener(((EditorImpl)editor).getDisposable(), new MarkupModelListener() {
-            int errors = 0;
+            private final AtomicInteger errors = new AtomicInteger();
             @Override
             public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
               processHighlighter(highlighter, true);
             }
 
             @Override
-            public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+            public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
               processHighlighter(highlighter, false);
             }
 
             void processHighlighter(@NotNull RangeHighlighterEx highlighter, boolean add) {
               HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
               if (info != null && HighlightSeverity.ERROR.equals(info.getSeverity())) {
-                errors += add ? 1 : -1;
-                if (errors == 0 || errors == 1) {
-                  myComboBox.putClientProperty("JComponent.outline", errors > 0 ? "error" : null);
-                  myComboBox.repaint();
+                int value = errors.addAndGet(add ? 1 : -1);
+                if (value == 0 || value == 1) {
+                  EdtInvocationManager.invokeLaterIfNeeded(() -> {
+                    if (UIUtil.isShowing(myComboBox)) {
+                      myComboBox.putClientProperty("JComponent.outline", value > 0 ? "error" : null);
+                      myComboBox.repaint();
+                    }
+                  });
                 }
               }
             }

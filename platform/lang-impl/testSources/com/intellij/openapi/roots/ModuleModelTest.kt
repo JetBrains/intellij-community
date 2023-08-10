@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots
 
 import com.intellij.openapi.application.runReadAction
@@ -77,12 +77,10 @@ class ModuleModelTest {
       assertThat(model.modules).containsExactly(module)
       assertThat(model.getModuleToBeRenamed("a")).isNull()
       assertThat(model.getActualName(module)).isEqualTo("b")
-      if (ProjectModelRule.isWorkspaceModelEnabled) {
-        //in the old model newly added module doesn't get the new name until commit; it looks like a bug
-        assertThat(model.findModuleByName("a")).isNull()
-        assertThat(model.findModuleByName("b")).isEqualTo(module)
-        assertThat(module.name).isEqualTo("b")
-      }
+      //in the old model newly added module doesn't get the new name until commit; it looks like a bug
+      assertThat(model.findModuleByName("a")).isNull()
+      assertThat(model.findModuleByName("b")).isEqualTo(module)
+      assertThat(module.name).isEqualTo("b")
       module
     }
 
@@ -308,7 +306,7 @@ class ModuleModelTest {
     assertThat(modules[0].name).isEqualTo(antModuleName)
 
     runWriteActionAndWait {
-      moduleManager.modifiableModel.let { model ->
+      moduleManager.getModifiableModel().let { model ->
         model.renameModule(antModule, mavenModuleName)
         model.renameModule(antModule, gradleModuleName)
         model.commit()
@@ -375,7 +373,7 @@ class ModuleModelTest {
   private fun createModifiableModuleModel(): @NotNull ModifiableModuleModel {
     //we need to get module manager outside of read action because it may lazily initialize the project requiring write action
     val moduleManager = projectModel.moduleManager
-    return runReadAction { moduleManager.modifiableModel }
+    return runReadAction { moduleManager.getModifiableModel() }
   }
 
   private fun getSortedModules() = runReadAction { projectModel.moduleManager.sortedModules }

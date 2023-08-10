@@ -19,10 +19,6 @@ import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ArrayUtil
-
-/**
- * @author peter
- */
 class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test contract and notNull"() {
@@ -33,7 +29,9 @@ class Foo {
     }
 }
 '''
-    myFixture.launchAction(myFixture.findSingleIntention("Insert '@Contract(pure = true) @NotNull'"))
+    def intention = myFixture.findSingleIntention("Insert '@Contract(pure = true) @NotNull'")
+    assertTrue(intention.startInWriteAction())
+    myFixture.launchAction(intention)
     myFixture.checkResult '''import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

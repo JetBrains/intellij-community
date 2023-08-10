@@ -20,21 +20,21 @@ import com.intellij.lang.LanguageDependentMembersRefactoringSupport;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.NavigatablePsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringBundle;
-import java.util.HashMap;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
 public class UsedByMemberDependencyGraph<T extends NavigatablePsiElement, C extends PsiElement, M extends MemberInfoBase<T>> implements MemberDependencyGraph<T, M> {
-  protected HashSet<T> mySelectedNormal;
-  protected HashSet<T> mySelectedAbstract;
-  protected HashSet<T> myMembers;
-  protected HashSet<T> myDependencies = null;
-  protected HashMap<T, HashSet<T>> myDependenciesToDependent = null;
+  private final HashSet<T> mySelectedNormal;
+  private final HashSet<T> mySelectedAbstract;
+  private final HashSet<T> myMembers;
+  private HashSet<T> myDependencies = null;
+  private HashMap<T, HashSet<T>> myDependenciesToDependent = null;
   private final MemberDependenciesStorage<T, C> myMemberDependenciesStorage;
 
   public UsedByMemberDependencyGraph(C aClass) {
@@ -45,7 +45,7 @@ public class UsedByMemberDependencyGraph<T extends NavigatablePsiElement, C exte
   }
 
   @Override
-  public void memberChanged(M memberInfo) {
+  public synchronized void memberChanged(M memberInfo) {
     final ClassMembersRefactoringSupport support =
       LanguageDependentMembersRefactoringSupport.INSTANCE.forLanguage(memberInfo.getMember().getLanguage());
     if (support != null && support.isProperMember(memberInfo)) {
@@ -71,33 +71,35 @@ public class UsedByMemberDependencyGraph<T extends NavigatablePsiElement, C exte
   }
 
   @Override
-  public Set<? extends T> getDependent() {
+  public synchronized Set<? extends T> getDependent() {
     if(myDependencies == null) {
-      myDependencies = new HashSet<>();
-      myDependenciesToDependent = new HashMap<>();
+      HashSet<T> dependencies = new HashSet<>();
+      HashMap<T, HashSet<T>> dependenciesToDependent = new HashMap<>();
       for (T member : myMembers) {
         Set<T> dependent = myMemberDependenciesStorage.getMemberDependencies(member);
         if (dependent != null) {
           for (final T aDependent : dependent) {
             if (mySelectedNormal.contains(aDependent) && !mySelectedAbstract.contains(aDependent)) {
-              myDependencies.add(member);
-              HashSet<T> deps = myDependenciesToDependent.get(member);
+              dependencies.add(member);
+              HashSet<T> deps = dependenciesToDependent.get(member);
               if (deps == null) {
                 deps = new HashSet<>();
-                myDependenciesToDependent.put(member, deps);
+                dependenciesToDependent.put(member, deps);
               }
               deps.add(aDependent);
             }
           }
         }
       }
+      myDependencies = dependencies;
+      myDependenciesToDependent = dependenciesToDependent;
     }
 
     return myDependencies;
   }
 
   @Override
-  public Set<? extends T> getDependenciesOf(T member) {
+  public synchronized Set<? extends T> getDependenciesOf(T member) {
     final Set<? extends T> dependent = getDependent();
     if(!dependent.contains(member)) return null;
     return myDependenciesToDependent.get(member);

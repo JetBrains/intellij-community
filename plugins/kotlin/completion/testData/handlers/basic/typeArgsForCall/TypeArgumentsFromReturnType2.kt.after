@@ -1,0 +1,7 @@
+fun <T> foo(): List<List<T>> = l
+
+fun test() {
+  val f: List<Int> = foo<<caret>>()
+}
+
+// ELEMENT: foo

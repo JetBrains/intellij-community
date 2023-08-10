@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.psi.PsiClass
@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
 
 class GradleNamedDomainCollectionContributor : NonCodeMembersContributor() {
 
-  override fun getParentClassName(): String? = GRADLE_API_NAMED_DOMAIN_OBJECT_CONTAINER
+  override fun getParentClassName(): String = GRADLE_API_NAMED_DOMAIN_OBJECT_CONTAINER
 
   override fun processDynamicElements(qualifierType: PsiType,
                                       clazz: PsiClass?,
@@ -49,10 +49,15 @@ class GradleNamedDomainCollectionContributor : NonCodeMembersContributor() {
       val method = GrLightMethodBuilder(manager, domainObjectName).apply {
         returnType = domainObjectType
         addParameter("configuration", createType(GROOVY_LANG_CLOSURE, containingFile))
+        originInfo = NAMED_DOMAIN_DECLARATION
       }
       if (!processor.execute(method, state)) {
         return
       }
     }
+  }
+
+  companion object {
+    const val NAMED_DOMAIN_DECLARATION = "by NamedDomainCollection"
   }
 }

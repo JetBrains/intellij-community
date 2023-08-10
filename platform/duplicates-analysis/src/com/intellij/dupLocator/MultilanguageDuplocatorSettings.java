@@ -3,6 +3,7 @@ package com.intellij.dupLocator;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -14,14 +15,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * @author Eugene.Kudelevsky
- */
 @State(
   name = "MultiLanguageDuplocatorSettings",
-  storages = @Storage("duplocatorSettings.xml")
+  storages = @Storage("duplocatorSettings.xml"),
+  category = SettingsCategory.CODE
 )
-public class MultilanguageDuplocatorSettings implements PersistentStateComponent<Element> {
+public final class MultilanguageDuplocatorSettings implements PersistentStateComponent<Element> {
   private final Map<String, DefaultDuplocatorState> mySettingsMap = new TreeMap<>();
 
   public static MultilanguageDuplocatorSettings getInstance() {

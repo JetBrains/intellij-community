@@ -3,11 +3,11 @@ import java.util.*;
 
 public class OptionalInlining {
   void testOrElse() {
-    String s = Optional.ofNullable(<warning descr="Passing a non-null argument to 'Optional'">"foo"</warning>).orElse("bar");
+    String s = Optional.ofNullable("foo").orElse("bar");
     if (<warning descr="Condition 's.equals(\"bar\")' is always 'false'">s.equals("bar")</warning>) {
       System.out.println("Never");
     }
-    String s2 = Optional.<String>ofNullable(<warning descr="Passing 'null' argument to 'Optional'">null</warning>).orElse("bar");
+    String s2 = Optional.<String>ofNullable(null).orElse("bar");
     if (<warning descr="Condition 's2.equals(\"bar\")' is always 'true'">s2.equals("bar")</warning>) {
       System.out.println("Always");
     }
@@ -38,7 +38,7 @@ public class OptionalInlining {
   }
 
   void testGuavaOrNull() {
-    String s = com.google.common.base.Optional.fromNullable(<warning descr="Passing a non-null argument to 'Optional'">"foo"</warning>).orNull();
+    String s = com.google.common.base.Optional.fromNullable("foo").orNull();
     if (<warning descr="Condition 's == null' is always 'false'">s == null</warning>) {
       System.out.println("Never");
     }
@@ -68,7 +68,7 @@ public class OptionalInlining {
       }
       return "baz";
     });
-    if (<warning descr="Condition 's.equals(\"bar\") && !opt.isPresent()' is always 'false'">s.equals("bar") && <warning descr="Condition '!opt.isPresent()' is always 'false' when reached">!<warning descr="Result of 'opt.isPresent()' is always 'true'">opt.isPresent()</warning></warning></warning>) {
+    if (<warning descr="Condition 's.equals(\"bar\") && !opt.isPresent()' is always 'false'">s.equals("bar") && <warning descr="Condition '!opt.isPresent()' is always 'false' when reached">!opt.isPresent()</warning></warning>) {
       System.out.println("Impossible");
     }
   }
@@ -111,7 +111,7 @@ public class OptionalInlining {
   void testMap(Optional<String> opt) {
     opt.map(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
     String res = opt.<String>map(s -> null).orElse("abc");
-    if (<warning descr="Condition '!res.equals(\"abc\")' is always 'false'">!<warning descr="Result of 'res.equals(\"abc\")' is always 'true'">res.equals("abc")</warning></warning>) {
+    if (<warning descr="Condition '!res.equals(\"abc\")' is always 'false'">!res.equals("abc")</warning>) {
       System.out.println("Never");
     }
     String trimmed = Optional.ofNullable(nullableMethod()).map(xx -> xx.trim()).orElse("");

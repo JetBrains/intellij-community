@@ -43,8 +43,7 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
     if (resolveResult == null || resolveResult.getElement() == null) {
       mySubstitutor = PsiSubstitutor.EMPTY;
     }
-    else if (resolveResult.getElement() instanceof PsiMethod) {
-      PsiMethod resolved = (PsiMethod)resolveResult.getElement();
+    else if (resolveResult.getElement() instanceof PsiMethod resolved) {
       mySubstitutor = resolveResult.getSubstitutor();
       if (!element.getManager().areElementsEquivalent(method, resolved)) {
         final PsiClass baseClass = method.getContainingClass();

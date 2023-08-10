@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.performance;
 
+import com.intellij.formatting.FormatterTestUtils;
 import com.intellij.java.psi.formatter.java.AbstractJavaFormatterTest;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -34,9 +35,9 @@ public class JavaSmartReformatPerformanceTest extends AbstractJavaFormatterTest 
       documentManager.commitDocument(document);
     };
 
-    List<TextRange> ranges = Collections.singletonList(new TextRange(6682, 6686));
     ThrowableRunnable test = () -> {
-      Runnable command = () -> WriteAction.run(() -> codeStyleManager.reformatTextWithContext(file, ranges));
+      Runnable command =
+        () -> WriteAction.run(() -> FormatterTestUtils.ACTIONS.get(FormatterTestUtils.Action.REFORMAT_WITH_CONTEXT).run(file, 6682, 6686));
       commandProcessor.executeCommand(project, command, null, null);
     };
 

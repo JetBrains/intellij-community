@@ -1,18 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("PackageDirectoryMismatch")
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("PackageDirectoryMismatch", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.reference.SoftReference
 import com.intellij.serialization.SerializationException
 import com.intellij.serialization.xml.KotlinAwareBeanBinding
+import com.intellij.serialization.xml.KotlinxSerializationBinding
 import com.intellij.util.io.URLUtil
 import com.intellij.util.xmlb.*
+import kotlinx.serialization.Serializable
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
+import java.lang.ref.SoftReference
 import java.lang.reflect.Type
 import java.net.URL
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -22,7 +24,7 @@ import kotlin.concurrent.write
 private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SkipDefaultsSerializationFilter>>()
 
 private fun doGetDefaultSerializationFilter(): SkipDefaultsSerializationFilter {
-  var result = SoftReference.dereference(skipDefaultsSerializationFilter.get())
+  var result = skipDefaultsSerializationFilter.get()?.get()
   if (result == null) {
     result = object : SkipDefaultsSerializationFilter() {
       override fun accepts(accessor: Accessor, bean: Any): Boolean {
@@ -37,7 +39,8 @@ private fun doGetDefaultSerializationFilter(): SkipDefaultsSerializationFilter {
   return result
 }
 
-internal class JdomSerializerImpl : JdomSerializer {
+@Suppress("unused")
+private class JdomSerializerImpl : JdomSerializer {
   override fun getDefaultSerializationFilter() = doGetDefaultSerializationFilter()
 
   override fun <T : Any> serialize(obj: T, filter: SerializationFilter?, createElementIfEmpty: Boolean): Element? {
@@ -87,7 +90,7 @@ internal class JdomSerializerImpl : JdomSerializer {
 
     @Suppress("UNCHECKED_CAST")
     try {
-      return (serializer.getRootBinding(clazz) as NotNullDeserializeBinding).deserialize(null, element) as T
+      return (serializer.getRootBinding(clazz, clazz) as NotNullDeserializeBinding).deserialize(null, element) as T
     }
     catch (e: SerializationException) {
       throw e
@@ -115,7 +118,7 @@ internal class JdomSerializerImpl : JdomSerializer {
 
   override fun <T> deserialize(url: URL, aClass: Class<T>): T {
     try {
-      return deserialize(JDOMXIncluder.resolveRoot(JDOMUtil.load(URLUtil.openStream(url)), url), aClass)
+      return deserialize(JDOMUtil.load(URLUtil.openStream(url)), aClass)
     }
     catch (e: IOException) {
       throw XmlSerializationException(e)
@@ -169,7 +172,15 @@ private abstract class OldBindingProducer<ROOT_BINDING> {
 private class MyXmlSerializer : XmlSerializerImpl.XmlSerializerBase() {
   val bindingProducer = object : OldBindingProducer<Binding>() {
     override fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, Binding>): Binding {
-      val binding = createClassBinding(aClass, null, type) ?: KotlinAwareBeanBinding(aClass)
+      var binding = createClassBinding(aClass, null, type)
+      if (binding == null) {
+        if (aClass.isAnnotationPresent(Serializable::class.java)) {
+          binding = KotlinxSerializationBinding(aClass)
+        }
+        else {
+          binding = KotlinAwareBeanBinding(aClass)
+        }
+      }
       map.put(cacheKey, binding)
       try {
         binding.init(type, this@MyXmlSerializer)

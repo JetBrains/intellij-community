@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.ide.SelectInEditorManager;
@@ -14,13 +14,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.reference.SoftReference;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageTreeColorsScheme;
@@ -29,38 +30,56 @@ import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.rules.*;
 import com.intellij.util.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.ref.Reference;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
-                                               MergeableUsage, Comparable<UsageInfo2UsageAdapter>,
+                                               MergeableUsage,
                                                RenameableUsage, DataProvider, UsagePresentation {
   public static final NotNullFunction<UsageInfo, Usage> CONVERTER = UsageInfo2UsageAdapter::new;
   private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = Comparator.comparingInt(UsageInfo::getNavigationOffset);
+  @SuppressWarnings("StaticNonFinalField")
+  public static boolean ourAutomaticallyCalculatePresentationInTests = true;
 
   private final @NotNull UsageInfo myUsageInfo;
   private @NotNull Object myMergedUsageInfos; // contains all merged infos, including myUsageInfo. Either UsageInfo or UsageInfo[]
   private final int myLineNumber;
   private final int myOffset;
-  protected Icon myIcon;
-  private volatile Reference<TextChunk[]> myTextChunks; // allow to be gced and recreated on-demand because it requires a lot of memory
+  private volatile UsageNodePresentation myCachedPresentation;
+  @Nullable private final VirtualFile myVirtualFile;
+  private final int myOffsetToCompareUsages;
   private volatile UsageType myUsageType;
 
-  public UsageInfo2UsageAdapter(final @NotNull UsageInfo usageInfo) {
+  private static class ComputedData {
+    public final int offset;
+    public final int lineNumber;
+    public final VirtualFile virtualFile;
+    public final int offsetToCompareUsages;
+
+    private ComputedData(int offset, int lineNumber, VirtualFile virtualFile, int offsetToCompareUsages) {
+      this.offset = offset;
+      this.lineNumber = lineNumber;
+      this.virtualFile = virtualFile;
+      this.offsetToCompareUsages = offsetToCompareUsages;
+    }
+  }
+
+  public UsageInfo2UsageAdapter(@NotNull UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
     myMergedUsageInfos = usageInfo;
 
-    Point data =
+    ComputedData data =
     ReadAction.compute(() -> {
+      VirtualFile virtualFile = usageInfo.getVirtualFile();
       PsiElement element = getElement();
       PsiFile psiFile = usageInfo.getFile();
       boolean isNullOrBinary = psiFile == null || psiFile.getFileType().isBinary();
@@ -69,27 +88,35 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
       int offset;
       int lineNumber;
+      int offsetToCompareUsages;
       if (document == null) {
         // element over light virtual file
-        offset = element == null || isNullOrBinary ? 0 : element.getTextOffset();
+        offsetToCompareUsages = offset = element == null || isNullOrBinary ? 0 : element.getTextOffset();
         lineNumber = -1;
       }
       else {
         int startOffset = myUsageInfo.getNavigationOffset();
         if (startOffset == -1) {
-          offset = element == null ? 0 : element.getTextOffset();
+          offsetToCompareUsages = offset = element == null ? 0 : element.getTextOffset();
           lineNumber = -1;
         }
         else {
           offset = -1;
+          offsetToCompareUsages = startOffset;
           lineNumber = getLineNumber(document, startOffset);
         }
       }
-      return new Point(offset, lineNumber);
+      return new ComputedData(offset, lineNumber, virtualFile, offsetToCompareUsages);
     });
-    myOffset = data.x;
-    myLineNumber = data.y;
+    myOffset = data.offset;
+    myLineNumber = data.lineNumber;
+    myVirtualFile = data.virtualFile;
+    myOffsetToCompareUsages = data.offsetToCompareUsages;
     myModificationStamp = getCurrentModificationStamp();
+
+    if (ApplicationManager.getApplication().isUnitTestMode() && ourAutomaticallyCalculatePresentationInTests) {
+      updateCachedPresentation();
+    }
   }
 
   @Override
@@ -98,22 +125,30 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return infos instanceof UsageInfo ? new UsageInfo[]{(UsageInfo)infos} : (UsageInfo[])infos;
   }
 
-  @NotNull
   @Override
-  public Promise<UsageInfo[]> getMergedInfosAsync() {
-    return Promises.resolvedPromise(getMergedInfos());
+  public @NotNull CompletableFuture<UsageInfo[]> getMergedInfosAsync() {
+    return CompletableFuture.completedFuture(getMergedInfos());
   }
 
-  private static int getLineNumber(@NotNull Document document, final int startOffset) {
+  private static int getLineNumber(@NotNull Document document, int startOffset) {
     if (document.getTextLength() == 0) return 0;
     if (startOffset >= document.getTextLength()) return document.getLineCount();
     return document.getLineNumber(startOffset);
   }
 
-  private TextChunk @NotNull [] initChunks() {
-    TextChunk[] chunks;
+  private Color computeBackgroundColor() {
     VirtualFile file = getFile();
-    boolean isNullOrBinary = file == null || file.getFileType().isBinary();
+    if (file == null) {
+      return null;
+    }
+
+    return EditorTabPresentationUtil.getFileBackgroundColor(getProject(), file);
+  }
+
+  private TextChunk @NotNull [] computeText() {
+    TextChunk[] chunks;
+    PsiFile psiFile = getPsiFile();
+    boolean isNullOrBinary = psiFile == null || psiFile.getFileType().isBinary();
 
     PsiElement element = getElement();
     if (element != null && isNullOrBinary) {
@@ -125,7 +160,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
       };
     }
     else {
-      PsiFile psiFile = getPsiFile();
       Document document = psiFile == null ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
       if (document == null) {
         // element over light virtual file
@@ -141,7 +175,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
         chunks = ChunkExtractor.extractChunks(psiFile, this);
       }
     }
-    myTextChunks = new SoftReference<>(chunks);
     return chunks;
   }
 
@@ -233,7 +266,10 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   }
 
   public Editor openTextEditor(boolean focus) {
-    return FileEditorManager.getInstance(getProject()).openTextEditor(getDescriptor(), focus);
+    OpenFileDescriptor descriptor = getDescriptor();
+    if (descriptor == null) return null;
+
+    return FileEditorManager.getInstance(getProject()).openTextEditor(descriptor, focus);
   }
 
   @Override
@@ -318,7 +354,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   @Override
   public OrderEntry getLibraryEntry() {
     if (!isValid()) return null;
-    PsiFile psiFile = getPsiFile();
     VirtualFile virtualFile = getFile();
     if (virtualFile == null) return null;
 
@@ -352,7 +387,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
       for (AdditionalLibraryRootsProvider e : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
         for (SyntheticLibrary library : e.getAdditionalProjectLibraries(project)) {
           if (library.getSourceRoots().contains(sourcesRoot)) {
-            Condition<VirtualFile> excludeFileCondition = library.getExcludeFileCondition();
+            Condition<VirtualFile> excludeFileCondition = library.getUnitedExcludeCondition();
             if (excludeFileCondition == null || !excludeFileCondition.value(virtualFile)) {
               list.add(library);
             }
@@ -366,7 +401,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   @Override
   public VirtualFile getFile() {
-    return getUsageInfo().getVirtualFile();
+    return myVirtualFile;
   }
   private PsiFile getPsiFile() {
     return getUsageInfo().getFile();
@@ -374,7 +409,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   @Override
   public @NotNull String getPath() {
-    return getFile().getPath();
+    VirtualFile file = getFile();
+    return file != null ? file.getPath() : "";
   }
 
   @Override
@@ -384,14 +420,17 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   @Override
   public boolean merge(@NotNull MergeableUsage other) {
-    if (!(other instanceof UsageInfo2UsageAdapter)) return false;
-    UsageInfo2UsageAdapter u2 = (UsageInfo2UsageAdapter)other;
+    if (!(other instanceof UsageInfo2UsageAdapter u2)) return false;
     assert u2 != this;
     if (myLineNumber != u2.myLineNumber || !Comparing.equal(getFile(), u2.getFile())) return false;
     UsageInfo[] merged = ArrayUtil.mergeArrays(getMergedInfos(), u2.getMergedInfos());
     myMergedUsageInfos = merged.length == 1 ? merged[0] : merged;
     Arrays.sort(getMergedInfos(), BY_NAVIGATION_OFFSET);
-    myTextChunks = null; // chunks will be rebuilt lazily (IDEA-126048)
+
+    // Invalidate cached presentation, so it'll be updated later
+    // Do not reset it to still have something to present
+    myModificationStamp = Long.MIN_VALUE;
+
     return true;
   }
 
@@ -399,7 +438,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public void reset() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myMergedUsageInfos = myUsageInfo;
-    initChunks();
+    resetCachedPresentation();
+  }
+
+  protected final void resetCachedPresentation() {
+    // Invalidate cached presentation, so it'll be updated later
+    // Do not clear it to still have something to present
+    myModificationStamp = Long.MIN_VALUE;
   }
 
   @Override
@@ -418,14 +463,18 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   }
 
   // by start offset
-  @Override
-  public int compareTo(@NotNull final UsageInfo2UsageAdapter o) {
-    return getUsageInfo().compareToByStartOffset(o.getUsageInfo());
+  public final int compareTo(@NotNull UsageInfo2UsageAdapter o) {
+    int byPath = VfsUtilCore.compareByPath(myVirtualFile, o.myVirtualFile);
+    if (byPath != 0) {
+      return byPath;
+    }
+
+    return Integer.compare(myOffsetToCompareUsages, o.myOffsetToCompareUsages);
   }
 
   @Override
   public void rename(@NotNull String newName) throws IncorrectOperationException {
-    final PsiReference reference = getUsageInfo().getReference();
+    PsiReference reference = getUsageInfo().getReference();
     assert reference != null : this;
     reference.handleElementRename(newName);
   }
@@ -453,35 +502,40 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   private long myModificationStamp;
   private long getCurrentModificationStamp() {
-    final PsiFile containingFile = getPsiFile();
+    PsiFile containingFile = getPsiFile();
     return containingFile == null ? -1L : containingFile.getViewProvider().getModificationStamp();
   }
 
   @Override
   public TextChunk @NotNull [] getText() {
-    return doUpdateCachedText();
+    return getNotNullCachedPresentation().getText();
   }
 
   @Override
-  public TextChunk @Nullable [] getCachedText() {
-    return SoftReference.dereference(myTextChunks);
+  public final @Nullable UsageNodePresentation getCachedPresentation() {
+    return myCachedPresentation;
   }
 
   @Override
-  public void updateCachedText() {
-    doUpdateCachedText();
-  }
+  public final void updateCachedPresentation() {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
+    }
 
-  private TextChunk @NotNull [] doUpdateCachedText() {
-    TextChunk[] chunks = SoftReference.dereference(myTextChunks);
-    final long currentModificationStamp = getCurrentModificationStamp();
+    UsageNodePresentation cachedPresentation = getCachedPresentation();
+    long currentModificationStamp = getCurrentModificationStamp();
     boolean isModified = currentModificationStamp != myModificationStamp;
-    if (chunks == null || isValid() && isModified) {
-      // the check below makes sense only for valid PsiElement
-      chunks = initChunks();
+    if (cachedPresentation == null || isModified && isValid()) {
+      myCachedPresentation = new UsageNodePresentation(computeIcon(), computeText(), computeBackgroundColor());
       myModificationStamp = currentModificationStamp;
     }
-    return chunks;
+  }
+
+  private @NotNull UsageNodePresentation getNotNullCachedPresentation() {
+    // Presentation is expected to be always externally updated by calling updateCachedPresentation
+    // Here we just return cached result because it must be always available for painting or speed search
+    UsageNodePresentation cachedPresentation = getCachedPresentation();
+    return cachedPresentation != null ? cachedPresentation : UsageNodePresentation.EMPTY;
   }
 
   @NotNull
@@ -500,15 +554,15 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   @Override
   @NotNull
   public String getPlainText() {
-    final PsiElement element = getElement();
-    VirtualFile file = getFile();
-    boolean isNullOrBinary = file == null || file.getFileType().isBinary();
+    PsiElement element = getElement();
+    PsiFile psiFile = getPsiFile();
+    boolean isNullOrBinary = psiFile == null || psiFile.getFileType().isBinary();
     if (element != null && isNullOrBinary) {
       return clsType(element) + " " + clsName(element);
     }
     int startOffset;
     if (element != null && (startOffset = getNavigationOffset()) != -1) {
-      final Document document = getDocument();
+      Document document = getDocument();
       if (document != null) {
         int lineNumber = document.getLineNumber(startOffset);
         int lineStart = document.getLineStartOffset(lineNumber);
@@ -529,16 +583,23 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   }
 
   @Override
+  public @Nullable Color getBackgroundColor() {
+    return getNotNullCachedPresentation().getBackgroundColor();
+  }
+
+  @Override
   public Icon getIcon() {
-    Icon icon = myIcon;
-    if (icon == null) {
-      myIcon = icon = myUsageInfo.getIcon();
+    return getNotNullCachedPresentation().getIcon();
+  }
+
+  @Nullable
+  protected Icon computeIcon() {
+    Icon icon = myUsageInfo.getIcon();
+    if (icon != null) {
+      return icon;
     }
-    if (icon == null) {
-      PsiElement psiElement = getElement();
-      myIcon = icon = psiElement != null && psiElement.isValid() && !isFindInPathUsage(psiElement) ? psiElement.getIcon(0) : null;
-    }
-    return icon;
+    PsiElement psiElement = getElement();
+    return psiElement != null && psiElement.isValid() && !isFindInPathUsage(psiElement) ? psiElement.getIcon(0) : null;
   }
 
   private boolean isFindInPathUsage(PsiElement psiElement) {
@@ -553,45 +614,49 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   @Nullable
   public UsageType getUsageType() {
     UsageType usageType = myUsageType;
-
     if (usageType == null) {
-      usageType = UsageType.UNCLASSIFIED;
-      PsiFile file = getPsiFile();
-
-      if (file != null) {
-        Segment segment = getFirstSegment();
-
-        if (segment != null) {
-          Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-          if (document != null) {
-            ChunkExtractor extractor = ChunkExtractor.getExtractor(file);
-            SmartList<TextChunk> chunks = new SmartList<>();
-            extractor.createTextChunks(
-              this,
-              document.getCharsSequence(),
-              segment.getStartOffset(),
-              segment.getEndOffset(),
-              false,
-              chunks
-            );
-
-            for(TextChunk chunk:chunks) {
-              UsageType chunkUsageType = chunk.getType();
-              if (chunkUsageType != null) {
-                usageType = chunkUsageType;
-                break;
-              }
-            }
-          }
-        }
+      usageType = computeUsageType();
+      if (usageType == null) {
+        usageType = UsageType.UNCLASSIFIED;
       }
       myUsageType = usageType;
     }
     return usageType;
   }
 
+  private @Nullable UsageType computeUsageType() {
+    PsiFile file = getPsiFile();
+    if (file == null) {
+      return null;
+    }
+    Segment segment = getFirstSegment();
+    if (segment == null) {
+      return null;
+    }
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    if (document == null) {
+      return null;
+    }
+    return ChunkExtractor.getExtractor(file).deriveUsageTypeFromHighlighting(
+      document.getCharsSequence(), segment.getStartOffset(), segment.getEndOffset()
+    );
+  }
+
   @Override
   public @Nullable Class<? extends PsiReference> getReferenceClass() {
     return myUsageInfo.getReferenceClass();
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public static void disableAutomaticPresentationCalculationInTests(Runnable block) {
+    boolean old = ourAutomaticallyCalculatePresentationInTests;
+    ourAutomaticallyCalculatePresentationInTests = false;
+    try {
+      block.run();
+    }
+    finally {
+      ourAutomaticallyCalculatePresentationInTests = old;
+    }
   }
 }

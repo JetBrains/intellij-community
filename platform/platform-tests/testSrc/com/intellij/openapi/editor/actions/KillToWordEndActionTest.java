@@ -13,9 +13,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 
-/**
- * @author Denis Zhdanov
- */
 public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
 
   public void testAtWordStart() {
@@ -127,10 +124,11 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
   }
 
   public void testSubsequentKillsInterruptedBySave() throws Exception {
-    String text = "public class ParentCopy {\n" +
-                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
-                  "        }\n" +
-                  "    }";
+    String text = """
+      public class ParentCopy {
+              public Insets getBorderInsets(<caret>Component c) {
+              }
+          }""";
     configureFromFileText(getTestName(false) + ".java", text);
     cutToLineEnd();
     cutToLineEnd();
@@ -146,10 +144,11 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
   }
 
   public void testSubsequentKillsWithFolding() throws Exception {
-    String text = "public class ParentCopy {\n" +
-                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
-                  "        }\n" +
-                  "    }";
+    String text = """
+      public class ParentCopy {
+              public Insets getBorderInsets(<caret>Component c) {
+              }
+          }""";
     configureFromFileText(getTestName(false) + ".java", text);
     final FoldingModel model = getEditor().getFoldingModel();
     model.runBatchFoldingOperation(() -> {
@@ -200,10 +199,11 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
 
 
   public void testKillsInterruptedByDelete() throws Exception {
-    String text = "public class ParentCopy {\n" +
-                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
-                  "        }\n" +
-                  "    }";
+    String text = """
+      public class ParentCopy {
+              public Insets getBorderInsets(<caret>Component c) {
+              }
+          }""";
     configureFromFileText(getTestName(false) + ".java", text);
     cutToLineEnd();
     deleteLine();
@@ -218,10 +218,11 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
   }
 
   public void testKillsInterruptedByDeleteLine() throws Exception {
-    String text = "public class ParentCopy {\n" +
-                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
-                  "        }\n" +
-                  "    }";
+    String text = """
+      public class ParentCopy {
+              public Insets getBorderInsets(<caret>Component c) {
+              }
+          }""";
     configureFromFileText(getTestName(false) + ".java", text);
     cutToLineEnd();
     deleteLine();
@@ -236,10 +237,11 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
   }
 
   public void testKillsInterruptedByDeleteLineEnd() throws Exception {
-    String text = "public class ParentCopy {\n" +
-                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
-                  "        }\n" +
-                  "    }";
+    String text = """
+      public class ParentCopy {
+              public Insets getBorderInsets(<caret>Component c) {
+              }
+          }""";
     configureFromFileText(getTestName(false) + ".java", text);
     cutToLineEnd();
     executeAction("EditorDeleteToLineEnd");
@@ -253,10 +255,11 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
   }
 
   public void testKillsInterruptedByDeleteWord() throws Exception {
-    String text = "public class ParentCopy {\n" +
-                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
-                  "        }\n" +
-                  "    }";
+    String text = """
+      public class ParentCopy {
+              public Insets getBorderInsets(<caret>Component c) {
+              }
+          }""";
     configureFromFileText(getTestName(false) + ".java", text);
     cutToLineEnd();
     executeAction("EditorDeleteToWordEnd");
@@ -270,38 +273,44 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
   }
 
   public void testKillsInterruptedBySplit() throws Exception {
-    String text = "public class ParentCopy {\n" +
-                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
-                  "        }\n" +
-                  "    }";
+    String text = """
+      public class ParentCopy {
+              public Insets getBorderInsets(<caret>Component c) {
+              }
+          }""";
     configureFromFileText(getTestName(false) + ".java", text);
     cutToLineEnd();
     executeAction("EditorSplitLine");
     cutToLineEnd();
     cutToLineEnd();
-    checkResultByText("public class ParentCopy {\n" +
-                      "        public Insets getBorderInsets(        }\n" +
-                      "    }");
+    checkResultByText("""
+                        public class ParentCopy {
+                                public Insets getBorderInsets(        }
+                            }""");
 
     Object string = getContents();
-    assertEquals("\n" +
-                 "                \n", string);
+    assertEquals("""
+
+                                  \s
+                   """, string);
   }
 
   public void testKillsInterruptedByStartNewLine() throws Exception {
-    String text = "public class ParentCopy {\n" +
-                  "        public Insets getBorderInsets(<caret>Component c) {\n" +
-                  "        }\n" +
-                  "    }";
+    String text = """
+      public class ParentCopy {
+              public Insets getBorderInsets(<caret>Component c) {
+              }
+          }""";
     configureFromFileText(getTestName(false) + ".java", text);
     cutToLineEnd();
     executeAction("EditorStartNewLine");
     cutToLineEnd();
     cutToLineEnd();
-    checkResultByText("public class ParentCopy {\n" +
-                      "        public Insets getBorderInsets(\n" +
-                      "                \n" +
-                      "    }");
+    checkResultByText("""
+                        public class ParentCopy {
+                                public Insets getBorderInsets(
+                                       \s
+                            }""");
 
     Object string = getContents();
     assertEquals("\n" +

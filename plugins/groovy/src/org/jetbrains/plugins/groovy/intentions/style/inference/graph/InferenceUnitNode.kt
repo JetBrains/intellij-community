@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.PsiWildcardType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.INHABIT
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
@@ -58,7 +59,7 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
     }
 
     if (parent == null) {
-      if (typeInstantiation == PsiType.NULL) {
+      if (typeInstantiation == PsiTypes.nullType()) {
         return PsiWildcardType.createUnbounded(core.initialTypeParameter.manager) to REIFIED_AS_PROPER_TYPE
       }
       if (typeInstantiation.resolve()?.hasModifierProperty("final") == true) {
@@ -95,7 +96,7 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
     if (equivalenceClasses[type]?.any { usage.invariantTypes.contains(it.type) || it.subtypes.isNotEmpty() } == true) {
       val advice = parent?.type ?: typeInstantiation
       return if (advice == typeInstantiation) {
-        (if (advice == PsiType.NULL) type else advice) to ENDPOINT_TYPE_PARAMETER
+        (if (advice == PsiTypes.nullType()) type else advice) to ENDPOINT_TYPE_PARAMETER
       }
       else {
         advice to NEW_TYPE_PARAMETER
@@ -105,7 +106,7 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
     if (direct) {
       return typeInstantiation to REIFIED_AS_PROPER_TYPE
     }
-    if (typeInstantiation == PsiType.NULL) {
+    if (typeInstantiation == PsiTypes.nullType()) {
       return type to REIFIED_AS_TYPE_PARAMETER
     }
     return if (subtypes.isNotEmpty()) {

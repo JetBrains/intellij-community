@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,16 +42,25 @@ public abstract class PackagingElementFactory {
   public abstract PackagingElement<?> createModuleSource(@NotNull Module module);
 
   @NotNull
+  public abstract PackagingElement<?> createTestModuleOutput(@NotNull String moduleName, @NotNull Project project);
+
+  @NotNull
   public abstract PackagingElement<?> createTestModuleOutput(@NotNull Module module);
 
   @NotNull
-  public abstract List<? extends PackagingElement<?>> createLibraryElements(@NotNull Library library);
+  public abstract List<PackagingElement<?>> createLibraryElements(@NotNull Library library);
+
+  @NotNull
+  public abstract List<? extends PackagingElement<?>> createLibraryElements(@NotNull LibraryEntity libraryEntity, String moduleName);
 
   @NotNull
   public abstract PackagingElement<?> createArtifactElement(@NotNull ArtifactPointer artifactPointer, @NotNull Project project);
 
   @NotNull
   public abstract PackagingElement<?> createArtifactElement(@NotNull Artifact artifact, @NotNull Project project);
+
+  @NotNull
+  public abstract PackagingElement<?> createArtifactElement(@NotNull String artifactName, @NotNull Project project);
 
   @NotNull
   public abstract PackagingElement<?> createLibraryFiles(@NotNull String libraryName, @NotNull @NonNls String level, @NonNls String moduleName);
@@ -80,8 +90,8 @@ public abstract class PackagingElementFactory {
   @NotNull
   public abstract CompositePackagingElement<?> getOrCreateArchive(@NotNull CompositePackagingElement<?> parent, @NotNull @NonNls String relativePath);
 
-  public abstract void addFileCopy(@NotNull CompositePackagingElement<?> root, @NotNull @NonNls String outputDirectoryPath, @NotNull @NonNls String sourceFilePath,
-                                   final @NonNls String outputFileName);
+  public abstract void addFileCopy(@NotNull CompositePackagingElement<?> root, @NotNull @NonNls String outputDirectoryPath,
+                                   @NotNull @NonNls String sourceFilePath, @NonNls String outputFileName, boolean addAsFirstChild);
 
   public abstract void addFileCopy(@NotNull CompositePackagingElement<?> root, @NotNull @NonNls String outputDirectoryPath, @NotNull @NonNls String sourceFilePath);
 

@@ -1,15 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.LookupManagerListener;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
@@ -25,10 +25,10 @@ import com.intellij.openapi.ui.popup.Balloon.Position;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -42,13 +42,11 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 
 import static com.intellij.codeInsight.hint.ParameterInfoTaskRunnerUtil.runTask;
 
-public class ParameterInfoController extends ParameterInfoControllerBase {
-
+public final class ParameterInfoController extends ParameterInfoControllerBase {
   private LightweightHint myHint;
   private final ParameterInfoComponent myComponent;
   private boolean myKeepOnHintHidden;
@@ -85,6 +83,9 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
     myParameterInfoControllerData.setParameterOwner(parameterOwner);
     myParameterInfoControllerData.setHighlighted(highlighted);
 
+    registerSelf();
+    setupListeners();
+
     LookupListener lookupListener = new LookupListener() {
       LookupImpl activeLookup = null;
       final MergingUpdateQueue queue = new MergingUpdateQueue("Update parameter info position", 200, true, myComponent);
@@ -92,6 +93,11 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
       @Override
       public void lookupShown(@NotNull LookupEvent event) {
         activeLookup = (LookupImpl)event.getLookup();
+      }
+
+      @Override
+      public void lookupCanceled(@NotNull LookupEvent event) {
+        activeLookup = null;
       }
 
       @Override
@@ -107,15 +113,14 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
       }
     };
 
-    PropertyChangeListener lookupChangeListener = evt -> {
-      if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName())) {
-        Lookup lookup = (Lookup)evt.getNewValue();
-        if (lookup != null) {
-          lookup.addLookupListener(lookupListener);
-        }
+
+    LookupManagerListener lookupManagerListener = (oldLookup, newLookup) -> {
+      if (newLookup != null && ClientId.isCurrentlyUnderLocalId()) {
+        newLookup.addLookupListener(lookupListener);
       }
     };
-    LookupManager.getInstance(project).addPropertyChangeListener(lookupChangeListener, this);
+
+    project.getMessageBus().connect(this).subscribe(LookupManagerListener.TOPIC, lookupManagerListener);
 
     if (showHint) {
       showHint(requestFocus, mySingleParameterInfo);
@@ -179,7 +184,7 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
     int flags = HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     if (!singleParameterInfo && myKeepOnHintHidden) flags |= HintManager.HIDE_BY_TEXT_CHANGE;
 
-    Editor editorToShow = myEditor instanceof EditorWindow ? ((EditorWindow)myEditor).getDelegate() : myEditor;
+    Editor editorToShow = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
 
     //update presentation of descriptors synchronously
     myComponent.update(mySingleParameterInfo);
@@ -280,16 +285,12 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
 
   @HintManager.PositionFlags
   private static short toShort(Position position) {
-    switch (position) {
-      case above:
-        return HintManager.ABOVE;
-      case atLeft:
-        return HintManager.LEFT;
-      case atRight:
-        return HintManager.RIGHT;
-      default:
-        return HintManager.UNDER;
-    }
+    return switch (position) {
+      case above -> HintManager.ABOVE;
+      case atLeft -> HintManager.LEFT;
+      case atRight -> HintManager.RIGHT;
+      default -> HintManager.UNDER;
+    };
   }
 
   @Override
@@ -319,7 +320,7 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
       hostWhitespaceStart = ((EditorWindow)myEditor).getDocument().injectedToHost(hostWhitespaceStart);
       hostWhitespaceEnd = ((EditorWindow)myEditor).getDocument().injectedToHost(hostWhitespaceEnd);
     }
-    List<Inlay> inlays = ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(hostEditor,
+    List<Inlay<?>> inlays = ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(hostEditor,
                                                                                                   hostWhitespaceStart, hostWhitespaceEnd);
     for (Inlay inlay : inlays) {
       int inlayOffset = inlay.getOffset();
@@ -354,7 +355,7 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
                                                    boolean showLookupHint) {
     if (ApplicationManager.getApplication().isUnitTestMode() ||
         ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return Pair.pair(new Point(), HintManager.DEFAULT);
+      return new Pair<>(new Point(), HintManager.DEFAULT);
     }
 
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
@@ -381,20 +382,16 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
     if (!showLookupHint && activeLookup != null && activeLookup.isShown()) {
       Rectangle lookupBounds = activeLookup.getBounds();
 
-      p1Ok = p1.y + hintSize.height + 50 < layeredPane.getHeight() && !isHintIntersectWithLookup(p1, hintSize, lookupBounds, isRealPopup);
-      p2Ok = p2.y - hintSize.height - 50 >= 0 && !isHintIntersectWithLookup(p2, hintSize, lookupBounds, isRealPopup);
+      p1Ok = p1.y + hintSize.height + 50 < layeredPane.getHeight() && !isHintIntersectWithLookup(p1, hintSize, lookupBounds, isRealPopup, HintManager.UNDER);
+      p2Ok = p2.y - hintSize.height - 70 >= 0 && !isHintIntersectWithLookup(p2, hintSize, lookupBounds, isRealPopup, HintManager.ABOVE);
 
       if (activeLookup.isPositionedAboveCaret()) {
         if (!p1Ok) {
           var abovePoint = new Point(lookupBounds.x, lookupBounds.y - hintSize.height - 10);
           SwingUtilities.convertPointToScreen(abovePoint, layeredPane);
-          var screenRectangle = new Rectangle(abovePoint, hintSize);
-          if (isFitTheScreen(screenRectangle)) {
-            // calculate if hint can be shown above lookup
-            abovePoint.move(lookupBounds.x, lookupBounds.y - hintSize.height - 10);
-            hint.setForceShowAsPopup(true);
-            return new Pair<>(abovePoint, HintManager.DEFAULT);
-          }
+          abovePoint.move(lookupBounds.x, lookupBounds.y - hintSize.height - 10);
+          hint.setForceShowAsPopup(true);
+          return new Pair<>(abovePoint, HintManager.DEFAULT);
         }
       }
       else {
@@ -452,10 +449,16 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
     return screen.contains(aRectangle);
   }
 
-  private static boolean isHintIntersectWithLookup(Point hintPoint, Dimension hintSize, Rectangle lookupBounds, boolean isRealPopup){
+  private static boolean isHintIntersectWithLookup(Point hintPoint,
+                                                   Dimension hintSize,
+                                                   Rectangle lookupBounds,
+                                                   boolean isRealPopup,
+                                                   short hintPosition){
     Point leftTopPoint = isRealPopup
       ? hintPoint
-      : new Point(hintPoint.x - hintSize.width / 2, hintPoint.y - hintSize.height);
+      : hintPosition == HintManager.ABOVE
+          ? new Point(hintPoint.x - hintSize.width / 2, hintPoint.y - hintSize.height)
+          : new Point(hintPoint.x - hintSize.width / 2, hintPoint.y);
 
     return lookupBounds.intersects(new Rectangle(leftTopPoint, hintSize));
   }
@@ -497,6 +500,7 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
 
       LookupImpl activeLookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
       Rectangle lookupBounds = !ApplicationManager.getApplication().isUnitTestMode()
+                               && !ApplicationManager.getApplication().isHeadlessEnvironment()
                                && activeLookup != null
                                && activeLookup.isShown()
                                ? activeLookup.getBounds()
@@ -511,17 +515,17 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
         return Pair.create(previousBestPoint, previousBestPosition);
       }
 
-      boolean isMultiline = list != null && StringUtil.containsAnyChar(list.getText(), "\n\r");
-      if (pos == null) pos = EditorUtil.inlayAwareOffsetToVisualPosition(myEditor, offset);
-      Pair<Point, Short> position;
+      Editor editor = myEditor;
+      if (pos == null) {
+        pos = EditorUtil.inlayAwareOffsetToVisualPosition(myEditor, offset);
+        // The position above is always in the host editor. If we are in an injected
+        // editor this position will likely be outside of our range and the hint position
+        // will be our range's end. To avoid that and compute hint position correctly,
+        // switch to the host editor.
+        editor = myEditor instanceof EditorWindow ? ((EditorWindow)myEditor).getDelegate() : editor;
+      }
+      Pair<Point, Short> position = chooseBestHintPosition(editor, pos, hint, activeLookup, preferredPosition, false);
 
-      if (!isMultiline) {
-        position = chooseBestHintPosition(myEditor, pos, hint, activeLookup, preferredPosition, false);
-      }
-      else {
-        Point p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManager.ABOVE);
-        position = new Pair<>(p, HintManager.ABOVE);
-      }
       previousBestPoint = position.getFirst();
       previousBestPosition = position.getSecond();
       previousOffset = offset;
@@ -531,7 +535,7 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
     }
   }
 
-  private static class WrapperPanel extends JPanel {
+  static class WrapperPanel extends JPanel {
     WrapperPanel() {
       super(new BorderLayout());
       setBorder(JBUI.Borders.empty());

@@ -1,96 +1,61 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication
 
-import com.intellij.ide.BrowserUtil.browse
+import com.intellij.collaboration.auth.credentials.Credentials
+import com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer
+import com.intellij.collaboration.auth.services.OAuthRequest
+import com.intellij.collaboration.auth.services.OAuthServiceBase
+import com.intellij.collaboration.auth.services.PkceUtils
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Url
 import com.intellij.util.Urls.newFromEncoded
-import com.intellij.util.io.DigestUtil.randomToken
-import com.intellij.util.io.DigestUtil.sha256
-import com.intellij.util.io.HttpRequests
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.CancellablePromise
-import org.jetbrains.concurrency.rejectedCancellablePromise
-import org.jetbrains.plugins.github.authentication.GHOAuthCallbackHandler.Companion.authorizationCodeUrl
-import org.jetbrains.plugins.github.authentication.GHOAuthService.Companion.ACCESS_TOKEN_URL
-import org.jetbrains.plugins.github.authentication.GHOAuthService.Companion.AUTHORIZE_URL
-import java.io.IOException
+import org.jetbrains.ide.BuiltInServerManager
+import org.jetbrains.ide.RestService
 import java.util.*
-import java.util.concurrent.atomic.AtomicReference
-
-internal fun isOAuthEnabled(): Boolean = Registry.`is`("github.use.oauth")
+import java.util.concurrent.CompletableFuture
 
 @Service
-internal class GHOAuthService {
-  private val currentRequest = AtomicReference<GHTokenRequest?>()
+internal class GHOAuthService : OAuthServiceBase<Credentials>() {
+  override val name: String get() = SERVICE_NAME
 
-  fun requestToken(): CancellablePromise<String> {
-    if (!currentRequest.compareAndSet(null, GHTokenRequest())) return rejectedCancellablePromise("Already running")
-
-    val request = currentRequest.get()!!
-    request.onError { } // not to log exceptions as errors
-    request.onProcessed { currentRequest.set(null) }
-    request.startAuthorization()
-    return request
+  fun authorize(): CompletableFuture<Credentials> {
+    return authorize(GHOAuthRequest())
   }
 
-  fun acceptCode(code: String): Boolean {
-    val request = currentRequest.get() ?: return false
-
-    request.processCode(code)
-    return request.isSucceeded
+  override fun revokeToken(token: String) {
+    TODO("Not yet implemented")
   }
 
-  companion object {
-    val instance: GHOAuthService
-      get() = service()
+  private class GHOAuthRequest : OAuthRequest<Credentials> {
+    private val port: Int get() = BuiltInServerManager.getInstance().port
 
-    private val SERVICE_URL: Url = newFromEncoded("https://account.jetbrains.com/github/oauth/intellij")
+    private val codeVerifier = PkceUtils.generateCodeVerifier()
 
-    val AUTHORIZE_URL: Url
-      get() = SERVICE_URL.resolve("authorize")
-    val ACCESS_TOKEN_URL: Url
-      get() = SERVICE_URL.resolve("access_token")
-    val SUCCESS_URL: Url
-      get() = SERVICE_URL.resolve("complete")
-    val ERROR_URL: Url
-      get() = SERVICE_URL.resolve("error")
-  }
-}
+    private val codeChallenge = PkceUtils.generateShaCodeChallenge(codeVerifier, Base64.getEncoder())
 
-private class GHTokenRequest : AsyncPromise<String>() {
-  private val codeVerifier: String = randomToken()
-  private val codeChallenge: String get() = Base64.getEncoder().encodeToString(sha256().digest(codeVerifier.toByteArray()))
+    override val authorizationCodeUrl: Url
+      get() = newFromEncoded("http://127.0.0.1:$port/${RestService.PREFIX}/$SERVICE_NAME/authorization_code")
 
-  fun startAuthorization() {
-    val authorizeUrl = AUTHORIZE_URL.addParameters(mapOf(
+    override val credentialsAcquirer: OAuthCredentialsAcquirer<Credentials> = GHOAuthCredentialsAcquirer(codeVerifier)
+
+    override val authUrlWithParameters: Url = AUTHORIZE_URL.addParameters(mapOf(
       "code_challenge" to codeChallenge,
       "callback_url" to authorizationCodeUrl.toExternalForm()
     ))
 
-    browse(authorizeUrl.toExternalForm())
-  }
-
-  fun processCode(code: String) {
-    try {
-      val token = acquireToken(code)
-      if (token != null) setResult(token) else setError("No token provided")
-    }
-    catch (e: IOException) {
-      setError(e)
+    companion object {
+      private val AUTHORIZE_URL: Url
+        get() = SERVICE_URL.resolve("authorize")
     }
   }
 
-  private fun acquireToken(code: String): String? {
-    val tokenUrl = ACCESS_TOKEN_URL.addParameters(mapOf(
-      "code" to code,
-      "code_verifier" to codeVerifier
-    ))
+  companion object {
+    private const val SERVICE_NAME = "github/oauth"
 
-    return HttpRequests.post(tokenUrl.toExternalForm(), null).connect { it.getToken() }
+    val instance: GHOAuthService
+      get() = service()
+
+    val SERVICE_URL: Url = newFromEncoded("https://account.jetbrains.com/github/oauth/intellij")
   }
 }
-
-private fun HttpRequests.Request.getToken(): String? = connection.getHeaderField("X-OAuth-Token")

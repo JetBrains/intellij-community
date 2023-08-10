@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.cloneDialog
 
 import com.intellij.openapi.application.ModalityState
@@ -8,6 +8,8 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.Companion.CLONE
+import com.intellij.openapi.vcs.ui.VcsCloneComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -17,7 +19,6 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.cloneDialog.RepositoryUrlCloneDialogExtension.RepositoryUrlMainExtensionComponent
 import java.awt.CardLayout
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.event.ListSelectionListener
@@ -25,14 +26,12 @@ import javax.swing.event.ListSelectionListener
 /**
  * Top-level UI-component for new clone/checkout dialog
  */
-class VcsCloneDialog private constructor(private val project: Project,
-                                         initialExtensionClass: Class<out VcsCloneDialogExtension>,
-                                         private var initialVcs: Class<out CheckoutProvider>? = null) : DialogWrapper(project) {
+class VcsCloneDialog private constructor(private val project: Project) : DialogWrapper(project) {
   private lateinit var extensionList: VcsCloneDialogExtensionList
   private val cardLayout = CardLayout()
   private val mainPanel = JPanel(cardLayout)
   private val extensionComponents: MutableMap<String, VcsCloneDialogExtensionComponent> = HashMap()
-  private val listModel = CollectionListModel<VcsCloneDialogExtension>(VcsCloneDialogExtension.EP_NAME.extensionList)
+  private val listModel = CollectionListModel(VcsCloneDialogExtension.EP_NAME.extensionList)
 
   private val listener = object : VcsCloneDialogComponentStateListener {
     override fun onOkActionNameChanged(name: String) = setOKButtonText(name)
@@ -51,13 +50,9 @@ class VcsCloneDialog private constructor(private val project: Project,
       rootPane.minimumSize = it
       rootPane.preferredSize = it
     }
-
-    VcsCloneDialogExtension.EP_NAME.findExtension(initialExtensionClass)?.let {
-      ScrollingUtil.selectItem(extensionList, it)
-    }
   }
 
-  override fun getStyle() = DialogStyle.COMPACT
+  override fun getStyle(): DialogStyle = DialogStyle.COMPACT
 
   override fun createCenterPanel(): JComponent {
     extensionList = VcsCloneDialogExtensionList(listModel).apply {
@@ -84,21 +79,21 @@ class VcsCloneDialog private constructor(private val project: Project,
   override fun getPreferredFocusedComponent(): JComponent? = getSelectedComponent()?.getPreferredFocusedComponent()
 
   fun doClone(checkoutListener: CheckoutProvider.Listener) {
-    getSelectedComponent()?.doClone(checkoutListener)
+    val selectedComponent = getSelectedComponent()
+    if (selectedComponent != null) {
+      CLONE.log(project, selectedComponent.javaClass)
+      selectedComponent.doClone(checkoutListener)
+    }
   }
 
   private fun switchComponent(extension: VcsCloneDialogExtension) {
-    val extensionId = extension.javaClass.name
-    val mainComponent = extensionComponents.getOrPut(extensionId, {
+    val extensionId = extension.id
+    val mainComponent = extensionComponents.getOrPut(extensionId) {
       val component = extension.createMainComponent(project, ModalityState.stateForComponent(window))
       mainPanel.add(component.getView(), extensionId)
       Disposer.register(disposable, component)
       component.addComponentStateListener(listener)
       component
-    })
-
-    if (mainComponent is RepositoryUrlMainExtensionComponent) {
-      initialVcs?.let { mainComponent.openForVcs(it) }
     }
     mainComponent.onComponentSelected()
     cardLayout.show(mainPanel, extensionId)
@@ -108,13 +103,29 @@ class VcsCloneDialog private constructor(private val project: Project,
     return extensionComponents[extensionList.selectedValue.javaClass.name]
   }
 
+  private fun selectExtension(extension: VcsCloneDialogExtension) {
+    ScrollingUtil.selectItem(extensionList, extension)
+  }
+
   class Builder(private val project: Project) {
     fun forExtension(clazz: Class<out VcsCloneDialogExtension> = RepositoryUrlCloneDialogExtension::class.java): VcsCloneDialog {
-      return VcsCloneDialog(project, clazz, null)
+      return VcsCloneDialog(project).apply {
+        VcsCloneDialogExtension.EP_NAME.findExtension(clazz)?.let { selectExtension(it) }
+      }
     }
 
-    fun forVcs(clazz: Class<out CheckoutProvider>): VcsCloneDialog {
-      return VcsCloneDialog(project, RepositoryUrlCloneDialogExtension::class.java, clazz)
+    @JvmOverloads
+    fun forVcs(clazz: Class<out CheckoutProvider>, url: String? = null): VcsCloneDialog {
+      return VcsCloneDialog(project).apply {
+        VcsCloneDialogExtension.EP_NAME.findExtension(RepositoryUrlCloneDialogExtension::class.java)?.let { selectExtension(it) }
+        val repoComponent = (getSelectedComponent() as? RepositoryUrlMainExtensionComponent)?.openForVcs(clazz)
+        if(url != null) {
+          (repoComponent?.getCurrentVcsComponent() as? VcsCloneComponent.WithSettableUrl)?.setUrl(url)
+        }
+      }
     }
   }
 }
+
+private val VcsCloneDialogExtension.id: String
+  get() = javaClass.name

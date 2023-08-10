@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization
 
 import com.intellij.openapi.externalSystem.model.project.dependencies.*
@@ -24,7 +24,6 @@ import org.jetbrains.plugins.gradle.model.tests.DefaultExternalTestsModel
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.RepositoriesModelImpl
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.IdeaProjectSerializationService
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.*
 import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator
 import org.junit.Before
@@ -103,7 +102,8 @@ class ToolingSerializerTest {
   @Test
   @Throws(Exception::class)
   fun `IDEA project serialization test`() {
-    val gradleVersion = GradleVersion.version("5.5")
+    // do not assert GradleVersion.buildTime and GradleVersion.commitId properties of GradleVersionComparator.myVersion field
+    val gradleVersion = GradleVersion.version(GradleVersion.current().version)
     myRandomParameters
       .randomize(
         ofType(GradleVersionComparator::class.java).and(inClass(InternalIdeaContentRoot::class.java)),
@@ -115,12 +115,9 @@ class ToolingSerializerTest {
       )
       .excludeField(named("parent").and(ofType(InternalIdeaProject::class.java)).and(inClass(InternalIdeaModule::class.java)))
       .excludeField(named("parent").and(ofType(InternalGradleProject::class.java)).and(inClass(InternalGradleProject::class.java)))
-      // relax InternalBuildIdentifier.rootDir absolute path assertion
-      .randomize(File::class.java) { File(myRandom.nextObject(String::class.java)).absoluteFile }
       .excludeField(named("gradleProject").and(inClass(InternalGradleTask::class.java)))
 
     val serializer = ToolingSerializer()
-    serializer.register(IdeaProjectSerializationService(gradleVersion))
     doTest(InternalIdeaProject::class.java, Consumer { ideaProject ->
       val buildIdentifier = InternalBuildIdentifier(myRandom.nextObject(File::class.java))
       ideaProject.children.forEach { ideaModule ->
@@ -167,7 +164,7 @@ class ToolingSerializerTest {
     val testComponentDependencies = ComponentDependenciesImpl("test", testCompileDependencies, testRuntimeDependencies)
     projectDependencies.add(testComponentDependencies)
 
-    val bytes = ToolingSerializer().write(projectDependencies, ProjectDependenciesImpl::class.java)
+    val bytes = ToolingSerializer().write(projectDependencies)
     val deserializedObject = ToolingSerializer().read(bytes, ProjectDependenciesImpl::class.java)
 
     val deserializedMainNestedDependency = deserializedObject!!.componentsDependencies[0].runtimeDependenciesGraph.dependencies[0].dependencies[0]
@@ -193,7 +190,7 @@ class ToolingSerializerTest {
                          serializer: ToolingSerializer) {
     val generatedObject = myRandom.nextObject(modelClazz)
     generatedObjectPatcher?.accept(generatedObject)
-    val bytes = serializer.write(generatedObject as Any, modelClazz)
+    val bytes = serializer.write(generatedObject as Any)
     val deserializedObject = serializer.read(bytes, modelClazz)
     assertThat(deserializedObject).usingRecursiveComparison().isEqualTo(generatedObject)
   }
@@ -241,7 +238,6 @@ class ToolingSerializerTest {
         tasks[task.name] = task
       }
 
-      @Suppress("UNCHECKED_CAST")
       val projectMap = externalProject.childProjects as TreeMap<String, DefaultExternalProject>
       for (key in projectMap.keys.toList()) {
         val childProject = projectMap.remove(key)

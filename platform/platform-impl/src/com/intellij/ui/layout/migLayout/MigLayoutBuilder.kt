@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.layout.migLayout
 
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY
 import com.intellij.openapi.ui.ValidationInfo
@@ -9,12 +10,15 @@ import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.SmartList
+import com.intellij.util.containers.CollectionFactory
 import net.miginfocom.layout.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Container
-import java.util.*
 import javax.swing.*
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuilderImpl {
   companion object {
     private var hRelatedGap = -1
@@ -50,8 +54,8 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   /**
    * Map of component to constraints shared among rows (since components are unique)
    */
-  internal val componentConstraints: MutableMap<Component, CC> = IdentityHashMap()
-  override val rootRow = MigLayoutRow(parent = null, builder = this, indent = 0)
+  internal val componentConstraints: MutableMap<Component, CC> = CollectionFactory.createWeakIdentityMap(4, 0.8f)
+  override val rootRow: MigLayoutRow = MigLayoutRow(parent = null, builder = this, indent = 0)
 
   private val buttonGroupStack: MutableList<ButtonGroup> = mutableListOf()
   override var preferredFocusedComponent: JComponent? = null
@@ -62,10 +66,10 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   override var resetCallbacks: MutableMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
   override var isModifiedCallbacks: MutableMap<JComponent?, MutableList<() -> Boolean>> = linkedMapOf()
 
-  val topButtonGroup: ButtonGroup?
+  internal val topButtonGroup: ButtonGroup?
     get() = buttonGroupStack.lastOrNull()
 
-  internal var hideableRowNestingLevel = 0
+  internal var hideableRowNestingLevel: Int = 0
 
   override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
     buttonGroupStack.add(buttonGroup)
@@ -98,17 +102,17 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   }
 
 
-  val defaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
+  internal val defaultComponentConstraintCreator: DefaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
 
   // keep in mind - MigLayout always creates one more than need column constraints (i.e. for 2 will be 3)
   // it doesn't lead to any issue.
-  val columnConstraints = AC()
+  internal val columnConstraints: AC = AC()
 
   // MigLayout in any case always creates CC, so, create instance even if it is not required
   private val Component.constraints: CC
     get() = componentConstraints.getOrPut(this) { CC() }
 
-  fun updateComponentConstraints(component: Component, callback: CC.() -> Unit) {
+  internal fun updateComponentConstraints(component: Component, callback: CC.() -> Unit) {
     component.constraints.callback()
   }
 
@@ -136,9 +140,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
      */
 
     lc.isVisualPadding = true
-
-    // if 3, invisible component will be disregarded completely and it means that if it is last component, it's "wrap" constraint will be not taken in account
-    lc.hideMode = 2
+    lc.hideMode = 3
 
     val rowConstraints = AC()
     (container as JComponent).putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
@@ -172,13 +174,18 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
     }
     else {
       for ((rowIndex, row) in physicalRows.withIndex()) {
-        row.rowConstraints = rowConstraints.index(rowIndex).constaints[rowIndex];
+        val isLastRow = rowIndex == physicalRows.size - 1
+        row.rowConstraints = rowConstraints.index(rowIndex).constaints[rowIndex]
         if (row.noGrid) {
           rowConstraints.noGrid(rowIndex)
         }
         else {
-          row.gapAfter?.let {
-            rowConstraints.gap(it, rowIndex)
+          if (row.gapAfter != null) {
+            rowConstraints.gap(row.gapAfter, rowIndex)
+          }
+          else if (isLastRow) {
+            // Do not append default gap to the last row
+            rowConstraints.gap("0px!", rowIndex)
           }
         }
         // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
@@ -193,6 +200,9 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
           if (index == row.components.size - 1) {
             cc.spanX()
             cc.isWrap = true
+            if (row.components.size > 1) {
+              cc.hideMode = 2   // if hideMode is 3, the wrap constraint won't be processed
+            }
           }
 
           if (index >= row.rightIndex) {
@@ -203,9 +213,6 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
         }
       }
     }
-
-    // do not hold components
-    componentConstraints.clear()
   }
 
   private fun collectPhysicalRows(rootRow: MigLayoutRow): List<MigLayoutRow> {
@@ -273,6 +280,9 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
           }
         }
       }
+      else if (prevRowType == RowType.NESTED_PANEL) {
+        prevRow.gapAfter = "0px!"
+      }
     }
   }
 
@@ -287,11 +297,14 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
           it is JBTextArea || it is JComboBox<*>
         }) return RowType.CHECKBOX_TALL
     }
+    if (row.components.singleOrNull() is DialogPanel) {
+      return RowType.NESTED_PANEL
+    }
     return RowType.GENERIC
   }
 
   private enum class RowType {
-    GENERIC, CHECKBOX, CHECKBOX_TALL;
+    GENERIC, CHECKBOX, CHECKBOX_TALL, NESTED_PANEL;
 
     val isCheckboxRow get() = this == CHECKBOX || this == CHECKBOX_TALL
   }
@@ -299,7 +312,6 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
 
 private fun LC.apply(flags: Array<out LCFlags>): LC {
   for (flag in flags) {
-    @Suppress("NON_EXHAUSTIVE_WHEN")
     when (flag) {
       LCFlags.noGrid -> isNoGrid = true
 

@@ -27,21 +27,11 @@ public abstract class GradleFrameworkSupportProvider extends FrameworkSupportInM
   public static final ExtensionPointName<GradleFrameworkSupportProvider> EP_NAME =
     ExtensionPointName.create("org.jetbrains.plugins.gradle.frameworkSupport");
 
-  /**
-   * @deprecated use {@link #addSupport(ProjectId, Module, ModifiableRootModel, ModifiableModelsProvider, BuildScriptDataBuilder)}
-   */
-  @Deprecated
-  public void addSupport(@NotNull Module module, @NotNull ModifiableRootModel rootModel,
-                         @NotNull ModifiableModelsProvider modifiableModelsProvider,
-                         @NotNull BuildScriptDataBuilder buildScriptData) {
-  }
-
   public void addSupport(@NotNull ProjectId projectId,
                          @NotNull Module module,
                          @NotNull ModifiableRootModel rootModel,
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @NotNull BuildScriptDataBuilder buildScriptData) {
-    addSupport(module, rootModel, modifiableModelsProvider, buildScriptData);
   }
 
   public JComponent createComponent() {

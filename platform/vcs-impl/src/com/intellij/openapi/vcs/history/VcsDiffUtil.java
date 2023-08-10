@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.project.Project;
@@ -11,13 +11,12 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.vcs.CompareWithLocalDialog;
 import com.intellij.vcsUtil.VcsFileUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,12 +37,26 @@ public final class VcsDiffUtil {
            (localMark ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
   }
 
+  @Nls
+  @NotNull
+  public static String getRevisionTitle(@NotNull @NlsSafe String revision, @Nullable FilePath file, @Nullable FilePath baseFile) {
+    boolean needFileName = file != null && !VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(baseFile, file);
+    if (!needFileName) return revision;
+
+    String fileName = getRelativeFileName(baseFile, file);
+
+    return revision.isEmpty() ? fileName : String.format("%s (%s)", revision, fileName); //NON-NLS
+  }
+
   public static void putFilePathsIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
     ContentRevision afterRevision = change.getAfterRevision();
     ContentRevision beforeRevision = change.getBeforeRevision();
     FilePath aFile = afterRevision == null ? null : afterRevision.getFile();
     FilePath bFile = beforeRevision == null ? null : beforeRevision.getFile();
-    context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(afterRevision, aFile, null));
+    String afterRevisionName = afterRevision instanceof CurrentContentRevision
+                               ? VcsBundle.message("diff.title.local")
+                               : getShortHash(afterRevision);
+    context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(afterRevisionName, aFile, null));
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(beforeRevision, bFile, aFile));
   }
 
@@ -52,10 +65,7 @@ public final class VcsDiffUtil {
   public static String getRevisionTitle(@Nullable ContentRevision revision,
                                         @Nullable FilePath file,
                                         @Nullable FilePath baseFile) {
-    return getShortHash(revision) +
-           (file == null || VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(baseFile, file)
-            ? ""
-            : " (" + getRelativeFileName(baseFile, file) + ")");
+    return getRevisionTitle(getShortHash(revision), file, baseFile);
   }
 
   @NlsSafe
@@ -77,16 +87,19 @@ public final class VcsDiffUtil {
   }
 
   @RequiresEdt
-  public static void showChangesDialog(@NotNull Project project, @NotNull @NlsContexts.DialogTitle String title, @NotNull List<? extends Change> changes) {
+  public static void showChangesDialog(@NotNull Project project,
+                                       @NotNull @NlsContexts.DialogTitle String title,
+                                       @NotNull List<? extends Change> changes) {
     DialogBuilder dialogBuilder = new DialogBuilder(project);
 
     dialogBuilder.setTitle(title);
     dialogBuilder.setActionDescriptors(new DialogBuilder.CloseDialogAction());
-    final SimpleChangesBrowser changesBrowser = new SimpleChangesBrowser(project, false, true);
+    final SimpleAsyncChangesBrowser changesBrowser = new SimpleAsyncChangesBrowser(project, false, true);
     changesBrowser.setChangesToDisplay(changes);
     dialogBuilder.setCenterPanel(changesBrowser);
     dialogBuilder.setPreferredFocusComponent(changesBrowser.getPreferredFocusedComponent());
     dialogBuilder.setDimensionServiceKey("VcsDiffUtil.ChangesDialog");
+    dialogBuilder.addDisposable(() -> changesBrowser.shutdown());
     dialogBuilder.showNotModal();
   }
 
@@ -103,9 +116,9 @@ public final class VcsDiffUtil {
     String revNumTitle1 = getRevisionTitle(getShortRevisionString(targetRevNumber), false);
     String revNumTitle2 = VcsBundle.message("diff.title.local");
     String dialogTitle = VcsBundle.message("history.dialog.title.difference.between.versions.in",
-                                           revNumTitle1, revNumTitle2, VcsUtil.getFilePath(file));
+                                           revNumTitle1, revNumTitle2, file.getName());
 
-    CompareWithLocalDialog.showDialog(project, dialogTitle, CompareWithLocalDialog.LocalContent.AFTER, () -> {
+    CompareWithLocalDialog.showChanges(project, dialogTitle, CompareWithLocalDialog.LocalContent.AFTER, () -> {
       return provider.compareWithWorkingDir(file, targetRevNumber);
     });
   }

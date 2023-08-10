@@ -84,7 +84,7 @@ public final class ScopeUtil {
       return context instanceof ScopeOwner ? (ScopeOwner)context : getScopeOwner(context);
     }
     if (element instanceof StubBasedPsiElement) {
-      final StubElement stub = ((StubBasedPsiElement)element).getStub();
+      final StubElement stub = ((StubBasedPsiElement<?>)element).getStub();
       if (stub != null) {
         StubElement parentStub = stub.getParentStub();
         while (parentStub != null) {
@@ -129,8 +129,7 @@ public final class ScopeUtil {
       return nextOwner;
     }
     // Function return annotations and type comments are resolved outside of the function
-    if (firstOwner instanceof PyFunction) {
-      final PyFunction function = (PyFunction)firstOwner;
+    if (firstOwner instanceof PyFunction function) {
       if (isAncestor(function.getAnnotation(), element, false) || isAncestor(function.getTypeComment(), element, false)) {
         return nextOwner;
       }

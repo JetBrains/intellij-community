@@ -82,8 +82,7 @@ public final class GeeseUtil {
 
     //search for start of the line
     cur = parent;
-    if (cur.getParent() instanceof GrMethodCall) {
-      GrMethodCall call = (GrMethodCall)cur.getParent();
+    if (cur.getParent() instanceof GrMethodCall call) {
       GrExpression invoked = call.getInvokedExpression();
       if (invoked instanceof GrReferenceExpression && ((GrReferenceExpression)invoked).getReferenceNameElement() != null) {
         cur = ((GrReferenceExpression)invoked).getReferenceNameElement();

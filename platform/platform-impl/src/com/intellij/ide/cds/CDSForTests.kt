@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
  */
 object CDSForTests {
   @JvmStatic
-  fun waitForEnabledCDS(@Suppress("UNUSED_PARAMETER") context: PlaybackContext): Promise<String> {
+  fun waitForEnabledCDS(@Suppress("UNUSED_PARAMETER") context: PlaybackContext): String? {
     val promise = AsyncPromise<String>()
 
     object : Runnable {
@@ -34,6 +34,6 @@ object CDSForTests {
       }
     }.run()
 
-    return promise
+    return promise.get()
   }
 }

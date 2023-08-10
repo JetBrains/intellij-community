@@ -1,32 +1,37 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("EXPERIMENTAL_API_USAGE")
 
 package com.intellij.execution.process.mediator.daemon
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ClosedSendChannelException
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.actor
-import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.takeWhile
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.CoroutineContext
 
 
 interface QuotaManager : Closeable {
   fun check(): Boolean
 
-  /** The returned job completes as soon as the quota is exceeded, but never before [check] starts returning false. */
+  /**
+   * The returned job completes as soon as the quota is exceeded and all [runIfPermitted] blocks finished,
+   * but never before [check] starts returning false.
+   */
   fun asJob(): Job
 }
 
-
-internal suspend fun <R : Any> QuotaManager.runIfPermitted(block: suspend () -> R): R? {
+/**
+ * Check if the quota has not been exceeded yet,
+ * and prevents the manager from completing its [job][QuotaManager.asJob] until the block finishes.
+ */
+@Throws(QuotaExceededException::class)
+internal inline fun <R : Any> QuotaManager.runIfPermitted(block: () -> R): R {
   val childJob = Job(this.asJob())  // prevents the QuotaManager Job from finishing in case quota exceeds while running the block
   try {
     if (!this.check()) {
-      return null
+      throw QuotaExceededException()
     }
     check(childJob.isActive) { "check() returned true after asJob() has completed" }
 
@@ -41,31 +46,32 @@ internal suspend fun <R : Any> QuotaManager.runIfPermitted(block: suspend () -> 
 internal class TimeQuotaManager(
   coroutineScope: CoroutineScope,
   quotaOptions: QuotaOptions = QuotaOptions.UNLIMITED,
-) : QuotaManager, CoroutineScope by coroutineScope {
-  private val stopwatchRef: AtomicReference<QuotaStopwatch>
+) : QuotaManager {
+  private val stopwatchRef: AtomicReference<QuotaStopwatch> = AtomicReference(QuotaStopwatch.New(quotaOptions))
 
-  private val job = Job(coroutineContext[Job])
-  private val timeoutActor = createTimeoutActor(job)
-
-  init {
-    val stopwatch = QuotaStopwatch.New(quotaOptions)
-    stopwatchRef = AtomicReference(stopwatch)
-
-    job.invokeOnCompletion {
-      stopwatchRef.set(QuotaStopwatch.Exceeded)
+  private val job = Job(coroutineScope.coroutineContext[Job]).apply {
+    invokeOnCompletion {
+      stopwatchRef.set(QuotaStopwatch.Expired)
+      mutableStateFlow.value = null
     }
+  }
+  private val timeoutScope = coroutineScope + Job(job).also {
     if (job.complete()) {
-      // doesn't in fact complete until the child actor completes
+      // doesn't in fact complete until the timeoutJob completes
       job.ensureActive()
     }
-    timeoutActor.offer(stopwatch)
   }
+
+  private val mutableStateFlow: MutableStateFlow<QuotaState?> = MutableStateFlow(stopwatchRef.get().toState())
+
+  val stateUpdateFlow: Flow<QuotaState>
+    get() = mutableStateFlow.takeWhile { it != null }.filterNotNull()
 
   override fun asJob(): Job = job
 
   override fun check(): Boolean {
-    val quota = updateStopwatch { it.refresh() }
-    return quota !is QuotaStopwatch.Exceeded
+    val stopwatch = updateStopwatch { it.refresh() }
+    return stopwatch !is QuotaStopwatch.Expired
   }
 
   fun adjustQuota(newOptions: QuotaOptions) {
@@ -73,51 +79,46 @@ internal class TimeQuotaManager(
   }
 
   private fun updateStopwatch(function: (t: QuotaStopwatch) -> QuotaStopwatch): QuotaStopwatch {
-    return stopwatchRef.updateAndGet(function).takeIf { stopwatch ->
-      timeoutActor.tryOffer(stopwatch)
-    } ?: QuotaStopwatch.Exceeded.also {
-      stopwatchRef.set(it)
+    return stopwatchRef.updateAndGet(function).also { stopwatch ->
+      onStopwatchUpdated(stopwatch)
     }
   }
 
-  override fun close() {
-    cancel("Closed")
+  private fun updateStopwatch(expectedStopwatch: QuotaStopwatch, stopwatch: QuotaStopwatch): Boolean {
+    return stopwatchRef.compareAndSet(expectedStopwatch, stopwatch).also { success ->
+      if (success) {
+        onStopwatchUpdated(stopwatch)
+      }
+    }
   }
-}
 
-private fun <T> SendChannel<T>.tryOffer(quota: T): Boolean {
-  return try {
-    offer(quota)
-  }
-  catch (e: CancellationException) {
-    false
-  }
-  catch (e: ClosedSendChannelException) {
-    false
-  }
-}
-
-private fun CoroutineScope.createTimeoutActor(context: CoroutineContext): SendChannel<QuotaStopwatch> {
-  return actor(context, capacity = Channel.CONFLATED) {
-    var stopwatch: QuotaStopwatch = channel.receive()
-
-    while (stopwatch !is QuotaStopwatch.Exceeded) {
-      stopwatch = select {
-        channel.onReceive { it }
-
-        (stopwatch as? QuotaStopwatch.Active)?.let { activeStopwatch ->
-          if (!activeStopwatch.isUnlimited) {
-            onTimeout(activeStopwatch.remaining()) { QuotaStopwatch.Exceeded }
+  private fun onStopwatchUpdated(stopwatch: QuotaStopwatch) {
+    when (stopwatch) {
+      is QuotaStopwatch.Active -> {
+        if (!stopwatch.isUnlimited) {
+          timeoutScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            delay(stopwatch.remaining())
+            updateStopwatch(stopwatch, QuotaStopwatch.Expired)
           }
         }
       }
+      QuotaStopwatch.Expired -> {
+        timeoutScope.cancel("expired")
+      }
+      else -> {}
     }
-    channel.close()  // otherwise the channel becomes cancelled once the actor returns
+    mutableStateFlow.value = stopwatch.toState()
+  }
+
+  override fun close() {
+    job.cancel("Closed")
   }
 }
 
 
 private sealed class QuotaStopwatch {
+  abstract val options: QuotaOptions
+
   /**
    * This can only reduce the quota. An already exceeded quota doesn't change.
    */
@@ -129,16 +130,18 @@ private sealed class QuotaStopwatch {
    */
   abstract fun refresh(): QuotaStopwatch
 
+  abstract fun toState(): QuotaState
 
   data class New(
-    val options: QuotaOptions,
+    override val options: QuotaOptions,
   ) : QuotaStopwatch() {
     override fun adjust(newOptions: QuotaOptions): QuotaStopwatch = copy(options = options.adjust(newOptions))
     override fun refresh(): QuotaStopwatch = Active(options)  // the very first process is always permitted
+    override fun toState() = QuotaState.New(options)
   }
 
   data class Active(
-    val options: QuotaOptions,
+    override val options: QuotaOptions,
     private val startTimeMillis: Long = System.currentTimeMillis(),
   ) : QuotaStopwatch() {
     val isUnlimited get() = options.isUnlimited
@@ -146,22 +149,28 @@ private sealed class QuotaStopwatch {
     fun elapsed(): Long = if (isUnlimited) 0 else System.currentTimeMillis() - startTimeMillis
     fun remaining(): Long = if (isUnlimited) Long.MAX_VALUE else options.timeLimitMs - elapsed()
 
-    private fun isExceeded(): Boolean = remaining() <= 0
+    private fun isExpired(): Boolean = remaining() <= 0
 
     override fun adjust(newOptions: QuotaOptions): QuotaStopwatch = when {
-      isExceeded() -> Exceeded
+      isExpired() -> Expired
       else -> copy(options = options.adjust(newOptions))
     }
 
     override fun refresh(): QuotaStopwatch = when {
-      isExceeded() -> Exceeded
+      isExpired() -> Expired
       !options.isRefreshable -> this
       else -> copy(startTimeMillis = System.currentTimeMillis())
     }
+
+    override fun toState() = QuotaState.Active(options, elapsed())
   }
 
-  object Exceeded : QuotaStopwatch() {
+  object Expired : QuotaStopwatch() {
+    override val options: QuotaOptions
+      get() = QuotaOptions.EXCEEDED
+
     override fun adjust(newOptions: QuotaOptions): QuotaStopwatch = this
     override fun refresh(): QuotaStopwatch = this
+    override fun toState() = QuotaState.Expired
   }
 }

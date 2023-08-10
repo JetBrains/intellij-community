@@ -37,10 +37,6 @@ public abstract class PyQuickFixTestCase extends PyTestCase {
     myFixture.checkResultByFile(testFileName + "_after.py", true);
   }
 
-  protected void doQuickFixTest(final String hint, LanguageLevel languageLevel) {
-    runWithLanguageLevel(languageLevel, () -> doQuickFixTest(hint));
-  }
-
   protected void doQuickFixTest(final String hint) {
     String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");
@@ -69,5 +65,24 @@ public abstract class PyQuickFixTestCase extends PyTestCase {
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile(testFileName + ".py", testFileName + "_after.py", true);
+  }
+
+  protected void doNegativeTest(@NotNull Class inspectionClass, @NotNull String hint) {
+    final var testFileName = getTestName(true);
+    myFixture.enableInspections(inspectionClass);
+    myFixture.configureByFile(testFileName + ".py");
+    myFixture.checkHighlighting(true, false, false);
+    assertEmpty(myFixture.filterAvailableIntentions(hint));
+  }
+
+  protected void doMultiFileTest(@NotNull Class inspectionClass, @NotNull String hint) {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.enableInspections(inspectionClass);
+    myFixture.configureByFile("main.py");
+    myFixture.checkHighlighting(true, false, false);
+
+    final IntentionAction intentionAction = myFixture.findSingleIntention(hint);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(getTestName(true) + "/main_after.py", true);
   }
 }

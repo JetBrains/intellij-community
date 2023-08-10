@@ -24,22 +24,21 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.server.Unreferenced;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RemoteObject implements Remote, Unreferenced {
 
   public static final boolean IN_PROCESS = "true".equals(System.getProperty("idea.rmi.server.in.process"));
 
+  private static final int ALLOWED_EXCEPTIONS_RECURSION_DEPTH = 30;
+
   private final WeakReference<RemoteObject> myWeakRef;
   private RemoteObject myParent;
-  private final Map<RemoteObject, Remote> myChildren = new ConcurrentHashMap<RemoteObject, Remote>();
+  private final Map<RemoteObject, Remote> myChildren = new ConcurrentHashMap<>();
 
   public RemoteObject() {
-    myWeakRef = new WeakReference<RemoteObject>(this);
+    myWeakRef = new WeakReference<>(this);
   }
 
   public WeakReference<RemoteObject> getWeakRef() {
@@ -63,7 +62,7 @@ public class RemoteObject implements Remote, Unreferenced {
 
   public synchronized void unexportChildren() throws RemoteException {
     if (IN_PROCESS) return;
-    final ArrayList<RemoteObject> childrenRefs = new ArrayList<RemoteObject>(myChildren.keySet());
+    final ArrayList<RemoteObject> childrenRefs = new ArrayList<>(myChildren.keySet());
     myChildren.clear();
     for (RemoteObject child : childrenRefs) {
       child.unreferenced();
@@ -73,7 +72,7 @@ public class RemoteObject implements Remote, Unreferenced {
   public synchronized void unexportChildren(@NotNull Collection<? extends WeakReference<RemoteObject>> children) throws RemoteException {
     if (IN_PROCESS) return;
     if (children.isEmpty()) return;
-    final ArrayList<RemoteObject> list = new ArrayList<RemoteObject>(children.size());
+    final ArrayList<RemoteObject> list = new ArrayList<>(children.size());
     for (WeakReference<? extends RemoteObject> child : children) {
       RemoteObject element = child.get();
       if (element != null) {
@@ -104,30 +103,76 @@ public class RemoteObject implements Remote, Unreferenced {
     }
   }
 
-  public Throwable wrapException(Throwable ex) {
-    boolean foreignException = false;
-    Throwable each = ex;
-    while (each != null) {
-      if (!each.getClass().getName().startsWith("java.") && !isKnownException(each)) {
-        foreignException = true;
-        break;
-      }
-      each = each.getCause();
-    }
-
-    if (foreignException) {
-      final RuntimeException wrapper = new RuntimeException(ex.toString(), wrapException(ex.getCause()));
-      wrapper.setStackTrace(ex.getStackTrace());
-      ex = wrapper;
-    }
-    return ex;
+  public final Throwable wrapException(Throwable ex) {
+    return createExceptionProcessor().wrapException(ex);
   }
 
-  protected boolean isKnownException(Throwable ex) {
-    return false;
+  protected ExceptionProcessor createExceptionProcessor() {
+    return new ExceptionProcessor();
   }
 
   protected Iterable<RemoteObject> getExportedChildren() {
     return myChildren.keySet();
+  }
+
+  public static class ForeignException extends RuntimeException {
+    private final String myOriginalClassName; //or store hierarchy here
+
+    public static ForeignException create(String message, Class<?> clazz) {
+      String name = clazz.getName();
+      if (message.startsWith(name)) {
+        int o = name.length();
+        if (message.startsWith(":", o)) o += 1;
+        message = message.substring(o).trim();
+      }
+      return new ForeignException(message, name);
+    }
+
+    public ForeignException(String message, String originalClassName) {
+      super(message);
+      myOriginalClassName = originalClassName;
+    }
+
+    public String getOriginalClassName() {
+      return myOriginalClassName;
+    }
+
+    public String toString() {
+      String s = getOriginalClassName();
+      String message = getLocalizedMessage();
+      return (message != null) ? (s + ": " + message) : s;
+    }
+  }
+
+  public static class ExceptionProcessor {
+    private final Set<Throwable> recursion = new HashSet<>();
+
+    public final Throwable wrapException(Throwable ex) {
+      return ex == null || !recursion.add(ex) || recursion.size() >= ALLOWED_EXCEPTIONS_RECURSION_DEPTH ? null : wrapExceptionStep(ex);
+    }
+
+    protected Throwable wrapExceptionStep(Throwable ex) {
+      boolean foreignException = false;
+      Throwable each = ex;
+      while (each != null) {
+        if (!each.getClass().getName().startsWith("java.") && !isKnownException(each)) {
+          foreignException = true;
+          break;
+        }
+        each = each.getCause();
+      }
+
+      if (foreignException) {
+        ForeignException wrapper = ForeignException.create(ex.toString(), ex.getClass());
+        wrapper.initCause(wrapException(ex.getCause()));
+        wrapper.setStackTrace(ex.getStackTrace());
+        ex = wrapper;
+      }
+      return ex;
+    }
+
+    protected boolean isKnownException(Throwable ex) {
+      return false;
+    }
   }
 }

@@ -15,12 +15,11 @@
  */
 package com.intellij.codeInsight.completion.simple;
 
-import com.intellij.codeInsight.lookup.CommaTailType;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TailType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.TextRange;
@@ -32,9 +31,6 @@ import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public abstract class RParenthTailType extends TailType {
   private static final Logger LOG = Logger.getInstance(RParenthTailType.class);
 
@@ -55,7 +51,7 @@ public abstract class RParenthTailType extends TailType {
   @Override
   public int processTail(final Editor editor, int tailOffset) {
     return addRParenth(editor, tailOffset,
-                       isSpaceWithinParentheses(CommonCodeStyleSettings.getLocalCodeStyleSettings(editor, tailOffset), editor, tailOffset));
+                       isSpaceWithinParentheses(CodeStyle.getLocalLanguageSettings(editor, tailOffset), editor, tailOffset));
   }
 
   public static int addRParenth(Editor editor, int offset, boolean spaceWithinParens) {
@@ -84,7 +80,7 @@ public abstract class RParenthTailType extends TailType {
     if (tailOffset >= document.getTextLength()) return -1;
 
     final CharSequence charsSequence = document.getCharsSequence();
-    EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
+    EditorHighlighter highlighter = editor.getHighlighter();
 
     int existingRParenthOffset = -1;
     for(HighlighterIterator iterator = highlighter.createIterator(tailOffset); !iterator.atEnd(); iterator.advance()){

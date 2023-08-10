@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.containers;
 
 import com.intellij.util.indexing.ValueContainer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.function.IntPredicate;
 
 /**
  * Class buffers changes in 2 modes:
@@ -29,16 +16,17 @@ import java.util.Arrays;
  * It is assumed that add / remove operations as well as read only operations are externally synchronized, the only synchronization is
  * performed upon transforming changes array into randomAccessContainer because it can be done during read only operations in several threads
  */
-public class ChangeBufferingList implements Cloneable {
+public final class ChangeBufferingList implements Cloneable {
   static final int MAX_FILES = 20000; // less than Short.MAX_VALUE
-  //static final int MAX_FILES = 100;
-  private volatile int[] changes;
+  private int[] changes;
   private short length;
   private boolean hasRemovals;
-  private volatile boolean mayHaveDupes;
-  private volatile RandomAccessIntContainer randomAccessContainer;
+  private boolean mayHaveDupes;
+  private RandomAccessIntContainer randomAccessContainer;
 
-  public ChangeBufferingList() { this(3); }
+  public ChangeBufferingList() {
+    this(3);
+  }
   public ChangeBufferingList(int length) {
     if (length > MAX_FILES) {
       randomAccessContainer = new IdBitSet(length);
@@ -59,7 +47,7 @@ public class ChangeBufferingList implements Cloneable {
 
   public synchronized void add(int value) {
     ensureCapacity(1);
-    
+
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null) {
       addChange(value);
@@ -79,7 +67,7 @@ public class ChangeBufferingList implements Cloneable {
 
   public synchronized void remove(int value) {
     ensureCapacity(1);
-    
+
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null) {
       addChange(-value);
@@ -98,7 +86,7 @@ public class ChangeBufferingList implements Cloneable {
       if (randomAccessContainer != null) {
         clone.randomAccessContainer = (RandomAccessIntContainer)randomAccessContainer.clone();
       }
-      
+
       return clone;
     }
     catch (CloneNotSupportedException e) {
@@ -107,64 +95,59 @@ public class ChangeBufferingList implements Cloneable {
   }
 
   private RandomAccessIntContainer getRandomAccessContainer() {
-    int[] currentChanges = changes;
-    if (currentChanges == null) return randomAccessContainer;
+    if (changes == null) return randomAccessContainer;
 
-    synchronized (currentChanges) {
-      currentChanges = changes;
-      if (currentChanges == null) return randomAccessContainer;
-      boolean copyChanges = true;
-      RandomAccessIntContainer idSet;
+    boolean copyChanges = true;
+    RandomAccessIntContainer idSet;
 
-      if (randomAccessContainer == null) {
-        int someElementsNumberEstimation = length;
+    if (randomAccessContainer == null) {
+      int someElementsNumberEstimation = length;
 
-        // todo we can check these lengths instead of only relying upon reaching MAX_FILES
-        //int lengthOfBitSet = IdBitSet.sizeInBytes(minMax[1], minMax[0]);
-        //int lengthOfIntSet = 4 * length;
+      // todo we can check these lengths instead of only relying upon reaching MAX_FILES
+      //int lengthOfBitSet = IdBitSet.sizeInBytes(minMax[1], minMax[0]);
+      //int lengthOfIntSet = 4 * length;
 
-        if (someElementsNumberEstimation < MAX_FILES) {
-          if (!hasRemovals) {
-            if (mayHaveDupes) {
-              removingDupesAndSort();
-            }
-            idSet = new SortedIdSet(currentChanges, length);
-
-            copyChanges = false;
-          } else {
-            idSet = new SortedIdSet(Math.max(someElementsNumberEstimation, 3));
+      if (someElementsNumberEstimation < MAX_FILES) {
+        if (!hasRemovals) {
+          if (mayHaveDupes) {
+            removingDupesAndSort();
           }
-        }
-        else if (!hasRemovals) {
-          idSet = new IdBitSet(changes, length, 0);
+          idSet = new SortedIdSet(changes, length);
+
           copyChanges = false;
         } else {
-          idSet = new IdBitSet(calcMinMax(changes, length), 0);
+          idSet = new SortedIdSet(Math.max(someElementsNumberEstimation, 3));
         }
+      }
+      else if (!hasRemovals) {
+        idSet = new IdBitSet(changes, length, 0);
+        copyChanges = false;
       } else {
-        idSet = randomAccessContainer;
+        idSet = new IdBitSet(calcMinMax(changes, length), 0);
       }
+    } else {
+      idSet = randomAccessContainer;
+    }
 
-      assert idSet != null;
+    assert idSet != null;
 
-      if (copyChanges) {
-        for(int i = 0, len = length; i < len; ++i) {
-          int id = currentChanges[i];
-          if (id > 0) {
-            idSet.add(id);
-          } else {
-            idSet.remove(-id);
-          }
+    if (copyChanges) {
+      for(int i = 0, len = length; i < len; ++i) {
+        int id = changes[i];
+        if (id > 0) {
+          idSet.add(id);
+        } else {
+          idSet.remove(-id);
         }
       }
-      
-      length = 0;
-      hasRemovals = false;
-      mayHaveDupes = false;
-      randomAccessContainer = idSet;
-      changes = null;
-      return randomAccessContainer;
     }
+
+    length = 0;
+    hasRemovals = false;
+    mayHaveDupes = false;
+    randomAccessContainer = idSet;
+    changes = null;
+    return randomAccessContainer;
   }
 
   private void removingDupesAndSort() { // duplicated ids can be present for some index due to cancellation of indexing for next index
@@ -247,7 +230,7 @@ public class ChangeBufferingList implements Cloneable {
     return intContainer.size() == 0;
   }
 
-  public synchronized ValueContainer.IntPredicate intPredicate() {
+  public synchronized IntPredicate intPredicate() {
     RandomAccessIntContainer container = getRandomAccessContainer();
     return container::contains;
   }
@@ -255,14 +238,11 @@ public class ChangeBufferingList implements Cloneable {
   public synchronized IntIdsIterator intIterator() {
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null && !hasRemovals) {
-      int[] currentChanges = changes;
-      if (currentChanges != null) {
+      if (changes != null) {
         if (mayHaveDupes) {
-          synchronized (currentChanges) {
-            if (mayHaveDupes) removingDupesAndSort();
-          }
+          removingDupesAndSort();
         }
-        return new ChangesIterator(currentChanges, length, true);
+        return new ChangesIterator(changes, length, true);
       }
     }
     return getRandomAccessContainer().intIterator();

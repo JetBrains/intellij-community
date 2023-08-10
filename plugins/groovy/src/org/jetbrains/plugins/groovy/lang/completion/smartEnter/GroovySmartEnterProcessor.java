@@ -99,8 +99,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
   @Override
   protected void reformat(PsiElement atCaret) throws IncorrectOperationException {
     PsiElement parent = atCaret.getParent();
-    if (parent instanceof GrCodeBlock) {
-      final GrCodeBlock block = (GrCodeBlock) parent;
+    if (parent instanceof GrCodeBlock block) {
       if (block.getStatements().length > 0 && block.getStatements()[0] == atCaret) {
         atCaret = block;
       }

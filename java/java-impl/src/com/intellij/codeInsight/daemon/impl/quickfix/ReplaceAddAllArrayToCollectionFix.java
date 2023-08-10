@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -31,82 +18,66 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
-  private final PsiMethodCallExpression myMethodCall;
-
+public class ReplaceAddAllArrayToCollectionFix extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
   public ReplaceAddAllArrayToCollectionFix(@NotNull PsiMethodCallExpression methodCall) {
-    myMethodCall = methodCall;
-  }
-
-  @Override
-  @NotNull
-  public String getText() {
-    return CommonQuickFixBundle.message("fix.replace.x.with.y", myMethodCall.getText(), getCollectionsMethodCall());
+    super(methodCall);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return getText();
+    return CommonQuickFixBundle.message("fix.replace.with.x", "Collections.addAll()");
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (!myMethodCall.isValid()) return false;
-
-    final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-    if (module == null) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call) {
+    final Module module = ModuleUtilCore.findModuleForPsiElement(context.file());
+    if (module == null) return null;
     final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
-    if (jdk == null || !JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_5)) return false;
+    if (jdk == null || !JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_5)) return null;
 
-    final PsiReferenceExpression expression = myMethodCall.getMethodExpression();
+    final PsiReferenceExpression expression = call.getMethodExpression();
     final PsiElement element = expression.resolve();
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-      final PsiClass collectionsClass = psiFacade.findClass("java.util.Collection", GlobalSearchScope.allScope(project));
+    if (element instanceof PsiMethod method) {
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(context.project());
+      final PsiClass collectionsClass = psiFacade.findClass("java.util.Collection", GlobalSearchScope.allScope(context.project()));
       if (collectionsClass != null && InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), collectionsClass, true)) {
-        if (Comparing.strEqual(method.getName(), "addAll") && PsiType.BOOLEAN.equals(method.getReturnType())) {
+        if (Comparing.strEqual(method.getName(), "addAll") && PsiTypes.booleanType().equals(method.getReturnType())) {
           final PsiParameter[] psiParameters = method.getParameterList().getParameters();
           if (psiParameters.length == 1 &&
               psiParameters[0].getType() instanceof PsiClassType &&
               InheritanceUtil.isInheritorOrSelf(((PsiClassType)psiParameters[0].getType()).resolve(), collectionsClass, true)) {
-            final PsiExpressionList list = myMethodCall.getArgumentList();
+            final PsiExpressionList list = call.getArgumentList();
             final PsiExpression[] expressions = list.getExpressions();
             if (expressions.length == 1) {
               if (expressions[0].getType() instanceof PsiArrayType) {
-                return true;
+                return Presentation.of(CommonQuickFixBundle.message("fix.replace.x.with.y", call.getText(), getCollectionsMethodCall(call)));
               }
             }
           }
         }
       }
     }
-    return false;
+    return null;
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    final PsiExpression toReplace = elementFactory.createExpressionFromText(getCollectionsMethodCall(), myMethodCall);
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(myMethodCall.replace(toReplace));
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call, @NotNull ModPsiUpdater updater) {
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(context.project());
+    final PsiExpression toReplace = elementFactory.createExpressionFromText(getCollectionsMethodCall(call), call);
+    JavaCodeStyleManager.getInstance(context.project()).shortenClassReferences(call.replace(toReplace));
   }
 
   @NonNls
-  private String getCollectionsMethodCall() {
-    final PsiExpression qualifierExpression = myMethodCall.getMethodExpression().getQualifierExpression();
-    PsiExpression[] expressions = myMethodCall.getArgumentList().getExpressions();
+  private static String getCollectionsMethodCall(@NotNull PsiMethodCallExpression call) {
+    final PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
+    PsiExpression[] expressions = call.getArgumentList().getExpressions();
     return "java.util.Collections.addAll(" +
            (qualifierExpression != null ? qualifierExpression.getText() : "this") +
            ", " + (expressions.length == 0 ? "" : expressions[0].getText()) + ")";
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

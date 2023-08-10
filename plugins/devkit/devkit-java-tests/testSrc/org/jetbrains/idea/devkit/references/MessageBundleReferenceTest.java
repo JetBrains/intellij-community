@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.lang.properties.codeInspection.unused.UnusedPropertyInspection;
@@ -16,10 +16,8 @@ public class MessageBundleReferenceTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    String projectModelJar = PathUtil.getJarPathForClass(State.class);
-    moduleBuilder.addLibrary("projectModel", projectModelJar);
-    String platformApiJar = PathUtil.getJarPathForClass(JBList.class);
-    moduleBuilder.addLibrary("platform-api", platformApiJar);
+    moduleBuilder.addLibrary("platform-projectModel", PathUtil.getJarPathForClass(State.class));
+    moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList.class));
   }
 
   @Override
@@ -45,6 +43,10 @@ public class MessageBundleReferenceTest extends JavaCodeInsightFixtureTestCase {
 
   public void testExportableIdImplicitUsage() {
     doHighlightImplicitUsagesTest("ExportableIdImplicitUsage.java");
+  }
+
+  public void testAdvancedSettingImplicitUsage() {
+    doHighlightImplicitUsagesTest("AdvancedSettingImplicitUsage.xml");
   }
 
   public void testNoImplicitUsageWrongFilename() {
@@ -81,5 +83,13 @@ public class MessageBundleReferenceTest extends JavaCodeInsightFixtureTestCase {
 
     myFixture.completeBasic();
     assertContainsElements(myFixture.getLookupElementStrings(), "my.plugin.id");
+  }
+
+  public void testAdvancedSettingIdCompletionVariants() {
+    myFixture.copyFileToProject("AdvancedSettingImplicitUsage.xml");
+    myFixture.configureByText("MyBundle.properties", "advanced.setting.<caret>");
+
+    myFixture.completeBasic();
+    assertContainsElements(myFixture.getLookupElementStrings(), "my.advanced.setting.id", "my.another.advanced.setting.id");
   }
 }

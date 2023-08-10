@@ -22,7 +22,7 @@ public final class LombokBasics {
 @AllArgsConstructor
 class FinalCheck {
   @Getter
-  private int <warning descr="Field 'a' may be 'final'">a</warning>;
+  private int a;
   @Setter
   private int <warning descr="Private field 'b' is assigned but never accessed">b</warning>;
   @Getter @Setter

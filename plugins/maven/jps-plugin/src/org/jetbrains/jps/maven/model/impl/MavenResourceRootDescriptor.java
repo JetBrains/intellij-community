@@ -25,7 +25,7 @@ import java.io.FileFilter;
 /**
  * @author Eugene Zhuravlev
  */
-public class MavenResourceRootDescriptor extends BuildRootDescriptor {
+public final class MavenResourceRootDescriptor extends BuildRootDescriptor {
   private final MavenResourcesTarget myTarget;
   private final ResourceRootConfiguration myConfig;
   private final File myFile;
@@ -52,17 +52,17 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public String getRootId() {
+  public @NotNull String getRootId() {
     return myId;
   }
 
   @Override
-  public File getRootFile() {
+  public @NotNull File getRootFile() {
     return myFile;
   }
 
   @Override
-  public MavenResourcesTarget getTarget() {
+  public @NotNull MavenResourcesTarget getTarget() {
     return myTarget;
   }
 

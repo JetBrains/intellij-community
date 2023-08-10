@@ -40,7 +40,7 @@ public class NonFinalGuardInspection extends AbstractBaseJavaLocalInspectionTool
     }
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       if (!JCiPUtil.isGuardedByAnnotation(annotation)) {
         return;
@@ -68,7 +68,7 @@ public class NonFinalGuardInspection extends AbstractBaseJavaLocalInspectionTool
     }
 
     @Override
-    public void visitDocTag(PsiDocTag psiDocTag) {
+    public void visitDocTag(@NotNull PsiDocTag psiDocTag) {
       super.visitDocTag(psiDocTag);
       if (!JCiPUtil.isGuardedByTag(psiDocTag)) {
         return;

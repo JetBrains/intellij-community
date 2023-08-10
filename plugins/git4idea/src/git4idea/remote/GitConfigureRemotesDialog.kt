@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package git4idea.remote
 
@@ -21,7 +21,9 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
+import com.intellij.xml.util.XmlStringUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
 import git4idea.i18n.GitBundle.message
@@ -29,10 +31,8 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRemote.ORIGIN
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
-import java.awt.Component
 import java.awt.Font
 import java.awt.event.MouseEvent
-import java.util.*
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import kotlin.math.min
@@ -63,7 +63,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
 
   override fun getPreferredFocusedComponent(): JBTable = table
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     table.selectionModel = DefaultListSelectionModel()
     table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
     table.intercellSpacing = JBUI.emptySize()
@@ -109,7 +109,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
     val remote = remoteNode.remote
     val repository = remoteNode.repository
 
-    removeRemotes(git, repository, setOf(remote), rootPane, rebuildTreeOnSuccess)
+    removeRemotes(git, repository, setOf(remote), rebuildTreeOnSuccess)
   }
 
   private fun editRemote() {
@@ -222,28 +222,30 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
 
   private inner class MyCellRenderer : ColoredTableCellRenderer() {
     override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
-      if (value is RepoNode) {
-        append(value.getPresentableString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-      }
-      else if (value is RemoteNode) {
-        if (repositories.size > 1) append("", SimpleTextAttributes.REGULAR_ATTRIBUTES, REMOTE_PADDING, SwingConstants.LEFT)
-        append(value.getPresentableString())
-      }
-      else if (value is String) {
-        append(value)
+      when (value) {
+        is RepoNode -> {
+          append(value.getPresentableString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+        }
+        is RemoteNode -> {
+          if (repositories.size > 1) append("", SimpleTextAttributes.REGULAR_ATTRIBUTES, REMOTE_PADDING, SwingConstants.LEFT)
+          append(value.getPresentableString())
+        }
+        is String -> {
+          append(value)
+        }
       }
       border = null
     }
   }
 }
 
-fun removeRemotes(git: Git, repository: GitRepository, remotes: Set<GitRemote>, parent: Component? = null, onSuccess: () -> Unit = {}) {
-  if (YES == showYesNoDialog(if (parent == null) parent else repository.project,
+fun removeRemotes(git: Git, repository: GitRepository, remotes: Set<GitRemote>, onSuccess: () -> Unit = {}) {
+  if (YES == showYesNoDialog(repository.project,
                              message("remotes.dialog.remove.remote.message", remotes.size, remotes.toStringRepresentation()),
                              message("remotes.dialog.remove.remote.title", remotes.size), getQuestionIcon())) {
     runInModalTask(message("remotes.dialog.removing.remote.progress", remotes.size),
                    message("remotes.dialog.removing.remote.error.title", remotes.size),
-                   message("remotes.dialog.removing.remote.error.message", remotes.size, remotes.toStringRepresentation()), //FIXME
+                   message("remotes.dialog.removing.remote.error.message", remotes.size, remotes.toStringRepresentation()),
                    repository, onSuccess) {
       arrayListOf<GitCommandResult>().apply {
         for (remote in remotes) {
@@ -309,10 +311,10 @@ private fun runInModalTask(@Nls(capitalization = Nls.Capitalization.Title) title
       if (results == null || results!!.any { !it.success() }) {
         val errorDetails =
           if (results == null) message("remotes.operation.not.executed.message")
-          else results!!.joinToString(separator = "\n") { it.errorOutputAsJoinedString }
+          else results!!.joinToString(separator = UIUtil.BR) { it.errorOutputAsHtmlString }
         val message = message("remotes.operation.error.message", errorMessage, repository, errorDetails)
         LOG.warn(message)
-        showErrorDialog(myProject, message, errorTitle)
+        showErrorDialog(myProject, XmlStringUtil.wrapInHtml(message), errorTitle)
       }
     }
   })

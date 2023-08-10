@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.ranker.ExperimentModelProvider
 import com.intellij.completion.ml.ranker.ExperimentModelProvider.Companion.match
-import com.intellij.completion.ml.ranker.local.MLCompletionLocalModelsUtil
+import com.intellij.completion.ml.ranker.local.MLCompletionLocalModelsLoader
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import com.intellij.internal.ml.completion.RankingModelProvider
@@ -13,14 +13,17 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 object RankingSupport {
   private val LOG = logger<RankingSupport>()
   private var enabledInTests: Boolean = false
+  private val localDebugModelLoader = MLCompletionLocalModelsLoader("completion.ml.path.to.zip.model")
 
   fun getRankingModel(language: Language): RankingModelWrapper? {
-    MLCompletionLocalModelsUtil.getModel(language.id)?.let { return LanguageRankingModel(it, DecoratingItemsPolicy.DISABLED) }
+    tryLoadLocalDebugModel(language)?.let { return it }
+
     val provider = findProviderSafe(language)
     return if (provider != null && shouldSortByML(language, provider)) tryGetModel(provider) else null
   }
@@ -47,6 +50,9 @@ object RankingSupport {
     }
   }
 
+  @ApiStatus.Internal
+  fun loadLocalDebugModel(language: Language): LanguageRankingModel? = tryLoadLocalDebugModel(language, synchronous = true)
+
   private fun tryGetModel(provider: RankingModelProvider): RankingModelWrapper? {
     try {
       return LanguageRankingModel(provider.model, provider.decoratingPolicy)
@@ -64,11 +70,19 @@ object RankingSupport {
     val settings = CompletionMLRankingSettings.getInstance()
     val experimentStatus = ExperimentStatus.getInstance()
     val experimentInfo = experimentStatus.forLanguage(language)
+    val shouldSort = settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
+
     if (application.isEAP && experimentInfo.inExperiment && !experimentStatus.isDisabled()) {
       settings.updateShowDiffInExperiment(experimentInfo.shouldShowArrows)
     }
 
-    return settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
+    return shouldSort
+  }
+
+  private fun tryLoadLocalDebugModel(language: Language, synchronous: Boolean = false): LanguageRankingModel? {
+    return localDebugModelLoader.getModel(language.id, synchronous)?.let {
+      return LanguageRankingModel(it, DecoratingItemsPolicy.DISABLED)
+    }
   }
 
   @TestOnly

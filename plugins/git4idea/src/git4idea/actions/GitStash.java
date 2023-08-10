@@ -2,6 +2,7 @@
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -13,6 +14,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitStashUsageCollector;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -38,6 +40,7 @@ public class GitStash extends GitRepositoryAction {
     if (!d.showAndGet()) {
       return;
     }
+    d.logUsage();
 
     runStashInBackground(project, Collections.singleton(d.getGitRoot()), root -> d.handler());
   }
@@ -57,7 +60,10 @@ public class GitStash extends GitRepositoryAction {
           Collection<VirtualFile> successfulRoots = new ArrayList<>();
           Map<VirtualFile, @Nls String> failedRoots = new LinkedHashMap<>();
           for (VirtualFile root : roots) {
+            StructuredIdeActivity activity = GitStashUsageCollector.logStashPush(project);
             GitCommandResult result = Git.getInstance().runCommand(createHandler.apply(root));
+            activity.finished();
+
             if (result.success()) {
               successfulRoots.add(root);
             }
@@ -72,7 +78,9 @@ public class GitStash extends GitRepositoryAction {
           if (!failedRoots.isEmpty()) {
             String rootsList = StringUtil.join(failedRoots.keySet(), VirtualFile::getPresentableName, ",");
             String errorTitle = GitBundle.message("stash.error", StringUtil.shortenTextWithEllipsis(rootsList, 100, 0));
-            String errorMessage = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(failedRoots.values(), s -> HtmlChunk.raw(s))).toString();
+            String errorMessage = new HtmlBuilder()
+              .appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(failedRoots.values(), s -> HtmlChunk.raw(s)))
+              .toString();
             VcsNotifier.getInstance(project).notifyError(STASH_FAILED, errorTitle, errorMessage, true);
           }
         }

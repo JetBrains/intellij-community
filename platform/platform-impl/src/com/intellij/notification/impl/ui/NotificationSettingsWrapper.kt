@@ -10,7 +10,7 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl
  * @author Konstantin Bulenkov
  */
 class NotificationSettingsWrapper internal constructor(var version: NotificationSettings) {
-  var isRemoved = false
+  var isRemoved: Boolean = false
   var title: String? = null
   fun hasChanged(): Boolean {
     return isRemoved || originalSettings != version

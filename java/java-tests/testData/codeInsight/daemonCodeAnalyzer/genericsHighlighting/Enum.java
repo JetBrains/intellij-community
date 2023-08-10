@@ -109,7 +109,10 @@ enum TestEnum
     }
 }
 
-<error descr="Class 'abstr' must either be declared abstract or implement abstract method 'run()' in 'Runnable'">enum abstr implements Runnable</error> {
+<error descr="Class 'abstr' must implement abstract method 'run()' in 'Runnable'">enum abstr implements Runnable</error> {
+}
+<error descr="Modifier 'abstract' not allowed here">abstract</error> enum XX {
+  A, B;
 }
 
 //this one is OK, enum constants are checked instead of enum itself
@@ -138,7 +141,7 @@ interface Barz {
     void baz();
 }
 
-<error descr="Class 'Fooz' must either be declared abstract or implement abstract method 'baz()' in 'Barz'">enum Fooz implements Barz</error> {
+<error descr="Class 'Fooz' must implement abstract method 'baz()' in 'Barz'">enum Fooz implements Barz</error> {
     FOO;
 }
 

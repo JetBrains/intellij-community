@@ -14,7 +14,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,9 +23,6 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author peter
- */
 public abstract class ElementPresentationManager {
   private static final ConcurrentMap<Class<?>, Optional<Method>> ourNameValueMethods = ConcurrentFactoryMap.create(key -> ReflectionUtil
       .getClassPublicMethods(key)
@@ -75,8 +71,7 @@ public abstract class ElementPresentationManager {
   public static String getElementName(@NotNull Object element) {
     Object o = invokeNameValueMethod(element);
     if (o == null || o instanceof String) return (String)o;
-    if (o instanceof GenericValue) {
-      final GenericValue gv = (GenericValue)o;
+    if (o instanceof GenericValue gv) {
       final String s = gv.getStringValue();
       if (s == null) {
         final Object value = gv.getValue();
@@ -90,16 +85,6 @@ public abstract class ElementPresentationManager {
   }
 
 
-  /**
-   * @deprecated always return {@code null}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
-  @Nullable
-  public static String getDocumentationForElement(Object element) {
-    return null;
-  }
-
   @Nullable
   public static Object invokeNameValueMethod(@NotNull final Object element) {
     return ourNameValueMethods.get(element.getClass()).map(method -> DomReflectionUtil.invokeMethod(method, element)).orElse(null);
@@ -111,8 +96,7 @@ public abstract class ElementPresentationManager {
     o = firstImpl != null ? firstImpl : o;
     String typeName = TypePresentationService.getService().getTypeName(o);
     if (typeName != null) return typeName;
-    if (o instanceof DomElement) {
-      final DomElement element = (DomElement)o;
+    if (o instanceof DomElement element) {
       return StringUtil.capitalizeWords(element.getNameStrategy().splitIntoWords(element.getXmlElementName()), true);
     }
     return TypePresentationService.getDefaultTypeName(o.getClass());

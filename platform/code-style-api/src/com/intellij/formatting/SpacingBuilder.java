@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
 import com.intellij.lang.Language;
@@ -15,9 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class SpacingBuilder {
   private static final Logger LOG = Logger.getInstance(SpacingBuilder.class);
 
@@ -230,6 +228,10 @@ public class SpacingBuilder {
 
   public RuleBuilder afterInside(TokenSet tokenSet, IElementType parentType) {
     return new RuleBuilder(new RuleCondition(TokenSet.create(parentType), tokenSet, null));
+  }
+
+  public RuleBuilder afterInside(TokenSet tokenSet, TokenSet parentType) {
+    return new RuleBuilder(new RuleCondition(parentType, tokenSet, null));
   }
 
   public RuleBuilder before(IElementType elementType) {

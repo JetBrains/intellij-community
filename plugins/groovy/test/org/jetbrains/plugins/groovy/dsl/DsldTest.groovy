@@ -6,9 +6,6 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 
-/**
- * @author peter
- */
 class DsldTest extends LightGroovyTestCase {
 
   void testUnknownPointcut() {

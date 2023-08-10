@@ -20,7 +20,7 @@ package com.intellij.codeInsight.lookup;
  * @author maxim
  * @deprecated use LookupElementBuilder
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface PresentableLookupValue {
   String getPresentation();
 }

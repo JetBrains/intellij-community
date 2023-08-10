@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.vcs.log.graph.parser;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
@@ -10,7 +9,8 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,47 +24,39 @@ import static com.intellij.vcs.log.graph.parser.CommitParser.toLines;
 import static com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.parseGraphEdgeType;
 import static com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.parseGraphNodeType;
 
-public class LinearGraphParser {
+public final class LinearGraphParser {
 
   public static LinearGraph parse(@NotNull String in) {
     List<GraphNode> graphNodes = new ArrayList<>();
 
     Map<GraphNode, List<String>> edges = new HashMap<>();
-    TIntIntHashMap nodeIdToNodeIndex = new TIntIntHashMap();
+    Int2IntMap nodeIdToNodeIndex = new Int2IntOpenHashMap();
 
     for (String line : toLines(in)) { // parse input and create nodes
-      Pair<Pair<Integer, GraphNode>, List<String>> graphNodePair = parseLine(line, graphNodes.size());
-      GraphNode graphNode = graphNodePair.first.second;
+      ParsedLine graphNodePair = parseLine(line, graphNodes.size());
 
-      edges.put(graphNode, graphNodePair.second);
-      nodeIdToNodeIndex.put(graphNodePair.first.first, graphNodes.size());
-      graphNodes.add(graphNode);
+      edges.put(graphNodePair.graphNode, graphNodePair.normalEdges);
+      nodeIdToNodeIndex.put(graphNodePair.nodeId, graphNodes.size());
+      graphNodes.add(graphNodePair.graphNode);
     }
 
     MultiMap<Integer, GraphEdge> upEdges = MultiMap.create();
     MultiMap<Integer, GraphEdge> downEdges = MultiMap.create();
     for (GraphNode graphNode : graphNodes) { // create edges
       for (String strEdge : edges.get(graphNode)) {
-        Pair<Integer, Character> pairEdge = parseNumberWithChar(strEdge);
-        GraphEdgeType type = parseGraphEdgeType(pairEdge.second);
+        NumberWithChar pairEdge = parseNumberWithChar(strEdge);
+        GraphEdgeType type = parseGraphEdgeType(pairEdge.character);
 
         GraphEdge edge;
         switch (type) {
-          case USUAL:
-          case DOTTED:
-            assert nodeIdToNodeIndex.containsKey(pairEdge.first);
-            int downNodeIndex = nodeIdToNodeIndex.get(pairEdge.first);
+          case USUAL, DOTTED -> {
+            assert nodeIdToNodeIndex.containsKey(pairEdge.nodeId);
+            int downNodeIndex = nodeIdToNodeIndex.get(pairEdge.nodeId);
             edge = GraphEdge.createNormalEdge(graphNode.getNodeIndex(), downNodeIndex, type);
-            break;
-
-          case NOT_LOAD_COMMIT:
-          case DOTTED_ARROW_DOWN:
-          case DOTTED_ARROW_UP:
-            edge = GraphEdge.createEdgeWithTargetId(graphNode.getNodeIndex(), pairEdge.first, type);
-            break;
-
-          default:
-            throw new IllegalStateException("Unknown type: " + type);
+          }
+          case NOT_LOAD_COMMIT, DOTTED_ARROW_DOWN, DOTTED_ARROW_UP ->
+            edge = GraphEdge.createEdgeWithTargetId(graphNode.getNodeIndex(), pairEdge.nodeId, type);
+          default -> throw new IllegalStateException("Unknown type: " + type);
         }
         if (edge.getUpNodeIndex() != null) downEdges.putValue(edge.getUpNodeIndex(), edge);
         if (edge.getDownNodeIndex() != null) upEdges.putValue(edge.getDownNodeIndex(), edge);
@@ -78,22 +70,44 @@ public class LinearGraphParser {
    * Example input line:
    * 0_U|-1_U 2_D
    */
-  public static Pair<Pair<Integer, GraphNode>, List<String>> parseLine(@NotNull String line, int lineNumber) {
+  public static ParsedLine parseLine(@NotNull String line, int lineNumber) {
     int separatorIndex = nextSeparatorIndex(line, 0);
-    Pair<Integer, Character> pair = parseNumberWithChar(line.substring(0, separatorIndex));
+    NumberWithChar pair = parseNumberWithChar(line.substring(0, separatorIndex));
 
-    GraphNode graphNode = new GraphNode(lineNumber, parseGraphNodeType(pair.second));
+    GraphNode graphNode = new GraphNode(lineNumber, parseGraphNodeType(pair.character));
 
     String[] edges = line.substring(separatorIndex + 2).split("\\s");
     List<String> normalEdges = ContainerUtil.mapNotNull(edges, s -> {
       if (s.isEmpty()) return null;
       return s;
     });
-    return Pair.create(Pair.create(pair.first, graphNode), normalEdges);
+    return new ParsedLine(pair.nodeId, graphNode, normalEdges);
   }
 
-  private static Pair<Integer, Character> parseNumberWithChar(@NotNull String in) {
-    return new Pair<>(Integer.decode(in.substring(0, in.length() - 2)), in.charAt(in.length() - 1));
+  private static NumberWithChar parseNumberWithChar(@NotNull String in) {
+    return new NumberWithChar(Integer.decode(in.substring(0, in.length() - 2)), in.charAt(in.length() - 1));
+  }
+
+  private static class NumberWithChar {
+    public final int nodeId;
+    public final char character;
+
+    private NumberWithChar(int nodeId, char character) {
+      this.nodeId = nodeId;
+      this.character = character;
+    }
+  }
+
+  private static class ParsedLine {
+    public final int nodeId;
+    public final GraphNode graphNode;
+    public final List<String> normalEdges;
+
+    private ParsedLine(int nodeId, GraphNode graphNode, List<String> normalEdges) {
+      this.nodeId = nodeId;
+      this.graphNode = graphNode;
+      this.normalEdges = normalEdges;
+    }
   }
 
   private static final class TestLinearGraphWithElementsInfo implements LinearGraph {

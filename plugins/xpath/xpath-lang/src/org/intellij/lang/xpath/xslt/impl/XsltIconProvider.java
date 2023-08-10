@@ -10,9 +10,6 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 
 import javax.swing.*;
 
-/**
- * @author peter
- */
 public class XsltIconProvider implements FileIconPatcher {
 
   @Override

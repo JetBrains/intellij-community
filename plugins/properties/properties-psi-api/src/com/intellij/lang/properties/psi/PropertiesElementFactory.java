@@ -46,17 +46,6 @@ public final class PropertiesElementFactory {
     return dummyFile.getProperties().get(0);
   }
 
-  /**
-   * @deprecated use {@link #createProperty(Project, String, String, Character)}
-   */
-  @Deprecated
-  @NotNull
-  public static IProperty createProperty(@NotNull Project project,
-                                         @NonNls @NotNull String name,
-                                         @NonNls @NotNull String value) {
-    return createProperty(project, name, value, null);
-  }
-
   @NotNull
   public static String getPropertyText(@NonNls @NotNull String name,
                                        @NonNls @NotNull String value,
@@ -110,7 +99,7 @@ public final class PropertiesElementFactory {
   /**
    * @deprecated use {@link #escapeValue(String, char, PropertyKeyValueFormat)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static String escapeValue(String value, char delimiter) {
     return escapeValue(value, delimiter, PropertyKeyValueFormat.PRESENTABLE);
   }

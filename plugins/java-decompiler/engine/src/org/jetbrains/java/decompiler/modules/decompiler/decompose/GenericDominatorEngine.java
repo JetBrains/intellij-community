@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.decompose;
 
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
@@ -86,7 +86,7 @@ public class GenericDominatorEngine {
         IGraphNode idom = null;
 
         if (!setRoots.contains(node)) {
-          for (IGraphNode pred : node.getPredecessors()) {
+          for (IGraphNode pred : node.getPredecessorNodes()) {
             if (colOrderedIDoms.getWithKey(pred) != null) {
               idom = getCommonIDom(idom, pred, colOrderedIDoms);
               if (idom == null) {

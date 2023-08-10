@@ -7,7 +7,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
-import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -21,7 +20,6 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.text.Matcher;
@@ -34,7 +32,7 @@ import java.awt.*;
 
 import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
 
-public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer<Object> {
+public class NavigationItemListCellRenderer extends JPanel implements ListCellRenderer<Object> {
 
   public NavigationItemListCellRenderer() {
     super(new BorderLayout());
@@ -54,6 +52,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     final LeftRenderer left = new LeftRenderer(!hasRightRenderer || !factory.rendersLocationString(), MatcherHolder.getAssociatedMatcher(list));
     final Component leftCellRendererComponent = left.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     final Color listBg = leftCellRendererComponent.getBackground();
+    ((JComponent) leftCellRendererComponent).setOpaque(false);
     add(leftCellRendererComponent, BorderLayout.WEST);
 
     setBackground(isSelected ? UIUtil.getListSelectionBackground(true) : listBg);
@@ -74,11 +73,6 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
       add(spacer, BorderLayout.CENTER);
     }
     return this;
-  }
-
-  static PsiElement getPsiElement(Object o) {
-    return o instanceof PsiElement ? (PsiElement)o :
-           o instanceof PsiElementNavigationItem ? ((PsiElementNavigationItem)o).getTargetElement() : null;
   }
 
   private static class LeftRenderer extends ColoredListCellRenderer {
@@ -102,11 +96,10 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
         setIcon(IconUtil.getEmptyIcon(false));
         append(LangBundle.message("label.invalid"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
-      else if (value instanceof NavigationItem) {
-        NavigationItem item = (NavigationItem)value;
+      else if (value instanceof NavigationItem item) {
         ItemPresentation presentation = item.getPresentation();
         assert presentation != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation(): element " +
-          item.toString() + ", class " + item.getClass().getName();
+          item + ", class " + item.getClass().getName();
         String name = presentation.getPresentableText();
         assert name != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation().getPresentableName: element " +
                              item + ", class " + item.getClass().getName();
@@ -121,7 +114,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
           isProblemFile = false;
         }
 
-        PsiElement psiElement = getPsiElement(item);
+        PsiElement psiElement = PSIRenderingUtils.getPsiElement(item);
 
         if (psiElement != null && psiElement.isValid()) {
           Project project = psiElement.getProject();

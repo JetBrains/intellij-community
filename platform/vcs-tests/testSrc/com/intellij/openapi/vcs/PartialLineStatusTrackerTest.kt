@@ -611,4 +611,50 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     }
   }
 
+  fun testZombieModification() {
+    testPartial("A_B_C_D_E_F") {
+      "E".replace("E1")
+
+      partialTracker.dropBaseRevision()
+
+      createChangeList_SetDefault("Test")
+      "B".replace("B2")
+      "E1".replace("E2")
+
+      partialTracker.setBaseRevision(parseInput("A_B_C_D_E1_F"))
+
+      range(0).assertChangeList("Test")
+      range(1).assertChangeList("Test")
+    }
+  }
+
+  fun testInvalidatingInvalidTracker1() {
+    testPartial("A_B_C_D_E_F") {
+      createChangeList_SetDefault("Test")
+
+      partialTracker.dropBaseRevision()
+      "E".replace("E1")
+      setDefaultChangeList(DEFAULT)
+
+      partialTracker.setBaseRevision(parseInput("A_B_C_D_E_F"))
+
+      range(0).assertChangeList("Test")
+    }
+  }
+
+  fun testInvalidatingInvalidTracker2() {
+    testPartial("A_B_C_D_E_F") {
+      createChangeList_SetDefault("Test")
+
+      partialTracker.dropBaseRevision()
+      "E".replace("E1")
+      setDefaultChangeList(DEFAULT)
+
+      partialTracker.dropBaseRevision()
+
+      partialTracker.setBaseRevision(parseInput("A_B_C_D_E_F"))
+
+      range(0).assertChangeList("Test")
+    }
+  }
 }

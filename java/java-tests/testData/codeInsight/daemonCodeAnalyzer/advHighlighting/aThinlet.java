@@ -17,7 +17,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-//package thinlet; //java
+package thinlet; //java
 //midp package thinlet.midp;
 
 import java.awt.*; //java
@@ -34,7 +34,7 @@ import java.util.*;
 /**
  *
  */
-public class Thinlet extends Container //java
+class Thinlet extends Container //java
 	implements Runnable, Serializable { //java
 //midp public class Thinlet extends Canvas implements CommandListener {
 
@@ -5151,7 +5151,7 @@ public class Thinlet extends Container //java
 	 */
 	private boolean setInteger(Object component,
 			String key, int value, int defaultvalue) {
-		return set(component, key, (value == defaultvalue) ? null : new Integer(value));
+		return set(component, key, (value == defaultvalue) ? null : Integer.valueOf(value));
 	}
 
 	/**
@@ -5249,9 +5249,9 @@ public class Thinlet extends Container //java
 
 	private static Object[] dtd;
 	static {
-		Integer integer_1 = new Integer(-1);
-		Integer integer0 = new Integer(0);
-		Integer integer1 = new Integer(1);
+		Integer integer_1 = Integer.valueOf(-1);
+		Integer integer0 = Integer.valueOf(0);
+		Integer integer1 = Integer.valueOf(1);
 		String[] orientation = { "horizontal", "vertical" };
 		String[] leftcenterright = { "left", "center", "right" };
 		String[] selections = { "single", "interval", "multiple" };
@@ -5333,12 +5333,12 @@ public class Thinlet extends Container //java
 			"progressbar", "component", new Object[][] {
 				{ "choice", "orientation", "validate", orientation },
 				{ "integer", "minimum", "paint", integer0 }, //...checkvalue
-				{ "integer", "maximum", "paint", new Integer(100) },
+				{ "integer", "maximum", "paint", Integer.valueOf(100) },
 				{ "integer", "value", "paint", integer0 } },
 				// change stringpainted
 			"slider", "progressbar", new Object[][] {
-				{ "integer", "unit", "", new Integer(5) },
-				{ "integer", "block", "", new Integer(25) },
+				{ "integer", "unit", "", Integer.valueOf(5) },
+				{ "integer", "block", "", Integer.valueOf(25) },
 				{ "method", "action", "", null } },
 				// minor/majortickspacing
 				// inverted
@@ -5359,7 +5359,7 @@ public class Thinlet extends Container //java
 						"cell", "cellinterval",
 						"singlecolumn", "columninterval", "multiplecolumn" } }*/ },
 			"column", "choice", new Object[][] {
-				{ "integer", "width", "", new Integer(80) }},
+				{ "integer", "width", "", Integer.valueOf(80) }},
 			"row", null, new Object[][] {
 				{ "boolean", "selected", "", Boolean.FALSE } },
 			"cell", "choice", new Object[][] {},

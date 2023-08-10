@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.lang.Language
@@ -10,18 +10,29 @@ import org.jetbrains.uast.analysis.UastAnalysisPlugin
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.classSetOf
 
+/**
+ * Extension to provide UAST (Unified Abstract Syntax Tree) language support. UAST is an abstraction layer on PSI of different JVM
+ * languages. It provides a unified API for working with common language elements like classes and method declarations, literal values and
+ * control flow operators.
+ *
+ * @see org.jetbrains.uast.generate.UastCodeGenerationPlugin for UAST code generation.
+ */
+@JvmDefaultWithCompatibility
 interface UastLanguagePlugin {
   companion object {
-    val extensionPointName = ExtensionPointName<UastLanguagePlugin>("org.jetbrains.uast.uastLanguagePlugin")
+    val extensionPointName: ExtensionPointName<UastLanguagePlugin> = ExtensionPointName("org.jetbrains.uast.uastLanguagePlugin")
 
     fun getInstances(): Collection<UastLanguagePlugin> = extensionPointName.extensionList
 
-    fun byLanguage(language: Language): UastLanguagePlugin? = extensionPointName.extensionList.firstOrNull { it.language === language }
+    fun byLanguage(language: Language): UastLanguagePlugin? = UastFacade.findPlugin(language)
   }
 
   data class ResolvedMethod(val call: UCallExpression, val method: PsiMethod)
   data class ResolvedConstructor(val call: UCallExpression, val constructor: PsiMethod, val clazz: PsiClass)
 
+  /**
+   * The underlying programming language.
+   */
   val language: Language
 
   /**
@@ -38,7 +49,7 @@ interface UastLanguagePlugin {
    *
    * Priority is useful when a language N wraps its own elements (NElement) to, for example, Java's PsiElements,
    *  and Java resolves the reference to such wrapped PsiElements, not the original NElement.
-   * In this case N implementation can handle such wrappers in UastConverter earlier than Java's converter,
+   * In this case, N implementation can handle such wrappers in UastConverter earlier than Java's converter,
    *  so N language converter will have a higher priority.
    */
   val priority: Int
@@ -62,16 +73,9 @@ interface UastLanguagePlugin {
    */
   fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement?
 
-  fun getMethodCallExpression(
-    element: PsiElement,
-    containingClassFqName: String?,
-    methodName: String
-  ): ResolvedMethod?
+  fun getMethodCallExpression(element: PsiElement, containingClassFqName: String?, methodName: String): ResolvedMethod?
 
-  fun getConstructorCallExpression(
-    element: PsiElement,
-    fqName: String
-  ): ResolvedConstructor?
+  fun getConstructorCallExpression(element: PsiElement, fqName: String): ResolvedConstructor?
 
   fun getMethodBody(element: PsiMethod): UExpression? {
     if (element is UMethod) return element.uastBody
@@ -88,13 +92,44 @@ interface UastLanguagePlugin {
     return (convertElementWithParent(element, null) as? UVariable)?.uastInitializer
   }
 
+  fun getContainingAnnotationEntry(uElement: UElement?, annotationsHint: Collection<String>): Pair<UAnnotation, String?>? {
+    return getContainingUAnnotationEntry(uElement)
+  }
+
+  private fun getContainingUAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String?>? {
+    fun tryConvertToEntry(uElement: UElement, parent: UElement, name: String?): Pair<UAnnotation, String?>? {
+      if (uElement !is UExpression) return null
+      val uAnnotation = parent.sourcePsi.toUElementOfType<UAnnotation>() ?: return null
+      val argumentSourcePsi = wrapULiteral(uElement).sourcePsi
+      return uAnnotation to (name ?: uAnnotation.attributeValues.find { wrapULiteral(it.expression).sourcePsi === argumentSourcePsi }?.name)
+    }
+
+    tailrec fun retrievePsiAnnotationEntry(uElement: UElement?, name: String?): Pair<UAnnotation, String?>? {
+      if (uElement == null) return null
+      val parent = uElement.uastParent ?: return null
+      return when (parent) {
+        is UAnnotation -> parent to name
+        is UReferenceExpression -> tryConvertToEntry(uElement, parent, name)
+        is UCallExpression ->
+          if (parent.hasKind(UastCallKind.NESTED_ARRAY_INITIALIZER))
+            retrievePsiAnnotationEntry(parent, null)
+          else
+            tryConvertToEntry(uElement, parent, name)
+        is UPolyadicExpression -> retrievePsiAnnotationEntry(parent, null)
+        is UNamedExpression -> retrievePsiAnnotationEntry(parent, parent.name)
+        else -> null
+      }
+    }
+
+    return retrievePsiAnnotationEntry(uElement, null)
+  }
+
   /**
    * Returns true if the expression value is used.
    * Do not rely on this property too much, its value can be approximate in some cases.
    */
   fun isExpressionValueUsed(element: UExpression): Boolean
 
-  @JvmDefault
   @Suppress("UNCHECKED_CAST")
   fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: Array<out Class<out T>>): T? =
     when {
@@ -105,11 +140,11 @@ interface UastLanguagePlugin {
     } as? T
 
 
-  @JvmDefault
-  fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> =
-    sequenceOf(convertElementWithParent(element, requiredTypes)).filterNotNull()
+  fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> {
+    val result = convertElementWithParent(element, requiredTypes)
+    return if (result == null) emptySequence() else sequenceOf(result)
+  }
 
-  @JvmDefault
   val analysisPlugin: UastAnalysisPlugin?
     @ApiStatus.Experimental
     get() = null
@@ -125,7 +160,6 @@ interface UastLanguagePlugin {
    *         can be converted to at least one of the specified [uastTypes]
    *         (or to [UElement] if no type was specified)
    */
-  @JvmDefault
   fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> {
     logger<UastLanguagePlugin>().warn(Exception("fallback to the PsiElement for ${this.javaClass}, it can have a performance impact"))
     return classSetOf(PsiElement::class.java)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.diff;
 
 import com.intellij.icons.AllIcons;
@@ -18,30 +18,23 @@ public enum DirDiffOperation {
   COPY_TO, COPY_FROM, MERGE, EQUAL, NONE, DELETE;
 
   public Icon getIcon() {
-    switch (this) {
-      case COPY_TO:   return AllIcons.Vcs.Arrow_right;
-      case COPY_FROM: return AllIcons.Vcs.Arrow_left;
-      case MERGE:     return AllIcons.Vcs.Not_equal;
-      case EQUAL:     return AllIcons.Vcs.Equal;
-      case DELETE:    return AllIcons.Vcs.Remove;
-      case NONE:
-    }
-    return JBUIScale.scaleIcon(EmptyIcon.create(16));
+    return switch (this) {
+      case COPY_TO -> AllIcons.Vcs.Arrow_right;
+      case COPY_FROM -> AllIcons.Vcs.Arrow_left;
+      case MERGE -> AllIcons.Vcs.Not_equal;
+      case EQUAL -> AllIcons.Vcs.Equal;
+      case DELETE -> AllIcons.Vcs.Remove;
+      case NONE -> JBUIScale.scaleIcon(EmptyIcon.create(16));
+    };
   }
 
   @Nullable
   public Color getTextColor() {
-    switch (this) {
-      case COPY_TO:
-      case COPY_FROM:
-        return FileStatus.ADDED.getColor();
-      case MERGE:
-        return FileStatus.MODIFIED.getColor();
-      case DELETE:
-        return FileStatus.DELETED.getColor();
-      case EQUAL:
-      case NONE:
-    }
-    return JBColor.foreground();
+    return switch (this) {
+      case COPY_TO, COPY_FROM -> FileStatus.ADDED.getColor();
+      case MERGE -> FileStatus.MODIFIED.getColor();
+      case DELETE -> FileStatus.DELETED.getColor();
+      case EQUAL, NONE -> JBColor.foreground();
+    };
   }
 }

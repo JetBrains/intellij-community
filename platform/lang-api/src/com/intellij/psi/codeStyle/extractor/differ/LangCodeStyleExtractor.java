@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author Roman.Shein
- */
 public interface LangCodeStyleExtractor {
   LanguageExtension<LangCodeStyleExtractor> EXTENSION =
     new LanguageExtension<>("com.intellij.lang.formatting.extractor");

@@ -18,7 +18,7 @@ package com.intellij.vcs.log.graph.impl.print.elements;
 
 import com.intellij.vcs.log.graph.NodePrintElement;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
-import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
+import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager;
 import org.jetbrains.annotations.NotNull;
 
 public class SimplePrintElementImpl extends PrintElementWithGraphElement implements NodePrintElement {
@@ -26,16 +26,14 @@ public class SimplePrintElementImpl extends PrintElementWithGraphElement impleme
   public SimplePrintElementImpl(int rowIndex,
                                 int positionInCurrentRow,
                                 @NotNull GraphElement graphElement,
-                                @NotNull PrintElementManager printElementManager) {
-    super(rowIndex, positionInCurrentRow, graphElement, printElementManager);
+                                @NotNull PrintElementPresentationManager presentationManager) {
+    super(rowIndex, positionInCurrentRow, graphElement, presentationManager);
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof NodePrintElement)) return false;
-
-    NodePrintElement that = (NodePrintElement)o;
+    if (!(o instanceof NodePrintElement that)) return false;
 
     if (myPositionInCurrentRow != that.getPositionInCurrentRow()) return false;
     if (myRowIndex != that.getRowIndex()) return false;

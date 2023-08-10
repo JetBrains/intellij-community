@@ -11,9 +11,6 @@ import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
-/**
- * @author peter
- */
 class GroovyLiveTemplatesTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {

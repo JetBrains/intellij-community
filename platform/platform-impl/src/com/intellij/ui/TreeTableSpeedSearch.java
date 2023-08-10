@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
@@ -14,6 +14,10 @@ import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
+/**
+ * To install the speed search on a {@link TreeTable} component
+ * use one of the {@link TreeTableSpeedSearch#installOn} static methods
+ */
 public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
   private static final Convertor<TreePath, String> TO_STRING = object -> {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)object.getLastPathComponent();
@@ -22,11 +26,55 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
   private final Convertor<? super TreePath, String> myToStringConvertor;
   protected boolean myCanExpand;
 
+  /**
+   * @param sig parameter is used to avoid clash with the deprecated constructor
+   */
+  protected TreeTableSpeedSearch(TreeTable tree, Void sig, Convertor<? super TreePath, String> toStringConvertor) {
+    super(tree, sig);
+    myToStringConvertor = toStringConvertor;
+  }
+
+  /**
+   * @param sig parameter is used to avoid clash with the deprecated constructor
+   */
+  protected TreeTableSpeedSearch(TreeTable tree, Void sig) {
+    this(tree, sig, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING);
+  }
+
+
+  public static @NotNull TreeTableSpeedSearch installOn(TreeTable tree, Convertor<? super TreePath, String> toStringConvertor) {
+    TreeTableSpeedSearch search = new TreeTableSpeedSearch(tree, null, toStringConvertor);
+    search.setupListeners();
+    return search;
+  }
+
+  public static @NotNull TreeTableSpeedSearch installOn(TreeTable tree) {
+    return installOn(tree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING);
+  }
+
+  /**
+   * @deprecated Use the static method {@link TreeTableSpeedSearch#installOn(TreeTable, Convertor)} to install a speed search.
+   * <p>
+   * For inheritance use the non-deprecated constructor.
+   * <p>
+   * Also, note that non-deprecated constructor is side effect free, and you should call for {@link TreeTableSpeedSearch#setupListeners()}
+   * method to enable speed search
+   */
+  @Deprecated
   public TreeTableSpeedSearch(TreeTable tree, Convertor<? super TreePath, String> toStringConvertor) {
     super(tree);
     myToStringConvertor = toStringConvertor;
   }
 
+  /**
+   * @deprecated Use the static method {@link TreeTableSpeedSearch#installOn(TreeTable)} to install a speed search.
+   * <p>
+   * For inheritance use the non-deprecated constructor.
+   * <p>
+   * Also, note that non-deprecated constructor is side effect free, and you should call for {@link TreeTableSpeedSearch#setupListeners()}
+   * method to enable speed search
+   */
+  @Deprecated
   public TreeTableSpeedSearch(TreeTable tree) {
     this(tree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING);
   }
@@ -81,7 +129,7 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
   protected String getElementText(Object element) {
     TreePath path = (TreePath)element;
     String string = myToStringConvertor.convert(path);
-    if (string == null) return TreeTableSpeedSearch.TO_STRING.convert(path);
+    if (string == null) return TO_STRING.convert(path);
     return string;
   }
 }

@@ -1,70 +1,88 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.browsers.ReloadMode;
+import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.AnyPsiChangeListener;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.ui.jcef.JCEFHtmlPanel;
-import com.intellij.util.Alarm;
+import com.intellij.ui.GotItTooltip;
+import com.intellij.ui.jcef.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.BuiltInServerBundle;
 
 import javax.swing.*;
+import java.awt.*;
 import java.beans.PropertyChangeListener;
+
 
 /**
  * @author Konstantin Bulenkov
  */
 public class WebPreviewFileEditor extends UserDataHolderBase implements FileEditor {
+  public static final String WEB_PREVIEW_RELOAD_TOOLTIP_ID = "web.preview.reload.on.save";
   private final VirtualFile myFile;
   private final JCEFHtmlPanel myPanel;
+  private final String myUrl;
+  private static int previewsOpened = 0;
 
   public WebPreviewFileEditor(@NotNull Project project, @NotNull WebPreviewVirtualFile file) {
     myFile = file.getOriginalFile();
-    myPanel = new JCEFHtmlPanel(myFile.getUrl());
-    myPanel.getCefBrowser().createImmediately();
-    Alarm alarm = new Alarm(this);
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(myFile);
-    if (psiFile != null) {
-      Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-      if (document != null) {
-        reloadHtml(document);
-        project.getMessageBus().connect(alarm)
-          .subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC,
-                     new AnyPsiChangeListener() {
-                       @Override
-                       public void afterPsiChanged(boolean isPhysical) {
-                         PsiFile psi = PsiManager.getInstance(project).findFile(myFile);
-                         if (psi != null) {
-                           Document doc = PsiDocumentManager.getInstance(project).getDocument(psi);
-                           if (doc != null) {
-                             alarm.cancelAllRequests();
-                             alarm.addRequest(() -> reloadHtml(doc), 100);
-                           }
-                         }
-                       }
-                     });
-      }
-    }
+    myUrl = file.getPreviewUrl().toExternalForm();
+    myPanel = new JCEFHtmlPanel(myUrl);
+    myPanel.setPageBackgroundColor("white");
+    reloadPage();
+    previewsOpened++;
+    showPreviewTooltip();
   }
 
-  private void reloadHtml(@NotNull Document document) {
+  private void reloadPage() {
     FileDocumentManager.getInstance().saveAllDocuments();
     ApplicationManager.getApplication().saveAll();
-    myPanel.setHtml(document.getText());
+    myPanel.loadURL(myUrl);
+  }
+
+  private void showPreviewTooltip() {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      GotItTooltip gotItTooltip = new GotItTooltip(WEB_PREVIEW_RELOAD_TOOLTIP_ID, BuiltInServerBundle.message("reload.on.save.preview.got.it.content"), this);
+      if (!gotItTooltip.canShow()) return;
+
+      if (WebBrowserManager.PREVIEW_RELOAD_MODE_DEFAULT != ReloadMode.RELOAD_ON_SAVE) {
+        Logger.getInstance(WebPreviewFileEditor.class).error(
+          "Default value for " + BuiltInServerBundle.message("reload.on.save.preview.got.it.title") + " has changed, tooltip is outdated.");
+        return;
+      }
+      if (WebBrowserManager.getInstance().getWebPreviewReloadMode() != ReloadMode.RELOAD_ON_SAVE) {
+        // changed before gotIt was shown
+        return;
+      }
+
+      gotItTooltip
+        .withHeader(BuiltInServerBundle.message("reload.on.save.preview.got.it.title"))
+        .withPosition(Balloon.Position.above)
+        .withLink(CommonBundle.message("action.text.configure.ellipsis"), () -> {
+          ShowSettingsUtil.getInstance().showSettingsDialog( null, (it) ->
+            it instanceof SearchableConfigurable &&
+            ((SearchableConfigurable)it).getId().equals("reference.settings.ide.settings.web.browsers"),
+          null);
+        });
+
+
+      gotItTooltip.show(myPanel.getComponent(), (c, b) ->  new Point(0, 0) );
+    });
   }
 
   @Override
@@ -88,6 +106,11 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
   }
 
   @Override
+  public @NotNull VirtualFile getFile() {
+    return myFile;
+  }
+
+  @Override
   public boolean isModified() {
     return false;
   }
@@ -107,13 +130,13 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
 
   }
 
-  @Override
-  public @Nullable FileEditorLocation getCurrentLocation() {
-    return null;
+  public static boolean isPreviewOpened() {
+    return previewsOpened > 0;
   }
 
   @Override
   public void dispose() {
-
+    previewsOpened--;
+    Disposer.dispose(myPanel);
   }
 }

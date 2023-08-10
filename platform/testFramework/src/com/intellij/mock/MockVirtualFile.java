@@ -15,9 +15,6 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class MockVirtualFile extends VirtualFile {
   public static MockVirtualFile dir(@NotNull String name, MockVirtualFile... children) {
     MockVirtualFile dir = new MockVirtualFile(true, name);

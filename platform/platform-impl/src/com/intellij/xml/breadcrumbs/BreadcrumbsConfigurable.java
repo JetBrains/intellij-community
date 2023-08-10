@@ -11,7 +11,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.colors.pages.GeneralColorsPage;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
-import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.scale.JBUIScale;
@@ -99,7 +99,7 @@ final class BreadcrumbsConfigurable extends CompositeConfigurable<BreadcrumbsCon
       component.add(show);
       component.add(placementPanel);
       component.add(languagesPanel);
-      component.add(LinkLabel.create(message("configure.breadcrumbs.colors"), () -> {
+      component.add(new ActionLink(message("configure.breadcrumbs.colors"), e -> {
         DataContext context = DataManager.getInstance().getDataContext(component);
         selectOrEditColor(context, "Breadcrumbs//Current", GeneralColorsPage.class);
       }));

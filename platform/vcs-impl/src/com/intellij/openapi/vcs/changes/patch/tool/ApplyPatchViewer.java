@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.*;
@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -30,7 +29,6 @@ import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -40,7 +38,7 @@ import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntListIterator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,8 +49,6 @@ import java.util.List;
 import java.util.*;
 
 class ApplyPatchViewer implements DataProvider, Disposable {
-  private static final Logger LOG = Logger.getInstance(ApplyPatchViewer.class);
-
   @Nullable private final Project myProject;
   @NotNull private final DiffContext myContext;
   @NotNull private final ApplyPatchRequest myPatchRequest;
@@ -178,8 +174,6 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     if (myDisposed) return;
     myDisposed = true;
 
-    myFoldingModel.destroy();
-
     Disposer.dispose(myModel);
 
     Disposer.dispose(myResultHolder);
@@ -296,12 +290,10 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     myPatchEditor.getGutter().setLineNumberConverter(new LineNumberConverterAdapter(convertor1.createConvertor()),
                                                      new LineNumberConverterAdapter(convertor2.createConvertor()));
 
-    TIntArrayList lines = builder.getSeparatorLines();
-    for (int i = 0; i < lines.size(); i++) {
-      int offset = patchDocument.getLineStartOffset(lines.get(i));
-      DiffDrawUtil.createLineSeparatorHighlighter(myPatchEditor, offset, offset, BooleanGetter.TRUE);
+    for (IntListIterator iterator = builder.getSeparatorLines().iterator(); iterator.hasNext(); ) {
+      int offset = patchDocument.getLineStartOffset(iterator.nextInt());
+      DiffDrawUtil.createLineSeparatorHighlighter(myPatchEditor, offset, offset);
     }
-
 
     List<PatchChangeBuilder.Hunk> hunks = builder.getHunks();
 
@@ -498,6 +490,11 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private abstract class ApplySelectedChangesActionBase extends DumbAwareAction {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
         // consume shortcut even if there are nothing to do - avoid calling some other action
@@ -565,6 +562,11 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       boolean enabled = ContainerUtil.exists(myModelChanges, c -> {
         if (c.isResolved()) return false;
@@ -583,14 +585,9 @@ class ApplyPatchViewer implements DataProvider, Disposable {
         for (int i = changes.size() - 1; i >= 0; i--) {
           ApplyPatchChange change = changes.get(i);
           switch (change.getStatus()) {
-            case ALREADY_APPLIED:
-              markChangeResolved(change);
-              break;
-            case EXACTLY_APPLIED:
-              replaceChange(change);
-              break;
-            case NOT_APPLIED:
-              break;
+            case ALREADY_APPLIED -> markChangeResolved(change);
+            case EXACTLY_APPLIED -> replaceChange(change);
+            case NOT_APPLIED -> {}
           }
         }
       });
@@ -733,14 +730,9 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
         totalUnresolved++;
         switch (change.getStatus()) {
-          case ALREADY_APPLIED:
-            alreadyApplied++;
-            break;
-          case NOT_APPLIED:
-            notApplied++;
-            break;
-          case EXACTLY_APPLIED:
-            break;
+          case ALREADY_APPLIED -> alreadyApplied++;
+          case NOT_APPLIED -> notApplied++;
+          case EXACTLY_APPLIED -> {}
         }
       }
 

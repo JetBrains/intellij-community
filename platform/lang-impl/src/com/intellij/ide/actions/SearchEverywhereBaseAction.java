@@ -1,19 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.ide.actions.GotoActionBase.getInitialText;
 
-public abstract class SearchEverywhereBaseAction extends AnAction {
+public abstract class SearchEverywhereBaseAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public void update(@NotNull final AnActionEvent event) {
@@ -23,6 +23,11 @@ public abstract class SearchEverywhereBaseAction extends AnAction {
     boolean hasContributors = hasContributors(dataContext);
     presentation.setEnabled((!requiresProject() || project != null) && hasContributors);
     presentation.setVisible(hasContributors);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   protected boolean requiresProject() {
@@ -39,7 +44,6 @@ public abstract class SearchEverywhereBaseAction extends AnAction {
                                              boolean sendStatistics) {
     Project project = event.getProject();
     SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(project);
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
 
     if (seManager.isShown()) {
       if (tabID.equals(seManager.getSelectedTabID())) {
@@ -48,18 +52,16 @@ public abstract class SearchEverywhereBaseAction extends AnAction {
       else {
         seManager.setSelectedTabID(tabID);
         if (sendStatistics) {
-          FeatureUsageData data = SearchEverywhereUsageTriggerCollector
-            .createData(tabID)
-            .addInputEvent(event);
-          SearchEverywhereUsageTriggerCollector.trigger(project, SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, data);
+          SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(project,
+                                                                 SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(tabID),
+                                                                 EventFields.InputEventByAnAction.with(event));
         }
       }
       return;
     }
 
     if (sendStatistics) {
-      FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(tabID).addInputEvent(event);
-      SearchEverywhereUsageTriggerCollector.trigger(project, SearchEverywhereUsageTriggerCollector.DIALOG_OPEN, data);
+      SearchEverywhereUsageTriggerCollector.DIALOG_OPEN.log(project, tabID, event);
     }
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
     String searchText = StringUtil.nullize(getInitialText(useEditorSelection, event).first);

@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -11,6 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ui.TextTransferable;
@@ -24,17 +24,22 @@ import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.util.Predicates.nonNull;
 import static org.junit.Assert.assertNotNull;
 
+@TestOnly
 public class XDebuggerTestUtil {
   public static final int TIMEOUT_MS = 25_000;
 
@@ -81,25 +86,34 @@ public class XDebuggerTestUtil {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     WriteAction.runAndWait(() -> {
       XLineBreakpoint<?> breakpoint = Arrays.stream(XDebuggerUtil.getInstance().getLineBreakpointTypes())
-                                            .map(t -> breakpointManager.findBreakpointAtLine(t, file, line)).filter(Objects::nonNull)
-                                            .findFirst().orElse(null);
+        .map(t -> breakpointManager.findBreakpointAtLine(t, file, line))
+        .filter(nonNull())
+        .findFirst().orElse(null);
       assertNotNull(breakpoint);
       breakpointManager.removeBreakpoint(breakpoint);
     });
   }
 
-  public static XExecutionStack getActiveThread(@NotNull XDebugSession session) {
+  public static @Nullable XExecutionStack getActiveThread(@NotNull XDebugSession session) {
     return session.getSuspendContext().getActiveExecutionStack();
   }
 
   public static List<XExecutionStack> collectThreads(@NotNull XDebugSession session) {
-    return collectThreadsWithErrors(session).first;
+    return collectThreads(session, TIMEOUT_MS);
+  }
+
+  public static List<XExecutionStack> collectThreads(@NotNull XDebugSession session, int timeoutMs) {
+    return collectThreadsWithErrors(session, timeoutMs).first;
   }
 
   public static Pair<List<XExecutionStack>, String> collectThreadsWithErrors(@NotNull XDebugSession session) {
+    return collectThreadsWithErrors(session, TIMEOUT_MS);
+  }
+
+  public static Pair<List<XExecutionStack>, String> collectThreadsWithErrors(@NotNull XDebugSession session, int timeoutMs) {
     XTestExecutionStackContainer container = new XTestExecutionStackContainer();
     session.getSuspendContext().computeExecutionStacks(container);
-    return container.waitFor(TIMEOUT_MS);
+    return container.waitFor(timeoutMs);
   }
 
   public static List<XStackFrame> collectFrames(@NotNull XDebugSession session) {
@@ -107,7 +121,7 @@ public class XDebuggerTestUtil {
   }
 
   public static List<XStackFrame> collectFrames(@Nullable XExecutionStack thread, @NotNull XDebugSession session) {
-    return collectFrames(thread == null ? getActiveThread(session) : thread);
+    return collectFrames(thread == null ? Objects.requireNonNull(getActiveThread(session)) : thread);
   }
 
   public static String getFramePresentation(XStackFrame frame) {
@@ -131,7 +145,7 @@ public class XDebuggerTestUtil {
   }
 
   public static Pair<List<XStackFrame>, XStackFrame> collectFramesWithSelected(@NotNull XDebugSession session, long timeout) {
-    return collectFramesWithSelected(getActiveThread(session), timeout);
+    return collectFramesWithSelected(Objects.requireNonNull(getActiveThread(session)), timeout);
   }
 
   public static Pair<List<XStackFrame>, XStackFrame> collectFramesWithSelected(XExecutionStack thread, long timeout) {
@@ -142,8 +156,7 @@ public class XDebuggerTestUtil {
   }
 
   public static XStackFrame getFrameAt(@NotNull XDebugSession session, int frameIndex) {
-    final XExecutionStack activeThread = getActiveThread(session);
-    return getFrameAt(activeThread, frameIndex);
+    return getFrameAt(Objects.requireNonNull(getActiveThread(session)), frameIndex);
   }
 
   public static XStackFrame getFrameAt(@NotNull XExecutionStack thread, int frameIndex) {
@@ -187,7 +200,7 @@ public class XDebuggerTestUtil {
     s.down();
     ApplicationManager.getApplication().invokeLater(() -> s.up());
     s.waitForUnsafe();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {});
+    UIUtil.invokeAndWaitIfNeeded(() -> {});
   }
 
   @NotNull
@@ -198,7 +211,7 @@ public class XDebuggerTestUtil {
         String eachName = ((XNamedValue)each).getName();
         if (eachName.equals(name)) return each;
 
-        if (names.length() > 0) names.append(", ");
+        if (!names.isEmpty()) names.append(", ");
         names.append(eachName);
       }
     }
@@ -228,6 +241,10 @@ public class XDebuggerTestUtil {
         return null;
       }
       catch (ExecutionException e) {
+        Throwable cause = e.getCause();
+        if (cause != null) {
+          ExceptionUtil.rethrow(cause);
+        }
         throw new RuntimeException(e);
       }
     }, timeoutInMillis);
@@ -259,10 +276,19 @@ public class XDebuggerTestUtil {
     return null;
   }
 
+  public static void markValue(XValueMarkers<?, ?> markers, @NotNull XValue value, @NotNull ValueMarkup markup) {
+    try {
+      markers.markValue(value, markup).blockingGet(TIMEOUT_MS);
+    }
+    catch (TimeoutException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   // Rider needs this in order to be able to receive messages from the backend when waiting on the EDT.
   private static void flushEventQueue() {
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      IdeEventQueue.getInstance().flushQueue();
+      UIUtil.dispatchAllInvocationEvents();
     }
     else {
       UIUtil.pump();
@@ -313,8 +339,7 @@ public class XDebuggerTestUtil {
   public static void setBreakpointCondition(Project project, int line, final String condition) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     for (XBreakpoint breakpoint : getBreakpoints(breakpointManager)) {
-      if (breakpoint instanceof XLineBreakpoint) {
-        final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
+      if (breakpoint instanceof XLineBreakpoint lineBreakpoint) {
 
         if (lineBreakpoint.getLine() == line) {
           WriteAction.runAndWait(() -> lineBreakpoint.setCondition(condition));
@@ -326,8 +351,7 @@ public class XDebuggerTestUtil {
   public static void setBreakpointLogExpression(Project project, int line, final String logExpression) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     for (XBreakpoint breakpoint : getBreakpoints(breakpointManager)) {
-      if (breakpoint instanceof XLineBreakpoint) {
-        final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
+      if (breakpoint instanceof XLineBreakpoint lineBreakpoint) {
 
         if (lineBreakpoint.getLine() == line) {
           WriteAction.runAndWait(() -> {

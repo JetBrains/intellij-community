@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBCachingScalableIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,15 +55,18 @@ public final class OffsetIcon extends JBCachingScalableIcon<OffsetIcon> {
     myScaledOffset = icon.myScaledOffset;
   }
 
-  @NotNull
   @Override
-  public OffsetIcon copy() {
+  public @NotNull OffsetIcon copy() {
     return new OffsetIcon(this);
   }
 
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return myIcon;
+  }
+
+  @ApiStatus.Internal
+  public int getOffset() {
+    return myOffset;
   }
 
   public int hashCode() {
@@ -71,8 +75,7 @@ public final class OffsetIcon extends JBCachingScalableIcon<OffsetIcon> {
 
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (obj instanceof OffsetIcon) {
-      OffsetIcon icon = (OffsetIcon)obj;
+    if (obj instanceof OffsetIcon icon) {
       return icon.myOffset == myOffset && Objects.equals(icon.myIcon, myIcon);
     }
     return false;

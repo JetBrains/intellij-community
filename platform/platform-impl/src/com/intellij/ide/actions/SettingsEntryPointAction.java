@@ -1,24 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginStateListener;
-import com.intellij.ide.plugins.PluginStateManager;
-import com.intellij.ide.plugins.newui.PluginUpdatesService;
+import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -26,83 +18,62 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.updateSettings.impl.CheckForUpdateResult;
-import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.updateSettings.impl.PluginUpdateDialog;
-import com.intellij.openapi.updateSettings.impl.UpdateInfoDialog;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnActionButton;
+import com.intellij.ui.BadgeIconSupplier;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IconManager;
 import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Alexander Lobas
  */
-public final class SettingsEntryPointAction extends AnAction implements DumbAware, RightAlignedToolbarAction,
-                                                                  AnAction.TransparentUpdate, TooltipDescriptionProvider {
-  private boolean myShowPopup = true;
+public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider, Toggleable {
+  private static final BadgeIconSupplier GEAR_ICON = new BadgeIconSupplier(AllIcons.General.GearPlain);
+  private static final Icon NEW_UI_ICON =
+    IconManager.getInstance().withIconBadge(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.NEW_UI);
+  private static final BadgeIconSupplier IDE_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.IdeUpdate);
+  private static final BadgeIconSupplier PLUGIN_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.PluginUpdate);
 
   public SettingsEntryPointAction() {
-    initPluginsListeners();
+    super(IdeBundle.messagePointer("settings.entry.point.tooltip"));
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     resetActionIcon();
 
-    if (!myShowPopup) {
-      return;
-    }
-    myShowPopup = false;
-
-    ListPopup popup = createMainPopup(e.getDataContext(), () -> myShowPopup = true);
-
-    InputEvent inputEvent = e.getInputEvent();
-    if (inputEvent == null) {
-      popup.showInFocusCenter();
-    }
-    else {
-      Component component = inputEvent.getComponent();
-      if (component instanceof ActionButtonComponent) {
-        popup.showUnderneathOf(component);
-      }
-      else {
-        popup.showInCenterOf(component);
-      }
-    }
+    ListPopup popup = createMainPopup(e.getDataContext());
+    PopupUtil.addToggledStateListener(popup, e.getPresentation());
+    PopupUtil.showForActionButtonEvent(popup, e);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setText("");
+    if (e.isFromActionToolbar()) presentation.setText("");
     presentation.setDescription(getActionTooltip());
     presentation.setIcon(getActionIcon());
+  }
 
-    for (AnAction child : getTemplateActions()) {
-      child.update(e);
-    }
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static AnAction @NotNull [] getTemplateActions() {
@@ -111,93 +82,35 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
   }
 
   @NotNull
-  private static ListPopup createMainPopup(@NotNull DataContext context, @NotNull Runnable disposeCallback) {
-    DefaultActionGroup group = new DefaultActionGroup();
+  private static ListPopup createMainPopup(@NotNull DataContext context) {
+    List<AnAction> appActions = new ArrayList<>();
+    List<AnAction> pluginActions = new ArrayList<>();
 
-    if (myPlatformUpdateInfo != null) {
-      group.add(new DumbAwareAction(IdeBundle.message("settings.entry.point.update.ide.action",
-                                                      ApplicationNamesInfo.getInstance().getFullProductName(),
-                                                      myPlatformUpdateInfo.getNewBuild().getVersion()),
-                                    null, AllIcons.Ide.Notification.IdeUpdate) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          if (myPlatformUpdateInfo.getPatches() == null ||
-              (!SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath())))) {
-            new UpdateInfoDialog(e.getProject(), myPlatformUpdateInfo.getUpdatedChannel(), myPlatformUpdateInfo.getNewBuild(), null, true,
-                                 null, myIncompatiblePlugins).show();
-          }
-          else {
-            CheckForUpdateResult platformUpdateInfo = myPlatformUpdateInfo;
-            newPlatformUpdate(null, null);
-
-            ActionCallback callback = new ActionCallback().doWhenRejected(() -> {
-              ApplicationManager.getApplication().invokeLater(() -> {
-                newPlatformUpdate(platformUpdateInfo, null);
-              }, ModalityState.any());
-            });
-
-            UpdateInfoDialog.downloadPatchAndRestart(platformUpdateInfo.getNewBuild(), platformUpdateInfo.getUpdatedChannel(),
-                                                     platformUpdateInfo.getPatches(), null, null, callback);
-          }
+    for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
+      for (UpdateAction action : provider.getUpdateActions(context)) {
+        Presentation presentation = action.getTemplatePresentation();
+        if (action.isIdeUpdate()) {
+          presentation.setIcon(AllIcons.Ide.Notification.IdeUpdate);
+          appActions.add(action);
         }
-      });
-    }
-    if (myUpdatedPlugins != null) {
-      int size = myUpdatedPlugins.size();
-
-      String name = size == 1
-                    ? IdeBundle.message("settings.entry.point.update.plugin.action", myUpdatedPlugins.iterator().next().getPluginName())
-                    : IdeBundle.message("settings.entry.point.update.plugins.action");
-      group.add(new DumbAwareAction(name, null, AllIcons.Ide.Notification.PluginUpdate) {
-        @Override
-        public void update(@NotNull AnActionEvent e) {
-          e.getPresentation().setEnabled(myEnableUpdateAction);
+        else {
+          presentation.setIcon(AllIcons.Ide.Notification.PluginUpdate);
+          pluginActions.add(action);
         }
-
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          PluginUpdateDialog dialog = new PluginUpdateDialog(e.getProject(), myUpdatedPlugins, myCustomRepositoryPlugins);
-          dialog.setFinishCallback(() -> setEnableUpdateAction(true));
-          setEnableUpdateAction(false);
-
-          if (!dialog.showAndGet()) {
-            setEnableUpdateAction(true);
-          }
-        }
-      });
-      if (size > 1) {
-        StringBuilder result = new StringBuilder();
-        int count = 0;
-
-        for (PluginDownloader plugin : myUpdatedPlugins) {
-          if (result.length() > 0) {
-            result.append(", ");
-          }
-          result.append(plugin.getPluginName());
-          count++;
-          if (count == 2) {
-            int delta = size - count;
-            if (delta > 0) {
-              result.append(" ").append(IdeBundle.message("settings.entry.point.update.plugins.more.action", delta));
-            }
-            break;
-          }
-        }
-
-        @NlsSafe String actionName = result.toString();
-        group.add(new AnAction(actionName) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-          }
-
-          @Override
-          public void update(@NotNull AnActionEvent e) {
-            e.getPresentation().setEnabled(false);
-          }
-        });
+        action.markAsRead();
       }
     }
 
+    DefaultActionGroup group = new DefaultActionGroup(appActions);
+    group.addAll(pluginActions);
+
+    if (group.getChildrenCount() == 0) {
+      resetActionIcon();
+    }
+    AnAction updateGroup = ActionManager.getInstance().getAction("UpdateEntryPointGroup");
+    if (updateGroup != null) {
+      group.add(updateGroup);
+    }
     group.addSeparator();
 
     for (AnAction child : getTemplateActions()) {
@@ -206,18 +119,12 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
       }
       else {
         String text = child.getTemplateText();
-        if (text != null && !text.endsWith("...")) {
+        if (text != null && !(text.endsWith("...") || text.endsWith("…")) && !(child instanceof NoDots)) {
           AnActionButton button = new AnActionButton.AnActionButtonWrapper(child.getTemplatePresentation(), child) {
             @Override
             public void updateButton(@NotNull AnActionEvent e) {
               getDelegate().update(e);
-              e.getPresentation().setText(e.getPresentation().getText() + "...");
-            }
-
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-              super.actionPerformed(new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(),
-                                                      getDelegate().getTemplatePresentation(), e.getActionManager(), e.getModifiers()));
+              e.getPresentation().setText(e.getPresentation().getText() + "…");
             }
           };
           button.setShortcut(child.getShortcutSet());
@@ -230,110 +137,114 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
     }
 
     return JBPopupFactory.getInstance()
-      .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true, () -> {
-        AppExecutorUtil.getAppScheduledExecutorService().schedule(
-          () -> ApplicationManager.getApplication().invokeLater(disposeCallback, ModalityState.any()), 250, TimeUnit.MILLISECONDS);
-      }, -1);
+      .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
   }
 
-  private static PluginUpdatesService myUpdatesService;
-  private static PluginStateListener myPluginStateListener;
+  private static boolean ourShowPlatformUpdateIcon;
+  private static boolean ourShowPluginsUpdateIcon;
+  private static boolean ourNewUiIcon = calculateOurNewUiIcon();
 
-  private static void initPluginsListeners() {
-    if (myUpdatesService == null) {
-      myUpdatesService = PluginUpdatesService.connectWithUpdates(descriptors -> {
-        if (ContainerUtil.isEmpty(descriptors)) {
-          newPluginsUpdate(null, null);
-          return;
-        }
-        List<PluginDownloader> downloaders = new ArrayList<>();
-        try {
-          for (IdeaPluginDescriptor descriptor : descriptors) {
-            if (!PluginUpdateDialog.isIgnored(descriptor)) {
-              downloaders.add(PluginDownloader.createDownloader(descriptor));
-            }
+  public static void updateState() {
+    resetActionIcon();
+
+    ourNewUiIcon = calculateOurNewUiIcon();
+
+    loop:
+    for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
+      for (UpdateAction action : provider.getUpdateActions(DataContext.EMPTY_CONTEXT)) {
+        if (action.isNewAction()) {
+          if (action.isIdeUpdate()) {
+            ourShowPlatformUpdateIcon = true;
+          }
+          else {
+            ourShowPluginsUpdateIcon = true;
+          }
+          if (ourShowPlatformUpdateIcon && ourShowPluginsUpdateIcon) {
+            break loop;
           }
         }
-        catch (IOException e) {
-          PluginManagerCore.getLogger().error(e);
-        }
-        newPluginsUpdate(downloaders.isEmpty() ? null : downloaders, null);
-      });
-    }
-    if (myPluginStateListener == null) {
-      PluginStateManager.addStateListener(myPluginStateListener = new PluginStateListener() {
-        @Override
-        public void install(@NotNull IdeaPluginDescriptor descriptor) {
-          removePluginsUpdate(Collections.singleton(descriptor));
-        }
-      });
-    }
-  }
-
-  private static CheckForUpdateResult myPlatformUpdateInfo;
-  private static @Nullable Collection<? extends IdeaPluginDescriptor> myIncompatiblePlugins;
-  private static boolean myShowPlatformUpdateIcon;
-
-  private static Collection<? extends PluginDownloader> myUpdatedPlugins;
-  private static Collection<? extends IdeaPluginDescriptor> myCustomRepositoryPlugins;
-  private static boolean myShowPluginsUpdateIcon;
-  private static boolean myEnableUpdateAction = true;
-
-  private static void setEnableUpdateAction(boolean value) {
-    myEnableUpdateAction = value;
-  }
-
-  public static void newPlatformUpdate(@Nullable CheckForUpdateResult platformUpdateInfo,
-                                       @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
-    myPlatformUpdateInfo = platformUpdateInfo;
-    myIncompatiblePlugins = incompatiblePlugins;
-    myShowPlatformUpdateIcon = platformUpdateInfo != null;
-    updateAction();
-  }
-
-  public static void newPluginsUpdate(@Nullable Collection<? extends PluginDownloader> updatedPlugins,
-                                      @Nullable Collection<? extends IdeaPluginDescriptor> customRepositoryPlugins) {
-    myUpdatedPlugins = updatedPlugins;
-    myCustomRepositoryPlugins = customRepositoryPlugins;
-    myShowPluginsUpdateIcon = updatedPlugins != null;
-    updateAction();
-  }
-
-  public static void removePluginsUpdate(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
-    if (myUpdatedPlugins != null) {
-      List<PluginDownloader> updatedPlugins =
-        ContainerUtil.filter(myUpdatedPlugins, downloader -> {
-          PluginId pluginId = downloader.getId();
-          return ContainerUtil.find(descriptors, descriptor -> descriptor.getPluginId().equals(pluginId)) == null;
-        });
-      if (myUpdatedPlugins.size() != updatedPlugins.size()) {
-        newPluginsUpdate(updatedPlugins.isEmpty() ? null : updatedPlugins, myCustomRepositoryPlugins);
       }
     }
-  }
 
-  private static void updateAction() {
     if (isAvailableInStatusBar()) {
       updateWidgets();
     }
   }
 
+  private static boolean calculateOurNewUiIcon() {
+    return !ExperimentalUI.isNewUI() && !ExperimentalUI.isNewUiUsedOnce()
+           && ExperimentalUI.getPromotionDaysCount() < 14;
+  }
+
   private static @NotNull @Nls String getActionTooltip() {
-    return IdeBundle.message("settings.entry.point.tooltip");
+    boolean updates = ourShowPlatformUpdateIcon || ourShowPluginsUpdateIcon;
+    if (!updates) {
+      for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
+        if (!provider.getUpdateActions(DataContext.EMPTY_CONTEXT).isEmpty()) {
+          updates = true;
+          break;
+        }
+      }
+    }
+    if (updates) {
+      return IdeBundle.message("settings.entry.point.with.updates.tooltip");
+    }
+    return IdeBundle.message(ourNewUiIcon ? "settings.entry.point.newUi.tooltip" : "settings.entry.point.tooltip");
   }
 
   private static void resetActionIcon() {
-    myShowPlatformUpdateIcon = myShowPluginsUpdateIcon = false;
+    ourShowPlatformUpdateIcon = false;
+    ourShowPluginsUpdateIcon = false;
+    ourNewUiIcon = false;
   }
 
   private static @NotNull Icon getActionIcon() {
-    if (myShowPlatformUpdateIcon) {
-      return AllIcons.Ide.Notification.IdeUpdate;
+    if (ourShowPlatformUpdateIcon) {
+      return ExperimentalUI.isNewUI()
+             ? GEAR_ICON.getWarningIcon()
+             : getCustomizedIcon(IDE_UPDATE_ICON);
     }
-    if (myShowPluginsUpdateIcon) {
-      return AllIcons.Ide.Notification.PluginUpdate;
+    if (ourShowPluginsUpdateIcon) {
+      return ExperimentalUI.isNewUI()
+             ? GEAR_ICON.getInfoIcon()
+             : getCustomizedIcon(PLUGIN_UPDATE_ICON);
     }
-    return AllIcons.General.GearPlain;
+    if (ourNewUiIcon) {
+      return NEW_UI_ICON;
+    }
+
+    return getCustomizedIcon(GEAR_ICON);
+  }
+
+  private static @NotNull Icon getCustomizedIcon(@NotNull BadgeIconSupplier supplier) {
+    for (IconCustomizer customizer : IconCustomizer.EP_NAME.getExtensionList()) {
+      Icon icon = customizer.getCustomIcon(supplier);
+      if (icon != null) return icon;
+    }
+    return supplier.getOriginalIcon();
+  }
+
+  /**
+   * Allows to modify a base icon provided by {@link BadgeIconSupplier}. The icon of the first extension which returns a non-null value
+   * will be used.
+   */
+  public interface IconCustomizer {
+    ExtensionPointName<IconCustomizer> EP_NAME = new ExtensionPointName<>("com.intellij.settingsEntryPointIconCustomizer");
+
+    /**
+     * Returns a customized icon optionally based on the given {@link BadgeIconSupplier}. For example, {@code supplier.getInfoIcon()}.
+     *
+     * @param supplier The supplier to use for a base icon.
+     *
+     * @return A customized icon using {@link BadgeIconSupplier} or an alternative (custom) icon.
+     */
+    @Nullable Icon getCustomIcon(@NotNull BadgeIconSupplier supplier);
+  }
+
+  /**
+   * Marker interface to suppress automatic dots "..." addition after action name.
+   */
+  public interface NoDots {
   }
 
   private static UISettingsListener mySettingsListener;
@@ -360,22 +271,25 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
 
   private static boolean isAvailableInStatusBar() {
     initUISettingsListener();
-
-    UISettings settings = UISettings.getInstance();
-    return !settings.getShowMainToolbar() && !settings.getShowToolbarInNavigationBar() && !Registry.is("ide.new.navbar");
+    UISettings uiSettings = UISettings.getInstance();
+    ToolbarSettings toolbarSettings = ToolbarSettings.getInstance();
+    return !uiSettings.getShowMainToolbar() &&
+           !uiSettings.getShowNavigationBar() &&
+           !ExperimentalUI.isNewUI() &&
+           !(toolbarSettings.isAvailable() && toolbarSettings.isVisible());
   }
 
   private static final String WIDGET_ID = "settingsEntryPointWidget";
 
-  public static class StatusBarManager implements StatusBarWidgetFactory {
+  static final class StatusBarManager implements StatusBarWidgetFactory {
     @Override
-    public @NonNls @NotNull String getId() {
+    public @NotNull String getId() {
       return WIDGET_ID;
     }
 
     @Override
-    public @Nls @NotNull String getDisplayName() {
-      return IdeBundle.message("settings.entry.point.tooltip");
+    public @NotNull String getDisplayName() {
+      return IdeBundle.message("settings.entry.point.widget.name");
     }
 
     @Override
@@ -389,31 +303,16 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
     }
 
     @Override
-    public void disposeWidget(@NotNull StatusBarWidget widget) {
-      Disposer.dispose(widget);
-    }
-
-    @Override
     public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
       return isAvailableInStatusBar();
     }
-
-    @Override
-    public boolean isConfigurable() {
-      return false;
-    }
   }
 
-  private static class MyStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
+  private static final class MyStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
     private StatusBar myStatusBar;
-    private boolean myShowPopup = true;
-
-    private MyStatusBarWidget() {
-      initPluginsListeners();
-    }
 
     @Override
-    public @NonNls @NotNull String ID() {
+    public @NotNull String ID() {
       return WIDGET_ID;
     }
 
@@ -423,28 +322,23 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
     }
 
     @Override
-    public @Nullable WidgetPresentation getPresentation() {
+    public @NotNull WidgetPresentation getPresentation() {
       return this;
     }
 
     @Override
-    public @Nullable @NlsContexts.Tooltip String getTooltipText() {
+    public @NlsContexts.Tooltip @NotNull String getTooltipText() {
       return getActionTooltip();
     }
 
     @Override
-    public @Nullable Consumer<MouseEvent> getClickConsumer() {
+    public @NotNull Consumer<MouseEvent> getClickConsumer() {
       return event -> {
         resetActionIcon();
         myStatusBar.updateWidget(WIDGET_ID);
 
-        if (!myShowPopup) {
-          return;
-        }
-        myShowPopup = false;
-
         Component component = event.getComponent();
-        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component), () -> myShowPopup = true);
+        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component));
         popup.addListener(new JBPopupListener() {
           @Override
           public void beforeShown(@NotNull LightweightWindowEvent event) {
@@ -458,12 +352,41 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
     }
 
     @Override
-    public @Nullable Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return getActionIcon();
     }
+  }
 
-    @Override
-    public void dispose() {
+  public interface ActionProvider {
+    ExtensionPointName<ActionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.settingsEntryPointActionProvider");
+
+    @NotNull Collection<UpdateAction> getUpdateActions(@NotNull DataContext context);
+  }
+
+  public static abstract class UpdateAction extends DumbAwareAction {
+    private boolean myNewAction = true;
+
+    protected UpdateAction() {
+    }
+
+    protected UpdateAction(@Nullable @NlsActions.ActionText String text) {
+      super(text);
+    }
+
+    public boolean isIdeUpdate() {
+      return false;
+    }
+
+    public boolean isRestartRequired() {
+      return false;
+    }
+
+    public boolean isNewAction() {
+      return myNewAction;
+    }
+
+    public void markAsRead() {
+      myNewAction = false;
     }
   }
 }

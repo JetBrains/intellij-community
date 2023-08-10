@@ -5,9 +5,8 @@ import com.intellij.execution.impl.ConsoleBuffer
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.Key
+import com.intellij.smRunner.OutputEventSplitterBase
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
-import java.util.concurrent.atomic.AtomicReference
-
 
 /**
  * External test runner sends plain text along with service messages ([ServiceMessage]) to [process].
@@ -35,42 +34,32 @@ import java.util.concurrent.atomic.AtomicReference
  *
  */
 abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean = false,
-                                   private val cutNewLineBeforeServiceMessage: Boolean = false) {
+                                   private val cutNewLineBeforeServiceMessage: Boolean = false) :
+  OutputEventSplitterBase<ProcessOutputType>(ServiceMessage.SERVICE_MESSAGE_START, bufferTextUntilNewLine, cutNewLineBeforeServiceMessage) {
 
-  private val prevRefs: Map<ProcessOutputType, AtomicReference<Output>> =
-    listOf(ProcessOutputType.STDOUT, ProcessOutputType.STDERR, ProcessOutputType.SYSTEM)
-      .map { it to AtomicReference<Output>() }.toMap()
+  companion object {
+    private val USE_CYCLE_BUFFER = ConsoleBuffer.useCycleBuffer()
 
-  private val ProcessOutputType.prevRef get() = prevRefs[baseOutputType.baseOutputType]
-  private var newLinePending = false
-
+    private val stdout = OutputType(ProcessOutputType.STDOUT, OutputStreamType.STDOUT)
+    private val stderr = OutputType(ProcessOutputType.STDERR, OutputStreamType.STDERR)
+    private val system = OutputType(ProcessOutputType.SYSTEM, OutputStreamType.SYSTEM)
+  }
 
   /**
-   * [outputType] could be one of [ProcessOutputTypes] or any other [ProcessOutputType].
+   * [processOutputType] could be one of [ProcessOutputTypes] or any other [ProcessOutputType].
    * Only stdout ([ProcessOutputType.isStdout]) accepts Teamcity Messages ([ServiceMessage]).
    *
    * Stderr and System are flushed automatically unless [bufferTextUntilNewLine],
    * Stdout may be buffered until the end of the message.
    * Make sure you do not process same type from different threads.
    */
-  fun process(text: String, outputType: Key<*>) {
-    val prevRef = (outputType as? ProcessOutputType)?.prevRef
-    if (prevRef == null) {
-      flushInternal(text, outputType)
-      return
+  fun process(text: String, processOutputType: Key<*>) {
+    val outputType = (processOutputType as? ProcessOutputType)?.toOutputType()
+    if (outputType != null) {
+      process(text, outputType)
     }
-
-    var mergedText = text
-    prevRef.getAndSet(null)?.let {
-      if (it.outputType == outputType) {
-        mergedText = it.text + text
-      }
-      else {
-        flushInternal(it.text, it.outputType)
-      }
-    }
-    processInternal(mergedText, outputType)?.let {
-      prevRef.set(Output(it, outputType))
+    else {
+      onTextAvailableInternal(text, processOutputType)
     }
   }
 
@@ -81,93 +70,29 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
    * */
   abstract fun onTextAvailable(text: String, outputType: Key<*>)
 
-  private fun processInternal(text: String, outputType: ProcessOutputType): String? {
-    var from = 0
-    val processServiceMessages = outputType.isStdout
-    // new line char and teamcity message start are two reasons to flush previous text
-    var newLineInd = text.indexOf(NEW_LINE)
-    var teamcityMessageStartInd = if (processServiceMessages) text.indexOf(SERVICE_MESSAGE_START) else -1
-    var serviceMessageStarted = false
-    while (from < text.length) {
-      val nextFrom = Math.min(if (newLineInd != -1) newLineInd + 1 else Integer.MAX_VALUE,
-                              if (teamcityMessageStartInd != -1) teamcityMessageStartInd else Integer.MAX_VALUE)
-      if (nextFrom == Integer.MAX_VALUE) {
-        break
-      }
-      if (from < nextFrom) {
-        flushInternal(text.substring(from, nextFrom), outputType)
-      }
-      assert(from != nextFrom || from == 0) {"``from`` is $from and it hasn't been changed since last check. Loop is frozen"}
-      from = nextFrom
-      serviceMessageStarted = processServiceMessages && nextFrom == teamcityMessageStartInd
-      if (serviceMessageStarted) {
-        teamcityMessageStartInd = text.indexOf(SERVICE_MESSAGE_START, nextFrom + SERVICE_MESSAGE_START.length)
-      }
-      if (newLineInd != -1 && nextFrom == newLineInd + 1) {
-        newLineInd = text.indexOf(NEW_LINE, nextFrom)
-      }
-    }
-    if (from < text.length) {
-      val unprocessed = text.substring(from)
-      if (serviceMessageStarted) {
-        return unprocessed
-      }
-      val preserveSuffixLength = when {
-        bufferTextUntilNewLine -> unprocessed.length
-        processServiceMessages -> findSuffixLengthToPreserve(unprocessed)
-        else -> 0
-      }
-      if (preserveSuffixLength < unprocessed.length) {
-        flushInternal(unprocessed.substring(0, unprocessed.length - preserveSuffixLength), outputType)
-      }
-      if (preserveSuffixLength > 0) {
-        return unprocessed.substring(unprocessed.length - preserveSuffixLength)
-      }
-    }
-    return null
+  final override fun onTextAvailable(text: String, outputType: OutputType<ProcessOutputType>) {
+    onTextAvailableInternal(text, outputType.data)
   }
 
-  private fun findSuffixLengthToPreserve(text: String): Int {
-    for (suffixSize in SERVICE_MESSAGE_START.length - 1 downTo 1) {
-      if (text.regionMatches(text.length - suffixSize, SERVICE_MESSAGE_START, 0, suffixSize)) {
-        return suffixSize
-      }
-    }
-    return 0
-  }
-
-  private data class Output(val text: String, val outputType: ProcessOutputType)
-
-  /**
-   * Flush remainder. Call as last step.
-   */
-  fun flush() {
-    prevRefs.values.forEach { reference ->
-      reference.getAndSet(null)?.let {
-        flushInternal(it.text, it.outputType, lastFlush = true)
-      }
-    }
-  }
-
-  private fun flushInternal(text: String, key: Key<*>, lastFlush: Boolean = false) {
-    if (cutNewLineBeforeServiceMessage && key is ProcessOutputType && key.isStdout) {
-      if (newLinePending) { //Prev. flush was "\n".
-        if (!text.startsWith(SERVICE_MESSAGE_START) || (lastFlush)) {
-          onTextAvailable("\n", key)
-        }
-        newLinePending = false
-      }
-      if (text == "\n" && !lastFlush) {
-        newLinePending = true
-        return
-      }
-    }
-
+  private fun onTextAvailableInternal(text: String, processOutputType: Key<*>) {
     val textToAdd = if (USE_CYCLE_BUFFER) cutLineIfTooLong(text) else text
-    onTextAvailable(textToAdd, key)
+    onTextAvailable(textToAdd, processOutputType)
+  }
+
+  private fun ProcessOutputType.toOutputType(): OutputType<ProcessOutputType> {
+    return when (this) {
+      ProcessOutputType.STDOUT -> stdout
+      ProcessOutputType.STDERR -> stderr
+      ProcessOutputType.SYSTEM -> system
+      else -> {
+        val streamType = when (baseOutputType) {
+          ProcessOutputType.STDOUT -> OutputStreamType.STDOUT
+          ProcessOutputType.STDERR -> OutputStreamType.STDERR
+          ProcessOutputType.SYSTEM -> OutputStreamType.SYSTEM
+          else -> OutputStreamType.STDOUT
+        }
+        OutputType(this, streamType)
+      }
+    }
   }
 }
-
-private val USE_CYCLE_BUFFER = ConsoleBuffer.useCycleBuffer()
-private const val SERVICE_MESSAGE_START: String = ServiceMessage.SERVICE_MESSAGE_START
-private const val NEW_LINE: Char = '\n'

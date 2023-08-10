@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.fixes;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -14,12 +14,16 @@ import org.jetbrains.annotations.NotNull;
 public class RemoveElementQuickFix implements LocalQuickFix {
 
   private final @IntentionFamilyName String myName;
+  @SafeFieldForPreview
   private final Function<? super PsiElement, ? extends PsiElement> myElementFunction;
 
   public RemoveElementQuickFix(@IntentionFamilyName @NotNull String name) {
     this(name, Functions.identity());
   }
 
+  /**
+   * The function must be pure
+   */
   public RemoveElementQuickFix(@IntentionFamilyName @NotNull String name,
                                @NotNull Function<? super PsiElement, ? extends PsiElement> function) {
     myName = name;

@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
+import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -13,10 +16,10 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpSecurityUtil
 import com.intellij.util.io.RequestBuilder
-import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage
 import org.jetbrains.plugins.github.exceptions.*
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubSettings
 import java.io.IOException
 import java.io.InputStream
@@ -24,7 +27,6 @@ import java.io.InputStreamReader
 import java.io.Reader
 import java.net.HttpURLConnection
 import java.util.*
-import java.util.function.Supplier
 import java.util.zip.GZIPInputStream
 
 /**
@@ -32,7 +34,7 @@ import java.util.zip.GZIPInputStream
  */
 sealed class GithubApiRequestExecutor {
 
-  protected val authDataChangedEventDispatcher = EventDispatcher.create(AuthDataChangeListener::class.java)
+  open fun addListener(disposable: Disposable, listener: () -> Unit) = Unit
 
   @RequiresBackgroundThread
   @Throws(IOException::class, ProcessCanceledException::class)
@@ -43,73 +45,34 @@ sealed class GithubApiRequestExecutor {
   @Throws(IOException::class, ProcessCanceledException::class)
   fun <T> execute(request: GithubApiRequest<T>): T = execute(EmptyProgressIndicator(), request)
 
-  fun addListener(listener: AuthDataChangeListener, disposable: Disposable) =
-    authDataChangedEventDispatcher.addListener(listener, disposable)
-
-  fun addListener(disposable: Disposable, listener: () -> Unit) =
-    authDataChangedEventDispatcher.addListener(object : AuthDataChangeListener {
-      override fun authDataChanged() {
-        listener()
-      }
-    }, disposable)
-
-  class WithTokenAuth internal constructor(githubSettings: GithubSettings,
-                                           token: String,
-                                           private val useProxy: Boolean) : Base(githubSettings) {
-    @Volatile
-    internal var token: String = token
-      set(value) {
-        field = value
-        authDataChangedEventDispatcher.multicaster.authDataChanged()
-      }
+  internal class WithTokenAuth(githubSettings: GithubSettings,
+                               private val tokenSupplier: () -> String,
+                               private val useProxy: Boolean) : Base(githubSettings) {
 
     @Throws(IOException::class, ProcessCanceledException::class)
     override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
-      if (service<GHRequestExecutorBreaker>().isRequestsShouldFail) error(
-        "Request failure was triggered by user action. This a pretty long description of this failure that should resemble some long error which can go out of bounds.")
+      check(!service<GHRequestExecutorBreaker>().isRequestsShouldFail) {
+        "Request failure was triggered by user action. This a pretty long description of this failure that should resemble some long error which can go out of bounds."
+      }
+
       indicator.checkCanceled()
       return createRequestBuilder(request)
         .tuner { connection ->
           request.additionalHeaders.forEach(connection::addRequestProperty)
-          connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "${request.tokenHeaderType} $token")
+          connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Bearer ${tokenSupplier()}")
         }
         .useProxy(useProxy)
         .execute(request, indicator)
     }
-  }
 
-  class WithBasicAuth internal constructor(githubSettings: GithubSettings,
-                                           private val login: String,
-                                           private val password: CharArray,
-                                           private val twoFactorCodeSupplier: Supplier<String?>) : Base(githubSettings) {
-    private var twoFactorCode: String? = null
-
-    @Throws(IOException::class, ProcessCanceledException::class)
-    override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
-      indicator.checkCanceled()
-      val basicHeaderValue = HttpSecurityUtil.createBasicAuthHeaderValue(login, password)
-      return executeWithBasicHeader(indicator, request, basicHeaderValue)
-    }
-
-    private fun <T> executeWithBasicHeader(indicator: ProgressIndicator, request: GithubApiRequest<T>, header: String): T {
-      indicator.checkCanceled()
-      return try {
-        createRequestBuilder(request)
-          .tuner { connection ->
-            request.additionalHeaders.forEach(connection::addRequestProperty)
-            connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Basic $header")
-            twoFactorCode?.let { connection.addRequestProperty(OTP_HEADER_NAME, it) }
-          }
-          .execute(request, indicator)
-      }
-      catch (e: GithubTwoFactorAuthenticationException) {
-        twoFactorCode = twoFactorCodeSupplier.get() ?: throw e
-        executeWithBasicHeader(indicator, request, header)
+    override fun addListener(disposable: Disposable, listener: () -> Unit) {
+      if (tokenSupplier is MutableTokenSupplier) {
+        tokenSupplier.addListener(disposable, listener)
       }
     }
   }
 
-  class NoAuth internal constructor(githubSettings: GithubSettings) : Base(githubSettings) {
+  internal class NoAuth(githubSettings: GithubSettings) : Base(githubSettings) {
     override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
       indicator.checkCanceled()
       return createRequestBuilder(request)
@@ -136,6 +99,7 @@ sealed class GithubApiRequestExecutor {
             LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Connected")
           }
           checkResponseCode(connection)
+          checkServerVersion(connection)
           indicator.checkCanceled()
           val result = request.extractResult(createResponse(it, indicator))
           LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Result extracted")
@@ -159,13 +123,14 @@ sealed class GithubApiRequestExecutor {
     protected fun createRequestBuilder(request: GithubApiRequest<*>): RequestBuilder {
       return when (request) {
         is GithubApiRequest.Get -> HttpRequests.request(request.url)
+        is GithubApiRequest.Patch -> HttpRequests.patch(request.url, request.bodyMimeType)
         is GithubApiRequest.Post -> HttpRequests.post(request.url, request.bodyMimeType)
         is GithubApiRequest.Put -> HttpRequests.put(request.url, request.bodyMimeType)
-        is GithubApiRequest.Patch -> HttpRequests.patch(request.url, request.bodyMimeType)
         is GithubApiRequest.Head -> HttpRequests.head(request.url)
         is GithubApiRequest.Delete -> {
           if (request.body == null) HttpRequests.delete(request.url) else HttpRequests.delete(request.url, request.bodyMimeType)
         }
+
         else -> throw UnsupportedOperationException("${request.javaClass} is not supported")
       }
         .connectTimeout(githubSettings.connectionTimeout)
@@ -189,15 +154,13 @@ sealed class GithubApiRequestExecutor {
         HttpURLConnection.HTTP_UNAUTHORIZED,
         HttpURLConnection.HTTP_PAYMENT_REQUIRED,
         HttpURLConnection.HTTP_FORBIDDEN -> {
-          val otpHeader = connection.getHeaderField(OTP_HEADER_NAME)
-          if (otpHeader != null && otpHeader.contains("required", true)) {
-            GithubTwoFactorAuthenticationException(jsonError?.presentableError ?: errorText)
-          }
-          else if (jsonError?.containsReasonMessage("API rate limit exceeded") == true) {
+          if (jsonError?.containsReasonMessage("API rate limit exceeded") == true) {
             GithubRateLimitExceededException(jsonError.presentableError)
           }
-          else GithubAuthenticationException("Request response: " + (jsonError?.presentableError ?: errorText ?: statusLine))
+          else GithubAuthenticationException(
+            GithubBundle.message("request.response.0", jsonError?.presentableError ?: errorText ?: statusLine))
         }
+
         else -> {
           if (jsonError != null) {
             GithubStatusCodeException("$statusLine - ${jsonError.presentableError}", jsonError, connection.responseCode)
@@ -209,6 +172,12 @@ sealed class GithubApiRequestExecutor {
       }
     }
 
+    private fun checkServerVersion(connection: HttpURLConnection) {
+      // let's assume it's not ghe if header is missing
+      val versionHeader = connection.getHeaderField(GHEServerVersionChecker.ENTERPRISE_VERSION_HEADER) ?: return
+      GHEServerVersionChecker.checkVersionSupported(versionHeader)
+    }
+
     private fun getErrorText(connection: HttpURLConnection): String? {
       val errorStream = connection.errorStream ?: return null
       val stream = if (connection.contentEncoding == "gzip") GZIPInputStream(errorStream) else errorStream
@@ -216,7 +185,8 @@ sealed class GithubApiRequestExecutor {
     }
 
     private fun getJsonError(connection: HttpURLConnection, errorText: String): GithubErrorMessage? {
-      if (!connection.contentType.startsWith(GithubApiContentHelper.JSON_MIME_TYPE)) return null
+      val contentType = connection.contentType
+      if (contentType == null || !contentType.startsWith(GithubApiContentHelper.JSON_MIME_TYPE)) return null
       return try {
         return GithubApiContentHelper.fromJson(errorText)
       }
@@ -241,23 +211,16 @@ sealed class GithubApiRequestExecutor {
   }
 
   class Factory {
-    @CalledInAny
-    fun create(token: String): WithTokenAuth {
-      return create(token, true)
-    }
+    fun create(token: String): GithubApiRequestExecutor = create(token, true)
 
-    @CalledInAny
-    fun create(token: String, useProxy: Boolean = true): WithTokenAuth {
-      return WithTokenAuth(GithubSettings.getInstance(), token, useProxy)
-    }
+    fun create(token: String, useProxy: Boolean = true): GithubApiRequestExecutor = create(useProxy) { token }
 
-    @CalledInAny
-    internal fun create(login: String, password: CharArray, twoFactorCodeSupplier: Supplier<String?>): WithBasicAuth {
-      return WithBasicAuth(GithubSettings.getInstance(), login, password, twoFactorCodeSupplier)
-    }
+    fun create(tokenSupplier: () -> String): GithubApiRequestExecutor = create(true, tokenSupplier)
 
-    @CalledInAny
-    fun create() = NoAuth(GithubSettings.getInstance())
+    fun create(useProxy: Boolean = true, tokenSupplier: () -> String): GithubApiRequestExecutor =
+      WithTokenAuth(GithubSettings.getInstance(), tokenSupplier, useProxy)
+
+    fun create(): GithubApiRequestExecutor = NoAuth(GithubSettings.getInstance())
 
     companion object {
       @JvmStatic
@@ -267,15 +230,23 @@ sealed class GithubApiRequestExecutor {
 
   companion object {
     private val LOG = logger<GithubApiRequestExecutor>()
-
-    private const val OTP_HEADER_NAME = "X-GitHub-OTP"
   }
 
-  interface AuthDataChangeListener : EventListener {
-    fun authDataChanged()
-  }
+  internal class MutableTokenSupplier(token: String) : () -> String {
+    private val authDataChangedEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
-  enum class TokenHeaderType {
-    TOKEN, BEARER
+    @Volatile
+    var token: String = token
+      set(value) {
+        field = value
+        runInEdt(ModalityState.any()) {
+          authDataChangedEventDispatcher.multicaster.eventOccurred()
+        }
+      }
+
+    override fun invoke(): String = token
+
+    fun addListener(disposable: Disposable, listener: () -> Unit) =
+      SimpleEventListener.addDisposableListener(authDataChangedEventDispatcher, disposable, listener)
   }
 }

@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.AfterLineEndInlayImpl;
 import com.intellij.openapi.editor.impl.softwrap.WrapElementIterator;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,7 +28,7 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
     inlineInlays = view.getEditor().getInlayModel().getInlineElementsInRange(startOffset, endOffset);
     afterLineEndInlays = ContainerUtil.filter(
       view.getEditor().getInlayModel().getAfterLineEndElementsInRange(DocumentUtil.getLineStartOffset(startOffset, myDocument), endOffset),
-      inlay -> ((AfterLineEndInlayImpl)inlay).isSoftWrappable()
+      inlay -> !inlay.getProperties().isSoftWrappingDisabled()
     );
   }
 

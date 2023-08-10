@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
@@ -17,6 +18,8 @@ import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import kotlin.jvm.functions.Function0;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,18 +34,17 @@ import java.util.Map;
 
 public final class TestWindowManager extends WindowManagerEx {
   private static final Key<StatusBar> STATUS_BAR = Key.create("STATUS_BAR");
-  private final DesktopLayout myLayout = new DesktopLayout();
 
   @Override
-  public final void doNotSuggestAsParent(final Window window) { }
+  public void doNotSuggestAsParent(Window window) { }
 
   @Override
-  public final Window suggestParentWindow(final @Nullable Project project) {
+  public Window suggestParentWindow(@Nullable Project project) {
     return null;
   }
 
   @Override
-  public final StatusBar getStatusBar(@NotNull Project project) {
+  public StatusBar getStatusBar(@NotNull Project project) {
     synchronized (STATUS_BAR) {
       StatusBar statusBar = project.getUserData(STATUS_BAR);
       if (statusBar == null) {
@@ -89,22 +91,22 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public final @Nullable IdeFrameImpl getFrame(Project project) {
+  public @Nullable IdeFrameImpl getFrame(Project project) {
     return null;
   }
 
   @Override
-  public final Component getFocusedComponent(@NotNull Window window) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public final Component getFocusedComponent(Project project) {
+  public Component getFocusedComponent(@NotNull Window window) {
     return null;
   }
 
   @Override
-  public final Window getMostRecentFocusedWindow() {
+  public Component getFocusedComponent(Project project) {
+    return null;
+  }
+
+  @Override
+  public Window getMostRecentFocusedWindow() {
     return null;
   }
 
@@ -114,47 +116,37 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public @NotNull DesktopLayout getLayout() {
-    return myLayout;
-  }
-
-  @Override
-  public final void setLayout(@NotNull DesktopLayout layout) {
+  public void dispatchComponentEvent(final ComponentEvent e) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public final void dispatchComponentEvent(final ComponentEvent e) {
+  public @NotNull Rectangle getScreenBounds() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public final @NotNull Rectangle getScreenBounds() {
+  public boolean isInsideScreenBounds(final int x, final int y, final int width) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public final boolean isInsideScreenBounds(final int x, final int y, final int width) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public final boolean isAlphaModeSupported() {
+  public boolean isAlphaModeSupported() {
     return false;
   }
 
   @Override
-  public final void setAlphaModeRatio(final Window window, final float ratio) {
+  public void setAlphaModeRatio(final Window window, final float ratio) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public final boolean isAlphaModeEnabled(final Window window) {
+  public boolean isAlphaModeEnabled(final Window window) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public final void setAlphaModeEnabled(final Window window, final boolean state) {
+  public void setAlphaModeEnabled(final Window window, final boolean state) {
     throw new UnsupportedOperationException();
   }
 
@@ -162,9 +154,6 @@ public final class TestWindowManager extends WindowManagerEx {
   public void setWindowShadow(Window window, WindowShadowMode mode) {
     throw new UnsupportedOperationException();
   }
-
-  @Override
-  public void adjustContainerWindow(@NotNull Component c, Dimension oldSize, Dimension newSize) { }
 
   @Override
   public boolean isFullScreenSupportedInCurrentOS() {
@@ -185,17 +174,14 @@ public final class TestWindowManager extends WindowManagerEx {
     }
 
     @Override
-    public @Nullable StatusBar createChild(@NotNull IdeFrame frame) {
+    public @Nullable StatusBar createChild(@NotNull CoroutineScope coroutineScope,
+                                           @NotNull IdeFrame frame,
+                                           @NotNull Function0<? extends FileEditor> editorProvider) {
       return null;
     }
 
     @Override
-    public IdeFrame getFrame() {
-      return null;
-    }
-
-    @Override
-    public StatusBar findChild(Component c) {
+    public StatusBar findChild(@NotNull Component c) {
       return null;
     }
 
@@ -206,12 +192,6 @@ public final class TestWindowManager extends WindowManagerEx {
     public boolean isVisible() {
       return false;
     }
-
-    @Override
-    public void addCustomIndicationComponent(@NotNull JComponent c) { }
-
-    @Override
-    public void removeCustomIndicationComponent(@NotNull JComponent c) { }
 
     @Override
     public void addProgress(@NotNull ProgressIndicatorEx indicator, @NotNull TaskInfo info) { }
@@ -244,13 +224,10 @@ public final class TestWindowManager extends WindowManagerEx {
     }
 
     @Override
-    public void dispose() { }
-
-    @Override
     public void updateWidget(@NotNull String id) { }
 
     @Override
-    public StatusBarWidget getWidget(String id) {
+    public StatusBarWidget getWidget(@NotNull String id) {
       return myWidgetMap.get(id);
     }
 
@@ -266,12 +243,12 @@ public final class TestWindowManager extends WindowManagerEx {
     }
 
     @Override
-    public final String getInfo() {
+    public String getInfo() {
       return null;
     }
 
     @Override
-    public final void setInfo(final String s) {}
+    public void setInfo(final String s) {}
 
     @Override
     public void startRefreshIndication(final String tooltipText) { }
@@ -299,11 +276,21 @@ public final class TestWindowManager extends WindowManagerEx {
                                                   @Nullable HyperlinkListener listener) {
       return () -> { };
     }
+
+    @Override
+    public @NotNull Function0<FileEditor> getCurrentEditor() {
+      return () -> null;
+    }
   }
 
   @Override
   public void releaseFrame(@NotNull ProjectFrameHelper frameHelper) {
     frameHelper.getFrame().dispose();
+  }
+
+  @Override
+  public boolean isFrameReused(@NotNull ProjectFrameHelper frameHelper) {
+    return false;
   }
 
   @Override

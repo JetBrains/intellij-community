@@ -9,7 +9,7 @@ import java.lang.annotation.*;
 @NonNullByDefault
 class X {
   void test() {
-      String x = Y.getFoo();
+      @NonNull String x = Y.getFoo();
   }
 }
 

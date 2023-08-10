@@ -106,9 +106,9 @@ public class IndentAdjuster {
   }
 
   public IndentInfo adjustLineIndent(FormatProcessor.ChildAttributesInfo info, AbstractBlockWrapper child) {
-    AbstractBlockWrapper parent = info.parent;
-    ChildAttributes childAttributes = info.attributes;
-    int index = info.index;
+    AbstractBlockWrapper parent = info.parent();
+    ChildAttributes childAttributes = info.attributes();
+    int index = info.index();
 
     AlignWhiteSpace alignWhiteSpace = getAlignOffsetBefore(childAttributes.getAlignment());
     if (alignWhiteSpace == null) {

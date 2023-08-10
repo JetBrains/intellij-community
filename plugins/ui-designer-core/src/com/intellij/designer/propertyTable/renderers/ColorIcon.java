@@ -49,8 +49,7 @@ public final class ColorIcon extends EmptyIcon {
     int iconWidth = getIconWidth();
     int iconHeight = getIconHeight();
 
-    if (component instanceof SimpleColoredComponent) {
-      SimpleColoredComponent coloredComponent = (SimpleColoredComponent)component;
+    if (component instanceof SimpleColoredComponent coloredComponent) {
       g.setColor(component.getBackground());
       g.fillRect(left - coloredComponent.getIpad().left, 0,
                  iconWidth + coloredComponent.getIpad().left + coloredComponent.getIconTextGap(), component.getHeight());

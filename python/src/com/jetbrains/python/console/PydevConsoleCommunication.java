@@ -3,27 +3,26 @@ package com.jetbrains.python.console;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.protocol.*;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
@@ -31,10 +30,20 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
+import com.jetbrains.python.debugger.pydev.ProcessDebugger;
+import com.jetbrains.python.debugger.pydev.SetUserTypeRenderersCommand;
+import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
+import com.jetbrains.python.debugger.pydev.tables.PyDevCommandParameters;
+import com.jetbrains.python.debugger.pydev.tables.TableCommandParameters;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
+import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersHyperLink;
+import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRenderer;
+import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementGenerator;
 import org.apache.thrift.TException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +60,8 @@ import java.util.concurrent.Future;
 
 import static com.jetbrains.python.console.PydevConsoleCommunicationUtil.*;
 import static com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult.ResultType.UNHANDLED_ERROR;
+import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.getTypeRenderer;
+import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.loadTypeRendererChildren;
 
 /**
  * Communication with Python console backend using Thrift services.
@@ -86,6 +97,11 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   private final List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @Nullable private XCompositeNode myCurrentRootNode;
+
+  @Nullable
+  public PsiFile getHistoryPsiFile() {
+    return myConsoleView != null ? myConsoleView.getHistoryPsiFile() : null;
+  }
 
   /**
    * Initializes the bidirectional RPC communication.
@@ -140,6 +156,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    */
   public void close() {
     PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
+    notifySessionStopped();
     myCallbackHashMap.clear();
 
     new Task.Backgroundable(myProject, PyBundle.message("console.close.console.communication"), false) {
@@ -193,6 +210,11 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    * Variables that control when we're expecting to give some input to the server or when we're
    * adding some line to be executed
    */
+
+  @Override
+  public @Nullable Project getProject() {
+    return myProject;
+  }
 
   /**
    * Helper to keep on busy loop.
@@ -262,11 +284,26 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   /**
    * Executes the needed command
    *
-   * @param command
    * @return a Pair with (null, more) or (error, false)
    */
   protected Pair<String, Boolean> exec(final ConsoleCodeFragment command) throws PythonUnhandledException {
     setExecuting(true);
+
+    // add code fragment to myConsoleView.getHistoryPsiFile()
+    PsiFile psi = getHistoryPsiFile();
+      if (myConsoleView != null && psi != null) {
+        WriteCommandAction.runWriteCommandAction(myProject, null, null,
+                                                 () -> {
+                                                   PsiElement[] newElems =
+                                                     PyElementGenerator.getInstance(myProject)
+                                                       .createDummyFile(LanguageLevel.forElement(myConsoleView.getFile()), command.getText())
+                                                       .getChildren();
+                                                   for (PsiElement elem : newElems) {
+                                                     psi.add(elem);
+                                                   }
+                                                 },
+                                                 psi);
+      }
 
     boolean more;
     try {
@@ -331,6 +368,34 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
   }
 
+  @Override
+  public String execTableCommand(String command, TableCommandType commandType, TableCommandParameters tableCommandParameters) throws PyDebuggerException {
+    if (!isCommunicationClosed()) {
+      return executeBackgroundTask(
+        () -> {
+          String startIndex = "";
+          String endIndex = "";
+          try {
+            if (tableCommandParameters instanceof PyDevCommandParameters) {
+              startIndex = String.valueOf(((PyDevCommandParameters)tableCommandParameters).getStart());
+              endIndex = String.valueOf(((PyDevCommandParameters)tableCommandParameters).getEnd());
+            }
+            return getPythonConsoleBackendClient().execTableCommand(command, commandType.name(), startIndex, endIndex);
+          }
+          catch (PythonTableException e) {
+            throw new PyDebuggerException(e.message);
+          }
+        },
+        true,
+        createRuntimeMessage(PyBundle.message("console.getting.table.data")),
+        PyBundle.message("console.table.failed.to.load")
+      );
+    }
+    else {
+      return null;
+    }
+  }
+
   @TestOnly
   public List<PydevCompletionVariant> gerCompletionVariants(String text, String actTok) throws Exception {
     return doGetCompletions(text, actTok);
@@ -381,7 +446,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         return future.get();
       }
       catch (InterruptedException | ExecutionException e) {
-        throw new PyDebuggerException(errorLogMessage, e);
+        throw new PyDebuggerException(errorLogMessage + e.getMessage(), e);
       }
     }
     return null;
@@ -405,20 +470,18 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
       // add temporary value to avoid repeated requests for the same expression
       myPrevNameToDescription = Pair.create(text, "");
     }
-    if (ApplicationManager.getApplication().isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new PyDebuggerException("Documentation in Python Console shouldn't be called from Dispatch Thread!");
-    }
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
-    return executeBackgroundTask(
-      () ->
-      {
+    ProgressManager progressManager = ProgressManager.getInstance();
+    ProgressIndicator indicator = progressManager.hasProgressIndicator() ? progressManager.getProgressIndicator() : new EmptyProgressIndicator();
+    indicator.setText(createRuntimeMessage(PyBundle.message("console.getting.documentation")));
+    return ApplicationUtil.runWithCheckCanceled(
+      () -> {
         final String resultDescription = getPythonConsoleBackendClient().getDescription(text);
         myPrevNameToDescription = Pair.create(text, resultDescription);
         return resultDescription;
       },
-      true,
-      createRuntimeMessage(PyBundle.message("console.getting.documentation")),
-      "Error when Getting Description in Python Console: ");
+      indicator);
   }
 
   /**
@@ -454,16 +517,17 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
           catch (PythonUnhandledException e) {
             LOG.error("Error in execInterpreter():" + e.traceback);
             nextResponse = new InterpreterResponse(false, false);
+            notifyCommandExecuted(true);
           }
           catch (Exception e) {
             nextResponse = new InterpreterResponse(false, false);
+            notifyCommandExecuted(true);
           }
           finally {
             InterpreterResponse response = nextResponse;
             if (response != null && response.more) {
               myNeedsMore = true;
             }
-            notifyCommandExecuted(true);
             onResponseReceived.fun(response);
           }
         }
@@ -520,18 +584,34 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   @Nullable
   @Override
   public XValueChildrenList loadFrame(@Nullable XStackFrame contextFrame) throws PyDebuggerException {
+    return loadFrame(() -> {
+      List<DebugValue> frame = getPythonConsoleBackendClient().getFrame(ProcessDebugger.GROUP_TYPE.DEFAULT.ordinal());
+      XValueChildrenList frameValues = parseVars(frame, null, this);
+      notifyVariablesLoaded(frameValues);
+      return frameValues;
+    });
+  }
+
+  @Override
+  public XValueChildrenList loadSpecialVariables(ProcessDebugger.GROUP_TYPE groupType) throws PyDebuggerException {
+    return loadFrame(() -> {
+      List<DebugValue> frame = getPythonConsoleBackendClient().getFrame(groupType.ordinal());
+      XValueChildrenList values = parseVars(frame, null, this);
+      PyDebugValue.getAsyncValues(null, this, values);
+      return values;
+    });
+
+  }
+
+  private <T> XValueChildrenList loadFrame(Callable<T> task) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
-      return executeBackgroundTask(
-        () -> {
-          List<DebugValue> frame = getPythonConsoleBackendClient().getFrame();
-          return parseVars(frame, null, this);
-        },
+      return (XValueChildrenList) executeBackgroundTask(
+        task,
         true,
         createRuntimeMessage(PyBundle.message("console.getting.frame.variables")),
         "Error in loadFrame():"
       );
-    }
-    else {
+    } else {
       return new XValueChildrenList();
     }
   }
@@ -575,14 +655,14 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   }
 
   @Override
-  public XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException {
+  public @Nullable XValueChildrenList loadVariableDefaultView(PyDebugValue variable) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
       return executeBackgroundTask(
         () -> {
-          final String name = var.getOffset() == 0 ? GetVariableCommand.composeName(var)
-                                                   : var.getOffset() + "\t" + GetVariableCommand.composeName(var);
+          final String name = variable.getOffset() == 0 ? GetVariableCommand.composeName(variable)
+                                                        : variable.getOffset() + "\t" + GetVariableCommand.composeName(variable);
           List<DebugValue> ret = getPythonConsoleBackendClient().getVariable(name);
-          return parseVars(ret, var, this);
+          return parseVars(ret, variable, this);
         },
         true,
         createRuntimeMessage(PyBundle.message("console.getting.variable.value")),
@@ -591,6 +671,24 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
     else {
       return new XValueChildrenList();
+    }
+  }
+
+  @Override
+  public @Nullable XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException {
+    PyUserNodeRenderer typeRenderer = getTypeRenderer(var);
+    if (typeRenderer != null) {
+      return executeBackgroundTask(
+        () -> {
+          return loadTypeRendererChildren(this, var, typeRenderer);
+        },
+        true,
+        createRuntimeMessage(PyBundle.message("console.getting.variable.value")),
+        "Error in loadVariable():"
+      );
+    }
+    else {
+      return loadVariableDefaultView(var);
     }
   }
 
@@ -660,7 +758,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
             getPythonConsoleBackendClient().execDataViewerAction(
               builder.getVar().getName(),
               builder.getAction().name(),
-              builder.getArgs() == null? "" :String.join("\t", builder.getArgs())
+              builder.getArgs() == null ? "" : String.join("\t", builder.getArgs())
             );
 
             return DataViewerCommandResult.makeSuccessResult("Export successful");
@@ -694,7 +792,6 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    *
    * @param localPort port for pydevd to connect to.
    * @param dbgOpts   additional debugger options (that are normally passed via command line) to apply
-   * @param extraEnvs
    * @throws Exception if connection fails
    */
   public void connectToDebugger(int localPort,
@@ -720,18 +817,70 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   @Override
   public void notifyCommandExecuted(boolean more) {
     super.notifyCommandExecuted(more);
+    PyFrameListener.publisher().frameChanged();
     for (PyFrameListener listener : myFrameListeners) {
       listener.frameChanged();
     }
+  }
+
+  private void notifyVariablesLoaded(XValueChildrenList values) {
+    PyFrameListener.publisher().valuesUpdated(this, values);
+    for (PyFrameListener listener : myFrameListeners) {
+      listener.valuesUpdated(this, values);
+    }
+  }
+
+  void notifyViewCreated(XStandaloneVariablesView view) {
+    PyFrameListener.publisher().viewCreated(this, view);
+    for (PyFrameListener listener : myFrameListeners) {
+      listener.viewCreated(this, view);
+    }
+  }
+
+  private void notifySessionStopped() {
+    PyFrameListener.publisher().sessionStopped(this);
+    for (PyFrameListener listener : myFrameListeners) {
+      listener.sessionStopped(this);
+    }
+  }
+
+  @Override
+  public void setUserTypeRenderersSettings() {
+    if (!isCommunicationClosed()) {
+      try {
+        executeBackgroundTask(
+          () -> {
+            PyUserTypeRenderersSettings settings = PyUserTypeRenderersSettings.getInstance();
+            if (settings == null) {
+              return false;
+            }
+            List<PyUserTypeRenderer> renderers = settings.getApplicableRenderers();
+            if (renderers.isEmpty()) {
+              return false;
+            }
+            final String renderersMessage = SetUserTypeRenderersCommand.createMessage(renderers);
+            return getPythonConsoleBackendClient().setUserTypeRenderers(renderersMessage);
+          },
+          false,
+          createRuntimeMessage(PyBundle.message("console.setting.user.type.renderers")),
+          "Error in setUserTypeRenderersSettings():"
+        );
+      }
+      catch (PyDebuggerException e) {
+        LOG.warn("Failed to send Type Renderers", e);
+      }
+    }
+  }
+
+  @Override
+  public @Nullable XDebuggerTreeNodeHyperlink getUserTypeRenderersLink(@NotNull String typeRendererId) {
+    return new ConfigureTypeRenderersHyperLink(typeRendererId, getProject(), null);
   }
 
   public void setDebugCommunication(PythonDebugConsoleCommunication debugCommunication) {
     myDebugCommunication = debugCommunication;
   }
 
-  public PythonDebugConsoleCommunication getDebugCommunication() {
-    return myDebugCommunication;
-  }
 
   public void setConsoleView(@Nullable PythonConsoleView consoleView) {
     myConsoleView = consoleView;
@@ -755,7 +904,14 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   private class PythonConsoleFrontendHandler implements PythonConsoleFrontendService.Iface {
 
     @Override
-    public void notifyFinished(boolean needsMoreInput) {
+    public void notifyFinished(boolean needsMoreInput, boolean exceptionOccurred) {
+      if (PyConsoleUtil.isCommandQueueEnabled(myProject)) {
+        // notify the CommandQueue service that the command has been completed without exceptions
+        // and it must be removed from the queue
+        // or clear queue if exception occurred
+        ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class)
+          .removeCommand(PydevConsoleCommunication.this, exceptionOccurred);
+      }
       execNotifyFinished(needsMoreInput);
     }
 
@@ -798,6 +954,13 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     @Override
     public boolean IPythonEditor(String path, String line) {
       return execIPythonEditor(path);
+    }
+
+    @Override
+    public void sendRichOutput(Map<String, String> data) throws TException {
+      if (myConsoleView == null) return;
+      if (data.isEmpty()) return;
+      PyConsoleOutputCustomizer.Companion.getInstance().showRichOutput(myConsoleView, data);
     }
   }
 

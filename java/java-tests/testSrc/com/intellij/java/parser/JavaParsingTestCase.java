@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.parser;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageASTFactory;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
@@ -23,6 +24,7 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -31,14 +33,20 @@ import java.util.function.Consumer;
 public abstract class JavaParsingTestCase extends ParsingTestCase {
   private LanguageLevel myLanguageLevel;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public JavaParsingTestCase(String dataPath) {
-    super("psi/" + dataPath, "java", new JavaParserDefinition());
+    this(dataPath, "java", new JavaParserDefinition());
+  }
+
+  public JavaParsingTestCase(String dataPath, String fileExt, ParserDefinition... parserDefinitions) {
+    super("psi/" + dataPath, fileExt, parserDefinitions);
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myLanguageLevel = JavaTestUtil.getMaxRegisteredLanguageLevel();
+    getProject().registerService(WorkspaceModelTopics.class, new WorkspaceModelTopics());
     getProject().registerService(LanguageLevelProjectExtension.class, new LanguageLevelProjectExtensionImpl(getProject()));
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());
   }
@@ -52,6 +60,16 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
 
   protected void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
+  }
+
+  protected void doParserTest(Consumer<PsiBuilder> parser) {
+    String name = getTestName(false);
+    try {
+      doParserTest(loadFile(name + "." + myFileExt), parser);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected void doParserTest(String text, Consumer<PsiBuilder> parser) {

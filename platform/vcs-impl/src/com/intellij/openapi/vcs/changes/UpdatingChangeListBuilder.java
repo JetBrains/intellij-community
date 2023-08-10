@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ReadAction;
@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -15,15 +14,17 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.ChangeListWorker.ChangeListUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
-class UpdatingChangeListBuilder implements ChangelistBuilder {
+final class UpdatingChangeListBuilder implements ChangelistBuilder {
   private static final Logger LOG = Logger.getInstance(UpdatingChangeListBuilder.class);
   private final ChangeListUpdater myChangeListUpdater;
   private final FileHolderComposite myComposite;
-  private final Getter<Boolean> myDisposedGetter;
+  private final Supplier<Boolean> myDisposedGetter;
   private final ProjectLevelVcsManager myVcsManager;
 
   private VcsDirtyScope myScope;
@@ -33,7 +34,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
 
   UpdatingChangeListBuilder(ChangeListUpdater changeListUpdater,
                             FileHolderComposite composite,
-                            Getter<Boolean> disposedGetter) {
+                            Supplier<Boolean> disposedGetter) {
     myChangeListUpdater = changeListUpdater;
     myComposite = composite;
     myDisposedGetter = disposedGetter;
@@ -50,12 +51,12 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   @Override
-  public void processChange(Change change, VcsKey vcsKey) {
+  public void processChange(@NotNull Change change, VcsKey vcsKey) {
     processChangeInList(change, (ChangeList)null, vcsKey);
   }
 
   @Override
-  public void processChangeInList(Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
+  public void processChangeInList(@NotNull Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
     checkIfDisposed();
 
     LOG.debug("[processChangeInList-1] entering, cl name: " + ((changeList == null) ? null : changeList.getName()) +
@@ -84,7 +85,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   @Override
-  public void processChangeInList(Change change, String changeListName, VcsKey vcsKey) {
+  public void processChangeInList(@NotNull Change change, String changeListName, VcsKey vcsKey) {
     checkIfDisposed();
 
     LocalChangeList list = null;
@@ -102,7 +103,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   @Override
   public void processUnversionedFile(FilePath filePath) {
     if (acceptFilePath(filePath, false)) {
-      myComposite.getUnversionedFileHolder().addFile(filePath);
+      myComposite.getUnversionedFileHolder().addFile(myScope.getVcs(), filePath);
       SwitchedFileHolder switchedFileHolder = myComposite.getSwitchedFileHolder();
       if (!switchedFileHolder.isEmpty()) {
         // if a file was previously marked as switched through recursion, remove it from switched list

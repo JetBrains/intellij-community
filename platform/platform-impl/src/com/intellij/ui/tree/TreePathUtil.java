@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.util.ArrayUtil;
@@ -27,7 +27,7 @@ public final class TreePathUtil {
   public static TreePath createTreePath(TreePath parent, @NotNull Object component) {
     return parent != null
            ? parent.pathByAddingChild(component)
-           : new TreePath(component);
+           : new CachingTreePath(component);
   }
 
   /**
@@ -74,7 +74,6 @@ public final class TreePathUtil {
    */
   private static <T> T[] convertTreePathToArray(@NotNull TreePath path, @NotNull Function<Object, ? extends T> converter, @NotNull Class<T> type) {
     int count = path.getPathCount();
-    if (count <= 0) return null;
     T[] array = ArrayUtil.newArray(type, count);
     while (path != null && count > 0) {
       Object component = path.getLastPathComponent();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -17,15 +17,16 @@ import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
 
 public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements PsiMethodCallExpression {
   private static final Logger LOG = Logger.getInstance(PsiMethodCallExpressionImpl.class);
@@ -64,7 +65,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     PsiReferenceExpression expression = getMethodExpression();
     PsiReferenceParameterList result = expression.getParameterList();
     if (result != null) return result;
-    LOG.error("Invalid method call expression. Children:\n" + DebugUtil.psiTreeToString(expression, false));
+    LOG.error("Invalid method call expression. Children:\n" + DebugUtil.psiTreeToString(expression, true));
     return result;
   }
 
@@ -84,7 +85,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
   public PsiExpressionList getArgumentList() {
     PsiExpressionList list = (PsiExpressionList)findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
     if (list == null) {
-      LOG.error("Invalid PSI for'" + getText() + ". Parent:" + DebugUtil.psiToString(getParent(), false));
+      LOG.error("Invalid PSI for'" + getText() + ". Parent:" + DebugUtil.psiToString(getParent(), true));
     }
     return list;
   }
@@ -189,10 +190,8 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       boolean is15OrHigher = languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
       final PsiType getClassReturnType = PsiTypesUtil.patchMethodGetClassReturnType(
         call, methodExpression, method,
-        type -> type != JavaElementType.CLASS &&
-                //enum can be created inside enum only, no need to mention it here
-                type != JavaElementType.ANONYMOUS_CLASS
-        , languageLevel);
+        type -> type != JavaElementType.CLASS && type != JavaElementType.ANONYMOUS_CLASS, // enum can be created inside enum only, no need to mention it here
+        languageLevel);
 
       if (getClassReturnType != null) {
         return getClassReturnType;
@@ -223,9 +222,10 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     }
     return parentArgList != null &&
            MethodCandidateInfo.isOverloadCheck(parentArgList) &&
-           Arrays.stream(parentArgList.getExpressions())
-             .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
-             .noneMatch(expression -> expression != null && ThreadLocalTypes.hasBindingFor(expression));
+           !ContainerUtil.exists(parentArgList.getExpressions(), expression -> {
+               expression = PsiUtil.skipParenthesizedExprDown(expression);
+               return expression != null && ThreadLocalTypes.hasBindingFor(expression);
+             });
   }
 
   private static PsiType captureReturnType(PsiMethodCallExpression call,
@@ -245,7 +245,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       // 18.5.2
       // if unchecked conversion was necessary, then this substitution provides the parameter types of the invocation type, 
       // while the return type and thrown types are given by the erasure of m's type (without applying theta').
-      //due to https://bugs.openjdk.java.net/browse/JDK-8135087 erasure is called on substitutedReturnType and not on ret type itself as by spec
+      //due to https://bugs.openjdk.org/browse/JDK-8135087 erasure is called on substitutedReturnType and not on ret type itself as by spec
       return TypeConversionUtil.erasure(substitutedReturnType);
     }
 
@@ -278,5 +278,14 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     }
     return PsiUtil.captureToplevelWildcards(substitutedReturnType, call);
   }
-}
 
+  @Override
+  public void replaceChildInternal(@NotNull ASTNode child,
+                                   @NotNull TreeElement newElement) {
+    if (getChildRole(child) == ChildRole.METHOD_EXPRESSION &&
+        newElement.getElementType() != JavaElementType.REFERENCE_EXPRESSION) {
+      throw new IncorrectOperationException("ReferenceExpression expected; got: " + newElement.getElementType());
+    }
+    super.replaceChildInternal(child, newElement);
+  }
+}

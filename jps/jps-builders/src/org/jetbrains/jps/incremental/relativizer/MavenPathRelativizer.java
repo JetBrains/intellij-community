@@ -8,13 +8,15 @@ import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.util.Arrays;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 
-class MavenPathRelativizer extends CommonPathRelativizer {
+@VisibleForTesting
+public class MavenPathRelativizer extends SubPathRelativizer {
   private static final String IDENTIFIER = "$MAVEN_REPOSITORY$";
   private static final String M2_DIR = ".m2";
   private static final String CONF_DIR = "conf";
@@ -22,7 +24,7 @@ class MavenPathRelativizer extends CommonPathRelativizer {
   private static final String REPOSITORY_PATH = "repository";
   private static final Namespace SETTINGS_NAMESPACE = Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.0.0");
 
-  MavenPathRelativizer() {
+  public MavenPathRelativizer() {
     super(initializeMavenRepositoryPath(), IDENTIFIER);
   }
 

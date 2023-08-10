@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.DiffUtil.executeWriteCommand
 import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteThread
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.command.undo.UndoConstants
+import com.intellij.openapi.command.UndoConfirmationPolicy
+import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Document
@@ -79,12 +66,12 @@ abstract class LineStatusTrackerBase<R : Range>(
   override val virtualFile: VirtualFile? get() = null
 
   override fun getRanges(): List<R>? {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ApplicationManager.getApplication().assertReadAccessAllowed() // is not needed - but without it results are useless
     return blockOperations.getRanges()
   }
 
   @RequiresEdt
-  protected fun setBaseRevision(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
+  protected open fun setBaseRevisionContent(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (isReleased) return
 
@@ -105,10 +92,17 @@ abstract class LineStatusTrackerBase<R : Range>(
   @RequiresEdt
   fun dropBaseRevision() {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    if (isReleased) return
+    if (isReleased || !isInitialized) return
 
     isInitialized = false
     updateHighlighters()
+
+    documentTracker.doFrozen {
+      updateDocument(Side.LEFT) {
+        vcsDocument.setText(document.immutableCharSequence)
+        documentTracker.setFrozenState(emptyList())
+      }
+    }
   }
 
   fun release() {
@@ -120,7 +114,7 @@ abstract class LineStatusTrackerBase<R : Range>(
     }
 
     if (!ApplicationManager.getApplication().isDispatchThread || LOCK.isHeldByCurrentThread) {
-      WriteThread.submit(runnable)
+      ApplicationManager.getApplication().invokeLater(runnable)
     }
     else {
       runnable.run()
@@ -134,7 +128,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   }
 
   @RequiresEdt
-  protected fun updateDocument(side: Side, commandName: String?, task: (Document) -> Unit): Boolean {
+  protected fun updateDocument(side: Side, commandName: @NlsContexts.Command String?, task: (Document) -> Unit): Boolean {
     val affectedDocument = if (side.isLeft) vcsDocument else document
     return updateDocument(project, affectedDocument, commandName, task)
   }
@@ -245,31 +239,32 @@ abstract class LineStatusTrackerBase<R : Range>(
   override fun rollbackChanges(range: Range) {
     val newRange = blockOperations.findBlock(range)
     if (newRange != null) {
-      runBulkRollback { it == newRange }
+      runBulkRollback { if (it == newRange) RangeExclusionState.Included else RangeExclusionState.Excluded }
     }
   }
 
   @RequiresEdt
   override fun rollbackChanges(lines: BitSet) {
-    runBulkRollback { it.isSelectedByLine(lines) }
+    runBulkRollback { if (it.isSelectedByLine(lines)) RangeExclusionState.Included else RangeExclusionState.Excluded }
   }
 
   @RequiresEdt
-  protected fun runBulkRollback(condition: (Block) -> Boolean) {
+  protected fun runBulkRollback(condition: (Block) -> RangeExclusionState) {
     if (!isValid()) return
 
     updateDocument(Side.RIGHT, DiffBundle.message("rollback.change.command.name")) {
-      documentTracker.partiallyApplyBlocks(Side.RIGHT, condition) { block, shift ->
-        fireLinesUnchanged(block.start + shift, block.start + shift + (block.vcsEnd - block.vcsStart))
+      documentTracker.partiallyApplyBlocks(Side.RIGHT, condition) { appliedRange, shift ->
+        val start = appliedRange.start2 + shift
+        val length = appliedRange.end1 - appliedRange.start1
+        fireLinesUnchanged(start, start + length)
       }
     }
   }
 
   private fun fireLinesUnchanged(startLine: Int, endLine: Int) {
-    if (!isClearLineModificationFlagOnRollback()) return
-    if (document.textLength == 0) return  // empty document has no lines
-    if (startLine == endLine) return
-    (document as DocumentImpl).clearLineModificationFlags(startLine, endLine)
+    if (isClearLineModificationFlagOnRollback()) {
+      DiffUtil.clearLineModificationFlags(document, startLine, endLine)
+    }
   }
 
 
@@ -277,10 +272,11 @@ abstract class LineStatusTrackerBase<R : Range>(
     @JvmStatic
     protected val LOG: Logger = Logger.getInstance(LineStatusTrackerBase::class.java)
     private val VCS_DOCUMENT_KEY: Key<Boolean> = Key.create("LineStatusTrackerBase.VCS_DOCUMENT_KEY")
+    val SEPARATE_UNDO_STACK: Key<Boolean> = Key.create("LineStatusTrackerBase.SEPARATE_UNDO_STACK")
 
     fun createVcsDocument(originalDocument: Document): Document {
       val result = DocumentImpl(originalDocument.immutableCharSequence, true)
-      result.putUserData(UndoConstants.DONT_RECORD_UNDO, true)
+      UndoUtil.disableUndoFor(result)
       result.putUserData(VCS_DOCUMENT_KEY, true)
       result.setReadOnly(true)
       return result
@@ -304,13 +300,29 @@ abstract class LineStatusTrackerBase<R : Range>(
         }
       }
       else {
-        return DiffUtil.executeWriteCommand(document, project, commandName) { task(document) }
+        val isSeparateUndoStack = DiffUtil.isUserDataFlagSet(SEPARATE_UNDO_STACK, document)
+        return executeWriteCommand(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT, false,
+                                   !isSeparateUndoStack) { task(document) }
       }
     }
   }
 
 
   override fun toString(): String {
-    return "${javaClass.name}(file=${virtualFile?.path}, isReleased=$isReleased)@${Integer.toHexString(hashCode())}"
+    return javaClass.name + "(" +
+           "file=" +
+           virtualFile?.let { file ->
+             file.path +
+             (if (!file.isInLocalFileSystem) "@$file" else "") +
+             "@" + Integer.toHexString(file.hashCode())
+           } +
+           ", document=" +
+           document.let { doc ->
+             doc.toString() +
+             "@" + Integer.toHexString(doc.hashCode())
+           } +
+           ", isReleased=$isReleased" +
+           ")" +
+           "@" + Integer.toHexString(hashCode())
   }
 }

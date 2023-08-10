@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.collectors.fus.ui
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
@@ -92,24 +93,21 @@ class GotItUsageCollectorGroup : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("got.it.tooltip", 1)
+    private val GROUP = EventLogGroup("got.it.tooltip", 2)
 
-    internal val showEvent = GROUP.registerEvent("show",
-                                                 EventFields.StringValidatedByCustomRule("id_prefix", GotItTooltip.PROPERTY_PREFIX),
-                                                 EventFields.Int("count"))
+    internal val showEvent: EventId2<String?, Int> = GROUP.registerEvent("show",
+                                                                         EventFields.StringValidatedByCustomRule("id_prefix", GotItIDValidator::class.java),
+                                                                         EventFields.Int("count"))
 
-    internal val closeEvent = GROUP.registerEvent("close",
-                                                  EventFields.StringValidatedByCustomRule("id_prefix", GotItTooltip.PROPERTY_PREFIX),
-                                                  EventFields.Enum<CloseType>("type"))
+    internal val closeEvent: EventId2<String?, CloseType> = GROUP.registerEvent("close",
+                                                                                EventFields.StringValidatedByCustomRule("id_prefix", GotItIDValidator::class.java),
+                                                                                EventFields.Enum<CloseType>("type"))
   }
 }
 
 class GotItIDValidator : CustomValidationRule() {
+  override fun getRuleId(): String = GotItTooltip.PROPERTY_PREFIX
+
   override fun doValidate(data: String, context: EventContext): ValidationResultType =
     if (GotItUsageCollector.instance.toPrefix(data) == data) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
-
-
-  override fun acceptRuleId(ruleId: String?): Boolean {
-    return GotItTooltip.PROPERTY_PREFIX == ruleId
-  }
 }

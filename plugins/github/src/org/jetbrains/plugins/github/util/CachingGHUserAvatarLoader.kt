@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
+import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -14,18 +16,19 @@ import com.intellij.util.ImageLoader
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import java.awt.Image
+import java.awt.image.BufferedImage
+import java.time.Duration
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
 
 class CachingGHUserAvatarLoader : Disposable {
-  private val LOG = logger<CachingGHUserAvatarLoader>()
 
   private val indicatorProvider = ProgressIndicatorsProvider().also {
     Disposer.register(this, it)
   }
 
-  private val avatarCache = CacheBuilder.newBuilder()
-    .expireAfterAccess(5, TimeUnit.MINUTES)
+  private val avatarCache = Caffeine.newBuilder()
+    .expireAfterAccess(Duration.of(5, ChronoUnit.MINUTES))
     .build<String, CompletableFuture<Image?>>()
 
   init {
@@ -39,9 +42,9 @@ class CachingGHUserAvatarLoader : Disposable {
   private fun loadAndDownscale(requestExecutor: GithubApiRequestExecutor, indicator: ProgressIndicator,
                                url: String, maximumSize: Int): Image? {
     try {
-      val image = requestExecutor.execute(indicator, GithubApiRequests.CurrentUser.getAvatar(url))
-      return if (image.getWidth(null) <= maximumSize && image.getHeight(null) <= maximumSize) image
-      else ImageLoader.scaleImage(image, maximumSize)
+      val loadedImage = requestExecutor.execute(indicator, GithubApiRequests.CurrentUser.getAvatar(url))
+      return if (loadedImage.width <= maximumSize && loadedImage.height <= maximumSize) loadedImage
+      else ImageLoader.scaleImage(loadedImage, maximumSize) as BufferedImage
     }
     catch (e: ProcessCanceledException) {
       return null
@@ -55,6 +58,8 @@ class CachingGHUserAvatarLoader : Disposable {
   override fun dispose() {}
 
   companion object {
+    private val LOG = logger<CachingGHUserAvatarLoader>()
+
     @JvmStatic
     fun getInstance(): CachingGHUserAvatarLoader = service()
 

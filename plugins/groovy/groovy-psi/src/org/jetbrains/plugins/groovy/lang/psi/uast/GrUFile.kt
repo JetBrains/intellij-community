@@ -15,7 +15,7 @@ class GrUFile(override val sourcePsi: GroovyFile, override val languagePlugin: U
   override val packageName: String
     get() = sourcePsi.packageName
 
-  override val imports: List<UImportStatement> = emptyList<UImportStatement>() // not implemented
+  override val imports: List<UImportStatement> = emptyList() // not implemented
 
   override val uAnnotations: List<UAnnotation>
     get() = sourcePsi.packageDefinition?.annotationList?.annotations?.map { GrUAnnotation(it, { this }) } ?: emptyList()

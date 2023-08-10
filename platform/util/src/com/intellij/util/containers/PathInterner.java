@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.Hash;
@@ -17,9 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public final class PathInterner {
   private final HashSetInterner<CharSegment> myInternMap = new HashSetInterner<>();
 
@@ -163,7 +161,7 @@ public final class PathInterner {
       CharSequence string = (CharSequence)encodedString;
       Object newEncodedString;
       if (asBytes) {
-        byte[] bytes = new byte[length()];
+        byte[] bytes = ArrayUtil.newByteArray(length());
         for (int i = 0; i < bytes.length; i++) {
           bytes[i] = (byte)string.charAt(i + start);
         }
@@ -215,9 +213,8 @@ public final class PathInterner {
       return toString().substring(start, end);
     }
 
-    @NotNull
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       StringBuilder b = new StringBuilder(length());
       for (CharSegment wrapper : myWrappers) {
         wrapper.appendTo(b);
@@ -289,8 +286,7 @@ public final class PathInterner {
       myIdxToSeq.add(null);
     }
 
-    @NotNull
-    public List<CharSequence> getAllPaths() {
+    public @NotNull List<CharSequence> getAllPaths() {
       // 0th is reserved
       return myIdxToSeq.subList(1, myIdxToSeq.size());
     }
@@ -304,8 +300,7 @@ public final class PathInterner {
       return mySeqToIdx.getInt(seq);
     }
 
-    @NotNull
-    public CharSequence retrievePath(int idx) {
+    public @NotNull CharSequence retrievePath(int idx) {
       try {
         return myIdxToSeq.get(idx);
       }
@@ -319,15 +314,13 @@ public final class PathInterner {
       return key != null && mySeqToIdx.containsKey(key);
     }
 
-    @NotNull
     @Override
-    public CharSequence intern(@NotNull CharSequence path) {
+    public @NotNull CharSequence intern(@NotNull CharSequence path) {
       return retrievePath(addPath(path));
     }
 
-    @NotNull
     @Override
-    public Set<CharSequence> getValues() {
+    public @NotNull Set<CharSequence> getValues() {
       return CollectionFactory.createSmallMemoryFootprintSet(getAllPaths());
     }
 

@@ -1,26 +1,32 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.CeProcessCanceledException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.function.BiConsumer;
 
 /**
  * <p>QueueProcessor processes elements which are being added to a queue via {@link #add(Object)} and {@link #addFirst(Object)} methods.</p>
- * <p>Elements are processed one by one in a special single thread.
+ * <p>Elements are processed one by one in a special single thread (AWT or pooled thread).
+ * The thread is occupied only when the queue is not empty.
+ * Once all items are processed, the thread is released.
+ * In case of pooled thread, once new items are added, a new thread is requested for processing.
  * The processor itself is passed in the constructor and is called from that thread.
  * By default processing starts when the first element is added to the queue, though there is an 'autostart' option which holds
  * the processor until {@link #start()} is called.</p>
@@ -36,14 +42,13 @@ public final class QueueProcessor<T> {
   }
 
   private final BiConsumer<? super T, ? super Runnable> myProcessor;
-  private final Deque<T> myQueue = new ArrayDeque<>();
+  private final Deque<Pair<T, ModalityState>> myQueue = new ArrayDeque<>();
 
   private boolean isProcessing;
   private boolean myStarted;
 
   private final ThreadToUse myThreadToUse;
   private final Condition<?> myDeathCondition;
-  private final Map<Object, ModalityState> myModalityState = new Reference2ObjectOpenHashMap<>();
 
   /**
    * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.
@@ -69,16 +74,18 @@ public final class QueueProcessor<T> {
   }
 
   @NotNull
-  public static QueueProcessor<Runnable> createRunnableQueueProcessor(ThreadToUse threadToUse) {
+  public static QueueProcessor<Runnable> createRunnableQueueProcessor(@NotNull ThreadToUse threadToUse) {
     return new QueueProcessor<>(wrappingProcessor(new RunnableConsumer()), true, threadToUse, Conditions.alwaysFalse());
   }
 
   @NotNull
   private static <T> BiConsumer<T, Runnable> wrappingProcessor(@NotNull Consumer<? super T> processor) {
     return (item, continuation) -> {
-      // try-with-resources is the most simple way to ensure no suppressed exception is lost
-      try (SilentAutoClosable ignored = continuation::run) {
+      try {
         runSafely(() -> processor.consume(item));
+      }
+      finally {
+        continuation.run();
       }
     };
   }
@@ -132,27 +139,25 @@ public final class QueueProcessor<T> {
   }
 
   public void add(@NotNull T t, ModalityState state) {
-    synchronized (myQueue) {
-      myModalityState.put(t, state);
-    }
-    doAdd(t, false);
+    doAdd(t, state, false);
   }
 
   public void add(@NotNull T element) {
-    doAdd(element, false);
+    doAdd(element, null,false);
   }
 
   public void addFirst(@NotNull T element) {
-    doAdd(element, true);
+    doAdd(element, null,true);
   }
 
-  private void doAdd(@NotNull T element, boolean atHead) {
+  private void doAdd(@NotNull T element, @Nullable ModalityState state, boolean atHead) {
     synchronized (myQueue) {
+      Pair<T, ModalityState> pair = Pair.create(element, state);
       if (atHead) {
-        myQueue.addFirst(element);
+        myQueue.addFirst(pair);
       }
       else {
-        myQueue.add(element);
+        myQueue.add(pair);
       }
       startProcessing();
     }
@@ -165,6 +170,7 @@ public final class QueueProcessor<T> {
   }
 
   public void waitFor() {
+    assertCorrectThread();
     synchronized (myQueue) {
       while (isProcessing) {
         try {
@@ -178,6 +184,7 @@ public final class QueueProcessor<T> {
   }
 
   boolean waitFor(long timeoutMS) {
+    assertCorrectThread();
     synchronized (myQueue) {
       long start = System.currentTimeMillis();
 
@@ -198,6 +205,12 @@ public final class QueueProcessor<T> {
     }
   }
 
+  private void assertCorrectThread() {
+    if (myThreadToUse == ThreadToUse.AWT) {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
+    }
+  }
+
   private void startProcessing() {
     LOG.assertTrue(Thread.holdsLock(myQueue));
 
@@ -205,30 +218,33 @@ public final class QueueProcessor<T> {
       return;
     }
     isProcessing = true;
-    final T item = myQueue.removeFirst();
-    final Runnable runnable = () -> {
+    Pair<T, ModalityState> pair = myQueue.removeFirst();
+    T item = pair.getFirst();
+    Runnable runnable = () -> {
       if (myDeathCondition.value(null)) {
         finishProcessing(false);
         return;
       }
       runSafely(() -> myProcessor.accept(item, (Runnable)() -> finishProcessing(true)));
     };
-    final Application application = ApplicationManager.getApplication();
-    if (myThreadToUse == ThreadToUse.AWT) {
-      final ModalityState state = myModalityState.remove(item);
-      if (state != null) {
-        application.invokeLater(runnable, state);
+    Application application = ApplicationManager.getApplication();
+    switch (myThreadToUse) {
+      case AWT -> {
+        ModalityState state = pair.getSecond();
+        if (state == null) {
+          application.invokeLater(runnable);
+        }
+        else {
+          application.invokeLater(runnable, state);
+        }
       }
-      else {
-        application.invokeLater(runnable);
-      }
-    }
-    else {
-      if (application != null) {
-        application.executeOnPooledThread(runnable);
-      }
-      else {
-        SwingUtilities.invokeLater(runnable);
+      case POOLED -> {
+        if (application == null) {
+          SwingUtilities.invokeLater(runnable);
+        }
+        else {
+          AppJavaExecutorUtil.executeOnPooledIoThread(runnable);
+        }
       }
     }
   }
@@ -240,6 +256,9 @@ public final class QueueProcessor<T> {
     catch (ProcessCanceledException e) {
       throw e;
     }
+    catch (CancellationException e) {
+      throw new CeProcessCanceledException(e);
+    }
     catch (Throwable e) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         throw e;
@@ -248,8 +267,10 @@ public final class QueueProcessor<T> {
         LOG.error(e);
       }
       catch (Throwable e2) {
-        //noinspection CallToPrintStackTrace
-        e2.printStackTrace();
+        if (!ApplicationManager.getApplication().isUnitTestMode() || DefaultLogger.shouldDumpExceptionToStderr()) {
+          //noinspection CallToPrintStackTrace
+          e2.printStackTrace();
+        }
       }
     }
   }
@@ -277,13 +298,7 @@ public final class QueueProcessor<T> {
     }
   }
 
-  @FunctionalInterface
-  protected interface SilentAutoClosable extends AutoCloseable {
-    @Override
-    void close();
-  }
-
-  public static final class RunnableConsumer implements Consumer<Runnable> {
+  private static final class RunnableConsumer implements Consumer<Runnable> {
     @Override
     public void consume(Runnable runnable) {
       runnable.run();

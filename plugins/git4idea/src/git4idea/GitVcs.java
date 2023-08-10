@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -19,7 +17,6 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
-import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,8 +25,9 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.log.VcsUserRegistry;
+import git4idea.annotate.GitAdvancedSettingsListener;
 import git4idea.annotate.GitAnnotationProvider;
-import git4idea.annotate.GitRepositoryForAnnotationsListener;
+import git4idea.annotate.GitAnnotationsListener;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
@@ -46,12 +44,16 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.roots.GitIntegrationEnabler;
+import git4idea.stash.ui.GitStashContentProviderKt;
 import git4idea.status.GitChangeProvider;
 import git4idea.update.GitUpdateEnvironment;
 import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.*;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
@@ -75,7 +77,6 @@ public final class GitVcs extends AbstractVcs {
   @NotNull
   public static GitVcs getInstance(@NotNull Project project) {
     GitVcs gitVcs = (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
-    ProgressManager.checkCanceled();
     return Objects.requireNonNull(gitVcs);
   }
 
@@ -184,8 +185,7 @@ public final class GitVcs extends AbstractVcs {
         return GitRevisionNumber.resolve(myProject, root, revision);
       }
       catch (VcsException e) {
-        LOG.info("Unexpected problem with resolving the git revision number: ", e);
-        throw e;
+        LOG.warn("Unexpected problem with resolving the git revision number: ", e);
       }
     }
     return new GitRevisionNumber(revision);
@@ -204,17 +204,18 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   protected void activate() {
-    myDisposable = Disposer.newDisposable();
+    Disposable disposable = Disposer.newDisposable();
+    myDisposable = disposable;
 
-    BackgroundTaskUtil.executeOnPooledThread(myDisposable, ()
+    BackgroundTaskUtil.executeOnPooledThread(disposable, ()
       -> GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject));
 
-    if (myVFSListener == null) {
-      myVFSListener = GitVFSListener.createInstance(this);
-    }
-    ServiceManager.getService(myProject, VcsUserRegistry.class); // make sure to read the registry before opening commit dialog
+    myVFSListener = GitVFSListener.createInstance(this, disposable);
+    // make sure to read the registry before opening commit dialog
+    myProject.getService(VcsUserRegistry.class);
 
-    GitRepositoryForAnnotationsListener.registerListener(myProject, myDisposable);
+    GitAnnotationsListener.registerListener(myProject, disposable);
+    GitAdvancedSettingsListener.registerListener(myProject, disposable);
 
     GitUserRegistry.getInstance(myProject).activate();
     GitBranchIncomingOutgoingManager.getInstance(myProject).activate();
@@ -222,10 +223,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   protected void deactivate() {
-    if (myVFSListener != null) {
-      Disposer.dispose(myVFSListener);
-      myVFSListener = null;
-    }
+    myVFSListener = null;
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
       myDisposable = null;
@@ -301,7 +299,7 @@ public final class GitVcs extends AbstractVcs {
   /**
    * @deprecated Use {@link GitExecutableManager#identifyVersion(String)} and {@link GitExecutableProblemsNotifier}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public GitExecutableValidator getExecutableValidator() {
     return new GitExecutableValidator(myProject);
@@ -314,12 +312,11 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   @RequiresEdt
-  public void enableIntegration() {
+  public void enableIntegration(@Nullable VirtualFile targetDirectory) {
     new Task.Backgroundable(myProject, GitBundle.message("progress.title.enabling.git"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
-        new GitIntegrationEnabler(GitVcs.this).enable(roots);
+        new GitIntegrationEnabler(GitVcs.this, targetDirectory).detectAndEnable();
       }
     }.queue();
   }
@@ -364,6 +361,11 @@ public final class GitVcs extends AbstractVcs {
   public boolean isWithCustomLocalChanges() {
     return GitVcsApplicationSettings.getInstance().isStagingAreaEnabled() &&
            GitStageManagerKt.canEnableStagingArea();
+  }
+
+  @Override
+  public boolean isWithCustomShelves() {
+    return GitStashContentProviderKt.stashToolWindowRegistryOption().asBoolean();
   }
 
   @Override

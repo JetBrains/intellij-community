@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -32,16 +17,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 
-/**
- * @author peter
- */
 public abstract class DomManager extends CompositeModificationTracker implements ModificationTracker {
   public static final Key<Module> MOCK_ELEMENT_MODULE = Key.create("MockElementModule");
 
-  private static final NotNullLazyKey<DomManager, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(DomManager.class);
-
   public static DomManager getDomManager(Project project) {
-    return INSTANCE_CACHE.getValue(project);
+    return project.getService(DomManager.class);
   }
 
   public DomManager(@NotNull Project project) {
@@ -52,7 +32,7 @@ public abstract class DomManager extends CompositeModificationTracker implements
 
   /**
    * @param file XML file
-   * @param domClass desired DOM element class 
+   * @param domClass desired DOM element class
    * @return New or cached DOM file element for the given file. All registered {@link DomFileDescription}s are
    * asked if they are responsible for the file {@link DomFileDescription#isMyFile(XmlFile, Module)}.
    * If there is a {@link DomFileDescription} that is responsible for the file, but its {@link DomFileDescription#getRootElementClass()}
@@ -72,7 +52,7 @@ public abstract class DomManager extends CompositeModificationTracker implements
    * @deprecated use {@link #getFileElement(XmlFile, Class)}
    */
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> aClass, @NonNls String rootTagName);
 
   public abstract void addDomEventListener(DomEventListener listener, Disposable parentDisposable);
@@ -123,16 +103,6 @@ public abstract class DomManager extends CompositeModificationTracker implements
   public abstract <T extends DomElement> T createStableValue(Factory<? extends T> provider);
 
   public abstract <T> T createStableValue(final Factory<? extends T> provider, final Condition<? super T> validator);
-
-  /**
-   * Registers a new {@link DomFileDescription} within the manager. The description parameter describes some DOM
-   * parameters and restrictions to the particular XML files, that need DOM support. Should be called on
-   * {@link com.intellij.openapi.components.ProjectComponent} loading.
-   * @param description The description in question
-   * @deprecated Make your file description an extension (see {@link DomFileDescription#EP_NAME})
-   */
-  @Deprecated
-  public abstract void registerFileDescription(DomFileDescription<?> description);
 
   /**
    * @return {@link ConverterManager} instance

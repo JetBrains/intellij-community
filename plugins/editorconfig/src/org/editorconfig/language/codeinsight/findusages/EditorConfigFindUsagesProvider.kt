@@ -23,8 +23,7 @@ class EditorConfigFindUsagesProvider : FindUsagesProvider {
     }
 
     val describable = element as? EditorConfigDescribableElement
-    val descriptor = describable?.getDescriptor(false)
-    return when (descriptor) {
+    return when (describable?.getDescriptor(false)) {
       is EditorConfigDeclarationDescriptor,
       is EditorConfigReferenceDescriptor -> EditorConfigBundle.get(
         "usage.type.identifier",
@@ -46,8 +45,7 @@ class EditorConfigFindUsagesProvider : FindUsagesProvider {
     }
 
     val describable = element as? EditorConfigDescribableElement
-    val descriptor = describable?.getDescriptor(false)
-    return when (descriptor) {
+    return when (describable?.getDescriptor(false)) {
       is EditorConfigDeclarationDescriptor,
       is EditorConfigReferenceDescriptor,
       is EditorConfigConstantDescriptor ->
@@ -63,8 +61,7 @@ class EditorConfigFindUsagesProvider : FindUsagesProvider {
     }
 
     val describable = element as? EditorConfigDescribableElement
-    val descriptor = describable?.getDescriptor(false)
-    return when (descriptor) {
+    return when (describable?.getDescriptor(false)) {
       is EditorConfigDeclarationDescriptor,
       is EditorConfigReferenceDescriptor,
       is EditorConfigConstantDescriptor ->

@@ -49,8 +49,7 @@ public final class LocalChangeListDiffTool {
 
     @Override
     public boolean canShow(@NotNull DiffContext context, @NotNull DiffRequest request) {
-      if (!(request instanceof LocalChangeListDiffRequest)) return false;
-      LocalChangeListDiffRequest localRequest = (LocalChangeListDiffRequest)request;
+      if (!(request instanceof LocalChangeListDiffRequest localRequest)) return false;
       return localRequest.getLineStatusTracker() instanceof PartialLocalLineStatusTracker;
     }
 

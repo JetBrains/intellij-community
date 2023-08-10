@@ -145,6 +145,15 @@
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("read").definedInClass("com.jayway.jsonpath.ReadContext"))]]></place>
   </injection>
   <injection language="JSONPath" injector-id="java">
+    <display-name>WriteContext (com.jayway.jsonpath)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("set").definedInClass("com.jayway.jsonpath.WriteContext"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("add").definedInClass("com.jayway.jsonpath.WriteContext"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("delete").definedInClass("com.jayway.jsonpath.WriteContext"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("put").definedInClass("com.jayway.jsonpath.WriteContext"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("renameKey").definedInClass("com.jayway.jsonpath.WriteContext"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("map").definedInClass("com.jayway.jsonpath.WriteContext"))]]></place>
+  </injection>
+  <injection language="JSONPath" injector-id="java">
     <display-name>JsonPathMatchers (com.jayway.jsonpath)</display-name>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("hasJsonPath").definedInClass("com.jayway.jsonpath.matchers.JsonPathMatchers"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("hasNoJsonPath").definedInClass("com.jayway.jsonpath.matchers.JsonPathMatchers"))]]></place>

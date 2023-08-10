@@ -43,8 +43,7 @@ public class ModuleGroupUrl extends AbstractUrl {
 
   @Override
   public AbstractUrl createUrlByElement(Object element) {
-    if (element instanceof ModuleGroup) {
-      ModuleGroup group = (ModuleGroup)element;
+    if (element instanceof ModuleGroup group) {
       final String[] groupPath = group.getGroupPath();
       return new ModuleGroupUrl(StringUtil.join(groupPath, ";"));
     }

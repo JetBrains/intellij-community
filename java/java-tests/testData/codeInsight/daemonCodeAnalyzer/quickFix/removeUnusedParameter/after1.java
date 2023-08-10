@@ -1,4 +1,4 @@
-// "Safe delete 'i'" "true"
+// "Safe delete 'i'" "true-preview"
 import java.io.*;
 
 class a {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.properties.editor;
 
@@ -14,6 +14,7 @@ import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -97,7 +98,7 @@ public final class ResourceBundleFileStructureViewElement implements StructureVi
 
   private static MultiMap<String, IProperty> getChildrenIdShowOnlyIncomplete(ResourceBundle resourceBundle) {
     final MultiMap<String, IProperty> propertyNames = MultiMap.createLinked();
-    Object2IntOpenHashMap<String> occurrences = new Object2IntOpenHashMap<>();
+    Object2IntMap<String> occurrences=new Object2IntOpenHashMap<>();
     for (PropertiesFile file : resourceBundle.getPropertiesFiles()) {
       MultiMap<String, IProperty> currentFilePropertyNames = MultiMap.createLinked();
       for (IProperty property : file.getProperties()) {
@@ -106,7 +107,7 @@ public final class ResourceBundleFileStructureViewElement implements StructureVi
       }
       propertyNames.putAllValues(currentFilePropertyNames);
       for (String propertyName : currentFilePropertyNames.keySet()) {
-        occurrences.addTo(propertyName, 1);
+        occurrences.mergeInt(propertyName, 1, Math::addExact);
       }
     }
     final int targetOccurrences = resourceBundle.getPropertiesFiles().size();
@@ -118,15 +119,13 @@ public final class ResourceBundleFileStructureViewElement implements StructureVi
     return propertyNames;
   }
 
-  @NotNull
   @Override
-  public IProperty[] getProperties() {
+  public IProperty @NotNull [] getProperties() {
     return IProperty.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiFile[] getFiles() {
+  public PsiFile @Nullable [] getFiles() {
     ResourceBundle rb = getValue();
     if (rb == null) return null;
     final List<PropertiesFile> files = rb.getPropertiesFiles();
@@ -147,20 +146,5 @@ public final class ResourceBundleFileStructureViewElement implements StructureVi
         return AllIcons.FileTypes.Properties;
       }
     };
-  }
-
-  @Override
-  public void navigate(boolean requestFocus) {
-
-  }
-
-  @Override
-  public boolean canNavigate() {
-    return false;
-  }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return false;
   }
 }

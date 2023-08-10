@@ -18,9 +18,6 @@ package com.intellij.openapi.editor;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * @author Denis Zhdanov
- */
 public class DefaultLineWrapPositionStrategyTest extends AbstractLineWrapPositionStrategyTest {
   private LineWrapPositionStrategy myStrategy;
 

@@ -36,9 +36,6 @@ import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
 import static com.jetbrains.python.packaging.PyRequirementsKt.pyRequirement;
 import static org.junit.Assert.*;
 
-/**
- * @author vlan
- */
 public class PyPackagingTest extends PyEnvTestCase {
   @Override
   public void runPythonTest(PyTestTask testTask) {

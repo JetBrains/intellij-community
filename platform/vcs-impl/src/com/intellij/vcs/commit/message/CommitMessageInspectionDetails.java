@@ -52,7 +52,7 @@ public class CommitMessageInspectionDetails implements UnnamedConfigurable, Disp
 
     BaseCommitMessageInspection tool = ObjectUtils.tryCast(myToolState.getTool().getTool(), BaseCommitMessageInspection.class);
     myOptionsConfigurable = tool != null ? tool.createOptionsConfigurable() : null;
-    JComponent options = myOptionsConfigurable != null ? myOptionsConfigurable.getComponent() : myToolState.getAdditionalConfigPanel();
+    JComponent options = myOptionsConfigurable != null ? myOptionsConfigurable.getComponent() : myToolState.getAdditionalConfigPanel(this, project);
 
     myMainPanel = new CommitMessageInspectionDetailsPanel(severityPanel, options);
 

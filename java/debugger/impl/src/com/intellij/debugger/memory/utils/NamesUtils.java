@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.utils;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -8,9 +8,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
-final class NamesUtils {
+public final class NamesUtils {
   @NotNull
-  static String getUniqueName(@NotNull ObjectReference ref) {
+  public static String getUniqueName(@NotNull ObjectReference ref) {
     String shortName = StringUtil.getShortName(ref.referenceType().name());
     String name = shortName.replace("[]", "Array");
     return String.format("%s@%d", name, ref.uniqueID());

@@ -51,6 +51,11 @@ public interface EditorEx extends Editor {
   @NonNls String PROP_INSERT_MODE = "insertMode";
   @NonNls String PROP_COLUMN_MODE = "columnMode";
   @NonNls String PROP_FONT_SIZE = "fontSize";
+  @NonNls String PROP_FONT_SIZE_2D = "fontSize2D";
+  @NonNls String PROP_ONE_LINE_MODE = "oneLineMode";
+  @NonNls String PROP_HIGHLIGHTER = "highlighter";
+  @NonNls String PROP_HEADER_COMPONENT = "headerComponent";
+
   Key<TextRange> LAST_PASTED_REGION = Key.create("LAST_PASTED_REGION");
 
   @NotNull
@@ -79,9 +84,6 @@ public interface EditorEx extends Editor {
   @NotNull
   EditorGutterComponentEx getGutterComponentEx();
 
-  @NotNull
-  EditorHighlighter getHighlighter();
-
   JComponent getPermanentHeaderComponent();
 
   /**
@@ -89,9 +91,9 @@ public interface EditorEx extends Editor {
    */
   void setViewer(boolean isViewer);
 
-  void setPermanentHeaderComponent(JComponent component);
-
   void setHighlighter(@NotNull EditorHighlighter highlighter);
+
+  void setPermanentHeaderComponent(JComponent component);
 
   void setColorsScheme(@NotNull EditorColorsScheme scheme);
 
@@ -160,6 +162,10 @@ public interface EditorEx extends Editor {
 
   void setFontSize(int fontSize);
 
+  default void setFontSize(float fontSize) {
+    setFontSize((int)(fontSize + 0.5));
+  }
+
   @NotNull
   Color getBackgroundColor();
 
@@ -170,6 +176,7 @@ public interface EditorEx extends Editor {
   boolean isEmbeddedIntoDialogWrapper();
   void setEmbeddedIntoDialogWrapper(boolean b);
 
+  @Override
   VirtualFile getVirtualFile();
 
   TextDrawingCallback getTextDrawingCallback();

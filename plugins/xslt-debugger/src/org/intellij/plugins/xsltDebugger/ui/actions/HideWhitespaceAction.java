@@ -17,6 +17,7 @@ package org.intellij.plugins.xsltDebugger.ui.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.ui.treeStructure.Tree;
@@ -46,5 +47,10 @@ public class HideWhitespaceAction extends ToggleAction {
     final TreeState treeState = TreeState.createOn(myStructureTree);
     myEventModel.setFilterWhitespace(state);
     treeState.applyTo(myStructureTree);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

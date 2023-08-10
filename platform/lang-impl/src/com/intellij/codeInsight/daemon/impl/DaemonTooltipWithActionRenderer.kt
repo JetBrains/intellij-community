@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("MayBeConstant")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl
 
@@ -27,11 +26,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.*
-import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -157,17 +154,14 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
 
     val topInset = 5
     val bottomInset = (if (highlightActions) 4 else 10)
-    buttons.add(createActionLabel(tooltipAction.text, runFixAction, hintHint.textBackground),
-                gridBag.next().insets(topInset, 10, bottomInset, 4))
-    buttons.add(createKeymapHint(shortcutRunActionText),
-                gridBag.next().insets(topInset, 4, bottomInset, 12))
+    buttons.add(createActionLabel(tooltipAction.text, hintHint.textBackground, runFixAction), gridBag.next().insets(topInset, 10, bottomInset, 4))
+    buttons.add(createKeymapHint(shortcutRunActionText), gridBag.next().insets(topInset, 4, bottomInset, 12))
 
-    val showAllFixes = { _: InputEvent? ->
+    val actionLabel = createActionLabel(DaemonBundle.message("daemon.tooltip.more.actions.link.label"), hintHint.textBackground) {
       hint.hide()
       tooltipAction.showAllActions(editor)
     }
-
-    buttons.add(createActionLabel(DaemonBundle.message("daemon.tooltip.more.actions.link.label"), showAllFixes, hintHint.textBackground),
+    buttons.add(actionLabel,
                 gridBag.next().insets(topInset, 12, bottomInset, 4))
     buttons.add(createKeymapHint(shortcutShowAllActionsText),
                 gridBag.next().fillCellHorizontally().insets(topInset, 4, bottomInset, 20))
@@ -176,7 +170,6 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
       override fun actionPerformed(e: AnActionEvent) {
         runFixAction(e.inputEvent)
       }
-
       init {
         registerCustomShortcutSet(runActionCustomShortcutSet, editor.contentComponent)
       }
@@ -184,9 +177,9 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
 
     actions.add(object : AnAction() {
       override fun actionPerformed(e: AnActionEvent) {
-        showAllFixes(e.inputEvent)
+        hint.hide()
+        tooltipAction.showAllActions(editor)
       }
-
       init {
         registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS), editor.contentComponent)
       }
@@ -194,7 +187,6 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
 
     val buttonsConstraints = GridBagConstraints(0, 1, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                 JBUI.insetsTop(0), 0, 0)
-
     grid.add(wrapper, buttonsConstraints)
   }
 
@@ -273,7 +265,7 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
     return super.canAutoHideOn(event)
   }
 
-  private fun isOwnAction(action: AnAction?) = action is ShowDocAction || action is ShowActionsAction || action is SettingsActionGroup
+  private fun isOwnAction(action: AnAction?): Boolean = action is ShowDocAction || action is ShowActionsAction || action is SettingsActionGroup
 
   private class SettingsActionGroup(actions: List<AnAction>) : DefaultActionGroup(actions), HintManagerImpl.ActionToIgnore, DumbAware {
     init {
@@ -281,7 +273,7 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
     }
   }
 
-  override fun isContentAction(dressedText: String?): Boolean {
+  override fun isContentAction(dressedText: String): Boolean {
     return super.isContentAction(dressedText) || tooltipAction != null
   }
 
@@ -310,14 +302,15 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
     return wrapper
   }
 
-  private inner class ShowActionsAction(
-    val reloader: TooltipReloader, val isEnabled: Boolean
-  ) : ToggleAction(DaemonBundle.message("daemon.tooltip.show.quick.fixes.action.text")),
+  private inner class ShowActionsAction(val reloader: TooltipReloader, val isEnabled: Boolean)
+    : ToggleAction(DaemonBundle.message("daemon.tooltip.show.quick.fixes.action.text")),
       HintManagerImpl.ActionToIgnore {
 
     override fun isSelected(e: AnActionEvent): Boolean {
       return isShowActions()
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       setShowActions(state)
@@ -345,6 +338,8 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
       return myCurrentWidth > 0
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       TooltipActionsLogger.logShowDescription(e.project, TooltipActionsLogger.Source.Gear, e.inputEvent, e.place)
       reloader.reload(state)
@@ -359,8 +354,7 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
 
 }
 
-
-fun createActionLabel(@NlsContexts.LinkLabel text: String, action: (InputEvent?) -> Unit, background: Color): HyperlinkLabel {
+private fun createActionLabel(@NlsContexts.LinkLabel text: String, background: Color, action: (InputEvent?) -> Unit): HyperlinkLabel {
   val label = object : HyperlinkLabel(text, background) {
     override fun getTextOffset(): Int {
       return 0
@@ -388,7 +382,7 @@ private fun getActionFont(): Font? {
   if (toolTipFont == null || SystemInfo.isWindows) return toolTipFont
 
   //if font was changed from default we dont have a good heuristic to customize it
-  if (JBFont.label() != toolTipFont || UISettings.instance.overrideLafFonts) return toolTipFont
+  if (JBFont.label() != toolTipFont || UISettings.getInstance().overrideLafFonts) return toolTipFont
 
   if (SystemInfo.isMac) {
     return toolTipFont.deriveFont(toolTipFont.size - 1f)

@@ -1,4 +1,4 @@
-// "Surround with try/catch" "true"
+// "Surround with try/catch" "true-preview"
 public class ExTest {
     public static void maybeThrow(String data) throws Ex {
         throw new Ex(data);

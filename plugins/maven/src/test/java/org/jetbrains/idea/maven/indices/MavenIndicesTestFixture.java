@@ -16,11 +16,13 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +35,6 @@ public class MavenIndicesTestFixture {
   private final String[] myExtraRepoDirs;
 
   private MavenCustomRepositoryHelper myRepositoryHelper;
-  private MavenProjectIndicesManager myIndicesManager;
 
   public MavenIndicesTestFixture(Path dir, Project project) {
     this(dir, project, "local1", "local2");
@@ -50,7 +51,7 @@ public class MavenIndicesTestFixture {
     myExtraRepoDirs = extraRepoDirs;
   }
 
-  public void setUp() throws Exception {
+  public void setUpBeforeImport() throws Exception {
     myRepositoryHelper = new MavenCustomRepositoryHelper(myDir.toFile(), ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
 
     for (String each : myExtraRepoDirs) {
@@ -59,11 +60,18 @@ public class MavenIndicesTestFixture {
 
     MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(
       myRepositoryHelper.getTestDataPath(myLocalRepoDir));
+  }
 
-    getIndicesManager().setTestIndexDir(myDir.resolve("MavenIndices"));
-    myIndicesManager = MavenProjectIndicesManager.getInstance(myProject);
+  public void setUp() throws Exception {
+    setUpBeforeImport();
+    setUpAfterImport();
+  }
 
-    myIndicesManager.doInit();
+  public void setUpAfterImport() throws Exception {
+    MavenIndexerWrapper.setTestIndicesDir(myDir.resolve("MavenIndices"));
+    getIndicesManager().scheduleUpdateIndicesList(null);
+    getIndicesManager().waitForBackgroundTasksInTests();
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   public void addToRepository(String relPath) throws IOException {
@@ -71,16 +79,16 @@ public class MavenIndicesTestFixture {
   }
 
   public void tearDown() {
-    getIndicesManager().doShutdownInTests();
     MavenServerManager.getInstance().shutdown(true);
+    Disposer.dispose(getIndicesManager());
   }
 
   public MavenIndicesManager getIndicesManager() {
     return MavenIndicesManager.getInstance(myProject);
   }
 
-  public MavenProjectIndicesManager getProjectIndicesManager() {
-    return myIndicesManager;
+  public MavenArchetypeManager getArchetypeManager() {
+    return MavenArchetypeManager.getInstance(myProject);
   }
 
   public MavenCustomRepositoryHelper getRepositoryHelper() {

@@ -1,25 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.navigationToolbar.ui.NavBarUI;
 import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.DirtyUI;
-import com.intellij.ui.RelativeFont;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleAction;
 import javax.accessibility.AccessibleContext;
@@ -32,10 +30,14 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
+import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
+
 /**
  * @author Konstantin Bulenkov
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
-public class NavBarItem extends SimpleColoredComponent implements DataProvider, Disposable {
+@Deprecated
+public final class NavBarItem extends SimpleColoredComponent implements Disposable {
   private final @Nls String myText;
   private final SimpleTextAttributes myAttributes;
   private final int myIndex;
@@ -44,6 +46,14 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
   private final Object myObject;
   private final boolean isPopupElement;
   private final NavBarUI myUI;
+  private boolean mouseHovered;
+  private final boolean myIsModule;
+
+  public static final Icon CHEVRON_ICON = AllIcons.General.ChevronRight;
+
+  public static Icon getModuleIcon() {
+    return ExpUiIcons.Nodes.Module8x8;
+  }
 
   public NavBarItem(NavBarPanel panel, Object object, int idx, Disposable parent) {
     this(panel, object, idx, parent, false);
@@ -59,19 +69,25 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
     if (object != null) {
       NavBarPresentation presentation = myPanel.getPresentation();
       myText = presentation.getPresentableText(object, inPopup);
-      myIcon = presentation.getIcon(object);
       myAttributes = presentation.getTextAttributes(object, false);
+      myIsModule = presentation.isModule(object);
+      myIcon = ExperimentalUI.isNewUI() && myIsModule && !inPopup ? getModuleIcon() : presentation.getIcon(object);
     }
     else {
       myText = IdeBundle.message("navigation.bar.item.sample");
       myIcon = PlatformIcons.FOLDER_ICON;
       myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+      myIsModule = false;
     }
 
     Disposer.register(parent == null ? panel : parent, this);
 
     setOpaque(false);
     setIpad(myUI.getElementIpad(isPopupElement));
+
+    if (ExperimentalUI.isNewUI()) {
+      setIconTextGap(JBUIScale.scale(4));
+    }
 
     if (!isPopupElement) {
       setMyBorder(null);
@@ -89,7 +105,7 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
       }
     }
     else {
-      setIconOpaque(true);
+      setIconOpaque(false);
       setFocusBorderAroundIcon(true);
     }
 
@@ -130,18 +146,34 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
 
     setBackground(myUI.getBackground(selected, focused));
 
-    Color fg = myUI.getForeground(selected, focused, isInactive());
-    if (fg == null) fg = myAttributes.getFgColor();
+    Color fg;
+    Color bg = getBackground();
 
-    final Color bg = getBackground();
-    append(myText, new SimpleTextAttributes(bg, fg, myAttributes.getWaveColor(), myAttributes.getStyle()));
+    if (ExperimentalUI.isNewUI()) {
+      if (isMouseHover()) fg = JBUI.CurrentTheme.StatusBar.Breadcrumbs.HOVER_FOREGROUND;
+      else if (selected && focused) fg = JBUI.CurrentTheme.StatusBar.Breadcrumbs.SELECTION_FOREGROUND;
+      else if (selected && myPanel.isNodePopupActive() && !isPopupElement()) fg = JBUI.CurrentTheme.StatusBar.Breadcrumbs.SELECTION_INACTIVE_FOREGROUND;
+      else if (isInFloatingMode()) fg = JBUI.CurrentTheme.StatusBar.Breadcrumbs.FLOATING_FOREGROUND;
+      else if (isPopupElement()) fg = JBUI.CurrentTheme.List.foreground(selected, focused);
+      else fg = JBUI.CurrentTheme.StatusBar.Breadcrumbs.FOREGROUND;
+    }
+    else {
+      fg = myUI.getForeground(selected, focused, isInactive());
+      if (fg == null) fg = myAttributes.getFgColor();
+    }
 
-    //repaint();
+    int style = myAttributes.getStyle();
+    if (ExperimentalUI.isNewUI()) {
+      style = STYLE_PLAIN;
+      //if (myAttributes.isWaved()) style |= STYLE_WAVED;
+    }
+
+    append(myText, new SimpleTextAttributes(bg, fg, ExperimentalUI.isNewUI() ? null : myAttributes.getWaveColor(), style));
   }
 
   public boolean isInactive() {
     final NavBarModel model = myPanel.getModel();
-    return model.getSelectedIndex() < myIndex && model.getSelectedIndex() != -1 && !myPanel.isUpdating();
+    return model.getSelectedIndex() < myIndex && model.getSelectedIndex() != -1;
   }
 
   public boolean isPopupElement() {
@@ -181,19 +213,28 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
     final Dimension size = super.getPreferredSize();
     final Dimension offsets = myUI.getOffsets(this);
     int width = size.width + offsets.width;
+
+    if (ExperimentalUI.isNewUI() && !isFirstElement() && !isPopupElement) {
+      width += CHEVRON_ICON.getIconWidth() + JBUI.CurrentTheme.StatusBar.Breadcrumbs.CHEVRON_INSET.get();
+    }
+
     if (!needPaintIcon() && myIcon != null) {
-      width -= myIcon.getIconWidth();
+      width -= myIcon.getIconWidth() + (ExperimentalUI.isNewUI() ? getIconTextGap() : 0);
     }
     return new Dimension(width, size.height + offsets.height);
   }
 
   @DirtyUI
   public boolean needPaintIcon() {
-    if (Registry.is("navBar.show.icons") || isPopupElement || isLastElement()) {
+    if (Registry.is("navBar.show.icons") || isPopupElement || isLastElement() || ExperimentalUI.isNewUI() && myIsModule) {
       return true;
     }
     Object object = getObject();
-    return object instanceof PsiElement && ((PsiElement)object).getContainingFile() != null;
+    return object instanceof PsiElement && ((PsiElement) object).isValid() && ((PsiElement)object).getContainingFile() != null;
+  }
+
+  public int getVerticalIconOffset() {
+    return myIsModule && ExperimentalUI.isNewUI() ? JBUI.scale(1) : 0;
   }
 
   @NotNull
@@ -221,7 +262,7 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
 
   @Override
   protected boolean shouldDrawBackground() {
-    return isSelected() && isFocusedOrPopupElement();
+    return isSelected() && isFocused() && !isPopupElement;
   }
 
   @Override
@@ -231,10 +272,21 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
     return myIndex == myPanel.getModel().getSelectedIndex() - 1;
   }
 
-  @Nullable
-  @Override
-  public Object getData(@NotNull String dataId) {
-    return myPanel.getDataImpl(dataId, this, () -> JBIterable.of(getObject()));
+  public int getIndex() {
+    return myIndex;
+  }
+
+  public void setMouseHover(boolean hovered) {
+    mouseHovered = hovered;
+    update();
+  }
+
+  public boolean isMouseHover() {
+    return mouseHovered;
+  }
+
+  public boolean isInFloatingMode() {
+    return myPanel.isInFloatingMode();
   }
 
   @Override
@@ -301,7 +353,7 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
       // The base will be first or last NavBarItem in the NavBarPanel
       NavBarItem focusBase = null;
       List<NavBarItem> items = myPanel.getItems();
-      if (items.size() > 0) {
+      if (!items.isEmpty()) {
         if (next) {
           focusBase = items.get(items.size() - 1);
         } else {

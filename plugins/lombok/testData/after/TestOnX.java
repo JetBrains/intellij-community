@@ -107,7 +107,7 @@ public class TestOnX {
         return result;
     }
 
-    @Max(100L)
+    @Max(100)
     @NonNull
     public Integer getSomeIntField() {
         return this.someIntField;
@@ -137,7 +137,7 @@ public class TestOnX {
     }
 
     @NonNull
-    public TestOnX withSomeFloatField(@Min(1L) float someFloatField) {
+    public TestOnX withSomeFloatField(@Min(1) float someFloatField) {
         return this.someFloatField == someFloatField ? this : new TestOnX(this.someIntField, this.someStringField, someFloatField);
     }
 }

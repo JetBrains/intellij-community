@@ -124,7 +124,6 @@
     </item>
     <item name='org.apache.commons.collections.collection.SynchronizedCollection java.util.Collection decorate(java.util.Collection)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -151,7 +150,6 @@
     </item>
     <item name='org.apache.commons.collections.collection.TransformedCollection java.util.Collection decorate(java.util.Collection, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -242,7 +240,6 @@
     </item>
     <item name='org.apache.commons.collections.collection.UnmodifiableBoundedCollection org.apache.commons.collections.BoundedCollection decorate(org.apache.commons.collections.BoundedCollection)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -252,7 +249,6 @@
     </item>
     <item name='org.apache.commons.collections.collection.UnmodifiableBoundedCollection org.apache.commons.collections.BoundedCollection decorateUsing(java.util.Collection)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

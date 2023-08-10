@@ -27,9 +27,6 @@ import org.junit.Test
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertTrue
 
-/**
- * @author ven
- */
 @CompileStatic
 class RenameTest extends GroovyLatestTest implements BaseTest {
 

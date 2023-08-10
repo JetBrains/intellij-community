@@ -20,7 +20,6 @@ import com.intellij.codeInsight.generation.GenerateGetterSetterHandlerBase;
 /**
  * Action group which contains Generate... actions
  * Available in the Java code editor context only
- * @author Danila Ponomarenko
  */
 public abstract class GenerateGetterSetterBaseAction extends BaseGenerateAction {
   public GenerateGetterSetterBaseAction(GenerateGetterSetterHandlerBase handler) {

@@ -6,7 +6,7 @@ import com.intellij.coverage.CoverageExecutor;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
@@ -35,7 +35,7 @@ public class TrackCoverageAction extends ToggleModelAction {
   private TreeSelectionListener myTreeSelectionListener;
 
   public TrackCoverageAction(TestConsoleProperties properties) {
-    super(CoverageBundle.message("show.coverage.per.test.action.text"), CoverageBundle.message("show.coverage.per.test.action.text"), AllIcons.RunConfigurations.TrackCoverage, properties,
+    super(CoverageBundle.message("show.coverage.per.test.action.text"), CoverageBundle.message("show.coverage.per.test.action.description"), AllIcons.RunConfigurations.TrackCoverage, properties,
           TestConsoleProperties.TRACK_CODE_COVERAGE);
     myProperties = properties;
 
@@ -101,10 +101,10 @@ public class TrackCoverageAction extends ToggleModelAction {
     }
 
     final RunProfile runConf = myModel.getProperties().getConfiguration();
-    if (runConf instanceof ModuleBasedConfiguration) {
+    if (runConf instanceof RunConfigurationBase) {
 
       // if coverage supported for run configuration
-      if (CoverageEnabledConfiguration.isApplicableTo((ModuleBasedConfiguration) runConf)) {
+      if (CoverageEnabledConfiguration.isApplicableTo((RunConfigurationBase<?>)runConf)) {
 
         // Get coverage settings
         Executor executor = myProperties.getExecutor();

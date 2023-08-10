@@ -8,20 +8,30 @@ import com.intellij.ide.actions.SelectInContextImpl
 import com.intellij.ide.impl.ProjectViewSelectInGroupTarget
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys.TOOL_WINDOW
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW
 
 private const val SELECT_CONTEXT_FILE = "SelectInProjectView"
 private const val SELECT_OPENED_FILE = "SelectOpenedFileInProjectView"
 
-internal class SelectFileAction : DumbAwareAction() {
+internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(event: AnActionEvent) {
     when (getActionId(event)) {
       SELECT_CONTEXT_FILE -> getSelector(event)?.run { target.selectIn(context, true) }
-      SELECT_OPENED_FILE -> getView(event)?.selectOpenedFile?.run()
+      SELECT_OPENED_FILE ->
+        if (Registry.`is`("ide.selectIn.works.as.revealIn.when.project.view.focused")) {
+          ActionManager.getInstance().getAction("RevealIn")?.actionPerformed(event)
+        } else {
+          getView(event)?.selectOpenedFile()
+        }
     }
   }
 
@@ -35,7 +45,7 @@ internal class SelectFileAction : DumbAwareAction() {
       }
       SELECT_OPENED_FILE -> {
         val view = getView(event)
-        event.presentation.isEnabled = view?.selectOpenedFile != null
+        event.presentation.isEnabled = event.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR) != null
         event.presentation.isVisible = view?.isSelectOpenedFileEnabled == true
         event.project?.let { project ->
           if (event.presentation.isVisible && getFirstKeyboardShortcutText(id).isEmpty()) {
@@ -50,6 +60,7 @@ internal class SelectFileAction : DumbAwareAction() {
     }
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private data class Selector(val target: SelectInTarget, val context: SelectInContext)
 
@@ -63,7 +74,7 @@ internal class SelectFileAction : DumbAwareAction() {
     event.project?.let { ProjectView.getInstance(it) as? ProjectViewImpl }
 
   private fun getActionId(event: AnActionEvent) =
-    when (TOOL_WINDOW.getData(event.dataContext)?.id) {
+    when (event.getData(TOOL_WINDOW)?.id) {
       PROJECT_VIEW -> SELECT_OPENED_FILE
       else -> SELECT_CONTEXT_FILE
     }

@@ -1,30 +1,30 @@
 public class OverflowingLoop {
   void increment(int s) {
-    <warning descr="Loop executes zero or billions times">for</warning> (int i = s; i > 12; i++) {
+    <warning descr="Loop executes zero or billions of times">for</warning> (int i = s; i > 12; i++) {
       System.out.println(i + 23);
     }
   }
 
   void incrementWithInvertedCondition(int s) {
-    <warning descr="Loop executes zero or billions times">for</warning> (int i = s; 12 < i; i++) {
+    <warning descr="Loop executes zero or billions of times">for</warning> (int i = s; 12 < i; i++) {
       System.out.println(i + 23);
     }
   }
 
   void decrement(int s) {
-    <warning descr="Loop executes zero or billions times">for</warning> (int i = s; i < 12; i--) {
+    <warning descr="Loop executes zero or billions of times">for</warning> (int i = s; i < 12; i--) {
       System.out.println(i + 23);
     }
   }
 
   void plusEq(int s) {
-    <warning descr="Loop executes zero or billions times">for</warning> (int i = s; i > 12; i += 12) {
+    <warning descr="Loop executes zero or billions of times">for</warning> (int i = s; i > 12; i += 12) {
       System.out.println(i + 23);
     }
   }
 
   void minusEq(int s) {
-    <warning descr="Loop executes zero or billions times">for</warning> (int i = s; i < 12; i -= 12) {
+    <warning descr="Loop executes zero or billions of times">for</warning> (int i = s; i < 12; i -= 12) {
       System.out.println(i + 23);
     }
   }
@@ -36,13 +36,13 @@ public class OverflowingLoop {
   }
 
   void minusEqAddPositive(int s) {
-    <warning descr="Loop executes zero or billions times">for</warning> (int i = s; i > 12; i += 12) {
+    <warning descr="Loop executes zero or billions of times">for</warning> (int i = s; i > 12; i += 12) {
       System.out.println(i + 23);
     }
   }
 
   void minusEqAddPositiveInsideLoop(int s) {
-    <warning descr="Loop executes zero or billions times">for</warning> (int i = s; i > 12; i += 12) {
+    <warning descr="Loop executes zero or billions of times">for</warning> (int i = s; i > 12; i += 12) {
       i++;
       System.out.println(i + 23);
     }
@@ -65,6 +65,33 @@ public class OverflowingLoop {
   void minusEqMinus(int s) {
     for (int i = 0; i < 10; i -=- 1) {
       System.out.println("asdsakdj");
+    }
+  }
+
+  void withoutInit1(int s) {
+    int i = s;
+    <warning descr="Loop executes zero or billions of times">for</warning> (; i < 10; i--) {
+      System.out.println("asdsakdj");
+    }
+  }
+
+  void withoutInit2(int s) {
+    int i = s;
+    <warning descr="Loop executes zero or billions of times">for</warning> (; i < 10; i -= 1) {
+      System.out.println("asdsakdj");
+    }
+  }
+
+  int iField = 0;
+  void withoutInit3() {
+    for (; iField < 10; iField -= 1) {
+      System.out.println("asdsakdj");
+    }
+  }
+
+  void byteUsage() {
+    for (byte i = 0; i >= 0; i++) {
+      System.out.println(i);
     }
   }
 }

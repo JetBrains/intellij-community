@@ -30,6 +30,14 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
                                                        (settings, value) -> settings.setActivateToolWindowBeforeRun(value), 100);
     tag.setActionHint(ExecutionBundle.message("open.the.run.debug.tool.window.when.the.application.is.started"));
     list.add(tag);
+    SettingsEditorFragment<S, ?> focus =
+      RunConfigurationEditorFragment.createSettingsTag("before.launch.focusToolWindow",
+                                                       ExecutionBundle.message("run.configuration.before.run.focus.tool.window"),
+                                                       ExecutionBundle.message("run.configuration.before.run.group"),
+                                                       settings -> settings.isFocusToolWindowBeforeRun(),
+                                                       (settings, value) -> settings.setFocusToolWindowBeforeRun(value), 100);
+    focus.setActionHint(ExecutionBundle.message("focus.the.run.debug.tool.window.when.the.application.is.started"));
+    list.add(focus);
     SettingsEditorFragment<S, ?> tag1 =
       RunConfigurationEditorFragment.createSettingsTag("before.launch.editSettings",
                                                        ExecutionBundle.message("run.configuration.before.run.edit.settings"),

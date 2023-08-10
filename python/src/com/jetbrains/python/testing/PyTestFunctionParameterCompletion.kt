@@ -4,6 +4,7 @@ package com.jetbrains.python.testing
 import com.intellij.codeInsight.completion.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.DumbAware
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
@@ -31,7 +32,7 @@ private val completionProviders = arrayOf(PyTestFixtureAsParameterProvider, PyTe
  * Contributes function argument names.
  * @see completionProviders
  */
-class PyTestParameterCompletionContributor : CompletionContributor() {
+class PyTestParameterCompletionContributor : CompletionContributor(), DumbAware {
   init {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement().inside(PyParameterList::class.java), PyTestFunctionArgumentCompletion)
   }

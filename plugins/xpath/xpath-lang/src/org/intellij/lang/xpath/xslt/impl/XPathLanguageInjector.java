@@ -133,8 +133,7 @@ public class XPathLanguageInjector implements MultiHostInjector {
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     XmlAttributeValueImpl value = (XmlAttributeValueImpl)context;
     PsiElement parent = value.getParent();
-    if (!(parent instanceof XmlAttribute)) return;
-    final XmlAttribute attribute = (XmlAttribute)parent;
+    if (!(parent instanceof XmlAttribute attribute)) return;
     if (!XsltSupport.isXPathAttribute(attribute)) return;
 
     ASTNode type = value.findChildByType(XmlElementType.XML_ENTITY_REF);

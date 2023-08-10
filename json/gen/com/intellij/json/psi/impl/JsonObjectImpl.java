@@ -17,6 +17,7 @@ public class JsonObjectImpl extends JsonObjectMixin implements JsonObject {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull JsonElementVisitor visitor) {
     visitor.visitObject(this);
   }

@@ -2,6 +2,8 @@
 package com.jetbrains.python.tools
 
 import com.intellij.util.io.delete
+import com.intellij.util.text.nullize
+import com.jetbrains.python.psi.LanguageLevel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -23,191 +25,17 @@ println("Syncing")
 sync(repo, bundled)
 
 val blacklist = sequenceOf(
-  "_ast", // leads to broken tests but could be enabled
-  "_collections",
-  "_decimal",
-  "_dummy_thread",
-  "_functools",
-  "_hotshot",
-  "_markupbase",
-  "_md5",
-  "_osx_support",
-  "_posixsubprocess",
-  "_pydecimal",
-  "_sha",
-  "_sha256",
-  "_sha512",
-  "_socket",
-  "_sre",
-  "_stat",
-  "_struct",
-  "_symtable",
-  "_threading_local",
-  "_weakref",
-  "_weakrefset",
-  "asynchat",
-  "atexit",
-  "backports",
-  "backports_abc",
-  "basehttpserver",
-  "binhex",
-  "bisect",
-  "bleach",
-  "boto",
-  "calendar",
-  "certifi",
-  "cgihttpserver",
-  "cgitb",
-  "characteristic",
-  "chunk",
-  "click",
-  "code",
-  "codeop",
-  "colorsys",
-  "commands",
-  "cookie",
-  "cookielib",
-  "copy",
-  "copy_reg",
-  "copyreg",
-  "croniter",
-  "cstringio",
-  "dataclasses",
-  "dateparser",
-  "datetimerange", // leads to broken tests but could be enabled
-  "decorator",
-  "dircache",
-  "dis",
-  "docutils",
-  "dummy_thread",
-  "dummy_threading",
-  "emoji",
-  "encodings",
-  "ensurepip",
-  "enum",
-  "errno",
-  "fb303",
-  "fileinput",
-  "first",
-  "flask",
-  "fnmatch",
-  "formatter", // leads to broken tests but could be enabled
-  "future_builtins",
-  "geoip2",
-  "getopt",
-  "getpass",
-  "glob",
-  "google",
-  "grp",
-  "gzip",
-  "html",
-  "htmlentitydefs",
-  "htmlparser",
-  "httplib",
-  "imp",
-  "itsdangerous",
-  "jinja2",
-  "jwt",
-  "kazoo",
-  "lib2to3",
-  "linecache",
-  "macurl2path",
-  "mailbox",
-  "mailcap",
-  "markupbase",
-  "markupsafe",
-  "maxminddb",
-  "md5",
-  "mimetools",
-  "msvcrt",
-  "mutex",
-  "mypy_extensions",
-  "netrc",
-  "nis",
-  "nntplib",
-  "nturl2path",
-  "openssl",
+  "google-cloud-ndb",
   "optparse", // deprecated
-  "pickletools",
-  "platform", // leads to broken tests but could be enabled
-  "popen2",
-  "poplib",
-  "profile",
-  "pty",
-  "pwd",
-  "pyclbr",
-  "pycurl",
-  "pymssql",
-  "pymysql",
-  "pynamodb",
-  "pyre_extensions",
-  "pytz",
-  "pyvmomi",
-  "quopri",
-  "readline",
-  "redis",
-  "repr",
-  "reprlib",
-  "rfc822",
-  "rlcompleter",
-  "robotparser",
-  "routes",
-  "runpy",
-  "sched",
-  "scribe",
-  "secrets",
-  "sets",
-  "sha",
-  "shelve",
-  "shlex",
-  "simplehttpserver",
-  "simplejson",
-  "singledispatch",
-  "site",
-  "smtpd",
-  "smtplib",
-  "sndhdr",
-  "spwd",
-  "sre_compile",
-  "stat",
-  "string", // leads to broken tests but could be enabled
-  "stringio",
-  "stringold",
-  "stringprep",
-  "strop",
-  "symbol",
-  "symtable",
-  "sysconfig",
-  "syslog",
-  "tabnanny",
-  "tabulate",
-  "telnetlib",
-  "termcolor",
-  "thread",
-  "timeit",
-  "tkinter",
-  "toaiff",
-  "toml",
-  "tornado",
-  "trace",
-  "traceback",
-  "tty",
-  "ujson",
-  "unicodedata",
-  "urllib2",
-  "user",
-  "userdict",
-  "userlist",
-  "userstring",
-  "weakref",
-  "whichdb",
-  "xdrlib",
-  "xmlrpclib",
-  "yaml"
-).mapTo(hashSetOf()) { it.toLowerCase() }
+  "protobuf",
+  "xxlimited", // not available in runtime
+).mapTo(hashSetOf()) { it.lowercase() }
 
 println("Cleaning")
 cleanTopLevelPackages(bundled, blacklist)
+
+println("Processing stdlib/VERSIONS")
+printStdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels(bundled, blacklist)
 
 fun sync(repo: Path, bundled: Path) {
   if (!Files.exists(repo)) throw IllegalArgumentException("Not found: ${repo.abs()}")
@@ -217,24 +45,12 @@ fun sync(repo: Path, bundled: Path) {
     println("Removed: ${bundled.abs()}")
   }
 
-  val whiteList = setOf(".github",
-                        "scripts",
-                        "stdlib",
-                        "tests",
-                        "third_party",
-                        ".flake8",
-                        ".gitignore",
-                        "CONTRIBUTING.md",
-                        "LICENSE",
-                        "pre-commit",
-                        "pyproject.toml",
-                        "README.md",
-                        "requirements-tests-py3.txt")
+  val exclude = setOf(".git", ".idea")
 
   Files
     .newDirectoryStream(repo)
     .forEach {
-      if (it.name() in whiteList) {
+      if (it.name() !in exclude) {
         val target = bundled.resolve(it.fileName)
 
         it.copyRecursively(target)
@@ -250,11 +66,10 @@ fun cleanTopLevelPackages(typeshed: Path, blackList: Set<String>) {
   val whiteList = hashSetOf<String>()
 
   sequenceOf(typeshed)
-    .flatMap { sequenceOf(it.resolve("stdlib"), it.resolve("third_party")) }
-    .flatMap { Files.newDirectoryStream(it).asSequence() }
+    .flatMap { sequenceOf(it.resolve("stdlib"), it.resolve("stdlib/@python2"), it.resolve("stubs")) }
     .flatMap { Files.newDirectoryStream(it).asSequence() }
     .filter {
-      val name = it.nameWithoutExtension().toLowerCase()
+      val name = it.nameWithoutExtension().lowercase()
 
       if (name in blackList) {
         true
@@ -268,6 +83,29 @@ fun cleanTopLevelPackages(typeshed: Path, blackList: Set<String>) {
 
   println("White list size: ${whiteList.size}")
   println("Black list size: ${blackList.size}")
+}
+
+fun printStdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels(repo: Path, blackList: Set<String>) {
+  val lowestPython3 = LanguageLevel.SUPPORTED_LEVELS.filter { it.isPy3K }.minOrNull()!!
+  val latestPython = LanguageLevel.SUPPORTED_LEVELS.maxOrNull()!!
+
+  val lines = Files
+    .readAllLines(repo.resolve("stdlib/VERSIONS"))
+    .map { it.substringBefore('#') }
+    .filterNot { it.isBlank() }
+    .map { it.split(": ", limit = 2) }
+
+  lines.filter { it.size == 2 }
+    .filter { it.first() !in blackList }
+    .filter {
+      val bounds = it.last()
+      val lowerBound = LanguageLevel.fromPythonVersion(bounds.substringBefore('-'))!!
+      val upperBound = LanguageLevel.fromPythonVersion(bounds.substringAfter('-').nullize(true)) ?: latestPython
+      lowestPython3.isOlderThan(lowerBound) || upperBound.isOlderThan(latestPython)
+    }
+    .forEach { println("${it.first()}, ${it.last()}") }
+
+  lines.filter { it.size != 2 }.forEach { println("WARN: malformed line: ${it.first()}") }
 }
 
 fun Path.abs() = toAbsolutePath()

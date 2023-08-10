@@ -1,4 +1,5 @@
 #!/bin/sh
+# Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 # ------------------------------------------------------
 # __product_full__ LightEdit mode Linux script.
 # ------------------------------------------------------
@@ -12,18 +13,14 @@ message()
   fi
 }
 
-DIRNAME=$(command -v dirname)
-if [ -z "$DIRNAME" ]; then
+if [ -z "$(command -v dirname)" ]; then
   message "Required 'dirname' utility is missing in the system."
   exit 1
-fi
-
-REALPATH=$(command -v realpath)
-if [ -z "$REALPATH" ]; then
+elif [ -z "$(command -v realpath)" ]; then
   message "Required 'realpath' utility is missing in the system."
   exit 1
 fi
 
-IDE_BIN_HOME="$("$DIRNAME" "$("$REALPATH" "$0")")"
+IDE_BIN_HOME=$(dirname $(realpath "$0"))
 
 exec "$IDE_BIN_HOME/__script_name__" nosplash -e "$@"

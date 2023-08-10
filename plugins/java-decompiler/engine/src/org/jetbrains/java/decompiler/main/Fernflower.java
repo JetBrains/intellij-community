@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.extern.*;
 import org.jetbrains.java.decompiler.modules.renamer.ConverterHelper;
@@ -23,7 +24,11 @@ public class Fernflower implements IDecompiledData {
   private final IIdentifierRenamer helper;
   private final IdentifierConverter converter;
 
-  public Fernflower(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> customProperties, IFernflowerLogger logger) {
+  public Fernflower(IBytecodeProvider provider,
+                    IResultSaver saver,
+                    @Nullable Map<String, Object> customProperties,
+                    IFernflowerLogger logger,
+                    @Nullable CancellationManager cancellationManager) {
     Map<String, Object> properties = new HashMap<>(IFernflowerPreferences.DEFAULTS);
     if (customProperties != null) {
       properties.putAll(customProperties);
@@ -51,8 +56,12 @@ public class Fernflower implements IDecompiledData {
       converter = null;
     }
 
-    DecompilerContext context = new DecompilerContext(properties, logger, structContext, classProcessor, interceptor);
+    DecompilerContext context = new DecompilerContext(properties, logger, structContext, classProcessor, interceptor, cancellationManager);
     DecompilerContext.setCurrentContext(context);
+  }
+
+  public Fernflower(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> customProperties, IFernflowerLogger logger) {
+    this(provider, saver, customProperties, logger, null);
   }
 
   private static IIdentifierRenamer loadHelper(String className, IFernflowerLogger logger) {
@@ -113,6 +122,9 @@ public class Fernflower implements IDecompiledData {
       buffer.append(DecompilerContext.getProperty(IFernflowerPreferences.BANNER).toString());
       classProcessor.writeClass(cl, buffer);
       return buffer.toString();
+    }
+    catch (CancellationManager.CanceledException e) {
+      throw e;
     }
     catch (Throwable t) {
       DecompilerContext.getLogger().writeMessage("Class " + cl.qualifiedName + " couldn't be fully decompiled.", t);

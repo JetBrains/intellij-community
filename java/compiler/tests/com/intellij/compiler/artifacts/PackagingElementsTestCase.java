@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.application.WriteAction;
@@ -58,8 +58,8 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     return VfsTestUtil.createDir(getOrCreateProjectBaseDir(), path);
   }
 
-  protected static VirtualFile getJDomJar() {
-    return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("JDOM");
+  protected static VirtualFile getFastUtilJar() {
+    return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("fastutil-min");
   }
 
   protected static String getLocalJarPath(VirtualFile jarEntry) {

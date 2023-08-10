@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.aliasAnnotations
 
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
@@ -13,7 +13,7 @@ class GrAnnotationHighlightingTest extends GrHighlightingTestBase {
   }
 
   void testAnnotatedAliasIsCorrect() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.*
 
 @AnnotationCollector([ToString, EqualsAndHashCode, Immutable])
@@ -27,7 +27,7 @@ class F<caret>oo {
   }
 
   void testAliasWithProperties() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.*
 
 @ToString(excludes = ['a', 'b'])
@@ -42,7 +42,7 @@ class F<caret>oo {
   }
 
   void testAliasWithMissedProperty() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.*
 
 @interface X {
@@ -61,7 +61,7 @@ class F<caret>oo {
   }
 
   void testInapplicableAlias() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.*
 
 @ToString(excludes = ['a', 'b'])
@@ -74,7 +74,7 @@ int foo
   }
 
   void testCorrectAnnotation() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.*
 
 @EqualsAndHashCode(excludes = ["a"])
@@ -85,7 +85,7 @@ import groovy.transform.*
   }
 
   void testInapplicableAttributeInAliasDeclaration() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.*
 
 @ToString(excludes = ['a', 'b'], <error descr="@interface 'groovy.transform.ToString' does not contain attribute 'foo'">foo</error> = 4)
@@ -98,7 +98,7 @@ class Foo{}
   }
 
   void testUnknownAttributeInAliasUsage() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.*
 
 @ToString(excludes = ['a', 'b'])
@@ -113,7 +113,7 @@ class Foo {
   }
 
   void testInapplicableAttributeInAliasUsage() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.*
 
 @ToString(excludes = ['a', 'b'])
@@ -128,7 +128,7 @@ class Foo {
   }
 
   void testAnnotationCollectorInterfaceWithAttrs() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 @interface Foo {
   int foo()
 }
@@ -146,7 +146,7 @@ class X{}
   }
 
   void testAnnotationCollectorClass() {
-    testHighlighting('''
+    doTestHighlighting('''
 @interface Foo {
   int foo()
 }
@@ -166,7 +166,7 @@ class X {}
   }
 
   void testInapplicableAlias2() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.AnnotationCollector
 import groovy.transform.Immutable
 import groovy.transform.ToString
@@ -188,7 +188,7 @@ def bbb() {}
   }
 
   void testCompileDynamic() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 

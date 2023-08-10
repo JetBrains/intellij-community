@@ -23,9 +23,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 import com.intellij.refactoring.introduceField.LocalToFieldHandler;
 
-/**
- * @author ven
- */
 public class MockLocalToFieldHandler extends LocalToFieldHandler {
   private final boolean myMakeEnumConstant;
   public MockLocalToFieldHandler(Project project, boolean isConstant, final boolean makeEnumConstant) {

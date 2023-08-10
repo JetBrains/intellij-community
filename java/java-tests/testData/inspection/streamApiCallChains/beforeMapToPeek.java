@@ -1,4 +1,4 @@
-// "Replace with 'peek'" "true"
+// "Replace with 'peek'" "true-preview"
 
 import java.util.List;
 

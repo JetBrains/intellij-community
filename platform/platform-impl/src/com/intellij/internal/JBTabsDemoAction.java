@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -14,6 +15,7 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,13 +28,19 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-public final class JBTabsDemoAction extends AnAction {
+final class JBTabsDemoAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout(0, 0));
     final int[] count = new int[1];
-    final JBTabsImpl tabs = new JBTabsImpl(null, null, ApplicationManager.getApplication());
+    final JBTabsImpl tabs = new JBTabsImpl(null, ApplicationManager.getApplication());
 
     //final JPanel flow = new JPanel(new FlowLayout(FlowLayout.CENTER));
     //frame.getContentPane().add(flow);
@@ -40,11 +48,12 @@ public final class JBTabsDemoAction extends AnAction {
 
     frame.getContentPane().add(tabs.getComponent(), BorderLayout.CENTER);
 
-    JPanel south = new JPanel(new FlowLayout());
+    JPanel south = new JPanel(new GridLayout(2, 6, 5, 5));
     south.setOpaque(true);
     south.setBackground(Color.white);
+    south.setBorder(JBUI.Borders.empty(5));
 
-    final JComboBox pos = new JComboBox(new Object[]{JBTabsPosition.top, JBTabsPosition.left, JBTabsPosition.right, JBTabsPosition.bottom});
+    final JComboBox pos = new JComboBox<>(JBTabsPosition.values());
     pos.setSelectedIndex(0);
     south.add(pos);
     pos.addActionListener(new ActionListener() {
@@ -56,12 +65,19 @@ public final class JBTabsDemoAction extends AnAction {
         }
       }
     });
+    final JTree component = new JTree();
+    final TabInfo toAnimate1 = new TabInfo(component);
+    toAnimate1.setIcon(AllIcons.Debugger.Console);
 
-    final JCheckBox bb = new JCheckBox("Buffered", true);
+    final JCheckBox bb = new JCheckBox("Icon", true);
     bb.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(final ItemEvent e) {
-       // tabs.setUseBufferedPaint(bb.isSelected());
+        if (bb.isSelected()) {
+          toAnimate1.setIcon(AllIcons.Debugger.Console);
+        } else {
+          toAnimate1.setIcon(null);
+        }
       }
     });
     south.add(bb);
@@ -138,9 +154,6 @@ public final class JBTabsDemoAction extends AnAction {
     tabs.addTab(new TabInfo(someTree)).setText("Tree1").setActions(new DefaultActionGroup(), null)
         .setIcon(AllIcons.Debugger.Frame);
 
-    final JTree component = new Tree();
-    final TabInfo toAnimate1 = new TabInfo(component);
-    //toAnimate1.setIcon(IconLoader.getIcon("/debugger/console.png"));
     final JCheckBox attract1 = new JCheckBox("Attract 1");
     attract1.addActionListener(new ActionListener() {
       @Override
@@ -196,13 +209,18 @@ public final class JBTabsDemoAction extends AnAction {
 
     south.add(refire);
 
+    for (Component c : south.getComponents()) {
+      if (c instanceof JComponent box) {
+        box.setOpaque(false);
+      }
+    }
 
 
 
     final JEditorPane text = new JEditorPane();
     text.setEditorKit(new HTMLEditorKit());
     StringBuilder buffer = new StringBuilder();
-    for (int i = 0; i < 50; i ++) {
+    for (int i = 0; i < 40; i ++) {
       buffer.append("1234567890abcdefghijklmnopqrstv1234567890abcdefghijklmnopqrstv1234567890abcdefghijklmnopqrstv<br>");
     }
     text.setText(buffer.toString());
@@ -222,9 +240,6 @@ public final class JBTabsDemoAction extends AnAction {
     tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
 
     //tabs.getComponent().setBorder(new EmptyBorder(5, 5, 5, 5));
-    tabs.setTabSidePaintBorder(5);
-    tabs.setPaintBorder(1, 1, 1, 1);
-
     tabs.getPresentation().setActiveTabFillIn(Color.white);
 
     //tabs.setBorder(new LineBorder(Color.blue, 5));
@@ -232,12 +247,13 @@ public final class JBTabsDemoAction extends AnAction {
 
     tabs.setUiDecorator(new UiDecorator() {
       @Override
-      public UiDecoration getDecoration() {
+      public @NotNull UiDecoration getDecoration() {
         return new UiDecoration(null, new Insets(0, -1, 0, -1));
       }
     });
 
-    frame.setBounds(1400, 200, 1000, 800);
-    frame.show();
+    frame.pack();
+    frame.setLocationRelativeTo(null);
+    frame.setVisible(true);
   }
 }

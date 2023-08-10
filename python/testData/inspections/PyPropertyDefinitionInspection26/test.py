@@ -175,7 +175,7 @@ class Test(object):
         self._myprop = None
 
     def get_myprop(self):
-        while False:
+        while undefined:
             yield i
 
     myprop = property(get_myprop)  # shouldn't pass with better analysis, pass at the moment

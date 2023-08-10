@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,26 +33,26 @@ public final class CachedValueProfiler {
     void onValueRejected(long frameId, EventPlace place, long start, long computed, long time);
   }
 
-  private static final ThreadLocal<ThreadContext> ourContext = ThreadLocal.withInitial(() -> new ThreadContext());
+  private static volatile GlobalContext ourGlobalContext = new GlobalContext(null, 0);
+
+  private static final ThreadLocal<ThreadContext> ourContext = ThreadLocal.withInitial(() -> new ThreadContext(ourGlobalContext));
   private static final AtomicLong ourFrameId = new AtomicLong();
   private static final Overhead ourFrameOverhead = new Overhead();
   private static final Overhead ourTrackerOverhead = new Overhead();
 
-  private static volatile EventConsumer ourEventConsumer;
-
   public static boolean isProfiling() {
-    return ourEventConsumer != null;
+    return ourGlobalContext.consumer != null;
   }
 
-  @Nullable
-  public static EventConsumer setEventConsumer(@Nullable EventConsumer eventConsumer) {
-    EventConsumer prev = ourEventConsumer;
-    ourEventConsumer = eventConsumer;
-    if (prev != null) {
+  public static @Nullable EventConsumer setEventConsumer(@Nullable EventConsumer eventConsumer) {
+    GlobalContext prev = ourGlobalContext;
+    if (prev.consumer == null && eventConsumer == null) return null;
+    ourGlobalContext = new GlobalContext(eventConsumer, prev.epoch + 1);
+    if (prev.consumer != null) {
       LOG.info(ourFrameOverhead.resetAndReport("doCompute()"));
       LOG.info(ourTrackerOverhead.resetAndReport("getValue()"));
     }
-    return prev;
+    return prev.consumer;
   }
 
   public static final class Frame implements AutoCloseable {
@@ -67,7 +67,7 @@ public final class CachedValueProfiler {
       ThreadContext context = ourContext.get();
       parent = context.topFrame;
       context.topFrame = this;
-      if (context.consumer == null || context.consumer != ourEventConsumer) return;
+      if (context.consumer == null || context.epoch != ourGlobalContext.epoch) return;
 
       EventPlace place = place(CachedValueProfiler::findCallerPlace);
       context.consumer.onFrameEnter(id, place, parent == null ? 0 : parent.id, start);
@@ -87,7 +87,7 @@ public final class CachedValueProfiler {
       if (parent == null) {
         ourContext.remove(); // also releases ThreadContext.consumer reference
       }
-      if (context.consumer == null || context.consumer != ourEventConsumer) return;
+      if (context.consumer == null || context.epoch != ourGlobalContext.epoch) return;
 
       context.consumer.onFrameExit(id, start, timeComputed, currentTime());
       long cur = currentTime();
@@ -97,22 +97,20 @@ public final class CachedValueProfiler {
       }
     }
 
-    @Nullable
-    public ValueTracker newValueTracker(@NotNull CachedValueProvider.Result<?> result) {
+    public @Nullable ValueTracker newValueTracker(@NotNull CachedValueProvider.Result<?> result) {
       timeComputed = currentTime();
       return onResultReturned(this, result);
     }
   }
 
-  @NotNull
-  public static Frame newFrame() {
+  public static @NotNull Frame newFrame() {
     return new Frame();
   }
 
   static void onResultCreated(@NotNull CachedValueProvider.Result<?> result, @Nullable Object original) {
     long time = currentTime();
     ThreadContext context = ourContext.get();
-    if (context.consumer == null || context.consumer != ourEventConsumer) return;
+    if (context.consumer == null || context.epoch != ourGlobalContext.epoch) return;
 
     Frame frame = context.topFrame;
     if (frame == null) return;
@@ -127,8 +125,7 @@ public final class CachedValueProfiler {
     ourFrameOverhead.overhead.addAndGet(currentTime() - time);
   }
 
-  @Nullable
-  static ValueTracker onResultReturned(@NotNull Frame frame, @NotNull CachedValueProvider.Result<?> result) {
+  static @Nullable ValueTracker onResultReturned(@NotNull Frame frame, @NotNull CachedValueProvider.Result<?> result) {
     long time = currentTime();
     ThreadContext context = ourContext.get();
     if (context.consumer == null) return null;
@@ -137,7 +134,7 @@ public final class CachedValueProfiler {
     if (place == null) place = place(CachedValueProfiler::findCallerPlace);
 
     context.consumer.onValueComputed(frame.id, place, frame.timeConfigured, time);
-    return new ValueTracker(place, frame.timeConfigured, time);
+    return new ValueTracker(place, frame.timeConfigured, time, context.epoch);
   }
 
   static EventPlace place(Function<? super Throwable, ? extends StackTraceElement> function) {
@@ -157,8 +154,7 @@ public final class CachedValueProfiler {
     };
   }
 
-  @Nullable
-  static StackTraceElement findComputationPlace(Throwable stackTraceHolder) {
+  static @Nullable StackTraceElement findComputationPlace(Throwable stackTraceHolder) {
     StackTraceElement[] stackTrace = stackTraceHolder.getStackTrace();
     int idx, len;
     for (idx = 2, len = stackTrace.length; idx < len; idx ++) {
@@ -186,8 +182,7 @@ public final class CachedValueProfiler {
     return null;
   }
 
-  @NotNull
-  static StackTraceElement findCallerPlace(Throwable stackTraceHolder) {
+  static @NotNull StackTraceElement findCallerPlace(Throwable stackTraceHolder) {
     StackTraceElement[] stackTrace = stackTraceHolder.getStackTrace();
     for (int idx = 2, len = stackTrace.length; idx < len; idx++) {
       String className = stackTrace[idx].getClassName();
@@ -209,18 +204,21 @@ public final class CachedValueProfiler {
     final EventPlace place;
     final long start;
     final long computed;
+    final int epoch;
     volatile long used;
 
-    ValueTracker(@NotNull EventPlace place, long start, long computed) {
+    ValueTracker(@NotNull EventPlace place, long start, long computed, int epoch) {
       this.place = place;
       this.start = start;
       this.computed = computed;
+      this.epoch = epoch;
     }
 
     public void onValueInvalidated() {
       long time = currentTime();
       ThreadContext context = ourContext.get();
-      if (context.consumer == null || context.consumer != ourEventConsumer) return;
+      if (context.consumer == null || context.epoch != ourGlobalContext.epoch) return;
+      if (epoch != context.epoch) return;
       context.consumer.onValueInvalidated(context.topFrame == null ? 0 : context.topFrame.id, place, used, time);
       ourTrackerOverhead.overhead.addAndGet(currentTime() - time);
     }
@@ -229,7 +227,8 @@ public final class CachedValueProfiler {
       long time = currentTime();
       used = time;
       ThreadContext context = ourContext.get();
-      if (context.consumer == null || context.consumer != ourEventConsumer) return;
+      if (context.consumer == null || context.epoch != ourGlobalContext.epoch) return;
+      if (epoch != context.epoch) return;
       context.consumer.onValueUsed(context.topFrame == null ? 0 : context.topFrame.id, place, computed, time);
       ourTrackerOverhead.count.incrementAndGet();
       ourTrackerOverhead.overhead.addAndGet(currentTime() - time);
@@ -238,7 +237,8 @@ public final class CachedValueProfiler {
     public void onValueRejected() {
       long time = currentTime();
       ThreadContext context = ourContext.get();
-      if (context.consumer == null || context.consumer != ourEventConsumer) return;
+      if (context.consumer == null || context.epoch != ourGlobalContext.epoch) return;
+      if (epoch != context.epoch) return;
       context.consumer.onValueRejected(context.topFrame == null ? 0 : context.topFrame.id, place, start, computed, time);
       ourTrackerOverhead.overhead.addAndGet(currentTime() - time);
     }
@@ -246,13 +246,28 @@ public final class CachedValueProfiler {
 
   public interface EventPlace {
     @Nullable StackTraceElement getStackFrame();
-
     StackTraceElement @Nullable [] getStackTrace();
   }
 
   private static class ThreadContext {
+    final @Nullable EventConsumer consumer;
+    final int epoch;
     @Nullable Frame topFrame;
-    @Nullable EventConsumer consumer = ourEventConsumer;
+
+    ThreadContext(@NotNull GlobalContext globalContext) {
+      consumer = globalContext.consumer;
+      epoch = globalContext.epoch;
+    }
+  }
+
+  private static class GlobalContext {
+    final EventConsumer consumer;
+    final int epoch;
+
+    GlobalContext(@Nullable EventConsumer consumer, int epoch) {
+      this.consumer = consumer;
+      this.epoch = epoch;
+    }
   }
 
   private static class Overhead {

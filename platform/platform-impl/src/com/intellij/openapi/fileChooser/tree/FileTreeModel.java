@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.tree;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -6,6 +6,7 @@ import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.util.Disposer;
@@ -24,6 +25,8 @@ import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.AbstractTreeModel;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,11 +38,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public final class FileTreeModel extends AbstractTreeModel implements InvokerSupplier {
+
+  private static final Logger LOG = Logger.getInstance(FileTreeModel.class);
+
   private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
   private final State state;
   private volatile List<Root> roots;
@@ -53,7 +58,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     state = new State(descriptor, refresher, sortDirectories, sortArchives, this);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         invoker.invoke(() -> process(events));
       }
     });
@@ -77,14 +82,14 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
   }
 
   @Override
-  public final Object getRoot() {
+  public Object getRoot() {
     if (state.path != null) return state;
     if (roots == null) roots = state.getRoots();
     return 1 == roots.size() ? roots.get(0) : null;
   }
 
   @Override
-  public final Object getChild(Object object, int index) {
+  public Object getChild(Object object, int index) {
     if (object == state) {
       if (roots == null) roots = state.getRoots();
       if (0 <= index && index < roots.size()) return roots.get(index);
@@ -97,7 +102,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
   }
 
   @Override
-  public final int getChildCount(Object object) {
+  public int getChildCount(Object object) {
     if (object == state) {
       if (roots == null) roots = state.getRoots();
       return roots.size();
@@ -110,7 +115,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
   }
 
   @Override
-  public final boolean isLeaf(Object object) {
+  public boolean isLeaf(Object object) {
     if (object instanceof Node) {
       Entry<Node> entry = getEntry((Node)object, false);
       if (entry != null) return entry.isLeaf();
@@ -119,7 +124,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
   }
 
   @Override
-  public final int getIndexOfChild(Object object, Object child) {
+  public int getIndexOfChild(Object object, Object child) {
     if (object == state) {
       if (roots == null) roots = state.getRoots();
       for (int i = 0; i < roots.size(); i++) {
@@ -169,16 +174,13 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       if (event instanceof VFilePropertyChangeEvent) {
         if (hasEntry(event.getFile())) files.add(event.getFile());
       }
-      else if (event instanceof VFileCreateEvent) {
-        VFileCreateEvent create = (VFileCreateEvent)event;
+      else if (event instanceof VFileCreateEvent create) {
         if (hasEntry(create.getParent())) parents.add(create.getParent());
       }
-      else if (event instanceof VFileCopyEvent) {
-        VFileCopyEvent copy = (VFileCopyEvent)event;
+      else if (event instanceof VFileCopyEvent copy) {
         if (hasEntry(copy.getNewParent())) parents.add(copy.getNewParent());
       }
-      else if (event instanceof VFileMoveEvent) {
-        VFileMoveEvent move = (VFileMoveEvent)event;
+      else if (event instanceof VFileMoveEvent move) {
         if (hasEntry(move.getNewParent())) parents.add(move.getNewParent());
         if (hasEntry(move.getOldParent())) parents.add(move.getOldParent());
       }
@@ -288,9 +290,12 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     }
 
     private List<Root> getRoots() {
+      if (!model.invoker.isValidThread()) {
+        LOG.error(new IllegalStateException(Thread.currentThread().getName()));
+      }
       List<VirtualFile> files = roots;
       if (files == null) files = getSystemRoots();
-      if (files == null || files.isEmpty()) return Collections.emptyList();
+      if (files.isEmpty()) return Collections.emptyList();
       return ContainerUtil.map(files, file -> new Root(this, file));
     }
 
@@ -299,32 +304,86 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       return list.isEmpty() && descriptor.isShowFileSystemRoots() ? null : list;
     }
 
-    private List<VirtualFile> getSystemRoots() {
-      List<Path> roots = ContainerUtil.newArrayList(FileSystems.getDefault().getRootDirectories());
+    private @NotNull List<VirtualFile> getSystemRoots() {
+      List<WSLDistribution> distributions = List.of();
       if (WSLUtil.isSystemCompatible() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser")) {
-        CompletableFuture<List<WSLDistribution>> future = WslDistributionManager.getInstance().getInstalledDistributionsFuture();
-        List<WSLDistribution> distributions = future.getNow(null);
-        if (distributions != null) {
-          roots.addAll(ContainerUtil.map(distributions, distribution -> distribution.getUNCRootPath()));
-        }
-        else {
-          future.thenAccept(loadedDistributions -> {
-            addRoots(ContainerUtil.map(loadedDistributions, distribution -> distribution.getUNCRootPath()));
+        WslDistributionManager distributionManager = WslDistributionManager.getInstance();
+        List<WSLDistribution> lastDistributions = ContainerUtil.notNullize(distributionManager.getLastInstalledDistributions());
+        distributions = lastDistributions;
+        LOG.debug("WSL distributions: ", distributions);
+        distributionManager.getInstalledDistributionsFuture().thenAccept(newDistributions -> {
+          // called on a background thread without read action
+          if (newDistributions.equals(lastDistributions)) {
+            LOG.debug("WSL distributions are up-to-date");
+            return;
+          }
+          LOG.debug("New WSL distributions: ", newDistributions);
+          model.invoker.invokeLater(() -> {
+            // invokeLater to ensure model.roots are calculated
+            setRoots(getLocalAndWslRoots(newDistributions));
           });
+        });
+      }
+      return getLocalAndWslRoots(distributions);
+    }
+
+    private static @NotNull List<VirtualFile> getLocalAndWslRoots(@NotNull List<? extends WSLDistribution> distributions) {
+      return toVirtualFiles(ContainerUtil.concat(ContainerUtil.newArrayList(FileSystems.getDefault().getRootDirectories()),
+                                                 ContainerUtil.map(distributions, WSLDistribution::getUNCRootPath)));
+    }
+
+    private void setRoots(@NotNull List<VirtualFile> newRootFiles) {
+      List<Root> oldRoots = model.roots;
+      if (oldRoots == null) {
+        LOG.error("Roots have not been calculated yet, new roots won't be set due to a possible race condition");
+        return;
+      }
+      List<VirtualFile> oldRootFiles = toRootFiles(oldRoots);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("New roots: " + newRootFiles + ", old roots: " + oldRootFiles);
+      }
+      removeRoots(oldRoots, findNewElementIndices(oldRootFiles, newRootFiles));
+      List<Root> rootsToAdd = newRootFiles.stream().filter(root -> !oldRootFiles.contains(root))
+        .map(root -> new Root(this, root)).collect(Collectors.toList());
+      addRoots(model.roots, rootsToAdd);
+    }
+
+    private static @NotNull List<VirtualFile> toRootFiles(@NotNull List<Root> roots) {
+      return ContainerUtil.map(roots, FileNode::getFile);
+    }
+
+    private void removeRoots(@NotNull List<Root> roots, int[] indicesToRemove) {
+      if (indicesToRemove.length > 0) {
+        List<Root> rootsToRemove = Arrays.stream(indicesToRemove).mapToObj(ind -> roots.get(ind)).toList();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Removing " + toRootFiles(rootsToRemove));
+        }
+        model.roots = ContainerUtil.filter(roots, root -> !rootsToRemove.contains(root));
+        model.treeNodesRemoved(path, indicesToRemove, rootsToRemove.toArray());
+      }
+    }
+
+    private void addRoots(@NotNull List<Root> roots, @NotNull List<Root> rootsToAdd) {
+      if (rootsToAdd.size() > 0) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Adding " + toRootFiles(rootsToAdd));
+        }
+        model.roots = List.copyOf(ContainerUtil.concat(roots, rootsToAdd));
+        model.treeNodesInserted(path, IntStream.range(roots.size(), roots.size() + rootsToAdd.size()).toArray(), rootsToAdd.toArray());
+      }
+    }
+
+    private static <E> int[] findNewElementIndices(@NotNull List<E> a, @NotNull List<E> b) {
+      IntList newIndices = new IntArrayList();
+      for (int i = 0; i < a.size(); i++) {
+        if (!b.contains(a.get(i))) {
+          newIndices.add(i);
         }
       }
-      return toVirtualFiles(roots);
+      return newIndices.toIntArray();
     }
 
-    private void addRoots(@NotNull List<Path> rootsToAdd) {
-      if (rootsToAdd.isEmpty()) return;
-      List<Root> addedRoots = ContainerUtil.map(toVirtualFiles(rootsToAdd), file -> new Root(this, file));
-      List<Root> oldRoots = model.roots;
-      model.roots = ContainerUtil.concat(oldRoots, addedRoots);
-      model.treeNodesInserted(path, IntStream.range(oldRoots.size(), oldRoots.size() + rootsToAdd.size()).toArray(), addedRoots.toArray());
-    }
-
-    private static @NotNull List<VirtualFile> toVirtualFiles(@NotNull List<Path> paths) {
+    private static @NotNull List<VirtualFile> toVirtualFiles(@NotNull List<? extends Path> paths) {
       return paths.stream().map(root -> LocalFileSystem.getInstance().findFileByNioFile(root)).filter(State::isValid).collect(
         Collectors.toList());
     }

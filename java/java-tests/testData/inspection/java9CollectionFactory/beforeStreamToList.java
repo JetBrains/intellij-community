@@ -1,4 +1,4 @@
-// "Replace with 'List.of' call" "true"
+// "Replace with 'List.of()' call" "true"
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;

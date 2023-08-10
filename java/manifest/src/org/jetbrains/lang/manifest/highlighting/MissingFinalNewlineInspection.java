@@ -25,7 +25,10 @@
 package org.jetbrains.lang.manifest.highlighting;
 
 import com.intellij.codeInspection.*;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -46,13 +49,14 @@ public class MissingFinalNewlineInspection extends LocalInspectionTool {
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (file instanceof ManifestFile) {
       String text = file.getText();
-      if (text != null && text.length() > 0 && !StringUtil.endsWith(text, "\n")) {
+      if (text != null && !text.isEmpty() && !StringUtil.endsWith(text, "\n")) {
         List<Section> sections = ((ManifestFile)file).getSections();
-        assert sections.size() > 0 : text;
+        assert !sections.isEmpty() : text;
         Section section = sections.get(sections.size() - 1);
+        ModCommandAction action = new AddNewlineQuickFix(section);
         ProblemDescriptor descriptor = manager.createProblemDescriptor(
           section.getLastChild(), ManifestBundle.message("inspection.newline.message"),
-          new AddNewlineQuickFix(section), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly
+          LocalQuickFix.from(action), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly
         );
         return new ProblemDescriptor[]{descriptor};
       }
@@ -61,20 +65,19 @@ public class MissingFinalNewlineInspection extends LocalInspectionTool {
     return null;
   }
 
-  private static final class AddNewlineQuickFix extends AbstractManifestQuickFix {
+  private static final class AddNewlineQuickFix extends PsiUpdateModCommandAction<Section> {
     private AddNewlineQuickFix(Section section) {
       super(section);
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getFamilyName() {
       return ManifestBundle.message("inspection.newline.fix");
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-      PsiElement lastChild = startElement.getLastChild();
+    protected void invoke(@NotNull ActionContext context, @NotNull Section section, @NotNull ModPsiUpdater updater) {
+      PsiElement lastChild = section.getLastChild();
       if (lastChild instanceof Header) {
         lastChild.getNode().addLeaf(ManifestTokenType.NEWLINE, "\n", null);
       }

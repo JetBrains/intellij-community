@@ -1,17 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.namespacePackages
 
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.LangDataKeys
-import com.intellij.util.PlatformIcons
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.*
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 
 class PyMarkAsNamespacePackageAction : AnAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun update(e: AnActionEvent) {
     val presentation = e.presentation
     presentation.isEnabled = false
@@ -24,12 +25,12 @@ class PyMarkAsNamespacePackageAction : AnAction() {
       return
     }
 
-    val module = e.getData(LangDataKeys.MODULE) ?: return
+    val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return
     val service = PyNamespacePackagesService.getInstance(module)
     if (!PyNamespacePackagesService.isEnabled()) return
     presentation.isVisible = true
 
-    presentation.icon = PlatformIcons.PACKAGE_ICON
+    presentation.icon = AllIcons.Nodes.Package
     when {
       virtualFiles.all { service.canBeMarked(it) } -> {
         presentation.isEnabled = true
@@ -62,7 +63,7 @@ class PyMarkAsNamespacePackageAction : AnAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val module = e.getData(LangDataKeys.MODULE) ?: return
+    val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return
     val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
     val service = PyNamespacePackagesService.getInstance(module)
     virtualFiles.forEach { service.toggleMarkingAsNamespacePackage(it) }

@@ -1,7 +1,8 @@
 <html>
 <body>
-Reports fields annotated as not-null which are not initialized in constructor. Example:
-<pre>public class MyClass {
+Reports fields annotated as not-null that are not initialized in the constructor.
+<p>Example:</p>
+<pre><code>public class MyClass {
   private @NotNull String value;
 
   public void setValue(@NotNull String value) {
@@ -11,13 +12,17 @@ Reports fields annotated as not-null which are not initialized in constructor. E
   public @NotNull String getValue() {
     return value;
   }
-}</pre>
+  }</code></pre>
 <p>
-  Such fields may violate the not-null constraint. E.g. in the example above while <code>setValue</code> parameter is annotated as not-null
-  <code>getValue</code> may return null if setter was not called.
+  Such fields may violate the not-null constraint. In the example above, the <code>setValue</code> parameter is annotated as not-null, but
+  <code>getValue</code> may return null if the setter was not called.
 </p>
 <!-- tooltip end -->
-<p>Use the checkboxes below to control whether warning should be issued if field could be initialized implicitly
-  (e.g. via dependency injection) or if field is written in test case setUp() method.</p>
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Ignore fields which could be initialized implicitly</b> option to control whether a warning should be issued if the field could be initialized implicitly
+    (e.g. via a dependency injection).</li>
+  <li>Use the <b>Ignore fields initialized in setUp() method</b> option to control whether a warning should be issued if the field is written in the test case <code>setUp()</code> method.</li>
+</ul>
 </body>
 </html>

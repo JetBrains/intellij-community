@@ -1,0 +1,9 @@
+// "Change parameter 't' type of function 'foo' to 'T'" "true"
+interface T
+
+infix fun Int.foo(t: T) = this
+
+fun foo() {
+    1 foo object: T{}
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeParameterTypeFix

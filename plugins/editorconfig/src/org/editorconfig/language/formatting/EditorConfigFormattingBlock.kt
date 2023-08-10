@@ -3,6 +3,7 @@ package org.editorconfig.language.formatting
 
 import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType
 import com.intellij.psi.formatter.common.AbstractBlock
 import org.editorconfig.language.psi.EditorConfigElementTypes
@@ -34,7 +35,25 @@ class EditorConfigFormattingBlock(
   }
 
   override fun getIndent(): Indent = Indent.getNoneIndent()
-  override fun getSpacing(child1: Block?, child2: Block) = builder.getSpacing(this, child1, child2)
+
+  override fun getSpacing(child1: Block?, child2: Block) : Spacing? {
+    return when {
+      isUnderHeader() -> Spacing.getReadOnlySpacing()
+      else -> builder.getSpacing(this, child1, child2)
+    }
+  }
+
+  private fun isUnderHeader() : Boolean {
+    var parent = node.treeParent
+    while (parent != null && parent.psi !is PsiFile) {
+      if (parent.elementType == EditorConfigElementTypes.HEADER) {
+        return true
+      }
+      parent = parent.treeParent
+    }
+    return false
+  }
+
   override fun isLeaf() = myNode.firstChildNode === null
 
   override fun getAlignment() =

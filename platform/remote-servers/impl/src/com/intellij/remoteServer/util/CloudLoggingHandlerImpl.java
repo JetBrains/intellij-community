@@ -12,6 +12,7 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import com.intellij.remoteServer.runtime.log.TerminalHandler;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
@@ -101,7 +102,7 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
     public void printHyperlink(String line, Runnable action) {
       myLoggingHandler.printHyperlink(line, new HyperlinkInfo() {
         @Override
-        public void navigate(Project project) {
+        public void navigate(@NotNull Project project) {
           action.run();
         }
       });

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.lang.Language;
@@ -8,8 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil.*;
 
 public class VisualGuidesAccessor extends CodeStylePropertyAccessor<List<Integer>> implements CodeStyleValueList {
   private final CodeStyleSettings mySettings;
@@ -44,7 +42,7 @@ public class VisualGuidesAccessor extends CodeStylePropertyAccessor<List<Integer
 
   @Override
   protected List<Integer> parseString(@NotNull String string) {
-    return getValueList(string).stream()
+    return CodeStylePropertiesUtil.getValueList(string).stream()
       .map(s -> safeToInt(s))
       .filter(integer -> integer >= 0)
       .collect(Collectors.toList());
@@ -53,7 +51,7 @@ public class VisualGuidesAccessor extends CodeStylePropertyAccessor<List<Integer
   @Nullable
   @Override
   protected String valueToString(@NotNull List<Integer> value) {
-    return toCommaSeparatedString(value);
+    return CodeStylePropertiesUtil.toCommaSeparatedString(value);
   }
 
   @Override

@@ -25,7 +25,7 @@ public final class YAMLFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return YAMLBundle.message("filetype.description.yaml");
+    return YAMLBundle.message("filetype.yaml.description");
   }
 
   @Override
@@ -35,7 +35,6 @@ public final class YAMLFileType extends LanguageFileType {
   }
 
   @Override
-  @NotNull
   public Icon getIcon() {
     return AllIcons.FileTypes.Yaml;
   }

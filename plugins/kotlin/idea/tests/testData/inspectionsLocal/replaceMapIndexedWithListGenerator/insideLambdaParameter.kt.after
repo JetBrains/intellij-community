@@ -1,0 +1,4 @@
+// WITH_STDLIB
+fun test(list: List<String>) {
+    List(list.size) { index -> index + 42 }
+}

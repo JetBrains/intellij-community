@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +13,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-@SomeQueue
 public final class ZipperUpdater {
   private final Alarm myAlarm;
   private boolean myRaised;
@@ -71,7 +69,7 @@ public final class ZipperUpdater {
         myAlarm.addRequest(request, delay, ModalityState.any());
       }
       else if (!ApplicationManager.getApplication().isDispatchThread()) {
-        myAlarm.addRequest(request, delay, ModalityState.NON_MODAL);
+        myAlarm.addRequest(request, delay, ModalityState.nonModal());
       }
       else {
         myAlarm.addRequest(request, delay);

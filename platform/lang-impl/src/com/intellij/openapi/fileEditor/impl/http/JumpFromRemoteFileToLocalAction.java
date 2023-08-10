@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -41,6 +42,11 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(myFile.getFileInfo().getState() == RemoteFileState.DOWNLOADED);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -85,7 +91,7 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
       }
     }
 
-    return FilenameIndex.getVirtualFilesByName(project, fileName, GlobalSearchScope.allScope(project));
+    return FilenameIndex.getVirtualFilesByName(fileName, GlobalSearchScope.allScope(project));
   }
 
   private static void navigateToFile(Project project, @NotNull VirtualFile file) {

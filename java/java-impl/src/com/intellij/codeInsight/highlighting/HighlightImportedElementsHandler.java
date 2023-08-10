@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -86,8 +86,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setRenderer(renderer)
       .setNamerForFiltering(o -> {
-        if (o instanceof PsiMember) {
-          final PsiMember member = (PsiMember)o;
+        if (o instanceof PsiMember member) {
           return member.getName();
         }
         return o.toString();
@@ -138,7 +137,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       if (!myImportStatic && reference.getText().equals(reference.getQualifiedName())) {
         return;
@@ -176,8 +175,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
             addReference(member, reference);
           }
         }
-        else if (importTarget instanceof PsiClass) {
-          final PsiClass importClass = (PsiClass)importTarget;
+        else if (importTarget instanceof PsiClass importClass) {
           if (myOnDemand) {
             final PsiClass containingClass = member.getContainingClass();
             if (InheritanceUtil.isInheritorOrSelf(importClass, containingClass, true)) {
@@ -195,29 +193,25 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
 
     private void checkImportReference(PsiJavaCodeReferenceElement reference) {
       final PsiElement element = reference.resolve();
-      if (!(element instanceof PsiClass)) {
+      if (!(element instanceof PsiClass referencedClass)) {
         return;
       }
-      final PsiClass referencedClass = (PsiClass)element;
       for (PsiElement importTarget : myImportTargets) {
-        if (importTarget instanceof PsiPackage) {
+        if (importTarget instanceof PsiPackage aPackage) {
           if (referencedClass.getContainingClass() != null) {
             return;
           }
           final PsiFile file = referencedClass.getContainingFile();
-          if (!(file instanceof PsiJavaFile)) {
+          if (!(file instanceof PsiJavaFile javaFile)) {
             return;
           }
-          final PsiJavaFile javaFile = (PsiJavaFile)file;
-          final PsiPackage aPackage = (PsiPackage)importTarget;
           final String packageName = aPackage.getQualifiedName();
           final String filePackage = javaFile.getPackageName();
           if (filePackage.equals(packageName)) {
             addReference(referencedClass, reference);
           }
         }
-        else if (importTarget instanceof PsiClass) {
-          final PsiClass aClass = (PsiClass)importTarget;
+        else if (importTarget instanceof PsiClass aClass) {
           final String name = aClass.getQualifiedName();
           if (name == null) {
             return;
@@ -254,7 +248,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     }
   }
 
-  static class PsiMemberComparator implements Comparator<PsiMember> {
+  private static class PsiMemberComparator implements Comparator<PsiMember> {
 
     @Override
     public int compare(PsiMember member1, PsiMember member2) {

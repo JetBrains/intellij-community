@@ -35,15 +35,17 @@ public class DomStubBuilderTest extends DomStubTest {
   }
 
   public void testFoo() {
-    doBuilderTest("foo.xml", "File:foo\n" +
-                             "  Element:foo\n" +
-                             "    Element:id:foo\n" +
-                             "    Element:list:list0\n" +
-                             "    Element:list:list1\n" +
-                             "    Element:bar\n" +
-                             "      Attribute:string:xxx\n" +
-                             "      Attribute:int:666\n" +
-                             "    Element:bar\n");
+    doBuilderTest("foo.xml", """
+      File:foo
+        Element:foo
+          Element:id:foo
+          Element:list:list0
+          Element:list:list1
+          Element:bar
+            Attribute:string:xxx
+            Attribute:int:666
+          Element:bar
+      """);
   }
 
   public void testFooNoStubbedValueWhenNestedTags() {
@@ -60,10 +62,12 @@ public class DomStubBuilderTest extends DomStubTest {
   }
 
   public void testIncompleteAttribute() {
-    doBuilderTest("incompleteAttribute.xml", "File:foo\n" +
-                                             "  Element:foo\n" +
-                                             "    Element:bar\n" +
-                                             "      Attribute:string:\n");
+    doBuilderTest("incompleteAttribute.xml", """
+      File:foo
+        Element:foo
+          Element:bar
+            Attribute:string:
+      """);
   }
 
   public void testDomExtension() {
@@ -72,11 +76,13 @@ public class DomStubBuilderTest extends DomStubTest {
     ep.extenderClassName = TestExtender.class.getName();
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), DomExtenderEP.EP_NAME, ep, myFixture.getTestRootDisposable());
 
-    doBuilderTest("extender.xml", "File:foo\n" +
-                                  "  Element:foo\n" +
-                                  "    Element:bar\n" +
-                                  "      Attribute:extend:xxx\n" +
-                                  "    Element:bar\n");
+    doBuilderTest("extender.xml", """
+      File:foo
+        Element:foo
+          Element:bar
+            Attribute:extend:xxx
+          Element:bar
+      """);
   }
 
   public void testNullTag() {
@@ -101,14 +107,16 @@ public class DomStubBuilderTest extends DomStubTest {
 
   private void doInclusionTest(boolean onStubs) {
     myFixture.copyFileToProject("include.xml");
-    doBuilderTest("inclusion.xml", "File:foo\n" +
-                                   "  Element:foo\n" +
-                                   "    XInclude:href=include.xml xpointer=xpointer(/foo/*)\n" +
-                                   "    Element:bar\n" +
-                                   "      Attribute:string:xxx\n" +
-                                   "      Attribute:int:666\n" +
-                                   "    Element:bar\n" +
-                                   "      XInclude:href=include.xml xpointer=xpointer(/foo/bar-2/*)\n");
+    doBuilderTest("inclusion.xml", """
+      File:foo
+        Element:foo
+          XInclude:href=include.xml xpointer=xpointer(/foo/*)
+          Element:bar
+            Attribute:string:xxx
+            Attribute:int:666
+          Element:bar
+            XInclude:href=include.xml xpointer=xpointer(/foo/bar-2/*)
+      """);
 
     PsiFile file = myFixture.getFile();
     if (onStubs) {

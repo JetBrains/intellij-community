@@ -3,6 +3,6 @@ package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.facet.ModifiableFacetModel
 
-interface ModifiableFacetModelBridge: ModifiableFacetModel {
+interface ModifiableFacetModelBridge : ModifiableFacetModel {
   fun prepareForCommit()
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerTestCase;
@@ -29,6 +29,12 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
 
   public DescriptorTestCase() {
     super();
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    atDebuggerTearDown(() -> flushDescriptors());
   }
 
   protected NodeRenderer getToStringRenderer() {
@@ -106,19 +112,6 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     myDescriptorLog.clear();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      flushDescriptors();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
   private static boolean expandOne(Tree tree) {
     boolean anyExpanded = false;
     for (int i = 0; i < tree.getRowCount(); i++) {
@@ -150,7 +143,10 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     boolean shouldExpand(TreeNode node);
   }
 
-  protected void expandAll(final DebuggerTree tree, final Runnable runnable, final Set<? super Value> alreadyExpanded, final NodeFilter filter) {
+  protected void expandAll(final DebuggerTree tree,
+                           final Runnable runnable,
+                           final Set<? super Value> alreadyExpanded,
+                           final NodeFilter filter) {
     expandAll(tree, runnable, alreadyExpanded, filter, tree.getDebuggerContext().getSuspendContext());
   }
 
@@ -161,9 +157,9 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
                            final SuspendContextImpl context) {
     invokeRatherLater(context, () -> {
       boolean anyCollapsed = false;
-      for(int i = 0; i < tree.getRowCount(); i++) {
+      for (int i = 0; i < tree.getRowCount(); i++) {
         final TreeNode treeNode = (TreeNode)tree.getPathForRow(i).getLastPathComponent();
-        if(tree.isCollapsed(i) && !treeNode.isLeaf()) {
+        if (tree.isCollapsed(i) && !treeNode.isLeaf()) {
           NodeDescriptor nodeDescriptor = null;
           if (treeNode instanceof DebuggerTreeNodeImpl) {
             nodeDescriptor = ((DebuggerTreeNodeImpl)treeNode).getDescriptor();

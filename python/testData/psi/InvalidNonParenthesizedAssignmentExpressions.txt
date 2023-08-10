@@ -260,53 +260,6 @@ PyFile:InvalidNonParenthesizedAssignmentExpressions.py
     PsiComment(Py:END_OF_LINE_COMMENT)('# Valid, but unlikely to be useful')
   PsiWhiteSpace('\n\n')
   PyAssignmentStatement
-    PyTargetExpression: result_set
-      PsiElement(Py:IDENTIFIER)('result_set')
-    PsiWhiteSpace(' ')
-    PsiElement(Py:EQ)('=')
-    PsiWhiteSpace(' ')
-    PyAssignmentExpression
-      PyDictLiteralExpression
-        PsiElement(Py:LBRACE)('{')
-        PyReferenceExpression: a
-          PsiElement(Py:IDENTIFIER)('a')
-        PsiErrorElement:Expression expected
-          <empty list>
-      PsiWhiteSpace(' ')
-      PsiElement(Py:COLONEQ)(':=')
-      PsiWhiteSpace(' ')
-      PyNumericLiteralExpression
-        PsiElement(Py:INTEGER_LITERAL)('1')
-    PsiErrorElement:Expression expected
-      <empty list>
-  PsiElement(Py:RBRACE)('}')
-  PsiErrorElement:Statement expected, found Py:RBRACE
-    <empty list>
-  PsiWhiteSpace('  ')
-  PsiComment(Py:END_OF_LINE_COMMENT)('# INVALID')
-  PsiWhiteSpace('\n')
-  PyAssignmentStatement
-    PyTargetExpression: result_set
-      PsiElement(Py:IDENTIFIER)('result_set')
-    PsiWhiteSpace(' ')
-    PsiElement(Py:EQ)('=')
-    PsiWhiteSpace(' ')
-    PySetLiteralExpression
-      PsiElement(Py:LBRACE)('{')
-      PyParenthesizedExpression
-        PsiElement(Py:LPAR)('(')
-        PyAssignmentExpression
-          PyTargetExpression: a
-            PsiElement(Py:IDENTIFIER)('a')
-          PsiWhiteSpace(' ')
-          PsiElement(Py:COLONEQ)(':=')
-          PsiWhiteSpace(' ')
-          PyNumericLiteralExpression
-            PsiElement(Py:INTEGER_LITERAL)('1')
-        PsiElement(Py:RPAR)(')')
-      PsiElement(Py:RBRACE)('}')
-  PsiWhiteSpace('\n\n')
-  PyAssignmentStatement
     PyTargetExpression: result_dict
       PsiElement(Py:IDENTIFIER)('result_dict')
     PsiWhiteSpace(' ')
@@ -340,6 +293,51 @@ PyFile:InvalidNonParenthesizedAssignmentExpressions.py
       PsiWhiteSpace(' ')
       PyNumericLiteralExpression
         PsiElement(Py:INTEGER_LITERAL)('2')
+    PsiErrorElement:End of statement expected
+      <empty list>
+  PsiElement(Py:RBRACE)('}')
+  PsiErrorElement:Statement expected, found Py:RBRACE
+    <empty list>
+  PsiWhiteSpace('  ')
+  PsiComment(Py:END_OF_LINE_COMMENT)('# INVALID')
+  PsiWhiteSpace('\n')
+  PyAssignmentStatement
+    PyTargetExpression: result_dict
+      PsiElement(Py:IDENTIFIER)('result_dict')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyAssignmentExpression
+      PyDictLiteralExpression
+        PsiElement(Py:LBRACE)('{')
+        PyReferenceExpression: a
+          PsiElement(Py:IDENTIFIER)('a')
+        PsiErrorElement:Expression expected
+          <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(Py:COLONEQ)(':=')
+      PsiWhiteSpace(' ')
+      PyNumericLiteralExpression
+        PsiElement(Py:INTEGER_LITERAL)('1')
+    PsiErrorElement:Expression expected
+      <empty list>
+  PsiWhiteSpace(' ')
+  PsiElement(Py:COLON)(':')
+  PsiErrorElement:Statement expected, found Py:COLON
+    <empty list>
+  PsiWhiteSpace(' ')
+  PyExpressionStatement
+    PyParenthesizedExpression
+      PsiElement(Py:LPAR)('(')
+      PyAssignmentExpression
+        PyTargetExpression: b
+          PsiElement(Py:IDENTIFIER)('b')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:COLONEQ)(':=')
+        PsiWhiteSpace(' ')
+        PyNumericLiteralExpression
+          PsiElement(Py:INTEGER_LITERAL)('2')
+      PsiElement(Py:RPAR)(')')
     PsiErrorElement:End of statement expected
       <empty list>
   PsiElement(Py:RBRACE)('}')
@@ -416,60 +414,6 @@ PyFile:InvalidNonParenthesizedAssignmentExpressions.py
         PyNumericLiteralExpression
           PsiElement(Py:INTEGER_LITERAL)('1')
       PsiElement(Py:RPAR)(')')
-  PsiWhiteSpace('\n\n')
-  PyAssignmentStatement
-    PyTargetExpression: l
-      PsiElement(Py:IDENTIFIER)('l')
-    PsiWhiteSpace(' ')
-    PsiElement(Py:EQ)('=')
-    PsiWhiteSpace(' ')
-    PyListLiteralExpression
-      PsiElement(Py:LBRACKET)('[')
-      PyNumericLiteralExpression
-        PsiElement(Py:INTEGER_LITERAL)('1')
-      PsiElement(Py:COMMA)(',')
-      PsiWhiteSpace(' ')
-      PyNumericLiteralExpression
-        PsiElement(Py:INTEGER_LITERAL)('2')
-      PsiElement(Py:RBRACKET)(']')
-  PsiWhiteSpace('\n')
-  PyAssignmentExpression
-    PySubscriptionExpression
-      PyReferenceExpression: l
-        PsiElement(Py:IDENTIFIER)('l')
-      PsiElement(Py:LBRACKET)('[')
-      PyReferenceExpression: a
-        PsiElement(Py:IDENTIFIER)('a')
-      PsiErrorElement:']' expected
-        <empty list>
-    PsiWhiteSpace(' ')
-    PsiElement(Py:COLONEQ)(':=')
-    PsiWhiteSpace(' ')
-    PyNumericLiteralExpression
-      PsiElement(Py:INTEGER_LITERAL)('0')
-  PsiElement(Py:RBRACKET)(']')
-  PsiErrorElement:Statement expected, found Py:IDENTIFIER
-    <empty list>
-  PsiWhiteSpace('  ')
-  PsiComment(Py:END_OF_LINE_COMMENT)('# INVALID')
-  PsiWhiteSpace('\n')
-  PyExpressionStatement
-    PySubscriptionExpression
-      PyReferenceExpression: l
-        PsiElement(Py:IDENTIFIER)('l')
-      PsiElement(Py:LBRACKET)('[')
-      PyParenthesizedExpression
-        PsiElement(Py:LPAR)('(')
-        PyAssignmentExpression
-          PyTargetExpression: a
-            PsiElement(Py:IDENTIFIER)('a')
-          PsiWhiteSpace(' ')
-          PsiElement(Py:COLONEQ)(':=')
-          PsiWhiteSpace(' ')
-          PyNumericLiteralExpression
-            PsiElement(Py:INTEGER_LITERAL)('0')
-        PsiElement(Py:RPAR)(')')
-      PsiElement(Py:RBRACKET)(']')
   PsiWhiteSpace('\n\n')
   PyWithStatement
     PsiElement(Py:WITH_KEYWORD)('with')

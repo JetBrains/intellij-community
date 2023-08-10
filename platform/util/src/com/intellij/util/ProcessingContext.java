@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Key;
@@ -30,7 +30,6 @@ import java.util.Map;
  * @see #get(Key) 
  * @see #put(Key, Object)
  * @see #ProcessingContext(SharedProcessingContext) 
- * @author peter
  */
 public class ProcessingContext {
   private Map<Object, Object> myMap;
@@ -39,38 +38,39 @@ public class ProcessingContext {
   public ProcessingContext() {
   }
 
-  public ProcessingContext(final SharedProcessingContext sharedContext) {
+  public ProcessingContext(@NotNull SharedProcessingContext sharedContext) {
     mySharedContext = sharedContext;
   }
 
-  @NotNull
-  public SharedProcessingContext getSharedContext() {
-    if (mySharedContext == null) {
-      return mySharedContext = new SharedProcessingContext();
+  public @NotNull SharedProcessingContext getSharedContext() {
+    SharedProcessingContext context = mySharedContext;
+    if (context == null) {
+      mySharedContext = context = new SharedProcessingContext();
     }
-    return mySharedContext;
+    return context;
   }
 
-  public Object get(@NotNull @NonNls final Object key) {
-    return myMap == null? null : myMap.get(key);
+  public Object get(final @NotNull @NonNls Object key) {
+    Map<Object, Object> map = myMap;
+    return map == null ? null : map.get(key);
   }
 
-  public void put(@NotNull @NonNls final Object key, @NotNull final Object value) {
-    checkMapInitialized();
-    myMap.put(key, value);
+  public void put(final @NotNull @NonNls Object key, final @NotNull Object value) {
+    ensureMapInitialized().put(key, value);
   }
 
-  public <T> void put(Key<T> key, T value) {
-    checkMapInitialized();
-    myMap.put(key, value);
+  public <T> void put(@NotNull Key<T> key, T value) {
+    ensureMapInitialized().put(key, value);
   }
 
-  public <T> T get(Key<T> key) {
-    return myMap == null ? null : (T)myMap.get(key);
+  public <T> T get(@NotNull Key<T> key) {
+    return (T)get((Object)key);
   }
 
-  private void checkMapInitialized() {
-    if (myMap == null) myMap = new HashMap<>(1);
+  private @NotNull Map<Object, Object> ensureMapInitialized() {
+    Map<Object, Object> map = myMap;
+    if (map == null) myMap = map = new HashMap<>(1);
+    return map;
   }
 
 }

@@ -3,7 +3,6 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.containers.RecentStringInterner;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +14,7 @@ final class StubStringInterner {
   private final RecentStringInterner myStringInterner;
 
   static StubStringInterner getInstance() {
-    return ServiceManager.getService(StubStringInterner.class);
+    return ApplicationManager.getApplication().getService(StubStringInterner.class);
   }
 
   StubStringInterner() {

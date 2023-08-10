@@ -34,7 +34,7 @@ public class RunAnythingHelpGroup<P extends RunAnythingProvider> extends RunAnyt
   /**
    * @deprecated API compatibility
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public RunAnythingHelpGroup() { }
 
   @NotNull
@@ -48,7 +48,7 @@ public class RunAnythingHelpGroup<P extends RunAnythingProvider> extends RunAnyt
    * See also {@code RunAnythingProviderBase.getHelp*()} methods.
    * @deprecated please use {@link RunAnythingProvider#getHelpGroupTitle()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public Collection<P> getProviders() {
     return myProviders;

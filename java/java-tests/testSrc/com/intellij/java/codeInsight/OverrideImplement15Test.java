@@ -43,9 +43,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class OverrideImplement15Test extends LightJavaCodeInsightTestCase {
   private static final String BASE_DIR = "/codeInsight/overrideImplement/";
 

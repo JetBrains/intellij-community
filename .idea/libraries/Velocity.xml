@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="Velocity" type="repository">
-    <properties maven-id="org.apache.velocity:velocity:1.7">
-      <exclude>
-        <dependency maven-id="commons-collections:commons-collections" />
-      </exclude>
+    <properties include-transitive-deps="false" maven-id="org.apache.velocity:velocity-engine-core:2.3">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/velocity/velocity-engine-core/2.3/velocity-engine-core-2.3.jar">
+          <sha256sum>b086cee8fd8183e240b4afcf54fe38ec33dd8eb0da414636e5bf7aa4d9856629</sha256sum>
+        </artifact>
+      </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/velocity/velocity/1.7/velocity-1.7.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/commons-lang/commons-lang/2.4/commons-lang-2.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/velocity/velocity-engine-core/2.3/velocity-engine-core-2.3.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/velocity/velocity/1.7/velocity-1.7-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/commons-lang/commons-lang/2.4/commons-lang-2.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/velocity/velocity-engine-core/2.3/velocity-engine-core-2.3-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

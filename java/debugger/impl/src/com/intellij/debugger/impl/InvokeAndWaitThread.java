@@ -17,9 +17,6 @@ package com.intellij.debugger.impl;
 
 import com.intellij.openapi.project.Project;
 
-/**
- * @author lex
- */
 public abstract class InvokeAndWaitThread<E extends DebuggerTask> extends InvokeThread<E> {
 
   public InvokeAndWaitThread(Project project) {

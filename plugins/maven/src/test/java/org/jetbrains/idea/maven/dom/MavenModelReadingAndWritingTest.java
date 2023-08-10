@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,20 +10,24 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.junit.Test;
 
-public class MavenModelReadingAndWritingTest extends MavenImportingTestCase {
+public class MavenModelReadingAndWritingTest extends MavenMultiVersionImportingTestCase {
   @Override
-  protected void setUpInWriteAction() throws Exception {
-    super.setUpInWriteAction();
+  protected void setUp() throws Exception {
+    super.setUp();
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
   }
 
+  @Test
   public void testReading() {
     MavenDomProjectModel model = getDomModel();
 
@@ -46,6 +36,7 @@ public class MavenModelReadingAndWritingTest extends MavenImportingTestCase {
     assertEquals("1", model.getVersion().getStringValue());
   }
 
+  @Test
   public void testWriting() throws Exception {
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       MavenDomProjectModel model = getDomModel();
@@ -57,17 +48,19 @@ public class MavenModelReadingAndWritingTest extends MavenImportingTestCase {
       formatAndSaveProjectPomDocument();
     }), null, null);
 
-    assertSameLines("<?xml version=\"1.0\"?>\r\n" +
-                    "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n" +
-                    "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\r\n" +
-                    "    <modelVersion>4.0.0</modelVersion>\r\n" +
-                    "    <groupId>foo</groupId>\r\n" +
-                    "    <artifactId>bar</artifactId>\r\n" +
-                    "    <version>baz</version>\r\n" +
-                    "</project>",
+    assertSameLines("""
+                      <?xml version="1.0"?>\r
+                      <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\r
+                               xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">\r
+                          <modelVersion>4.0.0</modelVersion>\r
+                          <groupId>foo</groupId>\r
+                          <artifactId>bar</artifactId>\r
+                          <version>baz</version>\r
+                      </project>""",
                     VfsUtil.loadText(myProjectPom));
   }
 
+  @Test
   public void testAddingADependency() throws Exception {
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       MavenDomProjectModel model = getDomModel();
@@ -80,21 +73,22 @@ public class MavenModelReadingAndWritingTest extends MavenImportingTestCase {
       formatAndSaveProjectPomDocument();
     }), null, null);
 
-    assertSameLines("<?xml version=\"1.0\"?>\r\n" +
-                    "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n" +
-                    "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\r\n" +
-                    "    <modelVersion>4.0.0</modelVersion>\r\n" +
-                    "    <groupId>test</groupId>\r\n" +
-                    "    <artifactId>project</artifactId>\r\n" +
-                    "    <version>1</version>\r\n" +
-                    "    <dependencies>\r\n" +
-                    "        <dependency>\r\n" +
-                    "            <groupId>group</groupId>\r\n" +
-                    "            <artifactId>artifact</artifactId>\r\n" +
-                    "            <version>version</version>\r\n" +
-                    "        </dependency>\r\n" +
-                    "    </dependencies>\r\n" +
-                    "</project>", VfsUtil.loadText(myProjectPom));
+    assertSameLines("""
+                      <?xml version="1.0"?>\r
+                      <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\r
+                               xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">\r
+                          <modelVersion>4.0.0</modelVersion>\r
+                          <groupId>test</groupId>\r
+                          <artifactId>project</artifactId>\r
+                          <version>1</version>\r
+                          <dependencies>\r
+                              <dependency>\r
+                                  <groupId>group</groupId>\r
+                                  <artifactId>artifact</artifactId>\r
+                                  <version>version</version>\r
+                              </dependency>\r
+                          </dependencies>\r
+                      </project>""", VfsUtil.loadText(myProjectPom));
   }
 
   private MavenDomProjectModel getDomModel() {

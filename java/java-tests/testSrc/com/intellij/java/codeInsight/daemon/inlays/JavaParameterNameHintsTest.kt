@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
@@ -23,15 +9,26 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Inlay
 import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 
 class JavaInlayParameterHintsTest : LightJavaCodeInsightFixtureTestCase() {
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return JAVA_8_ANNOTATED
+  }
 
   override fun tearDown() {
-    val default = ParameterNameHintsSettings()
-    ParameterNameHintsSettings.getInstance().loadState(default.state)
-    super.tearDown()
+    try {
+      val default = ParameterNameHintsSettings()
+      ParameterNameHintsSettings.getInstance().loadState(default.state)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun check(text: String) {
@@ -90,44 +87,6 @@ class Fooo {
  public void show(String title, String message) {}
 
 }""")
-  }
-
-
-  fun `test no hints for generic builders`() {
-    check("""
-class Foo {
-  void test() {
-    new IntStream().skip(10);
-    new Stream<Integer>().skip(10);
-  }
-}
-
-class IntStream {
-  public IntStream skip(int n) {}
-}
-
-class Stream<T> {
-  public Stream<T> skip(int n) {}
-}
-""")
-
-    JavaInlayParameterHintsProvider.getInstance().showForBuilderLikeMethods.set(true)
-    check("""
-class Foo {
-  void test() {
-    new IntStream().skip(<hint text="n:"/>10);
-    new Stream<Integer>().skip(<hint text="n:"/>10);
-  }
-}
-
-class IntStream {
-  public IntStream skip(int n) {}
-}
-
-class Stream<T> {
-  public Stream<T> skip(int n) {}
-}
-""")
   }
 
 
@@ -270,7 +229,7 @@ public class CharSymbol {
 public class Test {
   public void main(boolean isActive, boolean requestFocus, int xoo) {
     System.out.println("AAA");
-    main(<hint text="isActive:"/>true,<hint text="requestFocus:"/>false, /*comment*/<hint text="xoo:"/>2);
+    main(<hint text="isActive:"/>true,<hint text="requestFocus:"/>false, <hint text="xoo:"/>2);
   }
 }
 """)
@@ -356,7 +315,7 @@ class QCmp<E> {
 
 public class Test {
   public void main(QCmp<Integer> c, QList<String> l) {
-    c.cmpre(<hint text="oe1:"/>0, /** ddd */<hint text="oq2:"/>3);
+    c.cmpre(<hint text="oe1:"/>0, <hint text="oq2:"/>3);
     l.add(<hint text="query:"/>1, <hint text="obj:"/>"uuu");
   }
 }
@@ -458,7 +417,7 @@ public class VarArgTest {
 class Test {
 
   public void main() {
-    String.format("line", "eee", "www");
+    String.format(<hint text="s:"/>"line", <hint text="...objects:"/>"eee", "www");
   }
 
 }
@@ -512,83 +471,6 @@ interface DockManager {}
 interface Content {}
 """)
   }
-
-  fun `test do not inline builder pattern`() {
-    check("""
-class Builder {
-  void await(boolean value) {}
-  Builder bwait(boolean xvalue) {}
-  Builder timeWait(int time) {}
-}
-
-class Test {
-
-  public void test() {
-    Builder builder = new Builder();
-    builder.await(<hint text="value:"/>true);
-    builder.bwait(false).timeWait(100);
-  }
-
-}
-""")
-    
-    JavaInlayParameterHintsProvider.getInstance().showForBuilderLikeMethods.set(true)
-    check("""
-class Builder {
-  void await(boolean value) {}
-  Builder bwait(boolean xvalue) {}
-  Builder timeWait(int millis) {}
-}
-
-class Test {
-
-  public void test() {
-    Builder builder = new Builder();
-    builder.await(<hint text="value:"/>true);
-    builder.bwait(<hint text="xvalue:"/>false).timeWait(<hint text="millis:"/>100);
-  }
-
-}
-""")
-  }
-
-  
-  fun `test builder method only method with one param`() {
-    check("""
-class Builder {
-  Builder qwit(boolean value, String sValue) {}
-  Builder trew(boolean value) {}
-}
-
-class Test {
-  public void test() {
-    Builder builder = new Builder();
-    builder
-    .trew(false)
-    .qwit(<hint text="value:"/>true, <hint text="sValue:"/>"value");
-  }
-}
-""")
-
-    JavaInlayParameterHintsProvider.getInstance().showForBuilderLikeMethods.set(true)
-    check("""
-class Builder {
-  Builder qwit(boolean value, String sValue) {}
-  Builder trew(boolean value) {}
-}
-
-class Test {
-  public void test() {
-    Builder builder = new Builder();
-    builder
-    .trew(<hint text="value:"/>false)
-    .qwit(<hint text="value:"/>true, <hint text="sValue:"/>"value");
-  }
-}
-""")
-  
-  }
-  
 
   fun `test do not show single parameter hint if it is string literal`() {
     check("""
@@ -907,7 +789,7 @@ class Test {
     myFixture.doHighlighting()
     
     inlays = getHints()
-    assert(inlays.size == 1 && inlays.first() == "qas:", { "Real inlays ${inlays.size}" })
+    assert(inlays.size == 1 && inlays.first() == "qas:") { "Real inlays ${inlays.size}" }
   }
 
 
@@ -1154,6 +1036,31 @@ public class Test {
 }""")
   }
 
+  fun `test parameters have comments`() {
+    check("""
+public class Test {
+    static class A {
+      A(boolean leadingComment, boolean middleWithoutComments, boolean trailingComment){}
+    }
+
+    void foo() {
+      new A(/* comment not necessarily related to name */ true, <hint text="middleWithoutComments:"/>false, true /**/);
+    }
+}""")
+  }
+
+  fun `test optional empty`() {
+    check("""
+import java.util.Optional;
+public class Test {
+    void main() {
+      foo(<hint text="s:"/>Optional.empty());
+    }
+
+    static void foo(Optional<String> s) {}
+}""")
+  }
+
   fun `test undo after typing space`() {
     check("""
 class C {
@@ -1177,6 +1084,30 @@ class C {
     }
   }
 
+
+  fun `test same argument and parameter names`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowHintWhenExpressionTypeIsClear.set(true)
+    JavaInlayParameterHintsProvider.getInstance().showIfMethodNameContainsParameterName.set(false)
+    check("""
+class A {
+    static class ClassA {
+        static String getName() {
+            return "Asd";
+        }
+    }
+
+    static void testHints(ClassA entity, String name) {
+
+    }
+
+    public static void main(String[] args) {
+        ClassA entity = new ClassA();
+        testHints(entity, ClassA.getName());
+    }
+}
+""")
+  }
+
   fun getHints(): List<String> {
     val document = myFixture.getDocument(myFixture.file)
     val manager = ParameterHintsPresentationManager.getInstance()
@@ -1187,7 +1118,7 @@ class C {
   }
 
   
-  fun assertSingleInlayWithText(expectedText: String) {
+  private fun assertSingleInlayWithText(expectedText: String) {
     val inlays = ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(
       editor,
       0,

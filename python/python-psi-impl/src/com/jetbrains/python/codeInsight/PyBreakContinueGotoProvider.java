@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides reaction on ctrl+click for {@code break} and {@code continue} statements.
- * @author dcheryasov
  */
 public class PyBreakContinueGotoProvider extends GotoDeclarationHandlerBase {
   @Override

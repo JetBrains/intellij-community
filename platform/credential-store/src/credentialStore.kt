@@ -1,16 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.toByteArray
 import java.nio.CharBuffer
 import java.security.SecureRandom
-import java.util.*
 
-internal val LOG = logger<CredentialStore>()
+internal val LOG: Logger
+  get() = logger<PasswordSafeSettings>()
 
-fun joinData(user: String?, password: OneTimeString?): ByteArray? {
+internal fun joinData(user: String?, password: OneTimeString?): ByteArray? {
   if (user == null && password == null) {
     return null
   }
@@ -29,7 +30,7 @@ fun joinData(user: String?, password: OneTimeString?): ByteArray? {
   return buffer.toByteArray()
 }
 
-fun splitData(data: String?): Credentials? {
+internal fun splitData(data: String?): Credentials? {
   if (data.isNullOrEmpty()) {
     return null
   }
@@ -70,13 +71,6 @@ private fun parseString(data: String, @Suppress("SameParameterValue") delimiter:
 
   return result
 }
-
-// check isEmpty before
-@JvmOverloads
-fun Credentials.serialize(storePassword: Boolean = true) = joinData(userName, if (storePassword) password else null)!!
-
-val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
-val CANNOT_UNLOCK_KEYCHAIN = Credentials(null, null as OneTimeString?)
 
 fun createSecureRandom(): SecureRandom {
   // do not use SecureRandom.getInstanceStrong()

@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A marker interface for {@link QueryExecutorBase} parameters which indicates that searches should only be executed when indexing is complete.
  * The query executors that are not {@link com.intellij.openapi.project.DumbAware} are delayed in processing until index is ready.
- *
- * @author peter
  */
 public interface DumbAwareSearchParameters extends QueryParameters {
   @Override

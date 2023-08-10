@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -26,16 +26,14 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTransferableData> {
   @NotNull
   @Override
-  public List<IndentTransferableData> collectTransferableData(PsiFile file,
-                                                          Editor editor,
-                                                          int[] startOffsets,
-                                                          int[] endOffsets) {
+  public List<IndentTransferableData> collectTransferableData(@NotNull PsiFile file,
+                                                              @NotNull Editor editor,
+                                                              int @NotNull [] startOffsets,
+                                                              int @NotNull [] endOffsets) {
     if (!acceptFileType(file.getFileType())) {
       return Collections.emptyList();
     }
@@ -49,7 +47,7 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
 
   @NotNull
   @Override
-  public List<IndentTransferableData> extractTransferableData(Transferable content) {
+  public List<IndentTransferableData> extractTransferableData(@NotNull Transferable content) {
     IndentTransferableData indentData = new IndentTransferableData(-1);
     try {
       final DataFlavor flavor = IndentTransferableData.getDataFlavorStatic();
@@ -67,12 +65,12 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
   }
 
   @Override
-  public void processTransferableData(final Project project,
-                                      final Editor editor,
-                                      final RangeMarker bounds,
+  public void processTransferableData(final @NotNull Project project,
+                                      final @NotNull Editor editor,
+                                      final @NotNull RangeMarker bounds,
                                       final int caretOffset,
-                                      final Ref<? super Boolean> indented,
-                                      final List<? extends IndentTransferableData> values) {
+                                      final @NotNull Ref<? super Boolean> indented,
+                                      final @NotNull List<? extends IndentTransferableData> values) {
     if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE) {
       return;
     }
@@ -91,7 +89,7 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
         final boolean useTabs =
           CodeStyle.getSettings(psiFile).useTabCharacter(psiFile.getFileType());
         CharFilter NOT_INDENT_FILTER = ch -> useTabs ? ch != '\t' : ch != ' ';
-        String pastedText = document.getText(TextRange.create(bounds));
+        String pastedText = document.getText(bounds.getTextRange());
 
         int startLine = document.getLineNumber(bounds.getStartOffset());
         int endLine = document.getLineNumber(bounds.getEndOffset());

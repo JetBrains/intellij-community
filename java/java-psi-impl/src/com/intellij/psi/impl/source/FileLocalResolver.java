@@ -53,7 +53,7 @@ public class FileLocalResolver {
    */
   @NotNull
   public LightResolveResult resolveLocally(@NotNull LighterASTNode ref) {
-    final String refName = JavaLightTreeUtil.getNameIdentifierText(myTree, ref);
+    String refName = JavaLightTreeUtil.getNameIdentifierText(myTree, ref);
     if (refName == null) return LightResolveResult.UNKNOWN;
     if (!canResolveToLocalVariable(myTree, ref)) return LightResolveResult.NON_LOCAL;
 
@@ -123,12 +123,12 @@ public class FileLocalResolver {
   }
 
   @NotNull
-  private JBIterable<LighterASTNode> walkChildrenScopes(JBIterable<LighterASTNode> children) {
+  private JBIterable<LighterASTNode> walkChildrenScopes(JBIterable<? extends LighterASTNode> children) {
     return children.flatMap(child -> getDeclarations(child, null));
   }
 
   @NotNull
-  private static JBIterable<LighterASTNode> before(List<LighterASTNode> children, @Nullable final LighterASTNode lastParent) {
+  private static JBIterable<LighterASTNode> before(List<LighterASTNode> children, @Nullable LighterASTNode lastParent) {
     return JBIterable.from(children).filter(node -> lastParent == null || node.getStartOffset() < lastParent.getStartOffset());
   }
 
@@ -212,7 +212,7 @@ public class FileLocalResolver {
     public static final LightResolveResult NON_LOCAL = new LightResolveResult();
 
     @NotNull
-    static LightResolveResult resolved(@NotNull final LighterASTNode target) {
+    static LightResolveResult resolved(@NotNull LighterASTNode target) {
       return new LightResolveResult() {
         @Override
         public LighterASTNode getTarget() {

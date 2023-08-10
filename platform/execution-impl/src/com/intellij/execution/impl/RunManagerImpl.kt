@@ -1,10 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.execution.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.configurationStore.*
+import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.execution.*
+import com.intellij.execution.actions.ChooseRunConfigurationPopup
 import com.intellij.execution.configurations.*
+import com.intellij.execution.runToolbar.RunToolbarSlotManager
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
@@ -14,7 +18,10 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -24,33 +31,43 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
-import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.project.isDirectoryBased
-import com.intellij.ui.GuiUtils
+import com.intellij.serviceContainer.NonInjectable
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.IconManager
 import com.intellij.util.IconUtil
+import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
-import com.intellij.util.containers.*
-import com.intellij.util.getAttributeBooleanValue
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.containers.mapSmart
+import com.intellij.util.containers.nullize
+import com.intellij.util.containers.toMutableSmartList
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.util.ui.JBUI
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.swing.Icon
-import kotlin.collections.HashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.concurrent.read
@@ -67,26 +84,28 @@ interface RunConfigurationTemplateProvider {
   fun getRunConfigurationTemplate(factory: ConfigurationFactory, runManager: RunManagerImpl): RunnerAndConfigurationSettingsImpl?
 }
 
-// open for Upsource (UpsourceRunManager overrides to disable loadState (empty impl))
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
-open class RunManagerImpl @JvmOverloads constructor(val project: Project, sharedStreamProvider: StreamProvider? = null) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
+open class RunManagerImpl @NonInjectable constructor(val project: Project, sharedStreamProvider: StreamProvider?) :
+  RunManagerEx(), PersistentStateComponent<Element>, Disposable, SettingsSavingComponent {
   companion object {
-    const val CONFIGURATION = "configuration"
-    const val NAME_ATTR = "name"
+    const val CONFIGURATION: String = "configuration"
+    const val NAME_ATTR: String = "name"
 
-    internal val LOG = logger<RunManagerImpl>()
-
-    @JvmStatic
-    fun getInstanceImpl(project: Project) = getInstance(project) as RunManagerImpl
+    internal val LOG: Logger = logger<RunManagerImpl>()
 
     @JvmStatic
+    fun getInstanceImpl(project: Project): RunManagerImpl = getInstance(project) as RunManagerImpl
+
     fun canRunConfiguration(environment: ExecutionEnvironment): Boolean {
-      return environment.runnerAndConfigurationSettings?.let { canRunConfiguration(it, environment.executor) } ?: false
+      return environment.runnerAndConfigurationSettings?.let {
+        canRunConfiguration(it, environment.executor)
+      } ?: false
     }
 
     @JvmStatic
     fun canRunConfiguration(configuration: RunnerAndConfigurationSettings, executor: Executor): Boolean {
       try {
+        ApplicationManager.getApplication().assertIsNonDispatchThread()
         configuration.checkSettings(executor)
       }
       catch (ignored: IndexNotReadyException) {
@@ -100,6 +119,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       return true
     }
   }
+
+  constructor(project: Project) : this(project = project, sharedStreamProvider = null)
 
   private val lock = ReentrantReadWriteLock()
 
@@ -141,14 +162,19 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
   // so that when it is eventually loaded, we can mark is as a selected.
   // See also notYetAppliedInitialSelectedConfigurationId, which helps when the initially selected RC is stored in some arbitrary *.run.xml file in project
-  private var selectedConfigurationId: String? = null
+  protected open var selectedConfigurationId: String? = null
   // RCs stored in arbitrary *.run.xml files are loaded a bit later than RCs from workspace and from .idea/runConfigurations.
   // This var helps if initially selected RC is a one from such file.
   // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
   private var notYetAppliedInitialSelectedConfigurationId: String? = null
   private var selectedRCSetupScheduled: Boolean = false
 
-  private val iconCache = TimedIconCache()
+  private val iconAndInvalidCache = RunConfigurationIconAndInvalidCache()
+
+  // used by Rider
+  @Suppress("unused")
+  val iconCache: RunConfigurationIconCache
+    get() = iconAndInvalidCache
 
   private val recentlyUsedTemporaries = ArrayList<RunnerAndConfigurationSettings>()
 
@@ -164,7 +190,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
   })
 
-  internal val schemeManagerIprProvider = if (project.isDirectoryBased || sharedStreamProvider != null) null else SchemeManagerIprProvider("configuration")
+  internal val schemeManagerIprProvider: SchemeManagerIprProvider? = if (project.isDirectoryBased || sharedStreamProvider != null) null else SchemeManagerIprProvider("configuration")
 
   @Suppress("LeakingThis")
   private val templateDifferenceHelper = TemplateDifferenceHelper(this)
@@ -185,6 +211,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
                                                                                       schemeNameToFileName = OLD_NAME_CONVERTER,
                                                                                       streamProvider = sharedStreamProvider ?: schemeManagerIprProvider)
 
+  @Suppress("unused")
   internal val dotIdeaRunConfigurationsPath: String
     get() = FileUtil.toSystemIndependentName(projectSchemeManager.rootDirectory.path)
 
@@ -192,36 +219,25 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   private val isFirstLoadState = AtomicBoolean(true)
 
-  private val stringIdToBeforeRunProvider = object : ClearableLazyValue<ConcurrentMap<String, BeforeRunTaskProvider<*>>>() {
-    override fun compute(): ConcurrentMap<String, BeforeRunTaskProvider<*>> {
-      val result = ConcurrentHashMap<String, BeforeRunTaskProvider<*>>()
-      for (provider in BeforeRunTaskProvider.EP_NAME.getExtensions(project)) {
-        result.put(provider.id.toString(), provider)
-      }
-      return result
+  private val stringIdToBeforeRunProvider = SynchronizedClearableLazy {
+    val result = ConcurrentHashMap<String, BeforeRunTaskProvider<*>>()
+    for (provider in BeforeRunTaskProvider.EP_NAME.getExtensions(project)) {
+      result.put(provider.id.toString(), provider)
     }
+    result
   }
 
   internal val eventPublisher: RunManagerListener
     get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
-    val messageBusConnection = project.messageBus.connect()
-    messageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-      override fun rootsChanged(event: ModuleRootEvent) {
-        clearSelectedConfigurationIcon()
-
-        deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
-      }
-    })
-
-    messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      project.messageBus.connect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-        iconCache.clear()
+        iconAndInvalidCache.clear()
       }
 
       override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-        iconCache.clear()
+        iconAndInvalidCache.clear()
         // must be on unload and not before, since load must not be able to use unloaded plugin classes
         reloadSchemes()
       }
@@ -230,9 +246,17 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     BeforeRunTaskProvider.EP_NAME.getPoint(project).addChangeListener(stringIdToBeforeRunProvider::drop, project)
   }
 
+  override fun shouldSetRunConfigurationFromContext(): Boolean {
+    return Registry.`is`("select.run.configuration.from.context") && !isRiderRunWidgetActive()
+  }
+
+  override fun isRiderRunWidgetActive(): Boolean {
+    return RunToolbarSlotManager.getInstance(project).active
+  }
+
   private fun clearSelectedConfigurationIcon() {
-    selectedConfiguration?.let {
-      iconCache.remove(it.uniqueID)
+    selectedConfigurationId?.let {
+      iconAndInvalidCache.remove(it)
     }
   }
 
@@ -269,7 +293,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   override fun dispose() {
     lock.write {
-      iconCache.clear()
+      iconAndInvalidCache.clear()
       templateIdToConfiguration.clear()
     }
   }
@@ -298,19 +322,19 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   fun getSettings(configuration: RunConfiguration) = allSettings.firstOrNull { it.configuration === configuration } as? RunnerAndConfigurationSettingsImpl
 
-  override fun getConfigurationSettingsList(type: ConfigurationType) = allSettings.filterSmart { it.type === type }
+  override fun getConfigurationSettingsList(type: ConfigurationType) = allSettings.filter { it.type === type }
 
   fun getConfigurationsGroupedByTypeAndFolder(isIncludeUnknown: Boolean): Map<ConfigurationType, Map<String?, List<RunnerAndConfigurationSettings>>> {
     val result = LinkedHashMap<ConfigurationType, MutableMap<String?, MutableList<RunnerAndConfigurationSettings>>>()
-    // use allSettings to return sorted result
+    // use allSettings to return a sorted result
     for (setting in allSettings) {
       val type = setting.type
       if (!isIncludeUnknown && type === UnknownConfigurationType.getInstance()) {
         continue
       }
 
-      val folderToConfigurations = result.getOrPut(type) { LinkedHashMap() }
-      folderToConfigurations.getOrPut(setting.folderName) { SmartList() }.add(setting)
+      val folderToConfigurations = result.computeIfAbsent(type) { LinkedHashMap() }
+      folderToConfigurations.computeIfAbsent(setting.folderName) { SmartList() }.add(setting)
     }
     return result
   }
@@ -346,58 +370,62 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   private fun deleteRunConfigsFromArbitraryFilesNotWithinProjectContent() {
-    lock.write {
-      val deletedConfigs = rcInArbitraryFileManager.findRunConfigsThatAreNotWithinProjectContent()
-      // don't delete file just because it has become excluded
-      removeConfigurations(deletedConfigs, deleteFileIfStoredInArbitraryFile = false)
-    }
+    ReadAction
+      .nonBlocking(Callable {
+        lock.read { rcInArbitraryFileManager.findRunConfigsThatAreNotWithinProjectContent() }
+      })
+      .coalesceBy(this)
+      .expireWith(project)
+      .finishOnUiThread(ModalityState.defaultModalityState()) {
+        // don't delete file just because it has become excluded
+        removeConfigurations(it, deleteFileIfStoredInArbitraryFile = false)
+      }
+      .submit(AppExecutorUtil.getAppExecutorService())
   }
 
   // Paths in <code>deletedFilePaths</code> and <code>updatedFilePaths</code> may be not related to the project, use ProjectIndex.isInContent() when needed
   internal fun updateRunConfigsFromArbitraryFiles(deletedFilePaths: Collection<String>, updatedFilePaths: Collection<String>) {
-    lock.write {
-      val oldSelectedId = selectedConfigurationId
+    val oldSelectedId = selectedConfigurationId
+    val deletedRunConfigs = lock.read { rcInArbitraryFileManager.getRunConfigsFromFiles(deletedFilePaths) }
 
-      val deletedRunConfigs = rcInArbitraryFileManager.getRunConfigsFromFiles(deletedFilePaths)
-      // file is already deleted - no need to delete it once again
-      removeConfigurations(deletedRunConfigs, deleteFileIfStoredInArbitraryFile = false)
+    // file is already deleted - no need to delete it once again
+    removeConfigurations(deletedRunConfigs, deleteFileIfStoredInArbitraryFile = false)
 
-      for (filePath in updatedFilePaths) {
-        val deletedAndAddedRunConfigs = rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, filePath)
+    for (filePath in updatedFilePaths) {
+      val deletedAndAddedRunConfigs = runReadAction {  lock.read { rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, filePath) } }
 
-        for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
-          addConfiguration(runConfig)
+      for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
+        addConfiguration(runConfig)
 
-          if (runConfig.isTemplate) continue
+        if (runConfig.isTemplate) continue
 
-          if (!StartupManager.getInstance(project).postStartupActivityPassed()) {
-            // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
-            if (!selectedRCSetupScheduled && (notYetAppliedInitialSelectedConfigurationId == runConfig.uniqueID ||
-                                              notYetAppliedInitialSelectedConfigurationId == "" && runConfig.type.isManaged)) {
-              selectedRCSetupScheduled = true
-              // Project is being loaded. Finally we can set the right RC as 'selected' in the RC combo box.
-              // Need to set selectedConfiguration in EDT to avoid deadlock with ExecutionTargetManagerImpl or similar implementations of runConfigurationSelected()
-              StartupManager.getInstance(project).runAfterOpened {
-                GuiUtils.invokeLaterIfNeeded(Runnable {
-                  // Empty string means that there's no information about initially selected RC in workspace.xml
-                  // => IDE should select any if still none selected (CLion could have set the selected RC itself).
-                  if (selectedConfiguration == null || notYetAppliedInitialSelectedConfigurationId != "") {
-                    selectedConfiguration = runConfig
-                  }
-                  notYetAppliedInitialSelectedConfigurationId = null
-                }, ModalityState.NON_MODAL, project.disposed)
-              }
+        if (!StartupManager.getInstance(project).postStartupActivityPassed()) {
+          // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
+          if (!selectedRCSetupScheduled && (notYetAppliedInitialSelectedConfigurationId == runConfig.uniqueID ||
+                                            notYetAppliedInitialSelectedConfigurationId == "" && runConfig.type.isManaged)) {
+            selectedRCSetupScheduled = true
+            // Project is being loaded. Finally we can set the right RC as 'selected' in the RC combo box.
+            // Need to set selectedConfiguration in EDT to avoid deadlock with ExecutionTargetManagerImpl or similar implementations of runConfigurationSelected()
+            StartupManager.getInstance(project).runAfterOpened {
+              ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), project.disposed, Runnable {
+                // Empty string means that there's no information about initially selected RC in workspace.xml
+                // => IDE should select any if still none selected (CLion could have set the selected RC itself).
+                if (selectedConfiguration == null || notYetAppliedInitialSelectedConfigurationId != "") {
+                  selectedConfiguration = runConfig
+                }
+                notYetAppliedInitialSelectedConfigurationId = null
+              })
             }
           }
-          else if (selectedConfigurationId == null && runConfig.uniqueID == oldSelectedId) {
-            // don't loose currently selected RC in case of any external changes in the file
-            selectedConfigurationId = oldSelectedId
-          }
         }
-
-        // some VFS event caused RC to disappear (probably manual editing) - but the file itself shouldn't be deleted
-        removeConfigurations(deletedAndAddedRunConfigs.deletedRunConfigs, deleteFileIfStoredInArbitraryFile = false)
+        else if (selectedConfigurationId == null && runConfig.uniqueID == oldSelectedId) {
+          // don't loose currently selected RC in case of any external changes in the file
+          selectedConfigurationId = oldSelectedId
+        }
       }
+
+      // some VFS event caused RC to disappear (probably manual editing) - but the file itself shouldn't be deleted
+      removeConfigurations(deletedAndAddedRunConfigs.deletedRunConfigs, deleteFileIfStoredInArbitraryFile = false)
     }
   }
 
@@ -414,22 +442,21 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     val newId = settings.uniqueID
     var existingId: String?
     lock.write {
-      listManager.immutableSortedSettingsList = null
-
       // https://youtrack.jetbrains.com/issue/IDEA-112821
       // we should check by instance, not by id (todo is it still relevant?)
       existingId = if (idToSettings.get(newId) === settings) newId else findExistingConfigurationId(settings)
       existingId?.let {
         if (newId != it) {
           idToSettings.remove(it)
-
           if (selectedConfigurationId == it) {
             selectedConfigurationId = newId
           }
+          listManager.updateConfigurationId(it, newId)
         }
       }
 
       idToSettings.put(newId, settings)
+      listManager.requestSort()
 
       if (existingId == null) {
         refreshUsagesList(settings)
@@ -581,8 +608,12 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       eventPublisher.runConfigurationSelected(value)
     }
 
+  internal fun isFileContainsRunConfiguration(file: VirtualFile): Boolean {
+    return lock.read { rcInArbitraryFileManager.hasRunConfigsFromFile(file.path) }
+  }
+
   internal fun selectConfigurationStoredInFile(file: VirtualFile) {
-    val runConfigs = rcInArbitraryFileManager.getRunConfigsFromFiles(listOf(file.path))
+    val runConfigs = lock.read { rcInArbitraryFileManager.getRunConfigsFromFiles(listOf(file.path)) }
     runConfigs.find { idToSettings.containsKey(it.uniqueID) }?.let { selectedConfiguration = it }
   }
 
@@ -603,6 +634,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       }
     }
 
+  override suspend fun save() {
+    rcInArbitraryFileManager.saveRunConfigs(lock)
+  }
+
   override fun getState(): Element {
     if (!isFirstLoadState.get()) {
       lock.read {
@@ -618,8 +653,6 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     workspaceSchemeManager.save()
 
     lock.read {
-      rcInArbitraryFileManager.saveRunConfigs()
-
       workspaceSchemeManagerProvider.writeState(element)
 
       if (idToSettings.size > 1) {
@@ -686,25 +719,55 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     return methodElement
   }
 
-  @Suppress("unused")
   /**
    * used by MPS. Do not use if not approved.
    */
   fun reloadSchemes() {
+    var arbitraryFilePaths: Collection<String>
     lock.write {
       // not really required, but hot swap friendly - 1) factory is used a key, 2) developer can change some defaults.
       templateDifferenceHelper.clearCache()
       templateIdToConfiguration.clear()
       listManager.idToSettings.clear()
+      arbitraryFilePaths = rcInArbitraryFileManager.clearAllAndReturnFilePaths()
       recentlyUsedTemporaries.clear()
 
       stringIdToBeforeRunProvider.drop()
     }
+
     workspaceSchemeManager.reload()
     projectSchemeManager.reload()
+    reloadRunConfigsFromArbitraryFiles(arbitraryFilePaths)
   }
 
-  protected open fun addExtensionPointListeners() {
+  private fun reloadRunConfigsFromArbitraryFiles(filePaths: Collection<String>) {
+    for (filePath in filePaths) {
+      updateRunConfigsFromArbitraryFiles(emptyList(), filePaths)
+    }
+  }
+
+  @VisibleForTesting
+  protected open fun onFirstLoadingStarted() {
+    SyntheticConfigurationTypeProvider.EP_NAME.point.addExtensionPointListener(
+      object : ExtensionPointListener<SyntheticConfigurationTypeProvider> {
+        override fun extensionAdded(extension: SyntheticConfigurationTypeProvider, pluginDescriptor: PluginDescriptor) {
+          extension.configurationTypes
+        }
+      }, true, this)
+  }
+
+  @VisibleForTesting
+  protected open fun onFirstLoadingFinished() {
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        if (event.getChanges(ContentRootEntity::class.java).any() || event.getChanges(SourceRootEntity::class.java).any()) {
+          clearSelectedConfigurationIcon()
+          deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
+        }
+      }
+    })
+
+    @Suppress("TestOnlyProblems")
     if (ProjectManagerImpl.isLight(project)) {
       return
     }
@@ -743,24 +806,28 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun noStateLoaded() {
-    val first = isFirstLoadState.getAndSet(false)
+    val isFirstLoadState = isFirstLoadState.getAndSet(false)
+    if (isFirstLoadState) {
+      onFirstLoadingStarted()
+    }
+
     loadSharedRunConfigurations()
     runConfigurationFirstLoaded()
-    eventPublisher.stateLoaded(this, first)
+    eventPublisher.stateLoaded(this, isFirstLoadState)
 
-    if (first) {
-      addExtensionPointListeners()
+    if (isFirstLoadState) {
+      onFirstLoadingFinished()
     }
   }
 
   override fun loadState(parentNode: Element) {
-    val oldSelectedConfigurationId: String?
+    config.migrateToAdvancedSettings()
     val isFirstLoadState = isFirstLoadState.compareAndSet(true, false)
+    val oldSelectedConfigurationId = if (!isFirstLoadState) selectedConfigurationId else null
     if (isFirstLoadState) {
-      oldSelectedConfigurationId = null
+      onFirstLoadingStarted()
     }
     else {
-      oldSelectedConfigurationId = selectedConfigurationId
       clear(false)
     }
 
@@ -776,7 +843,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           schemeKey += ", type: ${it}"
         }
       }
-      else if (schemeKey != null) {
+      else {
         val typeId = element.getAttributeValue("type")
         if (typeId == null) {
           LOG.warn("typeId is null for '${schemeKey}'")
@@ -823,14 +890,14 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     runConfigurationFirstLoaded()
     fireBeforeRunTasksUpdated()
 
-    if (!isFirstLoadState && oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
+    if (oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
       eventPublisher.runConfigurationSelected(selectedConfiguration)
     }
 
     eventPublisher.stateLoaded(this, isFirstLoadState)
 
     if (isFirstLoadState) {
-      addExtensionPointListeners()
+      onFirstLoadingFinished()
     }
   }
 
@@ -854,8 +921,12 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     if (selectedConfiguration == null) {
       // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
       notYetAppliedInitialSelectedConfigurationId = selectedConfigurationId ?: ""
-      selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
+      selectAnyConfiguration()
     }
+  }
+
+  private fun selectAnyConfiguration() {
+    selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
   }
 
   fun readContext(parentNode: Element) {
@@ -927,7 +998,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       configurations
     }
 
-    iconCache.clear()
+    iconAndInvalidCache.clear()
     val eventPublisher = eventPublisher
     removedConfigurations.forEach { eventPublisher.runConfigurationRemoved(it) }
   }
@@ -982,8 +1053,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         }
       }
       else {
-        configuration.beforeRunTasks = getEffectiveBeforeRunTaskList(result ?: emptyList(), getConfigurationTemplate(configuration.factory!!).configuration.beforeRunTasks,
-                                                                     ownIsOnlyEnabled = true, isDisableTemplateTasks = false)
+        configuration.beforeRunTasks = getEffectiveBeforeRunTaskList(ownTasks = result ?: emptyList(),
+                                                                     templateTasks = getConfigurationTemplate(configuration.factory!!).configuration.beforeRunTasks,
+                                                                     ownIsOnlyEnabled = true,
+                                                                     isDisableTemplateTasks = false)
         return
       }
     }
@@ -991,16 +1064,25 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     configuration.beforeRunTasks = result ?: emptyList()
   }
 
-  @JvmOverloads
-  fun getFactory(typeId: String?, factoryId: String?, checkUnknown: Boolean = false): ConfigurationFactory? {
-    val type = idToType.value.get(typeId)
-    if (type == null) {
-      if (checkUnknown && typeId != null) {
-        UnknownFeaturesCollector.getInstance(project).registerUnknownRunConfiguration(typeId, factoryId)
-      }
-      return UnknownConfigurationType.getInstance()
+  fun getFactory(
+    typeId: String?,
+    factoryId: String?,
+    checkUnknown: Boolean = false,
+  ): ConfigurationFactory {
+    var factory = idToType.value.get(typeId)?.let { getFactory(it, factoryId) }
+    if (factory != null) {
+      return factory
     }
-    return getFactory(type, factoryId)
+
+    factory = UnknownConfigurationType.getInstance()
+    if (checkUnknown && typeId != null) {
+      UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(UnknownFeature(
+        CONFIGURATION_TYPE_FEATURE_ID,
+        ExecutionBundle.message("plugins.advertiser.feature.run.configuration"),
+        typeId,
+      ))
+    }
+    return factory
   }
 
   fun getFactory(type: ConfigurationType, factoryId: String?): ConfigurationFactory? {
@@ -1018,13 +1100,13 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
     tempConfiguration.isTemporary = true
     addConfiguration(tempConfiguration)
-    if (Registry.`is`("select.run.configuration.from.context")) {
+    if (shouldSetRunConfigurationFromContext()) {
       selectedConfiguration = tempConfiguration
     }
   }
 
   override val tempConfigurationsList: List<RunnerAndConfigurationSettings>
-    get() = allSettings.filterSmart { it.isTemporary }
+    get() = allSettings.filter { it.isTemporary }
 
   override fun makeStable(settings: RunnerAndConfigurationSettings) {
     settings.isTemporary = false
@@ -1071,14 +1153,16 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   override fun getConfigurationIcon(settings: RunnerAndConfigurationSettings, withLiveIndicator: Boolean): Icon {
     val uniqueId = settings.uniqueID
     if (selectedConfiguration?.uniqueID == uniqueId) {
-      iconCache.checkValidity(uniqueId)
+      iconAndInvalidCache.checkValidity(uniqueId, project)
     }
-    var icon = iconCache.get(uniqueId, settings, project)
+    var icon = iconAndInvalidCache.get(uniqueId, settings, project)
     if (withLiveIndicator) {
       val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors(Condition { it === settings })
       when {
-        runningDescriptors.size == 1 -> icon = ExecutionUtil.getLiveIndicator(icon)
-        runningDescriptors.size > 1 -> icon = IconUtil.addText(icon, runningDescriptors.size.toString())
+        runningDescriptors.size == 1 -> icon =
+          if (ExperimentalUI.isNewUI()) newUiRunningIcon(icon) else ExecutionUtil.getLiveIndicator(icon)
+        runningDescriptors.size > 1 -> icon =
+          if (ExperimentalUI.isNewUI()) newUiRunningIcon(icon) else IconUtil.addText(icon, runningDescriptors.size.toString())
       }
     }
     return icon
@@ -1086,7 +1170,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   fun isInvalidInCache(configuration: RunConfiguration): Boolean {
     findSettings(configuration)?.let {
-      return iconCache.isInvalid(it.uniqueID)
+      return iconAndInvalidCache.isInvalid(it.uniqueID)
     }
     return false
   }
@@ -1173,11 +1257,6 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     eventPublisher.runConfigurationChanged(settings, null)
   }
 
-  @Suppress("OverridingDeprecatedMember")
-  override fun addRunManagerListener(listener: RunManagerListener) {
-    project.messageBus.connect().subscribe(RunManagerListener.TOPIC, listener)
-  }
-
   fun fireBeforeRunTasksUpdated() {
     eventPublisher.beforeRunTasksChanged()
   }
@@ -1188,8 +1267,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
   }
 
-  fun removeConfigurations(toRemove: Collection<RunnerAndConfigurationSettings>) = removeConfigurations(toRemove,
-                                                                                                        deleteFileIfStoredInArbitraryFile = true)
+  fun removeConfigurations(toRemove: Collection<RunnerAndConfigurationSettings>) {
+    removeConfigurations(_toRemove = toRemove, deleteFileIfStoredInArbitraryFile = true)
+  }
 
   internal fun removeConfigurations(_toRemove: Collection<RunnerAndConfigurationSettings>,
                                     deleteFileIfStoredInArbitraryFile: Boolean = true,
@@ -1198,13 +1278,14 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       return
     }
 
-    val runConfigsToRemove = removeTemplatesAndReturnRemaining(_toRemove, deleteFileIfStoredInArbitraryFile, onSchemeManagerDeleteEvent)
-    val runConfigsToRemoveButNotYetRemoved = runConfigsToRemove.toMutableList()
-
     val changedSettings = SmartList<RunnerAndConfigurationSettings>()
     val removed = SmartList<RunnerAndConfigurationSettings>()
     var selectedConfigurationWasRemoved = false
+
     lock.write {
+      val runConfigsToRemove = removeTemplatesAndReturnRemaining(_toRemove, deleteFileIfStoredInArbitraryFile, onSchemeManagerDeleteEvent)
+      val runConfigsToRemoveButNotYetRemoved = runConfigsToRemove.toMutableList()
+
       listManager.immutableSortedSettingsList = null
 
       val iterator = idToSettings.values.iterator()
@@ -1220,7 +1301,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
           recentlyUsedTemporaries.remove(settings)
           removed.add(settings)
-          iconCache.remove(settings.uniqueID)
+          iconAndInvalidCache.remove(settings.uniqueID)
         }
         else {
           var isChanged = false
@@ -1249,7 +1330,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
 
     if (selectedConfigurationWasRemoved) {
-      selectedConfiguration = null
+      selectAnyConfiguration()
     }
 
     removed.forEach { eventPublisher.runConfigurationRemoved(it) }
@@ -1309,12 +1390,15 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
     otherRunManager.workspaceSchemeManager.reload()
   }
+
+  private fun newUiRunningIcon(icon: Icon) = IconManager.getInstance().withIconBadge(icon, JBUI.CurrentTheme.IconBadge.SUCCESS)
 }
 
 const val PROJECT_RUN_MANAGER_COMPONENT_NAME = "ProjectRunConfigurationManager"
 
+@Service(Service.Level.PROJECT)
 @State(name = PROJECT_RUN_MANAGER_COMPONENT_NAME, useLoadedStateAsExisting = false /* ProjectRunConfigurationManager is used only for IPR, avoid relatively cost call getState */)
-internal class IprRunManagerImpl(private val project: Project) : PersistentStateComponent<Element> {
+private class IprRunManagerImpl(private val project: Project) : PersistentStateComponent<Element> {
   val lastLoadedState = AtomicReference<Element>()
 
   override fun getState(): Element? {
@@ -1353,4 +1437,17 @@ private fun getFactoryKey(factory: ConfigurationFactory): String {
     is SimpleConfigurationType -> factory.type.id
     else -> "${factory.type.id}.${factory.id}"
   }
+}
+
+// todo convert ChooseRunConfigurationPopup to kotlin
+internal fun createFlatSettingsList(project: Project): List<ChooseRunConfigurationPopup.ItemWrapper<*>> {
+  return (RunManager.getInstanceIfCreated(project) as RunManagerImpl? ?: return emptyList()).getConfigurationsGroupedByTypeAndFolder(false)
+    .values
+    .asSequence()
+    .flatMap { map ->
+      map.values.flatten()
+    }
+    .map { ChooseRunConfigurationPopup.ItemWrapper.wrap(project, it)
+    }
+    .toList()
 }

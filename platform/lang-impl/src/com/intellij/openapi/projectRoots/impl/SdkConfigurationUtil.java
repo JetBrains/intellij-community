@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,9 +33,7 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author yole
- */
+
 public final class SdkConfigurationUtil {
   private static final Logger LOG = Logger.getInstance(SdkConfigurationUtil.class);
   private SdkConfigurationUtil() { }
@@ -214,12 +212,8 @@ public final class SdkConfigurationUtil {
   public static Sdk findOrCreateSdk(@Nullable Comparator<? super Sdk> comparator, SdkType @NotNull ... sdkTypes) {
     final Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     final Sdk sdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
-    if (sdk != null) {
-      for (SdkType type : sdkTypes) {
-        if (sdk.getSdkType() == type) {
-          return sdk;
-        }
-      }
+    if (sdk != null && ArrayUtil.contains(sdk.getSdkType(), sdkTypes)) {
+      return sdk;
     }
     for (SdkType type : sdkTypes) {
       List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(type);
@@ -265,7 +259,7 @@ public final class SdkConfigurationUtil {
   }
 
   @NotNull
-  public static String createUniqueSdkName(@NotNull SdkType type, String home, final Collection<? extends Sdk> sdks) {
+  public static String createUniqueSdkName(@NotNull SdkType type, @NotNull String home, final Collection<? extends Sdk> sdks) {
     return createUniqueSdkName(type.suggestSdkName(null, home), sdks);
   }
 
@@ -301,15 +295,7 @@ public final class SdkConfigurationUtil {
     // The behaviour may also depend on the FileChooser implementations which does not reuse that code
     FileChooser.chooseFiles(descriptor, null, component, getSuggestedSdkRoot(sdkType), chosen -> {
       final String path = chosen.get(0).getPath();
-      if (sdkType.isValidSdkHome(path)) {
-        consumer.consume(path);
-        return;
-      }
-
-      final String adjustedPath = sdkType.adjustSelectedSdkHome(path);
-      if (sdkType.isValidSdkHome(adjustedPath)) {
-        consumer.consume(adjustedPath);
-      }
+      consumer.consume(path);
     });
   }
 
@@ -330,7 +316,7 @@ public final class SdkConfigurationUtil {
     return result;
   }
 
-  private static @Nullable Sdk findByPath(@NotNull SdkType sdkType, Sdk @NotNull [] sdks, @NotNull String sdkHome) {
+  public static @Nullable Sdk findByPath(@NotNull SdkType sdkType, Sdk @NotNull [] sdks, @NotNull String sdkHome) {
     for (Sdk sdk : sdks) {
       final String path = sdk.getHomePath();
       if (sdk.getSdkType() == sdkType && path != null &&

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.coverage;
 
@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
@@ -15,12 +14,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author ven
- */
 public abstract class CoverageDataManager {
   public static CoverageDataManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, CoverageDataManagerImpl.class);
+    return project.getService(CoverageDataManagerImpl.class);
   }
 
   /**
@@ -29,20 +25,16 @@ public abstract class CoverageDataManager {
    * List coverage suite for presentation from IDEA
    *
    * @param name                  presentable name of a suite
-   * @param fileProvider
    * @param filters               configured filters for this suite
    * @param lastCoverageTimeStamp when this coverage data was gathered
    * @param suiteToMergeWith      null remove coverage pack from prev run and get from new
-   * @param coverageRunner
-   * @param collectLineInfo
-   * @param tracingEnabled
    */
   public abstract CoverageSuite addCoverageSuite(String name,
                                                  CoverageFileProvider fileProvider,
                                                  String[] filters,
                                                  long lastCoverageTimeStamp,
                                                  @Nullable String suiteToMergeWith, final CoverageRunner coverageRunner,
-                                                 final boolean collectLineInfo, final boolean tracingEnabled);
+                                                 final boolean coverageByTestEnabled, final boolean branchCoverage);
 
   public abstract CoverageSuite addExternalCoverageSuite(String selectedFileName,
                                                          long timeStamp,
@@ -77,6 +69,14 @@ public abstract class CoverageDataManager {
   public abstract void removeCoverageSuite(CoverageSuite suite);
 
   /**
+   * Remove suite from the list of tracked suites.
+   * <p>
+   * In contrast to <code>removeCoverageSuite</code>, this method keeps file on disk.
+   * @param suite suite to unregister
+   */
+  public abstract void unregisterCoverageSuite(CoverageSuite suite);
+
+  /**
    * runs computation in read action, blocking project close till action has been run,
    * and doing nothing in case projectClosing() event has been already broadcasted.
    *  Note that actions must not be long running not to cause significant pauses on project close.
@@ -92,15 +92,12 @@ public abstract class CoverageDataManager {
 
   public abstract void restoreMergedCoverage(@NotNull final CoverageSuitesBundle suite);
 
-  public abstract void addSuiteListener(CoverageSuiteListener listener, Disposable parentDisposable);
+  public abstract void addSuiteListener(@NotNull CoverageSuiteListener listener, @NotNull Disposable parentDisposable);
 
   public abstract void triggerPresentationUpdate();
 
   /**
    * This method attach process listener to process handler. Listener will load coverage information after process termination
-   * @param handler
-   * @param configuration
-   * @param runnerSettings
    */
   public abstract void attachToProcess(@NotNull final ProcessHandler handler,
                                        @NotNull final RunConfigurationBase configuration, RunnerSettings runnerSettings);

@@ -1,0 +1,8 @@
+// "Add constructor parameters from DataInputStream(InputStream!)" "true"
+// RUNTIME_WITH_FULL_JDK
+import java.io.DataInputStream
+import java.io.InputStream
+
+class C(`in`: InputStream) : DataInputStream(`in`)
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SuperClassNotInitialized$AddParametersFix

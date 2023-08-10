@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.core.CoreProjectScopeBuilder;
@@ -10,33 +10,26 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
-import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.IndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-/**
- * @author yole
- */
+
 public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
 
   public ProjectScopeBuilderImpl(@NotNull Project project) {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope buildEverythingScope() {
+  public @NotNull GlobalSearchScope buildEverythingScope() {
     return new EverythingGlobalScope(myProject) {
       final FileBasedIndexImpl myFileBasedIndex;
 
@@ -52,12 +45,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
         if (file instanceof VirtualFileWithId && myFileBasedIndex != null) {
-          for (IndexableFileSet set : myFileBasedIndex.getIndexableSets()) {
-            if (set.isInSet(file) && myFileBasedIndex.containsIndexableSet(set, myProject)) {
-              return true;
-            }
-          }
-          return false;
+          return myFileBasedIndex.belongsToProjectIndexableFiles(file, myProject);
         }
 
         RootType rootType = RootType.forFile(file);
@@ -67,9 +55,8 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
     };
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope buildLibrariesScope() {
+  public @NotNull GlobalSearchScope buildLibrariesScope() {
     ProjectAndLibrariesScope result = new ProjectAndLibrariesScope(myProject) {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
@@ -81,9 +68,8 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
         return false;
       }
 
-      @NotNull
       @Override
-      public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+      public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
         return Collections.emptySet();
       }
     };
@@ -91,9 +77,8 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
     return result;
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope buildAllScope() {
+  public @NotNull GlobalSearchScope buildAllScope() {
     if (myProject.isDefault() || LightEdit.owns(myProject)) {
       return new EverythingGlobalScope(myProject);
     }
@@ -104,22 +89,18 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
         if (file instanceof ProjectAwareVirtualFile) {
           return ((ProjectAwareVirtualFile)file).isInProject(Objects.requireNonNull(getProject()));
         }
-        DirectoryInfo info = ((ProjectFileIndexImpl)myProjectFileIndex).getInfoForFileOrDirectory(file);
-        return info.isInProject(file) &&
-               (info.getModule() != null || info.hasLibraryClassRoot() || info.isInLibrarySource(file));
+        return super.contains(file);
       }
     };
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope buildProjectScope() {
+  public @NotNull GlobalSearchScope buildProjectScope() {
     return new ProjectScopeImpl(myProject, FileIndexFacade.getInstance(myProject));
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope buildContentScope() {
+  public @NotNull GlobalSearchScope buildContentScope() {
     return new CoreProjectScopeBuilder.ContentSearchScope(myProject, FileIndexFacade.getInstance(myProject));
   }
 }

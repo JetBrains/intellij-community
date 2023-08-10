@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationScript.inspection
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
@@ -13,7 +14,7 @@ import org.snakeyaml.engine.v2.nodes.ScalarNode
 
 internal class ExternallyConfigurableProjectInspectionProfileManager(project: Project) : ProjectInspectionProfileManager(project) {
   companion object {
-    const val KEY = "inspections"
+    const val KEY: String = "inspections"
   }
 
   private val profileFromFile = SynchronizedClearableLazy {
@@ -32,46 +33,37 @@ internal class ExternallyConfigurableProjectInspectionProfileManager(project: Pr
     val profile = InspectionProfileImpl("intellij configuration file", InspectionToolRegistrar.getInstance(), this)
     if (disableAll) {
       for (entry in profile.getInspectionTools(null)) {
-        profile.setToolEnabled(entry.shortName, false, project, fireEvents = false)
+        profile.setToolEnabled(entry.shortName, false, project, /*fireEvents =*/ false)
       }
       profile.disableAllTools(project)
     }
 
     toEnable?.let {
-      updateTools(it, true, profile, project)
+      updateTools(list = it, value = true, profile = profile, project = project)
     }
     toDisable?.let {
-      updateTools(it, false, profile, project)
+      updateTools(list = it, value = false, profile = profile, project = project)
     }
 
     profile
-  }
-
-  private fun updateTools(list: List<Node>, value: Boolean, profile: InspectionProfileImpl, project: Project) {
-    for (node in list) {
-      if (node is ScalarNode) {
-        profile.setToolEnabled(node.value, value, project, fireEvents = false)
-      }
-    }
   }
 
   init {
     ConfigurationFileManager.getInstance(project).registerClearableLazyValue(profileFromFile)
   }
 
-  override fun getProfiles(): Collection<InspectionProfileImpl> {
-    val value = profileFromFile.value
-    if (value != null) {
-      return listOf(value)
+  private fun updateTools(list: List<Node>, value: Boolean, profile: InspectionProfileImpl, project: Project) {
+    for (node in list) {
+      if (node is ScalarNode) {
+        profile.setToolEnabled(node.value, value, project, /*fireEvents =*/ false)
+      }
     }
-    return super.getProfiles()
   }
 
-  override fun getCurrentProfile(): InspectionProfileImpl {
-    val value = profileFromFile.value
-    if (value != null) {
-      return value
-    }
-    return super.getCurrentProfile()
-  }
+  override fun getProfiles(): Collection<InspectionProfileImpl> =
+    profileFromFile.value?.let { listOf(it) }
+    ?: super.getProfiles()
+
+  override fun getCurrentProfile(): InspectionProfileImpl =
+    profileFromFile.value ?: super.getCurrentProfile()
 }

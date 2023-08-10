@@ -10,14 +10,18 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.GotItComponentBuilder;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +43,10 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     myExtensionsManager = extensionsManager;
   }
 
+  public boolean isInplaceValidationSupported() {
+    return false;
+  }
+
   @Override
   protected boolean isDefaultSettings() {
     return myDefaultSettings;
@@ -52,8 +60,10 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
   @Override
   protected final List<SettingsEditorFragment<Settings, ?>> createFragments() {
     List<SettingsEditorFragment<Settings, ?>> fragments = new ArrayList<>(createRunFragments());
-    for (SettingsEditorFragment<RunConfigurationBase<?>, ?> wrapper : myExtensionsManager.createFragments(mySettings)) {
-      fragments.add((SettingsEditorFragment<Settings, ?>)wrapper);
+    for (SettingsEditor<Settings> editor: myExtensionsManager.createFragments(mySettings)) {
+      if (editor instanceof SettingsEditorFragment<?, ?>) {
+        fragments.add((SettingsEditorFragment<Settings, ?>) editor);
+      }
     }
     addRunnerSettingsEditors(fragments);
 //    dump fragment ids for FUS
@@ -63,6 +73,13 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
       fragment.setConfigId(configId);
     }
     return fragments;
+  }
+
+  @Override
+  public @NotNull FragmentedSettingsBuilder<Settings> getBuilder() {
+    FragmentedSettingsBuilder<Settings> builder = super.getBuilder();
+    builder.setConfigId(mySettings.getType().getId());
+    return builder;
   }
 
   private void addRunnerSettingsEditors(List<? super SettingsEditorFragment<Settings, ?>> fragments) {
@@ -159,30 +176,37 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
       JComponent component = fragment.getEditorComponent();
       if (component == null) continue;
-      component.addFocusListener(new FocusListener() {
+      FocusListener listener = new FocusListener() {
         @Override
-        public void focusGained(FocusEvent e) {}
+        public void focusGained(FocusEvent e) { }
 
         @Override
         public void focusLost(FocusEvent e) {
           checkGotIt(fragment);
         }
-      });
+      };
+      component.addFocusListener(listener);
+      Disposer.register(fragment, () -> component.removeFocusListener(listener));
     }
   }
 
   private void checkGotIt(SettingsEditorFragment<Settings, ?> fragment) {
     if (!isDefaultSettings() && !fragment.isCanBeHidden() && !fragment.isTag() && StringUtil.isNotEmpty(fragment.getName())) {
-      //noinspection unchecked
-      Settings clone = (Settings)mySettings.clone();
-      fragment.applyEditorTo(clone);
-      if (!fragment.isInitiallyVisible(clone)) {
-        JComponent component = fragment.getEditorComponent();
-        String text = fragment.getName().replace("\u001B", "");
-        new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", text), fragment).
-          withHeader(ExecutionBundle.message("gotIt.popup.title")).
-          show(component, (c) -> new Point(GotItTooltip.ARROW_SHIFT, c.getHeight()));
-      }
+      ReadAction.nonBlocking(() -> {
+          //noinspection unchecked
+          Settings clone = (Settings)mySettings.clone();
+          fragment.applyEditorTo(clone);
+          return fragment.isInitiallyVisible(clone);
+        })
+        .finishOnUiThread(ModalityState.defaultModalityState(), visible -> {
+          if (visible) return;
+          JComponent component = fragment.getEditorComponent();
+          String text = fragment.getName().replace("\u001B", "");
+          new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", text), fragment).
+            withHeader(ExecutionBundle.message("gotIt.popup.title")).
+            show(component, (c, b) -> new Point(GotItComponentBuilder.getArrowShift(), c.getHeight()));
+        })
+        .expireWith(fragment).submit(NonUrgentExecutor.getInstance());
     }
   }
 }

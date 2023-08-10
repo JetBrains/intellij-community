@@ -2,6 +2,7 @@
 package com.intellij.ui.wizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.util.NlsActions;
 
 import javax.swing.*;
@@ -51,7 +52,7 @@ public abstract class WizardAction extends AbstractAction {
   public static class Finish extends WizardAction {
 
     public Finish(WizardModel model) {
-      super(IdeBundle.message("button.finish"), model);
+      super(IdeBundle.message(Experiments.getInstance().isFeatureEnabled("new.project.wizard") ? "button.create" :  "button.finish"), model);
     }
 
     @Override

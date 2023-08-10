@@ -21,25 +21,29 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
 public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
-  public void testJavadocsAndSources() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>4.0</version>" +
-                  "  </dependency>" +
-                  "</dependencies>");
+  @Test
+  public void JavadocsAndSources() {
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>4.0</version>
+                      </dependency>
+                    </dependencies>
+                    """);
 
     File sources = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar");
     File javadoc = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar");
@@ -53,18 +57,20 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertTrue(javadoc.exists());
   }
 
-  public void testIgnoringOfflineSetting() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>4.0</version>" +
-                  "  </dependency>" +
-                  "</dependencies>");
+  @Test
+  public void IgnoringOfflineSetting() {
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>4.0</version>
+                      </dependency>
+                    </dependencies>
+                    """);
 
     File sources = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar");
     File javadoc = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar");
@@ -91,30 +97,32 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertTrue(javadoc.exists());
   }
 
-  public void testDownloadingSpecificDependency() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>jmock</groupId>" +
-                  "    <artifactId>jmock</artifactId>" +
-                  "    <version>1.2.0</version>" +
-                  "  </dependency>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>4.0</version>" +
-                  "  </dependency>" +
-                  "</dependencies>");
+  @Test
+  public void DownloadingSpecificDependency() {
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>jmock</groupId>
+                        <artifactId>jmock</artifactId>
+                        <version>1.2.0</version>
+                      </dependency>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>4.0</version>
+                      </dependency>
+                    </dependencies>
+                    """);
 
     File sources = new File(getRepositoryPath(), "/jmock/jmock/1.2.0/jmock-1.2.0-sources.jar");
     File javadoc = new File(getRepositoryPath(), "/jmock/jmock/1.2.0/jmock-1.2.0-javadoc.jar");
     assertFalse(sources.exists());
     assertFalse(javadoc.exists());
 
-    MavenProject project = myProjectsTree.getRootProjects().get(0);
+    MavenProject project = getProjectsTree().getRootProjects().get(0);
     MavenArtifact dep = project.getDependencies().get(0);
     downloadArtifacts(Arrays.asList(project), Arrays.asList(dep));
 
@@ -124,25 +132,27 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertFalse(new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar").exists());
   }
 
-  public void testReturningNotFoundArtifacts() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+  @Test
+  public void ReturningNotFoundArtifacts() {
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>lib</groupId>
+                        <artifactId>xxx</artifactId>
+                        <version>1</version>
+                      </dependency>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>4.0</version>
+                      </dependency>
+                    </dependencies>
+                    """);
 
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>lib</groupId>" +
-                  "    <artifactId>xxx</artifactId>" +
-                  "    <version>1</version>" +
-                  "  </dependency>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>4.0</version>" +
-                  "  </dependency>" +
-                  "</dependencies>");
-
-    MavenProject project = myProjectsTree.getRootProjects().get(0);
+    MavenProject project = getProjectsTree().getRootProjects().get(0);
     MavenArtifactDownloader.DownloadResult unresolvedArtifacts = downloadArtifacts(Arrays.asList(project), null);
     assertUnorderedElementsAreEqual(unresolvedArtifacts.resolvedSources, new MavenId("junit", "junit", "4.0"));
     assertUnorderedElementsAreEqual(unresolvedArtifacts.resolvedDocs, new MavenId("junit", "junit", "4.0"));
@@ -150,19 +160,21 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertUnorderedElementsAreEqual(unresolvedArtifacts.unresolvedDocs, new MavenId("lib", "xxx", "1"));
   }
 
-  public void testJavadocsAndSourcesForTestDeps() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>4.0</version>" +
-                  "    <scope>test</scope>" +
-                  "  </dependency>" +
-                  "</dependencies>");
+  @Test
+  public void JavadocsAndSourcesForTestDeps() {
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>4.0</version>
+                        <scope>test</scope>
+                      </dependency>
+                    </dependencies>
+                    """);
 
     File sources = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar");
     File javadoc = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar");
@@ -176,17 +188,18 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertTrue(javadoc.exists());
   }
 
-  public void testJavadocsAndSourcesForDepsWithClassifiersAndType() throws Exception {
+  @Test
+  public void JavadocsAndSourcesForDepsWithClassifiersAndType() throws Exception {
     String remoteRepo = FileUtil.toSystemIndependentName(myDir.getPath() + "/repo");
-    updateSettingsXmlFully("<settings>" +
-                           "<mirrors>" +
-                           "  <mirror>" +
-                           "    <id>central</id>" +
-                           "    <url>" + VfsUtilCore.pathToUrl(remoteRepo) + "</url>" +
-                           "    <mirrorOf>*</mirrorOf>" +
-                           "  </mirror>" +
-                           "</mirrors>" +
-                           "</settings>");
+    updateSettingsXmlFully("<settings>\n" +
+                           "<mirrors>\n" +
+                           "  <mirror>\n" +
+                           "    <id>central</id>\n" +
+                           "    <url>\n" + VfsUtilCore.pathToUrl(myPathTransformer.toRemotePath(remoteRepo)) + "</url>\n" +
+                           "    <mirrorOf>*</mirrorOf>\n" +
+                           "  </mirror>\n" +
+                           "</mirrors>\n" +
+                           "</settings>\n");
 
     createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-sources.jar");
     createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-javadoc.jar");
@@ -200,32 +213,32 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-foo-sources.jar");
     createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-foo-javadoc.jar");
 
-
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>xxx</groupId>" +
-                  "    <artifactId>xxx</artifactId>" +
-                  "    <version>1</version>" +
-                  "    <classifier>foo</classifier>" +
-                  "  </dependency>" +
-                  "  <dependency>" +
-                  "    <groupId>xxx</groupId>" +
-                  "    <artifactId>yyy</artifactId>" +
-                  "    <version>1</version>" +
-                  "    <type>test-jar</type>" +
-                  "  </dependency>" +
-                  "  <dependency>" +
-                  "    <groupId>xxx</groupId>" +
-                  "    <artifactId>zzz</artifactId>" +
-                  "    <version>1</version>" +
-                  "    <classifier>foo</classifier>" +
-                  "    <type>test-jar</type>" +
-                  "  </dependency>" +
-                  "</dependencies>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>xxx</groupId>
+                        <artifactId>xxx</artifactId>
+                        <version>1</version>
+                        <classifier>foo</classifier>
+                      </dependency>
+                      <dependency>
+                        <groupId>xxx</groupId>
+                        <artifactId>yyy</artifactId>
+                        <version>1</version>
+                        <type>test-jar</type>
+                      </dependency>
+                      <dependency>
+                        <groupId>xxx</groupId>
+                        <artifactId>zzz</artifactId>
+                        <version>1</version>
+                        <classifier>foo</classifier>
+                        <type>test-jar</type>
+                      </dependency>
+                    </dependencies>
+                    """);
 
     List<File> files1 = Arrays.asList(new File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-sources.jar"),
                                       new File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-javadoc.jar"),
@@ -253,26 +266,27 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     }
   }
 
-  public void testDownloadingPlugins() {
+  @Test
+  public void DownloadingPlugins() {
     try {
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<build>" +
-                    "  <plugins>" +
-                    "    <plugin>" +
-                    "      <groupId>org.apache.maven.plugins</groupId>" +
-                    "      <artifactId>maven-surefire-plugin</artifactId>" +
-                    "      <version>2.4.2</version>" +
-                    "    </plugin>" +
-                    "  </plugins>" +
-                    "</build>");
-
-      File f = new File(getRepositoryPath(), "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar");
-      assertFalse(f.exists());
+      importProject("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      <build>
+                        <plugins>
+                          <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <version>2.4.2</version>
+                          </plugin>
+                        </plugins>
+                      </build>
+                      """);
 
       resolvePlugins();
+
+      File f = new File(getRepositoryPath(), "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar");
 
       assertTrue(f.exists());
     }
@@ -282,23 +296,25 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     }
   }
 
-  public void testDownloadBuildExtensionsOnResolve() {
+  @Test
+  public void DownloadBuildExtensionsOnResolve() {
     File f = new File(getRepositoryPath(), "/org/apache/maven/wagon/wagon-ftp/2.10/wagon-ftp-2.10.pom");
     assertFalse(f.exists());
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <extensions>" +
-                  "    <extension>" +
-                  "      <groupId>org.apache.maven.wagon</groupId>" +
-                  "      <artifactId>wagon-ftp</artifactId>" +
-                  "      <version>2.10</version>" +
-                  "    </extension>" +
-                  "  </extensions>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <extensions>
+                        <extension>
+                          <groupId>org.apache.maven.wagon</groupId>
+                          <artifactId>wagon-ftp</artifactId>
+                          <version>2.10</version>
+                        </extension>
+                      </extensions>
+                    </build>
+                    """);
 
     assertTrue(f.exists());
   }

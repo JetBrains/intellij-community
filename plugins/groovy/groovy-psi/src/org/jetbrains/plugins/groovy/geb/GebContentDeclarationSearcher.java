@@ -16,12 +16,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GebContentDeclarationSearcher extends PomDeclarationSearcher {
   @Override
-  public void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, @NotNull Consumer<PomTarget> consumer) {
+  public void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, @NotNull Consumer<? super PomTarget> consumer) {
     PsiElement grCall = element.getParent();
     if (!(grCall instanceof GrMethodCall)) return;
 
@@ -29,9 +26,8 @@ public class GebContentDeclarationSearcher extends PomDeclarationSearcher {
     if (!(grClosure instanceof GrClosableBlock)) return;
 
     PsiElement contentField = grClosure.getParent();
-    if (!(contentField instanceof GrField)) return;
+    if (!(contentField instanceof GrField field)) return;
 
-    GrField field = (GrField)contentField;
     if (!"content".equals(field.getName()) || !field.hasModifierProperty(PsiModifier.STATIC)) return;
 
     PsiClass containingClass = field.getContainingClass();

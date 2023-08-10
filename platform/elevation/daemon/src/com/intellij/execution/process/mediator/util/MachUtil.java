@@ -31,7 +31,7 @@ public final class MachUtil {
       throw new IllegalStateException("macOS only");
     }
 
-    if (machNamespaceUid != null && Platform.isMac()) {
+    if (machNamespaceUid != null) {
       tryRun(() -> machMoveToUserNamespace(machNamespaceUid), "Failed to move to namespace of UID " + machNamespaceUid);
     }
   }

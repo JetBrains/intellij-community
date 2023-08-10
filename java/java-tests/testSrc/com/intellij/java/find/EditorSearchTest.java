@@ -16,20 +16,21 @@
 package com.intellij.java.find;
 
 import com.intellij.find.EditorSearchSession;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 
 public class EditorSearchTest extends BasePlatformTestCase {
-  private static final String THE_CODE = "public class A {\n" +
-                                   "  //First comment ABC, ABCD, abc\n" +
-                                   "  int ABC = 3;\n" +
-                                   "  int abcde = 4;\n" +
-                                   "  String literalString = \"ABC, ABCD, abc\";\n" +
-                                   "}";
+  private static final String THE_CODE = """
+    public class A {
+      //First comment ABC, ABCD, abc
+      int ABC = 3;
+      int abcde = 4;
+      String literalString = "ABC, ABCD, abc";
+    }""";
 
   public void testSearchFieldSelection() {
     myFixture.configureByText("a.java", THE_CODE);
@@ -37,16 +38,17 @@ public class EditorSearchTest extends BasePlatformTestCase {
     int i = THE_CODE.indexOf(key);
     myFixture.getEditor().getSelectionModel().setSelection(i, i+key.length());
     myFixture.performEditorAction("Find");
-    IdeEventQueue.getInstance().flushQueue();
+    UIUtil.dispatchAllInvocationEvents();
+
     assertEquals(key, getSearchTextComponent().getText());
     assertEquals(key, getSearchTextComponent().getSelectedText());
     assertEquals(3, getSearchTextComponent().getCaretPosition());
     assertTrue(getEditorSearchComponent().hasMatches());
     IdeFocusManager.findInstance().requestFocus(myFixture.getEditor().getContentComponent(), false);
-    IdeEventQueue.getInstance().flushQueue();
+    UIUtil.dispatchAllInvocationEvents();
 
     myFixture.performEditorAction("Find");
-    IdeEventQueue.getInstance().flushQueue();
+    UIUtil.dispatchAllInvocationEvents();
     assertEquals(key, getSearchTextComponent().getText());
     assertEquals(key, getSearchTextComponent().getSelectedText());
     assertEquals(key.length(), getSearchTextComponent().getCaretPosition());
@@ -61,9 +63,9 @@ public class EditorSearchTest extends BasePlatformTestCase {
     int selectionEnd = myFixture.getEditor().getSelectionModel().getSelectionEnd();
     int caret = myFixture.getEditor().getCaretModel().getOffset();
 
-    IdeEventQueue.getInstance().flushQueue();
+    UIUtil.dispatchAllInvocationEvents();
     myFixture.performEditorAction("Find");
-    IdeEventQueue.getInstance().flushQueue();
+    UIUtil.dispatchAllInvocationEvents();
     assertEquals(key, getSearchTextComponent().getText());
     assertEquals(key, getSearchTextComponent().getSelectedText());
     assertEquals(key.length(), getSearchTextComponent().getCaretPosition());
@@ -72,7 +74,7 @@ public class EditorSearchTest extends BasePlatformTestCase {
       getSearchTextComponent().getDocument().remove(0, getSearchTextComponent().getDocument().getLength());
     } catch (BadLocationException ignore) {}
     
-    IdeEventQueue.getInstance().flushQueue();
+    UIUtil.dispatchAllInvocationEvents();
     assertEquals(selectionStart, myFixture.getEditor().getSelectionModel().getSelectionStart());
     assertEquals(selectionEnd, myFixture.getEditor().getSelectionModel().getSelectionEnd());
     assertEquals(caret, myFixture.getEditor().getCaretModel().getOffset());

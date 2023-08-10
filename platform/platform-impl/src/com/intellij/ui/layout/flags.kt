@@ -3,8 +3,12 @@
 
 package com.intellij.ui.layout
 
+import org.jetbrains.annotations.ApiStatus
+
 // http://www.migcalendar.com/miglayout/mavensite/docs/cheatsheet.pdf
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 enum class LCFlags {
   /**
    * Puts the layout in a flow-only mode.
@@ -33,6 +37,8 @@ enum class LCFlags {
  * See FAQ in the [docs](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout).
  * Do not use this flags directly.
  */
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 enum class CCFlags {
   /**
    * Use [Row.grow] instead.

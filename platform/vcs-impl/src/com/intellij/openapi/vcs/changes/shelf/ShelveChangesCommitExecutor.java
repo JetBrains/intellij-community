@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.shelf;
 
@@ -50,12 +50,7 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
 
   private class ShelveChangesCommitSession implements CommitSession {
     @Override
-    public boolean canExecute(Collection<Change> changes, String commitMessage) {
-      return changes.size() > 0;
-    }
-
-    @Override
-    public void execute(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
+    public void execute(@NotNull Collection<? extends Change> changes, @Nullable String commitMessage) {
       if (changes.size() > 0 && !ChangesUtil.hasFileChanges(changes)) {
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
           .showErrorDialog(myProject, VcsBundle.message("shelve.changes.only.directories"), VcsBundle.message("shelve.changes.action")), null, myProject);
@@ -65,7 +60,7 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
         final ShelvedChangeList list = ShelveChangesManager.getInstance(myProject).shelveChanges(changes, commitMessage, true, false, true);
         ShelvedChangesViewManager.getInstance(myProject).activateView(list);
 
-        Change[] changesArray = changes.toArray(new Change[0]);
+        Change[] changesArray = changes.toArray(Change.EMPTY_CHANGE_ARRAY);
         LocalChangeList changeList = ChangesUtil.getChangeListIfOnlyOne(myProject, changesArray);
         if (changeList != null) {
           ChangeListManager.getInstance(myProject).scheduleAutomaticEmptyChangeListDeletion(changeList, true);
@@ -74,7 +69,7 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
       catch (final Exception ex) {
         LOG.info(ex);
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(
-          () -> Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle()), ModalityState.NON_MODAL, myProject);
+          () -> Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle()), ModalityState.nonModal(), myProject);
       }
     }
 

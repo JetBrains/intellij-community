@@ -29,9 +29,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 
 import java.util.List;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PySmartEnterTest extends PyTestCase {
   private static List<SmartEnterProcessor> getSmartProcessors(Language language) {
     return SmartEnterProcessors.INSTANCE.forKey(language);
@@ -328,8 +325,37 @@ public class PySmartEnterTest extends PyTestCase {
     doTest();
   }
 
+  public void testWithExpressionMissingNoSpaceAfterWithKeyword() {
+    doTest();
+  }
+
   // PY-12877
   public void testWithOnlyColonMissing() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testWithParenthesizedWithItemsOnlyColonMissing() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testWithParenthesizedWithItemsColonMissingAndTargetIncomplete() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testWithParenthesizedWithItemsFirstTargetIncomplete() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testWithParenthesizedWithItemsLastTargetIncomplete() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testWithParenthesizedWithItemsNothingToFix() {
     doTest();
   }
 
@@ -357,5 +383,126 @@ public class PySmartEnterTest extends PyTestCase {
   // PY-19279
   public void testColonAfterReturnTypeAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+  }
+
+  // PY-48014
+  public void testColonAndFirstClauseAfterEmptyMatchStatementWithSubjectCaretOnSubject() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAndFirstClauseAfterEmptyMatchStatementWithSubjectCaretOnMatch() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAndFirstClauseAfterEmptyMatchStatementWithSubjectLookingLikeBinaryExpression() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAndFirstClauseAfterEmptyMatchStatementWithSubjectLookingLikeCallExpression() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testNothingAfterUnambiguousExpressionStartingWithMatch() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAndFirstClauseAfterEmptyMatchStatementWithSubjectCustomIndent() {
+    getIndentOptions().INDENT_SIZE = 2;
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAfterEmptyMatchStatementWithoutSubject() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testOnlyCaretMoveAfterMatchStatementWithColonWithoutSubject() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testFirstClauseAfterEmptyMatchStatementWithSubjectAndColon() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testLineBreakAndIndentAfterNonEmptyMatchStatementWithSubjectAndColon() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testNoFirstClauseInMatchStatementWithIncompleteStatementInside() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAndIndentAfterCaseClauseWithPattern() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAfterCaseClauseWithoutPattern() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testOnlyCaretMoveAfterCaseClauseWithColonWithoutPattern() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testIndentAfterCaseClauseWithPatternAndColon() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAndIndentAfterCaseClauseWithPatternAndGuardCondition() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAfterCaseClauseWithPatternWithoutGuardCondition() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testOnlyCaretMoveAfterCaseClauseWithGuardWithoutPattern() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testOnlyCaretMoveAfterCaseClauseWithPatternAndColonWithoutGuardCondition() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAfterCaseClauseWithoutPatternWithoutGuardCondition() {
+    doTest();
+  }
+
+  // PY-48014
+  public void testColonAfterCaseClauseWithoutPatternWithGuardCondition() {
+    doTest();
+  }
+
+  // PY-49785
+  public void testColonAfterIntermediateCaseClause() {
+    doTest();
+  }
+
+  // PY-49785
+  public void testColonAndIndentAfterIntermediateCaseClause() {
+    doTest();
+  }
+
+  // PY-49785
+  public void testColonAfterFinalCaseClauseWithPrecedingIncompleteCaseClause() {
+    doTest();
   }
 }

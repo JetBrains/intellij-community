@@ -68,15 +68,6 @@ def f():
     return f, foo
 
 
-# PY-3886
-def f():
-    from unittest import TestCase
-    class C(TestCase):
-        def test_1(self):
-            self.fail()
-            <warning descr="This code is unreachable">return -42</warning>
-
-
 # PY-4149
 def f():
     try:

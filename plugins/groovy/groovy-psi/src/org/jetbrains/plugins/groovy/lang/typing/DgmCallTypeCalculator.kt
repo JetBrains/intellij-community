@@ -17,7 +17,7 @@ class DgmCallTypeCalculator : GrCallTypeCalculator {
   override fun getType(receiver: PsiType?, method: PsiMethod, arguments: Arguments?, context: PsiElement): PsiType? {
     if (GroovyConfigUtils.getInstance().isVersionAtLeast(context, GroovyConfigUtils.GROOVY2_4)) return null
 
-    if (arguments == null || arguments.isEmpty()) {
+    if (arguments.isNullOrEmpty()) {
       return null
     }
     if (method.containingClass?.qualifiedName != DEFAULT_GROOVY_METHODS) {

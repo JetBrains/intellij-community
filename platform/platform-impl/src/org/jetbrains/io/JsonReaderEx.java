@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io;
 
 import com.google.gson.JsonParseException;
@@ -58,7 +44,7 @@ public final class JsonReaderEx implements Closeable {
   private static final int NUMBER_CHAR_EXP_SIGN = 6;
   private static final int NUMBER_CHAR_EXP_DIGIT = 7;
 
-  private final CharSequence in;
+  private final CharSequence sourceSequence;
 
   /** True to accept non-spec compliant JSON */
   private boolean lenient = false;
@@ -98,20 +84,20 @@ public final class JsonReaderEx implements Closeable {
   /**
    * Creates a new instance that reads a JSON-encoded stream from {@code in}.
    */
-  public JsonReaderEx(@NotNull CharSequence in) {
-    this(in, 0);
+  public JsonReaderEx(@NotNull CharSequence sourceSequence) {
+    this(sourceSequence, 0);
   }
 
-  public JsonReaderEx(@NotNull CharSequence in, int start) {
-    this(in, start, new int[32]);
+  public JsonReaderEx(@NotNull CharSequence sourceSequence, int start) {
+    this(sourceSequence, start, new int[32]);
 
     stack[stackSize++] = JsonScope.EMPTY_DOCUMENT;
   }
 
-  private JsonReaderEx(@NotNull CharSequence in, int start, int @NotNull [] stack) {
-    this.in = in;
+  private JsonReaderEx(@NotNull CharSequence sourceSequence, int start, int @NotNull [] stack) {
+    this.sourceSequence = sourceSequence;
     position = start;
-    limit = in.length();
+    limit = sourceSequence.length();
     this.stack = stack;
   }
 
@@ -162,24 +148,25 @@ public final class JsonReaderEx implements Closeable {
     static final int CLOSED = 8;
   }
 
+  /**
+   * @return initial char sequence to be parsed
+   */
+  public CharSequence getSourceSequence() { return sourceSequence; }
+
   @Nullable
   public JsonReaderEx subReader() {
     JsonToken nextToken = peek();
     switch (nextToken) {
-      case BEGIN_ARRAY:
-      case BEGIN_OBJECT:
-      case STRING:
-      case NUMBER:
-      case BOOLEAN:
-        break;
-      case NULL:
+      case BEGIN_ARRAY, BEGIN_OBJECT, STRING, NUMBER, BOOLEAN -> {
+      }
+      case NULL -> {
         // just return null
         return null;
-      default:
-        throw createParseError("Cannot create sub reader, next token " + nextToken + " is not value");
+      }
+      default -> throw createParseError("Cannot create sub reader, next token " + nextToken + " is not value");
     }
 
-    JsonReaderEx subReader = new JsonReaderEx(in, position, stack.clone());
+    JsonReaderEx subReader = new JsonReaderEx(sourceSequence, position, stack.clone());
     subReader.stackSize = stackSize;
     subReader.peeked = peeked;
     subReader.peekedLong = peekedLong;
@@ -195,17 +182,17 @@ public final class JsonReaderEx implements Closeable {
     return subReader;
   }
 
-  public final void setLenient(boolean lenient) {
+  public void setLenient(boolean lenient) {
     this.lenient = lenient;
   }
 
-  public final JsonReaderEx lenient(boolean lenient) {
+  public JsonReaderEx lenient(boolean lenient) {
     this.lenient = lenient;
     return this;
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public final boolean isLenient() {
+  public boolean isLenient() {
     return lenient;
   }
 
@@ -302,37 +289,19 @@ public final class JsonReaderEx implements Closeable {
       p = doPeek();
     }
 
-    switch (p) {
-      case PEEKED_BEGIN_OBJECT:
-        return JsonToken.BEGIN_OBJECT;
-      case PEEKED_END_OBJECT:
-        return JsonToken.END_OBJECT;
-      case PEEKED_BEGIN_ARRAY:
-        return JsonToken.BEGIN_ARRAY;
-      case PEEKED_END_ARRAY:
-        return JsonToken.END_ARRAY;
-      case PEEKED_SINGLE_QUOTED_NAME:
-      case PEEKED_DOUBLE_QUOTED_NAME:
-      case PEEKED_UNQUOTED_NAME:
-        return JsonToken.NAME;
-      case PEEKED_TRUE:
-      case PEEKED_FALSE:
-        return JsonToken.BOOLEAN;
-      case PEEKED_NULL:
-        return JsonToken.NULL;
-      case PEEKED_SINGLE_QUOTED:
-      case PEEKED_DOUBLE_QUOTED:
-      case PEEKED_UNQUOTED:
-      case PEEKED_BUFFERED:
-        return JsonToken.STRING;
-      case PEEKED_LONG:
-      case PEEKED_NUMBER:
-        return JsonToken.NUMBER;
-      case PEEKED_EOF:
-        return JsonToken.END_DOCUMENT;
-      default:
-        throw new AssertionError();
-    }
+    return switch (p) {
+      case PEEKED_BEGIN_OBJECT -> JsonToken.BEGIN_OBJECT;
+      case PEEKED_END_OBJECT -> JsonToken.END_OBJECT;
+      case PEEKED_BEGIN_ARRAY -> JsonToken.BEGIN_ARRAY;
+      case PEEKED_END_ARRAY -> JsonToken.END_ARRAY;
+      case PEEKED_SINGLE_QUOTED_NAME, PEEKED_DOUBLE_QUOTED_NAME, PEEKED_UNQUOTED_NAME -> JsonToken.NAME;
+      case PEEKED_TRUE, PEEKED_FALSE -> JsonToken.BOOLEAN;
+      case PEEKED_NULL -> JsonToken.NULL;
+      case PEEKED_SINGLE_QUOTED, PEEKED_DOUBLE_QUOTED, PEEKED_UNQUOTED, PEEKED_BUFFERED -> JsonToken.STRING;
+      case PEEKED_LONG, PEEKED_NUMBER -> JsonToken.NUMBER;
+      case PEEKED_EOF -> JsonToken.END_DOCUMENT;
+      default -> throw new AssertionError();
+    };
   }
 
   private int doPeek() {
@@ -371,45 +340,46 @@ public final class JsonReaderEx implements Closeable {
         }
       }
       int c = nextNonWhitespace(true);
-      switch (c) {
-        case '"':
-          return peeked = PEEKED_DOUBLE_QUOTED_NAME;
-        case '\'':
+      return peeked = switch (c) {
+        case '"' -> PEEKED_DOUBLE_QUOTED_NAME;
+        case '\'' -> {
           checkLenient();
-          return peeked = PEEKED_SINGLE_QUOTED_NAME;
-        case '}':
+          yield PEEKED_SINGLE_QUOTED_NAME;
+        }
+        case '}' -> {
           if (peekStack != JsonScope.NONEMPTY_OBJECT) {
-            return peeked = PEEKED_END_OBJECT;
+            yield PEEKED_END_OBJECT;
           }
           else {
             throw createParseError("Expected name");
           }
-        default:
+        }
+        default -> {
           checkLenient();
           position--; // Don't consume the first character in an unquoted string.
           if (isLiteral((char)c)) {
-            return peeked = PEEKED_UNQUOTED_NAME;
+            yield PEEKED_UNQUOTED_NAME;
           }
           else {
             throw createParseError("Expected name");
           }
-      }
+        }
+      };
     }
     else if (peekStack == JsonScope.DANGLING_NAME) {
       stack[stackSize - 1] = JsonScope.NONEMPTY_OBJECT;
       // Look for a colon before the value.
       int c = nextNonWhitespace(true);
       switch (c) {
-        case ':':
-          break;
-        case '=':
+        case ':' -> {
+        }
+        case '=' -> {
           checkLenient();
-          if (position < limit && in.charAt(position) == '>') {
+          if (position < limit && sourceSequence.charAt(position) == '>') {
             position++;
           }
-          break;
-        default:
-          throw createParseError("Expected ':'");
+        }
+        default -> throw createParseError("Expected ':'");
       }
     }
     else if (peekStack == JsonScope.EMPTY_DOCUMENT) {
@@ -480,7 +450,7 @@ public final class JsonReaderEx implements Closeable {
       return result;
     }
 
-    if (!isLiteral(in.charAt(position))) {
+    if (!isLiteral(sourceSequence.charAt(position))) {
       throw createParseError("Expected value");
     }
 
@@ -490,7 +460,7 @@ public final class JsonReaderEx implements Closeable {
 
   private int peekKeyword() {
     // Figure out which keyword we're matching against by its first character.
-    char c = in.charAt(position);
+    char c = sourceSequence.charAt(position);
     String keyword;
     String keywordUpper;
     int peeking;
@@ -519,13 +489,13 @@ public final class JsonReaderEx implements Closeable {
       if (position + i >= limit) {
         return PEEKED_NONE;
       }
-      c = in.charAt(position + i);
+      c = sourceSequence.charAt(position + i);
       if (c != keyword.charAt(i) && c != keywordUpper.charAt(i)) {
         return PEEKED_NONE;
       }
     }
 
-    if ((position + length < limit) && isLiteral(in.charAt(position + length))) {
+    if ((position + length < limit) && isLiteral(sourceSequence.charAt(position + length))) {
       return PEEKED_NONE; // Don't match trues, falsey or nullsoft!
     }
 
@@ -536,7 +506,7 @@ public final class JsonReaderEx implements Closeable {
 
   private int peekNumber() {
     // Like nextNonWhitespace, this uses locals 'p' and 'l' to save inner-loop field access.
-    CharSequence in = this.in;
+    CharSequence in = this.sourceSequence;
     int p = position;
     int l = limit;
 
@@ -561,7 +531,7 @@ public final class JsonReaderEx implements Closeable {
 
       char c = in.charAt(p + i);
       switch (c) {
-        case '-':
+        case '-' -> {
           if (last == NUMBER_CHAR_NONE) {
             negative = true;
             last = NUMBER_CHAR_SIGN;
@@ -572,30 +542,29 @@ public final class JsonReaderEx implements Closeable {
             continue;
           }
           return PEEKED_NONE;
-
-        case '+':
+        }
+        case '+' -> {
           if (last == NUMBER_CHAR_EXP_E) {
             last = NUMBER_CHAR_EXP_SIGN;
             continue;
           }
           return PEEKED_NONE;
-
-        case 'e':
-        case 'E':
+        }
+        case 'e', 'E' -> {
           if (last == NUMBER_CHAR_DIGIT || last == NUMBER_CHAR_FRACTION_DIGIT) {
             last = NUMBER_CHAR_EXP_E;
             continue;
           }
           return PEEKED_NONE;
-
-        case '.':
+        }
+        case '.' -> {
           if (last == NUMBER_CHAR_DIGIT) {
             last = NUMBER_CHAR_DECIMAL;
             continue;
           }
           return PEEKED_NONE;
-
-        default:
+        }
+        default -> {
           if (c < '0' || c > '9') {
             if (!isLiteral(c)) {
               break charactersOfNumber;
@@ -621,6 +590,7 @@ public final class JsonReaderEx implements Closeable {
           else if (last == NUMBER_CHAR_EXP_E || last == NUMBER_CHAR_EXP_SIGN) {
             last = NUMBER_CHAR_EXP_DIGIT;
           }
+        }
       }
     }
 
@@ -652,7 +622,7 @@ public final class JsonReaderEx implements Closeable {
     }
 
     for (int i = 0; i < NON_EXECUTE_PREFIX.length; i++) {
-      if (in.charAt(position + i) != NON_EXECUTE_PREFIX[i]) {
+      if (sourceSequence.charAt(position + i) != NON_EXECUTE_PREFIX[i]) {
         return; // not a security token!
       }
     }
@@ -778,7 +748,7 @@ public final class JsonReaderEx implements Closeable {
     }
     else if (p == PEEKED_NUMBER) {
       int end = position + peekedNumberLength;
-      result = in.subSequence(position, end).toString();
+      result = sourceSequence.subSequence(position, end).toString();
       position = end;
     }
     else if (anyPrimitiveAsString && p == PEEKED_TRUE) {
@@ -862,7 +832,7 @@ public final class JsonReaderEx implements Closeable {
 
     if (p == PEEKED_NUMBER) {
       int end = position + peekedNumberLength;
-      peekedString = in.subSequence(position, end).toString();
+      peekedString = sourceSequence.subSequence(position, end).toString();
       position = end;
     }
     else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
@@ -908,7 +878,7 @@ public final class JsonReaderEx implements Closeable {
 
     if (p == PEEKED_NUMBER) {
       int end = position + peekedNumberLength;
-      peekedString = in.subSequence(position, end).toString();
+      peekedString = sourceSequence.subSequence(position, end).toString();
       position = end;
     }
     else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
@@ -950,7 +920,7 @@ public final class JsonReaderEx implements Closeable {
    */
   private String nextQuotedValue(char quote) {
     // Like nextNonWhitespace, this uses locals 'p' and 'l' to save inner-loop field access.
-    CharSequence in = this.in;
+    CharSequence in = this.sourceSequence;
 
     int p = position;
     int l = limit;
@@ -1001,7 +971,7 @@ public final class JsonReaderEx implements Closeable {
     int i = position;
     findNonLiteralCharacter:
     for (; i < limit; i++) {
-      switch (in.charAt(i)) {
+      switch (sourceSequence.charAt(i)) {
         case '/':
         case '\\':
         case ';':
@@ -1023,14 +993,14 @@ public final class JsonReaderEx implements Closeable {
       }
     }
 
-    String result = in.subSequence(position, i).toString();
+    String result = sourceSequence.subSequence(position, i).toString();
     position = i;
     return result;
   }
 
   private void skipQuotedValue(char quote) {
     // Like nextNonWhitespace, this uses locals 'p' and 'l' to save inner-loop field access.
-    CharSequence in = this.in;
+    CharSequence in = this.sourceSequence;
     int p = position;
     int l = limit;
     // the index of the first character not yet appended to the builder
@@ -1058,7 +1028,7 @@ public final class JsonReaderEx implements Closeable {
   private void skipUnquotedValue() {
     int i = position;
     for (; i < limit; i++) {
-      switch (in.charAt(i)) {
+      switch (sourceSequence.charAt(i)) {
         case '/':
         case '\\':
         case ';':
@@ -1112,7 +1082,7 @@ public final class JsonReaderEx implements Closeable {
 
     if (p == PEEKED_NUMBER) {
       int end = position + peekedNumberLength;
-      peekedString = in.subSequence(position, end).toString();
+      peekedString = sourceSequence.subSequence(position, end).toString();
       position = end;
     }
     else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
@@ -1212,7 +1182,7 @@ public final class JsonReaderEx implements Closeable {
   private int getLineNumber() {
     int result = 1;
     for (int i = 0; i < position; i++) {
-      if (in.charAt(i) == '\n') {
+      if (sourceSequence.charAt(i) == '\n') {
         result++;
       }
     }
@@ -1222,7 +1192,7 @@ public final class JsonReaderEx implements Closeable {
   private int getColumnNumber() {
     int result = 1;
     for (int i = 0; i < position; i++) {
-      if (in.charAt(i) == '\n') {
+      if (sourceSequence.charAt(i) == '\n') {
         result = 1;
       }
       else {
@@ -1247,7 +1217,7 @@ public final class JsonReaderEx implements Closeable {
      * before any (potentially indirect) call to fillBuffer() and reread both
      * 'p' and 'l' after any (potentially indirect) call to the same method.
      */
-    CharSequence in = this.in;
+    CharSequence in = this.sourceSequence;
     int p = position;
     int l = limit;
     while (true) {
@@ -1280,7 +1250,7 @@ public final class JsonReaderEx implements Closeable {
         checkLenient();
         char peek = in.charAt(position);
         switch (peek) {
-          case '*':
+          case '*' -> {
             // skip a /* c-style comment */
             position++;
             if (!skipTo("*/")) {
@@ -1288,18 +1258,17 @@ public final class JsonReaderEx implements Closeable {
             }
             p = position + 2;
             l = limit;
-            continue;
-
-          case '/':
+          }
+          case '/' -> {
             // skip a // end-of-line comment
             position++;
             skipToEndOfLine();
             p = position;
             l = limit;
-            continue;
-
-          default:
+          }
+          default -> {
             return c;
+          }
         }
       }
       else if (c == '#') {
@@ -1340,7 +1309,7 @@ public final class JsonReaderEx implements Closeable {
    */
   private void skipToEndOfLine() {
     while (position < limit) {
-      char c = in.charAt(position++);
+      char c = sourceSequence.charAt(position++);
       if (c == '\n' || c == '\r') {
         break;
       }
@@ -1350,13 +1319,13 @@ public final class JsonReaderEx implements Closeable {
   private boolean skipTo(String toFind) {
     outer:
     for (; position + toFind.length() <= limit; position++) {
-      if (in.charAt(position) == '\n') {
+      if (sourceSequence.charAt(position) == '\n') {
         //lineNumber++;
         //lineStart = pos + 1;
         continue;
       }
       for (int c = 0; c < toFind.length(); c++) {
-        if (in.charAt(position + c) != toFind.charAt(c)) {
+        if (sourceSequence.charAt(position + c) != toFind.charAt(c)) {
           continue outer;
         }
       }
@@ -1384,16 +1353,16 @@ public final class JsonReaderEx implements Closeable {
       throw createParseError("Unterminated escape sequence");
     }
 
-    char escaped = in.charAt(position++);
-    switch (escaped) {
-      case 'u':
+    char escaped = sourceSequence.charAt(position++);
+    return switch (escaped) {
+      case 'u' -> {
         if (position + 4 > limit) {
           throw createParseError("Unterminated escape sequence");
         }
         // Equivalent to Integer.parseInt(stringPool.get(buffer, pos, 4), 16);
         char result = 0;
         for (int i = position, end = i + 4; i < end; i++) {
-          char c = in.charAt(i);
+          char c = sourceSequence.charAt(i);
           result <<= 4;
           if (c >= '0' && c <= '9') {
             result += (c - '0');
@@ -1405,38 +1374,20 @@ public final class JsonReaderEx implements Closeable {
             result += (c - 'A' + 10);
           }
           else {
-            throw new NumberFormatException("\\u" + in.subSequence(position, position + 4));
+            throw new NumberFormatException("\\u" + sourceSequence.subSequence(position, position + 4));
           }
         }
         position += 4;
-        return result;
-
-      case 't':
-        return '\t';
-
-      case 'b':
-        return '\b';
-
-      case 'n':
-        return '\n';
-
-      case 'r':
-        return '\r';
-
-      case 'f':
-        return '\f';
-
-      case '\n':
-        //lineNumber++;
-        //lineStart = pos;
-        // fall-through
-
-      case '\'':
-      case '"':
-      case '\\':
-      default:
-        return escaped;
-    }
+        yield result;
+      }
+      case 't' -> '\t';
+      case 'b' -> '\b';
+      case 'n' -> '\n';
+      case 'r' -> '\r';
+      case 'f' -> '\f';
+      //case '\n', '\'', '"', '\\',
+      default -> escaped;
+    };
   }
 
   /**

@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,7 @@ public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandl
   }
 
   @Override
-  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     if (caret == null) caret = editor.getCaretModel().getPrimaryCaret();
     Document document = editor.getDocument();
     Couple<Integer> lineRange = getTargetLineRange(caret);
@@ -56,7 +57,7 @@ public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandl
     }
     else if (caretLineContent != null) {
       for (int i = 0; i < lineCount; i++) {
-        if (lines[i] == caretLineContent) {
+        if (Strings.areSameInstance(lines[i], caretLineContent)) {
           caret.moveToOffset(document.getLineStartOffset(startLine + i) + caretOffsetInLine);
           break;
         }

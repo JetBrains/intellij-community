@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.IgnoredBeanFactory
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
@@ -14,6 +16,7 @@ import com.intellij.openapi.vcs.changes.ignore.actions.getSelectedFiles
 import com.intellij.openapi.vcs.changes.ignore.actions.writeIgnoreFileEntries
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle.messagePointer
@@ -33,6 +36,10 @@ abstract class DefaultGitExcludeAction(dynamicText: @NotNull Supplier<@Nls Strin
     e.presentation.isEnabled = enabled
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   protected open fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.getData(CommonDataKeys.PROJECT)
     return (project != null && GitUtil.getRepositories(project).isNotEmpty())
@@ -47,7 +54,7 @@ class AddToGitExcludeAction : DefaultGitExcludeAction(
   override fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return false
     val selectedFiles = getSelectedFiles(e)
-    val unversionedFiles = ScheduleForAdditionAction.getUnversionedFiles(e, project)
+    val unversionedFiles = ScheduleForAdditionAction.Manager.getUnversionedFiles(e, project)
     return isEnabled(project, selectedFiles, unversionedFiles.toList())
   }
 
@@ -66,7 +73,11 @@ class AddToGitExcludeAction : DefaultGitExcludeAction(
     val selectedFiles = getSelectedFiles(e)
     if (selectedFiles.isEmpty()) return
 
-    for ((repository, filesToAdd) in GitUtil.sortFilesByRepositoryIgnoringMissing(project, selectedFiles)) {
+    val filesToIgnore =
+      VcsUtil.computeWithModalProgress(project, VcsBundle.message("ignoring.files.progress.title"), false) {
+        GitUtil.sortFilesByRepositoryIgnoringMissing(project, selectedFiles)
+      }
+    for ((repository, filesToAdd) in filesToIgnore) {
       val gitExclude = repository.repositoryFiles.excludeFile.let { VfsUtil.findFileByIoFile(it, true) } ?: continue
       val ignores = filesToAdd.map { file -> IgnoredBeanFactory.ignoreFile(file, project) }
       writeIgnoreFileEntries(project, gitExclude, ignores, gitVcs, repository.root)

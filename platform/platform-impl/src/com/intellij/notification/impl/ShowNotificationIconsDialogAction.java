@@ -4,6 +4,7 @@ package com.intellij.notification.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -72,5 +73,10 @@ public class ShowNotificationIconsDialogAction extends AnAction implements DumbA
         return row;
       }
     }.show();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

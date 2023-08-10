@@ -1,0 +1,5 @@
+version = "1.1.*"
+obsolete_since = "2.0.0" # Released on 2022-09-11
+
+[tool.stubtest]
+ignore_missing_stub = false

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.extensions.debugger;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -25,10 +26,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * Class to extend debugger functionality to handle various Groovy scripts
- *
- * @author ilyas
  */
 public abstract class ScriptPositionManagerHelper {
   public static final ExtensionPointName<ScriptPositionManagerHelper> EP_NAME = ExtensionPointName.create("org.intellij.groovy.positionManagerDelegate");
@@ -82,5 +84,14 @@ public abstract class ScriptPositionManagerHelper {
   @Nullable
   public String customizeClassName(@NotNull PsiClass psiClass) {
     return null;
+  }
+
+  /**
+   * If a position manager works with scripts of FileType other,
+   * then {@link org.jetbrains.plugins.groovy.GroovyFileType#GROOVY_FILE_TYPE}, it should report them here.
+   * @return file types supported by this position manager helper
+   */
+  public Collection<? extends FileType> getAcceptedFileTypes() {
+    return Collections.emptySet();
   }
 }

@@ -18,11 +18,12 @@ package com.intellij.codeInsight.generation.surroundWith;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 
 abstract public class JavaBooleanExpressionSurrounder extends JavaExpressionSurrounder {
   @Override
   public boolean isApplicable(PsiExpression expr) {
     PsiType type = expr.getType();
-    return type != null && (PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type)));
+    return type != null && (PsiTypes.booleanType().equals(type) || PsiTypes.booleanType().equals(PsiPrimitiveType.getUnboxedType(type)));
   }
 }

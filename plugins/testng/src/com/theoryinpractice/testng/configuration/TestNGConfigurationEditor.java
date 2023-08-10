@@ -12,6 +12,8 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -34,6 +36,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.IconUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.MessageInfoException;
 import com.theoryinpractice.testng.TestngBundle;
@@ -105,7 +108,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
         protected void onClassChoosen(PsiClass psiClass) {
           final JTextField textField = myPatternTextField.getTextField();
           final String text = textField.getText();
-          textField.setText(text + (text.length() > 0 ? "||" : "") + psiClass.getQualifiedName());
+          textField.setText(text + (!text.isEmpty() ? "||" : "") + psiClass.getQualifiedName());
         }
 
         @Override
@@ -158,7 +161,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
       browseListeners[i].setField((ComponentWithBrowseButton)field);
       if (browseListeners[i] instanceof MethodBrowser) {
-        final EditorTextField childComponent = (EditorTextField)((ComponentWithBrowseButton)field).getChildComponent();
+        final EditorTextField childComponent = (EditorTextField)((ComponentWithBrowseButton<?>)field).getChildComponent();
         ((MethodBrowser)browseListeners[i]).installCompletion(childComponent);
         document = childComponent.getDocument();
       }
@@ -183,9 +186,6 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     myUseModulePath.setAnchor(moduleClasspath.getLabel());
     myUseModulePath.getComponent().setText(ExecutionBundle.message("use.module.path.checkbox.label"));
     myUseModulePath.getComponent().setSelected(true);
-    if (!project.isDefault()) {
-      myUseModulePath.setVisible(FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(project)).length > 0);
-    }
   }
 
   private void evaluateModuleClassPath() {
@@ -284,6 +284,13 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     myUseDefaultReportersCheckBox.setSelected(data.USE_DEFAULT_REPORTERS);
     myShortenCommandLineCombo.getComponent().setSelectedItem(config.getShortenCommandLine());
     myUseModulePath.getComponent().setSelected(config.isUseModulePath());
+    if (!project.isDefault()) {
+      SwingUtilities.invokeLater(() ->
+                                   ReadAction.nonBlocking(() -> FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(project)).length > 0)
+                                     .expireWith(this)
+                                     .finishOnUiThread(ModalityState.stateForComponent(myUseModulePath), visible -> myUseModulePath.setVisible(visible))
+                                     .submit(NonUrgentExecutor.getInstance()));
+    }
   }
 
   @Override

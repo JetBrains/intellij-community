@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PythonIndentingProcessor extends MergingLexerAdapter {
+  @SuppressWarnings("SSBasedInspection")
   protected final IntArrayList myIndentStack = new IntArrayList();
   protected int myBraceLevel;
   protected boolean myLineHasSignificantTokens;
@@ -112,7 +113,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   }
 
   @NotNull
-  private String getBaseTokenText() {
+  protected String getBaseTokenText() {
     return getBufferSequence().subSequence(getBaseTokenStart(), getBaseTokenEnd()).toString();
   }
 
@@ -255,12 +256,12 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
       pushToken(PyTokenTypes.STATEMENT_BREAK, pos, pos);
       final int indents = myIndentStack.size();
       for (int i = 0; i < indents - 1; i++) {
-        final int indent = myIndentStack.peekInt(0);
+        final int indent = myIndentStack.topInt();
         if (myCurrentNewLineIndent >= indent) {
           break;
         }
         if (myIndentStack.size() > 1) {
-          myIndentStack.popInt();
+          myIndentStack.pop();
           pushToken(PyTokenTypes.DEDENT, pos, pos);
         }
       }
@@ -376,7 +377,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   }
 
   protected void processIndent(int whiteSpaceStart, IElementType whitespaceTokenType) {
-    int lastIndent = myIndentStack.peekInt(0);
+    int lastIndent = myIndentStack.topInt();
     int indent = getNextLineIndent();
     myLastNewLineIndent = indent;
     // don't generate indent/dedent tokens if a line contains only end-of-line comment and whitespace
@@ -401,13 +402,13 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   }
 
   private void closeDanglingSuitesWithComments(int indent, int whiteSpaceStart) {
-    int lastIndent = myIndentStack.peekInt(0);
+    int lastIndent = myIndentStack.topInt();
 
     int insertIndex = myLineBreakBeforeFirstCommentIndex == -1 ? myTokenQueue.size() : myLineBreakBeforeFirstCommentIndex;
     int lastSuiteIndent;
     while (indent < lastIndent) {
       lastSuiteIndent = myIndentStack.popInt();
-      lastIndent = myIndentStack.peekInt(0);
+      lastIndent = myIndentStack.topInt();
       int dedentOffset = whiteSpaceStart;
       if (indent > lastIndent) {
         myTokenQueue.add(new PendingToken(PyTokenTypes.INCONSISTENT_DEDENT, whiteSpaceStart, whiteSpaceStart));
@@ -427,8 +428,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   protected int skipPrecedingCommentsWithIndent(int indent, int index) {
     // insert the DEDENT before previous comments that have the same indent as the current token indent
     boolean foundComment = false;
-    while(index > 0 && myTokenQueue.get(index-1) instanceof PendingCommentToken) {
-      final PendingCommentToken commentToken = (PendingCommentToken)myTokenQueue.get(index - 1);
+    while(index > 0 && myTokenQueue.get(index - 1) instanceof PendingCommentToken commentToken) {
       if (commentToken.getIndent() != indent) {
         break;
       }

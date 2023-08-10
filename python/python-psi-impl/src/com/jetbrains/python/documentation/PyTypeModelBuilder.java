@@ -3,25 +3,31 @@ package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiUtil;
-import com.jetbrains.python.toolbox.ChainIterable;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.jetbrains.python.documentation.DocumentationBuilderKit.combUp;
+import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.highlightExpressionText;
+import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.styledSpan;
 
 public class PyTypeModelBuilder {
   private final Map<PyType, TypeModel> myVisited = Maps.newHashMap();
@@ -41,7 +47,7 @@ public class PyTypeModelBuilder {
       return visitor.getString();
     }
 
-    public void toBodyWithLinks(@NotNull ChainIterable<String> body, @NotNull PsiElement anchor) {
+    public void toBodyWithLinks(@NotNull HtmlBuilder body, @NotNull PsiElement anchor) {
       final TypeToBodyWithLinksVisitor visitor = new TypeToBodyWithLinksVisitor(body, anchor);
       accept(visitor);
     }
@@ -63,9 +69,11 @@ public class PyTypeModelBuilder {
 
   static final class OneOf extends TypeModel {
     private final Collection<TypeModel> oneOfTypes;
+    private final boolean bitwiseOrUnionAllowed;
 
-    private OneOf(Collection<TypeModel> oneOfTypes) {
+    private OneOf(Collection<TypeModel> oneOfTypes, boolean bitwiseOrUnionAllowed) {
       this.oneOfTypes = oneOfTypes;
+      this.bitwiseOrUnionAllowed = bitwiseOrUnionAllowed;
     }
 
     @Override
@@ -97,7 +105,7 @@ public class PyTypeModelBuilder {
     private static final NamedType ANY = new NamedType(PyNames.UNKNOWN_TYPE);
 
     @Nullable
-    private final String name;
+    private final @NlsSafe String name;
 
     private NamedType(@Nullable String name) {
       this.name = name;
@@ -116,9 +124,11 @@ public class PyTypeModelBuilder {
 
   static final class UnknownType extends TypeModel {
     private final TypeModel type;
+    private final boolean bitwiseOrUnionAllowed;
 
-    private UnknownType(TypeModel type) {
+    private UnknownType(TypeModel type, boolean bitwiseOrUnionAllowed) {
       this.type = type;
+      this.bitwiseOrUnionAllowed = bitwiseOrUnionAllowed;
     }
 
     @Override
@@ -129,9 +139,11 @@ public class PyTypeModelBuilder {
 
   static final class OptionalType extends TypeModel {
     private final TypeModel type;
+    private final boolean bitwiseOrUnionAllowed;
 
-    private OptionalType(TypeModel type) {
+    private OptionalType(TypeModel type, boolean bitwiseOrUnionAllowed) {
       this.type = type;
+      this.bitwiseOrUnionAllowed = bitwiseOrUnionAllowed;
     }
 
     @Override
@@ -173,7 +185,7 @@ public class PyTypeModelBuilder {
   }
 
   static final class ParamType extends TypeModel {
-    @Nullable private final String name;
+    @Nullable private final @NlsSafe String name;
     @Nullable private final TypeModel type;
 
     private ParamType(@Nullable String name, @Nullable TypeModel type) {
@@ -201,7 +213,7 @@ public class PyTypeModelBuilder {
   }
 
   static class GenericType extends TypeModel {
-    private final String name;
+    private final @NlsSafe String name;
 
     GenericType(@Nullable String name) {
       this.name = name;
@@ -230,11 +242,8 @@ public class PyTypeModelBuilder {
 
   /**
    * Builds tree-like type model for PyType
-   *
-   * @param type
-   * @param allowUnions
-   * @return
    */
+  @SuppressWarnings("rawtypes")
   public TypeModel build(@Nullable PyType type,
                          boolean allowUnions) {
     final TypeModel evaluated = myVisited.get(type);
@@ -247,8 +256,7 @@ public class PyTypeModelBuilder {
     myVisited.put(type, null); //mark as evaluating
 
     TypeModel result = null;
-    if (type instanceof PyTypedDictType) {
-      PyTypedDictType typedDictType = (PyTypedDictType)type;
+    if (type instanceof PyTypedDictType typedDictType) {
       if (typedDictType.isInferred()) {
         return build(new PyCollectionTypeImpl(typedDictType.getPyClass(), false,
                                               typedDictType.getElementTypes()), allowUnions);
@@ -257,8 +265,8 @@ public class PyTypeModelBuilder {
         result = NamedType.nameOrAny(type);
       }
     }
-    else if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
-      final PyInstantiableType instanceType = ((PyInstantiableType)type).toInstance();
+    else if (type instanceof PyInstantiableType && ((PyInstantiableType<?>)type).isDefinition()) {
+      final PyInstantiableType instanceType = ((PyInstantiableType<?>)type).toInstance();
       // Special case: render Type[type] as just type
       if (type instanceof PyClassType && instanceType.equals(PyBuiltinCache.getInstance(((PyClassType)type).getPyClass()).getTypeType())) {
         result = NamedType.nameOrAny(type);
@@ -270,8 +278,7 @@ public class PyTypeModelBuilder {
     else if (type instanceof PyNamedTupleType) {
       result = NamedType.nameOrAny(type);
     }
-    else if (type instanceof PyTupleType) {
-      final PyTupleType tupleType = (PyTupleType)type;
+    else if (type instanceof PyTupleType tupleType) {
 
       final List<PyType> elementTypes = tupleType.isHomogeneous()
                                         ? Collections.singletonList(tupleType.getIteratedItemType())
@@ -281,8 +288,7 @@ public class PyTypeModelBuilder {
       final List<TypeModel> elementModels = ContainerUtil.map(elementTypes, elementType -> build(elementType, true));
       result = new TupleType(elementModels, tupleType.isHomogeneous(), useTypingAlias);
     }
-    else if (type instanceof PyCollectionType) {
-      final PyCollectionType asCollection = (PyCollectionType)type;
+    else if (type instanceof PyCollectionType asCollection) {
       final List<TypeModel> elementModels = new ArrayList<>();
       for (PyType elementType : asCollection.getElementTypes()) {
         elementModels.add(build(elementType, true));
@@ -293,8 +299,7 @@ public class PyTypeModelBuilder {
         result = new CollectionOf(collectionType, elementModels, useTypingAlias);
       }
     }
-    else if (type instanceof PyUnionType && allowUnions) {
-      final PyUnionType unionType = (PyUnionType)type;
+    else if (type instanceof PyUnionType unionType && allowUnions) {
       final Collection<PyType> unionMembers = unionType.getMembers();
       final Pair<List<PyLiteralType>, List<PyType>> literalsAndOthers = extractLiterals(unionType);
       final Ref<PyType> optionalType = getOptionalType(unionType);
@@ -303,24 +308,26 @@ public class PyTypeModelBuilder {
 
         if (!literalsAndOthers.second.isEmpty()) {
           final List<TypeModel> otherTypeModels = ContainerUtil.map(literalsAndOthers.second, t -> build(t, false));
-          result = new OneOf(ContainerUtil.prepend(otherTypeModels, oneOfLiterals));
+          result = new OneOf(ContainerUtil.prepend(otherTypeModels, oneOfLiterals),
+                             PyTypingTypeProvider.isBitwiseOrUnionAvailable(myContext));
         }
         else {
           result = oneOfLiterals;
         }
       }
       else if (optionalType != null) {
-        result = new OptionalType(build(optionalType.get(), true));
+        result = new OptionalType(build(optionalType.get(), true), PyTypingTypeProvider.isBitwiseOrUnionAvailable(myContext));
       }
       else if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type, false, myContext)) {
-        result = new UnknownType(build(unionType.excludeNull(), true));
+        result = new UnknownType(build(unionType.excludeNull(), true), PyTypingTypeProvider.isBitwiseOrUnionAvailable(myContext));
       }
-      else if (unionMembers.stream().allMatch(t -> t instanceof PyClassType && ((PyClassType)t).isDefinition())) {
+      else if (ContainerUtil.all(unionMembers, t -> t instanceof PyClassType && ((PyClassType)t).isDefinition())) {
         final List<TypeModel> instanceTypes = ContainerUtil.map(unionMembers, t -> build(((PyClassType)t).toInstance(), allowUnions));
-        result = new ClassObjectType(new OneOf(instanceTypes));
+        result = new ClassObjectType(new OneOf(instanceTypes, PyTypingTypeProvider.isBitwiseOrUnionAvailable(myContext)));
       }
       else {
-        result = new OneOf(Collections2.transform(unionMembers, t -> build(t, false)));
+        result = new OneOf(Collections2.transform(unionMembers, t -> build(t, false)),
+                           PyTypingTypeProvider.isBitwiseOrUnionAvailable(myContext));
       }
     }
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
@@ -328,9 +335,6 @@ public class PyTypeModelBuilder {
     }
     else if (type instanceof PyGenericType) {
       result = new GenericType(type.getName());
-    }
-    else if (type != null && type.isBuiltin() && PyNames.BUILTIN_PATH_LIKE.equals(type.getName())) {
-      result = new NamedType(PyNames.PATH_LIKE);
     }
     if (result == null) {
       result = NamedType.nameOrAny(type);
@@ -377,7 +381,13 @@ public class PyTypeModelBuilder {
     if (parameters != null) {
       parameterModels = new ArrayList<>();
       for (PyCallableParameter parameter : parameters) {
-        parameterModels.add(new ParamType(parameter.getName(), build(parameter.getType(myContext), true)));
+        final var paramType = parameter.getType(myContext);
+        if (paramType instanceof PyParamSpecType || paramType instanceof PyConcatenateType) {
+          parameterModels.add(new ParamType(null, build(parameter.getType(myContext), true)));
+        }
+        else {
+          parameterModels.add(new ParamType(parameter.getName(), build(parameter.getType(myContext), true)));
+        }
       }
     }
     final PyType ret = type.getReturnType(myContext);
@@ -410,30 +420,43 @@ public class PyTypeModelBuilder {
   }
 
   private static class TypeToStringVisitor extends TypeNameVisitor {
-    private final StringBuilder myStringBuilder = new StringBuilder();
-
     @Override
-    protected void add(String s) {
-      myStringBuilder.append(s);
+    protected @NotNull HtmlChunk styled(@Nls String text, @NotNull TextAttributesKey style) {
+      return HtmlChunk.raw(text);
     }
 
     @Override
-    protected void addType(String name) {
-      add(name);
+    protected @NotNull HtmlChunk escaped(@Nls String text) {
+      return HtmlChunk.raw(text);
+    }
+
+    @Override
+    protected @NotNull HtmlChunk className(@Nls String name) {
+      return escaped(name);
+    }
+
+    @Override
+    protected @NotNull HtmlChunk styledExpression(@Nls String expressionText, @NotNull PyExpression expression) {
+      return HtmlChunk.raw(expressionText);
     }
 
     public String getString() {
-      return myStringBuilder.toString();
+      return myBody.toString();
     }
 
     @Override
     public void unknown(UnknownType type) {
       final TypeModel nested = type.type;
       if (nested != null) {
-        add("Union[");
-        nested.accept(this);
-        add(", " + PyNames.UNKNOWN_TYPE);
-        add("]");
+        if (type.bitwiseOrUnionAllowed) {
+          nested.accept(this);
+          add(HtmlChunk.raw(" | " + PyNames.UNKNOWN_TYPE));
+        }
+        else {
+          add(HtmlChunk.raw("Union[")); // NON-NLS
+          nested.accept(this);
+          add(HtmlChunk.raw(", " + PyNames.UNKNOWN_TYPE + "]"));
+        }
       }
     }
   }
@@ -446,19 +469,19 @@ public class PyTypeModelBuilder {
 
     @Override
     public void function(FunctionType function) {
-      add("Callable[");
+      add(HtmlChunk.raw("Callable["));  //NON-NLS
       final Collection<TypeModel> parameters = function.parameters;
       if (parameters != null) {
-        add("[");
+        add(HtmlChunk.raw("["));
         processList(parameters);
-        add("]");
+        add(HtmlChunk.raw("]"));
       }
       else {
-        add("...");
+        add(HtmlChunk.raw("..."));
       }
-      add(", ");
+      add(HtmlChunk.raw(", "));
       function.returnType.accept(this);
-      add("]");
+      add(HtmlChunk.raw("]"));
     }
 
     @Override
@@ -467,7 +490,7 @@ public class PyTypeModelBuilder {
         param.type.accept(this);
       }
       else {
-        add("Any");
+        add(HtmlChunk.raw(PyNames.UNKNOWN_TYPE));
       }
     }
 
@@ -478,44 +501,59 @@ public class PyTypeModelBuilder {
   }
 
   private static class TypeToBodyWithLinksVisitor extends TypeNameVisitor {
-    private final ChainIterable<String> myBody;
     private final PsiElement myAnchor;
 
-    TypeToBodyWithLinksVisitor(ChainIterable<String> body, PsiElement anchor) {
+    TypeToBodyWithLinksVisitor(HtmlBuilder body, PsiElement anchor) {
       myBody = body;
       myAnchor = anchor;
     }
 
     @Override
-    protected void add(String s) {
-      myBody.addItem(combUp(s));
+    protected @NotNull HtmlChunk styled(@Nls String text, @NotNull TextAttributesKey style) {
+      return styledSpan(text, style);
     }
 
     @Override
-    protected void addType(String name) {
+    protected @NotNull HtmlChunk escaped(@Nls String text) {
+      return HtmlChunk.text(text);
+    }
+
+    @Override
+    protected @NotNull HtmlChunk className(@Nls String name) {
       final TypeEvalContext context = TypeEvalContext.userInitiated(myAnchor.getProject(), myAnchor.getContainingFile());
-      myBody.addItem(PyDocumentationLink.toPossibleClass(name, myAnchor, context));
+      return PyDocumentationLink.toPossibleClass(name, myAnchor, context);
+    }
+
+    @Override
+    protected @NotNull HtmlChunk styledExpression(@Nls String expressionText, @NotNull PyExpression expression) {
+      return highlightExpressionText(expressionText, expression);
     }
   }
 
   private static class TypeToDescriptionVisitor extends TypeNameVisitor {
-
-    @NotNull
-    private final StringBuilder myResult = new StringBuilder();
-
     @Override
-    protected void add(String s) {
-      myResult.append(s);
+    protected @NotNull HtmlChunk styled(@Nls String text, @NotNull TextAttributesKey style) {
+      return HtmlChunk.raw(text);
     }
 
     @Override
-    protected void addType(String name) {
-      add(name);
+    protected @NotNull HtmlChunk escaped(@Nls String text) {
+      return HtmlChunk.raw(text);
+    }
+
+    @Override
+    protected @NotNull HtmlChunk className(@Nls String name) {
+      return escaped(name);
+    }
+
+    @Override
+    protected @NotNull HtmlChunk styledExpression(@Nls String expressionText, @NotNull PyExpression expression) {
+      return HtmlChunk.raw(expressionText);
     }
 
     @NotNull
     public String getDescription() {
-      return myResult.toString();
+      return myBody.toString();
     }
   }
 
@@ -523,25 +561,44 @@ public class PyTypeModelBuilder {
     private int myDepth = 0;
     private final static int MAX_DEPTH = 6;
     private boolean switchBuiltinToTyping = false;
+    protected HtmlBuilder myBody = new HtmlBuilder();
 
     @Override
     public void oneOf(OneOf oneOf) {
       myDepth++;
       if (maxDepthExceeded()) {
-        add("...");
+        add(styled("...", PyHighlighter.PY_DOT));
         return;
       }
-      add("Union[");
-      processList(oneOf.oneOfTypes);
-      add("]");
+      if (oneOf.bitwiseOrUnionAllowed) {
+        processList(oneOf.oneOfTypes, " | ");
+      }
+      else {
+        add(escaped("Union")); //NON-NLS
+        add(styled("[", PyHighlighter.PY_BRACKETS));
+        processList(oneOf.oneOfTypes);
+        add(styled("]", PyHighlighter.PY_BRACKETS));
+      }
       myDepth--;
     }
 
     protected void processList(@NotNull Collection<TypeModel> list) {
+      processList(list, ", ");
+    }
+
+    protected void processList(@NotNull Collection<TypeModel> list, @NotNull @Nls String separator) {
       boolean first = true;
       for (TypeModel t : list) {
         if (!first) {
-          add(", ");
+          if (separator.equals(", ")) {
+            add(styled(separator, PyHighlighter.PY_COMMA));
+          }
+          else if (separator.equals(" | ")) {
+            add(styled(separator, PyHighlighter.PY_OPERATION_SIGN));
+          }
+          else {
+            add(escaped(separator));
+          }
         }
         else {
           first = false;
@@ -551,13 +608,23 @@ public class PyTypeModelBuilder {
       }
     }
 
-    protected abstract void add(String s);
+    protected void add(@NotNull HtmlChunk chunk) {
+      myBody.append(chunk);
+    }
+
+    protected abstract @NotNull HtmlChunk styled(@Nls String text, @NotNull TextAttributesKey style);
+
+    protected abstract @NotNull HtmlChunk escaped(@Nls String text);
+
+    protected abstract @NotNull HtmlChunk className(@Nls String name);
+
+    protected abstract @NotNull HtmlChunk styledExpression(@Nls String expressionText, @NotNull PyExpression expression);
 
     @Override
     public void collectionOf(CollectionOf collectionOf) {
       myDepth++;
       if (maxDepthExceeded()) {
-        add("...");
+        add(styled("...", PyHighlighter.PY_DOT));
         return;
       }
       final boolean allTypeParamsAreAny = ContainerUtil.and(collectionOf.elementTypes, t -> t == NamedType.ANY);
@@ -577,35 +644,34 @@ public class PyTypeModelBuilder {
       switchBuiltinToTyping = prevSwitchBuiltinToTyping;
 
       if (!collectionOf.elementTypes.isEmpty()) {
-        add("[");
+        add(styled("[", PyHighlighter.PY_BRACKETS));
         processList(collectionOf.elementTypes);
-        add("]");
+        add(styled("]", PyHighlighter.PY_BRACKETS));
       }
     }
 
-    protected abstract void addType(String name);
-
     @Override
-    public void name(String name) {
-      addType(switchBuiltinToTyping ? PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.getOrDefault(name, name) : name);
+    public void name(@NlsSafe String name) {
+      add(className(switchBuiltinToTyping ? PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.getOrDefault(name, name) : name));
     }
 
     @Override
     public void function(FunctionType function) {
       myDepth++;
       if (maxDepthExceeded()) {
-        add("...");
+        add(styled("...", PyHighlighter.PY_DOT));
         return;
       }
-      add("(");
+      add(styled("(", PyHighlighter.PY_PARENTHS));
       final Collection<TypeModel> parameters = function.parameters;
       if (parameters != null) {
         processList(parameters);
       }
       else {
-        add("...");
+        add(styled("...", PyHighlighter.PY_DOT));
       }
-      add(") -> ");
+      add(styled(")", PyHighlighter.PY_PARENTHS));
+      add(escaped(" -> "));
       function.returnType.accept(this);
       myDepth--;
     }
@@ -618,15 +684,15 @@ public class PyTypeModelBuilder {
     public void param(ParamType param) {
       myDepth++;
       if (maxDepthExceeded()) {
-        add("...");
+        add(styled("...", PyHighlighter.PY_DOT));
         return;
       }
       if (param.name != null) {
-        add(param.name);
+        add(styled(param.name, PyHighlighter.PY_PARAMETER));
       }
       if (param.type != null) {
         if (param.name != null) {
-          add(": ");
+          add(styled(": ", PyHighlighter.PY_OPERATION_SIGN));
         }
         param.type.accept(this);
       }
@@ -640,45 +706,66 @@ public class PyTypeModelBuilder {
 
     @Override
     public void optional(OptionalType type) {
-      add("Optional[");
-      type.type.accept(this);
-      add("]");
+      if (type.bitwiseOrUnionAllowed) {
+        type.type.accept(this);
+        add(styled(" | ", PyHighlighter.PY_OPERATION_SIGN));
+        add(styled("None", PyHighlighter.PY_KEYWORD)); //NON-NLS
+      }
+      else {
+        add(escaped("Optional")); //NON-NLS
+        add(styled("[", PyHighlighter.PY_BRACKETS));
+        type.type.accept(this);
+        add(styled("]", PyHighlighter.PY_BRACKETS));
+      }
     }
 
     @Override
     public void tuple(TupleType type) {
-      add(type.useTypingAlias ? "Tuple" : "tuple");
+      if (type.useTypingAlias) {
+        add(escaped("Tuple")); //NON-NLS
+      }
+      else {
+        add(styled("tuple", PyHighlighter.PY_BUILTIN_NAME)); //NON-NLS
+      }
       if (!type.members.isEmpty()) {
-        add("[");
+        add(styled("[", PyHighlighter.PY_BRACKETS));
         processList(type.members);
         if (type.homogeneous) {
-          add(", ...");
+          add(styled(", ", PyHighlighter.PY_COMMA));
+          add(styled("...", PyHighlighter.PY_DOT));
         }
-        add("]");
+        add(styled("]", PyHighlighter.PY_BRACKETS));
       }
     }
 
     @Override
     public void classObject(ClassObjectType type) {
-      add("Type[");
+      add(escaped("Type")); //NON-NLS
+      add(styled("[", PyHighlighter.PY_BRACKETS));
       type.classType.accept(this);
-      add("]");
+      add(styled("]", PyHighlighter.PY_BRACKETS));
     }
 
     @Override
     public void genericType(GenericType type) {
-      add(type.name);
+      if (type.name != null) {
+        add(escaped(type.name));
+      }
     }
 
     @Override
     public void oneOfLiterals(OneOfLiterals literals) {
       add(
-        StreamEx
-          .of(literals.literals)
-          .map(PyLiteralType::getExpression)
-          .map(PyExpression::getText)
-          .joining(", ", "Literal[", "]")
-      );
+        new HtmlBuilder()
+          .append(escaped("Literal")) //NON-NLS
+          .append(styled("[", PyHighlighter.PY_BRACKETS))
+          .append(StreamEx
+                    .of(literals.literals)
+                    .map(PyLiteralType::getExpression)
+                    .map(expr -> styledExpression(expr.getText(), expr))
+                    .collect(HtmlChunk.toFragment(styled(", ", PyHighlighter.PY_COMMA))))
+          .append(styled("]", PyHighlighter.PY_BRACKETS))
+          .toFragment());
     }
   }
 }

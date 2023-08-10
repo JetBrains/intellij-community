@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.dnd.DnDEvent;
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -20,9 +21,7 @@ import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.*;
 
-/**
- * @author yole
- */
+
 public class PaletteGroupHeader extends JCheckBox implements DataProvider {
   private final PaletteWindow myPaletteWindow;
   private PaletteComponentList myComponentList;
@@ -101,7 +100,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
   public void showGroupPopupMenu(final Component comp, final int x, final int y) {
     ActionGroup group = myGroup.getPopupActionGroup();
     if (group != null) {
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PaletteGroupHeader", group);
       popupMenu.getComponent().show(comp, x, y);
     }
   }
@@ -129,7 +128,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
 
   @Override public Color getForeground() {
     if (isFocusOwner()) {
-      return UIUtil.getListSelectionForeground(true);
+      return NamedColorUtil.getListSelectionForeground(true);
     }
     return super.getForeground();
   }
@@ -170,8 +169,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
         if (null == policy) policy = kfm.getDefaultFocusTraversalPolicy();
         Component next =
           moveDown ? policy.getComponentAfter(container, PaletteGroupHeader.this) : policy.getComponentBefore(container, PaletteGroupHeader.this);
-        if (next instanceof PaletteComponentList) {
-          final PaletteComponentList list = (PaletteComponentList)next;
+        if (next instanceof PaletteComponentList list) {
           if (list.getModel().getSize() != 0) {
             list.takeFocusFrom(PaletteGroupHeader.this, list == myComponentList ? 0 : -1);
             return;

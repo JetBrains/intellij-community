@@ -1,20 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ReflectionAssignabilityCache;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomElementVisitor;
-import com.intellij.util.xml.DomFileDescription;
-import com.intellij.util.xml.TypeChooserManager;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,23 +30,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author peter
- */
+@Service(Service.Level.APP)
 public final class DomApplicationComponent {
   private final MultiMap<String, DomFileMetaData> myRootTagName2FileDescription = MultiMap.createSet();
   private final Set<DomFileMetaData> myAcceptingOtherRootTagNamesDescriptions = new HashSet<>();
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache(DomImplementationClassEP.EP_NAME);
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
   final ReflectionAssignabilityCache assignabilityCache = new ReflectionAssignabilityCache();
-  private final Map<Class<?>, DomElementsAnnotator> myClass2Annotator = ConcurrentFactoryMap.createMap(key-> {
-      final DomFileDescription<?> desc = findFileDescription(key);
-      return desc == null ? null : desc.createAnnotator();
-    }
-  );
+  private final Map<Class<?>, DomElementsAnnotator> classToAnnotator = new ConcurrentHashMap<>();
   private final Map<Class<?>, DomFileDescription<?>> classToDescription = new ConcurrentHashMap<>();
 
-  private final Map<Class<?>, InvocationCache> myInvocationCaches = ContainerUtil.createConcurrentSoftValueMap();
+  private final Map<Class<?>, InvocationCache> myInvocationCaches = CollectionFactory.createConcurrentSoftValueMap();
   private final Map<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions = new ConcurrentHashMap<>();
 
   public DomApplicationComponent() {
@@ -78,7 +74,7 @@ public final class DomApplicationComponent {
     myRootTagName2FileDescription.clear();
 
     myAcceptingOtherRootTagNamesDescriptions.clear();
-    myClass2Annotator.clear();
+    classToAnnotator.clear();
     classToDescription.clear();
 
     myCachedImplementationClasses.clearCache();
@@ -131,6 +127,14 @@ public final class DomApplicationComponent {
     return ContainerUtil.map2Set(myAcceptingOtherRootTagNamesDescriptions, DomFileMetaData::getDescription);
   }
 
+  public @Nullable DomFileDescription<?> findDescription(XmlFile file) {
+    Module module = ModuleUtilCore.findModuleForFile(file);
+    Condition<DomFileDescription<?>> condition = d -> d.isMyFile(file, module);
+    String rootTagLocalName = DomService.getInstance().getXmlFileHeader(file).getRootTagLocalName();
+    DomFileDescription<?> description = ContainerUtil.find(getFileDescriptions(rootTagLocalName), condition);
+    return description != null ? description : ContainerUtil.find(getAcceptingOtherRootTagNameDescriptions(), condition);
+  }
+
   synchronized void registerFileDescription(DomFileDescription<?> description) {
     registerFileDescription(new DomFileMetaData(description));
     initDescription(description);
@@ -159,7 +163,7 @@ public final class DomApplicationComponent {
     myAcceptingOtherRootTagNamesDescriptions.remove(meta);
   }
 
-  public synchronized @Nullable DomFileDescription<?> findFileDescription(Class<?> rootElementClass) {
+  public synchronized @Nullable DomFileDescription<?> findFileDescription(@NotNull Class<?> rootElementClass) {
     return classToDescription.computeIfAbsent(rootElementClass, this::_findFileDescription);
   }
 
@@ -171,18 +175,20 @@ public final class DomApplicationComponent {
       .orElse(null);
   }
 
-  public DomElementsAnnotator getAnnotator(Class<?> rootElementClass) {
-    return myClass2Annotator.get(rootElementClass);
+  public DomElementsAnnotator getAnnotator(@NotNull Class<?> rootElementClass) {
+    return classToAnnotator.computeIfAbsent(rootElementClass, key -> {
+      DomFileDescription<?> desc = findFileDescription(key);
+      return desc == null ? null : desc.createAnnotator();
+    });
   }
 
-  @Nullable
-  final Class<? extends DomElement> getImplementation(Class<?> concreteInterface) {
+  @Nullable Class<? extends DomElement> getImplementation(Class<?> concreteInterface) {
     //noinspection unchecked
     return (Class<? extends DomElement>)myCachedImplementationClasses.get(concreteInterface);
   }
 
-  public final void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
-                                           @Nullable final Disposable parentDisposable) {
+  public void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
+                                     @Nullable final Disposable parentDisposable) {
     myCachedImplementationClasses.registerImplementation(domElementClass, implementationClass, parentDisposable);
   }
 
@@ -190,15 +196,15 @@ public final class DomApplicationComponent {
     return myTypeChooserManager;
   }
 
-  public final StaticGenericInfo getStaticGenericInfo(final Type type) {
-    return getInvocationCache(ReflectionUtil.getRawType(type)).genericInfo;
+  public StaticGenericInfo getStaticGenericInfo(final Type type) {
+    return getInvocationCache(ClassUtil.getRawType(type)).genericInfo;
   }
 
-  final InvocationCache getInvocationCache(Class<?> type) {
+  InvocationCache getInvocationCache(Class<?> type) {
     return myInvocationCaches.computeIfAbsent(type, InvocationCache::new);
   }
 
-  public final VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {
+  public VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {
     return myVisitorDescriptions.computeIfAbsent(aClass, VisitorDescription::new);
   }
 }

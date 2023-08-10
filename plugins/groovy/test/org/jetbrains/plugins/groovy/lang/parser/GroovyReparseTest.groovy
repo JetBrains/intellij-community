@@ -6,9 +6,6 @@ import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author peter
- */
 class GroovyReparseTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
@@ -19,11 +16,11 @@ class GroovyReparseTest extends LightJavaCodeInsightFixtureTestCase {
   void checkReparse(String text, String type) {
     myFixture.configureByText("a.groovy", text)
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    final String psiBefore = DebugUtil.psiToString(myFixture.getFile(), false)
+    final String psiBefore = DebugUtil.psiToString(myFixture.getFile(), true)
 
     myFixture.type(type)
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    final String psiAfter = DebugUtil.psiToString(myFixture.getFile(), false)
+    final String psiAfter = DebugUtil.psiToString(myFixture.getFile(), true)
 
     myFixture.configureByText("a.txt", psiBefore.trim() + "\n---\n" + psiAfter.trim())
     myFixture.checkResultByFile(getTestName(false) + ".txt")

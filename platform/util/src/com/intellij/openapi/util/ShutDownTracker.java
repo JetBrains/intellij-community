@@ -1,22 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Deque;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 
-public final class ShutDownTracker implements Runnable {
-  private final List<Thread> myThreads = new ArrayList<>();
-  private final LinkedList<Runnable> myShutdownTasks = new LinkedList<>();
+public final class ShutDownTracker {
+  private final Deque<Runnable> myShutdownTasks = new ConcurrentLinkedDeque<>();
+  private final Deque<Runnable> myCachesShutdownTasks = new ConcurrentLinkedDeque<>();
   private final Thread myThread;
 
   private ShutDownTracker() {
-    myThread = new Thread(this, "Shutdown tracker");
+    myThread = new Thread(() -> run(), "Shutdown tracker");
     Runtime.getRuntime().addShutdownHook(myThread);
   }
 
@@ -24,8 +24,7 @@ public final class ShutDownTracker implements Runnable {
     private static final ShutDownTracker ourInstance = new ShutDownTracker();
   }
 
-  @NotNull
-  public static ShutDownTracker getInstance() {
+  public static @NotNull ShutDownTracker getInstance() {
     return ShutDownTrackerHolder.ourInstance;
   }
 
@@ -33,20 +32,31 @@ public final class ShutDownTracker implements Runnable {
     return getInstance().myThread.isAlive();
   }
 
-  @Override
+  @ApiStatus.Internal
   public void run() {
-    ensureStopperThreadsFinished();
-
-    Runnable task;
-    while ((task = removeLast(myShutdownTasks)) != null) {
+    while (true) {
+      Runnable task = getNextTask();
+      if (task == null) break;
       // task can change myShutdownTasks
       try {
         task.run();
       }
       catch (Throwable e) {
-        Logger.getInstance(ShutDownTracker.class).error(e);
+        try {
+          Logger.getInstance(ShutDownTracker.class).error(e);
+        }
+        catch (AssertionError ignore) {
+          // give a chance to execute all shutdown tasks in tests
+        }
       }
     }
+  }
+
+  @Nullable
+  private Runnable getNextTask() {
+    Runnable task = myCachesShutdownTasks.pollLast();
+    if (task != null) return task;
+    return myShutdownTasks.pollLast();
   }
 
   // returns true if terminated
@@ -61,64 +71,27 @@ public final class ShutDownTracker implements Runnable {
     return false;
   }
 
-  public final void ensureStopperThreadsFinished() {
-    Thread[] threads = getStopperThreads();
-    final long started = System.currentTimeMillis();
-    while (threads.length > 0) {
-      Thread thread = threads[0];
-      if (!thread.isAlive()) {
-        if (isRegistered(thread)) {
-          Logger.getInstance(ShutDownTracker.class).error("Thread '" + thread.getName() + "' did not unregister itself from ShutDownTracker");
-          unregisterStopperThread(thread);
-        }
-      }
-      else {
-        final long totalTimeWaited = System.currentTimeMillis() - started;
-        if (totalTimeWaited > 3000) {
-          // okay, we are waiting fo too long already, lets stop everyone:
-          // in some cases, stopper thread may try to run readAction while we are shutting down (under a writeAction) and deadlock.
-          thread.interrupt();
-        }
-
-        try {
-          thread.join(100);
-        }
-        catch (InterruptedException ignored) { }
-      }
-      threads = getStopperThreads();
-    }
-  }
-
-  private synchronized boolean isRegistered(@NotNull Thread thread) {
-    return myThreads.contains(thread);
-  }
-
-  private synchronized Thread @NotNull [] getStopperThreads() {
-    return myThreads.toArray(new Thread[0]);
-  }
-
-  public synchronized void registerStopperThread(@NotNull Thread thread) {
-    myThreads.add(thread);
-  }
-
-  public synchronized void unregisterStopperThread(@NotNull Thread thread) {
-    myThreads.remove(thread);
-  }
-
-  public void registerShutdownTask(@NotNull Runnable task, @NotNull Disposable parentDisposable) {
-    registerShutdownTask(task);
-    Disposer.register(parentDisposable, () -> unregisterShutdownTask(task));
-  }
-
-  public synchronized void registerShutdownTask(@NotNull Runnable task) {
+  public void registerShutdownTask(@NotNull Runnable task) {
     myShutdownTasks.addLast(task);
   }
 
-  public synchronized void unregisterShutdownTask(@NotNull Runnable task) {
+  public void unregisterShutdownTask(@NotNull Runnable task) {
     myShutdownTasks.remove(task);
+    myCachesShutdownTasks.remove(task);
   }
 
-  private synchronized <T> T removeLast(@NotNull LinkedList<T> list) {
-    return list.isEmpty() ? null : list.removeLast();
+  /**
+   * Special ordered queue for cache-related tasks, specifically for tasks related to:
+   * <p>
+   * * VFS (Virtual File System),
+   * <p>
+   * * Indexes.
+   * <p>
+   * This queue is designed to prioritize and flush these tasks as early as possible to minimize
+   * the risk of shutdown hook execution interruption by OS.
+   */
+  @ApiStatus.Internal
+  public void registerCacheShutdownTask(@NotNull Runnable task) {
+    myCachesShutdownTasks.addLast(task);
   }
 }

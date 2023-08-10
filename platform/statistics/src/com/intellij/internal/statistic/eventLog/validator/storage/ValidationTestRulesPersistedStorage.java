@@ -1,18 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
-import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
+import com.intellij.internal.statistic.config.SerializationHelper;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence;
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors;
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,11 +32,11 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
   private final @NotNull AtomicBoolean myIsInitialized;
 
   ValidationTestRulesPersistedStorage(@NotNull String recorderId) {
+    myRecorderId = recorderId;
     myIsInitialized = new AtomicBoolean(false);
     myTestMetadataPersistence = new EventLogTestMetadataPersistence(recorderId);
     myMetadataPersistence = new EventLogMetadataPersistence(recorderId);
     updateValidators();
-    myRecorderId = recorderId;
   }
 
   @Override
@@ -77,12 +77,12 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
   }
 
   @NotNull
-  private static Map<String, EventGroupRules> createValidators(@NotNull EventGroupRemoteDescriptors groups,
-                                                               @Nullable GroupRemoteRule productionRules) {
+  private Map<String, EventGroupRules> createValidators(@NotNull EventGroupRemoteDescriptors groups,
+                                                        @Nullable EventGroupRemoteDescriptors.GroupRemoteRule productionRules) {
     final GroupRemoteRule rules = merge(groups.rules, productionRules);
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(rules);
-    final EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
-    return ValidationRulesPersistedStorage.createValidators(build, groups, globalRulesHolder);
+    final EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.getInstance().getBuild());
+    return ValidationRulesPersistedStorage.createValidators(build, groups, globalRulesHolder, myRecorderId);
   }
 
   public void addTestGroup(@NotNull GroupValidationTestRule group) throws IOException {
@@ -97,11 +97,10 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
     }
   }
 
-  public @NotNull List<GroupValidationTestRule> loadValidationTestRules() {
+  public @NotNull List<GroupValidationTestRule> loadValidationTestRules() throws JsonProcessingException {
     ArrayList<EventGroupRemoteDescriptor> testGroupsSchemes =
       EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myTestMetadataPersistence).groups;
     ArrayList<GroupValidationTestRule> groups = new ArrayList<>();
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
     for (EventGroupRemoteDescriptor group : testGroupsSchemes) {
       if (group.id == null || group.rules == null || group.rules.event_id == null) continue;
       Set<String> eventIds = group.rules.event_id;
@@ -109,7 +108,8 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
         groups.add(new GroupValidationTestRule(group.id, false));
       }
       else {
-        groups.add(new GroupValidationTestRule(group.id, true, gson.toJson(group.rules)));
+        groups.add(new GroupValidationTestRule(group.id, true,
+                                               SerializationHelper.INSTANCE.serialize(group.rules)));
       }
     }
     return groups;
@@ -147,7 +147,7 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
   }
 
   public static void cleanupAll() {
-    List<String> recorders = StatisticsEventLoggerKt.getEventLogProviders().stream().
+    List<String> recorders = StatisticsEventLogProviderUtil.getEventLogProviders().stream().
       filter(provider -> provider.isRecordEnabled()).
       map(provider -> provider.getRecorderId()).
       collect(Collectors.toList());

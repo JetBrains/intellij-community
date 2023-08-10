@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author peter
-*/
 public class MemberChooserObjectBase implements MemberChooserObject {
   private final @NlsContexts.Label String myText;
   private final Icon myIcon;

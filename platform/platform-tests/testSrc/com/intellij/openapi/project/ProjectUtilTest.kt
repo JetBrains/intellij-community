@@ -8,7 +8,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.testFramework.use
+import com.intellij.testFramework.useProject
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -28,7 +28,7 @@ class ProjectUtilTest {
   @Test
   fun doNotUseNameAsHashPrefixForIpr() {
     val project = ProjectManagerEx.getInstanceEx().openProject(fsRule.fs.getPath("/p.ipr"), createTestOpenProjectOptions(runPostStartUpActivities = false)) as ProjectEx
-    project.use {
+    project.useProject {
       project.setProjectName("do not use me")
 
       val cachePath = appSystemDir.relativize(project.getProjectCachePath("foo")).toString()
@@ -42,7 +42,7 @@ class ProjectUtilTest {
   @Test
   fun verticalBarInTheProjectName() {
     val project = ProjectManagerEx.getInstanceEx().openProject(fsRule.fs.getPath("/p"), createTestOpenProjectOptions(runPostStartUpActivities = false)) as ProjectEx
-    project.use {
+    project.useProject {
       project.setProjectName("World of heavens | Client")
 
       val cachePath = appSystemDir.relativize(project.getProjectCachePath("test", isForceNameUse = true)).toString()

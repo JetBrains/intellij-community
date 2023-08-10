@@ -2,19 +2,17 @@
 package com.jetbrains.python.ift.lesson.refactorings
 
 import com.intellij.icons.AllIcons
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
+import com.intellij.refactoring.RefactoringBundle
 import com.jetbrains.python.ift.PythonLessonsBundle
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
+import training.dsl.*
+import training.dsl.LessonUtil.checkExpectedStateOfEditor
+import training.learn.course.KLesson
+import training.util.isToStringContains
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class PythonInPlaceRefactoringLesson(module: Module)
-  : KLesson("refactoring.in.place", PythonLessonsBundle.message("python.in.place.refactoring.lesson.name"), module, "Python") {
+class PythonInPlaceRefactoringLesson
+  : KLesson("refactoring.in.place", PythonLessonsBundle.message("python.in.place.refactoring.lesson.name")) {
   private val template = """
     def fibonacci(stop):
         first = 0
@@ -50,9 +48,9 @@ class PythonInPlaceRefactoringLesson(module: Module)
     task("ShowIntentionActions") {
       text(
         PythonLessonsBundle.message("python.in.place.refactoring.invoke.intentions",
-                              icon(AllIcons.Gutter.SuggestedRefactoringBulb), action(it)))
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { ui -> // no highlighting
-        ui.toString().contains("Rename usages")
+                                    icon(AllIcons.Gutter.SuggestedRefactoringBulb), action(it)))
+      triggerAndBorderHighlight().listItem { ui -> // no highlighting
+        ui.isToStringContains("'s'")
       }
       proposeRestore {
         checkFirstChange()
@@ -72,7 +70,7 @@ class PythonInPlaceRefactoringLesson(module: Module)
         val expected = template.replace("<caret>", "").replace("<name>", newName)
         newName != variableName && editor.document.text == expected
       }
-      test { GuiTestUtil.shortcut(Key.ENTER) }
+      test { invokeActionViaShortcut("ENTER") }
     }
 
     waitBeforeContinue(500)
@@ -111,8 +109,10 @@ class PythonInPlaceRefactoringLesson(module: Module)
       showIntentionsTaskId = taskId
       text(PythonLessonsBundle.message("python.in.place.refactoring.invoke.intention.for.parameter",
                                        icon(AllIcons.Gutter.SuggestedRefactoringBulb), action(it)))
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
-        item.toString().contains("Update usages to")
+      val updateUsagesText = RefactoringBundle.message("suggested.refactoring.change.signature.intention.text",
+                                                       RefactoringBundle.message("suggested.refactoring.usages"))
+      triggerAndBorderHighlight().listItem { item ->
+        item.isToStringContains(updateUsagesText)
       }
       proposeRestore {
         checkSecondChange()
@@ -125,22 +125,22 @@ class PythonInPlaceRefactoringLesson(module: Module)
 
     task {
       text(PythonLessonsBundle.message("python.in.place.refactoring.update.callers", action("EditorChooseLookupItem")))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JPanel -> // no highlighting
+      triggerUI().component { ui: JPanel -> // no highlighting
         ui.javaClass.name.contains("ChangeSignaturePopup")
       }
       restoreByUi(delayMillis = defaultRestoreDelay)
-      test { GuiTestUtil.shortcut(Key.ENTER) }
+      test { invokeActionViaShortcut("ENTER") }
     }
 
     task {
       text(PythonLessonsBundle.message("python.in.place.refactoring.signature.preview", LessonUtil.rawEnter()))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JLabel -> // no highlighting
-        ui.text == "Add values for new parameters:"
+      triggerUI().component { ui: JLabel -> // no highlighting
+        ui.text == RefactoringBundle.message("suggested.refactoring.parameter.values.label.text")
       }
       restoreAfterStateBecomeFalse(restoreId = showIntentionsTaskId) {
         previous.ui?.isShowing != true
       }
-      test { GuiTestUtil.shortcut(Key.ENTER) }
+      test(waitEditorToBeReady = false) { invokeActionViaShortcut("ENTER") }
     }
     task {
       lateinit var beforeSecondRefactoring: String
@@ -154,9 +154,9 @@ class PythonInPlaceRefactoringLesson(module: Module)
           it.className.contains("PySuggestedRefactoringExecution") && it.methodName == "performChangeSignature"
         }
       }
-      test {
+      test(waitEditorToBeReady = false) {
         type("0")
-        GuiTestUtil.shortcut(Key.ENTER)
+        invokeActionViaShortcut("ENTER")
       }
     }
     text(PythonLessonsBundle.message("python.in.place.refactoring.remark.about.application.scope"))
@@ -171,4 +171,11 @@ class PythonInPlaceRefactoringLesson(module: Module)
     }
     return result.toString()
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(PythonLessonsBundle.message("python.in.place.refactoring.help.rename.link"),
+         LessonUtil.getHelpLink("rename-refactorings.html#inplace_rename")),
+    Pair(PythonLessonsBundle.message("python.in.place.refactoring.help.signature.link"),
+         LessonUtil.getHelpLink("pycharm", "change-signature.html#inplace_change_signature_python")),
+  )
 }

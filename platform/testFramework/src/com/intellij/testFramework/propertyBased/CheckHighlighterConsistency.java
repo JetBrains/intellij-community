@@ -16,7 +16,6 @@
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -37,7 +36,6 @@ import java.util.function.Function;
  *   <ul>Language depending on file content</ul>
  * </li>
  * 
- * @author peter
  */
 public class CheckHighlighterConsistency extends ActionOnFile {
 
@@ -55,7 +53,7 @@ public class CheckHighlighterConsistency extends ActionOnFile {
   }
 
   public static void performCheck(@NotNull Editor editor) {
-    LexerEditorHighlighter highlighter = (LexerEditorHighlighter)((EditorEx)editor).getHighlighter();
+    LexerEditorHighlighter highlighter = (LexerEditorHighlighter)editor.getHighlighter();
     CharSequence text = editor.getDocument().getImmutableCharSequence();
     String incremental = dumpHighlighterTokens(highlighter, text);
 

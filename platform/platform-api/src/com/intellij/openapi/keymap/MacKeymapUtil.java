@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.util.ui.StartupUiUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,6 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.StringJoiner;
 
 /**
  * Utility class to display action shortcuts in Mac menus
@@ -47,74 +48,120 @@ public final class MacKeymapUtil {
   public static final String NUM_PAD     = "\u2328";
 
   @NotNull
-  static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
-    StringBuilder buf = new StringBuilder();
-    if ((modifiers & InputEvent.CTRL_MASK) != 0) buf.append(get(CONTROL, "Ctrl+"));
-    if ((modifiers & InputEvent.ALT_MASK) != 0) buf.append(get(OPTION, "Alt+"));
-    if ((modifiers & InputEvent.SHIFT_MASK) != 0) buf.append(get(SHIFT, "Shift+"));
-    if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) buf.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
-    if ((modifiers & InputEvent.BUTTON1_MASK) != 0) buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
-    if ((modifiers & InputEvent.META_MASK) != 0) buf.append(get(COMMAND, "Cmd+"));
+  public static String getModifiersText(@JdkConstants.InputEventMask int modifiers, String delimiter) {
+    StringJoiner buf = new StringJoiner(delimiter != null ? delimiter : "");
+    if ((modifiers & InputEvent.CTRL_MASK) != 0) buf.add(get(CONTROL, "Ctrl+"));
+    if ((modifiers & InputEvent.ALT_MASK) != 0) buf.add(get(OPTION, "Alt+"));
+    if ((modifiers & InputEvent.SHIFT_MASK) != 0) buf.add(get(SHIFT, "Shift+"));
+    if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) buf.add(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
+    if ((modifiers & InputEvent.BUTTON1_MASK) != 0) buf.add(Toolkit.getProperty("AWT.button1", "Button1"));
+    if ((modifiers & InputEvent.META_MASK) != 0) buf.add(get(COMMAND, "Cmd+"));
+
     return buf.toString();
 
   }
 
   @NotNull
+  static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
+    return getModifiersText(modifiers, null);
+  }
+
+  @NotNull
   public static String getKeyText(int code) {
-    if (!Registry.is("ide.macos.disable.native.shortcut.symbols", false)) {
-      switch (code) {
-        case KeyEvent.VK_BACK_SPACE:     return get(BACKSPACE, "Backspace");
-        case KeyEvent.VK_ESCAPE:         return get(ESCAPE, "Escape");
-        case KeyEvent.VK_CAPS_LOCK:      return get(CAPS_LOCK, "Caps Lock");
-        case KeyEvent.VK_TAB:            return get(TAB, "Tab");
-        case KeyEvent.VK_SPACE:          return "Space";
-        case KeyEvent.VK_DELETE:         return get(DELETE, "Delete");
-        case KeyEvent.VK_HOME:           return get(HOME, "Home");
-        case KeyEvent.VK_END:            return get(END, "End");
-        case KeyEvent.VK_PAGE_UP:        return get(PAGE_UP, "Page Up");
-        case KeyEvent.VK_PAGE_DOWN:      return get(PAGE_DOWN, "Page Down");
-        case KeyEvent.VK_UP:             return get(UP, "Up Arrow");
-        case KeyEvent.VK_DOWN:           return get(DOWN, "Down Arrow");
-        case KeyEvent.VK_LEFT:           return get(LEFT, "Left Arrow");
-        case KeyEvent.VK_RIGHT:          return get(RIGHT, "Right Arrow");
-        case KeyEvent.VK_NUM_LOCK:       return get(NUMBER_LOCK, "Num Lock");
-        case KeyEvent.VK_ENTER:          return get(RETURN, "Return");
-        case KeyEvent.VK_NUMBER_SIGN:    return get(NUM_PAD, "NumPad");
-        case KeyEvent.VK_MULTIPLY:       return get(NUM_PAD, "NumPad") + " *";
-        case KeyEvent.VK_SUBTRACT:       return "-";
-        case KeyEvent.VK_ADD:            return "+";
-        case KeyEvent.VK_MINUS:          return "-";
-        case KeyEvent.VK_PLUS:           return "+";
-        case KeyEvent.VK_DIVIDE:         return get(NUM_PAD, "NumPad") + "/";
-        case KeyEvent.VK_NUMPAD0:        return get(NUM_PAD, "NumPad") + "0";
-        case KeyEvent.VK_NUMPAD1:        return get(NUM_PAD, "NumPad") + "1";
-        case KeyEvent.VK_NUMPAD2:        return get(NUM_PAD, "NumPad") + "2";
-        case KeyEvent.VK_NUMPAD3:        return get(NUM_PAD, "NumPad") + "3";
-        case KeyEvent.VK_NUMPAD4:        return get(NUM_PAD, "NumPad") + "4";
-        case KeyEvent.VK_NUMPAD5:        return get(NUM_PAD, "NumPad") + "5";
-        case KeyEvent.VK_NUMPAD6:        return get(NUM_PAD, "NumPad") + "6";
-        case KeyEvent.VK_NUMPAD7:        return get(NUM_PAD, "NumPad") + "7";
-        case KeyEvent.VK_NUMPAD8:        return get(NUM_PAD, "NumPad") + "8";
-        case KeyEvent.VK_NUMPAD9:        return get(NUM_PAD, "NumPad") + "9";
-        case 0:                          return "fn";
-      }
+    if (!isNativeShortcutSymbolsDisabled()) {
+      return switch (code) {
+        case KeyEvent.VK_BACK_SPACE -> get(BACKSPACE, "Backspace");
+        case KeyEvent.VK_ESCAPE -> get(ESCAPE, "Escape");
+        case KeyEvent.VK_CAPS_LOCK -> get(CAPS_LOCK, "Caps Lock");
+        case KeyEvent.VK_TAB -> get(TAB, "Tab");
+        case KeyEvent.VK_SPACE -> "Space";
+        case KeyEvent.VK_DELETE -> get(DELETE, "Delete");
+        case KeyEvent.VK_HOME -> get(HOME, "Home");
+        case KeyEvent.VK_END -> get(END, "End");
+        case KeyEvent.VK_PAGE_UP -> get(PAGE_UP, "Page Up");
+        case KeyEvent.VK_PAGE_DOWN -> get(PAGE_DOWN, "Page Down");
+        case KeyEvent.VK_UP -> get(UP, "Up Arrow");
+        case KeyEvent.VK_DOWN -> get(DOWN, "Down Arrow");
+        case KeyEvent.VK_LEFT -> get(LEFT, "Left Arrow");
+        case KeyEvent.VK_RIGHT -> get(RIGHT, "Right Arrow");
+        case KeyEvent.VK_NUM_LOCK -> get(NUMBER_LOCK, "Num Lock");
+        case KeyEvent.VK_ENTER -> get(RETURN, "Return");
+        case KeyEvent.VK_NUMBER_SIGN -> get(NUM_PAD, "NumPad");
+        case KeyEvent.VK_MULTIPLY -> get(NUM_PAD, "NumPad") + " *";
+        case KeyEvent.VK_SUBTRACT, KeyEvent.VK_MINUS -> "-";
+        case KeyEvent.VK_ADD, KeyEvent.VK_PLUS -> "+";
+        case KeyEvent.VK_DIVIDE -> get(NUM_PAD, "NumPad") + "/";
+        case KeyEvent.VK_NUMPAD0 -> get(NUM_PAD, "NumPad") + "0";
+        case KeyEvent.VK_NUMPAD1 -> get(NUM_PAD, "NumPad") + "1";
+        case KeyEvent.VK_NUMPAD2 -> get(NUM_PAD, "NumPad") + "2";
+        case KeyEvent.VK_NUMPAD3 -> get(NUM_PAD, "NumPad") + "3";
+        case KeyEvent.VK_NUMPAD4 -> get(NUM_PAD, "NumPad") + "4";
+        case KeyEvent.VK_NUMPAD5 -> get(NUM_PAD, "NumPad") + "5";
+        case KeyEvent.VK_NUMPAD6 -> get(NUM_PAD, "NumPad") + "6";
+        case KeyEvent.VK_NUMPAD7 -> get(NUM_PAD, "NumPad") + "7";
+        case KeyEvent.VK_NUMPAD8 -> get(NUM_PAD, "NumPad") + "8";
+        case KeyEvent.VK_NUMPAD9 -> get(NUM_PAD, "NumPad") + "9";
+        case 0 -> "fn";
+        default -> KeyEvent.getKeyText(code);
+      };
     }
     return KeyEvent.getKeyText(code);
   }
 
   @NotNull
-  public static String getKeyStrokeText(@NotNull KeyStroke keyStroke) {
-    final String modifiers = getModifiersText(keyStroke.getModifiers());
+  public static String getKeyStrokeText(@NotNull KeyStroke keyStroke, String delimiter, boolean onlyDelimIntoModifiersAndKey) {
+    String modifiers = getModifiersText(keyStroke.getModifiers());
     final String key = KeymapUtil.getKeyText(keyStroke.getKeyCode());
+
+    if (!onlyDelimIntoModifiersAndKey) {
+      modifiers = getModifiersText(keyStroke.getModifiers(), delimiter);
+    }
+
+    if (delimiter != null) {
+      if (modifiers.isEmpty()) return key;
+      return modifiers + delimiter + key;
+    }
     return modifiers + key;
   }
 
   @NotNull
+  public static String getKeyStrokeText(@NotNull KeyStroke keyStroke) {
+    return getKeyStrokeText(keyStroke, null, true);
+  }
+
+  @NotNull
   private static String get(@NotNull String value, @NotNull String replacement) {
-    if (Registry.is("ide.macos.disable.native.shortcut.symbols", false)) {
+    if (isNativeShortcutSymbolsDisabled()) {
       return replacement;
     }
-    Font font = UIUtil.getLabelFont();
-    return font == null || font.canDisplayUpTo(value) == -1 ? value : replacement;
+    return StartupUiUtil.getLabelFont().canDisplayUpTo(value) == -1 ? value : replacement;
+  }
+
+  private static boolean isNativeShortcutSymbolsDisabled() {
+    return AdvancedSettings.getInstanceIfCreated() != null && AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols");
+  }
+
+  @NotNull
+  public static String getKeyModifiersTextForMacOSLeopard(@JdkConstants.InputEventMask int modifiers) {
+    StringBuilder buf = new StringBuilder();
+    if ((modifiers & InputEvent.META_MASK) != 0) {
+      buf.append("\u2318");
+    }
+    if ((modifiers & InputEvent.CTRL_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.control", "Ctrl"));
+    }
+    if ((modifiers & InputEvent.ALT_MASK) != 0) {
+      buf.append("\u2325");
+    }
+    if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.shift", "Shift"));
+    }
+    if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
+    }
+    if ((modifiers & InputEvent.BUTTON1_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
+    }
+    return buf.toString();
   }
 }

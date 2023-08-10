@@ -1,0 +1,1 @@
+class ComponentNoHighlighting implements com.intellij.openapi.components.BaseComponent { }

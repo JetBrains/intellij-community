@@ -63,8 +63,7 @@ public final class GroovyImportUtil {
           final PsiElement resolved = resolveResult.getElement();
           if (resolved == null) return;
 
-          if (context instanceof GrImportStatement) {
-            final GrImportStatement importStatement = (GrImportStatement)context;
+          if (context instanceof GrImportStatement importStatement) {
 
             usedImports.add(importStatement);
             if (GroovyImportHelper.isImplicitlyImported(resolved, refName, file)) {
@@ -76,8 +75,7 @@ public final class GroovyImportUtil {
               if (importStatement.isOnDemand()) {
 
                 if (importStatement.isStatic()) {
-                  if (resolved instanceof PsiMember) {
-                    final PsiMember member = (PsiMember)resolved;
+                  if (resolved instanceof PsiMember member) {
                     final PsiClass clazz = member.getContainingClass();
                     if (clazz != null) {
                       final String classQName = clazz.getQualifiedName();

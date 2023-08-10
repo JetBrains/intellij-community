@@ -11,7 +11,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12.2)
 
 add_compile_options("-fmodules" "-flto=full" "-Wall" "-Wextra" "-Wpedantic" "-Wno-newline-eof")
 add_library(nst64 SHARED
-    src/JTypes.h src/Button.m src/Popover.m src/Scrubber.m
+    src/JTypes.h src/Button.m src/Scrubber.m
     src/ScrubberItemView.h src/ScrubberItemView.m
     src/TouchBar.h src/TouchBar.m
     src/Utils.h src/Utils.m

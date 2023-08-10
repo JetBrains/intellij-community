@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.diff.DiffDialogHints;
@@ -9,6 +8,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -16,13 +16,15 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeImpl;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
-import com.intellij.openapi.vcs.changes.ui.ChangesTreeImpl;
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ExcludingTraversalPolicy;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SearchTextField;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,13 +32,14 @@ import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
 
 public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialogModel> {
-  private ChangesTreeImpl<Change> myChangesTree;
+  private AsyncChangesTreeImpl<Change> myChangesTree;
   private JScrollPane myChangesTreeScrollPane;
   private ActionToolbar myToolBar;
 
@@ -93,7 +96,11 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       protected void textChanged(@NotNull DocumentEvent e) {
         scheduleRevisionsUpdate(m -> {
           m.setFilter(field.getText());
-          field.addCurrentTextToHistory();
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (!isDisposed()) {
+              field.addCurrentTextToHistory();
+            }
+          });
         });
       }
     });
@@ -104,7 +111,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private void initChangesTree(JComponent root) {
-    myChangesTree = new ChangesTreeImpl.Changes(myProject, false, false);
+    myChangesTree = new AsyncChangesTreeImpl.Changes(myProject, false, false);
     myChangesTree.setDoubleClickAndEnterKeyHandler(() -> new ShowDifferenceAction().performIfEnabled());
 
     new ShowDifferenceAction().registerCustomShortcutSet(root, null);
@@ -138,8 +145,8 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     return "reference.dialogs.localHistory.show.folder";
   }
 
-  private List<DirectoryChange> getChanges() {
-    return (List)myChangesTree.getChanges();
+  private List<DirectoryChange> getDisplayedChanges() {
+    return (List)myChangesTree.getDisplayedChanges();
   }
 
   private List<DirectoryChange> getSelectedChanges() {
@@ -154,7 +161,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     @Override
     protected void doPerform(DirectoryHistoryDialogModel model, List<? extends DirectoryChange> selected) {
-      final Set<DirectoryChange> selectedSet = new THashSet<>(selected);
+      final Set<DirectoryChange> selectedSet = new HashSet<>(selected);
 
       int index = 0;
       List<Change> changes = new ArrayList<>();
@@ -166,13 +173,13 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       ShowDiffAction.showDiffForChange(myProject, changes, index, new ShowDiffContext(DiffDialogHints.FRAME));
     }
 
-    private Iterable<DirectoryChange> iterFileChanges() {
-      return ContainerUtil.iterate(getChanges(), each -> each.canShowFileDifference());
+    private List<DirectoryChange> iterFileChanges() {
+      return ContainerUtil.filter(getDisplayedChanges(), each -> each.canShowFileDifference());
     }
 
     @Override
     protected boolean isEnabledFor(DirectoryHistoryDialogModel model, List<? extends DirectoryChange> changes) {
-      return iterFileChanges().iterator().hasNext();
+      return ContainerUtil.exists(getDisplayedChanges(), each -> each.canShowFileDifference());
     }
   }
 
@@ -208,6 +215,10 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     protected abstract void doPerform(DirectoryHistoryDialogModel model, List<? extends DirectoryChange> selected);
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return super.getActionUpdateThread();
+    }
 
     @Override
     protected boolean isEnabled(DirectoryHistoryDialogModel model) {

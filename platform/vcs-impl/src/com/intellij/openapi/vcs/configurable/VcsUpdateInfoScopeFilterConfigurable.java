@@ -14,11 +14,10 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -31,14 +30,14 @@ import java.util.Objects;
  */
 class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesHolder.ScopeListener, Disposable {
   private final JCheckBox myCheckbox;
-  private final JComboBox myComboBox;
+  private final ComboBox<String> myComboBox;
   private final VcsConfiguration myVcsConfiguration;
   private final NamedScopesHolder[] myNamedScopeHolders;
 
   VcsUpdateInfoScopeFilterConfigurable(@NotNull Project project, VcsConfiguration vcsConfiguration) {
     myVcsConfiguration = vcsConfiguration;
     myCheckbox = new JCheckBox(VcsBundle.message("settings.filter.update.project.info.by.scope"));
-    myComboBox = new ComboBox();
+    myComboBox = new ComboBox<>();
 
     myComboBox.setEnabled(myCheckbox.isSelected());
     myCheckbox.addChangeListener(new ChangeListener() {
@@ -65,14 +64,14 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
     return VcsBundle.message("settings.filter.update.project.info.by.scope");
   }
 
-  @Nullable
+  @NotNull
   @Override
   public JComponent createComponent() {
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     panel.add(myCheckbox);
     panel.add(myComboBox);
     panel.add(Box.createHorizontalStrut(UIUtil.DEFAULT_HGAP));
-    panel.add(LinkLabel.create(VcsBundle.message("configurable.vcs.manage.scopes"), () -> {
+    panel.add(new ActionLink(VcsBundle.message("configurable.vcs.manage.scopes"), e -> {
       Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(panel));
       if (settings != null) {
         settings.select(settings.find(ScopeChooserConfigurable.PROJECT_SCOPES));
@@ -105,7 +104,7 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
       }
     }
     if (selection) {
-      myComboBox.setSelectedItem(myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME);
+      myComboBox.setItem(myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME);
     }
     myCheckbox.setSelected(selection);
   }
@@ -123,6 +122,6 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
     if (!myCheckbox.isSelected()) {
       return null;
     }
-    return (String)myComboBox.getSelectedItem();
+    return myComboBox.getItem();
   }
 }

@@ -20,30 +20,34 @@ import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends CreateFromTemplateAction<T> {
+  @Nullable
   private final Set<? extends JpsModuleSourceRootType<?>> mySourceRootTypes;
 
   protected CreateTemplateInPackageAction(String text, String description, Icon icon,
@@ -52,7 +56,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
   }
 
   protected CreateTemplateInPackageAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon,
-                                          final Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+                                          final @Nullable Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     super(dynamicText, dynamicDescription, icon);
     mySourceRootTypes = rootTypes;
   }
@@ -83,6 +87,31 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
     return isAvailable(dataContext, mySourceRootTypes, this::checkPackageExists);
   }
 
+  @Override
+  protected @NotNull PsiDirectory adjustDirectory(@NotNull PsiDirectory directory) {
+    return adjustDirectory(directory, mySourceRootTypes);
+  }
+
+  @NotNull
+  public static PsiDirectory adjustDirectory(@NotNull PsiDirectory directory, @Nullable Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    ProjectFileIndex index = ProjectRootManager.getInstance(directory.getProject()).getFileIndex();
+    if (rootTypes != null && !index.isUnderSourceRootOfType(directory.getVirtualFile(), rootTypes)) {
+      Module module = ModuleUtilCore.findModuleForPsiElement(directory);
+      if (module == null) return directory;
+      ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+      ContentEntry contentEntry =
+        ContainerUtil.find(modifiableModel.getContentEntries(), entry -> entry.getFile() != null && VfsUtilCore.isAncestor(entry.getFile(), directory.getVirtualFile(), false));
+      if (contentEntry == null ||
+          !Objects.equals(contentEntry.getFile(), directory.getVirtualFile()) ||
+          contentEntry.getSourceFolders().length > 0) {
+        return directory;
+      }
+      contentEntry.addSourceFolder(directory.getVirtualFile(), false);
+      WriteAction.run(() -> modifiableModel.commit());
+    }
+    return directory;
+  }
+
   public static boolean isAvailable(DataContext dataContext, Set<? extends JpsModuleSourceRootType<?>> sourceRootTypes,
                                     Predicate<? super PsiDirectory> checkPackageExists) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -100,9 +129,16 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
       if (projectFileIndex.isUnderSourceRootOfType(dir.getVirtualFile(), sourceRootTypes) && checkPackageExists.test(dir)) {
         return true;
       }
+      if (isInContentRoot(dir.getVirtualFile(), projectFileIndex)) {
+        return true;
+      }
     }
 
     return false;
+  }
+
+  public static boolean isInContentRoot(VirtualFile file, ProjectFileIndex index) {
+    return file.equals(index.getContentRootForFile(file));
   }
 
   protected abstract boolean checkPackageExists(PsiDirectory directory);

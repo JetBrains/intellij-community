@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.openapi.module.Module;
@@ -21,7 +21,7 @@ public final class DescriptionCheckerUtil {
     // Try search in narrow scopes first
     return StreamEx.<Supplier<GlobalSearchScope>>of(
       () -> GlobalSearchScope.EMPTY_SCOPE,
-      module::getModuleScope,
+      () -> module.getModuleScope(false),
       module::getModuleWithDependenciesScope,
       () -> {
         GlobalSearchScope[] scopes = ContainerUtil.map2Array(ModuleUtilCore.getAllDependentModules(module),

@@ -1,13 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.NonExtendable
 interface ExternalSystemProjectTracker {
 
   /**
@@ -40,25 +39,34 @@ interface ExternalSystemProjectTracker {
   fun remove(id: ExternalSystemProjectId)
 
   /**
-   * Marks project settings dirty
-   * It allows to schedule unconditional project refresh
+   * Marks project settings as dirty.
    */
   fun markDirty(id: ExternalSystemProjectId)
 
   /**
-   * Schedules incremental project refresh
+   * Marks all external project settings as dirty
+   * @see markDirty(ExternalSystemProjectId)
+   */
+  fun markDirtyAllProjects()
+
+  /**
+   * Schedules project reload, may be skipped if project is up-to-date, project is being reloaded or VCS is being updated.
+   * Use [markDirtyAllProjects] for force project reload.
    */
   fun scheduleProjectRefresh()
 
   /**
-   * Schedules update of reload notification status
+   * Schedules project reload or notification update.
+   * I.e. marks this place as safe to start auto-reload.
+   *
+   * @see scheduleProjectRefresh
    */
-  fun scheduleProjectNotificationUpdate()
+  fun scheduleChangeProcessing()
 
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ExternalSystemProjectTracker {
-      return ServiceManager.getService(project, ExternalSystemProjectTracker::class.java)
+      return project.getService(ExternalSystemProjectTracker::class.java)
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -8,18 +8,27 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 /**
- * Provides access to core application-wide functionality and methods for working with the IDE's thread model.
+ * Provides access to the core application-wide functionality and methods for working with the IDE thread model.
  * <p>
- * The thread model defines three types of locks which provide access the PSI and other IDE data structures:
+ * The thread model defines three types of locks which provide access to the PSI and other IDE data structures:
  * <ul>
  *   <li><b>Read lock</b> provides read access to the data. Can be obtained from any thread concurrently with other Read locks
  *   and Write Intent lock.</li>
@@ -38,10 +47,10 @@ import java.util.concurrent.Future;
  * </table>
  * <p>
  * Obtaining locks manually is not recommended. The recommended way to obtain read and write locks is to run so-called
- * "read actions" and "write actions" via {@link #runReadAction} and {@link #runWriteAction}, respectively.
+ * "read actions" and write-actions via {@link #runReadAction} and {@link #runWriteAction}, respectively.
  * <p>
  * The recommended way to obtain Write Intent lock is to schedule execution on so-called "write thread" (i.e. thread with Write Intent lock)
- * via {@link #invokeLaterOnWriteThread}, {@link WriteThread} or {@link AppUIExecutor#onWriteThread} asynchronous API.
+ * via {@link #invokeLaterOnWriteThread} or {@link AppUIExecutor#onWriteThread} asynchronous API.
  * <p>
  * Multiple read actions can run at the same time without locking each other.
  * <p>
@@ -52,25 +61,35 @@ import java.util.concurrent.Future;
 public interface Application extends ComponentManager {
 
   /**
-   * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
-   * with {@link ModalityState#defaultModalityState()} modality state.
-   *
-   * @param action the runnable to execute.
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This method is obsolete because there will be no such thing as <i>write thread</i>,
+   * and any thread will be able to hold the write lock.
+   * For more info follow <a href="https://youtrack.jetbrains.com/issue/IJPL-53">IJPL-53</a>.
+   * </p>
    */
-  @ApiStatus.Experimental
-  void invokeLaterOnWriteThread(@NotNull Runnable action);
+  @ApiStatus.Obsolete
+  default void invokeLaterOnWriteThread(@NotNull Runnable action) {
+    invokeLater(action, getDefaultModalityState());
+  }
 
   /**
+   * See <b>obsolescence notice</b> on {@link #invokeLaterOnWriteThread(Runnable)}.
+   * <p>
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
    * when IDE is in the specified modality state (or a state with less modal dialogs open).
    *
    * @param action the runnable to execute.
    * @param modal  the state in which action will be executed
    */
-  @ApiStatus.Experimental
-  void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal);
+  @ApiStatus.Obsolete
+  default void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal) {
+    invokeLater(action, modal, getDisposed());
+  }
 
   /**
+   * See <b>obsolescence notice</b> on {@link #invokeLaterOnWriteThread(Runnable)}.
+   * <p>
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
    * when IDE is in the specified modality state (or a state with less modal dialogs open)
    * - unless the expiration condition is fulfilled.
@@ -79,77 +98,98 @@ public interface Application extends ComponentManager {
    * @param modal   the state in which action will be executed
    * @param expired condition to check before execution.
    */
-  @ApiStatus.Experimental
-  void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired);
+  @ApiStatus.Obsolete
+  default void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired) {
+    invokeLater(action, modal, expired);
+  }
 
   /**
    * Runs the specified read action. Can be called from any thread. The action is executed immediately
-   * if no write action is currently running, or blocked until the currently running write action completes.<p></p>
+   * if no write action is currently running, or blocked until the currently running write action completes.
    * <p>
    * See also {@link ReadAction#run} for a more lambda-friendly version.
    *
    * @param action the action to run.
+   * @see CoroutinesKt#readAction
+   * @see CoroutinesKt#readActionBlocking
    */
+  @RequiresBlockingContext
   void runReadAction(@NotNull Runnable action);
 
   /**
    * Runs the specified computation in a read action. Can be called from any thread. The action is executed
    * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.<p></p>
+   * completes.
    * <p>
    * See also {@link ReadAction#compute} for a more lambda-friendly version.
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
+   * @see CoroutinesKt#readAction
+   * @see CoroutinesKt#readActionBlocking
    */
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  @RequiresBlockingContext
   <T> T runReadAction(@NotNull Computable<T> computation);
 
   /**
    * Runs the specified computation in a read action. Can be called from any thread. The action is executed
    * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.<p></p>
+   * completes.
    * <p>
    * See also {@link ReadAction#compute} for a more lambda-friendly version.
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
    * @throws E re-frown from ThrowableComputable
+   * @see CoroutinesKt#readAction
+   * @see CoroutinesKt#readActionBlocking
    */
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  @RequiresBlockingContext
   <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
    * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
-   * immediately if no read actions are currently running, or blocked until all read actions complete.<p></p>
+   * immediately if no read actions are currently running, or blocked until all read actions complete.
    * <p>
    * See also {@link WriteAction#run} for a more lambda-friendly version.
    *
    * @param action the action to run
+   * @see CoroutinesKt#writeAction
    */
+  @RequiresBlockingContext
   void runWriteAction(@NotNull Runnable action);
 
   /**
-   * Runs the specified computation in a write action. Must be called from the Swing dispatch thread.
+   * Runs the specified computation in a write-action. Must be called from the Swing dispatch thread.
    * The action is executed immediately if no read actions or write actions are currently running,
-   * or blocked until all read actions and write actions complete.<p></p>
+   * or blocked until all read actions and write actions complete.
    * <p>
    * See also {@link WriteAction#compute} for a more lambda-friendly version.
    *
    * @param computation the computation to run
    * @return the result returned by the computation.
+   * @see CoroutinesKt#writeAction
    */
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  @RequiresBlockingContext
   <T> T runWriteAction(@NotNull Computable<T> computation);
 
   /**
-   * Runs the specified computation in a write action. Must be called from the Swing dispatch thread.
+   * Runs the specified computation in a write-action. Must be called from the Swing dispatch thread.
    * The action is executed immediately if no read actions or write actions are currently running,
-   * or blocked until all read actions and write actions complete.<p></p>
+   * or blocked until all read actions and write actions complete.
    * <p>
    * See also {@link WriteAction#compute} for a more lambda-friendly version.
    *
    * @param computation the computation to run
    * @return the result returned by the computation.
    * @throws E re-frown from ThrowableComputable
+   * @see CoroutinesKt#writeAction
    */
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  @RequiresBlockingContext
   <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
@@ -161,65 +201,113 @@ public interface Application extends ComponentManager {
   boolean hasWriteAction(@NotNull Class<?> actionClass);
 
   /**
-   * Asserts whether the read access is allowed.
+   * Runs the specified computation in a write intent. Must be called from the Swing dispatch thread. The action is executed
+   * immediately if no write action is currently running, or blocked until the currently running write action
+   * completes.
+   * <p>
+   * See also {@link WriteIntentReadAction#compute} for a more lambda-friendly version.
+   *
+   * @param computation the computation to perform.
+   * @return the result returned by the computation.
+   * @throws E re-frown from ThrowableComputable
    */
+  @ApiStatus.Experimental
+  default <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
+    assertWriteIntentLockAcquired();
+    return computation.compute();
+  }
+
+  /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
+   * Annotate the function with {@link RequiresReadLock} (in Java) or use {@link ThreadingAssertions#softAssertReadAccess} instead.
+   * </p>
+   * Asserts that read access is allowed.
+   */
+  @ApiStatus.Obsolete
   void assertReadAccessAllowed();
 
   /**
-   * Asserts whether the write access is allowed.
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
+   * Annotate the function with {@link RequiresWriteLock} (in Java) or use {@link ThreadingAssertions#assertWriteAccess()} instead.
+   * </p>
+   * Asserts that write access is allowed.
    */
+  @ApiStatus.Obsolete
   void assertWriteAccessAllowed();
 
   /**
-   * Asserts whether the method is being called from the event dispatch thread.
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
+   * Annotate the function with {@link RequiresReadLockAbsence} (in Java) or use {@link ThreadingAssertions#assertNoReadAccess()} instead.
+   * </p>
+   * Asserts that read access is not allowed.
    */
+  @ApiStatus.Experimental
+  @ApiStatus.Obsolete
+  void assertReadAccessNotAllowed();
+
+  /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
+   * Annotate the function with {@link RequiresEdt} (in Java) or use {@link ThreadingAssertions#assertEventDispatchThread()} instead.
+   * </p>
+   * Asserts that the method is being called from the event dispatch thread.
+   */
+  @ApiStatus.Obsolete
   void assertIsDispatchThread();
 
   /**
-   * Asserts whether the method is being called from any thread outside EDT.
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
+   * Annotate the function with {@link RequiresBackgroundThread} (in Java) or use {@link ThreadingAssertions#assertBackgroundThread()} instead.
+   * </p>
+   * Asserts that the method is being called from any thread outside EDT.
    */
   @ApiStatus.Experimental
+  @ApiStatus.Obsolete
   void assertIsNonDispatchThread();
 
   /**
-   * Asserts whether the method is being called from under the Write Intent lock
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
+   * Use {@link ThreadingAssertions#assertWriteIntentReadAccess()} instead.
+   * </p>
+   * Asserts that the method is being called from under the write-intent lock.
    */
   @ApiStatus.Experimental
-  void assertIsWriteThread();
-
-  /**
-   * @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead
-   * Adds an {@link ApplicationListener}.
-   *
-   * @param listener the listener to add
-   */
-  @Deprecated
-  void addApplicationListener(@NotNull ApplicationListener listener);
+  @ApiStatus.Obsolete
+  void assertWriteIntentLockAcquired();
 
   /**
    * Adds an {@link ApplicationListener}.
    *
    * @param listener the listener to add
-   * @param parent   the parent disposable which dispose will trigger this listener removal
+   * @param parent   the parent disposable, whose disposal will trigger this listener's removal
    */
   void addApplicationListener(@NotNull ApplicationListener listener, @NotNull Disposable parent);
 
   /**
-   * @deprecated Instead, just call {@code Disposer.dispose(disposable);} on disposable you've passed to {@link #addApplicationListener(ApplicationListener, Disposable)}
-   * Removes an {@link ApplicationListener}.
+   * Saves all open documents, settings of all open projects, and application settings.
    *
-   * @param listener the listener to remove
+   * @see #saveSettings()
+   * @deprecated Use {@link com.intellij.ide.SaveAndSyncHandler#scheduleSave)}
    */
   @Deprecated
-  void removeApplicationListener(@NotNull ApplicationListener listener);
-
-  /**
-   * Saves all open documents and projects.
-   */
+  @ApiStatus.Internal
+  @RequiresEdt
   void saveAll();
 
   /**
-   * Saves application settings.
+   * Saves application settings. Note that settings for non-roamable components aren't saved by default if they were saved less than
+   * 5 minutes ago, see {@link com.intellij.openapi.components.Storage#useSaveThreshold() useSaveThreshold} for details.
    */
   void saveSettings();
 
@@ -227,6 +315,10 @@ public interface Application extends ComponentManager {
    * Exits the application, showing the exit confirmation prompt if it is enabled.
    */
   void exit();
+
+  default void exit(boolean force, boolean exitConfirmed, boolean restart, int exitCode) {
+    exit();
+  }
 
   default void exit(boolean force, boolean exitConfirmed, boolean restart) {
     exit();
@@ -253,10 +345,10 @@ public interface Application extends ComponentManager {
   boolean isReadAccessAllowed();
 
   /**
-   * Checks if the current thread is the Swing dispatch thread and has IW lock acquired.
+   * Checks if the current thread is the event dispatch thread and has IW lock acquired.
    *
-   * @see #isWriteThread()
    * @return {@code true} if the current thread is the Swing dispatch thread with IW lock, {@code false} otherwise.
+   * @see #isWriteIntentLockAcquired()
    */
   @Contract(pure = true)
   boolean isDispatchThread();
@@ -268,38 +360,35 @@ public interface Application extends ComponentManager {
    */
   @ApiStatus.Experimental
   @Contract(pure = true)
-  boolean isWriteThread();
-
-  /**
-   * @return a facade, which lets to call all those invokeLater() with a ActionCallback handle returned.
-   */
-  @NotNull
-  ModalityInvokator getInvokator();
+  boolean isWriteIntentLockAcquired();
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
    * AWT event dispatching thread under Write Intent lock, with {@link ModalityState#defaultModalityState()} modality state.
-   * This will happen after all pending AWT events have been processed.<p/>
+   * This will happen after all pending AWT events have been processed.
    * <p>
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
    * for the reasons described in {@link ModalityState} documentation.
    *
    * @param runnable the runnable to execute.
    */
+  @RequiresBlockingContext
   void invokeLater(@NotNull Runnable runnable);
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
    * AWT event dispatching thread under Write Intent lock - unless the expiration condition is fulfilled.
    * This will happen after all pending AWT events have been processed and in {@link ModalityState#defaultModalityState()} modality state
-   * (or a state with less modal dialogs open).<p/>
+   * (or a state with less modal dialogs open).
    * <p>
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
    * for the reasons described in {@link ModalityState} documentation.
    *
    * @param runnable the runnable to execute.
    * @param expired  condition to check before execution.
+   * @see CoroutinesKt#getEDT
    */
+  @RequiresBlockingContext
   void invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired);
 
   /**
@@ -312,7 +401,9 @@ public interface Application extends ComponentManager {
    *
    * @param runnable the runnable to execute.
    * @param state    the state in which the runnable will be executed.
+   * @see CoroutinesKt#getEDT
    */
+  @RequiresBlockingContext
   void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state);
 
   /**
@@ -327,7 +418,9 @@ public interface Application extends ComponentManager {
    * @param runnable the runnable to execute.
    * @param state    the state in which the runnable will be executed.
    * @param expired  condition to check before execution.
+   * @see CoroutinesKt#getEDT
    */
+  @RequiresBlockingContext
   void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired);
 
   /**
@@ -345,65 +438,74 @@ public interface Application extends ComponentManager {
    * @param runnable      the runnable to execute.
    * @param modalityState the state in which the runnable will be executed.
    * @throws ProcessCanceledException when the current thread is interrupted
+   * @see CoroutinesKt#getEDT
    */
+  @RequiresBlockingContext
   void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) throws ProcessCanceledException;
 
   /**
    * Same as {@link #invokeAndWait(Runnable, ModalityState)}, using {@link ModalityState#defaultModalityState()}.
+   * @see CoroutinesKt#getEDT
    */
+  @RequiresBlockingContext
   void invokeAndWait(@NotNull Runnable runnable) throws ProcessCanceledException;
 
   /**
    * Please use {@link ModalityState#current()} instead.
    *
    * @return the current modality state.
+   * @deprecated for attention
    */
-  @NotNull
-  ModalityState getCurrentModalityState();
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  @RequiresEdt
+  @ApiStatus.Internal
+  @NotNull ModalityState getCurrentModalityState();
 
   /**
    * Please use {@link ModalityState#stateForComponent(Component)} instead.
    *
    * @return the modality state for the dialog to which the specified component belongs.
    */
-  @NotNull
-  ModalityState getModalityStateForComponent(@NotNull Component c);
+  @RequiresEdt
+  @NotNull ModalityState getModalityStateForComponent(@NotNull Component c);
 
   /**
    * Please use {@link ModalityState#defaultModalityState()} instead.
    *
    * @return the modality state for the current thread.
    */
-  @NotNull
-  ModalityState getDefaultModalityState();
+  @RequiresBlockingContext
+  @NotNull ModalityState getDefaultModalityState();
 
   /**
-   * Please use {@link ModalityState#NON_MODAL} instead.
+   * Please use {@link ModalityState#nonModal()} instead.
    *
    * @return the modality state for no modal dialogs.
+   * @deprecated for attention
    */
-  @NotNull
-  ModalityState getNoneModalityState();
+  @Deprecated
+  @ApiStatus.Internal
+  @NotNull ModalityState getNoneModalityState();
 
   /**
    * Please use {@link ModalityState#any()} instead, and only if you absolutely must, after carefully reading its documentation.
    *
    * @return modality state which is always applicable
+   * @deprecated for attention
    */
-  @NotNull
-  ModalityState getAnyModalityState();
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  @ApiStatus.Internal
+  @NotNull ModalityState getAnyModalityState();
 
   /**
-   * Returns the time of IDE start, in milliseconds since midnight, January 1, 1970 UTC.
-   *
-   * @return the IDE's start time.
+   * Returns the IDE start timestamp (UNIX time, in milliseconds).
    */
   long getStartTime();
 
   /**
    * Returns the time in milliseconds during which IDE received no input events.
-   *
-   * @return the idle time of IDE.
    */
   long getIdleTime();
 
@@ -411,7 +513,7 @@ public interface Application extends ComponentManager {
    * Checks if IDE is currently running unit tests. No UI should be shown when unit
    * tests are being executed.
    * This method may also be used for additional debug checks or logging in test mode.
-   * <p></p>
+   * <p>
    * Please avoid doing things differently depending on the result of this method, because this leads to
    * testing something synthetic instead of what really happens in production.
    * So you'll be able to catch less of production bugs and might instead lose your time on debugging test-only issues.
@@ -420,7 +522,8 @@ public interface Application extends ComponentManager {
    * <ul>
    *   <li>To wait for an {@code invokeLater} in tests, you can call {@code PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()}</li>
    *   <li>To wait for asynchronous non-blocking read operations, you can call {@code NonBlockingReadActionImpl.waitForAsyncTaskCompletion()}</li>
-   *   <li>To wait for other asynchronous operations, you can track their {@link Future}/{@link org.jetbrains.concurrency.Promise Promise}/etc callbacks and call {@code PlatformTestUtil.waitFor*}</li>
+   *   <li>To wait for other asynchronous operations, you can track their {@link Future}/{@link org.jetbrains.concurrency.Promise Promise}/etc
+   *       callbacks and call {@code PlatformTestUtil.waitFor*}</li>
    *   <li>To emulate user interaction with a simple yes/no dialog, use {@code TestDialogManager.setTestDialog(...)}</li>
    *   <li>For other UI interaction, try {@link com.intellij.ui.UiInterceptors UiInterceptors}</li>
    * </ul>
@@ -441,7 +544,7 @@ public interface Application extends ComponentManager {
    * Checks if IDE is running as a command line applet or in unit test mode.
    * UI can be shown (e.g. diff frame)
    *
-   * @return {@code true} if IDE is running in command line  mode, {@code false} otherwise
+   * @return {@code true} if IDE is running in command line mode, {@code false} otherwise
    */
   boolean isCommandLine();
 
@@ -458,8 +561,8 @@ public interface Application extends ComponentManager {
    * @param action to be executed
    * @return future result
    */
-  @NotNull
-  Future<?> executeOnPooledThread(@NotNull Runnable action);
+  @RequiresBlockingContext
+  @NotNull Future<?> executeOnPooledThread(@NotNull Runnable action);
 
   /**
    * Requests pooled thread to execute the action.
@@ -474,16 +577,8 @@ public interface Application extends ComponentManager {
    * @param action to be executed
    * @return future result
    */
-  @NotNull
-  <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action);
-
-  /**
-   * @deprecated Use {@link #isDisposed()}.
-   */
-  @Deprecated
-  default boolean isDisposeInProgress() {
-    return isDisposed();
-  }
+  @RequiresBlockingContext
+  @NotNull <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action);
 
   /**
    * Checks if IDE is capable of restarting itself on the current platform and with the current execution mode.
@@ -493,7 +588,7 @@ public interface Application extends ComponentManager {
   boolean isRestartCapable();
 
   /**
-   * Exits and restarts IDE. If the current platform is not restart capable, only exits.
+   * Exits and restarts IDE. If the current platform is not restart-capable, only exits.
    */
   void restart();
 
@@ -505,25 +600,73 @@ public interface Application extends ComponentManager {
   boolean isActive();
 
   /**
-   * @deprecated Use {@link #runReadAction(Runnable)} instead
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  AccessToken acquireReadActionLock();
-
-  /**
-   * @deprecated use {@link #runWriteAction}, {@link WriteAction#run(ThrowableRunnable)} or {@link WriteAction#compute(ThrowableComputable)} instead
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
-
-  /**
-   * Checks if IDE is running in <a href="http://www.jetbrains.org/intellij/sdk/docs/reference_guide/internal_actions/enabling_internal.html">Internal Mode</a> to enable additional features for plugin development.
+   * Checks if IDE is running in
+   * <a href="http://www.jetbrains.org/intellij/sdk/docs/reference_guide/internal_actions/enabling_internal.html">Internal Mode</a>
+   * to enable additional features for plugin development.
    */
   boolean isInternal();
 
   boolean isEAP();
+
+  //<editor-fold desc="Deprecated stuff">
+
+  /**
+   * @deprecated this scope will die only with the application => plugin coroutines which use it will leak on unloading.
+   * Instead, use <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#service-scopes">service constructor injection</a>.
+   * <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#why-application.getcoroutinescope-are-project.getcoroutinescope-are-bad">Why? See here.</a>
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
+  @ApiStatus.Internal
+  CoroutineScope getCoroutineScope();
+
+  /** @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead */
+  @Deprecated
+  void addApplicationListener(@NotNull ApplicationListener listener);
+
+  /** @deprecated call {@code Disposer.dispose(disposable);} on disposable passed to {@link #addApplicationListener(ApplicationListener, Disposable)} */
+  @Deprecated
+  void removeApplicationListener(@NotNull ApplicationListener listener);
+
+  /** @deprecated use corresponding {@link Application#invokeLater} methods */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
+  @NotNull ModalityInvokator getInvokator();
+
+  /** @deprecated use {@link #isDisposed()} instead */
+  @Deprecated
+  default boolean isDisposeInProgress() {
+    return isDisposed();
+  }
+
+  /** @deprecated use {@link #runReadAction(Runnable)} instead */
+  @Deprecated
+  @NotNull AccessToken acquireReadActionLock();
+
+  /** @deprecated use {@link #runWriteAction}, {@link WriteAction#run(ThrowableRunnable)}, or {@link WriteAction#compute} instead */
+  @Deprecated
+  @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
+
+  /** @deprecated Internal API */
+  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.Internal
+  @Deprecated
+  @SuppressWarnings({"override", "DeprecatedIsStillUsed"})
+  <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName);
+
+  /** @deprecated bad name, use {@link #isWriteIntentLockAcquired()} instead */
+  @Deprecated
+  @ApiStatus.Experimental
+  @Contract(pure = true)
+  default boolean isWriteThread() {
+    return isWriteIntentLockAcquired();
+  }
+
+  /** @deprecated bad name, use {@link #assertWriteIntentLockAcquired()} instead */
+  @Deprecated
+  @ApiStatus.Experimental
+  default void assertIsWriteThread() {
+    assertWriteIntentLockAcquired();
+  }
+  //</editor-fold>
 }

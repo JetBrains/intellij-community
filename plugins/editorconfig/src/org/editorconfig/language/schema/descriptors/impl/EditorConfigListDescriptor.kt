@@ -23,8 +23,7 @@ data class EditorConfigListDescriptor(
   }
 
   override fun matches(element: PsiElement): Boolean {
-    if (element !is EditorConfigOptionValueList) return false
     // Note: it might be necessary to compare values as well
-    return true
+    return element is EditorConfigOptionValueList
   }
 }

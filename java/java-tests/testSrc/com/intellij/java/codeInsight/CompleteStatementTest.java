@@ -1,16 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorActionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK;
 
 @TestDataPath("$CONTENT_ROOT/testData")
 public class CompleteStatementTest extends EditorActionTestCase {
@@ -33,11 +35,6 @@ public class CompleteStatementTest extends EditorActionTestCase {
     super.setUp();
     mySettings = CodeStyle.getSettings(getProject());
     myJavaSettings = mySettings.getCommonSettings(JavaLanguage.INSTANCE);
-  }
-
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_15_PREVIEW;
   }
 
   public void testAddMissingSemicolon() { doTest(); }
@@ -73,6 +70,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testForIncrementExpressionAndBody() { doTest(); }
   public void testEmptyBeforeReturn() { doTest(); }
   public void testIf() { doTest(); }
+  public void testIfWithComment() { doTest(); }
   public void testIfWithoutParentheses() { doTest(); }
   public void testBeforeStatement() { doTest(); }
   public void testTry1() { doTest(); }
@@ -80,6 +78,9 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testBlock1() { doTest(); }
   public void testAfterFor() { doTest(); }
   public void testBeforeFor() { doTest(); }
+  public void testForSingleStatementInBody() { doTest(); }
+  public void testForEachSingleStatementInBody() { doTest(); }
+  public void testForEachNextStatementNotIndented() { doTest(); }
   public void testAtBlockEnd() { doTest(); }
   public void testForceBlock() { doTest(); }
   public void testElseIf() { doTest(); }
@@ -87,6 +88,9 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testIncompleteElseIf() { doTest(); }
   public void testField() { doTest(); }
   public void testMethod() { doTest(); }
+  public void testLikelyField() { doTest(); }
+  public void testVoidMethodIncomplete() { doTest(); }
+  public void testFieldWithEquals() { doTest(); }
   public void testClass() { doTest(); }
   public void testInnerEnumBeforeMethod() { doTest(); }
   public void testInnerEnumBeforeMethodWithSpace() { doTest(); }
@@ -119,6 +123,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testCompleteIfNextLineBraceStyle2() { myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE; doTest(); }
   public void testSCR36110() { doTest(); }
   public void testSCR37331() { doTest(); }
+  public void testGenericBeforeVar() { doTest(); }
 
   public void testIDEADEV434() {
     mySettings.getCommonSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
@@ -138,6 +143,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testSwitchKeywordWithCondition() { doTest(); }
   public void testSwitchBraces() { doTest(); }
   public void testCaseColon() { doTest(); }
+  public void testMultipleCasesColon() { doTest(); }
   public void testDefaultColon() { doTest(); }
   public void testNewInParentheses() { doTest(); }
   public void testIDEADEV20713() { doTest(); }
@@ -172,6 +178,9 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testAddMethodBodyFromInsideAnnotation() { doTest(); }
   public void testArrayInitializerRBracket() { doTest(); }
   public void testArrayInitializerRBrace() { doTest(); }
+  public void testArrayInitializerRBrace2() { doTest(); }
+  public void testMultiArrayInitializerRBrace() { doTest(); }
+  public void testMultiArrayInitializerRBrace2() { doTest(); }
   public void testArrayInitializerSeveralLines() { doTest(); }
   public void testReturnInLambda() { doTest(); }
   public void testSemicolonAfterLambda() { doTest(); }
@@ -181,7 +190,44 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testRecord() { doTest(); }
   public void testRecordWithComponent() { doTest(); }
   public void testRecordWithComponentNoBody() { doTest(); }
+  public void testClassBeforeRecord() { doTest(); }
   public void testVarargMethod() { doTest(); }
+  public void testVarargMethod2() { doTest(); }
+  public void testVarargMethod3() { doTest(); }
+  public void testSemicolonAfterSwitchExpression() { doTest(); }
+  public void testOverloadedMethod() { doTest(); }
+  public void testOverloadedMethodNoCaretHint() { doTest(); }
+  public void testOverloadedMethodOneOrThree() { doTest(); }
+  public void testOverloadedMethodOneOrThree2() { doTest(); }
+  public void testOverloadedMethodOneOrThree3() { doTest(); }
+  public void testMissingComma() { doTest(); }
+  public void testInInjection() { doTest(); }
+  public void testNativeMethod() {
+    doTest();
+  }
+  public void testNativePrivateMethod() {
+    doTest();
+  }
+  public void testReturnSwitchExpression() {
+    doTest();
+  }
+  public void testReturnSwitchExpression2() {
+    doTest();
+  }
+  public void testReturnSwitchExpression3() {
+    doTest();
+  }
+  public void testSwitchAtTheEndOfClass() { doTest(); }
+  public void testAddMissingLambdaBody() { doTest(); }
+  public void testAddMissingLambdaBody2() { doTest(); }
+  public void testBlockInSwitchRule() { doTest(); }
+  public void testSwitchAddArrow() { doTest(); }
+  public void testYieldSemicolon() { doTest(); }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_LATEST_WITH_LATEST_JDK;
+  }
 
   private void doTestBracesNextLineStyle() {
     myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

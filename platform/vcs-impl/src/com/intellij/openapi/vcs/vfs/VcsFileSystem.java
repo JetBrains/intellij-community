@@ -28,7 +28,7 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements NonPhy
   /**
    * @deprecated Use {@link #getCouldNotImplementMessage()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final String COULD_NOT_IMPLEMENT_MESSAGE = "Could not implement"; //NON-NLS
 
   private static final String PROTOCOL = "vcs";  //NON-NLS
@@ -60,21 +60,6 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements NonPhy
   @Override
   public void fireContentsChanged(Object requestor, @NotNull VirtualFile file, long oldModificationStamp) {
     super.fireContentsChanged(requestor, file, oldModificationStamp);
-  }
-
-  @Override
-  protected void fireBeforeFileDeletion(Object requestor, @NotNull VirtualFile file) {
-    super.fireBeforeFileDeletion(requestor, file);
-  }
-
-  @Override
-  protected void fireFileDeleted(Object requestor, @NotNull VirtualFile file, @NotNull String fileName, VirtualFile parent) {
-    super.fireFileDeleted(requestor, file, fileName, parent);
-  }
-
-  @Override
-  protected void fireBeforeContentsChange(Object requestor, @NotNull VirtualFile file) {
-    super.fireBeforeContentsChange(requestor, file);
   }
 
   @Nls

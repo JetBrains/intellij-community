@@ -20,9 +20,9 @@ internal open class PrimitiveValueReader(val className: String, val defaultValue
     }
     else {
       addReaderParameter(subtyping, out)
-      out.append(".next");
+      out.append(".next")
       if (nullable) {
-        out.append("Nullable");
+        out.append("Nullable")
       }
       out.append(readPostfix).append("()")
     }

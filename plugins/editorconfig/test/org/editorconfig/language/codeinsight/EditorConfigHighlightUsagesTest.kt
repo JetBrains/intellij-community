@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType.ELEMENT_UNDER_CARET_READ
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType.ELEMENT_UNDER_CARET_WRITE
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class EditorConfigHighlightUsagesTest : BasePlatformTestCase() {
@@ -19,12 +18,12 @@ class EditorConfigHighlightUsagesTest : BasePlatformTestCase() {
   fun testDeclarationWithoutReferences() = doTest()
 
   private fun doTest() {
-    SeveritiesProvider.EP_NAME.getPoint().registerExtension(SEVERITIES_PROVIDER, testRootDisposable)
+    SeveritiesProvider.EP_NAME.point.registerExtension(SEVERITIES_PROVIDER, testRootDisposable)
     val name = getTestName(true)
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled (project, testRootDisposable, Runnable {
       myFixture.configureByFile("${name}/.editorconfig")
       myFixture.setReadEditorMarkupModel(true)
-      ExpectedHighlightingData.expectedDuplicatedHighlighting {myFixture.checkHighlighting ()}
+      myFixture.checkHighlighting()
     })
   }
 

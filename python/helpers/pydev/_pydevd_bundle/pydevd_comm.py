@@ -73,7 +73,7 @@ from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
     IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON, GlobalDebuggerHolder, \
-    get_global_debugger, GetGlobalDebugger, set_global_debugger # Keep for backward compatibility @UnusedImport
+    get_global_debugger, GetGlobalDebugger, set_global_debugger, NEXT_VALUE_SEPARATOR
 from _pydev_bundle.pydev_override import overrides
 import json
 import weakref
@@ -105,10 +105,12 @@ from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_att
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_bundle import pydev_log
 from _pydev_bundle import _pydev_completer
+from _pydevd_bundle.pydevd_tables import exec_table_command
 
 from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle import pydevd_console
 from _pydev_bundle.pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
+from _pydevd_bundle.pydevd_console_output import ConsoleOutputHook
 
 try:
     import cStringIO as StringIO #may not always be available @UnusedImport
@@ -141,7 +143,8 @@ from _pydevd_bundle.pydevd_comm_constants import (
     CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS, CMD_PROCESS_CREATED_MSG_RECEIVED, CMD_PYDEVD_JSON_CONFIG,
     CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION, CMD_THREAD_RESUME_SINGLE_NOTIFICATION,
     CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS, CMD_SET_PROJECT_ROOTS, CMD_VERSION,
-    CMD_RETURN, CMD_SET_PROTOCOL, CMD_ERROR, CMD_GET_SMART_STEP_INTO_VARIANTS, CMD_DATAVIEWER_ACTION,)
+    CMD_RETURN, CMD_SET_PROTOCOL, CMD_ERROR, CMD_GET_SMART_STEP_INTO_VARIANTS, CMD_DATAVIEWER_ACTION,
+    CMD_TABLE_EXEC, CMD_INTERRUPT_DEBUG_CONSOLE, CMD_SET_USER_TYPE_RENDERERS)
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
 #this number can be changed if there's need to do so
 
@@ -203,7 +206,7 @@ class PyDBDaemonThread(threading.Thread):
         created_pydb_daemon[self] = 1
         try:
             try:
-                if IS_JYTHON and not isinstance(threading.currentThread(), threading._MainThread):
+                if IS_JYTHON and not isinstance(threading.current_thread(), threading._MainThread):
                     # we shouldn't update sys.modules for the main thread, cause it leads to the second importing 'threading'
                     # module, and the new instance of main thread is created
                     import org.python.core as PyCore #@UnresolvedImport
@@ -264,7 +267,7 @@ class ReaderThread(PyDBDaemonThread):
     def __init__(self, sock):
         PyDBDaemonThread.__init__(self)
         self.sock = sock
-        self.setName("pydevd.Reader")
+        self.name = "pydevd.Reader"
         from _pydevd_bundle.pydevd_process_net_command import process_net_command
         self.process_net_command = process_net_command
         self.global_debugger_holder = GlobalDebuggerHolder
@@ -342,7 +345,7 @@ class WriterThread(PyDBDaemonThread):
     def __init__(self, sock):
         PyDBDaemonThread.__init__(self)
         self.sock = sock
-        self.setName("pydevd.Writer")
+        self.name = "pydevd.Writer"
         self.cmdQueue = _queue.Queue()
         if pydevd_vm_type.get_vm_type() == 'python':
             self.timeout = 0
@@ -437,6 +440,10 @@ def start_client(host, port):
     pydevd_log(1, "Connecting to ", host, ":", str(port))
 
     s = socket(AF_INET, SOCK_STREAM)
+    # Set inheritable for Python >= 3.4. See https://docs.python.org/3/library/os.html#fd-inheritance.
+    # It fixes issues: PY-37960 and PY-14980, also https://github.com/tornadoweb/tornado/issues/2243
+    if hasattr(s, 'set_inheritable'):
+        s.set_inheritable(True)
 
     #  Set TCP keepalive on an open socket.
     #  It activates after 1 second (TCP_KEEPIDLE,) of idleness,
@@ -568,7 +575,7 @@ class NetCommandFactory:
 
     def _thread_to_xml(self, thread):
         """ thread information as XML """
-        name = pydevd_xml.make_valid_xml_value(thread.getName())
+        name = pydevd_xml.make_valid_xml_value(thread.name)
         cmdText = '<thread name="%s" id="%s" />' % (quote(name), get_thread_id(thread))
         return cmdText
 
@@ -786,7 +793,7 @@ class NetCommandFactory:
 
         cmd_text_list.append('<xml>')
         if message:
-            message = make_valid_xml_value(message)
+            message = make_valid_xml_value(quote(message, '/>_= '))
 
         append('<thread id="%s"' % (thread_id,))
         if stop_reason is not None:
@@ -1235,7 +1242,7 @@ class InternalGetVariable(InternalThreadCommand):
         try:
             xml = StringIO.StringIO()
             xml.write("<xml>")
-            _typeName, val_dict = pydevd_vars.resolve_compound_variable_fields(self.thread_id, self.frame_id, self.scope, self.attributes)
+            _typeName, val_dict = pydevd_vars.resolve_compound_variable_fields(self.thread_id, self.frame_id, self.scope, self.attributes, dbg.get_user_type_renderers())
             if val_dict is None:
                 val_dict = {}
 
@@ -1248,7 +1255,7 @@ class InternalGetVariable(InternalThreadCommand):
             for k in keys:
                 val = val_dict[k]
                 evaluate_full_value = pydevd_xml.should_evaluate_full_value(val)
-                xml.write(pydevd_xml.var_to_xml(val, k, evaluate_full_value=evaluate_full_value))
+                xml.write(pydevd_xml.var_to_xml(val, k, evaluate_full_value=evaluate_full_value, user_type_renderers=dbg.get_user_type_renderers()))
 
             xml.write("</xml>")
             cmd = dbg.cmd_factory.make_get_variable_message(self.sequence, xml.getvalue())
@@ -1364,6 +1371,41 @@ class InternalDataViewerAction(InternalThreadCommand):
         else:
             raise AttributeError("Type {} is not supported".format(type(var)))
 
+
+#=======================================================================================================================
+# InternalDataViewerAction
+#=======================================================================================================================
+class InternalTableCommand(InternalThreadCommand):
+    def __init__(self, sequence, thread_id, frame_id, init_command, command_type,
+                 start_index, end_index):
+        super().__init__(thread_id)
+        self.sequence = sequence
+        self.frame_id = frame_id
+        self.init_command = init_command
+        self.command_type = command_type
+        self.start_index = start_index
+        self.end_index = end_index
+
+    def do_it(self, dbg):
+        try:
+            frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
+            success, res = self.exec_command(frame)
+
+            if success:
+                cmd = NetCommand(CMD_TABLE_EXEC, self.sequence, res)
+                dbg.writer.add_command(cmd)
+            else:
+                cmd = dbg.cmd_factory.make_error_message(self.sequence, str(res))
+                dbg.writer.add_command(cmd)
+        except Exception as e:
+            cmd = dbg.cmd_factory.make_error_message(self.sequence, get_exception_traceback_str())
+            dbg.writer.add_command(cmd)
+
+    def exec_command(self, frame):
+        return exec_table_command(self.init_command, self.command_type, self.start_index, self.end_index,
+                                  frame.f_globals, frame.f_locals)
+
+
 #=======================================================================================================================
 # InternalChangeVariable
 #=======================================================================================================================
@@ -1396,10 +1438,11 @@ class InternalChangeVariable(InternalThreadCommand):
 #=======================================================================================================================
 class InternalGetFrame(InternalThreadCommand):
     """ gets the value of a variable """
-    def __init__(self, seq, thread_id, frame_id):
+    def __init__(self, seq, thread_id, frame_id, group_type):
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
+        self.group_type = group_type
 
     def do_it(self, dbg):
         """ Converts request into python variable """
@@ -1408,7 +1451,7 @@ class InternalGetFrame(InternalThreadCommand):
             if frame is not None:
                 hidden_ns = pydevd_console_integration.get_ipython_hidden_vars()
                 xml = "<xml>"
-                xml += pydevd_xml.frame_vars_to_xml(frame.f_locals, hidden_ns)
+                xml += pydevd_xml.frame_vars_to_xml(frame.f_locals, self.group_type, hidden_ns, dbg.get_user_type_renderers())
                 del frame
                 xml += "</xml>"
                 cmd = dbg.cmd_factory.make_get_frame_message(self.sequence, xml)
@@ -1521,7 +1564,7 @@ class InternalEvaluateExpression(InternalThreadCommand):
             if self.temp_name != "":
                 pydevd_vars.change_attr_expression(self.thread_id, self.frame_id, self.temp_name, self.expression, dbg, result)
             xml = "<xml>"
-            xml += pydevd_xml.var_to_xml(result, self.expression, self.doTrim)
+            xml += pydevd_xml.var_to_xml(result, self.expression, self.doTrim, user_type_renderers=dbg.get_user_type_renderers())
             xml += "</xml>"
             cmd = dbg.cmd_factory.make_evaluate_expression_message(self.sequence, xml)
             dbg.writer.add_command(cmd)
@@ -1795,14 +1838,19 @@ class InternalConsoleExec(InternalThreadCommand):
 
     def do_it(self, dbg):
         """ Converts request into python variable """
+        out_hook = ConsoleOutputHook(dbg, sys.stdout, is_stderr=False)
+        err_hook = ConsoleOutputHook(dbg, sys.stderr, is_stderr=True)
+        sys.stdout = out_hook
+        sys.stderr = err_hook
         try:
             try:
                 #don't trace new threads created by console command
                 disable_trace_thread_modules()
 
-                result = pydevd_console_integration.console_exec(self.thread_id, self.frame_id, self.expression, dbg)
+                result, exception_occurred = pydevd_console_integration.console_exec(self.thread_id, self.frame_id, self.expression, dbg)
                 xml = "<xml>"
                 xml += pydevd_xml.var_to_xml(result, "")
+                xml += pydevd_xml.var_to_xml(exception_occurred, "exception_occurred")
                 xml += "</xml>"
                 cmd = dbg.cmd_factory.make_evaluate_expression_message(self.sequence, xml)
                 dbg.writer.add_command(cmd)
@@ -1813,7 +1861,8 @@ class InternalConsoleExec(InternalThreadCommand):
                 dbg.writer.add_command(cmd)
         finally:
             enable_trace_thread_modules()
-
+            sys.stdout = out_hook.original_out
+            sys.stderr = err_hook.original_out
             sys.stderr.flush()
             sys.stdout.flush()
 
@@ -1847,7 +1896,7 @@ class InternalLoadFullValue(InternalThreadCommand):
                     var_obj = pydevd_vars.getVariable(self.thread_id, self.frame_id, scope, attrs)
                     var_objects.append((var_obj, name))
 
-            t = GetValueAsyncThreadDebug(dbg, self.sequence, var_objects)
+            t = GetValueAsyncThreadDebug(dbg, self.sequence, var_objects, dbg.get_user_type_renderers())
             t.start()
         except:
             exc = get_exception_traceback_str()
@@ -1860,12 +1909,13 @@ class AbstractGetValueAsyncThread(PyDBDaemonThread):
     """
     Abstract class for a thread, which evaluates values for async variables
     """
-    def __init__(self, frame_accessor, seq, var_objects):
+    def __init__(self, frame_accessor, seq, var_objects, user_type_renderers=None):
         PyDBDaemonThread.__init__(self)
         self.frame_accessor = frame_accessor
         self.seq = seq
         self.var_objs = var_objects
         self.cancel_event = threading.Event()
+        self.user_type_renderers = user_type_renderers
 
     def send_result(self, xml):
         raise NotImplementedError()
@@ -1879,7 +1929,7 @@ class AbstractGetValueAsyncThread(PyDBDaemonThread):
             current_time = time.time()
             if current_time - start > ASYNC_EVAL_TIMEOUT_SEC or self.cancel_event.is_set():
                 break
-            xml.write(pydevd_xml.var_to_xml(var_obj, name, evaluate_full_value=True))
+            xml.write(pydevd_xml.var_to_xml(var_obj, name, evaluate_full_value=True, user_type_renderers=self.user_type_renderers))
         xml.write("</xml>")
         self.send_result(xml)
         xml.close()

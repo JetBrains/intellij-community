@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph
 
 import com.intellij.util.containers.ContainerUtil
@@ -13,12 +13,8 @@ import com.intellij.vcs.log.graph.api.elements.GraphNode
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
-import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
-import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
-import com.intellij.vcs.log.graph.utils.TimestampGetter
-import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -59,16 +55,6 @@ class TestGraphBuilder : BaseTestGraphBuilder {
     nodes.add(NodeWithEdges(node.nodeId, edges, node.type))
   }
 
-  fun node(id: Int, vararg edge: Int) {
-    nodes.add(NodeWithEdges(id, edge.map {
-      SimpleEdge(it, GraphEdgeType.USUAL)
-    }))
-  }
-
-  fun node(id: Int, vararg edge: SimpleEdge) {
-    nodes.add(NodeWithEdges(id, edge.toList()))
-  }
-
   private class TestLinearGraph(buildNodes: List<NodeWithEdges>) : LinearGraph {
     private val nodes: List<GraphNode>
     private val nodeIndexToId: Map<Int, Int>
@@ -96,7 +82,7 @@ class TestGraphBuilder : BaseTestGraphBuilder {
             val anotherNodeIndex = simpleEdge.toIndex ?: error(
               "Graph is incorrect. Node ${node.nodeId} has ${edgeType} edge to not existed node: ${simpleEdge.toNode}")
 
-            val graphEdge = GraphEdge.createNormalEdge(anotherNodeIndex!!, nodeIndex, edgeType)
+            val graphEdge = GraphEdge.createNormalEdge(anotherNodeIndex, nodeIndex, edgeType)
             edges.putValue(nodeIndex, graphEdge)
             edges.putValue(anotherNodeIndex, graphEdge)
           }
@@ -137,20 +123,21 @@ private fun LinearGraph.assertEdge(nodeIndex: Int, edge: GraphEdge) {
       assertTrue(getAdjacentEdges(edge.downNodeIndex!!, EdgeFilter.NORMAL_UP).contains(edge))
     }
     else {
-      assertTrue(nodeIndex == edge.downNodeIndex)
+      assertEquals(nodeIndex, edge.downNodeIndex)
       assertTrue(getAdjacentEdges(edge.upNodeIndex!!, EdgeFilter.NORMAL_DOWN).contains(edge))
     }
   }
   else {
     when (edge.type) {
       GraphEdgeType.NOT_LOAD_COMMIT, GraphEdgeType.DOTTED_ARROW_DOWN -> {
-        assertTrue(nodeIndex == edge.upNodeIndex)
+        assertEquals(nodeIndex, edge.upNodeIndex)
         assertNull(edge.downNodeIndex)
       }
       GraphEdgeType.DOTTED_ARROW_UP -> {
-        assertTrue(nodeIndex == edge.downNodeIndex)
+        assertEquals(nodeIndex, edge.downNodeIndex)
         assertNull(edge.upNodeIndex)
       }
+      else -> {}
     }
   }
 }
@@ -165,6 +152,7 @@ fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = StringBuild
     when (node.type) {
       GraphNodeType.UNMATCHED -> append(".UNM")
       GraphNodeType.NOT_LOAD_COMMIT -> append(".NOT_LOAD")
+      else -> {}
     }
 
     // edges
@@ -189,6 +177,7 @@ fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = StringBuild
           GraphEdgeType.DOTTED_ARROW_UP -> "$startId.up_dot"
           GraphEdgeType.DOTTED_ARROW_DOWN -> "$startId.down_dot"
           GraphEdgeType.NOT_LOAD_COMMIT -> "$startId.not_load"
+          else -> error("must not happen")
         }
       }
       else {
@@ -217,19 +206,14 @@ class TestPermanentGraphInfo(
   private val branchNodes: Set<Int> = setOf()
 ) : PermanentGraphInfo<Int> {
 
-  val commitInfo = object : PermanentCommitsInfo<Int> {
+  private val commitInfo = object : PermanentCommitsInfo<Int> {
     override fun getCommitId(nodeId: Int) = nodeId
     override fun getTimestamp(nodeId: Int) = nodeId.toLong()
     override fun getNodeId(commitId: Int) = commitId
     override fun convertToNodeIds(heads: Collection<Int>) = heads.toSet()
   }
 
-  val timestampGetter = object : TimestampGetter {
-    override fun size() = graph.nodesCount()
-    override fun getTimestamp(index: Int) = commitInfo.getTimestamp(graph.getNodeId(index))
-  }
-
-  val graphLayout = GraphLayoutBuilder.build(graph) { x, y ->
+  private val graphLayout = GraphLayoutBuilder.build(graph) { x, y ->
     if (headsOrder.isEmpty()) {
       graph.getNodeId(x) - graph.getNodeId(y)
     }
@@ -245,20 +229,3 @@ class TestPermanentGraphInfo(
   override fun getPermanentGraphLayout() = graphLayout
   override fun getBranchNodeIds() = branchNodes
 }
-
-class TestColorManager : GraphColorManager<Int> {
-  override fun getColorOfBranch(headCommit: Int): Int = headCommit
-
-  override fun getColorOfFragment(headCommit: Int?, magicIndex: Int): Int = magicIndex
-
-  override fun compareHeads(head1: Int, head2: Int): Int = head1.compareTo(head2)
-}
-
-class TestLinearController(val graph: LinearGraph) : LinearGraphController {
-  override fun getCompiledGraph() = graph
-
-  override fun performLinearGraphAction(action: LinearGraphController.LinearGraphAction) = throw UnsupportedOperationException()
-}
-
-fun LinearGraph.asVisibleGraph(): VisibleGraph<Int> = VisibleGraphImpl(TestLinearController(this), TestPermanentGraphInfo(this),
-                                                                       TestColorManager())

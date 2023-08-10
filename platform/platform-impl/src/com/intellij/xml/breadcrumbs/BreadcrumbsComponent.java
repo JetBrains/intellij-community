@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.ui.UISettings;
@@ -40,9 +26,8 @@ import java.awt.event.MouseMotionListener;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author spleaner
- */
+import static com.intellij.util.ui.SwingTextTrimmer.THREE_DOTS_AT_LEFT;
+
 public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent implements Disposable, Weighted {
 
   private static final Logger LOG = Logger.getInstance(BreadcrumbsComponent.class);
@@ -641,8 +626,8 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
   }
 
-  static class ButtonSettings extends PainterSettings {
-    static Color getBackgroundColor(boolean selected, boolean hovered, boolean light, boolean navigationCrumb) {
+  public static class ButtonSettings extends PainterSettings {
+    public static Color getBackgroundColor(boolean selected, boolean hovered, boolean light, boolean navigationCrumb) {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(
         hovered
         ? EditorColors.BREADCRUMBS_HOVERED
@@ -716,23 +701,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
 
       final FontMetrics fm = g2.getFontMetrics();
 
-      String string = c.getString();
-      if (fm.stringWidth(string) > width) {
-        final int dotsWidth = fm.stringWidth("...");
-        final StringBuilder sb = new StringBuilder();
-        int length = 0;
-        for (int i = 0; i < string.length(); i++) {
-          final int charWidth = fm.charWidth(string.charAt(i));
-          if (length + charWidth + dotsWidth > width) {
-            break;
-          }
-
-          length += charWidth;
-          sb.append(string.charAt(i));
-        }
-
-        string = sb.append("...").toString();
-      }
+      String string = THREE_DOTS_AT_LEFT.trim(c.getString(), fm, width);
 
       g2.drawString(string, offset + ROUND_VALUE + 5, height - fm.getDescent() - 5);
 

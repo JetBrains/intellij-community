@@ -4,7 +4,6 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
@@ -13,12 +12,11 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
 
 import static org.jetbrains.jps.incremental.storage.FileStampStorage.FileStamp;
 import static org.jetbrains.jps.incremental.storage.FileStampStorage.HashStampPerTarget;
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.Timestamp;
-import static org.jetbrains.jps.incremental.storage.MurmurHashingService.*;
+import static org.jetbrains.jps.incremental.storage.Xxh3HashingService.*;
 
 public class FileStampStorage extends AbstractStateStorage<String, HashStampPerTarget[]> implements StampsStorage<FileStamp> {
   private final FileTimestampStorage myTimestampStorage;
@@ -58,7 +56,7 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
   }
 
   private static HashStampPerTarget @NotNull [] updateFilesStamp(HashStampPerTarget[] oldState, final int targetId, FileStamp stamp) {
-    final HashStampPerTarget newItem = new HashStampPerTarget(targetId, stamp.myBytes);
+    final HashStampPerTarget newItem = new HashStampPerTarget(targetId, stamp.myHash);
     if (oldState == null) {
       return new HashStampPerTarget[]{newItem};
     }
@@ -108,7 +106,7 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
     return FileStamp.EMPTY;
   }
 
-  public byte @Nullable [] getStoredFileHash(File file, BuildTarget<?> target) throws IOException {
+  public Long getStoredFileHash(File file, BuildTarget<?> target) throws IOException {
     HashStampPerTarget[] state = getState(relativePath(file));
     if (state == null) return null;
     int targetId = myTargetsState.getBuildTargetId(target);
@@ -129,7 +127,9 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
     if (!(stamp instanceof FileStamp)) return true;
     FileStamp filesStamp = (FileStamp)stamp;
     if (!myTimestampStorage.isDirtyStamp(Timestamp.fromLong(filesStamp.myTimestamp), file)) return false;
-    return !Arrays.equals(filesStamp.myBytes, getFileHash(file));
+    Long hash = filesStamp.myHash;
+    if (hash == null) return true;
+    return hash != getFileHash(file);
   }
 
   @Override
@@ -137,7 +137,9 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
     if (!(stamp instanceof FileStamp)) return true;
     FileStamp filesStamp = (FileStamp)stamp;
     if (!myTimestampStorage.isDirtyStamp(Timestamp.fromLong(filesStamp.myTimestamp), file, attrs)) return false;
-    return !Arrays.equals(filesStamp.myBytes, getFileHash(file));
+    Long hash = filesStamp.myHash;
+    if (hash == null) return true;
+    return hash != getFileHash(file);
   }
 
   @Override
@@ -165,29 +167,29 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
 
   static final class HashStampPerTarget {
     public final int targetId;
-    public final byte[] hash;
+    public final long hash;
 
-    private HashStampPerTarget(int targetId, byte[] hash) {
+    private HashStampPerTarget(int targetId, long hash) {
       this.targetId = targetId;
       this.hash = hash;
     }
   }
 
   static final class FileStamp implements StampsStorage.Stamp {
-    static FileStamp EMPTY = new FileStamp(new byte[]{}, -1L);
+    static FileStamp EMPTY = new FileStamp(null, -1L);
 
-    private final byte[] myBytes;
+    private final Long myHash;
     private final long myTimestamp;
 
-    private FileStamp(byte[] bytes, long timestamp) {
-      myBytes = bytes;
+    private FileStamp(Long hash, long timestamp) {
+      myHash = hash;
       myTimestamp = timestamp;
     }
 
     @Override
     public String toString() {
       return "FileStamp{" +
-             "myBytes=" + Arrays.toString(myBytes) +
+             "myHash=" + myHash +
              ", myTimestamp=" + myTimestamp +
              '}';
     }
@@ -199,7 +201,7 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
       out.writeInt(value.length);
       for (HashStampPerTarget target : value) {
         out.writeInt(target.targetId);
-        out.write(target.hash);
+        out.writeLong(target.hash);
       }
     }
 
@@ -209,9 +211,8 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
       HashStampPerTarget[] targets = new HashStampPerTarget[size];
       for (int i = 0; i < size; i++) {
         int id = in.readInt();
-        byte[] bytes = new byte[HASH_SIZE];
-        in.readFully(bytes);
-        targets[i] = new HashStampPerTarget(id, bytes);
+        long hash = in.readLong();
+        targets[i] = new HashStampPerTarget(id, hash);
       }
       return targets;
     }

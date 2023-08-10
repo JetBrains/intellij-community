@@ -50,57 +50,63 @@ public class JsonStructureViewTest extends JsonTestCase {
   }
 
   public void testPropertyOrderPreserved() {
-    doTest("-PropertyOrderPreserved.json\n" +
-           " ccc\n" +
-           " bbb\n" +
-           " -aaa\n" +
-           "  eee\n" +
-           "  ddd\n");
+    doTest("""
+             -PropertyOrderPreserved.json
+              ccc
+              bbb
+              -aaa
+               eee
+               ddd
+             """);
   }
 
   // IDEA-127119
   public void testObjectsInsideArraysAreShown() {
-    doTest("-ObjectsInsideArraysAreShown.json\n" +
-           " aProp\n" +
-           " -node1\n" +
-           "  anotherProp\n" +
-           "  subNode1\n" +
-           "  subNode2\n" +
-           " -node2\n" +
-           "  -object\n" +
-           "   -subNode2\n" +
-           "    -object\n" +
-           "     someNode\n" +
-           " -node3\n" +
-           "  -object\n" +
-           "   prop1\n" +
-           "   prop2\n" +
-           "   someFlag\n" +
-           "   -array\n" +
-           "    -object\n" +
-           "     arrProp1\n" +
-           "     -array2\n" +
-           "      -object\n" +
-           "       arr2Prop1\n" +
-           "       arr2Prop2\n" +
-           "       -array3\n" +
-           "        -object\n" +
-           "         prop1\n" +
-           "         prop2\n");
+    doTest("""
+             -ObjectsInsideArraysAreShown.json
+              aProp
+              -node1
+               anotherProp
+               subNode1
+               subNode2
+              -node2
+               -object
+                -subNode2
+                 -object
+                  someNode
+              -node3
+               -object
+                prop1
+                prop2
+                someFlag
+                -array
+                 -object
+                  arrProp1
+                  -array2
+                   -object
+                    arr2Prop1
+                    arr2Prop2
+                    -array3
+                     -object
+                      prop1
+                      prop2
+             """);
   }
 
   // IDEA-131502
   public void testArrayNodesAreShownIfNecessary() {
-    doTest("-ArrayNodesAreShownIfNecessary.json\n" +
-           " -array\n" +
-           "  -object\n" +
-           "   nestedObject\n" +
-           " -array\n" +
-           "  -array\n" +
-           "   -object\n" +
-           "    deepNestedObject\n" +
-           " -object\n" +
-           "  siblingObject\n");
+    doTest("""
+             -ArrayNodesAreShownIfNecessary.json
+              -array
+               -object
+                nestedObject
+              -array
+               -array
+                -object
+                 deepNestedObject
+              -object
+               siblingObject
+             """);
   }
 
   // IDEA-167017

@@ -19,8 +19,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.En
 
 /**
  * Holds settings tokens used by built-in IJ arrangers.
- *
- * @author Denis Zhdanov
  */
 public final class StdArrangementTokens {
 

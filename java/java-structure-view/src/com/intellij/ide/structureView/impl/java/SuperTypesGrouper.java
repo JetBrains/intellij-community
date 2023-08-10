@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.icons.AllIcons;
@@ -30,10 +30,8 @@ public final class SuperTypesGrouper implements Grouper{
     Map<Group, SuperTypeGroup> groups = new HashMap<>();
 
     for (TreeElement child : children) {
-      if (child instanceof PsiMethodTreeElement) {
-        final PsiMethodTreeElement element = (PsiMethodTreeElement)child;
-
-        PsiMethod method = ((PsiMethodTreeElement)child).getMethod();
+      if (child instanceof PsiMethodTreeElement element) {
+        PsiMethod method = element.getMethod();
         if (element.isInherited()) {
           PsiClass groupClass = method.getContainingClass();
           final SuperTypeGroup group = getOrCreateGroup(groupClass, SuperTypeGroup.OwnershipType.INHERITS, groups);
@@ -79,7 +77,7 @@ public final class SuperTypesGrouper implements Grouper{
     return existing;
   }
 
-  private static boolean isParentGrouped(AbstractTreeNode parent) {
+  private static boolean isParentGrouped(AbstractTreeNode<?> parent) {
     while (parent != null) {
       if (parent.getValue() instanceof SuperTypeGroup) return true;
       parent = parent.getParent();

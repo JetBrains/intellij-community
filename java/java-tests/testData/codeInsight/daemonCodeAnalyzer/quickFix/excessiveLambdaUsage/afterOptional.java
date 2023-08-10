@@ -1,4 +1,4 @@
-// "Use 'orElse' method without lambda" "true"
+// "Use 'orElse' method without lambda" "true-preview"
 import java.util.*;
 
 class Test {

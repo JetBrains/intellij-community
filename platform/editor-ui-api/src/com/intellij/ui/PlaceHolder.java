@@ -29,7 +29,7 @@ public interface PlaceHolder extends PlaceProvider {
    * with generic parameter and therefore refers to the method with parameter type {@code Object} in its bytecode. This method isn't supposed to
    * be used directly.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void setPlace(Object place) {
     setPlace((String)place);
   }

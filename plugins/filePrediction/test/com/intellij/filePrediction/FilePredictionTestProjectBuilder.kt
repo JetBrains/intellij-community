@@ -1,7 +1,8 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.filePrediction
 
 import com.intellij.filePrediction.FilePredictionTestDataHelper.DEFAULT_MAIN_FILE
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -104,7 +105,7 @@ internal class FilePredictionTestProjectBuilder(mainPath: String? = null, import
   }
 
   private fun performFileActions(project: Project, root: VirtualFile) {
-    val manager = FileEditorManagerImpl.getInstance(project)
+    val manager = FileEditorManager.getInstance(project)
     for (action in fileActions) {
       val file = root.findFileByRelativePath(action.filePath)
       TestCase.assertNotNull(file)

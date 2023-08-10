@@ -15,15 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
+import com.intellij.codeInspection.options.OptPane;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.codeInspection.utils.SingleIntegerFieldOptionsPanel;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class GroovyMultipleReturnPointsPerMethodInspection extends GroovyMultipleReturnPointsPerMethodInspectionBase {
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(GroovyBundle.message("method.returns.max.returns.option"), this, "m_limit");
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      number("m_limit", GroovyBundle.message("method.returns.max.returns.option"), 1, 100));
   }
 }

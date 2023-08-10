@@ -1,18 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -47,17 +49,18 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @NotNull
   protected final String myLevel;
 
-  protected BaseLibrariesConfigurable(final @NotNull Project project, @NotNull String libraryTableLevel) {
-    super(project);
+  protected BaseLibrariesConfigurable(@NotNull ProjectStructureConfigurable projectStructureConfigurable,
+                                      @NotNull String libraryTableLevel) {
+    super(projectStructureConfigurable);
     myLevel = libraryTableLevel;
   }
 
-  public static BaseLibrariesConfigurable getInstance(@NotNull Project project, @NotNull String tableLevel) {
+  public static BaseLibrariesConfigurable getInstance(@NotNull ProjectStructureConfigurable projectStructureConfigurable, @NotNull String tableLevel) {
     if (tableLevel.equals(LibraryTablesRegistrar.PROJECT_LEVEL)) {
-      return ProjectLibrariesConfigurable.getInstance(project);
+      return projectStructureConfigurable.getProjectLibrariesConfigurable();
     }
     else {
-      return GlobalLibrariesConfigurable.getInstance(project);
+      return projectStructureConfigurable.getGlobalLibrariesConfigurable();
     }
   }
 
@@ -186,13 +189,14 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     if (fromPopup) {
       final BaseLibrariesConfigurable targetGroup = getOppositeGroup();
       actions.add(new ChangeLibraryLevelAction(myProject, myTree, this, targetGroup));
-      actions.add(new AddLibraryToModuleDependenciesAction(myProject, this));
+      actions.add(new AddLibraryToModuleDependenciesAction(this));
+      actions.add(new RefreshRootsLibraryAction(this));
     }
     return actions;
   }
 
   @Override
-  protected AbstractAddGroup createAddAction() {
+  protected AbstractAddGroup createAddAction(boolean fromPopup) {
     return new AbstractAddGroup(getAddText()) {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
@@ -274,8 +278,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
                 containerType2Usage.putValue(usage.getContainingElement().getTypeName(), usage);
               }
 
-              List<String> types = new ArrayList<>(containerType2Usage.keySet());
-              Collections.sort(types);
+              List<String> types = ContainerUtil.sorted(containerType2Usage.keySet());
 
               final StringBuilder sb = new StringBuilder("Library '");
               Library libraryModel = myContext.getLibraryModel(library);
@@ -356,8 +359,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
       final Object o = getSelectedObject();
-      if (o instanceof LibraryEx) {
-        final LibraryEx selected = (LibraryEx)o;
+      if (o instanceof LibraryEx selected) {
         final String newName = Messages.showInputDialog(JavaUiBundle.message("label.enter.library.name"), JavaUiBundle.message(
           "dialog.title.copy.library"), null, selected.getName() + "2", new NonEmptyInputValidator());
         if (newName == null) return;
@@ -380,6 +382,11 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
       } else {
         e.getPresentation().setEnabled(getSelectedObject() instanceof LibraryEx);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

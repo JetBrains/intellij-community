@@ -40,7 +40,6 @@ public interface ExternalComponentSource {
   /**
    * Install updates for the given {@link UpdatableExternalComponent}s.
    *
-   * @param request
    */
   void installUpdates(@NotNull Collection<UpdatableExternalComponent> request);
 

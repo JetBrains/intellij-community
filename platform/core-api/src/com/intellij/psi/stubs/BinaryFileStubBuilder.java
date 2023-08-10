@@ -2,13 +2,26 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.indexing.FileContent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.stream.Stream;
 
+/**
+ * Provides an ability to build stubs for binary files that are not based on a particular PSI.
+ * File type of passed file should be a binary file type, namely its {@link com.intellij.openapi.fileTypes.FileType#isBinary()} returns <strong>true</strong>.
+ * <p/>
+ * For example: java class file stubs built using bytecode decompiler.
+ */
 public interface BinaryFileStubBuilder {
+  @ApiStatus.Experimental
+  default @NotNull VirtualFileFilter getFileFilter() {
+    return file -> acceptsFile(file);
+  }
+
   boolean acceptsFile(@NotNull VirtualFile file);
 
   @Nullable Stub buildStubTree(@NotNull FileContent fileContent);

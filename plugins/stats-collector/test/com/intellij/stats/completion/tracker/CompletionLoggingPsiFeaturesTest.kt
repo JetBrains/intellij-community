@@ -74,7 +74,7 @@ class CompletionLoggingPsiFeaturesTest: CompletionLoggingTestBase() {
 
   private fun checkParentsPsiIs(vararg expectedParents: String) {
     val features = LookupStorage.get(lookup)?.contextProvidersResult()!!
-    expectedParents.forEachIndexed() { i, expectedParent ->
+    expectedParents.forEachIndexed { i, expectedParent ->
       val actualParent = features.classNameValue("ml_ctx_common_parent_${i + 1}")
       TestCase.assertEquals("Psi parent features", expectedParent, actualParent)
     }

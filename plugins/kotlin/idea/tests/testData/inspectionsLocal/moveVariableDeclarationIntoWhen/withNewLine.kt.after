@@ -1,0 +1,9 @@
+// HIGHLIGHT: INFORMATION
+fun foo() {
+    when (1) {
+        1 -> {
+        }
+        else -> {
+        }
+    }
+}

@@ -1,8 +1,8 @@
 public class Foo {
     void m() {
-        Runnable foo = new Runnable() {
+        Runnable r = new Runnable() {
             public void run()
-        }; foo(foo);
+        }; foo(r);
     }
 
     void foo(Runnable r) {}

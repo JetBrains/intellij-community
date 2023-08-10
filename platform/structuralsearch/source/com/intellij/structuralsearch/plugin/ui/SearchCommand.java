@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindManager;
 import com.intellij.find.FindSettings;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -14,7 +13,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.*;
-import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
+import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
@@ -148,24 +147,21 @@ public class SearchCommand {
     }
     catch (StructuralSearchException e) {
       myProcessPresentation.setShowNotFoundMessage(false);
-      final NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID);
-      //noinspection InstanceofCatchParameter
-      notificationGroup.createNotification(NotificationType.ERROR)
-        .setContent(e instanceof StructuralSearchScriptException
-                    ? SSRBundle.message("search.script.problem", e.getCause())
-                    : SSRBundle.message("search.template.problem", e.getMessage()))
+      @SuppressWarnings("InstanceofCatchParameter") String content =
+        e instanceof StructuralSearchScriptException
+        ? SSRBundle.message("search.script.problem", e.getCause().toString().replace(ScriptSupport.UUID, ""))
+        : SSRBundle.message("search.template.problem", e.getMessage());
+      NotificationGroupManager.getInstance()
+        .getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID)
+        .createNotification(content, NotificationType.ERROR)
         .setImportant(true)
         .notify(mySearchContext.getProject());
     }
   }
 
-  protected void findStarted() {
-    StructuralSearchPlugin.getInstance(mySearchContext.getProject()).setSearchInProgress(true);
-  }
+  protected void findStarted() {}
 
-  protected void findEnded() {
-    StructuralSearchPlugin.getInstance(mySearchContext.getProject()).setSearchInProgress(false);
-  }
+  protected void findEnded() {}
 
   protected void foundUsage(MatchResult result, Usage usage) {}
 }

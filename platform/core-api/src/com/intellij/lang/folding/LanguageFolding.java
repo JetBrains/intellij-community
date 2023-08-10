@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
@@ -11,16 +11,13 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- * @author Konstantin Bulenkov
- */
 public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
   public static final ExtensionPointName<KeyedLazyInstance<FoldingBuilder>> EP_NAME = ExtensionPointName.create("com.intellij.lang.foldingBuilder");
   public static final LanguageFolding INSTANCE = new LanguageFolding();
@@ -34,6 +31,7 @@ public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
   /**
    * This method is left to preserve binary compatibility.
    */
+  @SuppressWarnings("RedundantMethodOverride")
   @Override
   public FoldingBuilder forLanguage(@NotNull Language l) {
     return super.forLanguage(l);
@@ -56,9 +54,8 @@ public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
   /**
    * Only queries base language results if there are no extensions for originally requested language.
    */
-  @NotNull
   @Override
-  public List<FoldingBuilder> allForLanguage(@NotNull Language language) {
+  public @NotNull List<FoldingBuilder> allForLanguage(@NotNull Language language) {
     for (Language l = language; l != null; l = l.getBaseLanguage()) {
       List<FoldingBuilder> extensions = forKey(l);
       if (!extensions.isEmpty()) {
@@ -83,9 +80,10 @@ public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
                                                                                    @NotNull PsiElement root,
                                                                                    @NotNull Document document,
                                                                                    boolean quick) {
+    SlowOperations.assertSlowOperationsAreAllowed();
     try {
       if (!DumbService.isDumbAware(builder) && DumbService.getInstance(root.getProject()).isDumb()) {
-        return FoldingDescriptor.EMPTY;
+        return FoldingDescriptor.EMPTY_ARRAY;
       }
 
       if (builder instanceof FoldingBuilderEx) {
@@ -93,7 +91,7 @@ public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
       }
       final ASTNode astNode = root.getNode();
       if (astNode == null || builder == null) {
-        return FoldingDescriptor.EMPTY;
+        return FoldingDescriptor.EMPTY_ARRAY;
       }
 
       return builder.buildFoldRegions(astNode, document);
@@ -103,7 +101,7 @@ public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
     }
     catch (Exception e) {
       LOG.error(e);
-      return FoldingDescriptor.EMPTY;
+      return FoldingDescriptor.EMPTY_ARRAY;
     }
   }
 }

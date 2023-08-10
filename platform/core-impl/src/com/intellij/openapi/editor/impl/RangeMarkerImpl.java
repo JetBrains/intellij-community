@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,9 +11,8 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UnfairTextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,16 +21,14 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx {
   private static final Logger LOG = Logger.getInstance(RangeMarkerImpl.class);
 
-  @NotNull
-  private final Object myDocumentOrFile; // either VirtualFile (if any) or DocumentEx if no file associated
+  private final @NotNull Object myDocumentOrFile; // either VirtualFile (if any) or DocumentEx if no file associated
   RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
 
-  private final long myId;
+  private volatile long myId;
   private static final StripedIDGenerator counter = new StripedIDGenerator();
 
   RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register, boolean forceDocumentStrongReference) {
@@ -39,30 +36,21 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
          document.getTextLength(), start, end, register, false, false);
   }
 
-  // constructor which creates marker without document and saves it in the virtual file directly. Can be cheaper than loading document.
-  RangeMarkerImpl(@NotNull VirtualFile virtualFile, int start, int end, boolean register) {
-    // unfortunately we don't know the exact document size until we load it
-    this(virtualFile, estimateDocumentLength(virtualFile), start, end, register, false, false);
+  // The constructor which creates a marker without a document and saves it in the virtual file directly. Can be cheaper than loading the entire document.
+  RangeMarkerImpl(@NotNull VirtualFile virtualFile, int start, int end, int estimatedDocumentLength, boolean register) {
+    // unfortunately, we don't know the exact document size until we load it
+    this(virtualFile, estimatedDocumentLength, start, end, register, false, false);
   }
 
-  private static int estimateDocumentLength(@NotNull VirtualFile virtualFile) {
-    Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
-    return document == null ? Integer.MAX_VALUE : document.getTextLength();
-  }
-
-  private RangeMarkerImpl(@NotNull Object documentOrFile, int documentTextLength, int start,
+  private RangeMarkerImpl(@NotNull Object documentOrFile,
+                          int documentTextLength,
+                          int start,
                           int end,
                           boolean register,
                           boolean greedyToLeft,
                           boolean greedyToRight) {
-    if (start < 0) {
-      throw new IllegalArgumentException("Wrong start: " + start+"; end="+end);
-    }
     if (end > documentTextLength) {
-      throw new IllegalArgumentException("Wrong end: " + end + "; document length=" + documentTextLength + "; start=" + start);
-    }
-    if (start > end){
-      throw new IllegalArgumentException("start > end: start=" + start+"; end="+end);
+      throw new IllegalArgumentException("Invalid offsets: start=" +start+ "; end=" + end + "; document length=" + documentTextLength);
     }
 
     myDocumentOrFile = documentOrFile;
@@ -72,16 +60,23 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     }
   }
 
+  static int estimateDocumentLength(@NotNull VirtualFile virtualFile) {
+    Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+    return document == null ? Math.max(0, (int)virtualFile.getLength()) : document.getTextLength();
+  }
+
   protected void registerInTree(int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
     getDocument().registerRangeMarker(this, start, end, greedyToLeft, greedyToRight, layer);
   }
 
   protected void unregisterInTree() {
+    RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
     if (!isValid()) return;
-    IntervalTreeImpl<?> tree = myNode.getTree();
+    IntervalTreeImpl<?> tree = node.getTree();
     tree.checkMax(true);
     DocumentEx document = getCachedDocument();
     if (document == null) {
+      storeOffsetsBeforeDying(node);
       myNode = null;
     }
     else {
@@ -92,7 +87,14 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   @Override
   public long getId() {
-    return myId;
+    // read id before myNode to avoid returning changed id during concurrent dispose
+    // (because myId is assigned before myNode in dispose)
+    long id = myId;
+    RangeMarkerTree.RMNode<?> node = myNode;
+    if (node == null) {
+      throw new IllegalStateException("Already disposed");
+    }
+    return id;
   }
 
   @Override
@@ -103,30 +105,34 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   @Override
   public int getStartOffset() {
     RangeMarkerTree.RMNode<?> node = myNode;
-    return node == null ? -1 : node.intervalStart() + node.computeDeltaUpToRoot();
+    return node == null ? TextRangeScalarUtil.startOffset(myId) : node.intervalStart() + node.computeDeltaUpToRoot();
   }
 
   @Override
   public int getEndOffset() {
     RangeMarkerTree.RMNode<?> node = myNode;
-    return node == null ? -1 : node.intervalEnd() + node.computeDeltaUpToRoot();
+    return node == null ? TextRangeScalarUtil.endOffset(myId) : node.intervalEnd() + node.computeDeltaUpToRoot();
   }
 
-  void invalidate(@NotNull final Object reason) {
-    setValid(false);
+  @Override
+  public @NotNull TextRange getTextRange() {
     RangeMarkerTree.RMNode<?> node = myNode;
+    if (node == null) {
+      return TextRangeScalarUtil.create(myId);
+    }
+    int delta = node.computeDeltaUpToRoot();
+    return TextRangeScalarUtil.create(TextRangeScalarUtil.shift(node.toScalarRange(), delta, delta));
+  }
 
+  void invalidate() {
+    RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
     if (node != null) {
-      node.processAliveKeys(markerEx -> {
-        myNode.getTree().beforeRemove(markerEx, reason);
-        return true;
-      });
+      node.invalidate();
     }
   }
 
   @Override
-  @NotNull
-  public final DocumentEx getDocument() {
+  public final @NotNull DocumentEx getDocument() {
     Object file = myDocumentOrFile;
     DocumentEx document =
       file instanceof VirtualFile ? (DocumentEx)FileDocumentManager.getInstance().getDocument((VirtualFile)file) : (DocumentEx)file;
@@ -147,14 +153,14 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   @Override
-  public void setGreedyToLeft(final boolean greedy) {
+  public void setGreedyToLeft(boolean greedy) {
     if (!isValid() || greedy == isGreedyToLeft()) return;
 
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), greedy, isGreedyToRight(), isStickingToRight(), getLayer());
   }
 
   @Override
-  public void setGreedyToRight(final boolean greedy) {
+  public void setGreedyToRight(boolean greedy) {
     if (!isValid() || greedy == isGreedyToRight()) return;
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, isStickingToRight(), getLayer());
   }
@@ -181,8 +187,15 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return node != null && node.isStickingToRight();
   }
 
-  @Override
+  /**
+   * @deprecated do not use because it can mess internal offsets
+   */
+  @Deprecated
   public final void documentChanged(@NotNull DocumentEvent e) {
+    doChangeUpdate(e);
+  }
+
+  final void onDocumentChanged(@NotNull DocumentEvent e) {
     int oldStart = intervalStart();
     int oldEnd = intervalEnd();
     int docLength = e.getDocument().getTextLength();
@@ -194,7 +207,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     if (oldStart > oldEnd || oldStart < 0 || oldEnd > docLength - e.getNewLength() + e.getOldLength()) {
       LOG.error("RangeMarker" + (isGreedyToLeft() ? "[" : "(") + oldStart + ", " + oldEnd + (isGreedyToRight() ? "]" : ")") +
                 " is invalid before update. Event = " + e + ". Doc length=" + docLength + "; "+getClass());
-      invalidate(e);
+      invalidate();
       return;
     }
     changedUpdateImpl(e);
@@ -205,7 +218,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
                 "Doc length=" + docLength +
                 "; "+getClass()+". Before update: " + (isGreedyToLeft() ? "[" : "(") + oldStart + ", " + oldEnd + (isGreedyToRight() ? "]" : ")") +
                 " After update: '"+this+"'");
-      invalidate(e);
+      invalidate();
     }
   }
 
@@ -215,22 +228,23 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   private void doChangeUpdate(@NotNull DocumentEvent e) {
     if (!isValid()) return;
-
-    TextRange newRange = applyChange(e, intervalStart(), intervalEnd(), isGreedyToLeft(), isGreedyToRight(), isStickingToRight());
-    if (newRange == null) {
-      invalidate(e);
-      return;
+    RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
+    long newRange = node == null ? -1 : applyChange(e, node.toScalarRange(), isGreedyToLeft(), isGreedyToRight(), isStickingToRight());
+    if (newRange == -1) {
+      invalidate();
     }
-
-    setIntervalStart(newRange.getStartOffset());
-    setIntervalEnd(newRange.getEndOffset());
+    else {
+      node.setRange(newRange);
+    }
   }
 
-  protected int persistentHighlighterUpdate(@NotNull DocumentEvent e, int line, boolean wholeLineRange) {
+  protected void persistentHighlighterUpdate(@NotNull DocumentEvent e, boolean wholeLineRange) {
+    int line = 0;
     DocumentEventImpl event = (DocumentEventImpl)e;
-    boolean viaDiff = isValid() && PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, getStartOffset(), getEndOffset());
+    boolean viaDiff = isValid() && PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, toScalarRange());
     if (viaDiff) {
       try {
+        line = event.getLineNumberBeforeUpdate(getStartOffset());
         line = translatedViaDiff(event, line);
       }
       catch (FilesTooBigForDiffException exception) {
@@ -240,29 +254,29 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     if (!viaDiff) {
       doChangeUpdate(e);
       if (isValid()) {
-        line = getDocument().getLineNumber(getStartOffset());
+        int startOffset = getStartOffset();
+        line = getDocument().getLineNumber(startOffset);
         int endLine = getDocument().getLineNumber(getEndOffset());
         if (endLine != line) {
-          setIntervalEnd(getDocument().getLineEndOffset(line));
+          setRange(TextRangeScalarUtil.toScalarRange(startOffset, getDocument().getLineEndOffset(line)));
         }
       }
     }
     if (isValid() && wholeLineRange) {
-      setIntervalStart(DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), line));
-      setIntervalEnd(getDocument().getLineEndOffset(line));
+      int newStart = DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), line);
+      int newEnd = getDocument().getLineEndOffset(line);
+      setRange(TextRangeScalarUtil.toScalarRange(newStart, newEnd));
     }
-    return line;
   }
 
   private int translatedViaDiff(@NotNull DocumentEventImpl e, int line) throws FilesTooBigForDiffException {
     line = e.translateLineViaDiff(line);
     if (line < 0 || line >= getDocument().getLineCount()) {
-      invalidate(e);
+      invalidate();
     }
     else {
       DocumentEx document = getDocument();
-      setIntervalStart(document.getLineStartOffset(line));
-      setIntervalEnd(document.getLineEndOffset(line));
+      setRange(TextRangeScalarUtil.toScalarRange(document.getLineStartOffset(line), document.getLineEndOffset(line)));
     }
     return line;
   }
@@ -270,105 +284,98 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   // Called after the range was shifted from e.getMoveOffset() to e.getOffset()
   protected void onReTarget(@NotNull DocumentEvent e) {}
 
-  @Nullable
-  static TextRange applyChange(@NotNull DocumentEvent e, int intervalStart, int intervalEnd,
-                               boolean isGreedyToLeft, boolean isGreedyToRight, boolean isStickingToRight) {
+  // return -1 if invalid
+  static long applyChange(@NotNull DocumentEvent e, long range,
+                          boolean isGreedyToLeft, boolean isGreedyToRight, boolean isStickingToRight) {
+    int intervalStart = TextRangeScalarUtil.startOffset(range);
+    int intervalEnd = TextRangeScalarUtil.endOffset(range);
     if (intervalStart == intervalEnd) {
       return processIfOnePoint(e, intervalStart, isGreedyToRight, isStickingToRight);
     }
 
-    final int offset = e.getOffset();
-    final int oldLength = e.getOldLength();
-    final int newLength = e.getNewLength();
+    int offset = e.getOffset();
+    int oldLength = e.getOldLength();
+    int newLength = e.getNewLength();
 
     // changes after the end.
-    if (intervalEnd < offset) {
-      return new UnfairTextRange(intervalStart, intervalEnd);
+    if (offset > intervalEnd) {
+      return TextRangeScalarUtil.toScalarRange(intervalStart, intervalEnd);
     }
     if (!isGreedyToRight && intervalEnd == offset) {
       // handle replaceString that was minimized and resulted in insertString at the range end
       if (e instanceof DocumentEventImpl && oldLength == 0 && ((DocumentEventImpl)e).getInitialStartOffset() < offset) {
-        return new UnfairTextRange(intervalStart, intervalEnd + newLength);
+        return TextRangeScalarUtil.toScalarRange(intervalStart, intervalEnd + newLength);
       }
-      return new UnfairTextRange(intervalStart, intervalEnd);
+      return TextRangeScalarUtil.toScalarRange(intervalStart, intervalEnd);
     }
 
     // changes before start
     if (intervalStart > offset + oldLength) {
-      return new UnfairTextRange(intervalStart + newLength - oldLength, intervalEnd + newLength - oldLength);
+      return TextRangeScalarUtil.toScalarRange(intervalStart + newLength - oldLength, intervalEnd + newLength - oldLength);
     }
     if (!isGreedyToLeft && intervalStart == offset + oldLength) {
       // handle replaceString that was minimized and resulted in insertString at the range start
       if (e instanceof DocumentEventImpl && oldLength == 0 && ((DocumentEventImpl)e).getInitialStartOffset() + ((DocumentEventImpl)e).getInitialOldLength() > offset) {
-        return new UnfairTextRange(intervalStart, intervalEnd + newLength);
+        return TextRangeScalarUtil.toScalarRange(intervalStart, intervalEnd + newLength);
       }
-      return new UnfairTextRange(intervalStart + newLength - oldLength, intervalEnd + newLength - oldLength);
+      return TextRangeScalarUtil.toScalarRange(intervalStart + newLength - oldLength, intervalEnd + newLength - oldLength);
     }
 
     // Changes inside marker's area. Expand/collapse.
     if (intervalStart <= offset && intervalEnd >= offset + oldLength) {
-      return new ProperTextRange(intervalStart, intervalEnd + newLength - oldLength);
+      return TextRangeScalarUtil.toScalarRange(intervalStart, intervalEnd + newLength - oldLength);
     }
 
     // At this point we either have (myStart xor myEnd inside changed area) or whole area changed.
 
     // Replacing prefix or suffix...
     if (intervalStart >= offset && intervalStart <= offset + oldLength && intervalEnd > offset + oldLength) {
-      return new ProperTextRange(offset + newLength, intervalEnd + newLength - oldLength);
+      return TextRangeScalarUtil.toScalarRange(offset + newLength, intervalEnd + newLength - oldLength);
     }
 
-    if (intervalEnd >= offset && intervalEnd <= offset + oldLength && intervalStart < offset) {
-      return new UnfairTextRange(intervalStart, offset);
+    if (intervalEnd <= offset + oldLength && intervalStart < offset) {
+      return TextRangeScalarUtil.toScalarRange(intervalStart, offset);
     }
 
-    return null;
+    return -1;
   }
 
-  @Nullable
-  private static TextRange processIfOnePoint(@NotNull DocumentEvent e, int intervalStart, boolean greedyRight, boolean stickyRight) {
+  private static long processIfOnePoint(@NotNull DocumentEvent e, int intervalStart, boolean greedyRight, boolean stickyRight) {
     int offset = e.getOffset();
     int oldLength = e.getOldLength();
     int oldEnd = offset + oldLength;
     if (offset < intervalStart && intervalStart < oldEnd) {
-      return null;
+      return -1;
     }
 
     if (offset == intervalStart && oldLength == 0) {
       if (greedyRight) {
-        return new UnfairTextRange(intervalStart, intervalStart + e.getNewLength());
+        return TextRangeScalarUtil.toScalarRange(intervalStart, intervalStart + e.getNewLength());
       }
       else if (stickyRight) {
-        return new UnfairTextRange(intervalStart + e.getNewLength(), intervalStart + e.getNewLength());
+        int off = intervalStart + e.getNewLength();
+        return TextRangeScalarUtil.toScalarRange(off, off);
       }
     }
 
-    if (intervalStart > oldEnd || intervalStart == oldEnd  && oldLength > 0) {
-      return new UnfairTextRange(intervalStart + e.getNewLength() - oldLength, intervalStart + e.getNewLength() - oldLength);
+    if (intervalStart > oldEnd || intervalStart == oldEnd && oldLength > 0) {
+      int off = intervalStart + e.getNewLength() - oldLength;
+      return TextRangeScalarUtil.toScalarRange(off, off);
     }
 
-    return new UnfairTextRange(intervalStart, intervalStart);
+    return TextRangeScalarUtil.toScalarRange(intervalStart, intervalStart);
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "RangeMarker" + (isGreedyToLeft() ? "[" : "(")
            + (isValid() ? "" : "invalid:") + getStartOffset() + "," + getEndOffset()
-           + (isGreedyToRight() ? "]" : ")") + " " + getId();
+           + (isGreedyToRight() ? "]" : ")")
+           + " " + (isValid() ? getId() : "");
   }
 
-  int setIntervalStart(int start) {
-    if (start < 0) {
-      LOG.error("Negative start: " + start);
-    }
-    return myNode.setIntervalStart(start);
-  }
-
-  int setIntervalEnd(int end) {
-    if (end < 0) {
-      LOG.error("Negative end: "+end);
-    }
-    return myNode.setIntervalEnd(end);
+  void setRange(long scalarRange) {
+    myNode.setRange(scalarRange);
   }
 
   @Override
@@ -388,11 +395,11 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   private static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {
-    final FileType fileType = file.getFileType();
+    FileType fileType = file.getFileType();
     return fileType.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(fileType) == null;
   }
 
-  public boolean setValid(boolean value) {
+  protected boolean setValid(boolean value) {
     RangeMarkerTree.RMNode<?> node = myNode;
     return node == null || node.setValid(value);
   }
@@ -413,11 +420,34 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return node.intervalEnd();
   }
 
+  long toScalarRange() {
+    RangeMarkerTree.RMNode<?> node = myNode;
+    if (node == null) {
+      return -1;
+    }
+    return node.toScalarRange();
+  }
+
   public RangeMarker findRangeMarkerAfter() {
     return myNode.getTree().findRangeMarkerAfter(this);
   }
 
   public RangeMarker findRangeMarkerBefore() {
     return myNode.getTree().findRangeMarkerBefore(this);
+  }
+
+  @NotNull
+  TextRange reCalcTextRangeAfterReload(@NotNull DocumentImpl document, int tabSize) {
+    return getTextRange();
+  }
+
+  void storeOffsetsBeforeDying(@NotNull IntervalTreeImpl.IntervalNode<?> node) {
+    // store current offsets to give async listeners the ability to get offsets
+    int delta = node.computeDeltaUpToRoot();
+    long range = TextRangeScalarUtil.shift(node.toScalarRange(), delta, delta);
+    int startOffset = Math.max(0, TextRangeScalarUtil.startOffset(range));
+    int endOffset = Math.max(startOffset, TextRangeScalarUtil.endOffset(range));
+    // piggyback myId to store offsets, to conserve memory
+    myId = TextRangeScalarUtil.toScalarRange(startOffset, endOffset); // avoid invalid range
   }
 }

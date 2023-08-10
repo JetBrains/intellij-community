@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,10 +7,9 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.text.ByteArrayCharSequence;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.nio.file.Files;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,6 +25,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
+import static com.intellij.reference.SoftReference.dereference;
+
+/**
+ * Use {@link TempCopyArchiveHandler} if you'd like to extract archive to a temporary file
+ * and use it to read attributes and content.
+ */
 public abstract class ArchiveHandler {
   public static final long DEFAULT_LENGTH = 0L;
   public static final long DEFAULT_TIMESTAMP = -1L;
@@ -47,7 +53,7 @@ public abstract class ArchiveHandler {
     }
   }
 
-  private final File myPath;
+  private volatile File myPath;
   private final Object myLock = new Object();
   private volatile Reference<Map<String, EntryInfo>> myEntries = new SoftReference<>(null);
   private volatile Reference<AddonlyKeylessHash<EntryInfo, Object>> myChildrenEntries = new SoftReference<>(null);
@@ -59,6 +65,13 @@ public abstract class ArchiveHandler {
 
   public @NotNull File getFile() {
     return myPath;
+  }
+
+  protected void setFile(@NotNull File path) {
+    synchronized (myLock) {
+      assert myEntries.get() == null && myChildrenEntries.get() == null && !myCorrupted : "Archive already opened";
+      myPath = path;
+    }
   }
 
   public @Nullable FileAttributes getAttributes(@NotNull String relativePath) {
@@ -98,10 +111,10 @@ public abstract class ArchiveHandler {
   }
 
   private AddonlyKeylessHash<EntryInfo, Object> getParentChildrenMap() {
-    AddonlyKeylessHash<EntryInfo, Object> map = SoftReference.dereference(myChildrenEntries);
+    AddonlyKeylessHash<EntryInfo, Object> map = dereference(myChildrenEntries);
     if (map == null) {
       synchronized (myLock) {
-        map = SoftReference.dereference(myChildrenEntries);
+        map = dereference(myChildrenEntries);
 
         if (map == null) {
           if (myCorrupted) {
@@ -149,11 +162,8 @@ public abstract class ArchiveHandler {
     return result;
   }
 
-  public void dispose() {
-    clearCaches();
-  }
-
-  protected void clearCaches() {
+  @ApiStatus.OverrideOnly
+  public void clearCaches() {
     synchronized (myLock) {
       myEntries.clear();
       myChildrenEntries.clear();
@@ -166,10 +176,10 @@ public abstract class ArchiveHandler {
   }
 
   protected @NotNull Map<String, EntryInfo> getEntriesMap() {
-    Map<String, EntryInfo> map = SoftReference.dereference(myEntries);
+    Map<String, EntryInfo> map = dereference(myEntries);
     if (map == null) {
       synchronized (myLock) {
-        map = SoftReference.dereference(myEntries);
+        map = dereference(myEntries);
 
         if (map == null) {
           if (myCorrupted) {
@@ -187,6 +197,9 @@ public abstract class ArchiveHandler {
           }
 
           myEntries = new SoftReference<>(map);
+          // createEntriesMap recreates EntryInfo instances, so we need to ensure that we also recreate the children entries
+          // cache which uses EntryInfo instances as keys (otherwise the cache lookup in list() would return empty children arrays)
+          myChildrenEntries = new SoftReference<>(null);
         }
       }
     }
@@ -209,17 +222,17 @@ public abstract class ArchiveHandler {
    */
   protected final void processEntry(@NotNull Map<String, EntryInfo> map,
                                     @NotNull String entryName,
-                                    @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, @NotNull ? extends EntryInfo> entryFun) {
+                                    @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, ? extends @NotNull EntryInfo> entryFun) {
     processEntry(map, null, entryName, entryFun);
   }
 
   protected final void processEntry(@NotNull Map<String, EntryInfo> map,
                                     @Nullable Logger logger,
                                     @NotNull String entryName,
-                                    @SuppressWarnings("BoundedWildcard") @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, @NotNull ? extends EntryInfo> entryFun) {
-    String normalizedName = StringUtil.trimTrailing(StringUtil.trimLeading(FileUtil.normalize(entryName), '/'), '/');
+                                    @SuppressWarnings("BoundedWildcard") @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, ? extends @NotNull EntryInfo> entryFun) {
+    String normalizedName = normalizeName(entryName);
     if (normalizedName.isEmpty() || normalizedName.contains("..") && ArrayUtil.contains("..", normalizedName.split("/"))) {
-      if (logger != null) logger.info("invalid entry: " + getFile() + "!/" + entryName);
+      if (logger != null) logger.trace("invalid entry: " + getFile() + "!/" + entryName);
       return;
     }
 
@@ -230,7 +243,7 @@ public abstract class ArchiveHandler {
 
     EntryInfo existing = map.get(normalizedName);
     if (existing != null) {
-      if (logger != null) logger.info("duplicate entry: " + getFile() + "!/" + normalizedName);
+      if (logger != null) logger.trace("duplicate entry: " + getFile() + "!/" + normalizedName);
       return;
     }
 
@@ -239,17 +252,21 @@ public abstract class ArchiveHandler {
     map.put(normalizedName, entryFun.apply(parent, path.second));
   }
 
+  protected @NotNull String normalizeName(@NotNull String entryName) {
+    return StringUtil.trimTrailing(StringUtil.trimLeading(FileUtil.normalize(entryName), '/'), '/');
+  }
+
   private EntryInfo directoryEntry(Map<String, EntryInfo> map, @Nullable Logger logger, String normalizedName) {
     EntryInfo entry = map.get(normalizedName);
     if (entry == null || !entry.isDirectory) {
-      if (logger != null && entry != null) logger.info("duplicate entry: " + getFile() + "!/" + normalizedName);
+      if (logger != null && entry != null) logger.trace("duplicate entry: " + getFile() + "!/" + normalizedName);
       if (normalizedName.isEmpty()) {
         entry = createRootEntry();
       }
       else {
         Pair<String, String> path = split(normalizedName);
         EntryInfo parent = directoryEntry(map, logger, path.first);
-        entry = new EntryInfo(ByteArrayCharSequence.convertToBytesIfPossible(path.second), true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
+        entry = new EntryInfo(path.second, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
       }
       map.put(normalizedName, entry);
     }
@@ -261,34 +278,6 @@ public abstract class ArchiveHandler {
     String parentPath = p > 0 ? normalizedName.substring(0, p) : "";
     String shortName = p > 0 ? normalizedName.substring(p + 1) : normalizedName;
     return new Pair<>(parentPath, shortName);
-  }
-
-  /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */
-  @Deprecated
-  protected @NotNull EntryInfo getOrCreate(@NotNull Map<String, EntryInfo> map, @NotNull String entryName) {
-    EntryInfo entry = map.get(entryName);
-    if (entry == null) {
-      int slashP = entryName.lastIndexOf('/');
-      int p = Math.max(slashP, entryName.lastIndexOf('\\'));
-      String parentName = p > 0 ? entryName.substring(0, p) : "";
-      String shortName = p > 0 ? entryName.substring(p + 1) : entryName;
-      String fixedParent = parentName.replace('\\', '/');
-      //noinspection StringEquality
-      if (fixedParent != parentName || slashP == -1 && p != -1) {
-        parentName = fixedParent;
-        entryName = parentName + '/' + shortName;
-      }
-      EntryInfo parent = getOrCreate(map, parentName);
-      entry = new EntryInfo(ByteArrayCharSequence.convertToBytesIfPossible(shortName), true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
-      map.put(entryName, entry);
-    }
-    return entry;
-  }
-
-  /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */
-  @Deprecated
-  protected @NotNull Pair<String, String> splitPath(@NotNull String entryName) {
-    return split(entryName);
   }
 
   public abstract byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException;

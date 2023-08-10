@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions
 
 import com.intellij.openapi.project.Project
@@ -19,16 +19,8 @@ object LocalAttachHostPresentationGroup: XAttachPresentationGroup<XAttachHost> {
     return ""
   }
 
-  override fun getProcessIcon(project: Project, info: XAttachHost, dataHolder: UserDataHolder): Icon {
-    TODO("deprecated method should not be invoked")
-  }
-
   override fun getItemIcon(project: Project, info: XAttachHost, dataHolder: UserDataHolder): Icon {
     return EmptyIcon.ICON_16
-  }
-
-  override fun getProcessDisplayText(project: Project, info: XAttachHost, dataHolder: UserDataHolder): String {
-    TODO("deprecated method should not be invoked")
   }
 
   override fun getItemDisplayText(project: Project, info: XAttachHost, dataHolder: UserDataHolder): String {

@@ -5,9 +5,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
-/**
- * @author ven
- */
 public interface GrConstructorCall extends GrCall {
   GroovyResolveResult[] multiResolveClass();
 

@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -22,15 +21,13 @@ import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.formatting.FormatProcessor.FormatOptions;
@@ -43,9 +40,8 @@ public class FormatterImpl extends FormatterEx
              FormattingModelFactory {
   private static final Logger LOG = Logger.getInstance(FormatterImpl.class);
 
-  private final AtomicReference<FormattingProgressTask> myProgressTask = new AtomicReference<>();
+  private final AtomicReference<FormattingProgressCallback> myProgressTask = new AtomicReference<>();
 
-  private final AtomicInteger myIsDisabledCount = new AtomicInteger();
   private final IndentImpl NONE_INDENT = new IndentImpl(Indent.Type.NONE, false, false);
   private final IndentImpl myAbsoluteNoneIndent = new IndentImpl(Indent.Type.NONE, true, false);
   private final IndentImpl myLabelIndent = new IndentImpl(Indent.Type.LABEL, false, false);
@@ -83,7 +79,7 @@ public class FormatterImpl extends FormatterEx
   }
 
   @Override
-  public void setProgressTask(@NotNull FormattingProgressTask progressIndicator) {
+  public void setProgressTask(@NotNull FormattingProgressCallback progressIndicator) {
     if (!FormatterUtil.isFormatterCalledExplicitly()) {
       return;
     }
@@ -264,27 +260,19 @@ public class FormatterImpl extends FormatterEx
   }
 
   private void execute(@NotNull SequentialTask task) {
-    disableFormatting();
     Application application = ApplicationManager.getApplication();
-    FormattingProgressTask progressTask = myProgressTask.getAndSet(null);
+    FormattingProgressCallback progressTask = myProgressTask.getAndSet(null);
     if (progressTask == null || !application.isDispatchThread() || application.isUnitTestMode()) {
-      try {
-        task.prepare();
-        while (!task.isDone()) {
-          task.iteration();
-        }
-      }
-      finally {
-        enableFormatting();
+      task.prepare();
+      while (!task.isDone()) {
+        task.iteration();
       }
     }
     else {
       progressTask.setTask(task);
-      Runnable callback = () -> enableFormatting();
-      for (FormattingProgressCallback.EventType eventType : FormattingProgressCallback.EventType.values()) {
-        progressTask.addCallback(eventType, callback);
+      if (progressTask  instanceof SequentialModalProgressTask) {
+        ProgressManager.getInstance().run((SequentialModalProgressTask)progressTask);
       }
-      ProgressManager.getInstance().run(progressTask);
     }
   }
 
@@ -293,7 +281,6 @@ public class FormatterImpl extends FormatterEx
                                         final CodeStyleSettings settings,
                                         final CommonCodeStyleSettings.IndentOptions indentOptions,
                                         final TextRange rangeToAdjust) {
-    disableFormatting();
     try {
       validateModel(model);
       final FormattingDocumentModel documentModel = model.getDocumentModel();
@@ -316,9 +303,6 @@ public class FormatterImpl extends FormatterEx
     catch (FormattingModelInconsistencyException e) {
       LOG.error(e);
     }
-    finally {
-      enableFormatting();
-    }
   }
 
   @Override
@@ -326,7 +310,6 @@ public class FormatterImpl extends FormatterEx
                                 CodeStyleSettings settings,
                                 PsiFile file,
                                 TextRange textRange) {
-    disableFormatting();
     try {
       validateModel(model);
       final FormattingDocumentModel documentModel = model.getDocumentModel();
@@ -358,9 +341,6 @@ public class FormatterImpl extends FormatterEx
     catch (FormattingModelInconsistencyException e) {
       LOG.error(e);
     }
-    finally{
-      enableFormatting();
-    }
   }
 
   @Override
@@ -369,7 +349,6 @@ public class FormatterImpl extends FormatterEx
                               final CommonCodeStyleSettings.IndentOptions indentOptions,
                               final int offset,
                               final TextRange affectedRange) throws IncorrectOperationException {
-    disableFormatting();
     try {
       validateModel(model);
       if (model instanceof PsiBasedFormattingModel) {
@@ -387,9 +366,6 @@ public class FormatterImpl extends FormatterEx
     }
     catch (FormattingModelInconsistencyException e) {
       LOG.error(e);
-    }
-    finally {
-      enableFormatting();
     }
     return offset;
   }
@@ -485,6 +461,37 @@ public class FormatterImpl extends FormatterEx
     final Block block = model.getRootBlock();
     if (block.getTextRange().isEmpty()) return null; // handing empty document case
     final FormatProcessor processor = buildProcessorAndWrapBlocks(model, settings, indentOptions, affectedRange, offset);
+    return generateIndentWhitespace(processor, indentOptions, documentModel, offset);
+  }
+
+  @Override
+  @Nullable
+  public List<String> getLineIndents(final FormattingModel model,
+                                     final CodeStyleSettings settings,
+                                     final CommonCodeStyleSettings.IndentOptions indentOptions) {
+    final FormattingDocumentModel documentModel = model.getDocumentModel();
+    final Block block = model.getRootBlock();
+    if (block.getTextRange().isEmpty()) return Collections.emptyList(); // handing empty document case
+
+    Document document = model.getDocumentModel().getDocument();
+    FormatProcessor processor = buildProcessorAndWrapBlocks(model, settings, indentOptions, block.getTextRange(), 0);
+
+    int lines = document.getLineCount();
+    List<String> indents = new ArrayList<>(lines);
+    for (int i = 0; i < lines; i++) {
+      int offset = document.getLineStartOffset(i);
+      String indent = generateIndentWhitespace(processor, indentOptions, documentModel, offset);
+      indents.add(indent != null ? indent : "");
+    }
+
+    return indents;
+  }
+
+  @Nullable
+  private String generateIndentWhitespace(FormatProcessor processor,
+                                          CommonCodeStyleSettings.IndentOptions indentOptions,
+                                          FormattingDocumentModel documentModel,
+                                          int offset) {
     WhiteSpace whiteSpace = getWhiteSpaceAtOffset(offset, processor);
     if (whiteSpace != null) {
       final IndentInfo indent = calcIndent(offset, documentModel, processor, whiteSpace);
@@ -582,6 +589,11 @@ public class FormatterImpl extends FormatterEx
   }
 
   @Override
+  public Indent getSmartIndent(@NotNull Indent.Type type, boolean relativeToDirectParent) {
+    return new ExpandableIndent(type, relativeToDirectParent);
+  }
+
+  @Override
   public Indent getIndent(@NotNull Indent.Type type, int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren) {
     return new IndentImpl(type, false, spaces, relativeToDirectParent, enforceIndentToChildren);
   }
@@ -659,33 +671,6 @@ public class FormatterImpl extends FormatterEx
     return relative ? myContinuationWithoutFirstIndentRelativeToDirectParent : myContinuationWithoutFirstIndentNotRelativeToDirectParent;
   }
 
-  @Override
-  public boolean isDisabled() {
-    return myIsDisabledCount.get() > 0;
-  }
-
-  private void disableFormatting() {
-    myIsDisabledCount.incrementAndGet();
-  }
-
-  private void enableFormatting() {
-    int old = myIsDisabledCount.getAndDecrement();
-    if (old <= 0) {
-      LOG.error("enableFormatting()/disableFormatting() not paired. DisabledLevel = " + old);
-    }
-  }
-
-  @Nullable
-  public <T> T runWithFormattingDisabled(@NotNull Computable<T> runnable) {
-    disableFormatting();
-    try {
-      return runnable.compute();
-    }
-    finally {
-      enableFormatting();
-    }
-  }
-
   private abstract static class MyFormattingTask implements SequentialTask {
     private FormatProcessor myProcessor;
     private boolean         myDone;
@@ -743,5 +728,30 @@ public class FormatterImpl extends FormatterEx
     FormattingModelInconsistencyException(String message) {
       super(message);
     }
+  }
+
+  @Nullable
+  @Override
+  public FormattingModelBuilder createExternalFormattingModelBuilder(@NotNull PsiFile psiFile,
+                                                                     @Nullable FormattingModelBuilder langBuilder) {
+    return new ExternalFormattingModelBuilderImpl(langBuilder);
+  }
+
+  @Override
+  @NotNull
+  public FormattingModel createDummyFormattingModel(@NotNull PsiElement element) {
+    return new DummyFormattingModel(element);
+  }
+
+  @Override
+  public boolean isEligibleForVirtualFormatting(@NotNull PsiElement context) {
+    return VirtualFormattingImplKt.isEligibleForVirtualFormatting(context);
+  }
+
+  @Override
+  @Nullable
+  public FormattingModelBuilder wrapForVirtualFormatting(@NotNull PsiElement context,
+                                                         @Nullable FormattingModelBuilder originalModel) {
+    return VirtualFormattingImplKt.wrapForVirtualFormatting(context, originalModel);
   }
 }

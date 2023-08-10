@@ -18,22 +18,22 @@ public class AnnotationArgConverter {
 
     private void newMethod(PsiAnnotationMemberValue value, final StringBuilder buffer) {
         value.accept(new JavaElementVisitor() {
-            @Override
-            public void visitExpression(PsiExpression expression) {
-                buffer.append(expression.getText());
+          @Override
+          public void visitExpression(PsiExpression expression) {
+            buffer.append(expression.getText());
+          }
+    
+          @Override
+          public void visitNewExpression(PsiNewExpression expression) {
+            PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();
+            if (arrayInitializer == null) {
+              super.visitNewExpression(expression);
             }
-
-            @Override
-            public void visitNewExpression(PsiNewExpression expression) {
-                PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();
-                if (arrayInitializer == null) {
-                    super.visitNewExpression(expression);
-                }
-                else {
-                    buffer.append(")");
-                }
+            else {
+              buffer.append(")");
             }
-
+          }
+    
         });
     }
 }

@@ -9,6 +9,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,13 +27,13 @@ public abstract class RunAnythingGroup {
   };
 
   /**
-   * {@link #myMoreIndex} is a group's 'load more..' index in the main list.
+   * Group's 'load more...' index in the main list.
    * -1 means that group has all items loaded and no more 'load more..' placeholder
    */
   volatile int myMoreIndex = -1;
 
   /**
-   * {@link #myTitleIndex} is an index of group title in the main list.
+   * An index of group title in the main list.
    * -1 means that group has zero elements and thus has no showing title
    */
   volatile int myTitleIndex = -1;
@@ -151,7 +152,7 @@ public abstract class RunAnythingGroup {
    * Joins {@link #myTitleIndex} and {@link #myMoreIndex} of all groups; using for navigating by 'TAB' between groups.
    */
   public static int[] getAllIndexes(@NotNull Collection<? extends RunAnythingGroup> groups) {
-    IntArrayList list = new IntArrayList();
+    IntList list = new IntArrayList();
     for (RunAnythingGroup runAnythingGroup : groups) {
       list.add(runAnythingGroup.myTitleIndex);
     }

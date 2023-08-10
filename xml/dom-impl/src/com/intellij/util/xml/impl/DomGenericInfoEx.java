@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class DomGenericInfoEx implements DomGenericInfo {
 
   public abstract boolean checkInitialized();

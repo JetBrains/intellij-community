@@ -1,39 +1,55 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.webcore.packaging;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.eventLog.events.StringEventField;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class PackageManagementUsageCollector {
+import java.util.Arrays;
+
+public final class PackageManagementUsageCollector extends CounterUsagesCollector {
+  private static final EventLogGroup GROUP = new EventLogGroup("package.management.ui", 2);
+  private static final StringEventField SERVICE = EventFields.String("service", Arrays.asList("Node.js", "Python", "Bower"));
+
+  private static final EventId1<String> BROWSE_AVAILABLE_PACKAGES = GROUP.registerEvent("browseAvailablePackages", SERVICE);
+  private static final EventId1<String> INSTALL = GROUP.registerEvent("install", SERVICE);
+  private static final EventId1<String> UPGRADE = GROUP.registerEvent("upgrade", SERVICE);
+  private static final EventId1<String> UNINSTALL = GROUP.registerEvent("uninstall", SERVICE);
 
   private PackageManagementUsageCollector() {}
 
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
+  }
+
   public static void triggerBrowseAvailablePackagesPerformed(@NotNull Project project, @Nullable PackageManagementService service) {
-    trigger(project, service, "browseAvailablePackages");
+    trigger(project, service, BROWSE_AVAILABLE_PACKAGES);
   }
 
   public static void triggerInstallPerformed(@NotNull Project project, @Nullable PackageManagementService service) {
-    trigger(project, service, "install");
+    trigger(project, service, INSTALL);
   }
 
   public static void triggerUpgradePerformed(@NotNull Project project, @Nullable PackageManagementService service) {
-    trigger(project, service, "upgrade");
+    trigger(project, service, UPGRADE);
   }
 
   public static void triggerUninstallPerformed(@NotNull Project project, @Nullable PackageManagementService service) {
-    trigger(project, service, "uninstall");
+    trigger(project, service, UNINSTALL);
   }
 
-  private static void trigger(@NotNull Project project, @Nullable PackageManagementService service, @NotNull String actionName) {
+  private static void trigger(@NotNull Project project, @Nullable PackageManagementService service, EventId1<String> event) {
     String serviceName = toKnownServiceName(service);
     if (serviceName != null) {
-      FeatureUsageData data = new FeatureUsageData().addData("service", serviceName);
-      FUCounterUsageLogger.getInstance().logEvent(project, "package.management.ui", actionName, data);
+      event.log(project, serviceName);
     }
   }
 

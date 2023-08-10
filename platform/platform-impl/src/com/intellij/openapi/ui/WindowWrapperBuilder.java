@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper.Mode;
 import com.intellij.openapi.util.BooleanGetter;
@@ -9,7 +8,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,15 +85,10 @@ public class WindowWrapperBuilder {
 
   @NotNull
   public WindowWrapper build() {
-    switch (myMode) {
-      case FRAME:
-        return new FrameWindowWrapper(this);
-      case MODAL:
-      case NON_MODAL:
-        return new DialogWindowWrapper(this);
-      default:
-        throw new IllegalArgumentException(myMode.toString());
-    }
+    return switch (myMode) {
+      case FRAME -> new FrameWindowWrapper(this);
+      case MODAL, NON_MODAL -> new DialogWindowWrapper(this);
+    };
   }
 
   private static void installOnShowCallback(@Nullable Window window, @Nullable final Runnable onShowCallback) {
@@ -123,14 +117,11 @@ public class WindowWrapperBuilder {
 
       setTitle(builder.title);
       switch (builder.myMode) {
-        case MODAL:
-          myDialog.setModal(true);
-          break;
-        case NON_MODAL:
-          myDialog.setModal(false);
-          break;
-        default:
+        case MODAL -> myDialog.setModal(true);
+        case NON_MODAL -> myDialog.setModal(false);
+        default -> {
           assert false;
+        }
       }
       myDialog.init();
       Disposer.register(myDialog.getDisposable(), this);
@@ -168,6 +159,11 @@ public class WindowWrapperBuilder {
     @Override
     public Window getWindow() {
       return myDialog.getWindow();
+    }
+
+    @Override
+    public boolean isDisposed() {
+      return myDialog.isDisposed();
     }
 
     @Override
@@ -281,10 +277,7 @@ public class WindowWrapperBuilder {
 
     @Override
     public void show() {
-      final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myComponent);
-      if (tb != null)
-        Disposer.register(myFrame, tb);
-
+      TouchbarSupport.showWindowActions(myFrame, myComponent);
       myFrame.show();
       if (myOnShowCallback != null) myOnShowCallback.run();
     }
@@ -311,6 +304,11 @@ public class WindowWrapperBuilder {
     @Override
     public Window getWindow() {
       return myFrame.getFrame();
+    }
+
+    @Override
+    public boolean isDisposed() {
+      return myFrame.isDisposed();
     }
 
     @Override

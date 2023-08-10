@@ -19,15 +19,17 @@ public final class AnnotationTargetsSearch {
     private final PsiClass myAnnotationClass;
     private final SearchScope myScope;
 
-    public Parameters(final PsiClass annotationClass, final SearchScope scope) {
+    public Parameters(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
       myAnnotationClass = annotationClass;
       myScope = scope;
     }
 
+    @NotNull
     public PsiClass getAnnotationClass() {
       return myAnnotationClass;
     }
 
+    @NotNull
     public SearchScope getScope() {
       return myScope;
     }
@@ -35,12 +37,14 @@ public final class AnnotationTargetsSearch {
 
   private AnnotationTargetsSearch() {}
 
+  @NotNull
   public static Query<PsiModifierListOwner> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
     final Query<PsiMember> members = AnnotatedMembersSearch.search(annotationClass, scope);
     final Query<PsiPackage> packages = AnnotatedPackagesSearch.search(annotationClass, scope);
     return new MergeQuery<>(members, packages);
   }
 
+  @NotNull
   public static Query<PsiModifierListOwner> search(@NotNull PsiClass annotationClass) {
     return search(annotationClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(annotationClass)));
   }

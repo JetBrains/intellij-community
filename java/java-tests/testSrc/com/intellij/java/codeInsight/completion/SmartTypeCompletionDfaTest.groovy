@@ -20,9 +20,6 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.testFramework.NeedsIndex
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class SmartTypeCompletionDfaTest extends LightFixtureCompletionTestCase {
   @Override

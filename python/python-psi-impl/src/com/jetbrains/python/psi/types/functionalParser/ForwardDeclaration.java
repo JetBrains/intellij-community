@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
-* @author vlan
-*/
 public class ForwardDeclaration<R, T> extends FunctionalParserBase<R, T> {
   private FunctionalParser<R, T> myParser = null;
 

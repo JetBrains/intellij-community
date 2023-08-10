@@ -29,7 +29,7 @@ abstract class AbstractJavaExpressionValueTest : AbstractJavaUastTest() {
     var valuesFound = 0
     file.accept(object : UastVisitor {
       override fun visitElement(node: UElement): Boolean {
-        node as? JavaUElementWithComments ?: return false
+        if (node !is JavaUElementWithComments) return false
         for (comment in node.comments) {
           val text = comment.text.removePrefix("/* ").removeSuffix(" */")
           val parts = text.split(" = ")

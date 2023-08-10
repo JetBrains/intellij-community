@@ -8,8 +8,6 @@ import org.jetbrains.annotations.NotNull;
  * Editor customization that can make target editor soft wraps-aware.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public final class SoftWrapsEditorCustomization extends SimpleEditorCustomization {
 

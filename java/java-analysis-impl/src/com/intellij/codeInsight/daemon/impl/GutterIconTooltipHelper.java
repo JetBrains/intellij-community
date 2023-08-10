@@ -18,7 +18,7 @@ import java.util.Set;
 /**
  * @deprecated use {@link GutterTooltipHelper}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class GutterIconTooltipHelper {
   private GutterIconTooltipHelper() {
   }
@@ -34,19 +34,8 @@ public final class GutterIconTooltipHelper {
   /**
    * @deprecated use {@link GutterTooltipHelper}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static String composeText(@NotNull Iterable<? extends PsiElement> elements, @NotNull String start, @NotNull String pattern) {
-    return composeText(elements, start, pattern, "");
-  }
-
-  /**
-   * @deprecated use {@link GutterTooltipHelper}
-   */
-  @Deprecated
-  static String composeText(@NotNull Iterable<? extends PsiElement> elements,
-                            @NotNull String start,
-                            @NotNull String pattern,
-                            @NotNull String postfix) {
     @NonNls StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(start);
@@ -75,7 +64,6 @@ public final class GutterIconTooltipHelper {
       sep = "<br>";
       result.append(name);
     }
-    result.append(postfix);
     result.append("</body></html>");
     return result.toString();
   }

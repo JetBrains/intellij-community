@@ -38,6 +38,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
@@ -68,18 +69,13 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     Key.create("ParameterInfoControllerBase.ALL_CONTROLLERS_KEY");
 
   public static ParameterInfoControllerBase findControllerAtOffset(Editor editor, int offset) {
-    List<ParameterInfoControllerBase> allControllers = getAllControllers(editor);
-    for (int i = 0; i < allControllers.size(); ++i) {
-      ParameterInfoControllerBase controller = allControllers.get(i);
-
+    for (ParameterInfoControllerBase controller : new ArrayList<>(getAllControllers(editor))) {
       int lbraceOffset = controller.myLbraceMarker.getStartOffset();
       if (lbraceOffset == offset) {
         if (!controller.canBeDisposed()) {
           return controller;
         }
         Disposer.dispose(controller);
-        //noinspection AssignmentToForLoopParameter
-        --i;
       }
     }
 
@@ -89,8 +85,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   static List<ParameterInfoControllerBase> getAllControllers(@NotNull Editor editor) {
     List<ParameterInfoControllerBase> array = editor.getUserData(ALL_CONTROLLERS_KEY);
     if (array == null) {
-      array = new ArrayList<>();
-      editor.putUserData(ALL_CONTROLLERS_KEY, array);
+      array = ((UserDataHolderEx)editor).putUserDataIfAbsent(ALL_CONTROLLERS_KEY, new CopyOnWriteArrayList<>());
     }
     return array;
   }
@@ -114,6 +109,8 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
                                      PsiElement parameterOwner,
                                      @NotNull ParameterInfoHandler handler,
                                      boolean showHint) {
+    ApplicationManager.getApplication().assertIsDispatchThread(); // DEXP-575205
+
     myProject = project;
     myEditor = editor;
 
@@ -127,9 +124,6 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
 
     mySingleParameterInfo = !showHint;
 
-    List<ParameterInfoControllerBase> allControllers = getAllControllers(myEditor);
-    allControllers.add(this);
-
     myEditorCaretListener = new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
@@ -139,6 +133,17 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
         }
       }
     };
+  }
+
+  // TODO [V.Petrenko] need to make a proper logic of creation an instance of this class
+  //  without such inconvenient methods like registerSelf() and setupListeners()
+  //  considering possible exceptions in constructors of inheritors
+  protected final void registerSelf() {
+    List<ParameterInfoControllerBase> allControllers = getAllControllers(myEditor);
+    allControllers.add(this);
+  }
+
+  protected void setupListeners() {
     myEditor.getCaretModel().addCaretListener(myEditorCaretListener);
 
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
@@ -148,7 +153,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
       }
     }, this);
 
-    MessageBusConnection connection = project.getMessageBus().connect(this);
+    MessageBusConnection connection = myProject.getMessageBus().connect(this);
     connection.subscribe(ExternalParameterInfoChangesProvider.TOPIC, (e, offset) -> {
       if (e != null && (e != myEditor || myLbraceMarker.getStartOffset() != offset)) return;
       updateWhenAllCommitted();
@@ -202,14 +207,6 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     return controller != null && controller.getPrevOrNextParameterOffset(isNext) != -1;
   }
 
-  static void prevOrNextParameter(Editor editor, int lbraceOffset, boolean isNext) {
-    ParameterInfoControllerBase controller = findControllerAtOffset(editor, lbraceOffset);
-    int newOffset = controller != null ? controller.getPrevOrNextParameterOffset(isNext) : -1;
-    if (newOffset != -1) {
-      controller.moveToParameterAtOffset(newOffset);
-    }
-  }
-
   protected int getCurrentOffset() {
     int caretOffset = myEditor.getCaretModel().getOffset();
     CharSequence chars = myEditor.getDocument().getCharsSequence();
@@ -248,8 +245,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   protected abstract void moveToParameterAtOffset(int offset);
 
   protected int getPrevOrNextParameterOffset(boolean isNext) {
-    if (!(myParameterInfoControllerData.getHandler() instanceof ParameterInfoHandlerWithTabActionSupport)) return -1;
-    ParameterInfoHandlerWithTabActionSupport handler = (ParameterInfoHandlerWithTabActionSupport)myParameterInfoControllerData.getHandler();
+    if (!(myParameterInfoControllerData.getHandler() instanceof ParameterInfoHandlerWithTabActionSupport handler)) return -1;
 
     IElementType delimiter = handler.getActualParameterDelimiterType();
     boolean noDelimiter = delimiter == TokenType.WHITE_SPACE;
@@ -321,8 +317,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     ParameterInfoHandler[] handlers = ShowParameterInfoHandler.getHandlers(file.getProject(), PsiUtilCore.getLanguageAtOffset(file, offset), file.getViewProvider().getBaseLanguage());
 
     for (ParameterInfoHandler handler : handlers) {
-      if (handler instanceof ParameterInfoHandlerWithTabActionSupport) {
-        final ParameterInfoHandlerWithTabActionSupport parameterInfoHandler2 = (ParameterInfoHandlerWithTabActionSupport)handler;
+      if (handler instanceof ParameterInfoHandlerWithTabActionSupport parameterInfoHandler2) {
 
         // please don't remove typecast in the following line; it's required to compile the code under old JDK 6 versions
         final E e = ParameterInfoUtils.findArgumentList(file, offset, lbraceOffset, parameterInfoHandler2);

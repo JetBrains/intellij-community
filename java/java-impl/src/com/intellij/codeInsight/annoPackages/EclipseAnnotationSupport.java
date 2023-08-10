@@ -28,6 +28,7 @@ class EclipseAnnotationSupport implements AnnotationPackageSupport {
 
   @Override
   public @Nullable NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
+                                                                                 @NotNull PsiElement context,
                                                                                  PsiAnnotation.TargetType @NotNull [] types,
                                                                                  boolean superPackage) {
     if (superPackage) return null;
@@ -44,7 +45,8 @@ class EclipseAnnotationSupport implements AnnotationPackageSupport {
       else if (value instanceof PsiLiteralExpression && Boolean.FALSE.equals(((PsiLiteralExpression)value).getValue())) {
         targets = ArrayUtil.EMPTY_STRING_ARRAY;
       }
-      boolean targetApplies = StreamEx.of(targets).map(TARGET_MAP::get).nonNull().anyMatch(loc -> ArrayUtil.contains(loc, types));
+      boolean targetApplies = StreamEx.of(targets).map(TARGET_MAP::get).nonNull()
+        .anyMatch(loc -> loc == PsiAnnotation.TargetType.TYPE_USE ? types.length == 1 && types[0] == loc : ArrayUtil.contains(loc, types));
       return new NullabilityAnnotationInfo(anno, targetApplies ? Nullability.NOT_NULL : Nullability.UNKNOWN, true);
     }
     return null;
@@ -52,13 +54,10 @@ class EclipseAnnotationSupport implements AnnotationPackageSupport {
 
   @Override
   public @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
-    switch (nullability) {
-      case NOT_NULL:
-        return Collections.singletonList("org.eclipse.jdt.annotation.NonNull");
-      case NULLABLE:
-        return Collections.singletonList("org.eclipse.jdt.annotation.Nullable");
-      default:
-        return Collections.emptyList();
-    }
+    return switch (nullability) {
+      case NOT_NULL -> Collections.singletonList("org.eclipse.jdt.annotation.NonNull");
+      case NULLABLE -> Collections.singletonList("org.eclipse.jdt.annotation.Nullable");
+      default -> Collections.emptyList();
+    };
   }
 }

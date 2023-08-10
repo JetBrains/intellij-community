@@ -1,8 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.intention;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.SealClassFromPermitsListAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class SealClassFromPermitsListActionTest extends LightJavaCodeInsightFixtureTestCase {
@@ -22,11 +25,19 @@ public class SealClassFromPermitsListActionTest extends LightJavaCodeInsightFixt
     doTest(false);
   }
 
+  public void testSubInterface() {
+    myFixture.addClass("package foo; interface Child extends Parent {}");
+    myFixture.configureByText("Parent.java", "package foo; sealed interface Parent permits <caret>Child {}");
+    assertTrue(myFixture.filterAvailableIntentions("Make 'Child' final").isEmpty());
+  }
+
   private void doTest(boolean isAvailable) {
-    SealClassFromPermitsListAction action = new SealClassFromPermitsListAction(myFixture.getElementAtCaret());
+    IntentionAction action = new SealClassFromPermitsListAction(
+      PsiTreeUtil.getNonStrictParentOfType(myFixture.getElementAtCaret(), PsiClass.class)).asIntention();
     if (isAvailable) {
       assertTrue(action.isAvailable(getProject(), getEditor(), getFile()));
       myFixture.launchAction(action);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     }
     else {
       assertFalse(action.isAvailable(getProject(), getEditor(), getFile()));

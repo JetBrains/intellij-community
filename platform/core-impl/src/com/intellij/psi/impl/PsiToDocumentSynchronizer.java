@@ -57,7 +57,7 @@ public class PsiToDocumentSynchronizer {
   }
 
   public @Nullable DocumentChangeTransaction getTransaction(@NotNull Document document) {
-    final Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(document);
+    Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(document);
     return Pair.getFirst(pair);
   }
 
@@ -76,12 +76,12 @@ public class PsiToDocumentSynchronizer {
     void syncDocument(@NotNull Document document, @NotNull PsiTreeChangeEventImpl event);
   }
 
-  private void checkPsiModificationAllowed(final @NotNull PsiTreeChangeEvent event) {
+  private void checkPsiModificationAllowed(@NotNull PsiTreeChangeEvent event) {
     if (!toProcessPsiEvent()) return;
-    final PsiFile psiFile = event.getFile();
+    PsiFile psiFile = event.getFile();
     if (!(psiFile instanceof PsiFileEx) || !((PsiFileEx)psiFile).isContentsLoaded()) return;
 
-    final Document document = myPsiDocumentManager.getCachedDocument(psiFile);
+    Document document = myPsiDocumentManager.getCachedDocument(psiFile);
     if (document != null && myPsiDocumentManager.isUncommited(document)) {
       throw new IllegalStateException("Attempt to modify PSI for non-committed Document!");
     }
@@ -97,7 +97,7 @@ public class PsiToDocumentSynchronizer {
 
   private void doSync(@NotNull PsiTreeChangeEvent event, @NotNull DocSyncAction syncAction) {
     if (!toProcessPsiEvent()) return;
-    final PsiFile psiFile = event.getFile();
+    PsiFile psiFile = event.getFile();
     if (!(psiFile instanceof PsiFileEx) || !((PsiFileEx)psiFile).isContentsLoaded()) return;
 
     DocumentEx document = getCachedDocument(psiFile, true);
@@ -105,7 +105,7 @@ public class PsiToDocumentSynchronizer {
 
     performAtomically(psiFile, () -> syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event));
 
-    final boolean insideTransaction = myTransactionsMap.containsKey(document);
+    boolean insideTransaction = myTransactionsMap.containsKey(document);
     if (!insideTransaction) {
       document.setModificationStamp(psiFile.getViewProvider().getModificationStamp());
     }
@@ -143,7 +143,7 @@ public class PsiToDocumentSynchronizer {
 
   @TestOnly
   public void replaceString(@NotNull Document document, int startOffset, int endOffset, @NotNull String s) {
-    final DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
+    DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
     if(documentChangeTransaction != null) {
       documentChangeTransaction.replace(startOffset, endOffset - startOffset, s, null);
     }
@@ -151,7 +151,7 @@ public class PsiToDocumentSynchronizer {
 
   @TestOnly
   public void insertString(@NotNull Document document, int offset, @NotNull String s) {
-    final DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
+    DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
     if(documentChangeTransaction != null){
       documentChangeTransaction.replace(offset, 0, s, null);
     }
@@ -162,7 +162,7 @@ public class PsiToDocumentSynchronizer {
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
     Pair<DocumentChangeTransaction, Integer> prev = pair;
     if (pair == null) {
-      final PsiFile psiFile = scope.getContainingFile();
+      PsiFile psiFile = scope.getContainingFile();
       pair = new Pair<>(new DocumentChangeTransaction(doc, psiFile), 0);
       if (scope.isPhysical()) {
         myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionStarted(doc, psiFile);
@@ -175,13 +175,13 @@ public class PsiToDocumentSynchronizer {
   }
 
   public boolean commitTransaction(@NotNull Document document){
-    final DocumentChangeTransaction documentChangeTransaction = removeTransaction(document);
+    DocumentChangeTransaction documentChangeTransaction = removeTransaction(document);
     if(documentChangeTransaction == null) return false;
-    final PsiFile changeScope = documentChangeTransaction.myChangeScope;
+    PsiFile changeScope = documentChangeTransaction.myChangeScope;
     try {
       mySyncDocument = document;
 
-      final PsiTreeChangeEventImpl fakeEvent = new PsiTreeChangeEventImpl(changeScope.getManager());
+      PsiTreeChangeEventImpl fakeEvent = new PsiTreeChangeEventImpl(changeScope.getManager());
       fakeEvent.setParent(changeScope);
       fakeEvent.setFile(changeScope);
       checkPsiModificationAllowed(fakeEvent);
@@ -278,11 +278,11 @@ public class PsiToDocumentSynchronizer {
       int start = 0;
       int end = start + length;
 
-      final CharSequence chars = myPsiText.subSequence(psiStart, psiStart + length);
+      CharSequence chars = myPsiText.subSequence(psiStart, psiStart + length);
       if (StringUtil.equals(chars, replace)) return;
 
       int newStartInReplace = 0;
-      final int replaceLength = replace.length();
+      int replaceLength = replace.length();
       while (newStartInReplace < replaceLength && start < end && replace.charAt(newStartInReplace) == chars.charAt(start)) {
         start++;
         newStartInReplace++;
@@ -348,7 +348,7 @@ public class PsiToDocumentSynchronizer {
       myAffectedFragments.put(newFragment, newReplacement);
     }
 
-    private TextRange findFragment(final int docOffset) {
+    private TextRange findFragment(int docOffset) {
       return ContainerUtil.find(myAffectedFragments.keySet(), range -> range.containsOffset(docOffset));
     }
 

@@ -1,12 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.keyStorage;
 
-import com.intellij.util.Processor;
 import com.intellij.util.io.InlineKeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+/**
+ * {@link AppendableObjectStorage} implementation for values that could be bijectively mapped
+ * to-from int, see {@link InlineKeyDescriptor}.
+ * valueId == value itself converted to int
+ */
 public class InlinedKeyStorage<Data> implements AppendableObjectStorage<Data> {
 
   private final InlineKeyDescriptor<Data> myDescriptor;
@@ -16,12 +20,12 @@ public class InlinedKeyStorage<Data> implements AppendableObjectStorage<Data> {
   }
 
   @Override
-  public Data read(int addr) throws IOException {
-    return myDescriptor.fromInt(addr);
+  public Data read(int valueId, boolean checkAccess) throws IOException {
+    return myDescriptor.fromInt(valueId);
   }
 
   @Override
-  public boolean processAll(@NotNull Processor<? super Data> processor) throws IOException {
+  public boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException {
     throw new UnsupportedOperationException();
   }
 
@@ -31,10 +35,14 @@ public class InlinedKeyStorage<Data> implements AppendableObjectStorage<Data> {
   }
 
   @Override
-  public boolean checkBytesAreTheSame(int addr, Data value) {
+  public boolean checkBytesAreTheSame(int valueId, Data value) {
     return false;
   }
 
+  @Override
+  public void clear() throws IOException {
+    //do nothing
+  }
 
   @Override
   public void lockRead() {
@@ -58,7 +66,7 @@ public class InlinedKeyStorage<Data> implements AppendableObjectStorage<Data> {
 
   @Override
   public int getCurrentLength() {
-    throw new UnsupportedOperationException();
+    return -1;
   }
 
   @Override

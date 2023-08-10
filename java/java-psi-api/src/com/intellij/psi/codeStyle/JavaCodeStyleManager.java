@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -17,7 +16,7 @@ import java.util.function.Predicate;
 
 public abstract class JavaCodeStyleManager {
   public static JavaCodeStyleManager getInstance(Project project) {
-    return ServiceManager.getService(project, JavaCodeStyleManager.class);
+    return project.getService(JavaCodeStyleManager.class);
   }
 
   public static final int DO_NOT_ADD_IMPORTS = 0x1000;
@@ -247,6 +246,15 @@ public abstract class JavaCodeStyleManager {
    */
   @NotNull
   public abstract Collection<String> suggestSemanticNames(@NotNull PsiExpression expression);
+
+  /**
+   * This method is not actually tied to Java Code Style and work similarly to {@link #suggestSemanticNames(PsiExpression)}
+   * Additionally, this method adds new names from the context, based on VariableKind
+   * <p>
+   * Should be used with {@link #suggestNames(Collection, VariableKind, PsiType)}.
+   */
+  @NotNull
+  public abstract Collection<String> suggestSemanticNames(@NotNull PsiExpression expression, @NotNull VariableKind kind);
 
   @NotNull
   public abstract SuggestedNameInfo suggestNames(@NotNull Collection<String> semanticNames,

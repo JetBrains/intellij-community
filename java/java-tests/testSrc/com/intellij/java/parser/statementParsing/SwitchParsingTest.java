@@ -30,4 +30,5 @@ public class SwitchParsingTest extends JavaParsingTestCase {
   public void testUncomplete4() { doTest(true); }
   public void testUncomplete5() { doTest(true); }
   public void testUncomplete6() { doTest(true); }
+  public void testUncomplete7() { doTest(true); }
 }

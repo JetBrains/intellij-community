@@ -23,9 +23,8 @@ public class YamlIntegerType extends YamlScalarType {
   }
 
   public YamlIntegerType(boolean quotedValuesAllowed) {
-    super("yaml:integer");
+    super("yaml:integer", "integer");
     myQuotedValuesAllowed = quotedValuesAllowed;
-    setDisplayName("integer");
   }
 
   @Override

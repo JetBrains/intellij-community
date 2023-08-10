@@ -23,7 +23,6 @@ import java.io.IOException;
 
 /**
  * Creates new application for each test.
- * @author peter
  */
 public interface HeavyIdeaTestFixture extends IdeaProjectTestFixture {
   PsiFile addFileToProject(@NonNls @NotNull String rootPath, @NonNls @NotNull String relativePath, @NonNls @NotNull String fileText) throws IOException;

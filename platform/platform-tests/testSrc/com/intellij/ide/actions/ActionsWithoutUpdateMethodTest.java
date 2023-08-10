@@ -26,7 +26,8 @@ public class ActionsWithoutUpdateMethodTest extends LightPlatformTestCase {
     "SearchEverywhere",
     "Terminal.SmartCommandExecution.Run",
     "Terminal.SmartCommandExecution.Debug",
-    "UiInspector"
+    "UiInspector",
+    "CopyUiLabel"
   );
 
   public void testActionsWithShortcuts() throws Exception {
@@ -40,7 +41,7 @@ public class ActionsWithoutUpdateMethodTest extends LightPlatformTestCase {
     }
 
     ActionManager mgr = ActionManager.getInstance();
-    ArrayList<AnAction> failed = new ArrayList<>();
+    ArrayList<String> failed = new ArrayList<>();
     for (String id : ids) {
       AnAction action = mgr.getAction(id);
       if (action == null) {
@@ -49,11 +50,8 @@ public class ActionsWithoutUpdateMethodTest extends LightPlatformTestCase {
       }
       Method updateMethod = action.getClass().getMethod("update", AnActionEvent.class);
       if (updateMethod.getDeclaringClass() == AnAction.class) {
-        failed.add(action);
+        failed.add(action + " ID: " + mgr.getId(action) + " Class: " + action.getClass());
       }
-    }
-    for (AnAction action : failed) {
-      System.err.println(action + " ID: " + mgr.getId(action) + " Class: " + action.getClass());
     }
 
     assertEmpty("The following actions have shortcuts, but don't have update() method redefined", failed);

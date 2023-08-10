@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.copyright
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -35,8 +36,6 @@ import com.maddyhome.idea.copyright.options.Options
 import com.maddyhome.idea.copyright.util.FileTypeUtil
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
-import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
@@ -78,7 +77,7 @@ class CopyrightManager @NonInjectable constructor(private val project: Project, 
   private val schemeManager = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>("myName") {
     override fun createScheme(dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
                               name: String,
-                              attributeProvider: Function<in String, String?>,
+                              attributeProvider: (String) -> String?,
                               isBundled: Boolean): SchemeWrapper<CopyrightProfile> {
       return CopyrightLazySchemeWrapper(name, dataHolder, schemeWriter)
     }
@@ -217,7 +216,7 @@ class CopyrightManager @NonInjectable constructor(private val project: Project, 
 }
 
 private class CopyrightManagerDocumentListener : BulkFileListener {
-  private val newFilePaths = Collections.newSetFromMap<String>(ConcurrentHashMap())
+  private val newFilePaths = ConcurrentCollectionFactory.createConcurrentSet<String>()
 
   private val isDocumentListenerAdded = AtomicBoolean()
 
@@ -261,22 +260,28 @@ private class CopyrightManagerDocumentListener : BulkFileListener {
   }
 
   private fun handleEvent(virtualFile: VirtualFile, project: Project) {
+    val copyrightManager = CopyrightManager.getInstance(project)
+    if (!copyrightManager.hasAnyCopyrights()) return
+
     val module = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(virtualFile) ?: return
-    if (!FileTypeUtil.isSupportedFile(virtualFile) || PsiManager.getInstance(project).findFile(virtualFile) == null) {
+    if (!FileTypeUtil.isSupportedFile(virtualFile)) {
       return
     }
 
-    AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().withDocumentsCommitted(project).execute {
-      if (project.isDisposed || !virtualFile.isValid) {
+    val file = PsiManager.getInstance(project).findFile(virtualFile) ?: return
+
+    if (!file.isWritable) {
+      return
+    }
+
+    copyrightManager.getCopyrightOptions(file) ?: return
+
+    AppUIExecutor.onUiThread(ModalityState.nonModal()).later().withDocumentsCommitted(project).execute {
+      if (project.isDisposed || !file.isValid) {
         return@execute
       }
 
-      val file = PsiManager.getInstance(project).findFile(virtualFile)
-      if (file != null && file.isWritable) {
-        CopyrightManager.getInstance(project).getCopyrightOptions(file)?.let {
-          UpdateCopyrightProcessor(project, module, file).run()
-        }
-      }
+      UpdateCopyrightProcessor(project, module, file).run()
     }
   }
 }

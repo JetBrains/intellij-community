@@ -1,48 +1,32 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.VersionComparatorUtil;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
 import org.apache.maven.Maven;
 import org.apache.maven.MavenExecutionException;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.handler.DefaultArtifactHandler;
-import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
+import org.apache.maven.archetype.catalog.Archetype;
+import org.apache.maven.archetype.catalog.ArchetypeCatalog;
+import org.apache.maven.archetype.common.ArchetypeArtifactManager;
+import org.apache.maven.archetype.exception.UnknownArchetype;
+import org.apache.maven.archetype.metadata.ArchetypeDescriptor;
+import org.apache.maven.archetype.metadata.RequiredProperty;
+import org.apache.maven.archetype.source.ArchetypeDataSource;
+import org.apache.maven.archetype.source.ArchetypeDataSourceException;
+import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
+import org.apache.maven.artifact.repository.MavenArtifactRepository;
+import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
 import org.apache.maven.artifact.resolver.ArtifactResolutionRequest;
 import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.artifact.resolver.ResolutionListener;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.execution.DefaultMavenExecutionResult;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.model.building.ModelBuildingException;
 import org.apache.maven.model.building.ModelBuildingRequest;
-import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.project.*;
@@ -52,100 +36,70 @@ import org.codehaus.plexus.component.repository.exception.ComponentLookupExcepti
 import org.eclipse.aether.RepositorySystemSession;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2;
-import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
+import org.jetbrains.idea.maven.server.embedder.Maven3ExecutionResult;
 import org.jetbrains.idea.maven.server.security.MavenToken;
+import org.jetbrains.idea.maven.server.utils.Maven3ResolverUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import static org.apache.maven.archetype.source.CatalogArchetypeDataSource.ARCHETYPE_CATALOG_PROPERTY;
+import static org.apache.maven.archetype.source.RemoteCatalogArchetypeDataSource.REPOSITORY_PROPERTY;
+import static org.jetbrains.idea.maven.server.Maven3ModelConverter.convertRemoteRepositories;
 
 /**
  * @author Vladislav.Soroka
  */
-public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements MavenServerEmbedder {
-
-  public interface RunnableThrownRemote {
-    void run() throws RemoteException;
-  }
-
+public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
   public final static boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("idea.maven3.use.compat.resolver") != null;
   private final static String MAVEN_VERSION = System.getProperty(MAVEN_EMBEDDER_VERSION);
-  private static final Pattern PROPERTY_PATTERN = Pattern.compile("\"-D([\\S&&[^=]]+)(?:=([^\"]+))?\"|-D([\\S&&[^=]]+)(?:=(\\S+))?");
   protected final MavenServerSettings myServerSettings;
 
   protected Maven3ServerEmbedder(MavenServerSettings settings) {
     myServerSettings = settings;
-    initLog4J(myServerSettings);
+    initLogging(myServerSettings);
   }
 
-  private static void initLog4J(MavenServerSettings settings) {
+  private static void initLogging(MavenServerSettings settings) {
     try {
-      BasicConfigurator.configure();
-      final Level rootLoggerLevel = toLog4JLevel(settings.getLoggingLevel());
-      Logger.getRootLogger().setLevel(rootLoggerLevel);
-      if (!rootLoggerLevel.isGreaterOrEqual(Level.ERROR)) {
-        Logger.getLogger("org.apache.maven.wagon.providers.http.httpclient.wire").setLevel(Level.ERROR);
-        Logger.getLogger("org.apache.http.wire").setLevel(Level.ERROR);
+      final Level rootLoggerLevel = toJavaUtilLoggingLevel(settings.getLoggingLevel());
+      Logger.getLogger("").setLevel(rootLoggerLevel);
+      if (rootLoggerLevel.intValue() < Level.SEVERE.intValue()) {
+        Logger.getLogger("org.apache.maven.wagon.providers.http.httpclient.wire").setLevel(Level.SEVERE);
+        Logger.getLogger("org.apache.http.wire").setLevel(Level.SEVERE);
       }
     }
     catch (Throwable ignore) {
     }
   }
 
-  private static Level toLog4JLevel(int level) {
+  private static Level toJavaUtilLoggingLevel(int level) {
     switch (level) {
-      case MavenServerConsole.LEVEL_DEBUG:
+      case MavenServerConsoleIndicator.LEVEL_DEBUG:
         return Level.ALL;
-      case MavenServerConsole.LEVEL_ERROR:
-        return Level.ERROR;
-      case MavenServerConsole.LEVEL_FATAL:
-        return Level.FATAL;
-      case MavenServerConsole.LEVEL_DISABLED:
+      case MavenServerConsoleIndicator.LEVEL_ERROR:
+        return Level.SEVERE;
+      case MavenServerConsoleIndicator.LEVEL_FATAL:
+        return Level.SEVERE;
+      case MavenServerConsoleIndicator.LEVEL_DISABLED:
         return Level.OFF;
-      case MavenServerConsole.LEVEL_INFO:
+      case MavenServerConsoleIndicator.LEVEL_INFO:
         return Level.INFO;
-      case MavenServerConsole.LEVEL_WARN:
-        return Level.WARN;
+      case MavenServerConsoleIndicator.LEVEL_WARN:
+        return Level.WARNING;
     }
     return Level.INFO;
   }
 
   protected abstract ArtifactRepository getLocalRepository();
-
-  @NotNull
-  @Override
-  public List<String> retrieveAvailableVersions(@NotNull String groupId,
-                                                @NotNull String artifactId,
-                                                @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token)
-    throws RemoteException {
-    MavenServerUtil.checkToken(token);
-    try {
-      Artifact artifact =
-        new DefaultArtifact(groupId, artifactId, "", Artifact.SCOPE_COMPILE, "pom", null, new DefaultArtifactHandler("pom"));
-      List<ArtifactVersion> versions = getComponent(ArtifactMetadataSource.class)
-        .retrieveAvailableVersions(
-          artifact,
-          getLocalRepository(),
-          convertRepositories(remoteRepositories));
-      return ContainerUtilRt.map2List(versions, new Function<ArtifactVersion, String>() {
-        @Override
-        public String fun(ArtifactVersion version) {
-          return version.toString();
-        }
-      });
-    }
-    catch (Exception e) {
-      Maven3ServerGlobals.getLogger().info(e);
-    }
-    return Collections.emptyList();
-  }
 
   @NotNull
   protected List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Collection<File> files) {
@@ -161,7 +115,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     }
 
 
-    List<ProjectBuildingResult> buildingResults = new ArrayList<ProjectBuildingResult>();
+    List<ProjectBuildingResult> buildingResults = new ArrayList<>();
 
     final ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
     projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
@@ -173,7 +127,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
       }
       else {
         try {
-          buildingResults = builder.build(new ArrayList<File>(files), false, projectBuildingRequest);
+          buildingResults = builder.build(new ArrayList<>(files), false, projectBuildingRequest);
         }
         catch (ProjectBuildingException e) {
           for (ProjectBuildingResult result : e.getResults()) {
@@ -204,76 +158,14 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
       buildingResults.add(build);
     }
     catch (ProjectBuildingException e) {
-      handleProjectBuildingException(buildingResults, e);
+      Maven3ResolverUtil.handleProjectBuildingException(buildingResults, e);
     }
   }
 
-  protected void handleProjectBuildingException(List<ProjectBuildingResult> buildingResults, ProjectBuildingException e) {
-    List<ProjectBuildingResult> results = e.getResults();
-    if (results != null && !results.isEmpty()) {
-      buildingResults.addAll(results);
-    }
-    else {
-      Throwable cause = e.getCause();
-      List<ModelProblem> problems = null;
-      if (cause instanceof ModelBuildingException) {
-        problems = ((ModelBuildingException)cause).getProblems();
-      }
-      buildingResults.add(new MyProjectBuildingResult(null, e.getPomFile(), null, problems, null));
-    }
-  }
-
-  private static class MyProjectBuildingResult implements ProjectBuildingResult {
-
-    private final String myProjectId;
-    private final File myPomFile;
-    private final MavenProject myMavenProject;
-    private final List<ModelProblem> myProblems;
-    private final DependencyResolutionResult myDependencyResolutionResult;
-
-    MyProjectBuildingResult(String projectId,
-                            File pomFile,
-                            MavenProject mavenProject,
-                            List<ModelProblem> problems,
-                            DependencyResolutionResult dependencyResolutionResult) {
-      myProjectId = projectId;
-      myPomFile = pomFile;
-      myMavenProject = mavenProject;
-      myProblems = problems;
-      myDependencyResolutionResult = dependencyResolutionResult;
-    }
-
-    @Override
-    public String getProjectId() {
-      return myProjectId;
-    }
-
-    @Override
-    public File getPomFile() {
-      return myPomFile;
-    }
-
-    @Override
-    public MavenProject getProject() {
-      return myMavenProject;
-    }
-
-    @Override
-    public List<ModelProblem> getProblems() {
-      return myProblems;
-    }
-
-    @Override
-    public DependencyResolutionResult getDependencyResolutionResult() {
-      return myDependencyResolutionResult;
-    }
-  }
-
-  protected void addMvn2CompatResults(MavenProject project,
-                                      List<Exception> exceptions,
-                                      List<ResolutionListener> listeners,
-                                      ArtifactRepository localRepository,
-                                      Collection<MavenExecutionResult> executionResults) {
+  protected Maven3ExecutionResult resolveMvn2CompatResult(MavenProject project,
+                                                          List<Exception> exceptions,
+                                                          List<ResolutionListener> listeners,
+                                                          ArtifactRepository localRepository) {
     ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
     resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
     resolutionRequest.setArtifact(project.getArtifact());
@@ -289,7 +181,15 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
 
     project.setArtifacts(result.getArtifacts());
-    executionResults.add(new MavenExecutionResult(project, exceptions));
+    return new Maven3ExecutionResult(project, exceptions);
+  }
+
+  protected void addMvn2CompatResults(MavenProject project,
+                                      List<Exception> exceptions,
+                                      List<ResolutionListener> listeners,
+                                      ArtifactRepository localRepository,
+                                      Collection<Maven3ExecutionResult> executionResults) {
+    executionResults.add(resolveMvn2CompatResult(project, exceptions, listeners, localRepository));
   }
 
   @Override
@@ -299,45 +199,24 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     return null;
   }
 
-  public static Map<String, String> getMavenAndJvmConfigProperties(File workingDir) {
-    if (workingDir == null) {
-      return Collections.emptyMap();
-    }
-    File baseDir = MavenServerUtil.findMavenBasedir(workingDir);
-
-    Map<String, String> result = new HashMap<String, String>();
-    readConfigFiles(baseDir, result);
-    return result.isEmpty() ? Collections.<String, String>emptyMap() : result;
-  }
-
-  static void readConfigFiles(File baseDir, Map<String, String> result) {
-    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result, "");
-    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result, "true");
-  }
-
-  private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result, String valueIfMissing) {
-    File configFile = new File(baseDir, relativePath);
-
-    if (configFile.exists() && configFile.isFile()) {
-      try {
-        String text = FileUtilRt.loadFile(configFile, "UTF-8");
-        Matcher matcher = PROPERTY_PATTERN.matcher(text);
-        while (matcher.find()) {
-          if (matcher.group(1) != null) {
-            result.put(matcher.group(1), StringUtilRt.notNullize(matcher.group(2), valueIfMissing));
-          }
-          else {
-            result.put(matcher.group(3), StringUtilRt.notNullize(matcher.group(4), valueIfMissing));
-          }
-        }
-      }
-      catch (IOException ignore) {
-      }
-    }
-  }
-
   @NotNull
   protected abstract List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException;
+
+  @NotNull
+  protected List<ArtifactRepository> map2ArtifactRepositories(List<MavenRemoteRepository> repositories) {
+    PlexusContainer container = getContainer();
+    List<ArtifactRepository> result = new ArrayList<>();
+    for (MavenRemoteRepository each : repositories) {
+      try {
+        ArtifactRepositoryFactory factory = getComponent(ArtifactRepositoryFactory.class);
+        result.add(ProjectUtils.buildArtifactRepository(Maven3ModelConverter.toNativeRepository(each), factory, container));
+      }
+      catch (InvalidRepositoryException e) {
+        MavenServerGlobals.getLogger().warn(e);
+      }
+    }
+    return result;
+  }
 
   @Nullable
   public String getMavenVersion() {
@@ -348,17 +227,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
   public abstract <T> T getComponent(Class<T> clazz);
 
-  protected void executeWithMavenSession(MavenExecutionRequest request, final Runnable runnable) throws RemoteException {
-    executeWithMavenSession(request, new RunnableThrownRemote() {
-      @Override
-      public void run() throws RemoteException {
-        runnable.run();
-      }
-    });
-  }
-
-  protected void executeWithMavenSession(MavenExecutionRequest request, RunnableThrownRemote runnable) throws RemoteException {
-
+  public void executeWithMavenSession(MavenExecutionRequest request, final Runnable runnable) {
     if (VersionComparatorUtil.compare(getMavenVersion(), "3.2.5") >= 0) {
       executeWithSessionScope(request, runnable);
     }
@@ -367,17 +236,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     }
   }
 
-  protected void executeWithMavenSessionLegacy(MavenExecutionRequest request, final Runnable runnable) throws RemoteException {
-    executeWithMavenSessionLegacy(request, new RunnableThrownRemote() {
-      @Override
-      public void run() throws RemoteException {
-        runnable.run();
-      }
-    });
-  }
-
-
-  protected void executeWithMavenSessionLegacy(MavenExecutionRequest request, RunnableThrownRemote runnable) throws RemoteException {
+  protected void executeWithMavenSessionLegacy(MavenExecutionRequest request, Runnable runnable) {
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     MavenSession mavenSession = createMavenSession(request, maven);
     LegacySupport legacySupport = getComponent(LegacySupport.class);
@@ -402,7 +261,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
   private void notifyAfterSessionStart(MavenSession mavenSession) {
     try {
-      for (AbstractMavenLifecycleParticipant listener : getLifecycleParticipants(Collections.<MavenProject>emptyList())) {
+      for (AbstractMavenLifecycleParticipant listener : getLifecycleParticipants(Collections.emptyList())) {
         listener.afterSessionStart(mavenSession);
       }
     }
@@ -412,7 +271,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   }
 
 
-  protected void executeWithSessionScope(MavenExecutionRequest request, RunnableThrownRemote runnable) throws RemoteException {
+  protected void executeWithSessionScope(MavenExecutionRequest request, Runnable runnable) {
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     SessionScope sessionScope = getComponent(SessionScope.class);
     sessionScope.enter();
@@ -443,24 +302,123 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
   public abstract MavenExecutionRequest createRequest(File file,
                                                       List<String> activeProfiles,
-                                                      List<String> inactiveProfiles,
-                                                      List<String> goals)
+                                                      List<String> inactiveProfiles)
     throws RemoteException;
 
   protected static void warn(String message, Throwable e) {
+    MavenServerGlobals.getLogger().warn(new RuntimeException(message, e));
+  }
+
+  @Override
+  public HashSet<MavenRemoteRepository> resolveRepositories(@NotNull ArrayList<MavenRemoteRepository> repositories, MavenToken token)
+    throws RemoteException {
+    MavenServerUtil.checkToken(token);
     try {
-      Maven3ServerGlobals.getLogger().warn(new RuntimeException(message, e));
+      return new HashSet<>(
+        convertRemoteRepositories(convertRepositories(new ArrayList<>(repositories))));
     }
-    catch (RemoteException e1) {
-      throw new RuntimeException(e1);
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
+
+  @Override
+  public ArrayList<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    try {
+      ArchetypeDataSource source = getComponent(ArchetypeDataSource.class, "catalog");
+      Properties properties = new Properties();
+      properties.setProperty(ARCHETYPE_CATALOG_PROPERTY, path);
+      ArchetypeCatalog archetypeCatalog = source.getArchetypeCatalog(properties);
+      return getArchetypes(archetypeCatalog);
+    }
+    catch (Exception e) {
+      MavenServerGlobals.getLogger().warn(e);
+    }
+    return new ArrayList<>();
+  }
+
+  @Override
+  public ArrayList<MavenArchetype> getRemoteArchetypes(MavenToken token, @NotNull String url) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    try {
+      ArchetypeDataSource source = getComponent(ArchetypeDataSource.class, "remote-catalog");
+      Properties properties = new Properties();
+      properties.setProperty(REPOSITORY_PROPERTY, url);
+      ArchetypeCatalog archetypeCatalog = source.getArchetypeCatalog(properties);
+      return getArchetypes(archetypeCatalog);
+    }
+    catch (ArchetypeDataSourceException e) {
+      MavenServerGlobals.getLogger().warn(e);
+    }
+    return new ArrayList<>();
+  }
+
+  @Nullable
+  @Override
+  public HashMap<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
+                                                              @NotNull String version,
+                                                              @NotNull ArrayList<MavenRemoteRepository> repositories,
+                                                              @Nullable String url, MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    try {
+      MavenExecutionRequest request = createRequest(null, null, null);
+      List<ArtifactRepository> artifactRepositories = map2ArtifactRepositories(repositories);
+      for (ArtifactRepository repository : artifactRepositories) {
+        request.addRemoteRepository(repository);
+      }
+
+      HashMap<String, String> result = new HashMap<>();
+      AtomicBoolean unknownArchetypeError = new AtomicBoolean(false);
+      executeWithMavenSession(request, () -> {
+        MavenArtifactRepository artifactRepository = null;
+        if (url != null) {
+          artifactRepository = new MavenArtifactRepository();
+          artifactRepository.setId("archetype");
+          artifactRepository.setUrl(url);
+          artifactRepository.setLayout(new DefaultRepositoryLayout());
+        }
+
+        List<ArtifactRepository> remoteRepositories = request.getRemoteRepositories();
+
+        ArchetypeArtifactManager archetypeArtifactManager = getComponent(ArchetypeArtifactManager.class);
+        ArchetypeDescriptor descriptor = null;
+        try {
+          descriptor = archetypeArtifactManager.getFileSetArchetypeDescriptor(
+            groupId, artifactId, version, artifactRepository,
+            getLocalRepository(), remoteRepositories);
+        }
+        catch (UnknownArchetype e) {
+          unknownArchetypeError.set(true);
+        }
+        if (descriptor != null && descriptor.getRequiredProperties() != null) {
+          for (RequiredProperty property : descriptor.getRequiredProperties()) {
+            result.put(property.getKey(), property.getDefaultValue() != null ? property.getDefaultValue() : "");
+          }
+        }
+      });
+      return unknownArchetypeError.get() ? null : result;
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  @NotNull
+  private static ArrayList<MavenArchetype> getArchetypes(ArchetypeCatalog archetypeCatalog) {
+    ArrayList<MavenArchetype> result = new ArrayList<>(archetypeCatalog.getArchetypes().size());
+    for (Archetype each : archetypeCatalog.getArchetypes()) {
+      result.add(Maven3ModelConverter.convertArchetype(each));
+    }
+    return result;
+  }
+
 
   /**
    * adapted from {@link DefaultMaven#getLifecycleParticipants(Collection)}
    */
   private Collection<AbstractMavenLifecycleParticipant> getLifecycleParticipants(Collection<MavenProject> projects) {
-    Collection<AbstractMavenLifecycleParticipant> lifecycleListeners = new LinkedHashSet<AbstractMavenLifecycleParticipant>();
+    Collection<AbstractMavenLifecycleParticipant> lifecycleListeners = new LinkedHashSet<>();
 
     ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
     try {
@@ -472,7 +430,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
         warn("Failed to lookup lifecycle participants", e);
       }
 
-      Collection<ClassLoader> scannedRealms = new HashSet<ClassLoader>();
+      Collection<ClassLoader> scannedRealms = new HashSet<>();
 
       for (MavenProject project : projects) {
         ClassLoader projectRealm = project.getClassRealm();

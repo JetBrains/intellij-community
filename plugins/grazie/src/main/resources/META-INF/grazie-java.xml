@@ -1,6 +1,0 @@
-<idea-plugin>
-    <extensions defaultExtensionNs="com.intellij.grazie">
-        <grammar.strategy language="JAVA" implementationClass="com.intellij.grazie.ide.language.java.JavaGrammarCheckingStrategy"/>
-    </extensions>
-</idea-plugin>
-

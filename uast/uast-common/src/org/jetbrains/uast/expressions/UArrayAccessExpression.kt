@@ -9,7 +9,7 @@ import org.jetbrains.uast.visitor.UastVisitor
 /**
  * Represents `receiver[index0, ..., indexN]` expression.
  */
-interface UArrayAccessExpression : UExpression {
+interface UArrayAccessExpression : UExpression, UResolvable {
   /**
    * Returns the receiver expression.
    */

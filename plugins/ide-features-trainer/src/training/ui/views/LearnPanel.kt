@@ -1,215 +1,275 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui.views
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.text.paragraph.TextParagraph
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
-import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.components.panels.VerticalBox
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.StartupUiUtil
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.Nls
+import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
-import training.learn.interfaces.Lesson
+import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
+import training.statistic.LessonStartingWay
+import training.statistic.StatisticBase
 import training.ui.*
-import training.util.getNextLessonForCurrent
-import training.util.getPreviousLessonForCurrent
-import training.util.openLinkInBrowser
-import training.util.wrapWithUrlPanel
+import training.util.*
 import java.awt.*
-import java.awt.event.ActionEvent
+import java.awt.event.*
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 import javax.swing.border.MatteBorder
+import kotlin.math.max
 
-class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
+internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   private val lessonPanel = JPanel()
-
-  private val moduleNameLabel: JLabel = LinkLabelWithBackArrow<Any> { _, _ ->
-    LessonManager.instance.stopLesson()
-    LearningUiManager.resetModulesView()
-  }
-
-  private val lessonNameLabel = JLabel() //Name of the current lesson
   val lessonMessagePane = LessonMessagePane()
-  private val buttonPanel = JPanel()
-  private val nextButton = JButton(LearnBundle.message("learn.ui.button.skip"))
-  private val prevButton = JButton()
+  private var nextButton: JButton? = null
 
-  private val footer = JPanel()
+  private val scrollPane = JBScrollPane(lessonPanel)
+  private val stepAnimator = StepAnimator(scrollPane.verticalScrollBar, lessonMessagePane)
 
   private val lessonPanelBoxLayout = BoxLayout(lessonPanel, BoxLayout.Y_AXIS)
 
   internal var scrollToNewMessages = true
 
   init {
+    Disposer.register(learnToolWindow.parentDisposable, lessonMessagePane)
     isFocusable = false
+    background = UISettings.getInstance().backgroundColor
+    layout = BoxLayout(this, BoxLayout.Y_AXIS)
+    isOpaque = true
+
+    scrollPane.addComponentListener(object: ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent?) {
+        updatePanelSize(getVisibleAreaWidth())
+      }
+    })
   }
 
   fun reinitMe(lesson: Lesson) {
+    with(UISettings.getInstance()) {
+      border = EmptyBorder(northInset, 0, southInset, 0)
+    }
+
     scrollToNewMessages = true
     clearMessages()
-    footer.removeAll()
     lessonPanel.removeAll()
     removeAll()
 
-    layout = BorderLayout()
-    isOpaque = true
-
-    initLessonPanel()
-    lessonPanel.alignmentX = LEFT_ALIGNMENT
-    add(lessonPanel, BorderLayout.CENTER)
-
-    if (lesson.helpLinks.isNotEmpty() && Registry.`is`("ift.help.links", false)) {
-      initFooterPanel(lesson)
-      add(footer, BorderLayout.PAGE_END)
-    }
-
-    preferredSize = Dimension(UISettings.instance.width, 100)
-    with (UISettings.instance) {
-      border = EmptyBorder(northInset, JBUI.scale(18), southInset, JBUI.scale(18))
-    }
+    add(createHeaderPanel(lesson))
+    add(createSmallSeparator())
+    add(scaledRigid(UISettings.getInstance().panelWidth, JBUI.scale(4)))
+    initLessonPanel(lesson)
+    scrollPane.alignmentX = LEFT_ALIGNMENT
+    add(scrollPane)
   }
 
-  private fun initFooterPanel(lesson: Lesson) {
+  fun updatePanelSize(viewAreaWidth: Int) {
+    val width = max(UISettings.getInstance().panelWidth, viewAreaWidth) - 2 * UISettings.getInstance().learnPanelSideOffset
+    lessonMessagePane.preferredSize = null
+    lessonMessagePane.setBounds(0, 0, width, 10000)
+    lessonMessagePane.revalidate()
+    lessonMessagePane.repaint()
+    lessonMessagePane.preferredSize = Dimension(width, lessonMessagePane.preferredSize.height)
+
+    lessonPanel.revalidate()
+    lessonPanel.doLayout() // need to reset correct location for auto-scroll
+    lessonPanel.repaint()
+  }
+
+  private fun createFooterPanel(lesson: Lesson): JPanel {
     val shiftedFooter = JPanel()
     shiftedFooter.name = "footerLessonPanel"
     shiftedFooter.layout = BoxLayout(shiftedFooter, BoxLayout.Y_AXIS)
     shiftedFooter.isFocusable = false
     shiftedFooter.isOpaque = false
-    shiftedFooter.border = MatteBorder(JBUI.scale(1), 0, 0, 0, UISettings.instance.separatorColor)
+    shiftedFooter.border = MatteBorder(JBUI.scale(1), 0, 0, 0, UISettings.getInstance().separatorColor)
 
     val footerContent = JPanel()
     footerContent.isOpaque = false
-    footerContent.layout = VerticalLayout(5)
+    footerContent.layout = BoxLayout(footerContent, BoxLayout.Y_AXIS)
+    footerContent.add(rigid(0, 16))
     footerContent.add(JLabel(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text")).also {
-      it.font = UISettings.instance.getFont(1).deriveFont(Font.BOLD)
+      it.font = UISettings.getInstance().getFont(1).deriveFont(Font.BOLD)
     })
     for (helpLink in lesson.helpLinks) {
       val text = helpLink.key
       val link = helpLink.value
       val linkLabel = LinkLabel<Any>(text, null) { _, _ ->
         openLinkInBrowser(link)
+        StatisticBase.logHelpLinkClicked(lesson.id)
       }
+      footerContent.add(rigid(0, 5))
       footerContent.add(linkLabel.wrapWithUrlPanel())
     }
 
     shiftedFooter.add(footerContent)
     shiftedFooter.add(Box.createHorizontalGlue())
 
+    val footer = JPanel()
     footer.add(shiftedFooter)
+    footer.alignmentX = Component.LEFT_ALIGNMENT
     footer.isOpaque = false
     footer.layout = BoxLayout(footer, BoxLayout.Y_AXIS)
-    footer.border = UISettings.instance.checkmarkShiftBorder
+    footer.border = UISettings.getInstance().lessonHeaderBorder
+    return footer
   }
 
-  private fun initLessonPanel() {
+  private fun initLessonPanel(lesson: Lesson) {
     lessonPanel.name = "lessonPanel"
     lessonPanel.layout = lessonPanelBoxLayout
     lessonPanel.isFocusable = false
-    lessonPanel.isOpaque = false
-
-    moduleNameLabel.name = "moduleNameLabel"
-    moduleNameLabel.font = UISettings.instance.getFont(1)
-    moduleNameLabel.isFocusable = false
-    moduleNameLabel.border = UISettings.instance.checkmarkShiftBorder
-
-    lessonNameLabel.name = "lessonNameLabel"
-    lessonNameLabel.border = UISettings.instance.checkmarkShiftBorder
-    lessonNameLabel.font = UISettings.instance.getFont(5).deriveFont(Font.BOLD)
-    lessonNameLabel.alignmentX = Component.LEFT_ALIGNMENT
-    lessonNameLabel.isFocusable = false
+    lessonPanel.isOpaque = true
+    with(UISettings.getInstance()) {
+      lessonPanel.background = backgroundColor
+      lessonPanel.border = EmptyBorder(0, learnPanelSideOffset, 0, learnPanelSideOffset)
+    }
 
     lessonMessagePane.name = "lessonMessagePane"
     lessonMessagePane.isFocusable = false
     lessonMessagePane.isOpaque = false
     lessonMessagePane.alignmentX = Component.LEFT_ALIGNMENT
-    lessonMessagePane.margin = JBUI.emptyInsets()
-    lessonMessagePane.border = EmptyBorder(0, 0, JBUI.scale(24), JBUI.scale(21))
-    lessonMessagePane.maximumSize = Dimension(UISettings.instance.width, 10000)
+    lessonMessagePane.margin = JBInsets.emptyInsets()
+    lessonMessagePane.border = EmptyBorder(0, 0, JBUI.scale(20), JBUI.scale(14))
 
-    //Set Next Button UI
-    listOf(nextButton, prevButton).forEach {
-      it.margin = JBUI.emptyInsets()
-      it.isFocusable = false
-      it.isVisible = true
-      it.isEnabled = true
-      it.isOpaque = false
-    }
-
-    buttonPanel.name = "buttonPanel"
-    buttonPanel.border = EmptyBorder(0, UISettings.instance.checkIndent - JButton().insets.left, 0, 0)
-    buttonPanel.isOpaque = false
-    buttonPanel.isFocusable = false
-    buttonPanel.layout = BoxLayout(buttonPanel, BoxLayout.X_AXIS)
-    buttonPanel.alignmentX = Component.LEFT_ALIGNMENT
-    updateNavigationButtons()
-
-    //shift right for checkmark
-    lessonPanel.add(moduleNameLabel)
-    lessonPanel.add(Box.createVerticalStrut(JBUI.scale(20)))
-    lessonPanel.add(lessonNameLabel)
+    lessonPanel.add(scaledRigid(UISettings.getInstance().panelWidth - 2 * UISettings.getInstance().learnPanelSideOffset, JBUI.scale(19)))
+    lessonPanel.add(createLessonNameLabel(lesson))
     lessonPanel.add(lessonMessagePane)
-    lessonPanel.add(buttonPanel)
+    lessonPanel.add(createButtonsPanel())
     lessonPanel.add(Box.createVerticalGlue())
-  }
 
-  fun setLessonName(@Nls lessonName: String) {
-    lessonNameLabel.text = lessonName
-    lessonNameLabel.foreground = UISettings.instance.defaultTextColor
-    lessonNameLabel.isFocusable = false
-    this.revalidate()
-    this.repaint()
-  }
-
-  fun setModuleName(@Nls moduleName: String) {
-    moduleNameLabel.text = "    $moduleName"
-    moduleNameLabel.foreground = UISettings.instance.defaultTextColor
-    moduleNameLabel.isFocusable = false
-    this.revalidate()
-    this.repaint()
-  }
-
-  fun addMessage(@Language("HTML") text: String, state: LessonMessagePane.MessageState = LessonMessagePane.MessageState.NORMAL) {
-    val messages = MessageFactory.convert(text)
-    MessageFactory.setLinksHandlers(learnToolWindow.project, messages)
-    addMessages(messages, state)
-  }
-
-  fun addMessages(messageParts: List<MessagePart>, state: LessonMessagePane.MessageState = LessonMessagePane.MessageState.NORMAL) {
-    val needToShow = lessonMessagePane.addMessage(messageParts, state)
-    adjustMessagesArea()
-    if (state != LessonMessagePane.MessageState.INACTIVE) {
-      scrollToMessage(needToShow)
+    if (lesson.helpLinks.isNotEmpty() && Registry.`is`("ift.help.links", false)) {
+      lessonPanel.add(rigid(0, 16))
+      lessonPanel.add(createFooterPanel(lesson))
     }
+  }
+
+  private fun createLessonNameLabel(lesson: Lesson): JLabel {
+    val lessonNameLabel = object: JLabel() {
+      override fun updateUI() {
+        super.updateUI()
+        border = UISettings.getInstance().lessonHeaderBorder
+        font = UISettings.getInstance().getFont(5).deriveFont(Font.BOLD)
+      }
+    }
+    lessonNameLabel.name = "lessonNameLabel"
+    lessonNameLabel.alignmentX = Component.LEFT_ALIGNMENT
+    lessonNameLabel.isFocusable = false
+    lessonNameLabel.text = lesson.name
+    lessonNameLabel.foreground = UISettings.getInstance().defaultTextColor
+    return lessonNameLabel
+  }
+
+  private fun createHeaderPanel(lesson: Lesson): VerticalBox {
+    val moduleNameLabel: JLabel = LinkLabelWithBackArrow<Any> { _, _ ->
+      StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.OPEN_MODULES)
+      LessonManager.instance.stopLesson()
+      LearningUiManager.resetModulesView()
+    }
+    moduleNameLabel.name = "moduleNameLabel"
+    moduleNameLabel.font = UISettings.getInstance().getFont(1)
+    moduleNameLabel.text = "    ${lesson.module.name}"
+    moduleNameLabel.foreground = UISettings.getInstance().defaultTextColor
+    moduleNameLabel.isFocusable = false
+
+    val linksPanel = JPanel()
+    linksPanel.isOpaque = false
+    linksPanel.layout = BoxLayout(linksPanel, BoxLayout.X_AXIS)
+    linksPanel.alignmentX = LEFT_ALIGNMENT
+    linksPanel.border = EmptyBorder(0, 0, JBUI.scale(12), 0)
+
+    linksPanel.add(moduleNameLabel)
+    linksPanel.add(Box.createHorizontalGlue())
+
+    val exitLink = JLabel(LearnBundle.message("exit.learning.link"), AllIcons.Actions.Exit, SwingConstants.LEADING)
+    exitLink.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    exitLink.addMouseListener(object : MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent) {
+        if (!StatisticBase.isLearnProjectCloseLogged) {
+          StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.EXIT_LINK)
+        }
+        LessonManager.instance.stopLesson()
+        val langSupport = LangManager.getInstance().getLangSupport()
+        val project = learnToolWindow.project
+        langSupport?.onboardingFeedbackData?.let {
+          showOnboardingLessonFeedbackForm(project, it, false)
+          langSupport.onboardingFeedbackData = null
+        }
+
+        if (langSupport != null && isLearningProject(project, langSupport.primaryLanguage)) {
+          CloseProjectWindowHelper().windowClosing(project)
+        } else {
+          LearningUiManager.resetModulesView()
+          ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)?.hide()
+        }
+      }
+    })
+    linksPanel.add(exitLink)
+
+    val headerPanel = VerticalBox()
+    headerPanel.isOpaque = false
+    headerPanel.alignmentX = LEFT_ALIGNMENT
+    headerPanel.border = UISettings.getInstance().lessonHeaderBorder
+    headerPanel.add(linksPanel)
+    return headerPanel
+  }
+
+  fun addMessage(@Language("HTML") text: String, properties: LessonMessagePane.MessageProperties = LessonMessagePane.MessageProperties()) {
+    val paragraphs = MessageFactory.convert(text)
+    val firstParagraph = paragraphs.first()
+    addMessages(firstParagraph, properties)
+    for (paragraph in paragraphs.subList(1, paragraphs.size)) {
+      addMessages(paragraph, properties.copy(useInternalParagraphStyle = true))
+    }
+  }
+
+  fun addMessages(message: TextParagraph,
+                  properties: LessonMessagePane.MessageProperties = LessonMessagePane.MessageProperties()) {
+    val needToShow = lessonMessagePane.addMessage(message, properties)
+    adjustMessagesArea()
+    if (properties.state != LessonMessagePane.MessageState.INACTIVE) {
+      scrollToMessage(needToShow())
+    }
+  }
+
+  fun focusCurrentMessage() {
+    scrollToMessage(lessonMessagePane.getCurrentMessageRectangle())
   }
 
   private fun scrollToMessage(needToShow: Rectangle?) {
-    if (scrollToNewMessages && needToShow != null) {
-      lessonMessagePane.scrollRectToVisible(needToShow)
+    if (needToShow == null) return
+
+    if (scrollToNewMessages) {
+      adjustMessagesArea()
+      val visibleSize = lessonPanel.visibleRect.size
+      val needToScroll = max(0, needToShow.y + lessonMessagePane.location.y - visibleSize.height / 2 + needToShow.height / 2)
+      scrollTo(needToScroll)
     }
   }
 
-  private fun adjustMessagesArea() {
-    //invoke #getPreferredSize explicitly to update actual size of LessonMessagePane
-    lessonMessagePane.preferredSize
-
-    //Pack lesson panel
-    lessonPanel.repaint()
-    //run to update LessonMessagePane.getMinimumSize and LessonMessagePane.getPreferredSize
-    lessonPanelBoxLayout.invalidateLayout(lessonPanel)
-    lessonPanelBoxLayout.layoutContainer(lessonPanel)
+  fun adjustMessagesArea() {
+    updatePanelSize(getVisibleAreaWidth())
+    revalidate()
+    repaint()
   }
 
   fun resetMessagesNumber(number: Int) {
     val needToShow = lessonMessagePane.resetMessagesNumber(number)
     adjustMessagesArea()
-    scrollToMessage(needToShow)
+    scrollToMessage(needToShow())
   }
 
   fun removeInactiveMessages(number: Int) {
@@ -221,120 +281,147 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
   fun setPreviousMessagesPassed() {
     lessonMessagePane.passPreviousMessages()
-    lessonMessagePane.revalidate()
-    lessonMessagePane.repaint()
-  }
-
-  fun setLessonPassed() {
-    setButtonToNext()
-    revalidate()
-    this.repaint()
-  }
-
-  private fun setButtonToNext() {
-    nextButton.isVisible = true
-    lessonPanel.revalidate()
-    lessonPanel.repaint()
+    adjustMessagesArea()
   }
 
   private fun clearMessages() {
-    lessonNameLabel.icon = null
-    lessonMessagePane.clear()
+    lessonMessagePane.clearMessages()
   }
 
-  private fun updateNavigationButtons() {
-    buttonPanel.removeAll()
+  private fun createButtonsPanel(): JPanel {
+    val buttonPanel = JPanel()
+    buttonPanel.name = "buttonPanel"
+    buttonPanel.border = EmptyBorder(0, UISettings.getInstance().checkIndent - JButton().insets.left, 0, 0)
+    buttonPanel.isOpaque = false
+    buttonPanel.isFocusable = false
+    buttonPanel.layout = BoxLayout(buttonPanel, BoxLayout.X_AXIS)
+    buttonPanel.alignmentX = Component.LEFT_ALIGNMENT
     rootPane?.defaultButton = null
 
-    updateButton(prevButton, getPreviousLessonForCurrent(), LearnBundle.message("learn.new.ui.button.back"))
+    val previousLesson = getPreviousLessonForCurrent()
+    val prevButton = previousLesson?.let { createNavigationButton(previousLesson, isNext = false) }
 
     val nextLesson = getNextLessonForCurrent()
-    updateButton(nextButton, nextLesson, LearnBundle.message("learn.new.ui.button.next", nextLesson?.name ?: ""))
-  }
+    nextButton = nextLesson?.let { createNavigationButton(nextLesson, isNext = true) }
 
-
-  private fun updateButton(button: JButton, targetLesson: Lesson?, @Nls buttonText: String) {
-    button.isVisible = targetLesson != null
-    if (targetLesson != null) {
-      button.action = object : AbstractAction() {
-        override fun actionPerformed(actionEvent: ActionEvent) {
-          CourseManager.instance.openLesson(learnToolWindow.project, targetLesson)
-        }
-      }
-      button.text = buttonText
-      button.updateUI()
-      button.isSelected = true
-
-      if (!targetLesson.passed &&
-          !targetLesson.properties.canStartInDumbMode &&
-          DumbService.getInstance(learnToolWindow.project).isDumb) {
-        button.isEnabled = false
-        button.toolTipText = LearnBundle.message("indexing.message")
-        button.isSelected = false
-        DumbService.getInstance(learnToolWindow.project).runWhenSmart {
-          button.isEnabled = true
-          button.toolTipText = ""
-          button.isSelected = true
-        }
-      }
-
+    for (button in listOfNotNull(prevButton, nextButton)) {
+      button.margin = JBInsets.emptyInsets()
+      button.isFocusable = false
+      button.isEnabled = true
+      button.isOpaque = false
       buttonPanel.add(button)
     }
+    return buttonPanel
   }
 
-  @NlsSafe
-  private fun getNextLessonKeyStrokeText() = "Enter"
+  private fun createNavigationButton(targetLesson: Lesson, isNext: Boolean): JButton {
+    val button = JButton()
+    button.action = object : AbstractAction() {
+      override fun actionPerformed(actionEvent: ActionEvent) {
+        StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.OPEN_NEXT_OR_PREV_LESSON)
+        val startingWay = if (isNext) LessonStartingWay.NEXT_BUTTON else LessonStartingWay.PREV_BUTTON
+        CourseManager.instance.openLesson(learnToolWindow.project, targetLesson, startingWay)
+      }
+    }
+    button.text = if (isNext) {
+      LearnBundle.message("learn.new.ui.button.next", targetLesson.name)
+    }
+    else LearnBundle.message("learn.new.ui.button.back")
+    button.updateUI()
+    button.isSelected = true
 
-  override fun getPreferredSize(): Dimension {
-    if (lessonPanel.minimumSize == null) return Dimension(10, 10)
-    return Dimension(lessonPanel.minimumSize.getWidth().toInt() + UISettings.instance.westInset + UISettings.instance.eastInset,
-                     lessonPanel.minimumSize.getHeight().toInt() + footer.minimumSize.getHeight().toInt() + UISettings.instance.northInset + UISettings.instance.southInset)
-  }
-
-  override fun getBackground(): Color {
-    return if (!UIUtil.isUnderDarcula())
-      UISettings.instance.backgroundColor
-    else
-      UIUtil.getPanelBackground()
+    if (!targetLesson.passed &&
+        !targetLesson.properties.canStartInDumbMode &&
+        DumbService.getInstance(learnToolWindow.project).isDumb) {
+      button.isEnabled = false
+      button.toolTipText = LearnBundle.message("indexing.message")
+      button.isSelected = false
+      DumbService.getInstance(learnToolWindow.project).runWhenSmart {
+        button.isEnabled = true
+        button.toolTipText = ""
+        button.isSelected = true
+      }
+    }
+    return button
   }
 
   fun makeNextButtonSelected() {
-    rootPane?.defaultButton = nextButton
-    nextButton.isSelected = true
-    nextButton.isFocusable = true
-    nextButton.requestFocus()
+    nextButton?.let {
+      rootPane?.defaultButton = it
+      it.isSelected = true
+      it.isFocusable = true
+      it.requestFocus()
+    }
     if (scrollToNewMessages) {
-      nextButton.scrollRectToVisible(Rectangle(0, 0, nextButton.width, nextButton.height))
+      adjustMessagesArea()
+      scrollToTheEnd()
     }
   }
 
   fun clearRestoreMessage() {
     val needToShow = lessonMessagePane.clearRestoreMessages()
-    scrollToMessage(needToShow)
+    scrollToMessage(needToShow())
   }
 
-  class LinkLabelWithBackArrow<T>(linkListener: LinkListener<T>) : LinkLabel<T>("", null, linkListener) {
+  fun removeMessage(index: Int) {
+    lessonMessagePane.removeMessage(index)
+  }
 
-    init {
-      font = UIUtil.getLabelFont()
-    }
+  private fun getVisibleAreaWidth(): Int {
+    val scrollWidth = scrollPane.verticalScrollBar?.size?.width ?: 0
+    return scrollPane.viewport.extentSize.width - scrollWidth
+  }
 
-    override fun paint(g: Graphics?) {
-      super.paint(g)
-      val arrowWingHeight = textBounds.height / 4
+  private fun scrollToTheEnd() {
+    val vertical = scrollPane.verticalScrollBar
+    if (useAnimation()) stepAnimator.startAnimation(vertical.maximum)
+    else vertical.value = vertical.maximum
+  }
 
-      val g2d = g as Graphics2D
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+  fun scrollToTheStart() {
+    scrollPane.verticalScrollBar.value = 0
+  }
 
-      val stroke3: Stroke = BasicStroke(1.2f * font.size / 13, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
-      g2d.stroke = stroke3
-      g2d.color = foreground
-      g2d.drawLine(textBounds.x, textBounds.y + textBounds.height / 2,
-                   textBounds.x + 5 * textBounds.height / 17, textBounds.y + textBounds.height / 2 - arrowWingHeight)
-      g2d.drawLine(textBounds.x, textBounds.y + textBounds.height / 2,
-                   textBounds.x + 9 * textBounds.height / 17, textBounds.y + textBounds.height / 2)
-      g2d.drawLine(textBounds.x, textBounds.y + textBounds.height / 2,
-                   textBounds.x + 5 * textBounds.height / 17, textBounds.y + textBounds.height / 2 + arrowWingHeight)
+  private fun scrollTo(needTo: Int) {
+    if (useAnimation()) stepAnimator.startAnimation(needTo)
+    else {
+      scrollPane.verticalScrollBar.value = needTo
     }
   }
+
+  private fun useAnimation() = Registry.`is`("ift.use.scroll.animation", false)
+}
+
+private class LinkLabelWithBackArrow<T>(linkListener: LinkListener<T>) : LinkLabel<T>("", null, linkListener) {
+  init {
+    font = StartupUiUtil.labelFont
+  }
+
+  override fun paint(g: Graphics?) {
+    super.paint(g)
+    val arrowWingHeight = textBounds.height / 4
+
+    val g2d = g as Graphics2D
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+    val stroke3: Stroke = BasicStroke(1.2f * font.size / 13, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+    g2d.stroke = stroke3
+    g2d.color = foreground
+    g2d.drawLine(textBounds.x, textBounds.y + textBounds.height / 2,
+                 textBounds.x + 5 * textBounds.height / 17, textBounds.y + textBounds.height / 2 - arrowWingHeight)
+    g2d.drawLine(textBounds.x, textBounds.y + textBounds.height / 2,
+                 textBounds.x + 9 * textBounds.height / 17, textBounds.y + textBounds.height / 2)
+    g2d.drawLine(textBounds.x, textBounds.y + textBounds.height / 2,
+                 textBounds.x + 5 * textBounds.height / 17, textBounds.y + textBounds.height / 2 + arrowWingHeight)
+  }
+}
+
+private fun createSmallSeparator(): Component {
+  // Actually standard JSeparator can be used, but it adds some extra size for Y and I don't know how to fix it :(
+  val separatorPanel = JPanel()
+  separatorPanel.isOpaque = false
+  separatorPanel.layout = BoxLayout(separatorPanel, BoxLayout.X_AXIS)
+  separatorPanel.add(Box.createHorizontalGlue())
+  separatorPanel.border = MatteBorder(0, 0, JBUI.scale(1), 0, UISettings.getInstance().separatorColor)
+  return separatorPanel
 }

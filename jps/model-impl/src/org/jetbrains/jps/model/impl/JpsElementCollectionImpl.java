@@ -23,7 +23,7 @@ import org.jetbrains.jps.model.ex.JpsElementBase;
 
 import java.util.*;
 
-public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBase<JpsElementCollectionImpl<E>> implements JpsElementCollection<E> {
+public final class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBase<JpsElementCollectionImpl<E>> implements JpsElementCollection<E> {
   private final List<E> myElements;
   private final Map<E, E> myCopyToOriginal;
   private final JpsElementChildRole<E> myChildRole;
@@ -67,10 +67,6 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
   public <X extends E> X addChild(X element) {
     myElements.add(element);
     setParent(element, this);
-    final JpsEventDispatcher eventDispatcher = getEventDispatcher();
-    if (eventDispatcher != null) {
-      eventDispatcher.fireElementAdded(element, myChildRole);
-    }
     return element;
   }
 
@@ -78,10 +74,6 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
   public void removeChild(@NotNull E element) {
     final boolean removed = myElements.remove(element);
     if (removed) {
-      final JpsEventDispatcher eventDispatcher = getEventDispatcher();
-      if (eventDispatcher != null) {
-        eventDispatcher.fireElementRemoved(element, myChildRole);
-      }
       setParent(element, null);
     }
   }

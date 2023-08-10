@@ -1,24 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.SelectInTargetPsiWrapper;
+import com.intellij.ide.navbar.ui.StaticNavBarPanel;
+import com.intellij.ide.navbar.vm.NavBarVm;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,24 +55,39 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
   }
 
   public static void selectInNavBar(boolean showPopup) {
-    DataManager.getInstance().getDataContextFromFocus()
-      .doWhenDone((Consumer<DataContext>)context -> {
-        IdeFrame frame = IdeFrame.KEY.getData(context);
-        if (frame instanceof IdeFrameEx) {
-          final IdeRootPaneNorthExtension navBarExt = ((IdeFrameEx)frame).getNorthExtension(NavBarRootPaneExtension.NAV_BAR);
-          if (navBarExt != null) {
-            final JComponent c = navBarExt.getComponent();
-            final NavBarPanel panel = (NavBarPanel)c.getClientProperty("NavBarPanel");
-            panel.rebuildAndSelectItem((list) -> {
-              if (UISettings.getInstance().getShowMembersInNavigationBar()) {
-                int lastDirectory = ContainerUtil.lastIndexOf(list, (item) -> item.getObject() instanceof PsiDirectory || item.getObject() instanceof PsiDirectoryContainer);
-                if (lastDirectory >= 0 && lastDirectory < list.size() - 1) return lastDirectory;
-              }
-              return list.size() - 1;
-            }, showPopup);
+    DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
+      IdeFrame frame = IdeFrame.KEY.getData(context);
+      if (frame == null) {
+        return;
+      }
+
+      StatusBar statusBar = frame.getStatusBar();
+      JComponent navBar = null;
+      if (statusBar instanceof IdeStatusBarImpl) {
+        navBar = ((IdeStatusBarImpl)statusBar).getWidgetComponent(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
+      }
+      if (navBar == null && frame instanceof IdeFrameEx) {
+        navBar = ((IdeFrameEx)frame).getNorthExtension(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
+      }
+
+      if (navBar == null) {
+        return;
+      }
+
+      Object panel = navBar.getClientProperty(NavBarRootPaneExtension.PANEL_KEY);
+      if (panel instanceof StaticNavBarPanel navBarPanel) {
+        NavBarVm vm = navBarPanel.getModel();
+        if (vm != null) {
+          vm.selectTail();
+          if (showPopup) {
+            vm.showPopup();
           }
         }
-      });
+      }
+      else {
+        ((NavBarPanel)panel).rebuildAndSelectLastDirectoryOrTail(showPopup);
+      }
+    });
   }
 
   @Override

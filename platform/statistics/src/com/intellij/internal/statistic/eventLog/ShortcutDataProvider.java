@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,7 +52,7 @@ public final class ShortcutDataProvider {
   }
 
   @Nullable
-  protected static String getKeyEventText(@Nullable KeyEvent key) {
+  static String getKeyEventText(@Nullable KeyEvent key) {
     if (key == null) return null;
 
     final KeyStroke keystroke = KeyStroke.getKeyStrokeForEvent(key);
@@ -59,7 +60,7 @@ public final class ShortcutDataProvider {
   }
 
   @Nullable
-  protected static String getMouseEventText(@Nullable MouseEvent event) {
+  static String getMouseEventText(@Nullable MouseEvent event) {
     if (event == null) return null;
 
     String res = getMouseButtonText(event.getButton());
@@ -67,7 +68,7 @@ public final class ShortcutDataProvider {
 
     int clickCount = event.getClickCount();
     if (clickCount > 1) {
-      res += "(" + clickCount + "x)";
+      res += "(" + roundClickCount(clickCount) + "x)";
     }
 
     int modifiers = event.getModifiersEx() & ~BUTTON1_DOWN_MASK & ~BUTTON3_DOWN_MASK & ~BUTTON2_DOWN_MASK;
@@ -81,17 +82,22 @@ public final class ShortcutDataProvider {
     return res;
   }
 
+  @NotNull
+  private static String roundClickCount(int clickCount) {
+    if (clickCount < 3) return String.valueOf(clickCount);
+    if (clickCount < 5) return "3-5";
+    if (clickCount < 25) return "5-25";
+    if (clickCount < 100) return "25-100";
+    return "100+";
+  }
+
   private static String getMouseButtonText(int buttonNum) {
-    switch (buttonNum) {
-      case MouseEvent.BUTTON1:
-        return "MouseLeft";
-      case MouseEvent.BUTTON2:
-        return "MouseMiddle";
-      case MouseEvent.BUTTON3:
-        return "MouseRight";
-      default:
-        return "NoMouseButton";
-    }
+    return switch (buttonNum) {
+      case MouseEvent.BUTTON1 -> "MouseLeft";
+      case MouseEvent.BUTTON2 -> "MouseMiddle";
+      case MouseEvent.BUTTON3 -> "MouseRight";
+      default -> "NoMouseButton";
+    };
   }
 
   private static String getShortcutText(KeyboardShortcut shortcut) {
@@ -152,7 +158,7 @@ public final class ShortcutDataProvider {
   private static String getLocaleUnawareKeyModifiersText(int modifiers) {
     List<String> pressed = ourModifiers.stream()
       .filter(p -> (p.first & modifiers) != 0)
-      .map(p -> p.second).collect(Collectors.toList());
+      .map(p -> p.second).toList();
     return StringUtil.join(pressed, "+");
   }
 

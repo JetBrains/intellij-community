@@ -1,18 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.common.runAllCatching
 import com.intellij.util.SmartList
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.throwIfNotEmpty
 import org.jetbrains.annotations.ApiStatus
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -21,14 +24,18 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Predicate
+import kotlin.io.path.exists
 import kotlin.properties.Delegates
 
 /**
- * fileName argument is not used as is for generated file or dir name - sortable UID is added as suffix.
- * `hello.kt` will be created as `hello_1eSBtxBR5522COEjhRLR6AEz.kt`.
- * `.kt` will be created as `1eSBtxBR5522COEjhRLR6AEz.kt`.
+ * Provides the possibility to create a temporary directory during a test.
+ * The directory is not actually created by default; call [createDir] to do that.
+ *
+ * * The `fileName` argument is not used as is for generated file or dir name - sortable UID is added as suffix.
+ * * `hello.kt` will be created as `hello_1eSBtxBR5522COEjhRLR6AEz.kt`.
+ * * `.kt` will be created as `1eSBtxBR5522COEjhRLR6AEz.kt`.
  */
-class TemporaryDirectory : ExternalResource() {
+open class TemporaryDirectory : ExternalResource() {
   private val paths = SmartList<Path>()
   private var sanitizedName: String by Delegates.notNull()
 
@@ -58,7 +65,7 @@ class TemporaryDirectory : ExternalResource() {
     fun createVirtualFile(parent: VirtualFile, exactFileName: String, data: String?): VirtualFile {
       return WriteAction.computeAndWait<VirtualFile, IOException> {
         val result = parent.createChildData(TemporaryDirectory::class.java, exactFileName)
-        if (data != null && data.isNotEmpty()) {
+        if (!data.isNullOrEmpty()) {
           result.setBinaryContent(data.toByteArray(Charsets.UTF_8))
         }
         result
@@ -67,9 +74,13 @@ class TemporaryDirectory : ExternalResource() {
   }
 
   override fun apply(base: Statement, description: Description): Statement {
-    sanitizedName = testNameToFileName(description.methodName)
-    root = Paths.get(FileUtilRt.getTempDirectory())
+    before(description.methodName ?: description.className)
     return super.apply(base, description)
+  }
+
+  protected fun before(testName: String) {
+    sanitizedName = testNameToFileName(testName)
+    root = Paths.get(FileUtilRt.getTempDirectory())
   }
 
   @ApiStatus.Internal
@@ -101,13 +112,12 @@ class TemporaryDirectory : ExternalResource() {
       return
     }
 
-    val errors = mutableListOf<Throwable>()
-    for (i in (paths.size - 1) downTo 0) {
-      errors.catchAndStoreExceptions { paths[i].delete() }
+    val error = runAllCatching(paths.asReversed()) {
+      it.delete()
     }
 
     paths.clear()
-    throwIfNotEmpty(errors)
+    error?.let { throw it }
   }
 
   @JvmOverloads
@@ -167,14 +177,18 @@ class TemporaryDirectory : ExternalResource() {
   }
 }
 
-fun VirtualFile.writeChild(relativePath: String, data: String) = VfsTestUtil.createFile(this, relativePath, data)
+fun VirtualFile.writeChild(relativePath: String, data: String): VirtualFile = VfsTestUtil.createFile(this, relativePath, data)
 
-fun VirtualFile.writeChild(relativePath: String, data: ByteArray) = VfsTestUtil.createFile(this, relativePath, data)
+fun VirtualFile.writeChild(relativePath: String, data: ByteArray): VirtualFile = VfsTestUtil.createFile(this, relativePath, data)
 
 fun Path.refreshVfs() {
   // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
   val virtualFile = (LocalFileSystem.getInstance() ?: return).refreshAndFindFileByNioFile(this) ?: return
   VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
+}
+
+fun Path.refreshVfs(relativePath: String) {
+  getResolvedPath(relativePath).refreshVfs()
 }
 
 private fun generateName(fileName: String): String {
@@ -196,4 +210,15 @@ private fun generateName(fileName: String): String {
     nameBuilder.append(fileName, extIndex, fileName.length)
   }
   return nameBuilder.toString()
+}
+
+class TemporaryDirectoryExtension : TemporaryDirectory(), BeforeEachCallback, AfterEachCallback {
+  override fun afterEach(context: ExtensionContext?) {
+    after()
+  }
+
+  override fun beforeEach(context: ExtensionContext) {
+    before(context.testMethod.map { it.name }.orElse(context.displayName))
+  }
+
 }

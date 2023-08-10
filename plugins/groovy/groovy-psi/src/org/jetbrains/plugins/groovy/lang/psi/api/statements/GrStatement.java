@@ -21,8 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 21.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public interface GrStatement extends GrTopStatement, GrCondition {
   GrStatement[] EMPTY_ARRAY = new GrStatement[0];

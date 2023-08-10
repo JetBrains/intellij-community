@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -12,23 +12,22 @@ import java.util.Arrays;
 public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
   private final ASTNode myRoot;
 
-  public ASTStructure(@NotNull final ASTNode root) {
+  public ASTStructure(@NotNull ASTNode root) {
     myRoot = root;
   }
 
   @Override
-  @NotNull
-  public ASTNode getRoot() {
+  public @NotNull ASTNode getRoot() {
     return myRoot;
   }
 
   @Override
-  public ASTNode getParent(@NotNull final ASTNode node) {
+  public ASTNode getParent(@NotNull ASTNode node) {
     return node.getTreeParent();
   }
 
   @Override
-  public int getChildren(@NotNull final ASTNode astNode, @NotNull final Ref<ASTNode[]> into) {
+  public int getChildren(@NotNull ASTNode astNode, @NotNull Ref<ASTNode[]> into) {
     ASTNode child = astNode.getFirstChildNode();
     if (child == null) return 0;
 
@@ -53,12 +52,11 @@ public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
   }
 
   @Override
-  public void disposeChildren(final ASTNode[] nodes, final int count) {
+  public void disposeChildren(ASTNode[] nodes, int count) {
   }
 
-  @NotNull
   @Override
-  public CharSequence toString(@NotNull ASTNode node) {
+  public @NotNull CharSequence toString(@NotNull ASTNode node) {
     return node.getChars();
   }
 

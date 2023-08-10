@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -26,12 +25,14 @@ import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
 import org.jetbrains.plugins.gradle.model.ExternalTask;
 import org.jetbrains.plugins.gradle.model.GradleExtensions;
 import org.jetbrains.plugins.gradle.model.GradleProperty;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull;
+import static org.jetbrains.plugins.gradle.util.GradleModuleDataKt.getGradleIdentityPath;
 
 /**
  * @author Vladislav.Soroka
@@ -52,7 +53,7 @@ public class GradleExtensionsSettings {
 
   @NotNull
   public static Settings getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, GradleExtensionsSettings.class).myState;
+    return project.getService(GradleExtensionsSettings.class).myState;
   }
 
   public static void load(Project project) {
@@ -88,7 +89,7 @@ public class GradleExtensionsSettings {
         DataNode<?> parent = node.getParent();
         if (parent == null) continue;
         if (!(parent.getData() instanceof ModuleData)) continue;
-        String gradlePath = GradleProjectResolverUtil.getGradlePath((ModuleData)parent.getData());
+        String gradlePath = getGradleIdentityPath((ModuleData)parent.getData());
         extensionMap.put(gradlePath, node.getData());
       }
 
@@ -148,6 +149,7 @@ public class GradleExtensionsSettings {
           gradleConfiguration.description = configuration.getDescription();
           gradleConfiguration.visible = configuration.isVisible();
           gradleConfiguration.scriptClasspath = configuration.isScriptClasspathConfiguration();
+          gradleConfiguration.declarationAlternatives = configuration.getDeclarationAlternatives();
           if (gradleConfiguration.scriptClasspath) {
             extensionsData.buildScriptConfigurations.put(configuration.getName(), gradleConfiguration);
           }
@@ -179,7 +181,7 @@ public class GradleExtensionsSettings {
     public GradleExtensionsData getExtensionsFor(@Nullable Module module) {
       if (module == null) return null;
       return getExtensionsFor(ExternalSystemApiUtil.getExternalRootProjectPath(module),
-                              GradleProjectResolverUtil.getGradlePath(module));
+                              getGradleIdentityPathOrNull(module));
     }
 
     /**
@@ -319,6 +321,7 @@ public class GradleExtensionsSettings {
     public boolean visible = true;
     public boolean scriptClasspath;
     public String description;
+    public List<String> declarationAlternatives;
   }
 
   @Nullable

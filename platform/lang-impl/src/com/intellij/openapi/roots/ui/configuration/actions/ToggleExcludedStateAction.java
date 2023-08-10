@@ -47,7 +47,8 @@ public class ToggleExcludedStateAction extends ContentEntryEditingAction {
     final VirtualFile[] selectedFiles = getSelectedFiles();
     if (selectedFiles.length == 0) return false;
 
-    return myEntryTreeEditor.getContentEntryEditor().isExcludedOrUnderExcludedDirectory(selectedFiles[0]);
+    ContentEntryEditor editor = myEntryTreeEditor.getContentEntryEditor();
+    return editor != null && editor.isExcludedOrUnderExcludedDirectory(selectedFiles[0]);
   }
 
   @Override
@@ -56,6 +57,8 @@ public class ToggleExcludedStateAction extends ContentEntryEditingAction {
     assert selectedFiles.length != 0;
 
     ContentEntryEditor contentEntryEditor = myEntryTreeEditor.getContentEntryEditor();
+    if (contentEntryEditor == null) return;
+    
     for (VirtualFile selectedFile : selectedFiles) {
       if (isSelected) {
         if (!contentEntryEditor.isExcludedOrUnderExcludedDirectory(selectedFile)) { // not excluded yet

@@ -19,9 +19,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ilyas
- */
 public interface PsiClassHolderFileStub<T extends PsiFile> extends PsiFileStub<T> {
   PsiClass @NotNull [] getClasses();
 }

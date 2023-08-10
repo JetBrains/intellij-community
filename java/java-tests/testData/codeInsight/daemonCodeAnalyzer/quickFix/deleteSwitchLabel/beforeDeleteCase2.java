@@ -1,4 +1,4 @@
-// "Remove switch label '"bar"'" "true"
+// "Remove switch label '"bar"'" "true-preview"
 class Main {
     public void test() {
         switch ("foo") {

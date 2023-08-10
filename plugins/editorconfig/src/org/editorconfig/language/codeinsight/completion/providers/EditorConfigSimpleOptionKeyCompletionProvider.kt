@@ -15,6 +15,7 @@ import org.editorconfig.language.codeinsight.completion.providers.EditorConfigCo
 import org.editorconfig.language.codeinsight.completion.withSeparatorIn
 import org.editorconfig.language.psi.EditorConfigElementTypes
 import org.editorconfig.language.psi.EditorConfigOption
+import org.editorconfig.language.psi.EditorConfigPattern
 import org.editorconfig.language.psi.EditorConfigSection
 import org.editorconfig.language.services.EditorConfigOptionDescriptorManager
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
@@ -27,7 +28,7 @@ object EditorConfigSimpleOptionKeyCompletionProvider : EditorConfigCompletionPro
         psiElement(EditorConfigElementTypes.R_BRACKET)
       ))
       .withSuperParent(3, EditorConfigSection::class.java)
-      .andNot(psiElement().withParent(psiElement(EditorConfigElementTypes.PATTERN)))
+      .andNot(psiElement().withParent(EditorConfigPattern::class.java))
       .andNot(psiElement().beforeLeaf(psiElement(EditorConfigElementTypes.COLON)))
 
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {

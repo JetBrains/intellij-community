@@ -21,9 +21,6 @@ import com.intellij.util.xml.DomElement;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public interface AbstractMethodParams extends DomElement {
   List<GenericDomValue<PsiType>> getMethodParams();
 

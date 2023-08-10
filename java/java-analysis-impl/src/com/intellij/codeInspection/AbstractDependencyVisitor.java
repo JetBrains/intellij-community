@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,9 +43,9 @@ public abstract class AbstractDependencyVisitor extends ClassVisitor {
       protected Label readLabel(int offset, Label[] labels) {
         if (offset >= labels.length) {
           // workaround for JDK8 javac bugs:
-          // https://bugs.openjdk.java.net/browse/JDK-8144185
-          // https://bugs.openjdk.java.net/browse/JDK-8187805
-          // https://bugs.openjdk.java.net/browse/JDK-8191969
+          // https://bugs.openjdk.org/browse/JDK-8144185
+          // https://bugs.openjdk.org/browse/JDK-8187805
+          // https://bugs.openjdk.org/browse/JDK-8191969
           return LABEL;
         }
         return super.readLabel(offset, labels);
@@ -334,7 +334,18 @@ public abstract class AbstractDependencyVisitor extends ClassVisitor {
 
   private void addHandle(Handle h) {
     addName(h.getOwner());
-    addMethodDesc(h.getDesc());
+    int tag = h.getTag();
+    String desc = h.getDesc();
+    if (tag == Opcodes.H_INVOKEVIRTUAL ||
+        tag == Opcodes.H_INVOKESTATIC || 
+        tag == Opcodes.H_INVOKESPECIAL ||
+        tag == Opcodes.H_NEWINVOKESPECIAL || 
+        tag == Opcodes.H_INVOKEINTERFACE) {
+      addMethodDesc(desc);
+    }
+    else {
+      addDesc(desc);
+    }
   }
 
   private void addMethodDesc(String desc) {
@@ -347,14 +358,9 @@ public abstract class AbstractDependencyVisitor extends ClassVisitor {
 
   private void addType(Type t) {
     switch (t.getSort()) {
-      case Type.ARRAY:
-        addType(t.getElementType());
-        break;
-      case Type.OBJECT:
-        addName(t.getClassName().replace('.', '/'));
-        break;
-      case Type.METHOD:
-        addMethodDesc(t.getDescriptor());
+      case Type.ARRAY -> addType(t.getElementType());
+      case Type.OBJECT -> addName(t.getClassName().replace('.', '/'));
+      case Type.METHOD -> addMethodDesc(t.getDescriptor());
     }
   }
 

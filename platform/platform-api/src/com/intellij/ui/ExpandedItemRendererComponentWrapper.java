@@ -30,10 +30,6 @@ import java.awt.event.MouseEvent;
 public class ExpandedItemRendererComponentWrapper extends JComponent {
   JComponent owner;
 
-  /**
-   * @deprecated use {@link #wrap(Component)}} instead to create an instance
-   */
-  @Deprecated
   private ExpandedItemRendererComponentWrapper(@NotNull final Component rendererComponent) {
     add(rendererComponent);
     setOpaque(false);
@@ -56,7 +52,6 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
       }
     });
   }
-  private ExpandedItemRendererComponentWrapper() {}
 
   @NotNull
   public static ExpandedItemRendererComponentWrapper wrap(@NotNull Component rendererComponent) {
@@ -66,11 +61,10 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
     return new ExpandedItemRendererComponentWrapper(rendererComponent);
   }
 
-  @NotNull
+  @Nullable
   public static Component unwrap(@NotNull Component rendererComponent) {
     if (rendererComponent instanceof ExpandedItemRendererComponentWrapper) {
-      Component component = ((ExpandedItemRendererComponentWrapper)rendererComponent).getDelegate();
-      return component;
+      return ((ExpandedItemRendererComponentWrapper)rendererComponent).getDelegate();
     }
     return rendererComponent;
   }
@@ -161,9 +155,6 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
 
   @Nullable
   private Component getDelegate() {
-    if (getComponentCount() == 1) {
-      return getComponent(0);
-    }
-    return null;
+    return getComponentCount() == 1 ? getComponent(0) : null;
   }
 }

@@ -16,13 +16,13 @@
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.util.ArrayUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,16 +61,21 @@ class ChangeNullableDefaultsFix implements LocalQuickFix {
     if (myNotNullName != null) {
       List<String> notNulls = myManager.getNotNulls();
       if (!notNulls.contains(myNotNullName)) {
-        myManager.setNotNulls(StreamEx.of(notNulls).append(myNotNullName).toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+        myManager.setNotNulls(ArrayUtil.append(ArrayUtil.toStringArray(notNulls), myNotNullName));
       }
       myManager.setDefaultNotNull(myNotNullName);
     }
     else {
       List<String> nullables = myManager.getNullables();
       if (!nullables.contains(myNullableName)) {
-        myManager.setNullables(StreamEx.of(nullables).append(myNullableName).toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+        myManager.setNullables(ArrayUtil.append(ArrayUtil.toStringArray(nullables), myNullableName));
       }
       myManager.setDefaultNullable(myNullableName);
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return new IntentionPreviewInfo.Html(JavaAnalysisBundle.message("make.0.default.annotation.preview"));
   }
 }

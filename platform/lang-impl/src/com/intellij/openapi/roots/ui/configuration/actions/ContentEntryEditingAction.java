@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.ui.configuration.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -39,7 +40,6 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
 
   protected ContentEntryEditingAction(JTree tree) {
     myTree = tree;
-    getTemplatePresentation().setEnabled(true);
   }
 
   @Override
@@ -58,6 +58,11 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
         break;
       }
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   protected final VirtualFile @NotNull [] getSelectedFiles() {

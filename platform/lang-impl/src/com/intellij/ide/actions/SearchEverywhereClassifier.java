@@ -48,6 +48,13 @@ public interface SearchEverywhereClassifier {
     }
 
     @Nullable
+    public static GlobalSearchScope getEverywhereScope(@NotNull Project project) {
+      return SearchEverywhereClassifier.EP_NAME.getExtensionList().stream()
+        .map(classifier -> classifier.getEverywhereScope(project))
+        .filter(Objects::nonNull).findFirst().orElse(null);
+    }
+
+    @Nullable
     public static GlobalSearchScope getProjectScope(@NotNull Project project) {
       return SearchEverywhereClassifier.EP_NAME.getExtensionList().stream()
         .map(classifier -> classifier.getProjectScope(project))
@@ -66,6 +73,9 @@ public interface SearchEverywhereClassifier {
 
   @Nullable
   Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus);
+
+  @Nullable
+  default GlobalSearchScope getEverywhereScope(@NotNull Project project) { return null; }
 
   @Nullable
   default GlobalSearchScope getProjectScope(@NotNull Project project) { return null; }

@@ -5,12 +5,13 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.*
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
 class OpenFileInDefaultBrowserAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    val result = BaseOpenInBrowserAction.doUpdate(e) ?: return
+    val result = BaseOpenInBrowserAction.Handler.doUpdate(e) ?: return
 
     var description = templatePresentation.description
     if (WebBrowserXmlService.getInstance().isHtmlFile(result.file)) {
@@ -30,8 +31,12 @@ class OpenFileInDefaultBrowserAction : DumbAwareAction() {
     }
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
-    BaseOpenInBrowserAction.openInBrowser(e, findUsingBrowser())
+    BaseOpenInBrowserAction.Handler.openInBrowser(e, findUsingBrowser())
   }
 }
 

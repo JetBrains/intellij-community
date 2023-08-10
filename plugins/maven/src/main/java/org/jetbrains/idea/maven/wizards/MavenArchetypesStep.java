@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -17,6 +17,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.indices.MavenArchetypeManager;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 
@@ -35,8 +36,7 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-public class MavenArchetypesStep extends ModuleWizardStep implements Disposable {
-
+public final class MavenArchetypesStep extends ModuleWizardStep implements Disposable {
   private JCheckBox myUseArchetypeCheckBox;
   private JButton myAddArchetypeButton;
   private JPanel myArchetypesPanel;
@@ -55,7 +55,12 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   public MavenArchetypesStep(AbstractMavenModuleBuilder builder, @Nullable StepAdapter step) {
     myBuilder = builder;
     myStep = step;
-    Disposer.register(this, myLoadingIcon);
+    Disposer.register(this, new Disposable() {
+      @Override
+      public void dispose() {
+        myLoadingIcon.dispose();
+      }
+    });
 
     myArchetypesTree = new Tree();
     myArchetypesTree.setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
@@ -102,7 +107,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
       }
     });
 
-    new TreeSpeedSearch(myArchetypesTree, path -> {
+    TreeSpeedSearch.installOn(myArchetypesTree, false, path -> {
       MavenArchetype info = getArchetypeInfoFromPathComponent(path.getLastPathComponent());
       return info.groupId + ":" + info.artifactId + ":" + info.version;
     }).setComparator(new SpeedSearchComparator(false));
@@ -221,12 +226,10 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
     myCurrentUpdaterMarker = currentUpdaterMarker;
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      MavenIndicesManager mavenIndicesManager = MavenIndicesManager.getInstance(findProject());
-      final Set<MavenArchetype> archetypes = mavenIndicesManager.getArchetypes();
+      final Set<MavenArchetype> archetypes = MavenArchetypeManager.getInstance(findProject()).getArchetypes();
 
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
-        if (currentUpdaterMarker != myCurrentUpdaterMarker) return; // Other updater has been run.
+        if (currentUpdaterMarker != myCurrentUpdaterMarker) return; // Another updater has been run.
 
         ((CardLayout)myArchetypesPanel.getLayout()).show(myArchetypesPanel, "archetypes");
 
@@ -283,8 +286,10 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
     }
 
     MavenArchetype archetype = dialog.getArchetype();
-    MavenIndicesManager.getInstance(findProject()).addArchetype(archetype);
-    updateArchetypesList(archetype);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      MavenIndicesManager.getInstance(findProject()).addArchetype(archetype);
+      ApplicationManager.getApplication().invokeLater(() -> updateArchetypesList(archetype));
+    });
   }
 
   @Override
@@ -312,9 +317,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
                                       int row,
                                       boolean hasFocus) {
       Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-      if (!(userObject instanceof MavenArchetype)) return;
-
-      MavenArchetype info = (MavenArchetype)userObject;
+      if (!(userObject instanceof MavenArchetype info)) return;
 
       if (leaf) {
         append(info.artifactId, SimpleTextAttributes.GRAY_ATTRIBUTES);

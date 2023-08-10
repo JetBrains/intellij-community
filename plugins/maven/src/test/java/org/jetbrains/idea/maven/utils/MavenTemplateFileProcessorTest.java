@@ -29,15 +29,16 @@ import java.util.Map;
 public class MavenTemplateFileProcessorTest extends BasePlatformTestCase {
 
   private static final String TEXT =
-    "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-    "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd\">\n" +
-    "    <modelVersion>4.0.0</modelVersion>\n" +
-    "    <groupId>com.springapp</groupId>\n" +
-    "    <artifactId>springapp</artifactId>\n" +
-    "    <packaging>jar</packaging>\n" +
-    "    <version>1.0-SNAPSHOT</version>\n" +
-    "    <name>SpringApp</name>\n" +
-    "</project>";
+    """
+      <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+          <modelVersion>4.0.0</modelVersion>
+          <groupId>com.springapp</groupId>
+          <artifactId>springapp</artifactId>
+          <packaging>jar</packaging>
+          <version>1.0-SNAPSHOT</version>
+          <name>SpringApp</name>
+      </project>""";
 
   @Override
   protected void tearDown() throws Exception {
@@ -55,15 +56,16 @@ public class MavenTemplateFileProcessorTest extends BasePlatformTestCase {
   public void testProcessor() throws Exception {
     PsiFile file = myFixture.configureByText("pom.xml", TEXT);
     String s = new MavenTemplateFileProcessor().encodeFileText(TEXT, file.getVirtualFile(), getProject());
-    assertEquals("<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd\">\n" +
-                 "    <modelVersion>4.0.0</modelVersion>\n" +
-                 "    <groupId>com.springapp</groupId>\n" +
-                 "    <artifactId>${IJ_PROJECT_NAME}</artifactId>\n" +
-                 "    <packaging>jar</packaging>\n" +
-                 "    <version>1.0-SNAPSHOT</version>\n" +
-                 "    <name>${IJ_PROJECT_NAME}</name>\n" +
-                 "</project>", s);
+    assertEquals("""
+                   <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+                       <modelVersion>4.0.0</modelVersion>
+                       <groupId>com.springapp</groupId>
+                       <artifactId>${IJ_PROJECT_NAME}</artifactId>
+                       <packaging>jar</packaging>
+                       <version>1.0-SNAPSHOT</version>
+                       <name>${IJ_PROJECT_NAME}</name>
+                   </project>""", s);
   }
 
   public void testSaveAsTemplate() throws Exception {
@@ -71,14 +73,15 @@ public class MavenTemplateFileProcessorTest extends BasePlatformTestCase {
     Map<String,String> map = SaveProjectAsTemplateAction.computeParameters(getProject(), true);
     map.put("com.springapp", ProjectTemplateParameterFactory.IJ_BASE_PACKAGE);
     String content = SaveProjectAsTemplateAction.getEncodedContent(file.getVirtualFile(), getProject(), map);
-    assertEquals("<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd\">\n" +
-                 "    <modelVersion>4.0.0</modelVersion>\n" +
-                 "    <groupId>${IJ_BASE_PACKAGE}</groupId>\n" +
-                 "    <artifactId>${IJ_PROJECT_NAME}</artifactId>\n" +
-                 "    <packaging>jar</packaging>\n" +
-                 "    <version>1.0-SNAPSHOT</version>\n" +
-                 "    <name>${IJ_PROJECT_NAME}</name>\n" +
-                 "</project>", content);
+    assertEquals("""
+                   <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+                       <modelVersion>4.0.0</modelVersion>
+                       <groupId>${IJ_BASE_PACKAGE}</groupId>
+                       <artifactId>${IJ_PROJECT_NAME}</artifactId>
+                       <packaging>jar</packaging>
+                       <version>1.0-SNAPSHOT</version>
+                       <name>${IJ_PROJECT_NAME}</name>
+                   </project>""", content);
   }
 }

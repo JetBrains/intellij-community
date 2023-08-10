@@ -1,22 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse
 
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.TempDirectoryExtension
+import com.intellij.testFramework.rules.TestNameExtension
 import com.intellij.util.PathUtil
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TestName
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
+import java.nio.file.Path
+import kotlin.io.path.copyTo
 
+@TestApplication
 class EclipseClasspathTest {
   @JvmField
-  @Rule
-  val tempDirectory = TempDirectory()
+  @RegisterExtension
+  val tempDirectory = TempDirectoryExtension()
 
   @JvmField
-  @Rule
-  val testName = TestName()
+  @RegisterExtension
+  val testName = TestNameExtension()
 
   @Test
   fun testAbsolutePaths() {
@@ -151,19 +153,32 @@ class EclipseClasspathTest {
     doTest("test", true, "linked")
   }
 
+  @Test
+  fun testNoDotProject() {
+    doTest(fileSuffixesToCheck = listOf("/.classpath", "/.project", ".iml"), updateExpectedDir = {
+      val dotProject = eclipseTestDataRoot.resolve("round/workspaceOnly/test/.project")
+      dotProject.copyTo(it.resolve("test/.project"))
+    })
+  }
 
-  private fun doTest(eclipseProjectDirPath: String = "test", setupPathVariables: Boolean = false, testDataParentDir: String = "round") {
+  private fun doTest(
+    eclipseProjectDirPath: String = "test",
+    setupPathVariables: Boolean = false,
+    testDataParentDir: String = "round",
+    updateExpectedDir: (Path) -> Unit = {},
+    fileSuffixesToCheck: List<String> = listOf("/.classpath", ".iml")
+  ) {
     val testDataRoot = eclipseTestDataRoot
     val testRoot = testDataRoot.resolve(testDataParentDir).resolve(testName.methodName.removePrefix("test").decapitalize())
     val commonRoot = testDataRoot.resolve("common").resolve("testModuleWithClasspathStorage")
     val modulePath = "$eclipseProjectDirPath/${PathUtil.getFileName(eclipseProjectDirPath)}"
-    checkLoadSaveRoundTrip(listOf(testRoot, commonRoot), tempDirectory, setupPathVariables, listOf("test" to modulePath))
-  }
-
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-
+    loadEditSaveAndCheck(
+      testDataDirs = listOf(testRoot, commonRoot), tempDirectory = tempDirectory,
+      setupPathVariables = setupPathVariables,
+      imlFilePaths = listOf("test" to modulePath),
+      edit = ::forceSave,
+      updateExpectedDir = updateExpectedDir,
+      fileSuffixesToCheck = fileSuffixesToCheck
+    )
   }
 }

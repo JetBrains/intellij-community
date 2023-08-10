@@ -37,9 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-/**
- * @author yole
- */
+
 public class PySubscriptionExpressionImpl extends PyElementImpl implements PySubscriptionExpression {
   public PySubscriptionExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -77,15 +75,13 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression indexExpression = getIndexExpression();
     final PyType type = indexExpression != null ? context.getType(getOperand()) : null;
-    if (type instanceof PyTupleType) {
-      final PyTupleType tupleType = (PyTupleType)type;
+    if (type instanceof PyTupleType tupleType) {
       return Optional
         .ofNullable(PyEvaluator.evaluate(indexExpression, Integer.class))
         .map(tupleType::getElementType)
         .orElse(null);
     }
-    if (type instanceof PyTypedDictType) {
-      final PyTypedDictType typedDictType = (PyTypedDictType)type;
+    if (type instanceof PyTypedDictType typedDictType) {
       return Optional
         .ofNullable(PyEvaluator.evaluate(indexExpression, String.class))
         .map(typedDictType::getElementType)
@@ -96,7 +92,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
 
   @Override
   public PsiReference getReference() {
-    return getReference(PyResolveContext.defaultContext());
+    return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
   }
 
   @NotNull
@@ -123,19 +119,11 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
 
   @Override
   public String getReferencedName() {
-    String res = PyNames.GETITEM;
-    switch (AccessDirection.of(this)) {
-      case READ:
-        res = PyNames.GETITEM;
-        break;
-      case WRITE:
-        res = PyNames.SETITEM;
-        break;
-      case DELETE:
-        res = PyNames.DELITEM;
-        break;
-    }
-    return res;
+    return switch (AccessDirection.of(this)) {
+      case READ -> PyNames.GETITEM;
+      case WRITE -> PyNames.SETITEM;
+      case DELETE -> PyNames.DELITEM;
+    };
   }
 
   @Override

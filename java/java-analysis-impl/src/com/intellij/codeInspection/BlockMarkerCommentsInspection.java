@@ -1,9 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -77,20 +79,22 @@ public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspecti
           return;
         }
         if (MARKER_PATTERN.accepts(element)) {
-          holder.registerProblem(element, JavaAnalysisBundle.message("redundant.block.marker"), new LocalQuickFix() {
-            @NotNull
-            @Override
-            public String getFamilyName() {
-              return JavaAnalysisBundle.message("remove.block.marker.comments");
-            }
-
-            @Override
-            public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-              descriptor.getPsiElement().delete();
-            }
-          });
+          holder.registerProblem(element, JavaAnalysisBundle.message("redundant.block.marker"), new DeleteBlockMarkerCommentFix());
         }
       }
     };
+  }
+
+  private static class DeleteBlockMarkerCommentFix extends PsiUpdateModCommandQuickFix {
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return JavaAnalysisBundle.message("remove.block.marker.comments");
+    }
+
+    @Override
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      element.delete();
+    }
   }
 }

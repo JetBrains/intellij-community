@@ -48,9 +48,8 @@ public class ExcludesConfigurationState {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ExcludesConfigurationState)) return false;
+    if (!(o instanceof ExcludesConfigurationState state)) return false;
 
-    ExcludesConfigurationState state = (ExcludesConfigurationState)o;
     return myDetectionEnabled == state.myDetectionEnabled && Comparing.haveEqualElements(myFiles, state.myFiles)
            && Comparing.haveEqualElements(myFrameworkTypes, state.myFrameworkTypes);
   }

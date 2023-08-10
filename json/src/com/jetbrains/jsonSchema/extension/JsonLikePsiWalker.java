@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Set;
 
-/**
- * @author Irina.Chernushina on 2/15/2017.
- */
 public interface JsonLikePsiWalker {
   /**
    * Returns YES in place where a property name is expected,

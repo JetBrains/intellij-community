@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.CommonProcessors;
 
 import java.util.*;
@@ -110,7 +111,7 @@ public final class SliceTestUtil {
 
     int size = expectedChildren.size();
     assertEquals(message(startOffset, usage), size, children.size());
-    children.sort(Comparator.naturalOrder());
+    children.sort(UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET);
 
     for (int i = 0; i < children.size(); i++) {
       checkUsages(children.get(i), expectedChildren.get(i));

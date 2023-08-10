@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ui.treeStructure.Tree;
@@ -9,13 +9,13 @@ import com.intellij.util.containers.Convertor;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
-/**
- * @author yole
- */
-public class TreeUIHelperImpl extends TreeUIHelper {
+
+final class TreeUIHelperImpl extends TreeUIHelper {
   @Override
   public void installToolTipHandler(final JTree tree) {
-    if (tree instanceof Tree) return;
+    if (tree instanceof Tree) {
+      return;
+    }
     new TreeExpandableItemsHandler(tree);
   }
 
@@ -26,22 +26,22 @@ public class TreeUIHelperImpl extends TreeUIHelper {
 
   @Override
   public void installTreeSpeedSearch(final JTree tree) {
-    new TreeSpeedSearch(tree);
+    TreeSpeedSearch.installOn(tree);
   }
 
   @Override
   public void installTreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> convertor, boolean canExpand) {
-    new TreeSpeedSearch(tree, convertor, canExpand);
+    TreeSpeedSearch.installOn(tree, canExpand, convertor);
   }
 
   @Override
   public void installListSpeedSearch(JList<?> list) {
-    new ListSpeedSearch<>(list);
+    ListSpeedSearch.installOn(list);
   }
 
   @Override
   public <T> void installListSpeedSearch(JList<T> list, Convertor<? super T, String> convertor) {
-    new ListSpeedSearch<>(list, convertor::convert);
+    ListSpeedSearch.installOn(list, convertor::convert);
   }
 
   @Override

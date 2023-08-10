@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.startup;
 
 import com.intellij.execution.ExecutionBundle;
@@ -35,6 +35,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -104,7 +105,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     myTable = new JBTable(myModel);
     myTable.setShowGrid(false);
     myTable.getEmptyText().setText(ExecutionBundle.message("settings.project.startup.add.run.configurations.with.the.button"));
-    new TableSpeedSearch(myTable);
+    TableSpeedSearch.installOn(myTable);
     DefaultCellEditor defaultEditor = (DefaultCellEditor)myTable.getDefaultEditor(Object.class);
     defaultEditor.setClickCountToStart(1);
 
@@ -128,6 +129,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     installRenderers();
     myDecorator = ToolbarDecorator.createDecorator(myTable)
       .setAddAction(this::selectAndAddConfiguration)
+      .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
       .setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -139,7 +141,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
 
     final JPanel tasksPanel = myDecorator.createPanel();
     final JLabel label = new JLabel(ExecutionBundle.message("settings.project.startup.run.tasks.and.tools.via.run.configurations"));
-    label.setForeground(UIUtil.getInactiveTextColor());
+    label.setForeground(NamedColorUtil.getInactiveTextColor());
     label.setHorizontalAlignment(SwingConstants.RIGHT);
     final JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(new JLabel(ExecutionBundle.message("settings.project.startup.to.be.started.on.project.opening")), BorderLayout.WEST);
@@ -241,7 +243,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
   }
 
   private void addConfiguration(RunnerAndConfigurationSettings configuration) {
-    if (!ProjectStartupRunner.canBeRun(configuration)) {
+    if (!ProjectStartupRunnerKt.canBeRun(configuration)) {
       final String message = ExecutionBundle.message("settings.project.startup.warning", configuration.getName());
       final Balloon balloon = JBPopupFactory.getInstance()
         .createHtmlTextBalloonBuilder(message, MessageType.ERROR, null)
@@ -261,18 +263,16 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     final List<ChooseRunConfigurationPopup.ItemWrapper<?>> wrappers = new ArrayList<>();
     wrappers.add(createNewWrapper(button));
-    final List<ChooseRunConfigurationPopup.ItemWrapper> allSettings =
-      ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
-        @Override
-        public Executor getExecutor() {
-          return executor;
-        }
-      }, false);
+    var allSettings = ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
+      @Override
+      public Executor getExecutor() {
+        return executor;
+      }
+    }, false);
     final Set<RunnerAndConfigurationSettings> existing = new HashSet<>(myModel.getAllConfigurations());
     for (ChooseRunConfigurationPopup.ItemWrapper<?> setting : allSettings) {
-      if (setting.getValue() instanceof RunnerAndConfigurationSettings) {
-        final RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)setting.getValue();
-        if (!settings.isTemporary() && ProjectStartupRunner.canBeRun(settings) && !existing.contains(settings)) {
+      if (setting.getValue() instanceof RunnerAndConfigurationSettings settings) {
+        if (!settings.isTemporary() && ProjectStartupRunnerKt.canBeRun(settings) && !existing.contains(settings)) {
           wrappers.add(setting);
         }
       }
@@ -284,8 +284,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
         label.setText(value.getText());
       }))
       .setItemChosenCallback((at) -> {
-        if (at.getValue() instanceof RunnerAndConfigurationSettings) {
-          final RunnerAndConfigurationSettings added = (RunnerAndConfigurationSettings)at.getValue();
+        if (at.getValue() instanceof RunnerAndConfigurationSettings added) {
           addConfiguration(added);
         }
         else {
@@ -297,13 +296,8 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     showPopup(button, popup);
   }
 
-  private void showPopup(AnActionButton button, JBPopup popup) {
-    final RelativePoint point = button.getPreferredPopupPoint();
-    if (point != null) {
-      popup.show(point);
-    } else {
-      popup.showInCenterOf(myDecorator.getActionsPanel());
-    }
+  private static void showPopup(AnActionButton button, JBPopup popup) {
+    popup.show(button.getPreferredPopupPoint());
   }
 
   @Override

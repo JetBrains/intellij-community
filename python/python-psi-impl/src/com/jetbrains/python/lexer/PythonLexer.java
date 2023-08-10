@@ -2,13 +2,16 @@
 package com.jetbrains.python.lexer;
 
 import com.intellij.lexer.FlexAdapter;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PythonLexer extends FlexAdapter {
   public PythonLexer() {
-    super(new _PythonLexer(null));
+    this(PythonLexerKind.REGULAR);
+  }
+
+  public PythonLexer(@NotNull PythonLexerKind kind) {
+    super(new _PythonLexer(null, kind));
   }
 
   @Override

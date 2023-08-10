@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui.classFilter;
 
@@ -28,7 +28,7 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
   @Attribute("include")
   public boolean INCLUDE = true;
 
-  private Matcher myMatcher;  // to speedup matching
+  private Matcher myMatcher;  // to speed up matching
 
   public ClassFilter() {
   }
@@ -86,14 +86,8 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ClassFilter)) return false;
-
-    ClassFilter classFilter = (ClassFilter)o;
-
-    if (isEnabled() != classFilter.isEnabled()) return false;
-    if (!getPattern().equals(classFilter.getPattern())) return false;
-
-    return true;
+    if (!(o instanceof ClassFilter classFilter)) return false;
+    return isEnabled() == classFilter.isEnabled() && getPattern().equals(classFilter.getPattern());
   }
 
   public int hashCode() {

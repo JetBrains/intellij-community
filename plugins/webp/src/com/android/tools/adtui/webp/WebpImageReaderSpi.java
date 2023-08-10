@@ -41,7 +41,7 @@ import java.util.Locale;
  *
  * @see IIORegistry
  */
-public class WebpImageReaderSpi extends ImageReaderSpi {
+public final class WebpImageReaderSpi extends ImageReaderSpi {
   private static final byte[] RIFF_HEADER = {'R', 'I', 'F', 'F'};
   private static final byte[] WEBP_HEADER = {'W', 'E', 'B', 'P'};
 
@@ -59,9 +59,8 @@ public class WebpImageReaderSpi extends ImageReaderSpi {
 
   @Override
   public boolean canDecodeInput(@NotNull Object source) throws IOException {
-    if (!(source instanceof ImageInputStream)) return false;
+    if (!(source instanceof ImageInputStream stream)) return false;
 
-    ImageInputStream stream = (ImageInputStream)source;
     long length = stream.length();
     // The length may be -1 for files of unknown size.
     // Accept them for now and if needed, throw an IOException later.

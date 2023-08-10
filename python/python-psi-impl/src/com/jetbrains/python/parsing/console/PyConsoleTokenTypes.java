@@ -22,6 +22,9 @@ public final class PyConsoleTokenTypes {
   public static final PyElementType PLING = new PyElementType("PLING"); //!
   public static final PyElementType DOLLAR = new PyElementType("DOLLAR"); //$
 
+  public static final PyElementType SHELL_COMMAND = new PyElementType("SHELL_COMMAND");
+  public static final PyElementType MAGIC_COMMAND_LINE = new PyElementType("MAGIC_COMMAND_LINE");
+
   private PyConsoleTokenTypes() {
   }
 }

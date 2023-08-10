@@ -12,12 +12,12 @@ class LightJavadocGeneratorTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testPlainModule() = doTestModule(
     "module M.N { }",
-    "<div class='definition'><pre>module <b>M.N</b></pre></div>")
+    "<div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">module </span><span style=\"color:#000000;\">M.N</span></pre></div>")
 
   fun testDocumentedModule() = doTestModule(
     "/** One humble module. */\n@Deprecated\nmodule M.N { }",
-    "<div class='definition'><pre>@<a href=\"psi_element://java.lang.Deprecated\"><code>Deprecated</code></a> \n" +
-    "module <b>M.N</b></pre></div><div class='content'> One humble module. </div>")
+    "<div class='definition'><pre><span style=\"color:#808000;\">@</span><a href=\"psi_element://java.lang.Deprecated\"><code><span style=\"color:#808000;\">Deprecated</span></code></a> \n" +
+    "<span style=\"color:#000080;font-weight:bold;\">module </span><span style=\"color:#000000;\">M.N</span></pre></div><div class='content'> One humble module. </div>")
 
   fun testRootedClassLink() = doTestLink("{@docRoot}/java/lang/Character.html#unicode", "psi_element://java.lang.Character###unicode")
   fun testRootedPackageLink() = doTestLink("{@docRoot}/java/util/package-summary.html", "psi_element://java.util")
@@ -38,7 +38,7 @@ class LightJavadocGeneratorTest : LightJavaCodeInsightFixtureTestCase() {
   private fun doTestLink(link: String, expected: String) {
     doTestClass(
       "package a.b;\n/** A <a href=\"${link}\">link</a>. */\ninterface I { }",
-      "<div class='definition'><pre>a.b<br>interface <b>I</b></pre></div><div class='content'> A <a href=\"${expected}\">link</a>. </div>")
+      "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Package\"> <code><span style=\"color:#000000;\">a.b</span></code></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">interface</span> <span style=\"color:#000000;\">I</span></pre></div><div class='content'> A <a href=\"$expected\">link</a>. </div>")
   }
 
   private fun doTestClass(text: String, expected: String) {

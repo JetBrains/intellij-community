@@ -25,7 +25,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
@@ -81,7 +81,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
     fireEvent(EventType.INIT);
 
-    new UiNotifyConnector(getComponent(), new Activatable() {
+    UiNotifyConnector.installOn(getComponent(), new Activatable() {
       private boolean wasNotShownYet = true;
 
       @Override
@@ -103,7 +103,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @RequiresEdt
   public final void dispose() {
     if (myDisposed) return;
-    if (!ApplicationManager.getApplication().isDispatchThread()) LOG.warn(new Throwable("dispose() not from EDT"));
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     UIUtil.invokeLaterIfNeeded(() -> {
       if (myDisposed) return;
@@ -132,8 +132,8 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
     abortRediff();
 
-    if (getComponent().isShowing()) {
-      myTaskAlarm.addRequest(this::rediff, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+    if (UIUtil.isShowing(getComponent())) {
+      myTaskAlarm.addRequest(this::rediff, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     }
   }
 
@@ -158,7 +158,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     onBeforeRediff();
 
     boolean forceEDT = forceRediffSynchronously();
-    int waitMillis = trySync || tryRediffSynchronously() ? ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
+    int waitMillis = trySync || tryRediffSynchronously() ? ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
 
     myTaskExecutor.executeAndTryWait(
       indicator -> {
@@ -283,21 +283,11 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   private void fireEvent(@NotNull EventType type) {
     for (DiffViewerListener listener : myListeners) {
       switch (type) {
-        case INIT:
-          listener.onInit();
-          break;
-        case DISPOSE:
-          listener.onDispose();
-          break;
-        case BEFORE_REDIFF:
-          listener.onBeforeRediff();
-          break;
-        case AFTER_REDIFF:
-          listener.onAfterRediff();
-          break;
-        case REDIFF_ABORTED:
-          listener.onRediffAborted();
-          break;
+        case INIT -> listener.onInit();
+        case DISPOSE -> listener.onDispose();
+        case BEFORE_REDIFF -> listener.onBeforeRediff();
+        case AFTER_REDIFF -> listener.onAfterRediff();
+        case REDIFF_ABORTED -> listener.onRediffAborted();
       }
     }
   }

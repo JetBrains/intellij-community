@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskBundle;
@@ -40,9 +41,10 @@ public class ShowTaskDescription extends BaseTaskAction {
       final LocalTask activeTask = getActiveTask(event);
       presentation.setEnabled(activeTask != null && activeTask.isIssue() && activeTask.getDescription() != null);
       if (activeTask == null || !activeTask.isIssue()) {
-        presentation.setText(getTemplatePresentation().getText());
+        presentation.setTextWithMnemonic(getTemplatePresentation().getTextWithPossibleMnemonic());
       } else {
-        presentation.setText(TaskBundle.message("action.show.description.text", activeTask.getPresentableName()));
+        presentation.setText(TaskBundle.message("action.show.description.text",
+                                                StringUtil.escapeMnemonics(activeTask.getPresentableName())));
       }
     }
   }

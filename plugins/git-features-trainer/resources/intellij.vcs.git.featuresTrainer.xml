@@ -1,0 +1,9 @@
+<idea-plugin package="training.git">
+  <dependencies>
+    <plugin id="Git4Idea"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="training">
+    <ift.learning.commonCourse key="Git" implementationClass="training.git.GitLearningCourse"/>
+  </extensions>
+</idea-plugin>

@@ -12,19 +12,20 @@ import com.sun.jdi.Value;
 import java.util.concurrent.CompletableFuture;
 
 public interface ChildrenRenderer extends Renderer {
-  void buildChildren(Value value, ChildrenBuilder  builder, EvaluationContext evaluationContext);
+  void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext);
 
   /**
+   * <pre>
    * - parentNode
    *    + ..
    *    + node
    *    + ...
-   *
+   * </pre>
    * is invoked on the renderer of the parentNode
+   *
    * @param node a child node
    * @return expression that evaluates the child node.
-   *         Use 'this' to refer the expression that evaluates this (parent) node
-   * @param context
+   * Use 'this' to refer the expression that evaluates this (parent) node
    */
   PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException;
 

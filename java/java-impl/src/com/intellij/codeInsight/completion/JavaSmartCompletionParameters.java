@@ -20,9 +20,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class JavaSmartCompletionParameters {
   private final CompletionParameters myParameters;
   private final ExpectedTypeInfo myExpectedType;

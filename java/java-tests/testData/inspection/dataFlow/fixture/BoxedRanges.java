@@ -1,6 +1,15 @@
 import java.util.*;
 
 class Test {
+  void testBoxedArrayAccess(Integer x, List<?>[] data) {
+    List<?> d = data[x];
+    if (d == null) {
+      d = new ArrayList<Object>();
+      data[x] = d;
+    }
+    System.out.println(data[x]);
+  }
+
   void testBoxed(Integer x) {
     if(<warning descr="Condition 'x > 0 || x < 10' is always 'true'">x > 0 || <warning descr="Condition 'x < 10' is always 'true' when reached">x < 10</warning></warning>) {}
   }

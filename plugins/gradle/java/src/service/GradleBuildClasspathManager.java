@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.project.ExternalModuleBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo;
@@ -9,7 +8,7 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.PackageDirectoryCache;
+import com.intellij.openapi.roots.PackageDirectoryCache;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -28,8 +27,8 @@ public class GradleBuildClasspathManager {
   @NotNull
   private final Project myProject;
 
-  @NotNull
-  private volatile List<VirtualFile> allFilesCache;
+  @Nullable
+  private volatile List<VirtualFile> allFilesCache = null;
 
   @NotNull
   private final AtomicReference<Map<String/*module path*/, List<VirtualFile> /*module build classpath*/>> myClasspathMap
@@ -41,12 +40,11 @@ public class GradleBuildClasspathManager {
 
   public GradleBuildClasspathManager(@NotNull Project project) {
     myProject = project;
-    allFilesCache = new ArrayList<>();
   }
 
   @NotNull
   public static GradleBuildClasspathManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, GradleBuildClasspathManager.class);
+    return project.getService(GradleBuildClasspathManager.class);
   }
 
   public void reload() {
@@ -101,7 +99,10 @@ public class GradleBuildClasspathManager {
   @NotNull
   public List<VirtualFile> getAllClasspathEntries() {
     checkRootsValidity(allFilesCache);
-    return allFilesCache;
+    if (allFilesCache == null) {
+      reload();
+    }
+    return Objects.requireNonNull(allFilesCache);
   }
 
   @NotNull

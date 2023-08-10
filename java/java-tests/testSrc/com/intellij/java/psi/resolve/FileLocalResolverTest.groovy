@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve
 
 import com.intellij.lang.FCTSBackedLighterAST
@@ -28,21 +14,13 @@ import com.intellij.psi.impl.source.FileLocalResolver
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
-/**
- * @author peter
- */
 @CompileStatic
 class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15
-  }
-
+  
   void "test unknown variable"() {
     assertDoesNotResolve 'class C {{ <caret>a = 2; }}'
   }
@@ -254,7 +232,7 @@ class C {
 
     def file = PsiFileFactory.getInstance(project).
       createFileFromText('a.java', JavaLanguage.INSTANCE, myFixture.file.text, false, false)
-    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_15_PREVIEW)
+    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST)
     def fctsTree = file.node.lighterAST
 
     assert fctsTree instanceof FCTSBackedLighterAST

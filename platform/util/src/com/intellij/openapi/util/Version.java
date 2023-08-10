@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Version implements Comparable<Version> {
+import java.io.Serializable;
+
+public class Version implements Comparable<Version>, Serializable {
   public final int major;
   public final int minor;
   public final int bugfix;
@@ -16,8 +18,7 @@ public class Version implements Comparable<Version> {
     this.major = major;
   }
 
-  @Nullable
-  public static Version parseVersion(@NotNull String versionString) {
+  public static @Nullable Version parseVersion(@NotNull String versionString) {
     String[] versions = versionString.split("\\.");
     String version = versions[0];
     int major = parseNumber(version, -1);

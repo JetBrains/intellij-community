@@ -1,4 +1,4 @@
-// "Unimplement Class" "true"
+// "Unimplement" "true-preview"
 class A {}
 
 sealed class B permits C {}

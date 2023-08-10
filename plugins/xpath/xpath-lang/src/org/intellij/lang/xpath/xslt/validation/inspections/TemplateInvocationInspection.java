@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -41,11 +41,11 @@ public class TemplateInvocationInspection extends XsltInspection {
     @Override
     @NotNull
     public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-      if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
+        if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
         final XsltElementFactory xsltElementFactory = XsltElementFactory.getInstance();
         return new XmlElementVisitor() {
             @Override
-            public void visitXmlTag(XmlTag tag) {
+            public void visitXmlTag(@NotNull XmlTag tag) {
               if (XsltSupport.isTemplateCall(tag)) {
                   final XsltCallTemplate call = xsltElementFactory.wrapElement(tag, XsltCallTemplate.class);
                     checkTemplateInvocation(call, holder, isOnTheFly);
@@ -74,9 +74,8 @@ public class TemplateInvocationInspection extends XsltInspection {
             }
         }
 
-        if (call instanceof XsltCallTemplate) {
-            final XsltCallTemplate ct = ((XsltCallTemplate)call);
-            final PsiElement nameToken = ct.getNameIdentifier();
+        if (call instanceof XsltCallTemplate ct) {
+          final PsiElement nameToken = ct.getNameIdentifier();
             final XsltTemplate template = ct.getTemplate();
 
             if (template != null) {

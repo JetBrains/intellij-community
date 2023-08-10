@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.ide.IdeBundle;
@@ -10,25 +10,20 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.FontUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.treetable.DefaultMutableTreeTableNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.*;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR;
 
-/**
- * @author Rustam Vishnyakov
- */
-public class ColorOptionsTree extends Tree {
+public final class ColorOptionsTree extends Tree {
   private final String myCategoryName;
   private final DefaultTreeModel myTreeModel;
 
@@ -41,7 +36,7 @@ public class ColorOptionsTree extends Tree {
     setRootVisible(false);
     getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myCategoryName = categoryName;
-    new TreeSpeedSearch(this, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
+    TreeSpeedSearch.installOn(this, true, TreeSpeedSearch.NODE_PRESENTATION_FUNCTION);
   }
 
   public void fillOptions(@NotNull ColorAndFontOptions options) {
@@ -86,14 +81,12 @@ public class ColorOptionsTree extends Tree {
     return list;
   }
 
-  @Nullable
-  public EditorSchemeAttributeDescriptor getSelectedDescriptor() {
+  public @Nullable EditorSchemeAttributeDescriptor getSelectedDescriptor() {
     Object selectedValue = getSelectedValue();
     return selectedValue instanceof EditorSchemeAttributeDescriptor ? (EditorSchemeAttributeDescriptor)selectedValue : null;
   }
 
-  @Nullable
-  public Object getSelectedValue() {
+  public @Nullable Object getSelectedValue() {
     Object selectedNode = getLastSelectedPathComponent();
     if (selectedNode instanceof DefaultMutableTreeNode) {
       return ((DefaultMutableTreeNode)selectedNode).getUserObject();
@@ -101,7 +94,8 @@ public class ColorOptionsTree extends Tree {
     return null;
   }
 
-  public void selectOptionByType(@NotNull final String attributeType) {
+  public void selectOptionByType(final @NotNull String attributeType) {
+    if (Objects.equals(ObjectUtils.doIfNotNull(getSelectedDescriptor(), d -> d.getType()), attributeType)) return;
     selectPath(findOption(myTreeModel.getRoot(), new DescriptorMatcher() {
       @Override
       public boolean matches(@NotNull Object data) {
@@ -114,7 +108,7 @@ public class ColorOptionsTree extends Tree {
   }
 
   public void selectOptionByName(@NotNull String name) {
-    String optionName = name.replace(FontUtil.rightArrow(UIUtil.getLabelFont()), NAME_SEPARATOR);
+    String optionName = name.replace(FontUtil.rightArrow(StartupUiUtil.getLabelFont()), NAME_SEPARATOR);
     selectPath(findOption(myTreeModel.getRoot(), new DescriptorMatcher() {
       @Override
       public boolean matches(@NotNull Object data) {
@@ -123,8 +117,7 @@ public class ColorOptionsTree extends Tree {
     }));
   }
 
-  @Nullable
-  private TreePath findOption(@NotNull Object nodeObject, @NotNull DescriptorMatcher matcher) {
+  private @Nullable TreePath findOption(@NotNull Object nodeObject, @NotNull DescriptorMatcher matcher) {
     for (int i = 0; i < myTreeModel.getChildCount(nodeObject); i ++) {
       Object childObject = myTreeModel.getChild(nodeObject, i);
       if (childObject instanceof MyTreeNode) {
@@ -146,8 +139,7 @@ public class ColorOptionsTree extends Tree {
     }
   }
 
-  @Nullable
-  private static List<String> extractPath(@NotNull EditorSchemeAttributeDescriptor descriptor) {
+  private static @Nullable List<String> extractPath(@NotNull EditorSchemeAttributeDescriptor descriptor) {
     if (descriptor instanceof EditorSchemeAttributeDescriptorWithPath) {
       String name = descriptor.toString();
       List<String> path = new ArrayList<>();
@@ -166,7 +158,7 @@ public class ColorOptionsTree extends Tree {
     return null;
   }
 
-  private static class MyTreeNode extends DefaultMutableTreeNode {
+  private static final class MyTreeNode extends DefaultMutableTreeNode {
     private final String myName;
 
     MyTreeNode(@NotNull EditorSchemeAttributeDescriptor descriptor, @NotNull String name) {

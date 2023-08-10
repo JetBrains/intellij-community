@@ -28,7 +28,7 @@
   <item name='java.lang.Boolean boolean logicalXor(boolean, boolean)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value"
-           val="&quot;true,true -&gt; false; true,false -&gt; true; false,true -&gt; true; false,false -&gt; true&quot;"/>
+           val="&quot;true,true -&gt; false; true,false -&gt; true; false,true -&gt; true; false,false -&gt; false&quot;"/>
       <val name="pure" val="true"/>
     </annotation>
   </item>
@@ -44,10 +44,21 @@
   <item name='java.lang.Boolean java.lang.Boolean valueOf(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.Byte byte parseByte(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.Byte int intValue()'>
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="java.lang.Byte.MIN_VALUE"/>
       <val name="to" val="java.lang.Byte.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Byte int toUnsignedInt(byte)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="255"/>
     </annotation>
   </item>
   <item name='java.lang.Byte java.lang.Byte valueOf(byte)'>
@@ -59,10 +70,31 @@
       <val name="to" val="java.lang.Byte.MAX_VALUE"/>
     </annotation>
   </item>
+  <item name='java.lang.Byte long toUnsignedLong(byte)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="255"/>
+    </annotation>
+  </item>
+  <item name='java.lang.CharSequence char charAt(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE-1"/>
+    </annotation>
+  </item>
+  <item name='java.lang.CharSequence int length()'>
+        <annotation name='org.jetbrains.annotations.Range'>
+            <val name="from" val="0"/>
+            <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+        </annotation>
+    </item>
+  <item name='java.lang.CharSequence java.lang.CharSequence subSequence(int, int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.lang.CharSequence java.lang.CharSequence subSequence(int, int) 0'>
       <annotation name='org.jetbrains.annotations.Range'>
           <val name="from" val="0"/>
-          <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+          <val name="to" val="java.lang.Integer.MAX_VALUE-1"/>
       </annotation>
   </item>
   <item name='java.lang.CharSequence java.lang.CharSequence subSequence(int, int) 1'>
@@ -78,11 +110,13 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.CharSequence java.util.stream.IntStream codePoints()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.Character java.lang.Character valueOf(char)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -436,6 +470,11 @@
   <item name="java.lang.Comparable int compareTo(T) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.lang.Double double parseDouble(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.Enum T valueOf(java.lang.Class&lt;T&gt;, java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -457,6 +496,11 @@
   <item name='java.lang.Enum java.lang.String name()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.Float float parseFloat(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.Integer int bitCount(int)'>
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="0"/>
@@ -475,7 +519,12 @@
       <val name="to" val="32"/>
     </annotation>
   </item>
-  <item name='java.lang.Integer java.lang.Integer decode(java.lang.String)'>
+    <item name='java.lang.Integer int parseInt(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.lang.Integer java.lang.Integer decode(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
@@ -509,6 +558,12 @@
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="java.lang.Integer.MIN_VALUE"/>
       <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Integer long toUnsignedLong(int)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="0xFFFFFFFFL"/>
     </annotation>
   </item>
   <item name='java.lang.Iterable java.util.Iterator&lt;T&gt; iterator()'>
@@ -561,6 +616,11 @@
   </item>
   <item name='java.lang.Long java.lang.Long valueOf(long)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Long long parseLong(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.lang.Math double IEEEremainder(double, double)'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -804,6 +864,12 @@
       <val name="to" val="java.lang.Short.MAX_VALUE"/>
     </annotation>
   </item>
+  <item name='java.lang.Short int toUnsignedInt(short)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="0xFFFF"/>
+    </annotation>
+  </item>
   <item name='java.lang.Short java.lang.Short decode(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -820,6 +886,17 @@
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="java.lang.Short.MIN_VALUE"/>
       <val name="to" val="java.lang.Short.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Short long toUnsignedLong(short)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="0xFFFF"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Short short parseShort(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name='java.lang.StackTraceElement java.lang.String getClassName()'>
@@ -949,6 +1026,11 @@
   </item>
   <item name="java.lang.String boolean endsWith(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.lang.String boolean isBlank()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.lang.String boolean matches(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -1099,6 +1181,12 @@
   <item name='java.lang.String java.lang.String format(java.util.Locale, java.lang.String, java.lang.Object...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.String java.lang.String indent(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.lang.String java.lang.String intern()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -1108,7 +1196,16 @@
   <item name='java.lang.String java.lang.String join(java.lang.CharSequence, java.lang.Iterable&lt;? extends java.lang.CharSequence&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name="java.lang.String java.lang.String replace(char, char)">
+  <item name='java.lang.String java.lang.String repeat(int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.String java.lang.String repeat(int) 0'>
+        <annotation name='org.jetbrains.annotations.Range'>
+            <val name="from" val="0"/>
+            <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+        </annotation>
+    </item>
+    <item name="java.lang.String java.lang.String replace(char, char)">
     <annotation name="org.jetbrains.annotations.NotNull" />
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
@@ -1150,6 +1247,30 @@
   <item name="java.lang.String java.lang.String replaceFirst(java.lang.String, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+    <item name='java.lang.String java.lang.String strip()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+      <annotation name='org.jetbrains.annotations.Contract'>
+        <val name="pure" val="true"/>
+      </annotation>
+    </item>
+  <item name='java.lang.String java.lang.String stripIndent()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.String java.lang.String stripLeading()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.String java.lang.String stripTrailing()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.lang.String java.lang.String substring(int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -1189,6 +1310,13 @@
   <item name="java.lang.String java.lang.String toLowerCase(java.util.Locale) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.lang.String java.lang.String toString()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;-&gt; this&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.lang.String java.lang.String toUpperCase()">
     <annotation name="org.jetbrains.annotations.NotNull" />
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -1204,8 +1332,17 @@
   <item name="java.lang.String java.lang.String toUpperCase(java.util.Locale) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.lang.String java.lang.String translateEscapes()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.lang.String java.lang.String trim()">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name="java.lang.String java.lang.String valueOf(boolean)">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -1288,6 +1425,12 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.lang.String java.util.stream.Stream&lt;java.lang.String&gt; lines()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.lang.String void getBytes(int, int, byte[], int) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -1328,7 +1471,12 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
-  <item name='java.lang.System void arraycopy(java.lang.Object, int, java.lang.Object, int, int) 0'>
+    <item name='java.lang.System void arraycopy(java.lang.Object, int, java.lang.Object, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param3&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.lang.System void arraycopy(java.lang.Object, int, java.lang.Object, int, int) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.intellij.lang.annotations.Flow'>
       <val name="sourceIsContainer" val="true"/>
@@ -1422,6 +1570,24 @@
   </item>
   <item name='java.lang.Thread void setName(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Thread void sleep(long) 0'>
+      <annotation name='org.jetbrains.annotations.Range'>
+          <val name="from" val="0"/>
+          <val name="to" val="java.lang.Long.MAX_VALUE"/>
+      </annotation>
+  </item>
+  <item name='java.lang.Thread void sleep(long, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Thread void sleep(long, int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="999999"/>
+    </annotation>
   </item>
 </root>
 

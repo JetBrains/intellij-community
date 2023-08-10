@@ -1,4 +1,4 @@
-// "Rename 'Foo' to 'Bar'" "true"
+// "Rename 'Foo' to 'Bar'" "true-preview"
 class Bar {
   Bar(){}
 }

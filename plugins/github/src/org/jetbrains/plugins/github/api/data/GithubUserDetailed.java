@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data;
 
+import com.intellij.collaboration.auth.AccountDetails;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
@@ -45,7 +46,7 @@ import java.util.Date;
 */
 //endregion
 @SuppressWarnings("UnusedDeclaration")
-public class GithubUserDetailed extends GithubUser {
+public class GithubUserDetailed extends GithubUser implements AccountDetails {
   private String name;
   private String company;
   private String blog;

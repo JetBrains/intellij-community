@@ -1,15 +1,16 @@
 <html>
 <body>
-Reports methods where: <br> <br>
-&nbsp;- method is empty OR <br>
-&nbsp;- all implementations of interface method are empty OR <br>
-&nbsp;- method is empty itself and is overridden only by empty methods <br> <br>
-Note that a method containing only the <b><font color="#000080">super()</font></b>
-call and passing its own parameter is also considered empty.
-<br> <br>
-This inspection is automatically suppressed for methods annotated with special annotations,
-for example, EJB annotations javax.ejb.Init and javax.ejb.Remove.
+Reports empty methods that can be removed.
+<p>Methods are considered empty if they are empty themselves and if they are overridden or
+ implemented by empty methods only. Note that methods containing only comments and the <code>super()</code> call with own parameters are
+  also considered empty.</p>
+<p>The inspection ignores methods with special annotations, for example, the <code>javax.ejb.Init</code> and <code>javax.ejb.Remove</code> EJB annotations .</p>
+<p>The quick-fix safely removes unnecessary methods.</p>
 <!-- tooltip end -->
-Additional annotations can be configured below.
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Comments and javadoc count as content</b> option to select whether methods with comments should be treated as non-empty.</li>
+  <li>Use the <b>Additional special annotations</b> option to configure additional annotations that should be ignored by this inspection.</li>
+</ul>
 </body>
 </html>

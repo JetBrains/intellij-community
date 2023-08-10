@@ -38,7 +38,7 @@ import com.intellij.psi.PsiType;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.Nullable;
 
-public class UserExpressionDescriptorImpl extends EvaluationDescriptor implements UserExpressionDescriptor{
+public class UserExpressionDescriptorImpl extends EvaluationDescriptor implements UserExpressionDescriptor {
   private final ValueDescriptorImpl myParentDescriptor;
   private final String myTypeName;
   private final String myName;

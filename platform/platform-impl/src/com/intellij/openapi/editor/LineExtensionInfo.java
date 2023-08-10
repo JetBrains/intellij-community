@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.markup.EffectType;
@@ -11,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 /**
+ * Adds informational text to the end of a line in a text editor.
+ *
  * @author Konstantin Bulenkov
  */
 public class LineExtensionInfo {
@@ -22,10 +24,10 @@ public class LineExtensionInfo {
   @JdkConstants.FontStyle private final int myFontType;
 
   public LineExtensionInfo(@NotNull @Nls String text,
-                              @Nullable Color color,
-                              @Nullable EffectType effectType,
-                              @Nullable Color effectColor,
-                              @JdkConstants.FontStyle int fontType) {
+                           @Nullable Color color,
+                           @Nullable EffectType effectType,
+                           @Nullable Color effectColor,
+                           @JdkConstants.FontStyle int fontType) {
     myText = text;
     myColor = color;
     myEffectType = effectType;
@@ -33,6 +35,7 @@ public class LineExtensionInfo {
     myFontType = fontType;
     myBgColor = null;
   }
+
   public LineExtensionInfo(@NotNull @Nls String text, @NotNull TextAttributes attr) {
     myText = text;
     myColor = attr.getForegroundColor();

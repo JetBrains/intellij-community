@@ -1,0 +1,17 @@
+LineBreakpoint created at jvm.kt:15
+LineBreakpoint created at jvm.kt:20
+LineBreakpoint created at jvm.kt:25
+LineBreakpoint created at jvm.kt:30
+Run Java
+Connected to the target VM
+jvm.kt:15
+Compile bytecode for Platform()
+jvm.kt:20
+Compile bytecode for Platform().name1()
+jvm.kt:25
+Compile bytecode for Platform().name2()
+jvm.kt:30
+Compile bytecode for Platform().name2("special")
+Disconnected from the target VM
+
+Process finished with exit code 0

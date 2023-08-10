@@ -6,7 +6,6 @@ import com.jetbrains.python.psi.PyIfPart;
 
 /**
  * PyIfPart that represents an 'if' part.
- * User: dcheryasov
  */
 public class PyIfPartIfImpl extends PyConditionalStatementPartImpl implements PyIfPart {
 

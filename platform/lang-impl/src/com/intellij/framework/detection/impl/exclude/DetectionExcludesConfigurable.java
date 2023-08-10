@@ -156,12 +156,7 @@ public class DetectionExcludesConfigurable implements Configurable {
       }
     });
     final RelativePoint popupPoint = button.getPreferredPopupPoint();
-    if (popupPoint != null) {
-      popup.show(popupPoint);
-    }
-    else {
-      popup.showInCenterOf(myMainPanel);
-    }
+    popup.show(popupPoint);
   }
 
   private boolean isExcluded(@NotNull FrameworkType type) {

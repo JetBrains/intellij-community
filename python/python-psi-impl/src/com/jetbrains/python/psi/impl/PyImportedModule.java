@@ -37,9 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author yole
- */
+
 public class PyImportedModule extends LightElement implements PyTypedElement {
   @Nullable private final PyImportElement myImportElement;
   @NotNull private final PyFile myContainingFile;
@@ -76,7 +74,7 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitElement(this);
+    super.accept(visitor);
   }
 
   @Override

@@ -1,46 +1,51 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress
 
 import com.intellij.build.BuildWorkspaceConfiguration
 import com.intellij.compiler.BaseCompilerTestCase
 import com.intellij.compiler.CompilerWorkspaceConfiguration
-import com.intellij.openapi.Disposable
+import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.compiler.*
-import com.intellij.openapi.compiler.CompilerMessageCategory.*
+import com.intellij.openapi.compiler.CompilationStatusListener
+import com.intellij.openapi.compiler.CompileContext
+import com.intellij.openapi.compiler.CompileStatusNotification
+import com.intellij.openapi.compiler.CompilerMessageCategory.INFORMATION
+import com.intellij.openapi.compiler.CompilerMessageCategory.WARNING
+import com.intellij.openapi.compiler.CompilerTopics
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil.addSourceRoot
-import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
-import com.intellij.util.ThrowableRunnable
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.java.JavaResourceRootType
 
 class CompilerBuildViewTest : BaseCompilerTestCase() {
-
   private lateinit var buildViewTestFixture: BuildViewTestFixture
-  private val testDisposable: Disposable = Disposer.newDisposable()
+  private val testDisposable = Disposer.newDisposable()
 
-  @Throws(Exception::class)
   public override fun setUp() {
     super.setUp()
     buildViewTestFixture = BuildViewTestFixture(project)
     buildViewTestFixture.setUp()
-    val registryValue = Registry.get("ide.jps.use.build.tool.window")
-    registryValue.setValue(true, testDisposable)
+  }
+
+  override fun getProjectLanguageLevel(): LanguageLevel {
+    // if possible, use the language level, that corresponds to the build's jdk to avoid various compatibility warnings in compiler output
+    return BuildManager.getBuildProcessRuntimeSdk(myProject).second?.maxLanguageLevel ?: super.getProjectLanguageLevel()
   }
 
   public override fun tearDown() {
-    RunAll(
-      ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() },
-      ThrowableRunnable { Disposer.dispose(testDisposable) },
-      ThrowableRunnable { super.tearDown() }
-    ).run()
+    runAll (
+      { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() },
+      { Disposer.dispose(testDisposable) },
+      { super.tearDown() }
+    )
   }
 
   fun `test empty build`() {
@@ -69,49 +74,43 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
 
     runWithProgressExIndicatorSupport { rebuildProject() }
     buildViewTestFixture.assertBuildViewTreeEquals("-\n rebuild finished")
-    buildViewTestFixture.assertBuildViewSelectedNode("rebuild finished", false) { output: String? ->
-      assertThat(output).startsWith("Clearing build system data...\n" +
-                                    "Executing pre-compile tasks...\n" +
-                                    "Loading Ant configuration...\n" +
-                                    "Running Ant tasks...\n" +
-                                    "Cleaning output directories...\n" +
+    buildViewTestFixture.assertBuildViewSelectedNode("rebuild finished", false) { output ->
+      assertThat(output).startsWith("Clearing build system data…\n" +
+                                    "Executing pre-compile tasks…\n" +
+                                    "Cleaning output directories…\n" +
                                     "Running 'before' tasks\n" +
                                     "Checking sources\n" +
-                                    "Copying resources... [a]\n" +
-                                    "Parsing java... [a]\n" +
-                                    "Writing classes... [a]\n" +
-                                    "Updating dependency information... [a]\n" +
-                                    "Adding @NotNull assertions... [a]\n" +
-                                    "Adding pattern assertions... [a]\n" +
+                                    "Copying resources… [a]\n" +
+                                    "Parsing java… [a]\n" +
+                                    "Writing classes… [a]\n" +
+                                    "Updating dependency information… [a]\n" +
+                                    "Adding nullability assertions… [a]\n" +
+                                    "Adding threading assertions… [a]\n" +
+                                    "Adding pattern assertions… [a]\n" +
                                     "Running 'after' tasks\n")
-      assertThat(output).contains("Finished, saving caches...\n" +
-                                  "Executing post-compile tasks...\n" +
-                                  "Loading Ant configuration...\n" +
-                                  "Running Ant tasks...\n" +
-                                  "Synchronizing output directories...")
+      assertThat(output).contains("Finished, saving caches…\n" +
+                                  "Executing post-compile tasks…\n" +
+                                  "Synchronizing output directories…")
     }
 
     runWithProgressExIndicatorSupport { rebuild(module) }
     buildViewTestFixture.assertBuildViewTreeEquals("-\n recompile finished")
-    buildViewTestFixture.assertBuildViewSelectedNode("recompile finished", false) { output: String? ->
-      assertThat(output).startsWith("Executing pre-compile tasks...\n" +
-                                    "Loading Ant configuration...\n" +
-                                    "Running Ant tasks...\n" +
-                                    "Cleaning output directories...\n" +
+    buildViewTestFixture.assertBuildViewSelectedNode("recompile finished", false) { output ->
+      assertThat(output).startsWith("Executing pre-compile tasks…\n" +
+                                    "Cleaning output directories…\n" +
                                     "Running 'before' tasks\n" +
                                     "Checking sources\n" +
-                                    "Copying resources... [a]\n" +
-                                    "Parsing java... [a]\n" +
-                                    "Writing classes... [a]\n" +
-                                    "Updating dependency information... [a]\n" +
-                                    "Adding @NotNull assertions... [a]\n" +
-                                    "Adding pattern assertions... [a]\n" +
+                                    "Copying resources… [a]\n" +
+                                    "Parsing java… [a]\n" +
+                                    "Writing classes… [a]\n" +
+                                    "Updating dependency information… [a]\n" +
+                                    "Adding nullability assertions… [a]\n" +
+                                    "Adding threading assertions… [a]\n" +
+                                    "Adding pattern assertions… [a]\n" +
                                     "Running 'after' tasks")
-      assertThat(output).contains("Finished, saving caches...\n" +
-                                  "Executing post-compile tasks...\n" +
-                                  "Loading Ant configuration...\n" +
-                                  "Running Ant tasks...\n" +
-                                  "Synchronizing output directories...")
+      assertThat(output).contains("Finished, saving caches…\n" +
+                                  "Executing post-compile tasks…\n" +
+                                  "Synchronizing output directories…")
     }
   }
 
@@ -196,16 +195,16 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     val module = addModule("a", null)
     myProject.messageBus.connect(testRootDisposable).subscribe(CompilerTopics.COMPILATION_STATUS, object : CompilationStatusListener {
       override fun compilationFinished(aborted: Boolean, errors: Int, warnings: Int, compileContext: CompileContext) {
-        compileContext.addMessage(INFORMATION, "some progress 0%", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "\rsome progress 30%", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "\rsome progress 60%", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "another message\n", null, -1, -1);
-        compileContext.addMessage(WARNING, "another yellow message\n", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "\rsome progress 90%", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "\rsome progress 95%", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "this message will be dropped because of subsequent message started with CR", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "\rsome progress 99%", null, -1, -1);
-        compileContext.addMessage(INFORMATION, "\rsome progress 100%", null, -1, -1);
+        compileContext.addMessage(INFORMATION, "some progress 0%", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "\rsome progress 30%", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "\rsome progress 60%", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "another message\n", null, -1, -1)
+        compileContext.addMessage(WARNING, "another yellow message\n", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "\rsome progress 90%", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "\rsome progress 95%", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "this message will be dropped because of subsequent message started with CR", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "\rsome progress 99%", null, -1, -1)
+        compileContext.addMessage(INFORMATION, "\rsome progress 100%", null, -1, -1)
       }
     })
     build(module)
@@ -236,18 +235,6 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
   }
 
   private fun runWithProgressExIndicatorSupport(action: () -> Unit) {
-    val key = "intellij.progress.task.ignoreHeadless"
-    val prev = System.setProperty(key, "true")
-    try {
-      return action()
-    }
-    finally {
-      if (prev != null) {
-        System.setProperty(key, prev)
-      }
-      else {
-        System.clearProperty(key)
-      }
-    }
+    PlatformTestUtil.withSystemProperty<Nothing>("intellij.progress.task.ignoreHeadless", "true", action)
   }
 }

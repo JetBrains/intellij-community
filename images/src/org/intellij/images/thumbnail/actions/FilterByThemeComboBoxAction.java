@@ -17,28 +17,35 @@
 package org.intellij.images.thumbnail.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Arrays;
 
 public final class FilterByThemeComboBoxAction extends ComboBoxAction {
 
-    @Override
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+
+  @Override
     public void update(@NotNull final AnActionEvent e) {
         Project project = e.getProject();
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
         boolean hasApplicableExtension =
-          Arrays.stream(ThemeFilter.EP_NAME.getExtensions())
-            .allMatch(filter -> project != null && filter.isApplicableToProject(project));
+          ContainerUtil.and(ThemeFilter.EP_NAME.getExtensions(), filter -> project != null && filter.isApplicableToProject(project));
         e.getPresentation().setVisible(view != null && hasApplicableExtension);
         ThemeFilter filter = view != null ? view.getFilter() : null;
         e.getPresentation().setText(filter == null ? CommonBundle.message("action.text.all") : filter.getDisplayName());
@@ -46,7 +53,7 @@ public final class FilterByThemeComboBoxAction extends ComboBoxAction {
 
     @NotNull
     @Override
-    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
         DefaultActionGroup group = new DefaultActionGroup();
         group.add(new FilterImagesAction(new ThemeFilter() {
             @Override

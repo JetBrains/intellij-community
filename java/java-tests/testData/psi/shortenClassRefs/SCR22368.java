@@ -1,5 +1,5 @@
 class X {
   void method() {
-    java.util.List<
+    java.util.List<>
   }
 }

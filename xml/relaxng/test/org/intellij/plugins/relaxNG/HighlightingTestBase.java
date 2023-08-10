@@ -85,7 +85,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   }
 
   protected CodeInsightTestFixture createFixture(@NotNull IdeaTestFixtureFactory factory) {
-    final TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createLightFixtureBuilder();
+    final TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createLightFixtureBuilder(getTestName(false));
     final IdeaProjectTestFixture fixture = builder.getFixture();
 
     return factory.createCodeInsightFixture(fixture);
@@ -166,6 +166,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     int[] ignore = externalToolPass == null || externalToolPass ? new int[]{
       Pass.LINE_MARKERS,
       Pass.LOCAL_INSPECTIONS,
+      Pass.SLOW_LINE_MARKERS,
       Pass.POPUP_HINTS,
       Pass.UPDATE_ALL,
       Pass.UPDATE_FOLDING,

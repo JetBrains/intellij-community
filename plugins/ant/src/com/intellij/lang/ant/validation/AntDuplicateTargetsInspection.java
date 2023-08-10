@@ -38,9 +38,8 @@ public class AntDuplicateTargetsInspection extends AntInspection {
   }
 
   @Override
-  protected void checkDomElement(DomElement element, final DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
-    if (element instanceof AntDomProject) {
-      final AntDomProject project = (AntDomProject)element;
+  protected void checkDomElement(@NotNull DomElement element, final @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
+    if (element instanceof AntDomProject project) {
       TargetResolver.validateDuplicateTargets(project.getContextAntProject(), new TargetResolver.TargetSink() {
         @Override
         public void duplicateTargetDetected(AntDomTarget existingTarget, AntDomTarget duplicatingTarget, String targetEffectiveName) {

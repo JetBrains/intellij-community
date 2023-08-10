@@ -1,4 +1,4 @@
-// "Add 'int' as 3rd parameter to constructor 'E'" "true"
+// "Add 'int' as 3rd parameter to constructor 'E'" "true-preview"
 enum E {
   FIRST("a", "b", 1);
 

@@ -11,14 +11,14 @@ import java.util.function.Supplier;
 
 public class DerivedResultImpl implements DerivedResult {
 
-  @NotNull private final Supplier<EventResult> myOnDefault;
-  @NotNull private final Supplier<FailureResult> myFail;
+  @NotNull private final Supplier<? extends EventResult> myOnDefault;
+  @NotNull private final Supplier<? extends FailureResult> myFail;
 
   public DerivedResultImpl() {
     this(null, null);
   }
 
-  public DerivedResultImpl(@Nullable Supplier<EventResult> onDefault, @Nullable Supplier<FailureResult> onFail) {
+  public DerivedResultImpl(@Nullable Supplier<? extends EventResult> onDefault, @Nullable Supplier<? extends FailureResult> onFail) {
     myOnDefault = onDefault != null ? onDefault : SuccessResultImpl::new;
     myFail = onFail != null ? onFail : FailureResultImpl::new;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.java
 
 import com.intellij.application.options.CodeStyle
@@ -13,8 +13,6 @@ import com.intellij.psi.JavaCodeFragmentFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.IncorrectOperationException
 
 /**
@@ -22,10 +20,7 @@ import com.intellij.util.IncorrectOperationException
  * java formatting test classes.
  */
 class JavaFormatterTest : AbstractJavaFormatterTest() {
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_15
-  }
-
+  
   fun testPaymentManager() {
     settings.KEEP_LINE_BREAKS = false
     doTest("paymentManager.java", "paymentManager_after.java")
@@ -199,6 +194,8 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
       KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true
       WHILE_ON_NEW_LINE = true
       BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+
+      SPACE_WITHIN_BRACES = true
     }
     doTest()
   }
@@ -1637,7 +1634,7 @@ class Test {
       settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
 
       doTextTest("enum En {\n" + "    A(10) {},\n" + "    B(10) {},\n" + "    C(10);\n" + "\n" + "    En(int i) { }\n" + "}",
-                 "enum En {\n" + "    A(10) {},\n" + "    B(10) {},\n" + "    C(10);\n" + "\n" + "    En(int i) { }\n" + "}")
+                 "enum En {\n" + "    A(10) {},\n" + "    B(10) {},\n" + "    C(10);\n" + "\n" + "    En(int i) {}\n" + "}")
 
       doTextTest("class C {\n" +
                  "    void foo (Map<?, String> s) {\n" +
@@ -2326,7 +2323,7 @@ enum Foo {
     settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
     settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
     settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
-    doTextTest("class Foo {\n" + "    void foo() { return;}" + "}", "class Foo {\n" + "    void foo() { return;}\n" + "}")
+    doTextTest("class Foo {\n" + "    void foo() { return;}" + "}", "class Foo {\n" + "    void foo() {return;}\n" + "}")
 
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
     settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = false
@@ -4089,5 +4086,34 @@ public enum LevelCode {
       record R(String str) {
       }
       """.trimIndent())
+  }
+
+  fun testIdea153525() {
+    settings.LAMBDA_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
+    doTextTest(
+      """
+      public class Test {
+      void foo () {
+          bar (event ->{for (Listener l : listeners) {
+            notify ();
+        }
+          });
+      }
+      }
+      """.trimIndent(),
+
+      """
+      public class Test {
+          void foo() {
+              bar(event ->
+                  {
+                  for (Listener l : listeners) {
+                      notify();
+                  }
+                  });
+          }
+      }
+      """.trimIndent()
+    )
   }
 }

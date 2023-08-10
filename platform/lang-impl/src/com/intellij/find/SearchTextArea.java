@@ -1,30 +1,32 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook;
+import com.intellij.openapi.actionSystem.impl.FieldInplaceActionButtonLook;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.project.LightEditActionFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBInsets;
@@ -35,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -53,38 +54,16 @@ import java.util.List;
 import static java.awt.event.InputEvent.*;
 import static javax.swing.ScrollPaneConstants.*;
 
-public class SearchTextArea extends JPanel implements PropertyChangeListener {
-  private static final JBColor BUTTON_SELECTED_BACKGROUND = JBColor.namedColor("SearchOption.selectedBackground", 0xDAE4ED, 0x5C6164);
+public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyChangeListener {
+
+  private static final JBColor BACKGROUND_COLOR = JBColor.namedColor("Editor.SearchField.background", UIUtil.getTextFieldBackground());
   public static final String JUST_CLEARED_KEY = "JUST_CLEARED";
   public static final KeyStroke NEW_LINE_KEYSTROKE
     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
 
-  private static final ActionButtonLook FIELD_INPLACE_LOOK = new IdeaActionButtonLook() {
-    @Override
-    public void paintBorder(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
-      if (component.isFocusOwner() && component.isEnabled()) {
-        Rectangle rect = new Rectangle(component.getSize());
-        JBInsets.removeFrom(rect, component.getInsets());
-        SYSTEM_LOOK.paintLookBorder(g, rect, JBUI.CurrentTheme.ActionButton.focusedBorder());
-      }
-      else {
-        super.paintBorder(g, component, ActionButtonComponent.NORMAL);
-      }
-    }
+  private static final ActionButtonLook FIELD_INPLACE_LOOK = new FieldInplaceActionButtonLook();
 
-    @Override
-    public void paintBackground(Graphics g, JComponent component, int state) {
-      if (((MyActionButton)component).isRolloverState()) {
-        super.paintBackground(g, component, state);
-        return;
-      }
-      if (state == ActionButtonComponent.SELECTED && component.isEnabled()) {
-        Rectangle rect = new Rectangle(component.getSize());
-        JBInsets.removeFrom(rect, component.getInsets());
-        paintLookBackground(g, rect, BUTTON_SELECTED_BACKGROUND);
-      }
-    }
-  };
+  private static final Border EMPTY_SCROLL_BORDER = JBUI.Borders.empty(2, 0, 2, 2);
 
   private final JTextArea myTextArea;
   private final boolean mySearchMode;
@@ -96,19 +75,12 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   private final ActionButton myHistoryPopupButton;
   private boolean myMultilineEnabled = true;
 
-  @Deprecated
-  public SearchTextArea(boolean searchMode) {
-    this(new JBTextArea(), searchMode);
-  }
-
-  @Deprecated
-  public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, boolean infoMode) {
+  /**
+   * @deprecated infoMode is not used. Use the other constructor.
+   */
+  @Deprecated(forRemoval = true)
+  public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, @SuppressWarnings("unused") boolean infoMode) {
     this (textArea, searchMode);
-  }
-
-  @Deprecated
-  public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, boolean infoMode, boolean allowInsertTabInMultiline) {
-    this(textArea, searchMode);
   }
 
   public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode) {
@@ -118,9 +90,9 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
 
     myTextArea.addPropertyChangeListener("background", this);
     myTextArea.addPropertyChangeListener("font", this);
-    DumbAwareAction.create(event -> myTextArea.transferFocus())
+    LightEditActionFactory.create(event -> myTextArea.transferFocus())
       .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), myTextArea);
-    DumbAwareAction.create(event -> myTextArea.transferFocusBackward())
+    LightEditActionFactory.create(event -> myTextArea.transferFocusBackward())
       .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, SHIFT_DOWN_MASK)), myTextArea);
     KeymapUtil.reassignAction(myTextArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), NEW_LINE_KEYSTROKE, WHEN_FOCUSED);
     myTextArea.setDocument(new PlainDocument() {
@@ -151,14 +123,18 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
       @Override
       protected void setupCorners() {
         super.setupCorners();
-        setBorder(JBUI.Borders.empty(2, 0, 2, 2));
+        super.setBorder(EMPTY_SCROLL_BORDER);
       }
 
       @Override
       public void updateUI() {
         super.updateUI();
-        setBorder(JBUI.Borders.empty(2, 0, 2, 2));
+        super.setBorder(EMPTY_SCROLL_BORDER);
       }
+
+      // Disable external updates e.g. from UIUtil.removeScrollBorder
+      @Override
+      public void setBorder(Border border) {}
     };
     myTextArea.setBorder(new Border() {
       @Override
@@ -190,9 +166,9 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     myScrollPane.getHorizontalScrollBar().putClientProperty(JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, Boolean.TRUE);
     myScrollPane.setOpaque(false);
 
-    myHistoryPopupButton = new MyActionButton(new ShowHistoryAction(), false);
-    myClearButton = new MyActionButton(new ClearAction(), false);
-    myNewLineButton = new MyActionButton(new NewLineAction(), false);
+    myHistoryPopupButton = new MyActionButton(new ShowHistoryAction(), false, true);
+    myClearButton = new MyActionButton(new ClearAction(), false, false);
+    myNewLineButton = new MyActionButton(new NewLineAction(), false, true);
 
     updateLayout();
   }
@@ -201,7 +177,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   public void updateUI() {
     super.updateUI();
     updateFont();
-    setBackground(UIUtil.getTextFieldBackground());
+    setBackground(BACKGROUND_COLOR);
   }
 
   private void updateFont() {
@@ -217,19 +193,21 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
 
   protected void updateLayout() {
     JPanel historyButtonWrapper = new NonOpaquePanel(new BorderLayout());
-    historyButtonWrapper.setBorder(JBUI.Borders.emptyTop(1));
+    historyButtonWrapper.setBorder(ExperimentalUI.isNewUI() ? JBUI.Borders.empty(2, 3, 0, 8) : JBUI.Borders.empty(2, 3, 0, 0));
     historyButtonWrapper.add(myHistoryPopupButton, BorderLayout.NORTH);
     JPanel iconsPanelWrapper = new NonOpaquePanel(new BorderLayout());
-    iconsPanelWrapper.setBorder(JBUI.Borders.emptyTop(1));
+    iconsPanelWrapper.setBorder(JBUI.Borders.emptyTop(2));
     JPanel p = new NonOpaquePanel(new BorderLayout());
     p.add(myIconsPanel, BorderLayout.NORTH);
-    myIconsPanel.setBorder(JBUI.Borders.emptyRight(5));
+    myIconsPanel.setBorder(ExperimentalUI.isNewUI() ? JBUI.Borders.emptyRight(8) : JBUI.Borders.emptyRight(5));
     iconsPanelWrapper.add(p, BorderLayout.WEST);
     iconsPanelWrapper.add(myExtraActionsPanel, BorderLayout.CENTER);
 
+    Border border = getBorder() == null ? JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchField.borderInsets()) : getBorder();
     removeAll();
     setLayout(new BorderLayout(JBUIScale.scale(3), 0));
-    setBorder(JBUI.Borders.empty(SystemInfo.isLinux ? JBUI.scale(2) : JBUI.scale(1)));
+    setBorder(border);
+
     add(historyButtonWrapper, BorderLayout.WEST);
     add(myScrollPane, BorderLayout.CENTER);
     add(iconsPanelWrapper, BorderLayout.EAST);
@@ -252,17 +230,25 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
       myIconsPanel.setLayout(new BorderLayout());
       myIconsPanel.add(myClearButton, BorderLayout.CENTER);
       myIconsPanel.add(myNewLineButton, BorderLayout.EAST);
-      myIconsPanel.setPreferredSize(myIconsPanel.getPreferredSize());
+      resetPreferredSize(myIconsPanel);
       if (!showClearIcon) myIconsPanel.remove(myClearButton);
       if (!showNewLine) myIconsPanel.remove(myNewLineButton);
       myIconsPanel.revalidate();
       myIconsPanel.repaint();
+    }
+    else {
+      resetPreferredSize(myIconsPanel);
     }
     myScrollPane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.setVerticalScrollBarPolicy(multiline ? VERTICAL_SCROLLBAR_AS_NEEDED : VERTICAL_SCROLLBAR_NEVER);
     myScrollPane.getHorizontalScrollBar().setVisible(multiline);
     myScrollPane.revalidate();
     doLayout();
+  }
+
+  private void resetPreferredSize(JComponent component) {
+    component.setPreferredSize(null);
+    component.setPreferredSize(myIconsPanel.getPreferredSize());
   }
 
   public List<Component> setExtraActions(AnAction... actions) {
@@ -275,13 +261,14 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
         if (action instanceof TooltipDescriptionProvider) {
           action.getTemplatePresentation().setDescription(FindBundle.message("find.embedded.buttons.description"));
         }
-        ActionButton button = new MyActionButton(action, true);
+        ActionButton button = new MyActionButton(action, true, true);
         addedButtons.add(button);
         buttonsGrid.add(button);
       }
+      buttonsGrid.setBorder(JBUI.Borders.emptyRight(2));
       myExtraActionsPanel.setLayout(new BorderLayout());
       myExtraActionsPanel.add(buttonsGrid, BorderLayout.NORTH);
-      myExtraActionsPanel.setBorder(new CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 1, 0, 0), JBUI.Borders.emptyLeft(5)));
+      if (!ExperimentalUI.isNewUI()) myExtraActionsPanel.setBorder(new PseudoSeparatorBorder());
     }
     return addedButtons;
   }
@@ -339,12 +326,13 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     }
   }
 
+  /**
+   * @deprecated use this wrapper component with JBTextArea and its getEmptyText() instead
+   */
   @Deprecated
-  public void setInfoText(String info) {}
+  public void setInfoText(@SuppressWarnings("unused") String info) {}
 
-  private class ShowHistoryAction extends DumbAwareAction {
-    private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
-
+  private class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {
     ShowHistoryAction() {
       super(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"),
             FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"),
@@ -354,20 +342,24 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (myPopupState.isRecentlyHidden()) return; // do not show new popup
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
-      FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(e.getProject());
+      Project project = e.getProject();
+      if (project == null) return;
+      FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(project);
       String[] recent = mySearchMode ? findInProjectSettings.getRecentFindStrings()
                                      : findInProjectSettings.getRecentReplaceStrings();
       JBList<String> historyList = new JBList<>(ArrayUtil.reverseArray(recent));
-      Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null, myPopupState);
+      Dimension size = historyList.getPreferredSize();
+      size.width = Math.min(size.width, getWidth() + 200);
+      historyList.setPreferredSize(size);
+      Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null);
     }
   }
 
-  private class ClearAction extends DumbAwareAction {
+  private class ClearAction extends DumbAwareAction implements LightEditCompatible {
     ClearAction() {
-      super(AllIcons.Actions.Close);
-      getTemplatePresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
+      super(ExperimentalUI.isNewUI() ? ExpUiIcons.General.CloseSmall : AllIcons.Actions.Close);
+      getTemplatePresentation().setHoveredIcon(
+        ExperimentalUI.isNewUI() ? ExpUiIcons.General.CloseSmallHovered : AllIcons.Actions.CloseHovered);
     }
 
     @Override
@@ -377,7 +369,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     }
   }
 
-  private class NewLineAction extends DumbAwareAction {
+  private class NewLineAction extends DumbAwareAction implements LightEditCompatible {
     NewLineAction() {
       super(FindBundle.message("find.new.line"), null, AllIcons.Actions.SearchNewLine);
       setShortcutSet(new CustomShortcutSet(NEW_LINE_KEYSTROKE));
@@ -391,11 +383,9 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   }
 
   private static final class MyActionButton extends ActionButton {
-
-    private MyActionButton(@NotNull AnAction action, boolean focusable) {
-      super(action, action.getTemplatePresentation().clone(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-
-      setLook(focusable ? FIELD_INPLACE_LOOK : ActionButtonLook.INPLACE_LOOK);
+    MyActionButton(@NotNull AnAction action, boolean focusable, boolean fieldInplaceLook) {
+      super(action, action.getTemplatePresentation().clone(), "SearchTextArea", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      setLook(fieldInplaceLook ? FIELD_INPLACE_LOOK : ActionButtonLook.INPLACE_LOOK);
       setFocusable(focusable);
       updateIcon();
     }
@@ -410,10 +400,6 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
       return isSelected() ? SELECTED : super.getPopState();
     }
 
-    boolean isRolloverState() {
-      return super.isRollover();
-    }
-
     @Override
     public Icon getIcon() {
       if (isEnabled() && isSelected()) {
@@ -421,6 +407,24 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
         if (selectedIcon != null) return selectedIcon;
       }
       return super.getIcon();
+    }
+  }
+
+  private static class PseudoSeparatorBorder implements Border {
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      g.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
+      g.fillRect(x + JBUI.scale(1), y + 1, 1, JBUI.scale(20));
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      return new JBInsets(0, 7, 0, 0);
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return false;
     }
   }
 }

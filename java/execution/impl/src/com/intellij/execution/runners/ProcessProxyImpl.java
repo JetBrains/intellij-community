@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.process.BaseOSProcessHandler;
@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -93,7 +94,7 @@ final class ProcessProxyImpl implements ProcessProxy {
 
   @Override
   public boolean canSendBreak() {
-    if (SystemInfo.isWindows) {
+    if (SystemInfo.isWindows && (CpuArch.isArm64() || CpuArch.isIntel64() || CpuArch.isIntel32())) {  // see also: `AppMainV2#loadHelper`
       synchronized (myLock) {
         if (myConnection == null) return false;
       }

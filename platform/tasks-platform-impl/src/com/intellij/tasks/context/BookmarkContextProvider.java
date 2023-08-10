@@ -1,13 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.context;
 
-import com.intellij.ide.bookmarks.BookmarkManager;
+import com.intellij.ide.bookmark.BookmarksManager;
+import com.intellij.ide.bookmark.ManagerState;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.TaskBundle;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import static java.util.Objects.requireNonNull;
 
 public class BookmarkContextProvider extends WorkingContextProvider {
   @NotNull
@@ -25,17 +29,25 @@ public class BookmarkContextProvider extends WorkingContextProvider {
 
   @Override
   public void saveContext(@NotNull Project project, @NotNull Element toElement) {
-    Element state = BookmarkManager.getInstance(project).getState();
-    toElement.addContent(ContainerUtil.map(state.getContent(), content -> content.clone()));
+    ManagerState state = requireNonNull(getComponent(project).getState());
+    toElement.addContent(XmlSerializer.serialize(state));
   }
 
   @Override
   public void loadContext(@NotNull Project project, @NotNull Element fromElement) {
-    BookmarkManager.getInstance(project).loadState(fromElement);
+    ManagerState state = new ManagerState();
+    Element element = fromElement.getChild(ManagerState.class.getSimpleName());
+    if (element != null) XmlSerializer.deserializeInto(state, element);
+    getComponent(project).loadState(state);
   }
 
   @Override
   public void clearContext(@NotNull Project project) {
-    BookmarkManager.getInstance(project).loadState(new Element(getId()));
+    getComponent(project).loadState(new ManagerState());
+  }
+
+  @SuppressWarnings("unchecked")
+  private static @NotNull PersistentStateComponent<ManagerState> getComponent(@NotNull Project project) {
+    return (PersistentStateComponent<ManagerState>)requireNonNull(BookmarksManager.getInstance(project));
   }
 }

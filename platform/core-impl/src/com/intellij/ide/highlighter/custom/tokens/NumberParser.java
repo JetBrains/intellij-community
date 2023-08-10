@@ -19,9 +19,6 @@ package com.intellij.ide.highlighter.custom.tokens;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CustomHighlighterTokenType;
 
-/**
- * @author dsl
- */
 public final class NumberParser extends TokenParser {
   private final String mySuffices;
   private final boolean myIgnoreCase;

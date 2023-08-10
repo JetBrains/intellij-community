@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -17,6 +17,7 @@ import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
@@ -46,10 +47,11 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    EditorNotifications notifications = new EditorNotificationsImpl(getProject());
-    ServiceContainerUtil.replaceService(getProject(), EditorNotifications.class, notifications, getTestRootDisposable());
-    NonProjectFileWritingAccessProvider.enableChecksInTests(getProject());
-    StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
+    Project project = getProject();
+    EditorNotifications notifications = new EditorNotificationsImpl(project, project.getCoroutineScope());
+    ServiceContainerUtil.replaceService(project, EditorNotifications.class, notifications, getTestRootDisposable());
+    NonProjectFileWritingAccessProvider.enableChecksInTests(project);
+    StoreReloadManager.Companion.getInstance(project).blockReloadingProjectOnExternalChanges();
   }
 
   @Override
@@ -72,8 +74,9 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       addSuppressedException(e);
     }
     finally {
+      StoreReloadManager.Companion.getInstance(getProject()).unblockReloadingProjectOnExternalChanges();
+
       super.tearDown();
-      StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges(); // unblock only after project is disposed;
     }
   }
 
@@ -86,7 +89,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile, false);
     typeAndCheck(nonProjectFile, false);// still not allowed
 
-    typeAndCheck(nonProjectFile, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK, true);
+    typeAndCheck(nonProjectFile, UnlockOption.UNLOCK, true);
     typeAndCheck(nonProjectFile, null, true); // still allowed after previous Unlock
   }
 
@@ -125,7 +128,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     PlatformTestUtil.saveProject(getProject(), true);
     VirtualFile fileUnderProjectDir = createFileExternally(new File(getProject().getBasePath()));
 
-    assertFalse(ProjectFileIndex.SERVICE.getInstance(getProject()).isInContent(fileUnderProjectDir));
+    assertFalse(ProjectFileIndex.getInstance(getProject()).isInContent(fileUnderProjectDir));
 
     typeAndCheck(getProject().getProjectFile(), true);
     typeAndCheck(getProject().getWorkspaceFile(), true);
@@ -151,7 +154,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
     VirtualFile fileUnderNonProjectModuleDir = createFileExternally(moduleWithoutContentRoot.getModuleNioFile().getParent().toFile());
 
-    assertFalse(ProjectFileIndex.SERVICE.getInstance(getProject()).isInContent(fileUnderNonProjectModuleDir));
+    assertFalse(ProjectFileIndex.getInstance(getProject()).isInContent(fileUnderNonProjectModuleDir));
 
     typeAndCheck(moduleWithoutContentRoot.getModuleFile(), true);
     typeAndCheck(myModule.getModuleFile(), true);
@@ -162,11 +165,11 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     VirtualFile nonProjectFile1 = createNonProjectFile();
     VirtualFile nonProjectFile2 = createNonProjectFile();
 
-    typeAndCheck(nonProjectFile1, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK, true);
+    typeAndCheck(nonProjectFile1, UnlockOption.UNLOCK, true);
     typeAndCheck(nonProjectFile2, null, false);
 
     typeAndCheck(nonProjectFile1, null, true);
-    typeAndCheck(nonProjectFile2, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK, true);
+    typeAndCheck(nonProjectFile2, UnlockOption.UNLOCK, true);
 
     // let's check both files one more time to make sure unlock option doesn't have eny unexpected effect
     typeAndCheck(nonProjectFile1, null, true);
@@ -188,7 +191,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFileDir12, false);
     typeAndCheck(nonProjectFileDir2, false);
 
-    typeAndCheck(nonProjectFileDir11, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK_DIR, true);
+    typeAndCheck(nonProjectFileDir11, UnlockOption.UNLOCK_DIR, true);
 
     // affects other files in dir
     typeAndCheck(nonProjectFileDir12, true);
@@ -207,7 +210,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile2, false);
     typeAndCheck(nonProjectFile3, false);
 
-    typeAndCheck(nonProjectFile1, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK_ALL, true);
+    typeAndCheck(nonProjectFile1, UnlockOption.UNLOCK_ALL, true);
     // affects other files
     typeAndCheck(nonProjectFile2, true);
     typeAndCheck(nonProjectFile3, true);
@@ -222,13 +225,13 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile1, false);
     assertSameElements(requested); // not called since non-project file access is denied
 
-    typeAndCheck(nonProjectFile1, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK, false);
+    typeAndCheck(nonProjectFile1, UnlockOption.UNLOCK, false);
     assertSameElements(requested, nonProjectFile1);
 
     typeAndCheck(nonProjectFile1, false); // leave file locked if other provides denied access
     requested.clear();
 
-    typeAndCheck(nonProjectFile2, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK, true);
+    typeAndCheck(nonProjectFile2, UnlockOption.UNLOCK, true);
     assertSameElements(requested, nonProjectFile2);
   }
 
@@ -238,7 +241,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
     registerWriteAccessProvider(nonProjectFile1);
 
-    typeAndCheck(nonProjectFile1, NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK_ALL,
+    typeAndCheck(nonProjectFile1, UnlockOption.UNLOCK_ALL,
                  false); // can't write since denied by another write-access provider
     typeAndCheck(nonProjectFile2, true);
   }
@@ -322,7 +325,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       @Override
       public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
         requested.addAll(files);
-        Set<VirtualFile> denied = ContainerUtil.set(filesToDeny);
+        Set<VirtualFile> denied = ContainerUtil.newHashSet(filesToDeny);
         denied.retainAll(files);
         return denied;
       }
@@ -379,11 +382,11 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   }
 
   private void typeAndCheck(VirtualFile file,
-                            @Nullable final NonProjectFileWritingAccessProvider.UnlockOption option,
+                            @Nullable final UnlockOption option,
                             boolean fileHasBeenChanged) {
     Editor editor = getEditor(file);
 
-    NullableFunction<List<VirtualFile>, NonProjectFileWritingAccessProvider.UnlockOption> unlocker =
+    NullableFunction<List<VirtualFile>, UnlockOption> unlocker =
       files -> option;
     NonProjectFileWritingAccessProvider.setCustomUnlocker(unlocker);
 

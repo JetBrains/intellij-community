@@ -15,6 +15,9 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Obsolete
 public interface CatchingConsumer<T, E extends Throwable> extends Consumer<T> {
   void consume(E e);
 }

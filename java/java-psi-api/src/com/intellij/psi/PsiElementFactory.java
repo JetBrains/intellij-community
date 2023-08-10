@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -38,7 +37,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   }
 
   static PsiElementFactory getInstance(Project project) {
-    return ServiceManager.getService(project, PsiElementFactory.class);
+    return project.getService(PsiElementFactory.class);
   }
 
   /**
@@ -365,6 +364,11 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
                                              @Nullable PsiElement context);
 
   /**
+   * Creates a string template fragment with the specified text of the specified token type.
+   */
+  @NotNull PsiFragment createStringTemplateFragment(@NotNull String newText, @NotNull IElementType tokenType, @Nullable PsiElement context);
+
+  /**
    * Creates a PSI element for the "&#64;param" JavaDoc tag.
    *
    * @throws IncorrectOperationException if the name or description are invalid.
@@ -376,6 +380,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * Returns a synthetic Java class containing methods which are defined on Java arrays.
    *
    * @param languageLevel language level used to construct array class.
+   * @see #isArrayClass(PsiClass) 
    */
   @NotNull
   PsiClass getArrayClass(@NotNull LanguageLevel languageLevel);
@@ -388,6 +393,13 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    */
   @NotNull
   PsiClassType getArrayClassType(@NotNull PsiType componentType, @NotNull final LanguageLevel languageLevel);
+
+  /**
+   * @param psiClass class to test
+   * @return true if given class is a synthetic Java array class previously returned 
+   * by {@link #getArrayClass(LanguageLevel)}
+   */
+  boolean isArrayClass(@NotNull PsiClass psiClass);
 
   /**
    * Creates a package statement for the specified package name.

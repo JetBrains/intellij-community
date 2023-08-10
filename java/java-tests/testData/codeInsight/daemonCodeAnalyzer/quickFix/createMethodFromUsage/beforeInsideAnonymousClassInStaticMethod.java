@@ -1,4 +1,4 @@
-// "Create method 'doSomething' in 'Test'" "true"
+// "Create method 'doSomething' in 'Test'" "true-preview"
 public class Test {
     public static void main(String[] args) {
         blaat(new Runnable() {

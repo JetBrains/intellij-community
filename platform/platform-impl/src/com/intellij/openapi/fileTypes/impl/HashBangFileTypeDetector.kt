@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl
 
 import com.intellij.openapi.fileTypes.FileType
@@ -8,14 +8,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 
 /**
- * @author yole
- * 
  * Consider using <code>hashBangs</code> attribute of <code>fileType</code>
  */
-open class HashBangFileTypeDetector constructor(
-  val fileType: FileType,
-  val marker: String
-) : FileTypeRegistry.FileTypeDetector {
+open class HashBangFileTypeDetector(val fileType: FileType, val marker: String) : FileTypeRegistry.FileTypeDetector {
   override fun detect(file: VirtualFile, firstBytes: ByteSequence, firstCharsIfText: CharSequence?): FileType? {
     return if (FileUtil.isHashBangLine(firstCharsIfText, marker)) fileType else null
   }

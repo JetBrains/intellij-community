@@ -4,6 +4,7 @@ package com.intellij.spellchecker.inspection
 import com.intellij.spellchecker.SpellCheckerManager
 import junit.framework.TestCase
 
+
 class SpellcheckerCornerCasesTest : SpellcheckerInspectionTestCase() {
   fun `test a lot of mistakes in united word suggest`() {
     //should not end up with OOM

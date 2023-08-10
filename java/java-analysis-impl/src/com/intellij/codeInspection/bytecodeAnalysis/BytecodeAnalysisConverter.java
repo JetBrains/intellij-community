@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.dataFlow.MutationSignature;
@@ -16,9 +16,6 @@ import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InOut;
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InThrow;
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
-/**
- * @author lambdamix
- */
 public final class BytecodeAnalysisConverter {
 
   /**
@@ -99,8 +96,7 @@ public final class BytecodeAnalysisConverter {
   private static String descriptor(@NotNull PsiType psiType) {
     int dimensions = 0;
     psiType = TypeConversionUtil.erasure(psiType);
-    if (psiType instanceof PsiArrayType) {
-      PsiArrayType arrayType = (PsiArrayType)psiType;
+    if (psiType instanceof PsiArrayType arrayType) {
       psiType = arrayType.getDeepComponentType();
       dimensions = arrayType.getArrayDimensions();
     }
@@ -141,7 +137,7 @@ public final class BytecodeAnalysisConverter {
         keys.add(primaryKey.withDirection(new InThrow(i, Value.NotNull)));
         keys.add(primaryKey.withDirection(new InThrow(i, Value.Null)));
       }
-      else if (PsiType.BOOLEAN.equals(parameters[i].getType())) {
+      else if (PsiTypes.booleanType().equals(parameters[i].getType())) {
         keys.add(primaryKey.withDirection(new InOut(i, Value.True)));
         keys.add(primaryKey.withDirection(new InOut(i, Value.False)));
         keys.add(primaryKey.withDirection(new InThrow(i, Value.True)));

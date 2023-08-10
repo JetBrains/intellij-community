@@ -24,58 +24,62 @@ public class LightRainbowHighlightingTest extends LightJavaCodeInsightFixtureTes
 
   public void testRainbowOff() {
     checkRainbow(
-      "class TestClass {\n" +
-      "    private static int field = 1;\n" +
-      "    public static void main(String[] args) {\n" +
-      "        ++field;\n" +
-      "        String local1 = null;\n" +
-      "        System.out.println(field + local1 + args[0]);\n" +
-      "    }\n" +
-      "}", false, false);
+      """
+        class TestClass {
+            private static int field = 1;
+            public static void main(String[] args) {
+                ++field;
+                String local1 = null;
+                System.out.println(field + local1 + args[0]);
+            }
+        }""", false, false);
   }
 
   public void testRainbowSameColorsForSameIds() {
     checkRainbow(
-      "class TestClass {\n" +
-      "    public static void main(String[] <rainbow color='ff000003'>args</rainbow>) {\n" +
-      "        String <rainbow color='ff000004'>local1</rainbow> = null;\n" +
-      "        System.out.println(<rainbow color='ff000004'>local1</rainbow>\n" +
-      "                           + <rainbow color='ff000003'>args</rainbow>[0]);\n" +
-      "    }\n" +
-      "}", true, true);
+      """
+        class TestClass {
+            public static void main(String[] <rainbow color='ff000003'>args</rainbow>) {
+                String <rainbow color='ff000004'>local1</rainbow> = null;
+                System.out.println(<rainbow color='ff000004'>local1</rainbow>
+                                   + <rainbow color='ff000003'>args</rainbow>[0]);
+            }
+        }""", true, true);
   }
 
   public void testRainbowHighlightingIds() {
     // check no coloring for [this] and etc.
     checkRainbow(
-      "class TestClass {\n" +
-      "    private static int SFIELD = 1;\n" +
-      "    private static int myField = 1;\n" +
-      "    private static Runnable myRunnable = () -> {int <rainbow>a</rainbow> = 0;\n" +
-      "                                                <rainbow>a</rainbow>++;};\n" +
-      "    public void f(int <rainbow>param1</rainbow>,\n" +
-      "                  int <rainbow>param2</rainbow>,\n" +
-      "                  int <rainbow>param3</rainbow>) {\n" +
-      "        SFIELD = <rainbow>param1</rainbow> + <rainbow>param2</rainbow> + <rainbow>param3</rainbow> + myField;\n" +
-      "        <rainbow>param1</rainbow> = this.hashCode() + this.myField;\n" +
-      "    }\n" +
-      "}", true, false);
+      """
+        class TestClass {
+            private static int SFIELD = 1;
+            private static int myField = 1;
+            private static Runnable myRunnable = () -> {int <rainbow>a</rainbow> = 0;
+                                                        <rainbow>a</rainbow>++;};
+            public void f(int <rainbow>param1</rainbow>,
+                          int <rainbow>param2</rainbow>,
+                          int <rainbow>param3</rainbow>) {
+                SFIELD = <rainbow>param1</rainbow> + <rainbow>param2</rainbow> + <rainbow>param3</rainbow> + myField;
+                <rainbow>param1</rainbow> = this.hashCode() + this.myField;
+            }
+        }""", true, false);
   }
 
   public void testRainbowParamsInJavadocHaveTheSameColorsAsInCode() {
     checkRainbow(
-      "class TestClass {\n" +
-      "    /**\n" +
-      "     * \n" +
-      "     * @param <rainbow color='ff000002'>param1</rainbow>\n" +
-      "     * @param <rainbow color='ff000004'>param2</rainbow>\n" +
-      "     * @param <rainbow color='ff000001'>param3</rainbow>\n" +
-      "     */\n" +
-      "    public void f(int <rainbow color='ff000002'>param1</rainbow>,\n" +
-      "                  int <rainbow color='ff000004'>param2</rainbow>,\n" +
-      "                  int <rainbow color='ff000001'>param3</rainbow>) {\n" +
-      "    }\n" +
-      "}", true, true);
+      """
+        class TestClass {
+            /**
+             *\s
+             * @param <rainbow color='ff000002'>param1</rainbow>
+             * @param <rainbow color='ff000004'>param2</rainbow>
+             * @param <rainbow color='ff000001'>param3</rainbow>
+             */
+            public void f(int <rainbow color='ff000002'>param1</rainbow>,
+                          int <rainbow color='ff000004'>param2</rainbow>,
+                          int <rainbow color='ff000001'>param3</rainbow>) {
+            }
+        }""", true, true);
   }
 
   public void testBadStringHashValue() {

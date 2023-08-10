@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -11,21 +11,21 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class SvnIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+  private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, SvnIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Common = load("icons/Common.svg", 7071703365154619525L, 0);
-  /** 16x16 */ public static final @NotNull Icon Conflictc = load("icons/conflictc.svg", -6509737765179932210L, 0);
-  /** 16x16 */ public static final @NotNull Icon Conflictcp = load("icons/conflictcp.svg", 225634432002246613L, 0);
-  /** 16x16 */ public static final @NotNull Icon Conflictct = load("icons/conflictct.svg", -5662543468048298405L, 0);
-  /** 16x16 */ public static final @NotNull Icon Conflictctp = load("icons/conflictctp.svg", 6069458668735256200L, 0);
-  /** 16x16 */ public static final @NotNull Icon Conflictp = load("icons/conflictp.svg", -4163072530566829817L, 0);
-  /** 16x16 */ public static final @NotNull Icon Conflictt = load("icons/conflictt.svg", -3327967857310411794L, 0);
-  /** 16x16 */ public static final @NotNull Icon Conflicttp = load("icons/conflicttp.svg", -4050491873001372776L, 0);
-  /** 16x16 */ public static final @NotNull Icon Integrated = load("icons/Integrated.svg", 4035227219594288718L, 0);
-  /** 16x16 */ public static final @NotNull Icon MarkAsMerged = load("icons/MarkAsMerged.svg", -9101869856463888922L, 2);
-  /** 16x16 */ public static final @NotNull Icon MarkAsNotMerged = load("icons/MarkAsNotMerged.svg", -6810627706002411753L, 2);
-  /** 16x16 */ public static final @NotNull Icon Notintegrated = load("icons/Notintegrated.svg", 7204423773431963401L, 0);
-  /** 16x16 */ public static final @NotNull Icon PreviewDetailsLeft = load("icons/previewDetailsLeft.svg", -5282932797654692978L, 2);
-  /** 16x16 */ public static final @NotNull Icon UndoIntegrateToBranch = load("icons/UndoIntegrateToBranch.svg", -769326482823802743L, 2);
+  /** 16x16 */ public static final @NotNull Icon Common = load("icons/Common.svg", -272481644, 0);
+  /** 16x16 */ public static final @NotNull Icon Conflictc = load("icons/conflictc.svg", 1067382135, 0);
+  /** 16x16 */ public static final @NotNull Icon Conflictcp = load("icons/conflictcp.svg", -231366019, 0);
+  /** 16x16 */ public static final @NotNull Icon Conflictct = load("icons/conflictct.svg", -1563687133, 0);
+  /** 16x16 */ public static final @NotNull Icon Conflictctp = load("icons/conflictctp.svg", -1794310488, 0);
+  /** 16x16 */ public static final @NotNull Icon Conflictp = load("icons/conflictp.svg", -643146001, 0);
+  /** 16x16 */ public static final @NotNull Icon Conflictt = load("icons/conflictt.svg", -716922796, 0);
+  /** 16x16 */ public static final @NotNull Icon Conflicttp = load("icons/conflicttp.svg", 1831957933, 0);
+  /** 16x16 */ public static final @NotNull Icon Integrated = load("icons/Integrated.svg", -7108002, 0);
+  /** 16x16 */ public static final @NotNull Icon MarkAsMerged = load("icons/MarkAsMerged.svg", -564260528, 2);
+  /** 16x16 */ public static final @NotNull Icon MarkAsNotMerged = load("icons/MarkAsNotMerged.svg", -1476119082, 2);
+  /** 16x16 */ public static final @NotNull Icon Notintegrated = load("icons/Notintegrated.svg", -207048453, 0);
+  /** 16x16 */ public static final @NotNull Icon PreviewDetailsLeft = load("icons/previewDetailsLeft.svg", 607680233, 2);
+  /** 16x16 */ public static final @NotNull Icon UndoIntegrateToBranch = load("icons/UndoIntegrateToBranch.svg", -1690597648, 2);
 }

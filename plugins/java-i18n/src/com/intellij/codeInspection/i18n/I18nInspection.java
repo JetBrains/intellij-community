@@ -1,24 +1,32 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.*;
-import com.intellij.ide.util.TreeClassChooser;
-import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.restriction.AnnotationContext;
+import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.intellij.java.i18n.JavaI18nBundle;
+import com.intellij.lang.jvm.JvmModifiersOwner;
+import com.intellij.lang.jvm.actions.AnnotationRequestsKt;
+import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -27,18 +35,13 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.uast.UastHintedVisitorAdapter;
-import com.intellij.ui.AddDeleteListPanel;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.FieldPanel;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
@@ -53,18 +56,12 @@ import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
 import org.jetbrains.uast.util.UastExpressionUtils;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class I18nInspection extends AbstractBaseUastLocalInspectionTool implements CustomSuppressableInspectionTool {
   private static final CallMatcher ERROR_WRAPPER_METHODS = CallMatcher.anyOf(
@@ -230,229 +227,74 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final GridBagLayout layout = new GridBagLayout();
-    final JPanel panel = new JPanel(layout);
-    final JCheckBox assertStatementsCheckbox = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.assert"), ignoreForAssertStatements);
-    assertStatementsCheckbox.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForAssertStatements = assertStatementsCheckbox.isSelected();
-      }
-    });
-    final JCheckBox exceptionConstructorCheck =
-      new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.for.exception.constructor.arguments"),
-                    ignoreForExceptionConstructors);
-    exceptionConstructorCheck.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForExceptionConstructors = exceptionConstructorCheck.isSelected();
-      }
-    });
-
-    final JTextField specifiedExceptions = new JTextField(ignoreForSpecifiedExceptionConstructors);
-    specifiedExceptions.getDocument().addDocumentListener(new DocumentAdapter(){
-      @Override
-      protected void textChanged(@NotNull DocumentEvent e) {
-        ignoreForSpecifiedExceptionConstructors = specifiedExceptions.getText();
-      }
-    });
-
-    final JCheckBox junitAssertCheckbox = new JCheckBox(
-      JavaI18nBundle.message("inspection.i18n.option.ignore.for.junit.assert.arguments"), ignoreForJUnitAsserts);
-    junitAssertCheckbox.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForJUnitAsserts = junitAssertCheckbox.isSelected();
-      }
-    });
-    final JCheckBox classRef = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.qualified.class.names"), ignoreForClassReferences);
-    classRef.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForClassReferences = classRef.isSelected();
-      }
-    });
-    final JCheckBox propertyRef = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.property.keys"), ignoreForPropertyKeyReferences);
-    propertyRef.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForPropertyKeyReferences = propertyRef.isSelected();
-      }
-    });
-    final JCheckBox nonAlpha = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.nonalphanumerics"), ignoreForNonAlpha);
-    nonAlpha.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForNonAlpha = nonAlpha.isSelected();
-      }
-    });
-    final JCheckBox assignedToConstants = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.assigned.to.constants"), ignoreAssignedToConstants);
-    assignedToConstants.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreAssignedToConstants = assignedToConstants.isSelected();
-      }
-    });
-    final JCheckBox chkToString = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.tostring"), ignoreToString);
-    chkToString.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreToString = chkToString.isSelected();
-      }
-    });
-
-    final JCheckBox ignoreEnumConstants = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.enum"), ignoreForEnumConstants);
-    ignoreEnumConstants.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForEnumConstants = ignoreEnumConstants.isSelected();
-      }
-    });
-
-    final JCheckBox reportRefs = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.report.unannotated.refs"), reportUnannotatedReferences);
-    reportRefs.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        reportUnannotatedReferences = reportRefs.isSelected();
-      }
-    });
-    final JCheckBox ignoreAllButNls = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.nls"), ignoreForAllButNls);
-    ignoreAllButNls.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        ignoreForAllButNls = ignoreAllButNls.isSelected();
-      }
-    });
-
-    final GridBagConstraints gc = new GridBagConstraints();
-    gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.insets.bottom = 2;
-
-    gc.gridx = GridBagConstraints.REMAINDER;
-    gc.gridy = 0;
-    gc.weightx = 1;
-    gc.weighty = 0;
-    panel.add(ignoreAllButNls, gc);
-
-    gc.gridy ++;
-    panel.add(reportRefs, gc);
-
-    gc.gridy ++;
-    panel.add(assertStatementsCheckbox, gc);
-
-    gc.gridy ++;
-    panel.add(junitAssertCheckbox, gc);
-
-    gc.gridy ++;
-    panel.add(exceptionConstructorCheck, gc);
-
-    gc.gridy ++;
-    final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    panel.add(new FieldPanel(specifiedExceptions,
-                             null,
-                             JavaI18nBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"),
-                             openProjects.length == 0 ? null :
-                             new ActionListener() {
-                               @Override
-                               public void actionPerformed(@NotNull ActionEvent e) {
-                                 createIgnoreExceptionsConfigurationDialog(openProjects[0], specifiedExceptions).show();
-                               }
-                             },
-                             null), gc);
-
-    gc.gridy ++;
-    panel.add(classRef, gc);
-
-    gc.gridy ++;
-    panel.add(propertyRef, gc);
-
-    gc.gridy++;
-    panel.add(assignedToConstants, gc);
-
-    gc.gridy++;
-    panel.add(chkToString, gc);
-
-    gc.gridy ++;
-    panel.add(nonAlpha, gc);
-
-    gc.gridy ++;
-    panel.add(ignoreEnumConstants, gc);
-
-    gc.gridy ++;
-    gc.anchor = GridBagConstraints.NORTHWEST;
-    gc.weighty = 1;
-    final JTextField commentPattern = new JTextField(nonNlsCommentPattern);
-    final FieldPanel nonNlsCommentPatternComponent =
-      new FieldPanel(commentPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.comment.pattern"),
-                     JavaI18nBundle.message("inspection.i18n.option.ignore.comment.title"), null,
-                     () -> setNonNlsCommentPattern(commentPattern.getText()));
-    panel.add(nonNlsCommentPatternComponent, gc);
-    gc.gridy ++;
-    gc.anchor = GridBagConstraints.NORTHWEST;
-    gc.weighty = 1;
-    final JTextField literalPattern = new ExpandableTextField(text -> Collections.singletonList(text),
-                                                              strings -> StringUtil.join(strings, "|"));
-    literalPattern.setText(nonNlsLiteralPattern);
-    final FieldPanel nonNlsStringPatternComponent =
-      new FieldPanel(literalPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.string.pattern"),
-                     JavaI18nBundle.message("inspection.i18n.option.ignore.string.title"), null,
-                     () -> setNonNlsLiteralPattern(literalPattern.getText()));
-    panel.add(nonNlsStringPatternComponent, gc);
-
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setBorder(null);
-    scrollPane.setPreferredSize(new Dimension(panel.getPreferredSize().width + scrollPane.getVerticalScrollBar().getPreferredSize().width,
-                                              panel.getPreferredSize().height +
-                                              scrollPane.getHorizontalScrollBar().getPreferredSize().height));
-    return scrollPane;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      tabs(
+        tab(JavaI18nBundle.message("inspection.i18n.option.tab.general"),
+            checkbox("ignoreForAllButNls", JavaI18nBundle.message("inspection.i18n.option.ignore.nls"))
+              .description(JavaI18nBundle.message("inspection.i18n.option.ignore.nls.description")),
+            checkbox("reportUnannotatedReferences", JavaI18nBundle.message("inspection.i18n.option.report.unannotated.refs"))
+              .description(JavaI18nBundle.message("inspection.i18n.option.report.unannotated.refs.description")),
+            expandableString("nonNlsCommentPattern", JavaI18nBundle.message("inspection.i18n.option.suppression.comment"), "\n")
+              .description(JavaI18nBundle.message("inspection.i18n.option.suppression.comment.description"))
+        ),
+        tab(JavaI18nBundle.message("inspection.i18n.option.tab.context"),
+            group(JavaI18nBundle.message("inspection.i18n.option.ignore.context"),
+                  checkbox("ignoreForAssertStatements", JavaI18nBundle.message("inspection.i18n.option.ignore.context.assert"))
+                    .description(exampleDescription("assert s.equals(\"Message\");")),
+                  checkbox("ignoreForJUnitAsserts", JavaI18nBundle.message("inspection.i18n.option.ignore.context.junit.assert"))
+                    .description(exampleDescription("assertEquals(s, \"Message\");")),
+                  checkbox("ignoreAssignedToConstants", JavaI18nBundle.message(
+                    "inspection.i18n.option.ignore.context.assigned.to.constants"))
+                    .description(exampleDescription("static final ID = \"Message\"")),
+                  checkbox("ignoreToString", JavaI18nBundle.message("inspection.i18n.option.ignore.context.tostring"))
+                    .description(exampleDescription("""
+                      public String toString() {
+                        return "MyObject: value = " + value;
+                      }""")),
+                  checkbox("ignoreForEnumConstants", JavaI18nBundle.message("inspection.i18n.option.ignore.context.enum"))
+                    .description(exampleDescription("""
+                      enum MyEnum {
+                        VALUE("Message");
+                        MyEnum(String msg) {}
+                      }""")),
+                  checkbox("ignoreForExceptionConstructors", JavaI18nBundle.message(
+                             "inspection.i18n.option.ignore.context.exception.constructor"),
+                     stringList("ignoreForSpecifiedExceptionConstructors", "",
+                                new JavaClassValidator().withSuperClass(CommonClassNames.JAVA_LANG_THROWABLE)))
+            )
+        ),
+        tab(JavaI18nBundle.message("inspection.i18n.option.tab.literals"),
+            group(JavaI18nBundle.message("inspection.i18n.option.no.report.content"),
+                  checkbox("ignoreForClassReferences", JavaI18nBundle.message(
+                    "inspection.i18n.option.no.report.content.qualified.class.names")),
+                  checkbox("ignoreForPropertyKeyReferences", JavaI18nBundle.message(
+                    "inspection.i18n.option.no.report.content.property.keys")),
+                  checkbox("ignoreForNonAlpha", JavaI18nBundle.message("inspection.i18n.option.no.report.content.nonalphanumerics")),
+                  expandableString("nonNlsLiteralPattern", JavaI18nBundle.message("inspection.i18n.option.no.report.content.string.pattern"),
+                                   "\n")
+                  )
+        )
+      )
+    );
   }
 
-  private DialogWrapper createIgnoreExceptionsConfigurationDialog(final Project project, final JTextField specifiedExceptions) {
-    return new DialogWrapper(true) {
-      private AddDeleteListPanel<?> myPanel;
-      {
-        setTitle(JavaI18nBundle.message(
-          "inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"));
-        init();
-      }
+  @NotNull
+  private static HtmlChunk exampleDescription(@NlsSafe String exampleText) {
+    return HtmlChunk.fragment(
+      HtmlChunk.text(JavaI18nBundle.message("tooltip.example")),
+      HtmlChunk.br(),
+      HtmlChunk.tag("pre").addText(exampleText)
+    );
+  }
 
-      @Override
-      protected JComponent createCenterPanel() {
-        final String[] ignored = ignoreForSpecifiedExceptionConstructors.split(",");
-        final List<String> initialList = new ArrayList<>();
-        for (String e : ignored) {
-          if (!e.isEmpty()) initialList.add(e);
-        }
-        myPanel = new AddDeleteListPanel<>(null, initialList) {
-          @Override
-          protected String findItemToAdd() {
-            final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-            TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).
-              createInheritanceClassChooser(
-                JavaI18nBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"), scope,
-                JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_THROWABLE, scope), true, true, null);
-            chooser.showDialog();
-            PsiClass selectedClass = chooser.getSelected();
-            return selectedClass != null ? selectedClass.getQualifiedName() : null;
-          }
-        };
-        return myPanel;
-      }
-
-      @Override
-      protected void doOKAction() {
-        StringBuilder buf = new StringBuilder();
-        final Object[] exceptions = myPanel.getListItems();
-        for (Object exception : exceptions) {
-          buf.append(",").append(exception);
-        }
-        specifiedExceptions.setText(buf.length() > 0 ? buf.substring(1) : buf.toString());
-        super.doOKAction();
-      }
-    };
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController()
+      .onValue("ignoreForSpecifiedExceptionConstructors", () -> StringUtil.split(ignoreForSpecifiedExceptionConstructors, ","),
+               res -> ignoreForSpecifiedExceptionConstructors = StringUtil.join((List<?>)res, ",")) 
+      .onValueSet("nonNlsCommentPattern", pattern -> setNonNlsCommentPattern(pattern.toString()))
+      .onValueSet("nonNlsLiteralPattern", pattern -> setNonNlsLiteralPattern(pattern.toString()));
   }
 
   @Override
@@ -471,35 +313,67 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
            new Class[] {UInjectionHost.class};
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public @NotNull String getAlternativeID() {
     return "nls";
   }
 
   @NotNull
   private static LocalQuickFix createIntroduceConstantFix() {
-    return new LocalQuickFix() {
-      @Override
-      @NotNull
-      public String getFamilyName() {
-        return IntroduceConstantHandler.getRefactoringNameText();
-      }
+    return new IntroduceConstantFix();
+  }
 
-      @Override
-      public boolean startInWriteAction() {
-        return false;
+  @Nullable
+  private static ULocalVariable getVariableToSearch(UExpression passThrough) {
+    UElement uastParent = passThrough.getUastParent();
+    ULocalVariable uVar = null;
+    if (uastParent instanceof ULocalVariable) {
+      uVar = (ULocalVariable)uastParent;
+    }
+    else if (uastParent instanceof UBinaryExpression &&
+             (((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.ASSIGN ||
+              ((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.PLUS_ASSIGN) &&
+             AnnotationContext.expressionsAreEquivalent(((UBinaryExpression)uastParent).getRightOperand(), passThrough)) {
+      UExpression left = ((UBinaryExpression)uastParent).getLeftOperand();
+      if (left instanceof UResolvable) {
+        PsiElement target = ((UResolvable)left).resolve();
+        uVar = ObjectUtils.tryCast(UastContextKt.toUElement(target), ULocalVariable.class);
+        if (uVar == null && target != null) {
+          uVar = ObjectUtils.tryCast(UastContextKt.toUElement(target.getParent()), ULocalVariable.class);
+        }
       }
+    }
+    return uVar;
+  }
 
-      @Override
-      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-        PsiElement element = descriptor.getPsiElement();
-        if (!(element instanceof PsiExpression)) return;
-
-        PsiExpression[] expressions = {(PsiExpression)element};
-        new IntroduceConstantHandler().invoke(project, expressions);
+  @Nullable
+  private static List<@NotNull UExpression> findUsages(UExpression passThrough, ULocalVariable uVar) {
+    PsiElement psiVar = uVar.getSourcePsi();
+    PsiElement psi = passThrough.getSourcePsi();
+    if (psi != null && psiVar != null) {
+      if (psiVar instanceof PsiLocalVariable local) {
+        // Java
+        PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
+        if (codeBlock instanceof PsiCodeBlock) {
+          List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, codeBlock);
+          return ContainerUtil.mapNotNull(
+            refs, ref -> PsiUtil.isAccessedForWriting(ref) ? null : UastContextKt.toUElement(ref, UExpression.class));
+        }
       }
-    };
+      else {
+        // Kotlin
+        Collection<PsiReference> refs = ReferencesSearch.search(psiVar, psiVar.getUseScope()).findAll();
+        return ContainerUtil.mapNotNull(refs, ref -> {
+          UExpression expr = UastContextKt.toUElement(ref.getElement(), UExpression.class);
+          if (expr != null && expr.getUastParent() instanceof UBinaryExpression &&
+              AnnotationContext.expressionsAreEquivalent(((UBinaryExpression)expr.getUastParent()).getLeftOperand(), expr)) {
+            return null;
+          }
+          return expr;
+        });
+      }
+    }
+    return null;
   }
 
   private final class StringI18nVisitor extends AbstractUastNonRecursiveVisitor {
@@ -525,8 +399,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
           return true;
         }
       }
-      if (ref.getUastParent() instanceof UQualifiedReferenceExpression) {
-        UQualifiedReferenceExpression parent = (UQualifiedReferenceExpression)ref.getUastParent();
+      if (ref.getUastParent() instanceof UQualifiedReferenceExpression parent) {
         if (STRING_BUILDER_TO_STRING.methodMatches(target)) {
           UExpression receiver = parent.getReceiver();
           if (receiver instanceof UResolvable) {
@@ -566,7 +439,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
       PsiType type = ref.getExpressionType();
       if (!TypeUtils.isJavaLangString(type) && !TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_CHAR_SEQUENCE, type)) return;
       if (target instanceof PsiMethod &&
-          (NlsInfo.isStringProcessingMethod((PsiMethod)target) || NlsInfo.isPassthroughMethod((PsiMethod)target, null, null))) {
+          (StringFlowUtil.isStringProcessingMethod((PsiMethod)target, NlsInfo.factory()) || StringFlowUtil.isPassthroughMethod((PsiMethod)target, null, null, NlsInfo.factory()))) {
         return;
       }
       if (NlsInfo.forModifierListOwner(target).canBeUsedInLocalizedContext()) return;
@@ -576,14 +449,31 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
       NlsInfo targetInfo = getExpectedNlsInfo(myHolder.getProject(), ref, value, new HashSet<>(), myOnTheFly, true);
       if (targetInfo instanceof NlsInfo.Localized) {
-        AddAnnotationFix fix =
-          new AddAnnotationFix(((NlsInfo.Localized)targetInfo).suggestAnnotation(target), target, AnnotationUtil.NON_NLS);
-        AddAnnotationFix fixSafe = null;
-        if (JavaPsiFacade.getInstance(target.getProject()).findClass(NlsInfo.NLS_SAFE, target.getResolveScope()) != null) {
-          fixSafe = new MarkAsSafeFix(target);
+        List<LocalQuickFix> fixes = new ArrayList<>();
+        String fqn = ((NlsInfo.Localized)targetInfo).suggestAnnotation(target);
+        ExternalAnnotationsManager.AnnotationPlace annotationPlace = AddAnnotationPsiFix.choosePlace(fqn, target);
+        boolean addNullSafe = JavaPsiFacade.getInstance(target.getProject()).findClass(NlsInfo.NLS_SAFE, target.getResolveScope()) != null;
+        if (annotationPlace == ExternalAnnotationsManager.AnnotationPlace.IN_CODE && target instanceof JvmModifiersOwner) {
+          fixes.addAll(IntentionWrapper.wrapToQuickFixes(JvmElementActionFactories.createAddAnnotationActions((JvmModifiersOwner)target, AnnotationRequestsKt.annotationRequest(fqn)), sourcePsi.getContainingFile()));
+          if (addNullSafe) {
+            for (IntentionAction action : JvmElementActionFactories.createAddAnnotationActions((JvmModifiersOwner)target, AnnotationRequestsKt.annotationRequest(NlsInfo.NLS_SAFE))) {
+              fixes.add(new IntentionWrapper(action) {
+                @Override
+                public @NotNull String getFamilyName() {
+                  return JavaI18nBundle.message("intention.family.name.mark.as.nlssafe");
+                }
+              });
+            }
+          }
+        }
+        else {
+          fixes.add(new AddAnnotationFix(fqn, target, AnnotationUtil.NON_NLS));
+          if (addNullSafe) {
+            fixes.add(new MarkAsSafeFix(target));
+          }
         }
         String description = JavaI18nBundle.message("inspection.i18n.message.non.localized.passed.to.localized");
-        myHolder.registerProblem(sourcePsi, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix, fixSafe);
+        myHolder.registerProblem(sourcePsi, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     }
 
@@ -651,15 +541,15 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
       myHolder.registerProblem(sourcePsi, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, farr);
     }
 
-    private boolean isSwitchCase(@NotNull UInjectionHost expression) {
-      if (expression.getUastParent() instanceof USwitchClauseExpression) {
-        return ((USwitchClauseExpression)expression.getUastParent()).getCaseValues().stream()
-          .anyMatch(value -> expression.equals(UastLiteralUtils.wrapULiteral(value)));
+    private static boolean isSwitchCase(@NotNull UInjectionHost expression) {
+      if (expression.getUastParent() instanceof USwitchClauseExpression parent) {
+        return ContainerUtil.exists(parent.getCaseValues(),
+                                    value -> expression.equals(UastLiteralUtils.wrapULiteral(value)));
       }
       return false;
     }
 
-    private boolean isNotConstantFieldInitializer(final PsiExpression expression) {
+    private static boolean isNotConstantFieldInitializer(final PsiExpression expression) {
       PsiField parentField = expression.getParent() instanceof PsiField ? (PsiField)expression.getParent() : null;
       return parentField != null && expression == parentField.getInitializer() &&
              parentField.hasModifierProperty(PsiModifier.FINAL) &&
@@ -677,51 +567,12 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     }
   }
 
-  protected static List<UExpression> findIndirectUsages(UExpression expression, boolean allowStringModifications) {
-    UExpression passThrough = NlsInfo.goUp(expression, allowStringModifications);
-    UElement uastParent = passThrough.getUastParent();
-    ULocalVariable uVar = null;
-    if (uastParent instanceof ULocalVariable) {
-      uVar = (ULocalVariable)uastParent;
-    } else if (uastParent instanceof UBinaryExpression &&
-               (((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.ASSIGN ||
-                ((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.PLUS_ASSIGN) &&
-               AnnotationContext.expressionsAreEquivalent(((UBinaryExpression)uastParent).getRightOperand(), passThrough)){
-      UExpression left = ((UBinaryExpression)uastParent).getLeftOperand();
-      if (left instanceof UResolvable) {
-        PsiElement target = ((UResolvable)left).resolve();
-        uVar = ObjectUtils.tryCast(UastContextKt.toUElement(target), ULocalVariable.class);
-        if (uVar == null && target != null) {
-          uVar = ObjectUtils.tryCast(UastContextKt.toUElement(target.getParent()), ULocalVariable.class);
-        }
-      }
-    }
+  static List<UExpression> findIndirectUsages(UExpression expression, boolean allowStringModifications) {
+    UExpression passThrough = StringFlowUtil.goUp(expression, allowStringModifications, NlsInfo.factory());
+    ULocalVariable uVar = getVariableToSearch(passThrough);
     if (uVar != null && NlsInfo.fromUVariable(uVar).getNlsStatus() == ThreeState.UNSURE) {
-      PsiElement psiVar = uVar.getSourcePsi();
-      PsiElement psi = passThrough.getSourcePsi();
-      if (psi != null && psiVar != null) {
-        if (psiVar instanceof PsiLocalVariable) {
-          // Java
-          PsiLocalVariable local = (PsiLocalVariable)psiVar;
-          PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
-          if (codeBlock instanceof PsiCodeBlock) {
-            List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, codeBlock);
-            return ContainerUtil.mapNotNull(
-              refs, ref -> PsiUtil.isAccessedForWriting(ref) ? null : UastContextKt.toUElement(ref, UExpression.class));
-          }
-        } else {
-          // Kotlin
-          Collection<PsiReference> refs = ReferencesSearch.search(psiVar, psiVar.getUseScope()).findAll();
-          return ContainerUtil.mapNotNull(refs, ref -> {
-            UExpression expr = UastContextKt.toUElement(ref.getElement(), UExpression.class);
-            if (expr != null && expr.getUastParent() instanceof UBinaryExpression &&
-                AnnotationContext.expressionsAreEquivalent(((UBinaryExpression)expr.getUastParent()).getLeftOperand(), expr)) {
-              return null;
-            }
-            return expr;
-          });
-        }
-      }
+      List<UExpression> usages = findUsages(passThrough, uVar);
+      if (usages != null) return usages;
     }
     return Collections.singletonList(passThrough);
   }
@@ -752,10 +603,10 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     for (UExpression usage : usages) {
       NlsInfo info = NlsInfo.forExpression(usage);
       switch (info.getNlsStatus()) {
-        case YES: {
+        case YES -> {
           return info;
         }
-        case UNSURE: {
+        case UNSURE -> {
           if (ignoreForAllButNls) {
             break;
           }
@@ -765,11 +616,10 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
           if (!onTheFly) { //keep only potential annotation candidate
             nonNlsTargets.clear();
           }
-          ContainerUtil.addIfNotNull(nonNlsTargets, ((NlsInfo.Unspecified)info).getAnnotationCandidate());
+          ContainerUtil.addIfNotNull(nonNlsTargets, ((NlsInfo.NlsUnspecified)info).getAnnotationCandidate());
           return NlsInfo.localized();
         }
-        case NO:
-          break;
+        case NO -> {}
       }
     }
     return NlsInfo.nonLocalized();
@@ -892,8 +742,8 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
                                    final Set<? super PsiModifierListOwner> nonNlsTargets) {
     NlsInfo info = NlsInfo.forExpression(JavaI18nUtil.getTopLevelExpression(expression, false));
     if (info.getNlsStatus() == ThreeState.NO) return true;
-    if (info instanceof NlsInfo.Unspecified) {
-      PsiModifierListOwner candidate = ((NlsInfo.Unspecified)info).getAnnotationCandidate();
+    if (info instanceof NlsInfo.NlsUnspecified) {
+      PsiModifierListOwner candidate = ((NlsInfo.NlsUnspecified)info).getAnnotationCandidate();
       if (candidate instanceof PsiVariable &&
           ignoreAssignedToConstants &&
           candidate.hasModifierProperty(PsiModifier.STATIC) &&
@@ -911,8 +761,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
   private static boolean isSafeStringMethod(UExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
     UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
-    if (parent instanceof UBinaryExpression) {
-      UBinaryExpression binOp = (UBinaryExpression)parent;
+    if (parent instanceof UBinaryExpression binOp) {
       if (STRING_COMPARISON_OPS.contains(binOp.getOperator())) {
         UResolvable left = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand()), UResolvable.class);
         UResolvable right = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getRightOperand()), UResolvable.class);
@@ -922,8 +771,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     }
     if (!(parent instanceof UQualifiedReferenceExpression)) return false;
     UExpression selector = ((UQualifiedReferenceExpression)parent).getSelector();
-    if (!(selector instanceof UCallExpression)) return false;
-    UCallExpression call = (UCallExpression)selector;
+    if (!(selector instanceof UCallExpression call)) return false;
     if (STRING_EQUALS.uCallMatches(call)) {
       final List<UExpression> expressions = call.getValueArguments();
       if (expressions.size() != 1) return false;
@@ -946,15 +794,14 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     if (parent instanceof UResolvable && isNonNlsCall((UResolvable)parent, nonNlsTargets)) {
       return true;
     }
-    if (parent != null && UastExpressionUtils.isAssignment(parent)) {
+    if (UastExpressionUtils.isAssignment(parent)) {
       UExpression operand = ((UBinaryExpression)parent).getLeftOperand();
       if (operand instanceof UReferenceExpression &&
           isNonNlsCall((UReferenceExpression)operand, nonNlsTargets)) return true;
     }
     if (parent instanceof UCallExpression) {
       UElement parentOfNew = UastUtils.skipParenthesizedExprUp(parent.getUastParent());
-      if (parentOfNew instanceof ULocalVariable) {
-        final ULocalVariable newVariable = (ULocalVariable)parentOfNew;
+      if (parentOfNew instanceof ULocalVariable newVariable) {
         if (annotatedAsNonNls(newVariable.getPsi())) {
           return true;
         }
@@ -971,8 +818,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
   private static boolean isNonNlsCall(UResolvable qualifier, Set<? super PsiModifierListOwner> nonNlsTargets) {
     final PsiElement resolved = qualifier.resolve();
-    if (resolved instanceof PsiModifierListOwner) {
-      final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)resolved;
+    if (resolved instanceof PsiModifierListOwner modifierListOwner) {
       if (annotatedAsNonNls(modifierListOwner)) {
         return true;
       }

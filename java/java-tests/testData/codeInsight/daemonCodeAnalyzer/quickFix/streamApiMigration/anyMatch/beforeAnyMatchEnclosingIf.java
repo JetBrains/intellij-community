@@ -1,4 +1,4 @@
-// "Replace with anyMatch()" "true"
+// "Collapse loop with stream 'anyMatch()'" "true-preview"
 
 public class Main {
   boolean contains(String[][] haystack, String needle) {

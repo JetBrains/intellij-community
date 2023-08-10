@@ -22,8 +22,6 @@ import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * Tests the "Join lines" handler.
- *
- * @author dcheryasov
  */
 public class PyJoinLinesTest extends PyTestCase {
   private void doTest() {
@@ -184,6 +182,10 @@ public class PyJoinLinesTest extends PyTestCase {
   }
   
   public void testFStringAndPlainLiteral() {
+    doTest();
+  }
+
+  public void testSlashAtFirstLine() {
     doTest();
   }
 }

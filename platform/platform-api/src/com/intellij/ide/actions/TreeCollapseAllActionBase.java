@@ -6,15 +6,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @deprecated use {@link CollapseAllAction} instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+@Deprecated(forRemoval = true)
 public abstract class TreeCollapseAllActionBase extends DumbAwareAction {
   protected abstract @Nullable TreeExpander getExpander(@NotNull DataContext context);
 
@@ -30,7 +28,7 @@ public abstract class TreeCollapseAllActionBase extends DumbAwareAction {
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     TreeExpander expander = getExpander(event.getDataContext());
-    presentation.setVisible(expander == null || (expander.isCollapseAllVisible() && expander.isVisible(event)));
+    presentation.setVisible(expander == null || expander.isCollapseAllVisible());
     presentation.setEnabled(expander != null && expander.canCollapse());
   }
 }

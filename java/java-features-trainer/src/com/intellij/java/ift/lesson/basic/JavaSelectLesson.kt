@@ -1,16 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.ift.lesson.basic
 
-import training.learn.interfaces.Module
+import training.dsl.LessonSample
+import training.dsl.parseLessonSample
 import training.learn.lesson.general.NewSelectLesson
-import training.learn.lesson.kimpl.LessonSample
-import training.learn.lesson.kimpl.parseLessonSample
 
-class JavaSelectLesson(module: Module) : NewSelectLesson(module, "JAVA") {
-  override val selectArgument = "\"$selectString\""
-  override val selectCall = """someMethod("$firstString", $selectArgument, "$thirdString")"""
+class JavaSelectLesson : NewSelectLesson() {
+  override val selectArgument: String = "\"$selectString\""
+  override val selectCall: String = """someMethod("$firstString", $selectArgument, "$thirdString")"""
 
-  override val numberOfSelectsForWholeCall = 4
+  override val numberOfSelectsForWholeCall: Int = 2
 
   override val sample: LessonSample = parseLessonSample("""
     abstract class Scratch {
@@ -25,5 +24,5 @@ class JavaSelectLesson(module: Module) : NewSelectLesson(module, "JAVA") {
         }
     }
   """.trimIndent())
-  override val selectIf = sample.getPosition(1).selection!!.let { sample.text.substring(it.first, it.second) }
+  override val selectIf: String = sample.getPosition(1).selection!!.let { sample.text.substring(it.first, it.second) }
 }

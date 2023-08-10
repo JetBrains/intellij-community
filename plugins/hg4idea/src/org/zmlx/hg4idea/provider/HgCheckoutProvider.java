@@ -2,16 +2,21 @@
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTask;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTaskInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
@@ -23,7 +28,6 @@ import org.zmlx.hg4idea.ui.HgCloneDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.io.File;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.CLONE_ERROR;
 
@@ -55,24 +59,38 @@ public class HgCheckoutProvider implements CheckoutProvider {
       return;
     }
     final String targetDir = destinationParent.getPath() + File.separator + directoryName;
+    String projectPath = FileUtilRt.toSystemIndependentName(targetDir);
 
-    final AtomicReference<HgCommandResult> cloneResult = new AtomicReference<>();
-    new Task.Backgroundable(project, HgBundle.message("hg4idea.clone.progress", sourceRepositoryURL), true) {
+    CloneTask cloneTask = new CloneTask() {
+
+      @NotNull
       @Override
-      public void run(@NotNull ProgressIndicator indicator) {
+      public CloneTaskInfo taskInfo() {
+        return new CloneTaskInfo(DvcsBundle.message("cloning.repository", sourceRepositoryURL),
+                                 DvcsBundle.message("cloning.repository.cancel", sourceRepositoryURL),
+                                 DvcsBundle.message("clone.repository"),
+                                 DvcsBundle.message("clone.repository.tooltip"),
+                                 DvcsBundle.message("clone.repository.failed"),
+                                 DvcsBundle.message("clone.repository.canceled"),
+                                 DvcsBundle.message("clone.stop.message.title"),
+                                 DvcsBundle.message("clone.stop.message.description", sourceRepositoryURL));
+      }
+
+      @NotNull
+      @Override
+      public CloneStatus run(@NotNull ProgressIndicator indicator) {
         HgCloneCommand clone = new HgCloneCommand(project);
         clone.setRepositoryURL(sourceRepositoryURL);
         clone.setDirectory(targetDir);
-        cloneResult.set(clone.executeInCurrentThread());
-      }
 
-      @Override
-      public void onSuccess() {
-        if (cloneResult.get() == null || HgErrorUtil.hasErrorsInCommandExecution(cloneResult.get())) {
+        HgCommandResult commandResult = clone.executeInCurrentThread();
+        if (commandResult == null || HgErrorUtil.hasErrorsInCommandExecution(commandResult)) {
           new HgCommandResultNotifier(project).notifyError(CLONE_ERROR,
-                                                           cloneResult.get(),
-                                                           HgBundle.message("hg4idea.clone.error"),
+                                                           commandResult,
+                                                           DvcsBundle.message("clone.repository.failed"),
                                                            HgBundle.message("hg4idea.clone.repo.error.msg", sourceRepositoryURL));
+
+          return CloneStatus.FAILURE;
         }
         else {
           DvcsUtil.addMappingIfSubRoot(project, targetDir, HgVcs.VCS_NAME);
@@ -80,19 +98,25 @@ public class HgCheckoutProvider implements CheckoutProvider {
             listener.directoryCheckedOut(new File(parentDirectory, directoryName), HgVcs.getKey());
             listener.checkoutCompleted();
           }
+
+          return CloneStatus.SUCCESS;
         }
       }
-    }.queue();
+    };
+
+    CloneableProjectsService.getInstance().runCloneTask(projectPath, cloneTask);
   }
 
   @Override
-  public String getVcsName() {
-    return "_Mercurial";
+  public @NotNull String getVcsName() {
+    return HgBundle.message("hg4idea.vcs.name.with.mnemonic");
   }
 
   @NotNull
   @Override
-  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState, @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project,
+                                                  @NotNull ModalityState modalityState,
+                                                  @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
     return new HgCloneDialogComponent(project, dialogStateListener);
   }
 }

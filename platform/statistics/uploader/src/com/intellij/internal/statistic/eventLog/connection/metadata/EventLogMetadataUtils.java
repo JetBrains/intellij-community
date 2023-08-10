@@ -1,19 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection.metadata;
 
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DatabindException;
+import com.intellij.internal.statistic.config.SerializationHelper;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException.EventLogMetadataLoadErrorType;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequests;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsRequestResult;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsResponseException;
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collections;
 
-import static com.intellij.internal.statistic.StatisticsStringUtil.isEmptyOrSpaces;
+import static com.intellij.internal.statistic.config.StatisticsStringUtil.isEmptyOrSpaces;
 
 /**
  * <ol>
@@ -33,10 +36,34 @@ public final class EventLogMetadataUtils {
   public static EventGroupsFilterRules<EventLogBuild> loadAndParseGroupsFilterRules(@NotNull String serviceUrl, @NotNull EventLogConnectionSettings settings) {
     try {
       String content = loadMetadataFromServer(serviceUrl, settings);
-      return EventGroupsFilterRules.create(content);
+      EventGroupRemoteDescriptors groups = parseGroupRemoteDescriptors(content);
+      return EventGroupsFilterRules.create(groups, EventLogBuild.EVENT_LOG_BUILD_PRODUCER);
     }
     catch (EventLogMetadataParseException | EventLogMetadataLoadException e) {
       return EventGroupsFilterRules.empty();
+    }
+  }
+
+  @NotNull
+  public static EventGroupRemoteDescriptors parseGroupRemoteDescriptors(@Nullable String content) throws EventLogMetadataParseException {
+    if (isEmptyOrSpaces(content)) {
+      throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.EMPTY_CONTENT);
+    }
+
+    try {
+      EventGroupRemoteDescriptors groups = SerializationHelper.INSTANCE.deserialize(content, EventGroupRemoteDescriptors.class);
+
+      if (groups == null) {
+        throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.INVALID_JSON);
+      }
+
+      return groups;
+    }
+    catch (StreamReadException | DatabindException e) {
+      throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.INVALID_JSON, e);
+    }
+    catch (Exception e) {
+      throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.UNKNOWN, e);
     }
   }
 

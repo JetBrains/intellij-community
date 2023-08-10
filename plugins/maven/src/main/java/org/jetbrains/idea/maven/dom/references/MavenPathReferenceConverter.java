@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.dom.references;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,9 +25,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenPathReferenceConverter extends PathReferenceConverter {
 
   private final Condition<PsiFileSystemItem> myCondition;
@@ -71,7 +69,7 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
           @Override
           protected void innerResolveInContext(@NotNull String text,
                                                @NotNull PsiFileSystemItem context,
-                                               @NotNull Collection<ResolveResult> result,
+                                               @NotNull Collection<? super ResolveResult> result,
                                                boolean caseSensitive) {
             if (model == null) {
               DomElement rootElement = DomUtil.getFileElement(genericDomValue).getRootElement();
@@ -83,7 +81,7 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
             String resolvedText = model == null ? text : MavenPropertyResolver.resolve(text, model);
 
             if (resolvedText.equals(text)) {
-              if (getIndex() == 0 && resolvedText.length() == 2 && resolvedText.charAt(1) == ':') {
+              if (getIndex() == 0 && resolvedText.length() == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(resolvedText)) {
                 // it's root on windows, e.g. "C:"
                 VirtualFile file = LocalFileSystem.getInstance().findFileByPath(resolvedText + '/');
                 if (file != null) {

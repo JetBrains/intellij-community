@@ -75,7 +75,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
                                  Pair<String, String> position, Project project, TestDiscoveryIndex testDiscoveryIndex) {
     final RunnerAndConfigurationSettings template =
       configurationContext.getRunManager().getConfigurationTemplate(getConfigurationFactory());
-    final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
+    final Module predefinedModule = ((ModuleBasedConfiguration<?, ?>)template.getConfiguration()).getConfigurationModule().getModule();
     if (predefinedModule != null) {
       return predefinedModule;
     }
@@ -126,7 +126,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
 
   public static Module detectTargetModule(Collection<? extends Module> survivedModules, Project project) {
     ModuleManager moduleManager = ModuleManager.getInstance(project);
-    final Set<Module> allModules = ContainerUtil.set(moduleManager.getModules());
+    final Set<Module> allModules = ContainerUtil.newHashSet(moduleManager.getModules());
     survivedModules
       .forEach(module -> {
         final List<Module> dependentModules = ModuleUtilCore.getAllDependentModules(module);

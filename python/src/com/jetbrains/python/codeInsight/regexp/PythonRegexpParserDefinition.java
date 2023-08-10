@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.regexp;
 
 import com.intellij.lang.PsiParser;
@@ -7,16 +7,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
-import org.intellij.lang.regexp.*;
+import org.intellij.lang.regexp.RegExpCapability;
+import org.intellij.lang.regexp.RegExpLexer;
+import org.intellij.lang.regexp.RegExpParser;
+import org.intellij.lang.regexp.RegExpParserDefinition;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 
 import static org.intellij.lang.regexp.RegExpCapability.*;
 
-/**
- * @author yole
- */
+
 public class PythonRegexpParserDefinition extends RegExpParserDefinition {
   public static final IFileElementType PYTHON_REGEXP_FILE = new IFileElementType("PYTHON_REGEXP_FILE", PythonRegexpLanguage.INSTANCE);
   protected final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(DANGLING_METACHARACTERS,
@@ -42,6 +43,6 @@ public class PythonRegexpParserDefinition extends RegExpParserDefinition {
 
   @Override
   public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
-    return new RegExpFile(viewProvider, PythonRegexpLanguage.INSTANCE);
+    return new DjangoRegexpFile(viewProvider);
   }
 }

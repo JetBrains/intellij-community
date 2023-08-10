@@ -65,7 +65,7 @@ abstract class SpotlightPainter extends AbstractPainter implements ComponentHigh
     }
     else if (component != null) {
       myGlassPanel.clear();
-      String text = filter.getFilterText();
+      String text = filter.getSpotlightFilterText();
       myVisible = !text.isEmpty();
       SearchableConfigurable searchable = new SearchableConfigurable.Delegate(configurable);
       try {

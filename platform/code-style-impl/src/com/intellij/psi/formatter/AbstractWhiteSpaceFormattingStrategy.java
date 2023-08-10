@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Abstract common {@link WhiteSpaceFormattingStrategy} implementation that doesn't replace default strategy and doesn't
  * adjust white space and
- *
- * @author Denis Zhdanov
  */
 public abstract class AbstractWhiteSpaceFormattingStrategy implements WhiteSpaceFormattingStrategy {
 

@@ -22,9 +22,6 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.IntFunction;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxColorProvider implements ElementColorProvider {
   private static final String COLOR = "color";
   private static final String RGB = "rgb";
@@ -40,8 +37,7 @@ public class JavaFxColorProvider implements ElementColorProvider {
     if (!(element instanceof PsiIdentifier)) return null;
     PsiElement parent = element.getParent();
     PsiElement gp = parent == null ? null : parent.getParent();
-    if (gp instanceof PsiNewExpression && ((PsiNewExpression)gp).getClassReference() == parent) {
-      PsiNewExpression newExpression = (PsiNewExpression)gp;
+    if (gp instanceof PsiNewExpression newExpression && ((PsiNewExpression)gp).getClassReference() == parent) {
       if (isColorClass(PsiTypesUtil.getPsiClass(newExpression.getType()))) {
         PsiExpressionList argumentList = newExpression.getArgumentList();
         if (argumentList != null) {
@@ -57,14 +53,12 @@ public class JavaFxColorProvider implements ElementColorProvider {
       parent = parent.getParent();
       gp = parent.getParent();
     }
-    if (gp instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)gp).getMethodExpression().getReferenceNameElement() == element) {
-      PsiMethodCallExpression methodCall = (PsiMethodCallExpression)gp;
+    if (gp instanceof PsiMethodCallExpression methodCall && ((PsiMethodCallExpression)gp).getMethodExpression().getReferenceNameElement() == element) {
       PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
       String methodName = methodExpression.getReferenceName();
       if (FACTORY_METHODS.contains(methodName)) {
         PsiElement resolved = methodExpression.resolve();
-        if (resolved instanceof PsiMethod) {
-          PsiMethod method = (PsiMethod)resolved;
+        if (resolved instanceof PsiMethod method) {
           if (method.hasModifierProperty(PsiModifier.STATIC)) {
             if (isColorClass(method.getContainingClass())) {
               return getColor(methodName, methodCall.getArgumentList());
@@ -82,38 +76,36 @@ public class JavaFxColorProvider implements ElementColorProvider {
 
   @Nullable
   private static Color getColor(@Nullable String methodName, @NotNull PsiExpressionList argumentList) {
+    if (methodName == null) return null;
     Object[] values = getArgumentValues(argumentList.getExpressions());
-    if (COLOR.equals(methodName)) {
-      switch (values.length) {
-        case 4: return getScaledRgbColor(values[0], values[1], values[2], values[3]);
-        case 3: return getScaledRgbColor(values[0], values[1], values[2], Double.valueOf(1));
-      }
-    }
-    else if (RGB.equals(methodName)) {
-      switch (values.length) {
-        case 4: return getRgbColor(values[0], values[1], values[2], values[3]);
-        case 3: return getRgbColor(values[0], values[1], values[2], Double.valueOf(1));
-      }
-    }
-    else if (GRAY.equals(methodName)) {
-      switch (values.length) {
-        case 2: return getScaledRgbColor(values[0], values[0], values[0], values[1]);
-        case 1: return getScaledRgbColor(values[0], values[0], values[0], Double.valueOf(1));
-      }
-    }
-    else if (GRAY_RGB.equals(methodName)) {
-      switch (values.length) {
-        case 2: return getRgbColor(values[0], values[0], values[0], values[1]);
-        case 1: return getRgbColor(values[0], values[0], values[0], Double.valueOf(1));
-      }
-    }
-    else if (HSB.equals(methodName)) {
-      switch (values.length) {
-        case 4: return getHsbColor(values[0], values[1], values[2], values[3]);
-        case 3: return getHsbColor(values[0], values[1], values[2], Double.valueOf(1));
-      }
-    }
-    return null;
+    return switch (methodName) {
+      case COLOR -> switch (values.length) {
+        case 4 -> getScaledRgbColor(values[0], values[1], values[2], values[3]);
+        case 3 -> getScaledRgbColor(values[0], values[1], values[2], Double.valueOf(1));
+        default -> null;
+      };
+      case RGB -> switch (values.length) {
+        case 4 -> getRgbColor(values[0], values[1], values[2], values[3]);
+        case 3 -> getRgbColor(values[0], values[1], values[2], Double.valueOf(1));
+        default -> null;
+      };
+      case GRAY -> switch (values.length) {
+        case 2 -> getScaledRgbColor(values[0], values[0], values[0], values[1]);
+        case 1 -> getScaledRgbColor(values[0], values[0], values[0], Double.valueOf(1));
+        default -> null;
+      };
+      case GRAY_RGB -> switch (values.length) {
+        case 2 -> getRgbColor(values[0], values[0], values[0], values[1]);
+        case 1 -> getRgbColor(values[0], values[0], values[0], Double.valueOf(1));
+        default -> null;
+      };
+      case HSB -> switch (values.length) {
+        case 4 -> getHsbColor(values[0], values[1], values[2], values[3]);
+        case 3 -> getHsbColor(values[0], values[1], values[2], Double.valueOf(1));
+        default -> null;
+      };
+      default -> null;
+    };
   }
 
   private static Object @NotNull [] getArgumentValues(PsiExpression @NotNull [] argumentExpressions) {
@@ -188,14 +180,12 @@ public class JavaFxColorProvider implements ElementColorProvider {
   @Override
   public void setColorTo(@NotNull PsiElement element, @NotNull Color color) {
     Runnable command = null;
-    if (element instanceof PsiNewExpression) {
-      final PsiNewExpression expr = (PsiNewExpression)element;
+    if (element instanceof PsiNewExpression expr) {
       PsiExpressionList argumentList = expr.getArgumentList();
       assert argumentList != null;
       command = () -> replaceConstructorArgs(color, argumentList);
     }
-    if (element instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
+    if (element instanceof PsiMethodCallExpression methodCall) {
       PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
       String methodName = methodExpression.getReferenceName();
       if (COLOR.equals(methodName) || GRAY.equals(methodName)) {

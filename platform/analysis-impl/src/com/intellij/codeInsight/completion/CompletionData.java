@@ -20,9 +20,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -31,8 +29,7 @@ import static com.intellij.patterns.StandardPatterns.not;
 /**
  * @deprecated see {@link CompletionContributor}
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-@Deprecated
+@Deprecated(forRemoval = true)
 public class CompletionData {
   private static final Logger LOG = Logger.getInstance(CompletionData.class);
   public static final ObjectPattern.Capture<Character> NOT_JAVA_ID = not(CharPattern.javaIdentifierPartCharacter());
@@ -53,7 +50,7 @@ public class CompletionData {
   /**
    * @deprecated see {@link CompletionContributor}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected void registerVariant(CompletionVariant variant){
     myCompletionVariants.add(variant);
   }
@@ -122,27 +119,14 @@ public class CompletionData {
     }
   };
 
-  /**
-   * @deprecated {@link CompletionUtil#findReferencePrefix} instead
-   */
-  @Deprecated
-  @Nullable
-  public static String getReferencePrefix(@NotNull PsiElement insertedElement, int offsetInFile) {
-    return CompletionUtil.findReferencePrefix(insertedElement, offsetInFile);
-  }
-
-  /**
-   * @deprecated Use {@link CompletionUtil} methods instead
-   */
-  @Deprecated
-  public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile, ElementPattern<Character> prefixStartTrim) {
+  private static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile, ElementPattern<Character> prefixStartTrim) {
     if(insertedElement == null) return "";
 
     final Document document = insertedElement.getContainingFile().getViewProvider().getDocument();
     assert document != null;
     LOG.assertTrue(!PsiDocumentManager.getInstance(insertedElement.getProject()).isUncommited(document), "Uncommitted");
 
-    final String prefix = getReferencePrefix(insertedElement, offsetInFile);
+    final String prefix = CompletionUtil.findReferencePrefix(insertedElement, offsetInFile);
     if (prefix != null) return prefix;
 
     if (insertedElement.getTextRange().equals(insertedElement.getContainingFile().getTextRange()) || insertedElement instanceof PsiComment) {
@@ -155,16 +139,12 @@ public class CompletionData {
   /**
    * @deprecated Use {@link CompletionUtil} methods instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile) {
     return findPrefixStatic(insertedElement, offsetInFile, NOT_JAVA_ID);
   }
 
-  /**
-   * @deprecated Use {@link CompletionUtil} methods instead
-   */
-  @Deprecated
-  public static String findPrefixDefault(final PsiElement insertedElement, final int offset, @NotNull final ElementPattern trimStart) {
+  private static String findPrefixDefault(final PsiElement insertedElement, final int offset, @NotNull final ElementPattern trimStart) {
     String substr = insertedElement.getText().substring(0, offset - insertedElement.getTextRange().getStartOffset());
     if (substr.length() == 0 || Character.isWhitespace(substr.charAt(substr.length() - 1))) return "";
 
@@ -207,12 +187,10 @@ public class CompletionData {
   protected void addLookupItem(Set<? super LookupElement> set, TailType tailType, @NotNull Object completion, final CompletionVariant variant) {
     LookupElement ret = objectToLookupItem(completion);
 
-    if (!(ret instanceof LookupItem)) {
+    if (!(ret instanceof LookupItem item)) {
       set.add(ret);
       return;
     }
-
-    LookupItem item = (LookupItem)ret;
 
     InsertHandler<?> insertHandler = variant.getInsertHandler();
     if(insertHandler != null && item.getInsertHandler() == null) {
@@ -236,8 +214,8 @@ public class CompletionData {
         completeReference(ref, position, set, tailType, filter, variant);
       }
     }
-    else if (reference instanceof PsiDynaReference) {
-      for (PsiReference ref : ((PsiDynaReference<?>)reference).getReferences()) {
+    else if (reference instanceof PsiReferencesWrapper) {
+      for (PsiReference ref : ((PsiReferencesWrapper)reference).getReferences()) {
         completeReference(ref, position, set, tailType, filter, variant);
       }
     }
@@ -248,15 +226,14 @@ public class CompletionData {
           LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(completions));
           continue;
         }
-        if (completion instanceof PsiElement) {
-          final PsiElement psiElement = (PsiElement)completion;
+        if (completion instanceof PsiElement psiElement) {
           if (filter.isClassAcceptable(psiElement.getClass()) && filter.isAcceptable(psiElement, position)) {
             addLookupItem(set, tailType, completion, variant);
           }
         }
         else {
           if (completion instanceof LookupItem) {
-            final Object o = ((LookupItem)completion).getObject();
+            final Object o = ((LookupItem<?>)completion).getObject();
             if (o instanceof PsiElement) {
               if (!filter.isClassAcceptable(o.getClass()) || !filter.isAcceptable(o, position)) continue;
             }

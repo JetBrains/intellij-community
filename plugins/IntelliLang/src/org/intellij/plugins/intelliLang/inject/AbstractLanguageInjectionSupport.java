@@ -59,13 +59,13 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
     return false;
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Override
   public boolean useDefaultCommentInjector() {
     return true;
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   @Override
   public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef) {

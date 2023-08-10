@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -36,9 +22,8 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaLightStubBuilder extends LightStubBuilder {
-  @NotNull
   @Override
-  protected StubElement<?> createStubForFile(@NotNull PsiFile file, @NotNull LighterAST tree) {
+  protected @NotNull StubElement<?> createStubForFile(@NotNull PsiFile file, @NotNull LighterAST tree) {
     if (!(file instanceof PsiJavaFile)) {
       return super.createStubForFile(file, tree);
     }
@@ -166,9 +151,9 @@ public class JavaLightStubBuilder extends LightStubBuilder {
         seenModifier = true;
       }
       // local classes
-      else if (type == JavaTokenType.CLASS_KEYWORD && (last != JavaTokenType.DOT || preLast != JavaTokenType.IDENTIFIER || seenModifier)
-               || type == JavaTokenType.ENUM_KEYWORD 
-               || type == JavaTokenType.INTERFACE_KEYWORD) {
+      else if (type == JavaTokenType.CLASS_KEYWORD && (last != JavaTokenType.DOT || preLast != JavaTokenType.IDENTIFIER || seenModifier) ||
+               type == JavaTokenType.ENUM_KEYWORD ||
+               type == JavaTokenType.INTERFACE_KEYWORD) {
         return (result = false);
       }
       // if record is inside lazy parseable element, tokens are not remapped and record token is still identifier
@@ -176,8 +161,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
       // Local records without < or ( won't be parsed
       else if (preLast == JavaTokenType.IDENTIFIER &&
                last == JavaTokenType.IDENTIFIER &&
-               (type == JavaTokenType.LPARENTH || type == JavaTokenType.LT)
-      ) {
+               (type == JavaTokenType.LPARENTH || type == JavaTokenType.LT)) {
         return (result = false);
       }
 

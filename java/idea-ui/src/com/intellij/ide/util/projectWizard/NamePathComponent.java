@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
@@ -33,6 +35,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
+import static com.intellij.openapi.ui.UiUtils.getCanonicalPath;
+import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 import static java.awt.GridBagConstraints.*;
 
 /**
@@ -112,8 +116,8 @@ public final class NamePathComponent extends JPanel {
     NamePathComponent component = new NamePathComponent(
       IdeBundle.message("label.project.name"),
       IdeBundle.message("label.project.files.location"),
-      JavaUiBundle.message("title.select.project.file.directory", IdeBundle.message("project.new.wizard.project.identification")),
-      JavaUiBundle.message("description.select.project.file.directory", StringUtil.capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
+      JavaUiBundle.message("title.select.project.file.directory", IdeCoreBundle.message("project.new.wizard.project.identification")),
+      JavaUiBundle.message("description.select.project.file.directory", StringUtil.capitalize(IdeCoreBundle.message("project.new.wizard.project.identification"))),
       true, false
     );
     String baseDir = context.getProjectFileDirectory();
@@ -163,7 +167,7 @@ public final class NamePathComponent extends JPanel {
       String fileName = defaultFormat ? name + ProjectFileType.DOT_DEFAULT_EXTENSION : Project.DIRECTORY_STORE_FOLDER;
       File projectFile = new File(projectDirectory, fileName);
       if (projectFile.exists()) {
-        message = JavaUiBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), context.getPresentationName());
+        message = CoreBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), context.getPresentationName());
         shouldContinue = MessageDialogBuilder.yesNo(IdeBundle.message("title.file.already.exists"), message).show() == Messages.YES;
       }
     }
@@ -187,15 +191,15 @@ public final class NamePathComponent extends JPanel {
   }
 
   public String getPath() {
-    String text = myTfPath.getText().trim();
-    return FileUtil.toCanonicalPath(FileUtil.expandUserHome(text));
+    String text = myTfPath.getText();
+    return getCanonicalPath(text);
   }
 
   public void setPath(String path) {
     boolean isPathChangedByUser = myIsPathChangedByUser;
     myIsPathNameSyncEnabled = false;
     try {
-      myTfPath.setText(FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path)));
+      myTfPath.setText(getPresentablePath(path));
     }
     finally {
       myIsPathChangedByUser = isPathChangedByUser;

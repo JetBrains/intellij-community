@@ -1,14 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.ide.plugins.PluginUtilImpl;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
-import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.mock.*;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.EditorFactory;
@@ -16,7 +15,7 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -24,11 +23,10 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.LineColumn;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.PomModel;
@@ -39,9 +37,6 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
-import com.intellij.psi.impl.source.tree.injected.EditorWindowTracker;
-import com.intellij.psi.impl.source.tree.injected.EditorWindowTrackerImpl;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
@@ -62,10 +57,10 @@ import java.util.*;
 
 /** @noinspection JUnitTestCaseWithNonTrivialConstructors*/
 public abstract class ParsingTestCase extends UsefulTestCase {
-  private PluginDescriptor myPluginDescriptor;
+  private PluginDescriptor pluginDescriptor;
 
-  private MockApplication myApp;
-  protected MockProjectEx myProject;
+  private MockApplication app;
+  protected MockProjectEx project;
 
   protected String myFilePrefix = "";
   protected String myFileExt;
@@ -91,15 +86,18 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
   @NotNull
   protected MockApplication getApplication() {
-    return myApp;
+    return app;
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
+    // This makes sure that tasks launched in the shared project are properly cancelled,
+    // so they don't leak into the mock app of ParsingTestCase.
+    LightPlatformTestCase.closeAndDeleteProject();
     MockApplication app = MockApplication.setUp(getTestRootDisposable());
-    myApp = app;
+    this.app = app;
     MutablePicoContainer appContainer = app.getPicoContainer();
     ComponentAdapter component = appContainer.getComponentAdapter(ProgressManager.class.getName());
     if (component == null) {
@@ -107,25 +105,25 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     }
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
 
-    myProject = new MockProjectEx(getTestRootDisposable());
-    myPsiManager = new MockPsiManager(myProject);
+    project = new MockProjectEx(getTestRootDisposable());
+    myPsiManager = new MockPsiManager(project);
     myFileFactory = new PsiFileFactoryImpl(myPsiManager);
     appContainer.registerComponentInstance(MessageBus.class, app.getMessageBus());
     appContainer.registerComponentInstance(SchemeManagerFactory.class, new MockSchemeManagerFactory());
     MockEditorFactory editorFactory = new MockEditorFactory();
     appContainer.registerComponentInstance(EditorFactory.class, editorFactory);
-    app.registerService(FileDocumentManager.class, new MockFileDocumentManagerImpl(FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY,
+    app.registerService(FileDocumentManager.class, new MockFileDocumentManagerImpl(FileDocumentManagerBase.HARD_REF_TO_DOCUMENT_KEY,
                                                                                    editorFactory::createDocument));
     app.registerService(PluginUtil.class, new PluginUtilImpl());
 
     app.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     app.registerService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
     app.registerService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
-    myProject.registerService(PsiDocumentManager.class, new MockPsiDocumentManager());
-    myProject.registerService(PsiManager.class, myPsiManager);
-    myProject.registerService(TreeAspect.class, new TreeAspect());
-    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myProject)));
-    myProject.registerService(StartupManager.class, new StartupManagerImpl(myProject));
+    project.registerService(PsiDocumentManager.class, new MockPsiDocumentManager());
+    project.registerService(PsiManager.class, myPsiManager);
+    project.registerService(TreeAspect.class, new TreeAspect());
+    project.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(project, new PsiCachedValuesFactory(project)));
+    project.registerService(StartupManager.class, new StartupManagerImpl(project, project.getCoroutineScope()));
     registerExtensionPoint(app.getExtensionArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
     registerExtensionPoint(app.getExtensionArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
 
@@ -140,7 +138,9 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     }
 
     // That's for reparse routines
-    myProject.registerService(PomModel.class, new PomModelImpl(myProject));
+    project.registerService(PomModel.class, new PomModelImpl(project));
+    Registry.markAsLoaded();
+    LoadingState.setCurrentState(LoadingState.PROJECT_OPENED);
   }
 
   protected final void registerParserDefinition(@NotNull ParserDefinition definition) {
@@ -165,7 +165,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     myLanguage = definition.getFileNodeType().getLanguage();
     myFileExt = extension;
     registerParserDefinition(definition);
-    myApp.registerService(FileTypeManager.class, new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
+    app.registerService(FileTypeManager.class, new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
   }
 
   protected final <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T extension) {
@@ -173,8 +173,8 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     registerExtensions(name, (Class<T>)extension.getClass(), Collections.singletonList(extension));
   }
 
-  protected final <T> void registerExtensions(@NotNull ExtensionPointName<T> name, @NotNull Class<T> extensionClass, @NotNull List<T> extensions) {
-    ExtensionsAreaImpl area = myApp.getExtensionArea();
+  protected final <T> void registerExtensions(@NotNull ExtensionPointName<T> name, @NotNull Class<T> extensionClass, @NotNull List<? extends T> extensions) {
+    ExtensionsAreaImpl area = app.getExtensionArea();
     ExtensionPoint<T> point = area.getExtensionPointIfRegistered(name.getName());
     if (point == null) {
       point = registerExtensionPoint(area, name, extensionClass);
@@ -188,7 +188,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   }
 
   protected final <T> void addExplicitExtension(@NotNull LanguageExtension<T> collector, @NotNull Language language, @NotNull T object) {
-    ExtensionsAreaImpl area = myApp.getExtensionArea();
+    ExtensionsAreaImpl area = app.getExtensionArea();
     PluginDescriptor pluginDescriptor = getPluginDescriptor();
     if (!area.hasExtensionPoint(collector.getName())) {
       area.registerFakeBeanPoint(collector.getName(), pluginDescriptor);
@@ -199,7 +199,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   }
 
   protected final <T> void registerExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<T> aClass) {
-    registerExtensionPoint(myApp.getExtensionArea(), extensionPointName, aClass);
+    registerExtensionPoint(app.getExtensionArea(), extensionPointName, aClass);
   }
 
   protected <T> ExtensionPointImpl<T> registerExtensionPoint(@NotNull ExtensionsAreaImpl extensionArea,
@@ -211,24 +211,24 @@ public abstract class ParsingTestCase extends UsefulTestCase {
       return extensionArea.getExtensionPoint(name);
     }
     else {
-      return extensionArea.registerPoint(name, extensionClass, getPluginDescriptor());
+      return extensionArea.registerPoint(name, extensionClass, getPluginDescriptor(), false);
     }
   }
 
   @NotNull
   // easy debug of not disposed extension
-  private PluginDescriptor getPluginDescriptor() {
-    PluginDescriptor pluginDescriptor = myPluginDescriptor;
+  protected PluginDescriptor getPluginDescriptor() {
+    PluginDescriptor pluginDescriptor = this.pluginDescriptor;
     if (pluginDescriptor == null) {
       pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId(getClass().getName() + "." + getName()), ParsingTestCase.class.getClassLoader());
-      myPluginDescriptor = pluginDescriptor;
+      this.pluginDescriptor = pluginDescriptor;
     }
     return pluginDescriptor;
   }
 
   @NotNull
   public MockProjectEx getProject() {
-    return myProject;
+    return project;
   }
 
   public MockPsiManager getPsiManager() {
@@ -238,7 +238,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   @Override
   protected void tearDown() throws Exception {
     myFile = null;
-    myProject = null;
+    project = null;
     myPsiManager = null;
     myFileFactory = null;
     super.tearDown();
@@ -267,32 +267,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
   /* Sanity check against thoughtlessly copy-pasting actual test results as the expected test data. */
   protected void ensureNoErrorElements() {
-    myFile.accept(new PsiRecursiveElementVisitor() {
-      private static final int TAB_WIDTH = 8;
-
-      @Override
-      public void visitErrorElement(@NotNull PsiErrorElement element) {
-        // Very dump approach since a corresponding Document is not available.
-        String text = myFile.getText();
-        String[] lines = StringUtil.splitByLinesKeepSeparators(text);
-
-        int offset = element.getTextOffset();
-        LineColumn position = StringUtil.offsetToLineColumn(text, offset);
-        int lineNumber = position != null ? position.line : -1;
-        int column = position != null ? position.column : 0;
-
-        String line = StringUtil.trimTrailing(lines[lineNumber]);
-        // Sanitize: expand indentation tabs, replace the rest with a single space
-        int numIndentTabs = StringUtil.countChars(line.subSequence(0, column), '\t', 0, true);
-        int indentedColumn = column + numIndentTabs * (TAB_WIDTH - 1);
-        String lineWithNoTabs = StringUtil.repeat(" ", numIndentTabs * TAB_WIDTH) + line.substring(numIndentTabs).replace('\t', ' ');
-        String errorUnderline = StringUtil.repeat(" ", indentedColumn) + StringUtil.repeat("^", Math.max(1, element.getTextLength()));
-
-        fail(String.format("Unexpected error element: %s:%d:%d\n\n%s\n%s\n%s",
-                           myFile.getName(), lineNumber + 1, column,
-                           lineWithNoTabs, errorUnderline, element.getErrorDescription()));
-      }
-    });
+    ParsingTestUtil.assertNoPsiErrorElements(myFile);
   }
 
   protected void doTest(boolean checkResult) {
@@ -399,6 +374,29 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     checkResult(myFilePrefix + name, myFile);
   }
 
+  protected void doReparseTest(String textBefore, String textAfter) {
+    var file = createFile("test." + myFileExt, textBefore);
+    var fileAfter = createFile("test." + myFileExt, textAfter);
+
+    var rangeStart = StringUtil.commonPrefixLength(textBefore, textAfter);
+    var rangeEnd = textBefore.length() - StringUtil.commonSuffixLength(textBefore, textAfter);
+
+    var range = new TextRange(Math.min(rangeStart, rangeEnd), Math.max(rangeStart, rangeEnd));
+
+    var psiToStringDefault = DebugUtil.psiToString(fileAfter, true, false, true, null);
+    DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
+      new BlockSupportImpl().reparseRange(
+        file,
+        file.getNode(),
+        range,
+        fileAfter.getText(),
+        new EmptyProgressIndicator(),
+        file.getText()
+      ).performActualPsiChange(file);
+    });
+    assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true, false, true, null));
+  }
+
   protected PsiFile createPsiFile(@NotNull String name, @NotNull String text) {
     return createFile(name + "." + myFileExt, text);
   }
@@ -434,7 +432,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
   private static void printAstTypeNamesTree(ASTNode node, StringBuffer buffer, int indent) {
     buffer.append(" ".repeat(indent));
-    buffer.append(node.getElementType().toString()).append("\n");
+    buffer.append(node.getElementType()).append("\n");
     indent += 2;
     ASTNode childNode = node.getFirstChildNode();
 
@@ -509,7 +507,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   }
 
   protected static String toParseTreeText(@NotNull PsiElement file,  boolean skipSpaces, boolean printRanges) {
-    return DebugUtil.psiToString(file, skipSpaces, printRanges);
+    return DebugUtil.psiToString(file, !skipSpaces, printRanges);
   }
 
   protected String loadFile(@NotNull @TestDataFile String name) throws IOException {
@@ -530,7 +528,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   }
 
   public static void ensureCorrectReparse(@NotNull final PsiFile file) {
-    final String psiToStringDefault = DebugUtil.psiToString(file, false, false);
+    final String psiToStringDefault = DebugUtil.psiToString(file, true, false);
 
     DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
                                        final String fileText = file.getText();
@@ -539,15 +537,6 @@ public abstract class ParsingTestCase extends UsefulTestCase {
                                        diffLog.performActualPsiChange(file);
                                      });
 
-    assertEquals(psiToStringDefault, DebugUtil.psiToString(file, false, false));
-  }
-
-  public void registerMockInjectedLanguageManager() {
-    registerExtensionPoint(myProject.getExtensionArea(), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
-
-    registerExtensionPoint(myApp.getExtensionArea(), LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
-    myProject.registerService(DumbService.class, new MockDumbService(myProject));
-    getApplication().registerService(EditorWindowTracker.class, new EditorWindowTrackerImpl());
-    myProject.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(myProject));
+    assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true, false));
   }
 }

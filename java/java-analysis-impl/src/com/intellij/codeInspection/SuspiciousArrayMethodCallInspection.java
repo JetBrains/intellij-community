@@ -4,20 +4,19 @@ package com.intellij.codeInspection;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public class SuspiciousArrayMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final Set<String> INTERESTING_NAMES = ContainerUtil.set("fill", "binarySearch", "equals", "mismatch");
+  private static final Set<String> INTERESTING_NAMES = Set.of("fill", "binarySearch", "equals", "mismatch");
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
         if (nameElement == null) return;
         String name = nameElement.getText();
@@ -28,24 +27,22 @@ public class SuspiciousArrayMethodCallInspection extends AbstractBaseJavaLocalIn
         if (aClass == null || !CommonClassNames.JAVA_UTIL_ARRAYS.equals(aClass.getQualifiedName())) return;
         PsiExpression[] args = call.getArgumentList().getExpressions();
         switch (name) {
-          case "fill":
-          case "binarySearch":
+          case "fill", "binarySearch" -> {
             if (args.length == 2) {
               handleArrayElement(args[0], args[1]);
             }
             else if (args.length == 4) {
               handleArrayElement(args[0], args[3]);
             }
-            break;
-          case "equals":
-          case "mismatch":
+          }
+          case "equals", "mismatch" -> {
             if (args.length == 2) {
               handleArrays(nameElement, args[0], args[1]);
             }
             else if (args.length == 6) {
               handleArrays(nameElement, args[0], args[3]);
             }
-            break;
+          }
         }
       }
 

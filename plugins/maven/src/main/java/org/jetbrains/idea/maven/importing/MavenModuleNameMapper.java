@@ -4,6 +4,8 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -11,7 +13,10 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import java.io.File;
 import java.util.*;
 
+import static java.util.Locale.ROOT;
+
 public final class MavenModuleNameMapper {
+
   public static void map(Collection<MavenProject> projects,
                          Map<MavenProject, Module> mavenProjectToModule,
                          Map<MavenProject, String> mavenProjectToModuleName,
@@ -27,6 +32,10 @@ public final class MavenModuleNameMapper {
                        dedicatedModuleDir);
   }
 
+  public static String resolveModuleName(MavenProject project) {
+    return new NameItem(project, null).getResultName();
+  }
+
   private static void resolveModuleNames(Collection<MavenProject> projects,
                                          Map<MavenProject, Module> mavenProjectToModule,
                                          Map<MavenProject, String> mavenProjectToModuleName) {
@@ -39,14 +48,15 @@ public final class MavenModuleNameMapper {
 
     Arrays.sort(names);
 
-    Map<String, Integer> nameCounters = new HashMap<>();
+    Map<String, Integer> nameCountersLowerCase = new HashMap<>();
 
-    for ( i = 0; i < names.length; i++) {
+    for (i = 0; i < names.length; i++) {
       if (names[i].hasDuplicatedGroup) continue;
 
       for (int k = i + 1; k < names.length; k++) {
-        if (names[i].originalName.equals(names[k].originalName)) {
-          nameCounters.put(names[i].originalName, 0);
+        // IDEA-320329 check should be non case-sensitive
+        if (names[i].originalName.equalsIgnoreCase(names[k].originalName)) {
+          nameCountersLowerCase.put(names[i].originalName.toLowerCase(ROOT), 0);
 
           if (names[i].groupId.equals(names[k].groupId)) {
             names[i].hasDuplicatedGroup = true;
@@ -68,11 +78,11 @@ public final class MavenModuleNameMapper {
     for (NameItem nameItem : names) {
       if (nameItem.module == null) {
 
-        Integer c = nameCounters.get(nameItem.originalName);
+        Integer c = nameCountersLowerCase.get(nameItem.originalName.toLowerCase(ROOT));
 
         if (c != null) {
           nameItem.number = c;
-          nameCounters.put(nameItem.originalName, c + 1);
+          nameCountersLowerCase.put(nameItem.originalName.toLowerCase(ROOT), c + 1);
         }
 
         do {
@@ -80,8 +90,9 @@ public final class MavenModuleNameMapper {
           if (existingNames.add(name)) break;
 
           nameItem.number++;
-          nameCounters.put(nameItem.originalName, nameItem.number + 1);
-        } while (true);
+          nameCountersLowerCase.put(nameItem.originalName.toLowerCase(ROOT), nameItem.number + 1);
+        }
+        while (true);
       }
     }
 
@@ -92,7 +103,7 @@ public final class MavenModuleNameMapper {
     //assert new HashSet<String>(mavenProjectToModuleName.values()).size() == mavenProjectToModuleName.size() : new HashMap<MavenProject, String>(mavenProjectToModuleName);
   }
 
-  public static class NameItem implements Comparable<NameItem> {
+  private static class NameItem implements Comparable<NameItem> {
     public final MavenProject project;
     public final Module module;
 
@@ -102,7 +113,7 @@ public final class MavenModuleNameMapper {
     public int number = -1; // has no duplicates
     public boolean hasDuplicatedGroup;
 
-    public NameItem(MavenProject project, @Nullable Module module) {
+    private NameItem(MavenProject project, @Nullable Module module) {
       this.project = project;
       this.module = module;
       originalName = calcOriginalName();
@@ -156,22 +167,40 @@ public final class MavenModuleNameMapper {
                                          String dedicatedModuleDir) {
     for (MavenProject each : projects) {
       Module module = mavenProjectToModule.get(each);
-      String path = module != null
-                    ? module.getModuleFilePath()
-                    : generateModulePath(each,
-                                         mavenProjectToModuleName,
-                                         dedicatedModuleDir);
+      String path = getPath(mavenProjectToModuleName.get(each), each, dedicatedModuleDir, module);
       mavenProjectToModulePath.put(each, path);
     }
   }
 
-  private static String generateModulePath(MavenProject project,
-                                           Map<MavenProject, String> mavenProjectToModuleName,
-                                           String dedicatedModuleDir) {
+  @NotNull
+  public static @NonNls String getPath(@NotNull String moduleName,
+                                       @NotNull MavenProject each,
+                                       @Nullable String dedicatedModuleDir,
+                                       @Nullable Module module) {
+    return module != null
+           ? module.getModuleFilePath()
+           : generateModulePath(each, moduleName, dedicatedModuleDir);
+  }
+
+  @NotNull
+  public static String generateModulePath(MavenProject project,
+                                          String moduleName,
+                                          String dedicatedModuleDir) {
     String dir = StringUtil.isEmptyOrSpaces(dedicatedModuleDir)
                  ? project.getDirectory()
                  : dedicatedModuleDir;
-    String fileName = mavenProjectToModuleName.get(project) + ModuleFileType.DOT_DEFAULT_EXTENSION;
+    String fileName = moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
+    return new File(dir, fileName).getPath();
+  }
+
+  @NotNull
+  public static String generateModulePath(String directory,
+                                          String moduleName,
+                                          String dedicatedModuleDir) {
+    String dir = StringUtil.isEmptyOrSpaces(dedicatedModuleDir)
+                 ? directory
+                 : dedicatedModuleDir;
+    String fileName = moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
     return new File(dir, fileName).getPath();
   }
 }

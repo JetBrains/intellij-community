@@ -13,5 +13,6 @@ public interface BlockingProgressIndicator extends ProgressIndicator {
    * @deprecated Do not use, it's too low level and dangerous. Instead, consider using run* methods in {@link com.intellij.openapi.progress.ProgressManager} or {@link ProgressRunner}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   void startBlocking(@NotNull Runnable init, @NotNull CompletableFuture<?> stopCondition);
 }

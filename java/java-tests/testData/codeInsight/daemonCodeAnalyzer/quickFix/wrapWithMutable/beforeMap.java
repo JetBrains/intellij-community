@@ -1,4 +1,4 @@
-// "Wrap 'map' with 'HashMap'" "true"
+// "Wrap 'map' with 'HashMap'" "true-preview"
 import java.util.*;
 
 class Test {

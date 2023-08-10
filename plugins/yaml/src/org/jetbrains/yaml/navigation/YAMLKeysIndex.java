@@ -11,14 +11,12 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.yaml.YAMLFileBasedIndexUtil;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLSequence;
 import org.jetbrains.yaml.psi.YamlRecursivePsiElementVisitor;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 import java.util.Map;
 
 public final class YAMLKeysIndex extends FileBasedIndexExtension<String, Integer> {
@@ -79,7 +77,7 @@ public final class YAMLKeysIndex extends FileBasedIndexExtension<String, Integer
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return YAMLUtil.YAML_INPUT_FILTER;
+    return YAMLFileBasedIndexUtil.YAML_INPUT_FILTER;
   }
 
   @Override

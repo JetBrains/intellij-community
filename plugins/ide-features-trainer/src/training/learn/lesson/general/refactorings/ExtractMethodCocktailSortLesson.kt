@@ -3,19 +3,16 @@ package training.learn.lesson.general.refactorings
 
 import com.intellij.CommonBundle
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.testGuiFramework.impl.button
+import com.intellij.refactoring.extractMethod.ExtractMethodHelper
 import com.intellij.ui.UIBundle
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskTestContext
+import training.dsl.*
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import javax.swing.JButton
+import training.learn.course.KLesson
 import javax.swing.JDialog
 
-class ExtractMethodCocktailSortLesson(module: Module, lang: String, private val sample: LessonSample)
-  : KLesson("Extract method", LessonsBundle.message("extract.method.lesson.name"), module, lang) {
+class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
+  : KLesson("Extract method", LessonsBundle.message("extract.method.lesson.name")) {
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       prepareSample(sample)
@@ -25,10 +22,10 @@ class ExtractMethodCocktailSortLesson(module: Module, lang: String, private val 
       task("ExtractMethod") {
         startTaskId = taskId
         text(LessonsBundle.message("extract.method.invoke.action", action(it)))
-        triggerByUiComponentAndHighlight(false, false) { dialog: JDialog ->
+        triggerUI().component { dialog: JDialog ->
           dialog.title == extractMethodDialogTitle
         }
-        restoreIfModifiedOrMoved()
+        restoreIfModifiedOrMoved(sample)
         test { actions(it) }
       }
       // Now will be open the first dialog
@@ -39,17 +36,16 @@ class ExtractMethodCocktailSortLesson(module: Module, lang: String, private val 
       task {
         text(LessonsBundle.message("extract.method.start.refactoring", strong(okButtonText)))
 
-        // Wait until the second dialog
-        triggerByUiComponentAndHighlight(false, false) { button: JButton ->
-          button.text == yesButtonText
+        // Wait until the first dialog will be gone but we st
+        stateCheck {
+          val ui = previous.ui ?: return@stateCheck false
+          !ui.isShowing && insideRefactoring()
         }
 
         restoreByUi(delayMillis = defaultRestoreDelay)
-        test {
-          with(TaskTestContext.guiTestCase) {
-            dialog(extractMethodDialogTitle, needToKeepDialog = true) {
-              button(okButtonText).click()
-            }
+        test(waitEditorToBeReady = false) {
+          dialog(extractMethodDialogTitle) {
+            button(okButtonText).click()
           }
         }
       }
@@ -58,16 +54,15 @@ class ExtractMethodCocktailSortLesson(module: Module, lang: String, private val 
         text(LessonsBundle.message("extract.method.confirm.several.replaces", strong(yesButtonText)))
 
         // Wait until the third dialog
-        triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { dialog: JDialog ->
+        triggerUI().component { dialog: JDialog ->
           dialog.title == replaceFragmentDialogTitle
         }
-
-        restoreByUi(restoreId = startTaskId, delayMillis = defaultRestoreDelay)
-        test {
-          with(TaskTestContext.guiTestCase) {
-            dialog(extractMethodDialogTitle) {
-              button(yesButtonText).click()
-            }
+        restoreState(restoreId = startTaskId, delayMillis = defaultRestoreDelay) {
+          !insideRefactoring()
+        }
+        test(waitEditorToBeReady = false) {
+          dialog {
+            button(yesButtonText).click()
           }
         }
       }
@@ -78,13 +73,20 @@ class ExtractMethodCocktailSortLesson(module: Module, lang: String, private val 
           previous.ui?.isShowing?.not() ?: true
         }
 
-        test {
-          with(TaskTestContext.guiTestCase) {
-            dialog(replaceFragmentDialogTitle) {
-              button(UIBundle.message("replace.prompt.replace.button").dropMnemonic()).click()
-            }
+        test(waitEditorToBeReady = false) {
+          dialog(replaceFragmentDialogTitle) {
+            button(UIBundle.message("replace.prompt.replace.button").dropMnemonic()).click()
           }
         }
       }
     }
+
+  private fun insideRefactoring() = Thread.currentThread().stackTrace.any {
+    it.className.contains(ExtractMethodHelper::class.java.simpleName)
+  }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("extract.method.help.link"),
+         LessonUtil.getHelpLink("extract-method.html")),
+  )
 }

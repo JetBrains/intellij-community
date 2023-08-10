@@ -2,6 +2,7 @@
 package com.intellij.psi.util
 
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ContributedReferenceHost
@@ -10,7 +11,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.SmartList
-import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.headTailOrNull
 import org.jetbrains.annotations.ApiStatus
 
@@ -80,14 +80,15 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
     return -1
   }
 
-  private fun buildSegmentWithMappedRange(value: String, sourcePsi: PsiElement?, rangeInPks: TextRange): StringEntry.Known =
-    StringEntry.Known(
-      value,
-      sourcePsi,
-      sourcePsi.castSafelyTo<PsiLanguageInjectionHost>()?.let { host ->
-        mapRangeToHostRange(host, getRangeInHost(host) ?: ElementManipulators.getValueTextRange(host), rangeInPks)
-      } ?: rangeInPks
-    )
+  private fun rangeForSubElement(parent: StringEntry, partRange: TextRange): TextRange =
+    parent.rangeAlignedToHost
+      ?.let { (host, hostRange) ->
+        mapRangeToHostRange(host, hostRange, partRange)?.shiftLeft(parent.sourcePsi!!.startOffset - host.startOffset)
+      }
+    ?: partRange.shiftRight(parent.range.startOffset)
+
+  private fun buildSegmentWithMappedRange(parent: StringEntry, value: String, rangeInPks: TextRange): StringEntry.Known =
+    StringEntry.Known(value, parent.sourcePsi, rangeForSubElement(parent, rangeInPks))
 
   fun splitAtInKnown(splitAt: Int): Pair<PartiallyKnownString, PartiallyKnownString> {
     var accumulated = 0
@@ -102,12 +103,12 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
           else {
             val leftPart = segment.value.substring(0, splitAt - accumulated)
             val rightPart = segment.value.substring(splitAt - accumulated)
-            left.add(buildSegmentWithMappedRange(leftPart, segment.sourcePsi, TextRange.from(0, leftPart.length)))
+            left.add(buildSegmentWithMappedRange(segment, leftPart, TextRange.from(0, leftPart.length)))
 
             return PartiallyKnownString(left) to PartiallyKnownString(
               ArrayList<StringEntry>(segments.lastIndex - i + 1).apply {
                 if (rightPart.isNotEmpty())
-                  add(buildSegmentWithMappedRange(rightPart, segment.sourcePsi, TextRange.from(leftPart.length, rightPart.length)))
+                  add(buildSegmentWithMappedRange(segment, rightPart, TextRange.from(leftPart.length, rightPart.length)))
                 addAll(segments.subList(i + 1, segments.size))
               }
             )
@@ -132,13 +133,6 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
         add(PartiallyKnownString(pending))
       }
 
-      fun rangeForSubElement(partRange: TextRange): TextRange =
-        head.rangeAlignedToHost
-          ?.let { (host, hostRange) ->
-            mapRangeToHostRange(host, hostRange, partRange)?.shiftLeft(head.sourcePsi!!.startOffset - host.startOffset)
-          }
-        ?: partRange.shiftRight(head.range.startOffset)
-
       when (head) {
         is StringEntry.Unknown -> return collectPaths(result, pending.apply { add(head) }, tail)
         is StringEntry.Known -> {
@@ -154,14 +148,14 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
                 add(PartiallyKnownString(
                   pending.apply {
                     add(StringEntry.Known(stringParts.first().substring(value), head.sourcePsi,
-                                          rangeForSubElement(stringParts.first())))
+                      rangeForSubElement(head, stringParts.first())))
                   }))
                 addAll(stringParts.subList(1, stringParts.size - 1).map {
-                  PartiallyKnownString(it.substring(value), head.sourcePsi, rangeForSubElement(it))
+                  PartiallyKnownString(it.substring(value), head.sourcePsi, rangeForSubElement(head, it))
                 })
               },
               mutableListOf(StringEntry.Known(stringParts.last().substring(value), head.sourcePsi,
-                                              rangeForSubElement(stringParts.last()))),
+                rangeForSubElement(head, stringParts.last()))),
               tail
             )
           }
@@ -185,25 +179,33 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
    *
    * NOTE: currently supports only single-segment [rangeInPks]
    */
-  fun mapRangeToHostRange(host: PsiElement, rangeInHost: TextRange, rangeInPks: TextRange): TextRange? {
+  private fun mapRangeToHostRange(host: PsiElement, rangeInHost: TextRange, rangeInPks: TextRange): TextRange? {
 
     fun getHostRangeEscapeAware(segmentRange: TextRange, inSegmentStart: Int, inSegmentEnd: Int): TextRange {
       if (host is PsiLanguageInjectionHost) {
-        val escaper = host.createLiteralTextEscaper()
-        val decode = escaper.decode(segmentRange, StringBuilder())
-        if (decode) {
-          val start = escaper.getOffsetInHost(inSegmentStart, segmentRange)
-          val end = escaper.getOffsetInHost(inSegmentEnd, segmentRange)
-          if (start != -1 && end != -1 && start <= end)
-            return TextRange(start, end)
-          else {
-            logger<PartiallyKnownString>().error(
-              "decoding of ${segmentRange} failed for $host : [$start, $end] inSegment = [$inSegmentStart, $inSegmentEnd]",
-              Attachment("host:", host.text ?: "<null>"),
-              Attachment("file:", host.containingFile?.text ?: "<null>")
-            )
-            return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
+
+        try {
+          val escaper = host.createLiteralTextEscaper()
+          val decode = escaper.decode(segmentRange, StringBuilder())
+          if (decode) {
+            val start = escaper.getOffsetInHost(inSegmentStart, segmentRange)
+            val end = escaper.getOffsetInHost(inSegmentEnd, segmentRange)
+            if (start != -1 && end != -1 && start <= end)
+              return TextRange(start, end)
+            else {
+              logger<PartiallyKnownString>().error(
+                "decoding of ${segmentRange} failed for $host : [$start, $end] inSegment = [$inSegmentStart, $inSegmentEnd]",
+                *mkAttachments(host)
+              )
+              return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
+            }
           }
+        }
+        catch (e: Exception) {
+          if (e is ControlFlowException) throw e
+          logger<PartiallyKnownString>().error(
+            "decoding of ${segmentRange} failed for $host inSegment = [$inSegmentStart, $inSegmentEnd]", e, *mkAttachments(host)
+          )
         }
       }
 
@@ -266,10 +268,17 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
   }
 
   companion object {
-    val empty = PartiallyKnownString(emptyList())
+    val empty: PartiallyKnownString = PartiallyKnownString(emptyList())
   }
 
 }
+
+@ApiStatus.Internal
+fun mkAttachments(host: PsiElement): Array<Attachment> = arrayOf(
+  Attachment("host.txt", runCatching { host.text ?: "<null>" }.getOrElse { it.stackTraceToString() }),
+  Attachment(runCatching { host.containingFile?.virtualFile?.name }.getOrNull() ?: "file.txt",
+             runCatching { host.containingFile?.text ?: "<null>" }.getOrElse { it.stackTraceToString() })
+)
 
 @ApiStatus.Experimental
 sealed class StringEntry {
@@ -284,12 +293,17 @@ sealed class StringEntry {
     override fun toString(): String = "StringEntry.Known('$value' at $range in $sourcePsi)"
   }
 
-  class Unknown(override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry() {
+  class Unknown @JvmOverloads constructor(
+    override val sourcePsi: PsiElement?,
+    override val range: TextRange,
+    @ApiStatus.Internal
+    val possibleValues: Iterable<PartiallyKnownString>? = null
+  ) : StringEntry() {
     override fun toString(): String = "StringEntry.Unknown(at $range in $sourcePsi)"
   }
 
   val host: PsiElement?
-    get() = sourcePsi.takeIf { it.isSuitableHostClass() }  ?: sourcePsi?.parent.takeIf { it.isSuitableHostClass() }
+    get() = sourcePsi.takeIf { it.isSuitableHostClass() } ?: sourcePsi?.parent.takeIf { it.isSuitableHostClass() }
 
   val rangeAlignedToHost: Pair<PsiElement, TextRange>?
     get() {
@@ -304,7 +318,7 @@ sealed class StringEntry {
     }
 
   private fun PsiElement?.isSuitableHostClass(): Boolean =
-    when(this) {
+    when (this) {
       // this is primarily to workaround injections into YAMLKeyValue (which doesn't implement {@code PsiLanguageInjectionHost})
       is ContributedReferenceHost, is PsiLanguageInjectionHost -> true
       else -> false

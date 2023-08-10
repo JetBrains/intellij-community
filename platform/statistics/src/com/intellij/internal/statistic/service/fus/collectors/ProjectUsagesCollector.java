@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
+import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.NonUrgentExecutor;
@@ -37,11 +36,11 @@ import java.util.Set;
  *  </li>
  *  <li>
  *    Add group to events test scheme with "Add Group to Events Test Scheme" action.<br/>
- *    {@link com.intellij.internal.statistic.actions.scheme.AddGroupToTestSchemeAction}
+ *    {@link com.intellij.internal.statistic.devkit.actions.scheme.AddGroupToTestSchemeAction}
  *  </li>
  *  <li>
  *    Record all state collectors with "Record State Collectors to Event Log" action.<br/>
- *    {@link com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction}
+ *    {@link com.intellij.internal.statistic.devkit.actions.RecordStateStatisticsEventLogAction}
  *  </li>
  * </ol>
  * <br/>
@@ -52,27 +51,22 @@ import java.util.Set;
  */
 @ApiStatus.Internal
 public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
-
-  @ApiStatus.Internal
-  public static final ExtensionPointName<ProjectUsagesCollector> EP_NAME =
-    ExtensionPointName.create("com.intellij.statistics.projectUsagesCollector");
-
-  @NotNull
-  public static Set<ProjectUsagesCollector> getExtensions(@NotNull UsagesCollectorConsumer invoker) {
-    return getExtensions(invoker, EP_NAME);
-  }
-
   /**
    * Implement this method to calculate metrics.
    * <br/><br/>
    * {@link MetricEvent#eventId} should indicate what we measure, e.g. "configured.vcs", "module.jdk".<br/>
    * {@link MetricEvent#data} should contain the value of the measurement, e.g. {"name":"Git"}, {"version":"1.8", "vendor":"OpenJdk"}
    */
-  @NotNull
-  public CancellablePromise<? extends Set<MetricEvent>> getMetrics(@NotNull Project project, @NotNull ProgressIndicator indicator) {
+  public @NotNull CancellablePromise<? extends Set<MetricEvent>> getMetrics(@NotNull Project project, @Nullable ProgressIndicator indicator) {
     if (requiresReadAccess()) {
-      return ReadAction.nonBlocking(() -> getMetrics(project))
-        .wrapProgress(indicator)
+      NonBlockingReadAction<Set<MetricEvent>> action = ReadAction.nonBlocking(() -> project.isDisposed() ? Collections.emptySet() : getMetrics(project));
+      if (indicator != null) {
+        action = action.wrapProgress(indicator);
+      }
+      if (requiresSmartMode()) {
+        action = action.inSmartMode(project);
+      }
+      return action
         .expireWith(project)
         .submit(NonUrgentExecutor.getInstance());
     }
@@ -84,26 +78,23 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
    * consider using {@link #getMetrics(Project, ProgressIndicator)} along with ReadAction#nonBlocking if needed,
    * or override {@link #requiresReadAccess()} method to wrap metrics gathering with non-blocking read action automatically.
    */
-  @NotNull
-  protected Set<MetricEvent> getMetrics(@NotNull Project project) {
+  protected @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     return Collections.emptySet();
   }
 
   /**
-   * @return true if collector should be run under read access. The clients of such collectors
-   * have to wrap invocation this{@link #getMetrics(Project)} with non-blocking read-action {@link ReadAction#nonBlocking(Runnable)}
+   * @return <code>true</code> if collector should be run under read access. The clients of such collectors
+   * have to wrap invocation this {@link #getMetrics(Project)} with non-blocking read-action {@link ReadAction#nonBlocking(Runnable)}
    */
   protected boolean requiresReadAccess() {
     return false;
   }
 
   /**
-   * @deprecated Add {@link FeatureUsageData} directly to {@link MetricEvent} in {@link #getMetrics(Project)}
+   * @return <code>true</code> if collector should be run under read access in smart mode.
+   * It is called only if {@link #requiresReadAccess()} returned <code>true</code>.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  @Nullable
-  public FeatureUsageData getData(@NotNull Project project) {
-    return null;
+  protected boolean requiresSmartMode() {
+    return false;
   }
 }

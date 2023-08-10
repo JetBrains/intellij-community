@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -117,7 +118,8 @@ public final class TextAttributesReaderTest extends LightPlatformTestCase {
   }
 
   public void testTextAttributesCompatibility() throws Exception {
-    compare(null);
+    TextAttributes actual = read((Element)null);
+    assertEquals(new TextAttributes(), actual);
     compare(value());
     compare(value("UNSUPPORTED", null));
     compare(value("UNSUPPORTED", "OPTION"));
@@ -141,21 +143,19 @@ public final class TextAttributesReaderTest extends LightPlatformTestCase {
     }
   }
 
-  private TextAttributes read(String value) throws Exception {
-    return read(Option.element(value));
+  private TextAttributes read(@NotNull String value) throws Exception {
+    return read(JDOMUtil.load(value));
   }
 
   private TextAttributes read(Element element) {
     return myReader.read(TextAttributes.class, element);
   }
 
-  private void compare(String value) throws Exception {
-    Element element = Option.element(value);
-    TextAttributes expected = element == null ? new TextAttributes() : new TextAttributes(element);
+  private void compare(@NotNull String value) throws Exception {
+    Element element = JDOMUtil.load(value);
+    TextAttributes expected = new TextAttributes(element);
     TextAttributes actual = read(element);
     assertEquals(expected, actual);
-    // EditorColorsSchemeImplTest.testWriteInheritedFromDefault
-    // EditorColorsSchemeImplTest.testWriteInheritedFromDarcula
   }
 
   @NotNull

@@ -1,13 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector.RunTargetValidator;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentsManager;
+import com.intellij.execution.target.local.LocalTargetType;
 import com.intellij.internal.statistic.beans.MetricEvent;
+import com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
@@ -21,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -32,23 +34,37 @@ import java.util.*;
 
 public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
   public static final String CONFIGURED_IN_PROJECT = "configured.in.project";
-  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 9);
-  public static final StringEventField ID_FIELD = EventFields.StringValidatedByCustomRule("id", "run_config_id");
-  public static final StringEventField FACTORY_FIELD = EventFields.StringValidatedByCustomRule("factory", "run_config_factory");
+  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 15);
+  public static final StringEventField ID_FIELD = EventFields.StringValidatedByCustomRule("id", RunConfigurationUtilValidator.class);
+  public static final StringEventField FACTORY_FIELD = EventFields.StringValidatedByCustomRule("factory",
+                                                                                               RunConfigurationUtilValidator.class);
   private static final IntEventField COUNT_FIELD = EventFields.Int("count");
-  private static final StringEventField FEATURE_NAME_FIELD = EventFields.StringValidatedByCustomRule("featureName", "plugin_info");
+  private static final StringEventField FEATURE_NAME_FIELD = EventFields.StringValidatedByCustomRule("featureName",
+                                                                                                     PluginInfoValidationRule.class);
   private static final BooleanEventField SHARED_FIELD = EventFields.Boolean("shared");
   private static final BooleanEventField EDIT_BEFORE_RUN_FIELD = EventFields.Boolean("edit_before_run");
   private static final BooleanEventField ACTIVATE_BEFORE_RUN_FIELD = EventFields.Boolean("activate_before_run");
   private static final BooleanEventField TEMPORARY_FIELD = EventFields.Boolean("temporary");
   private static final BooleanEventField PARALLEL_FIELD = EventFields.Boolean("parallel");
-  private static final StringEventField TARGET_FIELD = EventFields.StringValidatedByCustomRule("target", "run_target");
+  /**
+   * Stands for the target specified for the Run Configuration.
+   * <p>
+   * Note that if the value is {@code null} then the <i>project default target</i> will be used for executing the run configuration. The
+   * default value for the project default target is the local machine, it might be changed by the user.
+   */
+  private static final StringEventField TARGET_FIELD =
+    EventFields.StringValidatedByCustomRule("target", RunTargetValidator.class);
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP.getId(), CONFIGURED_IN_PROJECT);
   private static final VarargEventId CONFIGURED_IN_PROJECT_EVENT =
     GROUP.registerVarargEvent(CONFIGURED_IN_PROJECT, COUNT_FIELD, ID_FIELD, FACTORY_FIELD, SHARED_FIELD, EDIT_BEFORE_RUN_FIELD,
                               ACTIVATE_BEFORE_RUN_FIELD, TEMPORARY_FIELD, PARALLEL_FIELD, ADDITIONAL_FIELD, TARGET_FIELD);
   private static final VarargEventId FEATURE_USED_EVENT =
     GROUP.registerVarargEvent("feature.used", COUNT_FIELD, ID_FIELD, EventFields.PluginInfo, FEATURE_NAME_FIELD);
+
+  private static final IntEventField TOTAL_COUNT_FIELD = EventFields.Int("total_count");
+  private static final IntEventField TEMP_COUNT_FIELD = EventFields.Int("temp_count");
+
+  private static final EventId2<Integer, Integer> TOTAL_COUNT = GROUP.registerEvent("total.configurations.registered", TOTAL_COUNT_FIELD, TEMP_COUNT_FIELD);
 
   @Override
   public EventLogGroup getGroup() {
@@ -58,7 +74,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   @NotNull
   @Override
   public Set<MetricEvent> getMetrics(@NotNull Project project) {
-    Object2IntOpenHashMap<Template> templates = new Object2IntOpenHashMap<>();
+    Object2IntMap<Template> templates = new Object2IntOpenHashMap<>();
     if (project.isDisposed()) {
       return Collections.emptySet();
     }
@@ -73,7 +89,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       }
 
       final ConfigurationType configurationType = configurationFactory.getType();
-      List<EventPair> pairs = createFeatureUsageData(configurationType, configurationFactory);
+      List<EventPair<?>> pairs = createFeatureUsageData(configurationType, configurationFactory);
       pairs.addAll(getSettings(settings, runConfiguration));
       final Template template = new Template(CONFIGURED_IN_PROJECT_EVENT, pairs);
       addOrIncrement(templates, template);
@@ -83,12 +99,9 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
         pairs.add(ADDITIONAL_FIELD.with(new ObjectEventData(additionalData)));
       }
       if (runConfiguration instanceof TargetEnvironmentAwareRunProfile) {
-        String defaultTargetName = ((TargetEnvironmentAwareRunProfile)runConfiguration).getDefaultTargetName();
-        if (defaultTargetName != null) {
-          TargetEnvironmentConfiguration target = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(defaultTargetName);
-          if (target != null) {
-            pairs.add(TARGET_FIELD.with(target.getTypeId()));
-          }
+        String assignedTargetType = getAssignedTargetType(project, (TargetEnvironmentAwareRunProfile)runConfiguration);
+        if (assignedTargetType != null) {
+          pairs.add(TARGET_FIELD.with(assignedTargetType));
         }
       }
     }
@@ -96,6 +109,12 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     for (Object2IntMap.Entry<Template> entry : Object2IntMaps.fastIterable(templates)) {
       metrics.add(entry.getKey().createMetricEvent(entry.getIntValue()));
     }
+
+
+    final int limitingBoundary = 500; // avoid reporting extreme values
+    metrics.add(TOTAL_COUNT.metric(Math.min(runManager.getAllSettings().size(), limitingBoundary),
+                                   runManager.getTempConfigurationsList().size()));
+
     return metrics;
   }
 
@@ -104,17 +123,18 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     return true;
   }
 
-  private static void addOrIncrement(Object2IntOpenHashMap<Template> templates, Template template) {
-    templates.addTo(template, 1);
+  private static void addOrIncrement(Object2IntMap<Template> templates,
+                                     Template template) {
+    templates.mergeInt(template, 1, Math::addExact);
   }
 
-  private static void collectRunConfigurationFeatures(RunConfiguration runConfiguration, Object2IntOpenHashMap<Template> templates) {
+  private static void collectRunConfigurationFeatures(RunConfiguration runConfiguration,
+                                                      Object2IntMap<Template> templates) {
     if (runConfiguration instanceof RunConfigurationBase) {
       PluginInfo info = PluginInfoDetectorKt.getPluginInfo(runConfiguration.getClass());
       if (!info.isSafeToReport()) return;
-      Object state = ((RunConfigurationBase)runConfiguration).getState();
-      if (state instanceof RunConfigurationOptions) {
-        RunConfigurationOptions runConfigurationOptions = (RunConfigurationOptions)state;
+      Object state = ((RunConfigurationBase<?>)runConfiguration).getState();
+      if (state instanceof RunConfigurationOptions runConfigurationOptions) {
         List<StoredProperty<Object>> properties = runConfigurationOptions.__getProperties();
         for (StoredProperty<Object> property : properties) {
           String name = property.getName();
@@ -128,16 +148,16 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
             featureUsed = StringUtil.isNotEmpty((String)value);
           }
           else if (value instanceof Collection) {
-            featureUsed = ((Collection)value).size() > 0;
+            featureUsed = ((Collection<?>)value).size() > 0;
           }
           else if (value instanceof Map) {
-            featureUsed = ((Map)value).size() > 0;
+            featureUsed = ((Map<?, ?>)value).size() > 0;
           }
           else {
             continue;
           }
           if (featureUsed) {
-            List<EventPair> pairs = new ArrayList<>();
+            List<EventPair<?>> pairs = new ArrayList<>();
             pairs.add(ID_FIELD.with(runConfiguration.getType().getId()));
             pairs.add(EventFields.PluginInfo.with(info));
             pairs.add(FEATURE_NAME_FIELD.with(name));
@@ -148,9 +168,10 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     }
   }
 
-  public static @NotNull List<EventPair> createFeatureUsageData(@NotNull ConfigurationType configuration, @Nullable ConfigurationFactory factory) {
+  public static @NotNull List<EventPair<?>> createFeatureUsageData(@NotNull ConfigurationType configuration,
+                                                                   @Nullable ConfigurationFactory factory) {
     final String id = configuration instanceof UnknownConfigurationType ? "unknown" : configuration.getId();
-    List<EventPair> pairs = new ArrayList<>();
+    List<EventPair<?>> pairs = new ArrayList<>();
     pairs.add(ID_FIELD.with(id));
     if (factory != null && configuration.getConfigurationFactories().length > 1) {
       pairs.add(FACTORY_FIELD.with(factory.getId()));
@@ -158,21 +179,21 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     return pairs;
   }
 
-  private static @NotNull ArrayList<EventPair<Boolean>> getSettings(@NotNull RunnerAndConfigurationSettings settings,
+  private static @NotNull List<EventPair<Boolean>> getSettings(@NotNull RunnerAndConfigurationSettings settings,
                                                                     @NotNull RunConfiguration runConfiguration) {
-    return ContainerUtil.newArrayList(SHARED_FIELD.with(settings.isShared()),
-                                      EDIT_BEFORE_RUN_FIELD.with(settings.isEditBeforeRun()),
-                                      ACTIVATE_BEFORE_RUN_FIELD.with(settings.isActivateToolWindowBeforeRun()),
-                                      PARALLEL_FIELD.with(runConfiguration.isAllowRunningInParallel()),
-                                      TEMPORARY_FIELD.with(settings.isTemporary()));
+    return List.of(SHARED_FIELD.with(settings.isShared()),
+                   EDIT_BEFORE_RUN_FIELD.with(settings.isEditBeforeRun()),
+                   ACTIVATE_BEFORE_RUN_FIELD.with(settings.isActivateToolWindowBeforeRun()),
+                   PARALLEL_FIELD.with(runConfiguration.isAllowRunningInParallel()),
+                   TEMPORARY_FIELD.with(settings.isTemporary()));
   }
 
   private static final class Template {
     private final VarargEventId myEventId;
-    private final List<? super EventPair> myEventPairs;
+    private final List<EventPair<?>> myEventPairs;
 
     private Template(VarargEventId id,
-                     List<? super EventPair> pairs) {
+                     List<EventPair<?>> pairs) {
       myEventId = id;
       myEventPairs = pairs;
     }
@@ -180,7 +201,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     @NotNull
     private MetricEvent createMetricEvent(int count) {
       myEventPairs.add(COUNT_FIELD.with(count));
-      return myEventId.metric(myEventPairs.toArray(new EventPair[0]));
+      return myEventId.metric(myEventPairs);
     }
 
     @Override
@@ -199,9 +220,15 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   }
 
   public static class RunConfigurationUtilValidator extends CustomValidationRule {
+    @NotNull
+    @Override
+    public String getRuleId() {
+      return "run_config_id";
+    }
+
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
-      return "run_config_id".equals(ruleId) || "run_config_factory".equals(ruleId);
+      return getRuleId().equals(ruleId) || "run_config_factory".equals(ruleId);
     }
 
     @NotNull
@@ -262,5 +289,34 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       }
       return null;
     }
+  }
+
+  /**
+   * The logged string type for the local machine target. Stands for {@link LocalTargetType#LOCAL_TARGET_NAME} target identifier.
+   * <p>
+   * Just for the reason that {@code "local"} looks prettier than {@code "@@@LOCAL@@@"}.
+   */
+  static final String LOCAL_TYPE_ID = "local";
+
+  /**
+   * <ul>
+   * <li>{@code null} stands for the project default target;</li>
+   * <li>{@code "local"} stands for the explicitly selected local machine configuration;</li>
+   * <li>other values stands for the specific target types.</li>
+   * </ul>
+   */
+  private static @Nullable String getAssignedTargetType(@NotNull Project project,
+                                                        @NotNull TargetEnvironmentAwareRunProfile runConfiguration) {
+    String assignedTargetName = runConfiguration.getDefaultTargetName();
+    if (LocalTargetType.LOCAL_TARGET_NAME.equals(assignedTargetName)) {
+      return LOCAL_TYPE_ID;
+    }
+    else if (assignedTargetName != null) {
+      TargetEnvironmentConfiguration target = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(assignedTargetName);
+      if (target != null) {
+        return target.getTypeId();
+      }
+    }
+    return null;
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -60,11 +61,16 @@ public class SvnEditCommitMessageAction extends DumbAwareAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     final DataContext dc = e.getDataContext();
     final ChangeList[] lists = VcsDataKeys.CHANGE_LISTS.getData(dc);
     final boolean enabled = lists != null && lists.length == 1 && lists[0] instanceof SvnChangeList;
-    boolean visible = enabled;
+    boolean visible;
     Project project = CommonDataKeys.PROJECT.getData(dc);
     if (project == null) {
       visible = VcsDataKeys.REMOTE_HISTORY_LOCATION.getData(dc) instanceof SvnRepositoryLocation;

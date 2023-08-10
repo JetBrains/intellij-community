@@ -5,12 +5,16 @@ import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.dsl.listCellRenderer.LcrUtilsKt;
+import com.intellij.ui.render.RendererPanelsUtils;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -44,11 +48,6 @@ public class RunAnythingItemBase extends RunAnythingItem {
   @NotNull
   @Override
   public Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
-    Component oldComponent = createComponent(isSelected);
-    if (oldComponent != null) {
-      return oldComponent;
-    }
-
     JPanel component = new JPanel(new BorderLayout());
     Color background = UIUtil.getListBackground(isSelected, true);
     component.setBackground(background);
@@ -82,7 +81,12 @@ public class RunAnythingItemBase extends RunAnythingItem {
 
   public void setupIcon(@NotNull SimpleColoredComponent component, @Nullable Icon icon) {
     component.setIcon(ObjectUtils.notNull(icon, EmptyIcon.ICON_16));
-    component.setIpad(JBUI.insets(0, 10, 0, 0));
+    if (ExperimentalUI.isNewUI()) {
+      component.setIconTextGap(RendererPanelsUtils.getIconTextGap());
+      LcrUtilsKt.stripHorizontalInsets(component);
+    } else {
+      component.setIpad(JBUI.insets(0, 10, 0, 0));
+    }
   }
 
   @Override
@@ -114,6 +118,6 @@ public class RunAnythingItemBase extends RunAnythingItem {
 
   @NotNull
   private static SimpleTextAttributes getDescriptionAttributes(boolean isSelected) {
-    return new SimpleTextAttributes(STYLE_PLAIN, isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
+    return new SimpleTextAttributes(STYLE_PLAIN, isSelected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor());
   }
 }

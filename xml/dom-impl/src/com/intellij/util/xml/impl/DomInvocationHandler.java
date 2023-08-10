@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
@@ -44,9 +45,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class DomInvocationHandler extends UserDataHolderBase implements InvocationHandler, DomElement {
   private static final Logger LOG = Logger.getInstance(DomInvocationHandler.class);
   public static final Method ACCEPT_METHOD = ReflectionUtil.getMethod(DomElement.class, "accept", DomElementVisitor.class);
@@ -377,8 +375,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
           description.getValues(getProxy()).get(0).ensureXmlElementExists();
         }
       }
-      else if (description instanceof DomFixedChildDescription) {
-        final DomFixedChildDescription childDescription = (DomFixedChildDescription)description;
+      else if (description instanceof DomFixedChildDescription childDescription) {
         List<? extends DomElement> values = null;
         final int count = childDescription.getCount();
         for (int i = 0; i < count; i++) {
@@ -707,7 +704,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   public final Class<?> getRawType() {
-    return ReflectionUtil.getRawType(myType);
+    return ClassUtil.getRawType(myType);
   }
 
   @Override

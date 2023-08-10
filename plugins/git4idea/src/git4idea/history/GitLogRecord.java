@@ -106,20 +106,20 @@ class GitLogRecord {
 
   long getCommitTime() {
     try {
-      return Long.parseLong(myOptions.get(COMMIT_TIME).trim()) * 1000;
+      return GitLogUtil.parseTime(myOptions.get(COMMIT_TIME));
     }
     catch (NumberFormatException e) {
-      LOG.error("Couldn't get commit time from " + toString() + ", while executing " + myHandler, e);
+      LOG.error("Couldn't get commit time from " + this + ", while executing " + myHandler, e);
       return 0;
     }
   }
 
   long getAuthorTimeStamp() {
     try {
-      return Long.parseLong(myOptions.get(AUTHOR_TIME).trim()) * 1000;
+      return GitLogUtil.parseTime(myOptions.get(AUTHOR_TIME));
     }
     catch (NumberFormatException e) {
-      LOG.error("Couldn't get author time from " + toString() + ", while executing " + myHandler, e);
+      LOG.error("Couldn't get author time from " + this + ", while executing " + myHandler, e);
       return 0;
     }
   }
@@ -130,7 +130,7 @@ class GitLogRecord {
 
   String @NotNull [] getParentsHashes() {
     final String parents = lookup(PARENTS);
-    if (parents.trim().length() == 0) return ArrayUtilRt.EMPTY_STRING_ARRAY;
+    if (parents.trim().isEmpty()) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     return parents.split(" ");
   }
 

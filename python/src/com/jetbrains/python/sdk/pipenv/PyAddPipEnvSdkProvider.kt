@@ -7,9 +7,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.UserDataHolder
 import com.jetbrains.python.sdk.add.PyAddSdkProvider
 
-/**
- * @author vlan
- */
 class PyAddPipEnvSdkProvider : PyAddSdkProvider {
   override fun createView(project: Project?,
                           module: Module?,

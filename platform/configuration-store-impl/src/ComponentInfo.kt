@@ -23,7 +23,7 @@ private fun isUseSaveThreshold(storage: Storage): Boolean {
   return storage.useSaveThreshold != ThreeState.NO && getEffectiveRoamingType(storage.roamingType, storage.path) === RoamingType.DISABLED
 }
 
-abstract class ComponentInfo {
+sealed class ComponentInfo {
   open val configurationSchemaKey: String?
     get() = null
 
@@ -35,6 +35,7 @@ abstract class ComponentInfo {
 
   abstract val isModificationTrackingSupported: Boolean
 
+  @Volatile
   var lastSaved: Int = -1
 
   var affectedPropertyNames: List<String> = emptyList()

@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class JavaWordSelectioner extends AbstractWordSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

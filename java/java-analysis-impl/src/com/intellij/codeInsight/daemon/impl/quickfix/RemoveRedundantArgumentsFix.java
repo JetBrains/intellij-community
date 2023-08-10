@@ -1,59 +1,33 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-/**
- * @author Danila Ponomarenko
- */
-public final class RemoveRedundantArgumentsFix implements IntentionAction {
+public final class RemoveRedundantArgumentsFix extends PsiUpdateModCommandAction<PsiExpressionList> {
   private final PsiMethod myTargetMethod;
-  private final PsiExpression[] myArguments;
   private final PsiSubstitutor mySubstitutor;
 
   private RemoveRedundantArgumentsFix(@NotNull PsiMethod targetMethod,
-                                      PsiExpression @NotNull [] arguments,
+                                      @NotNull PsiExpressionList arguments,
                                       @NotNull PsiSubstitutor substitutor) {
+    super(arguments);
     myTargetMethod = targetMethod;
-    myArguments = arguments;
     mySubstitutor = substitutor;
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return QuickFixBundle.message("remove.redundant.arguments.text", JavaHighlightUtil.formatMethod(myTargetMethod));
   }
 
   @NotNull
@@ -63,14 +37,13 @@ public final class RemoveRedundantArgumentsFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myTargetMethod.isValid() || myTargetMethod.getContainingClass() == null) return false;
-    for (PsiExpression expression : myArguments) {
-      if (!expression.isValid()) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionList args) {
+    if (!myTargetMethod.isValid() || myTargetMethod.getContainingClass() == null) return null;
+    if (!mySubstitutor.isValid()) return null;
+    if (findRedundantArgument(args.getExpressions(), myTargetMethod.getParameterList().getParameters(), mySubstitutor) == null) {
+      return null;
     }
-    if (!mySubstitutor.isValid()) return false;
-
-    return findRedundantArgument(myArguments, myTargetMethod.getParameterList().getParameters(), mySubstitutor) != null;
+    return Presentation.of(QuickFixBundle.message("remove.redundant.arguments.text", JavaHighlightUtil.formatMethod(myTargetMethod)));
   }
 
   private static PsiExpression @Nullable [] findRedundantArgument(PsiExpression @NotNull [] arguments,
@@ -95,8 +68,9 @@ public final class RemoveRedundantArgumentsFix implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiExpression[] redundantArguments = findRedundantArgument(myArguments, myTargetMethod.getParameterList().getParameters(), mySubstitutor);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpressionList args, @NotNull ModPsiUpdater updater) {
+    final PsiExpression[] redundantArguments = findRedundantArgument(args.getExpressions(), 
+                                                                     myTargetMethod.getParameterList().getParameters(), mySubstitutor);
     if (redundantArguments != null) {
       for (PsiExpression argument : redundantArguments) {
         argument.delete();
@@ -104,38 +78,61 @@ public final class RemoveRedundantArgumentsFix implements IntentionAction {
     }
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   public static void registerIntentions(JavaResolveResult @NotNull [] candidates,
                                         @NotNull PsiExpressionList arguments,
-                                        @Nullable HighlightInfo highlightInfo,
+                                        @NotNull HighlightInfo.Builder highlightInfo,
                                         TextRange fixRange) {
     for (JavaResolveResult candidate : candidates) {
       registerIntention(arguments, highlightInfo, fixRange, candidate);
     }
   }
 
+  public static void registerIntentions(@NotNull PsiExpressionList arguments,
+                                        @NotNull HighlightInfo.Builder highlightInfo,
+                                        TextRange fixRange) {
+    if (!arguments.isEmpty()) {
+      highlightInfo.registerFix(new ForImplicitConstructorAction(arguments), null, null, fixRange, null);
+    }
+  }
+
   private static void registerIntention(@NotNull PsiExpressionList arguments,
-                                        @Nullable HighlightInfo highlightInfo,
+                                        @NotNull HighlightInfo.Builder builder,
                                         TextRange fixRange,
                                         @NotNull JavaResolveResult candidate) {
     if (!candidate.isStaticsScopeCorrect()) return;
     PsiMethod method = (PsiMethod)candidate.getElement();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
-    if (method != null && BaseIntentionAction.canModify(method)) {
-      QuickFixAction
-        .registerQuickFixAction(highlightInfo, fixRange, new RemoveRedundantArgumentsFix(method, arguments.getExpressions(), substitutor));
+    if (method == null || !BaseIntentionAction.canModify(arguments)) return;
+    if (method.isConstructor() && arguments.getParent() instanceof PsiMethodCallExpression &&
+        ((PsiMethodCallExpression)arguments.getParent()).getMethodExpression().textMatches("this") &&
+        PsiTreeUtil.isAncestor(method, arguments, true)) {
+      // Avoid creating recursive constructor call
+      return;
     }
+    var action = new RemoveRedundantArgumentsFix(method, arguments, substitutor);
+    builder.registerFix(action, null, null, fixRange, null);
   }
 
-  @Override
-  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new RemoveRedundantArgumentsFix(
-      PsiTreeUtil.findSameElementInCopy(myTargetMethod, target),
-      ContainerUtil.map2Array(myArguments, PsiExpression.class, arg -> PsiTreeUtil.findSameElementInCopy(arg, target)),
-      mySubstitutor);
+  private static class ForImplicitConstructorAction extends PsiUpdateModCommandAction<PsiExpressionList> {
+    ForImplicitConstructorAction(@NotNull PsiExpressionList list) { 
+      super(list);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return QuickFixBundle.message("remove.redundant.arguments.family");
+    }
+
+    @Override
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionList args) {
+      return args.isEmpty() ? null : Presentation.of(getFamilyName());
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiExpressionList args, @NotNull ModPsiUpdater updater) {
+      PsiExpression[] expressions = args.getExpressions();
+      if (expressions.length == 0) return;
+      args.deleteChildRange(expressions[0], expressions[expressions.length - 1]);
+    }
   }
 }

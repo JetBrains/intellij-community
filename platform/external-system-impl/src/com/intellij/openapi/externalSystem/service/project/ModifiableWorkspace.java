@@ -6,21 +6,22 @@ import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.MultiMap;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
 public final class ModifiableWorkspace {
-  private final Map<ProjectCoordinate, String> myModuleMappingById = new Object2ObjectOpenCustomHashMap<>(new Hash.Strategy<>() {
+  private final Map<ProjectCoordinate, String> myModuleMappingById = CollectionFactory.createCustomHashingStrategyMap(new HashingStrategy<>() {
     @Override
     public int hashCode(ProjectCoordinate object) {
       if (object == null) {
@@ -52,18 +53,18 @@ public final class ModifiableWorkspace {
     }
   });
 
-  private final AbstractIdeModifiableModelsProvider myModelsProvider;
   private final ExternalProjectsWorkspaceImpl.State myState;
   private final MultiMap<String/* module owner */, String /* substitution modules */> mySubstitutions = MultiMap.createSet();
   private final Map<String /* module name */, String /* library name */> myNamesMap = new HashMap<>();
+  private final Supplier<? extends List<Module>> myModulesSupplier;
 
 
   public ModifiableWorkspace(ExternalProjectsWorkspaceImpl.State state,
-                             AbstractIdeModifiableModelsProvider modelsProvider) {
-    myModelsProvider = modelsProvider;
+                             Supplier<? extends List<Module>> modulesSupplier) {
+    myModulesSupplier = modulesSupplier;
     Set<String> existingModules = new HashSet<>();
-    for (Module module : modelsProvider.getModules()) {
-      register(module, modelsProvider);
+    for (Module module : modulesSupplier.get()) {
+      register(module);
       existingModules.add(module.getName());
     }
     myState = state;
@@ -86,7 +87,7 @@ public final class ModifiableWorkspace {
 
   public void commit() {
     Set<String> existingModules = new HashSet<>();
-    Arrays.stream(myModelsProvider.getModules()).map(Module::getName).forEach(existingModules::add);
+    myModulesSupplier.get().stream().map(Module::getName).forEach(existingModules::add);
 
     myState.names = new HashMap<>();
     myNamesMap.forEach((module, lib) -> {
@@ -153,9 +154,9 @@ public final class ModifiableWorkspace {
     myModuleMappingById.put(new ProjectId(id.getGroupId(), id.getArtifactId(), null), module.getName());
   }
 
-  private void register(@NotNull Module module, AbstractIdeModifiableModelsProvider modelsProvider) {
+  private void register(@NotNull Module module) {
     Arrays.stream(ExternalProjectsWorkspaceImpl.EP_NAME.getExtensions())
-      .map(contributor -> contributor.findProjectId(module, modelsProvider))
+      .map(contributor -> contributor.findProjectId(module))
       .filter(Objects::nonNull)
       .findFirst()
       .ifPresent(id -> register(id, module));

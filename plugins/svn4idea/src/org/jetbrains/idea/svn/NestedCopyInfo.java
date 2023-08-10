@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Url;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class NestedCopyInfo {
   @NotNull private final VirtualFile myFile;
   @Nullable private Url myUrl;

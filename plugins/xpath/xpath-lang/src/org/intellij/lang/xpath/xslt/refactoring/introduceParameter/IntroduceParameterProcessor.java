@@ -125,9 +125,8 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
             XmlTag anchorParam = null;
             for (UsageInfo info : usageInfos) {
-                if (info instanceof XPathUsageInfo) {
-                    final XPathUsageInfo x = (XPathUsageInfo)info;
-                    final XPathVariableReference variableReference = XPathChangeUtil.createVariableReference(x.getExpression(), mySettings.getName());
+                if (info instanceof XPathUsageInfo x) {
+                  final XPathVariableReference variableReference = XPathChangeUtil.createVariableReference(x.getExpression(), mySettings.getName());
                     final XmlAttribute attribute = x.getAttribute();
                     assert attribute != null;
 

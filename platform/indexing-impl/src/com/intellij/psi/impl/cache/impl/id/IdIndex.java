@@ -2,13 +2,14 @@
 
 package com.intellij.psi.impl.cache.impl.id;
 
-import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
+import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.InlineKeyDescriptor;
@@ -22,6 +23,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Map;
+
+import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION;
 
 /**
  * An implementation of identifier index where key is a identifier hash and value is occurrence mask {@link UsageSearchContext}.
@@ -46,7 +49,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
 
   @Override
   public int getVersion() {
-    return 17;
+    return 21 + IdIndexEntry.getUsedHashAlgorithmVersion();
   }
 
   @Override
@@ -88,8 +91,16 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
 
       @NotNull
       @Override
-      public Map<IdIndexEntry, Integer> map(@NotNull FileContent inputData, @NotNull FileTypeSpecificSubIndexer<IdIndexer> indexer) {
-        return indexer.getSubIndexerType().map(inputData);
+      public Map<IdIndexEntry, Integer> map(@NotNull FileContent inputData,
+                                            @NotNull FileTypeSpecificSubIndexer<IdIndexer> indexer) throws MapReduceIndexMappingException {
+        IdIndexer subIndexerType = indexer.getSubIndexerType();
+        try {
+          return subIndexerType.map(inputData);
+        }
+        catch (Exception e) {
+          if (e instanceof ControlFlowException) throw e;
+          throw new MapReduceIndexMappingException(e, subIndexerType.getClass());
+        }
       }
     };
   }
@@ -119,14 +130,12 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return file -> isIndexable(file.getFileType());
+    return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> isIndexable(fileType));
   }
 
   public static boolean isIndexable(FileType fileType) {
     return (fileType instanceof LanguageFileType && (fileType != PlainTextFileType.INSTANCE || !FileBasedIndex.IGNORE_PLAIN_TEXT_FILES)) ||
-           fileType instanceof CustomSyntaxTableFileType ||
-           IdTableBuilding.isIdIndexerRegistered(fileType) ||
-           CacheBuilderRegistry.getInstance().getCacheBuilder(fileType) != null;
+           IdTableBuilding.getFileTypeIndexer(fileType) != null;
   }
 
   @Override

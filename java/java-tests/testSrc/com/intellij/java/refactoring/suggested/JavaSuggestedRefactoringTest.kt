@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiJavaFile
@@ -967,6 +968,163 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
           ','
           LineBreak(' ', true)
           'NumberFormatException' (added)
+      """.trimIndent()
+    )
+  }
+
+  fun testFromUsageSimple() {
+    Registry.get("ide.java.refactoring.suggested.call.site").setValue(true, testRootDisposable)
+    doTestChangeSignature(
+      """
+        class X {
+          void test(int a, int b) {}
+          
+          void call() {
+            test(1, <caret>2);
+          }
+        }
+      """.trimIndent(),
+      """
+        class X {
+          void test(int a, int i, int b) {}
+          
+          void call() {
+            test(1, 5,2);
+          }
+        }
+      """.trimIndent(),
+      "declaration",
+      { myFixture.type("5,") },
+      expectedPresentation = """
+        Old:
+          'void'
+          ' '
+          'test'
+          '('
+          LineBreak('', true)
+          Group:
+            'int'
+            ' '
+            'a'
+          ','
+          LineBreak(' ', true)
+          Group:
+            'int'
+            ' '
+            'b'
+          LineBreak('', false)
+          ')'
+        New:
+          'void'
+          ' '
+          'test'
+          '('
+          LineBreak('', true)
+          Group:
+            'int'
+            ' '
+            'a'
+          ','
+          LineBreak(' ', true)
+          Group (added):
+            'int'
+            ' '
+            'i'
+          ','
+          LineBreak(' ', true)
+          Group:
+            'int'
+            ' '
+            'b'
+          LineBreak('', false)
+          ')'
+      """.trimIndent()
+    )
+  }
+
+  fun testFromUsageHasOtherUsages() {
+    Registry.get("ide.java.refactoring.suggested.call.site").setValue(true, testRootDisposable)
+    _suggestedChangeSignatureNewParameterValuesForTests = null
+    doTestChangeSignature(
+      """
+        class X {
+          void test(int a, int b) {}
+          
+          void call() {
+            test(1, <caret>2);
+          }
+          
+          void another() {
+            String s = "string";
+            test(3, 4);
+          }
+        }
+      """.trimIndent(),
+      """
+        class X {
+          void test(int a, int i, String hello, int b) {}
+          
+          void call() {
+            test(1, 5, "hello",2);
+          }
+          
+          void another() {
+            String s = "string";
+            test(3, 5, s, 4);
+          }
+        }
+      """.trimIndent(),
+      "declaration",
+      { myFixture.type("5, \"hello\",") },
+      expectedPresentation = """
+        Old:
+          'void'
+          ' '
+          'test'
+          '('
+          LineBreak('', true)
+          Group:
+            'int'
+            ' '
+            'a'
+          ','
+          LineBreak(' ', true)
+          Group:
+            'int'
+            ' '
+            'b'
+          LineBreak('', false)
+          ')'
+        New:
+          'void'
+          ' '
+          'test'
+          '('
+          LineBreak('', true)
+          Group:
+            'int'
+            ' '
+            'a'
+          ','
+          LineBreak(' ', true)
+          Group (added):
+            'int'
+            ' '
+            'i'
+          ','
+          LineBreak(' ', true)
+          Group (added):
+            'String'
+            ' '
+            'hello'
+          ','
+          LineBreak(' ', true)
+          Group:
+            'int'
+            ' '
+            'b'
+          LineBreak('', false)
+          ')'
       """.trimIndent()
     )
   }

@@ -1,19 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Alarm;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -32,6 +33,7 @@ import git4idea.GitRemoteBranch;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
@@ -49,8 +51,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static git4idea.commands.GitAuthenticationMode.NONE;
-import static git4idea.commands.GitAuthenticationMode.SILENT;
+import static com.intellij.externalProcessAuthHelper.AuthenticationMode.SILENT;
+import static com.intellij.externalProcessAuthHelper.AuthenticationMode.NONE;
 import static git4idea.config.GitIncomingCheckStrategy.Auto;
 import static git4idea.config.GitIncomingCheckStrategy.Never;
 import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;
@@ -111,15 +113,15 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   }
 
   public boolean shouldCheckIncoming() {
-    return Registry.is("git.update.incoming.outgoing.info") && GitVcsSettings.getInstance(myProject).getIncomingCheckStrategy() != Never;
+    return AdvancedSettings.getBoolean("git.update.incoming.outgoing.info") && GitVcsSettings.getInstance(myProject).getIncomingCheckStrategy() != Never;
   }
 
   private static boolean shouldCheckIncomingOutgoing() {
-    return Registry.is("git.update.incoming.outgoing.info");
+    return AdvancedSettings.getBoolean("git.update.incoming.outgoing.info");
   }
 
   public static @NotNull GitBranchIncomingOutgoingManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, GitBranchIncomingOutgoingManager.class);
+    return project.getService(GitBranchIncomingOutgoingManager.class);
   }
 
   public boolean supportsIncomingOutgoing() {
@@ -222,7 +224,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
         }
         myLocalBranchesWithIncoming.put(r, calcBranchesWithIncoming(r));
       }
-      myProject.getMessageBus().syncPublisher(GIT_INCOMING_OUTGOING_CHANGED).incomingOutgoingInfoChanged();
+      BackgroundTaskUtil.syncPublisher(myProject, GIT_INCOMING_OUTGOING_CHANGED).incomingOutgoingInfoChanged();
     }));
   }
 
@@ -263,7 +265,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   private @NotNull Map<GitLocalBranch, Hash> calcBranchesToFetchForRemote(@NotNull GitRepository repository,
                                                                           @NotNull GitRemote gitRemote,
                                                                           @NotNull Collection<? extends GitBranchTrackInfo> trackInfoList,
-                                                                          GitAuthenticationMode mode) {
+                                                                          AuthenticationMode mode) {
     Map<GitLocalBranch, Hash> result = new HashMap<>();
     GitBranchesCollection branchesCollection = repository.getBranches();
     final Map<String, Hash> remoteNameWithHash =
@@ -311,8 +313,8 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
     return result;
   }
 
-  private @NotNull GitAuthenticationMode getAuthenticationMode(@NotNull GitRepository repository,
-                                                               @NotNull GitRemote remote) {
+  private @NotNull AuthenticationMode getAuthenticationMode(@NotNull GitRepository repository,
+                                                            @NotNull GitRemote remote) {
     return (myAuthSuccessMap.get(repository).contains(remote)) ? SILENT : NONE;
   }
 
@@ -327,7 +329,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   private @NotNull Map<String, Hash> lsRemote(@NotNull GitRepository repository,
                                               @NotNull GitRemote remote,
                                               @NotNull List<String> branchRefNames,
-                                              @NotNull GitAuthenticationMode authenticationMode) {
+                                              @NotNull AuthenticationMode authenticationMode) {
     Map<String, Hash> result = new HashMap<>();
 
     if (!supportsIncomingOutgoing()) return result;
@@ -337,8 +339,8 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
     }
 
     VcsFileUtil.chunkArguments(branchRefNames).forEach(refs -> {
-      List<String> params = ContainerUtil.newArrayList("--heads", remote.getName()); //NON-NLS
-      params.addAll(refs);
+      List<String> params = ContainerUtil.concat(List.of("--heads", remote.getName()), //NON-NLS
+      refs);
       GitCommandResult lsRemoteResult =
         Git.getInstance().runCommand(() -> createLsRemoteHandler(repository, remote, params, authenticationMode));
       if (lsRemoteResult.success()) {
@@ -356,7 +358,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
 
   private @NotNull GitLineHandler createLsRemoteHandler(@NotNull GitRepository repository,
                                                         @NotNull GitRemote remote,
-                                                        @NotNull List<String> params, @NotNull GitAuthenticationMode authenticationMode) {
+                                                        @NotNull List<String> params, @NotNull AuthenticationMode authenticationMode) {
     GitLineHandler h = new GitLineHandler(myProject, repository.getRoot(), GitCommand.LS_REMOTE);
     h.setIgnoreAuthenticationMode(authenticationMode);
     h.addParameters(params);
@@ -388,21 +390,15 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
     //run git rev-list --count pushTargetForBranch_or_hash..localName for outgoing ( @{push} can be used only for equal branch names)
     //see git-push help -> simple push strategy
     //git rev-list --count localName..localName@{u} for incoming
-
-    GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REV_LIST);
-    handler.setSilent(true);
     String branchName = localBranch.getName();
-    handler.addParameters("--count", incoming
-                                     ? branchName + ".." + branchName + "@{u}"
-                                     : localHashForRemoteBranch.asString() + ".." + branchName);
-    try {
-      String output = Git.getInstance().runCommand(handler).getOutputOrThrow().trim();
-      return !StringUtil.startsWithChar(output, '0');
-    }
-    catch (VcsException e) {
-      LOG.warn("Can't get outgoing info (git rev-list " + branchName + " failed):" + e.getMessage());
+    String from = incoming ? branchName : localHashForRemoteBranch.asString();
+    String to = incoming ? branchName + "@{u}" : branchName;
+    String numberOfCommitsBetween = GitHistoryUtils.getNumberOfCommitsBetween(repository, from, to);
+    if (numberOfCommitsBetween == null) {
+      LOG.warn("Can't get outgoing info (git rev-list " + branchName + " failed)");
       return false;
     }
+    return !StringUtil.startsWithChar(numberOfCommitsBetween, '0');
   }
 
   private static @NotNull Collection<GitLocalBranch> getBranches(@Nullable GitRepository repository,

@@ -1,0 +1,2 @@
+// AFTER-WARNING: Parameter 'a' is never used
+fun test(a: Int) {}

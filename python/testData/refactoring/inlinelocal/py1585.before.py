@@ -1,7 +1,7 @@
 def foo(a, b):
     if a < b:
         params = {'a': 'b'}
-        print params
+        print(params)
     else:
         params = {'c': 'd'}
-        print p<caret>arams
+        print(p<caret>arams)

@@ -47,7 +47,7 @@ public class CompoundTestFailedState extends TestFailedState {
 
   @NotNull
   public List<DiffHyperlink> getHyperlinks() {
-    return ContainerUtil.map(ContainerUtil.filter(myStates, state -> state instanceof TestComparisionFailedState),
-                             state -> ((TestComparisionFailedState)state).getHyperlink());
+    return ContainerUtil.map(ContainerUtil.filter(myStates, state -> state instanceof TestComparisonFailedState),
+                             state -> ((TestComparisonFailedState)state).getHyperlink());
   }
 }

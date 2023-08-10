@@ -2,16 +2,12 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,13 +25,20 @@ public class AddBomAction extends AnAction implements DumbAware {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     boolean enabled = file != null
-                      && file.getBOM() == null
-                      && CharsetToolkit.getPossibleBom(file.getCharset()) != null
-      ; // support adding BOM to a single file only for the time being
-    
+                      &&
+                      file.getBOM() == null
+                      &&
+                      CharsetToolkit.getPossibleBom(file.getCharset()) !=
+                      null; // support adding BOM to a single file only for the time being
+
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));
     e.getPresentation().setDescription(IdeBundle.messagePointer("add.byte.order.mark.to", enabled ? file.getName() : null));
@@ -56,14 +59,13 @@ public class AddBomAction extends AnAction implements DumbAware {
     if (possibleBom == null) return;
 
     virtualFile.setBOM(possibleBom);
-    NewVirtualFile file = (NewVirtualFile)virtualFile;
     try {
-      byte[] bytes = file.contentsToByteArray();
+      byte[] bytes = virtualFile.contentsToByteArray();
       byte[] contentWithAddedBom = ArrayUtil.mergeArrays(possibleBom, bytes);
-      WriteAction.runAndWait(() -> file.setBinaryContent(contentWithAddedBom));
+      WriteAction.runAndWait(() -> virtualFile.setBinaryContent(contentWithAddedBom));
     }
     catch (IOException ex) {
-      LOG.warn("Unexpected exception occurred in file " + file, ex);
+      LOG.warn("Unexpected exception occurred in file " + virtualFile, ex);
     }
   }
 }

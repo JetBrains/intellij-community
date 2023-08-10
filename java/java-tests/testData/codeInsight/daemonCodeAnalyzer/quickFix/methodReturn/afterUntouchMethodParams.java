@@ -1,4 +1,4 @@
-// "Make 'f' return 'int'" "true"
+// "Make 'f()' return 'int'" "true"
 interface SomeInterface<T> {
     int f(T t);
 }

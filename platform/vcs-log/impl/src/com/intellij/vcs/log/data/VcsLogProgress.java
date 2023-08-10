@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -17,23 +18,23 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public class VcsLogProgress implements Disposable {
-  @NotNull private final Object myLock = new Object();
-  @NotNull private final List<ProgressListener> myListeners = new ArrayList<>();
-  @NotNull private final Set<VcsLogProgressIndicator> myTasksWithVisibleProgress = new HashSet<>();
-  @NotNull private final Set<ProgressIndicator> myTasksWithSilentProgress = new HashSet<>();
+  private final @NotNull CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
+  private final @NotNull Object myLock = new Object();
+  private final @NotNull List<ProgressListener> myListeners = new ArrayList<>();
+  private final @NotNull Set<VcsLogProgressIndicator> myTasksWithVisibleProgress = new HashSet<>();
+  private final @NotNull Set<ProgressIndicator> myTasksWithSilentProgress = new HashSet<>();
   private boolean myDisposed = false;
 
   public VcsLogProgress(@NotNull Disposable parent) {
     Disposer.register(parent, this);
+    Disposer.register(this, myDisposableFlag);
   }
 
-  @NotNull
-  public ProgressIndicator createProgressIndicator(@NotNull ProgressKey key) {
+  public @NotNull ProgressIndicator createProgressIndicator(@NotNull ProgressKey key) {
     return createProgressIndicator(true, key);
   }
 
-  @NotNull
-  public ProgressIndicator createProgressIndicator(boolean visible, @NotNull ProgressKey key) {
+  public @NotNull ProgressIndicator createProgressIndicator(boolean visible, @NotNull ProgressKey key) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return new EmptyProgressIndicator();
     }
@@ -65,8 +66,7 @@ public class VcsLogProgress implements Disposable {
     }
   }
 
-  @NotNull
-  public Set<ProgressKey> getRunningKeys() {
+  public @NotNull Set<ProgressKey> getRunningKeys() {
     synchronized (myLock) {
       return ContainerUtil.map2Set(myTasksWithVisibleProgress, VcsLogProgressIndicator::getKey);
     }
@@ -119,7 +119,7 @@ public class VcsLogProgress implements Disposable {
   private void fireNotification(@NotNull Consumer<? super ProgressListener> action) {
     synchronized (myLock) {
       List<ProgressListener> list = new ArrayList<>(myListeners);
-      ApplicationManager.getApplication().invokeLater(() -> list.forEach(action), o -> Disposer.isDisposed(this));
+      ApplicationManager.getApplication().invokeLater(() -> list.forEach(action), o -> myDisposableFlag.isDisposed());
     }
   }
 
@@ -137,7 +137,7 @@ public class VcsLogProgress implements Disposable {
   }
 
   private final class VcsLogProgressIndicator extends AbstractProgressIndicatorBase {
-    @NotNull private ProgressKey myKey;
+    private @NotNull ProgressKey myKey;
     private final boolean myVisible;
 
     private VcsLogProgressIndicator(boolean visible, @NotNull ProgressKey key) {
@@ -174,8 +174,7 @@ public class VcsLogProgress implements Disposable {
       return myVisible;
     }
 
-    @NotNull
-    public ProgressKey getKey() {
+    public @NotNull ProgressKey getKey() {
       synchronized (myLock) {
         return myKey;
       }
@@ -191,7 +190,7 @@ public class VcsLogProgress implements Disposable {
   }
 
   public static class ProgressKey {
-    @NotNull private final String myName;
+    private final @NotNull String myName;
 
     public ProgressKey(@NonNls @NotNull String name) {
       myName = name;

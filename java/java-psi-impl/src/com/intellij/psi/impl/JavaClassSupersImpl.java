@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class JavaClassSupersImpl extends JavaClassSupers {
   private static final Logger LOG = Logger.getInstance(JavaClassSupersImpl.class);
 
@@ -118,12 +115,7 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
           targetType = outer.substituteWithBoundsPromotion((PsiTypeParameter)paramCandidate);
           if (targetType != null && innerType.getAnnotations().length > 0) {
             PsiAnnotation[] typeAnnotations = targetType.getAnnotations();
-            targetType = targetType.annotate(new TypeAnnotationProvider() {
-              @Override
-              public PsiAnnotation @NotNull [] getAnnotations() {
-                return ArrayUtil.mergeArrays(innerType.getAnnotations(), typeAnnotations);
-              }
-            });
+            targetType = targetType.annotate(() -> ArrayUtil.mergeArrays(innerType.getAnnotations(), typeAnnotations));
           }
         }
         else {
@@ -173,7 +165,6 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
 
   private static final Set<String> ourReportedInconsistencies = ContainerUtil.newConcurrentSet();
 
-  @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   @Override
   public void reportHierarchyInconsistency(@NotNull PsiClass superClass, @NotNull PsiClass derivedClass) {
     if (!ourReportedInconsistencies.add(derivedClass.getQualifiedName() + "/" + superClass.getQualifiedName()) &&
@@ -181,18 +172,16 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
       return;
     }
 
-    StringBuilder msg = new StringBuilder("superClassSubstitutor requested when derived doesn't extend super:\n");
-    msg.append("Super: " + classInfo(superClass));
-    msg.append("Derived: " + classInfo(derivedClass));
-    msg.append("isInheritor: via util=" +
-               InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) +
-               ", directly=" +
-               derivedClass.isInheritor(superClass, true) + "\n");
-    msg.append("Super in derived's scope: " + PsiSearchScopeUtil.isInScope(derivedClass.getResolveScope(), superClass) + "\n");
-    if (!InheritanceUtil.processSupers(derivedClass, false, s -> s != superClass)) {
-      msg.append("Plain derived's supers contain Super\n");
-    }
-    msg.append("Hierarchy:\n");
+    StringBuilder msg = new StringBuilder("superClassSubstitutor requested when derived doesn't extend super:\n"
+      + "Super: " + classInfo(superClass)
+      + "Derived: " + classInfo(derivedClass)
+      +"isInheritor: via util=" +
+      InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) +
+      ", directly=" +
+      derivedClass.isInheritor(superClass, true) + "\n"
+      + "Super in derived's scope: " + PsiSearchScopeUtil.isInScope(derivedClass.getResolveScope(), superClass) + "\n"
+      + (InheritanceUtil.processSupers(derivedClass, false, s -> s != superClass) ? "" : "Plain derived's supers contain Super\n")
+      +"Hierarchy:\n");
     new ScopedClassHierarchy(derivedClass, derivedClass.getResolveScope()) {
       @Override
       void visitType(@NotNull PsiClassType type, Map<PsiClass, PsiClassType.ClassResolveResult> map) {
@@ -202,7 +191,7 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
         super.visitType(type, map);
       }
     }.visitType(JavaPsiFacade.getElementFactory(derivedClass.getProject()).createType(derivedClass, PsiSubstitutor.EMPTY), new HashMap<>());
-    LOG.error(msg);
+    LOG.error(msg.toString());
   }
 
   @SuppressWarnings("StringConcatenationInLoop")

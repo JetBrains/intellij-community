@@ -6,7 +6,6 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +75,7 @@ public class UsageInModuleClasspath extends ProjectStructureElementUsage {
   @Override
   public void removeSourceElement() {
     if (mySourceElement instanceof LibraryProjectStructureElement) {
-      ModuleStructureConfigurable.getInstance(myModule.getProject())
+      myContext.getModulesConfigurator().getProjectStructureConfigurable().getModulesConfig()
         .removeLibraryOrderEntry(myModule, ((LibraryProjectStructureElement)mySourceElement).getLibrary());
     }
   }

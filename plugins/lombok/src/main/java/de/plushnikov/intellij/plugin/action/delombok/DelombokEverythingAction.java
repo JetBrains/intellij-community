@@ -54,6 +54,7 @@ public class DelombokEverythingAction extends AbstractDelombokAction {
                                ApplicationManager.getApplication().getService(FieldNameConstantsPredefinedInnerClassFieldProcessor.class),
 
                                ApplicationManager.getApplication().getService(UtilityClassProcessor.class),
+                               ApplicationManager.getApplication().getService(StandardExceptionProcessor.class),
 
                                ApplicationManager.getApplication().getService(BuilderPreDefinedInnerClassFieldProcessor.class),
                                ApplicationManager.getApplication().getService(BuilderPreDefinedInnerClassMethodProcessor.class),

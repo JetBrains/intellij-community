@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -17,11 +18,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<TableCell, JTable> {
-  private final TableHeaderExpandableItemsHandler myHeaderItemsHandler;
-
   protected TableExpandableItemsHandler(final JTable table) {
     super(table);
-    myHeaderItemsHandler = new TableHeaderExpandableItemsHandler(table.getTableHeader());
     final ListSelectionListener selectionListener = new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -102,6 +100,8 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
 
     Rectangle cellRect = getCellRect(key);
     Component renderer = myComponent.prepareRenderer(myComponent.getCellRenderer(key.row, key.column), key.row, key.column);
+    Component unwrapped = ExpandedItemRendererComponentWrapper.unwrap(renderer);
+    if (unwrapped instanceof JCheckBox && StringUtil.isEmptyOrSpaces(((JCheckBox)unwrapped).getText())) return null;
     AppUIUtil.targetToDevice(renderer, myComponent);
     cellRect.width = renderer.getPreferredSize().width;
 
@@ -119,9 +119,18 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
   }
 
   @Override
+  public boolean isEnabled() {
+    // tables without scroll pane do not repaint rows correctly (BasicTableUI.paint:1868-1872)
+    return super.isEnabled() && myComponent.getParent() instanceof JViewport;
+  }
+
+  @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
-    myHeaderItemsHandler.setEnabled(enabled);
+    JTableHeader header = myComponent.getTableHeader();
+    if (header instanceof ComponentWithExpandableItems<?>) {
+      ((ComponentWithExpandableItems<?>)header).setExpandableItemsEnabled(enabled);
+    }
   }
 
   @Override

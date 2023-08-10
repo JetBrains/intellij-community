@@ -6,6 +6,8 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,6 +86,8 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
   }
 
   public String getPyQtBackend() {
+    if (StringUtil.toLowerCase(PyBundle.messagePointer("python.debugger.qt.backend.auto").get()).equals(myState.myPyQtBackend))
+      return "auto";
     return myState.myPyQtBackend;
   }
 

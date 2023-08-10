@@ -16,18 +16,18 @@ import java.util.List;
  * This filter includes decorations not only for stack-trace lines, but also for exception names
  */
 class AdvancedExceptionFilter extends ExceptionFilter {
-  AdvancedExceptionFilter(@NotNull GlobalSearchScope scope) {
-    super(scope);
+  AdvancedExceptionFilter(@NotNull Project project, @NotNull GlobalSearchScope scope) {
+    super(project, scope);
   }
 
   @Override
   @NotNull List<ResultItem> getExceptionClassNameItems(ExceptionInfo prevLineException) {
     ExceptionInfoCache.ClassResolveInfo info = myCache.resolveClass(prevLineException.getExceptionClassName());
-    if (info.myClasses.isEmpty()) return Collections.emptyList();
+    if (info.getClasses().isEmpty()) return Collections.emptyList();
     Project project = myCache.getProject();
     List<PsiClass> classMap;
     if (DumbService.isDumb(project)) {
-      classMap = ContainerUtil.filterIsInstance(info.myClasses.values(), PsiClass.class);
+      classMap = ContainerUtil.filterIsInstance(info.getClasses().values(), PsiClass.class);
     }
     else {
       classMap = info.getExceptionClasses();

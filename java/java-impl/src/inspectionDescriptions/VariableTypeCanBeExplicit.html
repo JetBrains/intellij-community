@@ -1,5 +1,18 @@
 <html>
 <body>
-Reports local variables with a <b>var</b> type that can be replaced with an explicit type.
+Reports local variables of the <code>var</code> type that can be replaced with an explicit type.
+<p><b>Example:</b></p>
+<pre><code>
+  var str = "Hello";
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  String str = "Hello";
+</code></pre>
+<!-- tooltip end -->
+<p>
+  <code>var</code> <i>keyword</i> appeared in Java 10.
+  This inspection can help to downgrade for backward compatibility with earlier Java versions.
+</p>
 </body>
 </html>

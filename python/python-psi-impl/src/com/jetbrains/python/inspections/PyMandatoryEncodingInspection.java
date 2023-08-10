@@ -17,46 +17,43 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptDropdown;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.quickfix.AddEncodingQuickFix;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.Arrays;
+import java.util.function.Function;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * User : catherine
  */
 public class PyMandatoryEncodingInspection extends PyInspection {
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
-
     @Override
     public void visitPyFile(@NotNull PyFile node) {
       if (!(myAllPythons || LanguageLevel.forElement(node).isPython2())) return;
@@ -78,100 +75,24 @@ public class PyMandatoryEncodingInspection extends PyInspection {
   public boolean myAllPythons = false;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final JPanel main = new JPanel(new GridBagLayout());
-
-    main.add(onlyPython2Box(), fixedIn(0));
-    main.add(defaultEncodingLabel(), fixedIn(1));
-    main.add(defaultEncodingBox(), resizableIn(1));
-    main.add(encodingFormatLabel(), fixedIn(2));
-    main.add(encodingFormatBox(), resizableIn(2));
-
-    final JPanel result = new JPanel(new BorderLayout());
-    result.add(main, BorderLayout.NORTH);
-    return result;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myAllPythons", PyPsiBundle.message("INSP.mandatory.encoding.checkbox.enable.in.python.3")),
+      defaultEncodingDropDown(),
+      encodingFormatDropDown()
+    );
   }
 
   @NotNull
-  private static GridBagConstraints fixedIn(int y) {
-    final GridBagConstraints c = new GridBagConstraints();
-
-    c.anchor = GridBagConstraints.WEST;
-    c.fill = GridBagConstraints.NONE; // do not resize
-    c.weightx = 0; // do not give extra horizontal space
-    c.gridx = 0;
-    c.gridy = y;
-
-    return c;
+  static OptDropdown defaultEncodingDropDown() {
+    return dropdown("myDefaultEncoding", PyPsiBundle.message("INSP.mandatory.encoding.label.select.default.encoding"),
+                    Arrays.asList(PyEncodingUtil.POSSIBLE_ENCODINGS), Function.identity(), Function.identity());
   }
 
   @NotNull
-  private static GridBagConstraints resizableIn(int y) {
-    final GridBagConstraints c = new GridBagConstraints();
-
-    c.anchor = GridBagConstraints.WEST;
-    c.fill = GridBagConstraints.HORIZONTAL; // resize horizontally
-    c.weightx = 1; // give extra horizontal space
-    c.gridx = 1;
-    c.gridy = y;
-
-    return c;
-  }
-
-  @NotNull
-  private JPanel onlyPython2Box() {
-    final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    JCheckBox checkBox =
-      PythonUiService.getInstance().createInspectionCheckBox(PyPsiBundle.message("INSP.mandatory.encoding.checkbox.enable.in.python.3"), this, "myAllPythons");
-    if (checkBox != null) {
-      panel.add(checkBox);
-    }
-    return panel;
-  }
-
-  @NotNull
-  private static JPanel defaultEncodingLabel() {
-    final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    panel.add(new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.label.select.default.encoding")));
-    return panel;
-  }
-
-  @NotNull
-  private JComboBox<String> defaultEncodingBox() {
-    final JComboBox<String> box = PythonUiService.getInstance().createComboBox(PyEncodingUtil.POSSIBLE_ENCODINGS);
-
-    box.setSelectedItem(myDefaultEncoding);
-    box.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JComboBox cb = (JComboBox)e.getSource();
-        myDefaultEncoding = (String)cb.getSelectedItem();
-      }
-    });
-
-    return box;
-  }
-
-  @NotNull
-  private static JPanel encodingFormatLabel() {
-    final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    panel.add(new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.label.encoding.comment.format")));
-    return panel;
-  }
-
-  @NotNull
-  private JComboBox<String> encodingFormatBox() {
-    final JComboBox<String> box = PythonUiService.getInstance().createComboBox(PyEncodingUtil.ENCODING_FORMAT, 250);
-
-    box.setSelectedIndex(myEncodingFormatIndex);
-    box.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JComboBox cb = (JComboBox)e.getSource();
-        myEncodingFormatIndex = cb.getSelectedIndex();
-      }
-    });
-
-    return box;
+  static OptDropdown encodingFormatDropDown() {
+    return dropdown("myEncodingFormatIndex", PyPsiBundle.message("INSP.mandatory.encoding.label.encoding.comment.format"),
+                    EntryStream.of(PyEncodingUtil.ENCODING_FORMAT).mapKeyValue((idx, format) -> option(String.valueOf(idx), format))
+                      .toArray(OptDropdown.Option.class));
   }
 }

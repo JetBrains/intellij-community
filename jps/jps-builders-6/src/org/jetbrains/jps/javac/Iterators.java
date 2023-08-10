@@ -1,15 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Function;
-import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class Iterators {
-
+public final class Iterators {
   @SuppressWarnings("rawtypes")
   private static final BooleanFunction NOT_NULL_FILTER = new BooleanFunction() {
     @Override
@@ -41,10 +37,43 @@ public class Iterators {
   }
 
   public static <C extends Collection<? super T>, T> C collect(Iterable<? extends T> iterable, C acc) {
-    for (T t : iterable) {
-      acc.add(t);
+    if (iterable != null) {
+      for (T t : iterable) {
+        acc.add(t);
+      }
     }
     return acc;
+  }
+
+  public interface Provider<T> {
+    T get();
+  }
+  
+  public interface Function<S, T> {
+    T fun(S s);
+  }
+  
+  public interface BooleanFunction<T> {
+    boolean fun(T t);
+  }
+  
+  public static <T> Iterable<T> lazy(final Provider<? extends Iterable<T>> provider) {
+    return new Iterable<T>() {
+      private Iterable<T> myDelegate = null;
+      @NotNull
+      @Override
+      public Iterator<T> iterator() {
+        return getDelegate().iterator();
+      }
+
+      private Iterable<T> getDelegate() {
+        Iterable<T> delegate = myDelegate;
+        if (delegate == null) {
+          myDelegate = delegate = provider.get();
+        }
+        return delegate;
+      }
+    };
   }
 
   @SuppressWarnings("unchecked")
@@ -83,6 +112,7 @@ public class Iterators {
       return Collections.emptyList();
     }
     if (parts.size() == 1) {
+      //noinspection unchecked
       return (Iterable<T>)parts.iterator().next();
     }
     return flat((Iterable<? extends Iterable<? extends T>>)parts);
@@ -134,7 +164,8 @@ public class Iterators {
   }
 
   public static <I> Iterator<I> asIterator(final Iterable<? extends I> from) {
-    return map(from.iterator(), Functions.<I, I>identity());
+    //noinspection unchecked
+    return from == null? Collections.<I>emptyIterator() : (Iterator<I>)from.iterator();
   }
 
   public static <T> Iterable<T> asIterable(final T elem) {
@@ -149,19 +180,18 @@ public class Iterators {
 
   public static <T> Iterator<T> asIterator(final T elem) {
     return new BaseIterator<T>() {
-      T _elem = elem;
+      private boolean available = true;
 
       @Override
       public boolean hasNext() {
-        return _elem != null;
+        return available;
       }
 
       @Override
       public T next() {
-        T element = _elem;
-        if (element != null) {
-          _elem = null;
-          return element;
+        if (available) {
+          available = false;
+          return elem;
         }
         throw new NoSuchElementException();
       }
@@ -259,7 +289,7 @@ public class Iterators {
 
   public static <T> Iterator<T> filterWithOrder(final Iterator<? extends T> from, final Iterator<? extends BooleanFunction<? super T>> predicates) {
     return flat(map(predicates, new Function<BooleanFunction<? super T>, Iterator<T>>() {
-      final List<T> buffer = new LinkedList<T>();
+      final List<T> buffer = new LinkedList<>();
       @Override
       public Iterator<T> fun(BooleanFunction<? super T> pred) {
         if (!buffer.isEmpty()) {
@@ -279,14 +309,58 @@ public class Iterators {
           buffer.add(elem);
         }
         buffer.clear();
-        return Collections.<T>emptyList().iterator();
+        return Collections.emptyIterator();
       }
     }));
+  }
+
+  public static <T> Iterable<T> unique(final Iterable<? extends T> it) {
+    return isEmptyCollection(it)? Collections.<T>emptyList() : new Iterable<T>() {
+      @NotNull
+      @Override
+      public Iterator<T> iterator() {
+        return unique(it.iterator());
+      }
+    };
+  }
+
+  public static <T> Iterator<T> unique(final Iterator<? extends T> it) {
+    return filter(it, new BooleanFunction<T>() {
+      private Set<T> processed;
+      @Override
+      public boolean fun(T t) {
+        if (processed == null) {
+          processed = new HashSet<>();
+        }
+        return processed.add(t);
+      }
+    });
   }
 
   @SuppressWarnings("unchecked")
   public static <T> BooleanFunction<? super T> notNullFilter() {
     return (BooleanFunction<T>)NOT_NULL_FILTER;
+  }
+
+  public static <T> boolean equals(Iterable<? extends T> s1, Iterable<? extends T> s2) {
+    Iterator<? extends T> it2 = s2.iterator();
+    for (T elem : s1) {
+      if (!it2.hasNext()) {
+        return false;
+      }
+      if (!elem.equals(it2.next())) {
+        return false;
+      }
+    }
+    return !it2.hasNext();
+  }
+
+  public static <T> int hashCode(Iterable<? extends T> s) {
+    int result = 1;
+    for (T elem : s) {
+      result = 31 * result + (elem == null? 0 : elem.hashCode());
+    }
+    return result;
   }
 
   private static abstract class BaseIterator<T> implements Iterator<T> {

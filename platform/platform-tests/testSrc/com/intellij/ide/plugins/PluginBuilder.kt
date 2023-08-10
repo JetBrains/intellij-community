@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.write
+import org.intellij.lang.annotations.Language
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.nio.file.Files
@@ -10,6 +12,26 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 
 private val pluginIdCounter = AtomicInteger()
+
+fun plugin(outDir: Path, @Language("XML") descriptor: String) {
+  val rawDescriptor = try {
+    readModuleDescriptorForTest(descriptor.toByteArray())
+  }
+  catch (e: Throwable) {
+    throw RuntimeException("Cannot parse:\n ${descriptor.trimIndent().prependIndent("  ")}", e)
+  }
+  outDir.resolve("${rawDescriptor.id!!}/${PluginManagerCore.PLUGIN_XML_PATH}").write(descriptor.trimIndent())
+}
+
+fun module(outDir: Path, ownerId: String, moduleId: String, @Language("XML") descriptor: String) {
+  try {
+    readModuleDescriptorForTest(descriptor.toByteArray())
+  }
+  catch (e: Throwable) {
+    throw RuntimeException("Cannot parse:\n ${descriptor.trimIndent().prependIndent("  ")}", e)
+  }
+  outDir.resolve("$ownerId/$moduleId.xml").write(descriptor.trimIndent())
+}
 
 class PluginBuilder {
   private data class ExtensionBlock(val ns: String, val text: String)
@@ -31,7 +53,11 @@ class PluginBuilder {
   private var untilBuild: String? = null
   private var version: String? = null
 
-  private val subDescriptors = mutableMapOf<String, PluginBuilder>()
+  private val content = mutableListOf<PluginContentDescriptor.ModuleItem>()
+  private val dependencies = mutableListOf<ModuleDependenciesDescriptor.ModuleReference>()
+  private val pluginDependencies = mutableListOf<ModuleDependenciesDescriptor.PluginReference>()
+
+  private val subDescriptors = HashMap<String, PluginBuilder>()
 
   init {
     depends("com.intellij.modules.lang")
@@ -57,7 +83,7 @@ class PluginBuilder {
     return this
   }
 
-  fun packagePrefix(value: String): PluginBuilder {
+  fun packagePrefix(value: String?): PluginBuilder {
     packagePrefix = value
     return this
   }
@@ -69,8 +95,28 @@ class PluginBuilder {
 
   fun depends(pluginId: String, subDescriptor: PluginBuilder): PluginBuilder {
     val fileName = "dep_${pluginIdCounter.incrementAndGet()}.xml"
-    subDescriptors[fileName] = subDescriptor
+    subDescriptors.put(PluginManagerCore.META_INF + fileName, subDescriptor)
     depends(pluginId, fileName)
+    return this
+  }
+
+  fun module(moduleName: String, moduleDescriptor: PluginBuilder): PluginBuilder {
+    val fileName = "$moduleName.xml"
+    subDescriptors.put(fileName, moduleDescriptor)
+    content.add(PluginContentDescriptor.ModuleItem(name = moduleName, configFile = null))
+
+    // remove default dependency on lang
+    moduleDescriptor.noDepends()
+    return this
+  }
+
+  fun dependency(moduleName: String): PluginBuilder {
+    dependencies.add(ModuleDependenciesDescriptor.ModuleReference(moduleName))
+    return this
+  }
+
+  fun pluginDependency(pluginId: String): PluginBuilder {
+    pluginDependencies.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(pluginId)))
     return this
   }
 
@@ -104,7 +150,7 @@ class PluginBuilder {
     return this
   }
 
-  fun extensionPoints(text: String): PluginBuilder {
+  fun extensionPoints(@Language("XML") text: String): PluginBuilder {
     extensionPoints = text
     return this
   }
@@ -118,10 +164,10 @@ class PluginBuilder {
     return buildString {
       append("<idea-plugin")
       if (implementationDetail) {
-        append(""" implementation-detail="true"""")
+        append(""" $IMPLEMENTATION_DETAIL_ATTRIBUTE="true"""")
       }
       packagePrefix?.let {
-        append(""" package="$it"""")
+        append(""" $PACKAGE_ATTRIBUTE="$it"""")
       }
       append(">")
       if (requireId) {
@@ -148,23 +194,37 @@ class PluginBuilder {
       extensionPoints?.let { append("<extensionPoints>$it</extensionPoints>") }
       applicationListeners?.let { append("<applicationListeners>$it</applicationListeners>") }
       actions?.let { append("<actions>$it</actions>") }
+
+      if (content.isNotEmpty()) {
+        append("\n<content>\n  ")
+        content.joinTo(this, separator = "\n  ") { """<module name="${it.name}" />""" }
+        append("\n</content>")
+      }
+
+      if (dependencies.isNotEmpty() || pluginDependencies.isNotEmpty()) {
+        append("\n<dependencies>\n  ")
+        if (dependencies.isNotEmpty()) {
+          dependencies.joinTo(this, separator = "\n  ") { """<module name="${it.name}" />""" }
+        }
+        if (pluginDependencies.isNotEmpty()) {
+          pluginDependencies.joinTo(this, separator = "\n  ") { """<plugin id="${it.id}" />""" }
+        }
+        append("\n</dependencies>")
+      }
+
       append("</idea-plugin>")
     }
   }
 
-  fun buildToAutoGeneratedSubDir(parentDir: Path): PluginBuilder {
-    return build(parentDir.resolve(id))
-  }
-
   fun build(path: Path): PluginBuilder {
-    path.resolve("META-INF/plugin.xml").write(text())
+    path.resolve(PluginManagerCore.PLUGIN_XML_PATH).write(text())
     writeSubDescriptors(path)
     return this
   }
 
   fun writeSubDescriptors(path: Path) {
     for ((fileName, subDescriptor) in subDescriptors) {
-      path.resolve("META-INF/$fileName").write(subDescriptor.text(requireId = false))
+      path.resolve(fileName).write(subDescriptor.text(requireId = false))
       subDescriptor.writeSubDescriptors(path)
     }
   }
@@ -176,7 +236,7 @@ class PluginBuilder {
 
   private fun buildJarToStream(outputStream: OutputStream) {
     Compressor.Zip(outputStream).use {
-      it.addFile("META-INF/plugin.xml", text().toByteArray())
+      it.addFile(PluginManagerCore.PLUGIN_XML_PATH, text().toByteArray())
     }
   }
 

@@ -33,6 +33,9 @@ public class PyNewProjectSettings {
   private String myRemotePath;
 
   @Nullable
+  private Object myInterpreterInfoForStatistics;
+
+  @Nullable
   public final Sdk getSdk() {
     return mySdk;
   }
@@ -51,6 +54,15 @@ public class PyNewProjectSettings {
 
   public final void setRemotePath(@Nullable final String remotePath) {
       myRemotePath = remotePath;
+  }
+
+  public final void setInterpreterInfoForStatistics(@Nullable Object interpreterInfoForStatistics) {
+    myInterpreterInfoForStatistics = interpreterInfoForStatistics;
+  }
+
+  @Nullable
+  public final Object getInterpreterInfoForStatistics() {
+    return myInterpreterInfoForStatistics;
   }
 
   @Nullable

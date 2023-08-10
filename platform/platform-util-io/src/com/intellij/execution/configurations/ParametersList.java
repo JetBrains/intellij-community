@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.application.Application;
@@ -46,7 +46,7 @@ public final class ParametersList implements Cloneable {
 
   private final List<CompositeParameterTargetedValue> myParameters = new ArrayList<>();
   private final List<ParamsGroup> myGroups = new SmartList<>();
-  private final NotNullLazyValue<Map<String, String>> myMacroMap = NotNullLazyValue.createValue(ParametersList::computeMacroMap);
+  private final NotNullLazyValue<Map<String, String>> myMacroMap = NotNullLazyValue.lazy(ParametersList::computeMacroMap);
 
   public boolean hasParameter(@NotNull @NonNls String parameter) {
     return ContainerUtil.lastIndexOf(myParameters, value -> parameter.equals(value.getLocalValue())) != -1;
@@ -94,7 +94,7 @@ public final class ParametersList implements Cloneable {
   @NotNull
   public List<String> getList() {
     if (myGroups.isEmpty()) {
-      return Collections.unmodifiableList(getLocalParameters());
+      return getLocalParameters();
     }
 
     List<String> params = new ArrayList<>(getLocalParameters());
@@ -134,6 +134,10 @@ public final class ParametersList implements Cloneable {
 
   public void prepend(@NotNull @NonNls String parameter) {
     addAt(0, parameter);
+  }
+
+  public void prepend(@Nullable CompositeParameterTargetedValue parameterTargetedValue) {
+    myParameters.add(0, parameterTargetedValue);
   }
 
   public void prependAll(@NonNls String @NotNull ... parameter) {
@@ -182,13 +186,17 @@ public final class ParametersList implements Cloneable {
     return group;
   }
 
+  public int getParametersCount() {
+    return myParameters.size();
+  }
+
   public int getParamsGroupsCount() {
     return myGroups.size();
   }
 
   @NotNull
   public List<String> getParameters() {
-    return Collections.unmodifiableList(getLocalParameters());
+    return getLocalParameters();
   }
 
   @NotNull
@@ -392,6 +400,10 @@ public final class ParametersList implements Cloneable {
       }
     }
     return sb == null ? text : sb.append(text, start, text.length()).toString();
+  }
+
+  public void patchMacroWithEnvs(Map<String, String> envs) {
+    myMacroMap.getValue().putAll(envs);
   }
 
   private static Map<String, String> ourTestMacros;

@@ -1,4 +1,4 @@
-// "Cast to 'B'" "false"
+// "Cast expression to 'B'" "false"
 import java.util.*;
 
 class A { }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
@@ -32,9 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
-/**
- * @author yole
- */
+
 public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   @NotNull
   @Override
@@ -186,6 +170,10 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     doTest(false, false);
   }
 
+  public void testArrayInitializer2() {
+    doTest(false, false);
+  }
+
   public void testVarargs() {
     doTest(false, false);
   }
@@ -271,13 +259,13 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     doTest(true, false);
   }
 
-  public void testSealed() {
-    setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+  public void testSealedNoMembers() {
+    setLanguageLevel(LanguageLevel.JDK_17);
     doTest(false, false);
   }
 
   public void testSealedParentChildWithMembers() {
-    setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+    setLanguageLevel(LanguageLevel.JDK_17);
     doTestCanBeInvokedOnReference(false);
   }
 
@@ -458,7 +446,8 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
       .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     PsiCall callToInline = InlineToAnonymousClassHandler.findCallToInline(getEditor());
     PsiClass classToInline = (PsiClass) element;
-    assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
+    assertNull(InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
+    assertTrue(new InlineToAnonymousClassHandler().canInlineElement(element));
     final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), classToInline, callToInline, inlineThisOnly,
                                                                                           false, searchInNonJavaFiles);
     UsageInfo[] usages = processor.findUsages();
@@ -509,9 +498,9 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
       .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     PsiCall callToInline = InlineToAnonymousClassHandler.findCallToInline(getEditor());
     PsiClass classToInline = (PsiClass) element;
-    assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
+    assertNull(InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
     final PsiClassType superType = InlineToAnonymousClassProcessor.getSuperType(classToInline);
-    assertTrue(superType != null);
+    assertNotNull(superType);
     assertEquals(canBeInvokedOnReference, InlineToAnonymousClassHandler.canBeInvokedOnReference(callToInline, superType));
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.application.PathManager;
@@ -51,6 +51,7 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -201,7 +202,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       PathRelativizerService relativizer = new PathRelativizerService(myModel.getProject());
       ProjectStamps projectStamps = new ProjectStamps(myDataStorageRoot, targetsState, relativizer);
       BuildDataManager dataManager = new BuildDataManager(dataPaths, targetsState, relativizer);
-      return new ProjectDescriptor(myModel, new BuildFSState(true), projectStamps, dataManager, buildLoggingManager, index, targetsState,
+      return new ProjectDescriptor(myModel, new BuildFSState(true), projectStamps, dataManager, buildLoggingManager, index,
                                    targetIndex, buildRootIndex, ignoredFileIndex);
     }
     catch (IOException e) {
@@ -222,7 +223,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       allPathVariables.putAll(pathVariables);
       allPathVariables.put(PathMacroUtil.APPLICATION_HOME_DIR, PathManager.getHomePath());
       allPathVariables.putAll(getAdditionalPathVariables());
-      JpsProjectLoader.loadProject(myProject, allPathVariables, fullProjectPath);
+      JpsProjectLoader.loadProject(myProject, allPathVariables, Paths.get(fullProjectPath));
       final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject);
       config.getCompilerOptions(JavaCompilers.JAVAC_ID).PREFER_TARGET_JDK_COMPILER = false;
     }
@@ -241,13 +242,15 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     return null;
   }
 
-  protected <T extends JpsElement> JpsModule addModule(String moduleName,
-                                                       String[] srcPaths,
+  protected <T extends JpsElement> JpsModule addModule(@NotNull String moduleName,
+                                                       String @NotNull [] srcPaths,
                                                        @Nullable String outputPath,
                                                        @Nullable String testOutputPath,
-                                                       JpsSdk<T> sdk) {
+                                                       @Nullable JpsSdk<T> sdk) {
     JpsModule module = myProject.addModule(moduleName, JpsJavaModuleType.INSTANCE);
-    setupModuleSdk(module, sdk);
+    if (sdk != null) {
+      setupModuleSdk(module, sdk);
+    }
     if (srcPaths.length > 0 || outputPath != null) {
       for (String srcPath : srcPaths) {
         module.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(srcPath));
@@ -270,7 +273,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     return module;
   }
 
-  protected  <T extends JpsElement> void setupModuleSdk(JpsModule module, JpsSdk<T> sdk) {
+  protected  <T extends JpsElement> void setupModuleSdk(@NotNull JpsModule module, @NotNull JpsSdk<T> sdk) {
     final JpsSdkType<T> sdkType = sdk.getSdkType();
     final JpsSdkReferencesTable sdkTable = module.getSdkReferencesTable();
     sdkTable.setSdkReference(sdkType, sdk.createReference());
@@ -434,6 +437,10 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
 
   public String getAbsolutePath(final String pathRelativeToProjectRoot) {
     return FileUtil.toSystemIndependentName(new File(getOrCreateProjectDir(), pathRelativeToProjectRoot).getAbsolutePath());
+  }
+
+  public @NotNull String getUrl(@NotNull String pathRelativeToProjectRoot) {
+    return JpsPathUtil.pathToUrl(getAbsolutePath(pathRelativeToProjectRoot));
   }
 
   public JpsModule addModule(String moduleName, String... srcPaths) {

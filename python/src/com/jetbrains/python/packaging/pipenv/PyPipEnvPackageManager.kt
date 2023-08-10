@@ -5,10 +5,12 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PySdkBundle
@@ -19,18 +21,9 @@ import com.jetbrains.python.sdk.pipenv.pipFileLockRequirements
 import com.jetbrains.python.sdk.pipenv.runPipEnv
 import com.jetbrains.python.sdk.pythonSdk
 
-/**
- * @author vlan
- */
-class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
+class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk ) {
   @Volatile
   private var packages: List<PyPackage>? = null
-
-  init {
-    PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk, this, Runnable {
-      PythonSdkType.getInstance().setupSdkPaths(sdk)
-    })
-  }
 
   override fun installManagement() {}
 
@@ -141,7 +134,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
         .asSequence()
         .filterNotNull()
         .flatMap { sequenceOf(it.pkg) + it.dependencies.asSequence() }
-        .map { PyPackage(it.packageName, it.installedVersion, null, emptyList()) }
+        .map { PyPackage(it.packageName, it.installedVersion) }
         .distinct()
         .toList()
     }

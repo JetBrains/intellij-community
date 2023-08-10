@@ -19,6 +19,10 @@ public class ConstructorTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
+  public void testConstructors$NoArgsWithDefinedConstructorsIsForced() {
+    doTest(true);
+  }
+
   public void testConstructors$ConstructorEnum() {
     doTest(true);
   }

@@ -1,35 +1,35 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.component
 
+import com.intellij.collaboration.async.CompletableFutureUtil
+import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
+import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.icons.AllIcons
-import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.WrapLayout
-import com.intellij.util.ui.codereview.InlineIconButton
+import com.intellij.vcsUtil.Delegates.equalVetoingObservable
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
-import org.jetbrains.plugins.github.util.CollectionDelta
-import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
-import org.jetbrains.plugins.github.util.getEDTExecutor
-import org.jetbrains.plugins.github.util.handleOnEdt
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRMetadataModel
 import java.awt.FlowLayout
 import java.awt.event.ActionListener
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.JPanel
+import kotlin.math.max
 import kotlin.properties.Delegates
 
-internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetailsModel,
+internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRMetadataModel,
                                                   @NlsContexts.Label emptyText: String, @NlsContexts.Label notEmptyText: String) {
 
   private var isBusy by Delegates.observable(false) { _, _, _ ->
@@ -57,9 +57,7 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
     border = JBUI.Borders.empty(6, 0)
   }
 
-  private val controlsPanel = JPanel(HorizontalLayout(4)).apply {
-    isOpaque = false
-
+  private val controlsPanel = HorizontalListPanel(4).apply {
     add(editButton)
     add(progressLabel)
     add(errorIcon)
@@ -86,8 +84,12 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
     panel.repaint()
   }
 
+  val preferredLabelWidth = label.getFontMetrics(label.font)?.let {
+    max(it.stringWidth(emptyText), it.stringWidth(notEmptyText))
+  }
+
   init {
-    model.addAndInvokeDetailsChangedListener(::updateList)
+    model.addAndInvokeChangesListener(::updateList)
     updateControls()
   }
 
@@ -96,7 +98,7 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
   }
 
   private fun updateControls() {
-    editButton.isVisible = !isBusy && model.isMetadataEditingAllowed
+    editButton.isVisible = !isBusy && model.isEditingAllowed
     progressLabel.isVisible = isBusy
     errorIcon.isVisible = adjustmentError != null
     val title = GithubBundle.message("pull.request.adjustment.failed")
@@ -117,7 +119,7 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
 
   private fun editList() {
     showEditPopup(editButton)
-      ?.thenComposeAsync(Function<CollectionDelta<T>, CompletableFuture<Unit>> { delta ->
+      ?.thenComposeAsync(Function { delta ->
         if (delta == null || delta.isEmpty) {
           CompletableFuture.completedFuture(Unit)
         }
@@ -126,7 +128,7 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
           isBusy = true
           adjust(EmptyProgressIndicator(), delta)
         }
-      }, getEDTExecutor())
+      }, CompletableFutureUtil.getEDTExecutor())
       ?.handleOnEdt { _, error ->
         adjustmentError = error
         isBusy = false

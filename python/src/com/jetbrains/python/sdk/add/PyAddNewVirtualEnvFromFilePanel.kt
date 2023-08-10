@@ -19,6 +19,7 @@ import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.Companion.InputData
 import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.Companion.RequirementsTxtOrSetupPyData
+import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.sdk.basePath
 import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.SystemIndependent
@@ -83,7 +84,7 @@ class PyAddNewVirtualEnvFromFilePanel(private val module: Module,
   }
 
   fun validateAll(@NlsContexts.Button defaultButtonName: String): List<ValidationInfo> =
-    listOfNotNull(PyAddSdkPanel.validateEnvironmentDirectoryLocation(pathField),
+    listOfNotNull(PyAddSdkPanel.validateEnvironmentDirectoryLocation(pathField, PlatformAndRoot.local),
                   PyAddSdkPanel.validateSdkComboBox(baseSdkField, defaultButtonName))
 
   /**

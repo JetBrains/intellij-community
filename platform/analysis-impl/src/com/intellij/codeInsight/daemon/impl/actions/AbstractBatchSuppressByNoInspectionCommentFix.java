@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ContainerBasedSuppressQuickFix;
 import com.intellij.codeInspection.InjectionAwareSuppressQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -42,7 +43,7 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
 
   /**
    * @param ID                         Inspection ID
-   * @param replaceOtherSuppressionIds Merge suppression policy. If false new tool id will be append to the end
+   * @param replaceOtherSuppressionIds Merge suppression policy. If false new tool id will be appended to the end
    *                                   otherwise replace other ids
    */
   public AbstractBatchSuppressByNoInspectionCommentFix(@NotNull String ID, boolean replaceOtherSuppressionIds) {
@@ -139,7 +140,7 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
     UndoUtil.markPsiFileForUndo(file);
   }
 
-  protected boolean replaceSuppressionComments(PsiElement container) {
+  protected boolean replaceSuppressionComments(@NotNull PsiElement container) {
     List<? extends PsiElement> comments = getCommentsFor(container);
     if (comments != null) {
       for (PsiElement comment : comments) {
@@ -161,6 +162,11 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
     return Collections.singletonList(prev);
   }
 
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    // Suppression actions have no preview
+    return IntentionPreviewInfo.EMPTY;
+  }
 
   @Override
   @NotNull

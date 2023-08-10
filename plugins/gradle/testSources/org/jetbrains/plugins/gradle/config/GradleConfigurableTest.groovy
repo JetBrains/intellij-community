@@ -20,9 +20,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.Before
 import org.junit.Test
 
-/**
- * @author Denis Zhdanov
- */
 class GradleConfigurableTest {
   
   static def VALID_GRADLE_HOME = "valid"

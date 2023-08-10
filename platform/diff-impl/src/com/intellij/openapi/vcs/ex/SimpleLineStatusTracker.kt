@@ -32,6 +32,6 @@ class SimpleLineStatusTracker(project: Project?,
 
   @RequiresEdt
   fun setBaseRevision(vcsContent: CharSequence) {
-    setBaseRevision(vcsContent, null)
+    setBaseRevisionContent(vcsContent, null)
   }
 }

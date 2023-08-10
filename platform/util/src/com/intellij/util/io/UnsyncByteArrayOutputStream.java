@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -10,20 +11,32 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public class UnsyncByteArrayOutputStream extends OutputStream {
+public class UnsyncByteArrayOutputStream extends OutputStream implements RepresentableAsByteArraySequence {
   protected byte[] myBuffer;
   protected int myCount;
   private boolean myIsShared;
+  private final @NotNull ByteArrayAllocator myAllocator;
+
+  @FunctionalInterface
+  public interface ByteArrayAllocator {
+    byte[] allocate(int size);
+  }
 
   public UnsyncByteArrayOutputStream() {
     this(32);
   }
 
   public UnsyncByteArrayOutputStream(int size) {
-    this(new byte[size]);
+    this(ArrayUtil.newByteArray(size));
   }
-  public UnsyncByteArrayOutputStream(byte[] buffer) {
+  public UnsyncByteArrayOutputStream(byte @NotNull [] buffer) {
+    myAllocator = size -> ArrayUtil.newByteArray(size);
     myBuffer = buffer;
+  }
+
+  public UnsyncByteArrayOutputStream(@NotNull ByteArrayAllocator allocator, int initialSize) {
+    myAllocator = allocator;
+    myBuffer = allocator.allocate(initialSize);
   }
 
   @Override
@@ -38,7 +51,10 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
   }
 
   private void grow(int newCount) {
-    myBuffer = Arrays.copyOf(myBuffer, newCount > myBuffer.length ? Math.max(myBuffer.length << 1, newCount) : myBuffer.length);
+    int newLength = newCount > myBuffer.length ? Math.max(myBuffer.length << 1, newCount) : myBuffer.length;
+    byte[] newBuffer = myAllocator.allocate(newLength);
+    System.arraycopy(myBuffer, 0, newBuffer, 0, myBuffer.length);
+    myBuffer = newBuffer;
   }
 
   @Override
@@ -67,12 +83,16 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
     myCount = 0;
   }
 
-  public byte[] toByteArray() {
+  public byte @NotNull [] toNewByteArray() {
+    return Arrays.copyOf(myBuffer, myCount);
+  }
+
+  public byte @NotNull [] toByteArray() {
     if (myBuffer.length == myCount) {
       myIsShared = true;
       return myBuffer;
     }
-    return Arrays.copyOf(myBuffer, myCount);
+    return toNewByteArray();
   }
 
   public int size() {
@@ -84,13 +104,16 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
     return new String(myBuffer, 0, myCount, StandardCharsets.UTF_8);
   }
 
-  @NotNull
-  public ByteArraySequence toByteArraySequence() {
+  public @NotNull ByteArraySequence toByteArraySequence() {
     return myCount == 0 ? ByteArraySequence.EMPTY : new ByteArraySequence(myBuffer, 0, myCount);
   }
 
-  @NotNull
-  public InputStream toInputStream() {
+  public @NotNull InputStream toInputStream() {
     return new UnsyncByteArrayInputStream(myBuffer, 0, myCount);
+  }
+
+  @Override
+  public @NotNull ByteArraySequence asByteArraySequence() {
+    return toByteArraySequence();
   }
 }

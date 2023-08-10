@@ -58,7 +58,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
 
   @Override
   public String toShortString() {
-    return asString().substring(0, 7);
+    return DvcsUtil.getShortHash(myRevisionHash);
   }
 
   @NotNull
@@ -73,15 +73,14 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
 
   @NotNull
   public String getShortRev() {
-    return DvcsUtil.getShortHash(myRevisionHash);
+    return toShortString();
   }
 
   @Override
   public int compareTo(VcsRevisionNumber crev) {
     if (this == crev) return 0;
 
-    if (crev instanceof GitRevisionNumber) {
-      GitRevisionNumber other = (GitRevisionNumber)crev;
+    if (crev instanceof GitRevisionNumber other) {
       if (myRevisionHash.equals(other.myRevisionHash)) {
         return 0;
       }

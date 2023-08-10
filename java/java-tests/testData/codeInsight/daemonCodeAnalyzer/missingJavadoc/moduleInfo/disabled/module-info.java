@@ -1,0 +1,1 @@
+<error descr="Module declaration should be located in a module's source root">module Disabled</error> { }

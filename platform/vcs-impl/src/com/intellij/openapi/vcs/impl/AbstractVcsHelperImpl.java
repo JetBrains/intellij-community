@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.CommonBundle;
@@ -24,10 +24,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
@@ -65,7 +65,6 @@ import com.intellij.ui.content.MessageView;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
@@ -76,15 +75,14 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.util.ui.ConfirmationDialog.requestForConfirmation;
-import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitExecutors;
 import static java.text.MessageFormat.format;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static final Logger LOG = Logger.getInstance(AbstractVcsHelperImpl.class);
-  private static final String CHANGES_DETAILS_WINDOW_KEY = "CommittedChangesDetailsLock";
 
   private Consumer<VcsException> myCustomHandler = null;
 
@@ -95,10 +93,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   public void openMessagesView(final VcsErrorViewPanel errorTreeView, @NotNull @NlsContexts.TabTitle String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
-      final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+      final MessageView messageView = MessageView.getInstance(myProject);
       messageView.runWhenInitialized(() -> {
         final Content content =
-          ContentFactory.SERVICE.getInstance().createContent(errorTreeView, tabDisplayName, true);
+          ContentFactory.getInstance().createContent(errorTreeView, tabDisplayName, true);
         messageView.getContentManager().addContent(content);
         Disposer.register(content, errorTreeView);
         messageView.getContentManager().setSelectedContent(content);
@@ -160,9 +158,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     SelectFilesDialog dlg = SelectFilesDialog.init(myProject, files, prompt, confirmationOption, true, false,
                                                    okActionName, cancelActionName);
     dlg.setTitle(title);
-    if (!confirmationOption.isPersistent()) {
-      dlg.setDoNotAskOption(null);
-    }
     if (dlg.showAndGet()) {
       final Collection<VirtualFile> selection = dlg.getSelectedFiles();
       // return items in the same order as they were passed to us
@@ -199,9 +194,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     final SelectFilePathsDialog dlg =
       new SelectFilePathsDialog(myProject, files, prompt, confirmationOption, okActionName, cancelActionName, true);
     dlg.setTitle(title);
-    if (!confirmationOption.isPersistent()) {
-      dlg.setDoNotAskOption(null);
-    }
     return dlg.showAndGet() ? dlg.getSelectedFiles() : null;
   }
 
@@ -225,9 +217,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   @Override
   public boolean commitChanges(@NotNull Collection<? extends Change> changes, @NotNull LocalChangeList initialChangeList,
                                @NotNull String commitMessage, @Nullable CommitResultHandler customResultHandler) {
-    return CommitChangeListDialog
-      .commitChanges(myProject, changes, initialChangeList, getCommitExecutors(myProject, changes), true, commitMessage,
-                     customResultHandler);
+    return CommitChangeListDialog.commitVcsChanges(myProject, changes, initialChangeList, commitMessage, customResultHandler);
   }
 
   private static void addDirectMessages(VcsErrorViewPanel vcsErrorViewPanel, List<? extends VcsException> abstractVcsExceptions) {
@@ -248,7 +238,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   private void showErrorsImpl(final boolean isEmpty,
-                              final Getter<? extends VcsException> firstGetter,
+                              final Supplier<? extends VcsException> firstGetter,
                               @NotNull @NlsContexts.TabTitle String tabDisplayName,
                               final Consumer<? super VcsErrorViewPanel> viewFiller) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -398,20 +388,16 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   @Override
   public void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable String title) {
-    ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changelist, null);
-    if (title != null) {
-      dlg.setTitle(title);
-    }
-    dlg.show();
+    LoadingCommittedChangeListPanel panel = new LoadingCommittedChangeListPanel(myProject);
+    panel.setChangeList(changelist, null);
+    ChangeListViewerDialog.show(myProject, title, panel);
   }
 
   @Override
   public void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable String title) {
-    ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changes);
-    if (title != null) {
-      dlg.setTitle(title);
-    }
-    dlg.show();
+    LoadingCommittedChangeListPanel panel = new LoadingCommittedChangeListPanel(myProject);
+    panel.setChanges(changes, null);
+    ChangeListViewerDialog.show(myProject, title, panel);
   }
 
   @Override
@@ -439,7 +425,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       ChangeBrowserSettings settings = filterDialog.getSettings();
 
       if (myProject.isDefault() || (ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length == 0) ||
-          (!ModalityState.NON_MODAL.equals(ModalityState.current()))) {
+          (!ModalityState.nonModal().equals(ModalityState.current()))) {
         final List<CommittedChangeList> versions = new ArrayList<>();
 
         if (parent == null || !parent.isValid()) {
@@ -483,13 +469,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                       @Nullable String title) {
     DefaultActionGroup extraActions = new DefaultActionGroup();
     //noinspection unchecked
-    RepositoryLocationCommittedChangesPanel panel =
-      new RepositoryLocationCommittedChangesPanel(myProject, provider, location, extraActions);
+    RepositoryLocationCommittedChangesPanel<ChangeBrowserSettings> panel =
+      new RepositoryLocationCommittedChangesPanel<>(myProject, provider, location, extraActions);
     panel.setMaxCount(maxCount);
-    //noinspection unchecked
     panel.setSettings(settings);
     panel.refreshChanges();
-    final ContentFactory factory = ContentFactory.SERVICE.getInstance();
+    final ContentFactory factory = ContentFactory.getInstance();
     if (title == null) {
       title = VcsBundle.message("browse.changes.content.title", location.toPresentableString());
     }
@@ -520,56 +505,61 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                                  final boolean isNonLocal) {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName());
     if (vcs == null) return;
-    final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+    final var provider = vcs.getCommittedChangesProvider();
     if (provider == null) return;
     if (isNonLocal && provider.getForNonLocal(virtualFile) == null) return;
 
     FilePath filePath = VcsUtil.getFilePath(virtualFile);
-    loadAndShowCommittedChangesDetails(project, revision, filePath, () -> getAffectedChanges(provider, virtualFile, revision, location, isNonLocal));
+    loadAndShowCommittedChangesDetails(project, revision, filePath,
+                                       () -> getAffectedChanges(provider, virtualFile, revision, location, isNonLocal));
   }
 
   public static void loadAndShowCommittedChangesDetails(@NotNull Project project,
                                                         @NotNull VcsRevisionNumber revision,
                                                         @NotNull FilePath filePath,
                                                         @NotNull CommittedChangeListProvider changelistProvider) {
+    loadAndShowCommittedChangesDetails(project, revision, filePath, showCommittedChangesAsTab(), changelistProvider);
+  }
+
+  public static void loadAndShowCommittedChangesDetails(@NotNull Project project,
+                                                        @NotNull VcsRevisionNumber revision,
+                                                        @NotNull FilePath filePath,
+                                                        boolean showAsTab,
+                                                        @NotNull CommittedChangeListProvider changelistProvider) {
     final String title = VcsBundle.message("paths.affected.in.revision", VcsUtil.getShortRevisionString(revision));
     final BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, VcsBackgroundableActions.COMMITTED_CHANGES_DETAILS,
                                                                            revision, filePath.getPath());
 
-    if (lock.isLocked()) {
-      for (Window window : Window.getWindows()) {
-        Object windowLock = UIUtil.getWindowClientProperty(window, CHANGES_DETAILS_WINDOW_KEY);
-        if (windowLock != null && lock.equals(windowLock)) {
-          UIUtil.toFront(window);
-          break;
-        }
-      }
-      return;
+    if (ChangeListViewerDialog.tryFocusExistingDialog(lock)) return;
+
+    LoadingCommittedChangeListPanel loadingPanel = new LoadingCommittedChangeListPanel(project);
+    loadingPanel.loadChangesInBackground(() -> loadCommittedChanges(revision, filePath, changelistProvider));
+    ChangeListViewerDialog.show(project, title, loadingPanel, lock, showAsTab);
+  }
+
+  public static boolean showCommittedChangesAsTab() {
+    return Registry.is("vcs.show.affected.files.as.tab") &&
+           ModalityState.current() == ModalityState.nonModal();
+  }
+
+  @NotNull
+  private static LoadingCommittedChangeListPanel.ChangelistData loadCommittedChanges(
+    @NotNull VcsRevisionNumber revision,
+    @NotNull FilePath filePath,
+    @NotNull CommittedChangeListProvider changelistProvider) throws VcsException {
+    try {
+      Pair<? extends CommittedChangeList, FilePath> pair = changelistProvider.loadChangelist();
+      if (pair == null || pair.getFirst() == null) throw new VcsException(failedText(filePath, revision));
+
+      CommittedChangeList changeList = pair.getFirst();
+      FilePath targetPath = pair.getSecond();
+
+      FilePath navigateToPath = ObjectUtils.notNull(targetPath, filePath);
+      return new LoadingCommittedChangeListPanel.ChangelistData(changeList, navigateToPath);
     }
-    lock.lock();
-
-    ChangeListViewerDialog dlg = new ChangeListViewerDialog(project);
-    dlg.setTitle(title);
-
-    UIUtil.putWindowClientProperty(dlg.getWindow(), CHANGES_DETAILS_WINDOW_KEY, lock);
-    Disposer.register(dlg.getDisposable(), () -> lock.unlock());
-
-    dlg.loadChangesInBackground(() -> {
-      try {
-        Pair<? extends CommittedChangeList, FilePath> pair = changelistProvider.loadChangelist();
-        if (pair == null || pair.getFirst() == null) throw new VcsException(failedText(filePath, revision));
-
-        CommittedChangeList changeList = pair.getFirst();
-        FilePath targetPath = pair.getSecond();
-
-        FilePath navigateToPath = ObjectUtils.notNull(targetPath, filePath);
-        return new ChangeListViewerDialog.ChangelistData(changeList, navigateToPath);
-      }
-      catch (VcsException e) {
-        throw new VcsException(failedText(filePath, revision), e);
-      }
-    });
-    dlg.show();
+    catch (VcsException e) {
+      throw new VcsException(failedText(filePath, revision), e);
+    }
   }
 
   @Nullable

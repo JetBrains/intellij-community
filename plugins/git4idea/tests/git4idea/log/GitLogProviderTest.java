@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ArrayUtilRt;
@@ -46,7 +45,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   public void setUp() {
     super.setUp();
     myLogProvider = GitTestUtil.findGitLogProvider(myProject);
-    myObjectsFactory = ServiceManager.getService(myProject, VcsLogObjectsFactory.class);
+    myObjectsFactory = myProject.getService(VcsLogObjectsFactory.class);
   }
 
   public void test_init_with_tagged_branch() throws VcsException {
@@ -370,7 +369,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     final Function<String, Hash> TO_HASH = s -> HashImpl.build(s);
     return ContainerUtil.map(StringUtil.splitByLines(output), record -> {
       String[] items = ArrayUtilRt.toStringArray(StringUtil.split(record, "|", true, false));
-      long time = Long.valueOf(items[2]) * 1000;
+      long time = Long.parseLong(items[2]) * 1000;
       return new VcsCommitMetadataImpl(TO_HASH.fun(items[0]), ContainerUtil.map(items[1].split(" "), TO_HASH), time,
                                        getProjectRoot(), items[3], defaultUser, items[4], defaultUser, time);
     });

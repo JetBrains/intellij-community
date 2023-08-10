@@ -28,7 +28,7 @@ import java.awt.font.TextLayout;
 import java.util.List;
 import java.util.Objects;
 
-class EmojiListPanel extends JBScrollPane {
+final class EmojiListPanel extends JBScrollPane {
   private static final Image NO_EMOJI_FOUND_IMAGE =
     ImageLoader.loadFromStream(EmojiListPanel.class.getResourceAsStream("/icons/NoEmojiFound.png"));
   private static final int HORIZONTAL_PADDING = 8;
@@ -45,7 +45,6 @@ class EmojiListPanel extends JBScrollPane {
   private Category myCurrentItemCategory;
   private int myCurrentItemIndex = -1;
   private EmojiSkinTone myCurrentSkinTone = EmojiSkinTone.NO_TONE;
-
 
   EmojiListPanel(EmojiPicker emojiPicker, EmojiPickerStyle style, List<EmojiCategory> categories) {
     super(null, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -305,10 +304,9 @@ class EmojiListPanel extends JBScrollPane {
     }
 
     private void paintNoEmojiFound(Graphics g) {
-      if (g instanceof Graphics2D) {
+      if (g instanceof Graphics2D g2) {
         int x = (getWidth() - myNoEmojiFoundImage.getWidth(this)) / 2;
         int y = (getHeight() - myNoEmojiFoundImage.getHeight(this)) / 2;
-        Graphics2D g2 = (Graphics2D)g;
         final Composite saveComposite = g2.getComposite();
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.5F));
         StartupUiUtil.drawImage(g, myNoEmojiFoundImage, x, y, null);

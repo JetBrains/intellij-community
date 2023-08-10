@@ -1,14 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
+import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesSeparator
 import com.intellij.openapi.vfs.AsyncFileListener
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileVisitor
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
+import org.jetbrains.annotations.ApiStatus
 
+@Deprecated("Use VirtualFileChangesListener instead")
+@ApiStatus.ScheduledForRemoval
 abstract class AsyncFileChangeListenerBase : AsyncFileListener {
 
   protected open val processRecursively: Boolean = true
@@ -19,101 +20,29 @@ abstract class AsyncFileChangeListenerBase : AsyncFileListener {
 
   protected open fun isRelevant(path: String): Boolean = false
 
-  protected open fun isRelevant(file: VirtualFile, event: VFileEvent): Boolean = false
+  protected open fun isRelevant(file: VirtualFile, event: VFileEvent): Boolean = isRelevant(file.path)
 
   protected abstract fun updateFile(file: VirtualFile, event: VFileEvent)
 
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier {
-    val separator = ChangeSeparator()
-    separator.processChangeEvents(events)
+    val listener = object : VirtualFileChangesListener {
+      override fun isProcessRecursively() = processRecursively
+      override fun init() = this@AsyncFileChangeListenerBase.init()
+      override fun apply() = this@AsyncFileChangeListenerBase.apply()
+      override fun isRelevant(file: VirtualFile, event: VFileEvent) = this@AsyncFileChangeListenerBase.isRelevant(file, event)
+      override fun updateFile(file: VirtualFile, event: VFileEvent) = this@AsyncFileChangeListenerBase.updateFile(file, event)
+    }
+    val separator = VirtualFileChangesSeparator(listener, events)
     return object : AsyncFileListener.ChangeApplier {
       override fun beforeVfsChange() {
         init()
-        separator.applyBefore()
+        separator.processBeforeEvents()
       }
 
       override fun afterVfsChange() {
-        separator.applyAfter()
+        separator.processAfterEvents()
         apply()
       }
     }
-  }
-
-  private fun process(f: VirtualFile, event: VFileEvent) {
-    when (processRecursively) {
-      true -> processRecursively(f, event)
-      else -> processFile(f, event)
-    }
-  }
-
-  private fun processFile(f: VirtualFile, event: VFileEvent) {
-    if (isRelevant(f.path) || isRelevant(f, event)) {
-      updateFile(f, event)
-    }
-  }
-
-  private fun processRecursively(f: VirtualFile, event: VFileEvent) {
-    VfsUtilCore.visitChildrenRecursively(f, object : VirtualFileVisitor<Void>() {
-      override fun visitFile(f: VirtualFile): Boolean {
-        if (isRelevant(f.path) || isRelevant(f, event)) {
-          updateFile(f, event)
-        }
-        return true
-      }
-
-      override fun getChildrenIterable(f: VirtualFile): Iterable<VirtualFile>? {
-        return if (f.isDirectory && f is NewVirtualFile) f.iterInDbChildren() else null
-      }
-    })
-  }
-
-  private fun ChangeSeparator.processChangeEvents(events: List<VFileEvent>) {
-    for (each in events) {
-      ProgressManager.checkCanceled()
-
-      when (each) {
-        is VFilePropertyChangeEvent -> if (each.isRename) {
-          before {
-            process(each.file, each)
-          }
-          after {
-            process(each.file, each)
-          }
-        }
-        is VFileMoveEvent -> {
-          before {
-            process(each.file, each)
-          }
-          after {
-            process(each.file, each)
-          }
-        }
-        is VFileCopyEvent -> after {
-          val newFile = each.newParent.findChild(each.newChildName)
-          if (newFile != null) process(newFile, each)
-        }
-        is VFileCreateEvent -> after {
-          val file = each.file
-          if (file != null) process(file, each)
-        }
-        is VFileDeleteEvent, is VFileContentChangeEvent -> before {
-          val file = each.file
-          if (file != null) process(file, each)
-        }
-      }
-    }
-  }
-
-  private class ChangeSeparator {
-    private val beforeAppliers = ArrayList<() -> Unit>()
-    private val afterAppliers = ArrayList<() -> Unit>()
-
-    fun before(action: () -> Unit) = beforeAppliers.add(action)
-
-    fun after(action: () -> Unit) = afterAppliers.add(action)
-
-    fun applyBefore() = beforeAppliers.forEach { it() }
-
-    fun applyAfter() = afterAppliers.forEach { it() }
   }
 }

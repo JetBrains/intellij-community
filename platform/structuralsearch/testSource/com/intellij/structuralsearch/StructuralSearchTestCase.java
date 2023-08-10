@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -13,6 +12,7 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,7 +65,7 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
 
   public static String checkApplicableConstraints(MatchOptions options, CompiledPattern compiledPattern) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
-    assert profile != null;
+    assert profile != null : "no profile found for file type: " + options.getFileType();
     for (String varName : options.getVariableConstraintNames()) {
       final List<PsiElement> nodes = compiledPattern.getVariableNodes(varName);
       final MatchVariableConstraint constraint = options.getVariableConstraint(varName);
@@ -100,12 +100,17 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
     return null;
   }
 
-  protected List<MatchResult> findMatches(String in, String pattern, LanguageFileType patternFileType) {
-    return findMatches(in, pattern, patternFileType, null, patternFileType, false);
+  protected List<MatchResult> findMatches(String in, String pattern, LanguageFileType fileType) {
+    return findMatches(in, pattern, fileType, null, fileType, false);
   }
 
-  protected int findMatchesCount(String in, String pattern) {
-    return findMatchesCount(in, pattern, JavaFileType.INSTANCE);
+  protected void findMatchesText(String in, String pattern, LanguageFileType fileType, String... expectedResults) {
+    final List<MatchResult> matches = findMatches(in, pattern, fileType);
+    final List<String> actualResults = ContainerUtil.map(matches, r -> StructuralSearchUtil.getPresentableElement(r.getMatch()).getText());
+    assertEquals(String.join("\n", actualResults), expectedResults.length, actualResults.size());
+    for (int i = 0, length = expectedResults.length; i < length; i++) {
+      assertEquals(expectedResults[i], actualResults.get(i));
+    }
   }
 
   protected String loadFile(String fileName) throws IOException {

@@ -1,60 +1,73 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class FakeRerunAction extends AnAction  {
+public class FakeRerunAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     ExecutionEnvironment environment = getEnvironment(event);
     if (environment != null) {
+      RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
+      RunConfiguration configuration = settings == null ? null : settings.getConfiguration();
+      if (configuration != null &&
+          RunDashboardManager.getInstance(configuration.getProject()).isShowInDashboard(configuration)) {
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
+
       presentation.setText(ExecutionBundle.messagePointer("rerun.configuration.action.name",
-                                                   StringUtil.escapeMnemonics(environment.getRunProfile().getName())));
-      presentation.setIcon(
-        ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) || ExecutionManagerImpl.isProcessRunning(getDescriptor(event)) ?
-        AllIcons.Actions.Restart : environment.getExecutor().getIcon());
+                                                          StringUtil.escapeMnemonics(environment.getRunProfile().getName())));
+      Icon rerunIcon = ExperimentalUI.isNewUI() ? environment.getExecutor().getRerunIcon() : environment.getExecutor().getIcon();
+      boolean isRestart = ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) || ExecutionManagerImpl.isProcessRunning(getDescriptor(event));
+      presentation.setIcon(isRestart && !ExperimentalUI.isNewUI() ? AllIcons.Actions.Restart : rerunIcon);
       presentation.setEnabled(isEnabled(event));
       return;
     }
 
-    presentation.setEnabled(false);
+    presentation.setEnabledAndVisible(false);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     ExecutionEnvironment environment = getEnvironment(event);
     if (environment != null) {
-      MacroManager.getInstance().cacheMacrosPreview(event.getDataContext());
       ExecutionUtil.restart(environment);
     }
   }
 
-  @Nullable
-  protected RunContentDescriptor getDescriptor(AnActionEvent event) {
+  protected @Nullable RunContentDescriptor getDescriptor(AnActionEvent event) {
     return event.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
   }
 
-  @Nullable
-  protected ExecutionEnvironment getEnvironment(@NotNull AnActionEvent event) {
-    ExecutionEnvironment environment = event.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
+  protected @Nullable ExecutionEnvironment getEnvironment(@NotNull AnActionEvent event) {
+    ExecutionEnvironment environment = event.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
     if (environment == null) {
       Project project = event.getProject();
       RunContentManager runContentManager = project == null ? null : RunContentManager.getInstanceIfCreated(project);
@@ -62,14 +75,14 @@ public class FakeRerunAction extends AnAction  {
       if (contentDescriptor != null) {
         JComponent component = contentDescriptor.getComponent();
         if (component != null) {
-          environment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(component));
+          environment = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(component));
         }
       }
     }
     return environment;
   }
 
-  protected boolean isEnabled(AnActionEvent event) {
+  protected boolean isEnabled(@NotNull AnActionEvent event) {
     RunContentDescriptor descriptor = getDescriptor(event);
     ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
     ExecutionEnvironment environment = getEnvironment(event);

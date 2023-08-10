@@ -3,6 +3,7 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
@@ -34,6 +35,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
   private static final Key<Boolean> CAN_BE_REMOVED_WHEN_COLLAPSED = Key.create("canBeRemovedWhenCollapsed");
   static final Key<Boolean> COLLAPSED_BY_DEFAULT = Key.create("collapsedByDefault");
   static final Key<String> SIGNATURE = Key.create("signature");
+  static final Key<Boolean> UPDATE_REGION = Key.create("update");
   static final String NO_SIGNATURE = "no signature";
 
   private static final Comparator<PsiElement> COMPARE_BY_OFFSET_REVERSED = (element, element1) -> {
@@ -132,11 +134,13 @@ final class UpdateFoldRegionsOperation implements Runnable {
                                                         descriptor.isNonExpandable());
       if (region == null) continue;
 
-      PsiElement psi = descriptor.getElement().getPsi();
-
-      if (psi == null || !psi.isValid() || !myFile.isValid()) {
-        region.dispose();
-        continue;
+      PsiElement psi;
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-326651, EA-831712")) {
+        psi = descriptor.getElement().getPsi();
+        if (psi == null || !psi.isValid() || !myFile.isValid()) {
+          region.dispose();
+          continue;
+        }
       }
 
       region.setGutterMarkEnabledForSingleLine(descriptor.isGutterMarkEnabledForSingleLine());
@@ -233,7 +237,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
       }
       if (shouldRemove) {
         for (FoldRegion r : regionsToProcess) {
-          rangeToExpandStatusMap.putIfAbsent(TextRange.create(r), r.isExpanded());
+          rangeToExpandStatusMap.putIfAbsent(r.getTextRange(), r.isExpanded());
         }
         toRemove.addAll(regionsToProcess);
       }
@@ -256,6 +260,11 @@ final class UpdateFoldRegionsOperation implements Runnable {
   private boolean shouldRemoveRegion(@NotNull FoldRegion region, @NotNull EditorFoldingInfo info,
                                      @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap, @NotNull Ref<? super FoldingUpdate.RegionInfo> matchingInfo) {
     matchingInfo.set(null);
+    if (UPDATE_REGION.get(region) == Boolean.TRUE) {
+      rangeToExpandStatusMap.put(TextRange.create(region.getStartOffset(), region.getEndOffset()),
+                                 region.isExpanded());
+      return true;
+    }
     PsiElement element = SlowOperations.allowSlowOperations(() -> info.getPsiElement(region));
     if (element != null) {
       PsiFile containingFile = element.getContainingFile();

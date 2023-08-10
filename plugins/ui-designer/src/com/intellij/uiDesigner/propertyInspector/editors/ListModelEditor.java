@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.propertyInspector.editors;
 
@@ -13,9 +13,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author yole
- */
+
 public class ListModelEditor extends PropertyEditor<String[]> {
   private final TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
   private RadComponent myLastComponent;

@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Compressor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -20,10 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Locale;
+import java.util.*;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
 
@@ -104,7 +100,7 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
     try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList())) {
       fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(outputRoot));
 
-      final Iterable<JavaFileObject> files = fileManager.list(StandardLocation.CLASS_OUTPUT, "ppp", ContainerUtil.set(JavaFileObject.Kind.CLASS, JavaFileObject.Kind.OTHER), false);
+      final Iterable<JavaFileObject> files = fileManager.list(StandardLocation.CLASS_OUTPUT, "ppp", Set.of(JavaFileObject.Kind.CLASS, JavaFileObject.Kind.OTHER), false);
       final Iterator<JavaFileObject> resultIterator = files.iterator();
       assertTrue(resultIterator.hasNext());
       final JavaFileObject item = resultIterator.next();
@@ -175,6 +171,43 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
 
       assertFalse(fileManager.isSameFile(res1, res2));
       checkFileObjectsBelongToLocation(fileManager, StandardLocation.CLASS_PATH, libClasses);
+    }
+  }
+
+  public void testPatchModulePath() throws IOException {
+    final VirtualFile srcAFile = createFile("src/A.java", "public class A {}");
+    final VirtualFile srcBFile = createFile("src/B.java", "public class B {}");
+    final File srcRoot = new File(srcAFile.getParent().getPath());
+
+    final StandardJavaFileManager stdFileManager = ToolProvider.getSystemJavaCompiler().getStandardFileManager(new DiagnosticListener<>() {
+      @Override
+      public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+      }
+    }, Locale.US, null);
+
+    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList())) {
+      fileManager.setLocation(StandardLocation.SOURCE_PATH, Collections.emptyList());
+      fileManager.handleOption("--patch-module", Arrays.asList("java.desktop=" + srcRoot.getPath()).iterator());
+
+      final File srcA = new File(srcAFile.getPath());
+      final File srcB = new File(srcBFile.getPath());
+      final Iterable<? extends JavaFileObject> sources = fileManager.getJavaFileObjectsFromFiles(Arrays.asList(srcA, srcB));
+
+      final Iterator<? extends JavaFileObject> it = sources.iterator();
+      assertTrue(it.hasNext());
+      final JavaFileObject srcAFileObject = it.next();
+      assertTrue(it.hasNext());
+      final JavaFileObject srcBFileObject = it.next();
+      assertFalse(it.hasNext());
+
+      assertEquals(JavaFileObject.Kind.SOURCE, srcAFileObject.getKind());
+      assertEquals(JavaFileObject.Kind.SOURCE, srcBFileObject.getKind());
+      assertEquals(srcA.toURI().getPath(), srcAFileObject.toUri().getPath());
+      assertEquals(srcB.toURI().getPath(), srcBFileObject.toUri().getPath());
+      assertTrue(fileManager.isSameFile(srcAFileObject, srcAFileObject));
+      assertFalse(fileManager.isSameFile(srcAFileObject, srcBFileObject));
+      checkFileObjectsBelongToLocation(fileManager, StandardLocation.SOURCE_PATH, sources);
+      checkFileObjectsBelongToLocation(fileManager, StandardLocation.PATCH_MODULE_PATH, sources);
     }
   }
 

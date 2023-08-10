@@ -17,15 +17,18 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class EditorToggleDecorationAction extends ToggleAction implements DumbAware, LightEditCompatible {
+public abstract class EditorToggleDecorationAction extends ToggleAction implements DumbAware, LightEditCompatible,
+                                                                                   ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public final void setSelected(@NotNull AnActionEvent e, boolean state) {
     final Editor editor = getEditor(e);
@@ -50,7 +53,12 @@ public abstract class EditorToggleDecorationAction extends ToggleAction implemen
     super.update(e);
     e.getPresentation().setEnabled(getEditor(e) != null);
   }
-  
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   protected abstract void setOption(Editor editor, boolean state);
   protected abstract boolean getOption(Editor editor);
 }

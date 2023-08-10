@@ -26,9 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GroovyTypeCastSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
@@ -39,8 +36,7 @@ public class GroovyTypeCastSelectioner extends ExtendWordSelectionHandlerBase {
   public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 
-    if (e instanceof GrTypeCastExpression) {
-      GrTypeCastExpression castExpression = ((GrTypeCastExpression) e);
+    if (e instanceof GrTypeCastExpression castExpression) {
       GrTypeElement type = castExpression.getCastTypeElement();
       TextRange range = type.getTextRange();
       if (range.contains(cursorOffset)) {

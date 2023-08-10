@@ -18,8 +18,10 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 /**
- * @author ibessonov
+ * @deprecated since Bintray service is scheduled for sunsetting in May 2021
  */
+@SuppressWarnings("DeprecatedIsStillUsed") // allow to use it in 2021.1
+@Deprecated(forRemoval = true)
 public class BintrayRepositoryService extends MavenRepositoryService {
 
   @NotNull
@@ -36,7 +38,7 @@ public class BintrayRepositoryService extends MavenRepositoryService {
       BintrayEndpoint bintrayEndpoint = new BintrayEndpoint();
       if (info.repo != null) {
         RemoteRepositoryDescription repository = bintrayEndpoint.getRepository(info.subject, info.repo);
-        return repository == null ? emptyList() : singletonList(repository);
+        return ContainerUtil.createMaybeSingletonList(repository);
       } else {
         return bintrayEndpoint.getRepositories(info.subject);
       }

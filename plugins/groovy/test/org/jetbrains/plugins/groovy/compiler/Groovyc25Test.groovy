@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -6,6 +6,8 @@ import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.TestLibrary
+import org.junit.Assert
+import org.junit.Ignore
 
 @CompileStatic
 class Groovyc25Test extends GroovycTestBase {
@@ -62,7 +64,7 @@ class Groovyc25Test extends GroovycTestBase {
   @Override
   void "test extend groovy classes with additional dependencies"() {
     ModuleRootModificationUtil.updateModel(module) { model ->
-      MavenDependencyUtil.addFromMaven(model, "org.codehaus.groovy:groovy-test:2.5.11", false)
+      MavenDependencyUtil.addFromMaven(model, "org.codehaus.groovy:groovy-test:2.5.17", false)
     }
     super.'test extend groovy classes with additional dependencies'()
   }
@@ -80,35 +82,39 @@ class Groovyc25Test extends GroovycTestBase {
     assert make().collect { it.message } == chunkRebuildMessage("Groovy stub generator")
   }
 
-  void 'test dependent class instanceof'() {
+  @Ignore("The rebuild was caused by a bug in groovy compiler, which is fixed in 2.5.16")
+  void '_test dependent class instanceof'() {
     def ca = myFixture.addFileToProject('A.groovy', 'class A { def usage(x) { x instanceof B } }')
     myFixture.addFileToProject('B.groovy', 'class B { A aaa }')
     assertEmpty make()
     touch(ca.virtualFile)
-    assert make().collect { it.message } == chunkRebuildMessage("Groovy compiler")
+    Assert.assertEquals(chunkRebuildMessage("Groovy compiler"), make().collect { it.message })
   }
 
-  void 'test dependent class exception'() {
+  @Ignore("The rebuild was caused by a bug in groovy compiler, which is fixed in 2.5.16")
+  void '_test dependent class exception'() {
     def ca = myFixture.addFileToProject('A.groovy', 'class A { def usage(x) throws B {} }')
     myFixture.addFileToProject('B.groovy', 'class B extends Throwable { A aaa }')
     assertEmpty make()
     touch(ca.virtualFile)
-    assert make().collect { it.message } == chunkRebuildMessage("Groovy compiler")
+    Assert.assertEquals(chunkRebuildMessage("Groovy compiler"), make().collect { it.message })
   }
 
-  void 'test dependent class literal'() {
+  @Ignore("The rebuild was caused by a bug in groovy compiler, which is fixed in 2.5.16")
+  void '_test dependent class literal'() {
     def ca = myFixture.addFileToProject('A.groovy', 'class A { def usage() { B.class } }')
     myFixture.addFileToProject('B.groovy', '@groovy.transform.PackageScope class B { A aaa }')
     assertEmpty make()
     touch(ca.virtualFile)
-    assert make().collect { it.message } == chunkRebuildMessage("Groovy compiler")
+    Assert.assertEquals(chunkRebuildMessage("Groovy compiler"), make().collect { it.message })
   }
 
-  void 'test dependent class array'() {
+  @Ignore("The rebuild was caused by a bug in groovy compiler, which is fixed in 2.5.16")
+  void '_test dependent class array'() {
     def ca = myFixture.addFileToProject('A.groovy', 'class A { def usage() { new B[0] } }')
     myFixture.addFileToProject('B.groovy', 'class B { A aaa }')
     assertEmpty make()
     touch(ca.virtualFile)
-    assert make().collect { it.message } == chunkRebuildMessage("Groovy compiler")
+    Assert.assertEquals(chunkRebuildMessage("Groovy compiler"), make().collect { it.message })
   }
 }

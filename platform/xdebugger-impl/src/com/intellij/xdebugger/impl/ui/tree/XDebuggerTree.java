@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.execution.configurations.RemoteRunProfile;
@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
@@ -32,6 +33,7 @@ import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +44,6 @@ import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.List;
@@ -56,6 +57,8 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   };
 
   public static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
+  public static final DataKey<List<XValueNodeImpl>> SELECTED_NODES = DataKey.create("xdebugger.selected.nodes");
+
   private final SingleAlarm myAlarm = new SingleAlarm(new Runnable() {
     @Override
     public void run() {
@@ -77,10 +80,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private static final TransferHandler DEFAULT_TRANSFER_HANDLER = new TransferHandler() {
     @Override
     protected Transferable createTransferable(JComponent c) {
-      if (!(c instanceof XDebuggerTree)) {
+      if (!(c instanceof XDebuggerTree tree)) {
         return null;
       }
-      XDebuggerTree tree = (XDebuggerTree)c;
       TreePath[] selectedPaths = tree.getSelectionPaths();
       if (selectedPaths == null || selectedPaths.length == 0) {
         return null;
@@ -190,21 +192,8 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       }
     });
 
-    if (Registry.is("debugger.variablesView.rss")) {
-      new XDebuggerTreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
-    }
-    else {
-      new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
-    }
-
-    final ActionManager actionManager = ActionManager.getInstance();
-    addMouseListener(new PopupHandler() {
-      @Override
-      public void invokePopup(final Component comp, final int x, final int y) {
-        ActionGroup group = (ActionGroup)actionManager.getAction(popupActionGroupId);
-        actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
-      }
-    });
+    installSpeedSearch();
+    PopupHandler.installPopupMenu(this, popupActionGroupId, "XDebuggerTreePopup");
     registerShortcuts();
 
     new AnAction() {
@@ -253,6 +242,18 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     addTreeExpansionListener(myTreeExpansionListener);
   }
 
+  /**
+   * Called from the tree constructor during initialization. Override if the speed search is not required for a derived class.
+   */
+  protected void installSpeedSearch() {
+    if (Registry.is("debugger.variablesView.rss")) {
+      XDebuggerTreeSpeedSearch.installOn(this, SPEED_SEARCH_CONVERTER);
+    }
+    else {
+      TreeSpeedSearch.installOn(this, false, SPEED_SEARCH_CONVERTER);
+    }
+  }
+
   @NotNull
   private MouseEvent dummyMouseClickEvent() {
     return new MouseEvent(this, 0, 0, 0, 0, 0, 1, false);
@@ -264,7 +265,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
 
   public boolean isUnderRemoteDebug() {
     DataContext context = DataManager.getInstance().getDataContext(this);
-    ExecutionEnvironment env = LangDataKeys.EXECUTION_ENVIRONMENT.getData(context);
+    ExecutionEnvironment env = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(context);
     if (env != null && env.getRunProfile() instanceof RemoteRunProfile) {
       return true;
     }
@@ -288,6 +289,11 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
 
   public void addTreeListener(@NotNull XDebuggerTreeListener listener) {
     myListeners.add(listener);
+  }
+
+  public void addTreeListener(@NotNull XDebuggerTreeListener listener, @NotNull Disposable parentDisposable) {
+    addTreeListener(listener);
+    Disposer.register(parentDisposable, () -> removeTreeListener(listener));
   }
 
   public void removeTreeListener(@NotNull XDebuggerTreeListener listener) {
@@ -342,6 +348,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     if (XDEBUGGER_TREE_KEY.is(dataId)) {
       return this;
     }
+    if (SELECTED_NODES.is(dataId)) {
+      return List.of(getSelectedNodes(XValueNodeImpl.class, null));
+    }
     if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
       XValueNodeImpl[] selectedNodes = getSelectedNodes(XValueNodeImpl.class, null);
       if (selectedNodes.length == 1 && selectedNodes[0].getFullValueEvaluator() == null) {
@@ -380,7 +389,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   public void markNodesObsolete() {
     Object root = myTreeModel.getRoot();
     if (root instanceof XValueContainerNode<?>) {
-      markNodesObsolete((XValueContainerNode<?>)root);
+      // avoid SOE
+      StreamEx.<XValueContainerNode<?>>ofTree((XValueContainerNode<?>)root, n -> StreamEx.of(n.getLoadedChildren()))
+        .forEach(XValueContainerNode::setObsolete);
     }
   }
 
@@ -405,11 +416,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.JUMP_TO_SOURCE, this, this);
     DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.JUMP_TO_TYPE_SOURCE, this, this);
     DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.MARK_OBJECT, this, this);
-  }
-
-  private static void markNodesObsolete(final XValueContainerNode<?> node) {
-    node.setObsolete();
-    node.getLoadedChildren().forEach(XDebuggerTree::markNodesObsolete);
+    DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.EVALUATE_EXPRESSION, this, this);
   }
 
   @Nullable
@@ -417,9 +424,12 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     return e.getData(XDEBUGGER_TREE_KEY);
   }
 
-  @Nullable
-  public static XDebuggerTree getTree(DataContext context) {
+  public static @Nullable XDebuggerTree getTree(@NotNull DataContext context) {
     return XDEBUGGER_TREE_KEY.getData(context);
+  }
+
+  public static @NotNull List<XValueNodeImpl> getSelectedNodes(@NotNull DataContext context) {
+    return ContainerUtil.notNullize(SELECTED_NODES.getData(context));
   }
 
   public void invokeLater(Runnable runnable) {

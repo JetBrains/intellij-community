@@ -5,6 +5,7 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,10 +31,6 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvider{
   private static final Logger LOG = Logger.getInstance(CutCopyPasteSupport.class);
   private static final SAXBuilder SAX_BUILDER = new SAXBuilder();
@@ -46,6 +43,11 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
 
   public CutCopyPasteSupport(final GuiEditor uiEditor) {
     myEditor = uiEditor;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
@@ -112,8 +114,8 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     }
 
     final ArrayList<RadComponent> componentsToPaste = new ArrayList<>();
-    final IntArrayList xs = new IntArrayList();
-    final IntArrayList ys = new IntArrayList();
+    final IntList xs=new IntArrayList();
+    final IntList ys=new IntArrayList();
     loadComponentsToPaste(myEditor, serializedComponents, xs, ys, componentsToPaste);
 
     myEditor.getMainProcessor().startPasteProcessor(componentsToPaste, xs, ys);
@@ -122,8 +124,8 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   @Nullable
   private static ArrayList<RadComponent> deserializeComponents(final GuiEditor editor, final String serializedComponents) {
     ArrayList<RadComponent> components = new ArrayList<>();
-    IntArrayList xs = new IntArrayList();
-    IntArrayList ys = new IntArrayList();
+    IntList xs=new IntArrayList();
+    IntList ys=new IntArrayList();
     if (!loadComponentsToPaste(editor, serializedComponents, xs, ys, components)) {
       return null;
     }
@@ -197,11 +199,10 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   private static String getSerializedComponents() {
     try {
       final Object transferData = CopyPasteManager.getInstance().getContents(ourDataFlavor);
-      if (!(transferData instanceof SerializedComponentData)) {
+      if (!(transferData instanceof SerializedComponentData dataProxy)) {
         return null;
       }
 
-      final SerializedComponentData dataProxy = (SerializedComponentData)transferData;
       return dataProxy.getSerializedComponents();
     }
     catch (Exception e) {

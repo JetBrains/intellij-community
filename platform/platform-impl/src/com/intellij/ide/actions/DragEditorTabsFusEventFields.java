@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup.ACTION_INVOKED_EVENT_ID;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup.ACTION_FINISHED_EVENT_ID;
 
 public class DragEditorTabsFusEventFields implements FeatureUsageCollectorExtension {
   public static final BooleanEventField SAME_WINDOW = EventFields.Boolean("same_window");
@@ -22,7 +22,7 @@ public class DragEditorTabsFusEventFields implements FeatureUsageCollectorExtens
 
   @Override
   public String getEventId() {
-    return ACTION_INVOKED_EVENT_ID;
+    return ACTION_FINISHED_EVENT_ID;
   }
 
   @Override

@@ -1,0 +1,3 @@
+fun jjk() {
+    JJK().test()
+}

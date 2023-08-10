@@ -1,68 +1,37 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModNavigate;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.NavigatablePsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class GoToSymbolFix implements IntentionAction {
-  private final SmartPsiElementPointer<NavigatablePsiElement> myPointer;
+public class GoToSymbolFix extends PsiBasedModCommandAction<NavigatablePsiElement> {
   private final @IntentionName String myMessage;
 
   public GoToSymbolFix(@NotNull NavigatablePsiElement symbol, @NotNull @Nls String message) {
-    myPointer = SmartPointerManager.getInstance(symbol.getProject()).createSmartPsiElementPointer(symbol);
+    super(symbol);
     myMessage = message;
   }
 
   @NotNull
   @Override
-  public String getText() {
+  public String getFamilyName() {
     return myMessage;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
-    return getText();
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull NavigatablePsiElement element) {
+    return new ModNavigate(element.getContainingFile().getVirtualFile(), 0, 0, 0);
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myPointer.getElement() != null;
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    NavigatablePsiElement e = myPointer.getElement();
-    if (e != null && e.isValid()) {
-      e.navigate(true);
-    }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+  protected @NotNull IntentionPreviewInfo generatePreview(ActionContext context, NavigatablePsiElement element) {
+    return IntentionPreviewInfo.navigate(element);
   }
 }

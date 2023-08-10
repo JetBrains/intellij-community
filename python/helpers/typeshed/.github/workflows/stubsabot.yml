@@ -1,0 +1,48 @@
+name: Run stubsabot weekly  # TODO: change to daily
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 5"  # TODO: change to daily
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  stubsabot:
+    name: Upgrade stubs with stubsabot
+    if: github.repository == 'python/typeshed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: git config
+        run: |
+          git config --global user.name stubsabot
+          git config --global user.email '<>'
+      - name: Install dependencies
+        run: pip install -r requirements-tests.txt
+      - name: Run stubsabot
+        run: GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} python scripts/stubsabot.py --action-level everything
+
+  # https://github.community/t/run-github-actions-job-only-if-previous-job-has-failed/174786/2
+  create-issue-on-failure:
+    name: Create an issue if stubsabot failed
+    runs-on: ubuntu-latest
+    needs: [stubsabot]
+    if: ${{ github.repository == 'python/typeshed' && always() && (needs.stubsabot.result == 'failure') }}
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.create({
+              owner: "python",
+              repo: "typeshed",
+              title: `Stubsabot failed on ${new Date().toDateString()}`,
+              body: "Stubsabot runs are listed here: https://github.com/python/typeshed/actions/workflows/stubsabot.yml",
+            })

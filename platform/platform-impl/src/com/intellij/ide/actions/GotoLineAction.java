@@ -23,7 +23,7 @@ public class GotoLineAction extends AnAction implements DumbAware, LightEditComp
     Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
     Editor editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
-    if (Boolean.TRUE.equals(e.getData(PlatformDataKeys.IS_MODAL_CONTEXT))) {
+    if (Boolean.TRUE.equals(e.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT))) {
       GotoLineNumberDialog dialog = new EditorGotoLineNumberDialog(project, editor);
       dialog.show();
     }
@@ -51,5 +51,10 @@ public class GotoLineAction extends AnAction implements DumbAware, LightEditComp
     }
     Editor editor = event.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
     presentation.setEnabledAndVisible(editor != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

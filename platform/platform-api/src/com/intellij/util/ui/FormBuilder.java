@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,13 +71,7 @@ public class FormBuilder {
 
   @NotNull
   private static JLabel createLabelForComponent(@NotNull @NlsContexts.Label String labelText, @NotNull JComponent component) {
-    TextWithMnemonic mnemonic = TextWithMnemonic.parse(labelText);
-    JLabel label = new JLabel(mnemonic.getText());
-    final int mnemonicIndex = mnemonic.getMnemonicIndex();
-    if (mnemonicIndex != -1) {
-      label.setDisplayedMnemonic(mnemonic.getMnemonic());
-      label.setDisplayedMnemonicIndex(mnemonicIndex);
-    }
+    JLabel label = new JLabel(UIUtil.replaceMnemonicAmpersand(labelText));
     label.setLabelFor(component);
     return label;
   }
@@ -106,7 +99,7 @@ public class FormBuilder {
 
   public FormBuilder addVerticalGap(final int height) {
     if (height == -1) {
-      myPanel.add(new JLabel(), new GridBagConstraints(0, myLineCount++, 2, 1, 0, 1, CENTER, NONE, JBUI.emptyInsets(), 0, 0));
+      myPanel.add(new JLabel(), new GridBagConstraints(0, myLineCount++, 2, 1, 0, 1, CENTER, NONE, JBInsets.emptyInsets(), 0, 0));
       return this;
     }
 

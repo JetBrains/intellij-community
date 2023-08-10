@@ -9,15 +9,17 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 public class TemplateBuilderTest extends LightJavaCodeInsightFixtureTestCase {
   public void testRunInlineTemplate() {
     TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable());
-    myFixture.configureByText("a.java", "class A {\n" +
-                                        "  public String tes<caret>t() {\n" +
-                                        "  }\n" +
-                                        "}");
+    myFixture.configureByText("a.java", """
+      class A {
+        public String tes<caret>t() {
+        }
+      }""");
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> TemplateBuilderFactory
       .getInstance().createTemplateBuilder(myFixture.getElementAtCaret()).run(myFixture.getEditor(), true));
-    myFixture.checkResult("class A {\n" +
-                          "  <caret>public String test() {\n" +
-                          "  }\n" +
-                          "}");
+    myFixture.checkResult("""
+                            class A {
+                              <caret>public String test() {
+                              }
+                            }""");
   }
 }

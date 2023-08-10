@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -7,8 +7,8 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
@@ -22,23 +22,25 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.RefactoringUsageCollector;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Predicate;
 
-public abstract class BaseRefactoringAction extends AnAction implements UpdateInBackground {
+public abstract class BaseRefactoringAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   protected abstract boolean isAvailableInEditorOnly();
 
@@ -49,10 +51,10 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
                                                         @NotNull PsiFile file,
                                                         @NotNull DataContext context,
                                                         @NotNull String place) {
-    if (ActionPlaces.isPopupPlace(place)) {
+    if (ActionPlaces.isPopupPlace(place) || place.contains(ActionPlaces.EDITOR_FLOATING_TOOLBAR)) {
       final RefactoringActionHandler handler = getHandler(context);
-      if (handler instanceof ContextAwareActionHandler) {
-        ContextAwareActionHandler contextAwareActionHandler = (ContextAwareActionHandler)handler;
+      if (handler == null) return false;
+      if (handler instanceof ContextAwareActionHandler contextAwareActionHandler) {
         if (!contextAwareActionHandler.isAvailableForQuickList(editor, file, context)) {
           return false;
         }
@@ -105,8 +107,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
       return;
     }
     IdeEventQueue.getInstance().setEventCount(eventCount);
-
-    SlowOperations.allowSlowOperations(() -> performRefactoringAction(project, dataContext, handler));
+    performRefactoringAction(project, dataContext, handler);
   }
 
   @ApiStatus.Internal
@@ -116,7 +117,8 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
     final Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
 
     if (handler == null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor"));
+      String message =
+        RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.getCannotRefactorMessage(null), null);
       return;
     }
@@ -134,7 +136,9 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
         Runnable command = () -> ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);
         Document doc = editor.getDocument();
         DocCommandGroupId group = DocCommandGroupId.noneGroupId(doc);
-        CommandProcessor.getInstance().executeCommand(editor.getProject(), command, ApplicationBundle.message("title.code.completion"), group, UndoConfirmationPolicy.DEFAULT, doc);
+        CommandProcessor.getInstance()
+          .executeCommand(editor.getProject(), command, ApplicationBundle.message("title.code.completion"), group,
+                          UndoConfirmationPolicy.DEFAULT, doc);
       }
     }
 
@@ -142,14 +146,14 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
     final Language language = file != null
                               ? file.getLanguage()
                               : (elements.length > 0 ? elements[0].getLanguage() : null);
-    FeatureUsageData data = new FeatureUsageData()
-      .addData("handler", handler.getClass().getName())
-      .addLanguage(language);
+    ArrayList<EventPair<?>> data = new ArrayList<>();
+    data.add(RefactoringUsageCollector.HANDLER.with(handler.getClass()));
+    data.add(EventFields.Language.with(language));
     if (elements.length > 0) {
-      data.addData("element", elements[0].getClass().getName());
+      data.add(RefactoringUsageCollector.ELEMENT.with(elements[0].getClass()));
     }
 
-    FUCounterUsageLogger.getInstance().logEvent(project, "refactoring", "handler.invoked", data);
+    RefactoringUsageCollector.HANDLER_INVOKED.log(project, data);
 
     if (editor != null) {
       if (file == null) return;
@@ -191,7 +195,12 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
         return;
       }
       final PsiElement[] elements = getPsiElementArray(dataContext);
-      final boolean isEnabled = isEnabledOnDataContext(dataContext) || elements.length != 0 && isEnabledOnElements(elements);
+      boolean availableForLanguage = ContainerUtil.exists(elements, element -> isAvailableForLanguage(element.getLanguage()));
+      if (!availableForLanguage) {
+        hideAction(e);
+        return;
+      }
+      final boolean isEnabled = isEnabledOnDataContext(dataContext) || isEnabledOnElements(elements);
       if (!isEnabled) {
         disableAction(e);
       }
@@ -267,27 +276,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
   }
 
   public static PsiElement getElementAtCaret(@NotNull final Editor editor, final PsiFile file) {
-    final int offset = fixCaretOffset(editor);
-    PsiElement element = file.findElementAt(offset);
-    if (element == null && offset == file.getTextLength()) {
-      element = file.findElementAt(offset - 1);
-    }
-
-    if (element instanceof PsiWhiteSpace) {
-      element = file.findElementAt(element.getTextRange().getStartOffset() - 1);
-    }
-    return element;
-  }
-
-  private static int fixCaretOffset(@NotNull final Editor editor) {
-    final int caret = editor.getCaretModel().getOffset();
-    if (editor.getSelectionModel().hasSelection()) {
-      if (caret == editor.getSelectionModel().getSelectionEnd()) {
-        return Math.max(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd() - 1);
-      }
-    }
-
-    return caret;
+    return CommonRefactoringUtil.getElementAtCaret(editor, file);
   }
 
   private static void disableAction(@NotNull AnActionEvent e) {
@@ -303,23 +292,6 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
   }
 
   public static PsiElement @NotNull [] getPsiElementArray(@NotNull DataContext dataContext) {
-    PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-    if (psiElements == null || psiElements.length == 0) {
-      PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-      if (element != null) {
-        psiElements = new PsiElement[]{element};
-      }
-    }
-
-    if (psiElements == null) return PsiElement.EMPTY_ARRAY;
-
-    List<PsiElement> filtered = null;
-    for (PsiElement element : psiElements) {
-      if (element instanceof SyntheticElement) {
-        if (filtered == null) filtered = new ArrayList<>(Collections.singletonList(element));
-        filtered.remove(element);
-      }
-    }
-    return filtered == null ? psiElements : PsiUtilCore.toPsiElementArray(filtered);
+    return CommonRefactoringUtil.getPsiElementArray(dataContext);
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +29,6 @@ import java.util.Map;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ParseException;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.parseContract;
 
-/**
- * @author peter
- */
 public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
@@ -38,7 +37,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
     return new JavaElementVisitor() {
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
         if (annotation == null || (!ApplicationManager.getApplication().isInternal() && AnnotationUtil.isInferredAnnotation(annotation))) {
           return;
@@ -51,7 +50,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
       }
 
       @Override
-      public void visitAnnotation(PsiAnnotation annotation) {
+      public void visitAnnotation(@NotNull PsiAnnotation annotation) {
         if (!JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotation.getQualifiedName())) return;
 
         PsiMethod method = PsiTreeUtil.getParentOfType(annotation, PsiMethod.class);
@@ -131,13 +130,13 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
           return ParseException
             .forClause(JavaAnalysisBundle.message("inspection.contract.checker.unreachable.contract.clause", contract), text, clauseIndex);
         }
-        if (StreamEx.of(possibleContracts).allMatch(c -> c.intersect(contract) == null)) {
+        if (ContainerUtil.and(possibleContracts, c -> c.intersect(contract) == null)) {
           return ParseException.forClause(
             JavaAnalysisBundle.message("inspection.contract.checker.contract.clause.never.satisfied", contract), text, clauseIndex);
         }
         possibleContracts = StreamEx.of(possibleContracts).flatMap(c -> c.excludeContract(contract))
-                                     .limit(DataFlowRunner.MAX_STATES_PER_BRANCH).toList();
-        if (possibleContracts.size() >= DataFlowRunner.MAX_STATES_PER_BRANCH) {
+                                     .limit(StandardDataFlowInterpreter.DEFAULT_MAX_STATES_PER_BRANCH).toList();
+        if (possibleContracts.size() >= StandardDataFlowInterpreter.DEFAULT_MAX_STATES_PER_BRANCH) {
           possibleContracts = null;
         }
       }
@@ -151,7 +150,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
                                                                 ValueConstraint constraint, PsiParameter parameter) {
     PsiType type = parameter.getType();
     switch (constraint) {
-      case NULL_VALUE: {
+      case NULL_VALUE -> {
         if (type instanceof PsiPrimitiveType) {
           return JavaAnalysisBundle.message("inspection.contract.checker.primitive.parameter.nullability",
                                             parameter.getName(), type.getPresentableText(), constraint);
@@ -169,7 +168,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
         }
         return null;
       }
-      case NOT_NULL_VALUE: {
+      case NOT_NULL_VALUE -> {
         if (type instanceof PsiPrimitiveType) {
           return JavaAnalysisBundle.message("inspection.contract.checker.primitive.parameter.nullability",
                                             parameter.getName(), type.getPresentableText(), constraint);
@@ -183,15 +182,16 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
         }
         return null;
       }
-      case TRUE_VALUE:
-      case FALSE_VALUE:
-        if (!PsiType.BOOLEAN.equals(type) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
+      case TRUE_VALUE, FALSE_VALUE -> {
+        if (!PsiTypes.booleanType().equals(type) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
           return JavaAnalysisBundle.message("inspection.contract.checker.boolean.condition.for.nonboolean.parameter",
                                             parameter.getName(), type.getPresentableText());
         }
         return null;
-      default:
+      }
+      default -> {
         return null;
+      }
     }
   }
 }

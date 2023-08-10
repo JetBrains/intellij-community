@@ -6,13 +6,9 @@ import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class VcsCommittedListsZipperAdapter implements VcsCommittedListsZipper {
   private final GroupCreator myGroupCreator;
@@ -61,7 +57,7 @@ public abstract class VcsCommittedListsZipperAdapter implements VcsCommittedList
     }
     final CommittedChangeList result = lists.get(0);
 
-    Set<Change> processed = new THashSet<>(result.getChanges());
+    Set<Change> processed = new HashSet<>(result.getChanges());
 
     for (int i = 1; i < lists.size(); i++) {
       for (Change change : lists.get(i).getChanges()) {

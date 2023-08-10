@@ -15,6 +15,8 @@ import java.util.Collections;
  * Additional library roots will extend {@link com.intellij.psi.search.GlobalSearchScope#allScope(Project)}
  * (in UI, "Project and Libraries" scope). Also, files contained in the roots will be shown as library files
  * in Project View and will be available in "Navigate | File..." popup.
+ *
+ * @see AdditionalLibraryRootsListener
  */
 public abstract class AdditionalLibraryRootsProvider {
   public static final ExtensionPointName<AdditionalLibraryRootsProvider> EP_NAME = ExtensionPointName.create("com.intellij.additionalLibraryRootsProvider");

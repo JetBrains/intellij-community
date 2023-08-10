@@ -1,6 +1,8 @@
 /*
-Value is always false (E.A == E.B; line#9)
-  Comparison arguments are different constants (==; line#9)
+Value is always false (E.A == E.B; line#11)
+  Values cannot be equal because E.A.ordinal != E.B.ordinal
+    Left operand is 0 (E.A; line#11)
+    and right operand is 1 (E.B; line#11)
  */
 class Test {
   enum E {A, B, C}

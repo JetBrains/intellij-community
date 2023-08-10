@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -24,10 +24,6 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
   }
 
   private UpdateOptions myState = new UpdateOptions();
-
-  public boolean isPlatformUpdateEnabled() {
-    return ExternalUpdateManager.ACTUAL == null;
-  }
 
   @Override
   public @NotNull UpdateOptions getState() {
@@ -55,12 +51,24 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
     myState.setCheckNeeded(value);
   }
 
+  public boolean isPluginsCheckNeeded() {
+    return myState.isPluginsCheckNeeded();
+  }
+
+  public void setPluginsCheckNeeded(boolean value) {
+    myState.setPluginsCheckNeeded(value);
+  }
+
   public boolean isShowWhatsNewEditor() {
     return myState.isShowWhatsNewEditor();
   }
 
-  public void setShowWhatsNewEditor(boolean value) {
-    myState.setShowWhatsNewEditor(value);
+  public int getWhatsNewShownFor() {
+    return myState.getWhatsNewShownFor();
+  }
+
+  public void setWhatsNewShownFor(int version) {
+    myState.setWhatsNewShownFor(version);
   }
 
   public long getLastTimeChecked() {
@@ -101,7 +109,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
       ContainerUtil.addAll(hosts, pluginHosts.split(";"));
     }
 
-    UpdateSettingsProviderHelper.addPluginRepositories(hosts);
+    hosts.addAll(UpdateSettingsProviderHelper.getPluginRepositories());
     ContainerUtil.removeDuplicates(hosts);
     return hosts;
   }
@@ -121,5 +129,13 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
 
   public void setThirdPartyPluginsAllowed(boolean value) {
     myState.setThirdPartyPluginsAllowed(value);
+  }
+
+  public boolean isObsoleteCustomRepositoriesCleanNeeded() {
+    return myState.isObsoleteCustomRepositoriesCleanNeeded();
+  }
+
+  public void setObsoleteCustomRepositoriesCleanNeeded(boolean value) {
+    myState.setObsoleteCustomRepositoriesCleanNeeded(value);
   }
 }

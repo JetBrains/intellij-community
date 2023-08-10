@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     setText("");
     setOpaque(true);
     updateUI();
+    setAlignmentX(LEFT_ALIGNMENT);
   }
 
   @Override public void updateUI() {
@@ -65,7 +67,15 @@ public class HighlightableComponent extends JComponent implements Accessible {
     }
   }
 
-  public void setIcon(Icon icon) {
+  public @NotNull String getText() {
+    return myText;
+  }
+
+  public @Nullable Icon getIcon() {
+    return myIcon;
+  }
+
+  public void setIcon(@Nullable Icon icon) {
     myIcon = icon;
     invalidate();
     repaint();
@@ -109,17 +119,13 @@ public class HighlightableComponent extends JComponent implements Accessible {
             myHighlightedRegions.add(i, new HighlightedRegion(startOffset, hRegion.startOffset, attributes));
             myHighlightedRegions.add(i + 1, new HighlightedRegion(hRegion.startOffset, endOffset, TextAttributes.merge(hRegion.textAttributes, attributes)));
             hRegion.startOffset = endOffset;
-            break;
           }
-
-          if (endOffset == hRegion.endOffset){
+          else if (endOffset == hRegion.endOffset){
             myHighlightedRegions.remove(hRegion);
             myHighlightedRegions.add(i, new HighlightedRegion(startOffset, hRegion.startOffset, attributes));
             myHighlightedRegions.add(i + 1, new HighlightedRegion(hRegion.startOffset, endOffset, TextAttributes.merge(hRegion.textAttributes, attributes)));
-            break;
           }
-
-          if (endOffset > hRegion.endOffset){
+          else { // endOffset > hRegion.endOffset
             myHighlightedRegions.remove(hRegion);
             myHighlightedRegions.add(i, new HighlightedRegion(startOffset, hRegion.startOffset, attributes));
             myHighlightedRegions.add(i + 1, new HighlightedRegion(hRegion.startOffset, hRegion.endOffset, TextAttributes.merge(hRegion.textAttributes, attributes)));
@@ -130,12 +136,12 @@ public class HighlightableComponent extends JComponent implements Accessible {
             else{
               myHighlightedRegions.add(i + 2, new HighlightedRegion(hRegion.endOffset, endOffset, attributes));
             }
-            break;
           }
+          break;
         }
 
         // must be after and overlap or full overlap
-        if (startOffset >= hRegion.startOffset && startOffset < hRegion.endOffset){
+        if (startOffset < hRegion.endOffset){
 
           int oldEndOffset = hRegion.endOffset;
 
@@ -271,7 +277,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
           g.drawString(text, offset, yOffset/*defFontMetrics.getMaxAscent()*/);
 
-          offset += defFontMetrics.stringWidth(text);
+          offset += getStringWidth(text, defFontMetrics);
         }
 
         Font regFont = getFont().deriveFont(hRegion.textAttributes.getFontType());
@@ -283,7 +289,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
         if (hRegion.textAttributes.getBackgroundColor() != null && paintHighlightsBackground) {
           g.setColor(hRegion.textAttributes.getBackgroundColor());
-          g.fillRect(offset, 0, fontMetrics.stringWidth(text), fontMetrics.getHeight() + fontMetrics.getLeading());
+          g.fillRect(offset, 0, getStringWidth(text, fontMetrics), fontMetrics.getHeight() + fontMetrics.getLeading());
         }
 
         // draw highlight text
@@ -302,17 +308,17 @@ public class HighlightableComponent extends JComponent implements Accessible {
         if (hRegion.textAttributes.getEffectType() != null && hRegion.textAttributes.getEffectColor() != null) {
           g.setColor(hRegion.textAttributes.getEffectColor());
           int y = yOffset/*fontMetrics.getMaxAscent()*/ + 2;
-          LinePainter2D.paint((Graphics2D)g, offset, y, offset + fontMetrics.stringWidth(text) - 1, y);
+          LinePainter2D.paint((Graphics2D)g, offset, y, offset + getStringWidth(text, fontMetrics) - 1, y);
         }
 
         // draw highlight border
 
         if (hRegion.textAttributes.getEffectColor() != null && hRegion.textAttributes.getEffectType() == EffectType.BOXED) {
           g.setColor(hRegion.textAttributes.getEffectColor());
-          g.drawRect(offset, 0, fontMetrics.stringWidth(text) - 1, fontMetrics.getHeight() + fontMetrics.getLeading() - 1);
+          g.drawRect(offset, 0, getStringWidth(text, fontMetrics) - 1, fontMetrics.getHeight() + fontMetrics.getLeading() - 1);
         }
 
-        offset += fontMetrics.stringWidth(text);
+        offset += getStringWidth(text, fontMetrics);
       }
 
       String text = myText.substring(endIndex);
@@ -360,7 +366,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     if (myText.length() != 0 && myHighlightedRegions.size() != 0) {
       int endIndex = 0;
       for (HighlightedRegion hRegion : myHighlightedRegions) {
-        width += defFontMetrics.stringWidth(myText.substring(endIndex, hRegion.startOffset));
+        width += getStringWidth(myText.substring(endIndex, hRegion.startOffset), defFontMetrics);
         endIndex = hRegion.endOffset;
         if (width > x) return null;
 
@@ -368,7 +374,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
         Font regFont = getFont().deriveFont(hRegion.textAttributes.getFontType());
         FontMetrics fontMetrics = getFontMetrics(regFont);
 
-        width += fontMetrics.stringWidth(text);
+        width += getStringWidth(text, fontMetrics);
         if (width > x) return hRegion;
       }
     }
@@ -387,14 +393,14 @@ public class HighlightableComponent extends JComponent implements Accessible {
     if (myText.length() != 0 && myHighlightedRegions.size() != 0) {
       int endIndex = 0;
       for (HighlightedRegion hRegion : myHighlightedRegions) {
-        pivot += defFontMetrics.stringWidth(myText.substring(endIndex, hRegion.startOffset));
+        pivot += getStringWidth(myText.substring(endIndex, hRegion.startOffset), defFontMetrics);
         start = pivot;
         endIndex = hRegion.endOffset;
 
         String text = getRegionText(hRegion);
         Font regFont = getFont().deriveFont(hRegion.textAttributes.getFontType());
         FontMetrics fontMetrics = getFontMetrics(regFont);
-        pivot += fontMetrics.stringWidth(text);
+        pivot += getStringWidth(text, fontMetrics);
         end = pivot;
         map.put(text, new Rectangle(this.getBounds().x + start, this.getBounds().y, end - start, this.getBounds().height));
       }
@@ -410,21 +416,21 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
     if (myText.length() != 0){
       if (myHighlightedRegions.size() == 0){
-        width += defFontMetrics.stringWidth(myText);
+        width += getStringWidth(myText, defFontMetrics);
       }
       else{
         int endIndex = 0;
         for (HighlightedRegion hRegion : myHighlightedRegions) {
-          width += defFontMetrics.stringWidth(myText.substring(endIndex, hRegion.startOffset));
+          width += getStringWidth(myText.substring(endIndex, hRegion.startOffset), defFontMetrics);
           endIndex = hRegion.endOffset;
 
           String text = getRegionText(hRegion);
           Font regFont = getFont().deriveFont(hRegion.textAttributes.getFontType());
           FontMetrics fontMetrics = getFontMetrics(regFont);
 
-          width += fontMetrics.stringWidth(text);
+          width += getStringWidth(text, fontMetrics);
         }
-        width += defFontMetrics.stringWidth(myText.substring(endIndex));
+        width += getStringWidth(myText.substring(endIndex), defFontMetrics);
       }
     }
 
@@ -438,7 +444,16 @@ public class HighlightableComponent extends JComponent implements Accessible {
     return new Dimension(width + 2, height);
   }
 
-  public String getRegionText(HighlightedRegion hRegion) {
+  protected int getStringWidth(@Nls String text, FontMetrics fontMetrics) {
+    return fontMetrics.stringWidth(text);
+  }
+
+  @ApiStatus.Internal
+  public ArrayList<HighlightedRegion> getHighlightedRegions() {
+    return myHighlightedRegions;
+  }
+
+  public @Nls String getRegionText(HighlightedRegion hRegion) {
     String text;
     if (hRegion.endOffset > myText.length()) {
       if (hRegion.startOffset < myText.length()) {

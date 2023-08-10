@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -23,13 +9,12 @@ import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContribut
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
-import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -41,7 +26,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -50,17 +34,12 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
 public class JavaTypedHandler extends TypedHandlerDelegate {
-  static final TokenSet INVALID_INSIDE_REFERENCE = TokenSet.create(JavaTokenType.SEMICOLON, JavaTokenType.LBRACE, JavaTokenType.RBRACE);
   private boolean myJavaLTTyped;
 
   private static void autoPopupMemberLookup(Project project, final Editor editor) {
@@ -79,7 +58,10 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       do {
         parent = parent.getParent();
       } while(parent instanceof PsiJavaCodeReferenceElement || parent instanceof PsiTypeElement);
-      if (parent instanceof PsiParameterList || parent instanceof PsiParameter) return false;
+      if (parent instanceof PsiParameterList ||
+          (parent instanceof PsiParameter && !(parent instanceof PsiPatternVariable))) {
+        return false;
+      }
 
       if (!".".equals(lastElement.getText()) && !"#".equals(lastElement.getText())) {
         return JavaClassReferenceCompletionContributor.findJavaClassReference(file, offset - 1) != null;
@@ -95,6 +77,8 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
   @Override
   public @NotNull Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (!(file instanceof PsiJavaFile)) return Result.CONTINUE;
+
     int offset = editor.getCaretModel().getOffset();
     if (charTyped == ' ' &&
         StringUtil.endsWith(editor.getDocument().getImmutableCharSequence(), 0, offset, PsiKeyword.NEW)) {
@@ -133,7 +117,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
     if ('>' == c) {
       if (!(file instanceof JspFile) && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && PsiUtil.isLanguageLevel5OrHigher(file)) {
-        if (TypedHandlerUtil.handleGenericGT(editor, JavaTokenType.LT, JavaTokenType.GT, INVALID_INSIDE_REFERENCE)) return Result.STOP;
+        if (TypedHandlerUtil.handleGenericGT(editor, JavaTokenType.LT, JavaTokenType.GT, JavaTypingTokenSets.INVALID_INSIDE_REFERENCE)) return Result.STOP;
       }
     }
 
@@ -158,7 +142,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         return Result.CONTINUE;
       }
 
-      HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset - 1);
+      HighlighterIterator iterator = editor.getHighlighter().createIterator(offset - 1);
       while (!iterator.atEnd() && iterator.getTokenType() == TokenType.WHITE_SPACE) {
         iterator.retreat();
       }
@@ -181,7 +165,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       }
 
       if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null && !shouldInsertPairedBrace(leaf)) {
-        EditorModificationUtil.insertStringAtCaret(editor, "{");
+        EditorModificationUtilEx.insertStringAtCaret(editor, "{");
         TypedHandler.indentOpenedBrace(project, editor);
         return Result.STOP; // use case: manually wrapping part of method's code in 'if', 'while', etc
       }
@@ -201,12 +185,13 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     char prevChar = doc.getCharsSequence().charAt(offsetBefore - 1);
     if (prevChar != '=' && prevChar != '!') return false;
 
-    HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(offsetBefore - 1);
+    HighlighterIterator it = editor.getHighlighter().createIterator(offsetBefore - 1);
     IElementType curToken = it.getTokenType();
     if (curToken != JavaTokenType.EQ && curToken != JavaTokenType.EXCL) return false;
     int lineStart = doc.getLineStartOffset(doc.getLineNumber(offsetBefore));
     do {
       it.retreat();
+      if (it.atEnd()) return false;
       curToken = it.getTokenType();
     }
     while (curToken == TokenType.WHITE_SPACE || curToken == JavaTokenType.C_STYLE_COMMENT || curToken == JavaTokenType.END_OF_LINE_COMMENT);
@@ -245,19 +230,6 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     return true;
   }
 
-  private static final TokenSet UNWANTED_TOKEN_AT_QUESTION =
-    TokenSet.create(JavaTokenType.C_STYLE_COMMENT, JavaTokenType.END_OF_LINE_COMMENT, JavaTokenType.CHARACTER_LITERAL,
-                    JavaTokenType.STRING_LITERAL, JavaTokenType.TEXT_BLOCK_LITERAL);
-
-  private static final TokenSet UNWANTED_TOKEN_BEFORE_QUESTION =
-    TokenSet.orSet(ExpressionParser.ASSIGNMENT_OPS, TokenSet.create(JavaTokenType.QUEST, JavaTokenType.COLON));
-
-  private static final TokenSet WANTED_TOKEN_BEFORE_QUESTION =
-    // Tokens that may appear before ?: in polyadic expression that may have non-boolean result
-    TokenSet.orSet(
-      TokenSet.create(JavaTokenType.OR, JavaTokenType.XOR, JavaTokenType.AND),
-      ExpressionParser.SHIFT_OPS, ExpressionParser.ADDITIVE_OPS, ExpressionParser.MULTIPLICATIVE_OPS);
-
   /**
    * Automatically insert parentheses around the ?: when necessary.
    *
@@ -265,10 +237,10 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
    */
   private static boolean handleQuestionMark(Project project, Editor editor, PsiFile file, int offsetBefore) {
     if (offsetBefore == 0) return false;
-    HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(offsetBefore);
+    HighlighterIterator it = editor.getHighlighter().createIterator(offsetBefore);
     if (it.atEnd()) return false;
     IElementType curToken = it.getTokenType();
-    if (UNWANTED_TOKEN_AT_QUESTION.contains(curToken)) return false;
+    if (JavaTypingTokenSets.UNWANTED_TOKEN_AT_QUESTION.contains(curToken)) return false;
     int nesting = 0;
     while (true) {
       it.retreat();
@@ -282,8 +254,8 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         nesting++;
       }
       else if (nesting == 0) {
-        if (UNWANTED_TOKEN_BEFORE_QUESTION.contains(curToken)) return false;
-        if (WANTED_TOKEN_BEFORE_QUESTION.contains(curToken)) break;
+        if (JavaTypingTokenSets.UNWANTED_TOKEN_BEFORE_QUESTION.contains(curToken)) return false;
+        if (JavaTypingTokenSets.WANTED_TOKEN_BEFORE_QUESTION.contains(curToken)) break;
       }
     }
 
@@ -292,15 +264,15 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     editor.getCaretModel().moveToOffset(offsetBefore + 1);
     PsiDocumentManager.getInstance(project).commitDocument(doc);
     PsiElement element = file.findElementAt(offsetBefore);
-    if (!(element instanceof PsiJavaToken) || !((PsiJavaToken)element).getTokenType().equals(JavaTokenType.QUEST)) return true;
+    if (!PsiUtil.isJavaToken(element, JavaTokenType.QUEST)) return true;
     PsiConditionalExpression cond = ObjectUtils.tryCast(element.getParent(), PsiConditionalExpression.class);
     if (cond == null || cond.getThenExpression() != null || cond.getElseExpression() != null) return true;
     PsiExpression condition = cond.getCondition();
     if (PsiUtilCore.hasErrorElementChild(condition)) return true;
     // intVal+bool? => intVal+(bool?)
-    if (condition instanceof PsiPolyadicExpression && !PsiType.BOOLEAN.equals(condition.getType())) {
+    if (condition instanceof PsiPolyadicExpression && !PsiTypes.booleanType().equals(condition.getType())) {
       PsiExpression lastOperand = ArrayUtil.getLastElement(((PsiPolyadicExpression)condition).getOperands());
-      if (lastOperand != null && PsiType.BOOLEAN.equals(lastOperand.getType())) {
+      if (lastOperand != null && PsiTypes.booleanType().equals(lastOperand.getType())) {
         int openingOffset = lastOperand.getTextRange().getStartOffset();
         int closingOffset = cond.getTextRange().getEndOffset();
         wrapWithParentheses(file, doc, openingOffset, closingOffset);
@@ -355,7 +327,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
     if (myJavaLTTyped) {
       myJavaLTTyped = false;
-      TypedHandlerUtil.handleAfterGenericLT(editor, JavaTokenType.LT, JavaTokenType.GT, INVALID_INSIDE_REFERENCE);
+      TypedHandlerUtil.handleAfterGenericLT(editor, JavaTokenType.LT, JavaTokenType.GT, JavaTypingTokenSets.INVALID_INSIDE_REFERENCE);
       return Result.STOP;
     }
     else if (c == ':') {
@@ -366,7 +338,27 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     else if (c == ',' && handleAnnotationParameter(project, editor, file)) {
       return Result.STOP;
     }
+    else if (c == '.') {
+      if (handleDotTyped(project, editor, file)) {
+        return Result.STOP;
+      }
+    }
     return Result.CONTINUE;
+  }
+
+  private static boolean handleDotTyped(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    int offset = editor.getCaretModel().getOffset() - 1;
+    if (offset >= 0) {
+      Document document = editor.getDocument();
+      int line = document.getLineNumber(offset);
+      int lineStart = document.getLineStartOffset(line);
+      if (StringUtil.isEmptyOrSpaces(document.getCharsSequence().subSequence(lineStart, offset))) {
+        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+        CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean handleAnnotationParameter(Project project, @NotNull Editor editor, @NotNull PsiFile file) {
@@ -403,7 +395,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
   private static boolean mightBeInsideDefaultAnnotationAttribute(@NotNull Editor editor, int offset) {
     if (offset < 0) return false;
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     int parenCount = 0;
     while (!iterator.atEnd()) {
       IElementType tokenType = iterator.getTokenType();
@@ -432,7 +424,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     char charAt = editor.getDocument().getCharsSequence().charAt(offset);
     if (charAt != ';') return false;
 
-    HighlighterIterator hi = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    HighlighterIterator hi = editor.getHighlighter().createIterator(offset);
     if (hi.atEnd() || hi.getTokenType() != JavaTokenType.SEMICOLON) return false;
 
     EditorModificationUtil.moveCaretRelatively(editor, 1);
@@ -449,7 +441,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     // Note, this feature may be rewritten using only lexer if needed.
     // In that case accuracy will not be 100%, but good enough.
 
-    HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(caretOffset);
+    HighlighterIterator it = editor.getHighlighter().createIterator(caretOffset);
     int afterLastParenOffset = -1;
 
     while (!it.atEnd()) {
@@ -526,41 +518,5 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       }
     }
     return false;
-  }
-
-  /**
-   * needed for API compatibility only
-   * @deprecated Please use {@link TypedHandlerUtil#handleGenericGT} instead
-   */
-  @Deprecated
-  public static boolean handleJavaGT(@NotNull final Editor editor,
-                                     @NotNull final IElementType lt,
-                                     @NotNull final IElementType gt,
-                                     @NotNull final TokenSet invalidInsideReference) {
-    return TypedHandlerUtil.handleGenericGT(editor, lt, gt, invalidInsideReference);
-  }
-
-  /**
-   * needed for API compatibility only
-   * @deprecated Please use {@link TypedHandlerUtil#handleAfterGenericLT} instead
-   */
-  @Deprecated
-  public static void handleAfterJavaLT(@NotNull final Editor editor,
-                                       @NotNull final IElementType lt,
-                                       @NotNull final IElementType gt,
-                                       @NotNull final TokenSet invalidInsideReference) {
-    TypedHandlerUtil.handleAfterGenericLT(editor, lt, gt, invalidInsideReference);
-  }
-
-  /**
-   * needed for API compatibility only
-   * @deprecated Please use {@link TypedHandlerUtil#isClassLikeIdentifier} instead
-   */
-  @Deprecated
-  public static boolean isClassLikeIdentifier(int offset,
-                                              @NotNull Editor editor,
-                                              @NotNull HighlighterIterator iterator,
-                                              @NotNull final IElementType idType) {
-    return TypedHandlerUtil.isClassLikeIdentifier(offset, editor, iterator, idType);
   }
 }

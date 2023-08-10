@@ -42,8 +42,7 @@ final class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
-    if (element instanceof ResourceBundle) {
-      ResourceBundle bundle = (ResourceBundle)element;
+    if (element instanceof ResourceBundle bundle) {
       final List<PropertiesFile> propertiesFiles = bundle.getPropertiesFiles();
       for (PropertiesFile file : propertiesFiles) {
         final VirtualFile virtualFile = file.getVirtualFile();
@@ -68,8 +67,7 @@ final class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public boolean isInvalidElement(final Object element) {
-    if (element instanceof ResourceBundle) {
-      ResourceBundle resourceBundle = (ResourceBundle)element;
+    if (element instanceof ResourceBundle resourceBundle) {
       List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
       if (propertiesFiles.size() == 1) {
         //todo result.add(new PsiFileNode(myProject, propertiesFiles.iterator().next(), this));
@@ -90,8 +88,7 @@ final class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
     if (element instanceof ResourceBundleImpl) {
       return ((ResourceBundleImpl)element).getUrl();
     }
-    else if (element instanceof PsiFile[]) {
-      PsiFile[] files = (PsiFile[])element;
+    else if (element instanceof PsiFile[] files) {
 
       ResourceBundle bundle = null;
       for (PsiFile file : files) {

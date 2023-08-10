@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,37 +18,35 @@ import java.util.concurrent.Future;
 public interface VcsLog {
 
   /**
-   * Returns commits currently selected in the log.
+   * @deprecated Use {@link VcsLogCommitSelection#getCommits()} instead.
    */
+  @RequiresEdt
   @NotNull
+  @Deprecated
   List<CommitId> getSelectedCommits();
 
   /**
-   * Returns metadata of the selected commit which are visible in the table. <br/>
-   * Metadata can be retrieved from index, or loaded from the repository.
-   * Metadata is loaded faster than full details and since it is done while scrolling,
-   * there is a better chance that details for a commit are loaded when user selects it.
-   * This makes this method preferable to {@link #getSelectedDetails()}.
-   * Still, check for LoadingDetails instance has to be done when using details from this list.
+   * @deprecated Use {@link VcsLogCommitSelection#getCachedMetadata()} instead.
    */
+  @RequiresEdt
   @NotNull
+  @Deprecated
   List<VcsCommitMetadata> getSelectedShortDetails();
 
   /**
-   * Returns details of the selected commits.
-   * For commits that are not loaded an instance of LoadingDetails is returned.
+   * @deprecated Use {@link VcsLogCommitSelection#getCachedFullDetails()} instead.
    */
+  @RequiresEdt
   @NotNull
+  @Deprecated
   List<VcsFullCommitDetails> getSelectedDetails();
 
   /**
-   * Sends a request to load details that are currently selected.
-   * Details are loaded in background. If a progress indicator is specified it is used during loading process.
-   * After all details are loaded they are provided to the consumer in the EDT.
-   *
-   * @param consumer called in EDT after all details are loaded.
+   * @deprecated Use {@link VcsLogCommitSelection#requestFullDetails(java.util.function.Consumer)} instead.
    */
-  void requestSelectedDetails(@NotNull Consumer<? super List<VcsFullCommitDetails>> consumer);
+  @RequiresEdt
+  @Deprecated
+  void requestSelectedDetails(@NotNull Consumer<? super List<? extends VcsFullCommitDetails>> consumer);
 
   /**
    * Returns names of branches which contain the given commit, or null if this information is unavailable yet.
@@ -75,9 +60,18 @@ public interface VcsLog {
    * or cancel commit selection.
    *
    * @param reference target reference (commit hash, branch or tag)
+   * @param focus     focus VCS Log table
    */
   @NotNull
-  Future<Boolean> jumpToReference(@NotNull String reference);
+  Future<Boolean> jumpToReference(@NotNull String reference, boolean focus);
+
+  /**
+   * {@link #jumpToReference(String, boolean)} with focusing VCS Log table
+   */
+  @NotNull
+  default Future<Boolean> jumpToReference(@NotNull String reference) {
+    return jumpToReference(reference, true);
+  }
 
   /**
    * Asynchronously selects the given commit in the given root.
@@ -85,10 +79,19 @@ public interface VcsLog {
    * or cancel commit selection.
    *
    * @param commitHash target commit
-   * @param root target repository root
+   * @param root       target repository root
+   * @param focus      focus VCS Log table
    */
   @NotNull
-  Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root);
+  Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root, boolean focus);
+
+  /**
+   * {@link #jumpToCommit(Hash, VirtualFile, boolean)} with focusing VCS Log table
+   */
+  @NotNull
+  default Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
+    return jumpToCommit(commitHash, root, true);
+  }
 
   /**
    * Returns {@link VcsLogProvider VcsLogProviders} which are active in this log, i.e. which VCS roots are shown in the log.

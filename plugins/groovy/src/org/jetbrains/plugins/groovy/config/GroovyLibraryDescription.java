@@ -1,14 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config;
 
+import com.intellij.framework.library.DownloadableLibraryType;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryPresentationProvider;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +32,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   private final String myEnvVariable;
   private final Set<? extends LibraryKind> myLibraryKinds;
   private final String myFrameworkName;
+  private final DownloadableLibraryType myLibraryType;
 
   public GroovyLibraryDescription() {
     this("GROOVY_HOME", getAllGroovyKinds(), GROOVY_FRAMEWORK_NAME);
@@ -53,6 +56,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     myEnvVariable = envVariable;
     myLibraryKinds = libraryKinds;
     myFrameworkName = frameworkName;
+    myLibraryType = LibraryType.EP_NAME.findExtension(GroovyDownloadableLibraryType.class);
   }
 
   @Nullable
@@ -82,19 +86,35 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
   @Override
   public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, VirtualFile contextDirectory) {
+    VirtualFile initial = findPathToGroovyHome();
+
+    final FileChooserDescriptor descriptor = createFileChooserDescriptor();
+    final VirtualFile dir = FileChooser.chooseFile(descriptor, parentComponent, null, initial);
+    if (dir == null) {
+      return null;
+    }
+    return createLibraryConfiguration(parentComponent, dir);
+  }
+
+  @Nullable
+  public VirtualFile findPathToGroovyHome() {
     VirtualFile initial = findFile(System.getenv(myEnvVariable));
     if (initial == null && GROOVY_FRAMEWORK_NAME.equals(myFrameworkName)) {
       if (SystemInfo.isLinux) {
-        initial = findFile("/usr/share/groovy");
+        return findFile("/usr/share/groovy");
       }
       else if (SystemInfo.isMac) {
-        initial = findFile("/usr/local/opt/groovy/libexec"); // homebrew
+        return findFile("/usr/local/opt/groovy/libexec"); // homebrew
       }
     }
+    return initial;
+  }
 
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
+  @NotNull
+  public FileChooserDescriptor createFileChooserDescriptor() {
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
         if (!super.isFileSelectable(file)) {
           return false;
         }
@@ -103,15 +123,16 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     };
     descriptor.setTitle(GroovyBundle.message("framework.0.sdk.chooser.title", myFrameworkName));
     descriptor.setDescription(GroovyBundle.message("framework.0.sdk.chooser.description", myFrameworkName));
-    final VirtualFile dir = FileChooser.chooseFile(descriptor, parentComponent, null, initial);
-    if (dir == null) return null;
+    return descriptor;
+  }
 
-    final GroovyLibraryPresentationProviderBase provider = findManager(dir);
+  public @Nullable NewLibraryConfiguration createLibraryConfiguration(@Nullable Component parentComponent, @NotNull VirtualFile pathToLibrary) {
+    final GroovyLibraryPresentationProviderBase provider = findManager(pathToLibrary);
     if (provider == null) {
       return null;
     }
 
-    final String path = dir.getPath();
+    final String path = pathToLibrary.getPath();
     final String sdkVersion = provider.getSDKVersion(path);
     if (sdkVersion == null) {
       Messages.showErrorDialog(
@@ -138,9 +159,8 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     return null;
   }
 
-  @NotNull
   @Override
-  public LibrariesContainer.LibraryLevel getDefaultLevel() {
-    return LibrariesContainer.LibraryLevel.GLOBAL;
+  public @Nullable DownloadableLibraryType getDownloadableLibraryType() {
+    return myLibraryType;
   }
 }

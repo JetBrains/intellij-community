@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.actions;
 
@@ -26,7 +26,6 @@ import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.tools.SimpleActionGroup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,16 +49,10 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
   public JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
     return new ComboBoxButton(presentation) {
       @Override
-      protected JBPopup createPopup(Runnable onDispose) {
+      protected @NotNull JBPopup createPopup(Runnable onDispose) {
         return SwitchTaskAction.createPopup(DataManager.getInstance().getDataContext(this), onDispose, false);
       }
     };
-  }
-
-  @NotNull
-  @Override
-  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-    return new DefaultActionGroup();
   }
 
   @Override
@@ -75,17 +68,15 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       TaskManager taskManager = TaskManager.getManager(project);
       LocalTask activeTask = taskManager.getActiveTask();
 
-      if (isImplicit(activeTask) &&
-          taskManager.getAllRepositories().length == 0 &&
-          !TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO) {
-        presentation.setEnabledAndVisible(false);
-      }
-      else {
+      if (isTaskManagerComboInToolbarEnabledAndVisible(activeTask, taskManager)) {
         String s = getText(activeTask);
         presentation.setEnabledAndVisible(true);
         presentation.setText(s, false);
         presentation.setIcon(activeTask.getIcon());
         presentation.setDescription(activeTask.getSummary());
+      }
+      else {
+        presentation.setEnabledAndVisible(false);
       }
     }
     else {
@@ -94,7 +85,18 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     }
   }
 
-  private static boolean isImplicit(LocalTask activeTask) {
+  public static boolean isTaskManagerComboInToolbarEnabledAndVisible(LocalTask activeTask, TaskManager taskManager) {
+    return !isOriginalDefault(activeTask) ||
+           taskManager.getAllRepositories().length != 0 ||
+           TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  private static boolean isOriginalDefault(LocalTask activeTask) {
     return activeTask.isDefault() && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
   }
 
@@ -117,9 +119,8 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
                                            boolean withTitle) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Ref<Boolean> shiftPressed = Ref.create(false);
-    final Ref<JComponent> componentRef = Ref.create();
     List<TaskListItem> items = project == null ? Collections.emptyList() :
-                               createPopupActionGroup(project, shiftPressed, PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext));
+                               createPopupActionGroup(project, shiftPressed, PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext));
     final String title = withTitle ? TaskBundle.message("popup.title.switch.to.task") : null;
     ListPopupStep<TaskListItem> step = new MultiSelectionListPopupStep<>(title, items) {
       @Override
@@ -129,7 +130,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
           return FINAL_CHOICE;
         }
         ActionGroup group = createActionsStep(selectedValues, project, shiftPressed);
-        DataContext dataContext = DataManager.getInstance().getDataContext(componentRef.get());
+        DataContext dataContext = DataContext.EMPTY_CONTEXT;
         return JBPopupFactory.getInstance().createActionsStep(
           group, dataContext, null, false, false, null, null, true, 0, false);
       }
@@ -171,7 +172,6 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
         }
       });
     }
-    componentRef.set(popup.getComponent());
     if (items.size() <= 2) {
       return popup;
     }
@@ -202,7 +202,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
   }
 
   private static ActionGroup createActionsStep(final List<TaskListItem> tasks, final Project project, final Ref<Boolean> shiftPressed) {
-    SimpleActionGroup group = new SimpleActionGroup();
+    DefaultActionGroup group = new DefaultActionGroup();
     final TaskManager manager = TaskManager.getManager(project);
     final LocalTask task = tasks.get(0).getTask();
     if (tasks.size() == 1 && task != null) {
@@ -252,6 +252,11 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
         ActionManager.getInstance().tryToExecute(gotoTaskAction, ActionCommand.getInputEvent(GotoTaskAction.ID),
                                                  contextComponent, ActionPlaces.UNKNOWN, false);
       }
+
+      @Override
+      public ShortcutSet getShortcut() {
+        return gotoTaskAction.getShortcutSet();
+      }
     });
 
     final TaskManager manager = TaskManager.getManager(project);
@@ -263,7 +268,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       if (task == activeTask) {
         continue;
       }
-      if (manager.isLocallyClosed(task)) {
+      if (task.isClosed()) {
         temp.add(task);
         continue;
       }

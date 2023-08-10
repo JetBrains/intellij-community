@@ -1,0 +1,9 @@
+ctypes.wintypes
+pwd.getpwnam
+
+# ==========
+# Allowlist entries that cannot or should not be fixed
+# ==========
+
+distutils.command.bdist_msi  # Only available on Windows and Python 3.10 and below
+ftplib.FTP.trust_server_pasv_ipv4_address  # Dangerous to use, intentionally undocumented, intentionally missing from typeshed. #6154

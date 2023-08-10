@@ -25,9 +25,9 @@ import org.jetbrains.annotations.Nullable;
 public interface SourcesFinder<Scope> {
   /**
    * Searches for source file within the deployedModules
+   *
    * @param relPath relative path of the source to be found (fetched from the class file)
-   * @param project
-   * @param scope a search scope
+   * @param scope   a search scope
    */
   @Nullable
   PsiFile findSourceFile(String relPath, Project project, Scope scope);

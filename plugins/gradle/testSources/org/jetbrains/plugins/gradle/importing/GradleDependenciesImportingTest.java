@@ -15,23 +15,31 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.gradle.util.GradleVersion;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.GradleManager;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
+import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
@@ -40,13 +48,13 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.function.BiPredicate;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getSourceSetName;
 
 /**
@@ -55,23 +63,34 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Override
-  protected void importProject(@NonNls @Language("Groovy") String config) throws IOException {
-    config += "\n" +
-              "allprojects {\n" +
-              "  afterEvaluate {\n" +
-              "    if(convention.findPlugin(JavaPluginConvention)) {\n" +
-              "      sourceSets.each { SourceSet sourceSet ->\n" +
-              "        tasks.create(name: 'print'+ sourceSet.name.capitalize() +'CompileDependencies') {\n" +
-              "          doLast { println sourceSet.compileClasspath.files.collect {it.name}.join(' ') }\n" +
-              "        }\n" +
-              "      }\n" +
-              "    }\n" +
-              "  }\n" +
-              "}\n";
+  public void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+    boolean useConventions = isGradleOlderThan("8.2");
+    config += "\n\n def useConventions = " + useConventions + "\n" + """
+      allprojects {
+        afterEvaluate {
+          if((useConventions && convention.findPlugin(JavaPluginConvention) != null)
+           || (!useConventions && extensions.findByType(JavaPluginExtension) != null)) {
+            sourceSets.each { SourceSet sourceSet ->
+              tasks.create(name: 'print'+ sourceSet.name.capitalize() +'CompileDependencies') {
+                doLast { println sourceSet.compileClasspath.files.collect {it.name}.join(' ') }
+              }
+            }
+          }
+        }
+      }
+      """;
     super.importProject(config);
   }
 
   protected void assertCompileClasspathOrdering(String moduleName) {
+    assertCompileClasspathOrdering(moduleName, false);
+  }
+
+  protected void maybeAssertCompileClasspathOrderingWithEnabledClasspathPackaging(String moduleName) {
+    assertCompileClasspathOrdering(moduleName, true);
+  }
+
+  private void assertCompileClasspathOrdering(String moduleName, boolean useCompileClasspathPackaging) {
     Module module = getModule(moduleName);
     String sourceSetName = getSourceSetName(module);
     assertNotNull("Can not find the sourceSet for the module", sourceSetName);
@@ -83,12 +102,23 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     settings.setTaskNames(Collections.singletonList(gradlePath + ":print" + capitalize(sourceSetName) + "CompileDependencies"));
     settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
     settings.setScriptParameters("--quiet");
+
+    if (useCompileClasspathPackaging) {
+      // use jars instead of class folders for everything on the compile classpath
+      // https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_classes_usage
+      if (isJavaLibraryPluginSupported() && isGradleOlderThan("5.6.1")) {
+        return;
+      }
+      settings.setVmOptions("-Dorg.gradle.java.compile-classpath-packaging=true");
+    }
     ExternalSystemProgressNotificationManager notificationManager =
       ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
     StringBuilder gradleClasspath = new StringBuilder();
     ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
       @Override
       public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+        if (!stdOut || text.isBlank()) return;
+        if (text.contains("Gradle Daemon")) return;
         gradleClasspath.append(text);
       }
     };
@@ -108,7 +138,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
           Module moduleDep = ((ModuleOrderEntry)entry).getModule();
           String sourceSetDepName = getSourceSetName(moduleDep);
           // for simplicity, only project dependency on 'default' configuration allowed here
-          assert sourceSetDepName != "main";
+          assert "main".equals(sourceSetDepName);
 
           String gradleProjectDepName = trimStart(trimEnd(getExternalProjectId(moduleDep), ":main"), ":");
           String version = getExternalProjectVersion(moduleDep);
@@ -125,23 +155,40 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  public void testModuleDependencies() throws IOException {
+    createSettingsFile("include 'project1', 'project2'");
+    createProjectSubFile("project1/build.gradle", script(it -> it.withJavaPlugin()
+      .addImplementationDependency(it.project(":"))));
+    createProjectSubFile("project2/build.gradle", script(it -> it.withJavaPlugin()
+      .addImplementationDependency(it.project(":project1"))));
+    importProject(script(it -> it.withJavaPlugin()));
+
+    assertModules("project", "project.main", "project.test",
+                  "project.project1", "project.project1.main", "project.project1.test",
+                  "project.project2", "project.project2.main", "project.project2.test");
+
+    assertModuleModuleDeps("project.main");
+    assertModuleModuleDeps("project.test", "project.main");
+    assertModuleModuleDeps("project.project1.main", "project.main");
+    assertModuleModuleDeps("project.project1.test", "project.project1.main", "project.main");
+    assertModuleModuleDeps("project.project2.main", "project.project1.main", "project.main");
+    assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.main", "project.main");
+  }
+
+  @Test
   public void testDependencyScopeMerge() throws Exception {
     createSettingsFile("include 'api', 'impl' ");
 
-    importProject(
-      "allprojects {\n" +
-      "  apply plugin: 'java'\n" +
-      "\n" +
-      "  sourceCompatibility = 1.5\n" +
-      "  version = '1.0'\n" +
-      "}\n" +
-      "\n" +
-      "dependencies {\n" +
-      "  compile project(':api')\n" +
-      "  testCompile project(':impl'), 'junit:junit:4.11'\n" +
-      "  runtime project(':impl')\n" +
-      "}"
-    );
+    importProject(script(it -> {
+      it.allprojects(p -> {
+          p.withJavaPlugin()
+            .withMavenCentral();
+        })
+        .addImplementationDependency(it.project(":api"))
+        .addTestImplementationDependency(it.project(":impl"))
+        .addTestImplementationDependency("junit:junit:4.11")
+        .addRuntimeOnlyDependency(it.project(":impl"));
+    }));
 
     assertModules("project", "project.main", "project.test",
                   "project.api", "project.api.main", "project.api.test",
@@ -175,31 +222,55 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("2.0+")
+  @TargetVersions(BASE_GRADLE_VERSION)
+  public void testSetExternalSourceForExistingLibrary() throws IOException {
+    String libraryName = "Gradle: junit:junit:" + GradleBuildScriptBuilderUtil.getJunit4Version();
+    WriteAction.runAndWait(() -> {
+      LibraryTable.ModifiableModel model = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getModifiableModel();
+      model.createLibrary(libraryName);
+      model.commit();
+    });
+
+    importProject(createBuildScriptBuilder()
+                    .withJavaPlugin()
+                    .withJUnit4()
+                    .generate());
+    assertModules("project", "project.main", "project.test");
+    Library library = assertSingleLibraryOrderEntry("project.test", libraryName).getLibrary();
+    assertNotNull(library);
+    assertNotNull(library.getExternalSource());
+  }
+  
+  @Test
+  @TargetVersions("2.0 <=> 6.9")
   public void testTransitiveNonTransitiveDependencyScopeMerge() throws Exception {
-    createSettingsFile("include 'project1'\n" +
-                       "include 'project2'\n");
+    createSettingsFile("""
+                         include 'project1'
+                         include 'project2'
+                         """);
 
     importProject(
-      "project(':project1') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  dependencies {\n" +
-      "    compile 'junit:junit:4.11'\n" +
-      "  }\n" +
-      "}\n" +
-      "\n" +
-      "project(':project2') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  dependencies.ext.strict = { projectPath ->\n" +
-      "    dependencies.compile dependencies.project(path: projectPath, transitive: false)\n" +
-      "    dependencies.runtime dependencies.project(path: projectPath, transitive: true)\n" +
-      "    dependencies.testRuntime dependencies.project(path: projectPath, transitive: true)\n" +
-      "  }\n" +
-      "\n" +
-      "  dependencies {\n" +
-      "    strict ':project1'\n" +
-      "  }\n" +
-      "}\n"
+      """
+        project(':project1') {
+          apply plugin: 'java'
+          dependencies {
+            compile 'junit:junit:4.11'
+          }
+        }
+
+        project(':project2') {
+          apply plugin: 'java'
+          dependencies.ext.strict = { projectPath ->
+            dependencies.compile dependencies.project(path: projectPath, transitive: false)
+            dependencies.runtime dependencies.project(path: projectPath, transitive: true)
+            dependencies.testRuntime dependencies.project(path: projectPath, transitive: true)
+          }
+
+          dependencies {
+            strict ':project1'
+          }
+        }
+        """
     );
 
     assertModules("project",
@@ -232,25 +303,21 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                        "include 'user'");
 
     importProject(
-      "subprojects {\n" +
-      "  apply plugin: 'java'\n" +
-      "  configurations {\n" +
-      "    provided\n" +
-      "  }\n" +
-      "}\n" +
-      "\n" +
-      "project(':web') {\n" +
-      "  dependencies {\n" +
-      "    provided 'junit:junit:4.11'\n" +
-      "  }\n" +
-      "}\n" +
-      "project(':user') {\n" +
-      "  apply plugin: 'war'\n" +
-      "  dependencies {\n" +
-      "    compile project(':web')\n" +
-      "    providedCompile project(path: ':web', configuration: 'provided')\n" +
-      "  }\n" +
-      "}"
+      createBuildScriptBuilder()
+        .subprojects(it -> {
+          it
+            .withMavenCentral()
+            .withJavaPlugin()
+            .addPostfix("configurations { provided }");
+        })
+        .project(":web", it -> { it.addDependency("provided", "junit:junit:4.11"); })
+        .project(":user", it -> {
+          it
+            .applyPlugin("war")
+            .addImplementationDependency(it.project(":web"))
+            .addDependency("providedCompile", it.project(":web", "provided"));
+        })
+        .generate()
     );
 
     assertModules("project",
@@ -274,27 +341,21 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   public void testCustomSourceSetsDependencies() throws Exception {
     createSettingsFile("include 'api', 'impl' ");
 
-    importProject(
-      "allprojects {\n" +
-      "  apply plugin: 'java'\n" +
-      "\n" +
-      "  sourceCompatibility = 1.5\n" +
-      "  version = '1.0'\n" +
-      "}\n" +
-      "\n" +
-      "project(\"impl\") {\n" +
-      "  sourceSets {\n" +
-      "    myCustomSourceSet\n" +
-      "    myAnotherSourceSet\n" +
-      "  }\n" +
-      "  \n" +
-      "  dependencies {\n" +
-      "    myCustomSourceSetCompile sourceSets.main.output\n" +
-      "    myCustomSourceSetCompile project(\":api\")\n" +
-      "    myCustomSourceSetRuntime 'junit:junit:4.11'\n" +
-      "  }\n" +
-      "}\n"
-    );
+    importProject(script(it -> {
+      it.allprojects( p -> {
+        p.withJavaPlugin()
+          .withMavenCentral();
+        })
+        .project("impl", p -> {
+          p.addPrefix("sourceSets {",
+                      "  myCustomSourceSet",
+                      "  myAnotherSourceSet",
+                      "}")
+            .addImplementationDependency(it.code("sourceSets.main.output"), "myCustomSourceSet")
+            .addImplementationDependency(it.project(":api"), "myCustomSourceSet")
+            .addRuntimeOnlyDependency("junit:junit:4.11", "myCustomSourceSet");
+        });
+    }));
 
     assertModules("project", "project.main", "project.test",
                   "project.api", "project.api.main", "project.api.test",
@@ -317,33 +378,26 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     final VirtualFile depTestsJar = createProjectJarSubFile("lib/dep/dep/1.0/dep-1.0-tests.jar");
     final VirtualFile depNonJar = createProjectSubFile("lib/dep/dep/1.0/dep-1.0.someExt");
 
-    createProjectSubFile("lib/dep/dep/1.0/dep-1.0.pom", "" +
-                                                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                                        "<project\n" +
-                                                        "  xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-                                                        "  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                                                        "  xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd\">\n" +
-                                                        "  <groupId>dep</groupId>\n" +
-                                                        "  <artifactId>dep</artifactId>\n" +
-                                                        "  <version>1.0</version>\n" +
-                                                        "\n" +
-                                                        "</project>\n");
+    createProjectSubFile("lib/dep/dep/1.0/dep-1.0.pom", """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project
+        xmlns="http://maven.apache.org/POM/4.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+        <groupId>dep</groupId>
+        <artifactId>dep</artifactId>
+        <version>1.0</version>
+
+      </project>
+      """);
     importProject(
-      "allprojects {\n" +
-      "  apply plugin: 'java'\n" +
-      "  sourceCompatibility = 1.5\n" +
-      "  version = '1.0'\n" +
-      "\n" +
-      "  repositories {\n" +
-      "    maven{ url file('lib') }\n" +
-      "  }\n" +
-      "}\n" +
-      "\n" +
-      "dependencies {\n" +
-      "  compile 'dep:dep:1.0'\n" +
-      "  testCompile 'dep:dep:1.0:tests'\n" +
-      "  runtime 'dep:dep:1.0@someExt'\n" +
-      "}"
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .addRepository("maven { url file('lib') }")
+        .addImplementationDependency("dep:dep:1.0")
+        .addTestImplementationDependency("dep:dep:1.0:tests")
+        .addRuntimeOnlyDependency("dep:dep:1.0@someExt")
+        .generate()
     );
 
     assertModules("project", "project.main", "project.test");
@@ -395,12 +449,14 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     createSettingsFile("include 'p1'\n" +
                        "include 'p2'");
 
-    importProjectUsingSingeModulePerGradleProject("allprojects {\n" +
-                                                  "apply plugin: 'java'\n" +
-                                                  "  dependencies {\n" +
-                                                  "     compile rootProject.files('lib/dep.jar', 'lib_other/dep.jar')\n" +
-                                                  "  }\n" +
-                                                  "}");
+    importProjectUsingSingeModulePerGradleProject(
+      createBuildScriptBuilder()
+        .allprojects(p -> {
+          p
+            .withJavaPlugin()
+            .addImplementationDependency(p.code("rootProject.files('lib/dep.jar', 'lib_other/dep.jar')"));
+        })
+        .generate());
 
     assertModules("project", "project.p1", "project.p2");
     Set<Library> libs = new HashSet<>();
@@ -415,8 +471,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     assertProjectLibraries("Gradle: dep", "Gradle: dep_1");
     assertEquals("No duplicates of libraries are expected", 2, libs.size());
-    assertContain(libs.stream().map(l -> l.getUrls(OrderRootType.CLASSES)[0]).collect(Collectors.toList()),
-                  depJar.getUrl(), dep2Jar.getUrl());
+    assertContain(ContainerUtil.map(libs, l -> l.getUrls(OrderRootType.CLASSES)[0]), depJar.getUrl(), dep2Jar.getUrl());
   }
 
   @Test
@@ -426,27 +481,25 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     createSettingsFile("include 'p1'\n" +
                        "include 'p2'");
 
-    importProjectUsingSingeModulePerGradleProject("allprojects { p ->\n" +
-                                                  "apply plugin: 'java'\n" +
-                                                  "  dependencies {\n" +
-                                                  "     compile p.files('lib/dep.jar')\n" +
-                                                  "  }\n" +
-                                                  "}");
+    importProjectUsingSingeModulePerGradleProject(createBuildScriptBuilder()
+                                                    .allprojects(p -> {
+                                                      p
+                                                        .withJavaPlugin()
+                                                        .addImplementationDependency(p.code("files('lib/dep.jar')"));
+                                                    })
+                                                    .generate());
 
     assertModules("project", "project.p1", "project.p2");
 
     final List<LibraryOrderEntry> moduleLibDepsP1 = getModuleLibDeps("project.p1", "Gradle: dep");
-    final boolean isGradleNewerThen_2_4 = GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("2.4")) > 0;
     for (LibraryOrderEntry libDep : moduleLibDepsP1) {
-      assertEquals("Dependency must be " + (isGradleNewerThen_2_4 ? "module" : "project") + " level: " + libDep.toString(),
-                   isGradleNewerThen_2_4, libDep.isModuleLevel());
+      assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
       assertEquals("Wrong library dependency", depP1Jar.getUrl(), libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
     }
 
     final List<LibraryOrderEntry> moduleLibDepsP2 = getModuleLibDeps("project.p2", "Gradle: dep");
     for (LibraryOrderEntry libDep : moduleLibDepsP2) {
-      assertEquals("Dependency must be " + (isGradleNewerThen_2_4 ? "module" : "project") + " level: " + libDep.toString(),
-                   isGradleNewerThen_2_4, libDep.isModuleLevel());
+      assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
       assertEquals("Wrong library dependency", depP2Jar.getUrl(), libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
     }
   }
@@ -454,27 +507,25 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test
   public void testProjectWithUnresolvedDependency() throws Exception {
     final VirtualFile depJar = createProjectJarSubFile("lib/dep/dep/1.0/dep-1.0.jar");
-    createProjectSubFile("lib/dep/dep/1.0/dep-1.0.pom", "" +
-                                                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                                        "<project\n" +
-                                                        "  xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-                                                        "  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                                                        "  xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd\">\n" +
-                                                        "  <groupId>dep</groupId>\n" +
-                                                        "  <artifactId>dep</artifactId>\n" +
-                                                        "  <version>1.0</version>\n" +
-                                                        "\n" +
-                                                        "</project>\n");
+    createProjectSubFile("lib/dep/dep/1.0/dep-1.0.pom", """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project
+        xmlns="http://maven.apache.org/POM/4.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+        <groupId>dep</groupId>
+        <artifactId>dep</artifactId>
+        <version>1.0</version>
+
+      </project>
+      """);
     importProject(
-      "apply plugin: 'java'\n" +
-      "\n" +
-      "repositories {\n" +
-      "  maven { url file('lib') }\n" +
-      "}\n" +
-      "dependencies {\n" +
-      "  compile 'dep:dep:1.0'\n" +
-      "  compile 'some:unresolvable-lib:0.1'\n" +
-      "}\n"
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .addRepository("maven { url file('lib') }")
+        .addImplementationDependency("dep:dep:1.0")
+        .addImplementationDependency("some:unresolvable-lib:0.1")
+        .generate()
     );
 
     assertModules("project", "project.main", "project.test");
@@ -488,7 +539,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertEquals(1, unresolvableDep.size());
     LibraryOrderEntry unresolvableEntry = unresolvableDep.iterator().next();
     assertEquals(DependencyScope.COMPILE, unresolvableEntry.getScope());
-    assertEmpty(unresolvableEntry.getUrls(OrderRootType.CLASSES));
+    assertEmpty(unresolvableEntry.getRootUrls(OrderRootType.CLASSES));
 
     assertModuleLibDep("project.test", depName, depJar.getUrl());
     assertModuleLibDepScope("project.test", depName, DependencyScope.COMPILE);
@@ -512,22 +563,26 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       unresolvableEntry = unresolvableDep.iterator().next();
       assertTrue(unresolvableEntry.isModuleLevel());
     }
-    assertEmpty(unresolvableEntry.getUrls(OrderRootType.CLASSES));
+    assertEmpty(unresolvableEntry.getRootUrls(OrderRootType.CLASSES));
   }
 
   @Test
   @TargetVersions("3.3+") // org.gradle.api.artifacts.ConfigurationPublications was introduced since 3.3
   public void testSourceSetOutputDirsAsArtifactDependencies() throws Exception {
-    createSettingsFile("rootProject.name = 'server'\n" +
-                       "include 'api'\n" +
-                       "include 'modules:X'\n" +
-                       "include 'modules:Y'");
+    createSettingsFile("""
+                         rootProject.name = 'server'
+                         include 'api'
+                         include 'modules:X'
+                         include 'modules:Y'""");
+    String compileConfiguration = isJavaLibraryPluginSupported() ? "implementation" : "compile";
     importProject(
       "configure(subprojects - project(':modules')) {\n" +
       "    group 'server'\n" +
       "    version '1.0-SNAPSHOT'\n" +
       "    apply plugin: 'java'\n" +
-      "    sourceCompatibility = 1.8\n" +
+      (isGradleNewerOrSameAs("8.2")
+       ? "  java { sourceCompatibility = 1.8 }\n"
+       : "    sourceCompatibility = 1.8\n") +
       "}\n" +
       "\n" +
       "project(':api') {\n" +
@@ -550,7 +605,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       "def webProjects = [project(':modules:X'), project(':modules:Y')]\n" +
       "configure(webProjects) {\n" +
       "    dependencies {\n" +
-      "        compile project(path: ':api', configuration: 'webappConf')\n" +
+      "        " + compileConfiguration + " project(path: ':api', configuration: 'webappConf')\n" +
       "    }\n" +
       "}"
     );
@@ -585,13 +640,14 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertLibraryExcludedRoots("project.main", depName, excludedRoots);
 
     VirtualFile depJar = createProjectJarSubFile("lib/dep.jar");
+    TestGradleBuildScriptBuilder builder = createBuildScriptBuilder();
     importProject(
-      "apply plugin: 'java'\n" +
-      "sourceSets.main.output.dir file(\"$buildDir/generated-resources/main\")\n" +
-      "dependencies {\n" +
-      " runtime 'junit:junit:4.11'\n" +
-      " runtime files('lib/dep.jar')\n" +
-      "}\n"
+      builder.withJavaPlugin()
+        .withMavenCentral()
+        .addPrefix("sourceSets.main.output.dir file(\"$buildDir/generated-resources/main\")")
+        .addRuntimeOnlyDependency("junit:junit:4.11")
+        .addRuntimeOnlyDependency(builder.code("files('lib/dep.jar')"))
+        .generate()
     );
 
     assertLibraryExcludedRoots("project.main", depName, excludedRoots);
@@ -614,22 +670,23 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   public void testSourceSetOutputDirsAsRuntimeDependenciesOfDependantModules() throws Exception {
     createSettingsFile("include 'projectA', 'projectB', 'projectC' ");
     importProject(
-      "project(':projectA') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  sourceSets.main.output.dir file(\"$buildDir/generated-resources/main\")\n" +
-      "}\n" +
-      "project(':projectB') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  dependencies {\n" +
-      "    compile project(':projectA')\n" +
-      "  }\n" +
-      "}\n" +
-      "project(':projectC') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  dependencies {\n" +
-      "    runtime project(':projectB')\n" +
-      "  }\n" +
-      "}"
+      createBuildScriptBuilder()
+        .project(":projectA", it -> {
+          it
+            .withJavaPlugin()
+            .addPostfix("sourceSets.main.output.dir file(\"$buildDir/generated-resources/main\")");
+        })
+        .project(":projectB", it -> {
+          it
+            .withJavaPlugin()
+            .addImplementationDependency(it.project(":projectA"));
+        })
+        .project(":projectC", it -> {
+          it
+            .withJavaPlugin()
+            .addRuntimeOnlyDependency(it.project(":projectB"));
+        })
+        .generate()
     );
 
     assertModules("project",
@@ -658,23 +715,24 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   public void testSourceSetOutputDirsAsDependenciesOfDependantModules() throws Exception {
     createSettingsFile("include 'projectA', 'projectB', 'projectC' ");
     importProject(
-      "subprojects { \n" +
-      "    apply plugin: \"java\" \n" +
-      "}\n" +
-      "project(':projectA') {\n" +
-      "  sourceSets.main.output.dir file('generated/projectA')\n" +
-      "}\n" +
-      "project(':projectB') {\n" +
-      "  sourceSets.main.output.dir file('generated/projectB')\n" +
-      "  dependencies {\n" +
-      "    implementation project(':projectA')\n" +
-      "  }\n" +
-      "}\n" +
-      "project(':projectC') {\n" +
-      "  dependencies {\n" +
-      "    implementation project(':projectB')\n" +
-      "  }\n" +
-      "}"
+      """
+        subprojects {\s
+            apply plugin: "java"\s
+        }
+        project(':projectA') {
+          sourceSets.main.output.dir file('generated/projectA')
+        }
+        project(':projectB') {
+          sourceSets.main.output.dir file('generated/projectB')
+          dependencies {
+            implementation project(':projectA')
+          }
+        }
+        project(':projectC') {
+          dependencies {
+            implementation project(':projectB')
+          }
+        }"""
     );
 
     assertModules("project",
@@ -717,29 +775,39 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     createSettingsFile("include 'api', 'impl' ");
 
     importProject(
-      "allprojects {\n" +
-      "  apply plugin: 'java'\n" +
-      "}\n" +
-      "\n" +
-      "project(\"api\") {\n" +
-      "  configurations {\n" +
-      "    tests\n" +
-      "  }\n" +
-      "  task testJar(type: Jar, dependsOn: testClasses, description: \"archive the testClasses\") {\n" +
-      "    baseName = \"${project.archivesBaseName}-tests\"\n" +
-      "    classifier = \"tests\"\n" +
-      "    from sourceSets.test.output\n" +
-      "  }\n" +
-      "  artifacts {\n" +
-      "    tests testJar\n" +
-      "    archives testJar\n" +
-      "  }\n" +
-      "}\n" +
-      "project(\"impl\") {\n" +
-      "  dependencies {\n" +
-      "    testCompile  project(path: ':api', configuration: 'tests')\n" +
-      "  }\n" +
-      "}\n"
+      createBuildScriptBuilder()
+        .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
+        .project(":api", it -> {
+          it
+            .addPostfix("configurations { tests }")
+            .withTask("testJar", "Jar", task -> {
+              task.code("dependsOn testClasses");
+              if (isGradleNewerOrSameAs("8.2")) {
+                task.code("archiveBaseName = \"${project.base.archivesName}-tests\"");
+              } else if (isGradleNewerOrSameAs("7.0")) {
+                task.code("archiveBaseName = \"${project.archivesBaseName}-tests\"");
+              } else {
+                task.code("baseName = \"${project.archivesBaseName}-tests\"");
+              }
+              if (isGradleOlderThan("8.0")) {
+                task.code("classifier 'test'");
+              }
+              else {
+                task.code("archiveClassifier = 'test'");
+              }
+              task.code("from sourceSets.test.output");
+              return null;
+            })
+            .addPostfix("artifacts {",
+                        "    tests testJar",
+                        "    archives testJar",
+                        "}")
+            .addTestImplementationDependency("junit:junit:4.11");
+        })
+        .project(":impl", it -> {
+          it.addTestImplementationDependency(it.project(":api", "tests"));
+        })
+        .generate()
     );
 
     assertModules("project", "project.main", "project.test",
@@ -764,36 +832,175 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project.impl", "project.api", DependencyScope.TEST);
   }
 
+
   @Test
-  public void testCompileAndRuntimeConfigurationsTransitiveDependencyMerge() throws Exception {
-    createSettingsFile("include 'project1'\n" +
-                       "include 'project2'\n" +
-                       "include 'project-tests'");
+  public void testProjectDependencyOnCustomArtifacts() throws Exception {
+    createSettingsFile("include 'api', 'impl' ");
+    String archiveBaseName = (isGradleOlderThan("7.0") ? "baseName" : "archiveBaseName") + " = 'my-archive'\n";
 
     importProject(
-      "subprojects {\n" +
-      "  apply plugin: \"java\"\n" +
-      "}\n" +
-      "\n" +
-      "project(\":project1\") {\n" +
-      "  dependencies {\n" +
-      "      compile 'org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0'\n" +
-      "  }\n" +
-      "}\n" +
-      "\n" +
-      "project(\":project2\") {\n" +
-      "  dependencies {\n" +
-      "      runtime 'org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1'\n" +
-      "  }\n" +
-      "}\n" +
-      "\n" +
-      "project(\":project-tests\") {\n" +
-      "  dependencies {\n" +
-      "      compile project(':project1')\n" +
-      "      runtime project(':project2')\n" +
-      "      compile 'junit:junit:4.11'\n" +
-      "  }\n" +
-      "}\n"
+      createBuildScriptBuilder()
+        .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
+        .project(":api", it -> {
+          it
+            .addPostfix("""
+                          configurations { myConfig }
+                          sourceSets { mySourceSet }
+                          tasks.create("myJar", Jar) {
+                            dependsOn compileMySourceSetJava
+                          """ +  archiveBaseName + """
+                            from sourceSets.mySourceSet.output
+                          }
+                          artifacts { myConfig myJar }
+                          """);
+        })
+        .project(":impl", it -> {
+          it.addImplementationDependency(it.project(":api", "myConfig"));
+        })
+        .generate()
+    );
+
+    assertModules("project", "project.main", "project.test",
+                  "project.api", "project.api.main", "project.api.test", "project.api.mySourceSet",
+                  "project.impl", "project.impl.main", "project.impl.test");
+
+    assertModuleModuleDepScope("project.impl.main", "project.api.mySourceSet", DependencyScope.COMPILE);
+  }
+
+  @Test
+  public void testProjectDependencyOnCustomArtifacts2() throws Exception {
+    createSettingsFile("include 'api', 'impl' ");
+    String archiveBaseName = (isGradleOlderThan("7.0") ? "baseName" : "archiveBaseName") + " = 'my-archive'\n";
+
+    String propertyBasedFromClasses;
+    if (isGradleOlderThan("4.0")) {
+      propertyBasedFromClasses = "new File(project.buildDir, 'classes/mySourceSet')";
+    } else if (isGradleOlderThan("4.1")) {
+      propertyBasedFromClasses = "new File(project.buildDir, 'classes/java/mySourceSet')";
+    } else {
+      propertyBasedFromClasses = "project.layout.getBuildDirectory().dir('classes/java/mySourceSet')";
+    }
+
+    importProject(
+      createBuildScriptBuilder()
+        .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
+        .project(":api", it -> {
+          it
+            .addPostfix("""
+                          configurations { myConfig }
+                          sourceSets { mySourceSet }
+                          tasks.create("myJar", Jar) {
+                            dependsOn compileMySourceSetJava
+                          """ + archiveBaseName + """
+                           from\s""" + propertyBasedFromClasses + """
+                            from new File(project.buildDir, "resources/mySourceSet")
+                          }
+                          artifacts { myConfig myJar }
+                          """);
+        })
+        .project(":impl", it -> {
+          it.addImplementationDependency(it.project(":api", "myConfig"));
+        })
+        .generate()
+    );
+
+    assertModules("project", "project.main", "project.test",
+                  "project.api", "project.api.main", "project.api.test", "project.api.mySourceSet",
+                  "project.impl", "project.impl.main", "project.impl.test");
+
+    assertModuleModuleDepScope("project.impl.main", "project.api.mySourceSet", DependencyScope.COMPILE);
+  }
+
+  @Test
+  @TargetVersions("7.0+")
+  public void testProjectJarTaskWithUnresolvableProvider() throws Exception {
+    createProjectSubFile("settings.gradle", settingsScript(it -> {
+      it.setProjectName("project");
+    }));
+    createProjectSubFile("build.gradle", script(it -> {
+      it.withJavaPlugin();
+      it.addPostfix("""
+                      tasks.create('customJar', Jar) {
+                        // unresolvable provider
+                        from jar.archiveFile.map { it }
+                      }
+                      """);
+    }));
+    importProject();
+
+    assertModules("project", "project.main", "project.test");
+  }
+
+  /**
+   * At the moment, IDEA does not support depending on an artifact containing output of multiple source sets.
+   * There is only one source set to choose as the module dependency.
+   * "Owning" sourceSet should be preferred for a jar task with name equal to sourceSet.getJarTaskName()
+   */
+  @Test
+  public void testProjectDependencyOnArtifactsContainingMultipleSourceSets() throws Exception {
+    createSettingsFile("include 'api', 'impl' ");
+    String archiveBaseName = (isGradleOlderThan("7.0") ? "baseName" : "archiveBaseName") + " = 'my-archive'\n";
+
+    importProject(
+      createBuildScriptBuilder()
+        .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
+        .project(":api", it -> {
+          it
+            .addPostfix("""
+                          configurations { myConfig }
+                          sourceSets { mainX }
+                          jar { from sourceSets.mainX.output }
+                          def mainXJarTask = tasks.create(sourceSets.mainX.getJarTaskName(), Jar) {
+                            """ +  archiveBaseName + """
+                            from sourceSets.mainX.output
+                          }
+                          artifacts { myConfig mainXJarTask }
+                          """);
+        })
+        .project(":impl", it -> {
+          it.addImplementationDependency(it.project(":api"));
+          it.addTestImplementationDependency(it.project(":api", "myConfig"));
+        })
+        .generate()
+    );
+
+    assertModules("project", "project.main", "project.test",
+                  "project.api", "project.api.main", "project.api.test", "project.api.mainX",
+                  "project.impl", "project.impl.main", "project.impl.test");
+
+    assertModuleModuleDeps("project.impl.main", "project.api.main"); // does not depend on mainX
+    assertModuleModuleDeps("project.impl.test", "project.impl.main", "project.api.main", "project.api.mainX");
+  }
+
+  @Test
+  public void testCompileAndRuntimeConfigurationsTransitiveDependencyMerge() throws Exception {
+    createSettingsFile("""
+                         include 'project1'
+                         include 'project2'
+                         include 'project-tests'""");
+
+    importProject(
+      createBuildScriptBuilder()
+        .subprojects(it -> {
+          it
+            .withMavenCentral()
+            .withJavaPlugin();
+        })
+        .project(":project1", it -> {
+          it
+            .withJavaLibraryPlugin()
+            .addApiDependency("org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.0");
+        })
+        .project(":project2", it -> {
+          it.addRuntimeOnlyDependency("org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1");
+        })
+        .project(":project-tests", it -> {
+          it
+            .addImplementationDependency(it.project(":project1"))
+            .addRuntimeOnlyDependency(it.project(":project2"))
+            .addImplementationDependency("junit:junit:4.11");
+        })
+        .generate()
     );
 
     assertModules("project",
@@ -809,7 +1016,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                             DependencyScope.RUNTIME);
 
     createProjectSubDirs("project1", "project2", "project-tests");
-    assertCompileClasspathOrdering("project.project-tests.main");
+    maybeAssertCompileClasspathOrderingWithEnabledClasspathPackaging("project.project-tests.main");
 
     importProjectUsingSingeModulePerGradleProject();
 
@@ -840,28 +1047,30 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testNonDefaultProjectConfigurationDependency() throws Exception {
-    createSettingsFile("include 'project1'\n" +
-                       "include 'project2'\n");
+    createSettingsFile("""
+                         include 'project1'
+                         include 'project2'
+                         """);
 
     importProject(
-      "project(':project1') {\n" +
-      "  configurations {\n" +
-      "    myConf {\n" +
-      "      description = 'My Conf'\n" +
-      "      transitive = true\n" +
-      "    }\n" +
-      "  }\n" +
-      "  dependencies {\n" +
-      "    myConf 'junit:junit:4.11'\n" +
-      "  }\n" +
-      "}\n" +
-      "\n" +
-      "project(':project2') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  dependencies {\n" +
-      "    compile project(path: ':project1', configuration: 'myConf')\n" +
-      "  }\n" +
-      "}\n"
+      createBuildScriptBuilder()
+        .subprojects(it -> { it.withMavenCentral(); })
+        .project(":project1", it -> {
+          it.addPrefix( """
+        configurations {
+          myConf {
+            description = 'My Conf'
+            transitive = true
+          }
+        }
+      """)
+            .addDependency("myConf", "junit:junit:4.11");
+        })
+        .project(":project2", it -> {
+          it.withJavaPlugin()
+            .addImplementationDependency(it.project(":project1", "myConf"));
+        })
+        .generate()
     );
 
     assertModules("project", "project.project1", "project.project2", "project.project2.main", "project.project2.test");
@@ -890,36 +1099,41 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testNonDefaultProjectConfigurationDependencyWithMultipleArtifacts() throws Exception {
-    createSettingsFile("include 'project1'\n" +
-                       "include 'project2'\n");
+    createSettingsFile("""
+                         include 'project1'
+                         include 'project2'
+                         """);
 
     importProject(
-      "project(':project1') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  configurations {\n" +
-      "    tests.extendsFrom testRuntime\n" +
-      "  }\n" +
-      "  task testJar(type: Jar) {\n" +
-      "    classifier 'test'\n" +
-      "    from project.sourceSets.test.output\n" +
-      "  }\n" +
-      "\n" +
-      "  artifacts {\n" +
-      "    tests testJar\n" +
-      "    archives testJar\n" +
-      "  }\n" +
-      "\n" +
-      "  dependencies {\n" +
-      "    testCompile 'junit:junit:4.11'\n" +
-      "  }\n" +
-      "}\n" +
-      "\n" +
-      "project(':project2') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  dependencies {\n" +
-      "    testCompile project(path: ':project1', configuration: 'tests')\n" +
-      "  }\n" +
-      "}\n"
+      createBuildScriptBuilder()
+        .project(":project1", it -> {
+          it
+            .withMavenCentral()
+            .withJavaPlugin()
+            .addPostfix("configurations { tests.extendsFrom testRuntime }")
+            .withTask("testJar", "Jar", task -> {
+              if (isGradleOlderThan("8.0")) {
+                task.code("classifier 'test'");
+              }
+              else {
+                task.code("archiveClassifier = 'test'");
+              }
+              task.code("from project.sourceSets.test.output");
+              return null;
+            })
+            .addPostfix("artifacts {",
+                        "    tests testJar",
+                        "    archives testJar",
+                        "}")
+            .addTestImplementationDependency("junit:junit:4.11");
+        })
+        .project(":project2", it -> {
+          it
+            .withMavenCentral()
+            .withJavaPlugin()
+            .addTestImplementationDependency(it.project(":project1", "tests"));
+        })
+        .generate()
     );
 
     assertModules("project",
@@ -933,21 +1147,28 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     assertModuleModuleDeps("project.project2.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
     assertModuleLibDeps("project.project2.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
-    assertModuleLibDepScope("project.project2.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
-    assertModuleLibDepScope("project.project2.test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
-
-    assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.main", "project.project1.test");
+    if (!isJavaLibraryPluginSupported()) {
+      assertModuleLibDepScope("project.project2.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+      assertModuleLibDepScope("project.project2.test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+    }
+    if (isGradleOlderThan("7.0")) {
+      assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.main", "project.project1.test");
+      assertModuleModuleDepScope("project.project2.test", "project.project1.main", DependencyScope.COMPILE);
+    }
+    else {
+      assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.test");
+    }
     assertModuleModuleDepScope("project.project2.test", "project.project2.main", DependencyScope.COMPILE);
-    assertModuleModuleDepScope("project.project2.test", "project.project1.main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("project.project2.test", "project.project1.test", DependencyScope.COMPILE);
     assertProductionOnTestDependencies("project.project2.test", "project.project1.test");
   }
 
   @Test
+  @TargetVersions("3.0 <=> 6.9")
   public void testDependencyOnDefaultConfigurationWithAdditionalArtifact() throws Exception {
     createSettingsFile("include 'project1', 'project2'");
     createProjectSubFile("project1/build.gradle",
-                         new GradleBuildScriptBuilderEx()
+                         createBuildScriptBuilder()
                            .withJavaPlugin()
                            .addPostfix(
                              "configurations {",
@@ -969,12 +1190,11 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                            .generate()
     );
 
-    createProjectSubFile("project2/build.gradle",
-                         new GradleBuildScriptBuilderEx().withJavaPlugin().addPostfix(
-                           "dependencies {",
-                           "  compile project(':project1')",
-                           "}"
-                         ).generate());
+    TestGradleBuildScriptBuilder builder = createBuildScriptBuilder();
+    createProjectSubFile("project2/build.gradle", builder
+      .withJavaPlugin()
+      .addImplementationDependency(builder.project(":project1"))
+      .generate());
 
     importProject("");
 
@@ -989,32 +1209,35 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("2.0+")
   public void testTestModuleDependencyAsArtifactFromTestSourceSetOutput() throws Exception {
-    createSettingsFile("include 'project1'\n" +
-                       "include 'project2'\n");
+    createSettingsFile("""
+                         include 'project1'
+                         include 'project2'
+                         """);
 
     importProject(
-      "project(':project1') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  configurations {\n" +
-      "    testArtifacts\n" +
-      "  }\n" +
-      "\n" +
-      "  task testJar(type: Jar) {\n" +
-      "    classifier = 'tests'\n" +
-      "    from sourceSets.test.output\n" +
-      "  }\n" +
-      "\n" +
-      "  artifacts {\n" +
-      "    testArtifacts testJar\n" +
-      "  }\n" +
-      "}\n" +
-      "\n" +
-      "project(':project2') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  dependencies {\n" +
-      "    testCompile project(path: ':project1', configuration: 'testArtifacts')\n" +
-      "  }\n" +
-      "}\n"
+      createBuildScriptBuilder()
+        .project(":project1", it -> {
+          it
+            .withJavaPlugin()
+            .addPrefix("configurations { testArtifacts }")
+            .withTask("testJar", "Jar", task -> {
+              if (isGradleOlderThan("8.0")) {
+                task.code("classifier 'test'");
+              }
+              else {
+                task.code("archiveClassifier = 'test'");
+              }
+              task.code("from sourceSets.test.output");
+              return null;
+            })
+            .addPostfix("artifacts { testArtifacts testJar }");
+        })
+        .project(":project2", it -> {
+          it
+            .withJavaPlugin()
+            .addTestImplementationDependency(it.project(":project1", "testArtifacts"));
+        })
+        .generate()
     );
 
     assertModules("project",
@@ -1033,33 +1256,36 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("2.0+")
   public void testTestModuleDependencyAsArtifactFromTestSourceSetOutput2() throws Exception {
-    createSettingsFile("include 'project1'\n" +
-                       "include 'project2'\n");
+    createSettingsFile("""
+                         include 'project1'
+                         include 'project2'
+                         """);
 
     importProject(
-      "project(':project1') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  configurations {\n" +
-      "    testArtifacts\n" +
-      "  }\n" +
-      "\n" +
-      "  task testJar(type: Jar) {\n" +
-      "    classifier = 'tests'\n" +
-      "    from sourceSets.test.output\n" +
-      "  }\n" +
-      "\n" +
-      "  artifacts {\n" +
-      "    testArtifacts testJar\n" +
-      "  }\n" +
-      "}\n" +
-      "\n" +
-      "project(':project2') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  dependencies {\n" +
-      "    compile project(path: ':project1')\n" +
-      "    testCompile project(path: ':project1', configuration: 'testArtifacts')\n" +
-      "  }\n" +
-      "}\n"
+      createBuildScriptBuilder()
+        .project(":project1", it -> {
+          it
+            .withJavaPlugin()
+            .addPrefix("configurations { testArtifacts }")
+            .withTask("testJar", "Jar", task -> {
+              if (isGradleOlderThan("8.0")) {
+                task.code("classifier 'test'");
+              }
+              else {
+                task.code("archiveClassifier = 'test'");
+              }
+              task.code("from sourceSets.test.output");
+              return null;
+            })
+            .addPostfix("artifacts { testArtifacts testJar }");
+        })
+        .project(":project2", it -> {
+          it
+            .withJavaPlugin()
+            .addImplementationDependency(it.code("project(path: ':project1')"))
+            .addTestImplementationDependency(it.project(":project1", "testArtifacts"));
+        })
+        .generate()
     );
 
     assertModules("project",
@@ -1078,55 +1304,61 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("2.0+")
   public void testTestModuleDependencyAsArtifactFromTestSourceSetOutput3() throws Exception {
-    createSettingsFile("include 'project1'\n" +
-                       "include 'project2'\n");
+    createSettingsFile("""
+                         include 'project1'
+                         include 'project2'
+                         """);
 
     importProject(
-      "allprojects {\n" +
-      "  apply plugin: 'idea'\n" +
-      "  idea {\n" +
-      "    module {\n" +
-      "      inheritOutputDirs = false\n" +
-      "      outputDir = file(\"buildIdea/main\")\n" +
-      "      testOutputDir = file(\"buildIdea/test\")\n" +
-      "      excludeDirs += file('buildIdea')\n" +
-      "    }\n" +
-      "  }\n" +
-      "}\n" +
-      "\n" +
-      "project(':project1') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  configurations {\n" +
-      "    testArtifacts\n" +
-      "  }\n" +
-      "\n" +
-      "  task testJar(type: Jar) {\n" +
-      "    classifier = 'tests'\n" +
-      "    from sourceSets.test.output\n" +
-      "  }\n" +
-      "\n" +
-      "  artifacts {\n" +
-      "    testArtifacts testJar\n" +
-      "  }\n" +
-      "}\n" +
-      "\n" +
-      "project(':project2') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  dependencies {\n" +
-      "    testCompile project(path: ':project1', configuration: 'testArtifacts')\n" +
-      "  }\n" +
-      "}\n"
+      createBuildScriptBuilder()
+        .allprojects(p -> {
+          p
+            .withIdeaPlugin()
+            .addPrefix("idea {",
+                       "  module {",
+                       "    inheritOutputDirs = false",
+                       "    outputDir = file(\"buildIdea/main\")",
+                       "    testOutputDir = file(\"buildIdea/test\")",
+                       "    excludeDirs += file('buildIdea')",
+                       "  }",
+                       "}");
+        })
+        .project(":project1", it -> {
+          it
+            .withJavaPlugin()
+            .addPrefix("configurations { testArtifacts }")
+            .withTask("testJar", "Jar", task -> {
+              if (isGradleOlderThan("8.0")) {
+                task.code("classifier 'test'");
+              }
+              else {
+                task.code("archiveClassifier = 'test'");
+              }
+              task.code("from sourceSets.test.output");
+              return null;
+            })
+            .addPostfix("artifacts { testArtifacts testJar }");
+        })
+        .project(":project2", it -> {
+          it
+            .withJavaPlugin()
+            .addTestImplementationDependency(it.project(":project1", "testArtifacts"));
+        })
+        .generate()
     );
 
     assertModules("project",
                   "project.project1", "project.project1.main", "project.project1.test",
                   "project.project2", "project.project2.main", "project.project2.test");
 
-    assertModuleOutput("project.project1.main", getProjectPath() + "/project1/buildIdea/main", "");
-    assertModuleOutput("project.project1.test", "", getProjectPath() + "/project1/buildIdea/test");
+    String mainClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/main" : "/build/classes/main";
+    String testClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/test" : "/build/classes/test";
 
-    assertModuleOutput("project.project2.main", getProjectPath() + "/project2/buildIdea/main", "");
-    assertModuleOutput("project.project2.test", "", getProjectPath() + "/project2/buildIdea/test");
+    assertModuleOutput("project.project1.main", getProjectPath() + "/project1" + mainClassesOutputPath, "");
+    assertModuleOutput("project.project1.test", "", getProjectPath() + "/project1" + testClassesOutputPath);
+
+    assertModuleOutput("project.project2.main", getProjectPath() + "/project2" + mainClassesOutputPath, "");
+    assertModuleOutput("project.project2.test", "", getProjectPath() + "/project2" + testClassesOutputPath);
 
     assertModuleModuleDeps("project.project2.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
     assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.test");
@@ -1140,33 +1372,42 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("2.6+")
   public void testProjectSubstitutions() throws Exception {
-    createSettingsFile("include 'core'\n" +
-                       "include 'service'\n" +
-                       "include 'util'\n");
+    createSettingsFile("""
+                         include 'core'
+                         include 'service'
+                         include 'util'
+                         """);
 
     importProject(
-      "subprojects {\n" +
-      "  apply plugin: 'java'\n" +
-      "  configurations.all {\n" +
-      "    resolutionStrategy.dependencySubstitution {\n" +
-      "      substitute module('mygroup:core') with project(':core')\n" +
-      "      substitute project(':util') with module('junit:junit:4.11')\n" +
-      "    }\n" +
-      "  }\n" +
-      "}\n" +
-      "\n" +
-      "project(':core') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  dependencies {\n" +
-      "    compile project(':util')\n" +
-      "  }\n" +
-      "}\n" +
-      "\n" +
-      "project(':service') {\n" +
-      "  dependencies {\n" +
-      "    compile 'mygroup:core:latest.release'\n" +
-      "  }\n" +
-      "}\n"
+      createBuildScriptBuilder()
+        .subprojects(p -> {
+          p.withMavenCentral();
+          p.withJavaPlugin();
+          if (isGradleOlderThan("8.0")) {
+            p.addPrefix("configurations.all {",
+                       "  resolutionStrategy.dependencySubstitution {",
+                       "    substitute module('mygroup:core') with project(':core')",
+                       "    substitute project(':util') with module('junit:junit:4.11')",
+                       "  }",
+                       "}");
+          } else {
+            p.addPrefix("configurations.all {",
+                        "  resolutionStrategy.dependencySubstitution {",
+                        "    substitute module('mygroup:core') using project(':core')",
+                        "    substitute project(':util') using module('junit:junit:4.11')",
+                        "  }",
+                        "}");
+          }
+        })
+        .project(":core", p -> {
+          p
+            .withJavaLibraryPlugin()
+            .addApiDependency(p.project(":util"));
+        })
+        .project(":service", p -> {
+          p.addImplementationDependency("mygroup:core:latest.release");
+        })
+        .generate()
     );
 
     assertModules("project",
@@ -1190,38 +1431,41 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("2.6+")
   public void testProjectSubstitutionsWithTransitiveDeps() throws Exception {
-    createSettingsFile("include 'modA'\n" +
-                       "include 'modB'\n" +
-                       "include 'app'\n");
-
+    createSettingsFile("""
+                         include 'modA'
+                         include 'modB'
+                         include 'app'
+                         """);
     importProject(
-      "subprojects {\n" +
-      "  apply plugin: 'java'\n" +
-      "  version '1.0.0'\n" +
-      "}\n" +
-      "project(':app') {\n" +
-      "  dependencies {\n" +
-      "    runtime 'org.hamcrest:hamcrest-core:1.3'\n" +
-      "    testCompile 'project:modA:1.0.0'\n" +
-      "  }\n" +
-      "\n" +
-      "  configurations.all {\n" +
-      "    resolutionStrategy.dependencySubstitution {\n" +
-      "      substitute module('project:modA:1.0.0') with project(':modA')\n" +
-      "      substitute module('project:modB:1.0.0') with project(':modB')\n" +
-      "    }\n" +
-      "  }\n" +
-      "}\n" +
-      "project(':modA') {\n" +
-      "  dependencies {\n" +
-      "    compile project(':modB')\n" +
-      "  }\n" +
-      "}\n" +
-      "project(':modB') {\n" +
-      "  dependencies {\n" +
-      "    compile 'org.hamcrest:hamcrest-core:1.3'\n" +
-      "  }\n" +
-      "}"
+      createBuildScriptBuilder()
+        .subprojects(it -> {
+          it
+            .withMavenCentral()
+            .withJavaLibraryPlugin()
+            .addVersion("1.0.0");
+        })
+        .project(":app", it -> {
+          it.addRuntimeOnlyDependency("org.hamcrest:hamcrest-core:1.3")
+            .addTestImplementationDependency("project:modA:1.0.0");
+          if (isGradleOlderThan("8.0")) {
+            it.addPostfix("configurations.all {",
+                          "  resolutionStrategy.dependencySubstitution {",
+                          "    substitute module('project:modA:1.0.0') with project(':modA')",
+                          "    substitute module('project:modB:1.0.0') with project(':modB')",
+                          "  }",
+                          "}");
+          } else {
+            it.addPostfix("configurations.all {",
+                          "  resolutionStrategy.dependencySubstitution {",
+                          "    substitute module('project:modA:1.0.0') using project(':modA')",
+                          "    substitute module('project:modB:1.0.0') using project(':modB')",
+                          "  }",
+                          "}");
+          }
+        })
+        .project(":modA", it -> { it.addApiDependency(it.project(":modB")); })
+        .project(":modB", it -> { it.addApiDependency("org.hamcrest:hamcrest-core:1.3"); })
+        .generate()
     );
 
     assertModules("project", "project.app", "project.app.main", "project.app.test",
@@ -1262,10 +1506,11 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @TargetVersions("2.12+")
   public void testCompileOnlyScope() throws Exception {
     importProject(
-      "apply plugin: 'java'\n" +
-      "dependencies {\n" +
-      "  compileOnly 'junit:junit:4.11'\n" +
-      "}"
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .withMavenCentral()
+        .addDependency("compileOnly", "junit:junit:4.11")
+        .generate()
     );
 
     assertModules("project", "project.main", "project.test");
@@ -1287,11 +1532,11 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @TargetVersions("2.12+")
   public void testCompileOnlyAndRuntimeScope() throws Exception {
     importProject(
-      "apply plugin: 'java'\n" +
-      "dependencies {\n" +
-      "  runtime 'org.hamcrest:hamcrest-core:1.3'\n" +
-      "  compileOnly 'org.hamcrest:hamcrest-core:1.3'\n" +
-      "}"
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .addRuntimeOnlyDependency("org.hamcrest:hamcrest-core:1.3")
+        .addCompileOnlyDependency("org.hamcrest:hamcrest-core:1.3")
+        .generate()
     );
 
     assertModules("project", "project.main", "project.test");
@@ -1319,21 +1564,19 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @TargetVersions("2.12+")
   public void testCompileOnlyAndCompileScope() throws Exception {
     createSettingsFile("include 'app'\n");
+    TestGradleBuildScriptBuilder builder = createBuildScriptBuilder();
     importProject(
-      "apply plugin: 'java'\n" +
-      "dependencies {\n" +
-      "  compileOnly project(':app')\n" +
-      "  compile 'junit:junit:4.11'\n" +
-      "}\n" +
-      "project(':app') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  repositories {\n" +
-      "    mavenCentral()\n" +
-      "  }\n" +
-      "  dependencies {\n" +
-      "    compile 'junit:junit:4.11'\n" +
-      "  }\n" +
-      "}"
+      builder
+        .withMavenCentral()
+        .withJavaPlugin()
+        .addCompileOnlyDependency(builder.project(":app"))
+        .addImplementationDependency("junit:junit:4.11")
+        .project(":app", it -> {
+          it
+            .withJavaPlugin()
+            .addImplementationDependency("junit:junit:4.11");
+        })
+        .generate()
     );
 
     assertModules("project", "project.main", "project.test",
@@ -1352,25 +1595,26 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("3.4+")
   public void testJavaLibraryPluginConfigurations() throws Exception {
-    createSettingsFile("include 'project1'\n" +
-                       "include 'project2'\n");
+    createSettingsFile("""
+                         include 'project1'
+                         include 'project2'
+                         """);
 
     importProject(
-      "project(':project1') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  dependencies {\n" +
-      "    compile project(path: ':project2')\n" +
-      "  }\n" +
-      "}\n" +
-      "\n" +
-      "project(':project2') {\n" +
-      "  apply plugin: 'java-library'\n" +
-      "  dependencies {\n" +
-      "    implementation group: 'junit', name: 'junit', version: '4.11'\n" +
-      "    api group: 'org.hamcrest', name: 'hamcrest-core', version: '1.3'\n" +
-      "  }\n" +
-      "\n" +
-      "}\n"
+      createBuildScriptBuilder()
+        .subprojects(it -> { it.withMavenCentral(); })
+        .project(":project1", p -> {
+          p
+            .withJavaPlugin()
+            .addImplementationDependency(p.project(":project2"));
+        })
+        .project(":project2", p -> {
+          p
+            .withJavaLibraryPlugin()
+            .addImplementationDependency("junit:junit:4.11")
+            .addApiDependency("org.hamcrest:hamcrest-core:1.3");
+        })
+        .generate()
     );
 
     assertModules("project",
@@ -1395,17 +1639,15 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  @TargetVersions("2.12+")
+  @TargetVersions("2.12 <=> 6.9")
   public void testNonTransitiveConfiguration() throws Exception {
     importProject(
-      "apply plugin: 'java'\n" +
-      "configurations {\n" +
-      "  compile.transitive = false\n" +
-      "}\n" +
-      "\n" +
-      "dependencies {\n" +
-      "  compile 'junit:junit:4.11'\n" +
-      "}"
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .withMavenCentral()
+        .addPrefix("configurations { compile.transitive = false }")
+        .addImplementationDependency("junit:junit:4.11")
+        .generate()
     );
 
     assertModules("project", "project.main", "project.test");
@@ -1439,21 +1681,21 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   public void testProvidedTransitiveDependencies() throws Exception {
     createSettingsFile("include 'projectA', 'projectB', 'projectC' ");
     importProject(
-      "project(':projectA') {\n" +
-      "  apply plugin: 'java'\n" +
-      "}\n" +
-      "project(':projectB') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  dependencies {\n" +
-      "    compile project(':projectA')\n" +
-      "  }\n" +
-      "}\n" +
-      "project(':projectC') {\n" +
-      "  apply plugin: 'war'\n" +
-      "  dependencies {\n" +
-      "    providedCompile project(':projectB')\n" +
-      "  }\n" +
-      "}"
+      createBuildScriptBuilder()
+        .project(":projectA", it -> {
+          it.withJavaPlugin();
+        })
+        .project(":projectB", it -> {
+          it
+            .withJavaLibraryPlugin()
+            .addApiDependency(it.project(":projectA"));
+        })
+        .project(":projectC", it -> {
+          it
+            .applyPlugin("war")
+            .addDependency("providedCompile", it.project(":projectB"));
+        })
+        .generate()
     );
 
     assertModules("project",
@@ -1466,7 +1708,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project.projectC.main", "project.projectB.main", DependencyScope.PROVIDED);
 
     createProjectSubDirs("projectA", "projectB", "projectC");
-    assertCompileClasspathOrdering("project.projectC.main");
+    maybeAssertCompileClasspathOrderingWithEnabledClasspathPackaging("project.projectC.main");
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project", "project.projectA", "project.projectB", "project.projectC");
@@ -1479,33 +1721,31 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testProjectConfigurationDependencyWithDependencyOnTestOutput() throws Exception {
-    createSettingsFile("include 'project1'\n" +
-                       "include 'project2'\n");
+    createSettingsFile("""
+                         include 'project1'
+                         include 'project2'
+                         """);
 
+    String testCompileConfiguration = isJavaLibraryPluginSupported() ? "testImplementation" : "testCompile";
     importProject(
-      "project(':project1') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  configurations {\n" +
-      "    testOutput\n" +
-      "    testOutput.extendsFrom (testCompile)\n" +
-      "  }\n" +
-      "\n" +
-      "  dependencies {\n" +
-      "    testOutput sourceSets.test.output\n" +
-      "    testCompile group: 'junit', name: 'junit', version: '4.11'\n" +
-      "  }\n" +
-      "}\n" +
-      "\n" +
-      "project(':project2') {\n" +
-      "  apply plugin: 'java'\n" +
-      "  dependencies {\n" +
-      "    compile project(path: ':project1')\n" +
-      "\n" +
-      "    testCompile group: 'junit', name: 'junit', version: '4.11'\n" +
-      "    testCompile project(path: ':project1', configuration: 'testOutput')\n" +
-      "  }\n" +
-      "\n" +
-      "}\n"
+      createBuildScriptBuilder()
+        .subprojects(it -> { it.withMavenCentral(); })
+        .project(":project1", it -> {
+          it.withJavaPlugin()
+            .addPrefix("configurations {",
+                       "  testOutput",
+                       "  testOutput.extendsFrom (" + testCompileConfiguration + ")",
+                       "}")
+            .addDependency("testOutput", it.code("sourceSets.test.output"))
+            .addTestImplementationDependency("junit:junit:4.11");
+        })
+        .project(":project2", it -> {
+          it.withJavaPlugin()
+            .addImplementationDependency(it.code("project(path: ':project1')"))
+            .addTestImplementationDependency("junit:junit:4.11")
+            .addTestImplementationDependency(it.project(":project1", "testOutput"));
+        })
+        .generate()
     );
 
     assertModules("project",
@@ -1528,25 +1768,28 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @TargetVersions("2.5+")
   @Test
   public void testJavadocAndSourcesForDependencyWithMultipleArtifacts() throws Exception {
+    GradleSettings.getInstance(myProject).setDownloadSources(true);
     createProjectSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/ivy-1.0-SNAPSHOT.xml",
-                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                         "<ivy-module version=\"2.0\" xmlns:m=\"http://ant.apache.org/ivy/maven\">\n" +
-                         "  <info organisation=\"depGroup\" module=\"depArtifact\" revision=\"1.0-SNAPSHOT\" status=\"integration\" publication=\"20170817121528\"/>\n" +
-                         "  <configurations>\n" +
-                         "    <conf name=\"compile\" visibility=\"public\"/>\n" +
-                         "    <conf name=\"default\" visibility=\"public\" extends=\"compile\"/>\n" +
-                         "    <conf name=\"sources\" visibility=\"public\"/>\n" +
-                         "    <conf name=\"javadoc\" visibility=\"public\"/>\n" +
-                         "  </configurations>\n" +
-                         "  <publications>\n" +
-                         "    <artifact name=\"depArtifact\" type=\"jar\" ext=\"jar\" conf=\"compile\"/>\n" +
-                         "    <artifact name=\"depArtifact\" type=\"source\" ext=\"jar\" conf=\"sources\" m:classifier=\"sources\"/>\n" +
-                         "    <artifact name=\"depArtifact\" type=\"javadoc\" ext=\"jar\" conf=\"javadoc\" m:classifier=\"javadoc\"/>\n" +
-                         "    <artifact name=\"depArtifact-api\" type=\"javadoc\" ext=\"jar\" conf=\"javadoc\" m:classifier=\"javadoc\"/>\n" +
-                         "    <artifact name=\"depArtifact-api\" type=\"source\" ext=\"jar\" conf=\"sources\" m:classifier=\"sources\"/>\n" +
-                         "  </publications>\n" +
-                         "  <dependencies/>\n" +
-                         "</ivy-module>\n");
+                         """
+                           <?xml version="1.0" encoding="UTF-8"?>
+                           <ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
+                             <info organisation="depGroup" module="depArtifact" revision="1.0-SNAPSHOT" status="integration" publication="20170817121528"/>
+                             <configurations>
+                               <conf name="compile" visibility="public"/>
+                               <conf name="default" visibility="public" extends="compile"/>
+                               <conf name="sources" visibility="public"/>
+                               <conf name="javadoc" visibility="public"/>
+                             </configurations>
+                             <publications>
+                               <artifact name="depArtifact" type="jar" ext="jar" conf="compile"/>
+                               <artifact name="depArtifact" type="source" ext="jar" conf="sources" m:classifier="sources"/>
+                               <artifact name="depArtifact" type="javadoc" ext="jar" conf="javadoc" m:classifier="javadoc"/>
+                               <artifact name="depArtifact-api" type="javadoc" ext="jar" conf="javadoc" m:classifier="javadoc"/>
+                               <artifact name="depArtifact-api" type="source" ext="jar" conf="sources" m:classifier="sources"/>
+                             </publications>
+                             <dependencies/>
+                           </ivy-module>
+                           """);
     VirtualFile classesJar = createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact-1.0-SNAPSHOT.jar");
     VirtualFile javadocJar = createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact-1.0-SNAPSHOT-javadoc.jar");
     VirtualFile sourcesJar = createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact-1.0-SNAPSHOT-sources.jar");
@@ -1555,17 +1798,13 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact-api-1.0-SNAPSHOT-sources.jar");
 
     importProject(
-      "apply plugin: 'java'\n" +
-      "\n" +
-      "repositories {\n" +
-      "  ivy { url file('repo') }\n" +
-      "}\n" +
-      "\n" +
-      "dependencies {\n" +
-      "  compile 'depGroup:depArtifact:1.0-SNAPSHOT'\n" +
-      "}\n" +
-      "apply plugin: 'idea'\n" +
-      "idea.module.downloadJavadoc true"
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .addPrefix("repositories { ivy { url file('repo') } }")
+        .addImplementationDependency("depGroup:depArtifact:1.0-SNAPSHOT")
+        .withIdeaPlugin()
+        .addPrefix("idea.module.downloadJavadoc true")
+        .generate()
     );
 
     assertModules("project", "project.main", "project.test");
@@ -1592,13 +1831,15 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @TargetVersions("4.6+")
   public void testAnnotationProcessorDependencies() throws Exception {
     importProject(
-      "apply plugin: 'java'\n" +
-      "\n" +
-      "dependencies {\n" +
-      "    compileOnly 'org.projectlombok:lombok:1.16.2'\n" +
-      "    testCompileOnly 'org.projectlombok:lombok:1.16.2'\n" +
-      "    annotationProcessor 'org.projectlombok:lombok:1.16.2'\n" +
-      "}\n");
+      """
+        apply plugin: 'java'
+
+        dependencies {
+            compileOnly 'org.projectlombok:lombok:1.16.2'
+            testCompileOnly 'org.projectlombok:lombok:1.16.2'
+            annotationProcessor 'org.projectlombok:lombok:1.16.2'
+        }
+        """);
 
     final String depName = "Gradle: org.projectlombok:lombok:1.16.2";
     assertModuleLibDepScope("project.main", depName, DependencyScope.PROVIDED);
@@ -1607,88 +1848,87 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test // https://youtrack.jetbrains.com/issue/IDEA-223152
   @TargetVersions("5.3+")
   public void testTransformedProjectDependency() throws Exception {
-    createSettingsFile("include 'lib-1'\n" +
-                       "include 'lib-2'\n");
+    createSettingsFile("""
+                         include 'lib-1'
+                         include 'lib-2'
+                         """);
 
     importProject(
-      "import java.nio.file.Files\n" +
-      "import java.util.zip.ZipEntry\n" +
-      "import java.util.zip.ZipException\n" +
-      "import java.util.zip.ZipFile\n" +
-      "import org.gradle.api.artifacts.transform.TransformParameters\n" +
-      "\n" +
-      "abstract class Unzip implements TransformAction<TransformParameters.None> {\n" +
-      "    @InputArtifact\n" +
-      "    abstract Provider<FileSystemLocation> getInputArtifact()\n" +
-      "\n" +
-      "    @Override\n" +
-      "    void transform(TransformOutputs outputs) {\n" +
-      "        def input = inputArtifact.get().asFile\n" +
-      "        def unzipDir = outputs.dir(input.name)\n" +
-      "        unzipTo(input, unzipDir)\n" +
-      "    }\n" +
-      "\n" +
-      "    private static void unzipTo(File zipFile, File unzipDir) {\n" +
-      "        new ZipFile(zipFile).withCloseable { zip ->\n" +
-      "            def outputDirectoryCanonicalPath = unzipDir.canonicalPath\n" +
-      "            for (entry in zip.entries()) {\n" +
-      "                unzipEntryTo(unzipDir, outputDirectoryCanonicalPath, zip, entry)\n" +
-      "            }\n" +
-      "        }\n" +
-      "    }\n" +
-      "\n" +
-      "    private static unzipEntryTo(File outputDirectory, String outputDirectoryCanonicalPath, ZipFile zip, ZipEntry entry) {\n" +
-      "        def output = new File(outputDirectory, entry.name)\n" +
-      "        if (!output.canonicalPath.startsWith(outputDirectoryCanonicalPath)) {\n" +
-      "            throw new ZipException(\"Zip entry '${entry.name}' is outside of the output directory\")\n" +
-      "        }\n" +
-      "        if (entry.isDirectory()) {\n" +
-      "            output.mkdirs()\n" +
-      "        } else {\n" +
-      "            output.parentFile.mkdirs()\n" +
-      "            zip.getInputStream(entry).withCloseable { Files.copy(it, output.toPath()) }\n" +
-      "        }\n" +
-      "    }\n" +
-      "}\n" +
-      "\n" +
-      "allprojects {\n" +
-      "    apply plugin: 'java'\n" +
-      "\n" +
-      "    repositories {\n" +
-      "        jcenter()\n" +
-      "    }\n" +
-      "}\n" +
-      "\n" +
-      "def processed = Attribute.of('processed', Boolean)\n" +
-      "def artifactType = Attribute.of('artifactType', String)\n" +
-      "\n" +
-      "\n" +
-      "dependencies {\n" +
-      "    attributesSchema {\n" +
-      "        attribute(processed)\n" +
-      "    }\n" +
-      "\n" +
-      "    artifactTypes.getByName(\"jar\") {\n" +
-      "        attributes.attribute(processed, false) \n" +
-      "    }\n" +
-      "\n" +
-      "    registerTransform(Unzip) {\n" +
-      "        from.attribute(artifactType, 'jar').attribute(processed, false)\n" +
-      "        to.attribute(artifactType, 'java-classes-directory').attribute(processed, true)\n" +
-      "    }\n" +
-      "\n" +
-      "    implementation project(':lib-1')\n" +
-      "    implementation project(':lib-2')\n" +
-      "}\n" +
-      "\n" +
-      "\n" +
-      "configurations.all {\n" +
-      "    afterEvaluate {\n" +
-      "        if (canBeResolved) {\n" +
-      "            attributes.attribute(processed, true)\n" +
-      "        }\n" +
-      "    }\n" +
-      "}"
+      """
+        import java.nio.file.Files
+        import java.util.zip.ZipEntry
+        import java.util.zip.ZipException
+        import java.util.zip.ZipFile
+        import org.gradle.api.artifacts.transform.TransformParameters
+
+        abstract class Unzip implements TransformAction<TransformParameters.None> {
+            @InputArtifact
+            abstract Provider<FileSystemLocation> getInputArtifact()
+
+            @Override
+            void transform(TransformOutputs outputs) {
+                def input = inputArtifact.get().asFile
+                def unzipDir = outputs.dir(input.name)
+                unzipTo(input, unzipDir)
+            }
+
+            private static void unzipTo(File zipFile, File unzipDir) {
+                new ZipFile(zipFile).withCloseable { zip ->
+                    def outputDirectoryCanonicalPath = unzipDir.canonicalPath
+                    for (entry in zip.entries()) {
+                        unzipEntryTo(unzipDir, outputDirectoryCanonicalPath, zip, entry)
+                    }
+                }
+            }
+
+            private static unzipEntryTo(File outputDirectory, String outputDirectoryCanonicalPath, ZipFile zip, ZipEntry entry) {
+                def output = new File(outputDirectory, entry.name)
+                if (!output.canonicalPath.startsWith(outputDirectoryCanonicalPath)) {
+                    throw new ZipException("Zip entry '${entry.name}' is outside of the output directory")
+                }
+                if (entry.isDirectory()) {
+                    output.mkdirs()
+                } else {
+                    output.parentFile.mkdirs()
+                    zip.getInputStream(entry).withCloseable { Files.copy(it, output.toPath()) }
+                }
+            }
+        }
+
+        allprojects {
+            apply plugin: 'java'
+        }
+
+        def processed = Attribute.of('processed', Boolean)
+        def artifactType = Attribute.of('artifactType', String)
+
+
+        dependencies {
+            attributesSchema {
+                attribute(processed)
+            }
+
+            artifactTypes.getByName("jar") {
+                attributes.attribute(processed, false)\s
+            }
+
+            registerTransform(Unzip) {
+                from.attribute(artifactType, 'jar').attribute(processed, false)
+                to.attribute(artifactType, 'java-classes-directory').attribute(processed, true)
+            }
+
+            implementation project(':lib-1')
+            implementation project(':lib-2')
+        }
+
+
+        configurations.all {
+            afterEvaluate {
+                if (canBeResolved) {
+                    attributes.attribute(processed, true)
+                }
+            }
+        }"""
     );
 
     assertModules("project", "project.main", "project.test",
@@ -1721,35 +1961,122 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  public void testSourcesExcludedFromGradleCacheOnDisabledFlag() throws Exception {
+    Assume.assumeFalse("Can not run on Windows. " +
+                       "The test locks native library files in test directory and can not be torn down properly.", SystemInfo.isWindows);
+    overrideGradleUserHome("project/cache");
+    var dependency = "junit:junit:4.12";
+    var dependencyName = "Gradle: junit:junit:4.12";
+    var dependencyJar = "junit-4.12.jar";
+
+    importProject(script(it -> {
+      it
+        .withJavaPlugin()
+        .withMavenCentral()
+        .addTestImplementationDependency(dependency);
+    }));
+
+    LibraryOrderEntry regularLibFromGradleCache = assertSingleLibraryOrderEntry("project.test", dependencyName);
+    assertNoSourcesAndDocsInGradleCache(dependencyJar, regularLibFromGradleCache);
+  }
+
+  @Test
+  public void testSourcesExcludedFromGradleCacheOnDisabledFlagWithIdeaPlugin() throws Exception {
+    Assume.assumeFalse("Can not run on Windows. " +
+                       "The test locks native library files in test directory and can not be torn down properly.", SystemInfo.isWindows);
+    overrideGradleUserHome("project/cache");
+    var dependency = "junit:junit:4.12";
+    var dependencyName = "Gradle: junit:junit:4.12";
+    var dependencyJar = "junit-4.12.jar";
+
+    importProject(script(it -> {
+      it
+        .withJavaPlugin()
+        .withIdeaPlugin()
+        .withMavenCentral()
+        .addTestImplementationDependency(dependency);
+    }));
+
+    LibraryOrderEntry regularLibFromGradleCache = assertSingleLibraryOrderEntry("project.test", dependencyName);
+    assertNoSourcesAndDocsInGradleCache(dependencyJar, regularLibFromGradleCache);
+  }
+
+  @Test
+  public void testSourcesExcludedFromGradleMultiModuleProjectCacheOnDisabledFlag() throws Exception {
+    Assume.assumeFalse("Can not run on Windows. " +
+                       "The test locks native library files in test directory and can not be torn down properly.", SystemInfo.isWindows);
+    overrideGradleUserHome("project/cache");
+    var dependency = "junit:junit:4.12";
+    var dependencyName = "Gradle: junit:junit:4.12";
+    var dependencyJar = "junit-4.12.jar";
+
+    createSettingsFile("include 'projectA', 'projectB' ");
+    importProject(
+      createBuildScriptBuilder()
+        .project(":projectA", it -> {
+          it
+            .withJavaPlugin()
+            .withIdeaPlugin()
+            .withMavenCentral()
+            .addTestImplementationDependency(dependency);
+        })
+        .project(":projectB", it -> {
+          it
+            .withJavaPlugin()
+            .withMavenCentral()
+            .addTestImplementationDependency(dependency);
+        })
+        .generate()
+    );
+
+    LibraryOrderEntry projectADependencyEntry = assertSingleLibraryOrderEntry("project.projectA.test", dependencyName);
+    assertNoSourcesAndDocsInGradleCache(dependencyJar, projectADependencyEntry);
+
+    LibraryOrderEntry projectBDependencyEntry = assertSingleLibraryOrderEntry("project.projectB.test", dependencyName);
+    assertNoSourcesAndDocsInGradleCache(dependencyJar, projectBDependencyEntry);
+  }
+
+  @Test
   public void testSourcesJavadocAttachmentFromGradleCache() throws Exception {
-    importProject(new GradleBuildScriptBuilderEx()
-                    .withJavaPlugin()
-                    .withJUnit("4.12") // download classes and sources - the default import settings
-                    .generate());
+    var dependency = "junit:junit:4.12";
+    var dependencyName = "Gradle: junit:junit:4.12";
+    var dependencyJar = "junit-4.12.jar";
+    var dependencySourcesJar = "junit-4.12-sources.jar";
+    var dependencyJavadocJar = "junit-4.12-javadoc.jar";
+
+    importProject(script(it -> {
+      it.withJavaPlugin();
+      it.withMavenCentral();
+      // download classes and sources - the default import settings
+      it.addTestImplementationDependency(dependency);
+    }));
     assertModules("project", "project.main", "project.test");
 
     WriteAction.runAndWait(() -> {
-      LibraryOrderEntry regularLibFromGradleCache = assertSingleLibraryOrderEntry("project.test", "Gradle: junit:junit:4.12");
+      LibraryOrderEntry regularLibFromGradleCache = assertSingleLibraryOrderEntry("project.test", dependencyName);
       Library library = regularLibFromGradleCache.getLibrary();
       ApplicationManager.getApplication().runWriteAction(() -> library.getTable().removeLibrary(library));
     });
 
-    importProject(new GradleBuildScriptBuilderEx()
-                    .withJavaPlugin()
-                    .withIdeaPlugin()
-                    .withJUnit("4.12")
-                    .addPrefix("idea.module {\n" +
-                               "  downloadJavadoc = true\n" +
-                               "  downloadSources = false\n" + // should be already available in Gradle cache
-                               "}")
-                    .generate());
+    importProject(script(it -> {
+      it.withJavaPlugin();
+      it.withIdeaPlugin();
+      it.withMavenCentral();
+      // download classes and sources - the default import settings
+      it.addTestImplementationDependency(dependency);
+      it.addPrefix(
+        "idea.module {",
+        "  downloadJavadoc = true",
+        "  downloadSources = false", // should be already available in Gradle cache
+        "}");
+    }));
 
     assertModules("project", "project.main", "project.test");
 
-    LibraryOrderEntry regularLibFromGradleCache = assertSingleLibraryOrderEntry("project.test", "Gradle: junit:junit:4.12");
+    LibraryOrderEntry regularLibFromGradleCache = assertSingleLibraryOrderEntry("project.test", dependencyName);
     assertThat(regularLibFromGradleCache.getRootFiles(OrderRootType.CLASSES))
       .hasSize(1)
-      .allSatisfy(file -> assertEquals("junit-4.12.jar", file.getName()));
+      .allSatisfy(file -> assertEquals(dependencyJar, file.getName()));
 
     String binaryPath = PathUtil.getLocalPath(regularLibFromGradleCache.getRootFiles(OrderRootType.CLASSES)[0]);
     Ref<Boolean> sourceFound = Ref.create(false);
@@ -1759,12 +2086,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     if (sourceFound.get()) {
       assertThat(regularLibFromGradleCache.getRootFiles(OrderRootType.SOURCES))
         .hasSize(1)
-        .allSatisfy(file -> assertEquals("junit-4.12-sources.jar", file.getName()));
+        .allSatisfy(file -> assertEquals(dependencySourcesJar, file.getName()));
     }
     if (docFound.get()) {
       assertThat(regularLibFromGradleCache.getRootFiles(JavadocOrderRootType.getInstance()))
         .hasSize(1)
-        .allSatisfy(file -> assertEquals("junit-4.12-javadoc.jar", file.getName()));
+        .allSatisfy(file -> assertEquals(dependencyJavadocJar, file.getName()));
     }
   }
 
@@ -1773,72 +2100,91 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   public void testSourcesJavadocAttachmentFromClassesFolder() throws Exception {
     createSettingsFile("include 'aLib'");
     createProjectSubFile("aLib/build.gradle",
-                         "plugins {\n" +
-                         "    id 'java-library'\n" +
-                         "    id 'maven-publish'\n" +
-                         "}\n" +
-                         "java {\n" +
-                         "    withJavadocJar()\n" +
-                         "    withSourcesJar()\n" +
-                         "}\n" +
-                         "publishing {\n" +
-                         "    publications {\n" +
-                         "        mavenJava(MavenPublication) {\n" +
-                         "            artifactId = 'aLib'\n" +
-                         "            groupId = 'test'\n" +
-                         "            version = '1.0-SNAPSHOT'\n" +
-                         "            from components.java\n" +
-                         "        }\n" +
-                         "        mavenJava1(MavenPublication) {\n" +
-                         "            artifactId = 'aLib'\n" +
-                         "            groupId = 'test'\n" +
-                         "            version = '1.0-SNAPSHOT-1'\n" +
-                         "            from components.java\n" +
-                         "        }\n" +
-                         "        mavenJava2(MavenPublication) {\n" +
-                         "            artifactId = 'aLib'\n" +
-                         "            groupId = 'test'\n" +
-                         "            version = '1.0-SNAPSHOT-2'\n" +
-                         "            from components.java\n" +
-                         "        }\n" +
-                         "    }\n" +
-                         "}\n" +
-                         "configurations {\n" +
-                         "    libConf\n" +
-                         "}\n" +
-                         "dependencies {\n" +
-                         "    libConf 'test:aLib:1.0-SNAPSHOT'\n" +
-                         "}\n" +
-                         "task moveALibToGradleUserHome() {\n" +
-                         "    dependsOn publishToMavenLocal\n" +
-                         "    doLast {\n" +
-                         "        repositories.add(repositories.mavenLocal())\n" +
-                         "        def libArtifact = configurations.libConf.singleFile\n" +
-                         "        def libRepoFolder = libArtifact.parentFile.parentFile\n" +
-                         "        ant.move file: libRepoFolder,\n" +
-                         "                 todir: new File(gradle.gradleUserHomeDir, '/caches/ij_test_repo/test')\n" +
-                         "    }\n" +
-                         "}\n" +
-                         "task removeALibFromGradleUserHome(type: Delete) {\n" +
-                         "    delete new File(gradle.gradleUserHomeDir, '/caches/ij_test_repo/test')\n" +
-                         "    followSymlinks = true" +
-                         "}");
-    importProject(new GradleBuildScriptBuilderEx()
+                         """
+                           plugins {
+                               id 'java-library'
+                               id 'maven-publish'
+                           }
+                           java {
+                               withJavadocJar()
+                               withSourcesJar()
+                           }
+                           publishing {
+                               publications {
+                                   mavenJava(MavenPublication) {
+                                       artifactId = 'aLib'
+                                       groupId = 'test'
+                                       version = '1.0-SNAPSHOT'
+                                       from components.java
+                                   }
+                                   mavenJava1(MavenPublication) {
+                                       artifactId = 'aLib'
+                                       groupId = 'test'
+                                       version = '1.0-SNAPSHOT-1'
+                                       from components.java
+                                   }
+                                   mavenJava2(MavenPublication) {
+                                       artifactId = 'aLib'
+                                       groupId = 'test'
+                                       version = '1.0-SNAPSHOT-2'
+                                       from components.java
+                                   }
+                               }
+                           }
+                           configurations {
+                               libConf
+                           }
+                           dependencies {
+                               libConf 'test:aLib:1.0-SNAPSHOT'
+                           }
+                           task moveALibToGradleUserHome() {
+                               dependsOn publishToMavenLocal
+                               doLast {
+                                   repositories.add(repositories.mavenLocal())
+                                   def libArtifact = configurations.libConf.singleFile
+                                   def libRepoFolder = libArtifact.parentFile.parentFile
+                                   ant.move file: libRepoFolder,
+                                            todir: new File(gradle.gradleUserHomeDir, '/caches/ij_test_repo/test')
+                               }
+                           }
+                           task removeALibFromGradleUserHome(type: DefaultTask) {
+                               doLast {
+                                 def attemptsLeft = 10;
+                                 while (attemptsLeft > 0) {
+                                   attemptsLeft--;
+                                   try {
+                                     project.delete {
+                                       delete new File(gradle.gradleUserHomeDir, '/caches/ij_test_repo/test')
+                                       followSymlinks = true
+                                     }
+                                     break;
+                                   } catch (Exception e) {
+                                     if (attemptsLeft == 0) {
+                                       throw e;
+                                     } else {
+                                        Thread.sleep(1000);
+                                     }
+                                   }
+                                 }
+                               }
+                           }""");
+    importProject(createBuildScriptBuilder()
                     .generate());
     assertModules("project",
                   "project.aLib", "project.aLib.main", "project.aLib.test");
 
     runTask(":aLib:moveALibToGradleUserHome");
     try {
-      importProject(new GradleBuildScriptBuilderEx()
+      importProject(createBuildScriptBuilder()
                       .withJavaPlugin()
                       .withIdeaPlugin()
                       .addRepository(" maven { url new File(gradle.gradleUserHomeDir, 'caches/ij_test_repo')} ")
                       .addDependency("implementation 'test:aLib:1.0-SNAPSHOT-1'")
-                      .addPrefix("idea.module {\n" +
-                                 "  downloadJavadoc = true\n" +
-                                 "  downloadSources = false\n" +
-                                 "}")
+                      .addPrefix(
+                        "idea.module {",
+                        "  downloadJavadoc = true",
+                        "  downloadSources = false",
+                        "}")
                       .generate());
     }
     finally {
@@ -1863,16 +2209,17 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test
   public void testModifiedSourceSetClasspathFileCollectionDependencies() throws Exception {
     importProject(
-      "apply plugin: 'java'\n" +
-      "dependencies {\n" +
-      "  compile 'junit:junit:4.11'\n" +
-      "}\n" +
-      "afterEvaluate {\n" +
-      "    def mainSourceSet = sourceSets['main']\n" +
-      "    def mainClassPath = mainSourceSet.compileClasspath\n" +
-      "    def exclusion = mainClassPath.filter { it.name.contains('junit') }\n" +
-      "    mainSourceSet.compileClasspath = mainClassPath - exclusion\n" +
-      "}"
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .withMavenCentral()
+        .addImplementationDependency("junit:junit:4.11")
+        .addPrefix("afterEvaluate {",
+                   "    def mainSourceSet = sourceSets['main']",
+                   "    def mainClassPath = mainSourceSet.compileClasspath",
+                   "    def exclusion = mainClassPath.filter { it.name.contains('junit') }",
+                   "    mainSourceSet.compileClasspath = mainClassPath - exclusion",
+                   "}")
+        .generate()
     );
 
     assertModules("project", "project.main", "project.test");
@@ -1889,8 +2236,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test
   public void testCompilationTaskClasspathDependencies() throws Exception {
     importProject(
-      new GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withJavaPlugin()
+        .withMavenCentral()
         .addPostfix(
           "  configurations {",
           "    custom1",
@@ -1904,7 +2252,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
           "    custom2 'org.hamcrest:hamcrest-core:1.3'",
           "  }",
           "  compileJava { classpath += configurations.custom1 }",
-          "  compileCustomSrcJava {classpath += configurations.custom2 }"
+          "  compileCustomSrcJava { classpath += configurations.custom2 }"
         )
         .generate()
     );
@@ -1924,6 +2272,39 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       assertModuleLibDeps("project.main", "Gradle: junit:junit:4.12", "Gradle: org.hamcrest:hamcrest-core:1.3");
       assertModuleLibDeps("project.customSrc", "Gradle: org.hamcrest:hamcrest-core:1.3");
     }
+  }
+
+  @Test
+  @TargetVersions("7.4+")
+  public void testVersionCatalogsModelImport() throws Exception {
+    final VirtualFile toml1 = createProjectSubFile("my_versions.toml", "[libraries]\n" +
+                                                                      "mylib = \"junit:junit:4.12\"");
+    final VirtualFile toml2 = createProjectSubFile("my_versions_2.toml", "[libraries]\n" +
+                                                                         "myOtherLib = \"org.hamcrest:hamcrest-core:1.3\"");
+    createSettingsFile("""
+                         dependencyResolutionManagement {
+                             versionCatalogs {
+                                 fooLibs {
+                                     from(files('my_versions.toml'))
+                                 }
+                                 barLibs {
+                                     from(files('my_versions_2.toml'))
+                                 }
+                             }
+                         }""");
+    importProject(createBuildScriptBuilder()
+                    .withJavaPlugin()
+                    .addPostfix(
+                      "dependencies {",
+                      "  testImplementation fooLibs.mylib",
+                      "  testImplementation barLibs.myOtherLib",
+                      "}"
+                    ).generate());
+
+    VersionCatalogsLocator locator = myProject.getService(VersionCatalogsLocator.class);
+    final Map<String, Path> stringStringMap = locator.getVersionCatalogsForModule(getModule("project.main"));
+    assertThat(stringStringMap).containsOnly(entry("fooLibs", Path.of(toml1.getPath())),
+                                             entry("barLibs", Path.of(toml2.getPath())));
   }
 
   @SuppressWarnings("SameParameterValue")
@@ -1950,6 +2331,24 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
           }
         }
       });
+  }
+
+  private void assertNoSourcesAndDocsInGradleCache(String dependencyJar, LibraryOrderEntry regularLibFromGradleCache) {
+    assertThat(regularLibFromGradleCache.getRootFiles(OrderRootType.CLASSES))
+      .hasSize(1)
+      .allSatisfy(file -> assertEquals(dependencyJar, file.getName()));
+
+    String binaryPath = PathUtil.getLocalPath(regularLibFromGradleCache.getRootFiles(OrderRootType.CLASSES)[0]);
+    Ref<Boolean> sourceFound = Ref.create(false);
+    Ref<Boolean> docFound = Ref.create(false);
+    try {
+      checkIfSourcesOrJavadocsCanBeAttached(binaryPath, sourceFound, docFound);
+    }
+    catch (IOException e) {
+      throw new IllegalStateException("Unable to lookup dependency artifacts in " + binaryPath);
+    }
+    assertFalse(sourceFound.get());
+    assertFalse(docFound.get());
   }
 
   private static void checkIfSourcesOrJavadocsCanBeAttached(String binaryPath,

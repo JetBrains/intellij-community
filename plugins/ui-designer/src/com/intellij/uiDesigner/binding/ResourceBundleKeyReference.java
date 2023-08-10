@@ -49,10 +49,9 @@ public final class ResourceBundleKeyReference extends ReferenceInForm {
 
   @Override
   public boolean isReferenceTo(@NotNull final PsiElement element) {
-    if (!(element instanceof IProperty)) {
+    if (!(element instanceof IProperty property)) {
       return false;
     }
-    IProperty property = (IProperty) element;
     String baseName = ResourceBundleManager.getInstance(element.getProject()).getFullName(property.getPropertiesFile());
     return baseName != null && myBundleName.equals(baseName) && getRangeText().equals(property.getUnescapedKey());
   }

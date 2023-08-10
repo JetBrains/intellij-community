@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,7 +33,7 @@ public final class XDebuggerWatchesManager {
   private final Map<String, List<XExpression>> watches = new ConcurrentHashMap<>();
   private final Map<String, Set<InlineWatch>> inlineWatches = new ConcurrentHashMap<>();
   private final MergingUpdateQueue myInlinesUpdateQueue;
-  private Project myProject;
+  private final Project myProject;
 
   public XDebuggerWatchesManager(@NotNull Project project) {
     myProject = project;
@@ -96,13 +96,15 @@ public final class XDebuggerWatchesManager {
       VirtualFile file = fileManager.findFileByUrl(inlineWatchState.getFileUrl());
       XSourcePosition position = debuggerUtil.createPosition(file, inlineWatchState.getLine());
       XExpression expression = inlineWatchState.getWatchState().toXExpression();
+      if (position == null || expression == null) continue;
+
       InlineWatch watch = new InlineWatch(expression, position);
       inlineWatches.computeIfAbsent(inlineWatchState.getFileUrl(), (k) -> new HashSet<>()).add(watch);
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
       inlineWatches.values().stream().flatMap(set -> set.stream()).forEach(InlineWatch::setMarker);
-    }, ModalityState.NON_MODAL, myProject.getDisposed());
+    }, ModalityState.nonModal(), myProject.getDisposed());
   }
 
   public void showInplaceEditor(@NotNull XSourcePosition presentationPosition,
@@ -114,7 +116,7 @@ public final class XDebuggerWatchesManager {
   }
 
   public void inlineWatchesRemoved(List<InlineWatch> removed, XInlineWatchesView watchesView) {
-    inlineWatches.values().forEach(set -> set.removeAll(removed));
+    inlineWatches.values().forEach(set -> removed.forEach(set::remove));
     getWatchesViews().filter(v -> v != watchesView).forEach(view -> view.removeInlineWatches(removed));
   }
 

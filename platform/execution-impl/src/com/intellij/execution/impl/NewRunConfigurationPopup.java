@@ -23,26 +23,27 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.ui.popup.util.BaseTreePopupStep;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ActiveComponent;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author Irina.Chernushina on 10/8/2015.
- */
 public final class NewRunConfigurationPopup {
   static final ConfigurationType HIDDEN_ITEMS_STUB = new ConfigurationType() {
     @NotNull
@@ -228,11 +229,6 @@ public final class NewRunConfigurationPopup {
       showTitle ? ExecutionBundle.message("add.new.run.configuration.action2.name") : null, structure
     ) {
       @Override
-      public boolean isRootVisible() {
-        return false;
-      }
-
-      @Override
       public boolean isSelectable(Object node, Object userData) {
         if (!(userData instanceof NodeDescriptor)) return false;
         if (getStructure().getChildElements(userData).length > 0) return false;
@@ -272,7 +268,7 @@ public final class NewRunConfigurationPopup {
 
       @Override
       public boolean shouldBeShowing(Object value) {
-        NodeDescriptor<?> parent = (value instanceof NodeDescriptor) ? ((NodeDescriptor)value).getParentDescriptor() : null;
+        NodeDescriptor<?> parent = (value instanceof NodeDescriptor) ? ((NodeDescriptor<?>)value).getParentDescriptor() : null;
         return super.shouldBeShowing(value) || (parent != null && super.shouldBeShowing(parent));
       }
     };
@@ -285,7 +281,15 @@ public final class NewRunConfigurationPopup {
       };
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
       .createActionToolbar(ActionPlaces.POPUP, new DefaultActionGroup(collapseAllAction), true);
+    toolbar.setTargetComponent(treePopup.getComponent());
     toolbar.setMiniMode(true);
+    var toolbarInsets = JBUI.CurrentTheme.Popup.headerInsets();
+    if (toolbarInsets instanceof JBInsets scaledInsets) {
+      toolbarInsets = scaledInsets.getUnscaled(); // JBUI.Borders.empty() will scale, need this to avoid double scaling
+    }
+    JBEmptyBorder toolbarBorder = ExperimentalUI.isNewUI()
+      ? JBUI.Borders.empty(toolbarInsets.top, 1, toolbarInsets.bottom, 1)
+      : JBUI.Borders.empty(2, 1, 0, 1);
     treePopup.getTitle().setButtonComponent(new ActiveComponent() {
       @Override
       public void setActive(boolean active) {
@@ -296,7 +300,7 @@ public final class NewRunConfigurationPopup {
       public JComponent getComponent() {
         return toolbar.getComponent();
       }
-    }, JBUI.Borders.empty(2, 1, 0, 1));
+    }, toolbarBorder);
     return treePopup;
   }
 }

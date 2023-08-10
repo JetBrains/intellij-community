@@ -41,7 +41,7 @@ public class JpsGradleDependenciesEnumerationHandler extends JpsJavaDependencies
 
   @Override
   public boolean shouldAddRuntimeDependenciesToTestCompilationClasspath() {
-    return myResolveModulePerSourceSet;
+    return !myResolveModulePerSourceSet;
   }
 
   @Override

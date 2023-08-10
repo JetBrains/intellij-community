@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
@@ -53,6 +54,7 @@ public class EditorModel {
   private final List<Long> numbersOfRequestedForReadingPages = new LinkedList<>();
   private final AtomicBoolean isUpdateRequested = new AtomicBoolean(false);
   private boolean isBrokenMode = false;
+  private boolean isDisposed = false;
 
   private final AbsoluteEditorPosition targetVisiblePosition = new AbsoluteEditorPosition(0, 0);
   private boolean isLocalScrollBarStabilized = false;
@@ -117,8 +119,7 @@ public class EditorModel {
   private void insertGlobalScrollBarIntoEditorComponent() {
     JComponent mainPanelInEditor = editor.getComponent();
     LayoutManager layout = mainPanelInEditor.getLayout();
-    if (layout instanceof BorderLayout) {
-      BorderLayout borderLayout = (BorderLayout)layout;
+    if (layout instanceof BorderLayout borderLayout) {
       Component originalCentralComponent = borderLayout.getLayoutComponent(BorderLayout.CENTER);
 
       JBLayeredPane intermediatePane = new JBLayeredPane() {
@@ -273,6 +274,10 @@ public class EditorModel {
 
   @RequiresEdt
   private void update() {
+    if (isDisposed) {
+      return;
+    }
+
     if (isBrokenMode) {
       documentOfPagesModel.removeAllPages(dataProvider.getProject());
       return;
@@ -829,6 +834,15 @@ public class EditorModel {
     }
   }
 
+  public void trySetHighlighter(@NotNull EditorHighlighter highlighter) {
+    if (editor instanceof EditorEx) {
+      ((EditorEx)editor).setHighlighter(highlighter);
+    } else {
+      LOG.warn("[Large File Editor Subsystem] EditorModel.trySetHighlighter: " + editor.getClass().getName()
+               + " is not instance of EditorEx. Can't set proper editor highlighter.");
+    }
+  }
+
   public void setCaretToFileEndAndShow() {
     long pagesAmount;
     try {
@@ -956,6 +970,7 @@ public class EditorModel {
   }
 
   void dispose() {
+    isDisposed = true;
     if (editor != null) {
       EditorFactory.getInstance().releaseEditor(editor);
     }

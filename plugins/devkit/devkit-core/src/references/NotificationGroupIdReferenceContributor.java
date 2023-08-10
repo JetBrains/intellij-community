@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -6,14 +6,15 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationBuilder;
 import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.SingletonNotificationManager;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.UExpression;
 
 import javax.swing.*;
@@ -26,16 +27,17 @@ import static com.intellij.patterns.uast.UastPatterns.uExpression;
 import static com.intellij.psi.UastReferenceRegistrar.registerUastReferenceProvider;
 
 public class NotificationGroupIdReferenceContributor extends PsiReferenceContributor {
-
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registerUastReferenceProvider(registrar,
-                                  injectionHostUExpression().andOr(
-                                    uExpression().constructorParameter(0, Notification.class.getName()),
-                                    uExpression().constructorParameter(0, NotificationBuilder.class.getName()),
-                                    uExpression().methodCallParameter(0, psiMethod().withName("getNotificationGroup")
-                                      .definedInClass(NotificationGroupManager.class.getName()))
-                                  ),
+                                  injectionHostUExpression()
+                                    .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
+                                    .andOr(
+                                      uExpression().constructorParameter(0, Notification.class.getName()),
+                                      uExpression().methodCallParameter(0, psiMethod().withName("getNotificationGroup")
+                                        .definedInClass(NotificationGroupManager.class.getName())),
+                                      uExpression().constructorParameter(0, SingletonNotificationManager.class.getName())
+                                    ),
 
                                   new UastInjectionHostReferenceProvider() {
                                     @Override
@@ -47,7 +49,7 @@ public class NotificationGroupIdReferenceContributor extends PsiReferenceContrib
                                   }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
-  private static class NotificationGroupIdReference extends ExtensionPointReferenceBase {
+  private static class NotificationGroupIdReference extends ExtensionReferenceBase {
 
     private NotificationGroupIdReference(PsiElement element) {
       super(element);
@@ -77,7 +79,7 @@ public class NotificationGroupIdReferenceContributor extends PsiReferenceContrib
         final String toolwindowId = getAttributeValue(extension, "toolWindowId");
         final String displayType = getAttributeValue(extension, "displayType");
         final String logByDefault = getAttributeValue(extension, "isLogByDefault");
-        Icon logIcon = logByDefault == null || !"false".equals(logByDefault) ? AllIcons.Ide.Notification.NoEvents : null;
+        Icon logIcon = !"false".equals(logByDefault) ? AllIcons.Ide.Notification.NoEvents : null;
 
         variants.add(LookupElementBuilder.create(extension.getXmlElement(), value)
                        .withTailText(toolwindowId != null ? " (" + toolwindowId + ")" : "")

@@ -26,10 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.GrModifierConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
-/**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
- */
 public interface GrModifierList extends GroovyPsiElement, PsiModifierList {
 
   int getModifierFlags();

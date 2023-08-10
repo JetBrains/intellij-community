@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.fileTemplates;
 
@@ -21,6 +7,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -31,9 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandler {
   @Override
   public boolean handlesTemplate(@NotNull final FileTemplate template) {
@@ -63,11 +48,14 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
   }
 
   protected String checkAppendExtension(String fileName, @NotNull FileTemplate template) {
-    final String suggestedFileNameEnd = "." + template.getExtension();
+    if (!StringUtil.isEmpty(template.getExtension())) { // can be empty, e.g. Dockerfile
+      String suggestedFileNameEnd = "." + template.getExtension();
 
-    if (!fileName.endsWith(suggestedFileNameEnd)) {
-      fileName += suggestedFileNameEnd;
+      if (!fileName.endsWith(suggestedFileNameEnd)) {
+        fileName += suggestedFileNameEnd;
+      }
     }
+
     return fileName;
   }
 

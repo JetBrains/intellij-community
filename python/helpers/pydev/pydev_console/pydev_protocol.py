@@ -19,6 +19,7 @@ UnsupportedArrayTypeException = _console_thrift.UnsupportedArrayTypeException
 ExceedingArrayDimensionsException = _console_thrift.ExceedingArrayDimensionsException
 KeyboardInterruptException = _console_thrift.KeyboardInterruptException
 PythonUnhandledException = _console_thrift.PythonUnhandledException
+PythonTableException = _console_thrift.PythonTableException
 
 PythonConsoleFrontendService = _console_thrift.PythonConsoleFrontendService
 PythonConsoleBackendService = _console_thrift.PythonConsoleBackendService

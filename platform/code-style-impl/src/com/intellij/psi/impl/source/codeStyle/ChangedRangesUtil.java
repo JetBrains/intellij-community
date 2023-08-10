@@ -27,7 +27,7 @@ final class ChangedRangesUtil {
     Document document = file.getViewProvider().getDocument();
     List<TextRange> result = new ArrayList<>();
     if (document != null) {
-      FormattingRangesExtender extender = new FormattingRangesExtender(document, file);
+      LineFormattingRangesExtender extender = new LineFormattingRangesExtender(document);
       for (TextRange range : changedRangesInfo.allChangedRanges) {
         List<TextRange> extended = extender.getExtendedRanges(Collections.singletonList(range));
         result.addAll(extended);

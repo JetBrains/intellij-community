@@ -51,9 +51,7 @@ public final class XmlEntityCache {
   public static void copyEntityCaches(final PsiFile file, final PsiFile context) {
     synchronized (LOCK) {
       final Map<String, CachedValue<XmlEntityDecl>> cachingMap = getCachingMap(file);
-      for(Map.Entry<String,CachedValue<XmlEntityDecl>> entry:getCachingMap(context).entrySet()) {
-        cachingMap.put(entry.getKey(), entry.getValue());
-      }
+      cachingMap.putAll(getCachingMap(context));
     }
 
   }

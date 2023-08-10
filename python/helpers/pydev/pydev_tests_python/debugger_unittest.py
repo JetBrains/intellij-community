@@ -1,6 +1,9 @@
 from collections import namedtuple
 from contextlib import contextmanager
 import json
+
+from _pydevd_bundle.pydevd_constants import GET_FRAME_NORMAL_GROUP
+
 try:
     from urllib import quote, quote_plus, unquote_plus
 except ImportError:
@@ -9,7 +12,6 @@ except ImportError:
 import re
 import socket
 import subprocess
-import sys
 import threading
 import time
 import traceback
@@ -72,6 +74,7 @@ CMD_STEP_INTO_MY_CODE = 144
 CMD_GET_CONCURRENCY_EVENT = 145
 CMD_SHOW_RETURN_VALUES = 146
 
+CMD_LOAD_FULL_VALUE = 151
 CMD_GET_THREAD_STACK = 152
 CMD_THREAD_DUMP_TO_STDERR = 153  # This is mostly for unit-tests to diagnose errors on ci.
 CMD_STOP_ON_START = 154
@@ -183,7 +186,7 @@ class ReaderThread(threading.Thread):
         except ImportError:
             from Queue import Queue
 
-        self.setDaemon(True)
+        self.daemon = True
         self.sock = sock
         self._queue = Queue()
         self.all_received = []
@@ -269,7 +272,7 @@ def read_process(stream, buffer, debug_stream, stream_name, finish):
 
 def start_in_daemon_thread(target, args):
     t0 = threading.Thread(target=target, args=args)
-    t0.setDaemon(True)
+    t0.daemon = True
     t0.start()
 
 
@@ -486,7 +489,7 @@ class AbstractWriterThread(threading.Thread):
 
     def __init__(self, *args, **kwargs):
         threading.Thread.__init__(self, *args, **kwargs)
-        self.setDaemon(True)
+        self.daemon = True
         self.finished_ok = False
         self.finished_initialization = False
         self._next_breakpoint_id = 0
@@ -509,7 +512,8 @@ class AbstractWriterThread(threading.Thread):
             'warning: Debugger speedups',
             'pydev debugger: New process is launching',
             'pydev debugger: To debug that process',
-            'pydev debugger: process'
+            'pydev debugger: process',
+            'warning: PYDEVD_USE_CYTHON environment variable is set to \'NO\'',
         )):
             return True
 
@@ -927,13 +931,15 @@ class AbstractWriterThread(threading.Thread):
         self.write("%s\t%s\t%s\t%s\t%s\t%s\t%s" % (
             CMD_CHANGE_VARIABLE, self.next_seq(), thread_id, frame_id, 'FRAME', varname, value))
 
-    def write_get_frame(self, thread_id, frame_id):
-        self.write("%s\t%s\t%s\t%s\tFRAME" % (CMD_GET_FRAME, self.next_seq(), thread_id, frame_id))
+    def write_get_frame(self, thread_id, frame_id, group_type=GET_FRAME_NORMAL_GROUP):
+        self.write("%s\t%s\t%s\t%s\tFRAME\t%s" % (CMD_GET_FRAME, self.next_seq(), thread_id, frame_id, group_type, ))
         self.log.append('write_get_frame')
 
-    def write_get_variable(self, thread_id, frame_id, var_attrs):
-        self.write("%s\t%s\t%s\t%s\tFRAME\t%s" % (CMD_GET_VARIABLE, self.next_seq(), thread_id, frame_id, var_attrs))
+    def write_get_variable(self, thread_id, frame_id, var_attrs, group_type=GET_FRAME_NORMAL_GROUP):
+        self.write("%s\t%s\t%s\t%s\tFRAME\t%s\t%s" % (CMD_GET_VARIABLE, self.next_seq(), thread_id, frame_id, group_type, var_attrs, ))
 
+    def write_load_full_value(self, thread_id, frame_id, var_name):
+        self.write("%s\t%s\t%s\t%s\tFRAME\t%s\t__pydev_val__" % (CMD_LOAD_FULL_VALUE, self.next_seq(), thread_id, frame_id, var_name))
     def write_step_over(self, thread_id):
         self.write("%s\t%s\t%s" % (CMD_STEP_OVER, self.next_seq(), thread_id,))
 

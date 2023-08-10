@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
-import com.intellij.util.Function;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,33 +12,21 @@ import java.util.Comparator;
  */
 public class Pair<A, B> {
   public final A first;
-  public final B second;
+  @Nls public final B second;
 
   @NotNull
   public static <A, B> Pair<A, B> create(A first, B second) {
-    //noinspection DontUsePairConstructor
-    return new Pair<A, B>(first, second);
+    return new Pair<>(first, second);
   }
 
   @NotNull
   public static <A, B> NonNull<A, B> createNonNull(@NotNull A first, @NotNull B second) {
-    return new NonNull<A, B>(first, second);
+    return new NonNull<>(first, second);
   }
 
   @NotNull
   public static <A, B> Pair<A, B> pair(A first, B second) {
-    //noinspection DontUsePairConstructor
-    return new Pair<A, B>(first, second);
-  }
-
-  @NotNull
-  public static <A, B> Function<A, Pair<A, B>> createFunction(final B value) {
-    return new Function<A, Pair<A, B>>() {
-      @Override
-      public Pair<A, B> fun(A a) {
-        return create(a, value);
-      }
-    };
+    return new Pair<>(first, second);
   }
 
   public static <T> T getFirst(@Nullable Pair<T, ?> pair) {
@@ -49,12 +37,12 @@ public class Pair<A, B> {
     return pair != null ? pair.second : null;
   }
 
-  @SuppressWarnings("rawtypes")
+  @SuppressWarnings({"rawtypes", "unchecked"})
   private static final Pair EMPTY = create(null, null);
 
   @NotNull
+  @SuppressWarnings("unchecked")
   public static <A, B> Pair<A, B> empty() {
-    //noinspection unchecked
     return EMPTY;
   }
 
@@ -100,7 +88,7 @@ public class Pair<A, B> {
   /**
    * @param <A> first value type (Comparable)
    * @param <B> second value type
-   * @return comparator that compares pair values by first value
+   * @return a comparator that compares pair values by first value
    */
   public static <A extends Comparable<? super A>, B> Comparator<Pair<A, B>> comparingByFirst() {
     return new Comparator<Pair<A, B>>() {
@@ -114,7 +102,7 @@ public class Pair<A, B> {
   /**
    * @param <A> first value type
    * @param <B> second value type (Comparable)
-   * @return comparator that compares pair values by second value
+   * @return a comparator that compares pair values by second value
    */
   public static <A, B extends Comparable<? super B>> Comparator<Pair<A, B>> comparingBySecond() {
     return new Comparator<Pair<A, B>>() {

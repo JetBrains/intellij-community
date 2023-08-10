@@ -2,10 +2,10 @@
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -15,13 +15,12 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 
 public class AlphaNumericTypeCommand extends TypeCommand {
-  private static final Logger LOG = Logger.getInstance(AlphaNumericTypeCommand.class);
   public AlphaNumericTypeCommand(String text, int line) {
     super(text, line, true);
   }
 
   @Override
-  public Promise<Object> _execute(PlaybackContext context) {
+  public @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     return type(context, getText());
   }
 
@@ -50,17 +49,9 @@ public class AlphaNumericTypeCommand extends TypeCommand {
           final char next = text.charAt(i + 1);
           boolean processed = true;
           switch (next) {
-            case 'n':
-              type(robot, KeyEvent.VK_ENTER, 0);
-              break;
-            case 't':
-              type(robot, KeyEvent.VK_TAB, 0);
-              break;
-            case 'r':
-              type(robot, KeyEvent.VK_ENTER, 0);
-              break;
-            default:
-              processed = false;
+            case 'n', 'r' -> type(robot, KeyEvent.VK_ENTER, 0);
+            case 't' -> type(robot, KeyEvent.VK_TAB, 0);
+            default -> processed = false;
           }
 
           if (processed) {
@@ -83,13 +74,12 @@ public class AlphaNumericTypeCommand extends TypeCommand {
     return result;
   }
 
-  @Nullable
-  public static TypingTarget findTarget(PlaybackContext context) {
-    if (!context.isUseTypingTargets()) return null;
+  public static @Nullable TypingTarget findTarget(PlaybackContext context) {
+    if (!context.isUseTypingTargets()) {
+      return null;
+    }
 
     Component each = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    LOG.debug("Name:"+ each.getName() + " Parent:" + each.getParent().toString() + "toString:" + each);
-
     while (each != null) {
       if (each instanceof TypingTarget) {
         return (TypingTarget)each;
@@ -100,6 +90,4 @@ public class AlphaNumericTypeCommand extends TypeCommand {
 
     return null;
   }
-
-
 }

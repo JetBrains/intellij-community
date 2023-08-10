@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.filters.CompositeFilter;
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.Filter;
@@ -12,13 +13,14 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.FileUrlProvider;
-import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
+import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction;
 import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * Use {@link SMRunnerConsolePropertiesProvider} so importer {@link AbstractImportTestsAction.ImportRunProfile#ImportRunProfile(VirtualFile, Project)}
  * would be able to create properties by read configuration and test navigation, rerun failed tests etc. would work on imported results
  */
-public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParserEx {
+public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParser {
   private final RunProfile myConfiguration;
   @NotNull private final String myTestFrameworkName;
   private final CompositeFilter myCustomFilter;
@@ -41,10 +43,8 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   private boolean myPrintTestingStartedTime = true;
 
   /**
-   * @param config
-   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit". 
+   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit".
    *                          Is used to distinguish problems of different test frameworks in logged exceptions
-   * @param executor
    */
   public SMTRunnerConsoleProperties(@NotNull RunConfiguration config, @NlsSafe @NotNull String testFrameworkName, @NotNull Executor executor) {
     this(config.getProject(), config, testFrameworkName, executor);
@@ -99,15 +99,38 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     myPrintTestingStartedTime = printTestingStartedTime;
   }
 
-  @Nullable
-  @Override
-  public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
-    return getErrorNavigatable(location.getProject(), stacktrace);
+  public static class FileHyperlinkNavigatable implements Navigatable {
+    private OpenFileDescriptor myFileDescriptor;
+    private final FileHyperlinkInfo myFileHyperlinkInfo;
+
+    public FileHyperlinkNavigatable(@NotNull FileHyperlinkInfo info) { myFileHyperlinkInfo = info; }
+
+    public OpenFileDescriptor getOpenFileDescriptor() {
+      if (myFileDescriptor == null) {
+        myFileDescriptor = myFileHyperlinkInfo.getDescriptor();
+      }
+      return myFileDescriptor;
+    }
+
+    @Override
+    public void navigate(boolean requestFocus) {
+      getOpenFileDescriptor().navigate(requestFocus);
+    }
+
+    @Override
+    public boolean canNavigate() {
+      return getOpenFileDescriptor().canNavigate();
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return getOpenFileDescriptor().canNavigateToSource();
+    }
   }
 
   @Nullable
   @Override
-  public Navigatable getErrorNavigatable(@NotNull final Project project, final @NotNull String stacktrace) {
+  public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
     if (myCustomFilter.isEmpty()) {
       return null;
     }
@@ -129,10 +152,11 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
 
         // covers 99% use existing cases
         if (info instanceof FileHyperlinkInfo) {
-          return ((FileHyperlinkInfo)info).getDescriptor();
+          return new FileHyperlinkNavigatable((FileHyperlinkInfo)info);
         }
 
         // otherwise
+        Project project = location.getProject();
         return new Navigatable() {
           @Override
           public void navigate(boolean requestFocus) {
@@ -193,5 +217,16 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
    */
   public boolean isUndefined() {
     return false;
+  }
+
+  @Override
+  public @NotNull String getWindowId() {
+    if (myConfiguration instanceof RunConfiguration configuration) {
+      RunDashboardManager manager = RunDashboardManager.getInstance(getProject());
+      if (manager.isShowInDashboard(configuration)) {
+        return manager.getToolWindowId();
+      }
+    }
+    return super.getWindowId();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.containers.SLRUMap;
@@ -9,9 +9,6 @@ import java.io.IOException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * @author peter
- */
 public final class CachingEnumerator<Data> implements DataEnumerator<Data> {
   private static final int STRIPE_POWER = 4;
   private static final int STRIPE_COUNT = 1 << STRIPE_POWER;
@@ -108,8 +105,7 @@ public final class CachingEnumerator<Data> implements DataEnumerator<Data> {
   }
 
   @Override
-  @Nullable
-  public Data valueOf(int idx) throws IOException {
+  public @Nullable Data valueOf(int idx) throws IOException {
     int stripe = idStripe(idx);
     Lock lock = myStripeLocks[stripe];
     lock.lock();

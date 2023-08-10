@@ -38,7 +38,6 @@ package com.intellij.util.xml;
  *    void visitBar(Bar bar) {}
  *  }
  * </pre>
- * @author peter
  */
 public interface DomElementVisitor {
   void visitDomElement(DomElement element);

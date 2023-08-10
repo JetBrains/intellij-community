@@ -15,18 +15,26 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.execution.rmi.RemoteProcessSupport;
+import com.intellij.maven.testFramework.MavenTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import org.jetbrains.idea.maven.MavenTestCase;
+import com.intellij.testFramework.common.ThreadUtil;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.WaitFor;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 
+import java.io.File;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class MavenServerManagerTest extends MavenTestCase {
+
   public void testInitializingDoesntTakeReadAction() throws Exception {
     //make sure all components are initialized to prevent deadlocks
     ensureConnected(MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath()));
@@ -56,36 +64,78 @@ public class MavenServerManagerTest extends MavenTestCase {
       }
     }
     if (!ok) {
-      printThreadDump();
+      ThreadUtil.printThreadDump();
       fail();
     }
     result.cancel(true);
   }
+
   public void testConnectorRestartAfterVMChanged() {
     MavenWorkspaceSettingsComponent settingsComponent = MavenWorkspaceSettingsComponent.getInstance(myProject);
-    String vmOptions = settingsComponent.getSettings().importingSettings.getVmOptionsForImporter();
+    String vmOptions = settingsComponent.getSettings().getImportingSettings().getVmOptionsForImporter();
     try {
       MavenServerConnector connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
       ensureConnected(connector);
-      settingsComponent.getSettings().importingSettings.setVmOptionsForImporter(vmOptions + " -DtestVm=test");
+      settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter(vmOptions + " -DtestVm=test");
       assertNotSame(connector, ensureConnected(MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath())));
     }
     finally {
-      settingsComponent.getSettings().importingSettings.setVmOptionsForImporter(vmOptions);
+      settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter(vmOptions);
     }
   }
 
-  private MavenServerConnector ensureConnected(MavenServerConnector connector) {
-    long timeout = TimeUnit.SECONDS.toMillis(10);
-    long start = System.currentTimeMillis();
-    while (connector.getState() == MavenServerConnector.State.STARTING) {
-      if (System.currentTimeMillis() > start + timeout) {
-        throw new RuntimeException("Server connector not connected in 10 seconds");
+  public void testShouldRestartConnectorAutomaticallyIfFailed() {
+    MavenServerConnector connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
+    ensureConnected(connector);
+    kill(connector);
+    MavenServerConnector newConnector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
+    ensureConnected(newConnector);
+    assertNotSame(connector, newConnector);
+  }
+
+
+
+  public void testShouldStopPullingIfConnectorIsFailing() {
+    MavenServerConnector connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
+    ensureConnected(connector);
+    ScheduledExecutorService executor =
+      ReflectionUtil.getField(MavenServerConnectorImpl.class, connector, ScheduledExecutorService.class, "myExecutor");
+    kill(connector);
+    new WaitFor(1_000) {
+      @Override
+      protected boolean condition() {
+        return executor.isShutdown();
       }
-      EdtTestUtil.runInEdtAndWait(() -> {
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-      });
-    }
-    return connector;
+    };
+    assertTrue(executor.isShutdown());
+  }
+
+  public void testShouldDropConnectorForMultiplyDirs() {
+    File topDir = myProjectRoot.toNioPath().toFile();
+    File first = new File(topDir, "first/.mvn");
+    File second = new File(topDir, "second/.mvn");
+    assertTrue(first.mkdirs());
+    assertTrue(second.mkdirs());
+    MavenServerConnector connectorFirst = MavenServerManager.getInstance().getConnector(myProject, first.getAbsolutePath());
+    ensureConnected(connectorFirst);
+    MavenServerConnector connectorSecond = MavenServerManager.getInstance().getConnector(myProject, second.getAbsolutePath());
+    assertSame(connectorFirst, connectorSecond);
+    MavenServerManager.getInstance().shutdownConnector(connectorFirst, true);
+    assertEmpty(MavenServerManager.getInstance().getAllConnectors());
+  }
+
+  private static void kill(MavenServerConnector connector) {
+    RemoteProcessSupport support =
+      ReflectionUtil.getField(MavenServerConnectorImpl.class, connector, RemoteProcessSupport.class, "mySupport");
+    AtomicReference<RemoteProcessSupport.Heartbeat> heartbeat =
+      ReflectionUtil.getField(RemoteProcessSupport.class, support, AtomicReference.class, "myHeartbeatRef");
+    heartbeat.get().kill(1);
+    new WaitFor(10_000) {
+      @Override
+      protected boolean condition() {
+        return !connector.checkConnected();
+      }
+    };
+    assertFalse(connector.checkConnected());
   }
 }

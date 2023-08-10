@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.codeInsight.template.TemplateManager;
@@ -8,7 +8,6 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.progress.ProgressManager;
@@ -18,6 +17,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,19 +40,13 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
                                              @NotNull Collection<AbstractTreeNode<?>> children,
                                              ViewSettings settings) {
-    return AbstractTreeUi.calculateYieldingToWriteAction(() -> doModify(parent, children));
-  }
-
-  @NotNull
-  private Collection<AbstractTreeNode<?>> doModify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<? extends AbstractTreeNode<?>> children) {
     List<AbstractTreeNode<?>> result = new ArrayList<>();
     for (AbstractTreeNode<?> child : children) {
       ProgressManager.checkCanceled();
 
       Object o = child.getValue();
-      if (o instanceof PsiClassOwner && !(o instanceof ServerPageFile)) {
-        ViewSettings settings1 = ((ProjectViewNode)parent).getSettings();
-        PsiClassOwner classOwner = (PsiClassOwner)o;
+      if (o instanceof PsiClassOwner classOwner && !(o instanceof ServerPageFile)) {
+        ViewSettings settings1 = ((ProjectViewNode<?>)parent).getSettings();
         VirtualFile file = classOwner.getVirtualFile();
 
         if (!(classOwner instanceof PsiCompiledElement)) {
@@ -60,8 +54,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
           ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
           if (file != null && fileIndex.isInLibrarySource(file)) {
             PsiElement originalElement = classOwner.getOriginalElement();
-            if (originalElement instanceof PsiFile) {
-              PsiFile classFile = (PsiFile)originalElement;
+            if (originalElement instanceof PsiFile classFile) {
               VirtualFile virtualClassFile = classFile.getVirtualFile();
               if (virtualClassFile != null && fileIndex.isInLibraryClasses(virtualClassFile)
                   && !classOwner.getManager().areElementsEquivalent(classOwner, classFile)
@@ -174,6 +167,16 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
         }
       }
       return result;
+    }
+
+    @Override
+    protected boolean isDeprecated() {
+      PsiFile file = getValue();
+      if (file == null || !file.isValid() || !(file instanceof PsiJavaFile)) {
+        return super.isDeprecated();
+      }
+      PsiJavaModule javaModule = ((PsiJavaFile)file).getModuleDeclaration();
+      return javaModule != null && PsiImplUtil.isDeprecated(javaModule);
     }
   }
 }

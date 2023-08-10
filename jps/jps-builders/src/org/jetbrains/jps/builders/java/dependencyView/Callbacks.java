@@ -9,9 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Future;
 
-/**
- * @author: db
- */
 public final class Callbacks {
 
   public interface ConstantRef {
@@ -98,7 +95,7 @@ public final class Callbacks {
    * @deprecated This functionality is obsolete and is not used by dependency analysis anymore.
    * To be removed in later releases
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public interface ConstantAffectionResolver {
     Future<ConstantAffection> request(
       final String ownerClassName, final String fieldName, int accessFlags, boolean fieldRemoved, boolean accessChanged

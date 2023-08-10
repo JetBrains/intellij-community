@@ -75,6 +75,7 @@ class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
 
     dirtyScopeManager.markEverythingDirty()
     changeListManager.ensureUpToDate()
+    updateUntrackedFiles(repo)
 
     assertEquals(1, changeListManager.allChanges.size)
     assertFileStatus("a.txt", FileStatus.DELETED)

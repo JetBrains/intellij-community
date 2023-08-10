@@ -49,7 +49,7 @@ public class SelectMavenProjectDialog extends DialogWrapper {
   public SelectMavenProjectDialog(@NotNull Project project,
                                   @NotNull Set<? extends MavenDomProjectModel> mavenDomProjectModels,
                                   @NotNull Function<? super MavenDomProjectModel, ? extends Set<MavenDomDependency>> funOccurrences,
-                                  @NotNull boolean hasExclusions) {
+                                  boolean hasExclusions) {
     super(project, true);
     myMavenDomProjectModels = mavenDomProjectModels;
     myHasExclusions = hasExclusions;

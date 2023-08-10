@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
@@ -8,13 +8,14 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,32 +40,23 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+    RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
     AnActionEvent event = AnActionEvent.createFromInputEvent(
-      relativePoint.toMouseEvent(), ActionPlaces.INTENTION_MENU, null, ((EditorEx)editor).getDataContext());
+      relativePoint.toMouseEvent(), ActionPlaces.INTENTION_MENU, null, EditorUtil.getEditorDataContext(editor));
     if (!ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) return;
-    if (myAction instanceof ActionGroup && !((ActionGroup)myAction).canBePerformed(event.getDataContext())) {
-      ActionGroup group = (ActionGroup)myAction;
-      JBPopupFactory.getInstance().createActionGroupPopup(
-        group.getTemplatePresentation().getText(), group, event.getDataContext(),
-        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-        false, null, -1, null, event.getPlace())
-        .showInBestPositionFor(editor);
-    }
-    else {
-      ActionUtil.performActionDumbAwareWithCallbacks(myAction, event, event.getDataContext());
-    }
+    ActionUtil.performDumbAwareWithCallbacks(myAction, event, () ->
+      ActionUtil.doPerformActionOrShowPopup(myAction, event, popup -> {
+        popup.showInBestPositionFor(editor);
+      }));
   }
 
-  @NotNull
   @Override
-  public Priority getPriority() {
+  public @NotNull Priority getPriority() {
     return myAction instanceof PriorityAction ? ((PriorityAction)myAction).getPriority() : Priority.NORMAL;
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return myText;
   }
 
@@ -76,14 +68,19 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
     return 0;
   }
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public @NotNull AnAction getAction() {
+    return myAction;
+  }
+
   @Override
   public Icon getIcon(@IconFlags int flags) {
     return myIcon;
   }
 
-  @Nullable
   @Override
-  public ShortcutSet getShortcut() {
+  public @Nullable ShortcutSet getShortcut() {
     return myAction.getShortcutSet();
   }
 }

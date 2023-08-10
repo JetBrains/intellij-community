@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -23,13 +25,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
+public class InvertIfConditionAction extends PsiUpdateModCommandAction<PsiElement> {
   private static final Logger LOG = Logger.getInstance(InvertIfConditionAction.class);
 
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  public InvertIfConditionAction() {
+    super(PsiElement.class);
+  }
 
-    int offset = editor.getCaretModel().getOffset();
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    return isAvailable(element, context.offset()) ? Presentation.of(getFamilyName()) : null;
+  }
+
+  private static boolean isAvailable(@NotNull PsiElement element, int offset) {
     final PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
     if (ifStatement == null) return false;
     final PsiExpression condition = ifStatement.getCondition();
@@ -70,18 +78,12 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
   @Override
   @NotNull
-  public String getText() {
-    return getFamilyName();
-  }
-
-  @Override
-  @NotNull
   public String getFamilyName() {
     return JavaBundle.message("intention.invert.if.condition");
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
 
     LOG.assertTrue(ifStatement != null);
@@ -247,8 +249,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       return ifStatement;
     }
 
-    if (element instanceof PsiReturnStatement) {
-      PsiReturnStatement returnStatement = (PsiReturnStatement) element;
+    if (element instanceof PsiReturnStatement returnStatement) {
       ifStatement = addAfterWithinCodeBlock(ifStatement, thenBranch, ct);
       ct.replaceAndRestoreComments(Objects.requireNonNull(ifStatement.getThenBranch()), ct.markUnchanged(returnStatement).copy());
 
@@ -327,8 +328,9 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
           }
         }
       }
-      if (thenBranch instanceof PsiContinueStatement || 
-          thenBranch instanceof PsiReturnStatement && ((PsiReturnStatement)thenBranch).getReturnValue() == null) {
+      if ((thenBranch instanceof PsiContinueStatement continueStatement &&
+           (continueStatement.getLabelIdentifier() == null || theSameLabel(continueStatement.getLabelIdentifier(), loopStmt))) ||
+          (thenBranch instanceof PsiReturnStatement && ((PsiReturnStatement)thenBranch).getReturnValue() == null)) {
         PsiStatement elseBranch = ifStatement.getElseBranch();
         if (elseBranch != null) {
           elseBranch.delete();
@@ -343,6 +345,16 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       }
     }
     ifStatement.setElseBranch(ct.markUnchanged(thenBranch));
+  }
+
+  private static boolean theSameLabel(@NotNull PsiIdentifier label, @Nullable PsiLoopStatement stmt) {
+    if (stmt == null) {
+      return false;
+    }
+    if (stmt.getParent() instanceof PsiLabeledStatement labeledStatement) {
+      return labeledStatement.getLabelIdentifier() == label;
+    }
+    return false;
   }
 
   private static PsiStatement wrapWithCodeBlock(@NotNull PsiStatement statement) {
@@ -371,8 +383,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
   }
 
   static void addAfter(PsiIfStatement ifStatement, PsiStatement branch, CommentTracker ct) throws IncorrectOperationException {
-    if (branch instanceof PsiBlockStatement) {
-      PsiBlockStatement blockStatement = (PsiBlockStatement) branch;
+    if (branch instanceof PsiBlockStatement blockStatement) {
       final PsiCodeBlock block = blockStatement.getCodeBlock();
       final PsiElement firstBodyElement = block.getFirstBodyElement();
       final PsiElement lastBodyElement = block.getLastBodyElement();
@@ -421,7 +432,10 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       endOffset = controlFlow.getSize();
     }
     while (endOffset < instructions.size() && instructions.get(endOffset) instanceof GoToInstruction &&
-           !((GoToInstruction) instructions.get(endOffset)).isReturn && !(controlFlow.getElement(endOffset) instanceof PsiBreakStatement) && !(controlFlow.getElement(endOffset) instanceof PsiContinueStatement)) {
+           !((GoToInstruction) instructions.get(endOffset)).isReturn &&
+           !(controlFlow.getElement(endOffset) instanceof PsiYieldStatement) &&
+           !(controlFlow.getElement(endOffset) instanceof PsiBreakStatement) &&
+           !(controlFlow.getElement(endOffset) instanceof PsiContinueStatement)) {
       endOffset = ((BranchingInstruction)instructions.get(endOffset)).offset;
     }
 

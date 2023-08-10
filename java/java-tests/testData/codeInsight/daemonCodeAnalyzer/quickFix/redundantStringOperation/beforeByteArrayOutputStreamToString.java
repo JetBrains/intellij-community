@@ -1,4 +1,4 @@
-// "Fix all 'Redundant String operation' problems in file" "true"
+// "Fix all 'Redundant 'String' operation' problems in file" "true"
 import java.io.ByteArrayOutputStream;
 
 class Main {
@@ -23,6 +23,6 @@ class Main {
         String s4 = new String((out4.toByteArray()));
 
         String s5 = new String(foo().toByteArray());
-        String s6 = new String((foo().toByteArray()<caret>));
+        String s6 = new String<caret>((foo().toByteArray()));
   }
 }

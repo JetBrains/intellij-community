@@ -67,7 +67,12 @@ public final class EncodingUtil {
   @NotNull
   static Magic8 isSafeToReloadIn(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytes, @NotNull Charset charset) {
     // file has BOM but the charset hasn't
-    byte[] bom = virtualFile.getBOM();
+    byte[] bom = null;
+    try {
+      bom = getBOMFromBytes(virtualFile.contentsToByteArray());
+    }
+    catch (IOException ignored) {
+    }
     if (bom != null && !CharsetToolkit.canHaveBom(charset, bom)) return Magic8.NO_WAY;
 
     // the charset has mandatory BOM (e.g. UTF-xx) but the file hasn't or has wrong
@@ -99,6 +104,17 @@ public final class EncodingUtil {
     return !Arrays.equals(bytesToSave, bytes) ? Magic8.NO_WAY : StringUtil.equals(loaded, text) ? Magic8.ABSOLUTELY : Magic8.WELL_IF_YOU_INSIST;
   }
 
+  private static byte[] getBOMFromBytes(byte @NotNull [] contents) {
+    Charset charset = CharsetToolkit.guessFromBOM(contents);
+    if (charset == null) {
+      return null;
+    }
+    if (charset.equals(StandardCharsets.UTF_8)) {
+      return CharsetToolkit.UTF8_BOM;
+    }
+    return CharsetToolkit.getMandatoryBom(charset);
+  }
+  
   @NotNull
   static Magic8 isSafeToConvertTo(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytesOnDisk, @NotNull Charset charset) {
     try {
@@ -275,14 +291,13 @@ public final class EncodingUtil {
 
   @NotNull
   static @Nls String reasonToString(@NotNull FailReason reason, @NotNull VirtualFile file) {
-    switch (reason) {
-      case IS_DIRECTORY: return IdeBundle.message("no.charset.set.reason.disabled.for.directory");
-      case IS_BINARY: return IdeBundle.message("no.charset.set.reason.disabled.for.binary.file");
-      case BY_FILE: return IdeBundle.message("no.charset.set.reason.charset.hard.coded.in.file");
-      case BY_BOM: return IdeBundle.message("no.charset.set.reason.charset.auto.detected.by.bom");
-      case BY_BYTES: return IdeBundle.message("no.charset.set.reason.charset.auto.detected.from.content");
-      case BY_FILETYPE: return IdeBundle.message("no.charset.set.reason.disabled.for.file.type", file.getFileType().getDescription());
-    }
-    throw new AssertionError(reason);
+    return switch (reason) {
+      case IS_DIRECTORY -> IdeBundle.message("no.charset.set.reason.disabled.for.directory");
+      case IS_BINARY -> IdeBundle.message("no.charset.set.reason.disabled.for.binary.file");
+      case BY_FILE -> IdeBundle.message("no.charset.set.reason.charset.hard.coded.in.file");
+      case BY_BOM -> IdeBundle.message("no.charset.set.reason.charset.auto.detected.by.bom");
+      case BY_BYTES -> IdeBundle.message("no.charset.set.reason.charset.auto.detected.from.content");
+      case BY_FILETYPE -> IdeBundle.message("no.charset.set.reason.disabled.for.file.type", file.getFileType().getDescription());
+    };
   }
 }

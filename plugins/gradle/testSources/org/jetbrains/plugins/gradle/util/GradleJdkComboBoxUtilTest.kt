@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.util
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.JAVA_HOME
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.USE_JAVA_HOME
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkReferenceItem
+import org.jetbrains.plugins.gradle.properties.GRADLE_JAVA_HOME_PROPERTY
 
 class GradleJdkComboBoxUtilTest : GradleJdkComboBoxUtilTestCase() {
   fun `test gradle JVM combobox empty setup`() {
@@ -19,12 +20,15 @@ class GradleJdkComboBoxUtilTest : GradleJdkComboBoxUtilTestCase() {
 
     environment.withVariables(JAVA_HOME to javaHomeJdk.homePath) {
       GradleJdkResolutionTestCase.withGradleProperties(externalProjectPath, gradleJavaHomeJdk) {
-        val comboBox = createJdkComboBox()
-        comboBox.addUsefulGradleJvmReferences(externalProjectPath)
-        assertComboBoxContent(comboBox)
-          .reference<SdkReferenceItem>(USE_GRADLE_JAVA_HOME) { assertReferenceItem(it, GRADLE_JAVA_HOME_PROPERTY, true) }
-          .reference<SdkReferenceItem>(USE_JAVA_HOME) { assertReferenceItem(it, JAVA_HOME, true) }
-          .nothing()
+        GradleJdkResolutionTestCase.withGradleLocalProperties(externalProjectPath, gradleJavaHomeJdk) {
+          val comboBox = createJdkComboBox()
+          comboBox.addUsefulGradleJvmReferences(externalProjectPath)
+          assertComboBoxContent(comboBox)
+            .reference<SdkReferenceItem>(USE_GRADLE_JAVA_HOME) { assertReferenceItem(it, GRADLE_JAVA_HOME_PROPERTY, true) }
+            .reference<SdkReferenceItem>(USE_GRADLE_LOCAL_JAVA_HOME) { assertReferenceItem(it, GRADLE_LOCAL_JAVA_HOME, true) }
+            .reference<SdkReferenceItem>(USE_JAVA_HOME) { assertReferenceItem(it, JAVA_HOME, true) }
+            .nothing()
+        }
       }
     }
   }
@@ -34,11 +38,14 @@ class GradleJdkComboBoxUtilTest : GradleJdkComboBoxUtilTestCase() {
 
     comboBox.setSelectedJdkReference(USE_GRADLE_JAVA_HOME)
     assertComboBoxSelection<SdkReferenceItem>(comboBox, null, USE_GRADLE_JAVA_HOME)
+    comboBox.setSelectedJdkReference(USE_GRADLE_LOCAL_JAVA_HOME)
+    assertComboBoxSelection<SdkReferenceItem>(comboBox, null, USE_GRADLE_LOCAL_JAVA_HOME)
     comboBox.setSelectedJdkReference(USE_JAVA_HOME)
     assertComboBoxSelection<SdkReferenceItem>(comboBox, null, USE_JAVA_HOME)
 
     assertComboBoxContent(comboBox)
       .reference<SdkReferenceItem>(USE_GRADLE_JAVA_HOME) { assertReferenceItem(it, GRADLE_JAVA_HOME_PROPERTY, false) }
+      .reference<SdkReferenceItem>(USE_GRADLE_LOCAL_JAVA_HOME) { assertReferenceItem(it, GRADLE_LOCAL_JAVA_HOME, false) }
       .reference<SdkReferenceItem>(USE_JAVA_HOME, isSelected = true) { assertReferenceItem(it, JAVA_HOME, false) }
       .nothing()
   }

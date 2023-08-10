@@ -16,32 +16,27 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 
 import java.util.*;
 
 class SwitchStatementBranch {
 
   private final Set<PsiElement> myPendingDeclarations = new HashSet<>(5);
-  private final List<String> myCaseValues = new ArrayList<>(2);
+  private final List<PsiCaseLabelElement> myCaseElements = new ArrayList<>(2);
   private final List<PsiElement> myBodyElements = new ArrayList<>(5);
   private final List<PsiElement> myPendingWhiteSpace = new ArrayList<>(2);
   private boolean myDefault;
   private boolean myHasStatements;
   private boolean myAlwaysExecuted;
 
-  public void addCaseValue(String labelString) {
-    myCaseValues.add(labelString);
-  }
-
-  public void addStatement(PsiStatement statement) {
+  void addStatement(PsiStatement statement) {
     myHasStatements = myHasStatements || !ControlFlowUtils.isEmpty(statement, false, true);
     addElement(statement);
   }
 
-  public void addComment(PsiElement comment) {
+  void addComment(PsiElement comment) {
     addElement(comment);
   }
 
@@ -51,41 +46,33 @@ class SwitchStatementBranch {
     myBodyElements.add(element);
   }
 
-  public void addWhiteSpace(PsiElement statement) {
+  void addWhiteSpace(PsiElement statement) {
     if (!myBodyElements.isEmpty()) {
       myPendingWhiteSpace.add(statement);
     }
   }
 
-  public List<String> getCaseValues() {
-    return Collections.unmodifiableList(myCaseValues);
+  List<PsiCaseLabelElement> getCaseElements() {
+    return Collections.unmodifiableList(myCaseElements);
   }
 
-  public List<PsiElement> getBodyElements() {
+  List<PsiElement> getBodyElements() {
     return Collections.unmodifiableList(myBodyElements);
   }
 
-  public boolean isDefault() {
+  boolean isDefault() {
     return myDefault;
-  }
-
-  public void setDefault() {
-    myDefault = true;
   }
 
   boolean isAlwaysExecuted() {
     return myAlwaysExecuted;
   }
 
-  void setAlwaysExecuted(boolean alwaysExecuted) {
-    myAlwaysExecuted = alwaysExecuted;
-  }
-
-  public boolean hasStatements() {
+  boolean hasStatements() {
     return myHasStatements;
   }
 
-  public void addPendingDeclarations(Set<? extends PsiElement> vars) {
+  void addPendingDeclarations(Set<? extends PsiElement> vars) {
     myPendingDeclarations.addAll(vars);
   }
 
@@ -93,41 +80,30 @@ class SwitchStatementBranch {
     return Collections.unmodifiableSet(myPendingDeclarations);
   }
 
-  void addCaseValues(PsiSwitchLabelStatementBase label, boolean defaultAlwaysExecuted, CommentTracker commentTracker) {
+  void addCaseValues(PsiSwitchLabelStatementBase label, boolean defaultAlwaysExecuted) {
     if (label.isDefaultCase()) {
-      setDefault();
-      setAlwaysExecuted(defaultAlwaysExecuted);
-    }
-    else {
-      PsiExpressionList values = label.getCaseValues();
-      if (values != null) {
-        for (PsiExpression value : values.getExpressions()) {
-          final String valueText = getCaseValueText(value, commentTracker);
-          addCaseValue(valueText);
+      myDefault = true;
+      myAlwaysExecuted = defaultAlwaysExecuted;
+    } else {
+      PsiCaseLabelElement nullCase = null;
+      PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+      if (labelElementList != null) {
+        for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+          if (labelElement instanceof PsiDefaultCaseLabelElement) {
+            myDefault = true;
+            myAlwaysExecuted = defaultAlwaysExecuted;
+            break;
+          }
+          else if (labelElement instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr)) {
+            nullCase = labelElement;
+          }
+        }
+        if (!myDefault) {
+          Collections.addAll(myCaseElements, labelElementList.getElements());
+        } else if (nullCase != null) {
+          myCaseElements.add(nullCase);
         }
       }
     }
-  }
-
-  private static String getCaseValueText(PsiExpression value, CommentTracker commentTracker) {
-    value = PsiUtil.skipParenthesizedExprDown(value);
-    if (value == null) {
-      return "";
-    }
-    if (!(value instanceof PsiReferenceExpression)) {
-      return commentTracker.text(value);
-    }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)value;
-    final PsiElement target = referenceExpression.resolve();
-
-    if (!(target instanceof PsiEnumConstant)) {
-      return commentTracker.text(value);
-    }
-    final PsiEnumConstant enumConstant = (PsiEnumConstant)target;
-    final PsiClass aClass = enumConstant.getContainingClass();
-    if (aClass == null) {
-      return commentTracker.text(value);
-    }
-    return aClass.getQualifiedName() + '.' + commentTracker.text(referenceExpression);
   }
 }

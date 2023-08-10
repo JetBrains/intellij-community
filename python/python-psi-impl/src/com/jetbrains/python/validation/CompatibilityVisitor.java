@@ -3,14 +3,18 @@ package com.jetbrains.python.validation;
 
 import com.google.common.collect.Sets;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -22,16 +26,20 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -82,6 +90,12 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                        node,
                                        new ReplaceExceptPartQuickFix());
       }
+    }
+    PsiElement star = PyPsiUtils.getFirstChildOfType(node, PyTokenTypes.MULT);
+    if (star != null) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON311),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.starred.except.part"),
+                                     star);
     }
   }
 
@@ -144,7 +158,30 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                          PyPsiBundle.message("INSP.compatibility.feature.support.unpacking.without.parentheses.in.yield.statements"),
                                          node);
         }
+
+        if (tupleParent instanceof PySubscriptionExpression) {
+          registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON35) &&
+                                                  level.isOlderThan(LanguageLevel.PYTHON311) &&
+                                                  registerForLanguageLevel(level),
+                                         PyPsiBundle.message("INSP.compatibility.feature.support.starred.expressions.in.subscriptions"),
+                                         node);
+        }
       }
+      if (node.getParent() instanceof PySubscriptionExpression || node.getParent() instanceof PySliceItem) {
+        registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON35) &&
+                                                level.isOlderThan(LanguageLevel.PYTHON311) &&
+                                                registerForLanguageLevel(level),
+                                       PyPsiBundle.message("INSP.compatibility.feature.support.starred.expressions.in.subscriptions"),
+                                       node);
+      }
+    }
+
+    PsiElement parent = node.getParent();
+    if (parent instanceof PyAnnotation && StarAnnotator.isVariadicArg(parent.getParent())) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON311) &&
+                                              registerForLanguageLevel(level),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.starred.expressions.in.type.annotations"),
+                                     node);
     }
   }
 
@@ -170,6 +207,8 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     else if (node.isOperator("@")) {
       checkMatrixMultiplicationOperator(node.getPsiOperator());
     }
+
+    checkBitwiseOrUnionSyntax(node);
   }
 
   private void checkMatrixMultiplicationOperator(PsiElement node) {
@@ -231,8 +270,8 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                      PyPsiBundle.message("INSP.compatibility.feature.support.string.literal.prefix", prefix),
                                      node,
                                      TextRange.create(elementStart, elementStart + element.getPrefixLength()),
-                                     new RemovePrefixQuickFix(prefix),
-                                     true);
+                                     true,
+                                     new RemovePrefixQuickFix(prefix));
     }
 
     if (seenBytes && seenNonBytes) {
@@ -259,12 +298,14 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyListCompExpression(final @NotNull PyListCompExpression node) {
     super.visitPyListCompExpression(node);
 
-    registerForAllMatchingVersions(
-      level -> registerForLanguageLevel(level) && UnsupportedFeaturesUtil.visitPyListCompExpression(node, level),
-      PyPsiBundle.message("INSP.compatibility.feature.support.this.syntax.in.list.comprehensions"),
-      ContainerUtil.map(node.getForComponents(), PyComprehensionForComponent::getIteratedList),
-      new ReplaceListComprehensionsQuickFix()
-    );
+    for (PyComprehensionForComponent component : node.getForComponents()) {
+      registerForAllMatchingVersions(
+        level -> registerForLanguageLevel(level) && UnsupportedFeaturesUtil.listComprehensionIteratesOverNonParenthesizedTuple(node, level),
+        PyPsiBundle.message("INSP.compatibility.feature.support.this.syntax.in.list.comprehensions"),
+        component.getIteratedList(),
+        new ReplaceListComprehensionsQuickFix()
+      );
+    }
   }
 
   @Override
@@ -305,7 +346,31 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyWithStatement(@NotNull PyWithStatement node) {
     super.visitPyWithStatement(node);
+    checkParenthesizedWithItems(node);
     checkAsyncKeyword(node);
+  }
+
+  private void checkParenthesizedWithItems(@NotNull PyWithStatement node) {
+    final PsiElement lpar = PyPsiUtils.getFirstChildOfType(node, PyTokenTypes.LPAR);
+    final PsiElement rpar = PyPsiUtils.getFirstChildOfType(node, PyTokenTypes.RPAR);
+    if (lpar == null && rpar == null) {
+      return;
+    }
+    // Context expressions such as "(foo(), bar())" or "(foo(),)" are valid in Python < 3.9, but most likely indicate an error anyway
+    PyWithItem[] withItems = node.getWithItems();
+    boolean canBeParsedAsSingleParenthesizedExpression = (
+      withItems.length == 1 &&
+      PyPsiUtils.getFirstChildOfType(withItems[0], PyTokenTypes.AS_KEYWORD) == null &&
+      PyPsiUtils.getFirstChildOfType(node, PyTokenTypes.COMMA) == null
+    );
+    if (canBeParsedAsSingleParenthesizedExpression) {
+      return;
+    }
+    for (PsiElement parenthesis : ContainerUtil.packNullables(lpar, rpar)) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON39) && registerForLanguageLevel(level),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.parenthesized.context.expressions"),
+                                     parenthesis);
+    }
   }
 
   @Override
@@ -319,10 +384,10 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     super.visitPyPrintStatement(node);
 
     final PsiElement[] arguments = node.getChildren();
-    final Predicate<PsiElement> nonParenthesesPredicate =
+    final Condition<PsiElement> nonParenthesesPredicate =
       element -> !(element instanceof PyParenthesizedExpression || element instanceof PyTupleExpression);
 
-    if (arguments.length == 0 || Arrays.stream(arguments).anyMatch(nonParenthesesPredicate)) {
+    if (arguments.length == 0 || ContainerUtil.exists(arguments, nonParenthesesPredicate)) {
       registerForAllMatchingVersions(level -> level.isPy3K() && registerForLanguageLevel(level),
                                      PyPsiBundle.message("INSP.compatibility.feature.support.print.statement"),
                                      node,
@@ -439,7 +504,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                      PyPsiBundle.message("INSP.compatibility.feature.support.this.syntax"),
                                      node,
                                      asyncNode.getTextRange(),
-                                     null,
                                      true);
     }
   }
@@ -476,17 +540,13 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   protected abstract void registerProblem(@NotNull PsiElement node,
                                           @NotNull TextRange range,
                                           @NotNull @InspectionMessage String message,
-                                          @Nullable LocalQuickFix localQuickFix,
-                                          boolean asError);
+                                          boolean asError,
+                                          LocalQuickFix @NotNull ... fixes);
 
   protected void registerProblem(@NotNull PsiElement node,
                                  @NotNull @InspectionMessage String message,
-                                 @Nullable LocalQuickFix localQuickFix) {
-    registerProblem(node, node.getTextRange(), message, localQuickFix, true);
-  }
-
-  protected void registerProblem(@NotNull PsiElement node, @NotNull @InspectionMessage String message) {
-    registerProblem(node, message, null);
+                                 LocalQuickFix @NotNull ... fixes) {
+    registerProblem(node, node.getTextRange(), message, true, fixes);
   }
 
   protected void setVersionsToProcess(@NotNull List<LanguageLevel> versionsToProcess) {
@@ -495,63 +555,24 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
                                                 @NotNull @Nls String suffix,
-                                                @NotNull Iterable<Pair<? extends PsiElement, TextRange>> nodesWithRanges,
-                                                @Nullable LocalQuickFix localQuickFix,
-                                                boolean asError) {
-    final List<String> levels = myVersionsToProcess
-      .stream()
-      .filter(levelPredicate)
-      .map(LanguageLevel::toString)
-      .collect(Collectors.toList());
-
+                                                @NotNull PsiElement node,
+                                                @NotNull TextRange range,
+                                                boolean asError,
+                                                LocalQuickFix @NotNull ... fixes) {
+    final List<LanguageLevel> levels = ContainerUtil.filter(myVersionsToProcess, levelPredicate::test);
     if (!levels.isEmpty()) {
-      @NlsSafe String versions = StringUtil.join(levels, ", ");
+      @NlsSafe String versions = StringUtil.join(levels,", ");
       @InspectionMessage String message = PyPsiBundle.message("INSP.compatibility.inspection.unsupported.feature.prefix",
                                                               levels.size(), versions, suffix);
-      for (Pair<? extends PsiElement, TextRange> nodeWithRange : nodesWithRanges) {
-        registerProblem(nodeWithRange.first, nodeWithRange.second, message, localQuickFix, asError);
-      }
+      registerProblem(node, range, message, asError, fixes);
     }
   }
 
   protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
                                                 @NotNull @Nls String suffix,
-                                                @NotNull Iterable<? extends PsiElement> nodes,
-                                                @Nullable LocalQuickFix localQuickFix) {
-    final List<Pair<? extends PsiElement, TextRange>> nodesWithRanges =
-      ContainerUtil.map(nodes, node -> Pair.createNonNull(node, node.getTextRange()));
-    registerForAllMatchingVersions(levelPredicate, suffix, nodesWithRanges, localQuickFix, true);
-  }
-
-  protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
-                                                @NotNull @Nls String suffix,
                                                 @NotNull PsiElement node,
-                                                @NotNull TextRange range,
-                                                @Nullable LocalQuickFix localQuickFix,
-                                                boolean asError) {
-    final List<Pair<? extends PsiElement, TextRange>> nodesWithRanges = Collections.singletonList(Pair.createNonNull(node, range));
-    registerForAllMatchingVersions(levelPredicate, suffix, nodesWithRanges, localQuickFix, asError);
-  }
-
-  protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
-                                                @NotNull @Nls String suffix,
-                                                @NotNull PsiElement node,
-                                                @Nullable LocalQuickFix localQuickFix,
-                                                boolean asError) {
-    registerForAllMatchingVersions(levelPredicate, suffix, node, node.getTextRange(), localQuickFix, asError);
-  }
-
-  protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
-                                                @NotNull @Nls String suffix,
-                                                @NotNull PsiElement node,
-                                                @Nullable LocalQuickFix localQuickFix) {
-    registerForAllMatchingVersions(levelPredicate, suffix, node, localQuickFix, true);
-  }
-
-  protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
-                                                @NotNull @Nls String suffix,
-                                                @NotNull PsiElement node) {
-    registerForAllMatchingVersions(levelPredicate, suffix, node, null, true);
+                                                LocalQuickFix @NotNull... fixes) {
+    registerForAllMatchingVersions(levelPredicate, suffix, node, node.getTextRange(), true, fixes);
   }
 
   @Override
@@ -585,8 +606,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         seenKeywordArgument = true;
         keywordArgumentNames.add(keyword);
       }
-      else if (argument instanceof PyStarArgument) {
-        final PyStarArgument starArgument = (PyStarArgument)argument;
+      else if (argument instanceof PyStarArgument starArgument) {
         if (starArgument.isKeyword()) {
           if (seenKeywordContainer) {
             registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON35) && registerForLanguageLevel(level),
@@ -717,6 +737,119 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     if (PsiTreeUtil.getChildOfType(decorator, PsiErrorElement.class) == null && decorator.getQualifiedName() == null) {
       registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON39) && registerForLanguageLevel(level),
                                      PyPsiBundle.message("INSP.compatibility.feature.support.arbitrary.expressions.as.decorator"), decorator);
+    }
+  }
+
+  @Override
+  public void visitPyMatchStatement(@NotNull PyMatchStatement matchStatement) {
+    registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON310),
+                                   PyPsiBundle.message("INSP.compatibility.feature.support.match.statements"),
+                                   matchStatement.getFirstChild());
+  }
+
+  private void checkBitwiseOrUnionSyntax(@NotNull PyBinaryExpression node) {
+    if (node.getOperator() != PyTokenTypes.OR) return;
+
+    final PsiFile file = node.getContainingFile();
+    final boolean isInAnnotation = PsiTreeUtil.getParentOfType(node, PyAnnotation.class, false, PyStatement.class) != null;
+    if (file == null ||
+        file instanceof PyFile &&
+        ((PyFile)file).hasImportFromFuture(FutureFeature.ANNOTATIONS) &&
+        isInAnnotation) {
+      return;
+    }
+
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(node.getProject(), node.getContainingFile());
+
+    // Consider only full expression not parts to have only one registered problem
+    if (PsiTreeUtil.getParentOfType(node, PyBinaryExpression.class, true, PyStatement.class) != null) return;
+
+    final Ref<PyType> refType = PyTypingTypeProvider.getType(node, context);
+    if (refType != null && refType.get() instanceof PyUnionType) {
+      if (isInAnnotation) {
+        registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON310),
+                                       PyPsiBundle.message("INSP.compatibility.new.union.syntax.not.available.in.earlier.version"),
+                                       node, new ReplaceWithOldStyleUnionQuickFix(), new AddFromFutureImportAnnotationsQuickFix());
+      }
+      else {
+        registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON310),
+                                       PyPsiBundle.message("INSP.compatibility.new.union.syntax.not.available.in.earlier.version"),
+                                       node, new ReplaceWithOldStyleUnionQuickFix());
+      }
+    }
+  }
+
+  private static class ReplaceWithOldStyleUnionQuickFix implements LocalQuickFix {
+    @Override
+    public @NotNull String getFamilyName() {
+      return PyPsiBundle.message("QFIX.replace.with.old.union.style");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiFile file = descriptor.getPsiElement().getContainingFile();
+      if (file == null) return;
+
+      final PsiElement descriptorElement = descriptor.getPsiElement();
+      if (!(descriptorElement instanceof PyBinaryExpression expression)) return;
+
+      final List<String> types = collectUnionTypes(expression);
+      final LanguageLevel languageLevel = LanguageLevel.forElement(file);
+      final AddImportHelper.ImportPriority priority = languageLevel.isAtLeast(LanguageLevel.PYTHON35) ?
+                                                      AddImportHelper.ImportPriority.BUILTIN :
+                                                      AddImportHelper.ImportPriority.THIRD_PARTY;
+
+      final PyCallExpression call = PsiTreeUtil.getParentOfType(expression, PyCallExpression.class);
+      if (call != null && call.isCalleeText(PyNames.ISINSTANCE, PyNames.ISSUBCLASS)) {
+        replaceOldExpressionWith(project, languageLevel, expression, "(" + StringUtil.join(types, ", ") + ")");
+      }
+      else {
+        if (types.size() == 2 && types.contains(PyNames.NONE)) {
+          final String notNoneType = PyNames.NONE.equals(types.get(0)) ? types.get(1) : types.get(0);
+          AddImportHelper.addOrUpdateFromImportStatement(file, "typing", "Optional", null, priority, expression);
+          replaceOldExpressionWith(project, languageLevel, expression, "Optional[" + notNoneType + "]");
+        }
+        else {
+          AddImportHelper.addOrUpdateFromImportStatement(file, "typing", "Union", null, priority, expression);
+          replaceOldExpressionWith(project, languageLevel, expression, "Union[" + StringUtil.join(types, ", ") + "]");
+        }
+      }
+    }
+
+    private static void replaceOldExpressionWith(@NotNull Project project, @NotNull LanguageLevel languageLevel,
+                                                 @NotNull PyBinaryExpression expression, @NotNull String text) {
+      final PyExpression newExpression = PyElementGenerator
+        .getInstance(project)
+        .createExpressionFromText(languageLevel, text);
+      expression.replace(newExpression);
+    }
+
+    private static @NotNull List<String> collectUnionTypes(@Nullable PyExpression expression) {
+      if (expression == null) return Collections.emptyList();
+      if (expression instanceof PyBinaryExpression) {
+        final List<String> leftTypes = collectUnionTypes(((PyBinaryExpression)expression).getLeftExpression());
+        final List<String> rightTypes = collectUnionTypes(((PyBinaryExpression)expression).getRightExpression());
+        return ContainerUtil.concat(leftTypes, rightTypes);
+      }
+      else if (expression instanceof PyParenthesizedExpression) {
+        return collectUnionTypes(PyPsiUtils.flattenParens(expression));
+      }
+      else {
+        return Collections.singletonList(expression.getText());
+      }
+    }
+  }
+
+  private static class AddFromFutureImportAnnotationsQuickFix implements LocalQuickFix {
+    @Override
+    public @NotNull String getFamilyName() {
+      return PyPsiBundle.message("QFIX.add.from.future.import.annotations");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiFile file = descriptor.getPsiElement().getContainingFile();
+      AddImportHelper.addOrUpdateFromImportStatement(file, "__future__", "annotations", null, AddImportHelper.ImportPriority.FUTURE, null);
     }
   }
 }

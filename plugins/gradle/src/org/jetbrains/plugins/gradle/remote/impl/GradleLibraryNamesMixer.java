@@ -16,8 +16,6 @@ import java.util.*;
  * tries to diversify them in the case of the positive answer.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class GradleLibraryNamesMixer {
 

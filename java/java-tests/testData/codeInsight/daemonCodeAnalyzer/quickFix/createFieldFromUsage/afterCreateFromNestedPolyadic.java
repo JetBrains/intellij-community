@@ -1,4 +1,4 @@
-// "Create field 'a'" "true"
+// "Create field 'a'" "true-preview"
 class C {
     private int a;
 

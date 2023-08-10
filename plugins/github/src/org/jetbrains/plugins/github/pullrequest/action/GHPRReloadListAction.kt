@@ -10,15 +10,15 @@ import java.util.function.Supplier
 
 class GHPRReloadListAction
   : RefreshAction(GithubBundle.messagePointer("pull.request.refresh.list.action"),
-                  Supplier<String?> { null },
+                  Supplier { null },
                   AllIcons.Actions.Refresh) {
 
   override fun update(e: AnActionEvent) {
-    val controller = e.getData(GHPRActionKeys.PULL_REQUESTS_TAB_CONTROLLER)
+    val controller = e.getData(GHPRActionKeys.PULL_REQUESTS_LIST_CONTROLLER)
     e.presentation.isEnabled = controller != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GHPRActionKeys.PULL_REQUESTS_TAB_CONTROLLER).refreshList()
+    e.getRequiredData(GHPRActionKeys.PULL_REQUESTS_LIST_CONTROLLER).refreshList()
   }
 }

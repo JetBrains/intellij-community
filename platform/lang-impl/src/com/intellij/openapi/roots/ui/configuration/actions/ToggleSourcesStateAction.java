@@ -54,7 +54,7 @@ public class ToggleSourcesStateAction<P extends JpsElement> extends ContentEntry
     if (selectedFiles.length == 0) return false;
 
     final ContentEntryEditor editor = myEntryTreeEditor.getContentEntryEditor();
-    return myEditHandler.getRootType().equals(editor.getRootType(selectedFiles[0]));
+    return editor != null && myEditHandler.getRootType().equals(editor.getRootType(selectedFiles[0]));
   }
 
   @Override
@@ -63,6 +63,8 @@ public class ToggleSourcesStateAction<P extends JpsElement> extends ContentEntry
     assert selectedFiles.length != 0;
 
     final ContentEntryEditor contentEntryEditor = myEntryTreeEditor.getContentEntryEditor();
+    if (contentEntryEditor == null) return;
+    
     for (VirtualFile selectedFile : selectedFiles) {
       final SourceFolder sourceFolder = contentEntryEditor.getSourceFolder(selectedFile);
       if (isSelected) {

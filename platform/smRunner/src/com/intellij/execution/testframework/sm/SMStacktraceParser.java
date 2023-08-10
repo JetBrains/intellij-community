@@ -15,6 +15,9 @@
  */
 package com.intellij.execution.testframework.sm;
 
+import com.intellij.execution.Location;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.testframework.sm.runner.ui.TestStackTraceParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
@@ -22,10 +25,15 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Roman.Chernyatchik
- * @deprecated use {@link SMStacktraceParserEx} instead
  */
-@Deprecated
 public interface SMStacktraceParser {
+  /**
+   * Used for navigation from tests view to the editor if "open failed line" option is selected
+   */
   @Nullable
-  Navigatable getErrorNavigatable(@NotNull Project project, @NotNull String stacktrace);
+  Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace);
+
+  default TestStackTraceParser getTestStackTraceParser(@NotNull String url, @NotNull SMTestProxy proxy, @NotNull Project project) {
+    return new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage(), proxy.getLocator(), project);
+  }
 }

@@ -1,37 +1,46 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.nio.file.Path;
 
-class PersistentFSPaths {
-  @NonNls private static final String DEPENDENT_PERSISTENT_LIST_START_PREFIX = "vfs_enum_";
+public final class PersistentFSPaths {
+
+  @NonNls private static final String ROOTS_START_PREFIX = "roots_";
   static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
 
   @NotNull
-  private final String myCachesDir;
+  private final Path storagesDir;
 
-  PersistentFSPaths(@NotNull String dir) {
-    myCachesDir = dir;
+  PersistentFSPaths(final @NotNull Path storagesDir) {
+    this.storagesDir = storagesDir.toAbsolutePath();
   }
 
-  @NotNull File getCorruptionMarkerFile() {
-    return new File(new File(myCachesDir), "corruption.marker");
+  public @NotNull Path getCorruptionMarkerFile() {
+    return storagesDir.resolve("corruption.marker");
   }
 
-  @NotNull File getVfsEnumBaseFile() {
-    return new File(new File(myCachesDir), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
+  public @NotNull Path getStoragesReplacementMarkerFile() {
+    return storagesDir.resolve("replace-storages.marker");
   }
 
-  @NotNull File getVfsEnumFile(@NotNull String enumName) {
-    return new File(new File(myCachesDir), DEPENDENT_PERSISTENT_LIST_START_PREFIX + enumName + VFS_FILES_EXTENSION);
+  public @NotNull Path getVfsLogStorage() { return storagesDir.resolve("vfslog"); }
+
+  public @NotNull Path getRootsBaseFile() {
+    return storagesDir.resolve(ROOTS_START_PREFIX);
   }
 
-  Path getRootsFile() {
-    if (FSRecords.ourStoreRootsSeparately) return new File(myCachesDir).getAbsoluteFile().toPath().resolve("roots" + VFS_FILES_EXTENSION);
-    else return null;
+  public @NotNull Path getRootsStorage(@NotNull String storageName) {
+    return storagesDir.resolve(ROOTS_START_PREFIX + storageName + VFS_FILES_EXTENSION);
+  }
+
+  public @NotNull Path storagePath(final @NotNull String storageName) {
+    return storagesDir.resolve(storageName + VFS_FILES_EXTENSION);
+  }
+
+  public @NotNull Path storagesSubDir(final @NotNull String name) {
+    return storagesDir.resolve(name);
   }
 }

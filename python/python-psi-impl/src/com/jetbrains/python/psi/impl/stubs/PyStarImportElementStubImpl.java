@@ -21,9 +21,6 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyStarImportElement;
 import com.jetbrains.python.psi.stubs.PyStarImportElementStub;
 
-/**
- * @author vlan
- */
 public class PyStarImportElementStubImpl extends StubBase<PyStarImportElement> implements PyStarImportElementStub {
   protected PyStarImportElementStubImpl(final StubElement parent) {
     super(parent, PyElementTypes.STAR_IMPORT_ELEMENT);

@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ActionStub;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -31,24 +18,24 @@ import java.util.Map;
 /**
  * @author Dmitry Avdeev
  */
-public class ChameleonAction extends AnAction {
-
+public final class ChameleonAction extends AnAction {
   private final Map<ProjectType, AnAction> myActions = new HashMap<>();
 
-  public ChameleonAction(@NotNull AnAction first, ProjectType projectType) {
+  public ChameleonAction(@NotNull AnAction first, @Nullable ProjectType projectType) {
     addAction(first, projectType);
     copyFrom(myActions.values().iterator().next());
   }
 
-  public AnAction addAction(AnAction action, ProjectType projectType) {
-    if (action instanceof ActionStub) {
-      String type = ((ActionStub)action).getProjectType();
-      action = ActionManagerImpl.convertStub((ActionStub)action);
-      if (action == null) return null;
+  @Nullable ChameleonAction addAction(@NotNull AnAction action, @Nullable ProjectType projectType) {
+    if (action instanceof ActionStub actionStub) {
+      action = ActionManagerImplKt.convertStub(actionStub);
+      if (action == null) {
+        return this;
+      }
 
-      projectType = type == null ? null : new ProjectType(type);
+      projectType = actionStub.getProjectType();
     }
-    return myActions.put(projectType, action);
+    return myActions.put(projectType, action) == null ? this : null;
   }
 
   @Override
@@ -61,22 +48,25 @@ public class ChameleonAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     AnAction action = getAction(e);
-    if (action != null) {
-      e.getPresentation().setVisible(true);
+    boolean visible = action != null;
+    e.getPresentation().setVisible(visible);
+    if (visible) {
       action.update(e);
-    }
-    else {
-      e.getPresentation().setVisible(false);
     }
   }
 
-  @Nullable
-  private AnAction getAction(@NotNull AnActionEvent e) {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    AnAction action = myActions.get(null);
+    if (action == null) action = myActions.values().iterator().next();
+    return action == null ? ActionUpdateThread.BGT : action.getActionUpdateThread();
+  }
+
+  private @Nullable AnAction getAction(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     ProjectType projectType = ProjectTypeService.getProjectType(project);
     AnAction action = myActions.get(projectType);
-    if (action == null) action = myActions.get(null);
-    return action;
+    return action != null ? action : myActions.get(null);
   }
 
   @TestOnly

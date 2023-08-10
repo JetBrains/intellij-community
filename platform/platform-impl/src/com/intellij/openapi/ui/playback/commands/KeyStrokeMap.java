@@ -59,6 +59,7 @@ public class KeyStrokeMap {
     KeyStroke symbolStroke = null;
 
     if (hasModifiers) {
+      s = lowerCaseS;// Avoid adding extra SHIFT modifier for uppercase letters in shortcuts
       beforeSymbol =  s.lastIndexOf(" ");
       haveSymbol = beforeSymbol > 0;
     } else {

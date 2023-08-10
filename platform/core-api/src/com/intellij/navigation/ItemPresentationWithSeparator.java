@@ -15,8 +15,5 @@
  */
 package com.intellij.navigation;
 
-/**
- * @author pegov
- */
 public interface ItemPresentationWithSeparator extends ItemPresentation {
 }

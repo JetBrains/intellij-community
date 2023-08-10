@@ -4,6 +4,8 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
@@ -39,6 +41,14 @@ public abstract class InspectionTreeTailRenderer<E extends Exception> {
       }
     }
     else {
+      if (ExperimentalUI.isNewUI() && node instanceof InspectionRootNode) {
+        String profile = myContext.getCurrentProfile().getDisplayName();
+        if (!Strings.isEmpty(profile)) {
+          appendText(" ");
+          appendText(InspectionsBundle.message("inspection.results.profile", profile), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+      }
+
       appendText("  ");
       LevelAndCount[] problemLevels = node.getProblemLevels();
       if (problemLevels.length > MAX_LEVEL_TYPES) {

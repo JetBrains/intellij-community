@@ -23,9 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExpression {
   public PyPrefixExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -58,7 +56,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
   @Override
   public PsiReference getReference() {
-    return getReference(PyResolveContext.defaultContext());
+    return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
   }
 
   @NotNull
@@ -85,7 +83,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
     }
 
     return StreamEx
-      .of(PyCallExpressionHelper.mapArguments(this, PyResolveContext.defaultContext().withTypeEvalContext(context)))
+      .of(PyCallExpressionHelper.mapArguments(this, PyResolveContext.defaultContext(context)))
       .map(PyCallExpression.PyArgumentsMapping::getCallableType)
       .nonNull()
       .map(callableType -> callableType.getCallType(context, this))

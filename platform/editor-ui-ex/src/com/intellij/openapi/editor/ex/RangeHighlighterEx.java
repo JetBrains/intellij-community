@@ -41,7 +41,7 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
    * during the calculation of {@link #getTextAttributes(EditorColorsScheme)}
    *
    * Can be also used to temporary hide the highlighter
-   * {@link com.intellij.openapi.editor.markup.TextAttributes#ERASE_MARKER }
+   * {@link TextAttributes#ERASE_MARKER }
    */
   void setTextAttributes(@Nullable TextAttributes textAttributes);
 
@@ -52,7 +52,7 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
 
   /**
    * If {@code true}, there will be a visual indication that this highlighter is present inside a collapsed fold region.
-   * By default it won't happen, use {@link #setVisibleIfFolded(boolean)} to change it.
+   * By default, it's not visible, use {@link #setVisibleIfFolded(boolean)} to change it.
    *
    * @see FoldRegion#setInnerHighlightersMuted(boolean)
    */
@@ -70,15 +70,6 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
 
   default boolean isRenderedInGutter() {
     return getGutterIconRenderer() != null || getLineMarkerRenderer() != null;
-  }
-
-  /**
-   * @deprecated Use {@link #getErrorStripeMarkColor(EditorColorsScheme)} directly,
-   * it's impossible to tell if a highlighter should be rendered in a scroll bar since an editor can have a custom color scheme
-   */
-  @Deprecated
-  default boolean isRenderedInScrollBar() {
-    return getErrorStripeMarkColor(null) != null;
   }
 
   default void copyFrom(@NotNull RangeHighlighterEx other) {

@@ -1,0 +1,5 @@
+// "Remove parameter 'x'" "true"
+class Foo<caret>
+
+val foo = Foo()
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUnusedFunctionParameterFix

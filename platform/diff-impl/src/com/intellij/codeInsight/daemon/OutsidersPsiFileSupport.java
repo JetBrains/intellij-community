@@ -12,7 +12,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class OutsidersPsiFileSupport {
   private static final Key<Boolean> KEY = Key.create("OutsidersPsiFileSupport");
-  private static final Key<String> FILE_PATH_KEY = Key.create("OutsidersPsiFileSupport.FilePath");
+  private static final Key<String> VFS_URL_KEY = Key.create("OutsidersPsiFileSupport.FilePath");
 
   public static class HighlightFilter implements HighlightInfoFilter {
     @Override
@@ -55,14 +57,22 @@ public final class OutsidersPsiFileSupport {
 
 
   public static void markFile(@NotNull VirtualFile file) {
-    markFile(file, null);
+    markFileWithUrl(file, null);
   }
 
   public static void markFile(@NotNull VirtualFile file, @Nullable String originalPath) {
-    file.putUserData(KEY, Boolean.TRUE);
-    if (originalPath != null) file.putUserData(FILE_PATH_KEY, FileUtil.toSystemIndependentName(originalPath));
+    var vfsUrl = originalPath != null ? VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, originalPath) : null;
+    markFileWithUrl(file, vfsUrl);
   }
 
+  /**
+   * @param originalVfsUrl The VFS URL of the outsider file's original file as defined by {@link VirtualFile#getUrl}, or `null` if the
+   *                       outsider doesn't have an original file.
+   */
+  public static void markFileWithUrl(@NotNull VirtualFile file, @Nullable String originalVfsUrl) {
+    file.putUserData(KEY, Boolean.TRUE);
+    if (originalVfsUrl != null) file.putUserData(VFS_URL_KEY, FileUtil.toSystemIndependentName(originalVfsUrl));
+  }
 
   public static boolean isOutsiderFile(@Nullable PsiFile file) {
     return file != null && isOutsiderFile(file.getVirtualFile());
@@ -72,8 +82,18 @@ public final class OutsidersPsiFileSupport {
     return file != null && file.getUserData(KEY) == Boolean.TRUE;
   }
 
+  /**
+   * @return The VFS URL of the outsider file's original file as defined by {@link VirtualFile#getUrl}, or `null` if the outsider doesn't
+   *         have an original file.
+   */
+  @Nullable
+  public static String getOriginalFileUrl(@NotNull VirtualFile file) {
+    return file.getUserData(VFS_URL_KEY);
+  }
+
   @Nullable
   public static String getOriginalFilePath(@NotNull VirtualFile file) {
-    return file.getUserData(FILE_PATH_KEY);
+    var vfsUrl = getOriginalFileUrl(file);
+    return vfsUrl != null ? VirtualFileManager.extractPath(vfsUrl) : null;
   }
 }

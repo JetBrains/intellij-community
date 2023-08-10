@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.GradleTask;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class InternalGradleTask implements GradleTask {
   private String path;
   private String name;
@@ -16,6 +18,11 @@ public final class InternalGradleTask implements GradleTask {
   @Override
   public String getPath() {
     return this.path;
+  }
+
+  @Override
+  public String getBuildTreePath() {
+    throw new UnsupportedOperationException();
   }
 
   public void setPath(String path) {

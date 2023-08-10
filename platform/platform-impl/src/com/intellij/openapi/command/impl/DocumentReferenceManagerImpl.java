@@ -36,7 +36,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
   DocumentReferenceManagerImpl() {
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Override
-      public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+      public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
         List<VirtualFile> deletedFiles = new NotNullList<>();
         for (VFileEvent event : events) {
           if (event instanceof VFileDeleteEvent) {
@@ -99,7 +99,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
     assertIsWriteThread();
 
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    return file == null ? createFromDocument(document) : create(file);
+    return file == null || !file.isValid() ? createFromDocument(document) : create(file);
   }
 
   @NotNull
@@ -136,7 +136,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
   }
 
   private static void assertIsWriteThread() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
   }
 
   @TestOnly

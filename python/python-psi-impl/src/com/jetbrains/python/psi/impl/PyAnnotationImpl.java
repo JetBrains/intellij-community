@@ -23,9 +23,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.stubs.PyAnnotationStub;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyAnnotationImpl extends PyBaseElementImpl<PyAnnotationStub> implements PyAnnotation {
   public PyAnnotationImpl(ASTNode astNode) {
     super(astNode);

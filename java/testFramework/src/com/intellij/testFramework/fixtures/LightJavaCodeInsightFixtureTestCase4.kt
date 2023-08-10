@@ -3,12 +3,14 @@ package com.intellij.testFramework.fixtures
 
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.TestDataPath
 import org.junit.Rule
 import org.junit.rules.ExternalResource
 import org.junit.rules.RuleChain
 import org.junit.rules.TestName
 import org.junit.rules.TestRule
 
+@TestDataPath("\$CONTENT_ROOT/testData")
 abstract class LightJavaCodeInsightFixtureTestCase4(
   projectDescriptor: LightProjectDescriptor? = null,
   protected val testDataPath: String? = null

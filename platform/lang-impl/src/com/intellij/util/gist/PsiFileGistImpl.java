@@ -36,10 +36,8 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
   private static final ModificationTracker ourReindexTracker = () -> ((GistManagerImpl)GistManager.getInstance()).getReindexCount();
   private final VirtualFileGist<Data> myPersistence;
@@ -65,24 +63,28 @@ class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
     if (shouldUseMemoryStorage(file)) {
       return CachedValuesManager.getManager(file.getProject()).getCachedValue(
         file, myCacheKey, () -> {
-          Data data = myCalculator.calcData(file.getProject(), file.getViewProvider().getVirtualFile());
+          Data data = myCalculator.calcData(file.getProject(), getVirtualFile(file));
           return CachedValueProvider.Result.create(data, file, ourReindexTracker);
         }, false);
     }
 
     file.putUserData(myCacheKey, null);
-    return myPersistence.getFileData(file.getProject(), file.getVirtualFile());
+    return myPersistence.getFileData(file.getProject(), getVirtualFile(file));
   }
 
-  private static boolean shouldUseMemoryStorage(PsiFile file) {
-    if (!(file.getVirtualFile() instanceof NewVirtualFile)) return true;
+  private static @NotNull VirtualFile getVirtualFile(@NotNull PsiFile file) {
+    return file.getViewProvider().getVirtualFile();
+  }
+
+  private static boolean shouldUseMemoryStorage(@NotNull PsiFile file) {
+    if (!(getVirtualFile(file) instanceof NewVirtualFile)) return true;
 
     PsiDocumentManager pdm = PsiDocumentManager.getInstance(file.getProject());
     Document document = pdm.getCachedDocument(file);
     return document != null && (pdm.isUncommited(document) || FileDocumentManager.getInstance().isDocumentUnsaved(document));
   }
 
-  private static PsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
+  private static @Nullable PsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
     PsiFile psi = PsiManager.getInstance(project).findFile(file);
     if (!(psi instanceof PsiFileImpl) || ((PsiFileImpl)psi).isContentsLoaded()) {
       return psi;

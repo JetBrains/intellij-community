@@ -36,9 +36,6 @@ import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 import static com.intellij.util.containers.ContainerUtil.indexOf;
 
-/**
- * @author ibessonov
- */
 public class MavenApplicationConfigurationExecutionEnvironmentProvider implements MavenExecutionEnvironmentProvider {
 
   @Override
@@ -190,7 +187,6 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
             RemoteConnection connection = new RemoteConnectionBuilder(false, DebuggerSettings.getInstance().getTransport(), "")
               .asyncAgent(true)
               .project(environment.getProject())
-              .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
               .create(parameters);
 
             ParametersList programParametersList = javaParameters.getProgramParametersList();

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2.GTDUOutcome
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.psi.PsiElement
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyClass
@@ -17,6 +16,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
+import junit.framework.TestCase
 
 class PyNavigationTest : PyTestCase() {
 
@@ -46,7 +46,7 @@ class PyNavigationTest : PyTestCase() {
 
   fun testGoToClassField() {
     myFixture.configureByFile("${getTestName(true)}.py")
-    val model = GotoSymbolModel2(myFixture.project)
+    val model = GotoSymbolModel2(myFixture.project, myFixture.testRootDisposable)
     val elements = model.getElementsByName("some_field", false, "")
     assertSize(1, elements)
     assertInstanceOf(elements.first(), PyTargetExpression::class.java)
@@ -188,9 +188,106 @@ class PyNavigationTest : PyTestCase() {
     assertFalse(PyiUtil.isOverload(foo, context))
   }
 
+  // PY-38636
+  fun testClassInPyiAssignedToFunctionInPy() {
+    myFixture.copyDirectoryToProject(getTestName(true), "")
+    myFixture.configureByFile("test.py")
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    TestCase.assertNotNull(target)
+    assertInstanceOf(target, PyTargetExpression::class.java)
+    checkPyNotPyi(target?.containingFile)
+  }
+
+  // PY-38636
+  fun testStubInUserCode() {
+    myFixture.copyDirectoryToProject("importFile", "")
+    myFixture.configureByFile("test.py")
+    runWithAdditionalClassEntryInSdkRoots(myFixture.findFileInTempDir("addRoots")) {
+      val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+      checkPyNotPyi(target?.containingFile)
+    }
+  }
+
+  // PY-38636
+  fun testClassInPyiClassInPy() {
+    myFixture.copyDirectoryToProject(getTestName(true), "")
+    myFixture.configureByFile("test.py")
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    TestCase.assertNotNull(target)
+    assertInstanceOf(target, PyFunction::class.java)
+    checkPyNotPyi(target?.containingFile)
+  }
+
+  // PY-54905
+  fun testGoToImplementationFunctionInPackageWithInitPy() {
+    doTestGotoImplementationNavigatesToPyNotPyi()
+  }
+
+  // PY-54905
+  fun testGoToImplementationClassInPackageWithInitPy() {
+    doTestGotoImplementationNavigatesToPyNotPyi()
+  }
+
+  // PY-54905 PY-54620
+  fun testGoToImplementationClassInPackageWithInitPyi() {
+    doTestGotoImplementationNavigatesToPyNotPyi()
+  }
+
+  // PY-54905
+  fun testGoToImplementationFunctionInPyNotPyi() {
+    doTestGotoImplementationNavigatesToPyNotPyi(2)
+  }
+
+  // PY-54905
+  fun testGoToImplementationNameReExportedThroughAssignmentInPyiStub() {
+    doTestGotoImplementationNavigatesToPyNotPyi()
+  }
+
+  // PY-61740
+  fun testGoToDeclarationNameReExportedThroughAssignmentInPyiStub() {
+    doTestGotoDeclarationNavigatesToPyNotPyi()
+  }
+
+  // PY-61740
+  fun testGoToDeclarationNameReExportedThroughAssignmentInPyiStubTwice() {
+    doTestGotoDeclarationNavigatesToPyNotPyi()
+  }
+
+  // PY-54905
+  fun testGoToImplementationFunctionOverrides() {
+    doTestGotoImplementationNavigatesToPyNotPyi(2)
+  }
+
+  // PY-54905
+  fun testGoToImplementationClassInherits() {
+    doTestGotoImplementationNavigatesToPyNotPyi(2)
+  }
+
+  // PY-61740
+  fun testGoToDeclarationClassInPackageWithInitPyi() {
+    doTestGotoDeclarationNavigatesToPyNotPyi()
+  }
+
+  private fun doTestGotoDeclarationNavigatesToPyNotPyi() {
+    myFixture.copyDirectoryToProject(getTestName(true), "")
+    myFixture.configureByFile("test.py")
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    checkPyNotPyi(target!!.containingFile)
+  }
+
+  private fun doTestGotoImplementationNavigatesToPyNotPyi(numTargets: Int = 1) {
+    myFixture.copyDirectoryToProject(getTestName(true), "")
+    myFixture.configureByFile("test.py")
+    val gotoData = CodeInsightTestUtil.gotoImplementation(myFixture.editor, myFixture.file)
+    assertSize(numTargets, gotoData.targets)
+    for (target in gotoData.targets) {
+      checkPyNotPyi(target.containingFile)
+    }
+  }
+
   private fun doTestGotoDeclarationOrUsagesOutcome(expectedOutcome: GTDUOutcome, text: String) {
     myFixture.configureByText("a.py", text)
-    val actualOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcome(myFixture.editor, myFixture.file, myFixture.caretOffset)
+    val actualOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcomeInNonBlockingReadAction(myFixture.editor, myFixture.file, myFixture.caretOffset)
     assertEquals(expectedOutcome, actualOutcome)
   }
 
@@ -208,6 +305,4 @@ class PyNavigationTest : PyTestCase() {
   override fun getTestDataPath(): String {
     return super.getTestDataPath() + "/navigation"
   }
-
-  override fun getProjectDescriptor(): LightProjectDescriptor? = ourPy3Descriptor
 }

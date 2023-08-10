@@ -1,12 +1,10 @@
 <idea-plugin>
-  <depends optional="true" config-file="terminal-for-remote-servers.xml">com.intellij.modules.remoteServers</depends>
-
   <extensions defaultExtensionNs="com.intellij">
-    <toolWindow id="Terminal" anchor="bottom" icon="TerminalIcons.OpenTerminal_13x13"
+    <toolWindow id="Terminal" anchor="bottom" icon="org.jetbrains.plugins.terminal.TerminalIcons.OpenTerminal_13x13"
                 factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory"
                 secondary="false"
                 canCloseContents="true"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalView"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalToolWindowManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory"/>
 
     <projectConfigurable groupId="tools" groupWeight="130"
@@ -21,16 +19,47 @@
 
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager"/>
-    <statistics.counterUsagesCollector groupId="terminalShell" version="3"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.terminal.TerminalUsageTriggerCollector"/>
 
     <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
 
-    <terminal.shellCommandHandler implementation="com.intellij.diff.actions.DiffCustomCommandHandler"/>
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
-    <terminal.shellCommandHandler implementation="com.intellij.ide.actions.runAnything.RunAnythingTerminalBridge"/>
-    <notificationGroup id="Terminal" displayType="TOOL_WINDOW" toolWindowId="Terminal"/>
+    <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.OpenFileShellCommandHandler"/>
+    <selectInTarget implementation="org.jetbrains.plugins.terminal.view.SelectInTerminal"/>
+    <iconMapper mappingFile="TerminalIconMappings.json"/>
+    <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal"/>
+
+    <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalEnterHandler"
+                         id="terminalEnter" order="first"/>
+    <editorActionHandler action="EditorUp" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCaretUpHandler"
+                         id="terminalUp" order="first"/>
+    <editorActionHandler action="EditorDown" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCaretDownHandler"
+                         id="terminalDown" order="first"/>
+    <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalEscapeHandler"
+                         id="terminalEscape" order="first"/>
+    <typedHandler implementation="org.jetbrains.plugins.terminal.exp.TerminalCompletionAutoPopupHandler"
+                  id="terminalCompletionAutoPopup" order="first"/>
+    <lookup.charFilter implementation="org.jetbrains.plugins.terminal.exp.TerminalCharFilter"
+                       id="terminal" order="first"/>
+    <completion.contributor language="any"
+                            id="terminalCommandSpec"
+                            implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCommandSpecCompletionContributor"
+                            order="first, before shShebang, before liveTemplates"/>
+    <completion.contributor language="any"
+                            implementationClass="org.jetbrains.plugins.terminal.exp.TerminalSessionCompletionContributor"
+                            order="first, after terminalCommandSpec, before shShebang, before liveTemplates"/>
+    <weigher key="completion"
+             id="terminalCommandSpec"
+             order="before stats"
+             implementationClass="org.jetbrains.plugins.terminal.exp.completion.CommandSpecCompletionWeigher"/>
+    <applicationService serviceInterface="com.intellij.terminal.completion.CommandSpecManager"
+                        serviceImplementation="org.jetbrains.plugins.terminal.exp.completion.IJCommandSpecManager"/>
+
+    <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
+    <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
+                        serviceImplementation="org.jetbrains.plugins.terminal.search.JediTermSearchComponentProviderImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
@@ -42,5 +71,26 @@
                     interface="org.jetbrains.plugins.terminal.LocalTerminalCustomizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.terminal.shellCommandHandler"
                     interface="com.intellij.terminal.TerminalShellCommandHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.openPredefinedTerminalProvider"
+                    interface="org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.commandSpec"
+                    beanClass="org.jetbrains.plugins.terminal.exp.completion.CommandSpecBean" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.shellSupport"
+                    beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport"/>
+    </extensionPoint>
   </extensionPoints>
+
+  <actions>
+    <group id="TerminalToolwindowActionGroup">
+      <action id="Terminal.NewTab" class="org.jetbrains.plugins.terminal.action.TerminalNewTabAction">
+        <keyboard-shortcut first-keystroke="control shift T" keymap="$default"/>
+        <keyboard-shortcut first-keystroke="meta T" keymap="Mac OS X" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="meta T" keymap="Mac OS X 10.5+" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE" keymap="VSCode" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE" keymap="VSCode OSX" replace-all="true"/>
+      </action>
+      <action id="TerminalNewPredefinedSession" class="org.jetbrains.plugins.terminal.action.TerminalNewPredefinedSessionAction"/>
+    </group>
+  </actions>
 </idea-plugin>

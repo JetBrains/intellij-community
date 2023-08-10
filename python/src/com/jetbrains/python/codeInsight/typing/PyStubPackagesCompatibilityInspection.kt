@@ -1,19 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.ui.ListEditForm
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElementVisitor
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
@@ -22,8 +20,8 @@ import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkUtil
-import javax.swing.JComponent
 
 class PyStubPackagesCompatibilityInspection : PyInspection() {
 
@@ -53,18 +51,18 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
   @Suppress("MemberVisibilityCanBePrivate")
   var ignoredStubPackages: MutableList<String> = mutableListOf()
 
-  override fun createOptionsPanel(): JComponent = ListEditForm(PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages"),
-                                                               ignoredStubPackages).contentPanel
+  override fun getOptionsPane() =
+    OptPane.pane(OptPane.stringList("ignoredStubPackages", PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages.label")))
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor {
-    return Visitor(ignoredStubPackages, holder, session)
+    return Visitor(ignoredStubPackages, holder, PyInspectionVisitor.getContext(session))
   }
 
   private class Visitor(val ignoredStubPackages: MutableList<String>,
                         holder: ProblemsHolder,
-                        session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
+                        context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyFile(node: PyFile) {
       val module = ModuleUtilCore.findModuleForFile(node) ?: return
@@ -76,7 +74,7 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
       val nameToPkg = mutableMapOf<String, PyPackage>()
       installedPackages.forEach { nameToPkg[it.name] = it }
 
-      val status = ServiceManager.getService(node.project, PyStubPackagesInstallingStatus::class.java)
+      val status = node.project.getService(PyStubPackagesInstallingStatus::class.java)
 
       findIncompatibleRuntimeToStubPackages(
         sdk) { stubPkg ->

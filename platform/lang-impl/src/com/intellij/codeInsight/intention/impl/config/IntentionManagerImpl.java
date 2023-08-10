@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -36,7 +37,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public final class IntentionManagerImpl extends IntentionManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(IntentionManagerImpl.class);
-  public static final ExtensionPointName<IntentionActionBean> EP_INTENTION_ACTIONS = new ExtensionPointName<>("com.intellij.intentionAction");
+  public static final ExtensionPointName<IntentionActionBean> EP_INTENTION_ACTIONS =
+    new ExtensionPointName<>("com.intellij.intentionAction");
 
   private final List<IntentionAction> myActions;
   private final AtomicReference<ScheduledFuture<?>> myScheduledFuture = new AtomicReference<>();
@@ -56,10 +58,8 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
 
       @Override
       public void extensionRemoved(@NotNull IntentionActionBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-        myActions.removeIf((wrapper) -> {
-          return wrapper instanceof IntentionActionWrapper &&
-                 ((IntentionActionWrapper)wrapper).getImplementationClassName().equals(extension.className);
-        });
+        myActions.removeIf(wrapper -> wrapper instanceof IntentionActionWrapper &&
+                                      ((IntentionActionWrapper)wrapper).getImplementationClassName().equals(extension.className));
       }
     }, this);
   }
@@ -71,8 +71,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
     String descriptionDirectoryName = action instanceof IntentionActionWrapper
                                       ? ((IntentionActionWrapper)action).getDescriptionDirectoryName()
                                       : IntentionActionWrapper.getDescriptionDirectoryName(action.getClass().getName());
-    IntentionManagerSettings settings = IntentionManagerSettings.getInstance();
-    settings.registerIntentionMetaData(action, category, descriptionDirectoryName);
+    IntentionsMetadataService.getInstance().registerIntentionMetaData(action, category, descriptionDirectoryName);
   }
 
   @Override
@@ -83,9 +82,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
   }
 
   @Override
-  @NotNull
-  public List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey,
-                                                           @NotNull PsiElement context) {
+  public @NotNull List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey, @NotNull PsiElement context) {
     checkForDuplicates();
     List<IntentionAction> options = new ArrayList<>(9);
     options.add(new EditInspectionToolsSettingsAction(displayKey));
@@ -94,9 +91,9 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
     return options;
   }
 
-  @Nullable
   @Override
-  public IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper<?, ?> toolWrapper, @NotNull IntentionAction action) {
+  public @Nullable IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
+                                                         @NotNull IntentionAction action) {
     checkForDuplicates();
     if (toolWrapper instanceof GlobalInspectionToolWrapper) {
       LocalInspectionToolWrapper localWrapper = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
@@ -110,7 +107,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
     }
     if (toolWrapper instanceof GlobalInspectionToolWrapper) {
       GlobalInspectionTool wrappedTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
-      if (wrappedTool instanceof GlobalSimpleInspectionTool && (action instanceof LocalQuickFix || action instanceof QuickFixWrapper)) {
+      if (wrappedTool instanceof GlobalSimpleInspectionTool && (action instanceof LocalQuickFix || QuickFixWrapper.unwrap(action) != null)) {
         return createFixAllIntentionInternal(toolWrapper, action);
       }
     }
@@ -124,26 +121,20 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
   public void dispose() {
   }
 
-  private static IntentionAction createFixAllIntentionInternal(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
-                                                               @NotNull IntentionAction action) {
-    PsiFile file = null;
-    FileModifier fix = action;
-    if (action instanceof QuickFixWrapper) {
-      fix = ((QuickFixWrapper)action).getFix();
-      file = ((QuickFixWrapper)action).getFile();
-    }
-    return new CleanupInspectionIntention(toolWrapper, fix, file, action.getText());
+  private static @NotNull IntentionAction createFixAllIntentionInternal(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
+                                                                        @NotNull IntentionAction action) {
+    LocalQuickFix fix = QuickFixWrapper.unwrap(action);
+    PsiFile file = QuickFixWrapper.unwrapFile(action);
+    return new CleanupInspectionIntention(toolWrapper, fix == null ? action : fix, file, action.getText());
   }
 
-  @NotNull
   @Override
-  public IntentionAction createCleanupAllIntention() {
+  public @NotNull IntentionAction createCleanupAllIntention() {
     return CleanupAllIntention.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public List<IntentionAction> getCleanupIntentionOptions() {
+  public @NotNull List<IntentionAction> getCleanupIntentionOptions() {
     List<IntentionAction> options = new ArrayList<>();
     options.add(EditCleanupProfileIntentionAction.INSTANCE);
     options.add(CleanupOnScopeIntention.INSTANCE);
@@ -151,21 +142,18 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
   }
 
   @Override
-  @NotNull
-  public LocalQuickFix convertToFix(@NotNull IntentionAction action) {
+  public @NotNull LocalQuickFix convertToFix(@NotNull IntentionAction action) {
     if (action instanceof LocalQuickFix) {
       return (LocalQuickFix)action;
     }
     return new LocalQuickFix() {
       @Override
-      @NotNull
-      public String getName() {
+      public @NotNull String getName() {
         return action.getText();
       }
 
       @Override
-      @NotNull
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return action.getFamilyName();
       }
 
@@ -212,7 +200,34 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
     return list;
   }
 
+  @Override
+  public @NotNull List<IntentionAction> getAvailableIntentions(Collection<String> languageIds) {
+    if (myIntentionsDisabled) {
+      return Collections.emptyList();
+    }
+
+    checkForDuplicates();
+
+    List<IntentionAction> list = new ArrayList<>();
+    IntentionManagerSettings settings = IntentionManagerSettings.getInstance();
+    for (IntentionAction action : myActions) {
+      if (isLanguageSupported(languageIds, action) && settings.isEnabled(action)) {
+        list.add(action);
+      }
+    }
+    return list;
+  }
+
+  private static boolean isLanguageSupported(Collection<String> fileLanguageIds, IntentionAction action) {
+    if (action instanceof IntentionActionWrapper) {
+      return ((IntentionActionWrapper)action).isApplicable(fileLanguageIds);
+    }
+
+    return true;
+  }
+
   private boolean checkedForDuplicates; // benign data race
+
   // check that the intention of some class registered only once
   public void checkForDuplicates() {
     if (checkedForDuplicates) {
@@ -229,9 +244,12 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
     List<String> duplicates = new ArrayList<>();
     for (List<IntentionAction> list : map.values()) {
       if (list.size() > 1) {
-        duplicates.add(list.size() + " intention duplicates found for " + IntentionActionDelegate.unwrap(list.get(0))
-                       + " (" + list.get(0).getClass()
-                       + "; plugin " + PluginManager.getInstance().getPluginOrPlatformByClassName(list.get(0).getClass().getName()) + ")");
+        String duplicateDescriptions = StringUtil.join(list, a -> {
+          Class<?> fixClass = IntentionActionDelegate.unwrap(a).getClass();
+          return "Registered: " + fixClass + " from plugin " + PluginManager.getPluginByClass(fixClass);
+        }, "\n");
+        duplicates.add(
+          list.size() + " intention duplicates found for " + IntentionActionDelegate.unwrap(list.get(0)) + ":\n" + duplicateDescriptions);
       }
     }
 
@@ -245,7 +263,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
   }
 
   @TestOnly
-  public <T extends Throwable> void withDisabledIntentions(ThrowableRunnable<T> runnable) throws T {
+  public <T extends Throwable> void withDisabledIntentions(@NotNull ThrowableRunnable<T> runnable) throws T {
     boolean oldIntentionsDisabled = myIntentionsDisabled;
     myIntentionsDisabled = true;
     try {

@@ -1,16 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
 import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.ide.IdeCoreBundle;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -19,17 +18,21 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.progress.CancellationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 final class RefreshSessionImpl extends RefreshSession {
-  private static final Logger LOG = Logger.getInstance(RefreshSession.class);
+  @SuppressWarnings("LoggerInitializedWithForeignClass") private static final Logger LOG = Logger.getInstance(RefreshSession.class);
 
   private static final int RETRY_LIMIT = SystemProperties.getIntProperty("refresh.session.retry.limit", 3);
   private static final long DURATION_REPORT_THRESHOLD_MS =
@@ -41,7 +44,7 @@ final class RefreshSessionImpl extends RefreshSession {
   private final boolean myIsAsync;
   private final boolean myIsRecursive;
   private final Runnable myFinishRunnable;
-  private final Throwable myStartTrace;
+  private final @Nullable Throwable myStartTrace;
   private final Semaphore mySemaphore = new Semaphore();
 
   private List<VirtualFile> myWorkQueue = new ArrayList<>();
@@ -57,17 +60,20 @@ final class RefreshSessionImpl extends RefreshSession {
     myFinishRunnable = finishRunnable;
     myModality = modality;
     TransactionGuard.getInstance().assertWriteSafeContext(modality);
-    myStartTrace = rememberStartTrace();
+    Application app = ApplicationManager.getApplication();
+    myStartTrace = app.isUnitTestMode() && (async || !app.isDispatchThread()) ? new Throwable() : null;
   }
 
-  private Throwable rememberStartTrace() {
-    boolean trace = ApplicationManager.getApplication().isUnitTestMode() && (myIsAsync || !ApplicationManager.getApplication().isDispatchThread());
-    return trace ? new Throwable() : null;
+  RefreshSessionImpl(boolean async, List<? extends VFileEvent> events) {
+    this(async, false, null, getSafeModalityState());
+    var filtered = events.stream().filter(Objects::nonNull).toList();
+    if (filtered.size() < events.size()) LOG.error("The list of events must not contain null elements");
+    myEvents.addAll(filtered);
   }
 
-  RefreshSessionImpl(boolean async, @NotNull List<? extends VFileEvent> events) {
-    this(async, false, null, ModalityState.defaultModalityState());
-    myEvents.addAll(events);
+  private static ModalityState getSafeModalityState() {
+    ModalityState state = ModalityState.defaultModalityState();
+    return state != ModalityState.any() ? state : ModalityState.nonModal();
   }
 
   @Override
@@ -76,22 +82,22 @@ final class RefreshSessionImpl extends RefreshSession {
   }
 
   @Override
-  public void addAllFiles(@NotNull Collection<? extends VirtualFile> files) {
-    for (VirtualFile file : files) {
-      if (file == null) {
-        LOG.error("null passed among " + files);
-      }
-      else {
-        addFile(file);
-      }
-    }
+  public void addFile(@NotNull VirtualFile file) {
+    checkState();
+    doAddFile(file);
   }
 
   @Override
-  public void addFile(@NotNull VirtualFile file) {
-    if (myLaunched) {
-      throw new IllegalStateException("Adding files is only allowed before launch");
-    }
+  public void addAllFiles(@NotNull Collection<? extends @NotNull VirtualFile> files) {
+    checkState();
+    for (VirtualFile file : files) doAddFile(file);
+  }
+
+  private void checkState() {
+    if (myLaunched) throw new IllegalStateException("Already launched");
+  }
+
+  private void doAddFile(VirtualFile file) {
     if (file instanceof NewVirtualFile) {
       myWorkQueue.add(file);
     }
@@ -107,78 +113,82 @@ final class RefreshSessionImpl extends RefreshSession {
 
   @Override
   public void launch() {
-    if (myLaunched) {
-      throw new IllegalStateException("launch() can be called only once");
-    }
+    checkState();
     myLaunched = true;
     mySemaphore.down();
     ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
   }
 
-  void scan() {
-    List<VirtualFile> workQueue = myWorkQueue;
+  void scan(long timeInQueue) {
+    if (myWorkQueue.isEmpty()) return;
+    var workQueue = myWorkQueue;
     myWorkQueue = new ArrayList<>();
-    boolean forceRefresh = !myIsRecursive && !myIsAsync;  // shallow sync refresh (e.g. project config files on open)
+    var forceRefresh = !myIsRecursive && !myIsAsync;  // shallow sync refresh (e.g., project config files on open)
 
-    if (!workQueue.isEmpty()) {
-      LocalFileSystem fs = LocalFileSystem.getInstance();
-      if (!forceRefresh && fs instanceof LocalFileSystemImpl) {
-        ((LocalFileSystemImpl)fs).markSuspiciousFilesDirty(workQueue);
+    var fs = LocalFileSystem.getInstance();
+    if (!forceRefresh && fs instanceof LocalFileSystemImpl) {
+      ((LocalFileSystemImpl)fs).markSuspiciousFilesDirty(workQueue);
+    }
+
+    if (LOG.isTraceEnabled()) LOG.trace("scanning " + workQueue);
+
+    var t = System.nanoTime();
+    PerformanceWatcher.Snapshot snapshot = null;
+    Map<String, Integer> types = null;
+    if (DURATION_REPORT_THRESHOLD_MS > 0) {
+      snapshot = PerformanceWatcher.takeSnapshot();
+      types = new HashMap<>();
+    }
+
+    var refreshRoots = new ArrayList<NewVirtualFile>(workQueue.size());
+    for (var file : workQueue) {
+      if (myCancelled) break;
+
+      var nvf = (NewVirtualFile)file;
+      if (forceRefresh) {
+        nvf.markDirty();
       }
-
-      if (LOG.isTraceEnabled()) LOG.trace("scanning " + workQueue);
-
-      long t = System.currentTimeMillis();
-      PerformanceWatcher.Snapshot snapshot = null;
-      Map<String, Integer> types = null;
-      if (DURATION_REPORT_THRESHOLD_MS > 0) {
-        snapshot = PerformanceWatcher.takeSnapshot();
-        types = new HashMap<>();
+      if (!nvf.isDirty()) {
+        continue;
       }
+      refreshRoots.add(nvf);
 
-      int count = 0;
-      refresh: do {
-        if (LOG.isTraceEnabled()) LOG.trace("try=" + count);
-
-        for (VirtualFile file : workQueue) {
-          if (myCancelled) break refresh;
-
-          NewVirtualFile nvf = (NewVirtualFile)file;
-          if (forceRefresh) {
-            nvf.markDirty();
-          }
-          else if (!nvf.isDirty()) {
-            continue;
-          }
-
-          RefreshWorker worker = new RefreshWorker(nvf, myIsRecursive);
-          myWorker = worker;
-          worker.scan();
-          myEvents.addAll(worker.getEvents());
-
-          if (types != null) {
-            String type = !file.isDirectory() ? "file" : file.getFileSystem() instanceof ArchiveFileSystem ? "arc" : "dir";
-            types.put(type, types.getOrDefault(type, 0) + 1);
-          }
-        }
-
-        count++;
-        if (LOG.isTraceEnabled()) LOG.trace("events=" + myEvents.size());
-      }
-      while (!myCancelled && myIsRecursive && count < RETRY_LIMIT && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
-
-      t = System.currentTimeMillis() - t;
-      if (LOG.isTraceEnabled()) {
-        LOG.trace((myCancelled ? "cancelled, " : "done, ") + t + " ms, tries " + count + ", events " + myEvents);
-      }
-      else if (snapshot != null && t > DURATION_REPORT_THRESHOLD_MS) {
-        snapshot.logResponsivenessSinceCreation(String.format(
-          "Refresh session (queue size: %s, scanned: %s, result: %s, tries: %s, events: %d)",
-          workQueue.size(), types, myCancelled ? "cancelled" : "done", count, myEvents.size()));
+      if (types != null) {
+        var type = !file.isDirectory() ? "file" : file.getFileSystem() instanceof ArchiveFileSystem ? "arc" : "dir";
+        types.put(type, types.getOrDefault(type, 0) + 1);
       }
     }
 
-    myWorker = null;
+    int count = 0;
+    do {
+      if (LOG.isTraceEnabled()) LOG.trace("try=" + count);
+
+      var worker = new RefreshWorker(refreshRoots, myIsRecursive);
+      myWorker = worker;
+      myEvents.addAll(worker.scan());
+      myWorker = null;
+
+      count++;
+      if (LOG.isTraceEnabled()) LOG.trace("events=" + myEvents.size());
+    }
+    while (!myCancelled && myIsRecursive && count < RETRY_LIMIT && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
+
+    t = NANOSECONDS.toMillis(System.nanoTime() - t);
+    int localRoots = 0, archiveRoots = 0, otherRoots = 0;
+    for (var file : refreshRoots) {
+      if (file.getFileSystem() instanceof LocalFileSystem) localRoots++;
+      else if (file.getFileSystem() instanceof ArchiveFileSystem) archiveRoots++;
+      else otherRoots++;
+    }
+    VfsUsageCollector.logRefreshSession(myIsRecursive, localRoots, archiveRoots, otherRoots, myCancelled, timeInQueue, t, count);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace((myCancelled ? "cancelled, " : "done, ") + t + " ms, tries " + count + ", events " + myEvents);
+    }
+    else if (snapshot != null && t > DURATION_REPORT_THRESHOLD_MS) {
+      snapshot.logResponsivenessSinceCreation(String.format(
+        "Refresh session (queue size: %s, scanned: %s, result: %s, tries: %s, events: %d)",
+        workQueue.size(), types, myCancelled ? "cancelled" : "done", count, myEvents.size()));
+    }
   }
 
   void cancel() {
@@ -190,24 +200,21 @@ final class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  void fireEvents(@NotNull List<? extends CompoundVFileEvent> events, @NotNull List<? extends AsyncFileListener.ChangeApplier> appliers, boolean asyncEventProcessing) {
+  void fireEvents(@NotNull List<CompoundVFileEvent> events, @NotNull List<AsyncFileListener.ChangeApplier> appliers, boolean asyncProcessing) {
     try {
-      ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
+      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       if ((myFinishRunnable != null || !events.isEmpty()) && !app.isDisposed()) {
         if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + events);
         WriteAction.run(() -> {
-          app.runWriteActionWithNonCancellableProgressInDispatchThread(IdeBundle.message("progress.title.file.system.synchronization"), null, null, indicator -> {
-            indicator.setText(IdeBundle.message("progress.text.processing.detected.file.changes", events.size()));
+          app.runWriteActionWithNonCancellableProgressInDispatchThread(IdeCoreBundle.message("progress.title.file.system.synchronization"), null, null, indicator -> {
+            indicator.setText(IdeCoreBundle.message("progress.text.processing.detected.file.changes", events.size()));
             int progressThresholdMillis = 5_000;
-            ((ProgressWindow) indicator).setDelayInMillis(progressThresholdMillis);
-            long start = System.currentTimeMillis();
-
-            fireEventsInWriteAction(events, appliers, asyncEventProcessing);
-
-            long elapsed = System.currentTimeMillis() - start;
-            if (elapsed > progressThresholdMillis) {
-              LOG.warn("Long VFS change processing (" + elapsed + "ms, " + events.size() + " events): " +
-                       StringUtil.trimLog(events.toString(), 10_000));
+            ((ProgressIndicatorWithDelayedPresentation)indicator).setDelayInMillis(progressThresholdMillis);
+            long t = System.nanoTime();
+            fireEventsInWriteAction(events, appliers, asyncProcessing);
+            t = NANOSECONDS.toMillis(System.nanoTime() - t);
+            if (t > progressThresholdMillis) {
+              LOG.warn("Long VFS change processing (" + t + "ms, " + events.size() + " events): " + StringUtil.trimLog(events.toString(), 10_000));
             }
           });
         });
@@ -218,13 +225,12 @@ final class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  private void fireEventsInWriteAction(@NotNull List<? extends CompoundVFileEvent> events,
-                                       @NotNull List<? extends AsyncFileListener.ChangeApplier> appliers, boolean asyncEventProcessing) {
-    final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
+  private void fireEventsInWriteAction(List<CompoundVFileEvent> events, List<AsyncFileListener.ChangeApplier> appliers, boolean asyncProcessing) {
+    VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
     manager.fireBeforeRefreshStart(myIsAsync);
     try {
-      AsyncEventSupport.processEventsFromRefresh(events, appliers, asyncEventProcessing);
+      AsyncEventSupport.processEventsFromRefresh(events, appliers, asyncProcessing);
     }
     catch (AssertionError e) {
       if (FileStatusMap.CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING.equals(e.getMessage())) {
@@ -245,21 +251,29 @@ final class RefreshSessionImpl extends RefreshSession {
   }
 
   void waitFor() {
-    mySemaphore.waitFor();
+    CancellationUtil.waitForMaybeCancellable(mySemaphore);
   }
 
-  @NotNull
-  ModalityState getModality() {
+  Semaphore getSemaphore() {
+    return mySemaphore;
+  }
+
+  @NotNull ModalityState getModality() {
     return myModality;
   }
 
-  @NotNull
-  List<? extends VFileEvent> getEvents() {
-    return new ArrayList<>(new LinkedHashSet<>(myEvents));
+  boolean hasEvents() {
+    return !myEvents.isEmpty();
+  }
+
+  @NotNull List<VFileEvent> getEvents() {
+    return hasEvents() ? new ArrayList<>(new LinkedHashSet<>(myEvents)) : List.of();
   }
 
   @Override
   public String toString() {
-    return myWorkQueue.size() <= 1 ? "" : myWorkQueue.size() + " roots in the queue.";
+    int size = myWorkQueue.size();
+    return "RefreshSessionImpl: " + size + " root(s) in the queue" +
+           (size == 0 ? "" : ": " + ContainerUtil.getFirstItem(myWorkQueue)) + (size >= 2 ? ", ..." : "");
   }
 }

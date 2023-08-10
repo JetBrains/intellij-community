@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.introduceParameter
 
@@ -11,11 +11,13 @@ import com.intellij.refactoring.IntroduceParameterRefactoring
 import com.intellij.refactoring.introduceField.ElementToWorkOn
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor
 import com.intellij.refactoring.introduceParameter.Util
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author Maxim.Medvedev
  */
@@ -29,13 +31,13 @@ class IntroduceParameterTest extends LightJavaCodeInsightFixtureTestCase {
     final String afterGroovy = getTestName(false) + "After.groovy"
     final String javaClass = getTestName(false) + "MyClass.java"
     myFixture.configureByFiles(javaClass, beforeGroovy)
-    executeRefactoring(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters, conflicts)
+    executeRefactoring(IntroduceVariableBase.JavaReplaceChoice.ALL, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters, conflicts)
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     myFixture.checkResultByFile(beforeGroovy, afterGroovy, true)
   }
 
 
-  private boolean executeRefactoring(boolean replaceAllOccurrences,
+  private boolean executeRefactoring(IntroduceVariableBase.JavaReplaceChoice replaceAllOccurrences,
                                      int replaceFieldsWithGetters,
                                      @NonNls String parameterName,
                                      boolean searchForSuper,
@@ -80,11 +82,11 @@ class IntroduceParameterTest extends LightJavaCodeInsightFixtureTestCase {
 
     PsiExpression initializer = expr == null ? localVar.initializer : expr
     assert initializer != null
-    IntArrayList parametersToRemove = removeUnusedParameters ? new IntArrayList(Util.findParametersToRemove(method, initializer, null).toNativeArray()) : new IntArrayList()
+    IntArrayList parametersToRemove = removeUnusedParameters ? new IntArrayList(Util.findParametersToRemove(method, initializer, null)) : new IntArrayList()
     final Project project = myFixture.project
     final IntroduceParameterProcessor processor =
       new IntroduceParameterProcessor(project, method, methodToSearchFor, initializer, expr, localVar, true, parameterName,
-                                      replaceAllOccurrences, replaceFieldsWithGetters, declareFinal, generateDelegate, null,
+                                      replaceAllOccurrences, replaceFieldsWithGetters, declareFinal, generateDelegate, false, null,
                                       parametersToRemove)
 
     try {

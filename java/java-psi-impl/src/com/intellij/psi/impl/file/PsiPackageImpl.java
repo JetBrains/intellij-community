@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,11 +20,9 @@ import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.*;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -35,8 +32,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Queryable {
   private static final Logger LOG = Logger.getInstance(PsiPackageImpl.class);
@@ -54,11 +54,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   protected Collection<PsiDirectory> getAllDirectories(GlobalSearchScope scope) {
-    if (!scope.getModelBranchesAffectingScope().isEmpty()) {
-      return ContainerUtil.mapNotNull(PackageIndex.getInstance(getProject()).getDirsByPackageName(getQualifiedName(), scope).findAll(),
-                                      getManager()::findDirectory);
-    }
-
     if (scope.isForceSearchingInLibrarySources()) {
       if (myDirectoriesWithLibSources == null) {
         myDirectoriesWithLibSources = createCachedDirectories(true);
@@ -172,15 +167,11 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   private PsiClass @NotNull [] getCachedClassesByName(@NotNull String name, GlobalSearchScope scope) {
     DumbService dumbService = DumbService.getInstance(getProject());
-    if (dumbService.isDumb() && dumbService.isAlternativeResolveEnabled()) {
+    if (dumbService.isAlternativeResolveEnabled()) {
       return getCachedClassesInDumbMode(name, scope);
     }
 
-    if (!scope.getModelBranchesAffectingScope().isEmpty()) {
-      return findAllClasses(name, scope);
-    }
-
-    Map<String, PsiClass[]> map = SoftReference.dereference(myClassCache);
+    Map<String, PsiClass[]> map = dereference(myClassCache);
     if (map == null) {
       myClassCache = new SoftReference<>(map = ContainerUtil.createConcurrentSoftValueMap());
     }
@@ -197,14 +188,14 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return classes;
   }
 
-  private PsiClass[] findAllClasses(@NotNull String shortName, GlobalSearchScope scope) {
+  private PsiClass @NotNull [] findAllClasses(@NotNull String shortName, GlobalSearchScope scope) {
     String qName = getQualifiedName();
     String classQName = !qName.isEmpty() ? qName + "." + shortName : shortName;
     return getFacade().findClasses(classQName, scope);
   }
 
-  private PsiClass[] getCachedClassesInDumbMode(String name, GlobalSearchScope scope) {
-    Map<GlobalSearchScope, Map<String, PsiClass[]>> scopeMap = SoftReference.dereference(myDumbModeFullCache);
+  private PsiClass @NotNull [] getCachedClassesInDumbMode(String name, GlobalSearchScope scope) {
+    Map<GlobalSearchScope, Map<String, PsiClass[]>> scopeMap = dereference(myDumbModeFullCache);
     if (scopeMap == null) {
       myDumbModeFullCache = new SoftReference<>(scopeMap = new ConcurrentHashMap<>());
     }
@@ -236,7 +227,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return PsiClass.EMPTY_ARRAY;
     }
 
-    Map<Pair<GlobalSearchScope, String>, PsiClass[]> partial = SoftReference.dereference(myDumbModePartialCache);
+    Map<Pair<GlobalSearchScope, String>, PsiClass[]> partial = dereference(myDumbModePartialCache);
     if (partial == null) {
       myDumbModePartialCache = new SoftReference<>(partial = new ConcurrentHashMap<>());
     }
@@ -273,13 +264,13 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return PsiSearchScopeUtil.isInScope(scope, allClasses[0]) ? allClasses.clone() : PsiClass.EMPTY_ARRAY;
     }
     return StreamEx.of(allClasses)
-      .filter(aClass -> PsiSearchScopeUtil.isInScope(scope, aClass))
+      .filter(aClass -> PsiSearchScopeUtil.isInScope(scope, aClass) && aClass.getContainingClass() == null)
       .sorted(PsiClassUtil
                 .createScopeComparator(scope)
                 .thenComparing(c -> c.getQualifiedName(), Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(c -> {
                   PsiFile file = c.getContainingFile();
-                  return file instanceof PsiJavaFile ? ((PsiJavaFile)file).getPackageName() : "";
+                  return file instanceof PsiClassOwner ? ((PsiClassOwner)file).getPackageName() : "";
                 }))
       .toArray(PsiClass.EMPTY_ARRAY);
   }
@@ -311,7 +302,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
         if (classes.length == 0 && PsiUtil.isInsideJavadocComment(place)) {
           //extend scope for javadoc references when no classes are found in the resolve scope:
 
-          //always replacing the scope works bad for the case when multiple classes with the same FQName exist, because index return them in unpredictable order,
+          //always replacing the scope works bad for the case when multiple classes with the same FQName exist,
+          //because the index returns them in unpredictable order,
           //so class not accessible from `place` may be used instead of another accessible class
           classes = findClassByShortName(providedName, allScope());
         }
@@ -368,11 +360,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       }
     }
     return true;
-  }
-
-  @Override
-  public boolean canNavigate() {
-    return isValid();
   }
 
   @Override

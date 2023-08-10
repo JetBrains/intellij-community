@@ -48,7 +48,7 @@ class Test {
       new GroovyGenerateToStringAction()
     ]
     actions.each {
-      def event = new TestActionEvent(getCurrentEditorDataContext(), it)
+      def event = TestActionEvent.createTestEvent(it, getCurrentEditorDataContext())
       it.update(event)
       assert event.presentation.enabledAndVisible
     }
@@ -74,7 +74,7 @@ class Test {
       new GroovyGenerateToStringAction()
     ]
     actions.each {
-      def event = new TestActionEvent(getCurrentEditorDataContext(), it)
+      def event = TestActionEvent.createTestEvent(it, getCurrentEditorDataContext())
       it.update(event)
       assert !event.presentation.enabledAndVisible
     }

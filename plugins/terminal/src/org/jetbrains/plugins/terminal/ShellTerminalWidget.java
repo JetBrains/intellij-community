@@ -1,24 +1,35 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.actions.TerminalActionUtil;
-import com.intellij.util.Consumer;
+import com.intellij.terminal.pty.PtyProcessTtyConnector;
+import com.intellij.terminal.ui.TerminalWidget;
+import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.Terminal;
+import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.TerminalLine;
+import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
+import com.jediterm.terminal.model.TerminalModelListener;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalAction;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
+import org.jetbrains.plugins.terminal.action.TerminalSplitAction;
 
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -27,27 +38,50 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ShellTerminalWidget extends JBTerminalWidget {
 
   private static final Logger LOG = Logger.getInstance(ShellTerminalWidget.class);
+  private static final long VFS_REFRESH_DELAY_MS = 500;
+  private static final ExecutorService EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+    ShellTerminalWidget.class.getSimpleName() + " command executor", 1);
 
-  private final Project myProject;
   private boolean myEscapePressed = false;
   private String myCommandHistoryFilePath;
-  private boolean myPromptUpdateNeeded = true;
-  private String myPrompt = "";
+  private List<String> myShellCommand;
+  private final Prompt myPrompt = new Prompt();
   private final Queue<String> myPendingCommandsToExecute = new LinkedList<>();
-  private final Queue<Consumer<TtyConnector>> myPendingActionsToExecute = new LinkedList<>();
   private final TerminalShellCommandHandlerHelper myShellCommandHandlerHelper;
 
+  private final Alarm myVfsRefreshAlarm;
+  private final TerminalModelListener myVfsRefreshModelListener;
+  private volatile String myPrevPromptWhenCommandStarted;
+
+  /**
+   * @deprecated use {@link #ShellTerminalWidget(Project, JBTerminalSystemSettingsProvider, Disposable)} instead
+   */
+  @Deprecated(forRemoval = true)
   public ShellTerminalWidget(@NotNull Project project,
                              @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
                              @NotNull Disposable parent) {
+    this(project, settingsProvider instanceof JBTerminalSystemSettingsProvider p ? p : new JBTerminalSystemSettingsProvider(), parent);
+  }
+
+  public ShellTerminalWidget(@NotNull Project project,
+                             @NotNull JBTerminalSystemSettingsProvider settingsProvider,
+                             @NotNull Disposable parent) {
     super(project, settingsProvider, parent);
-    myProject = project;
     myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelper(this);
+
+    myVfsRefreshAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+    myVfsRefreshModelListener = () -> {
+      myVfsRefreshAlarm.cancelAllRequests();
+      myVfsRefreshAlarm.addRequest(this::refreshVfsIfPromptIsShown, VFS_REFRESH_DELAY_MS);
+    };
 
     getTerminalPanel().addPreKeyEventHandler(e -> {
       if (e.getID() != KeyEvent.KEY_PRESSED) return;
@@ -56,8 +90,19 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       }
       handleAnyKeyPressed();
 
+      if (!e.isConsumed() && e.getKeyCode() == KeyEvent.VK_ENTER) {
+        String prompt = myPrompt.myPrompt;
+        if (!prompt.isEmpty() && !getTypedShellCommand().isEmpty()) {
+          myVfsRefreshAlarm.cancelAllRequests();
+          getTerminalTextBuffer().removeModelListener(myVfsRefreshModelListener);
+          myPrevPromptWhenCommandStarted = prompt;
+          if (!getTerminalTextBuffer().isUsingAlternateBuffer()) {
+            getTerminalTextBuffer().addModelListener(myVfsRefreshModelListener);
+          }
+        }
+      }
       if (e.getKeyCode() == KeyEvent.VK_ENTER || TerminalShellCommandHandlerHelper.matchedExecutor(e) != null) {
-        TerminalUsageTriggerCollector.Companion.triggerCommandExecuted(myProject);
+        TerminalUsageTriggerCollector.triggerCommandExecuted(project, getTypedShellCommand());
         if (myShellCommandHandlerHelper.processEnterKeyPressed(e)) {
           e.consume();
         }
@@ -67,53 +112,57 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         }
       }
       else {
-        myShellCommandHandlerHelper.processKeyPressed();
+        myShellCommandHandlerHelper.processKeyPressed(e);
       }
     });
+    Disposer.register(this, () -> getTerminalTextBuffer().removeModelListener(myVfsRefreshModelListener));
   }
 
-  @NotNull
-  Project getProject() {
-    return myProject;
+  private void refreshVfsIfPromptIsShown() {
+    String promptWhenCommandStarted = myPrevPromptWhenCommandStarted;
+    if (promptWhenCommandStarted != null) {
+      processTerminalBuffer(terminalTextBuffer -> {
+        TerminalLine line = myPrompt.getLineAtCursor(terminalTextBuffer);
+        String lineStr = line.getText();
+        if (lineStr.startsWith(promptWhenCommandStarted)) {
+          // A shown prompt probably suggests that last command has been terminated
+          SaveAndSyncHandler.getInstance().scheduleRefresh();
+          myPrevPromptWhenCommandStarted = null;
+          myVfsRefreshAlarm.cancelAllRequests();
+          getTerminalTextBuffer().removeModelListener(myVfsRefreshModelListener);
+        }
+        return null;
+      });
+    }
   }
 
   public void handleEnterPressed() {
-    myPromptUpdateNeeded = true;
+    myPrompt.reset();
   }
 
   public void handleAnyKeyPressed() {
-    if (myPromptUpdateNeeded) {
-      myPrompt = getLineAtCursor();
-      if (LOG.isDebugEnabled()) {
-        LOG.info("Guessed shell prompt: " + myPrompt);
-      }
-      myPromptUpdateNeeded = false;
-    }
+    myPrompt.onKeyPressed();
   }
 
   public void setCommandHistoryFilePath(@Nullable String commandHistoryFilePath) {
     myCommandHistoryFilePath = commandHistoryFilePath;
   }
 
-  @Nullable
-  public static String getCommandHistoryFilePath(@Nullable JBTerminalWidget terminalWidget) {
-    return terminalWidget instanceof ShellTerminalWidget ? ((ShellTerminalWidget)terminalWidget).myCommandHistoryFilePath : null;
+  public @Nullable String getCommandHistoryFilePath() {
+    return myCommandHistoryFilePath;
+  }
+
+  public void setShellCommand(@Nullable List<String> shellCommand) {
+    myShellCommand = shellCommand != null ? List.copyOf(shellCommand) : null;
+  }
+
+  public @Nullable List<String> getShellCommand() {
+    return myShellCommand;
   }
 
   @NotNull
   public String getTypedShellCommand() {
-    if (myPromptUpdateNeeded) {
-      return "";
-    }
-    String line = getLineAtCursor();
-    return StringUtil.trimStart(line, myPrompt);
-  }
-
-  private @NotNull String getLineAtCursor() {
-    return processTerminalBuffer(textBuffer -> {
-      TerminalLine line = textBuffer.getLine(getLineNumberAtCursor());
-      return line != null ? line.getText() : "";
-    });
+    return myPrompt.getTypedShellCommand();
   }
 
   <T> T processTerminalBuffer(@NotNull Function<TerminalTextBuffer, T> processor) {
@@ -148,12 +197,16 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   public void executeWithTtyConnector(@NotNull Consumer<TtyConnector> consumer) {
-    TtyConnector connector = getTtyConnector();
-    if (connector != null) {
-      consumer.consume(connector);
-    } else {
-      myPendingActionsToExecute.add(consumer);
+    asNewWidget().getTtyConnectorAccessor().executeWithTtyConnector(consumer);
+  }
+
+  @Override
+  public @Nls @Nullable String getDefaultSessionName(@NotNull TtyConnector connector) {
+    if (getProcessTtyConnector(connector) instanceof PtyProcessTtyConnector) {
+      // use name from settings for local terminal
+      return TerminalOptionsProvider.getInstance().getTabName();
     }
+    return super.getDefaultSessionName(connector);
   }
 
   @Override
@@ -162,28 +215,33 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
     String command;
     while ((command = myPendingCommandsToExecute.poll()) != null) {
-      try {
-        doExecuteCommand(command, ttyConnector);
-      }
-      catch (IOException e) {
-        LOG.warn("Cannot execute " + command, e);
-      }
-    }
-
-    Consumer<TtyConnector> consumer;
-    while ((consumer = myPendingActionsToExecute.poll()) != null) {
-      consumer.consume(ttyConnector);
+      doExecuteCommand(command, ttyConnector);
     }
   }
 
-  private void doExecuteCommand(@NotNull String shellCommand, @NotNull TtyConnector connector) throws IOException {
-    StringBuilder result = new StringBuilder();
-    if (myEscapePressed) {
-      result.append((char)KeyEvent.VK_BACK_SPACE); // remove Escape first, workaround for IDEA-221031
-    }
-    String enterCode = new String(getTerminalStarter().getCode(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8);
-    result.append(shellCommand).append(enterCode);
-    connector.write(result.toString());
+  private void doExecuteCommand(@NotNull String shellCommand, @NotNull TtyConnector connector) {
+    EXECUTOR.execute(() -> {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Before writing command " + shellCommand);
+      }
+      if (connector.isConnected()) {
+        StringBuilder result = new StringBuilder();
+        if (myEscapePressed) {
+          result.append((char)KeyEvent.VK_BACK_SPACE); // remove Escape first, workaround for IDEA-221031
+        }
+        String enterCode = new String(getTerminal().getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8);
+        result.append(shellCommand).append(enterCode);
+        try {
+          connector.write(result.toString());
+        }
+        catch (IOException e) {
+          LOG.info("Failed to write command for execution in terminal", e);
+        }
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("After writing command " + shellCommand);
+      }
+    });
   }
 
   public boolean hasRunningCommands() throws IllegalStateException {
@@ -198,18 +256,74 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   @Override
-  public List<TerminalAction> getActions() {
-    List<TerminalAction> baseActions = super.getActions();
-    if (TerminalView.isInTerminalToolWindow(this)) {
-      List<TerminalAction> actions = new ArrayList<>();
-      ContainerUtil.addIfNotNull(actions, TerminalActionUtil.createTerminalAction(this, RenameTerminalSessionActionKt.ACTION_ID, true));
-      return ContainerUtil.concat(baseActions, actions);
-    }
-    return baseActions;
+  public @NotNull JBTerminalSystemSettingsProvider getSettingsProvider() {
+    return (JBTerminalSystemSettingsProvider)super.getSettingsProvider();
   }
 
-  @Nullable
-  public static ProcessTtyConnector getProcessTtyConnector(@NotNull TtyConnector connector) {
+  @Override
+  public List<TerminalAction> getActions() {
+    List<TerminalAction> actions = new ArrayList<>(super.getActions());
+    if (TerminalToolWindowManager.isInTerminalToolWindow(this)) {
+      ContainerUtil.addIfNotNull(actions, TerminalActionUtil.createTerminalAction(this, RenameTerminalSessionActionKt.ACTION_ID, true));
+    }
+    JBTerminalWidgetListener listener = getListener();
+    JBTerminalSystemSettingsProvider settingsProvider = getSettingsProvider();
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getNewTabActionPresentation(), l -> {
+      l.onNewSession();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T));
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getCloseTabActionPresentation(), l -> {
+      l.onSessionClosed();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T));
+
+    actions.add(TerminalSplitAction.create(true, getListener()).separatorBefore(true));
+    actions.add(TerminalSplitAction.create(false, getListener()));
+    if (listener != null && listener.isGotoNextSplitTerminalAvailable()) {
+      actions.add(settingsProvider.getGotoNextSplitTerminalAction(listener, true));
+      actions.add(settingsProvider.getGotoNextSplitTerminalAction(listener, false));
+    }
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getPreviousTabActionPresentation(), l -> {
+      l.onPreviousTabSelected();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T));
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getNextTabActionPresentation(), l -> {
+      l.onNextTabSelected();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T));
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getMoveTabRightActionPresentation(), l -> {
+      l.moveTabRight();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_R).withEnabledSupplier(() -> listener != null && listener.canMoveTabRight()));
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getMoveTabLeftActionPresentation(), l -> {
+      l.moveTabLeft();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_L).withEnabledSupplier(() -> listener != null && listener.canMoveTabLeft()));
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getShowTabsActionPresentation(), l -> {
+      l.showTabs();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T));
+    return actions;
+  }
+
+  public @Nullable TerminalLineIntervalHighlighting highlightLineInterval(int lineNumber, int intervalStartOffset, int intervalLength,
+                                                                          @NotNull TextStyle style) {
+    TerminalLine line = getTerminalTextBuffer().getLine(lineNumber);
+    if (line == null) {
+      LOG.error("No line found");
+      return null;
+    }
+    TerminalLineIntervalHighlighting highlighting = line.addCustomHighlighting(intervalStartOffset, intervalLength, style);
+    getTerminalPanel().repaint();
+    return highlighting;
+  }
+
+  @Override
+  public @Nullable ProcessTtyConnector getProcessTtyConnector() {
+    return getProcessTtyConnector(getTtyConnector());
+  }
+
+  public static @Nullable ProcessTtyConnector getProcessTtyConnector(@Nullable TtyConnector connector) {
     if (connector instanceof ProcessTtyConnector) {
       return (ProcessTtyConnector)connector;
     }
@@ -217,5 +331,87 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       return getProcessTtyConnector(((ProxyTtyConnector)connector).getConnector());
     }
     return null;
+  }
+
+  private final class Prompt {
+    private volatile @NotNull String myPrompt = "";
+    private final AtomicInteger myTypings = new AtomicInteger(0);
+    private TerminalLine myTerminalLine;
+    private int myMaxCursorX = -1;
+
+    private void reset() {
+      myTypings.set(0);
+      myTerminalLine = null;
+      myMaxCursorX = -1;
+    }
+
+    private void onKeyPressed() {
+      TerminalLine terminalLine = processTerminalBuffer(this::getLineAtCursor);
+      if (terminalLine != myTerminalLine) {
+        myTypings.set(0);
+        myTerminalLine = terminalLine;
+        myMaxCursorX = -1;
+      }
+      String prompt = getLineTextUpToCursor(terminalLine);
+      if (myTypings.get() == 0) {
+        myPrompt = prompt;
+        myTerminalLine = terminalLine;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Guessed shell prompt: " + myPrompt);
+        }
+      }
+      else {
+        if (prompt.startsWith(myPrompt)) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Guessed prompt confirmed by typing# " + (myTypings.get() + 1));
+          }
+        }
+        else {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Prompt rejected by typing#" + (myTypings.get() + 1) + ", new prompt: " + prompt);
+          }
+          myPrompt = prompt;
+          myTypings.set(1);
+        }
+      }
+      myTypings.incrementAndGet();
+    }
+
+    private @NotNull String getTypedShellCommand() {
+      if (myTypings.get() == 0) {
+        return "";
+      }
+      TerminalLine terminalLine = processTerminalBuffer(this::getLineAtCursor);
+      if (terminalLine != myTerminalLine) {
+        return "";
+      }
+      String lineTextUpToCursor = getLineTextUpToCursor(terminalLine);
+      if (lineTextUpToCursor.startsWith(myPrompt)) {
+        return lineTextUpToCursor.substring(myPrompt.length());
+      }
+      return "";
+    }
+
+    private @NotNull TerminalLine getLineAtCursor(@NotNull TerminalTextBuffer textBuffer) {
+      return textBuffer.getLine(getLineNumberAtCursor());
+    }
+
+    private @NotNull String getLineTextUpToCursor(@Nullable TerminalLine line) {
+      if (line == null) return "";
+      return processTerminalBuffer(textBuffer -> {
+        int cursorX = getTerminal().getCursorX() - 1;
+        String lineStr = line.getText();
+        int maxCursorX = Math.max(myMaxCursorX, cursorX);
+        while (maxCursorX < lineStr.length() && !Character.isWhitespace(lineStr.charAt(maxCursorX))) {
+          maxCursorX++;
+        }
+        myMaxCursorX = maxCursorX;
+        return lineStr.substring(0, Math.min(maxCursorX, lineStr.length()));
+      });
+    }
+  }
+
+  public static @Nullable ShellTerminalWidget asShellJediTermWidget(@NotNull TerminalWidget widget) {
+    return ObjectUtils.tryCast(JBTerminalWidget.asJediTermWidget(widget), ShellTerminalWidget.class);
   }
 }

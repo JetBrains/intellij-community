@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 /**
  * Fragment of text for which complex layout is not required. Rendering is the same as if each character would be rendered on its own.
  */
-class SimpleTextFragment extends TextFragment {
+final class SimpleTextFragment extends TextFragment {
   private final char @NotNull [] myText;
   @NotNull
   private final Font myFont;

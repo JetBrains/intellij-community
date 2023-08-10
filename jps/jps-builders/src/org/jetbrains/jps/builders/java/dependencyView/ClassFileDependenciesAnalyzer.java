@@ -32,4 +32,8 @@ public class ClassFileDependenciesAnalyzer {
     }
     return classDependencies;
   }
+
+  public void close() {
+    myContext.close();
+  }
 }

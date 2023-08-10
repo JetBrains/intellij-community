@@ -24,17 +24,32 @@ public class FileHyperlinkRawData {
   private final int myDocumentColumn;
   private final int myHyperlinkStartInd;
   private final int myHyperlinkEndInd;
+  private final boolean myIsUseBrowser;
 
-  public FileHyperlinkRawData(@NotNull String filePath,
-                              int documentLine,
-                              int documentColumn,
-                              int hyperlinkStartInd,
-                              int hyperlinkEndInd) {
+  public FileHyperlinkRawData(
+    @NotNull String filePath,
+    int documentLine,
+    int documentColumn,
+    int hyperlinkStartInd,
+    int hyperlinkEndInd,
+    boolean isUseBrowser
+  ) {
     myFilePath = filePath;
     myDocumentLine = documentLine;
     myDocumentColumn = documentColumn;
     myHyperlinkStartInd = hyperlinkStartInd;
     myHyperlinkEndInd = hyperlinkEndInd;
+    myIsUseBrowser = isUseBrowser;
+  }
+
+  public FileHyperlinkRawData(
+    @NotNull String filePath,
+    int documentLine,
+    int documentColumn,
+    int hyperlinkStartInd,
+    int hyperlinkEndInd
+  ) {
+    this(filePath, documentLine, documentColumn, hyperlinkStartInd, hyperlinkEndInd, true);
   }
 
   @NotNull
@@ -58,6 +73,8 @@ public class FileHyperlinkRawData {
     return myHyperlinkEndInd;
   }
 
+  public boolean getIsUseBrowser() { return myIsUseBrowser; }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -69,7 +86,8 @@ public class FileHyperlinkRawData {
            myDocumentColumn == data.myDocumentColumn &&
            myHyperlinkStartInd == data.myHyperlinkStartInd &&
            myHyperlinkEndInd == data.myHyperlinkEndInd &&
-           myFilePath.equals(data.myFilePath);
+           myFilePath.equals(data.myFilePath) &&
+           myIsUseBrowser == data.myIsUseBrowser;
   }
 
   @Override
@@ -79,6 +97,7 @@ public class FileHyperlinkRawData {
     result = 31 * result + myDocumentColumn;
     result = 31 * result + myHyperlinkStartInd;
     result = 31 * result + myHyperlinkEndInd;
+    result = 31 * result + Boolean.hashCode(myIsUseBrowser);
     return result;
   }
 
@@ -88,6 +107,7 @@ public class FileHyperlinkRawData {
            ", line=" + myDocumentLine +
            ", column=" + myDocumentColumn +
            ", hyperlinkStartOffset=" + myHyperlinkStartInd +
-           ", hyperlinkEndOffset=" + myHyperlinkEndInd;
+           ", hyperlinkEndOffset=" + myHyperlinkEndInd +
+           ", isUseBrowser=" + myIsUseBrowser;
   }
 }

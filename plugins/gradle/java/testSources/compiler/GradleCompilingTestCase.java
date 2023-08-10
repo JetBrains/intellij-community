@@ -10,13 +10,15 @@ import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase;
 
 import java.io.File;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author Vladislav.Soroka
  */
 public abstract class GradleCompilingTestCase extends GradleImportingTestCase {
 
   protected void assertCopied(String path) {
-    assertTrue(file(path).exists());
+    assertThat(file(path)).exists();
   }
 
   protected void assertCopied(String path, String content) {
@@ -25,7 +27,7 @@ public abstract class GradleCompilingTestCase extends GradleImportingTestCase {
   }
 
   protected void assertNotCopied(String path) {
-    assertFalse(file(path).exists());
+    assertThat(file(path)).doesNotExist();
   }
 
   @Override

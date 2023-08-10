@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -30,6 +16,7 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   private final IntObjectMap<GlobalSearchScope> myScopeCache =
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private ModuleWithDependentsTestScope myModuleTestsWithDependentsScope;
+  private volatile ModuleWithDependenciesContentScope myModuleWithDependenciesContentScope;
 
   public ModuleScopeProviderImpl(@NotNull Module module) {
     myModule = module;
@@ -72,13 +59,17 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   @NotNull
   @Override
   public GlobalSearchScope getModuleContentScope() {
-    return getCachedScope(ModuleWithDependenciesScope.CONTENT);
+    return new ModuleContentScope(myModule);
   }
 
   @NotNull
   @Override
   public GlobalSearchScope getModuleContentWithDependenciesScope() {
-    return getCachedScope(ModuleWithDependenciesScope.CONTENT | ModuleWithDependenciesScope.MODULES);
+    ModuleWithDependenciesContentScope scope = myModuleWithDependenciesContentScope;
+    if (scope == null) {
+      myModuleWithDependenciesContentScope = scope = new ModuleWithDependenciesContentScope(myModule);
+    }
+    return scope;
   }
 
   @Override
@@ -92,7 +83,7 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   @Override
   @NotNull
   public GlobalSearchScope getModuleWithDependentsScope() {
-    return getModuleTestsWithDependentsScope().getBaseScope();
+    return getModuleTestsWithDependentsScope().getDelegate();
   }
 
   @Override
@@ -113,8 +104,19 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   }
 
   @Override
+  public @NotNull GlobalSearchScope getModuleProductionSourceScope() {
+    return getCachedScope(0);
+  }
+
+  @Override
+  public @NotNull GlobalSearchScope getModuleTestSourceScope() {
+    return getCachedScope(ModuleWithDependenciesScope.TESTS);
+  }
+
+  @Override
   public void clearCache() {
     myScopeCache.clear();
     myModuleTestsWithDependentsScope = null;
+    myModuleWithDependenciesContentScope = null;
   }
 }

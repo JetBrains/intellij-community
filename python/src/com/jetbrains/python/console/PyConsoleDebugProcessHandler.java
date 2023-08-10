@@ -11,29 +11,18 @@ import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.PyPositionConverter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
 
-public class PyConsoleDebugProcessHandler extends ProcessHandler implements PositionConverterProvider {
-  private final PyConsoleProcessHandler myConsoleProcessHandler;
+public final class PyConsoleDebugProcessHandler extends ProcessHandler implements PositionConverterProvider {
+  private final ProcessHandler myConsoleProcessHandler;
 
-  public PyConsoleDebugProcessHandler(final PyConsoleProcessHandler processHandler) {
+  public PyConsoleDebugProcessHandler(final ProcessHandler processHandler) {
     myConsoleProcessHandler = processHandler;
     processHandler.addProcessListener(new ProcessListener() {
       @Override
-      public void startNotified(@NotNull ProcessEvent event) {
-
-      }
-
-      @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         PyConsoleDebugProcessHandler.this.notifyProcessTerminated(event.getExitCode());
-      }
-
-      @Override
-      public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
-
       }
 
       @Override
@@ -64,13 +53,12 @@ public class PyConsoleDebugProcessHandler extends ProcessHandler implements Posi
     return null;
   }
 
-  public PyConsoleProcessHandler getConsoleProcessHandler() {
+  public ProcessHandler getConsoleProcessHandler() {
     return myConsoleProcessHandler;
   }
 
-  @Nullable
   @Override
-  public PyPositionConverter createPositionConverter(@NotNull PyDebugProcess debugProcess) {
+  public @NotNull PyPositionConverter createPositionConverter(@NotNull PyDebugProcess debugProcess) {
     if (myConsoleProcessHandler instanceof PositionConverterProvider) {
       return ((PositionConverterProvider)myConsoleProcessHandler).createPositionConverter(debugProcess);
     }

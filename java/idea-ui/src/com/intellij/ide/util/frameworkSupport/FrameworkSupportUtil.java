@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.framework.FrameworkTypeEx;
@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -77,12 +76,12 @@ public final class FrameworkSupportUtil {
     return false;
   }
 
-  public static Comparator<FrameworkSupportInModuleProvider> getFrameworkSupportProvidersComparator(final List<FrameworkSupportInModuleProvider> types) {
+  public static Comparator<FrameworkSupportInModuleProvider> getFrameworkSupportProvidersComparator(final List<? extends FrameworkSupportInModuleProvider> types) {
     DFSTBuilder<FrameworkSupportInModuleProvider>
       builder = new DFSTBuilder<>(GraphGenerator.generate(CachingSemiGraph.cache(new ProvidersGraph(types))));
     if (!builder.isAcyclic()) {
-      Pair<FrameworkSupportInModuleProvider, FrameworkSupportInModuleProvider> pair = builder.getCircularDependency();
-      LOG.error("Circular dependency between types '" + pair.getFirst().getFrameworkType().getId() + "' and '" + pair.getSecond().getFrameworkType().getId() + "' was found.");
+      Map.Entry<FrameworkSupportInModuleProvider, FrameworkSupportInModuleProvider> pair = builder.getCircularDependency();
+      LOG.error("Circular dependency between types '" + pair.getKey().getFrameworkType().getId() + "' and '" + pair.getValue().getFrameworkType().getId() + "' was found.");
     }
 
     return builder.comparator();
@@ -108,7 +107,7 @@ public final class FrameworkSupportUtil {
   private static class ProvidersGraph implements InboundSemiGraph<FrameworkSupportInModuleProvider> {
     private final List<FrameworkSupportInModuleProvider> myFrameworkSupportProviders;
 
-    ProvidersGraph(final List<FrameworkSupportInModuleProvider> frameworkSupportProviders) {
+    ProvidersGraph(final List<? extends FrameworkSupportInModuleProvider> frameworkSupportProviders) {
       myFrameworkSupportProviders = new ArrayList<>(frameworkSupportProviders);
     }
 

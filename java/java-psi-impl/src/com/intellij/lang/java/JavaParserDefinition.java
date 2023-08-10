@@ -51,12 +51,6 @@ public class JavaParserDefinition implements ParserDefinition {
 
   @NotNull
   @Override
-  public TokenSet getWhitespaceTokens() {
-    return TokenSet.WHITE_SPACE;
-  }
-
-  @NotNull
-  @Override
   public TokenSet getCommentTokens() {
     return ElementType.JAVA_COMMENT_BIT_SET;
   }
@@ -78,9 +72,11 @@ public class JavaParserDefinition implements ParserDefinition {
   public PsiElement createElement(ASTNode node) {
     IElementType type = node.getElementType();
     if (type instanceof JavaStubElementType) {
-      return ((JavaStubElementType)type).createPsi(node);
+      return ((JavaStubElementType<?, ?>)type).createPsi(node);
     }
 
+    // This exception is caught in com.intellij.psi.impl.source.tree.injected.InjectionRegistrarImpl.findNewInjectionHost
+    // Please, check that code if you make any changes here
     throw new IllegalArgumentException("Not a Java node: " + node + " (" + type + ", " + type.getLanguage() + ")");
   }
 

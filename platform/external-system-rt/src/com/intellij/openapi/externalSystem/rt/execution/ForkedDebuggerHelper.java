@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.rt.execution;
 
 import java.io.DataOutputStream;
@@ -20,6 +20,7 @@ public final class ForkedDebuggerHelper {
 
   public static final String FINISH_PARAMS = "FINISH_PARAMS";
   public static final String DISPATCH_PORT_SYS_PROP = "idea.debugger.dispatch.port";
+  public static final String DISPATCH_ADDR_SYS_PROP = "idea.debugger.dispatch.addr";
 
   // returns port at which debugger is supposed to communicate with debuggee process
   public static int setupDebugger(String debuggerId, String processName, String processParameters, String moduleDir) {
@@ -56,29 +57,21 @@ public final class ForkedDebuggerHelper {
   }
 
   private static void send(String debuggerId, String processName, String processParameters, int dispatchPort) throws IOException {
-    Socket socket = new Socket("127.0.0.1", dispatchPort);
-    try {
-      DataOutputStream stream = new DataOutputStream(socket.getOutputStream());
-      try {
+    String dispatchAddr = getAddrFromProperty();
+    try (Socket socket = new Socket(dispatchAddr, dispatchPort)) {
+      try (DataOutputStream stream = new DataOutputStream(socket.getOutputStream())) {
         stream.writeUTF(debuggerId);
         stream.writeUTF(processName);
         stream.writeUTF(processParameters);
         // wait for the signal handling
         int read = socket.getInputStream().read();
       }
-      finally {
-        stream.close();
-      }
-    }
-    finally {
-      socket.close();
     }
   }
 
   // copied from NetUtils
-  protected static int findAvailableSocketPort() throws IOException {
-    final ServerSocket serverSocket = new ServerSocket(0);
-    try {
+  private static int findAvailableSocketPort() throws IOException {
+    try (ServerSocket serverSocket = new ServerSocket(0)) {
       int port = serverSocket.getLocalPort();
       // workaround for linux : calling close() immediately after opening socket
       // may result that socket is not closed
@@ -99,9 +92,10 @@ public final class ForkedDebuggerHelper {
 
       return port;
     }
-    finally {
-      serverSocket.close();
-    }
+  }
+
+  public static String getAddrFromProperty() {
+    return System.getProperty(DISPATCH_ADDR_SYS_PROP, "127.0.0.1");
   }
 
   private static int getPortFromProperty() {

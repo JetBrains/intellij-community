@@ -1,23 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.IntroduceTargetChooser;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,43 +19,30 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionAction {
-  private final PsiElement myErrorElement;
-
-  public AddExceptionToExistingCatchFix(PsiElement errorElement) {myErrorElement = errorElement;}
+public final class AddExceptionToExistingCatchFix extends PsiBasedModCommandAction<PsiElement> {
+  public AddExceptionToExistingCatchFix(PsiElement errorElement) {
+    super(errorElement);
+  }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(myErrorElement)) return;
-    Context context = Context.from(myErrorElement);
-    if (context == null) return;
+  protected @NotNull ModCommand perform(@NotNull ActionContext ctx, @NotNull PsiElement element) {
+    Context context = Context.from(element);
+    if (context == null) return ModCommand.nop();
 
     List<? extends PsiClassType> unhandledExceptions = context.myExceptions;
     List<? extends PsiCatchSection> catches = context.myCatches;
 
-    if (catches.size() == 1) {
-      PsiCatchSection selectedSection = catches.get(0);
-      addTypeToCatch(unhandledExceptions, selectedSection);
-    }
-    else {
-      IntroduceTargetChooser.showChooser(
-        editor,
-        catches,
-        new Pass<PsiCatchSection>() {
-          @Override
-          public void pass(PsiCatchSection section) {
-            addTypeToCatch(unhandledExceptions, section);
-          }
-        },
-        section -> Objects.requireNonNull(section.getCatchType()).getPresentableText(),
-        QuickFixBundle.message("add.exception.to.existing.catch.chooser.title"),
-        catchSection -> Objects.requireNonNull(((PsiCatchSection)catchSection).getParameter()).getTextRange()
-      );
-    }
+    List<@NotNull ModCommandAction> actions = ContainerUtil.map(
+      catches, c -> ModCommand.psiUpdateStep(c,
+                                             Objects.requireNonNull(c.getCatchType()).getPresentableText(),
+                                             (section, updater) -> addTypeToCatch(unhandledExceptions, section, ctx.project()),
+                                              section -> Objects.requireNonNull(section.getParameter()).getTextRange()));
+    return new ModChooseAction(QuickFixBundle.message("add.exception.to.existing.catch.chooser.title"), actions);
   }
+
   private static List<PsiCatchSection> findSuitableSections(List<? extends PsiCatchSection> sections, @NotNull List<? extends PsiClassType> exceptionTypes, boolean isJava7OrHigher) {
     List<PsiCatchSection> finalSections = new ArrayList<>();
-    for (PsiCatchSection section : Lists.reverse(sections)) {
+    for (PsiCatchSection section : ContainerUtil.reverse(sections)) {
       finalSections.add(section);
 
       PsiType sectionType = section.getCatchType();
@@ -80,44 +61,37 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
     return finalSections;
   }
 
-  private static void addTypeToCatch(@NotNull List<? extends PsiClassType> exceptionsToAdd, @NotNull PsiCatchSection catchSection) {
-    Project project = catchSection.getProject();
-    WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("add.exception.to.existing.catch.family"), null, () -> {
-      if (!catchSection.isValid() || !exceptionsToAdd.stream().allMatch(type -> type.isValid())) return;
-      PsiParameter parameter = catchSection.getParameter();
-      if (parameter == null) return;
-      PsiTypeElement typeElement = parameter.getTypeElement();
-      if (typeElement == null) return;
-      PsiType parameterType = parameter.getType();
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      String flattenText = getTypeText(exceptionsToAdd, parameter, parameterType, factory);
-      PsiElement newTypeElement = typeElement.replace(factory.createTypeElementFromText(flattenText, parameter));
-      CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(newTypeElement));
-    });
+  private static void addTypeToCatch(@NotNull List<? extends PsiClassType> exceptionsToAdd, 
+                                     @NotNull PsiCatchSection catchSection, 
+                                     Project project) {
+    if (!catchSection.isValid() || !ContainerUtil.and(exceptionsToAdd, type -> type.isValid())) return;
+    PsiParameter parameter = catchSection.getParameter();
+    if (parameter == null) return;
+    PsiTypeElement typeElement = parameter.getTypeElement();
+    if (typeElement == null) return;
+    PsiType parameterType = parameter.getType();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    String flattenText = getTypeText(exceptionsToAdd, parameterType);
+    PsiElement newTypeElement = typeElement.replace(factory.createTypeElementFromText(flattenText, parameter));
+    CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(newTypeElement));
   }
 
   private static String getTypeText(@NotNull List<? extends PsiClassType> exceptionsToAdd,
-                                    PsiParameter parameter,
-                                    PsiType parameterType,
-                                    PsiElementFactory factory) {
-    String typeText = parameterType.getCanonicalText() + " | " + exceptionsToAdd.stream()
-                                                                                .map(type -> type.getCanonicalText())
-                                                                                .collect(Collectors.joining(" | "));
-    PsiTypeElement element = factory.createTypeElementFromText(typeText, parameter);
-    List<PsiType> flatten = PsiDisjunctionType.flattenAndRemoveDuplicates(((PsiDisjunctionType)element.getType()).getDisjunctions());
-    return flatten.stream()
-                  .map(type -> type.getCanonicalText())
-                  .collect(Collectors.joining(" | "));
+                                    PsiType parameterType) {
+    ArrayList<PsiType> types = new ArrayList<>();
+    types.add(parameterType);
+    types.addAll(exceptionsToAdd);
+    return PsiDisjunctionType.flattenAndRemoveDuplicates(types)
+      .stream()
+      .map(type -> type.getCanonicalText())
+      .collect(Collectors.joining(" | "));
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    Context context = Context.from(myErrorElement);
-    if (context != null) {
-      setText(context.getMessage());
-      return true;
-    }
-    return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext ctx, @NotNull PsiElement element) {
+    Context context = Context.from(element);
+    if (context == null) return null;
+    return Presentation.of(context.getMessage());
   }
 
   @Nls
@@ -164,8 +138,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       List<PsiTryStatement> parents = new SmartList<>();
       while (parent != null) {
         if (parent instanceof PsiLambdaExpression || parent instanceof PsiMember || parent instanceof PsiFile) break;
-        if (parent instanceof PsiTryStatement) {
-          PsiTryStatement tryStatement = (PsiTryStatement)parent;
+        if (parent instanceof PsiTryStatement tryStatement) {
           if (tryStatement.getFinallyBlock() != current && !(current instanceof PsiCatchSection)) {
             parents.add((PsiTryStatement)parent);
           }
@@ -195,8 +168,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
   }
 
   private static boolean replacementNeeded(@NotNull PsiClassType newException, @NotNull PsiType catchType) {
-    if (catchType instanceof PsiDisjunctionType) {
-      PsiDisjunctionType disjunction = (PsiDisjunctionType)catchType;
+    if (catchType instanceof PsiDisjunctionType disjunction) {
       for (PsiType type : disjunction.getDisjunctions()) {
         if (newException.isAssignableFrom(type)) {
           return true;
@@ -205,10 +177,5 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       return false;
     }
     return newException.isAssignableFrom(catchType);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 }

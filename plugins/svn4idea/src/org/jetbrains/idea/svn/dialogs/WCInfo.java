@@ -76,9 +76,7 @@ public class WCInfo {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof WCInfo)) return false;
-
-    final WCInfo wcInfo = (WCInfo)o;
+    if (!(o instanceof WCInfo wcInfo)) return false;
 
     return getPath().equals(wcInfo.getPath());
   }

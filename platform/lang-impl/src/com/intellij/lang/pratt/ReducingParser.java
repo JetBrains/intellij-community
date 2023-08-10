@@ -18,9 +18,6 @@ package com.intellij.lang.pratt;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class ReducingParser extends TokenParser{
   @Override
   public final boolean parseToken(final PrattBuilder builder) {

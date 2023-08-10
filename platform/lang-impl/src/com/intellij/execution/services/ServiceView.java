@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
@@ -7,6 +7,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
@@ -83,14 +84,14 @@ abstract class ServiceView extends JPanel implements Disposable {
     myModel.setGroupByContributor(value);
   }
 
-  abstract List<Object> getChildrenSafe(@NotNull List<Object> valueSubPath);
+  abstract List<Object> getChildrenSafe(@NotNull List<Object> valueSubPath, @NotNull Class<?> contributorClass);
 
   void setAutoScrollToSourceHandler(@NotNull AutoScrollToSourceHandler autoScrollToSourceHandler) {
     myAutoScrollToSourceHandler = autoScrollToSourceHandler;
   }
 
   void onViewSelected(@NotNull ServiceViewDescriptor descriptor) {
-    descriptor.onNodeSelected();
+    descriptor.onNodeSelected(ContainerUtil.map(getSelectedItems(), ServiceViewItem::getValue));
     if (myAutoScrollToSourceHandler != null) {
       myAutoScrollToSourceHandler.onMouseClicked(this);
     }
@@ -127,17 +128,16 @@ abstract class ServiceView extends JPanel implements Disposable {
         return serviceView.isGroupByServiceGroups();
       }
     };
-    serviceView.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, (DataProvider)dataId -> {
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    DataManager.registerDataProvider(serviceView, dataId -> {
+      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return ServiceViewManagerImpl.getToolWindowContextHelpId();
       }
-      if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
+      if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
         return ContainerUtil.map2Array(serviceView.getSelectedItems(), ServiceViewItem::getValue);
       }
-      if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-        List<Navigatable> navigatables =
-          ContainerUtil.mapNotNull(serviceView.getSelectedItems(), item -> item.getViewDescriptor().getNavigatable());
-        return navigatables.toArray(new Navigatable[0]);
+      if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
+        ServiceViewItem item = ContainerUtil.getOnlyItem(serviceView.getSelectedItems());
+        return item != null ? item.getValue() : null;
       }
       if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         List<ServiceViewItem> selection = serviceView.getSelectedItems();
@@ -161,6 +161,10 @@ abstract class ServiceView extends JPanel implements Disposable {
         return viewOptions;
       }
       List<ServiceViewItem> selectedItems = serviceView.getSelectedItems();
+      if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+        List<Navigatable> navigatables = ContainerUtil.mapNotNull(selectedItems, item -> item.getViewDescriptor().getNavigatable());
+        return navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+      }
       ServiceViewItem selectedItem = ContainerUtil.getOnlyItem(selectedItems);
       ServiceViewDescriptor descriptor = selectedItem == null || selectedItem.isRemoved() ? null : selectedItem.getViewDescriptor();
       DataProvider dataProvider = descriptor == null ? null : descriptor.getDataProvider();

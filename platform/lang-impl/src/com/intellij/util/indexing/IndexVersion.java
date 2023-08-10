@@ -1,22 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public final class IndexVersion {
   private static final int BASE_VERSION = 15;
   private static final IndexVersion NON_EXISTING_INDEX_VERSION = new IndexVersion(0, -1, -1);
-  private static final long ourVfsCreationStamp = FSRecords.getCreationTimestamp();
   private static final int MIN_FS_MODIFIED_TIMESTAMP_RESOLUTION = 2000; // https://en.wikipedia.org/wiki/File_Allocation_Table,
   // 1s for ext3 / hfs+ http://unix.stackexchange.com/questions/11599/determine-file-system-timestamp-accuracy
   // https://en.wikipedia.org/wiki/HFS_Plus
@@ -25,6 +26,7 @@ public final class IndexVersion {
   private static final ConcurrentMap<ID<?, ?>, IndexVersion> ourIndexIdToCreationStamp = new ConcurrentHashMap<>();
   private static volatile int ourVersion = -1;
   private static volatile long ourLastStamp; // ensure any file index stamp increases
+  private static final Logger LOG = FileBasedIndexImpl.LOG;
 
   private final long myModificationCount;
   private final int myIndexVersion;
@@ -64,6 +66,16 @@ public final class IndexVersion {
     return new IndexVersion(modificationCount, indexVersion, vfsCreationStamp);
   }
 
+  @Override
+  public String toString() {
+    return "IndexVersion{" +
+           "myModificationCount=" + myModificationCount +
+           ", myIndexVersion=" + myIndexVersion +
+           ", myCommonIndicesVersion=" + myCommonIndicesVersion +
+           ", myVfsCreationStamp=" + myVfsCreationStamp +
+           '}';
+  }
+
   private static long calcNextVersion(long modificationCount) {
     return Math.max(
       System.currentTimeMillis(),
@@ -84,7 +96,11 @@ public final class IndexVersion {
     if (ourVersion == -1) {
       int version = BASE_VERSION;
       for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensions()) {
-        version = 31 * version + ex.getVersion();
+        int extensionVersion = ex.getVersion();
+        // move rocksdb versioning outside
+        if (extensionVersion != -1) {
+          version = 31 * version + extensionVersion;
+        }
       }
       ourVersion = version;
     }
@@ -108,37 +124,40 @@ public final class IndexVersion {
       return new IndexVersionDiff.VersionChanged(version.myCommonIndicesVersion, getVersion(), "common index version");
     }
 
-    if (version.myVfsCreationStamp != ourVfsCreationStamp) {
-      return new IndexVersionDiff.VersionChanged(version.myVfsCreationStamp, ourVfsCreationStamp, "vfs creation stamp");
+    long timestamp = FSRecords.getCreationTimestamp();
+    if (version.myVfsCreationStamp != timestamp) {
+      return new IndexVersionDiff.VersionChanged(version.myVfsCreationStamp, timestamp, "vfs creation stamp");
     }
 
     return IndexVersionDiff.UP_TO_DATE;
   }
 
   public static synchronized void rewriteVersion(@NotNull ID<?,?> indexId, final int version) throws IOException {
-    if (FileBasedIndex.USE_IN_MEMORY_INDEX) return;
-    File file = IndexInfrastructure.getVersionFile(indexId);
-    if (FileBasedIndexImpl.LOG.isDebugEnabled()) {
-      FileBasedIndexImpl.LOG.debug("Rewriting " + file + "," + version);
+    if (FileBasedIndex.USE_IN_MEMORY_INDEX) {
+      return;
+    }
+
+    Path file = IndexInfrastructure.getVersionFile(indexId);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Rewriting " + file + "," + version);
     }
     IndexVersion newIndexVersion = getIndexVersion(indexId).nextVersion(version, FSRecords.getCreationTimestamp());
 
-    if (file.exists()) {
-      FileUtil.deleteWithRenaming(file);
-    } else {
-      //noinspection ResultOfMethodCallIgnored
-      file.getParentFile().mkdirs();
+    if (Files.exists(file)) {
+      FileUtil.deleteWithRenaming(file.toFile());
     }
-    try (final DataOutputStream os = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, FileNotFoundException>() {
-      @Override
-      public @Nullable DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
-        try {
-          return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+    else {
+      Files.createDirectories(file.getParent());
+    }
+    try (DataOutputStream os = FileUtilRt.doIOOperation(lastAttempt -> {
+      try {
+        return new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file)));
+      }
+      catch (IOException ex) {
+        if (lastAttempt) {
+          throw ex;
         }
-        catch (FileNotFoundException ex) {
-          if (lastAttempt) throw ex;
-          return null;
-        }
+        return null;
       }
     })) {
       assert os != null;
@@ -155,21 +174,26 @@ public final class IndexVersion {
 
   private static @NotNull IndexVersion getIndexVersion(@NotNull ID<?, ?> indexName) {
     IndexVersion version = ourIndexIdToCreationStamp.get(indexName);
-    if (version != null) return version;
+    if (version != null) {
+      return version;
+    }
 
     //noinspection SynchronizeOnThis
     synchronized (IndexingStamp.class) {
       version = ourIndexIdToCreationStamp.get(indexName);
       if (version != null) return version;
 
-      File versionFile = IndexInfrastructure.getVersionFile(indexName);
-      try (DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)))) {
-
-        version = new IndexVersion(in);
-        ourIndexIdToCreationStamp.put(indexName, version);
-        return version;
+      try {
+        Path versionFile = IndexInfrastructure.getVersionFile(indexName);
+        try (DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(versionFile)))) {
+          version = new IndexVersion(in);
+          LOG.debug("Version for index '", indexName, "' from file ", versionFile, ": ", version);
+          ourIndexIdToCreationStamp.put(indexName, version);
+          return version;
+        }
       }
-      catch (IOException ignore) {
+      catch (IOException e) {
+        LOG.debug("No version for index '" + indexName + "' (" + e + ")", e);
       }
       version = NON_EXISTING_INDEX_VERSION;
       ourIndexIdToCreationStamp.put(indexName, version);

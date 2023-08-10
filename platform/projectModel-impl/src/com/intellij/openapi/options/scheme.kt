@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options
 
 import com.intellij.configurationStore.CURRENT_NAME_CONVERTER
 import com.intellij.configurationStore.SchemeNameToFileName
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jdom.Parent
@@ -28,18 +29,33 @@ abstract class SchemeManagerFactory {
    * directoryName - like "keymaps".
    */
   @JvmOverloads
-  fun <SCHEME : Any, MUTABLE_SCHEME : SCHEME> create(@NonNls directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, directoryPath: Path? = null): SchemeManager<SCHEME> {
-    return create(directoryName, processor, presentableName, RoamingType.DEFAULT, directoryPath = directoryPath)
+  fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(
+    @NonNls directoryName: String,
+    processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
+    presentableName: String? = null,
+    directoryPath: Path? = null,
+    settingsCategory: SettingsCategory = SettingsCategory.OTHER
+  ): SchemeManager<SCHEME> {
+    return create(directoryName = directoryName,
+                  processor = processor,
+                  presentableName = presentableName,
+                  roamingType = RoamingType.DEFAULT,
+                  directoryPath = directoryPath,
+                  settingsCategory = settingsCategory)
   }
 
-  abstract fun <SCHEME : Any, MUTABLE_SCHEME : SCHEME> create(directoryName: String,
-                                                              processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
-                                                              presentableName: String? = null,
-                                                              roamingType: RoamingType = RoamingType.DEFAULT,
-                                                              schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
-                                                              streamProvider: StreamProvider? = null,
-                                                              directoryPath: Path? = null,
-                                                              isAutoSave: Boolean = true): SchemeManager<SCHEME>
+  abstract fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(
+    directoryName: String,
+    processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
+    presentableName: String? = null,
+    roamingType: RoamingType = RoamingType.DEFAULT,
+    schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
+    streamProvider: StreamProvider? = null,
+    directoryPath: Path? = null,
+    isAutoSave: Boolean = true,
+    settingsCategory: SettingsCategory = SettingsCategory.OTHER
+  ): SchemeManager<SCHEME>
+
   open fun dispose(schemeManager: SchemeManager<*>) {
   }
 }
@@ -48,10 +64,8 @@ enum class SchemeState {
   UNCHANGED, NON_PERSISTENT, POSSIBLY_CHANGED
 }
 
-abstract class SchemeProcessor<SCHEME, in MUTABLE_SCHEME: SCHEME> {
-  open fun getSchemeKey(scheme: SCHEME): String {
-    return (scheme as Scheme).name
-  }
+abstract class SchemeProcessor<SCHEME: Scheme, in MUTABLE_SCHEME: SCHEME> {
+  open fun getSchemeKey(scheme: SCHEME): String = scheme.name
 
   open fun isExternalizable(scheme: SCHEME): Boolean = scheme is ExternalizableScheme
 
@@ -75,7 +89,6 @@ abstract class SchemeProcessor<SCHEME, in MUTABLE_SCHEME: SCHEME> {
   /**
    * If scheme implements [com.intellij.configurationStore.SerializableScheme], this method will be called only if [com.intellij.configurationStore.SerializableScheme.getSchemeState] returns `null`
    */
-  @Suppress("KDocUnresolvedReference")
   open fun getState(scheme: SCHEME): SchemeState = SchemeState.POSSIBLY_CHANGED
 
   /**

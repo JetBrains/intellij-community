@@ -21,9 +21,6 @@ import com.jetbrains.jsonSchema.settings.mappings.JsonSchemaPatternComparator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-/**
- * @author Irina.Chernushina on 2/17/2016.
- */
 public class JsonSchemaPatternComparatorTest extends BasePlatformTestCase {
   public void testPatterns() {
     final JsonSchemaPatternComparator comparator = new JsonSchemaPatternComparator(getProject());

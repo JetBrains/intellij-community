@@ -24,10 +24,10 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -48,13 +48,15 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.StreamEx;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -89,7 +91,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
   protected void invokeAfterReload(Runnable runnable) { runnable.run(); }
 
-  @State(name = Configuration.COMPONENT_NAME, defaultStateAsResource = true, storages = @Storage("IntelliLang.xml"))
+  @State(name = Configuration.COMPONENT_NAME, defaultStateAsResource = true, storages = @Storage("IntelliLang.xml"), category = SettingsCategory.CODE)
   public static final class App extends Configuration implements Disposable {
     private volatile @NotNull List<BaseInjection> myDefaultInjections;
     private volatile @Nullable List<BaseInjection> myUnloadingDefaultInjections = null;
@@ -328,13 +330,12 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   private static List<BaseInjection> loadDefaultInjections() {
     final List<Configuration> cfgList = new ArrayList<>();
     final Set<Object> visited = new HashSet<>();
-    for (LanguageInjectionConfigBean configBean : LanguageInjectionSupport.CONFIG_EP_NAME.getExtensionList()) {
-      PluginDescriptor descriptor = configBean.getPluginDescriptor();
-      final ClassLoader loader = descriptor.getPluginClassLoader();
+    LanguageInjectionSupport.CONFIG_EP_NAME.processWithPluginDescriptor((configBean, pluginDescriptor) -> {
+      final ClassLoader loader = pluginDescriptor.getClassLoader();
       try {
         final Enumeration<URL> enumeration = loader.getResources(configBean.getConfigUrl());
         if (enumeration == null || !enumeration.hasMoreElements()) {
-          LOG.warn(descriptor.getPluginId() +": " + configBean.getConfigUrl() + " was not found");
+          LOG.warn(pluginDescriptor.getPluginId() +": " + configBean.getConfigUrl() + " was not found");
         }
         else {
           while (enumeration.hasMoreElements()) {
@@ -358,7 +359,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       catch (Exception e) {
         LOG.warn(e);
       }
-    }
+    });
 
     final List<BaseInjection> defaultInjections = new ArrayList<>();
     for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
@@ -569,7 +570,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
                                                    final T remove,
                                                    boolean global,
                                                    final List<? extends PsiElement> psiElementsToRemove,
-                                                   final PairProcessor<T, T> actualProcessor) {
+                                                   final PairProcessor<? super T, ? super T> actualProcessor) {
 
     PsiFile[] psiFiles = StreamEx.ofNullable(hostFile)
                                  .append(psiElementsToRemove
@@ -761,14 +762,9 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
       if (myDfaOption != DfaOption.RESOLVE) {
         switch (myDfaOption) {
-          case OFF:
-            break;
-          case ASSIGNMENTS:
-            JDOMExternalizerUtil.writeField(element, LOOK_FOR_VAR_ASSIGNMENTS, Boolean.TRUE.toString());
-            break;
-          case DFA:
-            JDOMExternalizerUtil.writeField(element, USE_DFA_IF_AVAILABLE, Boolean.TRUE.toString());
-            break;
+          case OFF -> {}
+          case ASSIGNMENTS -> JDOMExternalizerUtil.writeField(element, LOOK_FOR_VAR_ASSIGNMENTS, Boolean.TRUE.toString());
+          case DFA -> JDOMExternalizerUtil.writeField(element, USE_DFA_IF_AVAILABLE, Boolean.TRUE.toString());
         }
       }
     }

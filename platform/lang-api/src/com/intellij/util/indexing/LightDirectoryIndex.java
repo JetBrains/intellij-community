@@ -31,9 +31,9 @@ public final class LightDirectoryIndex<T> {
   private final Map<VirtualFile, T> myRootInfos = new ConcurrentHashMap<>();
   private final ConcurrentBitSet myNonInterestingIds = ConcurrentBitSet.create();
   private final T myDefValue;
-  private final Consumer<LightDirectoryIndex<T>> myInitializer;
+  private final Consumer<? super LightDirectoryIndex<T>> myInitializer;
 
-  public LightDirectoryIndex(@NotNull Disposable parentDisposable, @NotNull T defValue, @NotNull Consumer<LightDirectoryIndex<T>> initializer) {
+  public LightDirectoryIndex(@NotNull Disposable parentDisposable, @NotNull T defValue, @NotNull Consumer<? super LightDirectoryIndex<T>> initializer) {
     myDefValue = defValue;
     myInitializer = initializer;
     resetIndex();
@@ -47,7 +47,7 @@ public final class LightDirectoryIndex<T> {
 
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
           if (shouldReset(event)) {
             resetIndex();

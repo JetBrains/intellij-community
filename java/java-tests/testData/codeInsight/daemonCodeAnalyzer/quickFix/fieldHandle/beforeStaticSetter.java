@@ -1,4 +1,4 @@
-// "Change type to 'int'" "true"
+// "Change type to 'int'" "true-preview"
 import java.lang.invoke.*;
 
 public class Main {

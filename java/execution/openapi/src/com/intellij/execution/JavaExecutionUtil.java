@@ -28,9 +28,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author spleaner
- */
 public final class JavaExecutionUtil {
   private static final Logger LOG = Logger.getInstance(JavaExecutionUtil.class);
 
@@ -132,7 +129,7 @@ public final class JavaExecutionUtil {
   }
 
   @SuppressWarnings("MissingDeprecatedAnnotation")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void showExecutionErrorMessage(ExecutionException e, @NlsContexts.DialogTitle String title, Project project) {
     ExecutionErrorDialog.show(e, title, project);
   }

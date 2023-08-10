@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
@@ -33,24 +33,16 @@ public final class BuildScriptClasspathModelSerializationService implements Seri
   @Override
   public byte[] write(BuildScriptClasspathModel classpathModel, Class<? extends BuildScriptClasspathModel> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out);
-    try {
+    try (IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out)) {
       write(writer, myWriteContext, classpathModel);
-    }
-    finally {
-      writer.close();
     }
     return out.toByteArray();
   }
 
   @Override
   public BuildScriptClasspathModel read(byte[] object, Class<? extends BuildScriptClasspathModel> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return read(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 
@@ -126,7 +118,7 @@ public final class BuildScriptClasspathModelSerializationService implements Seri
   }
 
   private static List<ClasspathEntryModel> readClasspath(IonReader reader) {
-    List<ClasspathEntryModel> list = new ArrayList<ClasspathEntryModel>();
+    List<ClasspathEntryModel> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     ClasspathEntryModel entry;
@@ -141,9 +133,9 @@ public final class BuildScriptClasspathModelSerializationService implements Seri
     if (reader.next() == null) return null;
     reader.stepIn();
     ClasspathEntryModel entryModel = new ClasspathEntryModelImpl(
-      readStringSet(reader),
-      readStringSet(reader),
-      readStringSet(reader)
+      readFilesSet(reader),
+      readFilesSet(reader),
+      readFilesSet(reader)
     );
     reader.stepOut();
     return entryModel;
@@ -153,13 +145,13 @@ public final class BuildScriptClasspathModelSerializationService implements Seri
     private boolean isFirstModelRead;
     private File gradleHomeDir;
     private String gradleVersion;
-    private final IntObjectMap<BuildScriptClasspathModelImpl> objectMap = new IntObjectMap<BuildScriptClasspathModelImpl>();
+    private final IntObjectMap<BuildScriptClasspathModelImpl> objectMap = new IntObjectMap<>();
   }
 
   private static class WriteContext {
     private boolean isFirstModelWritten;
     private final ObjectCollector<BuildScriptClasspathModel, IOException> objectCollector =
-      new ObjectCollector<BuildScriptClasspathModel, IOException>();
+      new ObjectCollector<>();
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.mlcompletion
 
 import com.intellij.codeInsight.completion.CompletionLocation
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.ml.ContextFeatures
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
+import com.jetbrains.python.codeInsight.completion.PyMultipleArgumentsCompletionContributor
 import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.PyPrevCallsCompletionFeatures
 import com.jetbrains.python.psi.PyParameter
 
@@ -24,7 +25,7 @@ class PyElementFeatureProvider : ElementFeatureProvider {
     PyCompletionFeatures.getPyLookupElementInfo(element)?.let { info ->
       result["kind"] = MLFeatureValue.categorical(info.kind)
       result["is_builtins"] = MLFeatureValue.binary(info.isBuiltins)
-      PyCompletionFeatures.getNumberOfOccurrencesInScope(info.kind, contextFeatures, lookupString)?.let {
+      PyCompletionFeatures.getNumberOfOccurrencesInScope(info.kind, contextFeatures, lookupString).let {
         result["number_of_occurrences_in_scope"] = MLFeatureValue.numerical(it)
       }
       PyCompletionFeatures.getBuiltinPopularityFeature(lookupString, info.isBuiltins)?.let {
@@ -98,6 +99,10 @@ class PyElementFeatureProvider : ElementFeatureProvider {
           weightEmptyPrevCalls != null -> result["prev_2_calls_weight_empty_prev_calls"] = MLFeatureValue.numerical(weightEmptyPrevCalls!!)
         }
       }}
+    }
+
+    element.getUserData(PyMultipleArgumentsCompletionContributor.MULTIPLE_ARGUMENTS_VARIANT_KEY)?.let {
+      result["is_multiple_arguments"] = MLFeatureValue.binary(true)
     }
 
     return result

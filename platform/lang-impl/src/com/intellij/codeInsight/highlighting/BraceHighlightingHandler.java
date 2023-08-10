@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil.BraceHighlightingAndNavigationContext;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,7 +15,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.HighlighterIteratorWrapper;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
@@ -58,15 +55,15 @@ public class BraceHighlightingHandler {
   @NotNull
   private final Project myProject;
   @NotNull
-  private final EditorEx myEditor;
+  private final Editor myEditor;
   private final Alarm myAlarm;
 
-  private final DocumentEx myDocument;
+  private final Document myDocument;
   @NotNull
   private final PsiFile myPsiFile;
   private final CodeInsightSettings myCodeInsightSettings;
 
-  BraceHighlightingHandler(@NotNull Project project, @NotNull EditorEx editor, @NotNull Alarm alarm, @NotNull PsiFile psiFile) {
+  BraceHighlightingHandler(@NotNull Project project, @NotNull Editor editor, @NotNull Alarm alarm, @NotNull PsiFile psiFile) {
     myProject = project;
 
     myEditor = editor;
@@ -80,7 +77,7 @@ public class BraceHighlightingHandler {
   @NotNull
   public static EditorHighlighter getLazyParsableHighlighterIfAny(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     if (!PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument())) {
-      return ((EditorEx)editor).getHighlighter();
+      return editor.getHighlighter();
     }
     PsiElement elementAt = psiFile.findElementAt(editor.getCaretModel().getOffset());
     for (PsiElement e : SyntaxTraverser.psiApi().parents(elementAt).takeWhile(Conditions.notEqualTo(psiFile))) {
@@ -111,7 +108,7 @@ public class BraceHighlightingHandler {
       highlighter.setText(editor.getDocument().getText(range));
       return highlighter;
     }
-    return ((EditorEx)editor).getHighlighter();
+    return editor.getHighlighter();
   }
 
   void updateBraces() {
@@ -119,16 +116,7 @@ public class BraceHighlightingHandler {
 
     clearBraceHighlighters();
 
-    if (!myPsiFile.isValid()) return;
-
-    if (!myCodeInsightSettings.HIGHLIGHT_BRACES) return;
-
-    if (myEditor.getSelectionModel().hasSelection()) return;
-    
-    if (myEditor.getSoftWrapModel().isInsideOrBeforeSoftWrap(myEditor.getCaretModel().getVisualPosition())) return;
-
-    TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
-    if (state != null && !state.isFinished()) return;
+    if (!BackgroundHighlightingUtil.needMatching(myEditor, myCodeInsightSettings)) return;
 
     int offset = myEditor.getCaretModel().getOffset();
     CharSequence chars = myEditor.getDocument().getCharsSequence();
@@ -137,13 +125,13 @@ public class BraceHighlightingHandler {
 
     BraceHighlightingAndNavigationContext context = BraceMatchingUtil.computeHighlightingAndNavigationContext(myEditor, myPsiFile);
     if (context != null) {
-      doHighlight(context.currentBraceOffset, context.isCaretAfterBrace);
-      offset = context.currentBraceOffset;
+      doHighlight(context.currentBraceOffset(), context.isCaretAfterBrace());
+      offset = context.currentBraceOffset();
     }
     else if (offset > 0 && offset < chars.length()) {
       // There is a possible case that there are paired braces nearby the caret position and the document contains only white
       // space symbols between them. We want to highlight such braces as well.
-      // Example: 
+      // Example:
       //     public void test() { <caret>
       //     }
       char c = chars.charAt(offset);
@@ -154,8 +142,8 @@ public class BraceHighlightingHandler {
       if (backwardNonSpaceEndOffset > 0 && backwardNonSpaceEndOffset < offset) {
         context = BraceMatchingUtil.computeHighlightingAndNavigationContext(myEditor, myPsiFile, backwardNonSpaceEndOffset);
         if (context != null) {
-          doHighlight(context.currentBraceOffset, true);
-          offset = context.currentBraceOffset;
+          doHighlight(context.currentBraceOffset(), true);
+          offset = context.currentBraceOffset();
           searchForward = false;
         }
       }
@@ -166,8 +154,8 @@ public class BraceHighlightingHandler {
         if (nextNonSpaceCharOffset > offset) {
           context = BraceMatchingUtil.computeHighlightingAndNavigationContext(myEditor, myPsiFile, nextNonSpaceCharOffset);
           if (context != null) {
-            doHighlight(context.currentBraceOffset, true);
-            offset = context.currentBraceOffset;
+            doHighlight(context.currentBraceOffset(), true);
+            offset = context.currentBraceOffset();
           }
         }
       }
@@ -252,7 +240,7 @@ public class BraceHighlightingHandler {
     highlightBraces(brace1Start, brace2End, matched, scopeHighlighting, fileType);
   }
 
-  private void highlightBraces(@Nullable TextRange lBrace, @Nullable TextRange rBrace, boolean matched, boolean scopeHighlighting, @NotNull FileType fileType) {
+  void highlightBraces(@Nullable TextRange lBrace, @Nullable TextRange rBrace, boolean matched, boolean scopeHighlighting, @NotNull FileType fileType) {
     if (!matched && fileType == FileTypes.PLAIN_TEXT) {
       return;
     }
@@ -272,8 +260,8 @@ public class BraceHighlightingHandler {
     if (lBrace != null && rBrace !=null) {
       int startLine = myEditor.offsetToLogicalPosition(lBrace.getStartOffset()).line;
       int endLine = myEditor.offsetToLogicalPosition(rBrace.getEndOffset()).line;
-      if (endLine - startLine > 0) {
-        lineMarkFragment(myEditor, myDocument, startLine, endLine, matched);
+      if (endLine - startLine > 0 && myEditor instanceof EditorEx) {
+        lineMarkFragment((EditorEx)myEditor, myDocument, startLine, endLine, matched);
       }
 
       if (!scopeHighlighting) {
@@ -322,7 +310,7 @@ public class BraceHighlightingHandler {
                                    @NotNull PsiFile psiFile,
                                    int leftBraceStart,
                                    int leftBraceEnd) {
-    new BraceHighlightingHandler(psiFile.getProject(), (EditorEx)editor, BackgroundHighlighter.getAlarm(), psiFile).showScopeHint(leftBraceStart, leftBraceEnd, null);
+    new BraceHighlightingHandler(psiFile.getProject(), editor, BackgroundHighlighter.getAlarm(), psiFile).showScopeHint(leftBraceStart, leftBraceEnd, null);
   }
 
   /**
@@ -331,7 +319,7 @@ public class BraceHighlightingHandler {
    * @param startComputation optional adjuster for the brace start offset
    */
   private void showScopeHint(int leftBraceStart, int leftBraceEnd, @Nullable IntUnaryOperator startComputation) {
-    EditorEx editor = myEditor;
+    Editor editor = myEditor;
     Project project = editor.getProject();
     if (project == null) {
       return;
@@ -375,7 +363,9 @@ public class BraceHighlightingHandler {
       hint.hide();
       myEditor.putUserData(HINT_IN_EDITOR_KEY, null);
     }
-    removeLineMarkers(myEditor);
+    if (myEditor instanceof EditorEx) {
+      removeLineMarkers((EditorEx)myEditor);
+    }
   }
 
   /**

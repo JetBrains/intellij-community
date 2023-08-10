@@ -29,7 +29,10 @@ package ie.wombat.jbdiff;
 import com.intellij.updater.Utils;
 import com.intellij.updater.Utils.OpenByteArrayOutputStream;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.zip.GZIPOutputStream;
@@ -40,7 +43,7 @@ import java.util.zip.GZIPOutputStream;
  *
  * @author <a href="maito:jdesbonnet@gmail.com">Joe Desbonnet</a>
  */
-public class JBDiff {
+public final class JBDiff {
   private static void selectSplit(int[] I, int[] V, int start, int len, int h) {
     int j;
     for (int k = start; k < start + len; k += j) {
@@ -256,7 +259,7 @@ public class JBDiff {
     }
   }
 
-  public static byte[] bsdiff(InputStream oldFileIn, InputStream newFileIn, OutputStream diffFileOut) throws IOException {
+  public static byte[] bsdiff(InputStream oldFileIn, InputStream newFileIn, ByteArrayOutputStream diffFileOut, int timeout) throws IOException {
     byte[] oldBuf = Utils.readBytes(oldFileIn);
     int oldSize = oldBuf.length;
 
@@ -308,7 +311,14 @@ public class JBDiff {
     IntByRef pos = new IntByRef();
     int ctrlBlockLen = 0;
 
+    long stop = timeout > 0 ? System.nanoTime() + timeout * 1_000_000_000L : 0;
+
     while (scan < newSize) {
+      if (stop != 0 && System.nanoTime() > stop) {
+        diffFileOut.reset();
+        return newBuf;
+      }
+
       oldScore = 0;
 
       for (scSc = scan += len; scan < newSize; scan++) {
@@ -411,19 +421,19 @@ public class JBDiff {
     I = null;
 
     /* Write diff block */
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") GZIPOutputStream dbOut = new GZIPOutputStream(diffOut);
+    GZIPOutputStream dbOut = new GZIPOutputStream(diffOut);
     dbOut.write(db, 0, dbLen);
     dbOut.finish();
     int diffBlockLen = diffOut.size() - ctrlBlockLen;
 
     /* Write extra block */
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") GZIPOutputStream ebOut = new GZIPOutputStream(diffOut);
+    GZIPOutputStream ebOut = new GZIPOutputStream(diffOut);
     ebOut.write(eb, 0, ebLen);
     ebOut.finish();
 
     diffOut.close();
 
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream headerStream = new DataOutputStream(diffFileOut);
+    DataOutputStream headerStream = new DataOutputStream(diffFileOut);
     headerStream.writeLong(ctrlBlockLen);  // ctrlBlockLen (compressed)
     headerStream.writeLong(diffBlockLen);  // diffBlockLen (compressed)
     headerStream.writeLong(newSize);

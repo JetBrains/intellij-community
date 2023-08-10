@@ -5,11 +5,11 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -18,6 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public abstract class GrIntroduceFieldHandlerBase<Settings extends GrIntroduceSettings> extends GrIntroduceHandlerBase<Settings, PsiClass> {
   @Override
@@ -31,7 +32,7 @@ public abstract class GrIntroduceFieldHandlerBase<Settings extends GrIntroduceSe
       return new PsiClass[]{aClass};
     }
     else {
-      List<PsiClass> result = ContainerUtil.newArrayList(aClass);
+      List<PsiClass> result = new SmartList<>(aClass);
       while (aClass != null) {
         aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
         ContainerUtil.addIfNotNull(result, aClass);
@@ -41,11 +42,11 @@ public abstract class GrIntroduceFieldHandlerBase<Settings extends GrIntroduceSe
   }
 
   @Override
-  protected void showScopeChooser(PsiClass[] scopes, final Pass<PsiClass> callback, Editor editor) {
+  protected void showScopeChooser(PsiClass[] scopes, final Consumer<? super PsiClass> callback, Editor editor) {
     PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<>() {
       @Override
       public boolean execute(@NotNull PsiClass element) {
-        callback.pass(element);
+        callback.accept(element);
         return false;
       }
     };

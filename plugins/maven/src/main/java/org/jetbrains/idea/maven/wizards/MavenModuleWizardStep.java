@@ -22,7 +22,6 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,6 +42,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
+/**
+ * @deprecated use {@link MavenNewProjectWizardStep} instead
+ */
+@Deprecated
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class MavenModuleWizardStep extends ModuleWizardStep {
   private static final Icon WIZARD_ICON = null;
 
@@ -95,10 +99,6 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     loadSettings();
   }
 
-  /**
-   * @deprecated use {@link MavenModuleWizardStep#MavenModuleWizardStep(AbstractMavenModuleBuilder, WizardContext, boolean)} instead
-   */
-  @Deprecated
   public MavenModuleWizardStep(MavenModuleBuilder builder, WizardContext context, boolean includeArtifacts) {
     this((AbstractMavenModuleBuilder)builder, context, includeArtifacts);
   }

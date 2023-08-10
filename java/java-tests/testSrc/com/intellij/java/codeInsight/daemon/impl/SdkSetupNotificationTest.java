@@ -13,9 +13,6 @@ import com.intellij.ui.EditorNotificationPanel;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author Pavel.Dolgov
- */
 @TestFor(classes = JavaProjectSdkSetupValidator.class)
 public class SdkSetupNotificationTest extends SdkSetupNotificationTestBase {
   public void testProjectSdk() {

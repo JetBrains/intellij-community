@@ -72,6 +72,10 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     myEventPublisher.onRootPresentationAdded(myTestsRootProxy, rootName, comment, rootLocation);
   }
 
+  public void onSetNodeProperty(final @NotNull TestSetNodePropertyEvent event) {
+    logProblem("Event unsupported: " + event);
+  }
+
   protected SMTestProxy createProxy(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
     return new SMTestProxy(testName, false, locationHint, metaInfo, false);
   }
@@ -161,7 +165,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     myTestsRootProxy.setDurationStrategy(durationStrategy);
   }
 
-  private static void processTreeBuildEvents(final List<Runnable> runnables) {
+  private static void processTreeBuildEvents(final List<? extends Runnable> runnables) {
     for (Runnable runnable : runnables) {
       runnable.run();
     }

@@ -2,9 +2,6 @@ package bytecodeAnalysis.data;
 
 import bytecodeAnalysis.ExpectLeaking;
 
-/**
- * @author lambdamix
- */
 public class TestLeakingParametersData {
   int z;
 

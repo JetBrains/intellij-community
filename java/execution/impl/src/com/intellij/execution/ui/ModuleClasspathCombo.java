@@ -65,12 +65,12 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
   }
 
   private void buildModel(@NotNull Collection<? extends Module> modules) {
-    List<@NotNull Item> items = ContainerUtil.map(modules, Item::new);
-    items.sort(Comparator.comparing(o -> o.myModule.getName()));
+    List<@NotNull Item> items = ContainerUtil.sorted(ContainerUtil.map(modules, Item::new),
+    Comparator.comparing(o -> o.myModule.getName()));
     CollectionComboBoxModel<Item> model = new ModelWithOptions();
     model.add(items);
     if (myNoModule != null) {
-      model.add(new Item((Module)null));
+      model.add((Item)null);
     }
     if (myOptionItems.length > 0) {
       model.add(mySeparator);
@@ -103,7 +103,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
   @Override
   public void setSelectedModule(Module module) {
     List<Item> items = ((CollectionComboBoxModel<Item>)super.getModel()).getItems();
-    setSelectedItem(ContainerUtil.find(items, item -> module == item.myModule));
+    setSelectedItem(ContainerUtil.find(items, item -> item != null && module == item.myModule));
   }
 
   @Override
@@ -174,7 +174,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
 
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends Item> list, Item value, int index, boolean selected, boolean hasFocus) {
-      String name = value == null ? null : value.myModule == null ? myNoModule : value.myModule.getName();
+      String name = value == null || value.myModule == null ? myNoModule : value.myModule.getName();
       if (index == -1 && name != null) {
         //noinspection HardCodedStringLiteral
         append("-cp ", SimpleTextAttributes.GRAYED_ATTRIBUTES);

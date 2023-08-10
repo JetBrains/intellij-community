@@ -6,6 +6,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.indexing.IdFilter.FilterScopeType
 import com.intellij.util.io.EnumeratorStringDescriptor
 import junit.framework.TestCase
 import org.junit.ClassRule
@@ -17,12 +18,12 @@ class KeyHashLogTest {
   companion object {
     @JvmField
     @ClassRule
-    val appRule = ApplicationRule()
+    val appRule: ApplicationRule = ApplicationRule()
   }
 
   @Rule
   @JvmField
-  val temporaryDirectory = TemporaryDirectory()
+  val temporaryDirectory: TemporaryDirectory = TemporaryDirectory()
 
   @Test
   fun testAdd() {
@@ -156,15 +157,36 @@ class KeyHashLogTest {
     }
   }
 
+  @Test
+  fun testDoNotCacheResultsForNonProjectFilters() {
+    val dir = temporaryDirectory.createDir()
+    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+      it.addKeyHashToVirtualFileMapping("qwe", 1)
+      it.addKeyHashToVirtualFileMapping("asd", 2)
+
+      val resultForSubProjectFilterNotCached = it.getSuitableKeyHashes(setOf(1).toFilter(FilterScopeType.OTHER), project)
+      UsefulTestCase.assertEquals(setOf("qwe").toHashes(), resultForSubProjectFilterNotCached)
+
+      val resultForProjectAndLibraryFilter = it.getSuitableKeyHashes(setOf(1, 2).toFilter(FilterScopeType.PROJECT_AND_LIBRARIES), project)
+      UsefulTestCase.assertEquals(setOf("qwe", "asd").toHashes(), resultForProjectAndLibraryFilter)
+
+      val resultForSubProjectFilterCached = it.getSuitableKeyHashes(setOf(1).toFilter(FilterScopeType.OTHER), project)
+      UsefulTestCase.assertEquals(setOf("qwe", "asd").toHashes(), resultForSubProjectFilterCached)
+
+      val resultForProjectFilter = it.getSuitableKeyHashes(setOf(1).toFilter(FilterScopeType.PROJECT), project)
+      UsefulTestCase.assertEquals(setOf("qwe").toHashes(), resultForProjectFilter)
+    }
+  }
+
   private val project = ProjectManager.getInstance().defaultProject
 
-  private fun Set<Int>.toFilter() : IdFilter = object : IdFilter() {
+  private fun Set<Int>.toFilter(type: FilterScopeType = FilterScopeType.PROJECT) : IdFilter = object : IdFilter() {
     override fun containsFileId(id: Int): Boolean {
       return contains(id)
     }
 
     override fun getFilteringScopeType(): FilterScopeType {
-      return FilterScopeType.PROJECT
+      return type
     }
   }
 

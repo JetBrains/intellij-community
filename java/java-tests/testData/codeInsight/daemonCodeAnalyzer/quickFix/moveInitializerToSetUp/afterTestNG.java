@@ -1,4 +1,4 @@
-// "Move initializer to setUp method" "true"
+// "Move initializer to setUp method" "true-preview"
 public class X {
   <caret>int i;
 

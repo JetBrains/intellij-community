@@ -83,6 +83,11 @@ public class ChangeRevision extends Revision {
   }
 
   @Override
+  public RootEntry getRoot() {
+    return myRoot;
+  }
+
+  @Override
   public String getLabel() {
     return myLabel;
   }

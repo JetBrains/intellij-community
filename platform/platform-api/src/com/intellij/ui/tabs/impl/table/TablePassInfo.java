@@ -6,20 +6,29 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-class TablePassInfo extends LayoutPassInfo {
+/**
+ * @deprecated use {@link com.intellij.ui.tabs.impl.multiRow.MultiRowLayout}
+ * with {@link com.intellij.ui.tabs.impl.multiRow.MultiRowPassInfo} instead
+ */
+@SuppressWarnings("removal")
+@Deprecated(forRemoval = true)
+public final class TablePassInfo extends LayoutPassInfo {
   final List<TableRow> table = new ArrayList<>();
   public final Rectangle toFitRec;
+  public final Rectangle tabRectangle = new Rectangle();
   final Map<TabInfo, TableRow> myInfo2Row = new HashMap<>();
   final JBTabsImpl myTabs;
+  public final List<TabInfo> invisible = new ArrayList<>();
+  final Map<TabInfo, Integer> lengths = new LinkedHashMap<>();
+  final Map<TabInfo, Rectangle> bounds = new HashMap<>();
+  int requiredLength = 0;
 
-  TablePassInfo(final JBTabsImpl tabs, List<TabInfo> visibleInfos) {
+  TablePassInfo(TableLayout layout, List<TabInfo> visibleInfos) {
     super(visibleInfos);
-    myTabs = tabs;
+    myTabs = layout.myTabs;
     final Insets insets = myTabs.getLayoutInsets();
     toFitRec =
       new Rectangle(insets.left, insets.top, myTabs.getWidth() - insets.left - insets.right, myTabs.getHeight() - insets.top - insets.bottom);
@@ -31,32 +40,25 @@ class TablePassInfo extends LayoutPassInfo {
     return index != -1 && index == table.size() - 1;
   }
 
-  @Deprecated
   @Override
   public int getRowCount() {
     return table.size();
   }
 
-  @Deprecated
-  @Override
-  public int getColumnCount(final int row) {
-    return table.get(row).myColumns.size();
-  }
-
-  @Deprecated
-  @Override
-  public TabInfo getTabAt(final int row, final int column) {
-    if(getRowCount() <= row) return null;
-    TableRow tableRow = table.get(row);
-    if(tableRow == null) return null;
-    List<TabInfo> columns = tableRow.myColumns;
-    if(columns.size() <= column) return null;
-
-    return columns.get(column);
-  }
-
   @Override
   public Rectangle getHeaderRectangle() {
-    return (Rectangle)toFitRec.clone();
+    return (Rectangle)tabRectangle.clone();
+  }
+
+  @Override
+  public int getRequiredLength() {
+    return requiredLength;
+  }
+
+  @Override
+  public int getScrollExtent() {
+    return !moreRect.isEmpty() ? moreRect.x - toFitRec.x - myTabs.getActionsInsets().left
+           : table.size() > 1 || entryPointRect.isEmpty() ? toFitRec.width
+           : entryPointRect.x - toFitRec.x - myTabs.getActionsInsets().left;
   }
 }

@@ -32,6 +32,14 @@ public class RepositoryLibraryPropertiesDialog extends DialogWrapper {
                                            RepositoryLibraryPropertiesModel model,
                                            RepositoryLibraryDescription description,
                                            final boolean changesRequired, final boolean allowExcludingTransitiveDependencies) {
+    this(project, model, description, changesRequired, allowExcludingTransitiveDependencies, false);
+  }
+
+  public RepositoryLibraryPropertiesDialog(@Nullable Project project,
+                                           RepositoryLibraryPropertiesModel model,
+                                           RepositoryLibraryDescription description,
+                                           final boolean changesRequired, final boolean allowExcludingTransitiveDependencies,
+                                           final boolean globalLibrary) {
     super(project);
     this.model = model;
     propertiesEditor =
@@ -40,7 +48,7 @@ public class RepositoryLibraryPropertiesDialog extends DialogWrapper {
         public void onChange(@NotNull RepositoryLibraryPropertiesEditor editor) {
           setOKActionEnabled(editor.isValid() && (!changesRequired || editor.hasChanges()));
         }
-      });
+      }, globalLibrary);
     setTitle(description.getDisplayName());
     init();
   }

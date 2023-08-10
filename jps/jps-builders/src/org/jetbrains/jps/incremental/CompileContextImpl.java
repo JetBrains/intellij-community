@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
-import gnu.trove.TObjectLongHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.ModuleChunk;
@@ -43,18 +31,18 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final MessageHandler myDelegateMessageHandler;
   private final Set<ModuleBuildTarget> myNonIncrementalModules = new HashSet<>();
 
-  private final TObjectLongHashMap<BuildTarget<?>> myCompilationStartStamp = new TObjectLongHashMap<>();
+  private final Object2LongMap<BuildTarget<?>> myCompilationStartStamp = new Object2LongOpenHashMap<>();
   private final ProjectDescriptor myProjectDescriptor;
   private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
   private volatile float myDone = -1.0f;
   private final EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
 
-  CompileContextImpl(CompileScope scope,
-                     ProjectDescriptor pd,
-                     MessageHandler delegateMessageHandler,
-                     Map<String, String> builderParams,
-                     CanceledStatus cancelStatus) {
+  CompileContextImpl(@NotNull CompileScope scope,
+                     @NotNull ProjectDescriptor pd,
+                     @NotNull MessageHandler delegateMessageHandler,
+                     @NotNull Map<String, String> builderParams,
+                     @NotNull CanceledStatus cancelStatus) {
     myProjectDescriptor = pd;
     myBuilderParams = Collections.unmodifiableMap(builderParams);
     myCancelStatus = cancelStatus;
@@ -63,19 +51,19 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @TestOnly
-  public static CompileContext createContextForTests(CompileScope scope, ProjectDescriptor descriptor) {
+  public static CompileContext createContextForTests(@NotNull CompileScope scope, @NotNull ProjectDescriptor descriptor) {
     return new CompileContextImpl(scope, descriptor, DEAF, Collections.emptyMap(), CanceledStatus.NULL);
   }
 
   @Override
   public long getCompilationStartStamp(BuildTarget<?> target) {
     synchronized (myCompilationStartStamp) {
-      return myCompilationStartStamp.get(target);
+      return myCompilationStartStamp.getLong(target);
     }
   }
 
   @Override
-  public void setCompilationStartStamp(Collection<? extends BuildTarget<?>> targets, long stamp) {
+  public void setCompilationStartStamp(@NotNull Collection<? extends BuildTarget<?>> targets, long stamp) {
     synchronized (myCompilationStartStamp) {
       for (BuildTarget<?> target : targets) {
         myCompilationStartStamp.put(target, stamp);
@@ -93,7 +81,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public BuildLoggingManager getLoggingManager() {
+  public @NotNull BuildLoggingManager getLoggingManager() {
     return myProjectDescriptor.getLoggingManager();
   }
 
@@ -104,17 +92,17 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void addBuildListener(BuildListener listener) {
+  public void addBuildListener(@NotNull BuildListener listener) {
     myListeners.addListener(listener);
   }
 
   @Override
-  public void removeBuildListener(BuildListener listener) {
+  public void removeBuildListener(@NotNull BuildListener listener) {
     myListeners.removeListener(listener);
   }
 
   @Override
-  public void markNonIncremental(ModuleBuildTarget target) {
+  public void markNonIncremental(@NotNull ModuleBuildTarget target) {
     if (!target.isTests()) {
       myNonIncrementalModules.add(new ModuleBuildTarget(target.getModule(), JavaModuleBuildTargetType.TEST));
     }
@@ -122,7 +110,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public boolean shouldDifferentiate(ModuleChunk chunk) {
+  public boolean shouldDifferentiate(@NotNull ModuleChunk chunk) {
     if (myNonIncrementalModules.isEmpty()) {
       return true;
     }
@@ -135,7 +123,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public final CanceledStatus getCancelStatus() {
+  public final @NotNull CanceledStatus getCancelStatus() {
     return myCancelStatus;
   }
 
@@ -147,12 +135,12 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void clearNonIncrementalMark(ModuleBuildTarget target) {
+  public void clearNonIncrementalMark(@NotNull ModuleBuildTarget target) {
     myNonIncrementalModules.remove(target);
   }
 
   @Override
-  public CompileScope getScope() {
+  public @NotNull CompileScope getScope() {
     return myScope;
   }
 
@@ -179,7 +167,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public ProjectDescriptor getProjectDescriptor() {
+  public @NotNull ProjectDescriptor getProjectDescriptor() {
     return myProjectDescriptor;
   }
 }

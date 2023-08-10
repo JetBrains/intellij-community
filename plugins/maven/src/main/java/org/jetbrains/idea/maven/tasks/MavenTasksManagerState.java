@@ -28,17 +28,11 @@ public class MavenTasksManagerState {
 
   @NotNull
   public Set<MavenCompilerTask> getTasks(@NotNull MavenTasksManager.Phase phase) {
-    switch (phase) {
-      case AFTER_COMPILE:
-        return afterCompileTasks;
-      case BEFORE_COMPILE:
-        return beforeCompileTasks;
-      case AFTER_REBUILD:
-        return afterRebuildTask;
-      case BEFORE_REBUILD:
-        return beforeRebuildTask;
-      default:
-        throw new RuntimeException();
-    }
+    return switch (phase) {
+      case AFTER_COMPILE -> afterCompileTasks;
+      case BEFORE_COMPILE -> beforeCompileTasks;
+      case AFTER_REBUILD -> afterRebuildTask;
+      case BEFORE_REBUILD -> beforeRebuildTask;
+    };
   }
 }

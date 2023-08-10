@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.action;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -13,6 +13,7 @@ import com.intellij.debugger.streams.ui.ChooserOption;
 import com.intellij.debugger.streams.ui.impl.ElementChooserImpl;
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -27,11 +28,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -47,7 +47,7 @@ public final class TraceStreamAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final XDebugSession session = getCurrentSession(e);
+    final XDebugSession session = DebuggerUIUtil.getSession(e);
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
     final Presentation presentation = e.getPresentation();
     if (element == null) {
@@ -57,24 +57,24 @@ public final class TraceStreamAction extends AnAction {
     else {
       ChainResolver.ChainStatus chainStatus = CHAIN_RESOLVER.tryFindChain(element);
       switch (chainStatus) {
-        case LANGUAGE_NOT_SUPPORTED:
-          presentation.setEnabledAndVisible(false);
-          break;
-        case FOUND:
-          presentation.setEnabledAndVisible(true);
-          break;
-        case COMPUTING:
-        case NOT_FOUND:
+        case LANGUAGE_NOT_SUPPORTED -> presentation.setEnabledAndVisible(false);
+        case FOUND -> presentation.setEnabledAndVisible(true);
+        case COMPUTING, NOT_FOUND -> {
           presentation.setVisible(true);
           presentation.setEnabled(false);
-          break;
+        }
       }
     }
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    XDebugSession session = getCurrentSession(e);
+    XDebugSession session = DebuggerUIUtil.getSession(e);
     LibrarySupportProvider.EP_NAME.getExtensionList();
     XSourcePosition position = session == null ? null : session.getCurrentPosition();
     PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
@@ -137,12 +137,6 @@ public final class TraceStreamAction extends AnAction {
         ApplicationManager.getApplication().invokeLater(() -> window.setFailMessage(message));
       }
     });
-  }
-
-  @Nullable
-  private static XDebugSession getCurrentSession(@NotNull AnActionEvent e) {
-    final Project project = e.getProject();
-    return project == null ? null : XDebuggerManager.getInstance(project).getCurrentSession();
   }
 
   private static final class MyStreamChainChooser extends ElementChooserImpl<StreamChainOption> {

@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.MapDataContext;
@@ -30,7 +28,6 @@ public class PyMarkAsNamespacePackageActionTest extends PyTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myNspService = PyNamespacePackagesService.getInstance(myFixture.getModule());
-    setLanguageLevel(LanguageLevel.getLatest());
   }
 
   public void testPlainDirectory() {
@@ -119,13 +116,12 @@ public class PyMarkAsNamespacePackageActionTest extends PyTestCase {
     MapDataContext mapDataContext = new MapDataContext();
     mapDataContext.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, new VirtualFile[] {directory});
     mapDataContext.put(CommonDataKeys.PROJECT, myFixture.getProject());
-    mapDataContext.put(LangDataKeys.MODULE, myFixture.getModule());
+    mapDataContext.put(PlatformCoreDataKeys.MODULE, myFixture.getModule());
 
     AnAction action = new PyMarkAsNamespacePackageAction();
-    TestActionEvent e = new TestActionEvent(mapDataContext, action);
-    action.beforeActionPerformedUpdate(e);
-    if (e.getPresentation().isEnabledAndVisible()) {
-      action.actionPerformed(e);
+    AnActionEvent e = TestActionEvent.createTestEvent(action, mapDataContext);
+    if (ActionUtil.lastUpdateAndCheckDumb(action, e, true)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, e);
     }
 
     return e.getPresentation();

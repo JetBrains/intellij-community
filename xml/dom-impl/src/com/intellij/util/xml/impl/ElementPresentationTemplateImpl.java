@@ -44,7 +44,7 @@ public final class ElementPresentationTemplateImpl extends TypePresentationServi
             }
           }
         });
-        return result.isNull() ? super.getDocumentation() : result.get();
+        return result.isNull() ? super.getDocumentation() : result.get(); //NON-NLS
       }
     };
   }

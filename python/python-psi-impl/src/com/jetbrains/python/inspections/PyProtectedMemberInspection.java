@@ -5,7 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -25,17 +25,20 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.testing.PythonUnitTestDetectorsKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * User: ktisha
@@ -53,15 +56,14 @@ public class PyProtectedMemberInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
 
   private class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
-
     @Override
     public void visitPyImportElement(@NotNull PyImportElement node) {
       final PyStatement statement = node.getContainingImportStatement();
@@ -77,7 +79,7 @@ public class PyProtectedMemberInspection extends PyInspection {
       final PsiDirectory currentFileDirectory = importSource.getContainingFile().getContainingDirectory();
 
       if (currentFileDirectory != null && PyUtil.isPackage(currentFileDirectory, true, importSource)) {
-        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
 
         return StreamEx
           .of(importSource.getReference(resolveContext).multiResolve(false))
@@ -147,18 +149,13 @@ public class PyProtectedMemberInspection extends PyInspection {
           }
         }
 
-        final PyClass parentClass = getClassOwner(node);
-        if (parentClass != null) {
-
-          if (parentClass.isSubclass(resolvedClass, myTypeEvalContext))
-            return;
-
-          PyClass outerClass = getClassOwner(parentClass);
-          while (outerClass != null) {
-            if (outerClass.isSubclass(resolvedClass, myTypeEvalContext))
+        if (resolvedClass != null) {
+          PyClass parentClass = getClassOwner(node);
+          while (parentClass != null) {
+            if (parentClass.isSubclass(resolvedClass, myTypeEvalContext)) {
               return;
-
-            outerClass = getClassOwner(outerClass);
+            }
+            parentClass = getClassOwner(parentClass);
           }
         }
         final PyType type = myTypeEvalContext.getType(qualifier);
@@ -210,7 +207,7 @@ public class PyProtectedMemberInspection extends PyInspection {
 
     @Nullable
     private Set<String> collectDunderAlls(@NotNull PyReferenceExpression source) {
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
 
       final List<List<String>> resolvedDunderAlls = StreamEx
         .of(source.getReference(resolveContext).multiResolve(false))
@@ -229,19 +226,18 @@ public class PyProtectedMemberInspection extends PyInspection {
     }
 
     private boolean resolvesToFileSystemItem(@NotNull PyReferenceExpression referenceExpression) {
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
 
       return ContainerUtil.exists(referenceExpression.getReference(resolveContext).multiResolve(false),
                                   result -> result.getElement() instanceof PsiFileSystemItem);
     }
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(PyPsiBundle.message("INSP.protected.member.ignore.test.functions"), "ignoreTestFunctions");
-    panel.addCheckbox(PyPsiBundle.message("INSP.protected.member.ignore.annotations"), "ignoreAnnotations");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreTestFunctions", PyPsiBundle.message("INSP.protected.member.ignore.test.functions")),
+      checkbox("ignoreAnnotations", PyPsiBundle.message("INSP.protected.member.ignore.annotations"))
+    );
   }
 }

@@ -1,97 +1,223 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.project.Project
+import com.intellij.util.indexing.diagnostic.dto.JsonChangedFilesDuringIndexingStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
-import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
+import com.intellij.util.messages.Topic
+import it.unimi.dsi.fastutil.longs.LongSet
+import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
-import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 typealias TimeMillis = Long
 typealias TimeNano = Long
 typealias BytesNumber = Long
 
-data class ProjectIndexingHistory(val project: Project) {
-  private val biggestContributorsPerFileTypeLimit = 10
+/**
+ * Extend this extension point to receive project scanning & indexing statistics
+ * (e.g.: indexed file count, indexation speed, etc.) after each **dumb** indexation task was performed.
+ */
+@ApiStatus.ScheduledForRemoval
+@Deprecated(message = "Use ProjectIndexingActivityHistoryListener instead")
+interface ProjectIndexingHistoryListener {
+  companion object {
+    @Topic.AppLevel
+    val TOPIC: Topic<ProjectIndexingHistoryListener> = Topic(ProjectIndexingHistoryListener::class.java, Topic.BroadcastDirection.NONE)
+  }
+  fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) {}
 
-  val times = IndexingTimes(ZonedDateTime.now(ZoneOffset.UTC))
+  fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory)
+}
 
-  val scanningStatistics = arrayListOf<JsonScanningStatistics>()
-
-  val providerStatistics = arrayListOf<JsonFileProviderIndexStatistics>()
-
-  val totalStatsPerFileType = hashMapOf<String /* File type name */, StatsPerFileType>()
-
-  val totalStatsPerIndexer = hashMapOf<String /* Index ID */, StatsPerIndexer>()
-
-  fun addScanningStatistics(statistics: ScanningStatistics) {
-    scanningStatistics += statistics.toJsonStatistics()
+/**
+ * Extend this extension point to receive project scanning & indexing statistics
+ * (e.g.: indexed file count, indexation speed, etc.) after each scanning or **dumb** indexation task was performed.
+ */
+interface ProjectIndexingActivityHistoryListener {
+  companion object {
+    @Topic.AppLevel
+    val TOPIC: Topic<ProjectIndexingActivityHistoryListener> = Topic(ProjectIndexingActivityHistoryListener::class.java,
+                                                                     Topic.BroadcastDirection.NONE)
   }
 
-  fun addProviderStatistics(statistics: IndexingJobStatistics) {
-    // Convert to Json to release memory occupied by statistic values.
-    providerStatistics += statistics.toJsonStatistics()
+  fun onStartedScanning(history: ProjectScanningHistory) {}
 
-    for ((fileType, fileTypeStats) in statistics.statsPerFileType) {
-      val totalStats = totalStatsPerFileType.getOrPut(fileType) {
-        StatsPerFileType(0, 0, 0, 0,
-                         LimitedPriorityQueue(biggestContributorsPerFileTypeLimit, compareBy { it.indexingTimeInAllThreads }))
+  fun onFinishedScanning(history: ProjectScanningHistory) {}
+
+  fun onStartedDumbIndexing(history: ProjectDumbIndexingHistory) {}
+
+  fun onFinishedDumbIndexing(history: ProjectDumbIndexingHistory) {}
+}
+
+@ApiStatus.Obsolete
+interface ProjectIndexingHistory {
+  val project: Project
+  val indexingReason: String?
+  val indexingSessionId: Long
+  val times: IndexingTimes
+  val scanningStatistics: List<JsonScanningStatistics>
+  val providerStatistics: List<JsonFileProviderIndexStatistics>
+  val totalStatsPerFileType: Map<String, StatsPerFileType>
+  val totalStatsPerIndexer: Map<String, StatsPerIndexer>
+  val visibleTimeToAllThreadsTimeRatio: Double
+}
+
+interface ProjectIndexingActivityHistory {
+  val project: Project
+  val type: IndexDiagnosticDumper.IndexingActivityType
+}
+
+
+interface ProjectScanningHistory : ProjectIndexingActivityHistory {
+  override val project: Project
+  val indexingActivitySessionId: Long
+  val scanningReason: String?
+  val scanningSessionId: Long
+  val times: ScanningTimes
+  val scanningStatistics: List<JsonScanningStatistics>
+
+  override val type: IndexDiagnosticDumper.IndexingActivityType
+    get() = IndexDiagnosticDumper.IndexingActivityType.Scanning
+}
+
+interface ProjectDumbIndexingHistory : ProjectIndexingActivityHistory {
+  override val project: Project
+  val indexingActivitySessionId: Long
+  val times: DumbIndexingTimes
+  val changedDuringIndexingFilesStat: JsonChangedFilesDuringIndexingStatistics?
+  val providerStatistics: List<JsonFileProviderIndexStatistics>
+  val totalStatsPerFileType: Map<String, StatsPerFileType>
+  val totalStatsPerIndexer: Map<String, StatsPerIndexer>
+  val visibleTimeToAllThreadsTimeRatio: Double
+
+  override val type: IndexDiagnosticDumper.IndexingActivityType
+    get() = IndexDiagnosticDumper.IndexingActivityType.DumbIndexing
+}
+
+/**
+ * isFull - if the whole project was rescanned (instead of a part of it)
+ */
+enum class ScanningType(val isFull: Boolean) {
+  /**
+   * Full project rescan forced by user via Repair IDE action
+   */
+  FULL_FORCED(true),
+
+  /**
+   * It's mandatory full project rescan on project open
+   */
+  FULL_ON_PROJECT_OPEN(true),
+
+  /**
+   * Full project rescan requested by some code
+   */
+  FULL(true),
+
+
+  /**
+   * Partial rescan forced by user via Repair IDE action on a limited scope (not full project)
+   */
+  PARTIAL_FORCED(false),
+
+  /**
+   * Partial project rescan requested by some code
+   */
+  PARTIAL(false),
+
+  /**
+   * Some files were considered changed and therefore rescanned
+   */
+  REFRESH(false);
+
+  companion object {
+    fun merge(first: ScanningType, second: ScanningType): ScanningType = returnFirstFound(first, second)
+
+    private fun returnFirstFound(first: ScanningType, second: ScanningType): ScanningType {
+      val types = listOf(FULL_FORCED, FULL_ON_PROJECT_OPEN, FULL, PARTIAL_FORCED, PARTIAL, REFRESH)
+      for (type in types) {
+        if (first == type || second == type) return type
       }
-      totalStats.totalNumberOfFiles += fileTypeStats.numberOfFiles
-      totalStats.totalBytes += fileTypeStats.totalBytes
-      totalStats.totalIndexingTimeInAllThreads += fileTypeStats.indexingTime.sumTime
-      totalStats.totalContentLoadingTimeInAllThreads += fileTypeStats.contentLoadingTime.sumTime
-      totalStats.biggestFileTypeContributors.addElement(
-        BiggestFileTypeContributor(
-          statistics.fileSetName,
-          fileTypeStats.numberOfFiles,
-          fileTypeStats.totalBytes,
-          fileTypeStats.indexingTime.sumTime
-        )
-      )
-    }
-
-    for ((indexId, stats) in statistics.statsPerIndexer) {
-      val totalStats = totalStatsPerIndexer.getOrPut(indexId) { StatsPerIndexer(0, 0, 0, 0) }
-      totalStats.totalNumberOfFiles += stats.numberOfFiles
-      totalStats.totalNumberOfFilesIndexedByExtensions += stats.numberOfFilesIndexedByExtensions
-      totalStats.totalBytes += stats.totalBytes
-      totalStats.totalIndexingTimeInAllThreads += stats.indexingTime.sumTime
+      throw IllegalStateException("Unexpected ScanningType $first $second")
     }
   }
+}
 
-  data class StatsPerFileType(
-    var totalNumberOfFiles: Int,
-    var totalBytes: BytesNumber,
-    var totalIndexingTimeInAllThreads: TimeNano,
-    var totalContentLoadingTimeInAllThreads: TimeNano,
-    val biggestFileTypeContributors: LimitedPriorityQueue<BiggestFileTypeContributor>
-  )
+interface StatsPerFileType {
+  val totalNumberOfFiles: Int
+  val totalBytes: BytesNumber
+  val totalProcessingTimeInAllThreads: TimeNano
+  val totalContentLoadingTimeInAllThreads: TimeNano
+  val biggestFileTypeContributorList: List<BiggestFileTypeContributor>
+}
 
-  data class BiggestFileTypeContributor(
-    val providerName: String,
-    val numberOfFiles: Int,
-    val totalBytes: BytesNumber,
-    val indexingTimeInAllThreads: TimeNano
-  )
+interface BiggestFileTypeContributor {
+  val providerName: String
+  val numberOfFiles: Int
+  val totalBytes: BytesNumber
+  val processingTimeInAllThreads: TimeNano
+}
 
-  data class StatsPerIndexer(
-    var totalNumberOfFiles: Int,
-    var totalNumberOfFilesIndexedByExtensions: Int,
-    var totalBytes: BytesNumber,
-    var totalIndexingTimeInAllThreads: TimeNano
-  )
+interface StatsPerIndexer {
+  val totalNumberOfFiles: Int
+  val totalNumberOfFilesIndexedByExtensions: Int
+  val totalBytes: BytesNumber
+  val totalIndexValueChangerEvaluationTimeInAllThreads: TimeNano
+  val snapshotInputMappingStats: SnapshotInputMappingStats
+}
 
-  data class IndexingTimes(
-    val updatingStart: ZonedDateTime,
-    var updatingEnd: ZonedDateTime = updatingStart,
-    var indexingDuration: Duration = Duration.ZERO,
-    var pushPropertiesDuration: Duration = Duration.ZERO,
-    var indexExtensionsDuration: Duration = Duration.ZERO,
-    var scanFilesDuration: Duration = Duration.ZERO,
-    var suspendedDuration: Duration = Duration.ZERO,
-    var wasInterrupted: Boolean = false
-  )
+interface IndexingTimes {
+  val indexingReason: String?
+  val scanningType: ScanningType
+  val updatingStart: ZonedDateTime
+  val totalUpdatingTime: TimeNano
+  val updatingEnd: ZonedDateTime
+  val indexingDuration: Duration
+  val contentLoadingVisibleDuration: Duration
+  val pushPropertiesDuration: Duration
+  val indexExtensionsDuration: Duration
+  var creatingIteratorsDuration: Duration
+  val scanFilesDuration: Duration
+  val suspendedDuration: Duration
+  val appliedAllValuesSeparately: Boolean
+  val separateValueApplicationVisibleTime: TimeNano
+  val wasInterrupted: Boolean
+}
+
+interface ScanningTimes {
+  val scanningReason: String?
+  val scanningType: ScanningType
+  val scanningId: Long
+  val updatingStart: ZonedDateTime
+  val totalUpdatingTime: TimeNano
+  val updatingEnd: ZonedDateTime
+  val dumbModeStart: ZonedDateTime?
+  val dumbModeWithPausesDuration: Duration
+  val dumbModeWithoutPausesDuration: Duration
+  val delayedPushPropertiesStageDuration: Duration
+  val indexExtensionsDuration: Duration
+  var creatingIteratorsDuration: Duration
+  val collectingIndexableFilesDuration: Duration
+  val pausedDuration: Duration
+  val wasInterrupted: Boolean
+}
+
+interface DumbIndexingTimes {
+  val scanningIds: LongSet
+  val updatingStart: ZonedDateTime
+  val totalUpdatingTime: TimeNano
+  val updatingEnd: ZonedDateTime
+  val contentLoadingVisibleDuration: Duration
+  val retrievingChangedDuringIndexingFilesDuration: Duration
+  val pausedDuration: Duration
+  val appliedAllValuesSeparately: Boolean
+  val separateValueApplicationVisibleTime: TimeNano
+  val wasInterrupted: Boolean
+}
+
+interface SnapshotInputMappingStats {
+  val requests: Long
+  val misses: Long
+  val hits: Long
 }

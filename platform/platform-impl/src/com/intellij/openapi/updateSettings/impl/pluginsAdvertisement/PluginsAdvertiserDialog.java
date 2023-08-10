@@ -1,115 +1,102 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.ide.plugins.PluginNode;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.updateSettings.impl.DetectedPluginsPanel;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.ui.TableUtil;
+import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
-import java.util.*;
-import java.util.function.Function;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
-/**
- * @author anna
- */
 public final class PluginsAdvertiserDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance(PluginsAdvertiserDialog.class);
+  private final Collection<PluginDownloader> myPluginToInstall;
+  private final @Nullable Project myProject;
+  private final @NotNull List<PluginNode> myCustomPlugins;
+  private final @Nullable Consumer<Boolean> myFinishFunction;
+  private final boolean mySelectAllSuggestions;
+  private @Nullable DetectedPluginsPanel myPanel;
 
-  @Nullable private final Project myProject;
-  private final PluginDownloader[] myToInstallPlugins;
-  private final List<? extends IdeaPluginDescriptor> myCustomPlugins;
-  private final Set<PluginId> mySkippedPlugins = new HashSet<>();
-
-  private final PluginManagerMain.PluginEnabler.HEADLESS pluginHelper = new PluginManagerMain.PluginEnabler.HEADLESS();
-
-  private @NotNull Function<? super Boolean, Void> myFinishFunction;
-
-  PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<? extends IdeaPluginDescriptor> customPlugins) {
+  PluginsAdvertiserDialog(@Nullable Project project,
+                          @NotNull Collection<PluginDownloader> pluginsToInstall,
+                          @NotNull List<PluginNode> customPlugins,
+                          boolean selectAllSuggestions,
+                          @Nullable Consumer<Boolean> finishFunction) {
     super(project);
     myProject = project;
-    Arrays.sort(plugins, (o1, o2) -> o1.getPluginName().compareToIgnoreCase(o2.getPluginName()));
-    myToInstallPlugins = plugins;
+    myPluginToInstall = pluginsToInstall;
     myCustomPlugins = customPlugins;
+    myFinishFunction = finishFunction;
+    mySelectAllSuggestions = selectAllSuggestions;
     setTitle(IdeBundle.message("dialog.title.choose.plugins.to.install.or.enable"));
     init();
+
+    JRootPane rootPane = getPeer().getRootPane();
+    if (rootPane != null) {
+      rootPane.setPreferredSize(new JBDimension(800, 600));
+    }
   }
 
-  @NotNull
-  @Override
-  protected JComponent createCenterPanel() {
-    final DetectedPluginsPanel foundPluginsPanel = new DetectedPluginsPanel() {
-      @Override
-      protected Set<PluginId> getSkippedPlugins() {
-        return mySkippedPlugins;
-      }
-    };
+  public PluginsAdvertiserDialog(@Nullable Project project,
+                                 @NotNull Collection<PluginDownloader> pluginsToInstall,
+                                 @NotNull List<PluginNode> customPlugins) {
+    this(project, pluginsToInstall, customPlugins, false, null);
+  }
 
-    for (PluginDownloader uploadedPlugin : myToInstallPlugins) {
-      foundPluginsPanel.add(uploadedPlugin);
+  @Override
+  protected @NotNull JComponent createCenterPanel() {
+    if (myPanel == null) {
+      myPanel = new DetectedPluginsPanel(myProject);
+
+      // all or nothing, single plugin always gets selected automatically
+      boolean checkAll = mySelectAllSuggestions || myPluginToInstall.size() == 1;
+      for (PluginDownloader downloader : myPluginToInstall) {
+        myPanel.setChecked(downloader, checkAll);
+      }
+      myPanel.addAll(myPluginToInstall);
     }
-    TableUtil.ensureSelectionExists(foundPluginsPanel.getEntryTable());
-    return foundPluginsPanel;
+    return myPanel;
+  }
+
+  @Override
+  public @Nullable JComponent getPreferredFocusedComponent() {
+    return myPanel;
   }
 
   @Override
   protected void doOKAction() {
-    if (doInstallPlugins()) {
+    assert myPanel != null;
+    if (doInstallPlugins(myPanel::isChecked, ModalityState.stateForComponent(myPanel))) {
       super.doOKAction();
     }
   }
 
-  public void setFinishFunction(@NotNull Function<? super Boolean, Void> finishFunction) {
-    myFinishFunction = finishFunction;
-  }
-
-  public boolean doInstallPlugins() {
-    Set<PluginDescriptor> pluginsToEnable = new HashSet<>();
-    List<PluginNode> nodes = new ArrayList<>();
-    for (PluginDownloader downloader : myToInstallPlugins) {
-      PluginDescriptor plugin = downloader.getDescriptor();
-      if (!mySkippedPlugins.contains(plugin.getPluginId())) {
-        pluginsToEnable.add(plugin);
-        if (plugin.isEnabled()) {
-          nodes.add(PluginDownloader.createPluginNode(null, downloader));
-        }
-      }
-    }
-
-    if (!PluginManagerMain.checkThirdPartyPluginsAllowed(nodes)) {
-      return false;
-    }
-
-    PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginHelper, nodes);
-
-    Runnable notifyRunnable = () -> {
-      if (nodes.stream().anyMatch(o -> PluginManagerCore.getPlugin(o.getPluginId()) == null)) {
-        PluginManagerMain.notifyPluginsUpdated(myProject);
-      }
-    };
-    DisabledPluginsState.enablePlugins(pluginsToEnable, true);
-    if (!nodes.isEmpty()) {
-      try {
-        PluginManagerMain.downloadPlugins(nodes, myCustomPlugins, true, notifyRunnable, pluginHelper, myFinishFunction);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+  /**
+   * @param showDialog if the dialog will be shown to a user or not
+   * @param modalityState modality state used by plugin installation process.
+   *                      {@code modalityState} will taken into account only if {@code showDialog} is <code>false</code>.
+   *                      If {@code null} is passed, {@code ModalityState.NON_MODAL} will be used
+   */
+  public void doInstallPlugins(boolean showDialog, @Nullable ModalityState modalityState) {
+    if (showDialog) {
+      showAndGet();
     }
     else {
-      if (!pluginsToEnable.isEmpty()) {
-        notifyRunnable.run();
-      }
+      doInstallPlugins(__ -> true, modalityState != null ? modalityState : ModalityState.nonModal());
     }
-    return true;
+  }
+
+  private boolean doInstallPlugins(@NotNull Predicate<? super PluginDownloader> predicate, @NotNull ModalityState modalityState) {
+    return new PluginsAdvertiserDialogPluginInstaller(myProject, myPluginToInstall, myCustomPlugins, myFinishFunction)
+      .doInstallPlugins(predicate, modalityState);
   }
 }

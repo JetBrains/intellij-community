@@ -4,9 +4,6 @@ import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxRedundantPropertyValueInspection;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxRedundantPropertyValueInspectionTest extends AbstractJavaFXQuickFixTest {
   @Override
   protected void enableInspections() {

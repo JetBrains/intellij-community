@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.application.options.*;
@@ -27,16 +27,13 @@ import java.util.List;
 import static com.intellij.application.options.JavaDocFormattingPanel.*;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
-/**
- * @author rvishnyakov
- */
 public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @NotNull
   @Override
   public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(settings, modelSettings, JavaLanguage.INSTANCE.getDisplayName()) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
         return new JavaCodeStyleMainPanel(getCurrentSettings(), settings);
       }
       @Override
@@ -48,7 +45,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new JavaCodeStyleSettings(settings);
   }
 
@@ -79,8 +76,12 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showAllStandardOptions();
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACES_WITHIN_ANGLE_BRACKETS",
                                 JavaBundle.message("code.style.settings.angle.spacing.brackets"), getInstance().SPACES_WITHIN);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AROUND_ANNOTATION_EQ",
+                                JavaBundle.message("checkbox.spaces.around.annotation.eq"), getInstance().SPACES_OTHER);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_WITHIN_RECORD_HEADER",
                                 JavaBundle.message("checkbox.spaces.record.header"), getInstance().SPACES_WITHIN);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_WITHIN_DECONSTRUCTION_LIST",
+                                JavaBundle.message("checkbox.spaces.within.deconstruction.list"), getInstance().SPACES_WITHIN);
 
       String groupName = getInstance().SPACES_IN_TYPE_ARGUMENTS;
       consumer.moveStandardOption("SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS", groupName);
@@ -98,6 +99,9 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
         "checkbox.spaces.before.colon.in.foreach"), groupName);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_INSIDE_ONE_LINE_ENUM_BRACES", JavaBundle.message(
         "checkbox.spaces.inside.one.line.enum"), groupName);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_DECONSTRUCTION_LIST", JavaBundle.message(
+        "checkbox.spaces.before.deconstruction.list"), getInstance().SPACES_BEFORE_PARENTHESES);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("RIGHT_MARGIN",
@@ -204,12 +208,27 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 JavaBundle.message("wrapping.annotation.parameters"));
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "NEW_LINE_AFTER_LPAREN_IN_ANNOTATION",
+                                ApplicationBundle.message("wrapping.new.line.after.lpar"),
+                                JavaBundle.message("wrapping.annotation.parameters"));
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "RPAREN_ON_NEW_LINE_IN_ANNOTATION",
+                                ApplicationBundle.message("wrapping.rpar.on.new.line"),
+                                JavaBundle.message("wrapping.annotation.parameters"));
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ALIGN_MULTILINE_TEXT_BLOCKS",
                                 ApplicationBundle.message("wrapping.align.when.multiline"),
                                 JavaBundle.message("wrapping.text.blocks") );
 
-      String groupName = ApplicationBundle.message("wrapping.fields.annotation");
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION", JavaBundle.message("checkbox.do.not.wrap.after.single.annotation"), groupName);
+      String fieldAnnotations = ApplicationBundle.message("wrapping.fields.annotation");
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION",
+                                JavaBundle.message("checkbox.do.not.wrap.after.single.annotation"), fieldAnnotations);
+
+      String parameterAnnotationsWrapping = ApplicationBundle.message("wrapping.parameters.annotation");
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER",
+                                JavaBundle.message("checkbox.do.not.wrap.after.single.annotation"), parameterAnnotationsWrapping);
 
       // Record components
       String recordComponentsGroup = JavaBundle.message("wrapping.record.components");
@@ -230,6 +249,38 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "RPAREN_ON_NEW_LINE_IN_RECORD_HEADER",
                                 ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 recordComponentsGroup);
+
+      // Try statement
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "MULTI_CATCH_TYPES_WRAP",
+                                JavaBundle.message("wrapping.multi.catch.types"),
+                                ApplicationBundle.message("wrapping.try.statement"),
+                                getInstance().WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ALIGN_TYPES_IN_MULTI_CATCH",
+                                JavaBundle.message("align.types.in.multi.catch"),
+                                ApplicationBundle.message("wrapping.try.statement"));
+
+      // Deconstruction patterns
+      String deconstructionComponentsGroup = JavaBundle.message("wrapping.deconstruction.patterns");
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "DECONSTRUCTION_LIST_WRAP",
+                                deconstructionComponentsGroup,
+                                null,
+                                getInstance().WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ALIGN_MULTILINE_DECONSTRUCTION_LIST_COMPONENTS",
+                                ApplicationBundle.message("wrapping.align.when.multiline"),
+                                deconstructionComponentsGroup);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "NEW_LINE_AFTER_LPAREN_IN_DECONSTRUCTION_PATTERN",
+                                ApplicationBundle.message("wrapping.new.line.after.lpar"),
+                                deconstructionComponentsGroup);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN",
+                                ApplicationBundle.message("wrapping.rpar.on.new.line"),
+                                deconstructionComponentsGroup);
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();
@@ -305,7 +356,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   }
 
   @Override
-  public PsiFile createFileFromText(final Project project, final String text) {
+  public PsiFile createFileFromText(final @NotNull Project project, final @NotNull String text) {
     final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(
       "sample.java", JavaFileType.INSTANCE, text, LocalTimeCounter.currentTime(), false, false
     );
@@ -411,216 +462,228 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
   }
 
+  @Override
+  public boolean usesCommonKeepLineBreaks() {
+    return true;
+  }
+
   private static final String GENERAL_CODE_SAMPLE =
-    "public class Foo {\n" +
-    "  public int[] X = new int[]{1, 3, 5, 7, 9, 11};\n" +
-    "\n" +
-    "  public void foo(boolean a, int x, int y, int z) {\n" +
-    "    label1:\n" +
-    "    do {\n" +
-    "      try {\n" +
-    "        if (x > 0) {\n" +
-    "          int someVariable = a ? x : y;\n" +
-    "          int anotherVariable = a ? x : y;\n" +
-    "        }\n" +
-    "        else if (x < 0) {\n" +
-    "          int someVariable = (y + z);\n" +
-    "          someVariable = x = x + y;\n" +
-    "        }\n" +
-    "        else {\n" +
-    "          label2:\n" +
-    "          for (int i = 0; i < 5; i++) doSomething(i);\n" +
-    "        }\n" +
-    "        switch (a) {\n" +
-    "          case 0:\n" +
-    "            doCase0();\n" +
-    "            break;\n" +
-    "          default:\n" +
-    "            doDefault();\n" +
-    "        }\n" +
-    "      }\n" +
-    "      catch (Exception e) {\n" +
-    "        processException(e.getMessage(), x + y, z, a);\n" +
-    "      }\n" +
-    "      finally {\n" +
-    "        processFinally();\n" +
-    "      }\n" +
-    "    }\n" +
-    "    while (true);\n" +
-    "\n" +
-    "    if (2 < 3) return;\n" +
-    "    if (3 < 4) return;\n" +
-    "    do {\n" +
-    "      x++;\n" +
-    "    }\n" +
-    "    while (x < 10000);\n" +
-    "    while (x < 50000) x++;\n" +
-    "    for (int i = 0; i < 5; i++) System.out.println(i);\n" +
-    "  }\n" +
-    "\n" +
-    "  private class InnerClass implements I1, I2 {\n" +
-    "    public void bar() throws E1, E2 {\n" +
-    "    }\n" +
-    "  }\n" +
-    "}";
+    """
+      public class Foo {
+        public int[] X = new int[]{1, 3, 5, 7, 9, 11};
+
+        public void foo(boolean a, int x, int y, int z) {
+          label1:
+          do {
+            try {
+              if (x > 0) {
+                int someVariable = a ? x : y;
+                int anotherVariable = a ? x : y;
+              }
+              else if (x < 0) {
+                int someVariable = (y + z);
+                someVariable = x = x + y;
+              }
+              else {
+                label2:
+                for (int i = 0; i < 5; i++) doSomething(i);
+              }
+              switch (a) {
+                case 0:
+                  doCase0();
+                  break;
+                default:
+                  doDefault();
+              }
+            }
+            catch (Exception e) {
+              processException(e.getMessage(), x + y, z, a);
+            }
+            finally {
+              processFinally();
+            }
+          }
+          while (true);
+
+          if (2 < 3) return;
+          if (3 < 4) return;
+          do {
+            x++;
+          }
+          while (x < 10000);
+          while (x < 50000) x++;
+          for (int i = 0; i < 5; i++) System.out.println(i);
+        }
+
+        private class InnerClass implements I1, I2 {
+          public void bar() throws E1, E2 {
+          }
+        }
+      }""";
 
   private static final String BLANK_LINE_SAMPLE =
-    "/*\n" +
-    " * This is a sample file.\n" +
-    " */\n" +
-    "package com.intellij.samples;\n" +
-    "\n" +
-    "import com.intellij.idea.Main;\n" +
-    "\n" +
-    "import javax.swing.*;\n" +
-    "import java.util.Vector;\n" +
-    "\n" +
-    "public class Foo {\n" +
-    "  private int field1;\n" +
-    "  private int field2;\n" +
-    "\n" +
-    "  {\n" +
-    "      field1 = 2;\n" +
-    "  }\n" +
-    "\n" +
-    "  public void foo1() {\n" +
-    "      new Runnable() {\n" +
-    "          public void run() {\n" +
-    "          }\n" +
-    "      };\n" +
-    "  }\n" +
-    "\n" +
-    "  public class InnerClass {\n" +
-    "  }\n" +
-    "}\n" +
-    "class AnotherClass {\n" +
-    "}\n" +
-    "interface TestInterface {\n" +
-    "    int MAX = 10;\n" +
-    "    int MIN = 1;\n" +
-    "    void method1();\n" +
-    "    void method2();\n" +
-    "}";
+    """
+      /*
+       * This is a sample file.
+       */
+      package com.intellij.samples;
+
+      import com.intellij.idea.Main;
+
+      import javax.swing.*;
+      import java.util.Vector;
+
+      public class Foo {
+        private int field1;
+        private int field2;
+
+        {
+            field1 = 2;
+        }
+
+        public void foo1() {
+            new Runnable() {
+                public void run() {
+                }
+            };
+        }
+
+        public class InnerClass {
+        }
+      }
+      class AnotherClass {
+      }
+      interface TestInterface {
+          int MAX = 10;
+          int MIN = 1;
+          void method1();
+          void method2();
+      }""";
 
   private static final String SPACING_SAMPLE =
-    "@Annotation(param1 = \"value1\", param2 = \"value2\")\n" +
-    "@SuppressWarnings({\"ALL\"})\n" +
-    "public class Foo<T extends Bar & Abba, U> {\n" +
-    "  int[] X = new int[]{1, 3, 5, 6, 7, 87, 1213, 2};\n" +
-    "  int[] empty = new int[]{};" +
-    "\n" +
-    "  public void foo(int x, int y) {\n" +
-    "    Runnable r = () -> {};\n" +
-    "    Runnable r1 = this :: bar;\n" +
-    "    for (int i = 0; i < x; i++) {\n" +
-    "      y += (y ^ 0x123) << 2;\n" +
-    "    }\n" +
-    "    for (int a: X) { System.out.print(a); }\n" +
-    "    do {\n" +
-    "      try(MyResource r1 = getResource(); MyResource r2 = null) {\n" +
-    "        if (0 < x && x < 10) {\n" +
-    "          while (x != y) {\n" +
-    "            x = f(x * 3 + 5);\n" +
-    "          }\n" +
-    "        }\n" +
-    "        else {\n" +
-    "          synchronized (this) {\n" +
-    "            switch (e.getCode()) {\n" +
-    "              //...\n" +
-    "            }\n" +
-    "          }\n" +
-    "        }\n" +
-    "      }\n" +
-    "      catch (MyException e) {\n" +
-    "      }\n" +
-    "      finally {\n" +
-    "        int[] arr = (int[])g(y);\n" +
-    "        x = y >= 0 ? arr[y] : -1;\n" +
-    "        Map<String, String> sMap = new HashMap<String, String>();\n" +
-    "        Bar.<String, Integer>mess(null);\n" +
-    "      }\n" +
-    "    }\n" +
-    "    while (true);\n" +
-    "  }\n" +
-    "  void bar(){{return;}}\n" +
-    "}\n" +
-    "class Bar {\n" +
-    "    static <U, T> U mess(T t) {\n" +
-    "        return null;\n" +
-    "    }\n" +
-    "}\n" +
-    "interface Abba {}";
+    """
+      @Annotation(param1 = "value1", param2 = "value2")
+      @SuppressWarnings({"ALL"})
+      public class Foo<T extends Bar & Abba, U> {
+        int[] X = new int[]{1, 3, 5, 6, 7, 87, 1213, 2};
+        int[] empty = new int[]{};
+        public void foo(int x, int y) {
+          Runnable r = () -> {};
+          Runnable r1 = this :: bar;
+          for (int i = 0; i < x; i++) {
+            y += (y ^ 0x123) << 2;
+          }
+          for (int a: X) { System.out.print(a); }
+          do {
+            try(MyResource r1 = getResource(); MyResource r2 = null) {
+              if (0 < x && x < 10) {
+                while (x != y) {
+                  x = f(x * 3 + 5);
+                }
+              }
+              else {
+                synchronized (this) {
+                  switch (e.getCode()) {
+                    //...
+                  }
+                }
+              }
+            }
+            catch (MyException e) {
+            }
+            finally {
+              int[] arr = (int[])g(y);
+              x = y >= 0 ? arr[y] : -1;
+              Map<String, String> sMap = new HashMap<String, String>();
+              Bar.<String, Integer>mess(null);
+            }
+          }
+          while (true);
+         \s
+          switch (o) {
+            case Rec(String s, int i) r -> {}
+          }
 
-  private static final String WRAPPING_CODE_SAMPLE =
-    "/*\n" +
-    " * This is a sample file.\n" +
-    " */\n" +
-    "\n" +
-    "public class ThisIsASampleClass extends C1 implements I1, I2, I3, I4, I5 {\n" +
-    "  private int f1 = 1;\n" +
-    "  private String field2 = \"\";\n" +
-    "  public void foo1(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {}\n" +
-    "  public static void longerMethod() throws Exception1, Exception2, Exception3 {\n" +
-    "// todo something\n" +
-    "    int\n" +
-    "i = 0;\n" +
-    "    int[] a = new int[] {1, 2, 0x0052, 0x0053, 0x0054};\n" +
-    "    int[] empty = new int[] {};\n" +
-    "    int var1 = 1; int var2 = 2;\n" +
-    "    foo1(0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057);\n" +
-    "    int x = (3 + 4 + 5 + 6) * (7 + 8 + 9 + 10) * (11 + 12 + 13 + 14 + 0xFFFFFFFF);\n" +
-    "    String s1, s2, s3;\n" +
-    "    s1 = s2 = s3 = \"012345678901456\";\n" +
-    "    assert i + j + k + l + n+ m <= 2 : \"assert description\";" +
-    "    int y = 2 > 3 ? 7 + 8 + 9 : 11 + 12 + 13;\n" +
-    "    super.getFoo().foo().getBar().bar();\n" +
-    "\n" +
-    "    label: " +
-    "    if (2 < 3) {return;} else if (2 > 3) return; else return;\n" +
-    "    for (int i = 0; i < 0xFFFFFF; i += 2) System.out.println(i);\n" +
-    "    while (x < 50000) x++;\n" +
-    "    do x++; while (x < 10000);\n" +
-    "    switch (a) {\n" +
-    "    case 0: case 1:\ndoCase0(); break;\ncase 2: case 3: return;" +
-    "    default:\n" +
-    "      doDefault();\n" +
-    "    }\n" +
-    "    try (MyResource r1 = getResource(); MyResource r2 = null) {\n" +
-    "      doSomething();\n" +
-    "    } catch (Exception e) {\n" +
-    "      processException(e);\n" +
-    "    } finally {\n" +
-    "      processFinally();\n" +
-    "    }\n" +
-    "    do {\n" +
-    "        x--;\n" +
-    "    } while (x > 10); \n" +
-    "    try (MyResource r1 = getResource();\n" +
-    "      MyResource r2 = null) {\n" +
-    "      doSomething();\n" +
-    "    }\n" +
-    "    Runnable r = () -> {};\n" +
-    "  }\n" +
-    "    public static void test() \n" +
-    "        throws Exception { \n" +
-    "        foo.foo().bar(\"arg1\", \n" +
-    "                      \"arg2\"); \n" +
-    "        new Object() {};" +
-    "    } \n" +
-    "    class TestInnerClass {}\n" +
-    "    interface TestInnerInterface {}\n" +
-    "}\n" +
-    "\n" +
-    "enum Breed {\n" +
-    "    Dalmatian(), Labrador(), Dachshund()\n" +
-    "}\n" +
-    "\n" +
-    "@Annotation1 @Annotation2 @Annotation3(param1=\"value1\", param2=\"value2\") @Annotation4 class Foo {\n" +
-    "    @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") public static void foo(){\n" +
-    "    }\n" +
-    "    @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") public static int myFoo;\n" +
-    "    public void method(@Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") final int param){\n" +
-    "        @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") final int localVariable;" +
-    "    }\n" +
-    "}";
+        }
+        void bar(){{return;}}
+      }
+      class Bar {
+          static <U, T> U mess(T t) {
+              return null;
+          }
+      }
+      interface Abba {}
+      record Rec(String s, int i) {}""";
+
+  @SuppressWarnings({"UnusedLabel", "InnerClassMayBeStatic"})
+  @org.intellij.lang.annotations.Language("JAVA") private static final String WRAPPING_CODE_SAMPLE =
+    """
+      /*
+       * This is a sample file.
+       */
+
+      public class ThisIsASampleClass extends C1 implements I1, I2, I3, I4, I5 {
+        private int f1 = 1;
+        private String field2 = "";
+        public void foo1(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {}
+        public static void longerMethod() throws Exception1, Exception2, Exception3 {
+      // todo something
+          int
+      i = 0;
+          int[] a = new int[] {1, 2, 0x0052, 0x0053, 0x0054};
+          int[] empty = new int[] {};
+          int var1 = 1; int var2 = 2;
+          foo1(0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057);
+          int x = (3 + 4 + 5 + 6) * (7 + 8 + 9 + 10) * (11 + 12 + 13 + 14 + 0xFFFFFFFF);
+          String s1, s2, s3;
+          s1 = s2 = s3 = "012345678901456";
+          assert i + j + k + l + n+ m <= 2 : "assert description";    int y = 2 > 3 ? 7 + 8 + 9 : 11 + 12 + 13;
+          super.getFoo().foo().getBar().bar();
+
+          label:     if (2 < 3) {return;} else if (2 > 3) return; else return;
+          for (int i = 0; i < 0xFFFFFF; i += 2) System.out.println(i);
+          while (x < 50000) x++;
+          do x++; while (x < 10000);
+          switch (a) {
+          case 0: case 1:
+      doCase0(); break;
+      case 2: case 3: return;    default:
+            doDefault();
+          }
+          try (MyResource r1 = getResource(); MyResource r2 = null) {
+            doSomething();
+          } catch (Exception e) {
+            processException(e);
+          } finally {
+            processFinally();
+          }
+          do {
+              x--;
+          } while (x > 10);\s
+          try (MyResource r1 = getResource();
+            MyResource r2 = null) {
+            doSomething();
+          }
+          Runnable r = () -> {};
+        }
+          public static void test()\s
+              throws Exception {\s
+              foo.foo().bar("arg1",\s
+                            "arg2");\s
+              new Object() {};    }\s
+          class TestInnerClass {}
+          interface TestInnerInterface {}
+      }
+
+      enum Breed {
+          Dalmatian(), Labrador(), Dachshund()
+      }
+
+      @Annotation1 @Annotation2 @Annotation3(param1="value1", param2="value2") @Annotation4 class Foo {
+          @Annotation1 @Annotation3(param1="value1", param2="value2") public static void foo(){
+          }
+          @Annotation1 @Annotation3(param1="value1", param2="value2") public static int myFoo;
+          public void method(@Annotation1 @Annotation3(param1="value1", param2="value2") final int param){
+              @Annotation1 @Annotation3(param1="value1", param2="value2") final int localVariable;    }
+      }""";
 }

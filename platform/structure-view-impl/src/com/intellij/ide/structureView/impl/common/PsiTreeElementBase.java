@@ -5,7 +5,6 @@ import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.customRegions.CustomRegionStructureUtil;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptorProvidingKey;
 import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.navigation.ItemPresentation;
@@ -71,12 +70,12 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
 
   @Override
   public final StructureViewTreeElement @NotNull [] getChildren() {
-    List<StructureViewTreeElement> list = AbstractTreeUi.calculateYieldingToWriteAction(() -> doGetChildren(true));
+    List<StructureViewTreeElement> list = doGetChildren(true);
     return list.isEmpty() ? EMPTY_ARRAY : list.toArray(EMPTY_ARRAY);
   }
 
   public final @NotNull List<StructureViewTreeElement> getChildrenWithoutCustomRegions() {
-    return AbstractTreeUi.calculateYieldingToWriteAction(() -> doGetChildren(false));
+    return doGetChildren(false);
   }
 
   private @NotNull List<StructureViewTreeElement> doGetChildren(boolean withCustomRegions) {

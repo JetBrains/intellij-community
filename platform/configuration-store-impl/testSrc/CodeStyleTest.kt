@@ -15,6 +15,7 @@ import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertTrue
 
 internal class CodeStyleTest {
   companion object {
@@ -86,7 +87,7 @@ internal class CodeStyleTest {
 
   @Test fun `do not duplicate known extra sections`() {
     val newProvider: CodeStyleSettingsProvider = object : CodeStyleSettingsProvider() {
-      override fun createCustomSettings(settings: CodeStyleSettings?): CustomCodeStyleSettings {
+      override fun createCustomSettings(settings: CodeStyleSettings): CustomCodeStyleSettings {
         return object : CustomCodeStyleSettings("NewComponent", settings) {
           override fun getKnownTagNames(): List<String> {
             return ContainerUtil.concat(super.getKnownTagNames(), listOf("NewComponent-extra"))
@@ -191,16 +192,11 @@ internal class CodeStyleTest {
       <option name="RIGHT_MARGIN" value="64" />
       <option name="USE_FQ_CLASS_NAMES_IN_JAVADOC" value="false" />
     </code_scheme>""".trimIndent()
-    val expected = """
-    <code_scheme name="testSchemeName" version="${CodeStyleSettings.CURR_VERSION}">
-      <option name="RIGHT_MARGIN" value="64" />
-    </code_scheme>""".trimIndent()
 
     settings.readExternal(JDOMUtil.load(initial))
     settings.resetDeprecatedFields()
 
-    val serialized = Element("code_scheme").setAttribute("name", "testSchemeName")
-    settings.writeExternal(serialized)
-    assertThat(serialized).isEqualTo(expected)
+    @Suppress("removal", "DEPRECATION") // Test use
+    assertTrue(settings.USE_FQ_CLASS_NAMES_IN_JAVADOC)
   }
 }

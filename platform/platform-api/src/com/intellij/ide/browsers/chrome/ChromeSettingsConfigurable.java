@@ -96,7 +96,7 @@ public class ChromeSettingsConfigurable implements Configurable {
     }
   }
 
-  private static String getDefaultUserDataPath() {
+  public static String getDefaultUserDataPath() {
     File dir = new File(PathManager.getConfigPath(), CHROME_USER_DATA);
     try {
       return FileUtil.toSystemIndependentName(dir.getCanonicalPath());

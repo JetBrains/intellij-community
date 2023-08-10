@@ -30,9 +30,6 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Irina.Chernushina on 3/31/2016.
- */
 public class JsonSchemaReferenceContributor extends PsiReferenceContributor {
   private static class Holder {
     private static final PsiElementPattern.Capture<JsonValue> REF_PATTERN = createPropertyValuePattern("$ref", true, false);

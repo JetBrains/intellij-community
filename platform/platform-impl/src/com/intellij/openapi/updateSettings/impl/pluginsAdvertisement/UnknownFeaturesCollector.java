@@ -1,63 +1,65 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
-import com.intellij.execution.RunManager;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @State(name = "UnknownFeatures", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 @Service
 public final class UnknownFeaturesCollector implements PersistentStateComponent<Element> {
-  @NonNls private static final String FEATURE_ID = "featureType";
-  @NonNls private static final String IMPLEMENTATION_NAME = "implementationName";
 
-  private final Set<UnknownFeature> myUnknownFeatures = new HashSet<>();
+  private static final @NonNls String FEATURE_ID = "featureType";
+  private static final @NonNls String IMPLEMENTATION_NAME = "implementationName";
+
+  private final Set<UnknownFeature> myUnknownFeatures = ConcurrentCollectionFactory.createConcurrentSet();
   private final Set<UnknownFeature> myIgnoredUnknownFeatures = new HashSet<>();
 
-  public static UnknownFeaturesCollector getInstance(Project project) {
-    return ServiceManager.getService(project, UnknownFeaturesCollector.class);
+  public static @NotNull UnknownFeaturesCollector getInstance(@NotNull Project project) {
+    return project.getService(UnknownFeaturesCollector.class);
   }
 
-  public void registerUnknownRunConfiguration(@NotNull String configurationId, @Nullable String factoryName) {
-    registerUnknownFeature(RunManager.CONFIGURATION_TYPE_FEATURE_ID, configurationId,
-                           "Run Configuration", StringUtil.notNullize(factoryName, configurationId));
+  @ApiStatus.Internal
+  public boolean registerUnknownFeature(@NotNull UnknownFeature feature) {
+    return !isIgnored(feature) && myUnknownFeatures.add(feature);
   }
 
-  public void registerUnknownFeature(@NotNull String featureType, @NotNull String implementationName, @NotNull String featureDisplayName) {
-    registerUnknownFeature(featureType, implementationName, featureDisplayName, implementationName);
+  @ApiStatus.Experimental
+  public boolean unregisterUnknownFeature(@NotNull UnknownFeature feature) {
+    return myUnknownFeatures.remove(feature);
   }
 
-  public void registerUnknownFeature(@NotNull String featureType, @NotNull String implementationName,
-                                     @NotNull String featureDisplayName, @NotNull String implementationDisplayName) {
-    final UnknownFeature feature = new UnknownFeature(featureType, featureDisplayName, implementationName, implementationDisplayName);
-    if (!isIgnored(feature)) {
-      myUnknownFeatures.add(feature);
-    }
-  }
-
-  public boolean isIgnored(UnknownFeature feature) {
+  public boolean isIgnored(@NotNull UnknownFeature feature) {
     return myIgnoredUnknownFeatures.contains(feature);
   }
 
-  public void ignoreFeature(UnknownFeature feature) {
+  public void ignoreFeature(@NotNull UnknownFeature feature) {
     myIgnoredUnknownFeatures.add(feature);
   }
 
-  public Set<UnknownFeature> getUnknownFeatures() {
-    return myUnknownFeatures;
+  public @NotNull Set<UnknownFeature> getUnknownFeatures() {
+    return Collections.unmodifiableSet(myUnknownFeatures);
   }
 
-  @Nullable
+  @ApiStatus.Experimental
+  public @NotNull Set<UnknownFeature> getUnknownFeaturesOfType(@NotNull @NonNls String featureType) {
+    return myUnknownFeatures.stream()
+      .filter(feature -> feature.getFeatureType().equals(featureType))
+      .collect(Collectors.toUnmodifiableSet());
+  }
+
   @Override
-  public Element getState() {
+  public @Nullable Element getState() {
     if (myIgnoredUnknownFeatures.isEmpty()) return null;
 
     final Element ignored = new Element("ignored");
@@ -74,8 +76,13 @@ public final class UnknownFeaturesCollector implements PersistentStateComponent<
   public void loadState(@NotNull Element state) {
     myIgnoredUnknownFeatures.clear();
     for (Element element : state.getChildren()) {
-      myIgnoredUnknownFeatures.add(
-        new UnknownFeature(element.getAttributeValue(FEATURE_ID), null, element.getAttributeValue(IMPLEMENTATION_NAME), null));
+      String featureType = element.getAttributeValue(FEATURE_ID);
+      if (featureType == null) continue;
+
+      String implementationName = element.getAttributeValue(IMPLEMENTATION_NAME);
+      if (implementationName == null) continue;
+
+      myIgnoredUnknownFeatures.add(new UnknownFeature(featureType, implementationName));
     }
   }
 }

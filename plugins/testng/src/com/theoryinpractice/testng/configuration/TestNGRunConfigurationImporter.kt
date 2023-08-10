@@ -70,7 +70,7 @@ class TestNGRunConfigurationImporter: RunConfigurationImporter {
   override fun canImport(typeName: String): Boolean = "testng" == typeName
 
   override fun getConfigurationFactory(): ConfigurationFactory = ConfigurationTypeUtil
-    .findConfigurationType<TestNGConfigurationType>(TestNGConfigurationType::class.java)
+    .findConfigurationType(TestNGConfigurationType::class.java)
     .configurationFactories[0]
 
   companion object {

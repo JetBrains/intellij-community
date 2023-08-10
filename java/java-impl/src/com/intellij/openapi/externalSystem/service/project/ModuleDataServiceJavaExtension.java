@@ -10,14 +10,12 @@ import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated duplicate behaviour with {@link com.intellij.externalSystem.JavaModuleDataService}
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+@Deprecated(forRemoval = true)
 @SuppressWarnings("DeprecatedIsStillUsed")
 public class ModuleDataServiceJavaExtension implements ModuleDataServiceExtension {
   private static final Logger LOG = Logger.getInstance(ModuleDataServiceJavaExtension.class);

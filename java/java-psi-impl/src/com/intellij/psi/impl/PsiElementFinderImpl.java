@@ -26,19 +26,10 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
   private final Project myProject;
   private final JavaFileManager myFileManager;
 
-  @SuppressWarnings("unused") //used for extension point instantiation
+  //used for extension point instantiation
   public PsiElementFinderImpl(Project project) {
     myProject = project;
     myFileManager = JavaFileManager.getInstance(project);
-  }
-
-  /**
-   * @deprecated use {@link #PsiElementFinderImpl(Project)}
-   */
-  @Deprecated
-  public PsiElementFinderImpl(Project project, JavaFileManager javaFileManager) {
-    myProject = project;
-    myFileManager = javaFileManager;
   }
 
   @Override
@@ -51,7 +42,7 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
 
   private boolean skipIndices() {
     DumbService dumbService = DumbService.getInstance(myProject);
-    return dumbService.isDumb() && dumbService.isAlternativeResolveEnabled();
+    return dumbService.isAlternativeResolveEnabled();
   }
 
   @Override

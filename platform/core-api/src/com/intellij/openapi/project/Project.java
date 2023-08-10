@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
 
 /**
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.*;
  * <p>To get all of its modules, use {@code ModuleManager.getInstance(project).getModules()}.
  *
  * <p>To iterate over all project source files and directories,
- * use {@code ProjectFileIndex.SERVICE.getInstance(project).iterateContent(iterator)}.
+ * use {@code ProjectFileIndex.getInstance(project).iterateContent(iterator)}.
  *
  * <p>To get the list of all open projects, use {@code ProjectManager.getInstance().getOpenProjects()}.
  */
@@ -30,22 +31,29 @@ public interface Project extends ComponentManager, AreaInstance {
   @NlsSafe String getName();
 
   /**
-   * Returns a project base directory - a parent directory of a {@code .ipr} file or {@code .idea} directory.<br/>
+   * Returns a directory under which project configuration files are stored ({@code .ipr} file or {@code .idea} directory). Note that it
+   * is not always the direct parent of {@code .idea} directory, it may be its grand-grand parent.<br/>
    * Returns {@code null} for default project.
    *
-   * @see com.intellij.openapi.project.ProjectUtil#guessProjectDir
-   * @see #getBasePath()
-   *
-   * @deprecated No such concept as "project root". Project consists of module set, each has own content root set.
+   * @deprecated use other methods depending on what you actually need:
+   * <ul>
+   *   <li>if you need to find a root directory for a file use {@link com.intellij.openapi.roots.ProjectFileIndex#getContentRootForFile getContentRootForFile};</li>
+   *   <li>if you have a {@link com.intellij.openapi.module.Module Module} instance in the context, use one of its {@link com.intellij.openapi.roots.ModuleRootModel#getContentRoots() content roots};</li>
+   *   <li>if you just need to get a directory somewhere near project files, use {@link com.intellij.openapi.project.ProjectUtil#guessProjectDir guessProjectDir};</li>
+   *   <li>if you really need to locate {@code .idea} directory or {@code .ipr} file, use {@link com.intellij.openapi.components.impl.stores.IProjectStore IProjectStore}.</li>
+   * </ul>
    */
   @Deprecated
   VirtualFile getBaseDir();
 
   /**
-   * Returns a path to a project base directory (see {@linkplain #getBaseDir()}).<br/>
+   * Returns path to a directory under which project configuration files are stored ({@code .ipr} file or {@code .idea} directory). Note that it
+   * is not always the direct parent of {@code .idea} directory, it may be its grand-grand parent.<br/>
    * Returns {@code null} for default project.
-   *
-   * @see com.intellij.openapi.project.ProjectUtil#guessProjectDir
+   * <p>It's <b>strongly recommended</b> to use other methods instead of this one (see {@link #getBaseDir()} for alternatives. Most
+   * probably any use of this method in production code may lead to unexpected results for some projects (e.g. if {@code .idea} directory is
+   * stored not near the project files).
+   * </p>
    */
   @Nullable
   @SystemIndependent @NonNls
@@ -77,9 +85,7 @@ public interface Project extends ComponentManager, AreaInstance {
    * Returns {@code null} for default project.
    * <b>Note:</b> the word "presentable" here implies file system presentation, not a UI one.
    */
-  @Nullable
-  @SystemDependent @NonNls
-  default String getPresentableUrl() {
+  default @Nullable @SystemDependent @NonNls String getPresentableUrl() {
     return null;
   }
 
@@ -101,11 +107,30 @@ public interface Project extends ComponentManager, AreaInstance {
 
   void save();
 
+  default void scheduleSave() {
+    save();
+  }
+
   boolean isOpen();
 
   boolean isInitialized();
 
   default boolean isDefault() {
     return false;
+  }
+
+  /**
+   * @deprecated this scope will die only with the project => plugin coroutines which use it will leak on unloading.
+   * Instead, use <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#service-scopes">service constructor injection</a>.
+   * <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#why-application.getcoroutinescope-are-project.getcoroutinescope-are-bad">Why? See here.</a>
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
+  @ApiStatus.Internal
+  CoroutineScope getCoroutineScope();
+
+  @ApiStatus.Internal
+  default ComponentManager getActualComponentManager() {
+    return this;
   }
 }

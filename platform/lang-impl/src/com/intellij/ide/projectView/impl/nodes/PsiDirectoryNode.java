@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.NodeSortOrder;
 import com.intellij.ide.projectView.NodeSortSettings;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.CompoundIconProvider;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.PathElementIdProvider;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -34,8 +35,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +47,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Set;
 
-public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText {
+public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText, PathElementIdProvider {
   // the chain from a parent directory to this one usually contains only one virtual file
   private final Set<VirtualFile> chain = new SmartHashSet<>();
 
@@ -136,6 +139,12 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory, false, false));
 
     setupIcon(data, psiDirectory);
+  }
+
+  @Override
+  public @NotNull String getPathElementId() {
+    var value = getEqualityObject();
+    return value == null ? "" : value.toString();
   }
 
   protected static boolean canRealModuleNameBeHidden() {
@@ -232,8 +241,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
    */
   @Nullable
   private static VirtualFile getVirtualFile(Object element) {
-    if (element instanceof PsiDirectory) {
-      PsiDirectory directory = (PsiDirectory)element;
+    if (element instanceof PsiDirectory directory) {
       return directory.getVirtualFile();
     }
     return element instanceof VirtualFile ? (VirtualFile)element : null;
@@ -250,9 +258,10 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     if (super.canRepresent(element)) return true;
     PsiDirectory directory = getValue();
     Object owner = getParentValue();
-    if (file == null || directory == null || !(owner instanceof PsiDirectory)) return false;
-    return ProjectViewDirectoryHelper.getInstance(getProject())
-      .canRepresent(file, directory, (PsiDirectory)owner, getSettings());
+    if (file == null || directory == null) return false;
+    ProjectViewDirectoryHelper helper = ProjectViewDirectoryHelper.getInstance(directory.getProject());
+    return helper.canRepresent(file, directory) ||
+    owner instanceof PsiDirectory && helper.canRepresent(file, directory, (PsiDirectory)owner, getSettings());
   }
 
   @Override
@@ -379,6 +388,11 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   @Override
   public boolean isAlwaysShowPlus() {
     final VirtualFile file = getVirtualFile();
-    return file == null || file.getChildren().length > 0;
+    if (file == null || !file.isValid()) return false;
+    VirtualFile[] children = file.getChildren();
+    if (ArrayUtil.isEmpty(children)) return false;
+    if (ContainerUtil.exists(children, child -> !child.isDirectory())) return true;
+    ViewSettings settings = getSettings();
+    return settings == null || !settings.isFlattenPackages();
   }
 }

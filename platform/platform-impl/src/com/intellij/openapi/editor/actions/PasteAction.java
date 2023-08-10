@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Producer;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.Transferable;
 
@@ -21,7 +22,7 @@ public class PasteAction extends TextComponentEditorAction {
 
   private static class Handler extends BasePasteHandler {
     @Override
-    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, Caret caret, DataContext dataContext) {
       TextRange range = null;
       if (myTransferable != null) {
         TextRange[] ranges = EditorCopyPasteHelper.getInstance().pasteTransferable(editor, myTransferable);

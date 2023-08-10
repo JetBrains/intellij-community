@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -7,41 +7,37 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBComboBoxLabel;
-import com.intellij.util.NullableConsumer;
+import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SmartList;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author Bas Leijdekkers
  */
-class LinkComboBox extends JBComboBoxLabel {
+class LinkComboBox extends ActionLink {
 
   private final List<String> myItems = new SmartList<>();
   private String mySelectedItem;
   private @NlsContexts.Label String myDefaultItem;
-  private NullableConsumer<? super String> myConsumer;
+  private @Nullable Consumer<? super String> myConsumer;
 
   LinkComboBox(@NlsContexts.Label String defaultItem) {
+    setAutoHideOnDisable(false);
     setDefaultItem(defaultItem);
-    setForeground(JBUI.CurrentTheme.Link.Foreground.ENABLED);
-    addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        showPopup();
-      }
-    });
+    setDropDownLinkIcon();
+    addActionListener(e -> showPopup());
   }
 
-  public void setItemConsumer(@Nullable NullableConsumer<? super String> consumer) {
+  public void setItemConsumer(@Nullable Consumer<? super String> consumer) {
     myConsumer = consumer;
   }
 
@@ -52,6 +48,24 @@ class LinkComboBox extends JBComboBoxLabel {
     if (!myItems.contains(mySelectedItem)) {
       setSelectedItem(myDefaultItem != null ? myDefaultItem : myItems.get(0));
     }
+  }
+
+  /**
+   * Sets a label for this component.  If the specified label has a displayed mnemonic,
+   * it will call the {@code #doClick} method when the mnemonic is activated.
+   *
+   * @param label the label referring to this component
+   * @see JLabel#setLabelFor
+   */
+  public void setLabel(@NotNull JLabel label) {
+    label.setLabelFor(this);
+
+    label.getActionMap().put("release" /* BasicLabelUI.Actions.RELEASE */, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        doClick();
+      }
+    });
   }
 
   public String getSelectedItem() {
@@ -73,9 +87,9 @@ class LinkComboBox extends JBComboBoxLabel {
     if (!isEnabled()) return;
     final BaseListPopupStep<String> list = new BaseListPopupStep<>(null, myItems) {
       @Override
-      public PopupStep onChosen(@NlsContexts.Label String selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(@NlsContexts.Label String selectedValue, boolean finalChoice) {
         setSelectedItem(selectedValue);
-        if (myConsumer != null) myConsumer.consume(selectedValue);
+        if (myConsumer != null) myConsumer.accept(selectedValue);
         return super.onChosen(selectedValue, finalChoice);
       }
 
@@ -85,6 +99,6 @@ class LinkComboBox extends JBComboBoxLabel {
       }
     };
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(list);
-    popup.show(new RelativePoint(this, new Point(-2, 0)));
+    popup.show(new RelativePoint(this, new Point(JBUIScale.scale(-2), getHeight() + JBUIScale.scale(2))));
   }
 }

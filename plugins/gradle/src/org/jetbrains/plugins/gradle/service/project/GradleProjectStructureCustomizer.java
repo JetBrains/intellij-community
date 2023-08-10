@@ -24,7 +24,6 @@ import com.intellij.openapi.externalSystem.model.project.Identifiable;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,6 +79,6 @@ public class GradleProjectStructureCustomizer extends ExternalProjectStructureCu
 
   @NotNull
   private static Set<? extends Key<? extends Identifiable>> getDataKeys() {
-    return ContainerUtil.set(GradleSourceSetData.KEY, ProjectKeys.MODULE);
+    return Set.of(GradleSourceSetData.KEY, ProjectKeys.MODULE);
   }
 }

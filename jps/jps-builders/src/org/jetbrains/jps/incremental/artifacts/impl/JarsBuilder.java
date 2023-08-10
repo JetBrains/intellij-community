@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,6 +15,7 @@ import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
@@ -44,6 +45,7 @@ public final class JarsBuilder {
   private Map<JarInfo, File> myBuiltJars;
   private final BuildOutputConsumer myOutputConsumer;
   private final ArtifactOutputToSourceMapping myOutSrcMapping;
+  private final @Nullable Long buildDateInMillis;
 
   public JarsBuilder(Set<JarInfo> jarsToBuild, CompileContext context, BuildOutputConsumer outputConsumer,
                      ArtifactOutputToSourceMapping outSrcMapping) {
@@ -55,6 +57,11 @@ public final class JarsBuilder {
     }
     myJarsToBuild = evaluator.getJars();
     myContext = context;
+    String buildDateInSeconds = context.getBuilderParameter(GlobalOptions.BUILD_DATE_IN_SECONDS);
+    if (buildDateInSeconds == null) {
+      buildDateInSeconds = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS);
+    }
+    buildDateInMillis = buildDateInSeconds != null ? Long.parseLong(buildDateInSeconds) * 1000 : null;
   }
 
   public boolean buildJars() throws IOException, ProjectBuildException {
@@ -89,14 +96,19 @@ public final class JarsBuilder {
     }
   }
 
-  private void copyJars() throws IOException {
+  private void copyJars() {
     for (Map.Entry<JarInfo, File> entry : myBuiltJars.entrySet()) {
       File fromFile = entry.getValue();
       final JarInfo jarInfo = entry.getKey();
       DestinationInfo destination = jarInfo.getDestination();
       if (destination instanceof ExplodedDestinationInfo) {
         File toFile = new File(FileUtil.toSystemDependentName(destination.getOutputPath()));
-        FileUtil.rename(fromFile, toFile);
+        try {
+          FileUtil.rename(fromFile, toFile);
+        }
+        catch (IOException e) {
+          myContext.processMessage(new CompilerMessage(IncArtifactBuilder.getBuilderName(), BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e)));
+        }
       }
     }
   }
@@ -104,9 +116,9 @@ public final class JarsBuilder {
   private JarInfo @Nullable [] sortJars() {
     final DFSTBuilder<JarInfo> builder = new DFSTBuilder<>(GraphGenerator.generate(CachingSemiGraph.cache(new JarsGraph())));
     if (!builder.isAcyclic()) {
-      final Pair<JarInfo, JarInfo> dependency = builder.getCircularDependency();
-      String message = JpsBuildBundle.message("build.message.cannot.build.circular.dependency.found.between.0.and.1", dependency.getFirst().getPresentableDestination(),
-                                              dependency.getSecond().getPresentableDestination());
+      Map.Entry<JarInfo, JarInfo> dependency = builder.getCircularDependency();
+      String message = JpsBuildBundle.message("build.message.cannot.build.circular.dependency.found.between.0.and.1", dependency.getKey().getPresentableDestination(),
+                                              dependency.getValue().getPresentableDestination());
       myContext.processMessage(new CompilerMessage(IncArtifactBuilder.getBuilderName(), BuildMessage.Kind.ERROR, message));
       return null;
     }
@@ -141,12 +153,12 @@ public final class JarsBuilder {
       myContext.processMessage(new CompilerMessage(IncArtifactBuilder.getBuilderName(), BuildMessage.Kind.WARNING, messageText));
     }
     BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(jarFile));
-    JarOutputStream jarOutputStream = manifest != null ? new JarOutputStream(outputStream, manifest) : new JarOutputStream(outputStream);
+    JarOutputStream jarOutputStream = new JarOutputStream(outputStream);
 
     final Set<String> writtenPaths = new HashSet<>();
     try {
       if (manifest != null) {
-        writtenPaths.add(JarFile.MANIFEST_NAME);
+        addManifestEntry(jarOutputStream, manifest, writtenPaths);
       }
 
       for (Pair<String, Object> pair : jar.getContent()) {
@@ -282,7 +294,7 @@ public final class JarsBuilder {
   private void extractFileAndAddToJar(final JarOutputStream jarOutputStream, final JarBasedArtifactRootDescriptor root,
                                       final String relativeOutputPath, final Set<? super String> writtenPaths)
     throws IOException {
-    final long timestamp = FSOperations.lastModified(root.getRootFile());
+    final long timestamp = buildDateInMillis != null ? buildDateInMillis : FSOperations.lastModified(root.getRootFile());
     root.processEntries(new JarBasedArtifactRootDescriptor.EntryProcessor() {
       @Override
       public void process(@Nullable InputStream inputStream, @NotNull String relativePath, ZipEntry entry) throws IOException {
@@ -359,7 +371,8 @@ public final class JarsBuilder {
       return;
     }
 
-    final boolean added = ZipUtil.addFileToZip(jarOutputStream, file, relativePath, writtenItemRelativePaths, null);
+    final long timestamp = buildDateInMillis != null ? buildDateInMillis : FSOperations.lastModified(file);
+    final boolean added = ZipUtil.addFileToZip(jarOutputStream, file, relativePath, writtenItemRelativePaths, null, timestamp);
     if (rootIndex != -1) {
       myOutSrcMapping.appendData(targetJarPath, rootIndex, filePath);
       if (added) {
@@ -369,7 +382,7 @@ public final class JarsBuilder {
   }
 
 
-  private static String addParentDirectories(JarOutputStream jarOutputStream, Set<? super String> writtenPaths, String relativePath) throws IOException {
+  private String addParentDirectories(JarOutputStream jarOutputStream, Set<? super String> writtenPaths, String relativePath) throws IOException {
     while (StringUtil.startsWithChar(relativePath, '/')) {
       relativePath = relativePath.substring(1);
     }
@@ -384,15 +397,29 @@ public final class JarsBuilder {
     return relativePath;
   }
 
-  private static void addDirectoryEntry(final ZipOutputStream output, @NonNls final String relativePath, Set<? super String> writtenPaths) throws IOException {
+  private void addDirectoryEntry(final ZipOutputStream output, @NonNls final String relativePath, Set<? super String> writtenPaths) throws IOException {
     if (!writtenPaths.add(relativePath)) return;
 
     ZipEntry e = new ZipEntry(relativePath);
+    if (buildDateInMillis != null) {
+      e.setTime(buildDateInMillis);
+    }
     e.setMethod(ZipEntry.STORED);
     e.setSize(0);
     e.setCrc(0);
     output.putNextEntry(e);
     output.closeEntry();
+  }
+
+  private void addManifestEntry(ZipOutputStream output, Manifest manifest, Set<? super String> writtenPaths) throws IOException {
+    ZipEntry manifestEntry = new ZipEntry(JarFile.MANIFEST_NAME);
+    if (buildDateInMillis != null) {
+      manifestEntry.setTime(buildDateInMillis);
+    }
+    output.putNextEntry(manifestEntry);
+    manifest.write(new BufferedOutputStream(output));
+    output.closeEntry();
+    writtenPaths.add(JarFile.MANIFEST_NAME);
   }
 
   private class JarsGraph implements InboundSemiGraph<JarInfo> {

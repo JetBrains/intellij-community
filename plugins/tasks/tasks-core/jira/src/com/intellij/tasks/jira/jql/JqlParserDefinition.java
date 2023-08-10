@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Mikhail Golubev
  */
 public class JqlParserDefinition implements ParserDefinition {
-  private static final Logger LOG = Logger.getInstance(JqlParserDefinition.class);
+  private static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType(JqlLanguage.INSTANCE);
 
   @NotNull
   @Override
@@ -33,7 +32,7 @@ public class JqlParserDefinition implements ParserDefinition {
 
   @Override
   public @NotNull IFileElementType getFileNodeType() {
-    return JqlElementTypes.FILE;
+    return FILE_ELEMENT_TYPE;
   }
 
   @NotNull

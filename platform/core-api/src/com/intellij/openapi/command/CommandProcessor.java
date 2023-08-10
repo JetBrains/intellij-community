@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,28 +58,35 @@ public abstract class CommandProcessor {
                                       @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
                                       boolean shouldRecordCommandForActiveDocument);
 
+  @ApiStatus.Experimental
+  public abstract void executeCommand(@Nullable Project project,
+                                      @NotNull Runnable command,
+                                      @Nullable @NlsContexts.Command String name,
+                                      @Nullable Object groupId,
+                                      @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
+                                      boolean shouldRecordCommandForActiveDocument,
+                                      @Nullable Document document);
+
   public abstract void setCurrentCommandName(@Nullable @NlsContexts.Command String name);
 
   public abstract void setCurrentCommandGroupId(@Nullable Object groupId);
 
-  @Nullable
-  public abstract Runnable getCurrentCommand();
+  public abstract @Nullable Runnable getCurrentCommand();
 
-  @Nullable
-  @Nls
-  public abstract String getCurrentCommandName();
+  public abstract @Nullable @Nls String getCurrentCommandName();
 
-  @Nullable
-  public abstract Object getCurrentCommandGroupId();
+  public abstract @Nullable Object getCurrentCommandGroupId();
 
-  @Nullable
-  public abstract Project getCurrentCommandProject();
+  public abstract @Nullable Project getCurrentCommandProject();
 
   /**
    * Defines a scope which contains undoable actions, for which there won't be a separate undo/redo step - they will be undone/redone along
    * with 'adjacent' command.
    */
   public abstract void runUndoTransparentAction(@NotNull Runnable action);
+
+  @ApiStatus.Internal
+  public abstract AutoCloseable withUndoTransparentAction();
 
   /**
    * @see #runUndoTransparentAction(Runnable)
@@ -93,22 +100,15 @@ public abstract class CommandProcessor {
   public abstract void addAffectedFiles(@Nullable Project project, VirtualFile @NotNull ... files);
 
   /**
+   * Global commands will be merged during {@code action} execution
+   */
+  @ApiStatus.Experimental
+  public abstract void allowMergeGlobalCommands(@NotNull Runnable action);
+
+  /**
    * @deprecated use {@link CommandListener#TOPIC}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public abstract void addCommandListener(@NotNull CommandListener listener);
-
-  /**
-   * @deprecated use {@link CommandListener#TOPIC}
-   */
-  @Deprecated
-  public void addCommandListener(@NotNull CommandListener listener, @NotNull Disposable parentDisposable) {
-    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(CommandListener.TOPIC, listener);
-  }
-
-  /**
-   * @deprecated use {@link CommandListener#TOPIC}
-   */
-  @Deprecated
-  public abstract void removeCommandListener(@NotNull CommandListener listener);
 }

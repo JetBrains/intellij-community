@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -22,7 +9,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -33,11 +22,12 @@ import com.intellij.xml.impl.schema.XsdNsDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-class CreateXmlElementIntentionAction implements IntentionAction {
+final class CreateXmlElementIntentionAction implements IntentionAction {
   private final String myMessageKey;
-  protected final TypeOrElementOrAttributeReference myRef;
+  private final TypeOrElementOrAttributeReference myRef;
   private boolean myIsAvailableEvaluated;
   private XmlFile myTargetFile;
   private final String myDeclarationTagName;
@@ -68,7 +58,7 @@ class CreateXmlElementIntentionAction implements IntentionAction {
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     if (!myIsAvailableEvaluated) {
       final XmlTag tag = PsiTreeUtil.getParentOfType(myRef.getElement(), XmlTag.class);
-      if (tag != null) {
+      if (tag != null && tag.isValid()) {
         final XsdNsDescriptor descriptor = myRef.getDescriptor(tag, myRef.getCanonicalText(), new boolean[1]);
 
         if (descriptor != null &&
@@ -87,12 +77,19 @@ class CreateXmlElementIntentionAction implements IntentionAction {
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final XmlTag rootTag = myTargetFile.getDocument().getRootTag();
 
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(
-      project,
-      myTargetFile.getVirtualFile(),
-      rootTag.getValue().getTextRange().getEndOffset()
-    );
-    Editor targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+    Editor targetEditor;
+    if (myTargetFile.getVirtualFile() == null) {
+      targetEditor = editor;
+      targetEditor.getDocument().setText("");
+      targetEditor.getCaretModel().moveToOffset(0);
+    }
+    else {
+      targetEditor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(
+        project,
+        myTargetFile.getVirtualFile(),
+        rootTag.getValue().getTextRange().getEndOffset()
+      ), true);
+    }
     TemplateManager manager = TemplateManager.getInstance(project);
     final Template template = manager.createTemplate("", "");
 
@@ -101,7 +98,7 @@ class CreateXmlElementIntentionAction implements IntentionAction {
     manager.startTemplate(targetEditor, template);
   }
 
-  protected void addTextTo(Template template, XmlTag rootTag) {
+  private void addTextTo(Template template, XmlTag rootTag) {
     String schemaPrefix = rootTag.getPrefixByNamespace(XmlUtil.XML_SCHEMA_URI);
     if (!schemaPrefix.isEmpty()) schemaPrefix += ":";
 
@@ -118,5 +115,16 @@ class CreateXmlElementIntentionAction implements IntentionAction {
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  @Override
+  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiElement copy = PsiTreeUtil.findSameElementInCopy(myRef.getElement(), target);
+    PsiReference reference = copy.getReference();
+
+    CreateXmlElementIntentionAction intentionAction =
+      new CreateXmlElementIntentionAction(myMessageKey, myDeclarationTagName, (TypeOrElementOrAttributeReference)reference);
+    intentionAction.myTargetFile = (XmlFile)target;
+    return intentionAction;
   }
 }

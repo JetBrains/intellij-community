@@ -14,6 +14,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.UserActivityWatcher;
+import com.intellij.util.ui.JBFont;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,10 +26,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class MavenRunnerPanel implements MavenSettingsObservable {
+public class MavenRunnerPanel {
   protected final Project myProject;
   private final boolean myRunConfigurationMode;
 
@@ -60,10 +60,8 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     c.insets.bottom = 5;
 
     myDelegateToMavenCheckbox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.delegate"));
-    myDelegateToMavenCheckbox.setMnemonic('d');
 
     myRunInBackgroundCheckbox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.run.in.background"));
-    myRunInBackgroundCheckbox.setMnemonic('b');
     if (!myRunConfigurationMode) {
       c.gridx = 0;
       c.gridy++;
@@ -78,7 +76,6 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     c.gridwidth = 1;
 
     JLabel labelVMParameters = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.vm.options"));
-    labelVMParameters.setDisplayedMnemonic('v');
     labelVMParameters.setLabelFor(myVMParametersEditor = new RawCommandLineEditor());
     myVMParametersEditor.setDialogCaption(labelVMParameters.getText());
 
@@ -91,10 +88,17 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     c.weightx = 1;
     c.insets.left = 10;
     panel.add(myVMParametersEditor, c);
+
+    JLabel labelOverrideJvmConfig = new JLabel(MavenConfigurableBundle.message("maven.settings.vm.options.tooltip"));
+    labelOverrideJvmConfig.setFont(JBFont.small());
+    c.gridx = 1;
+    c.gridy++;
+    c.weightx = 1;
+    c.insets.left = 20;
+    panel.add(labelOverrideJvmConfig, c);
     c.insets.left = 0;
 
     myJdkLabel = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.jre"));
-    myJdkLabel.setDisplayedMnemonic('j');
     myJdkLabel.setLabelFor(myJdkCombo = new ExternalSystemJdkComboBox(myProject));
     c.gridx = 0;
     c.gridy++;
@@ -125,7 +129,6 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     propertiesPanel.setBorder(IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.runner.properties"), false));
 
     propertiesPanel.add(mySkipTestsCheckBox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.skip.tests")), BorderLayout.NORTH);
-    mySkipTestsCheckBox.setMnemonic('t');
 
     collectProperties();
     propertiesPanel.add(myPropertiesPanel = new MavenPropertiesPanel(myProperties), BorderLayout.CENTER);
@@ -212,7 +215,7 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     if (!localTarget) {
       List<String> items = IntStream.range(0, myTargetJdkCombo.getItemCount())
         .mapToObj(i -> myTargetJdkCombo.getItemAt(i))
-        .collect(Collectors.toList());
+        .toList();
 
       List<String> targetItems = new ArrayList<>();
       TargetEnvironmentConfiguration targetEnvironmentConfiguration = TargetEnvironmentsManager.getInstance(myProject)
@@ -234,17 +237,5 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     } else {
       myJdkLabel.setLabelFor(myJdkCombo);
     }
-  }
-
-  @Override
-  public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
-    watcher.registerComponent("delegateToMaven", myDelegateToMavenCheckbox);
-    watcher.registerComponent("runInBackground", myRunInBackgroundCheckbox);
-    watcher.registerComponent("vmParameters", myVMParametersEditor);
-    watcher.registerComponent("envVariables", myEnvVariablesComponent);
-    watcher.registerComponent("jdk", myJdkCombo);
-    watcher.registerComponent("targetJdk", myTargetJdkCombo);
-    watcher.registerComponent("skipTests", mySkipTestsCheckBox);
-    watcher.registerComponent("properties", myPropertiesPanel);
   }
 }

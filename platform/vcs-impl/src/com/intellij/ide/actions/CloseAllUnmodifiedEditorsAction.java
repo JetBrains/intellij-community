@@ -1,22 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import org.jetbrains.annotations.NotNull;
 
-public class CloseAllUnmodifiedEditorsAction extends CloseEditorsActionBase {
-
+final class CloseAllUnmodifiedEditorsAction extends CloseEditorsActionBase {
   @Override
-  protected boolean isFileToClose(final EditorComposite editor, final EditorWindow window) {
-    return !window.getManager().isChanged(editor) && !window.isFilePinned(editor.getFile());
+  protected boolean isFileToClose(@NotNull EditorComposite editor, @NotNull EditorWindow window, @NotNull FileEditorManagerEx fileEditorManager) {
+    return !fileEditorManager.isChanged(editor) && !window.isFilePinned(editor.getFile());
   }
 
   @Override
-  protected boolean isActionEnabled(final Project project, final AnActionEvent event) {
+  protected boolean isActionEnabled(Project project, AnActionEvent event) {
     return super.isActionEnabled(project, event) && ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length > 0;
   }
 

@@ -7,38 +7,25 @@ import static java.lang.String.format;
 class Main {
   static {
     System.out.print(/* one */ "hello" /* two */);
-    System.out.print(/* one */ ("hello") /* two */);
-    System.out.print(/* one */ ("hello") /* two */);
-    System.out.print(/* one */ ("hello") /* two */);
-    System.out.print(/* one */  /* two */ /* three */ ("hello") /* four */);
-    System.out.print(/* one */  /* two */ /* three */ ("hello") /* four */);
-    System.out.print(/* one */  /* two */ /* three */ ("hello") /* four */);
-    System.out.print((format(/* one */ Locale.CANADA /* two */, /* three */ "hello%n" /* four */)));
+    System.out.print(/* one */ ("hello") /* two */;
+    System.out.print(((/* one */ ("hello") /* two */)));
   }
 
   Main() {
     System.out.print(/* one */ ("hello") /* two */);
-    System.out.print(/* one */ ("hello") /* two */);
-    System.out.print(/* one */  /* two */ /* three */ ("hello") /* four */);
-    System.out.print(/* one */  /* two */ /* three */ ("hello") /* four */);
+    System.out.print(((/* one */ ("hello") /* two */)));
   }
   void f() {
     System.out.print(/* one */ ("hello") /* two */);
-    System.out.print(/* one */ ("hello") /* two */);
-    System.out.print(/* one */  /* two */ /* three */ ("hello") /* four */);
-    System.out.print(/* one */  /* two */ /* three */ ("hello") /* four */);
+    System.out.print(((/* one */ ("hello") /* two */)));
   }
   void out(PrintStream printer) {
     printer.print(/* one */ ("hello") /* two */);
-    printer.print(/* one */ ("hello") /* two */);
-    printer.print(/* one */  /* two */ /* three */ ("hello") /* four */);
-    printer.print(/* one */  /* two */ /* three */ ("hello") /* four */);
+    printer.print(((/* one */ ("hello") /* two */)));
   }
   void caller() {
-    printf(String.format(/* one */ ("hello") /* two */));
-    printf(((String.format(/* one */ ("hello") /* two */))));
-    printf(String.format(/* one */ Locale.CANADA /* two */, /* three */ ("hello") /* four */));
-    printf((String.format(/* one */ Locale.CANADA /* two */, /* three */ ("hello") /* four */)));
+    printf(/* one */ ("hello") /* two */);
+    printf(((/* one */ ("hello") /* two */)));
   }
 
   static void printf(String value) {}

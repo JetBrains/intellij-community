@@ -89,9 +89,6 @@ link.attrs &= common.attrs.microdata.itemid?
 		&	common.attrs.microdata.itemtype?
 		&	common.attrs.microdata.itemid?
 		&	meta.itemprop.attrs.content
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 		meta.itemprop.attrs.content =
 			attribute content {

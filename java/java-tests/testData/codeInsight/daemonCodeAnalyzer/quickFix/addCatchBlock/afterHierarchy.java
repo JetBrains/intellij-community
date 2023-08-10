@@ -1,7 +1,7 @@
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-// "Add 'catch' clause(s)" "true"
+// "Add 'catch' clause(s)" "true-preview"
 class CatchExceptions {
 
 	void foo() throws java.io.IOException, java.io.FileNotFoundException {
@@ -12,9 +12,9 @@ class CatchExceptions {
 		try {
 		foo();
 		} catch (FileNotFoundException e) {
-            <selection>e.printStackTrace();</selection>
+            <selection><caret>throw new RuntimeException(e);</selection>
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 }

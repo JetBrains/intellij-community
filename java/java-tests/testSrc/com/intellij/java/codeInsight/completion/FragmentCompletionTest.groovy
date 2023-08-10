@@ -26,9 +26,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.PairFunction
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
   void testDontCompleteFieldsAndMethodsInReferenceCodeFragment() throws Throwable {
@@ -55,6 +52,19 @@ class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile())
     assert !myFixture.complete(CompletionType.BASIC, 2)
     myFixture.checkResult(text)
+  }
+
+  @NeedsIndex.Full
+  void testPreferClassOverPackage() {
+    myFixture.addClass("package Xyz; public class Xyz {}")
+
+    def text = "Xy<caret>"
+    PsiFile file = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(text, null, true, true)
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile())
+    def elements = myFixture.completeBasic()
+    assert elements.length == 2
+    assert elements[0].getPsiElement() instanceof PsiClass
+    assert elements[1].getPsiElement() instanceof PsiPackage
   }
 
   void "test no constants in reference code fragment"() throws Throwable {
@@ -110,7 +120,7 @@ class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
     final ctxFile = createLightFile(JavaFileType.INSTANCE, ctxText)
     final context = ctxFile.findElementAt(ctxText.indexOf("map="))
     assert context
-    
+
     PsiFile file = JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment("map.entry<caret>", context, null, true)
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile())
     myFixture.file.putCopyableUserData(JavaCompletionUtil.DYNAMIC_TYPE_EVALUATOR, new PairFunction<PsiExpression, CompletionParameters, PsiType>() {

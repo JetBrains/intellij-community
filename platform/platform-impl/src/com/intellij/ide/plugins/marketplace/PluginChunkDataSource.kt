@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.marketplace
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.Chunk
@@ -13,6 +14,8 @@ import java.nio.charset.Charset
 private const val MAX_HTTP_HEADERS_LENGTH: Int = 19000
 private const val MAX_RANGE_BYTES: Int = 10_000_000
 private const val MAX_STRING_LENGTH: Int = 1024
+
+private val LOG = logger<PluginChunkDataSource>()
 
 class PluginChunkDataSource(
   oldBlockMap: BlockMap,
@@ -27,7 +30,7 @@ class PluginChunkDataSource(
   private var pointer: Int = 0
 
 
-  override fun hasNext() = curChunkData.size != 0
+  override fun hasNext(): Boolean = curChunkData.size != 0
 
   override fun next(): ByteArray {
     return if (curChunkData.size != 0) {
@@ -75,19 +78,31 @@ class PluginChunkDataSource(
 
   private fun getRange(range: String): MutableList<ByteArray> {
     val result = ArrayList<ByteArray>()
-    HttpRequests.requestWithRange(newPluginUrl, range).productNameAsUserAgent().connect { request ->
-      val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
-      request.inputStream.buffered().use { input ->
-        if (chunkSequences.size > 1) {
-          for (sequence in chunkSequences) {
-            parseHttpMultirangeHeaders(input, boundary)
-            parseHttpRangeBody(input, sequence, result)
+    if (range.isEmpty()) {
+      LOG.warn("Empty range: request '$newPluginUrl' range '$range'")
+    }
+    else {
+      HttpRequests
+        .requestWithRange(newPluginUrl, range)
+        .productNameAsUserAgent()
+        .setHeadersViaTuner()
+        .connect { request ->
+          val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
+          request.inputStream.buffered().use { input ->
+            when {
+              chunkSequences.size > 1 -> {
+                for (sequence in chunkSequences) {
+                  parseHttpMultirangeHeaders(input, boundary)
+                  parseHttpRangeBody(input, sequence, result)
+                }
+              }
+              chunkSequences.size == 1 -> parseHttpRangeBody(input, chunkSequences[0], result)
+              else -> {
+                LOG.warn("Zero chunks: request '$newPluginUrl' range '$range'")
+              }
+            }
           }
         }
-        else {
-          parseHttpRangeBody(input, chunkSequences[0], result)
-        }
-      }
     }
     return result
   }

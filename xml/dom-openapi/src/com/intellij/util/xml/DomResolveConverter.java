@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -22,10 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Converter which resolves {@link com.intellij.util.xml.DomElement}s by name in a defined scope. The scope is taken
- * from corresponding {@link com.intellij.util.xml.DomFileDescription#getResolveScope(GenericDomValue)}.
- *
- * @author peter
+ * Converter which resolves {@link DomElement}s by name in a defined scope. The scope is taken
+ * from corresponding {@link DomFileDescription#getResolveScope(GenericDomValue)}.
  */
 public final class DomResolveConverter<T extends DomElement> extends ResolvingConverter<T>{
   private static final Map<Class<? extends DomElement>, DomResolveConverter> ourCache =
@@ -34,7 +32,7 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
   private final SoftFactoryMap<DomElement, CachedValue<Map<String, DomElement>>> myResolveCache = new SoftFactoryMap<>() {
     @Override
     @NotNull
-    protected CachedValue<Map<String, DomElement>> create(final DomElement scope) {
+    protected CachedValue<Map<String, DomElement>> create(final @NotNull DomElement scope) {
       final DomManager domManager = scope.getManager();
       //noinspection ConstantConditions
       if (domManager == null) throw new AssertionError("Null DomManager for " + scope.getClass());
@@ -76,7 +74,7 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
   }
 
   @Override
-  public final T fromString(final String s, final ConvertContext context) {
+  public T fromString(final String s, final ConvertContext context) {
     if (s == null) return null;
     return (T) myResolveCache.get(getResolvingScope(context)).getValue().get(s);
   }
@@ -105,7 +103,7 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
   }
 
   @Override
-  public final String toString(final T t, final ConvertContext context) {
+  public String toString(final T t, final ConvertContext context) {
     if (t == null) return null;
     return ElementPresentationManager.getElementName(t);
   }

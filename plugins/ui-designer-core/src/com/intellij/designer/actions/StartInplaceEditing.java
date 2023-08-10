@@ -17,6 +17,7 @@ package com.intellij.designer.actions;
 
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,12 @@ public class StartInplaceEditing extends AnAction {
 
   public void setDesignerPanel(@Nullable DesignerEditorPanel designer) {
     myDesigner = designer;
+  }
+
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

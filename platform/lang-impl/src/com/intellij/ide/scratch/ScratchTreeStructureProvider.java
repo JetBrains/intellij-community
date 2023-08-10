@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -10,12 +10,12 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -25,7 +25,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,9 +33,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,6 +58,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
       AbstractProjectViewPane updateTarget;
       @Override
       public void run() {
+        if (project.isDisposed()) return;
         if (updateTarget == null) {
           updateTarget = ProjectView.getInstance(project).getProjectViewPaneById(ProjectViewPane.ID);
         }
@@ -66,15 +68,18 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
   }
 
   private static void registerUpdaters(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onUpdate) {
-    String scratchPath = FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(PathManager.getScratchPath()));
     VirtualFileManager.getInstance().addAsyncFileListener(events -> {
+      ScratchFileService scratchFileService = ScratchFileService.getInstance();
       boolean update = JBIterable.from(events).find(e -> {
         ProgressManager.checkCanceled();
-
-        final boolean isDirectory = isDirectory(e);
-        final VirtualFile parent = getNewParent(e);
-        return parent != null && (ScratchUtil.isScratch(parent) ||
-                                  isDirectory && parent.getPath().startsWith(scratchPath));
+        VirtualFile parent = getNewParent(e);
+        if (parent == null) return false;
+        if (ScratchUtil.isScratch(parent)) return true;
+        if (!isDirectory(e)) return false;
+        for (RootType rootType : RootType.getAllRootTypes()) {
+          if (scratchFileService.getRootPath(rootType).startsWith(parent.getPath())) return true;
+        }
+        return false;
       }) != null;
 
       return !update ? null : new AsyncFileListener.ChangeApplier() {
@@ -147,8 +152,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
     return virtualFile == null ? null : PsiManager.getInstance(project).findDirectory(virtualFile);
   }
 
-  @Nullable
-  private static VirtualFile getVirtualFile(@NotNull RootType rootType) {
+  public static @Nullable VirtualFile getVirtualFile(@NotNull RootType rootType) {
     String path = ScratchFileService.getInstance().getRootPath(rootType);
     return LocalFileSystem.getInstance().findFileByPath(path);
   }
@@ -164,6 +168,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
   public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
                                                          @NotNull Collection<AbstractTreeNode<?>> children,
                                                          ViewSettings settings) {
+    if (!settings.isShowScratchesAndConsoles()) return children;
     Project project = parent instanceof ProjectViewProjectNode ? parent.getProject() : null;
     if (project == null) return children;
     if (ApplicationManager.getApplication().isUnitTestMode()) return children;
@@ -180,13 +185,20 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
   /**
    * @deprecated Use modify method instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static AbstractTreeNode<?> createRootNode(@NotNull Project project, ViewSettings settings) {
     return new MyProjectNode(project, settings);
   }
 
   @Override
-  public @Nullable Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
+  public Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)slowId -> getSlowData(slowId, selected);
+    }
+    return null;
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Collection<? extends AbstractTreeNode<?>> selected) {
     if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
       AbstractTreeNode<?> single = JBIterable.from(selected).single();
       if (single instanceof MyRootNode) {
@@ -232,10 +244,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
 
     @Override
     public boolean canRepresent(Object element) {
-      PsiElement item = element instanceof PsiElement ? (PsiElement)element : null;
-      VirtualFile virtualFile = item == null ? null : PsiUtilCore.getVirtualFile(item);
-      if (virtualFile == null) return false;
-      return Objects.equals(virtualFile.getPath(), FileUtil.toSystemIndependentName(PathManager.getScratchPath()));
+      return false;
     }
   }
 
@@ -341,12 +350,9 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
           return true;
         }
       };
-
-      return AbstractTreeUi.calculateYieldingToWriteAction(() -> {
-        if (directory == null || !directory.isValid()) return Collections.emptyList();
-        directory.processChildren(processor);
-        return result;
-      });
+      if (directory == null || !directory.isValid()) return Collections.emptyList();
+      directory.processChildren(processor);
+      return result;
     }
   }
 }

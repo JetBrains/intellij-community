@@ -1,3 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<problems></problems>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>1</line>
+    <entry_point TYPE="class" FQNAME="Test" />
+    <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+    <description>Class is not instantiated.</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>2</line>
+    <entry_point TYPE="method" FQNAME="Test void foo(boolean b)" />
+    <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
+  </problem>
+</problems>
 

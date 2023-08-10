@@ -1,70 +1,90 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.codeInsight.actions.VcsFacade
 import com.intellij.model.ModelPatch
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.RangeMarker
-import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.search.runSearch
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.rename.api.FileOperation
-import com.intellij.refactoring.rename.api.ModifiableRenameUsage
+import com.intellij.refactoring.rename.api.*
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage.*
-import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.refactoring.rename.api.RenameUsage
-import com.intellij.refactoring.rename.api.ReplaceTextTargetContext.IN_COMMENTS_AND_STRINGS
-import com.intellij.refactoring.rename.api.ReplaceTextTargetContext.IN_PLAIN_TEXT
+import com.intellij.refactoring.rename.impl.FileUpdates.Companion.createFileUpdates
 import com.intellij.refactoring.rename.ui.*
 import com.intellij.util.Query
-import com.intellij.util.text.StringOperation
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.toList
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.flow.map
-import java.nio.file.Path
-import kotlin.coroutines.CoroutineContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 
 
 internal typealias UsagePointer = Pointer<out RenameUsage>
 
-internal fun rename(project: Project, target: RenameTarget) {
+/**
+ * Entry point to perform rename with a dialog initialized with [targetName].
+ */
+internal fun showDialogAndRename(project: Project, target: RenameTarget, targetName: String = target.targetName) {
   ApplicationManager.getApplication().assertIsDispatchThread()
-  val canRenameTextOccurrences = !target.textTargets(IN_PLAIN_TEXT).isEmpty()
-  val canRenameCommentAndStringOccurrences = !target.textTargets(IN_COMMENTS_AND_STRINGS).isEmpty()
   val initOptions = RenameDialog.Options(
-    targetName = target.targetName,
-    renameOptions = RenameOptions(
-      renameTextOccurrences = if (canRenameTextOccurrences) true else null,
-      renameCommentsStringsOccurrences = if (canRenameCommentAndStringOccurrences) true else null,
-      searchScope = target.maximalSearchScope ?: GlobalSearchScope.allScope(project)
-    )
+    targetName = targetName,
+    renameOptions = renameOptions(project, target)
   )
-  val dialog = RenameDialog(project, target.presentation.presentableText, initOptions)
+  val dialog = RenameDialog(project, target.presentation().presentableText, target.validator(), initOptions)
   if (!dialog.showAndGet()) {
     // cancelled
     return
   }
   val (newName: String, options: RenameOptions) = dialog.result()
-  val preview: Boolean = dialog.preview
-  val targetPointer: Pointer<out RenameTarget> = target.createPointer()
-  CoroutineScope(CoroutineName("root rename coroutine")).launch(Dispatchers.Default) {
-    rename(this, project, targetPointer, newName, options, preview)
+  setTextOptions(target, options.textOptions)
+  rename(project, target.createPointer(), newName, options, dialog.preview)
+}
+
+/**
+ * Entry point to perform rename without a dialog.
+ * @param preview whether the user explicitly requested the Preview
+ */
+internal fun rename(
+  project: Project,
+  targetPointer: Pointer<out RenameTarget>,
+  newName: String,
+  options: RenameOptions,
+  preview: Boolean = false
+) {
+  val cs = CoroutineScope(CoroutineName("root rename coroutine"))
+  rename(cs, project, targetPointer, newName, options, preview)
+}
+
+private fun rename(
+  cs: CoroutineScope,
+  project: Project,
+  targetPointer: Pointer<out RenameTarget>,
+  newName: String,
+  options: RenameOptions,
+  preview: Boolean
+): Job {
+  return cs.launch(Dispatchers.Default) {
+    doRename(this, project, targetPointer, newName, options, preview)
   }
 }
 
-private suspend fun rename(
+private suspend fun doRename(
   cs: CoroutineScope,
   project: Project,
   targetPointer: Pointer<out RenameTarget>,
@@ -129,6 +149,9 @@ private data class ProcessUsagesResult(
 )
 
 private suspend fun processUsages(usageChannel: ReceiveChannel<UsagePointer>, newName: String): ProcessUsagesResult {
+  if (ApplicationManager.getApplication().isUnitTestMode) {
+    return ProcessUsagesResult(usageChannel.toList(), false)
+  }
   val usagePointers = ArrayList<UsagePointer>()
   for (pointer: UsagePointer in usageChannel) {
     usagePointers += pointer
@@ -144,14 +167,15 @@ private suspend fun processUsages(usageChannel: ReceiveChannel<UsagePointer>, ne
   return ProcessUsagesResult(usagePointers, false)
 }
 
-private suspend fun prepareRename(allUsages: Collection<UsagePointer>, newName: String): Pair<FileUpdates?, ModelUpdate?> {
+@ApiStatus.Internal
+suspend fun prepareRename(allUsages: Collection<UsagePointer>, newName: String): Pair<FileUpdates?, ModelUpdate?> {
   return coroutineScope {
     require(!ApplicationManager.getApplication().isReadAccessAllowed)
     val (
       byFileUpdater: Map<FileUpdater, List<Pointer<out ModifiableRenameUsage>>>,
       byModelUpdater: Map<ModelUpdater, List<Pointer<out ModifiableRenameUsage>>>
-    ) = readAction { ctx: CoroutineContext ->
-      classifyUsages(ctx, allUsages)
+    ) = readAction {
+      classifyUsages(allUsages)
     }
     val fileUpdates: Deferred<FileUpdates?> = async {
       prepareFileUpdates(byFileUpdater, newName)
@@ -167,7 +191,6 @@ private suspend fun prepareRename(allUsages: Collection<UsagePointer>, newName: 
 }
 
 private fun classifyUsages(
-  ctx: CoroutineContext,
   allUsages: Collection<UsagePointer>
 ): Pair<
   Map<FileUpdater, List<Pointer<out ModifiableRenameUsage>>>,
@@ -178,7 +201,7 @@ private fun classifyUsages(
   val byFileUpdater = HashMap<FileUpdater, MutableList<Pointer<out ModifiableRenameUsage>>>()
   val byModelUpdater = HashMap<ModelUpdater, MutableList<Pointer<out ModifiableRenameUsage>>>()
   for (pointer: UsagePointer in allUsages) {
-    ctx.ensureActive()
+    ProgressManager.checkCanceled()
     val renameUsage: ModifiableRenameUsage = pointer.dereference() as? ModifiableRenameUsage ?: continue
     @Suppress("UNCHECKED_CAST") val modifiablePointer = pointer as Pointer<out ModifiableRenameUsage>
     renameUsage.fileUpdater?.let { fileUpdater: FileUpdater ->
@@ -210,49 +233,21 @@ private suspend fun prepareFileUpdates(
   usagePointers: List<Pointer<out ModifiableRenameUsage>>,
   newName: String
 ): FileUpdates? {
-  return readAction { ctx: CoroutineContext ->
+  return readAction {
     usagePointers.dereferenceOrNull()?.let { usages: List<ModifiableRenameUsage> ->
-      createFileUpdates(ctx, fileUpdater.prepareFileUpdateBatch(ctx, usages, newName))
+      createFileUpdates(fileUpdater.prepareFileUpdateBatch(usages, newName))
     }
   }
 }
 
-private fun createFileUpdates(ctx: CoroutineContext, fileOperations: Collection<FileOperation>): FileUpdates {
-  ApplicationManager.getApplication().assertReadAccessAllowed()
-
-  val filesToAdd = ArrayList<Pair<Path, CharSequence>>()
-  val filesToMove = ArrayList<Pair<VirtualFile, Path>>()
-  val filesToRemove = ArrayList<VirtualFile>()
-  val fileModifications = ArrayList<Pair<RangeMarker, CharSequence>>()
-
-  loop@
-  for (fileOperation: FileOperation in fileOperations) {
-    ctx.ensureActive()
-    when (fileOperation) {
-      is FileOperation.Add -> filesToAdd += Pair(fileOperation.path, fileOperation.content)
-      is FileOperation.Move -> filesToMove += Pair(fileOperation.file, fileOperation.path)
-      is FileOperation.Remove -> filesToRemove += fileOperation.file
-      is FileOperation.Modify -> {
-        val document: Document = FileDocumentManager.getInstance().getDocument(fileOperation.file.virtualFile) ?: continue@loop
-        for (stringOperation: StringOperation in fileOperation.modifications) {
-          ctx.ensureActive()
-          val rangeMarker: RangeMarker = document.createRangeMarker(stringOperation.range)
-          fileModifications += Pair(rangeMarker, stringOperation.replacement)
-        }
-      }
-    }
-  }
-
-  return FileUpdates(filesToAdd, filesToMove, filesToRemove, fileModifications)
-}
 
 private suspend fun prepareModelUpdate(byModelUpdater: Map<ModelUpdater, List<Pointer<out ModifiableRenameUsage>>>): ModelUpdate? {
   val updates: List<ModelUpdate> = byModelUpdater
     .flatMap { (modelUpdater: ModelUpdater, usagePointers: List<Pointer<out ModifiableRenameUsage>>) ->
-      readAction { ctx: CoroutineContext ->
+      readAction {
         usagePointers.dereferenceOrNull()
           ?.let { usages: List<ModifiableRenameUsage> ->
-            modelUpdater.prepareModelUpdateBatch(ctx, usages)
+            modelUpdater.prepareModelUpdateBatch(usages)
           }
         ?: emptyList()
       }
@@ -291,7 +286,7 @@ private suspend fun previewInDialog(project: Project, fileUpdates: FileUpdates):
     override fun getBranchChanges(): Map<VirtualFile, CharSequence> = preview
     override fun applyBranchChanges() = error("not implemented")
   }
-  return withContext(uiDispatcher) {
+  return withContext(Dispatchers.EDT) {
     VcsFacade.getInstance().createPatchPreviewComponent(project, patch)?.let { previewComponent ->
       DialogBuilder(project)
         .title(RefactoringBundle.message("rename.preview.tab.title"))
@@ -299,4 +294,38 @@ private suspend fun previewInDialog(project: Project, fileUpdates: FileUpdates):
         .showAndGet()
     }
   } != false
+}
+
+@Internal
+@TestOnly
+fun renameAndWait(project: Project, target: RenameTarget, newName: String) {
+  val application = ApplicationManager.getApplication()
+  application.assertIsDispatchThread()
+  require(application.isUnitTestMode)
+
+  val targetPointer = target.createPointer()
+  val options = RenameOptions(
+    textOptions = TextOptions(
+      commentStringOccurrences = true,
+      textOccurrences = true,
+    ),
+    searchScope = target.maximalSearchScope ?: GlobalSearchScope.projectScope(project)
+  )
+  runBlocking {
+    withTimeout(timeMillis = 1000 * 60 * 10) {
+      val renameJob = rename(cs = this@withTimeout, project, targetPointer, newName, options, preview = false)
+      while (renameJob.isActive) {
+        UIUtil.dispatchAllInvocationEvents()
+        delay(timeMillis = 10)
+      }
+    }
+  }
+  PsiDocumentManager.getInstance(project).commitAllDocuments()
+}
+
+internal object EmptyRenameValidator: RenameValidator {
+  override fun validate(newName: String): RenameValidationResult {
+    return RenameValidationResult.ok()
+  }
+
 }

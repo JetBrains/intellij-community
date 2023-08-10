@@ -140,13 +140,12 @@ public class StubParentStrategy implements DomParentStrategy {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof StubParentStrategy)) {
+    if (!(obj instanceof StubParentStrategy other)) {
       return PhysicalDomParentStrategy.strategyEquals(this, obj);
     }
 
     if (obj == this) return true;
 
-    StubParentStrategy other = (StubParentStrategy)obj;
     if (!other.getClass().equals(getClass())) return false;
 
     if (!other.myStub.equals(myStub)) return false;

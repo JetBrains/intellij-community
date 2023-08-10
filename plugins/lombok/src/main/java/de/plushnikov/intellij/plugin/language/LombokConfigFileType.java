@@ -26,7 +26,7 @@ public class LombokConfigFileType extends LanguageFileType {
   @Override
   @NlsContexts.Label
   public String getDescription() {
-    return LombokBundle.message("label.lombok.config.file");
+    return LombokBundle.message("filetype.lombok.config.description");
   }
 
   @NotNull
@@ -35,7 +35,6 @@ public class LombokConfigFileType extends LanguageFileType {
     return "config";
   }
 
-  @Nullable
   @Override
   public Icon getIcon() {
     return LombokIcons.Config;

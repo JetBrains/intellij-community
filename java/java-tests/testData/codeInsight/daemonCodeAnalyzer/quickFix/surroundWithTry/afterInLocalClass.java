@@ -1,4 +1,4 @@
-// "Surround with try/catch" "true"
+// "Surround with try/catch" "true-preview"
 import java.io.*;
 
 class C {
@@ -10,7 +10,7 @@ class C {
             try {
                 in = new FileInputStream("");
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         }
     }

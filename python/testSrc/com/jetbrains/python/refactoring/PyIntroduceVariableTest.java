@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring;
 
 import com.intellij.psi.PsiElement;
@@ -12,9 +12,7 @@ import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHa
 
 import java.util.Collection;
 
-/**
- * @author yole
- */
+
 @TestDataPath("$CONTENT_ROOT/../testData/refactoring/introduceVariable/")
 public class PyIntroduceVariableTest extends PyIntroduceTestCase {
   public void testSimple() {
@@ -198,6 +196,10 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     doTest();
   }
 
+  public void testSubstringFromFormatDictVariable() {
+    doTest();
+  }
+
   // PY-3654
   public void testSubstringFromFormatSingleValue() {
     doTest();
@@ -261,7 +263,42 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
   }
 
   public void testSelectionBreaksBinaryOperator() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
+  }
+
+  // PY-33843
+  public void testIteratorVariableInComprehension() {
+    doTestCannotPerform();
+  }
+
+  // PY-33843
+  public void testIteratorDependentExpressionInComprehensionIfComponent() {
+    doTestCannotPerform();
+  }
+
+  // PY-33843
+  public void testIteratorDependentExpressionInComprehensionResult() {
+    doTestCannotPerform();
+  }
+
+  // PY-33843
+  public void testIteratorFreeExpressionInComprehensionIfComponent() {
     doTest();
+  }
+
+  // PY-33843
+  public void testIteratorFreeExpressionInComprehensionResult() {
+    doTest();
+  }
+
+  // PY-33843
+  public void testExpressionInComprehensionIteratedList() {
+    doTest();
+  }
+
+  // PY-33843
+  public void testIteratorVariableDependentExpressionInComprehensionIteratedList() {
+    doTestCannotPerform();
   }
 
   private void doTestCannotPerform() {
@@ -270,7 +307,7 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
       doTest();
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      if (e.getMessage().equals("Cannot perform refactoring using the selected element(s)")) {
+      if (e.getMessage().equals("Cannot perform refactoring using the selected elements")) {
         thrownExpectedException = true;
       }
     }
@@ -278,10 +315,11 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
   }
 
   public void testAttributesAreNotConsideredAsUsedNames() {
-    myFixture.configureByText(PythonFileType.INSTANCE, "def f<caret>unc():\n" +
-                                                       "    foo()\n" +
-                                                       "    baz.bar()\n" +
-                                                       "    return quux[42].spam + 'eggs'");
+    myFixture.configureByText(PythonFileType.INSTANCE, """
+      def f<caret>unc():
+          foo()
+          baz.bar()
+          return quux[42].spam + 'eggs'""");
     final PsiElement element = myFixture.getElementAtCaret();
     assertInstanceOf(element, PyFunction.class);
     final Collection<String> usedNames = PyUtil.collectUsedNames(element);
@@ -315,7 +353,7 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
 
   // PY-31991
   public void testNoExtraSpacesAroundFStringFragmentExpression() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-32827 EA-90746

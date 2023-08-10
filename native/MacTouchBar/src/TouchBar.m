@@ -84,8 +84,19 @@ void setPrincipal(id tbobj, const char * uid) {
 }
 
 __used
-void releaseTouchBar(id tbobj) {
-    [tbobj release];
+void releaseNativePeer(id tbobj) {
+    void (^doRelease)() = ^{
+        if ([tbobj isKindOfClass:[NSCustomTouchBarItem class]])
+            ((NSCustomTouchBarItem *)tbobj).view = nil;
+        [tbobj release];
+    };
+      if ([NSThread isMainThread]) {
+          doRelease();
+      } else {
+          dispatch_async(dispatch_get_main_queue(), ^{
+              doRelease();
+          });
+      }
 }
 
 // NOTE: called from AppKit-thread (creation when TB becomes visible), uses default autorelease-pool (create before event processing)
@@ -104,8 +115,13 @@ id createGroupItem(const char * uid, id * items, int count) {
 }
 
 __used
-void setTouchBar(id tb) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [[NSApplication sharedApplication] setTouchBar:((TouchBar *) tb).touchBar];
-    });
+void setTouchBar(id nsview, id tb) {
+    NSObject * responder = nsview == 0 ? [NSApplication sharedApplication] : nsview;
+    if ([responder isKindOfClass:[NSResponder class]]) {
+      dispatch_async(dispatch_get_main_queue(), ^{
+          [(NSResponder *)responder setTouchBar:((TouchBar *) tb).touchBar];
+      });
+    } else {
+      nserror(@"not a responder %d", nsview);
+    }
 }

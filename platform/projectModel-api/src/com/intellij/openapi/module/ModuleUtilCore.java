@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.application.ReadAction;
@@ -21,7 +21,7 @@ public class ModuleUtilCore {
   public static final Key<Module> KEY_MODULE = new Key<>("Module");
 
   public static boolean projectContainsFile(@NotNull Project project, @NotNull VirtualFile file, boolean isLibraryElement) {
-    ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
     if (isLibraryElement) {
       List<OrderEntry> orders = projectFileIndex.getOrderEntriesForFile(file);
       for(OrderEntry orderEntry:orders) {
@@ -37,22 +37,26 @@ public class ModuleUtilCore {
   }
 
   @NotNull
-  public static String getModuleNameInReadAction(@NotNull final Module module) {
+  public static String getModuleNameInReadAction(@NotNull Module module) {
     return ReadAction.compute(module::getName);
   }
 
   public static boolean isModuleDisposed(@NotNull PsiElement element) {
     if (!element.isValid()) return true;
-    final Project project = element.getProject();
-    ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
-    final PsiFile file = element.getContainingFile();
+    Project project = element.getProject();
+    ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
+    PsiFile file = element.getContainingFile();
     if (file == null) return true;
     VirtualFile vFile = file.getVirtualFile();
-    final Module module = vFile == null ? null : projectFileIndex.getModuleForFile(vFile);
+    Module module = vFile == null ? null : projectFileIndex.getModuleForFile(vFile);
     // element may be in library
     return module == null ? !projectFileIndex.isInLibraryClasses(vFile) : module.isDisposed();
   }
 
+  /**
+   * @return module where {@code containingFile} is located, 
+   *         null for project files outside module content roots or library files
+   */
   @Nullable
   public static Module findModuleForFile(@Nullable PsiFile containingFile) {
     if (containingFile != null) {
@@ -64,24 +68,34 @@ public class ModuleUtilCore {
     return null;
   }
 
+    /**
+   * @return module where {@code file} is located, 
+   *         null for project files outside module content roots or library files
+   */
   @Nullable
   public static Module findModuleForFile(@NotNull VirtualFile file, @NotNull Project project) {
     if (project.isDefault()) {
       return null;
     }
-    return ProjectFileIndex.getInstance(project).getModuleForFile(file);
+    return ReadAction.compute(() -> ProjectFileIndex.getInstance(project).getModuleForFile(file));
   }
 
+  /**
+   * Return module where containing file of the {@code element} is located. 
+   * <br>
+   * For {@link com.intellij.psi.PsiDirectory}, corresponding virtual file is checked directly.
+   * If this virtual file belongs to a library or SDK and this library/SDK is attached to exactly one module, then this module will be returned.
+   */
   @Nullable
   public static Module findModuleForPsiElement(@NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
-    if (!Objects.requireNonNullElse(containingFile, element).isValid()) {
+    PsiElement highestPsi = containingFile == null ? element : containingFile;
+    if (!highestPsi.isValid()) {
       return null;
     }
-
-    Project project = (containingFile == null ? element : containingFile).getProject();
+    Project project = highestPsi.getProject();
     if (project.isDefault()) return null;
-    final ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
 
     if (element instanceof PsiFileSystemItem && (!(element instanceof PsiFile) || element.getContext() == null)) {
       VirtualFile vFile = ((PsiFileSystemItem)element).getVirtualFile();
@@ -91,28 +105,31 @@ public class ModuleUtilCore {
           return element.getUserData(KEY_MODULE);
         }
       }
+
       if (fileIndex.isInLibrary(vFile)) {
-        final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
+        List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
         if (orderEntries.isEmpty()) {
           return null;
         }
-        if (orderEntries.size() == 1) {
+
+        if (orderEntries.size() == 1 && orderEntries.get(0) instanceof LibraryOrSdkOrderEntry) {
           return orderEntries.get(0).getOwnerModule();
         }
-        Set<Module> modules = new HashSet<>();
-        for (OrderEntry orderEntry : orderEntries) {
-          modules.add(orderEntry.getOwnerModule());
-        }
-        final Module[] candidates = modules.toArray(Module.EMPTY_ARRAY);
-        Arrays.sort(candidates, ModuleManager.getInstance(project).moduleDependencyComparator());
-        return candidates[0];
+
+        return orderEntries
+          .stream()
+          .filter(entry -> entry instanceof LibraryOrSdkOrderEntry)
+          .map(OrderEntry::getOwnerModule)
+          .min(ModuleManager.getInstance(project).moduleDependencyComparator())
+          .orElse(null);
       }
+
       return fileIndex.getModuleForFile(vFile);
     }
     if (containingFile != null) {
       PsiElement context;
       while ((context = containingFile.getContext()) != null) {
-        final PsiFile file = context.getContainingFile();
+        PsiFile file = context.getContainingFile();
         if (file == null) break;
         containingFile = file;
       }
@@ -121,12 +138,12 @@ public class ModuleUtilCore {
         return containingFile.getUserData(KEY_MODULE);
       }
 
-      final PsiFile originalFile = containingFile.getOriginalFile();
+      PsiFile originalFile = containingFile.getOriginalFile();
       if (originalFile.getUserData(KEY_MODULE) != null) {
         return originalFile.getUserData(KEY_MODULE);
       }
 
-      final VirtualFile virtualFile = originalFile.getVirtualFile();
+      VirtualFile virtualFile = originalFile.getVirtualFile();
       if (virtualFile != null) {
         return fileIndex.getModuleForFile(virtualFile);
       }
@@ -150,18 +167,17 @@ public class ModuleUtilCore {
    * @param module to find dependencies on
    * @param result resulted set
    */
-  public static void collectModulesDependsOn(@NotNull final Module module, @NotNull Set<? super Module> result) {
+  public static void collectModulesDependsOn(@NotNull Module module, @NotNull Set<? super Module> result) {
     if (!result.add(module)) {
       return;
     }
 
-    final ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
-    final List<Module> dependentModules = moduleManager.getModuleDependentModules(module);
-    for (final Module dependentModule : dependentModules) {
-      final OrderEntry[] orderEntries = ModuleRootManager.getInstance(dependentModule).getOrderEntries();
+    ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
+    List<Module> dependentModules = moduleManager.getModuleDependentModules(module);
+    for (Module dependentModule : dependentModules) {
+      OrderEntry[] orderEntries = ModuleRootManager.getInstance(dependentModule).getOrderEntries();
       for (OrderEntry o : orderEntries) {
-        if (o instanceof ModuleOrderEntry) {
-          final ModuleOrderEntry orderEntry = (ModuleOrderEntry)o;
+        if (o instanceof ModuleOrderEntry orderEntry) {
           if (orderEntry.getModule() == module) {
             if (orderEntry.isExported()) {
               collectModulesDependsOn(dependentModule, result);
@@ -186,11 +202,11 @@ public class ModuleUtilCore {
     return list;
   }
 
-  public static boolean visitMeAndDependentModules(@NotNull final Module module, @NotNull ModuleVisitor visitor) {
+  public static boolean visitMeAndDependentModules(@NotNull Module module, @NotNull ModuleVisitor visitor) {
     if (!visitor.visit(module)) {
       return false;
     }
-    final List<Module> list = getAllDependentModules(module);
+    List<Module> list = getAllDependentModules(module);
     for (Module dependentModule : list) {
       if (!visitor.visit(dependentModule)) {
         return false;
@@ -199,7 +215,7 @@ public class ModuleUtilCore {
     return true;
   }
 
-  public static boolean moduleContainsFile(@NotNull final Module module, @NotNull VirtualFile file, boolean isLibraryElement) {
+  public static boolean moduleContainsFile(@NotNull Module module, @NotNull VirtualFile file, boolean isLibraryElement) {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     if (isLibraryElement) {
       OrderEntry orderEntry = moduleRootManager.getFileIndex().getOrderEntryForFile(file);

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi
 
-import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
@@ -14,9 +13,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ref.GCWatcher
 
 import java.util.function.Predicate
-/**
- * @author peter
- */
+
 class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test AST should be on a soft reference, for changed files as well"() {
@@ -62,19 +59,6 @@ class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
 
     LeakHunter.checkLeak(foo, MethodElement, { it.psi.containingFile == foo })
     LeakHunter.checkLeak(sup, MethodElement, { it.psi.containingFile == sup })
-  }
-
-  void "test no hard refs to Default File Template inspection internal AST"() {
-    myFixture.addFileToProject('sup.java', 'class Super { void bar() {} }')
-    def file = myFixture.addFileToProject('a.java', 'class Foo { void bar() { bar(); } }')
-    myFixture.configureFromExistingVirtualFile(file.virtualFile)
-    myFixture.enableInspections(new DefaultFileTemplateUsageInspection())
-    myFixture.doHighlighting()
-
-    def mainClass = ((PsiJavaFile)file).classes[0]
-    LeakHunter.checkLeak(mainClass, MethodElement, { MethodElement node ->
-      !node.psi.physical
-    })
   }
 
   void "test no hard refs to AST via class reference type"() {

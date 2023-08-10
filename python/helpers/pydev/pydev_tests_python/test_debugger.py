@@ -17,7 +17,8 @@ from pydev_tests_python.debugger_unittest import (CMD_SET_PROPERTY_TRACE, REASON
                                                   IS_APPVEYOR, wait_for_condition, CMD_GET_FRAME, CMD_GET_BREAKPOINT_EXCEPTION,
                                                   CMD_THREAD_SUSPEND, CMD_STEP_OVER, REASON_STEP_OVER, CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION,
                                                   CMD_THREAD_RESUME_SINGLE_NOTIFICATION, IS_PY37_OR_GREATER, IS_PY38_OR_GREATER)
-from _pydevd_bundle.pydevd_constants import IS_WINDOWS
+from _pydevd_bundle.pydevd_constants import IS_WINDOWS, IS_PY38, GET_FRAME_RETURN_GROUP
+
 try:
     from urllib import unquote
 except ImportError:
@@ -40,7 +41,7 @@ TEST_FLASK = False
 try:
     import django
     version = [int(x) for x in django.get_version().split('.')][:2]
-    TEST_DJANGO = version == [1, 7] or version == [2, 1]
+    TEST_DJANGO = version == [1, 7] or version == [2, 2]
 except:
     pass
 
@@ -199,7 +200,7 @@ def test_case_breakpoint_condition_exc(case_setup, skip_suspend_on_breakpoint_ex
         name_to_value = {}
         for var in msg.var:
             name_to_value[var['name']] = var['value']
-        assert name_to_value == {'i': 'int: 6', 'last_i': 'int: 6'}
+        assert name_to_value == {'i': '6', 'last_i': '6'}
 
         writer.write_remove_breakpoint(breakpoint_id)
 
@@ -262,8 +263,8 @@ def test_case_suspend_thread(case_setup):
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'exit_while_loop()')
         writer.wait_for_evaluation([
             [
-                '<var name="exit_while_loop()" type="str" qualifier="{0}" value="str: ok'.format(builtin_qualifier),
-                '<var name="exit_while_loop()" type="str"  value="str: ok"',  # jython
+                '<var name="exit_while_loop()" type="str" qualifier="{0}" value="ok'.format(builtin_qualifier),
+                '<var name="exit_while_loop()" type="str"  value="ok"',  # jython
              ]
         ])
 
@@ -297,12 +298,12 @@ def test_case_suspend_all_thread(case_setup):
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit0.thread_id, hit0.frame_id, 'LOCAL'), 'exit_while_loop(1)')
         writer.wait_for_evaluation([
             [
-                '<var name="exit_while_loop(1)" type="str" qualifier="{0}" value="str: ok'.format(builtin_qualifier)
+                '<var name="exit_while_loop(1)" type="str" qualifier="{0}" value="ok'.format(builtin_qualifier)
             ]
         ])
 
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit1.thread_id, hit1.frame_id, 'LOCAL'), 'exit_while_loop(2)')
-        writer.wait_for_evaluation('<var name="exit_while_loop(2)" type="str" qualifier="{0}" value="str: ok'.format(builtin_qualifier))
+        writer.wait_for_evaluation('<var name="exit_while_loop(2)" type="str" qualifier="{0}" value="ok'.format(builtin_qualifier))
 
         writer.write_run_thread('*')
 
@@ -407,7 +408,7 @@ def test_case_7(case_setup):
 
         writer.wait_for_vars([
             [
-                '<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="int%253A 10" />%0A</xml>'.format(builtin_qualifier),
+                '<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="10" />%0A</xml>'.format(builtin_qualifier),
                 '<var name="variable_for_test_1" type="int"  value="int',  # jython
             ]
         ])
@@ -420,8 +421,8 @@ def test_case_7(case_setup):
 
         writer.wait_for_vars([
             [
-                '<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="int%253A 10" />%0A<var name="variable_for_test_2" type="int" qualifier="{0}" value="int%253A 20" />%0A</xml>'.format(builtin_qualifier),
-                '<var name="variable_for_test_1" type="int"  value="int%253A 10" />%0A<var name="variable_for_test_2" type="int"  value="int%253A 20" />%0A',  # jython
+                '<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="10" />%0A<var name="variable_for_test_2" type="int" qualifier="{0}" value="20" />%0A</xml>'.format(builtin_qualifier),
+                '<var name="variable_for_test_1" type="int"  value="10" />%0A<var name="variable_for_test_2" type="int"  value="20" />%0A',  # jython
             ]
         ])
 
@@ -811,7 +812,7 @@ def test_case_18(case_setup):
         hit = writer.wait_for_breakpoint_hit(REASON_STOP_ON_BREAKPOINT, line=5)
 
         writer.write_change_variable(hit.thread_id, hit.frame_id, 'a', '40')
-        writer.wait_for_var('<xml><var name="" type="int" qualifier="{0}" value="int%253A 40" />%0A</xml>'.format(builtin_qualifier,))
+        writer.wait_for_var('<xml><var name="" type="int" qualifier="{0}" value="40" />%0A</xml>'.format(builtin_qualifier,))
         writer.write_run_thread(hit.thread_id)
 
         writer.finished_ok = True
@@ -828,7 +829,7 @@ def test_case_19(case_setup):
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'a.__var')
         writer.wait_for_evaluation([
             [
-                '<var name="a.__var" type="int" qualifier="{0}" value="int'.format(builtin_qualifier),
+                '<var name="a.__var" type="int" qualifier="{0}" value="10'.format(builtin_qualifier),
                 '<var name="a.__var" type="int"  value="int',  # jython
             ]
         ])
@@ -970,8 +971,16 @@ def _has_qt():
                 pass
     return False
 
+def _is_pyside2_and_python_38():
+    if not IS_PY38:
+        return False
+    try:
+        from PySide2 import QtCore  # @UnresolvedImport
+        return True
+    except:
+        return False
 
-@pytest.mark.skipif(not _has_qt(), reason='No qt available')
+@pytest.mark.skipif(not _has_qt() or _is_pyside2_and_python_38(), reason='No qt available or python3.8 with PySide2')
 def test_case_qthread1(case_setup):
     with case_setup.test_file('_debugger_case_qthread1.py') as writer:
         breakpoint_id = writer.write_add_breakpoint(writer.get_line_index_with_content('break here'), 'run')
@@ -989,7 +998,7 @@ def test_case_qthread1(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(not _has_qt(), reason='No qt available')
+@pytest.mark.skipif(not _has_qt() or _is_pyside2_and_python_38(), reason='No qt available or python3.8 with PySide2')
 def test_case_qthread2(case_setup):
     with case_setup.test_file('_debugger_case_qthread2.py') as writer:
         breakpoint_id = writer.write_add_breakpoint(writer.get_line_index_with_content('break here'), 'long_running')
@@ -1008,7 +1017,7 @@ def test_case_qthread2(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(not _has_qt(), reason='No qt available')
+@pytest.mark.skipif(not _has_qt() or _is_pyside2_and_python_38(), reason='No qt available or python3.8 with PySide2')
 def test_case_qthread3(case_setup):
     with case_setup.test_file('_debugger_case_qthread3.py') as writer:
         breakpoint_id = writer.write_add_breakpoint(writer.get_line_index_with_content('break here'), 'run')
@@ -1028,7 +1037,7 @@ def test_case_qthread3(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(not _has_qt(), reason='No qt available')
+@pytest.mark.skipif(not _has_qt() or _is_pyside2_and_python_38(), reason='No qt available or python3.8 with PySide2')
 def test_case_qthread4(case_setup):
     with case_setup.test_file('_debugger_case_qthread4.py') as writer:
         original_additional_output_checks = writer.additional_output_checks
@@ -1316,20 +1325,20 @@ def test_case_set_next_statement(case_setup):
         hit = writer.wait_for_breakpoint_hit(REASON_STOP_ON_BREAKPOINT, line=6)  # Stop in line a=3 (before setting it)
 
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'a')
-        writer.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="int: 2"'.format(builtin_qualifier))
+        writer.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="2"'.format(builtin_qualifier))
         writer.write_set_next_statement(hit.thread_id, 2, 'method')
         hit = writer.wait_for_breakpoint_hit('127', line=2)
 
         # Check that it's still unchanged
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'a')
-        writer.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="int: 2"'.format(builtin_qualifier))
+        writer.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="2"'.format(builtin_qualifier))
 
         # After a step over it should become 1 as we executed line which sets a = 1
         writer.write_step_over(hit.thread_id)
         hit = writer.wait_for_breakpoint_hit('108')
 
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'a')
-        writer.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="int: 1"'.format(builtin_qualifier))
+        writer.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="1"'.format(builtin_qualifier))
 
         writer.write_remove_breakpoint(breakpoint_id)
         writer.write_run_thread(hit.thread_id)
@@ -1407,12 +1416,13 @@ def test_case_type_ext(case_setup):
         writer.write_get_frame(hit.thread_id, hit.frame_id)
         assert writer.wait_for_var([
             [
+                r'<var name="my_rect" type="Rect" qualifier="__main__" value="__pydevd_value_async" isContainer="True" />',
                 r'<var name="my_rect" type="Rect" qualifier="__main__" value="Rectangle%255BLength%253A 5%252C Width%253A 10 %252C Area%253A 50%255D" isContainer="True" />',
                 r'<var name="my_rect" type="Rect"  value="Rect: <__main__.Rect object at',  # Jython
             ]
         ])
         writer.write_get_variable(hit.thread_id, hit.frame_id, 'my_rect')
-        assert writer.wait_for_var(r'<var name="area" type="int" qualifier="{0}" value="int%253A 50" />'.format(builtin_qualifier))
+        assert writer.wait_for_var(r'<var name="area" type="int" qualifier="{0}" value="50" />'.format(builtin_qualifier))
         writer.write_run_thread(hit.thread_id)
         writer.finished_ok = True
 
@@ -1458,7 +1468,7 @@ def test_case_writer_creation_deadlock(case_setup):
         assert hit.line == 26, 'Expected return to be in line 26, was: %s' % (hit.line,)
 
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'create_thread()')
-        writer.wait_for_evaluation('<var name="create_thread()" type="str" qualifier="{0}" value="str: create_thread:ok'.format(builtin_qualifier))
+        writer.wait_for_evaluation('<var name="create_thread()" type="str" qualifier="{0}" value="create_thread:ok'.format(builtin_qualifier))
         writer.write_run_thread(hit.thread_id)
 
         writer.finished_ok = True
@@ -2124,7 +2134,7 @@ def test_multiprocessing(case_setup_multiprocessing):
         writer.write_make_initial_run()
         hit2 = writer.wait_for_breakpoint_hit()
         secondary_process_thread_communication.join(10)
-        if secondary_process_thread_communication.isAlive():
+        if secondary_process_thread_communication.is_alive():
             raise AssertionError('The SecondaryProcessThreadCommunication did not finish')
         writer.write_run_thread(hit2.thread_id)
         writer.finished_ok = True
@@ -2428,8 +2438,18 @@ def test_return_value(case_setup):
 
         writer.wait_for_vars([
             [
-                '<var name="method1" type="int" qualifier="%s" value="int: 1" isRetVal="True"' % (builtin_qualifier,),
-                '<var name="method1" type="int"  value="int%253A 1" isRetVal="True"',
+                '<var name="_dummy_ret_val"  />',
+                '<var name="_dummy_special_var"  />',
+                '<var name="method1" type="int" qualifier="%s" value="1" isRetVal="True"' % (builtin_qualifier,),
+                '<var name="method1" type="int"  value="1" isRetVal="True"',
+            ],
+        ])
+
+        writer.write_get_frame(hit.thread_id, hit.frame_id, GET_FRAME_RETURN_GROUP)
+        writer.wait_for_vars([
+            [
+                '<var name="method1" type="int" qualifier="%s" value="1" isRetVal="True"' % (builtin_qualifier,),
+                '<var name="method1" type="int"  value="1" isRetVal="True"',
             ],
         ])
         writer.write_run_thread(hit.thread_id)
@@ -2488,7 +2508,7 @@ def test_run_pause_all_threads_single_notification(case_setup, check_single_noti
             hit = writer.wait_for_breakpoint_hit(CMD_STEP_OVER)
 
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'stop_loop()')
-        writer.wait_for_evaluation('<var name="stop_loop()" type="str" qualifier="{0}" value="str: stopped_loop'.format(builtin_qualifier))
+        writer.wait_for_evaluation('<var name="stop_loop()" type="str" qualifier="{0}" value="stopped_loop'.format(builtin_qualifier))
 
         writer.write_run_thread('*')
         writer.finished_ok = True
@@ -2641,16 +2661,16 @@ def test_asyncio_step_over_basic(case_setup):
 
         writer.write_step_over(hit.thread_id)
         hit = writer.wait_for_breakpoint_hit(
-            reason=REASON_STOP_ON_BREAKPOINT,
+            reason=REASON_STEP_OVER,
             file=target_filename,
-            line=writer.get_line_index_with_content('break main')
+            line=writer.get_line_index_with_content('step main')
         )
 
         writer.write_step_over(hit.thread_id)
         hit = writer.wait_for_breakpoint_hit(
             reason=REASON_STEP_OVER,
             file=target_filename,
-            line=writer.get_line_index_with_content('step main')
+            line=writer.get_line_index_with_content('step main') + 1
         )
 
         writer.write_run_thread(hit.thread_id)

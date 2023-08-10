@@ -27,7 +27,7 @@ import java.io.IOException;
  * @author Eugene Zhuravlev
  */
 public interface IndexStorage<Key, Value> extends Flushable {
-  
+
   void addValue(Key key, int inputId, Value value) throws StorageException;
 
   void removeAllValues(@NotNull Key key, int inputId) throws StorageException;
@@ -38,7 +38,7 @@ public interface IndexStorage<Key, Value> extends Flushable {
   }
 
   void clear() throws StorageException;
-  
+
   @NotNull
   ValueContainer<Value> read(Key key) throws StorageException;
 
@@ -48,4 +48,6 @@ public interface IndexStorage<Key, Value> extends Flushable {
 
   @Override
   void flush() throws IOException;
+
+  boolean isDirty();
 }

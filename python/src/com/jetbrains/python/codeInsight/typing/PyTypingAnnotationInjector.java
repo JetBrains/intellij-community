@@ -3,19 +3,17 @@ package com.jetbrains.python.codeInsight.typing;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyInjectionUtil;
 import com.jetbrains.python.codeInsight.PyInjectorBase;
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect;
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintDialect;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyLiteralType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,18 +21,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
-import static com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.ANNOTATED;
-import static com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.ANNOTATED_EXT;
+import static com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Injects fragments for type annotations either in string literals (quoted annotations containing forward references) or
  * in type comments starting with <tt># type:</tt>.
  *
- * @author vlan
  */
 public class PyTypingAnnotationInjector extends PyInjectorBase {
   public static final Pattern RE_TYPING_ANNOTATION = Pattern.compile("\\s*\\S+(\\[.*\\])?\\s*");
+
+  private static final Pattern TYPE_IGNORE_PATTERN = Pattern.compile("#\\s*type:\\s*ignore(\\[[^]#]*])?\\s*($|(#.*))", Pattern.CASE_INSENSITIVE);
 
   @Override
   protected PyInjectionUtil.InjectionResult registerInjection(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
@@ -53,8 +51,7 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
   @Nullable
   @Override
   public Language getInjectedLanguage(@NotNull PsiElement context) {
-    if (context instanceof PyStringLiteralExpression) {
-      final PyStringLiteralExpression expr = (PyStringLiteralExpression)context;
+    if (context instanceof PyStringLiteralExpression expr) {
       final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
       if (isTypingLiteralArgument(expr, typeEvalContext) || isTypingAnnotatedMetadataArgument(expr, typeEvalContext)) {
         return null;
@@ -75,17 +72,17 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
     if (assignment == null || !PsiTreeUtil.isAncestor(assignment.getAssignedValue(), expr, false)) {
       return false;
     }
-    return PyTypingTypeProvider.isExplicitTypeAlias(assignment, TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile()));
+    return isExplicitTypeAlias(assignment, TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile()));
   }
 
   @NotNull
   private static PyInjectionUtil.InjectionResult registerCommentInjection(@NotNull MultiHostRegistrar registrar,
                                                                           @NotNull PsiLanguageInjectionHost host) {
     final String text = host.getText();
-    final String annotationText = PyTypingTypeProvider.getTypeCommentValue(text);
+    final String annotationText = getTypeCommentValue(text);
     if (annotationText != null) {
       final Language language;
-      if (PyTypingTypeProvider.IGNORE.equals(annotationText)) {
+      if (PyTypingTypeProvider.TYPE_IGNORE_PATTERN.matcher(text).matches()) {
         language = null;
       }
       else if (isFunctionTypeComment(host)) {
@@ -97,7 +94,7 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
       if (language != null) {
         registrar.startInjecting(language);
         //noinspection ConstantConditions
-        registrar.addPlace("", "", host, PyTypingTypeProvider.getTypeCommentValueRange(text));
+        registrar.addPlace("", "", host, getTypeCommentValueRange(text));
         registrar.doneInjecting();
         return new PyInjectionUtil.InjectionResult(true, true);
       }
@@ -108,10 +105,12 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
   private static boolean isTypingLiteralArgument(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     PsiElement parent = element.getParent();
     if (parent instanceof PyTupleExpression) parent = parent.getParent();
-    if (!(parent instanceof PySubscriptionExpression)) return false;
-
-    final PyType type = Ref.deref(PyTypingTypeProvider.getType((PySubscriptionExpression)parent, context));
-    return PyTypeUtil.toStream(type).allMatch(PyLiteralType.class::isInstance);
+    PySubscriptionExpression subscription = ObjectUtils.tryCast(parent, PySubscriptionExpression.class);
+    if (subscription == null) return false;
+    PyReferenceExpression operand = ObjectUtils.tryCast(subscription.getOperand(), PyReferenceExpression.class);
+    if (operand == null) return false;
+    Collection<String> resolvedNames = resolveToQualifiedNames(operand, context);
+    return ContainerUtil.exists(resolvedNames, name -> LITERAL.equals(name) || LITERAL_EXT.equals(name));
   }
 
   private static boolean isTypingAnnotatedMetadataArgument(@NotNull PsiElement element,
@@ -122,7 +121,7 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
     if (parent == null) return false;
 
     final PyExpression operand = parent.getOperand();
-    final Collection<String> resolvedNames = PyTypingTypeProvider.resolveToQualifiedNames(operand, context);
+    final Collection<String> resolvedNames = resolveToQualifiedNames(operand, context);
     if (resolvedNames.stream().anyMatch(name -> ANNOTATED.equals(name) || ANNOTATED_EXT.equals(name))) {
       return tuple.getElements()[0] != element;
     }
@@ -136,5 +135,12 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
 
   private static boolean isTypingAnnotation(@NotNull String s) {
     return RE_TYPING_ANNOTATION.matcher(s).matches();
+  }
+
+  public static boolean isTypeIgnoreComment(@NotNull PsiElement comment) {
+    if (!(comment instanceof PsiComment)) return false;
+    String text = comment.getText();
+    if (text == null) return false;
+    return TYPE_IGNORE_PATTERN.matcher(text).matches();
   }
 }

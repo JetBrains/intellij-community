@@ -50,26 +50,28 @@ public class JavaInheritorsSearchTest extends LightJavaCodeInsightFixtureTestCas
 
   public void testDuplicateClasses() {
     myFixture.addClass(
-      "package x;\n" +
-      "public class Test<T> {\n" +
-      "  public void foo(T t) { }\n" +
-      "}\n" +
-      "class Goo<T> extends Test<T> {\n" +
-      "  public void foo(T t) {}\n" +
-      "}\n" +
-      "class Goo { }\n" +
-      "class Zoo extends Goo {\n" +
-      "  public void foo(Object t) { }\n" +
-      "}");
+      """
+        package x;
+        public class Test<T> {
+          public void foo(T t) { }
+        }
+        class Goo<T> extends Test<T> {
+          public void foo(T t) {}
+        }
+        class Goo { }
+        class Zoo extends Goo {
+          public void foo(Object t) { }
+        }""");
 
     doTest("x.Test", "", true, "x.Goo", "x.Zoo");
   }
 
   public void testIndirectInheritance() {
     myFixture.addClass(
-      "interface I { }\n" +
-      "class A implements I { }\n" +
-      "class B extends A implements I { }");
+      """
+        interface I { }
+        class A implements I { }
+        class B extends A implements I { }""");
 
     doTest("I", "", true, "A", "B");
   }

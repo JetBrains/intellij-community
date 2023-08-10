@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters.types;
 
 import com.intellij.psi.*;
@@ -24,11 +10,11 @@ import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.Nullable;
 
 
-public class AssignableFromFilter implements ElementFilter{
+public class AssignableFromFilter implements ElementFilter {
   private PsiType myType;
   private String myClassName;
 
-  public AssignableFromFilter(PsiType type){
+  public AssignableFromFilter(PsiType type) {
     myType = type;
   }
 
@@ -37,31 +23,27 @@ public class AssignableFromFilter implements ElementFilter{
   }
 
   @Override
-  public boolean isClassAcceptable(Class hintClass){
+  public boolean isClassAcceptable(Class hintClass) {
     return true;
   }
 
   @Override
-  public boolean isAcceptable(Object element, PsiElement context){
+  public boolean isAcceptable(Object element, PsiElement context) {
     PsiType type = myType;
-    if(type == null) {
+    if (type == null) {
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(context.getProject());
       final PsiClass aClass = psiFacade.findClass(myClassName, context.getResolveScope());
       if (aClass != null) {
         type = psiFacade.getElementFactory().createType(aClass, PsiSubstitutor.EMPTY);
       }
-      else {
-        type = null;
-      }
     }
-    if(type == null) return false;
-    if(element == null) return false;
-    if (element instanceof PsiType) return type.isAssignableFrom((PsiType) element);
-    
+    if (type == null) return false;
+    if (element == null) return false;
+    if (element instanceof PsiType) return type.isAssignableFrom((PsiType)element);
+
     PsiSubstitutor substitutor = null;
-    
-    if(element instanceof CandidateInfo){
-      final CandidateInfo info = (CandidateInfo)element;
+
+    if (element instanceof CandidateInfo info) {
       substitutor = info.getSubstitutor();
       element = info.getElement();
     }
@@ -79,7 +61,7 @@ public class AssignableFromFilter implements ElementFilter{
       return false;
     }
 
-    if(substitutor != null) {
+    if (substitutor != null) {
       typeByElement = substitutor.substitute(typeByElement);
     }
 
@@ -101,28 +83,36 @@ public class AssignableFromFilter implements ElementFilter{
 
   private static boolean allowBoxing(PsiElement place) {
     final PsiElement parent = place.getParent();
-    if (parent.getParent() instanceof PsiSynchronizedStatement) {
-      final PsiSynchronizedStatement statement = (PsiSynchronizedStatement)parent.getParent();
-      if (parent.equals(statement.getLockExpression())) {
-        return false;
-      }
+    if (parent.getParent() instanceof PsiSynchronizedStatement statement && parent.equals(statement.getLockExpression())) {
+      return false;
     }
     return true;
   }
 
-  private static boolean isReturnTypeInferrable(PsiMethod method, PsiElement place, PsiType expectedType, @Nullable PsiSubstitutor substitutor) {
+  private static boolean isReturnTypeInferrable(PsiMethod method,
+                                                PsiElement place,
+                                                PsiType expectedType,
+                                                @Nullable PsiSubstitutor substitutor) {
     final PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
-    for (final PsiTypeParameter parameter : method.getTypeParameters()) {
-      PsiType returnType = method.getReturnType();
-      if (substitutor != null) {
-        returnType = substitutor.substitute(returnType);
+    PsiTypeParameter[] typeParameters = method.getTypeParameters();
+    if (typeParameters.length == 0) return false;
+    PsiType returnType = method.getReturnType();
+    if (substitutor != null) {
+      returnType = substitutor.substitute(returnType);
+    }
+    if (returnType instanceof PsiClassType) {
+      PsiClass target = ((PsiClassType)returnType).resolve();
+      if (!(target instanceof PsiTypeParameter) && !expectedType.isAssignableFrom(((PsiClassType)returnType).rawType())) {
+        return false;
       }
+    }
+    for (final PsiTypeParameter parameter : typeParameters) {
       final PsiType substitutionForParameter = helper.getSubstitutionForTypeParameter(parameter,
                                                                                       returnType,
                                                                                       expectedType,
                                                                                       false,
                                                                                       PsiUtil.getLanguageLevel(place));
-      if (substitutionForParameter != PsiType.NULL &&
+      if (substitutionForParameter != PsiTypes.nullType() &&
           !isImpossibleIntersection(substitutionForParameter) &&
           !extendsImpossibleIntersection(PsiUtil.resolveClassInClassTypeOnly(substitutionForParameter)) &&
           PsiUtil.resolveClassInClassTypeOnly(substitutionForParameter) != parameter) {
@@ -146,7 +136,7 @@ public class AssignableFromFilter implements ElementFilter{
     return intersection instanceof PsiIntersectionType && ((PsiIntersectionType)intersection).getConflictingConjunctsMessage() != null;
   }
 
-  public String toString(){
+  public String toString() {
     return "assignable-from(" + (myType != null ? myType : myClassName) + ")";
   }
 }

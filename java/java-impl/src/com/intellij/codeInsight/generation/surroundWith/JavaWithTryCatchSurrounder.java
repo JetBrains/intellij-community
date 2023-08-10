@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -28,6 +14,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -43,8 +30,19 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
   @Override
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements)
     throws IncorrectOperationException {
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+    try {
+      return doSurround(project, container, statements);
+    }
+    catch (IncorrectOperationException e) {
+      Messages.showErrorDialog(project, JavaBundle.message("surround.with.try.catch.incorrect.template.message"),
+                               JavaBundle.message("surround.with.try.catch.incorrect.template.title"));
+      return null;
+    }
+  }
+
+  @Nullable
+  public TextRange doSurround(Project project, PsiElement container, PsiElement[] statements) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, true);
@@ -62,7 +60,7 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
 
     @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append("try{\n}");
-    for (PsiClassType exception : exceptions) {
+    for (PsiClassType ignored : exceptions) {
       buffer.append("catch(Exception e){\n}");
     }
     if (myGenerateFinally) {
@@ -82,16 +80,15 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
 
     for (int i = 0; i < exceptions.size(); i++) {
       PsiClassType exception = exceptions.get(i);
-      String name = new VariableNameGenerator(tryBlock, VariableKind.PARAMETER).byType(exception).byName("e", "ex", "exc").generate(false);
-      PsiCatchSection catchSection;
-      try {
-        catchSection = factory.createCatchSection(exception, name, tryBlock);
+      PsiClass target = exception.resolve();
+      if (target instanceof PsiTypeParameter) {
+        PsiClassType[] extendsListTypes = target.getExtendsListTypes();
+        if (extendsListTypes.length > 0) {
+          exception = extendsListTypes[0];
+        }
       }
-      catch (IncorrectOperationException e) {
-        Messages.showErrorDialog(project, JavaBundle.message("surround.with.try.catch.incorrect.template.message"),
-                                 JavaBundle.message("surround.with.try.catch.incorrect.template.title"));
-        return null;
-      }
+      String name = new VariableNameGenerator(tryBlock, VariableKind.PARAMETER).byName("e", "ex", "exc").byType(exception).generate(false);
+      PsiCatchSection catchSection = factory.createCatchSection(exception, name, tryBlock);
       catchSection = (PsiCatchSection)catchSections[i].replace(catchSection);
       codeStyleManager.shortenClassReferences(catchSection);
     }

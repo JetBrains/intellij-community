@@ -18,10 +18,6 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertFalse;
 
 public class BaseFixture implements IdeaTestFixture {
-  static {
-    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
-  }
-
   private boolean myInitialized;
   private boolean myDisposed;
   private @Nullable List<Throwable> mySuppressedExceptions;
@@ -54,9 +50,7 @@ public class BaseFixture implements IdeaTestFixture {
 
   protected void disposeRootDisposable() {
     EdtTestUtil.runInEdtAndWait(() -> {
-      if (!Disposer.isDisposed(myTestRootDisposable)) {
-        Disposer.dispose(myTestRootDisposable);
-      }
+      Disposer.dispose(myTestRootDisposable);
     });
   }
 

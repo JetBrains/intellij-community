@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.configurationStore
 
 import com.intellij.ide.IdeBundle
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationType
-import com.intellij.notification.NotificationsManager
+import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathMacros
@@ -12,13 +12,13 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.impl.ProjectMacrosUtil
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -30,9 +30,8 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
 
-@NonNls const val NOTIFICATION_GROUP_ID = "Load Error"
+@NonNls const val NOTIFICATION_GROUP_ID: String = "Load Error"
 
 @TestOnly
 @NonNls
@@ -102,7 +101,8 @@ private fun checkUnknownMacros(project: Project,
     if (store.isReloadPossible(components)) {
       substitutor.invalidateUnknownMacros(unknownMacros)
 
-      for (notification in notificationManager.getNotificationsOfType(UnknownMacroNotification::class.java, project)) {
+      for (notification in notificationManager.getNotificationsOfType(
+        UnknownMacroNotification::class.java, project)) {
         if (unknownMacros.containsAll(notification.macros)) {
           notification.expire()
         }
@@ -113,7 +113,7 @@ private fun checkUnknownMacros(project: Project,
     else if (Messages.showYesNoDialog(project, IdeBundle.message("dialog.message.component.could.not.be.reloaded"),
                                       IdeBundle.message("dialog.title.configuration.changed"),
                                       Messages.getQuestionIcon()) == Messages.YES) {
-      StoreReloadManager.getInstance().reloadProject(project)
+      StoreReloadManager.getInstance(project).reloadProject()
     }
   }
 }
@@ -158,9 +158,23 @@ fun getOrCreateVirtualFile(file: Path, requestor: StorageManagerFileWriteRequest
 
 // runWriteAction itself cannot do such check because in general case any write action must be tracked regardless of current action
 @ApiStatus.Internal
-inline fun <T> runAsWriteActionIfNeeded(crossinline runnable: () -> T): T {
+fun <T> runAsWriteActionIfNeeded(runnable: () -> T): T {
   return when {
     ApplicationManager.getApplication().isWriteAccessAllowed -> runnable()
     else -> runWriteAction(runnable)
+  }
+}
+
+class UnknownMacroNotification(groupId: String,
+                               title: @NlsContexts.NotificationTitle String,
+                               content: @NlsContexts.NotificationContent String,
+                               type: NotificationType,
+                               listener: NotificationListener?,
+                               val macros: Collection<String>) : Notification(groupId, title, content, type) {
+  init {
+    listener?.let {
+      @Suppress("DEPRECATION")
+      setListener(it)
+    }
   }
 }

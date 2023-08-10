@@ -1,13 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider;
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,18 +25,41 @@ import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
-class ShelvedWrapper {
+public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper implements SavedPatchesProvider.ChangeObject {
   @Nullable private final ShelvedChange myShelvedChange;
   @Nullable private final ShelvedBinaryFile myBinaryFile;
+  @NotNull private final ShelvedChangeList myChangeList;
 
-  ShelvedWrapper(@NotNull ShelvedChange shelvedChange) {
+  public ShelvedWrapper(@Nullable ShelvedChange shelvedChange,
+                        @Nullable ShelvedBinaryFile binaryFile,
+                        @NotNull ShelvedChangeList changeList) {
     myShelvedChange = shelvedChange;
-    myBinaryFile = null;
+    myBinaryFile = binaryFile;
+    myChangeList = changeList;
   }
 
-  ShelvedWrapper(@NotNull ShelvedBinaryFile binaryFile) {
-    myShelvedChange = null;
-    myBinaryFile = binaryFile;
+  public ShelvedWrapper(@NotNull ShelvedChange shelvedChange, @NotNull ShelvedChangeList changeList) {
+    this(shelvedChange, null, changeList);
+  }
+
+  public ShelvedWrapper(@NotNull ShelvedBinaryFile binaryFile, @NotNull ShelvedChangeList changeList) {
+    this(null, binaryFile, changeList);
+  }
+
+  @NotNull
+  public ShelvedChangeList getChangeList() {
+    return myChangeList;
+  }
+
+  @Override
+  public @NotNull Object getUserObject() {
+    return myShelvedChange != null ? myShelvedChange : Objects.requireNonNull(myBinaryFile);
+  }
+
+  @Nullable
+  @Override
+  public ChangesBrowserNode.Tag getTag() {
+    return new ShelvedListTag(myChangeList);
   }
 
   @Nullable
@@ -40,13 +72,36 @@ class ShelvedWrapper {
     return myBinaryFile;
   }
 
-  public  String getPath() {
+  @NotNull
+  public String getPath() {
     return chooseNotNull(getAfterPath(), getBeforePath());
+  }
+
+  @Nullable
+  @Override
+  public FilePath getOriginalFilePath() {
+    ContentRevision beforeRevision = myShelvedChange != null ? myShelvedChange.getChange().getBeforeRevision() : null;
+    if (beforeRevision != null) {
+      return beforeRevision.getFile();
+    }
+    String beforePath = getBeforePath();
+    if (beforePath == null) return null;
+    return VcsUtil.getFilePath(beforePath, false);
   }
 
   @NlsSafe
   public String getRequestName() {
     return FileUtil.toSystemDependentName(getPath());
+  }
+
+  @NotNull
+  @Override
+  public @Nls String getPresentableName() {
+    if (myShelvedChange == null) {
+      return getRequestName();
+    }
+
+    return ChangesUtil.getFilePath(myShelvedChange.getChange()).getName();
   }
 
   String getBeforePath() {
@@ -57,11 +112,19 @@ class ShelvedWrapper {
     return myShelvedChange != null ? myShelvedChange.getAfterPath() : Objects.requireNonNull(myBinaryFile).AFTER_PATH;
   }
 
-  FileStatus getFileStatus() {
+  @Override
+  public @NotNull FilePath getFilePath() {
+    Change change = myShelvedChange != null ? myShelvedChange.getChange() : null;
+    return change != null ? ChangesUtil.getFilePath(change) : VcsUtil.getFilePath(getPath(), false);
+  }
+
+  @Override
+  @NotNull
+  public FileStatus getFileStatus() {
     return myShelvedChange != null ? myShelvedChange.getFileStatus() : Objects.requireNonNull(myBinaryFile).getFileStatus();
   }
 
-  Change getChange(@NotNull Project project) {
+  Change getChangeWithLocal(@NotNull Project project) {
     return myShelvedChange != null ? myShelvedChange.getChange() : Objects.requireNonNull(myBinaryFile).createChange(project);
   }
 
@@ -73,4 +136,34 @@ class ShelvedWrapper {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
+  @Override
+  public @Nullable ChangeDiffRequestChain.Producer createProducer(@Nullable Project project) {
+    if (project == null) return null;
+    return new ShelvedWrapperDiffRequestProducer(project, this);
+  }
+
+  @Nullable
+  @Override
+  public ChangeDiffRequestChain.Producer createDiffRequestProducer(@Nullable Project project) {
+    return createProducer(project);
+  }
+
+  @Nullable
+  @Override
+  public ChangeDiffRequestChain.Producer createDiffWithLocalRequestProducer(@Nullable Project project, boolean useBeforeVersion) {
+    if (useBeforeVersion || project == null) return null;
+    return DiffShelvedChangesActionProvider.createDiffProducer(project, this, true);
+  }
+
+  public static class ShelvedListTag extends ChangesBrowserNode.ValueTag<ShelvedChangeList> {
+    public ShelvedListTag(@NotNull ShelvedChangeList value) {
+      super(value);
+    }
+
+    @Nls
+    @Override
+    public String toString() {
+      return value.DESCRIPTION;
+    }
+  }
 }

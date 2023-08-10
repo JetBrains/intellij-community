@@ -1,13 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.diagnostic.StartUpPerformanceService;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.diagnostic.ExternalSystemSyncDiagnostic;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.*;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemSyncActionsCollector;
+import com.intellij.openapi.externalSystem.statistics.Phase;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -18,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -25,40 +30,67 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 /**
  * Aggregates all {@link ProjectDataService#EP_NAME registered data services} and provides entry points for project data management.
- *
- * @author Denis Zhdanov
  */
-public class ProjectDataManagerImpl implements ProjectDataManager {
+public final class ProjectDataManagerImpl implements ProjectDataManager {
   private static final Logger LOG = Logger.getInstance(ProjectDataManagerImpl.class);
   private static final Function<ProjectDataService<?, ?>, Key<?>> KEY_MAPPER = ProjectDataService::getTargetDataKey;
 
+  private final Lock myLock = new ReentrantLock();
+
+  private static final ExternalSystemSyncDiagnostic syncMetrics = ExternalSystemSyncDiagnostic.getInstance();
+
   public static ProjectDataManagerImpl getInstance() {
-    ProjectDataManager service = ApplicationManager.getApplication().getService(ProjectDataManager.class);
-    return (ProjectDataManagerImpl)service;
+    return (ProjectDataManagerImpl)ProjectDataManager.getInstance();
   }
 
   @Override
   @NotNull
   public List<ProjectDataService<?, ?>> findService(@NotNull Key<?> key) {
-    List<ProjectDataService<?, ?>> result =
-      new ArrayList<>(ProjectDataService.EP_NAME.getByGroupingKey(key, ProjectDataManagerImpl.class, KEY_MAPPER));
+    List<ProjectDataService<?, ?>> result = new ArrayList<>(ProjectDataService.EP_NAME
+                                                              .getByGroupingKey(key, ProjectDataManagerImpl.class, KEY_MAPPER));
     ExternalSystemApiUtil.orderAwareSort(result);
     return result;
   }
 
+  @Override
+  public <T> void importData(@NotNull DataNode<T> node, @NotNull Project project) {
+    Application app = ApplicationManager.getApplication();
+    if (!app.isWriteIntentLockAcquired() && app.isReadAccessAllowed()) {
+      throw new IllegalStateException("importData() must not be called with a global read lock on a background thread. " +
+                                      "It will deadlock committing project model changes in write action");
+    }
+
+    if (app.isWriteIntentLockAcquired()) {
+      if (!myLock.tryLock()) {
+        throw new IllegalStateException("importData() can not wait on write thread for imports on background threads." +
+                                        " Consider running importData() on background thread.");
+      }
+    }
+    else {
+      myLock.lock();
+    }
+    try {
+      importData(node, project, createModifiableModelsProvider(project));
+    }
+    finally {
+      myLock.unlock();
+    }
+  }
+
   @SuppressWarnings("unchecked")
   @Override
-  public void importData(@NotNull Collection<? extends DataNode<?>> nodes,
-                         @NotNull Project project,
-                         @NotNull IdeModifiableModelsProvider modelsProvider,
-                         boolean synchronous) {
+  public <T> void importData(@NotNull DataNode<T> node,
+                             @NotNull Project project,
+                             @NotNull IdeModifiableModelsProvider modelsProvider) {
     if (project.isDisposed()) return;
 
-    MultiMap<Key<?>, DataNode<?>> grouped = ExternalSystemApiUtil.recursiveGroup(nodes);
+    MultiMap<Key<?>, DataNode<?>> grouped = ExternalSystemApiUtil.recursiveGroup(Collections.singletonList(node));
 
     final Collection<DataNode<?>> projects = grouped.get(ProjectKeys.PROJECT);
     // only one project(can be multi-module project) expected for per single import
@@ -84,18 +116,26 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
     List<Runnable> onSuccessImportTasks = new SmartList<>();
     List<Runnable> onFailureImportTasks = new SmartList<>();
-    final Collection<DataNode<?>> traceNodes = grouped.get(PerformanceTrace.TRACE_NODE_KEY);
 
-    final PerformanceTrace trace;
-    if (traceNodes.size() > 0) {
-      trace = (PerformanceTrace)traceNodes.iterator().next().getData();
-    }
-    else {
-      trace = new PerformanceTrace();
-      grouped.putValue(PerformanceTrace.TRACE_NODE_KEY, new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, trace, null));
-    }
+    final Collection<DataNode<?>> traceNodes = grouped.getOrPut(PerformanceTrace.TRACE_NODE_KEY, () ->
+      new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, new PerformanceTrace(), null)
+    );
+    final PerformanceTrace trace = (PerformanceTrace)ContainerUtil.getFirstItem(traceNodes).getData();
 
     long allStartTime = System.currentTimeMillis();
+    long activityId = trace.getId();
+
+    syncMetrics.getOrStartSpan(Phase.DATA_SERVICES.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
+    ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.DATA_SERVICES);
+
+    boolean importSucceeded = false;
+    int errorsCount = 0;
+
+    String projectPath = ObjectUtils.doIfNotNull(projectData, ProjectData::getLinkedExternalProjectPath);
+    var topic = project.getMessageBus()
+      .syncPublisher(ProjectDataImportListener.TOPIC);
+
+    topic.onImportStarted(projectPath);
     try {
       // keep order of services execution
       final Set<Key<?>> allKeys = new TreeSet<>(grouped.keySet());
@@ -119,56 +159,74 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
         long startTime = System.currentTimeMillis();
         doImportData(key, grouped.get(key), projectData, project, modelsProvider,
                      postImportTasks, onSuccessImportTasks, onFailureImportTasks);
-        trace.logPerformance("Data import by " + key.toString(), System.currentTimeMillis() - startTime);
+        trace.logPerformance("Data import by " + key, System.currentTimeMillis() - startTime);
       }
 
       for (Runnable postImportTask : postImportTasks) {
         postImportTask.run();
       }
 
-      commit(modelsProvider, project, synchronous, "Imported data");
+      commit(modelsProvider, project, true, "Imported data", activityId);
       if (indicator != null) {
         indicator.setIndeterminate(true);
       }
 
-      project.getMessageBus().syncPublisher(ProjectDataImportListener.TOPIC)
-        .onImportFinished(projectData != null ? projectData.getLinkedExternalProjectPath() : null);
-      trace.logPerformance("Data import total", System.currentTimeMillis() - allStartTime);
+      topic.onImportFinished(projectPath);
+      importSucceeded = true;
     }
     catch (Throwable t) {
-      project.getMessageBus().syncPublisher(ProjectDataImportListener.TOPIC)
-        .onImportFailed(projectData != null ? projectData.getLinkedExternalProjectPath() : null);
-      try {
-        runFinalTasks(project, synchronous, onFailureImportTasks);
-        dispose(modelsProvider, project, synchronous);
+      errorsCount += 1;
+      topic.onImportFailed(projectPath, t);
+      ExternalSystemSyncActionsCollector.logError(null, activityId, t);
+      //noinspection ConstantConditions
+      ExceptionUtil.rethrowAllAsUnchecked(t);
+    }
+    finally {
+      if (importSucceeded) {
+        runFinalTasks(project, projectPath, onSuccessImportTasks);
       }
-      finally {
-        //noinspection ConstantConditions
-        ExceptionUtil.rethrowAllAsUnchecked(t);
+      else {
+        runFinalTasks(project, projectPath, onFailureImportTasks);
+      }
+      if (!importSucceeded) {
+        dispose(modelsProvider, project, true);
+      }
+
+      long timeMs = System.currentTimeMillis() - allStartTime;
+      trace.logPerformance("Data import total", timeMs);
+      syncMetrics.endSpan(Phase.DATA_SERVICES.name());
+      ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.DATA_SERVICES, timeMs, errorsCount);
+      ExternalSystemSyncActionsCollector.logSyncFinished(project, activityId, importSucceeded);
+      syncMetrics.endSpan(ExternalSystemSyncDiagnostic.gradleSyncSpanName, (span) -> span.setAttribute("project", project.getName()));
+
+      Application app = ApplicationManager.getApplication();
+      if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
+        StartUpPerformanceService.Companion.getInstance().reportStatistics(project);
+      }
+
+      if (importSucceeded) {
+        trace.reportStatistics();
       }
     }
-    runFinalTasks(project, synchronous, onSuccessImportTasks);
   }
 
-  private static void runFinalTasks(@NotNull Project project, boolean synchronous, List<? extends Runnable> tasks) {
-    Runnable runnable = new DisposeAwareProjectChange(project) {
-      @Override
-      public void execute() {
-        for (Runnable task : ContainerUtil.reverse(tasks)) {
-          task.run();
-        }
-      }
-    };
-    if (synchronous) {
-      try {
-        runnable.run();
-      }
-      catch (Exception e) {
-        LOG.warn(e);
-      }
+  private static void runFinalTasks(
+    @NotNull Project project,
+    @Nullable String projectPath,
+    @NotNull List<? extends Runnable> tasks
+  ) {
+    var topic = project.getMessageBus()
+      .syncPublisher(ProjectDataImportListener.TOPIC);
+
+    topic.onFinalTasksStarted(projectPath);
+    try {
+      ContainerUtil.reverse(tasks).forEach(Runnable::run);
     }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable);
+    catch (Exception e) {
+      LOG.warn(e);
+    }
+    finally {
+      topic.onFinalTasksFinished(projectPath);
     }
   }
 
@@ -189,30 +247,6 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
       }
     }
     return buffer.toString();
-  }
-
-  @Override
-  public <T> void importData(@NotNull Collection<? extends DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {
-    Collection<DataNode<?>> dummy = new SmartList<>();
-    dummy.addAll(nodes);
-    importData(dummy, project, new IdeModifiableModelsProviderImpl(project), synchronous);
-  }
-
-  @Override
-  public <T> void importData(@NotNull DataNode<T> node,
-                             @NotNull Project project,
-                             @NotNull IdeModifiableModelsProvider modelsProvider,
-                             boolean synchronous) {
-    Collection<DataNode<?>> dummy = new SmartList<>();
-    dummy.add(node);
-    importData(dummy, project, modelsProvider, synchronous);
-  }
-
-  @Override
-  public <T> void importData(@NotNull DataNode<T> node,
-                             @NotNull Project project,
-                             boolean synchronous) {
-    importData(node, project, new IdeModifiableModelsProviderImpl(project), synchronous);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -339,7 +373,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
         }
       }
 
-      commit(modelsProvider, project, synchronous, "Removed data");
+      commit(modelsProvider, project, synchronous, "Removed data", null);
     }
     catch (Throwable t) {
       dispose(modelsProvider, project, synchronous);
@@ -353,7 +387,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
                                 @NotNull final ProjectData projectData,
                                 @NotNull Project project,
                                 boolean synchronous) {
-    removeData(key, toRemove, toIgnore, projectData, project, new IdeModifiableModelsProviderImpl(project), synchronous);
+    removeData(key, toRemove, toIgnore, projectData, project, createModifiableModelsProvider(project), synchronous);
   }
 
   public void updateExternalProjectData(@NotNull Project project, @NotNull ExternalProjectInfo externalProjectInfo) {
@@ -381,6 +415,11 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     }
   }
 
+  @Override
+  public @NotNull IdeModifiableModelsProvider createModifiableModelsProvider(@NotNull Project project) {
+    return new IdeModifiableModelsProviderImpl(project);
+  }
+
   private void ensureTheDataIsReadyToUse(@NotNull Collection<? extends DataNode<?>> nodes) {
     for (DataNode<?> node : nodes) {
       ensureTheDataIsReadyToUse(node);
@@ -390,13 +429,23 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
   private static void commit(@NotNull final IdeModifiableModelsProvider modelsProvider,
                              @NotNull Project project,
                              boolean synchronous,
-                             @NotNull final String commitDesc) {
+                             @NotNull final String commitDesc,
+                             @Nullable Long activityId) {
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {
+        syncMetrics.getOrStartSpan(Phase.WORKSPACE_MODEL_APPLY.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
+
+        if (activityId != null) {
+          ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.WORKSPACE_MODEL_APPLY);
+        }
         final long startTime = System.currentTimeMillis();
         modelsProvider.commit();
         final long timeInMs = System.currentTimeMillis() - startTime;
+        if (activityId != null) {
+          syncMetrics.endSpan(Phase.WORKSPACE_MODEL_APPLY.name());
+          ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.WORKSPACE_MODEL_APPLY, timeInMs);
+        }
         LOG.debug(String.format("%s committed in %d ms", commitDesc, timeInMs));
       }
     });

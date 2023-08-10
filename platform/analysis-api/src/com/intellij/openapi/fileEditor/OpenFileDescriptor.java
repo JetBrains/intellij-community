@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.DataKey;
@@ -7,15 +7,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows opening file in editor, optionally at specific line/column position.
  */
 public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<OpenFileDescriptor> {
   /**
-   * Tells descriptor to navigate in specific editor rather than file editor in main IDE window.
-   * For example if you want to navigate in editor embedded into modal dialog, you should provide this data.
+   * Tells descriptor to navigate in specific editor rather than file editor in the main IDE window.
+   * For example, if you want to navigate in an editor embedded into modal dialog, you should provide this data.
    */
   public static final DataKey<Editor> NAVIGATE_IN_EDITOR = DataKey.create("NAVIGATE_IN_EDITOR");
 
@@ -27,6 +26,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   private final RangeMarker myRangeMarker;
 
   private boolean myUseCurrentWindow;
+  private boolean myUsePreviewTab;
   private ScrollType myScrollType = ScrollType.CENTER;
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int offset) {
@@ -63,12 +63,10 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   }
 
   @Override
-  @NotNull
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
-  @Nullable
   public RangeMarker getRangeMarker() {
     return myRangeMarker;
   }
@@ -100,7 +98,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   }
 
   protected static void navigateInEditor(@NotNull OpenFileDescriptor descriptor, @NotNull Editor e) {
-    final int offset = descriptor.getOffset();
+    int offset = descriptor.getOffset();
     CaretModel caretModel = e.getCaretModel();
     boolean caretMoved = false;
     if (descriptor.getLine() >= 0) {
@@ -126,21 +124,20 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     }
   }
 
-  protected static void unfoldCurrentLine(@NotNull final Editor editor) {
-    final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
-    final TextRange range = getRangeToUnfoldOnNavigation(editor);
+  protected static void unfoldCurrentLine(@NotNull Editor editor) {
+    FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
+    TextRange range = getRangeToUnfoldOnNavigation(editor);
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
       for (FoldRegion region : allRegions) {
-        if (!region.isExpanded() && range.intersects(TextRange.create(region))) {
+        if (!region.isExpanded() && range.intersects(region)) {
           region.setExpanded(true);
         }
       }
     });
   }
 
-  @NotNull
-  public static TextRange getRangeToUnfoldOnNavigation(@NotNull Editor editor) {
-    final int offset = editor.getCaretModel().getOffset();
+  public static @NotNull TextRange getRangeToUnfoldOnNavigation(@NotNull Editor editor) {
+    int offset = editor.getCaretModel().getOffset();
     int line = editor.getDocument().getLineNumber(offset);
     int start = editor.getDocument().getLineStartOffset(line);
     int end = editor.getDocument().getLineEndOffset(line);
@@ -153,20 +150,19 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
 
   @Override
   public boolean canNavigate() {
-    return FileNavigator.getInstance().canNavigate(myFile);
+    return FileNavigator.getInstance().canNavigate(this);
   }
 
   @Override
   public boolean canNavigateToSource() {
-    return canNavigate();
+    return FileNavigator.getInstance().canNavigateToSource(this);
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  public OpenFileDescriptor setUseCurrentWindow(boolean search) {
+  public @NotNull OpenFileDescriptor setUseCurrentWindow(boolean search) {
     myUseCurrentWindow = search;
     return this;
   }
@@ -174,6 +170,16 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   @Override
   public boolean isUseCurrentWindow() {
     return myUseCurrentWindow;
+  }
+
+  public @NotNull OpenFileDescriptor setUsePreviewTab(boolean usePreviewTab) {
+    myUsePreviewTab = usePreviewTab;
+    return this;
+  }
+
+  @Override
+  public boolean isUsePreviewTab() {
+    return myUsePreviewTab;
   }
 
   public void setScrollType(@NotNull ScrollType scrollType) {

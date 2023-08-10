@@ -208,6 +208,6 @@ public abstract class Property<T extends PropertiesContainer> {
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof Property && getPath().equals(((Property) obj).getPath());
+    return obj instanceof Property && getPath().equals(((Property<?>) obj).getPath());
   }
 }

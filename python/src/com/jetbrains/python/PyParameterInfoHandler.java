@@ -7,19 +7,28 @@ import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.codeInsight.parameterInfo.ParameterHints;
 import com.jetbrains.python.codeInsight.parameterInfo.PyParameterInfoUtils;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.types.PyCallableType;
+import one.util.streamex.MoreCollectors;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 
 public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, Pair<PyCallExpression, PyCallableType>> {
+  private static final int MY_PARAM_LENGTH_LIMIT = 50;
+  private static final EnumMap<ParameterFlag, ParameterInfoUIContextEx.Flag> PARAM_FLAG_TO_UI_FLAG = new EnumMap<>(Map.of(
+    ParameterFlag.HIGHLIGHT, ParameterInfoUIContextEx.Flag.HIGHLIGHT,
+    ParameterFlag.DISABLE, ParameterInfoUIContextEx.Flag.DISABLE,
+    ParameterFlag.STRIKEOUT, ParameterInfoUIContextEx.Flag.STRIKEOUT
+  ));
 
   @Override
   @Nullable
@@ -76,41 +85,38 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     if (parameterHints == null) return;
 
     String[] hints = ArrayUtilRt.toStringArray(parameterHints.getHints());
+    String[] annotations = ArrayUtilRt.toStringArray(parameterHints.getAnnotations());
     if (context instanceof ParameterInfoUIContextEx) {
-      final ParameterInfoUIContextEx pic = (ParameterInfoUIContextEx)context;
-      EnumSet[] flags = new EnumSet[parameterHints.getFlags().size()];
+      //noinspection unchecked
+      EnumSet<ParameterInfoUIContextEx.Flag>[] flags = new EnumSet[parameterHints.getFlags().size()];
       for (int i = 0; i < flags.length; i++) {
-        EnumSet<ParameterInfoUIContextEx.Flag> paramUIFlags = EnumSet.noneOf(ParameterInfoUIContextEx.Flag.class);
-        EnumSet<ParameterFlag> paramsFlags = parameterHints.getFlags().get(i);
-        for (ParameterFlag flag : paramsFlags) {
-          switch (flag) {
-            case HIGHLIGHT:
-              paramUIFlags.add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
-              break;
-            case STRIKEOUT:
-              paramUIFlags.add(ParameterInfoUIContextEx.Flag.STRIKEOUT);
-              break;
-            case DISABLE:
-              paramUIFlags.add(ParameterInfoUIContextEx.Flag.DISABLE);
+        EnumSet<ParameterFlag> curFlags = parameterHints.getFlags().get(i);
+        if (!curFlags.contains(ParameterFlag.HIGHLIGHT) && i < hints.length && hints[i].length() > MY_PARAM_LENGTH_LIMIT &&
+            i < annotations.length) {
+          String annotation = annotations[i];
+          if (!annotation.isEmpty() && annotation.length() < hints[i].length()) {
+            hints[i] = annotation;
           }
         }
-        flags[i] = paramUIFlags;
+        flags[i] = StreamEx.of(parameterHints.getFlags().get(i))
+          .map(PARAM_FLAG_TO_UI_FLAG::get)
+          .collect(MoreCollectors.toEnumSet(ParameterInfoUIContextEx.Flag.class));
       }
-      if (hints.length < 1) {
+      if (hints.length == 0) {
         hints = new String[]{getNoParamsMsg()};
+        //noinspection unchecked
         flags = new EnumSet[]{EnumSet.of(ParameterInfoUIContextEx.Flag.DISABLE)};
       }
 
-      //noinspection unchecked
-      pic.setupUIComponentPresentation(hints, flags, context.getDefaultParameterColor());
+      ((ParameterInfoUIContextEx)context).setupUIComponentPresentation(hints, flags, context.getDefaultParameterColor());
     }
     else { // fallback, no highlight
       final StringBuilder signatureBuilder = new StringBuilder();
-      if (hints.length > 1) {
-        for (String s : hints) signatureBuilder.append(s);
+      if (hints.length == 0) {
+        signatureBuilder.append(getNoParamsMsg());
       }
       else {
-        signatureBuilder.append(XmlStringUtil.escapeString(getNoParamsMsg()));
+        for (String s : hints) signatureBuilder.append(s);
       }
       context.setupUIComponentPresentation(
         signatureBuilder.toString(), -1, 0, false, false, false, context.getDefaultParameterColor()

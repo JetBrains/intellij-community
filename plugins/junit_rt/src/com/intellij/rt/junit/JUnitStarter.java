@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.junit;
 
 import com.intellij.rt.execution.junit.RepeatCount;
@@ -6,6 +6,7 @@ import com.intellij.rt.execution.junit.RepeatCount;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,13 +33,13 @@ public final class JUnitStarter {
   private static String ourForkMode;
   private static String ourCommandFileName;
   private static String ourWorkingDirs;
-  protected static int ourCount = 1;
+  static int ourCount = 1;
   public static String ourRepeatCount;
 
   public static void main(String[] args) {
-    List<String> argList = new ArrayList<String>(Arrays.asList(args));
+    List<String> argList = new ArrayList<>(Arrays.asList(args));
 
-    final ArrayList<String> listeners = new ArrayList<String>();
+    final ArrayList<String> listeners = new ArrayList<>();
     final String[] name = new String[1];
 
     String agentName = processParameters(argList, listeners, name);
@@ -57,7 +58,7 @@ public final class JUnitStarter {
 
   private static String processParameters(List<String> args, final List<? super String> listeners, String[] params) {
     String agentName = isJUnit5Preferred() ? JUNIT5_RUNNER_NAME : JUNIT4_RUNNER_NAME;
-    List<String> result = new ArrayList<String>(args.size());
+    List<String> result = new ArrayList<>(args.size());
     for (String arg : args) {
       if (arg.startsWith(IDE_VERSION)) {
         //ignore
@@ -102,15 +103,25 @@ public final class JUnitStarter {
           continue;
         }
         else if (arg.startsWith(SOCKET)) {
-          final int port = Integer.parseInt(arg.substring(SOCKET.length()));
+          // the form of "-socket[<host>:]<port>" is expected here
+          // for example "-sockethost.docker.internal:12345" or "-socket54321"
+          final String value = arg.substring(SOCKET.length());
+          final String host;
+          final int port;
+          // NB the host might be an IPv6 address (and this kind of address contains ":")
+          int index = value.lastIndexOf(':');
+          if (index == -1) {
+            host = "127.0.0.1";
+            port = Integer.parseInt(value);
+          }
+          else {
+            host = value.substring(0, index);
+            port = Integer.parseInt(value.substring(index + 1));
+          }
           try {
-            final Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), port);  //start collecting tests
-            final DataInputStream os = new DataInputStream(socket.getInputStream());
-            try {
+            final Socket socket = new Socket(InetAddress.getByName(host), port);  //start collecting tests
+            try (DataInputStream os = new DataInputStream(socket.getInputStream())) {
               os.readBoolean();//wait for ready flag
-            }
-            finally {
-              os.close();
             }
           }
           catch (IOException e) {
@@ -211,7 +222,7 @@ public final class JUnitStarter {
       IdeaTestRunner<?> testRunner = (IdeaTestRunner<?>)getAgentClass(agentName).newInstance();
       if (ourCommandFileName != null) {
         if (!"none".equals(ourForkMode) || ourWorkingDirs != null && new File(ourWorkingDirs).length() > 0) {
-          final List<String> newArgs = new ArrayList<String>();
+          final List<String> newArgs = new ArrayList<>();
           newArgs.add(agentName);
           newArgs.addAll(listeners);
           return new JUnitForkedSplitter(ourWorkingDirs, ourForkMode, newArgs)
@@ -232,18 +243,14 @@ public final class JUnitStarter {
 
   public static void printClassesList(List<String> classNames, String packageName, String category, String filters, File tempFile)
     throws IOException {
-    final PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(tempFile), "UTF-8"));
 
-    try {
+    try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(tempFile), StandardCharsets.UTF_8))) {
       writer.println(packageName); //package name
       writer.println(category); //category
       writer.println(filters); //patterns
       for (String name : classNames) {
         writer.println(name);
       }
-    }
-    finally {
-      writer.close();
     }
   }
 }

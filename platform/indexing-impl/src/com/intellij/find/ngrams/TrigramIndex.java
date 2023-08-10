@@ -6,12 +6,12 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -19,24 +19,26 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION;
+
 /**
  * Implementation of <a href="https://en.wikipedia.org/wiki/Trigram">trigram index</a> for fast text search.
  *
  * Should not be used directly, please consider {@link com.intellij.find.TextSearchService}
  */
 public final class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
-  /**
-   * @deprecated not used anymore, always enabled
-   */
-  @Deprecated
-  public static final boolean ENABLED = true;
-
   public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
 
-  private static final FileBasedIndex.InputFilter INPUT_FILTER = file -> isIndexable(file.getFileType());
+  @ApiStatus.Internal
+  public static boolean isEnabled() {
+    return TrigramTextSearchService.useIndexingSearchExtensions();
+  }
 
+  @ApiStatus.Internal
   public static boolean isIndexable(FileType fileType) {
-    return !fileType.isBinary() && (!FileBasedIndex.IGNORE_PLAIN_TEXT_FILES || fileType != PlainTextFileType.INSTANCE);
+    return !fileType.isBinary() &&
+           isEnabled() &&
+           (!FileBasedIndex.IGNORE_PLAIN_TEXT_FILES || fileType != PlainTextFileType.INSTANCE);
   }
 
   @NotNull
@@ -52,9 +54,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
       @Override
       @NotNull
       public Map<Integer, Void> map(@NotNull FileContent inputData) {
-        MyTrigramProcessor trigramProcessor = new MyTrigramProcessor();
-        TrigramBuilder.processTrigrams(inputData.getContentAsText(), trigramProcessor);
-        return trigramProcessor.map;
+        return TrigramBuilder.getTrigramsAsMap(inputData.getContentAsText());
       }
     };
   }
@@ -68,7 +68,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return INPUT_FILTER;
+    return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> isIndexable(fileType));
   }
 
   @Override
@@ -78,12 +78,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
 
   @Override
   public int getVersion() {
-    return 3;
-  }
-
-  @Override
-  public boolean hasSnapshotMapping() {
-    return true;
+    return 4;
   }
 
   @Override
@@ -130,21 +125,5 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
         return result;
       }
     };
-  }
-
-  private static final class MyTrigramProcessor extends TrigramBuilder.TrigramProcessor {
-    Int2ObjectMap<Void> map;
-
-    @Override
-    public boolean consumeTrigramsCount(int count) {
-      map = new Int2ObjectOpenHashMap<>(count);
-      return true;
-    }
-
-    @Override
-    public boolean test(int value) {
-      map.put(value, null);
-      return true;
-    }
   }
 }

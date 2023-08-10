@@ -18,9 +18,6 @@ package com.intellij.lang.pratt;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class AppendTokenParser extends TokenParser {
   public static final AppendTokenParser JUST_APPEND = new AppendTokenParser() {
     @Override

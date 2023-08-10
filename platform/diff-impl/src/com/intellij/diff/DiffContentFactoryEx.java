@@ -15,7 +15,6 @@
  */
 package com.intellij.diff;
 
-import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -24,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 
 public abstract class DiffContentFactoryEx extends DiffContentFactory {
@@ -36,28 +34,6 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
 
   @NotNull
   public abstract DocumentContentBuilder documentContent(@Nullable Project project, boolean readOnly);
-
-
-  @NotNull
-  public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FilePath filePath);
-
-
-  @NotNull
-  public abstract DiffContent createFromBytes(@Nullable Project project,
-                                              byte @NotNull [] content,
-                                              @NotNull FilePath filePath) throws IOException;
-
-  @NotNull
-  public abstract DiffContent createFromBytes(@Nullable Project project,
-                                              byte @NotNull [] content,
-                                              @NotNull FilePath filePath,
-                                              @Nullable Charset defaultCharset) throws IOException;
-
-  @Override
-  @NotNull
-  public abstract DiffContent createFromBytes(@Nullable Project project,
-                                              byte @NotNull [] content,
-                                              @NotNull VirtualFile highlightFile) throws IOException;
 
 
   @NotNull
@@ -80,6 +56,8 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
   public interface DocumentContentBuilder {
     @NotNull DocumentContentBuilder withFileName(@Nullable String fileName);
 
+    @NotNull DocumentContentBuilder withDefaultCharset(@Nullable Charset charset);
+
     @NotNull DocumentContentBuilder contextByFileType(@Nullable FileType fileType);
 
     @NotNull DocumentContentBuilder contextByFilePath(@Nullable FilePath filePath);
@@ -90,6 +68,15 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
 
     @NotNull DocumentContent buildFromText(@NotNull String text, boolean respectLineSeparators);
 
-    @NotNull DocumentContent buildFromBytes(byte @NotNull [] content, @NotNull Charset charset);
+    @NotNull DocumentContent buildFromBytes(byte @NotNull [] content);
+
+    /**
+     * @deprecated Prefer using {@link #buildFromBytes(byte[])}.
+     */
+    @Deprecated(forRemoval = true)
+    default @NotNull DocumentContent buildFromBytes(byte @NotNull [] content, @NotNull Charset charset) {
+      withDefaultCharset(charset);
+      return buildFromBytes(content);
+    }
   }
 }

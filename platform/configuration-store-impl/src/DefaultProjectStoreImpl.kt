@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.util.LineSeparator
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -33,7 +35,7 @@ private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManag
     }
   }
 
-  override fun createSaveSession(states: StateMap) = object : FileBasedStorage.FileSaveSession(states, this) {
+  override fun createSaveSession(states: StateMap) = object : FileBasedStorage.FileSaveSessionProducer(states, this) {
     override fun saveLocally(dataWriter: DataWriter?) {
       super.saveLocally(when (dataWriter) {
         null -> null
@@ -56,15 +58,24 @@ private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManag
   }
 }
 
-// cannot be `internal`, used in Upsource
 @ApiStatus.Internal
-class DefaultProjectStoreImpl(override val project: Project) : ChildlessComponentStore() {
+internal class DefaultProjectStoreImpl(override val project: Project) : ComponentStoreWithExtraComponents() {
   // see note about default state in project store
   override val loadPolicy: StateLoadPolicy
     get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
 
   private val storage by lazy {
-    DefaultProjectStorage(ApplicationManager.getApplication().stateStore.storageManager.expandMacro(FILE_SPEC), FILE_SPEC, PathMacroManager.getInstance(project))
+    DefaultProjectStorage(ApplicationManager.getApplication().stateStore.storageManager.expandMacro(FILE_SPEC), FILE_SPEC,
+                          PathMacroManager.getInstance(project))
+  }
+
+  override val serviceContainer: ComponentManagerImpl
+    get() = project as ComponentManagerImpl
+  
+  override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
+    val saveSessionManager = createSaveSessionProducerManager()
+    saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings, saveSessionManager)
+    saveSessionManager.save().appendTo(result)
   }
 
   override val storageManager = object : StateStorageManager {
@@ -74,7 +85,7 @@ class DefaultProjectStoreImpl(override val project: Project) : ChildlessComponen
     override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
     }
 
-    override fun removeStreamProvider(clazz: Class<out StreamProvider>) {
+    override fun removeStreamProvider(aClass: Class<out StreamProvider>) {
     }
 
     override fun getStateStorage(storageSpec: Storage) = storage

@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -10,11 +9,13 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,14 +27,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Function;
 
 public abstract class InspectionRVContentProvider {
-  private static final Logger LOG = Logger.getInstance(InspectionRVContentProvider.class);
-
   public InspectionRVContentProvider() {
   }
 
@@ -109,16 +106,15 @@ public abstract class InspectionRVContentProvider {
     return tools.getTools();
   }
 
-  public boolean hasQuickFixes(InspectionTree tree) {
-    final TreePath[] treePaths = tree.getSelectionPaths();
-    if (treePaths == null) return false;
-    for (TreePath selectionPath : treePaths) {
-      if (!TreeUtil.treeNodeTraverser((TreeNode)selectionPath.getLastPathComponent())
+  public boolean hasQuickFixes(@NotNull AnActionEvent e) {
+    final Object[] selection = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+    if (selection == null) return false;
+    for (Object selectedNode : selection) {
+      if (!TreeUtil.treeNodeTraverser((TreeNode)selectedNode)
         .traverse(TreeTraversal.PRE_ORDER_DFS)
         .processEach(node -> {
         if (!((InspectionTreeNode) node).isValid()) return true;
-        if (node instanceof ProblemDescriptionNode) {
-          ProblemDescriptionNode problemDescriptionNode = (ProblemDescriptionNode)node;
+        if (node instanceof ProblemDescriptionNode problemDescriptionNode) {
           if (!problemDescriptionNode.isQuickFixAppliedFromView()) {
             final CommonProblemDescriptor descriptor = problemDescriptionNode.getDescriptor();
             final QuickFix<?>[] fixes = descriptor != null ? descriptor.getFixes() : null;
@@ -133,16 +129,18 @@ public abstract class InspectionRVContentProvider {
     return false;
   }
 
-  public abstract QuickFixAction @NotNull [] getCommonQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree);
+  public abstract QuickFixAction @NotNull [] getCommonQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree,
+                                                                 CommonProblemDescriptor @NotNull [] descriptors,
+                                                                 RefEntity @NotNull [] refElements);
 
-  public QuickFixAction @NotNull [] getPartialQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree) {
+  public QuickFixAction @NotNull [] getPartialQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree,
+                                                         CommonProblemDescriptor @NotNull [] selectedDescriptors) {
     GlobalInspectionContextImpl context = tree.getContext();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    CommonProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
     Map<String, FixAndOccurrences> result = new LinkedHashMap<>();
-    for (CommonProblemDescriptor d : descriptors) {
+    for (CommonProblemDescriptor d : selectedDescriptors) {
       QuickFix<?>[] fixes = d.getFixes();
-      if (fixes == null || fixes.length == 0) continue;
+      if (fixes == null) continue;
       for (QuickFix<?> fix : fixes) {
         String familyName = fix.getFamilyName();
         FixAndOccurrences fixAndOccurrences = result.get(familyName);
@@ -158,8 +156,17 @@ public abstract class InspectionRVContentProvider {
           fixAndOccurrences = new FixAndOccurrences(localQuickFixWrapper);
           result.put(familyName, fixAndOccurrences);
         } else {
-          final LocalQuickFixWrapper quickFixAction = fixAndOccurrences.fix;
-          checkFixClass(presentation, fix, quickFixAction);
+          final QuickFixAction quickFixAction = fixAndOccurrences.fix;
+          if (quickFixAction instanceof LocalQuickFixesWrapper) {
+            ((LocalQuickFixesWrapper)quickFixAction).addFixAction(fix, presentation.getToolWrapper());
+          } else {
+            assert quickFixAction instanceof LocalQuickFixWrapper;
+            if (fix.getClass() != ((LocalQuickFixWrapper)quickFixAction).getFix().getClass()) {
+              fixAndOccurrences.fix = new LocalQuickFixesWrapper(quickFixAction.getText(),
+                                                                 List.of(((LocalQuickFixWrapper)quickFixAction).getFix(), fix),
+                                                                 presentation.getToolWrapper());
+            }
+          }
         }
         fixAndOccurrences.occurrences++;
       }
@@ -168,33 +175,19 @@ public abstract class InspectionRVContentProvider {
     return result
       .values()
       .stream()
-      .filter(fixAndOccurrence -> fixAndOccurrence.occurrences != descriptors.length)
+      .filter(fixAndOccurrence -> fixAndOccurrence.occurrences != selectedDescriptors.length)
       .sorted(Comparator.comparingInt((FixAndOccurrences fixAndOccurrence) -> fixAndOccurrence.occurrences).reversed())
       .map(fixAndOccurrence -> {
-        LocalQuickFixWrapper fix = fixAndOccurrence.fix;
+        QuickFixAction fix = fixAndOccurrence.fix;
         int occurrences = fixAndOccurrence.occurrences;
-        fix.setText(LangBundle.message("action.fix.n.problems.text", fix.getText(), occurrences));
+        if (fix instanceof LocalQuickFixWrapper) {
+          ((LocalQuickFixWrapper)fix).setText(LangBundle.message("action.fix.n.problems.text", fix.getText(), occurrences));
+        } else if (fix instanceof LocalQuickFixesWrapper) {
+          ((LocalQuickFixesWrapper)fix).setText(LangBundle.message("action.fix.n.problems.text", fix.getText(), occurrences));
+        }
         return fix;
       })
       .toArray(QuickFixAction[]::new);
-  }
-
-  protected static void checkFixClass(InspectionToolPresentation presentation, QuickFix fix, LocalQuickFixWrapper quickFixAction) {
-    Class<?> class1 = getFixClass(fix);
-    Class<?> class2 = getFixClass(quickFixAction.getFix());
-    if (!class1.equals(class2)) {
-      String message = MessageFormat.format(
-        "QuickFix-es with the same family name ({0}) should be the same class instances but actually are {1} and {2} instances. " +
-        "Please assign reported exception for the inspection \"{3}\" (\"{4}\") developer.",
-        fix.getFamilyName(), class1.getName(), class2.getName(), presentation.getToolWrapper().getTool().getClass(),
-        presentation.getToolWrapper().getShortName());
-      AssertionError error = new AssertionError(message);
-      StreamEx.of(presentation.getProblemDescriptors()).select(ProblemDescriptorBase.class)
-              .map(ProblemDescriptorBase::getCreationTrace).nonNull()
-              .map(InspectionRVContentProvider::extractStackTrace).findFirst()
-              .ifPresent(error::setStackTrace);
-      LOG.error(message, error);
-    }
   }
 
   private static StackTraceElement[] extractStackTrace(Throwable throwable) {
@@ -288,10 +281,11 @@ public abstract class InspectionRVContentProvider {
 
   protected static QuickFixAction @NotNull [] getCommonFixes(@NotNull InspectionToolPresentation presentation,
                                                              CommonProblemDescriptor @NotNull [] descriptors) {
-    Map<String, LocalQuickFixWrapper> result = null;
+    Map<String, QuickFixAction> result = null;
     for (CommonProblemDescriptor d : descriptors) {
       QuickFix<?>[] fixes = d.getFixes();
       if (fixes == null || fixes.length == 0) continue;
+      // Add LocalQuickFixWrapper-s for the first descriptor fixes
       if (result == null) {
         result = new LinkedHashMap<>();
         for (QuickFix<?> fix : fixes) {
@@ -299,21 +293,33 @@ public abstract class InspectionRVContentProvider {
           result.put(fix.getFamilyName(), new LocalQuickFixWrapper(fix, presentation.getToolWrapper()));
         }
       }
+      // Remove non-shared fixes
       else {
         for (String familyName : new ArrayList<>(result.keySet())) {
           boolean isFound = false;
           for (QuickFix<?> fix : fixes) {
             if (fix == null) continue;
             if (familyName.equals(fix.getFamilyName())) {
+              // Fixes of different classes with the same family name are joined in LocalQuickFixesWrapper
               isFound = true;
-              final LocalQuickFixWrapper quickFixAction = result.get(fix.getFamilyName());
-              checkFixClass(presentation, fix, quickFixAction);
-              try {
-                quickFixAction.setText(StringUtil.escapeMnemonics(fix.getFamilyName()));
-              }
-              catch (AbstractMethodError e) {
-                //for plugin compatibility
-                quickFixAction.setText(LangBundle.message("action.name.not.available.text"));
+              final QuickFixAction quickFixAction = result.get(fix.getFamilyName());
+              if (quickFixAction instanceof LocalQuickFixesWrapper) {
+                ((LocalQuickFixesWrapper)quickFixAction).addFixAction(fix, presentation.getToolWrapper());
+              } else {
+                assert quickFixAction instanceof LocalQuickFixWrapper;
+                result.remove(fix.getFamilyName());
+
+                @NlsActions.ActionText String fixActionText;
+                try {
+                  fixActionText = fix.getFamilyName();
+                }
+                catch (AbstractMethodError e) {
+                  fixActionText = LangBundle.message("action.name.not.available.text");
+                }
+                final var commonWrapper = new LocalQuickFixesWrapper(fixActionText,
+                                                                     List.of(((LocalQuickFixWrapper)quickFixAction).getFix(), fix),
+                                                                     presentation.getToolWrapper());
+                result.put(fix.getFamilyName(), commonWrapper);
               }
               break;
             }
@@ -330,13 +336,9 @@ public abstract class InspectionRVContentProvider {
     return result == null || result.isEmpty() ? QuickFixAction.EMPTY : result.values().toArray(QuickFixAction.EMPTY);
   }
 
-  private static Class<?> getFixClass(QuickFix<?> fix) {
-    return fix instanceof ActionClassHolder ? ((ActionClassHolder)fix).getActionClass() : fix.getClass();
-  }
-
   private static class FixAndOccurrences {
-    final LocalQuickFixWrapper fix;
+    QuickFixAction fix;
     int occurrences;
-    FixAndOccurrences(LocalQuickFixWrapper fix) {this.fix = fix;}
+    FixAndOccurrences(QuickFixAction fix) {this.fix = fix;}
   }
 }

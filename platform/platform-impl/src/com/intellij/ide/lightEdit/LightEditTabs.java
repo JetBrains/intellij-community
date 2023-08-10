@@ -1,16 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CloseAction;
+import com.intellij.ide.actions.NextTabAction;
+import com.intellij.ide.actions.PreviousTabAction;
 import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -18,12 +17,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -33,15 +30,18 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.BitUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.FocusManager;
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -63,7 +63,9 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     addListener(new TabsListener() {
       @Override
       public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
-        ObjectUtils.consumeIfNotNull(oldSelection, tabInfo -> tabInfo.setTabColor(null));
+        if (oldSelection != null) {
+          oldSelection.setTabColor(null);
+        }
         asyncUpdateTab(newSelection);
         onSelectionChange(newSelection);
       }
@@ -83,9 +85,8 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   private void addEditorTab(@NotNull LightEditorInfo editorInfo, int index) {
-    EditorWithProviderComposite editorContainer =
-      ((LightEditFileEditorManagerImpl)FileEditorManager.getInstance(myProject))
-        .createEditorComposite(editorInfo);
+    LightEditFileEditorManagerImpl fileEditorManager = (LightEditFileEditorManagerImpl)FileEditorManager.getInstance(myProject);
+    EditorComposite editorContainer = fileEditorManager.createEditorComposite(editorInfo);
     TabInfo tabInfo = new TabInfo(editorContainer.getComponent())
       .setText(editorInfo.getFile().getPresentableName())
       .setIcon(getFileTypeIcon(editorInfo));
@@ -100,11 +101,17 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     select(tabInfo, true);
     asyncUpdateTab(tabInfo);
     myEditorManager.fireEditorSelected(editorInfo);
+    myProject.getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(
+      fileEditorManager, editorInfo.getFile()
+    );
   }
 
   @Override
   public void close() {
-    ObjectUtils.consumeIfNotNull(getSelectedInfo(), tabInfo -> closeTab(tabInfo));
+    TabInfo info = getSelectedInfo();
+    if (info != null) {
+      this.closeTab(info);
+    }
   }
 
   private static Icon getFileTypeIcon(@NotNull LightEditorInfo editorInfo) {
@@ -122,6 +129,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
       .findFirst().ifPresent(tabInfo -> select(tabInfo, true));
   }
 
+  // Counterpart of com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
   private final class CloseTabAction extends DumbAwareAction implements LightEditCompatible {
     private final LightEditorInfo myEditorInfo;
 
@@ -133,11 +141,11 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if ((e.getModifiers() & InputEvent.ALT_MASK) == 0) {
-        closeCurrentTab();
+      if (e.getInputEvent() instanceof MouseEvent && BitUtil.isSet(e.getInputEvent().getModifiersEx(), InputEvent.ALT_DOWN_MASK)) {
+        closeAllTabsExceptCurrent();
       }
       else {
-        closeAllTabsExceptCurrent();
+        closeCurrentTab();
       }
     }
 
@@ -147,6 +155,11 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
       e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
       e.getPresentation().setVisible(UISettings.getInstance().getShowCloseButton());
       e.getPresentation().setText(IdeBundle.messagePointer("action.presentation.LightEditTabs.text"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     private Icon getIcon() {
@@ -273,19 +286,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     return null;
   }
 
-  private static class TabEditorData {
-    private final @NotNull LightEditorInfo             editorInfo;
-    private final @NotNull EditorWithProviderComposite editorComposite;
-
-    private TabEditorData(@NotNull LightEditorInfo editorInfo, @NotNull EditorWithProviderComposite editorComposite) {
-      this.editorInfo = editorInfo;
-      this.editorComposite = editorComposite;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof TabEditorData && ((TabEditorData)obj).editorInfo.equals(editorInfo);
-    }
+  private record TabEditorData(@NotNull LightEditorInfo editorInfo, @NotNull EditorComposite editorComposite) {
   }
 
   @Nullable
@@ -308,7 +309,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   private void asyncUpdateTab(@NotNull TabInfo tabInfo) {
-    assert ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LightEditorInfo editorInfo = getEditorInfo(tabInfo);
     if (editorInfo == null) return;
     EditorNotifications.getInstance(myProject).updateNotifications(editorInfo.getFile());
@@ -354,7 +355,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   @Override
-  public void fileStatusChanged(@NotNull Collection<LightEditorInfo> editorInfos) {
+  public void fileStatusChanged(@NotNull Collection<? extends LightEditorInfo> editorInfos) {
     ApplicationManager.getApplication().invokeLater(() -> {
       List<Pair.NonNull<TabInfo, LightEditorInfo>> tabEditorPairs = ContainerUtil.mapNotNull(editorInfos, editorInfo -> {
         TabInfo info = findTabInfo(editorInfo);
@@ -385,19 +386,47 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   @Nullable
-  public EditorWithProviderComposite findEditorComposite(@NotNull FileEditor fileEditor) {
+  public EditorComposite findEditorComposite(@NotNull FileEditor fileEditor) {
     VirtualFile virtualFile = fileEditor.getFile();
     if (virtualFile != null) {
       for (TabInfo tabInfo : getTabs()) {
         final Object data = tabInfo.getObject();
         if (data instanceof TabEditorData && virtualFile.equals(((TabEditorData)data).editorInfo.getFile())) {
-          EditorWithProviderComposite composite = ((TabEditorData)data).editorComposite;
-          if (ContainerUtil.exists(composite.getEditors(), editor->editor.equals(fileEditor))) {
+          EditorComposite composite = ((TabEditorData)data).editorComposite;
+          if (ContainerUtil.exists(composite.getAllEditors(), editor->editor.equals(fileEditor))) {
             return composite;
           }
         }
       }
     }
     return null;
+  }
+
+  boolean isTabNavigationAvailable(@NotNull AnAction navigationAction) {
+    if (getTabCount() > 1) {
+      Component focusOwner = FocusManager.getCurrentManager().getFocusOwner();
+      if (focusOwner instanceof EditorComponentImpl) {
+        return getIndexOf(getSelectedInfo()) >= 0 &&
+               (navigationAction instanceof PreviousTabAction || navigationAction instanceof NextTabAction);
+      }
+    }
+    return false;
+  }
+
+  void navigateToTab(@NotNull AnAction navigationAction) {
+    int currIndex = getIndexOf(getSelectedInfo());
+    if (currIndex >= 0) {
+      int newIndex = currIndex;
+      if (navigationAction instanceof PreviousTabAction) {
+        newIndex = (currIndex > 0 ? currIndex : getTabCount()) - 1;
+      }
+      else if (navigationAction instanceof NextTabAction) {
+        newIndex = currIndex < getTabCount() - 1 ? currIndex + 1 : 0;
+      }
+      if (newIndex != currIndex) {
+        TabInfo newInfo = getTabAt(newIndex);
+        select(newInfo, true);
+      }
+    }
   }
 }

@@ -5,6 +5,7 @@ import com.google.gson.stream.JsonToken;
 import com.intellij.util.ArrayUtilRt;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,7 @@ public final class JsonReaders {
 
   private static void checkIsNull(JsonReaderEx reader) {
     if (reader.peek() == JsonToken.NULL) {
-      throw new RuntimeException("Field is not nullable" + "");
+      throw new RuntimeException("Field is not nullable");
     }
   }
 
@@ -144,29 +145,21 @@ public final class JsonReaders {
   }
 
   public static Object read(JsonReaderEx reader) {
-    switch (reader.peek()) {
-      case BEGIN_ARRAY:
-        return nextList(reader);
-
-      case BEGIN_OBJECT:
+    return switch (reader.peek()) {
+      case BEGIN_ARRAY -> nextList(reader);
+      case BEGIN_OBJECT -> {
         reader.beginObject();
-        return nextObject(reader);
-
-      case STRING:
-        return reader.nextString();
-
-      case NUMBER:
-        return reader.nextDouble();
-
-      case BOOLEAN:
-        return reader.nextBoolean();
-
-      case NULL:
+        yield nextObject(reader);
+      }
+      case STRING -> reader.nextString();
+      case NUMBER -> reader.nextDouble();
+      case BOOLEAN -> reader.nextBoolean();
+      case NULL -> {
         reader.nextNull();
-        return null;
-
-      default: throw new IllegalStateException();
-    }
+        yield null;
+      }
+      default -> throw new IllegalStateException();
+    };
   }
 
   public static Map<String, Object> nextObject(JsonReaderEx reader) {
@@ -253,7 +246,7 @@ public final class JsonReaders {
       return ArrayUtilRt.EMPTY_INT_ARRAY;
     }
 
-    IntArrayList result = new IntArrayList();
+    IntList result = new IntArrayList();
     do {
       result.add(reader.nextInt());
     }

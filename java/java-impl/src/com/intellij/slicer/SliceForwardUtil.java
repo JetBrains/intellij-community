@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
@@ -16,12 +16,11 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.Set;
 
 final class SliceForwardUtil {
@@ -36,40 +35,34 @@ final class SliceForwardUtil {
     Pair<PsiElement, PsiSubstitutor> pair = getAssignmentTarget(element, parent);
     if (pair != null) {
       PsiElement target = pair.getFirst();
-      final PsiSubstitutor substitutor = pair.getSecond();
-      if (target instanceof PsiParameter) {
-        PsiParameter parameter = (PsiParameter)target;
-        PsiElement declarationScope = parameter.getDeclarationScope();
-        if (declarationScope instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)declarationScope;
-          final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
+      if (target instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiMethod method) {
+        final PsiSubstitutor substitutor = pair.getSecond();
+        final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
 
-          Processor<PsiMethod> myProcessor = override -> {
-            if (!parent.getScope().contains(override)) return true;
-            final PsiSubstitutor superSubstitutor = method == override
-                                                    ? substitutor
-                                                    : MethodSignatureUtil.getSuperMethodSignatureSubstitutor(method.getSignature(substitutor),
-                                                                                          override.getSignature(substitutor));
+        Processor<PsiMethod> myProcessor = override -> {
+          if (!parent.getScope().contains(override)) return true;
+          final PsiSubstitutor superSubstitutor = method == override
+                                                  ? substitutor
+                                                  : MethodSignatureUtil.getSuperMethodSignatureSubstitutor(method.getSignature(substitutor),
+                                                                                                           override.getSignature(
+                                                                                                             substitutor));
 
-            PsiParameter[] parameters = override.getParameterList().getParameters();
-            if (parameters.length <= parameterIndex || superSubstitutor == null) return true;
-            PsiParameter actualParam = parameters[parameterIndex];
+          PsiParameter[] parameters = override.getParameterList().getParameters();
+          if (parameters.length <= parameterIndex || superSubstitutor == null) return true;
+          PsiParameter actualParam = parameters[parameterIndex];
 
-            return builder.withSubstitutor(superSubstitutor).process(actualParam, processor);
-          };
-          if (!myProcessor.process(method)) return false;
-          return OverridingMethodsSearch.search(method, parent.getScope().toSearchScope(), true).forEach(myProcessor);
-        }
+          return builder.withSubstitutor(superSubstitutor).process(actualParam, processor);
+        };
+        if (!myProcessor.process(method)) return false;
+        return OverridingMethodsSearch.search(method, parent.getScope().toSearchScope(), true).forEach(myProcessor);
       }
 
       return builder.process(target, processor);
     }
 
-    if (element instanceof PsiReferenceExpression) {
-      PsiReferenceExpression ref = (PsiReferenceExpression)element;
+    if (element instanceof PsiReferenceExpression ref) {
       PsiElement resolved = ref.resolve();
-      if (!(resolved instanceof PsiVariable)) return true;
-      final PsiVariable variable = (PsiVariable)resolved;
+      if (!(resolved instanceof PsiVariable variable)) return true;
       return processAssignedFrom(variable, ref, parent, processor);
     }
     if (element instanceof PsiVariable) {
@@ -88,33 +81,18 @@ final class SliceForwardUtil {
     if (from instanceof PsiLocalVariable) {
       return searchReferencesAndProcessAssignmentTarget(from, context, parent, processor);
     }
-    if (from instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)from;
+    if (from instanceof PsiParameter parameter) {
       PsiElement scope = parameter.getDeclarationScope();
-      Collection<PsiParameter> parametersToAnalyze = new THashSet<>();
-      if (scope instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)scope;
+      Collection<PsiParameter> parametersToAnalyze = new HashSet<>();
+      if (scope instanceof PsiMethod method && ((PsiMethod)scope).hasModifierProperty(PsiModifier.ABSTRACT)) {
         int index = method.getParameterList().getParameterIndex(parameter);
+        final Set<PsiMethod> implementors = new HashSet<>();
 
-        Collection<PsiMethod> superMethods = ContainerUtil.set(method.findDeepestSuperMethods());
-        superMethods.add(method);
-        for (Iterator<PsiMethod> iterator = superMethods.iterator(); iterator.hasNext(); ) {
+        if (!OverridingMethodsSearch.search(method, parent.getScope().toSearchScope(), true).forEach(sub -> {
           ProgressManager.checkCanceled();
-          PsiMethod superMethod = iterator.next();
-          if (!parent.params.scope.contains(superMethod)) {
-            iterator.remove();
-          }
-        }
-
-        final THashSet<PsiMethod> implementors = new THashSet<>(superMethods);
-        for (PsiMethod superMethod : superMethods) {
-          ProgressManager.checkCanceled();
-          if (!OverridingMethodsSearch.search(superMethod, parent.getScope().toSearchScope(), true).forEach(sub -> {
-            ProgressManager.checkCanceled();
-            implementors.add(sub);
-            return true;
-          })) return false;
-        }
+          implementors.add(sub);
+          return true;
+        })) return false;
         for (PsiMethod implementor : implementors) {
           ProgressManager.checkCanceled();
           if (!parent.params.scope.contains(implementor)) continue;
@@ -131,21 +109,20 @@ final class SliceForwardUtil {
       }
       for (final PsiParameter psiParameter : parametersToAnalyze) {
         ProgressManager.checkCanceled();
-
         if (!searchReferencesAndProcessAssignmentTarget(psiParameter, null, parent, processor)) return false;
       }
       return true;
     }
-    if (from instanceof PsiField) {
+    else if (from instanceof PsiField) {
       return searchReferencesAndProcessAssignmentTarget(from, null, parent, processor);
     }
 
     if (from instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)from;
 
-      Collection<PsiMethod> superMethods = ContainerUtil.set(method.findDeepestSuperMethods());
+      Collection<PsiMethod> superMethods = ContainerUtil.newHashSet(method.findDeepestSuperMethods());
       superMethods.add(method);
-      final Set<PsiReference> processed = new THashSet<>(); //usages of super method and overridden method can overlap
+      final Set<PsiReference> processed = new HashSet<>(); //usages of super method and overridden method can overlap
       for (final PsiMethod containingMethod : superMethods) {
         if (!MethodReferencesSearch.search(containingMethod, parent.getScope().toSearchScope(), true).forEach(reference -> {
           ProgressManager.checkCanceled();
@@ -216,8 +193,7 @@ final class SliceForwardUtil {
     PsiSubstitutor substitutor = parentUsage.getSubstitutor();
     //assignment
     PsiElement parent = element.getParent();
-    if (parent instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+    if (parent instanceof PsiAssignmentExpression assignment) {
       if (element.equals(assignment.getRExpression())) {
         PsiElement left = assignment.getLExpression();
         if (left instanceof PsiReferenceExpression) {
@@ -227,8 +203,7 @@ final class SliceForwardUtil {
         }
       }
     }
-    else if (parent instanceof PsiVariable) {
-      PsiVariable variable = (PsiVariable)parent;
+    else if (parent instanceof PsiVariable variable) {
 
       PsiElement initializer = variable.getInitializer();
       if (element.equals(initializer)) {
@@ -236,10 +211,9 @@ final class SliceForwardUtil {
       }
     }
     //method call
-    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression) {
+    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression methodCall) {
       PsiExpression[] expressions = ((PsiExpressionList)parent).getExpressions();
       int index = ArrayUtilRt.find(expressions, element);
-      PsiCallExpression methodCall = (PsiCallExpression)parent.getParent();
       JavaResolveResult result = methodCall.resolveMethodGenerics();
       PsiMethod method = (PsiMethod)result.getElement();
       if (index != -1 && method != null) {
@@ -250,8 +224,7 @@ final class SliceForwardUtil {
         }
       }
     }
-    else if (parent instanceof PsiReturnStatement) {
-      PsiReturnStatement statement = (PsiReturnStatement)parent;
+    else if (parent instanceof PsiReturnStatement statement) {
       if (element.equals(statement.getReturnValue())) {
         target = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
       }

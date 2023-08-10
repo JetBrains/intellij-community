@@ -89,7 +89,7 @@ abstract class FontWeightCombo extends ComboBox<FontWeightCombo.MyWeightItem> {
       if (value != null) {
         append(value.subFamily);
         if (value.isRecommended && myMarkRecommended && list.getModel().getSize() > 2) {
-          append(" ");
+          append("  ");
           append(ApplicationBundle.message("settings.editor.font.recommended"), SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
       }

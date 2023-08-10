@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
 import com.intellij.psi.PsiElement;
@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 
@@ -100,7 +101,9 @@ public final class ParenthesesUtils {
     BINARY_PRECEDENCES.put(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, SHIFT_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, SHIFT_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mRANGE_INCLUSIVE, RANGE_PRECEDENCE);
-    BINARY_PRECEDENCES.put(GroovyTokenTypes.mRANGE_EXCLUSIVE, RANGE_PRECEDENCE);
+    BINARY_PRECEDENCES.put(GroovyTokenTypes.mRANGE_EXCLUSIVE_LEFT, RANGE_PRECEDENCE);
+    BINARY_PRECEDENCES.put(GroovyTokenTypes.mRANGE_EXCLUSIVE_RIGHT, RANGE_PRECEDENCE);
+    BINARY_PRECEDENCES.put(GroovyTokenTypes.mRANGE_EXCLUSIVE_BOTH, RANGE_PRECEDENCE);
 
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mGT, RELATIONAL_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mGE, RELATIONAL_PRECEDENCE);
@@ -127,6 +130,7 @@ public final class ParenthesesUtils {
   public static int getPrecedence(GrExpression expr) {
     if (expr instanceof GrUnaryExpression) return ((GrUnaryExpression)expr).isPostfix() ? POSTFIX_PRECEDENCE : PREFIX_PRECEDENCE;
     if (expr instanceof GrTypeCastExpression) return TYPE_CAST_PRECEDENCE;
+    if (expr instanceof GrRangeExpression) return RANGE_PRECEDENCE;
     if (expr instanceof GrConditionalExpression) return CONDITIONAL_PRECEDENCE;
     if (expr instanceof GrSafeCastExpression) return SAFE_CAST_PRECEDENCE;
     if (expr instanceof GrAssignmentExpression) return ASSIGNMENT_PRECEDENCE;
@@ -134,8 +138,7 @@ public final class ParenthesesUtils {
     if (expr instanceof GrInstanceOfExpression) return INSTANCEOF_PRECEDENCE;
     if (expr instanceof GrNewExpression) return NEW_EXPR_PRECEDENCE;
     if (expr instanceof GrParenthesizedExpression) return PARENTHESIZED_PRECEDENCE;
-    if (expr instanceof GrReferenceExpression) {
-      final GrReferenceExpression referenceExpression = (GrReferenceExpression)expr;
+    if (expr instanceof GrReferenceExpression referenceExpression) {
       return referenceExpression.getQualifierExpression() == null ? LITERAL_PRECEDENCE : METHOD_CALL_PRECEDENCE;
     }
     if (expr instanceof GrBinaryExpression) {
@@ -195,10 +198,8 @@ public final class ParenthesesUtils {
     if (parent instanceof GrArgumentList) {
       parent = parent.getParent();
     }
-    if (!(parent instanceof GrExpression)) return false;
-    GrExpression oldParent = (GrExpression) parent;
-    if (oldParent instanceof GrBinaryExpression) {
-      GrBinaryExpression binaryExpression = (GrBinaryExpression)oldParent;
+    if (!(parent instanceof GrExpression oldParent)) return false;
+    if (oldParent instanceof GrBinaryExpression binaryExpression) {
       GrExpression rightOperand = binaryExpression.getRightOperand();
       return checkPrecedenceForBinaryOps(precedence, binaryExpression.getOperationTokenType(), oldExpr.equals(rightOperand));
     } else {

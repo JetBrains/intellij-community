@@ -18,6 +18,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,14 +54,14 @@ import java.util.stream.Collectors;
  */
 public class ImageDuplicateResultsDialog extends DialogWrapper {
   private final Project myProject;
-  private final List<VirtualFile> myImages;
+  private final List<? extends VirtualFile> myImages;
   private final Map<String, Set<VirtualFile>> myDuplicates;
   private final Tree myTree;
   private final TreeSpeedSearch mySpeedSearch;
   private final ResourceModules myResourceModules = new ResourceModules();
 
 
-  public ImageDuplicateResultsDialog(Project project, List<VirtualFile> images, Map<String, Set<VirtualFile>> duplicates) {
+  public ImageDuplicateResultsDialog(Project project, List<? extends VirtualFile> images, Map<String, Set<VirtualFile>> duplicates) {
     super(project);
     myProject = project;
     myImages = images;
@@ -70,7 +72,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     myTree.setRootVisible(true);
     MyCellRenderer renderer = new MyCellRenderer();
     myTree.setCellRenderer(renderer);
-    mySpeedSearch = new TreeSpeedSearch(myTree, x -> renderer.getTreeCellRendererComponent(myTree, x.getLastPathComponent(), false, false, false, 0, false).toString());
+    mySpeedSearch = TreeSpeedSearch.installOn(myTree, false, x -> renderer.getTreeCellRendererComponent(myTree, x.getLastPathComponent(), false, false, false, 0, false).toString());
     init();
     TreeUtil.expandAll(myTree);
     setTitle("Image Duplicates");
@@ -137,7 +139,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
         JBPopupFactory.getInstance().createListPopupBuilder(modules)
           .setTitle("Add Resource Module")
           .setNamerForFiltering(o -> o.getName())
-          .setItemChoosenCallback(() -> {
+          .setItemChosenCallback(() -> {
             Module value = modules.getSelectedValue();
             if (value != null && !myResourceModules.contains(value)) {
               myResourceModules.add(value);
@@ -193,6 +195,12 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
                 .setResizable(true)
                 .setMovable(true)
                 .setRequestFocus(false)
+                .addListener(new JBPopupListener() {
+                  @Override
+                  public void onClosed(@NotNull LightweightWindowEvent event) {
+                    viewComponent.cleanup();
+                  }
+                })
                 .setCancelCallback(() -> {
                   myTree.removeTreeSelectionListener(listener);
                   return true;

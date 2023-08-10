@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
@@ -66,13 +66,16 @@ public final class ChangeUtil {
       child = child.getTreeNext();
     }
 
-    return TreeCopyHandler.EP_NAME.getExtensionList().stream()
-      .map(handler -> handler.decodeInformation(element, state))
-      .filter(Objects::nonNull).findFirst().orElse(element);
+    for (TreeCopyHandler handler : TreeCopyHandler.EP_NAME.getExtensionList()) {
+      TreeElement treeElement = handler.decodeInformation(element, state);
+      if (treeElement != null) {
+        return treeElement;
+      }
+    }
+    return element;
   }
 
-  @NotNull
-  public static LeafElement copyLeafWithText(@NotNull LeafElement original, @NotNull String text) {
+  public static @NotNull LeafElement copyLeafWithText(@NotNull LeafElement original, @NotNull String text) {
     LeafElement element = ASTFactory.leaf(original.getElementType(), text);
     original.copyCopyableDataTo(element);
     encodeInformation(element, original);
@@ -81,16 +84,14 @@ public final class ChangeUtil {
     return element;
   }
 
-  @NotNull
-  public static TreeElement copyElement(@NotNull TreeElement original, CharTable table) {
+  public static @NotNull TreeElement copyElement(@NotNull TreeElement original, CharTable table) {
     CompositeElement treeParent = original.getTreeParent();
     return copyElement(original, treeParent == null ? null : treeParent.getPsi(), table);
   }
 
-  @NotNull
-  public static TreeElement copyElement(@NotNull TreeElement original, final PsiElement context, CharTable table) {
-    final TreeElement element = (TreeElement)original.clone();
-    final PsiManager manager = original.getManager();
+  public static @NotNull TreeElement copyElement(@NotNull TreeElement original, PsiElement context, CharTable table) {
+    TreeElement element = (TreeElement)original.clone();
+    PsiManager manager = original.getManager();
     DummyHolderFactory.createHolder(manager, element, context, table).getTreeElement();
     encodeInformation(element, original);
     TreeUtil.clearCaches(element);
@@ -98,19 +99,18 @@ public final class ChangeUtil {
     return element;
   }
 
-  private static void saveIndentationToCopy(final TreeElement original, final TreeElement element) {
+  private static void saveIndentationToCopy(TreeElement original, TreeElement element) {
     if(original == null || element == null || CodeEditUtil.isNodeGenerated(original)) return;
-    final int indentation = CodeEditUtil.getOldIndentation(original);
+    int indentation = CodeEditUtil.getOldIndentation(original);
     if(indentation < 0) CodeEditUtil.saveWhitespacesInfo(original);
     CodeEditUtil.setOldIndentation(element, CodeEditUtil.getOldIndentation(original));
     if(indentation < 0) CodeEditUtil.setOldIndentation(original, -1);
   }
 
-  @NotNull
-  public static TreeElement copyToElement(@NotNull PsiElement original) {
-    final DummyHolder holder = DummyHolderFactory.createHolder(original.getManager(), null, original.getLanguage());
-    final FileElement holderElement = holder.getTreeElement();
-    final TreeElement treeElement = generateTreeElement(original, holderElement.getCharTable(), original.getManager());
+  public static @NotNull TreeElement copyToElement(@NotNull PsiElement original) {
+    DummyHolder holder = DummyHolderFactory.createHolder(original.getManager(), null, original.getLanguage());
+    FileElement holderElement = holder.getTreeElement();
+    TreeElement treeElement = generateTreeElement(original, holderElement.getCharTable(), original.getManager());
     //  TreeElement treePrev = treeElement.getTreePrev(); // This is hack to support bug used in formater
     LOG.assertTrue(
       treeElement != null,
@@ -123,8 +123,7 @@ public final class ChangeUtil {
     return treeElement;
   }
 
-  @Nullable
-  public static TreeElement generateTreeElement(@Nullable PsiElement original, @NotNull CharTable table, @NotNull final PsiManager manager) {
+  public static @Nullable TreeElement generateTreeElement(@Nullable PsiElement original, @NotNull CharTable table, @NotNull PsiManager manager) {
     if (original == null) return null;
     PsiUtilCore.ensureValid(original);
     if (SourceTreeToPsiMap.hasTreeElement(original)) {
@@ -136,9 +135,9 @@ public final class ChangeUtil {
   }
 
   public static void prepareAndRunChangeAction(@NotNull ChangeAction action, @NotNull TreeElement changedElement){
-    final FileElement changedFile = TreeUtil.getFileElement(changedElement);
-    final PsiManager manager = changedFile.getManager();
-    final PomModel model = PomManager.getModel(manager.getProject());
+    FileElement changedFile = TreeUtil.getFileElement(changedElement);
+    PsiManager manager = changedFile.getManager();
+    PomModel model = PomManager.getModel(manager.getProject());
     model.runTransaction(new PomTransactionBase(changedElement.getPsi()) {
       @Override
       public @NotNull PomModelEvent runInner() {

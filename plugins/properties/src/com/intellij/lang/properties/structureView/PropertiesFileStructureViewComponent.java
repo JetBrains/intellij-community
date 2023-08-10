@@ -16,31 +16,16 @@
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.lang.properties.editor.PropertiesGroupingStructureViewComponent;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
 
 public class PropertiesFileStructureViewComponent extends PropertiesGroupingStructureViewComponent {
-  private final PropertiesFile myPropertiesFile;
 
-  public PropertiesFileStructureViewComponent(Project project, PropertiesFileImpl propertiesFile, FileEditor editor) {
-    super(project, editor, new PropertiesFileStructureViewModel(propertiesFile, EditorUtil.getEditorEx(editor)));
-    myPropertiesFile = propertiesFile;
+  public PropertiesFileStructureViewComponent(Project project, PropertiesFileImpl propertiesFile, FileEditor editor, String separator) {
+    super(project, editor, new PropertiesFileStructureViewModel(propertiesFile, EditorUtil.getEditorEx(editor), separator));
   }
 
-  @Override
-  public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return myPropertiesFile.getVirtualFile();
-    }
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return myPropertiesFile.getContainingFile();
-    }
-    return super.getData(dataId);
-  }
 }
 

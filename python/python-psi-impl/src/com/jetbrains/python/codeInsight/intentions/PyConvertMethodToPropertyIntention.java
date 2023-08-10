@@ -87,8 +87,7 @@ public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
   }
 
   private static boolean prepareForWrite(PsiFile file, List<UsageInfo> usages) {
-    List<PsiElement> toWrite = ContainerUtil.newArrayList(file);
-    toWrite.addAll(ContainerUtil.mapNotNull(usages, UsageInfo::getElement));
+    List<PsiElement> toWrite = ContainerUtil.prepend(ContainerUtil.mapNotNull(usages, UsageInfo::getElement), file);
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(toWrite)) return false;
     return true;
   }

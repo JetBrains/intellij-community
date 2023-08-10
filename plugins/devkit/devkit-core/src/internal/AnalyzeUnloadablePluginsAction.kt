@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.internal
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
@@ -23,11 +24,12 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 
-/**
- * @author yole
- */
-@Suppress("HardCodedStringLiteral")
 class AnalyzeUnloadablePluginsAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
@@ -108,11 +110,21 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       appendLine()
 
       val pluginsWithOptionalDependencies = result.filter { it.getStatus() == UnloadabilityStatus.NON_DYNAMIC_IN_DEPENDENCIES }
-      appendLine("Plugins not unloadable because of optional dependencies (${pluginsWithOptionalDependencies.size}):")
+      appendLine("Plugins not unloadable because of non-dynamic EPs in optional dependencies (${pluginsWithOptionalDependencies.size}):")
       for (status in pluginsWithOptionalDependencies) {
         appendLine(status.pluginId)
         for ((pluginId, eps) in status.nonDynamicEPsInDependencies) {
           appendLine("  ${pluginId} - ${eps.joinToString()}")
+        }
+      }
+      appendLine()
+
+      val pluginsWithDependenciesWithoutSeparateClassloaders = result.filter { it.getStatus() == UnloadabilityStatus.DEPENDENCIES_WITHOUT_SEPARATE_CLASSLOADERS }
+      appendLine("Plugins not unloadable because of optional dependencies without separate classloaders (${pluginsWithDependenciesWithoutSeparateClassloaders.size}):")
+      for (status in pluginsWithDependenciesWithoutSeparateClassloaders) {
+        appendLine(status.pluginId)
+        for (pluginId in status.dependenciesWithoutSeparateClassloaders) {
+          appendLine("  $pluginId")
         }
       }
       appendLine()
@@ -188,6 +200,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     val componentsInOptionalDependencies = mutableListOf<String>()
     val nonDynamicEPsInOptionalDependencies = mutableMapOf<String, MutableSet<String>>()
     val serviceOverridesInDependencies = mutableListOf<String>()
+    val dependenciesWithoutSeparateClassloaders = mutableListOf<String>()
     for (descriptor in allPlugins.mapNotNull { DescriptorUtil.getIdeaPlugin(it) }) {
       for (dependency in descriptor.depends) {
         if (dependency.optional.value == true && dependency.value == ideaPlugin) {
@@ -197,6 +210,11 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
               analysisErrors.add("Failed to resolve dependency descriptor file ${dependency.configFile.stringValue}")
             }
             continue
+          }
+          descriptor.pluginId?.let { pluginId ->
+            if (depIdeaPlugin.`package`.rawText == null) {
+              dependenciesWithoutSeparateClassloaders.add(pluginId)
+            }
           }
           val nonDynamicEPsInDependency = mutableSetOf<String>()
           analyzePluginFile(depIdeaPlugin, analysisErrors, componentsInOptionalDependencies, nonDynamicEPsInDependency, nonDynamicEPsInDependency, serviceOverridesInDependencies, false)
@@ -209,7 +227,8 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
 
     return PluginUnloadabilityStatus(
       ideaPlugin.pluginId ?: "?",
-      unspecifiedDynamicEPs, nonDynamicEPs, nonDynamicEPsInOptionalDependencies, components, serviceOverrides, analysisErrors
+      unspecifiedDynamicEPs, nonDynamicEPs, nonDynamicEPsInOptionalDependencies, dependenciesWithoutSeparateClassloaders,
+      components, serviceOverrides, analysisErrors
     )
   }
 
@@ -240,6 +259,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       if (allowOwnEPs && (ep.module == ideaPlugin.module || ep.module == extension.module)) continue  // a plugin can have extensions for its own non-dynamic EPs
 
       when (ep.dynamic.value) {
+        true -> {}
         false -> nonDynamicEPs.add(ep.effectiveQualifiedName)
         null -> unspecifiedDynamicEPs.add(ep.effectiveQualifiedName)
       }
@@ -258,7 +278,8 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
 }
 
 enum class UnloadabilityStatus {
-  UNLOADABLE, USES_COMPONENTS, USES_SERVICE_OVERRIDES, USES_NON_DYNAMIC_EPS, USES_UNSPECIFIED_DYNAMIC_EPS, NON_DYNAMIC_IN_DEPENDENCIES
+  UNLOADABLE, USES_COMPONENTS, USES_SERVICE_OVERRIDES, USES_NON_DYNAMIC_EPS, USES_UNSPECIFIED_DYNAMIC_EPS, NON_DYNAMIC_IN_DEPENDENCIES,
+  DEPENDENCIES_WITHOUT_SEPARATE_CLASSLOADERS
 }
 
 private data class PluginUnloadabilityStatus(
@@ -266,6 +287,7 @@ private data class PluginUnloadabilityStatus(
   val unspecifiedDynamicEPs: Set<String>,
   val nonDynamicEPs: Set<String>,
   val nonDynamicEPsInDependencies: Map<String, Set<String>>,
+  val dependenciesWithoutSeparateClassloaders: List<String>,
   val components: List<String>,
   val serviceOverrides: List<String>,
   val analysisErrors: List<String>
@@ -276,6 +298,7 @@ private data class PluginUnloadabilityStatus(
       serviceOverrides.isNotEmpty() -> UnloadabilityStatus.USES_SERVICE_OVERRIDES
       nonDynamicEPs.isNotEmpty() -> UnloadabilityStatus.USES_NON_DYNAMIC_EPS
       unspecifiedDynamicEPs.isNotEmpty() -> UnloadabilityStatus.USES_UNSPECIFIED_DYNAMIC_EPS
+      dependenciesWithoutSeparateClassloaders.isNotEmpty() -> UnloadabilityStatus.DEPENDENCIES_WITHOUT_SEPARATE_CLASSLOADERS
       nonDynamicEPsInDependencies.isNotEmpty() -> UnloadabilityStatus.NON_DYNAMIC_IN_DEPENDENCIES
       else -> UnloadabilityStatus.UNLOADABLE
     }

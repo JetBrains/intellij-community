@@ -41,19 +41,13 @@ public abstract class KeymapManager {
   /**
    * @deprecated use {@link KeymapManagerListener#TOPIC} instead
    */
-  @Deprecated
-  public abstract void addKeymapManagerListener(@NotNull KeymapManagerListener listener);
-
-  /**
-   * @deprecated use {@link KeymapManagerListener#TOPIC} instead
-   */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addKeymapManagerListener(@NotNull KeymapManagerListener listener, @NotNull Disposable parentDisposable);
 
   /**
    * @deprecated use {@link KeymapManagerListener#TOPIC} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void removeKeymapManagerListener(@NotNull KeymapManagerListener listener);
 
   /**

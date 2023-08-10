@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 
-/**
- * @author peter
- */
 @SkipSlowTestLocally
 @CompileStatic
 class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {

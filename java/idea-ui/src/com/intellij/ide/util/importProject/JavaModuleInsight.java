@@ -86,7 +86,7 @@ public final class JavaModuleInsight extends ModuleInsight {
         }
       }
 
-      addModules(StreamEx.of(moduleInfos.values()).map(info -> info.descriptor).toList());
+      addModules(ContainerUtil.map(moduleInfos.values(), info -> info.descriptor));
     }
     catch (ProcessCanceledException ignored) { }
     finally {
@@ -147,7 +147,7 @@ public final class JavaModuleInsight extends ModuleInsight {
   }
 
   @Override
-  protected void scanSourceFileForImportedPackages(final CharSequence chars, final Consumer<String> result) {
+  protected void scanSourceFileForImportedPackages(final CharSequence chars, final Consumer<? super String> result) {
     myLexer.start(chars);
 
     JavaSourceRootDetectionUtil.skipWhiteSpaceAndComments(myLexer);
@@ -230,7 +230,7 @@ public final class JavaModuleInsight extends ModuleInsight {
   }
 
   @Override
-  protected void scanLibraryForDeclaredPackages(File file, Consumer<String> result) throws IOException {
+  protected void scanLibraryForDeclaredPackages(File file, Consumer<? super String> result) throws IOException {
     try (ZipFile zip = new ZipFile(file)) {
       final Enumeration<? extends ZipEntry> entries = zip.entries();
       while (entries.hasMoreElements()) {
@@ -277,7 +277,7 @@ public final class JavaModuleInsight extends ModuleInsight {
     }
 
     @Override
-    public void visitRequiresStatement(PsiRequiresStatement statement) {
+    public void visitRequiresStatement(@NotNull PsiRequiresStatement statement) {
       super.visitRequiresStatement(statement);
       String referenceText = statement.getModuleName();
       if (referenceText != null) {
@@ -286,7 +286,7 @@ public final class JavaModuleInsight extends ModuleInsight {
     }
 
     @Override
-    public void visitPackageAccessibilityStatement(PsiPackageAccessibilityStatement statement) {
+    public void visitPackageAccessibilityStatement(@NotNull PsiPackageAccessibilityStatement statement) {
       super.visitPackageAccessibilityStatement(statement);
       if (statement.getRole() == PsiPackageAccessibilityStatement.Role.EXPORTS) {
         PsiJavaCodeReferenceElement reference = statement.getPackageReference();

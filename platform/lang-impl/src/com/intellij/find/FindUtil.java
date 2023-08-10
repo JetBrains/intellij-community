@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -7,9 +6,8 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.FindInProjectUtil;
+import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -41,6 +39,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -87,6 +86,10 @@ public final class FindUtil {
 
   public static void configureFindModel(boolean replace, @Nullable Editor editor, FindModel model, boolean firstSearch) {
     String selectedText = getSelectedText(editor);
+    configureFindModel(replace, model, firstSearch, selectedText);
+  }
+
+  public static void configureFindModel(boolean replace, FindModel model, boolean firstSearch, @Nullable String selectedText) {
     boolean multiline = selectedText != null && selectedText.contains("\n");
     String stringToFind = firstSearch || model.getStringToFind().contains("\n") ? "" : model.getStringToFind();
     boolean isSelectionUsed = false;
@@ -117,7 +120,7 @@ public final class FindUtil {
     model.setRegularExpressions(with.isRegularExpressions());
     model.setSearchContext(with.getSearchContext());
 
-    if (saveFindString && !with.getStringToFind().isEmpty()) {
+    if (saveFindString) {
       model.setStringToFind(with.getStringToFind());
     }
 
@@ -146,7 +149,7 @@ public final class FindUtil {
     if (editor == null) return null;
     String selectedText = editor.getSelectionModel().getSelectedText();
     if (selectedText == null && Registry.is("ide.find.select.word.at.caret")) {
-      selectedText  = getWordAtCaret(editor, true);
+      selectedText = getWordAtCaret(editor, true);
     }
     return selectedText;
   }
@@ -186,7 +189,7 @@ public final class FindUtil {
     return start < end? text.subSequence(start, end).toString() : null;
   }
 
-  public static void findWordAtCaret(Project project, @NotNull Editor editor) {
+  public static void findWordAtCaret(Project project, @NotNull Editor editor, @NotNull SearchResults.Direction direction) {
     String s = getWordAtCaret(editor, false);
     if (s == null) {
       return;
@@ -198,9 +201,10 @@ public final class FindUtil {
     findManager.setFindWasPerformed();
     findManager.clearFindingNextUsageInFile();
     FindModel model = new FindModel();
+    model.setForward(direction == SearchResults.Direction.DOWN);
     model.setStringToFind(s);
     model.setCaseSensitive(true);
-    model.setWholeWordsOnly(!editor.getSelectionModel().hasSelection());
+    model.setWholeWordsOnly(false);
 
     EditorSearchSession searchSession = EditorSearchSession.get(editor);
     if (searchSession != null) {
@@ -213,6 +217,7 @@ public final class FindUtil {
 
   public static void find(@NotNull final Project project, @NotNull final Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    PsiUtilBase.assertEditorAndProjectConsistent(project, editor);
     final FindManager findManager = FindManager.getInstance(project);
     String s = getSelectedText(editor);
 
@@ -940,13 +945,21 @@ public final class FindUtil {
                                           @NotNull @NlsContexts.TabTitle String title,
                                           @NotNull Project project) {
     if (targets.length == 0) return null;
-    PsiElement[] primary = sourceElement == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{sourceElement};
 
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
     SmartPsiElementPointer<?>[] pointers = Stream.of(targets).map(smartPointerManager::createSmartPsiElementPointer).toArray(SmartPsiElementPointer[]::new);
     // usage view will load document/AST so still referencing all these PSI elements might lead to out of memory
     //noinspection UnusedAssignment
     targets = PsiElement.EMPTY_ARRAY;
+    return showInUsageView(sourceElement, title, project, pointers);
+  }
+
+  @Nullable
+  public static UsageView showInUsageView(@Nullable PsiElement sourceElement,
+                                          @NlsContexts.TabTitle @NotNull String title,
+                                          @NotNull Project project,
+                                          SmartPsiElementPointer<?>[] pointers) {
+    PsiElement[] primary = sourceElement == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{sourceElement};
     return showInUsageView(sourceElement, pointers, p -> {
       PsiElement element = p.getElement();
       return element == null ? null : UsageInfoToUsageConverter.convert(primary, new UsageInfo(element));
@@ -1017,23 +1030,5 @@ public final class FindUtil {
   private static int getCaretPosition(FindResult findResult, int caretShiftFromSelectionStart) {
     return caretShiftFromSelectionStart < 0
            ? findResult.getEndOffset() : Math.min(findResult.getStartOffset() + caretShiftFromSelectionStart, findResult.getEndOffset());
-  }
-
-  public static void triggerUsedOptionsStats(@Nullable Project project,
-                                             @NotNull String type,
-                                             @NotNull FindModel model) {
-    FeatureUsageData data = new FeatureUsageData().
-      addData("type", type).
-      addData("case_sensitive", model.isCaseSensitive()).
-      addData("whole_words_only", model.isWholeWordsOnly()).
-      addData("regular_expressions", model.isRegularExpressions()).
-      addData("with_file_filter", model.getFileFilter() != null).
-      addData("context", model.getSearchContext().name());
-    FUCounterUsageLogger.getInstance().logEvent(project, "find", "search.session.started", data);
-  }
-
-  public static void triggerRegexHelpClicked(@Nullable String type) {
-    FeatureUsageData data = new FeatureUsageData().addData("type", StringUtil.notNullize(type, "Unknown"));
-    FUCounterUsageLogger.getInstance().logEvent("find", "regexp.help.clicked", data);
   }
 }

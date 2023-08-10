@@ -61,8 +61,7 @@ public class PyImportCollector {
   private PsiFile addCandidatesFromExistingImports() {
     PsiFile existingImportFile = null; // if there's a matching existing import, this is the file it imports
     PsiFile file = myNode.getContainingFile();
-    if (file instanceof PyFile) {
-      PyFile pyFile = (PyFile)file;
+    if (file instanceof PyFile pyFile) {
       for (PyImportElement importElement : pyFile.getImportTargets()) {
         existingImportFile = addImportViaElement(existingImportFile, importElement, importElement.resolve());
       }
@@ -177,10 +176,8 @@ public class PyImportCollector {
       // getArgumentList() still returns empty (but not null) element in this case
       return decorator != null && !decorator.hasArgumentList();
     }
-    if (myNode.getParent() instanceof PyArgumentList) {
-      final PyArgumentList argumentList = (PyArgumentList)myNode.getParent();
-      if (argumentList.getParent() instanceof PyClass) {
-        final PyClass pyClass = (PyClass)argumentList.getParent();
+    if (myNode.getParent() instanceof PyArgumentList argumentList) {
+      if (argumentList.getParent() instanceof PyClass pyClass) {
         if (pyClass.getSuperClassExpressionList() == argumentList) {
           return false;
         }

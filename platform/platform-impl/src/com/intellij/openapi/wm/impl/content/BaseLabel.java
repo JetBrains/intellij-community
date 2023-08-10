@@ -1,12 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.ui.DirtyUI;
-import com.intellij.ui.EngravedTextGraphics;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.OffsetIcon;
+import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -45,6 +42,10 @@ public class BaseLabel extends JLabel {
       }
     });
     GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
+
+    if (ExperimentalUI.isNewUI()) {
+      setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets()));
+    }
   }
 
   @Override
@@ -110,7 +111,7 @@ public class BaseLabel extends JLabel {
     return myPassiveFg;
   }
 
-  protected void updateTextAndIcon(Content content, boolean isSelected) {
+  protected void updateTextAndIcon(Content content, boolean isSelected, boolean isBold) {
     if (content == null) {
       setText(null);
       setIcon(null);
@@ -135,14 +136,18 @@ public class BaseLabel extends JLabel {
           setIcon(icon);
         }
         else {
-          setIcon(icon != null ? new WatermarkIcon(icon, .5f) : null);
+          var userValueIsTransparent = content.getUserData(ToolWindowContentUi.NOT_SELECTED_TAB_ICON_TRANSPARENT);
+          var isTransparent = userValueIsTransparent != null ? userValueIsTransparent : true;
+
+          var labelIcon = icon != null ? (isTransparent ? new WatermarkIcon(icon, .5f) : icon) : null;
+          setIcon(labelIcon);
         }
       }
       else {
         setIcon(null);
       }
 
-      myBold = false; //isSelected;
+      myBold = isBold;
     }
   }
 

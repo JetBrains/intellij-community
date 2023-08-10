@@ -1,19 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.net.URI;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 @SuppressWarnings("SynchronizeOnThis")
 public class JrtHandler extends ArchiveHandler {
@@ -26,19 +28,14 @@ public class JrtHandler extends ArchiveHandler {
   }
 
   @Override
-  public void dispose() {
-    super.dispose();
-
+  public void clearCaches() {
+    super.clearCaches();
     synchronized (this) {
-      FileSystem fs = SoftReference.dereference(myFileSystem);
+      FileSystem fs = dereference(myFileSystem);
       if (fs != null) {
         myFileSystem = null;
         try {
           fs.close();
-          ClassLoader loader = fs.getClass().getClassLoader();
-          if (loader instanceof AutoCloseable) {
-            ((AutoCloseable)loader).close();
-          }
         }
         catch (Exception e) {
           Logger.getInstance(JrtHandler.class).info(e);
@@ -47,8 +44,8 @@ public class JrtHandler extends ArchiveHandler {
     }
   }
 
-  private synchronized FileSystem getFileSystem() throws IOException {
-    FileSystem fs = SoftReference.dereference(myFileSystem);
+  protected synchronized FileSystem getFileSystem() throws IOException {
+    FileSystem fs = dereference(myFileSystem);
     if (fs == null) {
       String path = getFile().getPath();
       try {
@@ -62,9 +59,8 @@ public class JrtHandler extends ArchiveHandler {
     return fs;
   }
 
-  @NotNull
   @Override
-  protected Map<String, EntryInfo> createEntriesMap() throws IOException {
+  protected @NotNull Map<String, EntryInfo> createEntriesMap() throws IOException {
     Map<String, EntryInfo> map = new HashMap<>();
     map.put("", createRootEntry());
 
@@ -109,6 +105,13 @@ public class JrtHandler extends ArchiveHandler {
     EntryInfo entry = getEntryInfo(relativePath);
     if (entry == null) throw new FileNotFoundException(getFile() + " : " + relativePath);
     Path path = getFileSystem().getPath("/modules/" + relativePath);
-    return Files.readAllBytes(path);
+    try {
+      return Files.readAllBytes(path);
+    }
+    catch (RuntimeException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof IOException) throw (IOException)cause;
+      throw e;
+    }
   }
 }

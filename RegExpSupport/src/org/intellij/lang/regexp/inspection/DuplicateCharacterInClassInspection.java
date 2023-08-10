@@ -7,6 +7,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +36,8 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
 
     @Override
     public void visitRegExpClass(RegExpClass regExpClass) {
+      PsiFile file = regExpClass.getContainingFile();
+      if (file == null || Boolean.TRUE.equals(file.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION))) return;
       final HashSet<Object> seen = new HashSet<>();
       for (RegExpClassElement element : regExpClass.getElements()) {
         checkForDuplicates(element, seen);
@@ -41,8 +45,7 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
     }
 
     private void checkForDuplicates(RegExpClassElement element, Set<Object> seen) {
-      if (element instanceof RegExpChar) {
-        final RegExpChar regExpChar = (RegExpChar)element;
+      if (element instanceof RegExpChar regExpChar) {
         final int value = regExpChar.getValue();
         if (value != -1 && !seen.add(value)) {
           myHolder.registerProblem(regExpChar,
@@ -50,8 +53,7 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
                                    new DuplicateCharacterInClassFix(regExpChar));
         }
       }
-      else if (element instanceof RegExpSimpleClass) {
-        final RegExpSimpleClass regExpSimpleClass = (RegExpSimpleClass)element;
+      else if (element instanceof RegExpSimpleClass regExpSimpleClass) {
         final RegExpSimpleClass.Kind kind = regExpSimpleClass.getKind();
         if (!seen.add(kind)) {
           final String text = regExpSimpleClass.getText();

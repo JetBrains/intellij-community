@@ -2,8 +2,10 @@ package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +48,12 @@ public class YAMLScalarElementManipulator extends AbstractElementManipulator<YAM
       if (!(result instanceof YAMLScalarImpl)) {
         throw new AssertionError("Inserted YAML scalar, but it isn't a scalar after insertion :(");
       }
-
+      
+      // it is a hack to preserve the `QUICK_EDIT_HANDLERS` key, 
+      // actually `element.replace` should have done it, but for some reason didn't
+      ((UserDataHolderBase)element.getNode()).copyCopyableDataTo((UserDataHolderBase)result.getNode());
+      CodeEditUtil.setNodeGenerated(result.getNode(), true);
+      
       return ((YAMLScalarImpl)result);
     }
     catch (IllegalArgumentException e) {

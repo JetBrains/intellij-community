@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.CommandLineUtil;
@@ -37,8 +37,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
     myWaitFor = new ProcessWaitFor(process, this, myPresentableName);
   }
 
-  @NotNull
-  public final T getProcess() {
+  public final @NotNull T getProcess() {
     return myProcess;
   }
 
@@ -47,8 +46,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
     return myCommandLine;
   }
 
-  @Nullable
-  public Charset getCharset() {
+  public @Nullable Charset getCharset() {
     return myCharset;
   }
 
@@ -59,6 +57,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
 
   protected void onOSProcessTerminated(final int exitCode) {
     notifyProcessTerminated(exitCode);
+    closeStreams();
   }
 
   protected void doDestroyProcess() {
@@ -67,12 +66,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
 
   @Override
   protected void destroyProcessImpl() {
-    try {
-      closeStreams();
-    }
-    finally {
-      doDestroyProcess();
-    }
+    doDestroyProcess();
   }
 
   @Override
@@ -92,12 +86,36 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
     return false;
   }
 
-  protected void closeStreams() {
+  private void closeStreams() {
     try {
       myProcess.getOutputStream().close();
     }
     catch (IOException e) {
-      LOG.warn(e);
+      // The process may have already terminated, but some data has not yet been written to its standard input.
+      // For example, `com.intellij.execution.process.ProcessServiceImpl.sendWinProcessCtrlC(int, OutputStream)`
+      // tries to terminate a process with `GenerateConsoleCtrlEvent(CTRL_C_EVENT)` and then writes `-1` to process's input to
+      // unblock ReadConsoleW/ReadFile.
+      // In this case, `close` will fail, because of close -> flush -> write, and 'write' cannot be performed
+      // on a stream of the terminated process.
+      if (myProcess.isAlive()) {
+        LOG.warn("Cannot close stdin of '" + getCommandLine() + "'", e);
+      }
+    }
+    try {
+      myProcess.getInputStream().close();
+    }
+    catch (IOException e) {
+      if (myProcess.isAlive()) {
+        LOG.warn("Cannot close stdout of '" + getCommandLine() + "'", e);
+      }
+    }
+    try {
+      myProcess.getErrorStream().close();
+    }
+    catch (IOException e) {
+      if (myProcess.isAlive()) {
+        LOG.warn("Cannot close stderr of '" + getCommandLine() + "'", e);
+      }
     }
   }
 }

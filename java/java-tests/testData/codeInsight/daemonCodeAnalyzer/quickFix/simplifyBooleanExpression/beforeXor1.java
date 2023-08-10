@@ -1,4 +1,4 @@
-// "Simplify boolean expression" "true"
+// "Simplify boolean expression" "true-preview"
 class A {
     boolean a = true;
     boolean b = true;

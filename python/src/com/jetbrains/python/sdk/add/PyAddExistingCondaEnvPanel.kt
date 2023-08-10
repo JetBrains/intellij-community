@@ -30,25 +30,21 @@ import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.associateWithModule
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.detectCondaEnvs
-import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.setupAssociated
 import icons.PythonIcons
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import javax.swing.Icon
 
-/**
- * @author vlan
- */
-class PyAddExistingCondaEnvPanel(private val project: Project?,
-                                 private val module: Module?,
-                                 private val existingSdks: List<Sdk>,
-                                 override var newProjectPath: String?,
-                                 context: UserDataHolder) : PyAddSdkPanel() {
+open class PyAddExistingCondaEnvPanel(private val project: Project?,
+                                      private val module: Module?,
+                                      private val existingSdks: List<Sdk>,
+                                      override var newProjectPath: String?,
+                                      context: UserDataHolder) : PyAddSdkPanel() {
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.existing.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda
-  private val sdkComboBox = PySdkPathChoosingComboBox()
+  protected val sdkComboBox = PySdkPathChoosingComboBox()
   private val condaPathField = TextFieldWithBrowseButton().apply {
     val path = PyCondaPackageService.getCondaExecutable(null)
     if (path != null) {
@@ -72,6 +68,13 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
       makeSharedField.isSelected = true
     }
 
+    @Suppress("LeakingThis")
+    layoutComponents()
+
+
+  }
+
+  protected open fun layoutComponents() {
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent(PySdkBundle.message("python.interpreter.label"), sdkComboBox)
@@ -79,13 +82,10 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)
-    addInterpretersAsync(sdkComboBox) {
-      detectCondaEnvs(module, existingSdks, context)
-    }
   }
 
   override fun validateAll(): List<ValidationInfo> {
-    return listOfNotNull(validateSdkComboBox(sdkComboBox, this), CondaEnvSdkFlavor.validateCondaPath(condaPathField.text))
+    return listOfNotNull(validateSdkComboBox(sdkComboBox, this))
   }
 
   override fun getOrCreateSdk(): Sdk? {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible
 
 import com.intellij.mock.MockVirtualFile
@@ -20,7 +20,6 @@ import com.intellij.vcs.log.util.VcsLogUtil.FULL_HASH_LENGTH
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import org.junit.Rule
 import org.junit.Test
-import java.util.*
 import java.util.function.Predicate
 import kotlin.random.nextInt
 import kotlin.test.assertEquals
@@ -151,7 +150,7 @@ class VisiblePackBuilderTest {
     }
 
     val filePath = object : LocalFilePath(tempDir.createDir(), true) {
-      override fun getVirtualFile(): VirtualFile? {
+      override fun getVirtualFile(): VirtualFile {
         return graph.providers.keys.first()
       }
     }
@@ -298,7 +297,7 @@ class VisiblePackBuilderTest {
 
     private fun newTrivialDataGetter(): DataGetter<VcsFullCommitDetails> {
       return object : DataGetter<VcsFullCommitDetails> {
-        override fun getCommitData(row: Int, neighbourHashes: MutableIterable<Int>): VcsFullCommitDetails {
+        override fun getCommitData(row: Int): VcsFullCommitDetails {
           throw UnsupportedOperationException()
         }
 

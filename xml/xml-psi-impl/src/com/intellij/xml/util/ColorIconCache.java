@@ -15,7 +15,7 @@ public final class ColorIconCache {
   private static final ColorIconCache INSTANCE = new ColorIconCache();
   private static final SoftFactoryMap<Color, ConcurrentMap<Integer, Icon>> cache = new SoftFactoryMap<>() {
     @Override
-    protected ConcurrentMap<Integer, Icon> create(Color key) {
+    protected ConcurrentMap<Integer, Icon> create(@NotNull Color key) {
       return new ConcurrentHashMap<>();
     }
   };

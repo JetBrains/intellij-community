@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -57,7 +56,7 @@ public final class InjectionCache {
     GlobalSearchScope usageScope = GlobalSearchScope.getScopeRestrictedByFileTypes(allScope, JavaFileType.INSTANCE);
 
     Set<String> result = new HashSet<>();
-    ArrayList<PsiClass> annoClasses = ContainerUtil.newArrayList(JavaPsiFacade.getInstance(myProject).findClasses(annotationClassName, allScope));
+    List<PsiClass> annoClasses = new ArrayList<>(List.of(JavaPsiFacade.getInstance(myProject).findClasses(annotationClassName, allScope)));
     for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
       Parameters parameters = new Parameters(annoClasses.get(cursor), usageScope, true, PsiClass.class, PsiParameter.class, PsiMethod.class);
       AnnotatedElementsSearch.searchElements(parameters).forEach(element -> {
@@ -80,7 +79,7 @@ public final class InjectionCache {
   }
 
   public static InjectionCache getInstance(Project project) {
-    return ServiceManager.getService(project, InjectionCache.class);
+    return project.getService(InjectionCache.class);
   }
 
   public Set<String> getAnnoIndex() {

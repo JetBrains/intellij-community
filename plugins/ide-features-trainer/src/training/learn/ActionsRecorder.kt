@@ -1,12 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn
 
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandEvent
@@ -15,31 +12,39 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.FileOpenedSyncListener
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import training.check.Check
-import training.commands.kotlin.TaskContext
+import com.intellij.util.ui.FocusUtil
+import com.intellij.util.ui.TimerUtil
+import training.dsl.TaskContext
+import training.dsl.impl.LessonExecutor
 import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
+import training.statistic.LessonStartingWay
+import training.statistic.StatisticBase
 import training.ui.LearningUiManager
 import training.util.DataLoader
-import java.awt.KeyboardFocusManager
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
 import java.util.concurrent.CompletableFuture
+import javax.swing.Timer
 
 private val LOG = logger<ActionsRecorder>()
 
-class ActionsRecorder(private val project: Project,
-                      private val document: Document?,
-                      parentDisposable: Disposable) : Disposable {
+internal class ActionsRecorder(private val project: Project,
+                               private val document: Document?,
+                               private val lessonExecutor: LessonExecutor) : Disposable {
 
   private val documentListeners: MutableList<DocumentListener> = mutableListOf()
+
   // TODO: do we really need a lot of listeners?
   private val actionListeners: MutableList<AnActionListener> = mutableListOf()
   private val eventDispatchers: MutableList<IdeEventQueue.EventDispatcher> = mutableListOf()
@@ -47,7 +52,7 @@ class ActionsRecorder(private val project: Project,
   var disposed = false
     private set
 
-  private val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
+  private var timer: Timer? = null
 
   /** Currently registered command listener */
   private var commandListener: CommandListener? = null
@@ -57,21 +62,20 @@ class ActionsRecorder(private val project: Project,
 
   private var checkCallback: (() -> Unit)? = null
 
-  private var focusChangeListener: PropertyChangeListener? = null
-
   init {
-    Disposer.register(parentDisposable, this)
+    Disposer.register(lessonExecutor, this)
 
-    // We could not unregister a listener (it will be done in dispose)
+    val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
+    // We could not unregister a listener (it will be done in dispose).
     // So the simple solution is to use a proxy
 
     busConnection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
-      override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
-        actionListeners.forEach { it.beforeActionPerformed(action, dataContext, event) }
+      override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
+        actionListeners.forEach { it.beforeActionPerformed(action, event) }
       }
 
-      override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
-        actionListeners.forEach { it.afterActionPerformed(action, dataContext, event) }
+      override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
+        actionListeners.forEach { it.afterActionPerformed(action, event, result) }
       }
 
       override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
@@ -79,7 +83,7 @@ class ActionsRecorder(private val project: Project,
       }
     })
 
-    // This listener allows to track a lot of IDE state changes
+    // This listener allows tracking a lot of IDE state changes
     busConnection.subscribe(CommandListener.TOPIC, object : CommandListener {
       override fun commandStarted(event: CommandEvent) {
         commandListener?.commandStarted(event)
@@ -105,6 +109,12 @@ class ActionsRecorder(private val project: Project,
         commandListener?.undoTransparentActionFinished()
       }
     })
+    busConnection.subscribe(FileOpenedSyncListener.TOPIC, object : FileOpenedSyncListener {
+      override fun fileOpenedSync(source: FileEditorManager, file: VirtualFile, editorsWithProviders: List<FileEditorWithProvider>) {
+        @Suppress("DEPRECATION")
+        editorListener?.fileOpenedSync(source, file, editorsWithProviders)
+      }
+    })
     busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
         editorListener?.fileClosed(source, file)
@@ -112,12 +122,6 @@ class ActionsRecorder(private val project: Project,
 
       override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
         editorListener?.fileOpened(source, file)
-      }
-
-      override fun fileOpenedSync(source: FileEditorManager,
-                                  file: VirtualFile,
-                                  editors: Pair<Array<FileEditor>, Array<FileEditorProvider>>) {
-        editorListener?.fileOpenedSync(source, file, editors)
       }
 
       override fun selectionChanged(event: FileEditorManagerEvent) {
@@ -129,13 +133,12 @@ class ActionsRecorder(private val project: Project,
   override fun dispose() {
     removeListeners()
     disposed = true
-    Disposer.dispose(this)
   }
 
   fun futureActionOnStart(actionId: String, check: () -> Boolean): CompletableFuture<Boolean> {
-    val future: CompletableFuture<Boolean> = CompletableFuture()
+    val future = CompletableFuture<Boolean>()
     val actionListener = object : AnActionListener {
-      override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+      override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
         checkAndCancelForException(future) { getActionId(action) == actionId && check() }
       }
     }
@@ -143,13 +146,13 @@ class ActionsRecorder(private val project: Project,
     return future
   }
 
-  fun futureActionAndCheckAround(actionId: String, check: Check): CompletableFuture<Boolean> {
+  fun futureActionAndCheckAround(actionId: String, before: () -> Unit, check: () -> Boolean): CompletableFuture<Boolean> {
     val future: CompletableFuture<Boolean> = CompletableFuture()
     val actionListener = object : AnActionListener {
-      override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+      override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
         val caughtActionId: String? = ActionManager.getInstance().getId(action)
         if (actionId == caughtActionId) {
-          check.before()
+          before()
         }
         else if (caughtActionId != null) {
           // remove additional state listener to check caret positions and so on
@@ -157,7 +160,7 @@ class ActionsRecorder(private val project: Project,
         }
       }
 
-      override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+      override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
         if (actionId == ActionManager.getInstance().getId(action)) {
           val complete = checkComplete()
           if (!complete) {
@@ -168,7 +171,7 @@ class ActionsRecorder(private val project: Project,
 
       override fun beforeEditorTyping(c: Char, dataContext: DataContext) {}
 
-      private fun checkComplete(): Boolean = checkAndCancelForException(future) { check.check() }
+      private fun checkComplete(): Boolean = checkAndCancelForException(future, check)
     }
     actionListeners.add(actionListener)
     return future
@@ -204,6 +207,20 @@ class ActionsRecorder(private val project: Project,
     return future
   }
 
+  fun timerCheck(delayMillis: Int = 200, checkFunction: () -> Boolean): CompletableFuture<Boolean> {
+    val future: CompletableFuture<Boolean> = CompletableFuture()
+    val t = timer ?: TimerUtil.createNamedTimer("State Timer Check", delayMillis).also {
+      timer = it
+      it.start()
+    }
+    t.addActionListener {
+      if (checkFunction()) {
+        future.complete(true)
+      }
+    }
+    return future
+  }
+
   fun futureCheck(checkFunction: () -> Boolean): CompletableFuture<Boolean> {
     val future: CompletableFuture<Boolean> = CompletableFuture()
 
@@ -214,15 +231,12 @@ class ActionsRecorder(private val project: Project,
     document?.addDocumentListener(createDocumentListener { check() })
     addSimpleCommandListener(check)
     actionListeners.add(object : AnActionListener {
-      override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+      override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
         check()
       }
     })
 
-    PropertyChangeListener { check() }.let {
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusOwner", it)
-      focusChangeListener = it
-    }
+    FocusUtil.addFocusOwnerListener(this, PropertyChangeListener { check() })
 
     return future
   }
@@ -257,7 +271,7 @@ class ActionsRecorder(private val project: Project,
 
       override fun documentChanged(event: DocumentEvent) {
         if (document != null && PsiDocumentManager.getInstance(project).isUncommited(document)) {
-          ApplicationManager.getApplication().invokeLater {
+          lessonExecutor.taskInvokeLater {
             if (!disposed && !project.isDisposed) {
               PsiDocumentManager.getInstance(project).commitAndRunReadAction { onDocumentChange() }
             }
@@ -271,7 +285,7 @@ class ActionsRecorder(private val project: Project,
 
   private fun registerActionListener(processAction: (actionId: String, project: Project) -> Unit): AnActionListener {
     val actionListener = object : AnActionListener {
-      override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+      override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
         processAction(getActionId(action), project)
       }
     }
@@ -288,7 +302,8 @@ class ActionsRecorder(private val project: Project,
     eventDispatchers.clear()
     commandListener = null
     editorListener = null
-    focusChangeListener?.let { KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener("focusOwner", it) }
+    timer?.stop()
+    timer = null
   }
 
   private fun getActionId(action: AnAction): String {
@@ -312,9 +327,12 @@ class ActionsRecorder(private val project: Project,
       val lesson = LessonManager.instance.currentLesson
       if (activeToolWindow != null && lesson != null) {
         val notification = TaskContext.RestoreNotification(LearnBundle.message("learn.restore.notification.editor.closed")) {
-          CourseManager.instance.openLesson(activeToolWindow.project, lesson)
+          CourseManager.instance.openLesson(activeToolWindow.project, lesson, LessonStartingWay.RESTORE_LINK)
         }
         LessonManager.instance.setRestoreNotification(notification)
+      }
+      if (!StatisticBase.isLearnProjectCloseLogged) {
+        StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.CLOSE_FILE)
       }
       LessonManager.instance.stopLesson()
     }

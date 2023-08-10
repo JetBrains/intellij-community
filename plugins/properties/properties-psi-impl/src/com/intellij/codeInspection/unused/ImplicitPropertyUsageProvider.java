@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated Use {@link com.intellij.lang.properties.codeInspection.unused.ImplicitPropertyUsageProvider}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class ImplicitPropertyUsageProvider implements com.intellij.lang.properties.codeInspection.unused.ImplicitPropertyUsageProvider {
   @Override
   public abstract boolean isUsed(@NotNull Property property);

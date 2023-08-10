@@ -1,6 +1,11 @@
 <html>
 <body>
-This inspection detects passing Application or Project as a parent disposable in plugin code. Such usage will lead to plugins not being
-unloaded correctly. Please see <a href="https://plugins.jetbrains.com/docs/intellij/disposers.html?from=IncorrectParentDisposable#choosing-a-disposable-parent">Choosing a Disposable Parent</a> in SDK Docs.
+Reports using <code>Application</code> or <code>Project</code> as a parent <code>Disposable</code> in plugin code.
+<p>
+  Such usages will lead to plugins not being unloaded correctly.
+  Please see <a
+  href="https://plugins.jetbrains.com/docs/intellij/disposers.html?from=IncorrectParentDisposable#choosing-a-disposable-parent">Choosing a
+  Disposable Parent</a> in SDK Docs.
+</p>
 </body>
 </html>

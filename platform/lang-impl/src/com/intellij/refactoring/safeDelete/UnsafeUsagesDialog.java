@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -57,7 +58,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
     JPanel panel = new JPanel(new BorderLayout());
     myMessagePane = new JEditorPane(UIUtil.HTML_MIME, "");
     myMessagePane.setEditable(false);
-    myMessagePane.setEditorKit(UIUtil.getHTMLEditorKit());
+    myMessagePane.setEditorKit(HTMLEditorKitBuilder.simple());
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myMessagePane);
     scrollPane.setPreferredSize(JBUI.size(500, 400));
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);

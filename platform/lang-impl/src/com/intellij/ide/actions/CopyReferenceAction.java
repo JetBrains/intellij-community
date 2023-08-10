@@ -4,22 +4,20 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,14 +48,24 @@ public class CopyReferenceAction extends DumbAwareAction {
 
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    if (editor != null && FileDocumentManager.getInstance().getFile(editor.getDocument()) != null) {
-      enabled = true;
+    boolean fileWithDocument = editor != null && FileDocumentManager.getInstance().getFile(editor.getDocument()) != null;
+    boolean calcQualifiedName = ActionPlaces.COPY_REFERENCE_POPUP.equals(e.getPlace());
+    try {
+      List<PsiElement> elements = !fileWithDocument || calcQualifiedName ? getPsiElements(dataContext, editor) : null;
+      if (fileWithDocument) {
+        enabled = true;
+      }
+      else {
+        enabled = !elements.isEmpty();
+        plural = elements.size() > 1;
+        paths = ContainerUtil.and(elements, el -> el instanceof PsiFileSystemItem && getQualifiedNameFromProviders(el) == null);
+      }
+      if (calcQualifiedName) {
+        e.getPresentation().putClientProperty(CopyPathProvider.QUALIFIED_NAME, getQualifiedName(editor, elements));
+      }
     }
-    else {
-      List<PsiElement> elements = getPsiElements(dataContext, editor);
-      enabled = !elements.isEmpty();
-      plural = elements.size() > 1;
-      paths = elements.stream().allMatch(el -> el instanceof PsiFileSystemItem && getQualifiedNameFromProviders(el) == null);
+    catch (IndexNotReadyException ex) {
+      enabled = false;
     }
 
     e.getPresentation().setEnabled(enabled);
@@ -74,6 +82,11 @@ public class CopyReferenceAction extends DumbAwareAction {
     if (paths) {
       e.getPresentation().setEnabledAndVisible(false);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @NotNull
@@ -106,7 +119,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     highlight(editor, project, elements);
   }
 
-  protected String getQualifiedName(Editor editor, List<? extends PsiElement> elements) {
+  protected @NlsSafe String getQualifiedName(Editor editor, List<? extends PsiElement> elements) {
     return CopyReferenceUtil.doCopy(elements, editor);
   }
 
@@ -114,7 +127,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     return doCopy(Collections.singletonList(element), project);
   }
 
-  private static boolean doCopy(List<? extends PsiElement> elements, @Nullable final Project project) {
+  private static boolean doCopy(List<? extends PsiElement> elements, @Nullable Project project) {
     String toCopy = CopyReferenceUtil.doCopy(elements, null);
     CopyPasteManager.getInstance().setContents(new CopyReferenceFQNTransferable(toCopy));
     setStatusBarText(project, IdeBundle.message("message.reference.to.fqn.has.been.copied", toCopy));
@@ -122,19 +135,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     return true;
   }
 
-  @Nullable
-  public static String elementToFqn(@Nullable final PsiElement element) {
-    return CopyReferenceUtil.elementToFqn(element, null);
-  }
-
-  public interface VirtualFileQualifiedNameProvider {
-    ExtensionPointName<VirtualFileQualifiedNameProvider> EP_NAME =
-      ExtensionPointName.create("com.intellij.virtualFileQualifiedNameProvider");
-
-    /**
-     * @return {@code virtualFile} fqn (relative path for example) or null if not handled by this provider
-     */
-    @Nullable
-    String getQualifiedName(@NotNull Project project, @NotNull VirtualFile virtualFile);
+  public static @Nullable String elementToFqn(final @Nullable PsiElement element) {
+    return FqnUtil.elementToFqn(element, null);
   }
 }

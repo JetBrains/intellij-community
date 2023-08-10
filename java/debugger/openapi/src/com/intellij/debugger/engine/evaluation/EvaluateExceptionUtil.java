@@ -1,13 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jdi.*;
 
-/**
- * @author lex
- */
 public final class EvaluateExceptionUtil {
   public static final EvaluateException INCONSISTEND_DEBUG_INFO = createEvaluateException(
     JavaDebuggerBundle.message("evaluation.error.inconsistent.debug.info"));
@@ -55,33 +52,32 @@ public final class EvaluateExceptionUtil {
   }
 
   private static String reason(Throwable th) {
-    if(th instanceof InvalidTypeException) {
+    if (th instanceof InvalidTypeException) {
       final String originalReason = th.getMessage();
       return JavaDebuggerBundle.message("evaluation.error.type.mismatch") + (originalReason != null ? " " + originalReason : "");
     }
-    else if(th instanceof AbsentInformationException) {
+    else if (th instanceof AbsentInformationException) {
       return JavaDebuggerBundle.message("evaluation.error.debug.info.unavailable");
     }
-    else if(th instanceof ClassNotLoadedException) {
+    else if (th instanceof ClassNotLoadedException) {
       return JavaDebuggerBundle.message("evaluation.error.class.not.loaded", ((ClassNotLoadedException)th).className());
     }
-    else if(th instanceof ClassNotPreparedException) {
+    else if (th instanceof ClassNotPreparedException) {
       return th.getMessage();
     }
-    else if(th instanceof IncompatibleThreadStateException) {
+    else if (th instanceof IncompatibleThreadStateException) {
       return JavaDebuggerBundle.message("evaluation.error.thread.not.at.breakpoint");
     }
-    else if(th instanceof InconsistentDebugInfoException) {
+    else if (th instanceof InconsistentDebugInfoException) {
       return JavaDebuggerBundle.message("evaluation.error.inconsistent.debug.info");
     }
-    else if(th instanceof ObjectCollectedException) {
+    else if (th instanceof ObjectCollectedException) {
       return JavaDebuggerBundle.message("evaluation.error.object.collected");
     }
-    else if(th instanceof InvocationException){
-      InvocationException invocationException = (InvocationException) th;
+    else if (th instanceof InvocationException invocationException) {
       return JavaDebuggerBundle.message("evaluation.error.method.exception", invocationException.exception().referenceType().name());
     }
-    else if(th instanceof EvaluateException) {
+    else if (th instanceof EvaluateException) {
       return th.getMessage();
     }
     else {

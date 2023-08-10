@@ -1,0 +1,10 @@
+mutation($noteableId: NoteableID!, $body: String!, $position: DiffPositionInput!) {
+  createDiffNote(input: {noteableId: $noteableId, position: $position ,body: $body}){
+    note {
+      discussion {
+        ...discussion
+      }
+    }
+    errors
+  }
+}

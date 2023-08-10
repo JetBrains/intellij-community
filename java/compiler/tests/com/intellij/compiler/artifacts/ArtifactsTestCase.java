@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.artifacts.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.*;
@@ -175,6 +176,11 @@ public abstract class ArtifactsTestCase extends JavaProjectTestCase {
     @Override
     public ArtifactEditorSettings getDefaultSettings() {
       return new ArtifactEditorSettings();
+    }
+
+    @Override
+    public @NotNull ProjectStructureConfigurable getProjectStructureConfigurable() {
+      return ProjectStructureConfigurable.getInstance(myProject);
     }
 
     @Override

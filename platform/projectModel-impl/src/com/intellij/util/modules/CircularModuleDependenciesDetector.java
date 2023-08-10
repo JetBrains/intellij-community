@@ -72,9 +72,9 @@ public final class CircularModuleDependenciesDetector {
       Collection<Chunk<ModifiableRootModel>> nodesAfter = buildChunks(models);
       for (Chunk<ModifiableRootModel> chunk : nodesAfter) {
         if (chunk.containsNode(toDependOnModel) && chunk.containsNode(currentModel)) {
-          List<ModifiableRootModel> nodes = ContainerUtil.collect(chunk.getNodes().iterator());
+          List<ModifiableRootModel> nodes = ContainerUtil.sorted(ContainerUtil.collect(chunk.getNodes().iterator()),
           // graph algorithms collections are inherently unstable, so sort to return always the same modules to avoid blinking tests
-          nodes.sort(Comparator.comparing(m -> m.getModule().getName()));
+          Comparator.comparing(m -> m.getModule().getName()));
           return Couple.of(nodes.get(0).getModule(), nodes.get(1).getModule());
         }
       }

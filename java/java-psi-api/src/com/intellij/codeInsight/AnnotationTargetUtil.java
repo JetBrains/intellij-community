@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,20 +8,18 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class AnnotationTargetUtil {
   private static final Logger LOG = Logger.getInstance(AnnotationTargetUtil.class);
 
-  public static final Set<TargetType> DEFAULT_TARGETS = ContainerUtil.immutableSet(
+  public static final Set<TargetType> DEFAULT_TARGETS = Collections.unmodifiableSet(EnumSet.of(
     TargetType.PACKAGE, TargetType.TYPE, TargetType.ANNOTATION_TYPE, TargetType.FIELD, TargetType.METHOD, TargetType.CONSTRUCTOR,
-    TargetType.PARAMETER, TargetType.LOCAL_VARIABLE);
+    TargetType.PARAMETER, TargetType.LOCAL_VARIABLE, TargetType.MODULE, TargetType.RECORD_COMPONENT));
 
   private static final TargetType[] PACKAGE_TARGETS = {TargetType.PACKAGE};
   private static final TargetType[] TYPE_USE_TARGETS = {TargetType.TYPE_USE};
@@ -225,15 +223,31 @@ public final class AnnotationTargetUtil {
    * @param annotation the qualified name of the annotation to add
    * @return a target annotation owner to add the annotation (either modifier list or type element depending on the annotation target)
    * Returns null if {@code modifierListOwner.getModifierList()} is null.
+   * <p>The method should be called under read action
+   * and the caller should be prepared for {@link com.intellij.openapi.project.IndexNotReadyException}.
    */
+  @Contract(pure = true)
   public static @Nullable PsiAnnotationOwner getTarget(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String annotation) {
     PsiModifierList list = modifierListOwner.getModifierList();
     if (list == null) return null;
     PsiClass annotationClass = JavaPsiFacade.getInstance(modifierListOwner.getProject())
       .findClass(annotation, modifierListOwner.getResolveScope());
-    if (annotationClass != null && findAnnotationTarget(annotationClass, TargetType.TYPE_USE) != null &&
-        // External annotations for types are not supported
-        !(modifierListOwner instanceof PsiCompiledElement)) {
+    return getTarget(modifierListOwner, annotationClass != null && findAnnotationTarget(annotationClass, TargetType.TYPE_USE) != null);
+  }
+
+  /**
+   * @param modifierListOwner modifier list owner
+   * @param existsTypeUseTarget true, if annotation contains a type use target
+   * @return a target annotation owner to add the annotation (either modifier list or type element depending on the annotation target)
+   * Returns null if {@code modifierListOwner.getModifierList()} is null.
+   * <p>The method should be called under read action
+   * and the caller should be prepared for {@link com.intellij.openapi.project.IndexNotReadyException}.
+   */
+  @Contract(pure = true)
+  public static @Nullable PsiAnnotationOwner getTarget(@NotNull PsiModifierListOwner modifierListOwner, boolean existsTypeUseTarget) {
+    PsiModifierList list = modifierListOwner.getModifierList();
+    if (list == null) return null;
+    if (existsTypeUseTarget && !(modifierListOwner instanceof PsiCompiledElement)) {
       PsiElement parent = list.getParent();
       PsiTypeElement type = null;
       if (parent instanceof PsiMethod) {
@@ -242,7 +256,7 @@ public final class AnnotationTargetUtil {
       else if (parent instanceof PsiVariable) {
         type = ((PsiVariable)parent).getTypeElement();
       }
-      if (type != null && !type.getType().equals(PsiType.VOID)) return type;
+      if (type != null && type.acceptsAnnotations()) return type;
     }
     return list;
   }

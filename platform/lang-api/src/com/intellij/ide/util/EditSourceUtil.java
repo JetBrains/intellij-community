@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,6 +16,7 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,10 +48,14 @@ public final class EditSourceUtil {
     }
     OpenFileDescriptor desc = new OpenFileDescriptor(navigationElement.getProject(), virtualFile, offset);
     desc.setUseCurrentWindow(FileEditorManager.USE_CURRENT_WINDOW.isIn(navigationElement));
+    if (UISettings.getInstance().getOpenInPreviewTabIfPossible() && Registry.is("editor.preview.tab.navigation")) {
+      desc.setUsePreviewTab(true);
+    }
     return desc;
   }
 
-  private static PsiElement getNavigatableOriginalElement(@NotNull PsiElement element) {
+  @Internal
+  public static PsiElement getNavigatableOriginalElement(@NotNull PsiElement element) {
     return processAllOriginalElements(element, original -> canNavigate(original) ? original : null);
   }
 
@@ -82,5 +89,13 @@ public final class EditSourceUtil {
       }
     }
     return null;
+  }
+
+  public static boolean navigateToPsiElement(@NotNull PsiElement element) {
+    Navigatable descriptor = getDescriptor(element);
+    if (descriptor != null && descriptor.canNavigate()) {
+      descriptor.navigate(true);
+    }
+    return true;
   }
 }

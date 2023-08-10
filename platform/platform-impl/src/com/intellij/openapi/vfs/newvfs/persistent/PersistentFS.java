@@ -1,17 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.DiskQueryRelay;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -26,22 +24,24 @@ import java.util.function.Function;
 import static com.intellij.util.BitUtil.isSet;
 
 public abstract class PersistentFS extends ManagingFS {
-  static class Flags {
-    static final int CHILDREN_CACHED = 0x01;
-    static final int IS_DIRECTORY = 0x02;
-    static final int IS_READ_ONLY = 0x04;
-    static final int MUST_RELOAD_CONTENT = 0x08;
-    static final int IS_SYMLINK = 0x10;
-    static final int IS_SPECIAL = 0x20; // this file has "special" flag. Defined for files only.
-    static final int IS_HIDDEN = 0x40;
-    static final int MUST_RELOAD_LENGTH = 0x80;
-    // true if this directory can contain case-sensitive files. Defined for directories only.
-    static final int CHILDREN_CASE_SENSITIVE = 0x100;
-    // true if it's known whether this directory can contain case-sensitive files or not. Defined for directories only.
-    static final int CHILDREN_CASE_SENSITIVITY_CACHED = 0x200;
-    static final int ALL_VALID_FLAGS =
-      CHILDREN_CACHED | IS_DIRECTORY | IS_READ_ONLY | MUST_RELOAD_CONTENT | MUST_RELOAD_LENGTH | IS_SYMLINK | IS_SPECIAL | IS_HIDDEN |
-      CHILDREN_CASE_SENSITIVE | CHILDREN_CASE_SENSITIVITY_CACHED;
+  @ApiStatus.Internal
+  public interface Flags {
+    //@formatter:off
+    int CHILDREN_CACHED                  =           0b0001;
+    int IS_DIRECTORY                     =           0b0010;
+    int IS_READ_ONLY                     =           0b0100;
+    int MUST_RELOAD_CONTENT              =           0b1000;
+
+    int IS_SYMLINK                       =      0b0001_0000;
+    int IS_SPECIAL                       =      0b0010_0000;
+    int IS_HIDDEN                        =      0b0100_0000;
+    int MUST_RELOAD_LENGTH               =      0b1000_0000;
+    int CHILDREN_CASE_SENSITIVE          = 0b0001_0000_0000;  // 'true' if this directory can contain files differing only in the case
+    int CHILDREN_CASE_SENSITIVITY_CACHED = 0b0010_0000_0000;  // 'true' if this directory's case sensitivity is known
+    int FREE_RECORD_FLAG                 = 0b0100_0000_0000;
+    int OFFLINE_BY_DEFAULT               = 0b1000_0000_0000;
+    //@formatter:on
+    static int getAllValidFlags() { return 0xFFF; }
   }
 
   @MagicConstant(flagsFromClass = Flags.class)
@@ -66,8 +66,9 @@ public abstract class PersistentFS extends ManagingFS {
   public abstract @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile parent);
 
   @ApiStatus.Internal
-  public abstract ChildInfo findChildInfo(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem delegate);
+  public abstract ChildInfo findChildInfo(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem fs);
 
+  @NotNull
   public abstract String getName(int id);
 
   public abstract long getLastRecordedLength(@NotNull VirtualFile file);
@@ -81,18 +82,20 @@ public abstract class PersistentFS extends ManagingFS {
   public static boolean isSymLink(@Attributes int attributes) { return isSet(attributes, Flags.IS_SYMLINK); }
   public static boolean isSpecialFile(@Attributes int attributes) { return !isDirectory(attributes) && isSet(attributes, Flags.IS_SPECIAL); }
   public static boolean isHidden(@Attributes int attributes) { return isSet(attributes, Flags.IS_HIDDEN); }
+  public static boolean isOfflineByDefault(@Attributes int attributes) { return isSet(attributes, Flags.OFFLINE_BY_DEFAULT); }
 
   public static @NotNull FileAttributes.CaseSensitivity areChildrenCaseSensitive(@Attributes int attributes) {
     if (!isDirectory(attributes)) {
-      throw new IllegalArgumentException("CHILDREN_CASE_SENSITIVE flag defined for directories only but got file: 0b" + Integer.toBinaryString(attributes));
+      throw new IllegalArgumentException(
+        "CHILDREN_CASE_SENSITIVE flag defined for directories only but got file: 0b" + Integer.toBinaryString(attributes));
     }
     if (!isSet(attributes, Flags.CHILDREN_CASE_SENSITIVITY_CACHED)) {
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
-    return isSet(attributes, Flags.CHILDREN_CASE_SENSITIVE) ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+    return isSet(attributes, Flags.CHILDREN_CASE_SENSITIVE)
+           ? FileAttributes.CaseSensitivity.SENSITIVE
+           : FileAttributes.CaseSensitivity.INSENSITIVE;
   }
-
-  public abstract @Nullable NewVirtualFile findFileByIdIfCached(int id);
 
   public abstract int storeUnlinkedContent(byte @NotNull [] bytes);
 
@@ -106,19 +109,16 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract int getCurrentContentId(@NotNull VirtualFile file);
 
-  @ApiStatus.Internal
-  public abstract void processEvents(@NotNull List<? extends VFileEvent> events);
-
-  public static @NotNull NewVirtualFileSystem replaceWithNativeFS(final @NotNull NewVirtualFileSystem fs) {
-    if (SystemInfo.isWindows &&
-        !(fs instanceof Win32LocalFileSystem) &&
-        fs.getProtocol().equals(LocalFileSystem.PROTOCOL) &&
-        Win32LocalFileSystem.isAvailable()) {
-      return Win32LocalFileSystem.getWin32Instance();
-    }
-    return fs;
+  /** @deprecated bypasses async listeners and is too low-level in general; avoid */
+  @Deprecated(forRemoval = true)
+  public void processEvents(@NotNull List<? extends @NotNull VFileEvent> events) {
+    RefreshQueue.getInstance().processEvents(false, events);
   }
 
-  // true if FS persisted at least one child or it has never been queried for children
+  // 'true' if the FS persisted at least one child, or it has never been queried for children
   public abstract boolean mayHaveChildren(int id);
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public abstract @Nullable VfsLog getVfsLog();
 }

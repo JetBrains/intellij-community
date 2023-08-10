@@ -53,8 +53,7 @@ public final class NamedScopeFilter implements VirtualFileFilter {
     if (set == null) return false;
 
     Project project = holder.getProject();
-    if (set instanceof PackageSetBase) {
-      PackageSetBase base = (PackageSetBase)set;
+    if (set instanceof PackageSetBase base) {
       return base.contains(file, project, holder);
     }
     PsiFile psiFile = PackageSetBase.getPsiFile(file, project);

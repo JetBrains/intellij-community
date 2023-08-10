@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
@@ -31,7 +31,7 @@ import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor{
+public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor {
   public static final String OUTER_LOCAL_VAR_FIELD_PREFIX = "val$";
   private final Field myField;
   private final ObjectReference myObject;
@@ -176,14 +176,13 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     String fieldName;
-    if(isStatic()) {
+    if (isStatic()) {
       String typeName = myField.declaringType().name().replace('$', '.');
       typeName = DebuggerTreeNodeExpression.normalize(typeName, PositionUtil.getContextElement(context), myProject);
       fieldName = typeName + "." + getName();
     }
     else {
-      //noinspection HardCodedStringLiteral
-      fieldName = isOuterLocalVariableValue()? StringUtil.trimStart(getName(), OUTER_LOCAL_VAR_FIELD_PREFIX) : "this." + getName();
+      fieldName = isOuterLocalVariableValue() ? StringUtil.trimStart(getName(), OUTER_LOCAL_VAR_FIELD_PREFIX) : "this." + getName();
     }
     try {
       return elementFactory.createExpressionFromText(fieldName, null);
@@ -208,12 +207,8 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
             setter = v -> object.setValue(field, v);
           }
         }
-        else {
-          ReferenceType refType = field.declaringType();
-          if (refType instanceof ClassType) {
-            ClassType classType = (ClassType)refType;
-            setter = v -> classType.setValue(field, v);
-          }
+        else if (field.declaringType() instanceof ClassType classType) {
+          setter = v -> classType.setValue(field, v);
         }
 
         if (setter != null) {

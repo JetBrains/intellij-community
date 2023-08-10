@@ -34,23 +34,4 @@ public class DependencyScopeNode extends AbstractDependencyNode {
   public @Nls String getDescription() {
     return description;
   }
-
-  @Override
-  public boolean match(AbstractDependencyNode dependencyNode) {
-    if (dependencyNode == null || getClass() != dependencyNode.getClass()) return false;
-    DependencyScopeNode node = (DependencyScopeNode)dependencyNode;
-    if (!scope.equals(node.scope)) return false;
-    if (!displayName.equals(node.displayName)) return false;
-    if (description != null ? !description.equals(node.description) : node.description != null) return false;
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + scope.hashCode();
-    result = 31 * result + displayName.hashCode();
-    result = 31 * result + (description != null ? description.hashCode() : 0);
-    return result;
-  }
 }

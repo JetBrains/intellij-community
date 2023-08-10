@@ -24,6 +24,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.common.ThreadUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.MemoryDumpHelper;
@@ -50,21 +52,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
   private FileDocumentManagerImpl myDocumentManager;
-  private Boolean myReloadFromDisk;
+  private Boolean myAskReloadFromDiskResult;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myReloadFromDisk = null;
+    myAskReloadFromDiskResult = null;
     FileDocumentManagerImpl impl = (FileDocumentManagerImpl)FileDocumentManager.getInstance();
     impl.setAskReloadFromDisk(getTestRootDisposable(), new MemoryDiskConflictResolver() {
       @Override
       boolean askReloadFromDisk(VirtualFile file, Document document) {
-        if (myReloadFromDisk == null) {
+        if (myAskReloadFromDiskResult == null) {
           fail();
           return false;
         }
-        return myReloadFromDisk.booleanValue();
+        return myAskReloadFromDiskResult.booleanValue();
       }
     });
     myDocumentManager = impl;
@@ -72,7 +74,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myReloadFromDisk = null;
+    myAskReloadFromDiskResult = null;
     myDocumentManager = null;
     super.tearDown();
   }
@@ -246,6 +248,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     document = null;
 
     myDocumentManager.saveAllDocuments();
+    UIUtil.dispatchAllInvocationEvents();
 
     GCWatcher.tracking(myDocumentManager.getDocument(file)).ensureCollected();
 
@@ -380,7 +383,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "zzz"));
 
 
-    myReloadFromDisk = Boolean.TRUE;
+    myAskReloadFromDiskResult = Boolean.TRUE;
     setFileText(file, "xxx");
     UIUtil.dispatchAllInvocationEvents();
 
@@ -395,7 +398,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertNotNull(file.toString(), document);
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "old "));
 
-    myReloadFromDisk = Boolean.FALSE;
+    myAskReloadFromDiskResult = Boolean.FALSE;
     long oldDocumentStamp = document.getModificationStamp();
 
     setBinaryContent(file, "xxx".getBytes(StandardCharsets.UTF_8));
@@ -441,7 +444,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     document.insertString(0, "zzz");
     file.setContent(null, "xxx", false);
 
-    myReloadFromDisk = Boolean.TRUE;
+    myAskReloadFromDiskResult = Boolean.TRUE;
     myDocumentManager.saveAllDocuments();
     long fileStamp = file.getModificationStamp();
 
@@ -462,7 +465,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       }
     };
 
-    myReloadFromDisk = Boolean.FALSE;
+    myAskReloadFromDiskResult = Boolean.FALSE;
     final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "old "));
@@ -533,7 +536,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     Document original = documentManager.getDocument(file);
     assertNotNull(file.getPath(), original);
 
-    renameFile(file, "test.wtf");
+    rename(file, "test.wtf");
     Document afterRename = documentManager.getDocument(file);
     assertSame(afterRename + " != " + original, afterRename, original);
   }
@@ -547,16 +550,9 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     Document original = documentManager.getDocument(file);
     assertNotNull(file.getPath(), original);
 
-    renameFile(file, "test.png");
+    rename(file, "test.png");
     Document afterRename = documentManager.getDocument(file);
     assertNull(afterRename + " != null", afterRename);
-  }
-
-  private static void renameFile(VirtualFile file, String newName) throws IOException {
-    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
-      file.rename(null, newName);
-      return null;
-    });
   }
 
   public void testNoPSIModificationsDuringSave() {
@@ -644,10 +640,63 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     }
   }
 
-  private static void checkDocumentFiles(List<VirtualFile> files) throws Exception {
+  public void testDropAllUnsavedDocuments() throws Exception {
+    VirtualFile file = createFile("test.txt", "unedited");
+    Document document = myDocumentManager.getDocument(file);
+    assertEquals("unedited", document.getText());
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.setText("edited"));
+    assertEquals("edited", myDocumentManager.getDocument(file).getText());
+
+    ApplicationManager.getApplication().runWriteAction(myDocumentManager::dropAllUnsavedDocuments);
+    assertEquals("unedited", myDocumentManager.getDocument(file).getText());
+  }
+
+  public void testBeforeSaveAnyDocument_firedForUnchangedDocument() throws Exception {
+    VirtualFile file = createFile();
+    Document document = myDocumentManager.getDocument(file);
+    ArrayList<Document> firedDocuments = new ArrayList<>();
+
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+      @Override
+      public void beforeAnyDocumentSaving(@NotNull Document document, boolean explicit) {
+        firedDocuments.add(document);
+      }
+    });
+
+    myDocumentManager.saveDocument(document);
+    assertOrderedEquals(firedDocuments, document);
+  }
+
+  public void testBeforeSaveAnyDocument_firedBeforeBeforeDocumentSaving() throws Exception {
+    VirtualFile file = createFile();
+    Document document = myDocumentManager.getDocument(file);
+    ArrayList<Document> firedDocuments = new ArrayList<>();
+    ArrayList<Document> reallySavedDocuments = new ArrayList<>();
+
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+      @Override
+      public void beforeAnyDocumentSaving(@NotNull Document document, boolean explicit) {
+        firedDocuments.add(document);
+      }
+
+      @Override
+      public void beforeDocumentSaving(@NotNull Document document) {
+        reallySavedDocuments.add(document);
+        assertOrderedEquals(firedDocuments, document);
+      }
+    });
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "xxx"));
+    myDocumentManager.saveDocument(document);
+    assertOrderedEquals(firedDocuments, document);
+    assertOrderedEquals(reallySavedDocuments, document);
+  }
+
+  private static void checkDocumentFiles(List<? extends VirtualFile> files) throws Exception {
     FileDocumentManager fdm = FileDocumentManager.getInstance();
 
-    List<Future> futures = new ArrayList<>();
+    List<Future<?>> futures = new ArrayList<>();
     for (VirtualFile file : files) {
       if (fdm.getCachedDocument(file) != null) {
         MemoryDumpHelper.captureMemoryDumpZipped("fileDocTest.hprof.zip");
@@ -661,14 +710,12 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       }
     }
 
-    for (Future future : futures) {
-      try {
-        future.get(20, TimeUnit.SECONDS);
-      }
-      catch (TimeoutException e) {
-        printThreadDump();
-        throw e;
-      }
+    try {
+      ConcurrencyUtil.getAll(20, TimeUnit.SECONDS, futures);
+    }
+    catch (TimeoutException e) {
+      ThreadUtil.printThreadDump();
+      throw e;
     }
   }
 

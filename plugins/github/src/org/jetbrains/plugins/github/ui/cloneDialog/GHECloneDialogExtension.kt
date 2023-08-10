@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
-import com.intellij.application.subscribe
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -15,56 +15,31 @@ import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.ACCOUNT_REMOVED_TOPIC
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.ACCOUNT_TOKEN_CHANGED_TOPIC
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
-import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubUtil
 import javax.swing.JComponent
 
 private val GithubAccount.isGHEAccount: Boolean get() = !isGHAccount
 
-private fun getGHEAccounts(): Collection<GithubAccount> =
-  GithubAuthenticationManager.getInstance().getAccounts().filter { it.isGHEAccount }
-
 class GHECloneDialogExtension : BaseCloneDialogExtension() {
   override fun getName(): String = GithubUtil.ENTERPRISE_SERVICE_DISPLAY_NAME
 
-  override fun getAccounts(): Collection<GithubAccount> = getGHEAccounts()
+  override fun getAccounts(): Collection<GithubAccount> = GHAccountsUtil.accounts.filter { it.isGHEAccount }
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent =
-    GHECloneDialogExtensionComponent(project)
+    GHECloneDialogExtensionComponent(project, modalityState)
 }
 
-private class GHECloneDialogExtensionComponent(project: Project) : GHCloneDialogExtensionComponentBase(
+private class GHECloneDialogExtensionComponent(project: Project, modalityState: ModalityState) : GHCloneDialogExtensionComponentBase(
   project,
-  GithubAuthenticationManager.getInstance(),
-  GithubApiRequestExecutorManager.getInstance(),
-  GithubAccountInformationProvider.getInstance(),
-  CachingGHUserAvatarLoader.getInstance()
+  modalityState,
+  accountManager = service()
 ) {
 
-  init {
-    ACCOUNT_REMOVED_TOPIC.subscribe(this, this)
-    ACCOUNT_TOKEN_CHANGED_TOPIC.subscribe(this, this)
-
-    setup()
-  }
-
-  override fun getAccounts(): Collection<GithubAccount> = getGHEAccounts()
-
-  override fun accountRemoved(removedAccount: GithubAccount) {
-    if (removedAccount.isGHEAccount) super.accountRemoved(removedAccount)
-  }
-
-  override fun tokenChanged(account: GithubAccount) {
-    if (account.isGHEAccount) super.tokenChanged(account)
-  }
+  override fun isAccountHandled(account: GithubAccount): Boolean = account.isGHEAccount
 
   override fun createLoginPanel(account: GithubAccount?, cancelHandler: () -> Unit): JComponent =
     GHECloneDialogLoginPanel(account).apply {

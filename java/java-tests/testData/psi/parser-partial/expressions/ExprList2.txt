@@ -8,5 +8,5 @@ PsiJavaFile:ExprList2.java
       PsiJavaToken:LPARENTH('(')
       PsiLiteralExpression:1
         PsiJavaToken:INTEGER_LITERAL('1')
-      PsiErrorElement:')' expected
+      PsiErrorElement:',' or ')' expected
         <empty list>

@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomTableView extends AbstractTableView<DomElement> {
   private final List<DataProvider> myCustomDataProviders = new SmartList<>();
 

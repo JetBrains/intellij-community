@@ -6,6 +6,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -82,7 +83,8 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
     }
 
     TextRange blockRange = myNode.getTextRange();
-    List<DocumentWindow> documentWindows = InjectedLanguageManager.getInstance(file.getProject()).getCachedInjectedDocumentsInRange(file, blockRange);
+    List<DocumentWindow> documentWindows =
+      InjectedLanguageManager.getInstance(file.getProject()).getCachedInjectedDocumentsInRange(file, blockRange);
     if (documentWindows.isEmpty()) {
       return EMPTY;
     }
@@ -105,14 +107,13 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
 
   protected abstract List<Block> buildChildren();
 
-  @Nullable
   @Override
-  public Wrap getWrap() {
+  public @Nullable Wrap getWrap() {
     return myWrap;
   }
 
   @Override
-  public Indent getIndent() {
+  public @Nullable Indent getIndent() {
     return null;
   }
 
@@ -172,6 +173,6 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
 
   @Override
   public String toString() {
-    return myNode.getText() + " " + getTextRange();
+    return this.getClass().getSimpleName() + " '" + StringUtil.escapeLineBreak(myNode.getText()) + "' " + getTextRange();
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
@@ -43,7 +44,6 @@ import java.util.*;
 
 @Service
 final class PyUnitTestsDebuggingService {
-
   private static final @NotNull Map<XDebugSession, List<Inlay<FailedTestInlayRenderer>>> ourActiveInlays = new WeakHashMap<>();
   private static final @NotNull Map<Inlay<?>, ComponentListener> ourEditorListeners = Maps.newHashMap();
 
@@ -141,9 +141,9 @@ final class PyUnitTestsDebuggingService {
 
   private static final class FailedTestInlayRenderer implements EditorCustomElementRenderer {
 
-    private final static float HEIGHT_FACTOR = .5f;
-    private final static short RIGHT_BAR_THICKNESS = 2;
-    private final static short INLAY_TEXT_INDENT = 10;
+    private static final float HEIGHT_FACTOR = .5f;
+    private static final short RIGHT_BAR_THICKNESS = 2;
+    private static final short INLAY_TEXT_INDENT = 10;
 
     private final @NotNull String myExceptionType;
     private final @NotNull String myErrorMessage;
@@ -183,12 +183,12 @@ final class PyUnitTestsDebuggingService {
       g.setColor(getInlayBackgroundColor());
       g.fillRect(targetRegion.x, targetRegion.y, targetRegion.width, targetRegion.height);
 
-      g.setColor(UIUtil.getErrorForeground());
+      g.setColor(NamedColorUtil.getErrorForeground());
       g.fillRect(targetRegion.x, targetRegion.y, targetRegion.x + RIGHT_BAR_THICKNESS, calcHeightInPixels(inlay));
 
       g.setFont(getFont(inlay.getEditor()));
 
-      g.setColor(UIUtil.getErrorForeground());
+      g.setColor(NamedColorUtil.getErrorForeground());
       drawStringToInlayBox((myIsTestSetUpFail ? getErrorInTestSetUpCaption() : getFailedTestCaption()) + ":", inlay, g, targetRegion);
 
       g.setColor(UIUtil.getToolTipForeground());
@@ -251,7 +251,6 @@ final class PyUnitTestsDebuggingService {
   }
 
   private static final class FailedTestGutterIconRenderer extends GutterIconRenderer {
-
     private static final FailedTestGutterIconRenderer INSTANCE = new FailedTestGutterIconRenderer();
 
     private FailedTestGutterIconRenderer() {}

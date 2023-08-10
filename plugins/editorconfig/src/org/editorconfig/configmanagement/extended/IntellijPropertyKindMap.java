@@ -2,6 +2,7 @@
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.FormatterEnabledAccessor;
 import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -32,6 +33,7 @@ public final class IntellijPropertyKindMap {
     PROPERTY_KIND_MAP.put("formatter_off_tag", GENERIC);
     PROPERTY_KIND_MAP.put("formatter_on_tag", GENERIC);
     PROPERTY_KIND_MAP.put("formatter_tags_enabled", GENERIC);
+    PROPERTY_KIND_MAP.put(FormatterEnabledAccessor.PROPERTY_NAME, GENERIC);
     PROPERTY_KIND_MAP.put("visual_guides", GENERIC);
     PROPERTY_KIND_MAP.put("wrap_on_typing", GENERIC);
     PROPERTY_KIND_MAP.put("smart_tabs", GENERIC);

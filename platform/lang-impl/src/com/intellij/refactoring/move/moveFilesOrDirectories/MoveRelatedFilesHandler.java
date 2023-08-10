@@ -56,7 +56,7 @@ public final class MoveRelatedFilesHandler extends MoveFilesOrDirectoriesHandler
         NestingTreeStructureProvider.getFilesShownAsChildrenInProjectView(element.getProject(), file);
 
       for (NestingTreeStructureProvider.ChildFileInfo info : relatedFileInfos) {
-        final PsiFile psiFile = element.getManager().findFile(info.file);
+        final PsiFile psiFile = element.getManager().findFile(info.file());
         if (psiFile != null && !ArrayUtil.contains(psiFile, sourceElements)) {
           relatedFilesToMove.add(psiFile);
         }

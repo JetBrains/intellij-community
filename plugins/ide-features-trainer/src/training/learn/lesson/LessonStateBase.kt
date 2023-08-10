@@ -3,13 +3,14 @@ package training.learn.lesson
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import training.learn.interfaces.Lesson
+import training.learn.course.Lesson
 import training.util.trainerPluginConfigName
 
-@State(name = "LessonStateBase", storages = [Storage(value = trainerPluginConfigName)])
-class LessonStateBase : PersistentStateComponent<LessonStateBase> {
+@State(name = "LessonStateBase", storages = [Storage(value = trainerPluginConfigName)], category = SettingsCategory.TOOLS)
+private class LessonStateBase : PersistentStateComponent<LessonStateBase> {
 
   override fun getState(): LessonStateBase = this
 
@@ -21,11 +22,11 @@ class LessonStateBase : PersistentStateComponent<LessonStateBase> {
 
   companion object {
     internal val instance: LessonStateBase
-    get() = ApplicationManager.getApplication().getService(LessonStateBase::class.java)
+      get() = ApplicationManager.getApplication().getService(LessonStateBase::class.java)
   }
 }
 
-object LessonStateManager {
+internal object LessonStateManager {
 
   fun setPassed(lesson: Lesson) {
     LessonStateBase.instance.map[lesson.id.toLowerCase()] = LessonState.PASSED
@@ -37,5 +38,8 @@ object LessonStateManager {
     }
   }
 
-  fun getStateFromBase(lessonId: String): LessonState = LessonStateBase.instance.map.getOrPut(lessonId.toLowerCase(), { LessonState.NOT_PASSED })
+  fun getPassedLessonsNumber(): Int = LessonStateBase.instance.map.values.filter { it == LessonState.PASSED }.size
+
+  fun getStateFromBase(lessonId: String): LessonState =
+    LessonStateBase.instance.map.getOrPut(lessonId.toLowerCase()) { LessonState.NOT_PASSED }
 }

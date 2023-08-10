@@ -20,8 +20,6 @@ import com.intellij.psi.PsiType;
 /**
  * Converter for {@link PsiType} that uses {@link PsiType#getCanonicalText()}
  * as string representation
- *
- * @author peter
  */
 public abstract class CanonicalPsiTypeConverter extends Converter<PsiType> {
 }

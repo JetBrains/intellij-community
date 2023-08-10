@@ -23,6 +23,7 @@ public class ArtifactState {
   private Element myRootElement;
   private List<ArtifactPropertiesState> myPropertiesList = new ArrayList<>();
   private String myExternalSystemId;
+  private String myExternalSystemIdInInternalStorage;
 
   @Attribute(NAME_ATTRIBUTE)
   public @NlsSafe String getName() {
@@ -42,6 +43,11 @@ public class ArtifactState {
   @Attribute(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE)
   public String getExternalSystemId() {
     return myExternalSystemId;
+  }
+
+  @Attribute(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
+  public String getExternalSystemIdInInternalStorage() {
+    return myExternalSystemIdInInternalStorage;
   }
 
   @Tag("output-path")
@@ -82,6 +88,10 @@ public class ArtifactState {
 
   public void setExternalSystemId(String externalSystemId) {
     myExternalSystemId = externalSystemId;
+  }
+
+  public void setExternalSystemIdInInternalStorage(String externalSystemIdInInternalStorage) {
+    myExternalSystemIdInInternalStorage = externalSystemIdInInternalStorage;
   }
 
   public void setRootElement(Element rootElement) {

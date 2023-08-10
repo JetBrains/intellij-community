@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,6 +13,7 @@ import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.impl.java.stubs.impl.*;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -57,6 +58,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private PsiModifierListStub myModList;
   private PsiRecordHeaderStub myHeaderStub;
   private Map<TypeInfo, ClsTypeAnnotationCollector> myAnnoBuilders;
+  private List<String> myPermittedSubclasses;
   private ClassInfo myClassInfo;
 
   public StubBuildingVisitor(T classSource, InnerClassSourceStrategy<T> innersStrategy, StubElement<?> parent, int access, String shortName) {
@@ -100,7 +102,11 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       isRecord);
     myResult = new PsiClassStubImpl<>(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
-    myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
+    int classFlags = packClassFlags(flags);
+    if (myFirstPassData.isSealed()) {
+      classFlags |= ModifierFlags.SEALED_MASK;
+    }
+    myModList = new PsiModifierListStubImpl(myResult, classFlags);
     if (isRecord) {
       myHeaderStub = new PsiRecordHeaderStubImpl(myResult);
     }
@@ -137,6 +143,14 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       }
       newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, myClassInfo.interfaces);
     }
+  }
+
+  @Override
+  public void visitPermittedSubclass(String permittedSubclass) {
+    if (myPermittedSubclasses == null) {
+      myPermittedSubclasses = new SmartList<>();
+    }
+    myPermittedSubclasses.add(permittedSubclass);
   }
 
   private String getFqn(@NotNull String internalName, @Nullable String shortName, @Nullable String parentName) {
@@ -269,6 +283,10 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       myAnnoBuilders.values().forEach(ClsTypeAnnotationCollector::install);
     }
     myClassInfo.typeParameters.fillInTypeParameterList(myResult);
+    if (myPermittedSubclasses != null) {
+      List<TypeInfo> permittedTypes = myFirstPassData.createTypes(ArrayUtil.toStringArray(myPermittedSubclasses));
+      newReferenceList(JavaStubElementTypes.PERMITS_LIST, myResult, permittedTypes);
+    }
   }
 
   @Override
@@ -676,7 +694,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     @Override
     public void visitParameter(String name, int access) {
       int paramIndex = myParamNameIndex++ - myParamIgnoreCount;
-      if (!isSet(access, Opcodes.ACC_SYNTHETIC) && paramIndex >= 0 && paramIndex < myParamCount) {
+      if (name != null && !isSet(access, Opcodes.ACC_SYNTHETIC) && paramIndex >= 0 && paramIndex < myParamCount) {
         setParameterName(name, paramIndex);
       }
     }
@@ -693,7 +711,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       }
     }
 
-    private void setParameterName(String name, int paramIndex) {
+    private void setParameterName(@NotNull String name, int paramIndex) {
       if (ClsParsingUtil.isJavaIdentifier(name, LanguageLevel.HIGHEST)) {
         myParamStubs[paramIndex].setName(name);
       }

@@ -3,8 +3,9 @@ package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Alarm;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
@@ -14,10 +15,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class MergingUpdateQueueTest extends UsefulTestCase {
+public class MergingUpdateQueueTest extends LightPlatformTestCase {
   public void testOnShowNotify() {
     final MyUpdate first = new MyUpdate("first");
     final MyUpdate second = new MyUpdate("second");
@@ -182,7 +184,7 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     final MyUpdate food = new MyUpdate("food");
     MyUpdate hungry = new MyUpdate("hungry") {
       @Override
-      public boolean canEat(Update update) {
+      public boolean canEat(@NotNull Update update) {
         return update == food;
       }
     };
@@ -430,5 +432,34 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     TimeoutUtil.sleep(delay + 1000);
     canContinue.countDown();
     assertTrue(startedExecuting2.await(10, TimeUnit.SECONDS));
+  }
+  public void testQueueInsideQueueMustNotInterfereWithWaitForAllExecuted() throws Exception {
+    MergingUpdateQueue queue = new MergingUpdateQueue(getTestName(false), 100, true, null, getTestRootDisposable(), null, Alarm.ThreadToUse.POOLED_THREAD);
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicBoolean secondExecuted = new AtomicBoolean();
+    queue.queue(Update.create("first", () -> {
+      queue.queue(Update.create("second", () -> {
+        secondExecuted.set(true);
+      }));
+      TimeoutUtil.sleep(1000);
+      latch.countDown();
+    }));
+
+    queue.waitForAllExecuted(10, TimeUnit.SECONDS);
+    assertEquals(0, latch.getCount());
+    assertTrue(secondExecuted.get());
+  }
+
+  public void testMustRejectOnDispose() {
+    MergingUpdateQueue queue = new MergingUpdateQueue(getTestName(false), 1000_000, true, null, getTestRootDisposable(), null, Alarm.ThreadToUse.POOLED_THREAD);
+    Update update = new Update(this) {
+      @Override
+      public void run() {
+      }
+    };
+    queue.queue(update);
+    assertFalse(update.isRejected());
+    Disposer.dispose(queue);
+    assertTrue(update.isRejected());
   }
 }

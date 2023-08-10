@@ -1,0 +1,5 @@
+// "Add missing actual declarations" "true"
+
+expect interface I {
+    fun f(p: Int = 1)
+}

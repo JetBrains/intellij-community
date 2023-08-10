@@ -1,30 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.data.LoadingDetails;
+import com.intellij.vcs.log.ui.table.column.VcsLogMetadataColumn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractList;
+import java.util.List;
 import java.util.ListIterator;
 
 public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
   public VcsLogSpeedSearch(@NotNull VcsLogGraphTable component) {
-    super(component);
+    super(component, null);
   }
 
   @Override
@@ -32,9 +23,8 @@ public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
     return myComponent.getRowCount();
   }
 
-  @NotNull
   @Override
-  protected ListIterator<Object> getElementIterator(int startingViewIndex) {
+  protected @NotNull ListIterator<Object> getElementIterator(int startingViewIndex) {
     return new MyRowsList().listIterator(startingViewIndex);
   }
 
@@ -43,16 +33,39 @@ public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
     return myComponent.getSelectedRow();
   }
 
-  @Nullable
   @Override
-  protected String getElementText(@NotNull Object row) {
-    return myComponent.getModel().getCommitMetadata((Integer)row).getSubject();
+  protected @Nullable String getElementText(@NotNull Object row) {
+    throw new UnsupportedOperationException("Getting row text in a Log is unsupported since we match columns separately.");
+  }
+
+  @Override
+  protected boolean isMatchingElement(Object row, String pattern) {
+    return isMatchingMetadata(pattern, getCommitMetadata((Integer)row));
+  }
+
+  protected boolean isMatchingMetadata(String pattern, @Nullable VcsCommitMetadata metadata) {
+    return isMatchingMetadata(pattern, metadata, getColumnsForSpeedSearch());
+  }
+
+  protected boolean isMatchingMetadata(String pattern, @Nullable VcsCommitMetadata metadata, @NotNull List<? extends VcsLogMetadataColumn> columns) {
+    if (metadata == null) return false;
+    return ContainerUtil.exists(columns, column -> compare(column.getValue(myComponent.getModel(), metadata), pattern));
+  }
+
+  protected @Nullable VcsCommitMetadata getCommitMetadata(int row) {
+    VcsCommitMetadata metadata = myComponent.getModel().getCommitMetadata(row);
+    if (metadata instanceof LoadingDetails) return null;
+    return metadata;
+  }
+
+  protected @NotNull List<VcsLogMetadataColumn> getColumnsForSpeedSearch() {
+    return ContainerUtil.filterIsInstance(myComponent.getVisibleColumns(), VcsLogMetadataColumn.class);
   }
 
   @Override
   protected void selectElement(@Nullable Object row, @NotNull String selectedText) {
     if (row == null) return;
-    myComponent.jumpToRow((Integer)row);
+    myComponent.jumpToRow((Integer)row, true);
   }
 
   private class MyRowsList extends AbstractList<Object> {

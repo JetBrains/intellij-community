@@ -4,8 +4,6 @@ package com.intellij.openapi.projectRoots;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
@@ -16,6 +14,9 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.EventListener;
 import java.util.List;
 
+/**
+ * Provides access to SDKs configured in the IDE. Despite its name, this class operates on SDKs of all kinds, not only on Java SDKs.
+ */
 @ApiStatus.NonExtendable
 public abstract class ProjectJdkTable {
   public static ProjectJdkTable getInstance() {
@@ -34,24 +35,12 @@ public abstract class ProjectJdkTable {
     return getSdksOfType(type).stream().max(type.versionComparator()).orElse(null);
   }
 
-  /** @deprecated comparing version strings across SDK types makes no sense; use {@link #findMostRecentSdkOfType} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public Sdk findMostRecentSdk(@NotNull Condition<? super Sdk> condition) {
-    Sdk found = null;
-    for (Sdk each : getAllJdks()) {
-      if (condition.value(each) &&
-          (found == null || Comparing.compare(each.getVersionString(), found.getVersionString()) > 0)) {
-        found = each;
-      }
-    }
-    return found;
-  }
-
   public abstract void addJdk(@NotNull Sdk jdk);
 
   @TestOnly
   public void addJdk(@NotNull Sdk jdk, @NotNull Disposable parentDisposable) {
+    Sdk existingJdk = findJdk(jdk.getName(), jdk.getSdkType().getName());
+    if (existingJdk != null && existingJdk.getSdkAdditionalData() == jdk.getSdkAdditionalData()) return;
     addJdk(jdk);
     Disposer.register(parentDisposable, () -> WriteAction.runAndWait(()-> removeJdk(jdk)));
   }
@@ -69,13 +58,6 @@ public abstract class ProjectJdkTable {
 
     default void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) {
     }
-  }
-
-  /**
-   * @deprecated Use {@link Listener} directly.
-   */
-  @Deprecated
-  public static class Adapter implements Listener {
   }
 
   public abstract @NotNull SdkTypeId getDefaultSdkType();

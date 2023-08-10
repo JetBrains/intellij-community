@@ -35,7 +35,7 @@ def _get_line_for_frame(frame):
 def suspend_at_builtin_breakpoint():
     # used by built-in breakpoint() function appeared in Python 3.7
     frame = sys._getframe(3)
-    t = threading.currentThread()
+    t = threading.current_thread()
     if t.additional_info.is_tracing:
         return False
     if t.additional_info.pydev_step_cmd == -1:
@@ -51,7 +51,7 @@ def suspend_at_builtin_breakpoint():
 
 def _pydev_stop_at_break(line):
     frame = sys._getframe(1)
-    t = threading.currentThread()
+    t = threading.current_thread()
     if t.additional_info.is_tracing:
         return False
 

@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,16 +19,15 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-/**
- * @author ilyas
- */
 public abstract class CreateClassActionBase extends Intention {
   private final GrCreateClassKind myType;
 
@@ -43,20 +43,39 @@ public abstract class CreateClassActionBase extends Intention {
   @NotNull
   public String getText() {
     String referenceName = myRefElement.getReferenceName();
-    switch (getType()) {
-      case TRAIT:
-        return GroovyBundle.message("create.trait", referenceName);
-      case ENUM:
-        return GroovyBundle.message("create.enum", referenceName);
-      case CLASS:
-        return GroovyBundle.message("create.class.text", referenceName);
-      case INTERFACE:
-        return GroovyBundle.message("create.interface.text", referenceName);
-      case ANNOTATION:
-        return GroovyBundle.message("create.annotation.text", referenceName);
-      default:
-        return "";
+    return switch (getType()) {
+      case TRAIT -> GroovyBundle.message("create.trait", referenceName);
+      case ENUM -> GroovyBundle.message("create.enum", referenceName);
+      case CLASS -> GroovyBundle.message("create.class.text", referenceName);
+      case INTERFACE -> GroovyBundle.message("create.interface.text", referenceName);
+      case ANNOTATION -> GroovyBundle.message("create.annotation.text", referenceName);
+      case RECORD -> GroovyBundle.message("create.record.text", referenceName);
+    };
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    String name = myRefElement.getReferenceName();
+    if (name == null) {
+      return IntentionPreviewInfo.EMPTY;
     }
+    PsiFile containingFile = myRefElement.getContainingFile();
+    if (!(containingFile instanceof GroovyFileBase)) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    String packageName = ((GroovyFileBase)containingFile).getPackageName();
+    String prefix = packageName.isEmpty() ? "" : "package " + packageName + "\n\n";
+    String template = prefix + "%s " + name + " {\n}" ;
+    String newClassPrefix = switch (myType) {
+      case CLASS -> "class";
+      case INTERFACE -> "interface";
+      case TRAIT -> "trait";
+      case ENUM -> "enum";
+      case ANNOTATION -> "@interface";
+      case RECORD -> "record";
+    };
+
+    return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, name + ".groovy", "", String.format(template, newClassPrefix));
   }
 
   @Override

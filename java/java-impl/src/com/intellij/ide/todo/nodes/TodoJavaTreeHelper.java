@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.todo.nodes;
 
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class TodoJavaTreeHelper extends TodoTreeHelper {
+
   public TodoJavaTreeHelper(final Project project) {
     super(project);
   }
@@ -32,8 +33,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
 
   @Override
   public PsiElement getSelectedElement(final Object userObject) {
-    if (userObject instanceof TodoPackageNode) {
-      TodoPackageNode descriptor = (TodoPackageNode)userObject;
+    if (userObject instanceof TodoPackageNode descriptor) {
       final PackageElement packageElement = descriptor.getValue();
       return packageElement != null ? packageElement.getPackage() : null;
     }
@@ -51,14 +51,17 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
   }
 
   @Override
-  public void addPackagesToChildren(final ArrayList<? super AbstractTreeNode<?>> children, final Module module, final TodoTreeBuilder builder) {
+  public void addPackagesToChildren(@NotNull final ArrayList<? super AbstractTreeNode<?>> children,
+                                    @Nullable final Module module,
+                                    @NotNull final TodoTreeBuilder builder) {
     Project project = getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final List<VirtualFile> sourceRoots = new ArrayList<>();
     if (module == null) {
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
       ContainerUtil.addAll(sourceRoots, projectRootManager.getContentSourceRoots());
-    } else {
+    }
+    else {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       ContainerUtil.addAll(sourceRoots, moduleRootManager.getSourceRoots());
     }
@@ -127,7 +130,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
         }
       }
     }
-    final List<VirtualFile> roots = collectContentRoots(module);
+    final List<? extends VirtualFile> roots = collectContentRoots(module);
     roots.removeAll(sourceRoots);
     addDirsToChildren(roots, children, builder);
   }

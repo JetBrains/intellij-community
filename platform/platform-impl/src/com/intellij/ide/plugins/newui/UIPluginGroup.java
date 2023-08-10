@@ -16,12 +16,15 @@ import java.util.List;
 public final class UIPluginGroup {
   public Component panel;
   public List<ListPluginComponent> plugins = new ArrayList<>();
+  public boolean excluded;
 
-  @Nullable
-  public ListPluginComponent findComponent(@NotNull IdeaPluginDescriptor descriptor) {
-    PluginId pluginId = descriptor.getPluginId();
+  public @Nullable ListPluginComponent findComponent(@NotNull IdeaPluginDescriptor descriptor) {
+    return findComponent(descriptor.getPluginId());
+  }
+
+  public @Nullable ListPluginComponent findComponent(@NotNull PluginId pluginId) {
     for (ListPluginComponent component : plugins) {
-      if (pluginId == component.getPluginDescriptor().getPluginId()) {
+      if (pluginId.equals(component.getPluginDescriptor().getPluginId())) {
         return component;
       }
     }

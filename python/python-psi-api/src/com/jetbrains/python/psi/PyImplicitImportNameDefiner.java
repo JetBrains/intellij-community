@@ -15,8 +15,5 @@
  */
 package com.jetbrains.python.psi;
 
-/**
- * @author vlan
- */
 public interface PyImplicitImportNameDefiner extends PyImportedNameDefiner {
 }

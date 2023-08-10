@@ -1,14 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.codeInspection.unused;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.options.RegexValidator;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -16,27 +19,22 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentValidator;
-import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBTextField;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -56,42 +54,18 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
   }
 
   @Override
-  public @NotNull JComponent createOptionsPanel() {
-    Disposable disposable = Disposer.newDisposable();
-    JPanel panel = new JPanel(new GridBagLayout()) {
-      @Override
-      public void removeNotify() {
-        super.removeNotify();
-        Disposer.dispose(disposable);
-      }
-    };
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.weighty = 1.0;
-    constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(new JBLabel(PropertiesBundle.message("label.analyze.only.property.files.whose.name.matches")), constraints);
-    JBTextField textField = new JBTextField(fileNameMask);
-    constraints.gridy++;
-    panel.add(textField, constraints);
-    
-    ComponentValidator validator = new ComponentValidator(disposable).withValidator(() -> {
-      String text = textField.getText();
-      fileNameMask = text.isEmpty() ? ".*" : text;
-      String errorMessage = null;
-      try {
-        Pattern.compile(text);
-      }
-      catch (PatternSyntaxException ex) {
-        errorMessage = StringUtil.substringBefore(ex.getMessage(), "\n");
-      }
-      boolean hasError = StringUtil.isNotEmpty(errorMessage);
-      return hasError ? new ValidationInfo(errorMessage, textField) : null;
-    }).andRegisterOnDocumentListener(textField).installOn(textField);
-    validator.revalidate();
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(
+      OptPane.string("fileNameMask", PropertiesBundle.message("label.analyze.only.property.files.whose.name.matches"),
+                     30, new RegexValidator())
+    );
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onValueSet("fileNameMask", value -> {
+      if ("".equals(value)) fileNameMask = ".*";
+    });
   }
 
   @Nullable
@@ -132,12 +106,27 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module == null) return PsiElementVisitor.EMPTY_VISITOR;
 
+    if (InjectedLanguageManager.getInstance(module.getProject()).isInjectedFragment(holder.getFile())
+        || holder.getFile().getUserData(FileContextUtil.INJECTED_IN_ELEMENT) != null) {
+      // Properties inside injected fragments cannot be normally referenced
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+
+    VirtualFile virtualFile = holder.getFile().getVirtualFile();
+    if (virtualFile == null ||
+        !ProjectFileIndex.getInstance(module.getProject()).isInSource(virtualFile)) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+
     final UnusedPropertiesSearchHelper helper = new UnusedPropertiesSearchHelper(module);
+
+    final Set<PsiElement> propertiesBeingCommitted = getBeingCommittedProperties(file);
+
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (!(element instanceof Property)) return;
-        Property property = (Property)element;
+        if (!(element instanceof Property property)) return;
+        if (propertiesBeingCommitted != null && !propertiesBeingCommitted.contains(property)) return;
 
         if (isPropertyUsed(property, helper, isOnTheFly)) return;
 
@@ -149,10 +138,24 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
         LocalQuickFix fix = PropertiesQuickFixFactory.getInstance().createRemovePropertyLocalFix();
         holder.registerProblem(key, isOnTheFly ? PropertiesBundle.message("unused.property.problem.descriptor.name")
                                                : PropertiesBundle
-                                      .message("unused.property.problem.descriptor.name.offline", property.getUnescapedKey()),
-                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
+                                      .message("unused.property.problem.descriptor.name.offline", property.getUnescapedKey()), fix);
       }
     };
+  }
+
+  /**
+   * Extract the properties that are being committed. If no commit is in progress, return null.
+   * The {@link com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler#getBeforeCheckinConfigurationPanel} method puts
+   * into the {@link PsiFile}'s user data a closure that accepts a class and returns all the {@link PsiElement}s being committed.
+   * @param file the properties file that is supposed to contain the closure to extract properties that are being committed
+   * @return a {@link Set} of properties that are being committed or null if no commit is in progress.
+   */
+  @Nullable
+  private static Set<PsiElement> getBeingCommittedProperties(@NotNull PsiFile file) {
+    final Map<Class<? extends PsiElement>, Set<PsiElement>> data = file.getUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED);
+    if (data == null) return null;
+
+    return data.get(Property.class);
   }
 
   private static boolean isImplicitlyUsed(@NotNull Property property) {

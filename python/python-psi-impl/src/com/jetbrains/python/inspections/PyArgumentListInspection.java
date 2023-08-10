@@ -39,13 +39,14 @@ public class PyArgumentListInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
 
-    Visitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@NotNull ProblemsHolder holder,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @NotNull
@@ -108,8 +109,7 @@ public class PyArgumentListInspection extends PyInspection {
       final PyCallableType callableType = mapping.getCallableType();
       if (callableType != null) {
         final PyCallable callable = callableType.getCallable();
-        if (callable instanceof PyFunction) {
-          final PyFunction function = (PyFunction)callable;
+        if (callable instanceof PyFunction function) {
 
           // Decorate functions may have different parameter lists. We don't match arguments with parameters of decorators yet
           if (PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, context) ||

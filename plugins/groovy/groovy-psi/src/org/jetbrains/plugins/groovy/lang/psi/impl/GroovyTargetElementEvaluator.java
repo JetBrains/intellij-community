@@ -106,8 +106,7 @@ public class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
   @Nullable
   @Override
   public Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
-    if (reference instanceof GrReferenceExpression) {
-      GrReferenceExpression referenceExpression = (GrReferenceExpression)reference;
+    if (reference instanceof GrReferenceExpression referenceExpression) {
       if (referenceExpression.hasMemberPointer()) {
         GroovyResolveResult[] results = referenceExpression.multiResolve(false);
         if (results.length > 0) {

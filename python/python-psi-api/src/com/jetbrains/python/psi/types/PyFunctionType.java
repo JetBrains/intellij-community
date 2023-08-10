@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
  * Type of a particular function that is represented as a {@link PyCallable} in the PSI tree like lambda or function.
  * Use {@link #getCallable()} to get it.
  *
- * @author vlan
  */
 public interface PyFunctionType extends PyCallableType {
   /**

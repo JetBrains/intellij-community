@@ -1,32 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
-import com.intellij.CommonBundle;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindSettings;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.usages.api.SearchTarget;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.usages.PsiElementUsageTarget;
-import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageView;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 import static com.intellij.find.actions.FindUsagesKt.findUsages;
 import static com.intellij.find.actions.ResolverKt.allTargets;
@@ -34,8 +22,19 @@ import static com.intellij.find.actions.ResolverKt.findShowUsages;
 
 public class FindUsagesAction extends AnAction {
 
+  /**
+   * @see SearchTargetsDataRule
+   */
+  @Experimental
+  public static final DataKey<Collection<SearchTarget>> SEARCH_TARGETS = DataKey.create("search.targets");
+
   public FindUsagesAction() {
     setInjectedContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   protected boolean toShowDialog() {
@@ -50,15 +49,6 @@ public class FindUsagesAction extends AnAction {
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     DataContext dataContext = e.getDataContext();
-    if (Registry.is("ide.symbol.find.usages")) {
-      findSymbolUsages(project, dataContext);
-    }
-    else {
-      findUsageTargetUsages(project, dataContext);
-    }
-  }
-
-  private void findSymbolUsages(@NotNull Project project, @NotNull DataContext dataContext) {
     findShowUsages(
       project, dataContext, allTargets(dataContext), FindBundle.message("find.usages.ambiguous.title"),
       new UsageVariantHandler() {
@@ -79,29 +69,6 @@ public class FindUsagesAction extends AnAction {
     );
   }
 
-  private void findUsageTargetUsages(@NotNull Project project, @NotNull DataContext dataContext) {
-    UsageTarget[] usageTargets = dataContext.getData(UsageView.USAGE_TARGETS_KEY);
-    if (usageTargets == null) {
-      final Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
-      chooseAmbiguousTargetAndPerform(project, editor, element -> {
-        startFindUsages(element);
-        return false;
-      });
-    }
-    else {
-      UsageTarget target = usageTargets[0];
-      if (target instanceof PsiElementUsageTarget) {
-        PsiElement element = ((PsiElementUsageTarget)target).getElement();
-        if (element != null) {
-          startFindUsages(element);
-        }
-      }
-      else {
-        target.findUsages();
-      }
-    }
-  }
-
   protected void startFindUsages(@NotNull PsiElement element) {
     FindManager.getInstance(element.getProject()).findUsages(element);
   }
@@ -109,27 +76,6 @@ public class FindUsagesAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent event) {
     FindUsagesInFileAction.updateFindUsagesAction(event);
-  }
-
-  static void chooseAmbiguousTargetAndPerform(@NotNull final Project project,
-                                              final Editor editor,
-                                              @NotNull PsiElementProcessor<? super PsiElement> processor) {
-    if (editor == null) {
-      Messages.showMessageDialog(project, FindBundle.message("find.no.usages.at.cursor.error"), CommonBundle.getErrorTitle(),
-                                 Messages.getErrorIcon());
-    }
-    else {
-      int offset = editor.getCaretModel().getOffset();
-      boolean chosen = GotoDeclarationAction.chooseAmbiguousTarget(
-        project, editor, offset, processor, FindBundle.message("find.usages.ambiguous.title"), null
-      );
-      if (!chosen) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (editor.isDisposed() || !EditorActivityManager.getInstance().isVisible(editor)) return;
-          HintManager.getInstance().showErrorHint(editor, FindBundle.message("find.no.usages.at.cursor.error"));
-        }, project.getDisposed());
-      }
-    }
   }
 
   public static class ShowSettingsAndFindUsages extends FindUsagesAction {

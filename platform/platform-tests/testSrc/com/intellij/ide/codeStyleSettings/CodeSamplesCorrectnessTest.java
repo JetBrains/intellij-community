@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.codeStyleSettings;
 
 import com.intellij.lang.Language;
@@ -9,47 +9,55 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import org.assertj.core.description.LazyTextDescription;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
 
 import java.util.*;
 
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 public class CodeSamplesCorrectnessTest extends BasePlatformTestCase {
-  private List<CodeErrorReport> myErrorReports;
-  private SettingsType[] mySettingValues;
+  private List<CodeErrorReport> errorReports;
+  private SettingsType[] settingValues;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myErrorReports = new ArrayList<>();
-    mySettingValues = SettingsType.values();
+    errorReports = new ArrayList<>();
+    settingValues = SettingsType.values();
   }
 
   public void testNonPhysicalFiles() {
-    LanguageCodeStyleSettingsProvider[] providers = LanguageCodeStyleSettingsProvider.EP_NAME.getExtensions();
-    for (LanguageCodeStyleSettingsProvider provider : providers) {
-      if (isSql(provider.getLanguage())) continue; // SQL a is special case, has its own tests
+    for (LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getAllProviders()) {
+      // SQL is a special case, has its own tests
+      if (isSql(provider.getLanguage())) {
+        continue;
+      }
+
       List<CodeSampleInfo> samplesToTest = getSamplesToTest(provider);
       for (CodeSampleInfo sampleInfo : samplesToTest) {
         PsiFile file = provider.createFileFromText(getProject(), sampleInfo.codeSample);
         if (file != null) {
-          assertFalse(provider.getClass() + " must not create a physical file with psi events enabled", file.isPhysical());
+          assertThat(file.isPhysical())
+            .describedAs(provider.getClass() + " must not create a physical file with psi events enabled")
+            .isFalse();
         }
       }
     }
   }
 
   public void testAllCodeStylePreviewSamplesValid() {
-    LanguageCodeStyleSettingsProvider[] providers = LanguageCodeStyleSettingsProvider.EP_NAME.getExtensions();
-    for (LanguageCodeStyleSettingsProvider provider : providers) {
-      if (isSql(provider.getLanguage())) continue; // SQL a is special case, has its own tests
-      List<CodeSampleInfo> samplesToTest = getSamplesToTest(provider);
-      processCodeSamples(provider, samplesToTest);
+    for (LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getAllProviders()) {
+      if (isSql(provider.getLanguage())) {
+        // SQL is a special case, has its own tests
+        continue;
+      }
+
+      processCodeSamples(provider, getSamplesToTest(provider));
     }
 
-    Assert.assertTrue(formReport(myErrorReports), myErrorReports.isEmpty());
+    assertThat(errorReports).describedAs(new LazyTextDescription(() -> formReport(errorReports))).isEmpty();
   }
 
   private void processCodeSamples(@NotNull LanguageCodeStyleSettingsProvider provider, @NotNull List<CodeSampleInfo> samples) {
@@ -58,8 +66,8 @@ public class CodeSamplesCorrectnessTest extends BasePlatformTestCase {
       if (errorReports.isEmpty()) {
         continue;
       }
-      CodeErrorReport report = new CodeErrorReport(sample, provider.getLanguage(), errorReports);
-      myErrorReports.add(report);
+
+      this.errorReports.add(new CodeErrorReport(sample, provider.getLanguage(), errorReports));
     }
   }
 
@@ -67,7 +75,7 @@ public class CodeSamplesCorrectnessTest extends BasePlatformTestCase {
     Set<String> processedSamples = new HashSet<>();
     List<CodeSampleInfo> sampleInfos = new ArrayList<>();
 
-    for (SettingsType setting : mySettingValues) {
+    for (SettingsType setting : settingValues) {
       String sample = provider.getCodeSample(setting);
       if (StringUtil.isEmpty(sample) || processedSamples.contains(sample)) {
         continue;
@@ -80,8 +88,8 @@ public class CodeSamplesCorrectnessTest extends BasePlatformTestCase {
     return sampleInfos;
   }
 
-  @NotNull
-  private Collection<PsiErrorElement> getErrorsForText(@NotNull LanguageCodeStyleSettingsProvider provider, @NotNull String sample) {
+  private @NotNull Collection<PsiErrorElement> getErrorsForText(@NotNull LanguageCodeStyleSettingsProvider provider,
+                                                                @NotNull String sample) {
     PsiFile file = provider.createFileFromText(getProject(), sample);
     if (file == null) {
       Language language = provider.getLanguage();
@@ -93,9 +101,8 @@ public class CodeSamplesCorrectnessTest extends BasePlatformTestCase {
     return PsiTreeUtil.collectElementsOfType(file, PsiErrorElement.class);
   }
 
-  @NotNull
-  private static String formReport(@NotNull List<CodeErrorReport> errorReports) {
-    return StringUtil.join(errorReports, report -> report.createReport(), "\n");
+  private static @NotNull String formReport(@NotNull List<CodeErrorReport> errorReports) {
+    return StringUtil.join(errorReports, CodeErrorReport::createReport, "\n");
   }
 
 
@@ -104,7 +111,7 @@ public class CodeSamplesCorrectnessTest extends BasePlatformTestCase {
   }
 }
 
-class CodeSampleInfo {
+final class CodeSampleInfo {
   public final SettingsType correspondingSetting;
   public final String codeSample;
 
@@ -114,15 +121,15 @@ class CodeSampleInfo {
   }
 }
 
-class CodeErrorReport {
+final class CodeErrorReport {
   private final Language myLang;
   private final String myCode;
   private final SettingsType mySettingsType;
   private final Collection<? extends PsiErrorElement> myErrors;
 
   CodeErrorReport(@NotNull CodeSampleInfo codeSampleInfo,
-                         @NotNull Language lang,
-                         @NotNull Collection<? extends PsiErrorElement> errors) {
+                  @NotNull Language lang,
+                  @NotNull Collection<? extends PsiErrorElement> errors) {
     myLang = lang;
     myCode = codeSampleInfo.codeSample;
     mySettingsType = codeSampleInfo.correspondingSetting;

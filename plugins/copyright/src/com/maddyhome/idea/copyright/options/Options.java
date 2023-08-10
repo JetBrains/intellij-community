@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.maddyhome.idea.copyright.options;
 
@@ -31,22 +17,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- */
 public class Options implements Cloneable {
-  public LanguageOptions getOptions(String name) {
-    LanguageOptions res = options.get(name);
-    if (res == null) {
-      // NOTE: If any change is made here you need to update ConfigTabFactory and UpdateCopyrightFactory too.
-      final FileType fileType = FileTypeManager.getInstance().findFileTypeByName(name);
-      if (fileType != null) {
-        final UpdateCopyrightsProvider provider = CopyrightUpdaters.INSTANCE.forFileType(fileType);
-        if (provider != null) return provider.getDefaultOptions();
-      }
-      res = new LanguageOptions();
+  public LanguageOptions getOptions(String fileTypeName) {
+    LanguageOptions res = options.get(fileTypeName);
+    if (res != null) return res;
+
+    final FileType fileType = FileTypeManager.getInstance().findFileTypeByName(fileTypeName);
+    if (fileType == null) return new LanguageOptions();
+    
+    FileType acceptableFileType = CopyrightUpdaters.INSTANCE.getRegisteredFileTypeFromLanguageHierarchy(fileType);
+    if (acceptableFileType != null) {
+      res = this.options.get(acceptableFileType.getName());
+      if (res != null) return res;
     }
 
-    return res;
+    final UpdateCopyrightsProvider provider = CopyrightUpdaters.INSTANCE.forFileType(fileType);
+    if (provider != null) return provider.getDefaultOptions();
+    
+    return new LanguageOptions();
   }
 
   public LanguageOptions getTemplateOptions() {
@@ -67,13 +55,12 @@ public class Options implements Cloneable {
       LanguageOptions lang = getOptions(name).clone();
       LanguageOptions temp = getTemplateOptions().clone();
       switch (lang.getFileTypeOverride()) {
-        case LanguageOptions.USE_TEMPLATE:
+        case LanguageOptions.USE_TEMPLATE -> {
           temp.setFileLocation(lang.getFileLocation());
           temp.setFileTypeOverride(lang.getFileTypeOverride());
           lang = temp;
-          break;
-        case LanguageOptions.USE_TEXT:
-          break;
+        }
+        case LanguageOptions.USE_TEXT -> { }
       }
 
       return lang;
@@ -122,10 +109,13 @@ public class Options implements Cloneable {
           String name = option.getAttributeValue("name");
           String val = option.getAttributeValue("value");
           if ("body".equals(name)) {
-            //todo opts.setNotice(val);
+            opts.setNotice(val);
           }
           else if ("location".equals(name)) {
-            opts.setFileLocation(Integer.parseInt(val));
+            if(val != null){
+              opts.setFileLocation(Integer.parseInt(val));
+            }
+
           }
         }
 

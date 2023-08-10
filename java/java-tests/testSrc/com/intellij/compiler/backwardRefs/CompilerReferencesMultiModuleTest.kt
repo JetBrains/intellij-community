@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs
 
 import com.intellij.compiler.CompilerReferenceService
@@ -7,9 +7,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.searches.ClassInheritorsSearch
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import org.intellij.lang.annotations.Language
 
@@ -47,13 +50,13 @@ class CompilerReferencesMultiModuleTest : CompilerReferencesTestBase() {
     val foo = (file1 as PsiClassOwner).classes[0]
     assertOneElement(ClassInheritorsSearch.search(foo, foo.useScope, false).findAll())
 
+    val registryValue = Registry.get("compiler.ref.index")
     try {
-      assertTrue(CompilerReferenceService.IS_ENABLED_KEY.asBoolean())
-      CompilerReferenceService.IS_ENABLED_KEY.setValue(false)
+      registryValue.setValue(false)
       assertOneElement(ClassInheritorsSearch.search(foo, foo.useScope, false).findAll())
     }
     finally {
-      CompilerReferenceService.IS_ENABLED_KEY.setValue(true)
+      registryValue.setValue(true)
     }
   }
 
@@ -81,13 +84,16 @@ class CompilerReferencesMultiModuleTest : CompilerReferencesTestBase() {
     rebuildProject()
     assertEmpty(dirtyModules())
     val javaLangSystem = myFixture.javaFacade.findClass("java.lang.System")!!
-    val referentFiles = (CompilerReferenceService.getInstance(myFixture.project) as CompilerReferenceServiceImpl).getReferentFiles(javaLangSystem)!!
+    val referentFiles = (CompilerReferenceService.getInstance(myFixture.project) as CompilerReferenceServiceImpl).getReferentFilesForTests(javaLangSystem)!!
     assertEquals(setOf("Foo.java", "Bar.java"), referentFiles.map { it.name }.toSet())
   }
 
   private fun addTwoModules() {
     moduleA = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "A", myFixture.tempDirFixture.findOrCreateDir("A"))
     moduleB = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "B", myFixture.tempDirFixture.findOrCreateDir("B"))
+
+    IdeaTestUtil.setModuleLanguageLevel(moduleA!!, LanguageLevel.JDK_11)
+    IdeaTestUtil.setModuleLanguageLevel(moduleB!!, LanguageLevel.JDK_11)
     ModuleRootModificationUtil.addDependency(moduleA!!, module)
     ModuleRootModificationUtil.addDependency(moduleB!!, module)
   }

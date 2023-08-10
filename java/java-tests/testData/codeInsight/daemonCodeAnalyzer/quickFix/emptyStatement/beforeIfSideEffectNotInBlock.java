@@ -1,4 +1,4 @@
-// "Extract side effects" "true"
+// "Extract side effects" "true-preview"
 class Test {
   void test(int x) {
     if(x > 0)

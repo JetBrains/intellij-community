@@ -3,7 +3,6 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,13 +10,14 @@ import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Utility class for retina routine
  */
 @ApiStatus.Internal
 public final class DetectRetinaKit {
-  private static final Map<GraphicsDevice, Boolean> devicesToRetinaSupportCacheMap = CollectionFactory.createWeakMap();
+  private static final Map<GraphicsDevice, Boolean> devicesToRetinaSupportCacheMap = new WeakHashMap<>();
 
   @NotNull
   // cannot be static because logging maybe not configured yet

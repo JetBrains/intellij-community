@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
 import com.intellij.ProjectTopics;
@@ -19,18 +19,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public final class StringDescriptorManager {
   private Module myModule;
   private final Map<Pair<Locale, String>, PropertiesFile> myPropertiesFileCache = ContainerUtil.createSoftValueMap();
 
   public StringDescriptorManager(@NotNull Module module) {
     myModule = module;
-    module.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    module.getProject().getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(@NotNull final ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         synchronized(myPropertiesFileCache) {
           myPropertiesFileCache.clear();
         }
@@ -82,7 +80,9 @@ public final class StringDescriptorManager {
     if (propertiesFile == null || !propertiesFile.getContainingFile().isValid()) {
       propertiesFile = PropertiesUtilBase.getPropertiesFile(propFileName, myModule, locale);
       synchronized (myPropertiesFileCache) {
-        myPropertiesFileCache.put(cacheKey, propertiesFile);
+        if (propertiesFile != null) {
+          myPropertiesFileCache.put(cacheKey, propertiesFile);
+        }
       }
     }
 

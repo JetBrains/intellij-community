@@ -24,7 +24,7 @@ public interface BuildEventDispatcher extends Appendable, Closeable, BuildProgre
   /**
    * Registers handler which is invoked once the build process is finished and the build messages are dispatched.
    *
-   * @throws UnsupportedOperationException if underlying implementation doesn't support {@link #invokeOnCompletion}.
+   * @throws UnsupportedOperationException if underlying implementation doesn't support {@code invokeOnCompletion()}.
    */
   default void invokeOnCompletion(@NotNull Consumer<? super Throwable> consumer) {
     throw new UnsupportedOperationException("invokeOnCompletion is not supported by this BuildEventDispatcher");

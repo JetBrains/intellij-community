@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.*;
@@ -17,7 +16,7 @@ public final class GrBinaryExpressionUtil {
     INTEGER_RANK, LONG_RANK, BIG_INTEGER_RANK, BIG_DECIMAL_RANK, DOUBLE_RANK
   };
 
-  public static PsiType getDefaultNumericResultType(PsiType ltype, PsiType rtype, GrOperatorExpression e) {
+  public static PsiType getDefaultNumericResultType(PsiType ltype, PsiType rtype, PsiElement e) {
     int lRank = getTypeRank(ltype);
     int rRank = getTypeRank(rtype);
     return getDefaultNumericResultType(lRank, rRank, e);
@@ -39,19 +38,19 @@ public final class GrBinaryExpressionUtil {
     return 0;
   }
 
-  public static PsiType createDouble(GrOperatorExpression e) {
+  public static PsiType createDouble(PsiElement e) {
     return getTypeByFQName(CommonClassNames.JAVA_LANG_DOUBLE, e);
   }
 
-  public static PsiType createLong(GrOperatorExpression e) {
+  public static PsiType createLong(PsiElement e) {
     return getTypeByFQName(CommonClassNames.JAVA_LANG_LONG, e);
   }
 
-  public static PsiType createInteger(GrOperatorExpression e) {
+  public static PsiType createInteger(PsiElement e) {
     return getTypeByFQName(CommonClassNames.JAVA_LANG_INTEGER, e);
   }
 
-  public static PsiType createBigDecimal(GrOperatorExpression e) {
+  public static PsiType createBigDecimal(PsiElement e) {
     return getTypeByFQName(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL, e);
   }
 
@@ -68,7 +67,7 @@ public final class GrBinaryExpressionUtil {
     return ltype.equalsToText(CommonClassNames.JAVA_LANG_LONG) || rtype.equalsToText(CommonClassNames.JAVA_LANG_LONG);
   }
 
-  public static PsiType getTypeByFQName(String fqn, GrOperatorExpression e) {
+  public static PsiType getTypeByFQName(String fqn, PsiElement e) {
     return createTypeByFQClassName(fqn, e);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,26 +11,32 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface PsiEditorUtil {
+  static PsiEditorUtil getInstance() {
+    return ApplicationManager.getApplication().getService(PsiEditorUtil.class);
+  }
+
   @Nullable
   Editor findEditorByPsiElement(@NotNull PsiElement element);
 
-  @Nullable
-  static Editor findEditor(@NotNull PsiElement element) {
-    return Service.getInstance().findEditorByPsiElement(element);
+  static @Nullable Editor findEditor(@NotNull PsiElement element) {
+    return getInstance().findEditorByPsiElement(element);
   }
 
-  final class Service {
-    public static PsiEditorUtil getInstance() {
-      return ApplicationManager.getApplication().getService(PsiEditorUtil.class);
-    }
-  }
-
-  @NotNull
-  static PsiFile getPsiFile(Editor editor) {
+  static @NotNull PsiFile getPsiFile(Editor editor) {
     Project project = editor.getProject();
     assert project != null;
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     assert psiFile != null;
     return psiFile;
+  }
+
+  /**
+   * @deprecated use {@link PsiEditorUtil#getInstance()} instead
+   */
+  @Deprecated(forRemoval = true)
+  final class Service {
+    public static PsiEditorUtil getInstance() {
+      return PsiEditorUtil.getInstance();
+    }
   }
 }

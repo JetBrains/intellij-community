@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.newProject.steps;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,22 +26,30 @@ import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   private final List<ActionListener> myChangedListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance(PythonSdkChooserCombo.class);
-  @Nullable private String myNewProjectPath;
 
+  public PythonSdkChooserCombo(@Nullable final Project project,
+                               @Nullable final Module module,
+                               @NotNull List<? extends Sdk> sdks,
+                               @NotNull final Condition<? super Sdk> acceptableSdkCondition) {
+    this(project, module, sdks, null, acceptableSdkCondition);
+  }
+
+  /**
+   * @deprecated the value of the field corresponding to {@code newProjectPath} is not used anywhere internally; use
+   * {@link #PythonSdkChooserCombo(Project, Module, List, Condition)} instead.
+   */
   @SuppressWarnings("unchecked")
+  @Deprecated(forRemoval = true)
   public PythonSdkChooserCombo(@Nullable final Project project,
                                @Nullable final Module module,
                                @NotNull List<? extends Sdk> sdks,
                                @Nullable String newProjectPath,
                                @NotNull final Condition<? super Sdk> acceptableSdkCondition) {
     super(new ComboBox<>());
-    myNewProjectPath = newProjectPath;
     final Sdk initialSelection = ContainerUtil.find(sdks, acceptableSdkCondition);
     final JComboBox comboBox = getComboBox();
     comboBox.setModel(new CollectionComboBoxModel(sdks, initialSelection));
@@ -60,7 +68,7 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
         updateTooltip();
       }
     });
-    new ComboboxSpeedSearch(comboBox);
+    ComboboxSpeedSearch.installOn(comboBox);
     updateTooltip();
   }
 
@@ -105,9 +113,5 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   @SuppressWarnings("UnusedDeclaration")
   public void addChangedListener(ActionListener listener) {
     myChangedListeners.add(listener);
-  }
-
-  public void setNewProjectPath(@Nullable String newProjectPath) {
-    myNewProjectPath = newProjectPath;
   }
 }

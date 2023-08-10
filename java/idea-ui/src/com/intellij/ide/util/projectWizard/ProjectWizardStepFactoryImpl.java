@@ -73,7 +73,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
         final Sdk newProjectJdk = AbstractProjectWizard.getProjectSdkByDefault(wizardContext);
         if (newProjectJdk == null) return true;
         final ProjectBuilder projectBuilder = wizardContext.getProjectBuilder();
-        return projectBuilder != null && !projectBuilder.isSuitableSdk(newProjectJdk);
+        return projectBuilder != null && !projectBuilder.isSuitableSdkType(newProjectJdk.getSdkType());
       }
     };
     wizardContext.putUserData(PROJECT_JDK_STEP_KEY, projectSdkStep);

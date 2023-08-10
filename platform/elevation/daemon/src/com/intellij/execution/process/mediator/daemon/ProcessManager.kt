@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.mediator.daemon
 
 import com.google.protobuf.ByteString
@@ -8,49 +8,52 @@ import com.intellij.execution.process.mediator.daemon.FdConstants.STDOUT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.future.await
 import java.io.Closeable
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 typealias Pid = Long
 
-internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable, CoroutineScope by coroutineScope {
+internal class ProcessManager : Closeable {
+  private val handleIdCounter = AtomicLong()
   private val handleMap = ConcurrentHashMap<Pid, Handle>()
-  private val job = Job(coroutineContext[Job])
 
-  suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
-                            inFile: File?, outFile: File?, errFile: File?): Pid {
-    val completion = CompletableDeferred<Int>(job)
-    completion.ensureActive()
-    try {
-      val processBuilder = ProcessBuilder().apply {
-        command(command)
-        directory(workingDir)
-        environment().run {
-          clear()
-          putAll(environVars)
-        }
-        inFile?.let { redirectInput(it) }
-        outFile?.let { redirectOutput(it) }
-        errFile?.let { redirectError(it) }
+  fun openHandle(coroutineScope: CoroutineScope): Handle {
+    val handleId = handleIdCounter.incrementAndGet()
+    return Handle(handleId, coroutineScope).also { handle ->
+      handleMap[handleId] = handle
+      handle.lifetimeJob.invokeOnCompletion {
+        handleMap.remove(handleId)  // may not be there when called from ProcessManager.close()
       }
-
-      val process = withContext(Dispatchers.IO) {
-        @Suppress("BlockingMethodInNonBlockingContext")
-        processBuilder.start()
-      }
-
-      val handle = Handle(process, completion)
-      return registerHandle(handle)
-    }
-    catch (e: Throwable) {
-      completion.cancel("Failed to create process", e)
-      throw e
     }
   }
 
-  fun destroyProcess(pid: Pid, force: Boolean, destroyGroup: Boolean) {
-    val handle = getHandle(pid)
+  suspend fun createProcess(handleId: Long,
+                            command: List<String>, workingDir: File, environVars: Map<String, String>,
+                            inFile: File?, outFile: File?, errFile: File?, redirectErrorStream: Boolean): Pid {
+    val handle = getHandle(handleId)
+
+    val processBuilder = ProcessBuilder().apply {
+      command(command)
+      directory(workingDir)
+      environment().run {
+        clear()
+        putAll(environVars)
+      }
+      inFile?.let { redirectInput(it) }
+      outFile?.let { redirectOutput(it) }
+      errFile?.let { redirectError(it) }
+      redirectErrorStream(redirectErrorStream)
+    }
+    val process = handle.startProcess(processBuilder)
+
+    return process.pid()
+  }
+
+  fun destroyProcess(handleId: Long, force: Boolean, destroyGroup: Boolean) {
+    val handle = getHandle(handleId)
     val process = handle.process
     val processHandle = process.toHandle()
     if (destroyGroup) {
@@ -77,25 +80,23 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable, Corou
     }
   }
 
-  suspend fun awaitTermination(pid: Pid): Int {
-    val handle = getHandle(pid)
+  suspend fun awaitTermination(handleId: Long): Int {
+    val handle = getHandle(handleId)
     val process = handle.process
 
-    handle.completion.await()
-
-    return process.exitValue()
+    return process.onExit().await().exitValue()
   }
 
-  fun readStream(pid: Pid, fd: Int): Flow<ByteString> {
-    val handle = getHandle(pid)
+  fun readStream(handleId: Long, fd: Int): Flow<ByteString> {
+    val handle = getHandle(handleId)
     val process = handle.process
     val inputStream = when (fd) {
       STDOUT -> process.inputStream
       STDERR -> process.errorStream
-      else -> throw IllegalArgumentException("Unknown process output FD $fd for PID $pid")
+      else -> throw IllegalArgumentException("Unknown process output FD $fd for PID $handleId")
     }
     val buffer = ByteArray(8192)
-    @Suppress("BlockingMethodInNonBlockingContext", "EXPERIMENTAL_API_USAGE")  // note the .flowOn(Dispatchers.IO) below
+    @Suppress("EXPERIMENTAL_API_USAGE")  // note the .flowOn(Dispatchers.IO) below
     return flow<ByteString> {
       while (true) {
         val n = inputStream.read(buffer)
@@ -108,17 +109,20 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable, Corou
     }.flowOn(Dispatchers.IO)
   }
 
-  suspend fun writeStream(pid: Pid, fd: Int, chunkFlow: Flow<ByteString>, ackChannel: SendChannel<Unit>?) {
-    val handle = getHandle(pid)
+  suspend fun writeStream(handleId: Long, fd: Int, chunkFlow: Flow<ByteString>, ackChannel: SendChannel<Unit>?) {
+    val handle = getHandle(handleId)
     val process = handle.process
     val outputStream = when (fd) {
       STDIN -> process.outputStream
-      else -> throw IllegalArgumentException("Unknown process input FD $fd for PID $pid")
+      else -> throw IllegalArgumentException("Unknown process input FD $fd for PID $handleId")
     }
-    @Suppress("BlockingMethodInNonBlockingContext")
     withContext(Dispatchers.IO) {
       outputStream.use { outputStream ->
-        handle.cancelJobOnCompletion(currentCoroutineContext()[Job]!!)
+        with(currentCoroutineContext()) {
+          process.onExit().whenComplete { _, _ ->
+            job.cancel("Process exited")
+          }
+        }
         @Suppress("EXPERIMENTAL_API_USAGE")
         chunkFlow.onCompletion {
           ackChannel?.close(it)
@@ -132,59 +136,40 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable, Corou
     }
   }
 
-  fun release(pid: Pid) {
-    unregisterHandle(pid).release()
-  }
-
-  private fun registerHandle(handle: Handle): Pid {
-    val pid = handle.pid
-    handleMap.putIfAbsent(pid, handle).also { previous ->
-      check(previous == null) { "Duplicate PID $pid" }
-    }
-    return pid
-  }
-
-  private fun getHandle(pid: Pid): Handle {
-    val handle = handleMap[pid]
-    return requireNotNull(handle) { "Unknown PID $pid" }
-  }
-
-  private fun unregisterHandle(pid: Pid): Handle {
-    val handle = handleMap.remove(pid)
-    return requireNotNull(handle) { "Unknown PID $pid" }
+  private fun getHandle(handleId: Long): Handle {
+    val handle = handleMap[handleId]
+    return requireNotNull(handle) { "Unknown handle ID $handleId" }
   }
 
   override fun close() {
-    job.cancel("closed")
     while (true) {
-      val pid = handleMap.keys.firstOrNull() ?: break
-      handleMap.remove(pid)?.release()
+      val handleId = handleMap.keys.firstOrNull() ?: break
+      val handle = handleMap.remove(handleId) ?: continue
+      handle.lifetimeJob.cancel("closed")
     }
   }
 
-  private data class Handle(
-    val process: Process,
-    val completion: CompletableDeferred<Int>,
-  ) {
-    val pid get() = process.pid()
-
-    init {
-      process.onExit().whenComplete { p, _ ->
-        completion.complete(p.exitValue())
-      }
+  class Handle(val handleId: Long, coroutineScope: CoroutineScope) {
+    val lifetimeJob: Job = Job(coroutineScope.coroutineContext.job).also {
+      it.ensureActive()
     }
 
-    fun cancelJobOnCompletion(job: Job) {
-      completion.invokeOnCompletion { cause ->
-        job.cancel(cause as? CancellationException ?: CancellationException("Process exited", cause))
-      }.also { disposableHandle ->
-        job.invokeOnCompletion { disposableHandle.dispose() }
-      }
-    }
+    val process: Process
+      get() = checkNotNull(_process) { "Process has not been created yet" }
 
-    fun release() {
-      completion.cancel("process released")
-      process.destroy()  // TODO should we really destroy it?
+    @Volatile
+    private var _process: Process? = null
+
+    suspend fun startProcess(processBuilder: ProcessBuilder): Process {
+      check(_process == null) { "Process has already been initialized" }
+      withContext(Dispatchers.IO) {
+        synchronized(this) {
+          check(_process == null) { "Process has already been initialized" }
+          lifetimeJob.ensureActive()
+          _process = processBuilder.start()
+        }
+      }
+      return process
     }
   }
 }

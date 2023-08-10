@@ -9,7 +9,8 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.codeWithMe.ClientId;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -67,7 +68,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
                                                                   int offset, boolean fullMatch, boolean searchInDescription) {
     if (offset > editor.getDocument().getTextLength()) {
       LOG.error("Cannot filter templates, index out of bounds. Offset: " + offset,
-                AttachmentFactory.createAttachment(editor.getDocument()));
+                CoreAttachmentFactory.createAttachment(editor.getDocument()));
     }
     CharSequence documentText = editor.getDocument().getCharsSequence().subSequence(0, offset);
 
@@ -88,6 +89,11 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
         }
       }
       else {
+        if (!ClientId.isCurrentlyUnderLocalId() && prefixWithoutDots.isEmpty()) {
+          matchingTemplates.put(template, prefixWithoutDots);
+          continue;
+        }
+
         for (int i = templateKey.length(); i > 0; i--) {
           ProgressManager.checkCanceled();
           String prefix = templateKey.substring(0, i);

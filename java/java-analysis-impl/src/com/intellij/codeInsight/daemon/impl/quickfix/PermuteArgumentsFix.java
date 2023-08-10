@@ -1,20 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
@@ -25,57 +23,38 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public final class PermuteArgumentsFix implements IntentionAction, HighPriorityAction {
+public final class PermuteArgumentsFix extends PsiUpdateModCommandAction<PsiCall> {
   private static final Logger LOG = Logger.getInstance(PermuteArgumentsFix.class);
-  private final PsiCall myCall;
   private final PsiCall myPermutation;
 
   private PermuteArgumentsFix(@NotNull PsiCall call, @NotNull PsiCall permutation) {
-    myCall = call;
+    super(call);
     myPermutation = permutation;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-
-  @Override
-  @NotNull
-  public String getText() {
-    return QuickFixBundle.message("permute.arguments");
-  }
-
-  @Override
-  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new PermuteArgumentsFix(PsiTreeUtil.findSameElementInCopy(myCall, target), myPermutation);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return getText();
+    return QuickFixBundle.message("permute.arguments");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return !project.isDisposed() && myCall.isValid() && BaseIntentionAction.canModify(myCall);
+  protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiCall element) {
+    return Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.HIGH);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    Objects.requireNonNull(myCall.getArgumentList()).replace(Objects.requireNonNull(myPermutation.getArgumentList()));
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiCall call, @NotNull ModPsiUpdater updater) {
+    Objects.requireNonNull(call.getArgumentList()).replace(Objects.requireNonNull(myPermutation.getArgumentList()));
   }
 
-  public static boolean registerFix(HighlightInfo info, PsiCall callExpression, final CandidateInfo[] candidates, final TextRange fixRange) {
+  public static boolean registerFix(@NotNull HighlightInfo.Builder info, PsiCall callExpression, final CandidateInfo[] candidates, final TextRange fixRange) {
     PsiExpression[] expressions = Objects.requireNonNull(callExpression.getArgumentList()).getExpressions();
     if (expressions.length < 2) return false;
     List<PsiCall> permutations = new ArrayList<>();
 
     for (CandidateInfo candidate : candidates) {
-      if (candidate instanceof MethodCandidateInfo) {
-        MethodCandidateInfo methodCandidate = (MethodCandidateInfo)candidate;
+      if (candidate instanceof MethodCandidateInfo methodCandidate) {
         PsiMethod method = methodCandidate.getElement();
         PsiSubstitutor substitutor = methodCandidate.getSubstitutor();
 
@@ -94,8 +73,9 @@ public final class PermuteArgumentsFix implements IntentionAction, HighPriorityA
         }
 
         try {
-          registerSwapFixes(expressions, callExpression, permutations, methodCandidate, incompatibilitiesCount, minIncompatibleIndex, maxIncompatibleIndex);
-          registerShiftFixes(expressions, callExpression, permutations, methodCandidate, minIncompatibleIndex, maxIncompatibleIndex);
+          PsiExpression[] clonedExpressions = expressions.clone();
+          registerSwapFixes(clonedExpressions, callExpression, permutations, methodCandidate, incompatibilitiesCount, minIncompatibleIndex, maxIncompatibleIndex);
+          registerShiftFixes(clonedExpressions, callExpression, permutations, methodCandidate, minIncompatibleIndex, maxIncompatibleIndex);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -104,7 +84,7 @@ public final class PermuteArgumentsFix implements IntentionAction, HighPriorityA
     }
     if (permutations.size() == 1) {
       PermuteArgumentsFix fix = new PermuteArgumentsFix(callExpression, permutations.get(0));
-      QuickFixAction.registerQuickFixAction(info, fixRange, fix);
+      info.registerFix(fix, null, null, fixRange, null);
       return true;
     }
 

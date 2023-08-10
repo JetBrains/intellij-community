@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
@@ -9,7 +10,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.MutableCollectionComboBoxModel;
 import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,14 +51,7 @@ public class BrowserSelector {
     //noinspection unchecked
     myBrowserComboWithBrowse.getComboBox().setRenderer(
       SimpleListCellRenderer.<WebBrowser>create((label, value, index) -> {
-        Icon baseIcon;
-        if (value == null) {
-          WebBrowser firstBrowser = WebBrowserManager.getInstance().getFirstActiveBrowser();
-          baseIcon = firstBrowser == null ? PlatformIcons.WEB_ICON : firstBrowser.getIcon();
-        }
-        else {
-          baseIcon = value.getIcon();
-        }
+        Icon baseIcon = value != null ? value.getIcon() : AllIcons.General.Web;
         label.setIcon(myBrowserComboWithBrowse.isEnabled() ? baseIcon : IconLoader.getDisabledIcon(baseIcon));
         label.setText(value != null ? value.getName() : IdeBundle.message("default"));
       }));

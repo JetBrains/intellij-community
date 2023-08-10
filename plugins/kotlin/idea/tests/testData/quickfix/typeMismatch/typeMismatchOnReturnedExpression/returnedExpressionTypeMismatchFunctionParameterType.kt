@@ -1,0 +1,9 @@
+// "Change parameter 'f' type of function 'foo' to '() -> String'" "true"
+fun foo(f: () -> Int) {
+    foo {
+        ""<caret>
+    }
+}
+/* IGNORE_FIR */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForEnclosing

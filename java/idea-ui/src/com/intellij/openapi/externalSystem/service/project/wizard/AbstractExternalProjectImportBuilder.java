@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.JavaUiBundle;
@@ -50,8 +50,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.refres
 
 /**
  * GoF builder for external system backed projects.
- *
- * @author Denis Zhdanov
  */
 public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImportFromExternalSystemControl>
   extends ProjectImportBuilder<DataNode<ProjectData>>
@@ -64,18 +62,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   @NotNull private final ProjectSystemId myExternalSystemId;
 
   private DataNode<ProjectData> myExternalProjectNode;
-
-  /**
-   * @deprecated use {@link AbstractExternalProjectImportBuilder#AbstractExternalProjectImportBuilder(ProjectDataManager, NotNullFactory, ProjectSystemId)}
-   */
-  @Deprecated
-  public AbstractExternalProjectImportBuilder(@NotNull ProjectDataManager projectDataManager,
-                                              @NotNull C control,
-                                              @NotNull ProjectSystemId externalSystemId) {
-    myProjectDataManager = projectDataManager;
-    myControlValue = NotNullLazyValue.createValue(() -> control);
-    myExternalSystemId = externalSystemId;
-  }
 
   public AbstractExternalProjectImportBuilder(@NotNull ProjectDataManager projectDataManager,
                                               @NotNull NotNullFactory<? extends C> controlFactory,
@@ -186,7 +172,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
 
     //noinspection unchecked
-    Set<ExternalProjectSettings> projects = new HashSet<>(systemSettings.getLinkedProjectsSettings());
+    Set<ExternalProjectSettings> projects = new HashSet<ExternalProjectSettings>(systemSettings.getLinkedProjectsSettings());
     // add current importing project settings to linked projects settings or replace if similar already exist
     projects.remove(projectSettings);
     projects.add(projectSettings);
@@ -221,7 +207,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
                               boolean isFromUI,
                               final List<Module> modules,
                               IdeModifiableModelsProvider modelsProvider, final ExternalProjectSettings projectSettings) {
-    myProjectDataManager.importData(externalProjectNode, project, modelsProvider, true);
+    myProjectDataManager.importData(externalProjectNode, project, modelsProvider);
     myExternalProjectNode = null;
 
     // resolve dependencies
@@ -233,7 +219,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     }
     else {
       // execute when current dialog is closed
-      invokeLater(project, ModalityState.NON_MODAL, () -> {
+      invokeLater(project, ModalityState.nonModal(), () -> {
         final Module[] committedModules = ModuleManager.getInstance(project).getModules();
         if (Arrays.asList(committedModules).containsAll(modules)) {
           resolveDependenciesTask.run();
@@ -250,7 +236,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         if (externalProject == null) {
           return;
         }
-        ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project, false);
+        ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project);
       }
     };
   }
@@ -341,7 +327,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, myExternalSystemId);
     Object systemStateToRestore = null;
     if (systemSettings instanceof PersistentStateComponent) {
-      systemStateToRestore = ((PersistentStateComponent)systemSettings).getState();
+      systemStateToRestore = ((PersistentStateComponent<?>)systemSettings).getState();
     }
     systemSettings.copyFrom(getControl().getSystemSettings());
     Collection projectSettingsToRestore = systemSettings.getLinkedProjectsSettings();

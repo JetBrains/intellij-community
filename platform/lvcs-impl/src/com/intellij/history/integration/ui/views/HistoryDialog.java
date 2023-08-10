@@ -12,6 +12,7 @@ import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
+import com.intellij.history.integration.ui.models.RevisionItem;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.icons.AllIcons;
@@ -53,6 +54,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
@@ -62,15 +64,17 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   private static final int UPDATE_DIFFS = 1;
   private static final int UPDATE_REVS = UPDATE_DIFFS + 1;
 
+  @NotNull
   protected final Project myProject;
   protected final IdeaGateway myGateway;
   protected final VirtualFile myFile;
   private Splitter mySplitter;
-  private RevisionsList myRevisionsList;
+  protected RevisionsList myRevisionsList;
   private JBLoadingPanel myDiffView;
   private ActionToolbar myToolBar;
+  protected boolean myForceUpdateDiff;
 
-  private T myModel;
+  protected T myModel;
 
   private MergingUpdateQueue myUpdateQueue;
   private boolean isUpdating;
@@ -128,6 +132,10 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       }
       return () -> myRevisionsList.updateData(myModel);
     });
+  }
+
+  protected List<RevisionItem> getRevisions() {
+    return myModel == null ? Collections.emptyList() : myModel.getRevisions();
   }
 
   protected abstract T createModel(LocalHistoryFacade vcs);
@@ -189,12 +197,14 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         scheduleDiffUpdate(Couple.of(first, last));
       }
     });
-    addPopupMenuToComponent(myRevisionsList.getComponent(), actions);
+    myToolBar.setTargetComponent(myRevisionsList.getComponent());
+    PopupHandler.installPopupMenu(myRevisionsList.getComponent(), actions, "LvcsRevisionsListPopup");
 
 
     JPanel result = new JPanel(new BorderLayout());
     JPanel toolBarPanel = new JPanel(new BorderLayout());
-    toolBarPanel.add(myToolBar.getComponent());
+    toolBarPanel.add(myToolBar.getComponent(), BorderLayout.WEST);
+    addExtraToolbar(toolBarPanel);
     if (prefToolBarSize != null) {
       toolBarPanel.setPreferredSize(new Dimension(1, prefToolBarSize.height));
     }
@@ -204,6 +214,9 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     result.add(scrollPane, BorderLayout.CENTER);
 
     return result;
+  }
+
+  protected void addExtraToolbar(JPanel toolBarPanel) {
   }
 
   private static ActionToolbar createRevisionsToolbar(ActionGroup actions) {
@@ -220,31 +233,13 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     return result;
   }
 
-  private static void addPopupMenuToComponent(JComponent comp, final ActionGroup ag) {
-    comp.addMouseListener(new PopupHandler() {
-      @Override
-      public void invokePopup(Component c, int x, int y) {
-        ActionPopupMenu m = createPopupMenu(ag);
-        m.getComponent().show(c, x, y);
-      }
-    });
-  }
-
-  private static ActionPopupMenu createPopupMenu(ActionGroup ag) {
-    ActionManager m = ActionManager.getInstance();
-    return m.createActionPopupMenu(ActionPlaces.UNKNOWN, ag);
-  }
-
   private void scheduleDiffUpdate(@Nullable final Couple<Integer> toSelect) {
     doScheduleUpdate(UPDATE_DIFFS, () -> {
       synchronized (myModel) {
-        if (toSelect == null) {
-          myModel.resetSelection();
-        }
-        else {
-          myModel.selectRevisions(toSelect.first, toSelect.second);
-        }
-        return doUpdateDiffs(myModel);
+        boolean changed = toSelect == null ? myModel.resetSelection() : myModel.selectRevisions(toSelect.first, toSelect.second);
+        changed |= myForceUpdateDiff;
+        myForceUpdateDiff = false;
+        return changed ? doUpdateDiffs(myModel) : EmptyRunnable.getInstance();
       }
     });
   }
@@ -252,7 +247,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   private void doScheduleUpdate(int id, final Computable<? extends Runnable> update) {
     myUpdateQueue.queue(new Update(this, id) {
       @Override
-      public boolean canEat(Update update1) {
+      public boolean canEat(@NotNull Update update1) {
         return getPriority() >= update1.getPriority();
       }
 
@@ -441,7 +436,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       }
       else {
         Path file = Paths.get(p.getFileName());
-        PatchWriter.writePatches(myProject, file, base, patches, null, p.getEncoding(), false);
+        PatchWriter.writePatches(myProject, file, base, patches, null, p.getEncoding());
         showNotification(message("message.patch.created"));
         RevealFileAction.openFile(file);
       }
@@ -479,6 +474,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
 
     protected abstract void doPerform(T model);
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {

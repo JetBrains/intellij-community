@@ -1,9 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors.pages;
 
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.process.ConsoleHighlighter;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -13,6 +16,8 @@ import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
+import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
+import com.intellij.ui.EditorCustomization;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,40 +27,43 @@ import java.util.Map;
 /**
  * @author oleg, Roman.Chernyatchik
  */
-public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
+public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayPrioritySortable, EditorCustomization {
   @SuppressWarnings("SpellCheckingInspection")
   private static final String DEMO_TEXT =
-    "<stdsys>C:\\command.com</stdsys>\n" +
-    "-<stdout> C:></stdout>\n" +
-    "-<stdin> help</stdin>\n" +
-    "<stderr>Bad command or file name</stderr>\n" +
-    "\n" +
-    "<logError>Log error</logError>\n" +
-    "<logWarning>Log warning</logWarning>\n" +
-    "<logInfo>Log info</logInfo>\n" +
-    "<logVerbose>Log verbose</logVerbose>\n" +
-    "<logDebug>Log debug</logDebug>\n" +
-    "<logExpired>An expired log entry</logExpired>\n" +
-    "\n" +
-    "# Process output highlighted using ANSI colors codes\n" +
-    "<black>ANSI: black</black>\n" +
-    "<red>ANSI: red</red>\n" +
-    "<green>ANSI: green</green>\n" +
-    "<yellow>ANSI: yellow</yellow>\n" +
-    "<blue>ANSI: blue</blue>\n" +
-    "<magenta>ANSI: magenta</magenta>\n" +
-    "<cyan>ANSI: cyan</cyan>\n" +
-    "<gray>ANSI: gray</gray>\n" +
-    "<darkGray>ANSI: dark gray</darkGray>\n" +
-    "<redBright>ANSI: bright red</redBright>\n" +
-    "<greenBright>ANSI: bright green</greenBright>\n" +
-    "<yellowBright>ANSI: bright yellow</yellowBright>\n" +
-    "<blueBright>ANSI: bright blue</blueBright>\n" +
-    "<magentaBright>ANSI: bright magenta</magentaBright>\n" +
-    "<cyanBright>ANSI: bright cyan</cyanBright>\n" +
-    "<white>ANSI: white</white>\n" +
-    "\n" +
-    "<stdsys>Process finished with exit code 1</stdsys>\n";
+    """
+      <stdsys>C:\\command.com</stdsys>
+      -<stdout> C:></stdout>
+      -<stdin> help</stdin>
+      <stderr>Bad command or file name</stderr>
+
+      <logError>Log error</logError>
+      <logWarning>Log warning</logWarning>
+      <logInfo>Log info</logInfo>
+      <logVerbose>Log verbose</logVerbose>
+      <logDebug>Log debug</logDebug>
+      <logExpired>An expired log entry</logExpired>
+
+      # Process output highlighted using ANSI colors codes
+      <black>ANSI: black</black>
+      <red>ANSI: red</red>
+      <green>ANSI: green</green>
+      <yellow>ANSI: yellow</yellow>
+      <blue>ANSI: blue</blue>
+      <magenta>ANSI: magenta</magenta>
+      <cyan>ANSI: cyan</cyan>
+      <gray>ANSI: gray</gray>
+      <darkGray>ANSI: dark gray</darkGray>
+      <redBright>ANSI: bright red</redBright>
+      <greenBright>ANSI: bright green</greenBright>
+      <yellowBright>ANSI: bright yellow</yellowBright>
+      <blueBright>ANSI: bright blue</blueBright>
+      <magentaBright>ANSI: bright magenta</magentaBright>
+      <cyanBright>ANSI: bright cyan</cyanBright>
+      <white>ANSI: white</white>
+
+      <terminalCommandToRunUsingIDE>git log</terminalCommandToRunUsingIDE>
+      <stdsys>Process finished with exit code 1</stdsys>
+      """;
 
   private static final AttributesDescriptor[] ATTRS = {
     new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.stdout"), ConsoleViewContentType.NORMAL_OUTPUT_KEY),
@@ -77,16 +85,19 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.blue"), ConsoleHighlighter.BLUE),
     new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.magenta"), ConsoleHighlighter.MAGENTA),
     new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.cyan"), ConsoleHighlighter.CYAN),
-    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.gray"), ConsoleHighlighter.GRAY),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.white"), ConsoleHighlighter.GRAY),
 
-    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.darkGray"), ConsoleHighlighter.DARKGRAY),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.blackBright"), ConsoleHighlighter.DARKGRAY),
     new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.redBright"), ConsoleHighlighter.RED_BRIGHT),
     new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.greenBright"), ConsoleHighlighter.GREEN_BRIGHT),
     new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.yellowBright"), ConsoleHighlighter.YELLOW_BRIGHT),
     new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.blueBright"), ConsoleHighlighter.BLUE_BRIGHT),
     new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.magentaBright"), ConsoleHighlighter.MAGENTA_BRIGHT),
     new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.cyanBright"), ConsoleHighlighter.CYAN_BRIGHT),
-    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.white"), ConsoleHighlighter.WHITE),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.whiteBright"), ConsoleHighlighter.WHITE),
+
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.command.to.run.using.ide"),
+                             JBTerminalSystemSettingsProviderBase.COMMAND_TO_RUN_USING_IDE_KEY),
   };
 
   private static final Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<>();
@@ -119,6 +130,8 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("magentaBright", ConsoleHighlighter.MAGENTA_BRIGHT);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("cyanBright", ConsoleHighlighter.CYAN_BRIGHT);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("white", ConsoleHighlighter.WHITE);
+
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("terminalCommandToRunUsingIDE", JBTerminalSystemSettingsProviderBase.COMMAND_TO_RUN_USING_IDE_KEY);
   }
 
   private static final ColorDescriptor[] COLORS = {
@@ -163,5 +176,15 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
   @Override
   public DisplayPriority getPriority() {
     return DisplayPriority.COMMON_SETTINGS;
+  }
+
+  @Override
+  public @NotNull EditorColorsScheme customizeColorScheme(@NotNull EditorColorsScheme scheme) {
+    return ConsoleViewUtil.updateConsoleColorScheme(scheme);
+  }
+
+  @Override
+  public void customize(@NotNull EditorEx editor) {
+    editor.getSettings().setCaretRowShown(false);
   }
 }

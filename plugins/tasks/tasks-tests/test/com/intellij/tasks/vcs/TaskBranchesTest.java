@@ -2,6 +2,7 @@
 package com.intellij.tasks.vcs;
 
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsTaskHandler;
@@ -29,12 +30,24 @@ public abstract class TaskBranchesTest extends HeavyPlatformTestCase {
   private TaskManagerImpl myTaskManager;
 
   @Override
+  protected boolean runInDispatchThread() {
+    return false;
+  }
+
+  @Override
   protected void tearDown() throws Exception {
     new RunAll(
       () -> ChangeListManagerImpl.getInstanceImpl(myProject).forceStopInTestMode(),
       () -> ChangeListManagerImpl.getInstanceImpl(myProject).waitEverythingDoneInTestMode(),
       () -> myTaskManager = null,
-      () -> super.tearDown()
+      () -> ApplicationManager.getApplication().invokeAndWait(() -> {
+        try {
+          super.tearDown();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      })
     ).run();
   }
 
@@ -62,7 +75,7 @@ public abstract class TaskBranchesTest extends HeavyPlatformTestCase {
     assertEquals(2, getNumberOfBranches(repository));
     assertEquals(first, repository.getCurrentBranchName());
 
-    handler.switchToTask(defaultInfo, null);
+    ApplicationManager.getApplication().invokeAndWait(() -> handler.switchToTask(defaultInfo, null));
     repository.update();
     assertEquals(defaultBranchName, repository.getCurrentBranchName());
 
@@ -71,9 +84,9 @@ public abstract class TaskBranchesTest extends HeavyPlatformTestCase {
     repository.update();
     assertEquals(3, getNumberOfBranches(repository));
     assertEquals(second, repository.getCurrentBranchName());
-    handler.switchToTask(firstInfo, null);
+    ApplicationManager.getApplication().invokeAndWait(() -> handler.switchToTask(firstInfo, null));
     createAndCommitChanges(repository);
-    handler.closeTask(secondInfo, firstInfo);
+    ApplicationManager.getApplication().invokeAndWait(() -> handler.closeTask(secondInfo, firstInfo));
     repository.update();
     assertEquals(2, getNumberOfBranches(repository));
   }
@@ -93,24 +106,25 @@ public abstract class TaskBranchesTest extends HeavyPlatformTestCase {
 
     assertEquals(2, defaultTask.getBranches().size());
 
-    myTaskManager.activateTask(defaultTask, false);
+    ApplicationManager.getApplication().invokeAndWait(() -> myTaskManager.activateTask(defaultTask, false));
 
     Repository repository = repositories.get(0);
     assertEquals(defaultBranchName, repository.getCurrentBranchName());
 
-    foo = myTaskManager.createLocalTask("foo");
-    localTask = myTaskManager.activateTask(foo, false);
-    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask), null);
+    LocalTaskImpl foo2 = myTaskManager.createLocalTask("foo");
+    LocalTask localTask2 = myTaskManager.activateTask(foo2, false);
+    ApplicationManager.getApplication()
+      .invokeAndWait(() -> myTaskManager.createBranch(localTask2, defaultTask, myTaskManager.suggestBranchName(localTask2), null));
     assertEquals("foo", repository.getCurrentBranchName());
     createAndCommitChanges(repository);
 
-    myTaskManager.mergeBranch(localTask);
+    ApplicationManager.getApplication().invokeAndWait(() -> myTaskManager.mergeBranch(localTask2));
     repository.update();
     assertEquals(defaultBranchName, repository.getCurrentBranchName());
     assertEquals(1, getNumberOfBranches(repository));
 
-    myTaskManager.activateTask(defaultTask, false);
-    myTaskManager.activateTask(foo, false);
+    ApplicationManager.getApplication().invokeAndWait(() -> myTaskManager.activateTask(defaultTask, false));
+    ApplicationManager.getApplication().invokeAndWait(() -> myTaskManager.activateTask(foo2, false));
   }
 
   public void testCommit() {
@@ -120,7 +134,7 @@ public abstract class TaskBranchesTest extends HeavyPlatformTestCase {
     final LocalTask localTask = myTaskManager.activateTask(foo, false);
     myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask), null);
     createAndCommitChanges(repository);
-    myTaskManager.mergeBranch(localTask);
+    ApplicationManager.getApplication().invokeAndWait(() -> myTaskManager.mergeBranch(localTask));
     repository.update();
     assertEquals(getDefaultBranchName(), repository.getCurrentBranchName());
     assertEquals(1, getNumberOfBranches(repository));
@@ -130,22 +144,24 @@ public abstract class TaskBranchesTest extends HeavyPlatformTestCase {
     initRepository("foo");
     String defaultBranchName = getDefaultBranchName();
     LocalTaskImpl task = myTaskManager.createLocalTask("foo");
-    OpenTaskDialog dialog = new OpenTaskDialog(getProject(), task);
-    Disposer.register(getTestRootDisposable(), dialog.getDisposable());
-    try {
-      dialog.createTask();
-      assertEquals("foo", myTaskManager.getActiveTask().getSummary());
-      List<BranchInfo> branches = task.getBranches(true);
-      assertEquals(1, branches.size());
-      assertEquals(defaultBranchName, branches.get(0).name);
-      branches = task.getBranches(false);
-      assertEquals(1, branches.size());
-      assertEquals("foo", branches.get(0).name);
-    }
-    finally {
-      dialog.close(DialogWrapper.OK_EXIT_CODE);
-    }
-    UIUtil.dispatchAllInvocationEvents();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      OpenTaskDialog dialog = new OpenTaskDialog(getProject(), task);
+      Disposer.register(getTestRootDisposable(), dialog.getDisposable());
+      try {
+        dialog.createTask();
+        assertEquals("foo", myTaskManager.getActiveTask().getSummary());
+        List<BranchInfo> branches = task.getBranches(true);
+        assertEquals(1, branches.size());
+        assertEquals(defaultBranchName, branches.get(0).name);
+        branches = task.getBranches(false);
+        assertEquals(1, branches.size());
+        assertEquals("foo", branches.get(0).name);
+      }
+      finally {
+        dialog.close(DialogWrapper.OK_EXIT_CODE);
+      }
+      UIUtil.dispatchAllInvocationEvents();
+    });
   }
 
   public void testBranchBloating() {
@@ -186,7 +202,7 @@ public abstract class TaskBranchesTest extends HeavyPlatformTestCase {
     defaultTask.addBranch(info);
     repository.update();
     assertEquals("foo", repository.getCurrentBranchName());
-    myTaskManager.activateTask(defaultTask, false);
+    ApplicationManager.getApplication().invokeAndWait(() -> myTaskManager.activateTask(defaultTask, false));
     repository.update();
     assertEquals(getDefaultBranchName(), repository.getCurrentBranchName());
     // do not re-create "non-existing"

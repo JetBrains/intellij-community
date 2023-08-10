@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -12,8 +12,8 @@ import com.intellij.util.io.BooleanDataDescriptor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
-import gnu.trove.THashMap;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -21,6 +21,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.intellij.psi.JavaTokenType.PLUS;
 
@@ -39,7 +41,7 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
     return inputData -> {
       TokenList tokens = JavaParserUtil.obtainTokens(inputData.getPsiFile());
 
-      TIntArrayList result = new TIntArrayList();
+      IntList result = new IntArrayList();
       for (int i = 0; i < tokens.getTokenCount(); i++) {
         if (tokens.hasType(i, PLUS) &&
             (tokens.hasType(tokens.forwardWhile(i + 1, JavaParserUtil.WS_COMMENTS), ElementType.ALL_LITERALS) !=
@@ -50,8 +52,8 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
 
       if (result.isEmpty()) return Collections.emptyMap();
 
-      THashMap<Boolean, PlusOffsets> resultMap = new THashMap<>();
-      resultMap.put(Boolean.TRUE, new PlusOffsets(result.toNativeArray()));
+      Map<Boolean, PlusOffsets> resultMap = new HashMap<>();
+      resultMap.put(Boolean.TRUE, new PlusOffsets(result.toIntArray()));
       return resultMap;
     };
   }

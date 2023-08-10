@@ -2,13 +2,13 @@
 package com.jetbrains.python.psi;
 
 import com.google.common.collect.Maps;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.model.ModelBranch;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -16,18 +16,21 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.ui.IconManager;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
@@ -47,11 +50,14 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.pyi.PyiStubSuppressor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
@@ -74,20 +80,17 @@ public final class PyUtil {
   /**
    * @see PyUtil#flattenedParensAndTuples
    */
-  protected static List<PyExpression> unfoldParentheses(PyExpression[] targets, List<PyExpression> receiver,
-                                                        boolean unfoldListLiterals, boolean unfoldStarExpressions) {
+  private static List<PyExpression> unfoldParentheses(PyExpression[] targets, List<PyExpression> receiver,
+                                                      boolean unfoldListLiterals, boolean unfoldStarExpressions) {
     // NOTE: this proliferation of instanceofs is not very beautiful. Maybe rewrite using a visitor.
     for (PyExpression exp : targets) {
-      if (exp instanceof PyParenthesizedExpression) {
-        final PyParenthesizedExpression parenExpr = (PyParenthesizedExpression)exp;
+      if (exp instanceof PyParenthesizedExpression parenExpr) {
         unfoldParentheses(new PyExpression[]{parenExpr.getContainedExpression()}, receiver, unfoldListLiterals, unfoldStarExpressions);
       }
-      else if (exp instanceof PyTupleExpression) {
-        final PyTupleExpression tupleExpr = (PyTupleExpression)exp;
+      else if (exp instanceof PyTupleExpression tupleExpr) {
         unfoldParentheses(tupleExpr.getElements(), receiver, unfoldListLiterals, unfoldStarExpressions);
       }
-      else if (exp instanceof PyListLiteralExpression && unfoldListLiterals) {
-        final PyListLiteralExpression listLiteral = (PyListLiteralExpression)exp;
+      else if (exp instanceof PyListLiteralExpression listLiteral && unfoldListLiterals) {
         unfoldParentheses(listLiteral.getElements(), receiver, true, unfoldStarExpressions);
       }
       else if (exp instanceof PyStarExpression && unfoldStarExpressions) {
@@ -131,7 +134,7 @@ public final class PyUtil {
    * @return the representation.
    */
   @NotNull
-  @NonNls
+  @NlsSafe
   public static String getReadableRepr(PsiElement elt, final boolean cutAtEOL) {
     if (elt == null) return "null!";
     ASTNode node = elt.getNode();
@@ -195,9 +198,6 @@ public final class PyUtil {
    */
   public static void addListNode(PsiElement parent, PsiElement newItem, ASTNode beforeThis,
                                  boolean isFirst, boolean isLast, boolean addWhitespace) {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(parent)) {
-      return;
-    }
     ASTNode node = parent.getNode();
     assert node != null;
     ASTNode itemNode = newItem.getNode();
@@ -271,8 +271,7 @@ public final class PyUtil {
       return false;
     }
     final ScopeOwner owner = ScopeUtil.getScopeOwner(target);
-    if (owner instanceof PyFunction) {
-      final PyFunction method = (PyFunction)owner;
+    if (owner instanceof PyFunction method) {
       if (method.getContainingClass() != null) {
         if (method.getStub() != null) {
           return true;
@@ -309,13 +308,11 @@ public final class PyUtil {
     if (condition instanceof PyParenthesizedExpression) {
       return isNameEqualsMain(((PyParenthesizedExpression)condition).getContainedExpression());
     }
-    if (condition instanceof PyBinaryExpression) {
-      PyBinaryExpression binaryExpression = (PyBinaryExpression)condition;
+    if (condition instanceof PyBinaryExpression binaryExpression) {
       if (binaryExpression.getOperator() == PyTokenTypes.OR_KEYWORD) {
         return isNameEqualsMain(binaryExpression.getLeftExpression()) || isNameEqualsMain(binaryExpression.getRightExpression());
       }
-      if (binaryExpression.getRightExpression() instanceof PyStringLiteralExpression) {
-        final PyStringLiteralExpression rhs = (PyStringLiteralExpression) binaryExpression.getRightExpression();
+      if (binaryExpression.getRightExpression() instanceof PyStringLiteralExpression rhs) {
         return binaryExpression.getOperator() == PyTokenTypes.EQEQ &&
                binaryExpression.getLeftExpression().getText().equals(PyNames.NAME) &&
                rhs.getStringValue().equals("__main__");
@@ -380,7 +377,7 @@ public final class PyUtil {
 
   public static boolean isTopLevel(@NotNull PsiElement element) {
     if (element instanceof StubBasedPsiElement) {
-      final StubElement stub = ((StubBasedPsiElement)element).getStub();
+      final StubElement stub = ((StubBasedPsiElement<?>)element).getStub();
       if (stub != null) {
         final StubElement parentStub = stub.getParentStub();
         if (parentStub != null) {
@@ -646,19 +643,19 @@ public final class PyUtil {
    * @param <P>     key type
    */
   @NotNull
-  public static <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @Nullable P param, @NotNull NotNullFunction<P, T> f) {
+  public static <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @Nullable P param, @NotNull Function<P, @NotNull T> f) {
     final T result = getNullableParameterizedCachedValue(element, param, f);
     assert result != null;
     return result;
   }
 
   /**
-   * Same as {@link #getParameterizedCachedValue(PsiElement, Object, NotNullFunction)} but allows nulls.
+   * Same as {@link #getParameterizedCachedValue(PsiElement, Object, Function)} but allows nulls.
    */
   @Nullable
   public static <T, P> T getNullableParameterizedCachedValue(@NotNull PsiElement element,
                                                              @Nullable P param,
-                                                             @NotNull NullableFunction<P, T> f) {
+                                                             @NotNull Function<P, @Nullable T> f) {
     final CachedValuesManager manager = CachedValuesManager.getManager(element.getProject());
     final Map<Optional<P>, Optional<T>> cache = CachedValuesManager.getCachedValue(element, manager.getKeyForClass(f.getClass()), () -> {
       // concurrent hash map is a null-hostile collection
@@ -680,7 +677,7 @@ public final class PyUtil {
    * from the write action, because in this case {@code function} will be executed right in the current thread (presumably EDT)
    * without any progress whatsoever to avoid possible deadlock.
    *
-   * @see ApplicationImpl#runProcessWithProgressSynchronously(Runnable, String, boolean, Project, JComponent, String)
+   * @see com.intellij.openapi.application.impl.ApplicationImpl#runProcessWithProgressSynchronously(Runnable, String, boolean, boolean, Project, JComponent, String)
    */
   public static void runWithProgress(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
                                      boolean modal, boolean canBeCancelled, @NotNull final Consumer<? super ProgressIndicator> function) {
@@ -761,7 +758,8 @@ public final class PyUtil {
   @Nullable
   public static <T> T updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Function<? super Document, ? extends T> func) {
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(anchor.getProject());
-    final Document document = manager.getDocument(anchor.getContainingFile());
+    // manager.getDocument(anchor.getContainingFile()) doesn't work with intention preview
+    final Document document = anchor.getContainingFile().getViewProvider().getDocument();
     if (document != null) {
       manager.doPostponedOperationsAndUnblockDocument(document);
       try {
@@ -823,7 +821,7 @@ public final class PyUtil {
   }
 
   public static boolean isRoot(@NotNull VirtualFile directory, @NotNull Project project) {
-    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
     return Comparing.equal(fileIndex.getClassRootForFile(directory), directory) ||
            Comparing.equal(fileIndex.getContentRootForFile(directory), directory) ||
            Comparing.equal(fileIndex.getSourceRootForFile(directory), directory);
@@ -897,10 +895,9 @@ public final class PyUtil {
    */
   @Nullable
   public static PsiElement turnDirIntoInit(@Nullable PsiElement target) {
-    if (target instanceof PsiDirectory) {
-      final PsiDirectory dir = (PsiDirectory)target;
+    if (target instanceof PsiDirectory dir) {
       final PsiFile initStub = dir.findFile(PyNames.INIT_DOT_PYI);
-      if (initStub != null) {
+      if (initStub != null && !PyiStubSuppressor.isIgnoredStub(initStub)) {
         return initStub;
       }
       final PsiFile initFile = dir.findFile(PyNames.INIT_DOT_PY);
@@ -914,6 +911,22 @@ public final class PyUtil {
     else {
       return target;
     } // don't touch non-dirs
+  }
+
+  @Nullable
+  public static PsiElement turnDirIntoInitPy(@Nullable PsiElement target) {
+    if (!(target instanceof PsiDirectory psiDirectory)) return target;
+    return psiDirectory.findFile(PyNames.INIT_DOT_PY);
+  }
+
+  @Nullable
+  public static PsiElement turnDirIntoInitPyi(@Nullable PsiElement target) {
+    if (!(target instanceof PsiDirectory psiDirectory)) return target;
+    final PsiFile initStub = psiDirectory.findFile(PyNames.INIT_DOT_PYI);
+    if (initStub != null && !PyiStubSuppressor.isIgnoredStub(initStub)) {
+      return initStub;
+    }
+    return null;
   }
 
   /**
@@ -1031,7 +1044,6 @@ public final class PyUtil {
   }
 
   /**
-   * @param name
    * @return true iff the name looks like a class-private one, starting with two underscores but not ending with two underscores.
    */
   public static boolean isClassPrivateName(@NotNull String name) {
@@ -1062,7 +1074,8 @@ public final class PyUtil {
     } else {
       suffix = "";
     }
-    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + suffix).withIcon(PlatformIcons.PARAMETER_ICON);
+    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + suffix).withIcon(
+      IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter));
     lookupElementBuilder = lookupElementBuilder.withInsertHandler(OverwriteEqualsInsertHandler.INSTANCE);
     lookupElementBuilder.putUserData(PyCompletionMlElementInfo.Companion.getKey(), PyCompletionMlElementKind.NAMED_ARG.asInfo());
     return PrioritizedLookupElement.withGrouping(lookupElementBuilder, 1);
@@ -1100,6 +1113,59 @@ public final class PyUtil {
     return selfName;
   }
 
+  @RequiresEdt
+  public static void addSourceRoots(@NotNull Module module, @NotNull Collection<VirtualFile> roots) {
+    if (roots.isEmpty()) {
+      return;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        for (VirtualFile root : roots) {
+          boolean added = false;
+          for (ContentEntry entry : model.getContentEntries()) {
+            final VirtualFile file = entry.getFile();
+            if (file != null && VfsUtilCore.isAncestor(file, root, true)) {
+              entry.addSourceFolder(root, false);
+              added = true;
+            }
+          }
+
+          if (!added) {
+            model.addContentEntry(root).addSourceFolder(root, false);
+          }
+        }
+        model.commit();
+      }
+    );
+  }
+
+  @RequiresEdt
+  public static void removeSourceRoots(@NotNull Module module, @NotNull Collection<VirtualFile> roots) {
+    if (roots.isEmpty()) {
+      return;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        for (ContentEntry entry : model.getContentEntries()) {
+          for (SourceFolder folder : entry.getSourceFolders()) {
+            if (roots.contains(folder.getFile())) {
+              entry.removeSourceFolder(folder);
+            }
+          }
+
+          if (roots.contains(entry.getFile()) && entry.getSourceFolders().length == 0) {
+            model.removeContentEntry(entry);
+          }
+        }
+        model.commit();
+      }
+    );
+  }
+
   /**
    * @return Source roots <strong>and</strong> content roots for element's project
    */
@@ -1107,12 +1173,7 @@ public final class PyUtil {
   public static Collection<VirtualFile> getSourceRoots(@NotNull PsiElement foothold) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(foothold);
     if (module != null) {
-      Collection<VirtualFile> roots = getSourceRoots(module);
-      ModelBranch branch = ModelBranch.getPsiBranch(foothold);
-      if (branch != null) {
-        return ContainerUtil.map(roots, branch::findFileCopy);
-      }
-      return roots;
+      return getSourceRoots(module);
     }
     return Collections.emptyList();
   }
@@ -1306,7 +1367,7 @@ public final class PyUtil {
   }
 
   @Nullable
-  public static PsiElement findPrevAtOffset(PsiFile psiFile, int caretOffset, Class... toSkip) {
+  public static PsiElement findPrevAtOffset(PsiFile psiFile, int caretOffset, @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
     PsiElement element;
     if (caretOffset < 0) {
       return null;
@@ -1344,7 +1405,7 @@ public final class PyUtil {
   }
 
   @Nullable
-  public static PsiElement findNextAtOffset(@NotNull final PsiFile psiFile, int caretOffset, Class... toSkip) {
+  public static PsiElement findNextAtOffset(@NotNull final PsiFile psiFile, int caretOffset, @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
     PsiElement element = psiFile.findElementAt(caretOffset);
     if (element == null) {
       return null;
@@ -1511,7 +1572,7 @@ public final class PyUtil {
                                              @NotNull String memberName,
                                              @Nullable PyExpression location,
                                              @NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     final List<? extends RatedResolveResult> resolveResults = type.resolveMember(memberName, location, AccessDirection.READ,
                                                                                  resolveContext);
 
@@ -1622,17 +1683,23 @@ public final class PyUtil {
   public static boolean isForbiddenMutableDefault(@Nullable PyTypedElement value, @NotNull TypeEvalContext context) {
     if (value == null) return false;
 
-    final PyClassType type = as(context.getType(value), PyClassType.class);
-    if (type != null && !type.isDefinition()) {
-      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(value);
-      final Set<PyClass> forbiddenClasses = StreamEx
+    Set<PyClass> pyClasses = PyTypeUtil.toStream(context.getType(value))
+      .select(PyClassType.class)
+      .filter(clsType -> !clsType.isDefinition())
+      .map(PyClassType::getPyClass)
+      .toSet();
+
+    if (!pyClasses.isEmpty()) {
+      PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(value);
+      Set<PyClass> forbiddenClasses = StreamEx
         .of(builtinCache.getListType(), builtinCache.getSetType(), builtinCache.getDictType())
         .nonNull()
         .map(PyClassType::getPyClass)
         .toSet();
 
-      final PyClass cls = type.getPyClass();
-      return forbiddenClasses.contains(cls) || ContainerUtil.exists(cls.getAncestorClasses(context), forbiddenClasses::contains);
+      return StreamEx.of(pyClasses)
+        .flatMap(pyClass -> StreamEx.of(pyClass).append(pyClass.getAncestorClasses(context)))
+        .anyMatch(forbiddenClasses::contains);
     }
 
     return false;
@@ -1662,6 +1729,11 @@ public final class PyUtil {
 
   public static boolean isOrdinaryPackage(@NotNull PsiDirectory directory) {
     return directory.findFile(PyNames.INIT_DOT_PY) != null;
+  }
+
+  public static boolean isNoinspectionComment(@NotNull PsiComment comment) {
+    Pattern suppressPattern = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP);
+    return suppressPattern.matcher(comment.getText()).find();
   }
 
   /**

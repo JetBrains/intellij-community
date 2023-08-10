@@ -8,23 +8,26 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.UIBundle
-import com.intellij.ui.layout.*
-import com.intellij.util.io.exists
-import com.intellij.util.io.isWritable
+import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.enteredTextSatisfies
 import org.jetbrains.idea.devkit.DevKitBundle
 import java.awt.event.ActionEvent
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.AbstractAction
 import javax.swing.Action
+import kotlin.io.path.exists
+import kotlin.io.path.isWritable
 
 class UpdateFromSourcesDialog(private val project: Project,
                               private val showApplyButton: Boolean) : DialogWrapper(project, true) {
   private lateinit var panel: DialogPanel
-  private lateinit var pathField: TextFieldWithBrowseButton
+  private lateinit var pathField: TextFieldWithHistoryWithBrowseButton
   private val state = UpdateFromSourcesSettingsState().apply {
     copyFrom(UpdateFromSourcesSettings.getState())
   }
@@ -37,23 +40,16 @@ class UpdateFromSourcesDialog(private val project: Project,
 
   override fun createCenterPanel(): DialogPanel {
     panel = panel {
-      row(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.row.ide.installation")) {
-        pathField = textFieldWithBrowseButton({ state.actualIdePath },
-                                              { state.workIdePath = it },
-                                              DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.installation.choose.ide.directory.title"), project,
-                                              //todo use filter
-                                              FileChooserDescriptorFactory.createSingleFolderDescriptor()).component
+      pathField = optionsPanel(project, state)
+      row {
+        checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.restart.automatically"))
+          .bindSelected({ state.restartAutomatically }, { state.restartAutomatically = it })
+          .visibleIf(pathField.childComponent.textEditor.enteredTextSatisfies { FileUtil.pathsEqual(it, PathManager.getHomePath()) })
       }
       row {
-        checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.enabled.plugins.only"), { !state.buildDisabledPlugins }, { state.buildDisabledPlugins = !it })
-      }
-      row {
-        checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.restart.automatically"),
-                 { state.restartAutomatically }, { state.restartAutomatically = it })
-      }
-      row {
-        checkBox(UIBundle.message("dialog.options.do.not.show"), { !state.showSettings }, { state.showSettings = !it },
-                 DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.do.not.show.description"))
+        checkBox(UIBundle.message("dialog.options.do.not.show"))
+          .bindSelected({ !state.showSettings }, { state.showSettings = !it })
+          .comment(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.do.not.show.description"))
       }
     }
     return panel
@@ -62,8 +58,8 @@ class UpdateFromSourcesDialog(private val project: Project,
   override fun doValidate(): ValidationInfo? {
     val outputPath = Paths.get(pathField.text)
     val existingParent = generateSequence(outputPath, Path::getParent).firstOrNull { it.exists() }
-    if (existingParent == null || !existingParent.isWritable) {
-      return ValidationInfo(DevKitBundle.message("action.UpdateIdeFromSourcesAction.dialog.message.directory.not.writable", outputPath), pathField.textField)
+    if (existingParent == null || !existingParent.isWritable()) {
+      return ValidationInfo(DevKitBundle.message("action.UpdateIdeFromSourcesAction.dialog.message.directory.not.writable", outputPath), pathField.childComponent)
     }
     return null
   }
@@ -90,4 +86,20 @@ class UpdateFromSourcesDialog(private val project: Project,
     panel.apply()
     service<UpdateFromSourcesSettings>().loadState(state)
   }
+}
+
+internal fun Panel.optionsPanel(project: Project, state: UpdateFromSourcesSettingsState): TextFieldWithHistoryWithBrowseButton {
+  val pathField = textFieldWithHistoryWithBrowseButton(
+    project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.installation.choose.ide.directory.title"),
+    FileChooserDescriptorFactory.createSingleFolderDescriptor(), { state.workIdePathsHistory })
+  row(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.row.ide.installation")) {
+    cell(pathField)
+      .align(AlignX.FILL)
+      .bindText({ state.actualIdePath }, { state.workIdePath = it })
+  }
+  row {
+    checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.enabled.plugins.only"))
+      .bindSelected({ !state.buildDisabledPlugins }, { state.buildDisabledPlugins = !it })
+  }
+  return pathField
 }

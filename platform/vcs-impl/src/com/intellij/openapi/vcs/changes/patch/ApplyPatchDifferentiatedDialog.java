@@ -11,6 +11,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -18,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchFileHeaderInfo;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
-import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -52,13 +53,14 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Alarm;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsUser;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,12 +83,15 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.ContainerUtil.map;
 
 public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
+  @ApiStatus.Internal
+  public static final String DIMENSION_SERVICE_KEY = "vcs.ApplyPatchDifferentiatedDialog";
+
   private static final Logger LOG = Logger.getInstance(ApplyPatchDifferentiatedDialog.class);
   private final ZipperUpdater myLoadQueue;
   private final TextFieldWithBrowseButton myPatchFile;
 
   private final List<AbstractFilePatchInProgress<?>> myPatches;
-  private final List<ShelvedBinaryFilePatch> myBinaryShelvedPatches;
+  private final List<? extends ShelvedBinaryFilePatch> myBinaryShelvedPatches;
   @NotNull private final EditorNotificationPanel myErrorNotificationPanel;
   @NotNull private final MyChangeTreeList myChangesTreeList;
   @NotNull private final JBLoadingPanel myChangesTreeLoadingPanel;
@@ -121,7 +126,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                         ApplyPatchExecutor<?> callback,
                                         List<? extends ApplyPatchExecutor<?>> executors,
                                         @NotNull ApplyPatchMode applyPatchMode,
-                                        @NotNull List<FilePatch> patches,
+                                        @NotNull List<? extends FilePatch> patches,
                                         @Nullable ChangeList defaultList) {
     this(project, callback, executors, applyPatchMode, null, patches, defaultList, null, null, null, false);
   }
@@ -131,10 +136,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                         List<? extends ApplyPatchExecutor<?>> executors,
                                         @NotNull ApplyPatchMode applyPatchMode,
                                         @Nullable VirtualFile patchFile,
-                                        @Nullable List<FilePatch> patches,
+                                        @Nullable List<? extends FilePatch> patches,
                                         @Nullable ChangeList defaultList,
-                                        @Nullable List<ShelvedBinaryFilePatch> binaryShelvedPatches,
-                                        @Nullable Collection<Change> preselectedChanges,
+                                        @Nullable List<? extends ShelvedBinaryFilePatch> binaryShelvedPatches,
+                                        @Nullable Collection<? extends Change> preselectedChanges,
                                         @Nullable @NlsSafe String externalCommitMessage,
                                         boolean useProjectRootAsPredefinedBase) {
     super(project, true);
@@ -155,7 +160,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myRecentPathFileChange = new AtomicReference<>();
     myBinaryShelvedPatches = binaryShelvedPatches;
     myPreselectedChanges = preselectedChanges;
-    myErrorNotificationPanel = new EditorNotificationPanel(LightColors.RED);
+    myErrorNotificationPanel = new EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error);
     cleanNotifications();
     myChangesTreeList = new MyChangeTreeList(project,
                                              new Runnable() {
@@ -212,7 +217,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         }
       });
 
-      myChangeListChooser.setChangeLists(changeListManager.getChangeListsCopy());
       if (defaultList != null) {
         myChangeListChooser.setDefaultSelection(defaultList);
       }
@@ -254,7 +258,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     if (myCanChangePatchFile) {
       BulkFileListener listener = new BulkFileListener() {
         @Override
-        public void after(@NotNull List<? extends VFileEvent> events) {
+        public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
           for (VFileEvent event : events) {
             if (event instanceof VFileContentChangeEvent) {
               syncUpdatePatchFileAndScheduleReloadIfNeeded(event.getFile());
@@ -285,7 +289,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myLoadQueue.queue(myUpdater);
   }
 
-  private void init(@NotNull List<FilePatch> patches) {
+  private void init(@NotNull List<? extends FilePatch> patches) {
     List<AbstractFilePatchInProgress<?>> matchedPatches = new MatchPatchPaths(myProject).execute(patches, myUseProjectRootAsPredefinedBase);
     //todo add shelved binary patches
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -298,8 +302,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   public static FileChooserDescriptor createSelectPatchDescriptor() {
     return new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return FileTypeRegistry.getInstance().isFileOfType(file, PatchFileType.INSTANCE) || FileTypeRegistry.getInstance().isFileOfType(file, FileTypes.PLAIN_TEXT);
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        return file != null &&
+               (FileTypeRegistry.getInstance().isFileOfType(file, PatchFileType.INSTANCE) ||
+                FileTypeRegistry.getInstance().isFileOfType(file, FileTypes.PLAIN_TEXT));
       }
     };
   }
@@ -358,7 +364,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   @Override
   @NonNls
   protected String getDimensionServiceKey() {
-    return "vcs.ApplyPatchDifferentiatedDialog";
+    return DIMENSION_SERVICE_KEY;
   }
 
   @Override
@@ -410,13 +416,13 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       if (!ContainerUtil.isEmpty(myBinaryShelvedPatches)) {
         filePatches.addAll(myBinaryShelvedPatches);
       }
-      List<AbstractFilePatchInProgress<?>> matchedPatches = new MatchPatchPaths(myProject).execute(filePatches, myUseProjectRootAsPredefinedBase);
+      List<AbstractFilePatchInProgress<?>> matchedPatches =
+        new MatchPatchPaths(myProject).execute(filePatches, myUseProjectRootAsPredefinedBase);
 
       ApplicationManager.getApplication().invokeLater(() -> {
         if (myShouldUpdateChangeListName && myChangeListChooser != null) {
-          myChangeListChooser.setSuggestedName(
-            chooseNotNull(getSubjectFromMessage(messageFromPatch), file.getNameWithoutExtension().replace('_', ' ').trim()),
-            messageFromPatch);
+          String subject = chooseNotNull(getSubjectFromMessage(messageFromPatch), file.getNameWithoutExtension().replace('_', ' ').trim());
+          myChangeListChooser.setSuggestedName(subject, messageFromPatch, false);
         }
         myPatches.clear();
         myPatches.addAll(matchedPatches);
@@ -434,36 +440,21 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   @Nullable
   private PatchReader loadPatches(@NotNull VirtualFile patchFile) {
-    PatchReader reader;
     try {
-      reader = ReadAction.compute(() -> {
+      String text = ReadAction.compute(() -> {
         try (InputStreamReader inputStreamReader = new InputStreamReader(patchFile.getInputStream(), patchFile.getCharset())) {
-          char[] chars = new char[(int)patchFile.getLength()];
-          int count = 0;
-          while (count < chars.length) {
-            int n = inputStreamReader.read(chars, count, chars.length - count);
-            if (n <= 0) {
-              break;
-            }
-            count += n;
-          }
-          return new PatchReader(new CharArrayCharSequence(chars, 0, count));
+          return StreamUtil.readText(inputStreamReader);
         }
       });
+
+      PatchReader reader = new PatchReader(text);
+      reader.parseAllPatches();
+      return reader;
     }
     catch (Exception e) {
       addNotificationAndWarn(VcsBundle.message("patch.apply.cannot.read.patch", patchFile.getPresentableName(), e.getMessage()));
       return null;
     }
-    try {
-      reader.parseAllPatches();
-    }
-    catch (PatchSyntaxException e) {
-      addNotificationAndWarn(VcsBundle.message("patch.apply.cannot.read.patch", "", e.getMessage()));
-      return null;
-    }
-
-    return reader;
   }
 
   private void addNotificationAndWarn(@NotNull @NlsContexts.Label String errorMessage) {
@@ -544,21 +535,22 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), getRootPane());
       group.add(diffAction);
 
-      ActionGroup mapDirectoryActionGroup = new ActionGroup(VcsBundle.message("patch.apply.change.directory.paths.group"), null, AllIcons.Vcs.Folders) {
-        @Override
-        public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-          return new AnAction[]{
-            new MapDirectory(), new StripUp(IdeBundle.messagePointer("action.Anonymous.text.remove.leading.directory")), new ZeroStrip(),
-            new StripDown(IdeBundle.messagePointer("action.Anonymous.text.restore.leading.directory")), new ResetStrip()};
-        }
-      };
+      ActionGroup mapDirectoryActionGroup =
+        new ActionGroup(VcsBundle.message("patch.apply.change.directory.paths.group"), null, AllIcons.Vcs.Folders) {
+          @Override
+          public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+            return new AnAction[]{
+              new MapDirectory(), new StripUp(IdeBundle.messagePointer("action.Anonymous.text.remove.leading.directory")), new ZeroStrip(),
+              new StripDown(IdeBundle.messagePointer("action.Anonymous.text.restore.leading.directory")), new ResetStrip()};
+          }
+        };
       mapDirectoryActionGroup.setPopup(true);
       group.add(mapDirectoryActionGroup);
 
       if (myCanChangePatchFile) {
         group.add(new DumbAwareAction(VcsBundle.messagePointer("action.DumbAware.ApplyPatchDifferentiatedDialog.text.refresh"),
                                       VcsBundle.messagePointer("action.DumbAware.ApplyPatchDifferentiatedDialog.description.refresh"),
-           AllIcons.Actions.Refresh) {
+                                      AllIcons.Actions.Refresh) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             syncUpdatePatchFileAndScheduleReloadIfNeeded(null);
@@ -632,7 +624,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @NotNull
     @Override
     protected DefaultTreeModel buildTreeModel(@NotNull List<? extends AbstractFilePatchInProgress.PatchChange> changes) {
-      return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), changes, myChangeNodeDecorator);
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-317156, EA-830617")) {
+        return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), changes, myChangeNodeDecorator);
+      }
     }
 
     @Override
@@ -651,21 +645,21 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    protected void toggleChanges(@NotNull Collection<?> changes) {
+    protected boolean toggleChanges(@NotNull Collection<?> changes) {
       List<AbstractFilePatchInProgress.PatchChange> patchChanges =
         ContainerUtil.findAll(changes, AbstractFilePatchInProgress.PatchChange.class);
 
       if (patchChanges.size() == 1 && !patchChanges.get(0).isValid()) {
-        handleInvalidChangesAndToggle();
+        return handleInvalidChangesAndToggle();
       }
       else {
-        super.toggleChanges(getOnlyValidChanges(patchChanges));
+        return super.toggleChanges(getOnlyValidChanges(patchChanges));
       }
     }
 
-    private void handleInvalidChangesAndToggle() {
+    private boolean handleInvalidChangesAndToggle() {
       new NewBaseSelector(false).run();
-      super.toggleChanges(getOnlyValidChanges(getSelectedChanges()));
+      return super.toggleChanges(getOnlyValidChanges(getSelectedChanges()));
     }
   }
 
@@ -693,6 +687,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           JBPopupFactory.getInstance().createListPopup(step).showCenteredInCurrentWindow(myProject);
         }
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -866,7 +865,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    public PopupStep onChosen(final VirtualFile selectedValue, boolean finalChoice) {
+    public PopupStep<?> onChosen(final VirtualFile selectedValue, boolean finalChoice) {
       if (selectedValue == null) {
         myNewBaseSelector.run();
         return null;
@@ -1001,11 +1000,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final class MyChangeNodeDecorator implements ChangeNodeDecorator {
     @Override
     public void decorate(@NotNull Change change, @NotNull SimpleColoredComponent component, boolean isShowFlatten) {
-      if (change instanceof AbstractFilePatchInProgress.PatchChange) {
-        final AbstractFilePatchInProgress.PatchChange patchChange = (AbstractFilePatchInProgress.PatchChange)change;
+      if (change instanceof AbstractFilePatchInProgress.PatchChange patchChange) {
         final AbstractFilePatchInProgress patchInProgress = patchChange.getPatchInProgress();
         if (patchInProgress.getCurrentStrip() > 0) {
-          component.append(VcsBundle.message("patch.apply.stripped.description", patchInProgress.getCurrentStrip()), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+          component.append(VcsBundle.message("patch.apply.stripped.description", patchInProgress.getCurrentStrip()),
+                           SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
         }
         final String text;
         if (FilePatchStatus.ADDED.equals(patchInProgress.getStatus())) {
@@ -1080,6 +1079,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       boolean isEnabled = ContainerUtil.exists(myChangesTreeList.getSelectedChanges(), change -> change.getPatchInProgress().canDown());
       e.getPresentation().setEnabled(isEnabled);
@@ -1095,6 +1099,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private class StripUp extends DumbAwareAction {
     StripUp(Supplier<String> text) {
       super(text);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -1126,8 +1135,13 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private final MyChangeComparator myMyChangeComparator;
 
     private MyShowDiff() {
-      super(VcsBundle.message("action.name.show.difference"),null, AllIcons.Actions.Diff);
+      super(VcsBundle.message("action.name.show.difference"), null, AllIcons.Actions.Diff);
       myMyChangeComparator = new MyChangeComparator();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -1143,8 +1157,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private void showDiff() {
       if (ChangeListManager.getInstance(myProject).isFreezedWithNotification(null)) return;
       if (myPatches.isEmpty() || (!myContainBasedChanges)) return;
-      final List<AbstractFilePatchInProgress.PatchChange> changes = getAllChanges();
-      changes.sort(myMyChangeComparator);
+      final List<AbstractFilePatchInProgress.PatchChange> changes = ContainerUtil.sorted(getAllChanges(), myMyChangeComparator);
       List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
 
       if (changes.isEmpty()) return;
@@ -1233,6 +1246,19 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @Override
     public FileStatus getFileStatus() {
       return myChange.getFileStatus();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MyProducerWrapper wrapper = (MyProducerWrapper)o;
+      return Objects.equals(myProducer, wrapper.myProducer);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myProducer);
     }
   }
 

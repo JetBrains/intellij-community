@@ -48,7 +48,7 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
   }
 
   @Override
-  public void visitXmlAttributeValue(final XmlAttributeValue value) {
+  public void visitXmlAttributeValue(final @NotNull XmlAttributeValue value) {
     final PsiElement parent = value.getParent();
     if (parent instanceof XmlAttribute) {
       if (!XsltSupport.isXsltFile(parent.getContainingFile())) {
@@ -107,7 +107,7 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
   }
 
   private static int getAVTEndOffset(String value, int i) {
-    do {
+    while (true) {
       i = value.indexOf('}', i + 1);
       if (i != -1 && i == value.indexOf("}}", i)) {
         i += 2;
@@ -116,7 +116,6 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
         break;
       }
     }
-    while (i != -1);
     return i;
   }
 }

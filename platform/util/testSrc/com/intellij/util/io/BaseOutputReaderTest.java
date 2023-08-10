@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -149,7 +149,7 @@ public class BaseOutputReaderTest {
     return new ProcessBuilder(cmd).redirectErrorStream(true).start();
   }
 
-  public static class Runner {
+  public static final class Runner {
     private static final String[] TEST_DATA = {
       "first\r\n",
       "incomplete",

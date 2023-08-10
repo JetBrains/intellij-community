@@ -38,7 +38,7 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
       })
     }
     finally {
-      FileUtil.delete(File(FileUtil.toSystemDependentName(testDataRootPath + "/$name/data/a.jar")))
+      FileUtil.delete(File(FileUtil.toSystemDependentName("$testDataRootPath/$name/data/a.jar")))
     }
   }
 

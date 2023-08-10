@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.lazy;
 
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
+import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -19,20 +20,20 @@ public class LazyLoader {
     this.provider = provider;
   }
 
-  public void addClassLink(String classname, Link link) {
-    mapClassLinks.put(classname, link);
+  public void addClassLink(String className, Link link) {
+    mapClassLinks.put(className, link);
   }
 
-  public void removeClassLink(String classname) {
-    mapClassLinks.remove(classname);
+  public void removeClassLink(String className) {
+    mapClassLinks.remove(className);
   }
 
-  public Link getClassLink(String classname) {
-    return mapClassLinks.get(classname);
+  public Link getClassLink(String className) {
+    return mapClassLinks.get(className);
   }
 
-  public ConstantPool loadPool(String classname) {
-    try (DataInputFullStream in = getClassStream(classname)) {
+  public ConstantPool loadPool(String className) {
+    try (DataInputFullStream in = getClassStream(className)) {
       if (in != null) {
         in.discard(8);
         return new ConstantPool(in);
@@ -45,14 +46,14 @@ public class LazyLoader {
     }
   }
 
-  public byte[] loadBytecode(StructMethod mt, int codeFullLength) {
-    String className = mt.getClassStruct().qualifiedName;
+  public byte[] loadBytecode(StructClass classStruct, StructMethod mt, int codeFullLength) {
+    String className = classStruct.qualifiedName;
 
     try (DataInputFullStream in = getClassStream(className)) {
       if (in != null) {
         in.discard(8);
 
-        ConstantPool pool = mt.getClassStruct().getPool();
+        ConstantPool pool = classStruct.getPool();
         if (pool == null) {
           pool = new ConstantPool(in);
         }
@@ -90,7 +91,7 @@ public class LazyLoader {
           for (int j = 0; j < attrSize; j++) {
             int attrNameIndex = in.readUnsignedShort();
             String attrName = pool.getPrimitiveConstant(attrNameIndex).getString();
-            if (!StructGeneralAttribute.ATTRIBUTE_CODE.getName().equals(attrName)) {
+            if (!StructGeneralAttribute.ATTRIBUTE_CODE.name.equals(attrName)) {
               in.discard(in.readInt());
               continue;
             }

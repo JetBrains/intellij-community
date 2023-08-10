@@ -1,15 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.AnnotationInlayProvider
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import org.intellij.lang.annotations.Language
 
 class AnnotationHintsTest : InlayHintsProviderTestCase() {
 
   fun `test contract inferred annotation`() {
     val text = """
 class Demo {
-<# block [[@ Contract [( [[pure  =  true]] )]]] #>
+/*<# block [[@ Contract [( [[pure  =  true]] )]]] #>*/
   private static int pure(int x, int y) {
     return x * y + 10;
   }
@@ -20,7 +21,7 @@ class Demo {
   fun `test contract nullable`() {
     val text = """
 public class E {
-<# block [[@ Contract [( ["null -> true"] )]]] #>
+/*<# block [[@ Contract [( ["null -> true"] )]]] #>*/
   static boolean foo(E e) {
     if (e != null) {
       e.foo(new E());
@@ -35,7 +36,7 @@ public class E {
   fun `test no parameters have no parens`() {
     val text = """
 public class E {
-<# block [[@ Contract [( [[pure  =  true]] )]] [@ Nullable]] #>
+/*<# block [[@ Contract [( [[pure  =  true]] )]] [@ Nullable]] #>*/
   static Boolean foo(E e) {
     if (true) return false;
     return null;
@@ -48,7 +49,7 @@ public class E {
     val text = """
 public class E {
   void foo(
-      <# [[@ NotNull]] #>String s
+      /*<# [[@ NotNull]] #>*/String s
     ) {
     s.length();  
   }
@@ -57,10 +58,10 @@ public class E {
   }
 
   private fun testAnnotations(
-    text: String,
+    @Language("JAVA") text: String,
     settings: AnnotationInlayProvider.Settings = AnnotationInlayProvider.Settings(showInferred = true, showExternal = true)
   ) {
-    testProvider(
+    doTestProvider(
       "test.java",
       text,
       AnnotationInlayProvider(),

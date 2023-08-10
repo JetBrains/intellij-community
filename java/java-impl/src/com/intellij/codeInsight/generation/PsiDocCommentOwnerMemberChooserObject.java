@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author peter
-*/
 public class PsiDocCommentOwnerMemberChooserObject extends PsiElementMemberChooserObject {
   public PsiDocCommentOwnerMemberChooserObject(@NotNull PsiDocCommentOwner owner, final @NlsSafe String text, Icon icon) {
     super(owner, text, icon);
@@ -23,8 +20,9 @@ public class PsiDocCommentOwnerMemberChooserObject extends PsiElementMemberChoos
 
   @Override
   protected SimpleTextAttributes getTextAttributes(final JTree tree) {
+    PsiDocCommentOwner owner = getPsiDocCommentOwner();
     return new SimpleTextAttributes(
-        getPsiDocCommentOwner().isDeprecated() ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN,
-        RenderingUtil.getForeground(tree));
+      owner.isValid() && owner.isDeprecated() ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN,
+      RenderingUtil.getForeground(tree));
   }
 }

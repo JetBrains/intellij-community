@@ -8,12 +8,15 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.refactoring.inline.PyInlineLocalHandler;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author Dennis.Ushakov
@@ -96,21 +99,47 @@ public class PyInlineLocalTest extends PyTestCase {
   }
 
   // PY-12409
-  public void testResultExceedsRightMargin() {
+  public void testResultExceedsRightMarginWithBackslash() {
     final CodeStyleSettings settings = getCodeStyleSettings();
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
 
     final int oldRightMargin = settings.getRightMargin(PythonLanguage.getInstance());
     final boolean oldWrapLongLines = commonSettings.WRAP_LONG_LINES;
 
+    boolean initialValue = PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER;
+
     settings.setRightMargin(PythonLanguage.getInstance(), 80);
     commonSettings.WRAP_LONG_LINES = true;
     try {
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = false;
       doTest();
     }
     finally {
       commonSettings.WRAP_LONG_LINES = oldWrapLongLines;
       settings.setRightMargin(PythonLanguage.getInstance(), oldRightMargin);
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = initialValue;
+    }
+  }
+
+  public void testResultExceedsRightMarginWithParenthesizeOnEnter() {
+    final CodeStyleSettings settings = getCodeStyleSettings();
+    final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
+
+    final int oldRightMargin = settings.getRightMargin(PythonLanguage.getInstance());
+    final boolean oldWrapLongLines = commonSettings.WRAP_LONG_LINES;
+
+    boolean initialValue = PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER;
+
+    settings.setRightMargin(PythonLanguage.getInstance(), 80);
+    commonSettings.WRAP_LONG_LINES = true;
+    try {
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = true;
+      doTest();
+    }
+    finally {
+      commonSettings.WRAP_LONG_LINES = oldWrapLongLines;
+      settings.setRightMargin(PythonLanguage.getInstance(), oldRightMargin);
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = initialValue;
     }
   }
 
@@ -134,6 +163,132 @@ public class PyInlineLocalTest extends PyTestCase {
   // PY-15390
   public void testMatMulPrecedence() {
     checkOperatorPrecedence("x = y @ z", "matrixMultiplication");
+  }
+
+  // PY-40797
+  public void testStringToFString() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testFStringToFString() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testExpressionWithStringsToFString() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testExpressionWithStringsToExpressionInFString() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testStringContainingBackslashesToFString() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testStringContainingQuotesToFString() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testStringToFStringInFString() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testStringToFStringSeveralOccurrences() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testStringToFStringEscapedVariableOccurrence() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testRawStringToFString() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testStringToFStringsDifferentQuotes() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testStringWithQuoteToFStringTripleQuotes() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testMultilineStringToTripleQuotedExpressionFString() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testMultilineStringToTripleQuotedFString() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testExpressionWithStringToFStringsDifferentQuotes() {
+    doTest();
+  }
+
+
+  // PY-40797
+  public void testStringToFStringAndOtherPlaces() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testStringToFStringFormatPart() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testStringToFStringTypeConversion() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testStringToFStringRemoveFragmentInNestedFString() {
+    doTest();
+  }
+
+  // PY-40797
+  public void testExpressionWithStringsContainingQuotesToFString() {
+    doTest(PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string"));
+  }
+
+  // PY-40797
+  public void testExpressionWithStringsToFStringInFString() {
+    doTest(PyPsiBundle.message("refactoring.inline.can.not.string.to.nested.f.string"));
+  }
+
+  // PY-40797
+  public void testStringWithQuotesToFStringInFString() {
+    doTest(PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string"));
+  }
+
+  // PY-40797
+  public void testMultilineStringToFString() {
+    doTest(PyPsiBundle.message("refactoring.inline.can.not.multiline.string.to.f.string"));
+  }
+
+  // PY-40797
+  public void testMultilineStringToExpressionFString() {
+    doTest(PyPsiBundle.message("refactoring.inline.can.not.multiline.string.to.f.string"));
+  }
+
+  // PY-40797
+  public void testStringWithBackslashToFStringNotAvailable() {
+    doTest(PyPsiBundle.message("refactoring.inline.can.not.string.with.backslashes.or.quotes.to.f.string"));
   }
 
   private void checkOperatorPrecedence(@NotNull final String firstLine, @NotNull String resultPrefix) {

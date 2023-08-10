@@ -1,0 +1,58 @@
+{
+    "typeshedPath": ".",
+    "include": [
+        "stdlib",
+        "stubs"
+    ],
+    "exclude": [
+        "**/@python2"
+    ],
+    "typeCheckingMode": "basic",
+    "strictListInference": true,
+    "strictDictionaryInference": true,
+    "strictParameterNoneValue": true,
+    "strictSetInference": true,
+    "reportFunctionMemberAccess": "error",
+    "reportMissingModuleSource": "none",
+    "reportMissingTypeStubs": "error",
+    "reportUnusedImport": "error",
+    "reportUnusedClass": "error",
+    "reportUnusedFunction": "error",
+    "reportUnusedVariable": "error",
+    "reportDuplicateImport": "error",
+    "reportOptionalSubscript": "error",
+    "reportOptionalMemberAccess": "error",
+    "reportOptionalCall": "error",
+    "reportOptionalIterable": "error",
+    "reportOptionalContextManager": "error",
+    "reportOptionalOperand": "error",
+    "reportUntypedFunctionDecorator": "error",
+    "reportUntypedClassDecorator": "error",
+    "reportUntypedBaseClass": "error",
+    "reportUntypedNamedTuple": "error",
+    "reportPrivateUsage": "none",
+    "reportConstantRedefinition": "error",
+    "reportInvalidStringEscapeSequence": "error",
+    "reportUnknownArgumentType": "error",
+    "reportUnknownLambdaType": "error",
+    "reportMissingTypeArgument": "error",
+    "reportUndefinedVariable": "error",
+    "reportUnboundVariable": "error",
+    "reportInvalidStubStatement": "error",
+    "reportInvalidTypeVarUse": "error",
+    "reportUnsupportedDunderAll": "error",
+    "reportInconsistentConstructor": "error",
+    "reportTypeCommentUsage": "error",
+    "reportUnnecessaryComparison": "error",
+    // Incompatible overrides and property type mismatches are out of typeshed's control
+    // as they are inherited from the implementation.
+    "reportPropertyTypeMismatch": "none",
+    "reportIncompatibleMethodOverride": "none",
+    "reportIncompatibleVariableOverride": "none",
+    // Overlapping overloads are often necessary in a stub, meaning pyright's check
+    // (which is stricter than mypy's; see mypy issue #10143 and #10157)
+    // would cause many false positives and catch few bugs.
+    "reportOverlappingOverload": "none",
+    // The name of the self/cls parameter is out of typeshed's control.
+    "reportSelfClsParameterName": "none",
+}

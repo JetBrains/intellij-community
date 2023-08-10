@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -14,7 +14,6 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.reference.SoftReference;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.ArrayUtil;
@@ -23,11 +22,12 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeMap;
+import java.lang.ref.SoftReference;
+import java.util.*;
 
+/**
+ * Contains array of suites which should have the same {@link CoverageEngine}.
+ */
 public class CoverageSuitesBundle {
   private final CoverageSuite[] mySuites;
   private final CoverageEngine myEngine;
@@ -89,15 +89,25 @@ public class CoverageSuitesBundle {
 
   @Nullable
   public ProjectData getCoverageData() {
-    final ProjectData projectData = myData.get();
+    ProjectData projectData = myData.get();
     if (projectData != null) return projectData;
-    ProjectData data = new ProjectData();
-    for (CoverageSuite suite : mySuites) {
-      final ProjectData coverageData = suite.getCoverageData(null);
-      if (coverageData != null) {
+
+    List<ProjectData> dataList = Arrays.stream(mySuites)
+      .map(suite -> suite.getCoverageData(null))
+      .filter(data -> data != null)
+      .toList();
+
+    ProjectData data;
+    if (dataList.size() == 1) {
+      data = dataList.get(0);
+    }
+    else {
+      data = new ProjectData();
+      for (ProjectData coverageData : dataList) {
         data.merge(coverageData);
       }
     }
+
     myData = new SoftReference<>(data);
     return data;
   }
@@ -109,9 +119,9 @@ public class CoverageSuitesBundle {
     return false;
   }
 
-  public boolean isTracingEnabled() {
+  public boolean isBranchCoverage() {
     for (CoverageSuite suite : mySuites) {
-      if (suite.isTracingEnabled()) return true;
+      if (suite.isBranchCoverage()) return true;
     }
     return false;
   }
@@ -195,7 +205,7 @@ public class CoverageSuitesBundle {
     Module[] modules = Arrays.stream(mySuites).filter(suite -> suite instanceof BaseCoverageSuite)
       .map(suite -> ((BaseCoverageSuite)suite).getConfiguration())
       .filter(configuration -> configuration instanceof ModuleBasedConfiguration)
-      .map(configuration -> ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule())
+      .map(configuration -> ((ModuleBasedConfiguration<?, ?>)configuration).getConfigurationModule().getModule())
       .toArray(Module[]::new);
 
     if (modules.length == 0 || ArrayUtil.find(modules, null) > -1) {

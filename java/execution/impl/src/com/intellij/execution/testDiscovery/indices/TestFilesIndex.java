@@ -47,11 +47,6 @@ public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
     protected MyIndexStorage(@NotNull Path storageFile) throws IOException {
       super(storageFile, EnumeratorIntegerDescriptor.INSTANCE, VoidDataExternalizer.INSTANCE, 4 * 1024, false);
     }
-
-    @Override
-    protected void checkCanceled() {
-      ProgressManager.checkCanceled();
-    }
   }
 
   private static final IndexExtension<Integer, Void, UsedSources> INDEX_EXTENSION = new IndexExtension<>() {

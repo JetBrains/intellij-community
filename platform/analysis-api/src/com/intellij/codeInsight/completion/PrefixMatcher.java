@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -10,9 +10,6 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class PrefixMatcher {
   public static final PrefixMatcher ALWAYS_TRUE = new PlainPrefixMatcher("");
   protected final String myPrefix;
@@ -45,12 +42,11 @@ public abstract class PrefixMatcher {
 
   public abstract boolean prefixMatches(@NotNull String name);
 
-  @NotNull
-  public final String getPrefix() {
+  public final @NotNull String getPrefix() {
     return myPrefix;
   }
 
-  @NotNull public abstract PrefixMatcher cloneWithPrefix(@NotNull String prefix);
+  public abstract @NotNull PrefixMatcher cloneWithPrefix(@NotNull String prefix);
 
   public int matchingDegree(String string) {
     return 0;
@@ -59,7 +55,7 @@ public abstract class PrefixMatcher {
   /**
    * Filters _names for strings that match given matcher and sorts them.
    * "Start matching" items go first, then others.
-   * Within both groups names are sorted lexicographically in a case-insensitive way.
+   * Within both groups, names are sorted lexicographically in a case-insensitive way.
    */
   public LinkedHashSet<String> sortMatching(Collection<String> _names) {
     ProgressManager.checkCanceled();

@@ -1,3 +1,3 @@
 * item
-  <caret>
+* <caret>
   > quote

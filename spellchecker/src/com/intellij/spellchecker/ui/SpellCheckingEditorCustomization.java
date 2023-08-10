@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -23,7 +9,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -31,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.ui.SimpleEditorCustomization;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,44 +24,26 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
 /**
- * Allows to enforce editors to use/don't use spell checking ignoring user-defined spelling inspection settings.
+ * Allows enforcing editors to use/not use spell checking, ignoring user-defined spelling inspection settings.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class SpellCheckingEditorCustomization extends SimpleEditorCustomization {
-  /**
-   * @deprecated use {@link SpellCheckingEditorCustomizationProvider#getEnabledCustomization()} instead
-   */
-  @Deprecated public static final SpellCheckingEditorCustomization ENABLED =
-    (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization();
-
-  /**
-   * @deprecated use {@link SpellCheckingEditorCustomizationProvider#getDisabledCustomization()} instead
-   */
-  @Deprecated public static final SpellCheckingEditorCustomization DISABLED =
-    (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
-
   private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<>();
   private static final boolean READY = init();
-
-  @NotNull
-  public static SpellCheckingEditorCustomization getInstance(boolean enabled) {
-    return (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getCustomization(enabled);
-  }
 
   SpellCheckingEditorCustomization(boolean enabled) {
     super(enabled);
   }
 
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   private static boolean init() {
     // It's assumed that default spell checking inspection settings are just fine for processing all types of data.
-    // Please perform corresponding settings tuning if that assumption is broken at future.
+    // Please perform corresponding settings tuning if that assumption is broken in the future.
 
     Class<LocalInspectionTool>[] inspectionClasses = (Class<LocalInspectionTool>[])new Class<?>[]{SpellCheckingInspection.class};
     for (Class<LocalInspectionTool> inspectionClass : inspectionClasses) {
@@ -108,9 +76,10 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
       return;
     }
 
-    Function<InspectionProfileImpl, InspectionProfileWrapper> strategy = file.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
+    Function<? super InspectionProfile, ? extends InspectionProfileWrapper> strategy = InspectionProfileWrapper.getCustomInspectionProfileWrapper(file);
     if (strategy == null) {
-      file.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, strategy = new MyInspectionProfileStrategy());
+      strategy = new MyInspectionProfileStrategy();
+      InspectionProfileWrapper.setCustomInspectionProfileWrapperTemporarily(file, strategy);
     }
 
     if (!(strategy instanceof MyInspectionProfileStrategy)) {
@@ -130,26 +99,31 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     }
   }
 
+  public static boolean isSpellCheckingDisabled(@NotNull PsiFile file) {
+    Function<? super InspectionProfile, ? extends InspectionProfileWrapper>
+      strategy = InspectionProfileWrapper.getCustomInspectionProfileWrapper(file);
+    return strategy instanceof MyInspectionProfileStrategy && !((MyInspectionProfileStrategy)strategy).myUseSpellCheck;
+  }
+
   public static Set<String> getSpellCheckingToolNames() {
     return Collections.unmodifiableSet(SPELL_CHECK_TOOLS.keySet());
   }
 
-  private static class MyInspectionProfileStrategy implements Function<InspectionProfileImpl, InspectionProfileWrapper> {
-    private final Map<InspectionProfile, MyInspectionProfileWrapper> myWrappers = ContainerUtil.createWeakMap();
+  private static class MyInspectionProfileStrategy implements Function<InspectionProfile, InspectionProfileWrapper> {
+    private final ConcurrentMap<InspectionProfile, MyInspectionProfileWrapper> myWrappers =
+      ContainerUtil.createConcurrentWeakKeySoftValueMap();
     private boolean myUseSpellCheck;
 
     @NotNull
     @Override
-    public InspectionProfileWrapper apply(@NotNull InspectionProfileImpl inspectionProfile) {
+    public InspectionProfileWrapper apply(@NotNull InspectionProfile profile) {
       if (!READY) {
-        return new InspectionProfileWrapper(inspectionProfile);
+        return new InspectionProfileWrapper((InspectionProfileImpl)profile);
       }
-      MyInspectionProfileWrapper wrapper = myWrappers.get(inspectionProfile);
-      if (wrapper == null) {
-        myWrappers.put(inspectionProfile, wrapper = new MyInspectionProfileWrapper());
-      }
-      wrapper.setUseSpellCheck(myUseSpellCheck);
-      return wrapper;
+      MyInspectionProfileWrapper wrapper = myWrappers.get(profile);
+      return wrapper == null
+             ? ConcurrencyUtil.cacheOrGet(myWrappers, profile, new MyInspectionProfileWrapper(profile, myUseSpellCheck))
+             : wrapper;
     }
 
     public void setUseSpellCheck(boolean useSpellCheck) {
@@ -158,19 +132,16 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
   }
 
   private static class MyInspectionProfileWrapper extends InspectionProfileWrapper {
-    private boolean myUseSpellCheck;
+    private final boolean myUseSpellCheck;
 
-    MyInspectionProfileWrapper() {
-      super(new InspectionProfileImpl("CommitDialog"));
+    MyInspectionProfileWrapper(@NotNull InspectionProfile inspectionProfile, boolean useSpellCheck) {
+      super((InspectionProfileImpl)inspectionProfile);
+      myUseSpellCheck = useSpellCheck;
     }
 
     @Override
     public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
       return SPELL_CHECK_TOOLS.containsKey(key.toString()) ? myUseSpellCheck : super.isToolEnabled(key, element);
-    }
-
-    public void setUseSpellCheck(boolean useSpellCheck) {
-      myUseSpellCheck = useSpellCheck;
     }
   }
 }

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.ide.actions.runAnything.RunAnythingContext;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.module.Module;
@@ -10,8 +11,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenConstants;
+import org.junit.Test;
 
 import java.util.Collection;
 import java.util.List;
@@ -22,10 +23,7 @@ import java.util.function.Function;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static java.util.stream.Collectors.groupingBy;
 
-/**
- * @author ibessonov
- */
-public class MavenRunAnythingProviderTest extends MavenImportingTestCase {
+public class MavenRunAnythingProviderTest extends MavenMultiVersionImportingTestCase {
 
   private DataContext myDataContext;
   private MavenRunAnythingProvider myProvider;
@@ -38,6 +36,7 @@ public class MavenRunAnythingProviderTest extends MavenImportingTestCase {
     myProvider = new MavenRunAnythingProvider();
   }
 
+  @Test
   public void testRegularProject() {
     withVariantsFor("", it -> {
       assertContain(it, "clean", "validate", "compile", "test", "package", "verify", "install", "deploy", "site");
@@ -48,14 +47,29 @@ public class MavenRunAnythingProviderTest extends MavenImportingTestCase {
     });
   }
 
+  @Test
   public void testSingleMavenProject() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
     withVariantsFor("", variants -> {
       Function<String, String> classifier = it -> it.contains(":") ? substringBefore(it, ":") : startsWith(it, "-") ? "-" : "";
       Map<String, List<String>> groupedValues = variants.stream().collect(groupingBy(classifier));
-      assertSameElements(groupedValues.keySet(), "", "-", "clean", "compiler", "surefire", "resources", "jar", "install", "deploy", "site");
+      var expectedValues = arrayOfNotNull(
+        "",
+        "-",
+        "clean",
+        "compiler",
+        "surefire",
+        "resources",
+        "jar",
+        "install",
+        "deploy",
+        "site",
+        maven4orNull("wrapper"));
+      assertSameElements(groupedValues.keySet(), expectedValues);
       assertSameElements(groupedValues.get(""), MavenConstants.BASIC_PHASES);
       assertSameElements(groupedValues.get("clean"), "clean:clean", "clean:help");
       assertSameElements(groupedValues.get("compiler"), "compiler:testCompile", "compiler:compile", "compiler:help");
@@ -76,25 +90,30 @@ public class MavenRunAnythingProviderTest extends MavenImportingTestCase {
     });
   }
 
+  @Test
   public void testMavenProjectWithModules() {
     VirtualFile m1 =
-      createModulePom("m1", "<groupId>test</groupId>" +
-                            "<artifactId>m1</artifactId>" +
-                            "<version>1</version>" +
-                            "<build>" +
-                            "  <plugins>" +
-                            "    <plugin>" +
-                            "      <groupId>org.apache.maven.plugins</groupId>" +
-                            "      <artifactId>maven-war-plugin</artifactId>" +
-                            "      <version>3.2.2</version>" +
-                            "    </plugin>" +
-                            "  </plugins>" +
-                            "</build>");
+      createModulePom("m1", """
+        <groupId>test</groupId>
+        <artifactId>m1</artifactId>
+        <version>1</version>
+        <build>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-war-plugin</artifactId>
+              <version>3.2.2</version>
+            </plugin>
+          </plugins>
+        </build>
+        """);
 
     VirtualFile m2 =
-      createModulePom("m2", "<groupId>test</groupId>" +
-                            "<artifactId>m2</artifactId>" +
-                            "<version>1</version>");
+      createModulePom("m2", """
+        <groupId>test</groupId>
+        <artifactId>m2</artifactId>
+        <version>1</version>
+        """);
     importProjects(m1, m2);
     resolvePlugins();
 

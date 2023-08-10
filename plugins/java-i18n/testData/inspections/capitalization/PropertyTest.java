@@ -38,7 +38,7 @@ class X {
   }
 
   void main(int x) {
-    test(<warning descr="String 'hello world' is not properly capitalized. It should have title capitalization">message("property.lowercase")</warning>);
+    test(<warning descr="String 'hello world' is not properly capitalized. It should have title capitalization"><caret>message("property.lowercase")</warning>);
     test(message("property.titlecase"));
     test(message("property.unknown"));
     test(message("property.parameterized", "World"));
@@ -70,5 +70,7 @@ class X {
 
     test(message("property.icu4j.title", 10));
     test2(<warning descr="String 'Generate Code with {0, plural, one {Foo} other {Bar}}' is not properly capitalized. It should have sentence capitalization">message("property.icu4j.title", 10)</warning>);
+
+    test(message("property.with.underscore.mnemonic"));
   }
 }

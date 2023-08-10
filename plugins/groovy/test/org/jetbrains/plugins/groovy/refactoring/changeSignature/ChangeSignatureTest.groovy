@@ -48,14 +48,14 @@ class ChangeSignatureTest extends ChangeSignatureTestCase {
 
   void testInsertParameter() throws Exception {
     doTest( new SimpleInfo(0),
-           new SimpleInfo("p", -1, "5", "-3", PsiType.INT),
+           new SimpleInfo("p", -1, "5", "-3", PsiTypes.intType()),
            new SimpleInfo(1))
   }
 
   void testInsertOptionalParameter() throws Exception {
     doTest(new SimpleInfo(0),
            new SimpleInfo(1),
-           new SimpleInfo("p", -1, "5", "-3", PsiType.INT))
+           new SimpleInfo("p", -1, "5", "-3", PsiTypes.intType()))
   }
 
   void testNamedParametersRemove() throws Exception {
@@ -71,7 +71,7 @@ class ChangeSignatureTest extends ChangeSignatureTestCase {
   /*public void testNamedParametersOrder2() throws Exception {
     doTest(new SimpleInfo[]{
       new SimpleInfo(0),
-      new SimpleInfo("p", -1, "5", null, PsiType.INT),
+      new SimpleInfo("p", -1, "5", null, com.intellij.psi.PsiTypes.intType(),
       new SimpleInfo(2),
                                  });
   }
@@ -80,7 +80,7 @@ class ChangeSignatureTest extends ChangeSignatureTestCase {
     doTest(new SimpleInfo[]{
       new SimpleInfo(0),
       new SimpleInfo(2),
-      new SimpleInfo("p", -1, "5", null, PsiType.INT),
+      new SimpleInfo("p", -1, "5", null, com.intellij.psi.PsiTypes.intType(),
                                  });
   }*/
 
@@ -99,15 +99,15 @@ class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   void testImplicitConstructorInConstructor() throws Exception {
-    doTest(new SimpleInfo("p", -1, "5", null, PsiType.INT))
+    doTest(new SimpleInfo("p", -1, "5", null, PsiTypes.intType()))
   }
 
   void testImplicitConstructorForClass() throws Exception {
-    doTest(new SimpleInfo("p", -1, "5", null, PsiType.INT))
+    doTest(new SimpleInfo("p", -1, "5", null, PsiTypes.intType()))
   }
 
   void testAnonymousClassUsage() throws Exception {
-    doTest(new SimpleInfo("p", -1, "5", null, PsiType.INT))
+    doTest(new SimpleInfo("p", -1, "5", null, PsiTypes.intType()))
   }
 
   void testGroovyDocReferences() throws Exception {
@@ -135,11 +135,11 @@ class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   void testChangeParameterType() throws Exception {
-    doTest("", new SimpleInfo("p", 0, null, null, PsiType.INT))
+    doTest("", new SimpleInfo("p", 0, null, null, PsiTypes.intType()))
   }
 
   void testGenerateDelegate() throws Exception {
-    doTest("", true, new SimpleInfo(0), new SimpleInfo("p", -1, "2", "2", PsiType.INT))
+    doTest("", true, new SimpleInfo(0), new SimpleInfo("p", -1, "2", "2", PsiTypes.intType()))
   }
 
   void testAddException() throws Exception {
@@ -167,11 +167,11 @@ class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   void testGenerateDelegateForConstructor() throws Exception {
-    doTest(PsiModifier.PUBLIC, "Foo", null, [new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiType.INT)], [], true)
+    doTest(PsiModifier.PUBLIC, "Foo", null, [new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiTypes.intType())], [], true)
   }
 
   void testGenerateDelegateForAbstract() throws Exception {
-    doTest(PsiModifier.PUBLIC, "foo", null, [new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiType.INT)], [], true)
+    doTest(PsiModifier.PUBLIC, "foo", null, [new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiTypes.intType())], [], true)
   }
 
   void testTypeParameters() throws Exception {
@@ -179,7 +179,7 @@ class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   void testEnumConstructor() throws Exception {
-    doTest(new SimpleInfo("a", -1, "2", null, PsiType.INT))
+    doTest(new SimpleInfo("a", -1, "2", null, PsiTypes.intType()))
   }
 
   void testMoveArrayToTheEnd() throws Exception {
@@ -195,7 +195,7 @@ class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   void testConstructorCall() {
-    doTest(new SimpleInfo(0), new SimpleInfo("a", -1, "1", null, PsiType.INT))
+    doTest(new SimpleInfo(0), new SimpleInfo("a", -1, "1", null, PsiTypes.intType()))
   }
 
   void testNoArgInCommandCall() {

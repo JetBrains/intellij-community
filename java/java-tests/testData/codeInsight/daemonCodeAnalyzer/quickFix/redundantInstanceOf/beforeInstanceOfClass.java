@@ -1,4 +1,4 @@
-// "Replace with a null check" "true"
+// "Replace with a null check" "true-preview"
 import java.util.stream.Stream;
 
 class Test {

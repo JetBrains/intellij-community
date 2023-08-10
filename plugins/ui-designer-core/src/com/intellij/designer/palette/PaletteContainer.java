@@ -64,8 +64,7 @@ public class PaletteContainer extends JPanel implements Scrollable {
       int height = 0;
 
       for (Component component : parent.getComponents()) {
-        if (component instanceof PaletteGroupComponent) {
-          PaletteGroupComponent groupComponent = (PaletteGroupComponent)component;
+        if (component instanceof PaletteGroupComponent groupComponent) {
           groupComponent.setLocation(0, height);
           if (groupComponent.isVisible()) {
             int groupHeight = groupComponent.getPreferredSize().height;
@@ -91,8 +90,7 @@ public class PaletteContainer extends JPanel implements Scrollable {
       int height = 0;
 
       for (Component component : parent.getComponents()) {
-        if (component instanceof PaletteGroupComponent) {
-          PaletteGroupComponent groupComponent = (PaletteGroupComponent)component;
+        if (component instanceof PaletteGroupComponent groupComponent) {
           height += groupComponent.getHeight();
           if (groupComponent.isSelected()) {
             height += groupComponent.getItemsComponent().getPreferredHeight(width);

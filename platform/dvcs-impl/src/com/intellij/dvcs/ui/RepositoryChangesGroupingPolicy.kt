@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui
 
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.repo.VcsRepositoryManager
+import com.intellij.dvcs.ui.RepositoryChangesBrowserNode.Companion.getColorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NotNullLazyKey
 import com.intellij.openapi.vcs.FilePath
@@ -11,15 +12,19 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.StaticFilePath
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.*
-import com.intellij.vcsUtil.VcsUtil
 import java.util.*
 import javax.swing.tree.DefaultTreeModel
 
 class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
   private val repositoryManager = VcsRepositoryManager.getInstance(project)
 
-  override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
-    val nextPolicyParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot)
+  override fun getParentNodeFor(nodePath: StaticFilePath,
+                                node: ChangesBrowserNode<*>,
+                                subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
+    val nextPolicyParent = nextPolicy?.getParentNodeFor(nodePath, node, subtreeRoot)
+
+    val colorManager = getColorManager(project)
+    if (!colorManager.hasMultiplePaths()) return nextPolicyParent
 
     val filePath = nodePath.filePath
     val repository = getRepositoryFor(filePath)
@@ -30,7 +35,7 @@ class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTr
 
     REPOSITORY_CACHE.getValue(cachingRoot)[repository]?.let { return it }
 
-    val repoNode = RepositoryChangesBrowserNode(repository)
+    val repoNode = RepositoryChangesBrowserNode(repository, colorManager)
     repoNode.markAsHelperNode()
 
     model.insertNodeInto(repoNode, grandParent, grandParent.childCount)
@@ -60,6 +65,6 @@ class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTr
   }
 
   companion object {
-    val REPOSITORY_CACHE = NotNullLazyKey.create<MutableMap<Repository, ChangesBrowserNode<*>>, ChangesBrowserNode<*>>("ChangesTree.RepositoryCache") { mutableMapOf() }
+    val REPOSITORY_CACHE = NotNullLazyKey.createLazyKey<MutableMap<Repository, ChangesBrowserNode<*>>, ChangesBrowserNode<*>>("ChangesTree.RepositoryCache") { mutableMapOf() }
   }
 }

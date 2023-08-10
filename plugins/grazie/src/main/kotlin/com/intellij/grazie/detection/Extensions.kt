@@ -1,7 +1,7 @@
 package com.intellij.grazie.detection
 
-import com.intellij.grazie.detector.model.Language
-import com.intellij.grazie.detector.model.alphabet.Alphabet
+import ai.grazie.nlp.langs.Language
+import ai.grazie.nlp.langs.alphabet.Alphabet
 import com.intellij.grazie.jlanguage.Lang
 
 fun Lang.toLanguage() = Language.values().find { it.iso == this.iso }!!

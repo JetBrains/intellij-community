@@ -16,9 +16,7 @@ import com.jetbrains.python.lexer.PythonIndentingLexer;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 
-/**
- * @author yole
- */
+
 public class PyTokenSeparatorGenerator implements TokenSeparatorGenerator {
   @Override
   public ASTNode generateWhitespaceBetweenTokens(ASTNode left, ASTNode right) {

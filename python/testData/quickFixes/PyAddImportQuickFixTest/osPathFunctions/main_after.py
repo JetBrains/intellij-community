@@ -1,3 +1,3 @@
-from os.path import join
+from os.path import commonpath
 
-join
+commonpath

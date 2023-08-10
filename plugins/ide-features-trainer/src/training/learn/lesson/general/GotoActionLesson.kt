@@ -1,29 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn.lesson.general
 
-import com.intellij.ide.actions.AboutPopup
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.impl.jList
-import com.intellij.testGuiFramework.util.Key
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.ui.UIUtil
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.*
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.*
+import training.learn.course.KLesson
+import training.util.isToStringContains
 import java.awt.event.KeyEvent
-import javax.swing.JPanel
+import javax.swing.JDialog
 
-class GotoActionLesson(module: Module, lang: String, private val sample: LessonSample, private val firstLesson: Boolean = false) :
-  KLesson("Actions", LessonsBundle.message("goto.action.lesson.name"), module, lang) {
+class GotoActionLesson(private val sample: LessonSample,
+                       private val firstLesson: Boolean = false,
+                       private val helpUrl: String = "searching-everywhere.html#search_actions")
+  : KLesson("Actions", LessonsBundle.message("goto.action.lesson.name")) {
 
   companion object {
     private const val FIND_ACTION_WORKAROUND: String = "https://intellij-support.jetbrains.com/hc/en-us/articles/360005137400-Cmd-Shift-A-hotkey-opens-Terminal-with-apropos-search-instead-of-the-Find-Action-dialog"
@@ -36,7 +35,7 @@ class GotoActionLesson(module: Module, lang: String, private val sample: LessonS
         text(LessonsBundle.message("goto.action.use.find.action.1",
                                    LessonUtil.actionName(it), action(it)))
 
-        if (SystemInfo.isMacOSMojave) {
+        if (SystemInfoRt.isMac) {
           text(LessonsBundle.message("goto.action.mac.workaround", LessonUtil.actionName(it), FIND_ACTION_WORKAROUND))
         }
 
@@ -47,28 +46,23 @@ class GotoActionLesson(module: Module, lang: String, private val sample: LessonS
         test { actions(it) }
       }
 
-      actionTask("About") {
+      task("About") {
         showWarningIfSearchPopupClosed()
-        LessonsBundle.message("goto.action.invoke.about.action",
-                              LessonUtil.actionName(it).toLowerCase(), LessonUtil.rawEnter())
+        text(LessonsBundle.message("goto.action.invoke.about.action",
+                                   LessonUtil.actionName(it).toLowerCase(), LessonUtil.rawEnter()))
+        triggerUI().component { dialog: JDialog ->
+          dialog.title.isToStringContains(IdeBundle.message("about.popup.about.app", ApplicationNamesInfo.getInstance().fullProductName))
+        }
+        test { actions(it) }
       }
 
       task {
         text(LessonsBundle.message("goto.action.to.return.to.the.editor", action("EditorEscape")))
-        var aboutHasBeenFocused = false
         stateCheck {
-          aboutHasBeenFocused = aboutHasBeenFocused || focusOwner is AboutPopup.PopupPanel
-          aboutHasBeenFocused && focusOwner is EditorComponentImpl
+          focusOwner is EditorComponentImpl
         }
-        test {
-          ideFrame {
-            waitComponent(JPanel::class.java, "InfoSurface")
-            // Note 1: it is editor from test IDE fixture
-            // Note 2: In order to pass this task without interference with later task I need to firstly focus lesson
-            // and only then press Escape
-            editor.requestFocus()
-            GuiTestUtil.shortcut(Key.ESCAPE)
-          }
+        test(waitEditorToBeReady = false) {
+          invokeActionViaShortcut("ESCAPE")
         }
       }
 
@@ -82,7 +76,7 @@ class GotoActionLesson(module: Module, lang: String, private val sample: LessonS
       val showLineNumbersName = ActionsBundle.message("action.EditorGutterToggleGlobalLineNumbers.text")
       task(LearnBundle.message("show.line.number.prefix.to.show.first")) {
         text(LessonsBundle.message("goto.action.show.line.numbers.request", strong(it), strong(showLineNumbersName)))
-        triggerByListItemAndHighlight { item ->
+        triggerAndBorderHighlight().listItem { item ->
           val matchedValue = item as? GotoActionModel.MatchedValue
           val actionWrapper = matchedValue?.value as? GotoActionModel.ActionWrapper
           val action = actionWrapper?.action
@@ -135,4 +129,9 @@ class GotoActionLesson(module: Module, lang: String, private val sample: LessonS
   }
 
   private fun isLineNumbersShown() = EditorSettingsExternalizable.getInstance().isLineNumbersShown
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("help.search.everywhere"),
+         LessonUtil.getHelpLink(helpUrl)),
+  )
 }

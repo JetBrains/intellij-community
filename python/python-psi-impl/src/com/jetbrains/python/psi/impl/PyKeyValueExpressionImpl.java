@@ -13,9 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-/**
- * @author yole
- */
+
 public class PyKeyValueExpressionImpl extends PyElementImpl implements PyKeyValueExpression {
   public PyKeyValueExpressionImpl(ASTNode astNode) {
     super(astNode);

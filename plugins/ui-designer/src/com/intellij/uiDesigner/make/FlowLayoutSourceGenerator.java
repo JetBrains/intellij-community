@@ -1,18 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.make;
 
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 
-/**
- * @author yole
- */
+
 public final class FlowLayoutSourceGenerator extends LayoutSourceGenerator {
-  @NonNls private static final Int2ObjectOpenHashMap<String> myAlignMap = new Int2ObjectOpenHashMap<>();
+  @NonNls private static final Int2ObjectMap<String> myAlignMap = new Int2ObjectOpenHashMap<>();
 
   static {
     myAlignMap.put(FlowLayout.CENTER, "FlowLayout.CENTER");

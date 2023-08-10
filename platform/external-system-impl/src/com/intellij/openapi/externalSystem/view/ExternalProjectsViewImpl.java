@@ -29,6 +29,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
@@ -37,13 +38,15 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -58,33 +61,23 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
  */
-public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements DataProvider, ExternalProjectsView, Disposable {
+public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements DataProvider, ExternalProjectsView, Disposable {
   public static final Logger LOG = Logger.getInstance(ExternalProjectsViewImpl.class);
 
-  @NotNull
-  private final Project myProject;
-  @NotNull
-  private final ExternalProjectsManagerImpl myProjectsManager;
-  @NotNull
-  private final ToolWindowEx myToolWindow;
-  @NotNull
-  private final ProjectSystemId myExternalSystemId;
-  @NotNull
-  private final ExternalSystemUiAware myUiAware;
-  @NotNull
-  private final Set<Listener> listeners = new HashSet<>();
+  private final @NotNull Project myProject;
+  private final @NotNull ExternalProjectsManagerImpl myProjectsManager;
+  private final @NotNull ToolWindowEx myToolWindow;
+  private final @NotNull ProjectSystemId myExternalSystemId;
+  private final @NotNull ExternalSystemUiAware myUiAware;
+  private final @NotNull Set<Listener> listeners = new HashSet<>();
 
-  @Nullable
-  private ExternalProjectsStructure myStructure;
+  private @Nullable ExternalProjectsStructure myStructure;
   private SimpleTree myTree;
-  @NotNull
-  private final NotificationGroup myNotificationGroup;
+  private final @NotNull NotificationGroup myNotificationGroup;
   private final List<ExternalSystemViewContributor> myViewContributors;
 
   private ExternalProjectsViewState myState = new ExternalProjectsViewState();
@@ -102,42 +95,38 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationId);
     myNotificationGroup = registeredGroup != null ? registeredGroup : NotificationGroup.toolWindowGroup(notificationId, toolWindowId);
 
-    Predicate<ExternalSystemViewContributor> contributorPredicate =
-      c -> ProjectSystemId.IDE.equals(c.getSystemId()) || myExternalSystemId.equals(c.getSystemId());
-    myViewContributors = Arrays.stream(ExternalSystemViewContributor.EP_NAME.getExtensions())
-      .filter(contributorPredicate)
-      .collect(Collectors.toList());
+    Condition<ExternalSystemViewContributor> contributorPredicate = c -> {
+      return ProjectSystemId.IDE.equals(c.getSystemId()) || myExternalSystemId.equals(c.getSystemId());
+    };
+    myViewContributors = new ArrayList<>(ContainerUtil.filter(ExternalSystemViewContributor.EP_NAME.getExtensions(), contributorPredicate));
     ExternalSystemViewContributor.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull ExternalSystemViewContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
-        if (contributorPredicate.test(extension)) {
+        if (contributorPredicate.value(extension)) {
           myViewContributors.add(extension);
         }
       }
 
       @Override
       public void extensionRemoved(@NotNull ExternalSystemViewContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
-        if (contributorPredicate.test(extension)) {
+        if (contributorPredicate.value(extension)) {
           myViewContributors.remove(extension);
         }
       }
     }, this);
 
     setName(myExternalSystemId.getReadableName() + " tool window");
+    Touchbar.setActions(this, "ExternalSystem.RefreshAllProjects");
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
+  public @Nullable Object getData(@NotNull @NonNls String dataId) {
     if (ExternalSystemDataKeys.VIEW.is(dataId)) return this;
 
-    if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.toolwindows.gradle";
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return "reference.toolwindows.gradle";
     if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return extractVirtualFile();
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return extractVirtualFiles();
-    if (Location.DATA_KEY.is(dataId)) {
-      return extractLocation();
-    }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
 
     if (ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.is(dataId)) return myExternalSystemId;
@@ -146,20 +135,27 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     if (ExternalSystemDataKeys.SELECTED_NODES.is(dataId)) return getSelectedNodes(ExternalSystemNode.class);
     if (ExternalSystemDataKeys.PROJECTS_TREE.is(dataId)) return myTree;
     if (ExternalSystemDataKeys.NOTIFICATION_GROUP.is(dataId)) return myNotificationGroup;
-    if (TouchbarDataKeys.ACTIONS_KEY.is(dataId)) return new DefaultActionGroup(ActionManager.getInstance().getAction("ExternalSystem.RefreshAllProjects"));
+
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      final List<ExternalSystemNode> selectedNodes = getSelectedNodes(ExternalSystemNode.class);
+      return (DataProvider)(@NotNull String dataIdParam) -> {
+        if (Location.DATA_KEY.is(dataIdParam)) {
+          return extractLocation(selectedNodes);
+        }
+        return null;
+      };
+    }
 
     return super.getData(dataId);
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   @Override
-  @NotNull
-  public ExternalSystemUiAware getUiAware() {
+  public @NotNull ExternalSystemUiAware getUiAware() {
     return myUiAware;
   }
 
@@ -174,13 +170,11 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   @Override
-  @NotNull
-  public ProjectSystemId getSystemId() {
+  public @NotNull ProjectSystemId getSystemId() {
     return myExternalSystemId;
   }
 
-  @NotNull
-  public NotificationGroup getNotificationGroup() {
+  public @NotNull NotificationGroup getNotificationGroup() {
     return myNotificationGroup;
   }
 
@@ -190,7 +184,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
     MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
     busConnection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
-      boolean wasVisible = false;
+      boolean wasVisible;
 
       @Override
       public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
@@ -198,7 +192,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
           return;
         }
 
-        boolean visible = myToolWindow.isVisible();
+        boolean visible = ((ToolWindowManagerEx)toolWindowManager).shouldUpdateToolWindowContent(myToolWindow);
         if (!visible || wasVisible) {
           wasVisible = visible;
           if (!visible) {
@@ -212,16 +206,9 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       }
     });
 
-    getShortcutsManager().addListener(() -> {
-      scheduleTaskAndRunConfigUpdate();
-    }, this);
+    getShortcutsManager().addListener(() -> scheduleTaskAndRunConfigUpdate(), this);
 
-    getTaskActivator().addListener(new ExternalSystemTaskActivator.Listener() {
-      @Override
-      public void tasksActivationChanged() {
-        scheduleTaskAndRunConfigUpdate();
-      }
-    }, this);
+    getTaskActivator().addListener(() -> scheduleTaskAndRunConfigUpdate(), this);
 
     busConnection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       private void changed() {
@@ -284,12 +271,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       if (gearAction instanceof ExternalSystemViewGearAction) {
         ((ExternalSystemViewGearAction)gearAction).setView(this);
         group.add(gearAction);
-        Disposer.register(this, new Disposable() {
-          @Override
-          public void dispose() {
-            ((ExternalSystemViewGearAction)gearAction).setView(null);
-          }
-        });
+        Disposer.register(this, () -> ((ExternalSystemViewGearAction)gearAction).setView(null));
       }
     }
     return group;
@@ -327,8 +309,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
         }
       }
 
-      @Nullable
-      private String getMenuId(Collection<? extends ExternalSystemNode> nodes) {
+      private static @Nullable String getMenuId(Collection<? extends ExternalSystemNode> nodes) {
         String id = null;
         for (ExternalSystemNode node : nodes) {
           String menuId = node.getMenuId();
@@ -368,15 +349,11 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     });
   }
 
-  protected boolean isUnitTestMode() {
-    return ApplicationManager.getApplication().isUnitTestMode();
-  }
-
-  public static void invokeLater(Project p, Runnable r) {
+  private static void invokeLater(Project p, Runnable r) {
     invokeLater(p, ModalityState.defaultModalityState(), r);
   }
 
-  public static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
+  private static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
     if (isNoBackgroundMode()) {
       r.run();
     }
@@ -386,8 +363,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   public static boolean isNoBackgroundMode() {
-    return (ApplicationManager.getApplication().isUnitTestMode()
-            || ApplicationManager.getApplication().isHeadlessEnvironment());
+    return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
   @Override
@@ -399,16 +375,14 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   @Override
-  @Nullable
-  public ExternalProjectsStructure getStructure() {
+  public @Nullable ExternalProjectsStructure getStructure() {
     return myStructure;
   }
 
   @Override
-  @NotNull
-  public List<ExternalSystemNode<?>> createNodes(@NotNull ExternalProjectsView externalProjectsView,
-                                                 @Nullable ExternalSystemNode<?> parent,
-                                                 @NotNull DataNode<?> dataNode) {
+  public @NotNull List<ExternalSystemNode<?>> createNodes(@NotNull ExternalProjectsView externalProjectsView,
+                                                          @Nullable ExternalSystemNode<?> parent,
+                                                          @NotNull DataNode<?> dataNode) {
     final List<ExternalSystemNode<?>> result = new SmartList<>();
     final MultiMap<Key<?>, DataNode<?>> groups = ExternalSystemApiUtil.group(dataNode.getChildren());
     for (ExternalSystemViewContributor contributor : myViewContributors) {
@@ -417,14 +391,16 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
         ContainerUtil.putIfNotNull(key, groups.get(key), dataNodes);
       }
 
-      if (dataNodes.isEmpty()) continue;
+      if (dataNodes.isEmpty()) {
+        continue;
+      }
 
-      final List<ExternalSystemNode<?>> childNodes = contributor.createNodes(externalProjectsView, dataNodes);
+      List<ExternalSystemNode<?>> childNodes = contributor.createNodes(externalProjectsView, dataNodes);
       result.addAll(childNodes);
 
       if (parent == null) continue;
 
-      for (ExternalSystemNode childNode : childNodes) {
+      for (ExternalSystemNode<?> childNode : childNodes) {
         childNode.setParent(parent);
       }
     }
@@ -446,9 +422,8 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     return ref.get();
   }
 
-  @Nullable
-  public ExternalProjectsViewState getState() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+  @RequiresReadLock
+  public @Nullable ExternalProjectsViewState getState() {
     if (myStructure != null) {
       try {
         myState.treeState = new Element("root");
@@ -520,14 +495,15 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   @Override
-  @Nullable
-  public String getDisplayName(@Nullable DataNode node) {
+  public @Nullable String getDisplayName(@Nullable DataNode node) {
     if (node == null) return null;
-    return myViewContributors.stream()
-                             .map(contributor -> contributor.getDisplayName(node))
-                             .filter(Objects::nonNull)
-                             .findFirst()
-                             .orElse(null);
+    for (ExternalSystemViewContributor contributor : myViewContributors) {
+      String name = contributor.getDisplayName(node);
+      if (name != null) {
+        return name;
+      }
+    }
+    return null;
   }
 
   private <T extends ExternalSystemNode> void scheduleNodesRebuild(@NotNull Class<T> nodeClass) {
@@ -542,7 +518,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
   private void scheduleStructureRequest(final Runnable r) {
     invokeLater(myProject, () -> {
-      if (!myToolWindow.isVisible()) return;
+      if (!ToolWindowManagerEx.getInstanceEx(myProject).shouldUpdateToolWindowContent(myToolWindow)) return;
 
       boolean shouldCreate = myStructure == null;
       if (shouldCreate) {
@@ -574,15 +550,12 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     return getSelectedNodes(ProjectNode.class);
   }
 
-  @Nullable
-  private ProjectNode getSelectedProjectNode() {
+  private @Nullable ProjectNode getSelectedProjectNode() {
     final List<ProjectNode> projectNodes = getSelectedProjectNodes();
     return projectNodes.size() == 1 ? projectNodes.get(0) : null;
   }
 
-  @Nullable
-  private ExternalSystemTaskLocation extractLocation() {
-    final List<ExternalSystemNode> selectedNodes = getSelectedNodes(ExternalSystemNode.class);
+  private @Nullable ExternalSystemTaskLocation extractLocation(List<ExternalSystemNode> selectedNodes) {
     if (selectedNodes.isEmpty()) return null;
 
     List<TaskData> tasks = new SmartList<>();
@@ -593,8 +566,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
     for (ExternalSystemNode node : selectedNodes) {
       final Object data = node.getData();
-      if (data instanceof TaskData) {
-        final TaskData taskData = (TaskData)data;
+      if (data instanceof TaskData taskData) {
         if (projectPath == null) {
           projectPath = taskData.getLinkedExternalProjectPath();
         }
@@ -644,7 +616,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       Navigatable navigatable = each.getNavigatable();
       if (navigatable != null) navigatables.add(navigatable);
     }
-    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[0]);
+    return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
   }
 
   @Override

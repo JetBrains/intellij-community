@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,8 +15,10 @@ import java.io.OutputStream;
 @ApiStatus.Internal
 public abstract class SerializationManagerEx implements StubTreeSerializer {
   public static SerializationManagerEx getInstanceEx() {
-    return ServiceManager.getService(SerializationManagerEx.class);
+    return ApplicationManager.getApplication().getService(SerializationManagerEx.class);
   }
+
+  public abstract void performShutdown();
 
   /**
    * @deprecated only kept to support prebuilt stubs
@@ -28,20 +30,13 @@ public abstract class SerializationManagerEx implements StubTreeSerializer {
 
   protected abstract void initSerializers();
 
+  public abstract void initialize();
+
   public abstract boolean isNameStorageCorrupted();
 
   public abstract void repairNameStorage(@NotNull Exception corruptionCause);
 
-  /**
-   * @deprecated use {@link SerializationManagerEx#repairNameStorage(Exception)}
-   * with specified corruption cause
-   */
-  @Deprecated
-  public void repairNameStorage() {
-    repairNameStorage(new Exception());
-  }
-
-  public abstract void flushNameStorage();
+  public abstract void flushNameStorage() throws IOException;
 
   public abstract void reinitializeNameStorage();
 }

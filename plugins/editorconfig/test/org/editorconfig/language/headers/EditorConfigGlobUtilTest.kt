@@ -47,11 +47,11 @@ class EditorConfigGlobUtilTest : BasePlatformTestCase() {
 
   @Test
   fun `test that charclass can be subcase of pattern enumeration`() =
-    testHeaders("[[abc]]", "[{a, b, c, d}]")
+    testHeaders("[[abc]]", "[{a,b,c,d}]")
 
   @Test
   fun `test that pattern enumeration can be subcase of charclass`() =
-    testHeaders("[{a, b}]", "[[abc]]")
+    testHeaders("[{a,b}]", "[[abc]]")
 
   // ---- ---- asterisk tests ---- ----
 

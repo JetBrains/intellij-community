@@ -25,7 +25,6 @@ import com.jetbrains.python.psi.PyFunction;
 
 /**
  * Decorator-specific tests.
- * User: dcheryasov
  */
 public class PyDecoratorTest extends PyTestCase {
   private PsiElement find() {

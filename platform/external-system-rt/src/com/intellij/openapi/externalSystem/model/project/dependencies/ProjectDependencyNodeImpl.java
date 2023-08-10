@@ -8,11 +8,13 @@ import org.jetbrains.annotations.NotNull;
 public class ProjectDependencyNodeImpl extends AbstractDependencyNode implements ProjectDependencyNode {
 
   private final String projectName;
+  private final String projectPath;
 
-  @PropertyMapping({"id", "projectName"}) //NON-NLS
-  public ProjectDependencyNodeImpl(long id, @NotNull String projectName) {
+  @PropertyMapping({"id", "projectName", "projectPath"}) //NON-NLS
+  public ProjectDependencyNodeImpl(long id, @NotNull String projectName, @NotNull String projectPath) {
     super(id);
     this.projectName = projectName;
+    this.projectPath = projectPath;
   }
 
   @NotNull
@@ -21,25 +23,16 @@ public class ProjectDependencyNodeImpl extends AbstractDependencyNode implements
     return projectName;
   }
 
+  @NotNull
+  @Override
+  public String getProjectPath() {
+    return projectPath;
+  }
+
   @NonNls
   @NotNull
   @Override
   public String getDisplayName() {
     return "project " + projectName;
-  }
-
-  @Override
-  public boolean match(AbstractDependencyNode dependencyNode) {
-    if (dependencyNode == null || getClass() != dependencyNode.getClass()) return false;
-    ProjectDependencyNodeImpl node = (ProjectDependencyNodeImpl)dependencyNode;
-    if (!projectName.equals(node.projectName)) return false;
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + projectName.hashCode();
-    return result;
   }
 }

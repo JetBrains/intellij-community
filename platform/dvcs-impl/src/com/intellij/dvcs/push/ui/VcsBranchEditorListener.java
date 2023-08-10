@@ -32,9 +32,8 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
       myUnderlined = null;
       shouldRepaint = true;
     }
-    if (tag instanceof VcsLinkedTextComponent) {
+    if (tag instanceof VcsLinkedTextComponent linkedText) {
       component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      VcsLinkedTextComponent linkedText = (VcsLinkedTextComponent)tag;
       linkedText.setUnderlined(true);
       myUnderlined = linkedText;
       shouldRepaint = true;
@@ -55,8 +54,7 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
 
   @Override
   protected void handleTagClick(@Nullable final Object tag, @NotNull MouseEvent event) {
-    if (tag instanceof VcsLinkedTextComponent) {
-      VcsLinkedTextComponent textWithLink = (VcsLinkedTextComponent)tag;
+    if (tag instanceof VcsLinkedTextComponent textWithLink) {
       final TreePath path = myRenderer.getTextRenderer().getTree().getPathForLocation(event.getX(), event.getY());
       if (path == null) return; //path could not be null if tag not null; see com.intellij.dvcs.push.ui.PushLogTreeUtil.getTagAtForRenderer
       Object node = path.getLastPathComponent();

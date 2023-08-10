@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 
 import java.awt.*;
@@ -67,8 +68,31 @@ public final class TestFrameworkUtil {
     return false;
   }
 
+  @TestOnly
+  public static boolean isJUnit5TestClass(@NotNull Class<?> aClass, boolean allowAbstract) {
+    int modifiers = aClass.getModifiers();
+    if (!allowAbstract && (modifiers & Modifier.ABSTRACT) != 0) return false;
+    if ((modifiers & Modifier.PUBLIC) == 0) return false;
+
+    if (aClass.getAnnotation(ExtendWith.class) != null) return true;
+    for (Method method : aClass.getMethods()) {
+      if (method.getAnnotation(org.junit.jupiter.api.Test.class) != null) return true;
+    }
+    return false;
+  }
+
   public static boolean isPerformanceTest(@Nullable String testName, @Nullable String className) {
-    return testName != null && StringUtil.containsIgnoreCase(testName, "performance") ||
-           className != null && StringUtil.containsIgnoreCase(className, "performance");
+    return containsWord(testName, className, "performance");
+  }
+
+  public static boolean isStressTest(@Nullable String testName, @Nullable String className) {
+    return isPerformanceTest(testName, className) ||
+           containsWord(testName, className, "stress") ||
+           containsWord(testName, className, "slow");
+  }
+
+  private static boolean containsWord(@Nullable String testName, @Nullable String className, @NotNull String word) {
+    return testName != null && StringUtil.containsIgnoreCase(testName, word) ||
+           className != null && StringUtil.containsIgnoreCase(className, word);
   }
 }

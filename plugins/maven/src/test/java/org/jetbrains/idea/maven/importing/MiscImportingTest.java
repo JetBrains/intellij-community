@@ -1,106 +1,141 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.ProjectTopics;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
-import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.ExtensionTestUtil;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.model.MavenProjectProblem;
+import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporterKt;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectChanges;
-import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.junit.Assume;
+import org.junit.Test;
 
 import java.io.File;
-import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.Set;
+import java.util.function.Function;
 
-public class MiscImportingTest extends MavenImportingTestCase {
-  private int beforeRootsChangedCount;
-  private int rootsChangedCount;
+public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
+  private MavenEventsTestHelper myEventsTestHelper = new MavenEventsTestHelper();
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void beforeRootsChange(@NotNull ModuleRootEvent event) {
-        beforeRootsChangedCount++;
-      }
-
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        rootsChangedCount++;
-      }
-    });
+    myEventsTestHelper.setUp(myProject);
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      myEventsTestHelper.tearDown();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
+
+  @Test
   public void testRestarting() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<name>1</name>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <name>1</name>
+                    """);
 
     assertModules("project");
-    assertEquals("1", myProjectsTree.getRootProjects().get(0).getName());
+    assertEquals("1", getProjectsTree().getRootProjects().get(0).getName());
 
     MavenServerManager.getInstance().shutdown(true);
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<name>2</name>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <name>2</name>
+                    """);
 
     assertModules("project");
-    assertEquals("2", myProjectsTree.getRootProjects().get(0).getName());
+    assertEquals("2", getProjectsTree().getRootProjects().get(0).getName());
   }
 
+  @Test
+  public void testFallbackToSlowWorkspaceCommit() {
+    Assume.assumeTrue(isWorkspaceImport());
+
+    try {
+      WorkspaceProjectImporterKt.setWORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE(true);
+      importProject("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      <name>1</name>
+                      """);
+
+      assertModules("project");
+
+      // make sure the logic in WorkspaceProjectImporter worked as expected
+      assertFalse(WorkspaceProjectImporterKt.getWORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE());
+    }
+    finally {
+      WorkspaceProjectImporterKt.setWORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE(false);
+    }
+  }
+
+  @Test
   public void testDoNotFailOnInvalidMirrors() throws Exception {
-    updateSettingsXmlFully("<settings>" +
-                           "<mirrors>" +
-                           "  <mirror>" +
-                           "  </mirror>" +
-                           "  <mirror>" +
-                           "    <id></id>" +
-                           "    <url></url>" +
-                           "    <mirrorOf></mirrorOf>" +
-                           "  </mirror>" +
-                           "  <mirror>" +
-                           "    <id></id>" +
-                           "    <url>foo</url>" +
-                           "    <mirrorOf>*</mirrorOf>" +
-                           "  </mirror>" +
-                           "  <mirror>" +
-                           "    <id>foo</id>" +
-                           "    <url></url>" +
-                           "    <mirrorOf>*</mirrorOf>" +
-                           "  </mirror>" +
-                           "</mirrors>" +
-                           "</settings>");
+    updateSettingsXmlFully("""
+                             <settings>
+                             <mirrors>
+                               <mirror>
+                               </mirror>
+                               <mirror>
+                                 <id/>
+                                 <url/>
+                                 <mirrorOf/>
+                               </mirror>
+                               <mirror>
+                                 <id/>
+                                 <url>foo</url>
+                                 <mirrorOf>*</mirrorOf>
+                               </mirror>
+                               <mirror>
+                                 <id>foo</id>
+                                 <url/>
+                                 <mirrorOf>*</mirrorOf>
+                               </mirror>
+                             </mirrors>
+                             </settings>
+                             """);
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     assertModules("project");
   }
 
+  @Test
   public void testImportingAllAvailableFilesIfNotInitialized() {
     createModule("m1");
     createModule("m2");
@@ -108,14 +143,18 @@ public class MiscImportingTest extends MavenImportingTestCase {
                          "m2/src/main/java");
 
     createModulePom("m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      """);
 
     createModulePom("m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      """);
 
     assertSources("m1");
     assertSources("m2");
@@ -129,57 +168,186 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertSources("m2", "src/main/java");
   }
 
+  @Test
   public void testImportingFiresRootChangesOnlyOnce() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
-    assertRootsChanged(1);
+    myEventsTestHelper.assertRootsChanged(1);
+    myEventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 1 : 2);
   }
 
+  @Test
+  public void testDoRootChangesOnProjectReimportWhenNothingChanges() {
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>4.0</version>
+                      </dependency>
+                    </dependencies>
+                    """);
+
+    myEventsTestHelper.assertRootsChanged(1);
+    myEventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 1 : 2);
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>4.0</version>
+                      </dependency>
+                    </dependencies>
+                    """);
+
+    myEventsTestHelper.assertRootsChanged(isWorkspaceImport() ? 0 : 1);
+    myEventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 0 : 1);
+  }
+
+  @Test
+  public void testSetExternalSourceForExistingLibrary() {
+    /* this test checks that the external source will be restored if it wasn't saved due to the bug (IDEA-264750);
+       the bug isn't relevant for Workspace Import because it is actual only if "Store generated files under project root" is switched on */
+    MavenProjectsManager.getInstance(myProject).getImportingSettings().setWorkspaceImportEnabled(false);
+
+    String libraryName = "Maven: junit:junit:4.0";
+    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    WriteAction.runAndWait(() -> {
+      LibraryTable.ModifiableModel model = libraryTable.getModifiableModel();
+      model.createLibrary(libraryName);
+      model.commit();
+    });
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>4.0</version>
+                      </dependency>
+                    </dependencies>""");
+    importProject();
+
+    assertModules("project");
+    Library library = getModuleLibDep("project", libraryName).getLibrary();
+    assertNotNull(library);
+    assertNotNull(library.getExternalSource());
+  }
+
+  @Test
+  public void testSendWorkspaceEventsOnlyForChangedEntities() {
+    Assume.assumeTrue(isWorkspaceImport());
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                      <module>m1</module>
+                      <module>m2</module>
+                    </modules>
+                    """);
+
+    createModulePom("m1",
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      """);
+
+    createModulePom("m2",
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      """);
+
+    importProject();
+
+    createModulePom("m1",
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      <dependencies>
+                        <dependency>
+                          <groupId>junit</groupId>
+                          <artifactId>junit</artifactId>
+                          <version>4.0</version>
+                        </dependency>
+                      </dependencies>
+                      """);
+
+    var changeLog = new HashSet<String>();
+    myProject.getMessageBus().connect().subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
+      @Override
+      public void changed(@NotNull VersionedStorageChange event) {
+        Iterator<EntityChange<?>> iterator = event.getAllChanges().iterator();
+
+        var getName = new Function<WorkspaceEntity, String>() {
+          @Override
+          public String apply(WorkspaceEntity entity) {
+            if (entity instanceof WorkspaceEntityWithSymbolicId) {
+              return ((WorkspaceEntityWithSymbolicId)entity).getSymbolicId().getPresentableName();
+            }
+            else {
+              return entity.getClass().getSimpleName();
+            }
+          }
+        };
+        while (iterator.hasNext()) {
+          var change = iterator.next();
+          if (change.getNewEntity() == null) {
+            changeLog.add("deleted " + getName.apply(change.getOldEntity()));
+          }
+          else if (change.getOldEntity() == null) {
+            changeLog.add("created " + getName.apply(change.getNewEntity()));
+          }
+          else {
+            changeLog.add("modified " + getName.apply(change.getNewEntity()));
+          }
+        }
+      }
+    });
+
+    importProject();
+    assertEquals(Set.of("modified m1", "created Maven: junit:junit:4.0", "created LibraryPropertiesEntityImpl"), changeLog);
+  }
+
+  @Test
   public void testResolvingFiresRootChangesOnlyOnce() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
-    assertRootsChanged(1);
+    myEventsTestHelper.assertRootsChanged(1);
+    myEventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 1 : 2);
   }
 
-  public void testImportingWithLibrariesAndFacetsFiresRootChangesOnlyOnce() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>war</packaging>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>4.0</version>" +
-                  "  </dependency>" +
-                  "  <dependency>" +
-                  "    <groupId>jmock</groupId>" +
-                  "    <artifactId>jmock</artifactId>" +
-                  "    <version>1.0.0</version>" +
-                  "  </dependency>" +
-                  "</dependencies>");
-
-    assertRootsChanged(1);
-  }
-
-  public void testFacetsDoNotFireRootsChanges() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>war</packaging>");
-
-    assertRootsChanged(1);
-  }
-
+  @Test
   public void testDoNotRecreateModulesBeforeResolution() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     Module m = getModule("project");
     resolveDependenciesAndImport();
@@ -187,51 +355,50 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertSame(m, getModule("project"));
   }
 
+  @Test
   public void testTakingProxySettingsIntoAccount() throws Exception {
     MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
     setRepositoryPath(helper.getTestDataPath("local1"));
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>4.0</version>" +
-                  "  </dependency>" +
-                  "</dependencies>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>4.0</version>
+                      </dependency>
+                    </dependencies>
+                    """);
 
     removeFromLocalRepository("junit");
 
-    scheduleResolveAll(); // force resolving
-    resolveDependenciesAndImport();
+    updateAllProjects();
 
     File jarFile = new File(getRepositoryFile(), "junit/junit/4.0/junit-4.0.jar");
     assertTrue(jarFile.exists());
 
     myProjectsManager.listenForExternalChanges();
 
-    // valid password is 'fg3W9' (see http://www.jetbrains.net/confluence/display/JBINT/HTTP+Proxy+with+authorization)
-    updateSettingsXml("<proxies>" +
-                      " <proxy>" +
-                      "    <id>my</id>" +
-                      "    <active>true</active>" +
-                      "    <protocol>http</protocol>" +
-                      "    <host>proxy-auth-test.labs.intellij.net</host>" +
-                      "    <port>3128</port>" +
-                      "    <username>user1</username>" +
-                      "    <password>invalid</password>" +
-                      "  </proxy>" +
-                      "</proxies>");
+    updateSettingsXml("""
+                        <proxies>
+                         <proxy>
+                            <id>my</id>
+                            <active>true</active>
+                            <protocol>http</protocol>
+                            <host>invalid.host.in.intellij.net</host>
+                            <port>3128</port>
+                          </proxy>
+                        </proxies>
+                        """);
 
     removeFromLocalRepository("junit");
     assertFalse(jarFile.exists());
 
     try {
-      scheduleResolveAll(); // force resolving
-      resolveDependenciesAndImport();
+      updateAllProjects();
     }
     finally {
       // LightweightHttpWagon does not clear settings if they were not set before a proxy was configured.
@@ -242,67 +409,33 @@ public class MiscImportingTest extends MavenImportingTestCase {
 
     restoreSettingsFile();
 
-    scheduleResolveAll(); // force resolving
-    resolveDependenciesAndImport();
+    updateAllProjects();
     assertTrue(jarFile.exists());
   }
 
-  public void testClearUnresolvedPluginsAfterPluginResolution() {
-    try {
-      File repo = new File(myDir, "repo");
-      setRepositoryPath(repo.getPath());
-
-      createProjectPom("<groupId>test</groupId>" +
-                       "<artifactId>project</artifactId>" +
-                       "<version>1</version>" +
-                       "" +
-                       "<build>" +
-                       "  <plugins>" +
-                       "    <plugin>" +
-                       "      <artifactId>maven-surefire-plugin</artifactId>" +
-                       "    </plugin>" +
-                       "  </plugins>" +
-                       "</build>");
-      importProjectWithErrors();
-
-      List<MavenProjectProblem> problems = myProjectsTree.getRootProjects().get(0).getProblems();
-      assertTrue(problems.size() > 0);
-
-      for (MavenProjectProblem problem : problems) {
-        assertTrue(problem.getDescription(), problem.getDescription().contains("Unresolved plugin"));
-      }
-
-      resolvePlugins();
-
-      assertEquals(0, myProjectsTree.getRootProjects().get(0).getProblems().size());
-    }
-    finally {
-      // do not lock files by maven process
-      MavenServerManager.getInstance().shutdown(true);
-    }
-  }
-
+  @Test
   public void testMavenExtensionsAreLoadedAndAfterProjectsReadIsCalled() throws Exception {
     try {
       MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins");
       setRepositoryPath(helper.getTestDataPath("plugins"));
       getMavenGeneralSettings().setWorkOffline(true);
 
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
-                    "" +
-                    "<build>" +
-                    "  <extensions>" +
-                    "    <extension>" +
-                    "      <groupId>intellij.test</groupId>" +
-                    "      <artifactId>maven-extension</artifactId>" +
-                    "      <version>1.0</version>" +
-                    "    </extension>" +
-                    "  </extensions>" +
-                    "</build>");
+      importProject("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      <build>
+                        <extensions>
+                          <extension>
+                            <groupId>intellij.test</groupId>
+                            <artifactId>maven-extension</artifactId>
+                            <version>1.0</version>
+                          </extension>
+                        </extensions>
+                      </build>
+                      """);
 
-      List<MavenProject> projects = myProjectsTree.getProjects();
+      List<MavenProject> projects = getProjectsTree().getProjects();
       assertEquals(1, projects.size());
       MavenProject mavenProject = projects.get(0);
       assertEquals("Name for test:project generated by MyMavenExtension.", mavenProject.getFinalName());
@@ -310,136 +443,8 @@ public class MiscImportingTest extends MavenImportingTestCase {
       PlatformTestUtil.assertPathsEqual(myProjectPom.getPath(), mavenProject.getProperties().getProperty("workspace-info"));
     }
     finally {
-      // do not lock files by maven process
-      MavenServerManager.getInstance().shutdown(true);
+      MavenServerManager.getInstance().shutdown(true);  // to unlock files
     }
   }
 
-  public void testExceptionsFromMavenExtensionsAreReportedAsProblems() throws Exception {
-    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins");
-    setRepositoryPath(helper.getTestDataPath("plugins"));
-    getMavenGeneralSettings().setWorkOffline(true);
-
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<description>throw!</description>" +
-                     "" +
-                     "<build>" +
-                     "  <extensions>" +
-                     "    <extension>" +
-                     "      <groupId>intellij.test</groupId>" +
-                     "      <artifactId>maven-extension</artifactId>" +
-                     "      <version>1.0</version>" +
-                     "    </extension>" +
-                     "  </extensions>" +
-                     "</build>");
-    importProjectWithErrors();
-
-    List<MavenProject> projects = myProjectsTree.getProjects();
-    assertEquals(1, projects.size());
-    MavenProject mavenProject = projects.get(0);
-    assertEquals(mavenProject.getProblems().toString(), 1, mavenProject.getProblems().size());
-    assertEquals("throw!", mavenProject.getProblems().get(0).getDescription());
-  }
-
-  public void testCheckingIfModuleIsNotDisposedBeforeCommitOnImport() {
-    if (ignore()) return;
-
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<modules>" +
-                  "  <module>m1</module>" +
-                  "  <module>m2</module>" +
-                  "</modules>");
-
-    createModulePom("m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>");
-
-    createModulePom("m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>1</version>");
-
-    importProject();
-    assertModules("project", "m1", "m2");
-
-    myProjectsManager.scheduleImportInTests(myProjectsManager.getProjectsFiles());
-    myProjectsManager.importProjects(new IdeModifiableModelsProviderImpl(myProject) {
-      @Override
-      public void commit() {
-        ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
-        model.disposeModule(model.findModuleByName("m1"));
-        model.disposeModule(model.findModuleByName("m2"));
-        model.commit();
-        super.commit();
-      }
-    });
-  }
-
-  public void testUserPropertiesCanBeCustomizedByMavenImporters() {
-    Disposable disposable = Disposer.newDisposable();
-    try {
-      ExtensionTestUtil.maskExtensions(MavenImporter.EXTENSION_POINT_NAME,
-                                       Collections.<MavenImporter>singletonList(new NameSettingMavenImporter("name-from-properties")),
-                                       disposable);
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
-                    "<name>${myName}</name>");
-    }
-    finally {
-      Disposer.dispose(disposable);
-    }
-
-    MavenProject project = myProjectsManager.findProject(new MavenId("test", "project", "1"));
-    assertNotNull(project);
-    assertEquals("name-from-properties", project.getName());
-  }
-
-  private void assertRootsChanged(int count) {
-    assertEquals(count, rootsChangedCount);
-    assertEquals(rootsChangedCount, beforeRootsChangedCount);
-  }
-
-  private static class NameSettingMavenImporter extends MavenImporter {
-    private final String myName;
-
-    NameSettingMavenImporter(String name) {
-      super("gid", "id");
-      myName = name;
-    }
-
-    @Override
-    public void customizeUserProperties(Project project, MavenProject mavenProject, Properties properties) {
-      properties.setProperty("myName", myName);
-    }
-
-    @Override
-    public boolean isApplicable(MavenProject mavenProject) {
-      return true;
-    }
-
-    @Override
-    public void preProcess(Module module,
-                           MavenProject mavenProject,
-                           MavenProjectChanges changes,
-                           IdeModifiableModelsProvider modifiableModelsProvider) {
-    }
-
-    @Override
-    public void process(IdeModifiableModelsProvider modifiableModelsProvider,
-                        Module module,
-                        MavenRootModelAdapter rootModel,
-                        MavenProjectsTree mavenModel,
-                        MavenProject mavenProject,
-                        MavenProjectChanges changes,
-                        Map<MavenProject, String> mavenProjectToModuleName,
-                        List<MavenProjectsProcessorTask> postTasks) {
-    }
-  }
 }

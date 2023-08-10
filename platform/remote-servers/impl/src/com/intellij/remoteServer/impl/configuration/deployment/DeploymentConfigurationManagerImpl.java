@@ -18,18 +18,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationManager {
-  private final Project myProject;
+final class DeploymentConfigurationManagerImpl extends DeploymentConfigurationManager {
 
-  public DeploymentConfigurationManagerImpl(Project project) {
+  private final @NotNull Project myProject;
+
+  DeploymentConfigurationManagerImpl(@NotNull Project project) {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public List<RunnerAndConfigurationSettings> getDeploymentConfigurations(@NotNull ServerType<?> serverType) {
-    final DeployToServerConfigurationType configurationType =
-      DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(serverType);
+  public @NotNull List<RunnerAndConfigurationSettings> getDeploymentConfigurations(@NotNull ServerType<?> serverType) {
+    DeployToServerConfigurationType<?> configurationType = DeployToServerConfigurationTypesRegistrar.getInstance()
+      .getConfigurationType(serverType);
     return RunManager.getInstance(myProject).getConfigurationSettingsList(configurationType);
   }
 
@@ -37,7 +37,8 @@ public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationM
   public void createAndRunConfiguration(@NotNull ServerType<?> serverType,
                                         @Nullable RemoteServer<?> remoteServer,
                                         @Nullable DeploymentSourceType<?> sourceType) {
-    DeployToServerConfigurationType configurationType = DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(serverType);
+    DeployToServerConfigurationType<?> configurationType = DeployToServerConfigurationTypesRegistrar.getInstance()
+      .getConfigurationType(serverType);
     RunManager runManager = RunManager.getInstance(myProject);
     ConfigurationFactory factory = configurationType.getFactoryForType(sourceType);
     RunnerAndConfigurationSettings settings = runManager.createConfiguration(configurationType.getDisplayName(), factory);

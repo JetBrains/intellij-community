@@ -1,4 +1,4 @@
-// "Replace with reduce()" "false"
+// "Collapse loop with stream 'reduce()'" "false"
 public class Foo {
 
   boolean isAnyFalse(boolean[] array) {

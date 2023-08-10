@@ -20,24 +20,20 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.codeInsight.editorActions.TypedHandlerUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-/**
- * @author peter
- */
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.INVALID_INSIDE_REFERENCE;
+
 public class GroovyTypedHandler extends TypedHandlerDelegate {
-  static final TokenSet INVALID_INSIDE_REFERENCE = TokenSet.create(GroovyTokenTypes.mSEMI, GroovyTokenTypes.mLCURLY, GroovyTokenTypes.mRCURLY);
   private boolean myJavaLTTyped;
 
   @NotNull
@@ -78,7 +74,6 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
       });
     }
 
-
     return Result.CONTINUE;
   }
 
@@ -99,7 +94,7 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
   }
 
   public static boolean isAfterClassLikeIdentifier(final int offset, final Editor editor) {
-    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     if (iterator.atEnd()) return false;
     if (iterator.getStart() > 0) iterator.retreat();
     return TypedHandlerUtil.isClassLikeIdentifier(offset, editor, iterator, GroovyTokenTypes.mIDENT);

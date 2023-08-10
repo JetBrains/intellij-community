@@ -16,9 +16,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-/**
- * @author ilyas
- */
 public final class GroovyValidationUtil {
 
   private GroovyValidationUtil() {
@@ -57,15 +54,13 @@ public final class GroovyValidationUtil {
       }
       child = child.getNextSibling();
     }
-    if (parent instanceof GrParameterListOwner) { //method or closure parameters
-      GrParameterListOwner owner = (GrParameterListOwner)parent;
+    if (parent instanceof GrParameterListOwner owner) { //method or closure parameters
       for (GrParameter parameter : owner.getParameters()) {
         if (varName.equals(parameter.getName())) {
           addConflict(varName, parameter, conflicts);
         }
       }
-    } else if (parent instanceof GrForStatement) { // For statement binding
-      GrForStatement statement = (GrForStatement)parent;
+    } else if (parent instanceof GrForStatement statement) { // For statement binding
       GrForClause clause = statement.getClause();
       if (clause != null) {
         for (GrVariable variable : clause.getDeclaredVariables()) {
@@ -92,8 +87,7 @@ public final class GroovyValidationUtil {
   }
 
   private static void validateVariableOccurrencesDownImpl(final PsiElement child, final MultiMap<PsiElement, String> conflicts, final String varName) {
-    if (child instanceof PsiNamedElement) {
-      PsiNamedElement element = (PsiNamedElement)child;
+    if (child instanceof PsiNamedElement element) {
       if (varName.equals(element.getName())) {
         addConflict(varName, element, conflicts);
       } else {

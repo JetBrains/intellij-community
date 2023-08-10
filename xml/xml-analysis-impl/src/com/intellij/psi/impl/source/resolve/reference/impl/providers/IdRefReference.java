@@ -21,9 +21,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class IdRefReference extends BasicAttributeValueReference {
   private final boolean myIdAttrsOnly;
 
@@ -39,8 +36,7 @@ public class IdRefReference extends BasicAttributeValueReference {
 
   @Nullable
   protected PsiElement getIdValueElement(PsiElement element) {
-    if (element instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)element;
+    if (element instanceof XmlTag tag) {
       XmlAttribute attribute = tag.getAttribute(IdReferenceProvider.ID_ATTR_NAME, null);
       if (!myIdAttrsOnly) {
         if (attribute == null) {
@@ -59,8 +55,7 @@ public class IdRefReference extends BasicAttributeValueReference {
 
   @Nullable
   protected String getIdValue(final PsiElement element) {
-    if (element instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)element;
+    if (element instanceof XmlTag tag) {
       String s = tag.getAttributeValue(IdReferenceProvider.ID_ATTR_NAME);
       if (!myIdAttrsOnly) {
         if (s == null) s = tag.getAttributeValue(IdReferenceProvider.NAME_ATTR_NAME);
@@ -117,7 +112,7 @@ public class IdRefReference extends BasicAttributeValueReference {
 
       file.accept(new XmlRecursiveElementVisitor(true) {
         @Override
-        public void visitXmlTag(XmlTag tag) {
+        public void visitXmlTag(@NotNull XmlTag tag) {
           if (isAcceptableTagType(tag)) result.add(tag);
           super.visitXmlTag(tag);
         }
@@ -130,7 +125,7 @@ public class IdRefReference extends BasicAttributeValueReference {
         }
 
         @Override
-        public void visitXmlComment(final XmlComment comment) {
+        public void visitXmlComment(final @NotNull XmlComment comment) {
           if (isDeclarationComment(comment)) result.add(comment);
 
           super.visitComment(comment);

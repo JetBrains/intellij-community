@@ -22,9 +22,6 @@ import com.jetbrains.python.psi.PyImportElement
 import com.jetbrains.python.psi.PyImportStatement
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-/**
- * @author vlan
- */
 class PyiInspectionExtension : PyInspectionExtension() {
   override fun ignoreUnused(element: PsiElement, evalContext: TypeEvalContext): Boolean {
     if (element.containingFile !is PyiFile) {

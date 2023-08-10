@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui.actions;
 
 import com.intellij.icons.AllIcons;
@@ -8,8 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.ui.CommonActionsPanel;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +51,11 @@ public abstract class AddDomElementAction extends AnAction {
       }
     }
     e.getPresentation().setIcon(AllIcons.General.Add);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -104,7 +109,7 @@ public abstract class AddDomElementAction extends AnAction {
       final TypeChooser chooser = DomManager.getDomManager(project).getTypeChooserManager().getTypeChooser(description.getType());
       for (Type type : chooser.getChooserTypes()) {
 
-        final Class<?> rawType = ReflectionUtil.getRawType(type);
+        final Class<?> rawType = ClassUtil.getRawType(type);
 
         String name = TypePresentationService.getService().getTypePresentableName(rawType);
         Icon icon = null;

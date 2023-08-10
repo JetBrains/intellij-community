@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.editor.Editor;
@@ -28,6 +29,7 @@ import org.intellij.lang.xpath.psi.XPathToken;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ConvertToEntityFix extends AbstractFix {
     private final XPathToken myToken;
@@ -45,7 +47,7 @@ public class ConvertToEntityFix extends AbstractFix {
     }
 
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.convert.to.entity");
     }
 
@@ -82,5 +84,10 @@ public class ConvertToEntityFix extends AbstractFix {
     @Override
     protected boolean requiresEditor() {
         return false;
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      return new ConvertToEntityFix(PsiTreeUtil.findSameElementInCopy(myToken, target));
     }
 }

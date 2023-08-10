@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrArrayTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-/**
- * @author ilyas
- */
 public class GrArrayTypeElementImpl extends GroovyPsiElementImpl implements GrArrayTypeElement {
 
   public GrArrayTypeElementImpl(@NotNull ASTNode node) {

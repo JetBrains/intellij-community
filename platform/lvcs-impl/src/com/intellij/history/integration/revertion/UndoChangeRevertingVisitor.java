@@ -9,6 +9,7 @@ import com.intellij.history.core.changes.*;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.command.impl.DocumentUndoProvider;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
@@ -25,6 +26,8 @@ import java.util.List;
 import java.util.Set;
 
 public class UndoChangeRevertingVisitor extends ChangeVisitor {
+  private static final Logger LOG = Logger.getInstance(UndoChangeRevertingVisitor.class);
+
   private final IdeaGateway myGateway;
   private final Set<DelayedApply> myDelayedApplies = new HashSet<>();
 
@@ -43,7 +46,11 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     if (c.getId() == myFromChangeId) {
       isReverting = true;
     }
-    return isReverting && !(c instanceof ContentChange);
+    boolean shouldRevert = isReverting && !(c instanceof ContentChange);
+    if (shouldRevert && LOG.isDebugEnabled()) {
+      LOG.debug("Reverting " + c);
+    }
+    return shouldRevert;
   }
 
   protected void checkShouldStop(Change c) throws StopVisitingException {

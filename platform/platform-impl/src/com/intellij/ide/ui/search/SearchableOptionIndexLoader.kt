@@ -5,12 +5,11 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.text.ByteArrayCharSequence
 
 internal class MySearchableOptionProcessor(private val stopWords: Set<String>) : SearchableOptionProcessor() {
   private val cache: MutableSet<String> = HashSet()
   val storage: MutableMap<CharSequence, LongArray> = CollectionFactory.createCharSequenceMap(20, 0.9f, true)
-  val identifierTable = IndexedCharsInterner()
+  val identifierTable: IndexedCharsInterner = IndexedCharsInterner()
 
   override fun addOptions(text: String,
                           path: String?,
@@ -31,7 +30,7 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
   }
 
   fun computeHighlightOptionToSynonym(): Map<Pair<String, String>, MutableSet<String>> {
-    val fileNameFilter = { it: String -> it.endsWith(SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML) }
+    val fileNameFilter = { it: String -> it.endsWith(SearchableOptionsRegistrar.getSearchableOptionsXmlName())}
     SearchableOptionsRegistrarImpl.processSearchableOptions(fileNameFilter) { _, root ->
       for (configurable in root.getChildren("configurable")) {
         val id = configurable.getAttributeValue("id") ?: continue
@@ -99,6 +98,6 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
     else if (configs.indexOf(packed) == -1) {
       configs = ArrayUtil.append(configs, packed)
     }
-    storage.put(ByteArrayCharSequence.convertToBytesIfPossible(option), configs!!)
+    storage.put(option, configs!!)
   }
 }

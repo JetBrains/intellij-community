@@ -4,28 +4,30 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayProperties;
 import com.intellij.openapi.editor.VisualPosition;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
 
-public final class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, AfterLineEndInlayImpl<?>> {
+final class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, AfterLineEndInlayImpl<?>> {
   private static int ourGlobalCounter = 0;
-  private final boolean mySoftWrappable;
+  final boolean mySoftWrappable;
+  final int myPriority;
   final int myOrder;
 
   AfterLineEndInlayImpl(@NotNull EditorImpl editor,
                         int offset,
                         boolean relatesToPrecedingText,
-                        boolean insertFirst,
                         boolean softWrappable,
+                        int priority,
                         @NotNull R renderer) {
     super(editor, offset, relatesToPrecedingText, renderer);
     mySoftWrappable = softWrappable;
+    myPriority = priority;
     //noinspection AssignmentToStaticFieldFromInstanceMethod
-    int order = ourGlobalCounter++;
-    myOrder = insertFirst ? -order : order;
+    myOrder = ourGlobalCounter++;
   }
 
   @Override
@@ -67,13 +69,17 @@ public final class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> 
     return new VisualPosition(position.line, position.column + 1 + order);
   }
 
-  public boolean isSoftWrappable() {
-    return mySoftWrappable;
-  }
-
   @Override
   public int getHeightInPixels() {
     return myEditor.getLineHeight();
+  }
+
+  @Override
+  public @NotNull InlayProperties getProperties() {
+    return new InlayProperties()
+      .relatesToPrecedingText(isRelatedToPrecedingText())
+      .disableSoftWrapping(!mySoftWrappable)
+      .priority(myPriority);
   }
 
   @Override

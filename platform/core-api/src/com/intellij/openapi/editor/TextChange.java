@@ -23,8 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * Provides generic contract for object encapsulating information about single unit of text change.
  * <p/>
  * Implementations of this interface are not obliged to be thread-safe.
- *
- * @author Denis Zhdanov
  */
 public interface TextChange {
 

@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options
 
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.extensions.PluginDescriptor
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.function.Predicate
 
@@ -27,6 +29,7 @@ abstract class SchemeManager<T> {
   abstract fun reload()
 
   @Deprecated("Use addScheme", ReplaceWith("addScheme(scheme, replaceExisting)"))
+  @ApiStatus.ScheduledForRemoval
   fun addNewScheme(scheme: Scheme, replaceExisting: Boolean) {
     @Suppress("UNCHECKED_CAST")
     addScheme(scheme as T, replaceExisting)
@@ -55,7 +58,7 @@ abstract class SchemeManager<T> {
    *
    * Scheme manager processor must be LazySchemeProcessor
    */
-  abstract fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?)
+  abstract fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?): T?
 
   @JvmOverloads
   open fun setSchemes(newSchemes: List<T>, newCurrentScheme: T? = null, removeCondition: Predicate<T>? = null) {
@@ -66,5 +69,10 @@ abstract class SchemeManager<T> {
    */
   abstract fun isMetadataEditable(scheme: T): Boolean
 
-  abstract fun save(errors: MutableList<Throwable>)
+  abstract fun save()
+
+  /**
+   * Returns the category which settings of this scheme belong to.
+   */
+  abstract fun getSettingsCategory(): SettingsCategory
 }

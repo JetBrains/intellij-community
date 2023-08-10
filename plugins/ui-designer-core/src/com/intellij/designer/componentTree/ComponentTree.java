@@ -27,7 +27,7 @@ import com.intellij.designer.designSurface.FeedbackTreeLayer;
 import com.intellij.designer.model.ErrorInfo;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -130,7 +130,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       return myArea;
     }
     if (myDesigner != null) {
-      if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+      if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
         return myDesigner.getEditor();
       }
       return myDesigner.getActionPanel().getData(dataId);
@@ -143,8 +143,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
     Object userObject = node.getUserObject();
 
-    if (myDesigner != null && userObject instanceof TreeNodeDescriptor) {
-      TreeNodeDescriptor descriptor = (TreeNodeDescriptor)userObject;
+    if (myDesigner != null && userObject instanceof TreeNodeDescriptor descriptor) {
       Object element = descriptor.getElement();
 
       if (element instanceof RadComponent) {
@@ -216,7 +215,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   private void installCellRenderer() {
     setCellRenderer(new ColoredTreeCellRenderer() {
       @Override
-      public void customizeCellRenderer(JTree tree,
+      public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
                                         boolean selected,
                                         boolean expanded,

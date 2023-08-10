@@ -27,10 +27,13 @@ import org.jetbrains.annotations.NotNull;
  * @author Kirill Likhodedov
  * @deprecated in favor of {@link GitExecutableManager#identifyVersion(String)} and {@link GitExecutableProblemsNotifier}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class GitExecutableValidator extends ExecutableValidator {
   public GitExecutableValidator(@NotNull Project project) {
-    super(project, GitBundle.message("git.executable.notification.title"), GitBundle.message("git.executable.notification.description"));
+    super(project,
+          GitBundle.message("git.executable.notification.title"),
+          GitBundle.message("git.executable.notification.description"),
+          GitBundle.message("git.executable.notification.cant.run.in.safe.mode"));
   }
 
   @Override

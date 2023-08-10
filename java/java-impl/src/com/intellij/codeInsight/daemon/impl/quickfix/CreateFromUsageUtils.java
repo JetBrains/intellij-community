@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.*;
@@ -18,13 +18,16 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -56,10 +59,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +74,7 @@ public final class CreateFromUsageUtils {
 
   static boolean isValidReference(PsiReference reference, boolean unresolvedOnly) {
     if (!(reference instanceof PsiJavaReference)) return false;
-    JavaResolveResult[] results = ((PsiJavaReference)reference).multiResolve(true);
+    JavaResolveResult[] results = ((PsiJavaReference)reference).multiResolve(false);
     if(results.length == 0) return false;
     if (!unresolvedOnly) {
       for (JavaResolveResult result : results) {
@@ -88,7 +88,7 @@ public final class CreateFromUsageUtils {
   public static boolean isValidMethodReference(PsiReference reference, PsiMethodCallExpression call) {
     if (!(reference instanceof PsiJavaReference)) return false;
     try {
-      JavaResolveResult candidate = ((PsiJavaReference) reference).advancedResolve(true);
+      JavaResolveResult candidate = ((PsiJavaReference) reference).advancedResolve(false);
       PsiElement result = candidate.getElement();
       return result instanceof PsiMethod && PsiUtil.isApplicable((PsiMethod)result, candidate.getSubstitutor(), call.getArgumentList());
     }
@@ -98,32 +98,29 @@ public final class CreateFromUsageUtils {
     }
   }
 
-  static boolean shouldCreateConstructor(PsiClass targetClass, PsiExpressionList argList, PsiMethod candidate) {
-    if (argList == null) return false;
-    if (candidate == null) {
-      return targetClass != null && !targetClass.isInterface() && !(targetClass instanceof PsiTypeParameter) &&
-             !(argList.isEmpty() && targetClass.getConstructors().length == 0);
-    }
-    else {
-      return !PsiUtil.isApplicable(candidate, PsiSubstitutor.EMPTY, argList);
-    }
-  }
-
   public static void setupMethodBody(@NotNull PsiMethod method) throws IncorrectOperationException {
     PsiClass aClass = method.getContainingClass();
-    setupMethodBody(method, aClass);
-  }
-
-  public static void setupMethodBody(final PsiMethod method, final PsiClass aClass) throws IncorrectOperationException {
     FileTemplate template = FileTemplateManager.getInstance(method.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY);
-    setupMethodBody(method, aClass, template);
+    setupMethodBody(method, aClass, template, null);
   }
 
-  public static void setupMethodBody(final PsiMethod method, final PsiClass aClass, final FileTemplate template) throws
-                                                                                                                 IncorrectOperationException {
+  public static void setupMethodBody(final PsiMethod method, @NotNull ModPsiUpdater updater) throws IncorrectOperationException {
+    PsiClass aClass = method.getContainingClass();
+    FileTemplate template = FileTemplateManager.getInstance(method.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY);
+    setupMethodBody(method, aClass, template, updater);
+  }
+
+  public static void setupMethodBody(final PsiMethod method, final PsiClass aClass, final FileTemplate template) 
+    throws IncorrectOperationException {
+    setupMethodBody(method, aClass, template, null);
+  }
+
+  private static void setupMethodBody(final PsiMethod method, final PsiClass aClass, 
+                                      final FileTemplate template, @Nullable ModPsiUpdater updater) 
+    throws IncorrectOperationException {
     PsiType returnType = method.getReturnType();
     if (returnType == null) {
-      returnType = PsiType.VOID;
+      returnType = PsiTypes.voidType();
     }
 
     JVMElementFactory factory = JVMElementFactories.getFactory(aClass.getLanguage(), aClass.getProject());
@@ -160,9 +157,13 @@ public final class CreateFromUsageUtils {
       m = factory.createMethodFromText(methodText, aClass);
     }
     catch (IncorrectOperationException e) {
-      ApplicationManager.getApplication().invokeLater(
-        () -> Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
-                                 QuickFixBundle.message("new.method.body.template.error.title")));
+      if (updater == null) {
+        ApplicationManager.getApplication().invokeLater(
+          () -> Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
+                                         QuickFixBundle.message("new.method.body.template.error.title")));
+      } else {
+        updater.cancel(QuickFixBundle.message("new.method.body.template.error.text"));
+      }
       return;
     }
 
@@ -208,8 +209,8 @@ public final class CreateFromUsageUtils {
         final String lineIndent = styleManager.getLineIndent(containingFile, end);
         PsiDocumentManager manager = PsiDocumentManager.getInstance(body.getProject());
         manager.doPostponedOperationsAndUnblockDocument(newEditor.getDocument());
-        EditorModificationUtil.insertStringAtCaret(newEditor, lineIndent);
-        EditorModificationUtil.insertStringAtCaret(newEditor, "\n", false, false);
+        EditorModificationUtilEx.insertStringAtCaret(newEditor, lineIndent);
+        EditorModificationUtilEx.insertStringAtCaret(newEditor, "\n", false, false);
       }
       else {
         //correct position caret for groovy and java methods
@@ -219,6 +220,34 @@ public final class CreateFromUsageUtils {
         }
       }
       newEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
+  }
+
+  public static void setupEditor(@NotNull PsiCodeBlock body, @NotNull ModPsiUpdater updater) {
+    PsiElement l = PsiTreeUtil.skipWhitespacesForward(body.getLBrace());
+    PsiElement r = PsiTreeUtil.skipWhitespacesBackward(body.getRBrace());
+    if (l != null && r != null) {
+      int start = l.getTextRange().getStartOffset();
+      int end = r.getTextRange().getEndOffset();
+      updater.moveTo(Math.max(start, end));
+      if (end < start) {
+        updater.moveTo(end + 1);
+        CodeStyleManager styleManager = CodeStyleManager.getInstance(body.getProject());
+        PsiFile containingFile = body.getContainingFile();
+        final String lineIndent = Objects.requireNonNullElse(styleManager.getLineIndent(containingFile, end), "");
+        PsiDocumentManager manager = PsiDocumentManager.getInstance(body.getProject());
+        Document document = body.getContainingFile().getViewProvider().getDocument();
+        manager.doPostponedOperationsAndUnblockDocument(document);
+        document.insertString(updater.getCaretOffset(), lineIndent + "\n");
+        updater.moveTo(updater.getCaretOffset() + lineIndent.length());
+      }
+      else {
+        //correct position caret for groovy and java methods
+        if (body.getParent() instanceof PsiMethod) {
+          final PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo((PsiMethod)body.getParent());
+          info.positionCaret(updater, true);
+        }
+      }
     }
   }
 
@@ -232,7 +261,7 @@ public final class CreateFromUsageUtils {
 
   public static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
                                            final PsiSubstitutor substitutor, final PsiExpression[] arguments) {
-    setupMethodParameters(method, builder, contextElement, substitutor, ContainerUtil.map2List(arguments, Pair.createFunction(null)));
+    setupMethodParameters(method, builder, contextElement, substitutor, ContainerUtil.map(arguments, arg -> new Pair<>(arg, null)));
   }
 
   static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
@@ -259,7 +288,7 @@ public final class CreateFromUsageUtils {
       Pair<PsiExpression, PsiType> arg = arguments.get(i);
       PsiExpression exp = arg.first;
 
-      PsiType argType = exp == null ? arg.second : RefactoringUtil.getTypeByExpression(exp);
+      PsiType argType = exp == null ? arg.second : CommonJavaRefactoringUtil.getTypeByExpression(exp);
       SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(project).suggestVariableName(
         VariableKind.PARAMETER, null, exp, argType);
       @NonNls String[] names = suggestedInfo.names; //TODO: callback about used name
@@ -306,7 +335,7 @@ public final class CreateFromUsageUtils {
     else if (argType instanceof PsiWildcardType) {
       argType = ((PsiWildcardType)argType).getBound();
     }
-    if (argType == null || PsiType.NULL.equals(argType) || LambdaUtil.notInferredType(argType)) {
+    if (argType == null || PsiTypes.nullType().equals(argType) || LambdaUtil.notInferredType(argType)) {
       argType = PsiType.getJavaLangObject(psiManager, resolveScope);
     }
     return argType;
@@ -345,11 +374,17 @@ public final class CreateFromUsageUtils {
       qualifierName = aPackage.getQualifiedName();
     }
     final PsiDirectory targetDirectory;
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() &&
+        !ScratchUtil.isScratch(referenceElement.getContainingFile().getVirtualFile())) {
       Project project = manager.getProject();
       String title = CommonQuickFixBundle.message("fix.create.title", StringUtil.capitalize(classKind.getDescriptionAccusative()));
 
       CreateClassDialog dialog = new CreateClassDialog(project, title, name, qualifierName, classKind, false, module){
+        @Override
+        protected @Nullable PsiDirectory getBaseDir(String packageName) {
+          return sourceFile.getContainingDirectory();
+        }
+
         @Override
         protected boolean reportBaseInSourceSelectionInTest() {
           return true;
@@ -438,6 +473,9 @@ public final class CreateFromUsageUtils {
           else { //tests
             PsiClass aClass = classKind.create(factory, name);
             targetClass = (PsiClass)sourceFile.add(aClass);
+            if (ScratchUtil.isScratch(sourceFile.getVirtualFile())) {
+              PsiUtil.setModifierProperty(targetClass, PsiModifier.PACKAGE_LOCAL, true);
+            }
           }
 
           if (StringUtil.isNotEmpty(superClassName)  &&
@@ -482,7 +520,7 @@ public final class CreateFromUsageUtils {
 
     final List<PsiReferenceExpression> result = new ArrayList<>();
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expr) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expr) {
         if (expression instanceof PsiReferenceExpression &&
             (expr.getParent() instanceof PsiMethodCallExpression == expression.getParent() instanceof PsiMethodCallExpression)) {
           if (Objects.equals(expr.getReferenceName(), ((PsiReferenceExpression)expression).getReferenceName()) && !isValidReference(expr, false)) {
@@ -492,7 +530,7 @@ public final class CreateFromUsageUtils {
         visitElement(expr);
       }
 
-      @Override public void visitMethodCallExpression(PsiMethodCallExpression expr) {
+      @Override public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expr) {
         if (expression instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodExpression = expr.getMethodExpression();
           if (Objects.equals(methodExpression.getReferenceName(),
@@ -699,7 +737,7 @@ public final class CreateFromUsageUtils {
     }
 
     if (expectedTypes.length == 0) {
-      PsiType t = allowVoidType ? PsiType.VOID : PsiType.getJavaLangObject(manager, resolveScope);
+      PsiType t = allowVoidType ? PsiTypes.voidType() : PsiType.getJavaLangObject(manager, resolveScope);
       expectedTypes = new ExpectedTypeInfo[] {ExpectedTypesProvider.createInfo(t, ExpectedTypeInfo.TYPE_OR_SUBTYPE, t, TailType.NONE)};
     }
 
@@ -750,7 +788,7 @@ public final class CreateFromUsageUtils {
     }
 
     if (expectedTypes.length == 0) {
-      return allowVoidType ? new PsiType[]{PsiType.VOID} : new PsiType[]{PsiType.getJavaLangObject(manager, resolveScope)};
+      return allowVoidType ? new PsiType[]{PsiTypes.voidType()} : new PsiType[]{PsiType.getJavaLangObject(manager, resolveScope)};
     }
     else {
       //Double check to avoid expensive operations on PsiClassTypes
@@ -760,7 +798,7 @@ public final class CreateFromUsageUtils {
         @Override
         @Nullable
         public PsiType visitType(@NotNull PsiType type) {
-          if (PsiType.NULL.equals(type) || PsiType.VOID.equals(type) && !allowVoidType) {
+          if (PsiTypes.nullType().equals(type) || PsiTypes.voidType().equals(type) && !allowVoidType) {
             type = PsiType.getJavaLangObject(manager, resolveScope);
           }
 
@@ -1003,8 +1041,11 @@ public final class CreateFromUsageUtils {
     public LookupElement @NotNull [] calculateLookupItems(ExpressionContext context) {
       Project project = context.getProject();
       int offset = context.getStartOffset();
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+      Editor editor = context.getEditor();
+      assert editor != null;
+      Document document = editor.getDocument();
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
       assert file != null;
       PsiElement elementAt = file.findElementAt(offset);
       Set<String> parameterNames = getPeerNames(elementAt);

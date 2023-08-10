@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr.ui
 
 import org.jsoup.Jsoup
@@ -32,16 +32,17 @@ class HtmlRtfPane {
 
     fun replaceText(newText: String): JTextPane {
         resultPane.document.remove(0, resultPane.document.length)
-        clearMouseListeners()
+        clearLinks()
         process(newText)
         return resultPane
     }
 
-    private fun clearMouseListeners() {
+    private fun clearLinks() {
         mouseListenersList.forEach { resultPane.removeMouseListener(it) }
         mouseListenersList.clear()
         mouseMotionListenersList.forEach { resultPane.removeMouseMotionListener(it) }
         mouseMotionListenersList.clear()
+        linkMap.clear()
     }
 
     private fun process(htmlContent: String): DefaultStyledDocument {
@@ -125,7 +126,10 @@ class HtmlRtfPane {
                 }
                 currentOffset += length
             }
-            if (it is Element) styleNodes(it, styledDocument, currentOffset, linkMap)
+            if (it is Element) {
+              styleNodes(it, styledDocument, currentOffset, linkMap)
+              currentOffset += it.text().length
+            }
         }
     }
 

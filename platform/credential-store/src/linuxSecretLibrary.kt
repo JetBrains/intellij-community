@@ -1,13 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
-import com.intellij.jna.DisposableMemory
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.text.nullize
-import com.sun.jna.Library
-import com.sun.jna.Native
-import com.sun.jna.Pointer
-import com.sun.jna.Structure
+import com.sun.jna.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -20,9 +16,9 @@ private const val SECRET_SCHEMA_ATTRIBUTE_STRING = 0
 private const val DBUS_ERROR_SERVICE_UNKNOWN = 2
 private const val SECRET_ERROR_IS_LOCKED = 2
 
-// explicitly create pointer to be explicitly dispose it to avoid sensitive data in the memory
-internal fun stringPointer(data: ByteArray, clearInput: Boolean = false): DisposableMemory {
-  val pointer = DisposableMemory(data.size + 1L)
+// explicitly create a pointer to be explicitly disposing it to avoid sensitive data in the memory
+internal fun stringPointer(data: ByteArray, clearInput: Boolean = false): Memory {
+  val pointer = Memory(data.size + 1L)
   pointer.write(0, data, 0, data.size)
   pointer.setByte(data.size.toLong(), 0.toByte())
   if (clearInput) {
@@ -31,7 +27,7 @@ internal fun stringPointer(data: ByteArray, clearInput: Boolean = false): Dispos
   return pointer
 }
 
-// we use default collection, it seems no way to use custom
+// we use a default collection, it seems no way to use custom
 internal class SecretCredentialStore private constructor(schemeName: String) : CredentialStore {
   private val serviceAttributeNamePointer by lazy { stringPointer("service".toByteArray()) }
   private val accountAttributeNamePointer by lazy { stringPointer("account".toByteArray()) }
@@ -49,7 +45,7 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
     }
 
     private fun pingService(): Boolean {
-      var attr: DisposableMemory? = null
+      var attr: Memory? = null
       var dummySchema: Pointer? = null
       try {
         attr = stringPointer("ij-dummy-attribute".toByteArray())
@@ -92,7 +88,7 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
           val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
           if (userName == null) {
             library.secret_password_lookup_sync(schema, null, errorRef, serviceAttributeNamePointer, serviceNamePointer, null)?.let {
-              // Secret Service doesn't allow to get attributes, so, we store joined data
+              // Secret Service doesn't allow getting attributes, so, we store joined data
               return@Supplier splitData(it)
             }
           }
@@ -129,9 +125,10 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
       return
     }
 
-    val passwordPointer = stringPointer(credentials!!.serialize(!attributes.isPasswordMemoryOnly), true)
+    val passwordPointer = stringPointer(
+      joinData(credentials!!.userName, if (attributes.isPasswordMemoryOnly) null else credentials.password)!!, true)
     checkError("secret_password_store_sync") { errorRef ->
-      try {
+      passwordPointer.use {
         clearPassword(serviceNamePointer, null)
         if (accountName == null) {
           library.secret_password_store_sync(schema, null, serviceNamePointer, passwordPointer, null, errorRef,
@@ -145,13 +142,10 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
                                              null)
         }
       }
-      finally {
-        passwordPointer.close()
-      }
     }
   }
 
-  private fun clearPassword(serviceNamePointer: DisposableMemory, accountName: String?) {
+  private fun clearPassword(serviceNamePointer: Memory, accountName: String?) {
     checkError("secret_password_clear_sync") { errorRef ->
       if (accountName == null) {
         library.secret_password_clear_sync(schema, null, errorRef,
@@ -202,7 +196,6 @@ private interface SecretLibrary : Library {
   fun secret_error_get_quark(): Int
 }
 
-@Suppress("unused")
 @Structure.FieldOrder("domain", "code", "message")
 internal class GError(p: Pointer) : Structure(p) {
   @JvmField var domain: Int? = null

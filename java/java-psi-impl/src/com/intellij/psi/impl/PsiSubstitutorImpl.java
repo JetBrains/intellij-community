@@ -61,7 +61,7 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
   @Override
   public PsiType substitute(@NotNull PsiTypeParameter typeParameter) {
     PsiType type = getFromMap(typeParameter);
-    return PsiType.VOID.equals(type) ? JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(typeParameter) : type;
+    return PsiTypes.voidType().equals(type) ? JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(typeParameter) : type;
   }
 
   /**
@@ -71,7 +71,7 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
     if (typeParameter instanceof LightTypeParameter && ((LightTypeParameter)typeParameter).useDelegateToSubstitute()) {
       typeParameter = ((LightTypeParameter)typeParameter).getDelegate();
     }
-    return mySubstitutionMap.getOrDefault(typeParameter, PsiType.VOID);
+    return mySubstitutionMap.getOrDefault(typeParameter, PsiTypes.voidType());
   }
 
   @Override
@@ -162,7 +162,7 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
                                                           : rebound(wildcardType, newBoundBound);
         }
 
-        return newBound == PsiType.NULL ? newBound : rebound(wildcardType, newBound);
+        return newBound == PsiTypes.nullType() ? newBound : rebound(wildcardType, newBound);
       }
     }
 
@@ -190,7 +190,7 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
       if (aClass instanceof PsiTypeParameter) {
         final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
         final PsiType result = getFromMap(typeParameter);
-        if (PsiType.VOID.equals(result)) {
+        if (PsiTypes.voidType().equals(result)) {
           return classType;
         }
         if (result != null) {
@@ -259,11 +259,6 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
           return rawTypeForTypeParameter((PsiTypeParameter)aClass);
         }
         return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
-      }
-
-      @Override
-      public PsiType visitType(@NotNull PsiType type) {
-        return null;
       }
     });
   }
@@ -385,13 +380,5 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
   @NotNull
   public Map<PsiTypeParameter, PsiType> getSubstitutionMap() {
     return mySubstitutionMap;
-  }
-
-  /**
-   * @deprecated use {@link PsiSubstitutor#createSubstitutor(Map)}
-   */
-  @Deprecated
-  public static PsiSubstitutor createSubstitutor(@Nullable Map<? extends PsiTypeParameter, ? extends PsiType> map) {
-    return PsiSubstitutor.createSubstitutor(map);
   }
 }

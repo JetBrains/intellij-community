@@ -9,7 +9,6 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.DumbService
 import com.intellij.ui.ColoredTreeCellRenderer
-import com.intellij.ui.IconManager
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.EmptyIcon
@@ -26,8 +25,8 @@ internal class RunConfigurableTreeRenderer(private val runManager: RunManagerImp
     var isShared: Boolean? = null
     val name = getUserObjectName(userObject)
     val isDumb = DumbService.isDumb(runManager.project)
-    when {
-      userObject is ConfigurationType -> {
+    when (userObject) {
+      is ConfigurationType -> {
         val simpleTextAttributes = when {
           (value.parent as DefaultMutableTreeNode).isRoot -> SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
           isDumb && !ConfigurationTypeUtil.isEditableInDumbMode(userObject) -> SimpleTextAttributes.GRAYED_ATTRIBUTES
@@ -36,16 +35,12 @@ internal class RunConfigurableTreeRenderer(private val runManager: RunManagerImp
         append(name, simpleTextAttributes)
         icon = userObject.icon
       }
-      userObject === TEMPLATES_NODE_USER_OBJECT -> {
-        append(name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-        icon = AllIcons.General.Settings
-      }
-      userObject is String -> {
+      is String -> {
         // folder
         append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
         icon = AllIcons.Nodes.Folder
       }
-      userObject is ConfigurationFactory -> {
+      is ConfigurationFactory -> {
         append(name,
                if (isDumb && !userObject.isEditableInDumbMode) SimpleTextAttributes.GRAYED_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES)
         icon = userObject.icon
@@ -56,9 +51,7 @@ internal class RunConfigurableTreeRenderer(private val runManager: RunManagerImp
           val configurationSettings: RunnerAndConfigurationSettings = userObject.settings
           configuration = configurationSettings
           isShared = userObject.isStoredInFile
-          icon = IconManager.getInstance().createDeferredIcon(ProgramRunnerUtil.getConfigurationIcon(configurationSettings, false), userObject) {
-            return@createDeferredIcon ProgramRunnerUtil.getConfigurationIcon(configurationSettings, !it.isValid)
-          }
+          icon = ProgramRunnerUtil.getConfigurationIcon(configurationSettings, !userObject.isValid)
         }
         else if (userObject is RunnerAndConfigurationSettings) {
           isShared = userObject.isShared

@@ -15,14 +15,16 @@ public class UsernamePasswordCallbackTest extends SvnTestCase {
     "svn: E170001: Unable to connect to a repository at URL 'https://localhost:1443/svn/foobar'\n" +
     "svn: E170001: OPTIONS of 'https://localhost:1443/svn/foobar': authorization failed: Could not authenticate to server: rejected Basic challenge (https://localhost:1443)",
     // SVN 1.8 "Auth failed"
-    "svn: E215004: Authentication failed and interactive prompting is disabled; see the --force-interactive option\n" +
-    "svn: E215004: Unable to connect to a repository at URL 'https://localhost:1443/svn/foobar'\n" +
-    "svn: E215004: No more credentials or we tried too many times.\n" +
-    "Authentication failed",
+    """
+svn: E215004: Authentication failed and interactive prompting is disabled; see the --force-interactive option
+svn: E215004: Unable to connect to a repository at URL 'https://localhost:1443/svn/foobar'
+svn: E215004: No more credentials or we tried too many times.
+Authentication failed""",
     // SVN 1.9+ "Auth failed"
-    "svn: E170013: Unable to connect to a repository at URL 'https://localhost:1443/svn/foobar/trunk'\n" +
-    "svn: E215004: No more credentials or we tried too many times.\n" +
-    "Authentication failed"
+    """
+svn: E170013: Unable to connect to a repository at URL 'https://localhost:1443/svn/foobar/trunk'
+svn: E215004: No more credentials or we tried too many times.
+Authentication failed"""
   };
 
   @Test

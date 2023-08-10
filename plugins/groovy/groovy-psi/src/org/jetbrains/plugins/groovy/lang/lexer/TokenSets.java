@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 
 import java.util.Map;
@@ -12,9 +11,36 @@ import java.util.Map;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.GROOVY_DOC_TOKENS;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.GROOVY_DOC_COMMENT;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.ADDITIVE_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.ANNOTATION_METHOD;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.ANNOTATION_TYPE_DEFINITION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.BLOCK_STATEMENT;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.CLASS_BODY;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.CLASS_TYPE_DEFINITION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.CLASS_TYPE_ELEMENT;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.CONSTRUCTOR;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.DISJUNCTION_TYPE_ELEMENT;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.ENUM_BODY;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.ENUM_TYPE_DEFINITION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.EQUALITY_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.FIELD;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GSTRING_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.INTERFACE_TYPE_DEFINITION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.METHOD;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.MULTIPLICATIVE_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.OPEN_BLOCK;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.OPEN_BLOCK_SWITCH_AWARE;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.POWER_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.RANGE_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.REGEX_FIND_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.REGEX_MATCH_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.RELATIONAL_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.SHIFT_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.TRAIT_TYPE_DEFINITION;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.VARIABLE;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BODY;
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VAR;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes.RECORD_TYPE_DEFINITION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 public interface TokenSets {
 
@@ -68,7 +94,10 @@ public interface TokenSets {
     mIDENT,
     mREGEX_LITERAL,
     mDOLLAR_SLASH_REGEX_LITERAL,
-    KW_VAR
+    KW_VAR,
+    KW_YIELD,
+    KW_RECORD,
+    KW_PERMITS
   ));
 
   TokenSet KEYWORDS = TokenSet.create(
@@ -80,14 +109,15 @@ public interface TokenSets {
     kFALSE, kFINAL, kFLOAT, kFOR, kFINALLY,
     kIF, kIMPLEMENTS, kIMPORT, kIN, kINSTANCEOF, kINT, kINTERFACE,
     kLONG,
-    kNATIVE, kNEW, kNULL,
-    kPACKAGE, kPRIVATE, kPROTECTED, kPUBLIC,
-    kRETURN,
-    kSHORT, kSTATIC, kSTRICTFP, kSUPER, kSWITCH,
+    kNATIVE, kNEW, kNON_SEALED, kNOT_IN, kNOT_INSTANCEOF, kNULL,
+    kPACKAGE, kPERMITS, kPRIVATE, kPROTECTED, kPUBLIC,
+    kRECORD, kRETURN,
+    kSEALED, kSHORT, kSTATIC, kSTRICTFP, kSUPER, kSWITCH,
     kSYNCHRONIZED,
     kTHIS, kTHROW, kTHROWS, kTRAIT, kTRANSIENT, kTRUE, kTRY,
     kVOID, kVOLATILE,
-    kWHILE
+    kWHILE,
+    kYIELD
   );
 
   TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES, NUMBERS);
@@ -107,6 +137,8 @@ public interface TokenSets {
     kSTRICTFP,
     kVOLATILE,
     kSTRICTFP,
+    kSEALED,
+    kNON_SEALED,
     kDEF,
     kVAR
   );
@@ -162,25 +194,24 @@ public interface TokenSets {
 
   TokenSet WHITE_SPACES_OR_COMMENTS = TokenSet.orSet(WHITE_SPACES_SET, COMMENT_SET);
 
-  Map<IElementType, IElementType> ASSIGNMENTS_TO_OPERATORS = new ContainerUtil.ImmutableMapBuilder<IElementType, IElementType>()
-    .put(mMINUS_ASSIGN, mMINUS)
-    .put(mPLUS_ASSIGN, mPLUS)
-    .put(mDIV_ASSIGN, mDIV)
-    .put(mSTAR_ASSIGN, mSTAR)
-    .put(mMOD_ASSIGN, mMOD)
-    .put(mSL_ASSIGN, COMPOSITE_LSHIFT_SIGN)
-    .put(mSR_ASSIGN, COMPOSITE_RSHIFT_SIGN)
-    .put(mBSR_ASSIGN, COMPOSITE_TRIPLE_SHIFT_SIGN)
-    .put(mBAND_ASSIGN, mBAND)
-    .put(mBOR_ASSIGN, mBOR)
-    .put(mBXOR_ASSIGN, mBXOR)
-    .put(mSTAR_STAR_ASSIGN, mSTAR_STAR)
-    .build();
+  Map<IElementType, IElementType> ASSIGNMENTS_TO_OPERATORS = Map.ofEntries(
+    Map.entry(mMINUS_ASSIGN, mMINUS),
+    Map.entry(mPLUS_ASSIGN, mPLUS),
+    Map.entry(mDIV_ASSIGN, mDIV),
+    Map.entry(mSTAR_ASSIGN, mSTAR),
+    Map.entry(mMOD_ASSIGN, mMOD),
+    Map.entry(mSL_ASSIGN, COMPOSITE_LSHIFT_SIGN),
+    Map.entry(mSR_ASSIGN, COMPOSITE_RSHIFT_SIGN),
+    Map.entry(mBSR_ASSIGN, COMPOSITE_TRIPLE_SHIFT_SIGN),
+    Map.entry(mBAND_ASSIGN, mBAND),
+    Map.entry(mBOR_ASSIGN, mBOR),
+    Map.entry(mBXOR_ASSIGN, mBXOR),
+    Map.entry(mSTAR_STAR_ASSIGN, mSTAR_STAR));
 
-  TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kIN, kAS, kTRAIT, kVAR);
+  TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kIN, kAS, kTRAIT, kVAR, kYIELD, kRECORD);
 
   TokenSet BLOCK_SET =
-    TokenSet.create(CLOSABLE_BLOCK, BLOCK_STATEMENT, CONSTRUCTOR_BODY, OPEN_BLOCK, ENUM_BODY, CLASS_BODY, BLOCK_LAMBDA_BODY);
+    TokenSet.create(CLOSABLE_BLOCK, BLOCK_STATEMENT, CONSTRUCTOR_BODY, OPEN_BLOCK, OPEN_BLOCK_SWITCH_AWARE, CLOSABLE_BLOCK_SWITCH_AWARE, ENUM_BODY, CLASS_BODY, BLOCK_LAMBDA_BODY, BLOCK_LAMBDA_BODY_SWITCH_AWARE);
 
   TokenSet METHOD_DEFS = TokenSet.create(METHOD, CONSTRUCTOR, ANNOTATION_METHOD);
 
@@ -190,6 +221,7 @@ public interface TokenSets {
 
   TokenSet TYPE_DEFINITIONS = TokenSet.create(
     CLASS_TYPE_DEFINITION,
+    RECORD_TYPE_DEFINITION,
     ENUM_TYPE_DEFINITION,
     INTERFACE_TYPE_DEFINITION,
     ANNOTATION_TYPE_DEFINITION,
@@ -197,4 +229,6 @@ public interface TokenSets {
   );
 
   TokenSet METHOD_IDENTIFIERS = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(mIDENT));
+
+  TokenSet INVALID_INSIDE_REFERENCE = TokenSet.create(mSEMI, mLCURLY, mRCURLY);
 }

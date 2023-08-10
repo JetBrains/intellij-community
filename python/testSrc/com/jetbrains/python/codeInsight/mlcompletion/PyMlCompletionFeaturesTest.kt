@@ -2,17 +2,9 @@
 package com.jetbrains.python.codeInsight.mlcompletion
 
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
-import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.psi.impl.PyFunctionImpl
-import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 
 class PyMlCompletionFeaturesTest: PyMlCompletionTestCase() {
   override fun getTestDataPath(): String = super.getTestDataPath() + "/codeInsight/mlcompletion"
-
-  override fun setUp() {
-    super.setUp()
-    setLanguageLevel(LanguageLevel.getLatest())
-  }
 
   // Context features
 

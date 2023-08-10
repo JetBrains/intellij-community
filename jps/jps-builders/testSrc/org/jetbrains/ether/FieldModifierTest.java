@@ -15,9 +15,6 @@
  */
 package org.jetbrains.ether;
 
-/**
- * @author: db
- */
 public class FieldModifierTest extends IncrementalTestCase {
   public FieldModifierTest() {
     super("fieldModifiers");

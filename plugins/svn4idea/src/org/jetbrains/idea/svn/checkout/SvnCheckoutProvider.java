@@ -1,19 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkout;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.CheckoutProvider;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
@@ -21,6 +19,11 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTask;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTaskInfo;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +52,6 @@ import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.jetbrains.idea.svn.WorkingCopyFormat.UNKNOWN;
 
 public class SvnCheckoutProvider implements CheckoutProvider {
@@ -59,12 +61,6 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     // TODO: Several dialogs is invoked while dialog.show() - seems code should be rewritten to be more transparent
     CheckoutDialog dialog = new CheckoutDialog(project, listener);
     dialog.show();
-  }
-
-  @Deprecated // Required for compatibility with external plugins.
-  public static void doCheckout(@NotNull Project project, @NotNull File target, final String url, final Revision revision,
-                                final Depth depth, final boolean ignoreExternals, @Nullable final Listener listener) {
-    doCheckout(project, target, parseUrl(url), revision, depth, ignoreExternals, listener);
   }
 
   public static void doCheckout(@NotNull Project project,
@@ -91,17 +87,6 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
 
-  @Deprecated // Required for compatibility with external plugins.
-  public static void checkout(final Project project,
-                              final File target,
-                              final String url,
-                              final Revision revision,
-                              final Depth depth,
-                              final boolean ignoreExternals,
-                              final Listener listener, final WorkingCopyFormat selectedFormat) {
-    checkout(project, target, parseUrl(url), revision, depth, ignoreExternals, listener, selectedFormat);
-  }
-
   public static void checkout(Project project,
                               File target,
                               @NotNull Url url,
@@ -110,47 +95,57 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                               boolean ignoreExternals,
                               Listener listener,
                               WorkingCopyFormat selectedFormat) {
-    final Ref<Boolean> checkoutSuccessful = new Ref<>();
-    final Exception[] exception = new Exception[1];
-    final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project, message("progress.title.check.out"), true,
-                                                                               VcsConfiguration.getInstance(project).getCheckoutOption()) {
+    String projectAbsolutePath = target.getAbsolutePath();
+    String projectPath = FileUtilRt.toSystemIndependentName(projectAbsolutePath);
+
+    CloneTask cloneTask = new CloneTask() {
+      final Ref<Boolean> checkoutSuccessful = new Ref<>();
+
+      @NotNull
       @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
+      public CloneTaskInfo taskInfo() {
+        return new CloneTaskInfo(message("progress.title.check.out"),
+                                 message("progress.title.check.out.cancel"),
+                                 message("checkout.repository"),
+                                 message("checkout.repository.tooltip"),
+                                 message("checkout.repository.failed"),
+                                 message("checkout.repository.canceled"),
+                                 message("checkout.stop.message.title"),
+                                 message("checkout.stop.message.description", url.toString()));
+      }
+
+      @NotNull
+      @Override
+      public CloneStatus run(@NotNull ProgressIndicator indicator) {
         WorkingCopyFormat format = selectedFormat == null ? UNKNOWN : selectedFormat;
         SvnVcs vcs = SvnVcs.getInstance(project);
         ProgressTracker handler = new CheckoutEventHandler(vcs, false, ProgressManager.getInstance().getProgressIndicator());
-        ProgressManager.progress(message("progress.text.checking.out", target.getAbsolutePath()));
+        indicator.setText(message("progress.text.checking.out", target.getAbsolutePath()));
         try {
           getFactory(vcs).createCheckoutClient()
             .checkout(Target.on(url), target, revision, depth, ignoreExternals, true, format, handler);
-          ProgressManager.checkCanceled();
           checkoutSuccessful.set(Boolean.TRUE);
+
+          return CloneStatus.SUCCESS;
         }
-        catch (VcsException e) {
-          exception[0] = e;
+        catch (VcsException exception) {
+          getApplication().invokeLater(() -> {
+            showErrorDialog(message("message.text.cannot.checkout", exception.getMessage()), message("dialog.title.check.out"));
+          });
+          return CloneStatus.FAILURE;
+        }
+        finally {
+          VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
+          if (vf != null) {
+            vf.refresh(true, true, () -> getApplication().executeOnPooledThread(() -> notifyListener()));
+          }
+          else {
+            notifyListener();
+          }
         }
       }
 
-      @Override
-      public void onCancel() {
-        onSuccess();
-      }
-
-      @Override
-      public void onSuccess() {
-        if (exception[0] != null) {
-          showErrorDialog(message("message.text.cannot.checkout", exception[0].getMessage()), message("dialog.title.check.out"));
-        }
-
-        VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
-        if (vf != null) {
-          vf.refresh(true, true, () -> getApplication().invokeLater(() -> notifyListener()));
-        }
-        else {
-          notifyListener();
-        }
-      }
-
+      @RequiresBackgroundThread
       private void notifyListener() {
         notifyRootManagerIfUnderProject(project, target);
         if (listener != null) {
@@ -161,7 +156,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         }
       }
     };
-    ProgressManager.getInstance().run(checkoutBackgroundTask);
+
+    CloneableProjectsService.getInstance().runCloneTask(projectPath, cloneTask);
   }
 
   private static void notifyRootManagerIfUnderProject(@NotNull Project project, @NotNull File directory) {
@@ -219,7 +215,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     final String targetPath = target.getAbsolutePath();
 
     ExclusiveBackgroundVcsAction.run(project, () -> ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      final FileIndexFacade facade = ServiceManager.getService(project, FileIndexFacade.class);
+      final FileIndexFacade facade = project.getService(FileIndexFacade.class);
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       try {
         progressIndicator.setText(message("progress.text.import", targetPath));
@@ -267,8 +263,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   @Override
-  public String getVcsName() {
-    return "_Subversion";
+  public @NotNull String getVcsName() {
+    return message("svn.name.with.mnemonic");
   }
 
   public static class CheckoutFormatFromUserProvider {
@@ -343,7 +339,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   @NotNull
   @Override
-  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState, @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project,
+                                                  @NotNull ModalityState modalityState,
+                                                  @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
     return new SvnCloneDialogExtension(project);
   }
 }

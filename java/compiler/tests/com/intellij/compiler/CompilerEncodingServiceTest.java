@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -40,9 +41,9 @@ public class CompilerEncodingServiceTest extends JavaPsiTestCase {
     assertSameElements(getService().getAllModuleEncodings(myModule), projectDefaultPlus(WINDOWS_1251));
   }
 
-  public void testNonJavaFileEncoding() {
+  public void testPropertiesEncodingTest() {
     final VirtualFile file = createFile("A.properties");
-    assertEquals(getProjectDefault(), file.getCharset());
+    assertEquals(StandardCharsets.ISO_8859_1, file.getCharset());
     EncodingProjectManager.getInstance(myProject).setEncoding(file, WINDOWS_1251);
 
     assertSameElements(getService().getAllModuleEncodings(myModule), getProjectDefault());
@@ -63,7 +64,7 @@ public class CompilerEncodingServiceTest extends JavaPsiTestCase {
     final VirtualFile fileA = createFile("A.java");
     final VirtualFile fileB = createFile("B.properties");
     assertEquals(getProjectDefault(), fileA.getCharset());
-    assertEquals(getProjectDefault(), fileB.getCharset());
+    assertEquals(StandardCharsets.ISO_8859_1, fileB.getCharset());
     EncodingProjectManager.getInstance(myProject).setEncoding(fileA, WINDOWS_1251);
     EncodingProjectManager.getInstance(myProject).setEncoding(fileB, WINDOWS_1252);
 

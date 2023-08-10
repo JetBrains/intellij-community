@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.pull
 
 import com.intellij.codeInsight.hint.HintUtil
@@ -13,15 +13,18 @@ import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.Element.html
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import git4idea.GitNotificationIdsHolder.Companion.FETCH_ERROR
 import git4idea.GitRemoteBranch
 import git4idea.GitUtil
 import git4idea.GitVcs
@@ -35,7 +38,7 @@ import git4idea.merge.GIT_REF_PROTOTYPE_VALUE
 import git4idea.merge.createRepositoryField
 import git4idea.merge.createSouthPanelWithOptionsDropDown
 import git4idea.merge.dialog.*
-import git4idea.merge.validateBranchField
+import git4idea.merge.validateBranchExists
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -86,8 +89,16 @@ class GitPullDialog(private val project: Project,
     setOKButtonText(GitBundle.message("pull.button"))
     loadSettings()
     updateRemotesField()
-    updateUi()
+
+    // We call pack() manually.
+    isAutoAdjustable = false
+
     init()
+    window.minimumSize = JBDimension(200, 60)
+
+    updateUi()
+    validate()
+    pack()
   }
 
   override fun createCenterPanel() = panel
@@ -98,7 +109,7 @@ class GitPullDialog(private val project: Project,
 
   override fun getHelpId() = "reference.VersionControl.Git.Pull"
 
-  override fun doValidateAll() = listOf(::validateBranchField).mapNotNull { it() }
+  override fun doValidateAll() = listOf(::validateRepositoryField, ::validateRemoteField, ::validateBranchField).mapNotNull { it() }
 
   override fun doOKAction() {
     try {
@@ -109,17 +120,22 @@ class GitPullDialog(private val project: Project,
     }
   }
 
-  fun gitRoot() = getSelectedRepository().root
+  fun gitRoot() = getSelectedRepository()?.root ?: error("No selected repository found")
 
-  fun getSelectedRemote(): GitRemote = remoteField.item
+  fun getSelectedRemote(): GitRemote = remoteField.item ?: error("No selected remote found")
 
   fun getSelectedBranch(): GitRemoteBranch {
-    val branchName = "${getSelectedRemote().name}/${branchField.item}"
-    return getSelectedRepository().branches.findRemoteBranch(branchName)
+    val repository = getSelectedRepository() ?: error("No selected repository found")
+    val remote = getSelectedRemote()
+
+    val branchName = "${remote.name}/${branchField.item}"
+    return repository.branches.findRemoteBranch(branchName)
            ?: error("Unable to find remote branch: $branchName")
   }
 
   fun isCommitAfterMerge() = GitPullOption.NO_COMMIT !in selectedOptions
+
+  private fun getRemote(): GitRemote? = remoteField.item
 
   private fun loadSettings() {
     selectedOptions += pullSettings.options
@@ -135,24 +151,39 @@ class GitPullDialog(private val project: Project,
     .sortedBy { branch -> branch.nameForRemoteOperations }
     .groupBy { branch -> branch.remote }
 
-  private fun validateBranchField() = validateBranchField(branchField, "pull.branch.not.selected.error")
+  private fun validateRepositoryField(): ValidationInfo? {
+    return if (getSelectedRepository() != null)
+      null
+    else
+      ValidationInfo(GitBundle.message("pull.repository.not.selected.error"), repositoryField)
+  }
 
-  private fun getSelectedRepository() = repositoryField.item
+  private fun validateRemoteField(): ValidationInfo? {
+    return if (getRemote() != null)
+      null
+    else
+      ValidationInfo(GitBundle.message("pull.remote.not.selected"), remoteField)
+  }
+
+  private fun validateBranchField() = validateBranchExists(branchField, GitBundle.message("pull.branch.not.selected.error"))
+
+  private fun getSelectedRepository(): GitRepository? = repositoryField.item
 
   private fun updateRemotesField() {
     val repository = getSelectedRepository()
 
     val model = remoteField.model as MutableCollectionComboBoxModel
-    model.update(repository.remotes.toList())
+    model.update(repository?.remotes?.toList() ?: emptyList())
     model.selectedItem = getCurrentOrDefaultRemote(repository)
   }
 
   private fun updateBranchesField() {
     var branchToSelect = branchField.item
 
-    val repository = getSelectedRepository()
+    val repository = getSelectedRepository() ?: return
+    val remote = getRemote() ?: return
 
-    val branches = GitBranchUtil.sortBranchNames(getRemoteBranches(repository, getSelectedRemote()))
+    val branches = GitBranchUtil.sortBranchNames(getRemoteBranches(repository, remote))
 
     val model = branchField.model as MutableCollectionComboBoxModel
     model.update(branches)
@@ -174,8 +205,8 @@ class GitPullDialog(private val project: Project,
     return branches[repository]?.get(remote)?.map { it.nameForRemoteOperations } ?: emptyList()
   }
 
-  private fun getCurrentOrDefaultRemote(repository: GitRepository): GitRemote? {
-    val remotes = repository.remotes
+  private fun getCurrentOrDefaultRemote(repository: GitRepository?): GitRemote? {
+    val remotes = repository?.remotes ?: return null
     if (remotes.isEmpty()) {
       return null
     }
@@ -191,13 +222,23 @@ class GitPullDialog(private val project: Project,
       selectedOptions -= option
     }
     updateUi()
+    validate()
+    pack()
   }
 
   private fun performFetch() {
     if (fetchSupport.isFetchRunning) {
       return
     }
-    GitVcs.runInBackground(getFetchTask(getSelectedRepository(), getSelectedRemote()))
+    val repository = getSelectedRepository()
+    val remote = getRemote()
+    if (repository == null || remote == null) {
+      VcsNotifier.getInstance(project).notifyError(FETCH_ERROR,
+                                                   GitBundle.message("pull.fetch.failed.notification.title"),
+                                                   GitBundle.message("pull.fetch.failed.notification.text"))
+      return
+    }
+    GitVcs.runInBackground(getFetchTask(repository, remote))
   }
 
   private fun getFetchTask(repository: GitRepository, remote: GitRemote) = object : Backgroundable(project,
@@ -211,18 +252,17 @@ class GitPullDialog(private val project: Project,
     override fun onSuccess() {
       branches[repository] = getBranchesInRepo(repository)
 
-      if (getSelectedRepository() == repository && getSelectedRemote() == remote) {
+      if (getSelectedRepository() == repository && getRemote() == remote) {
         updateBranchesField()
       }
     }
   }
 
-  private fun createPopupBuilder() = GitOptionsPopupBuilder(project,
-                                                            GitBundle.message("pull.options.modify.popup.title"),
-                                                            ::getOptions,
-                                                            OptionListCellRenderer(::getOptionInfo, ::isOptionSelected, ::isOptionEnabled),
-                                                            ::optionChosen,
-                                                            ::isOptionEnabled)
+  private fun createPopupBuilder() = GitOptionsPopupBuilder(
+    project,
+    GitBundle.message("pull.options.modify.popup.title"),
+    ::getOptions, ::getOptionInfo, ::isOptionSelected, ::isOptionEnabled, ::optionChosen
+  )
 
   private fun isOptionSelected(option: GitPullOption) = option in selectedOptions
 
@@ -236,7 +276,7 @@ class GitPullDialog(private val project: Project,
     OptionInfo(option, option.option, option.description)
   }
 
-  private fun getOptions() = GitPullOption.values().toMutableList().apply {
+  private fun getOptions(): List<GitPullOption> = GitPullOption.values().toMutableList().apply {
     if (!isNoVerifySupported) {
       remove(GitPullOption.NO_VERIFY)
     }
@@ -244,20 +284,13 @@ class GitPullDialog(private val project: Project,
 
   private fun updateUi() {
     optionsPanel.rerender(selectedOptions)
-    rerender()
-  }
-
-  private fun rerender() {
-    window.pack()
-    window.revalidate()
-    pack()
-    repaint()
+    panel.invalidate()
   }
 
   private fun isOptionEnabled(option: GitPullOption) = selectedOptions.all { it.isOptionSuitable(option) }
 
   private fun updateTitle() {
-    val currentBranchName = getSelectedRepository().currentBranchName
+    val currentBranchName = getSelectedRepository()?.currentBranchName
     title = (if (currentBranchName.isNullOrEmpty())
       GitBundle.message("pull.dialog.title")
     else
@@ -290,7 +323,7 @@ class GitPullDialog(private val project: Project,
       add(repositoryField,
           CC()
             .gapAfter("0")
-            .minWidth("${JBUI.scale(115)}px")
+            .minWidth("115")
             .growX())
     }
 
@@ -298,17 +331,17 @@ class GitPullDialog(private val project: Project,
         CC()
           .gapAfter("0")
           .alignY("top")
-          .minWidth("${JBUI.scale(85)}px"))
+          .minWidth("85"))
 
     add(remoteField,
         CC()
           .alignY("top")
-          .minWidth("${JBUI.scale(90)}px"))
+          .minWidth("90"))
 
     add(branchField,
         CC()
           .alignY("top")
-          .minWidth("${JBUI.scale(250)}px")
+          .minWidth("250")
           .growX())
   }
 
@@ -328,7 +361,6 @@ class GitPullDialog(private val project: Project,
     renderer = SimpleListCellRenderer.create(
       HtmlChunk.text(GitBundle.message("util.remote.renderer.none")).italic().wrapWith(html()).toString()
     ) { it.name }
-    @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(
       outerInsets = Insets(BW.get(), 0, BW.get(), 0),
       popupEmptyText = GitBundle.message("pull.branch.no.matching.remotes")))
@@ -357,7 +389,6 @@ class GitPullDialog(private val project: Project,
       }
     }.registerCustomShortcutSet(getFetchActionShortcut(), this)
 
-    @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(
       Insets(1, 0, 1, 1),
       Insets(BW.get(), 0, BW.get(), BW.get()),

@@ -1,25 +1,35 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie
 
-import com.intellij.grazie.grammar.GrammarChecker
-import com.intellij.grazie.grammar.Typo
-import com.intellij.grazie.grammar.check
+import com.intellij.grazie.grammar.LanguageToolChecker
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
-import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.text.TextChecker
+import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.utils.filterFor
+import com.intellij.lang.Language
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPlainText
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import kotlinx.coroutines.runBlocking
 
 abstract class GrazieTestBase : BasePlatformTestCase() {
   companion object {
     val inspectionTools by lazy { arrayOf(GrazieInspection(), SpellCheckingInspection()) }
-    val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN, Lang.RUSSIAN)
-    val enabledRules = setOf("COMMA_WHICH")
+    val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN, Lang.RUSSIAN, Lang.ITALIAN)
+    val enabledRules = setOf("LanguageTool.EN.COMMA_WHICH", "LanguageTool.EN.UPPERCASE_SENTENCE_START")
   }
+
+  protected open val additionalEnabledRules: Set<String> = emptySet()
+
+  protected open val additionalEnabledContextLanguages: Set<Language> = emptySet()
 
   override fun getBasePath() = "community/plugins/grazie/src/test/testData"
 
@@ -27,21 +37,34 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     super.setUp()
     myFixture.enableInspections(*inspectionTools)
 
-    if (GrazieConfig.get().enabledLanguages != enabledLanguages) {
-      GrazieConfig.update { state ->
-        val checkingContext = state.checkingContext.copy(
-          isCheckInStringLiteralsEnabled = true,
-          isCheckInCommentsEnabled = true,
-          isCheckInDocumentationEnabled = true
-        )
-        state.copy(
-          enabledLanguages = enabledLanguages,
-          userEnabledRules = enabledRules,
-          checkingContext = checkingContext
-        )
-      }
+    GrazieConfig.update { state ->
+      val checkingContext = state.checkingContext.copy(
+        isCheckInStringLiteralsEnabled = true,
+        isCheckInCommentsEnabled = true,
+        isCheckInDocumentationEnabled = true,
+        enabledLanguages = additionalEnabledContextLanguages.map { it.id }.toSet(),
+      )
+      state.copy(
+        enabledLanguages = enabledLanguages,
+        userEnabledRules = enabledRules + additionalEnabledRules,
+        checkingContext = checkingContext
+      )
+    }
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
 
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+    val newExtensions = TextChecker.allCheckers().map { if (it is LanguageToolChecker) LanguageToolChecker.TestChecker() else it }
+    ExtensionTestUtil.maskExtensions(ExtensionPointName("com.intellij.grazie.textChecker"), newExtensions, testRootDisposable)
+  }
+
+  override fun tearDown() {
+    try {
+      GrazieConfig.update { GrazieConfig.State() }
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
     }
   }
 
@@ -56,9 +79,15 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     return texts.flatMap { myFixture.configureByText("${it.hashCode()}.txt", it).filterFor<PsiPlainText>() }
   }
 
-  fun check(tokens: Collection<PsiElement>): Set<Typo> {
-    if (tokens.isEmpty()) return emptySet()
-    val strategy = LanguageGrammarChecking.allForLanguage(tokens.first().language).first()
-    return GrammarChecker.check(tokens, strategy)
+  fun check(tokens: Collection<PsiElement>): List<TextProblem> {
+    return tokens.flatMap {
+      TextExtractor.findTextsAt(it, TextContent.TextDomain.ALL).flatMap { text ->
+        runBlocking {
+          blockingContext {
+            LanguageToolChecker().check(text)
+          }
+        }
+      }
+    }
   }
 }

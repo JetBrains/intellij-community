@@ -1,0 +1,7 @@
+package test.test2
+
+fun foo() {}
+
+fun usage() {
+    foo()
+}

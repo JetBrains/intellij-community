@@ -108,7 +108,7 @@ public class ArrayTableCellEditor extends AbstractCellEditor implements TableCel
       myExpression = XExpressionImpl.changeMode(text, getMode());
       myEditorTextField = new EditorTextField(createDocument(myExpression), project, debuggerEditorsProvider.getFileType()) {
         @Override
-        protected EditorEx createEditor() {
+        protected @NotNull EditorEx createEditor() {
           final EditorEx editor = super.createEditor();
           editor.setVerticalScrollbarVisible(false);
           editor.setOneLineMode(true);

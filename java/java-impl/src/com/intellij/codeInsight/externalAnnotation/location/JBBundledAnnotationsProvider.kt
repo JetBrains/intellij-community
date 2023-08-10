@@ -1,20 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.externalAnnotation.location
 
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonSyntaxException
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import com.intellij.ide.extensionResources.ExtensionsRootType
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.text.VersionComparatorUtil
+import java.nio.file.Files
+
+private val LOG = logger<JBBundledAnnotationsProvider>()
 
 class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
-  private val myPluginId = PluginManagerCore.JAVA_PLUGIN_ID
+  private val pluginId = PluginManagerCore.JAVA_PLUGIN_ID
   private val knownAnnotations: Map<String, Map<VersionRange, AnnotationsLocation>> by lazy { buildAnnotations() }
 
   override fun getLocations(project: Project,
@@ -34,20 +39,27 @@ class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
 
   private fun buildAnnotations(): Map<String, Map<VersionRange, AnnotationsLocation>> {
     val extensionsRootType = ExtensionsRootType.getInstance()
-    var annotationsFile = extensionsRootType.findResource(myPluginId, "predefinedExternalAnnotations.json")
-    if (annotationsFile?.exists() != true) {
-      extensionsRootType.extractBundledResources(myPluginId, "")
-      annotationsFile = extensionsRootType.findResource(myPluginId, "predefinedExternalAnnotations.json")
-      if (annotationsFile?.exists() != true) {
+    var file = extensionsRootType.findResource(pluginId, "predefinedExternalAnnotations.json")
+    if (file == null || !Files.exists(file)) {
+      extensionsRootType.extractBundledResources(pluginId, "")
+      file = extensionsRootType.findResource(pluginId, "predefinedExternalAnnotations.json")
+      if (file != null) {
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
+      }
+      if (file == null || !Files.exists(file)) {
         return emptyMap()
       }
     }
 
     val gsonBuilder = GsonBuilder()
     gsonBuilder.registerTypeAdapter(VersionRange::class.java, VersionRangeTypeAdapter())
-    val raw: Array<RepositoryDescriptor> =
-      gsonBuilder.create().fromJson(FileUtil.loadFile(annotationsFile, Charsets.UTF_8), Array<RepositoryDescriptor>::class.java)
-
+    val raw: Array<RepositoryDescriptor> = try {
+      gsonBuilder.create().fromJson(Files.readString(file), Array<RepositoryDescriptor>::class.java)
+    }
+    catch (e: JsonSyntaxException) {
+      LOG.warn("Failed to load annotations repositories descriptors", e)
+      emptyArray()
+    }
 
     return raw.asSequence()
       .flatMap { rd ->
@@ -94,13 +106,15 @@ class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
 
       val lowerSatisfied = if (lowerInclusive) {
         VersionComparatorUtil.compare(lowerBound, version) <= 0
-      } else {
+      }
+      else {
         VersionComparatorUtil.compare(lowerBound, version) < 0
       }
 
       val upperSatisfied = if (upperInclusive) {
         VersionComparatorUtil.compare(version, upperBound) <= 0
-      } else {
+      }
+      else {
         VersionComparatorUtil.compare(version, upperBound) < 0
       }
 
@@ -110,7 +124,7 @@ class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
 
   private data class ArtifactDescriptor(val groupId: String, val artifactId: String, val version: String)
 
-  private class VersionRangeTypeAdapter: TypeAdapter<VersionRange>() {
+  private class VersionRangeTypeAdapter : TypeAdapter<VersionRange>() {
     override fun read(reader: JsonReader): VersionRange? {
       if (reader.peek() == JsonToken.NULL) {
         reader.nextNull()
@@ -121,7 +135,7 @@ class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
       val beginInclusive = rangeString.startsWith('[')
       val endInclusive = rangeString.endsWith(']')
 
-      val versions = rangeString.trim('[',']','(',')').split(',').map { it.trim() }
+      val versions = rangeString.trim('[', ']', '(', ')').split(',').map { it.trim() }
       when {
         versions.size > 1 -> return VersionRange(versions[0], beginInclusive, versions[1], endInclusive)
         versions.size == 1 -> return VersionRange(lowerBound = versions[0], upperBound = versions[0])
@@ -143,7 +157,8 @@ class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
       val sb = StringBuilder().apply {
         if (range.lowerInclusive) {
           append("[")
-        } else {
+        }
+        else {
           append("(")
         }
         append(range.lowerBound)
@@ -151,7 +166,8 @@ class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
         append(range.upperBound)
         if (range.upperInclusive) {
           append(']')
-        } else {
+        }
+        else {
           append(')')
         }
       }

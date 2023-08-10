@@ -50,11 +50,11 @@ public class PluginInfoForm {
   private static EditorTextField createDescriptionEditor() {
     EditorTextField descriptionEditor = new EditorTextField() {
       @Override
-      protected EditorEx createEditor() {
+      protected @NotNull EditorEx createEditor() {
         EditorEx editor = super.createEditor();
         editor.getSettings().setUseSoftWraps(true);
         editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        editor.setColorsScheme(EditorColorsUtil.getColorSchemeForComponent(this));
+        editor.setColorsScheme(editor.createBoundColorSchemeDelegate(EditorColorsUtil.getColorSchemeForComponent(this)));
         return editor;
       }
     };

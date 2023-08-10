@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -49,6 +50,7 @@ import java.util.function.Supplier;
  */
 public abstract class VirtualFile extends UserDataHolderBase implements ModificationTracker {
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
+  public static final ArrayFactory<VirtualFile> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new VirtualFile[count];
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when the name of a {@link VirtualFile} changes.
@@ -314,7 +316,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * Gets the child files. The returned files are guaranteed to be valid, if the method is called in a read action.
    *
    * @return array of the child files or {@code null} if this file is not a directory
-   * @throws InvalidVirtualFileAccessException if this method is called inside read actin on an invalid file
+   * @throws InvalidVirtualFileAccessException if this method is called inside read action on an invalid file
    */
   public abstract VirtualFile[] getChildren();
 
@@ -323,7 +325,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @param name the file name to search by
    * @return the file if found any, {@code null} otherwise
-   * @throws InvalidVirtualFileAccessException if this method is called inside read actin on an invalid file
+   * @throws InvalidVirtualFileAccessException if this method is called inside read action on an invalid file
    */
   public @Nullable VirtualFile findChild(@NotNull @NonNls String name) {
     VirtualFile[] children = getChildren();
@@ -579,8 +581,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return {@code OutputStream}
    * @throws IOException if an I/O error occurs
    */
-  @NotNull
-  public final OutputStream getOutputStream(Object requestor) throws IOException {
+  public final @NotNull OutputStream getOutputStream(Object requestor) throws IOException {
     return getOutputStream(requestor, -1, -1);
   }
 
@@ -679,8 +680,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable);
 
-  @NotNull
-  public @NlsSafe String getPresentableName() {
+  public @NotNull @NlsSafe String getPresentableName() {
     return getName();
   }
 
@@ -705,8 +705,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if an I/O error occurs
    * @see #contentsToByteArray
    */
-  @NotNull
-  public abstract InputStream getInputStream() throws IOException;
+  public abstract @NotNull InputStream getInputStream() throws IOException;
 
   public byte @Nullable [] getBOM() {
     return getUserData(BOM_KEY);
@@ -725,15 +724,11 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return isValid();
   }
 
+  /**
+   * @return true if filesystem inherits {@link LocalFileSystem} (including temporary)
+   */
   public boolean isInLocalFileSystem() {
     return false;
-  }
-
-  /** @deprecated use {@link VirtualFileSystem#isValidName(String)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isValidName(@NotNull String name) {
-    return !name.isEmpty() && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }
 
   private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");

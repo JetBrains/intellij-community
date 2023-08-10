@@ -320,5 +320,5 @@ if __name__ == '__main__':
 
 
         dump_current_frames_thread = DumpThreads()
-        dump_current_frames_thread.setDaemon(True)  # Daemon so that this thread doesn't halt it!
+        dump_current_frames_thread.daemon = True  # Daemon so that this thread doesn't halt it!
         dump_current_frames_thread.start()

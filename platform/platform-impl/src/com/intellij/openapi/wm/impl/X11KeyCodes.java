@@ -2194,137 +2194,125 @@ class X11KeyCodes {
   private static final int XK_braille_dots_12345678       = 0x10028ff;  /* U+28ff BRAILLE PATTERN DOTS-12345678 */
 
   private static int _jkeycode2x11keycode(int keycode) {
-    switch (keycode) {
-      case KeyEvent.VK_ENTER: return XK_Return;
-      case KeyEvent.VK_BACK_SPACE: return XK_BackSpace;
-      case KeyEvent.VK_TAB: return XK_Tab;
-      case KeyEvent.VK_CANCEL: return XK_Cancel;
-      case KeyEvent.VK_CLEAR: return XK_Clear;
+    return switch (keycode) {
+      case KeyEvent.VK_ENTER -> XK_Return;
+      case KeyEvent.VK_BACK_SPACE -> XK_BackSpace;
+      case KeyEvent.VK_TAB -> XK_Tab;
+      case KeyEvent.VK_CANCEL -> XK_Cancel;
+      case KeyEvent.VK_CLEAR -> XK_Clear;
+      case KeyEvent.VK_PAUSE -> XK_Pause;
+      case KeyEvent.VK_CAPS_LOCK -> XK_Caps_Lock;
+      case KeyEvent.VK_ESCAPE -> XK_Escape;
+      case KeyEvent.VK_SPACE -> XK_space;
+      case KeyEvent.VK_PAGE_UP -> XK_Page_Up;
+      case KeyEvent.VK_PAGE_DOWN -> XK_Page_Down;
+      case KeyEvent.VK_END -> XK_End;
+      case KeyEvent.VK_HOME -> XK_Home;
+      case KeyEvent.VK_LEFT -> XK_Left;
+      case KeyEvent.VK_KP_LEFT -> XK_KP_Left;
+      case KeyEvent.VK_UP -> XK_Up;
+      case KeyEvent.VK_KP_UP -> XK_KP_Up;
+      case KeyEvent.VK_RIGHT -> XK_Right;
+      case KeyEvent.VK_KP_RIGHT -> XK_KP_Right;
+      case KeyEvent.VK_DOWN -> XK_Down;
+      case KeyEvent.VK_KP_DOWN -> XK_KP_Down;
+      case KeyEvent.VK_COMMA -> XK_comma;
+      case KeyEvent.VK_MINUS -> XK_minus;
+      case KeyEvent.VK_PERIOD -> XK_period;
+      case KeyEvent.VK_SLASH -> XK_slash;
+      case KeyEvent.VK_SEMICOLON -> XK_semicolon;
+      case KeyEvent.VK_EQUALS -> XK_equal;
+      case KeyEvent.VK_OPEN_BRACKET -> XK_bracketleft;
+      case KeyEvent.VK_BACK_SLASH -> XK_backslash;
+      case KeyEvent.VK_CLOSE_BRACKET -> XK_bracketright;
+      case KeyEvent.VK_MULTIPLY -> XK_multiply;
+      case KeyEvent.VK_ADD -> XK_KP_Add;
+      case KeyEvent.VK_SEPARATOR -> XK_KP_Separator;
+      case KeyEvent.VK_SUBTRACT -> XK_KP_Subtract;
+      case KeyEvent.VK_DECIMAL -> XK_KP_Decimal;
+      case KeyEvent.VK_DIVIDE -> XK_KP_Divide;
+      case KeyEvent.VK_DELETE -> XK_Delete;
+      case KeyEvent.VK_NUM_LOCK -> XK_Num_Lock;
+      case KeyEvent.VK_SCROLL_LOCK -> XK_Scroll_Lock;
+      case KeyEvent.VK_PRINTSCREEN -> XK_Print;
+      case KeyEvent.VK_INSERT -> XK_Insert;
+      case KeyEvent.VK_HELP -> XK_Help;
+      case KeyEvent.VK_META -> XK_Meta_R;
+      case KeyEvent.VK_BACK_QUOTE -> XK_quoteright;
+      case KeyEvent.VK_QUOTE -> XK_quoteleft;
+      case KeyEvent.VK_DEAD_GRAVE -> XK_dead_grave;
+      case KeyEvent.VK_DEAD_ACUTE -> XK_dead_acute;
+      case KeyEvent.VK_DEAD_CIRCUMFLEX -> XK_dead_circumflex;
+      case KeyEvent.VK_DEAD_TILDE -> XK_dead_tilde;
+      case KeyEvent.VK_DEAD_MACRON -> XK_dead_macron;
+      case KeyEvent.VK_DEAD_BREVE -> XK_dead_breve;
+      case KeyEvent.VK_DEAD_ABOVEDOT -> XK_dead_abovedot;
+      case KeyEvent.VK_DEAD_DIAERESIS -> XK_dead_diaeresis;
+      case KeyEvent.VK_DEAD_ABOVERING -> XK_dead_abovering;
+      case KeyEvent.VK_DEAD_DOUBLEACUTE -> XK_dead_doubleacute;
+      case KeyEvent.VK_DEAD_CARON -> XK_dead_caron;
+      case KeyEvent.VK_DEAD_CEDILLA -> XK_dead_cedilla;
+      case KeyEvent.VK_DEAD_OGONEK -> XK_dead_ogonek;
+      case KeyEvent.VK_DEAD_IOTA -> XK_dead_iota;
+      case KeyEvent.VK_DEAD_VOICED_SOUND -> XK_dead_voiced_sound;
+      case KeyEvent.VK_DEAD_SEMIVOICED_SOUND -> XK_dead_semivoiced_sound;
+      case KeyEvent.VK_AMPERSAND -> XK_ampersand;
+      case KeyEvent.VK_ASTERISK -> XK_asterisk;
+      case KeyEvent.VK_QUOTEDBL -> XK_quotedbl;
+      case KeyEvent.VK_LESS -> XK_less;
+      case KeyEvent.VK_GREATER -> XK_greater;
+      case KeyEvent.VK_BRACELEFT -> XK_braceleft;
+      case KeyEvent.VK_BRACERIGHT -> XK_braceright;
+      case KeyEvent.VK_AT -> XK_at;
+      case KeyEvent.VK_COLON -> XK_colon;
+      case KeyEvent.VK_CIRCUMFLEX -> XK_dead_circumflex;
+      case KeyEvent.VK_DOLLAR -> XK_dollar;
+      case KeyEvent.VK_EURO_SIGN -> XK_EuroSign;
+      case KeyEvent.VK_EXCLAMATION_MARK -> XK_exclamdown;
+      case KeyEvent.VK_INVERTED_EXCLAMATION_MARK -> XK_exclam;
+      case KeyEvent.VK_LEFT_PARENTHESIS -> XK_parenleft;
+      case KeyEvent.VK_NUMBER_SIGN -> XK_numbersign;
+      case KeyEvent.VK_PLUS -> XK_plus;
+      case KeyEvent.VK_RIGHT_PARENTHESIS -> XK_parenright;
+      case KeyEvent.VK_UNDERSCORE -> XK_underscore;
 
-      case KeyEvent.VK_PAUSE: return XK_Pause;
-      case KeyEvent.VK_CAPS_LOCK: return XK_Caps_Lock;
-      case KeyEvent.VK_ESCAPE: return XK_Escape;
-      case KeyEvent.VK_SPACE: return XK_space;
-      case KeyEvent.VK_PAGE_UP: return XK_Page_Up;
-      case KeyEvent.VK_PAGE_DOWN: return XK_Page_Down;
-      case KeyEvent.VK_END: return XK_End;
-      case KeyEvent.VK_HOME: return XK_Home;
-
-      case KeyEvent.VK_LEFT: return XK_Left;
-      case KeyEvent.VK_KP_LEFT: return XK_KP_Left;
-      case KeyEvent.VK_UP: return XK_Up;
-      case KeyEvent.VK_KP_UP: return XK_KP_Up;
-      case KeyEvent.VK_RIGHT: return XK_Right;
-      case KeyEvent.VK_KP_RIGHT: return XK_KP_Right;
-      case KeyEvent.VK_DOWN: return XK_Down;
-      case KeyEvent.VK_KP_DOWN: return XK_KP_Down;
-
-      case KeyEvent.VK_COMMA: return XK_comma;
-      case KeyEvent.VK_MINUS: return XK_minus;
-      case KeyEvent.VK_PERIOD: return XK_period;
-      case KeyEvent.VK_SLASH: return XK_slash;
-
-      case KeyEvent.VK_SEMICOLON: return XK_semicolon;
-      case KeyEvent.VK_EQUALS: return XK_equal;
-
-      case KeyEvent.VK_OPEN_BRACKET: return XK_bracketleft;
-      case KeyEvent.VK_BACK_SLASH: return XK_backslash;
-      case KeyEvent.VK_CLOSE_BRACKET: return XK_bracketright;
-
-
-      case KeyEvent.VK_MULTIPLY: return XK_multiply;
-      case KeyEvent.VK_ADD: return XK_KP_Add;
-      case KeyEvent.VK_SEPARATOR: return XK_KP_Separator;
-
-      case KeyEvent.VK_SUBTRACT: return XK_KP_Subtract;
-      case KeyEvent.VK_DECIMAL: return XK_KP_Decimal;
-      case KeyEvent.VK_DIVIDE: return XK_KP_Divide;
-      case KeyEvent.VK_DELETE: return XK_Delete;
-      case KeyEvent.VK_NUM_LOCK: return XK_Num_Lock;
-      case KeyEvent.VK_SCROLL_LOCK: return XK_Scroll_Lock;
-
-      case KeyEvent.VK_PRINTSCREEN: return XK_Print;
-      case KeyEvent.VK_INSERT: return XK_Insert;
-      case KeyEvent.VK_HELP: return XK_Help;
-      case KeyEvent.VK_META: return XK_Meta_R;
-
-      case KeyEvent.VK_BACK_QUOTE: return XK_quoteright;
-      case KeyEvent.VK_QUOTE: return XK_quoteleft;
-
-      case KeyEvent.VK_DEAD_GRAVE: return XK_dead_grave;
-      case KeyEvent.VK_DEAD_ACUTE: return XK_dead_acute;
-      case KeyEvent.VK_DEAD_CIRCUMFLEX: return XK_dead_circumflex;
-      case KeyEvent.VK_DEAD_TILDE: return XK_dead_tilde;
-      case KeyEvent.VK_DEAD_MACRON: return XK_dead_macron;
-      case KeyEvent.VK_DEAD_BREVE: return XK_dead_breve;
-      case KeyEvent.VK_DEAD_ABOVEDOT: return XK_dead_abovedot;
-      case KeyEvent.VK_DEAD_DIAERESIS: return XK_dead_diaeresis;
-      case KeyEvent.VK_DEAD_ABOVERING: return XK_dead_abovering;
-      case KeyEvent.VK_DEAD_DOUBLEACUTE: return XK_dead_doubleacute;
-      case KeyEvent.VK_DEAD_CARON: return XK_dead_caron;
-      case KeyEvent.VK_DEAD_CEDILLA: return XK_dead_cedilla;
-      case KeyEvent.VK_DEAD_OGONEK: return XK_dead_ogonek;
-      case KeyEvent.VK_DEAD_IOTA: return XK_dead_iota;
-      case KeyEvent.VK_DEAD_VOICED_SOUND: return XK_dead_voiced_sound;
-      case KeyEvent.VK_DEAD_SEMIVOICED_SOUND: return XK_dead_semivoiced_sound;
-      case KeyEvent.VK_AMPERSAND: return XK_ampersand;
-      case KeyEvent.VK_ASTERISK: return XK_asterisk;
-      case KeyEvent.VK_QUOTEDBL: return XK_quotedbl;
-      case KeyEvent.VK_LESS: return XK_less;
-      case KeyEvent.VK_GREATER: return XK_greater;
-      case KeyEvent.VK_BRACELEFT: return XK_braceleft;
-      case KeyEvent.VK_BRACERIGHT: return XK_braceright;
-      case KeyEvent.VK_AT: return XK_at;
-      case KeyEvent.VK_COLON: return XK_colon;
-      case KeyEvent.VK_CIRCUMFLEX: return XK_dead_circumflex;
-      case KeyEvent.VK_DOLLAR: return XK_dollar;
-      case KeyEvent.VK_EURO_SIGN: return XK_EuroSign;
-      case KeyEvent.VK_EXCLAMATION_MARK: return XK_exclamdown;
-      case KeyEvent.VK_INVERTED_EXCLAMATION_MARK: return XK_exclam;
-      case KeyEvent.VK_LEFT_PARENTHESIS: return XK_parenleft;
-      case KeyEvent.VK_NUMBER_SIGN: return XK_numbersign;
-      case KeyEvent.VK_PLUS: return XK_plus;
-      case KeyEvent.VK_RIGHT_PARENTHESIS: return XK_parenright;
-      case KeyEvent.VK_UNDERSCORE: return XK_underscore;
-
-      //case KeyEvent.VK_CONTEXT_MENU: return XK_Menu;
+      //case KeyEvent.VK_CONTEXT_MENU -> XK_Menu;
       //case KeyEvent.VK_FINAL:;
       //case KeyEvent.VK_CONVERT:;
       //case KeyEvent.VK_NONCONVERT:;
       //case KeyEvent.VK_ACCEPT:;
-      //case KeyEvent.VK_MODECHANGE: return XK_Mode_switch;
+      //case KeyEvent.VK_MODECHANGE -> XK_Mode_switch;
       //case KeyEvent.VK_KANA:;
 
-      case KeyEvent.VK_KANJI: return XK_Kanji;
-      //case KeyEvent.VK_ALPHANUMERIC: return X11KeyCodes.;
-      case KeyEvent.VK_KATAKANA: return XK_Katakana;
-      case KeyEvent.VK_HIRAGANA: return XK_Hiragana;
+      case KeyEvent.VK_KANJI -> XK_Kanji;
+      //case KeyEvent.VK_ALPHANUMERIC -> X11KeyCodes.;
+      case KeyEvent.VK_KATAKANA -> XK_Katakana;
+      case KeyEvent.VK_HIRAGANA -> XK_Hiragana;
 
-      //case KeyEvent.VK_FULL_WIDTH: return X11KeyCodes.;
-      //case KeyEvent.VK_HALF_WIDTH: return X11KeyCodes.;
-      //case KeyEvent.VK_ROMAN_CHARACTERS: return X11KeyCodes.;
-      case KeyEvent.VK_ALL_CANDIDATES: return XK_MultipleCandidate;
-      case KeyEvent.VK_PREVIOUS_CANDIDATE: return XK_PreviousCandidate;
-      case KeyEvent.VK_CODE_INPUT: return XK_Codeinput;
-      //case KeyEvent.VK_JAPANESE_KATAKANA: return X11KeyCodes.;
-      case KeyEvent.VK_JAPANESE_HIRAGANA: return XK_Hiragana;
-      //case KeyEvent.VK_JAPANESE_ROMAN: return X11KeyCodes.;
-      case KeyEvent.VK_KANA_LOCK: return XK_Kana_Lock;
-      //case KeyEvent.VK_INPUT_METHOD_ON_OFF: return X11KeyCodes.;
-      //case KeyEvent.VK_CUT: return X11KeyCodes.;
-      //case KeyEvent.VK_COPY: return X11KeyCodes.;
-      //case KeyEvent.VK_PASTE: return X11KeyCodes.;
-      //case KeyEvent.VK_UNDO: return X11KeyCodes.;
-      //case KeyEvent.VK_AGAIN: return X11KeyCodes.;
-      case KeyEvent.VK_FIND: return XK_Find;
-      //case KeyEvent.VK_PROPS: return X11KeyCodes.;
-      //case KeyEvent.VK_STOP: return X11KeyCodes.;
-      //case KeyEvent.VK_COMPOSE: return X11KeyCodes.;
-      //case KeyEvent.VK_ALT_GRAPH: return X11KeyCodes.;
-      case KeyEvent.VK_BEGIN: return XK_Begin;
-
-      default: return 0/*VK_UNDEFINED*/;
-    }
+      //case KeyEvent.VK_FULL_WIDTH -> X11KeyCodes.;
+      //case KeyEvent.VK_HALF_WIDTH -> X11KeyCodes.;
+      //case KeyEvent.VK_ROMAN_CHARACTERS -> X11KeyCodes.;
+      case KeyEvent.VK_ALL_CANDIDATES -> XK_MultipleCandidate;
+      case KeyEvent.VK_PREVIOUS_CANDIDATE -> XK_PreviousCandidate;
+      case KeyEvent.VK_CODE_INPUT -> XK_Codeinput;
+      //case KeyEvent.VK_JAPANESE_KATAKANA -> X11KeyCodes.;
+      case KeyEvent.VK_JAPANESE_HIRAGANA -> XK_Hiragana;
+      //case KeyEvent.VK_JAPANESE_ROMAN -> X11KeyCodes.;
+      case KeyEvent.VK_KANA_LOCK -> XK_Kana_Lock;
+      //case KeyEvent.VK_INPUT_METHOD_ON_OFF -> X11KeyCodes.;
+      //case KeyEvent.VK_CUT -> X11KeyCodes.;
+      //case KeyEvent.VK_COPY -> X11KeyCodes.;
+      //case KeyEvent.VK_PASTE -> X11KeyCodes.;
+      //case KeyEvent.VK_UNDO -> X11KeyCodes.;
+      //case KeyEvent.VK_AGAIN -> X11KeyCodes.;
+      case KeyEvent.VK_FIND -> XK_Find;
+      //case KeyEvent.VK_PROPS -> X11KeyCodes.;
+      //case KeyEvent.VK_STOP -> X11KeyCodes.;
+      //case KeyEvent.VK_COMPOSE -> X11KeyCodes.;
+      //case KeyEvent.VK_ALT_GRAPH -> X11KeyCodes.;
+      case KeyEvent.VK_BEGIN -> XK_Begin;
+      default -> 0;/*VK_UNDEFINED*/
+    };
   }
 
   public static int jkeycode2X11code(int jcode, int location) {

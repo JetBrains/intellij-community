@@ -18,8 +18,8 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.ui.JBUI;
-import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,9 +46,6 @@ import java.util.EventListener;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author ilyas
- */
 public class GroovyExtractMethodDialog extends DialogWrapper {
   private final ExtractMethodInfoHelper myHelper;
 
@@ -95,7 +92,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     String name = getEnteredName();
     if (name == null) return;
     GrMethod method = ExtractUtil.createMethod(myHelper);
-    if (method != null && !validateMethod(method, myHelper)) {
+    if (!validateMethod(method, myHelper)) {
       return;
     }
     final GroovyApplicationSettings settings = GroovyApplicationSettings.getInstance();
@@ -130,7 +127,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     myNameLabel.setLabelFor(myNameField);
 
     final PsiType type = myHelper.getOutputType();
-    if (!PsiType.VOID.equals(type)) {
+    if (!PsiTypes.voidType().equals(type)) {
       myForceReturnCheckBox.setSelected(GroovyApplicationSettings.getInstance().FORCE_RETURN);
     }
     else {
@@ -181,7 +178,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   @Nullable
   protected String getEnteredName() {
     String text = myNameField.getText();
-    if (text != null && !text.trim().isEmpty()) {
+    if (!text.trim().isEmpty()) {
       return text.trim();
     }
     else {
@@ -245,7 +242,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     ArrayList<String> conflicts = new ArrayList<>();
     PsiClass owner = helper.getOwner();
     PsiMethod[] methods = ArrayUtil.mergeArrays(owner.getAllMethods(), new PsiMethod[]{method}, PsiMethod.ARRAY_FACTORY);
-    final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new Hash.Strategy<>() {
+    final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new HashingStrategy<>() {
       @Override
       public int hashCode(@Nullable PsiMethod method) {
         return method == null ? 0 : method.getSignature(PsiSubstitutor.EMPTY).hashCode();
@@ -275,7 +272,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
       }
     }
 
-    return conflicts.size() <= 0 || reportConflicts(conflicts, helper.getProject());
+    return conflicts.size() == 0 || reportConflicts(conflicts, helper.getProject());
   }
 
   private static boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {

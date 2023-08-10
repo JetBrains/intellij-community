@@ -242,6 +242,7 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "param", "this")
   }
 
+  @NeedsIndex.SmartMode(reason = "isEffectivelyDeprecated needs smart mode")
   void testPreferAccessibleMembers() throws Throwable {
     checkPreferredItems(0, "Foo.C_NORMAL", "Foo.B_DEPRECATED")
   }

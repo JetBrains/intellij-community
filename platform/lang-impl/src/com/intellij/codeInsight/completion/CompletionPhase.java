@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationListener;
@@ -12,7 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FocusChangeListenerImpl;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -39,9 +40,6 @@ import java.awt.event.FocusEvent;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
-/**
- * @author peter
- */
 public abstract class CompletionPhase implements Disposable {
   private static final Logger LOG = Logger.getInstance(CompletionPhase.class);
 
@@ -49,6 +47,11 @@ public abstract class CompletionPhase implements Disposable {
     @Override
     public int newCompletionStarted(int time, boolean repeated) {
       return time;
+    }
+
+    @Override
+    public String toString() {
+      return "NoCompletion";
     }
   };
 
@@ -193,20 +196,21 @@ public abstract class CompletionPhase implements Disposable {
   }
   public static class BgCalculation extends CompletionPhase {
     boolean modifiersChanged = false;
+    private final @NotNull ClientId ownerId = ClientId.getCurrent();
 
     public BgCalculation(final CompletionProgressIndicator indicator) {
       super(indicator);
       ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
-          if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled()) {
+          if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled() && ownerId.equals(ClientId.getCurrent())) {
             indicator.scheduleRestart();
           }
         }
       }, this);
       if (indicator.isAutopopupCompletion()) {
         // lookup is not visible, we have to check ourselves if editor retains focus
-        ((EditorEx)indicator.getEditor()).addFocusListener(new FocusChangeListenerImpl() {
+        ((EditorEx)indicator.getEditor()).addFocusListener(new FocusChangeListener() {
           @Override
           public void focusLost(@NotNull Editor editor, @NotNull FocusEvent event) {
             // When ScreenReader is active the lookup gets focus on show and we should not close it.
@@ -312,9 +316,9 @@ public abstract class CompletionPhase implements Disposable {
   public static class EmptyAutoPopup extends ZombiePhase {
     private final ActionTracker myTracker;
     private final Editor myEditor;
-    private final Set<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions;
+    private final Set<? extends Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions;
 
-    EmptyAutoPopup(Editor editor, Set<Pair<Integer, ElementPattern<String>>> restartingPrefixConditions) {
+    EmptyAutoPopup(Editor editor, Set<? extends Pair<Integer, ElementPattern<String>>> restartingPrefixConditions) {
       super(null);
       myTracker = new ActionTracker(editor, this);
       myEditor = editor;

@@ -124,7 +124,7 @@ public final class PathEnvironmentVariableUtil {
       if (allExtensions != null) {
         Collection<String> extensions = StringUtil.split(allExtensions, ";", true, true);
         extensions = ContainerUtil.filter(extensions, s -> !StringUtil.isEmpty(s) && s.startsWith("."));
-        return ContainerUtil.map2List(extensions, s -> StringUtil.toLowerCase(s));
+        return ContainerUtil.map(extensions, s -> StringUtil.toLowerCase(s));
       }
     }
     return Collections.emptyList();

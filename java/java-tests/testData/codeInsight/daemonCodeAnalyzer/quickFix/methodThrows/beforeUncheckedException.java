@@ -1,4 +1,4 @@
-// "Remove 'RuntimeException' from 'f' throws list" "false"
+// "Remove 'RuntimeException' from 'f()' throws list" "false"
 import java.io.*;
 
 class a {

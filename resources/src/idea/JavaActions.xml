@@ -1,6 +1,6 @@
 <idea-plugin>
   <actions>
-    <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"
+    <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirAction"
             icon="AllIcons.Actions.ModuleDirectory">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoProject"/>
     </action>
@@ -16,9 +16,15 @@
     <!-- File -->
 
     <group id="JavaNewProjectOrModuleGroup">
-      <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction"/>
+      <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction">
+        <override-text place="ProjectWidgetPopup"/>
+        <add-to-group group-id="ProjectWidget.Actions" anchor="first"/>
+      </action>
       <action id="ImportProject" class="com.intellij.ide.actions.ImportProjectAction"/>
-      <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.ProjectFromVersionControlAction"/>
+      <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.ProjectFromVersionControlAction">
+        <override-text place="ProjectWidgetPopup"/>
+        <add-to-group group-id="ProjectWidget.Actions"/>
+      </action>>
       <separator/>
       <action id="NewModule" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction"/>
       <action id="ImportModule" class="com.intellij.ide.actions.ImportModuleAction"/>
@@ -41,6 +47,7 @@
     </action>
     <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>
+      <override-text place="MainMenu"/>
     </action>
     <action id="ShowSiblings" class="com.intellij.codeInsight.hint.actions.ShowSiblingsAction">
       <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickImplementations"/>
@@ -62,29 +69,37 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
+    <action id="JavaSoftExit" class="com.intellij.execution.impl.DefaultJavaProgramRunner$SoftExitAction">
+      <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Stop"/>
+      <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
+    </action>
+
+    <action id="JavaControlBreak" class="com.intellij.execution.impl.DefaultJavaProgramRunner$ControlBreakAction">
+      <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Stop"/>
+      <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
+    </action>
+
     <!-- View -->
     <reference ref="DelegateMethods">
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>
     </reference>
 
     <!-- Analyze -->
-    <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="AnalyzePlatformMenu"/>
-    <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="InspectCodeInCodeMenuGroup"/>
     <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="InspectCodeActionInPopupMenus"/>
-
-    <group id="AnalyzeActions">
-    </group>
 
     <group id="AnalyzeMenu" popup="true">
       <reference ref="InspectCodeGroup"/>
       <separator/>
       <reference ref="AnalyzeActions"/>
-      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
+
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+      <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
     </group>
 
     <group id="Java.BuildMenu">
       <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="AllIcons.Actions.Compile">
         <add-to-group group-id="TouchBarDefault" anchor="before" relative-to-action="RunConfiguration"/>
+        <add-to-group group-id="RightToolbarSideGroup" anchor="first"/>
       </action>
       <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
       <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
@@ -109,52 +124,8 @@
       <separator/>
       <action id="Merge3Files" internal="true" class="com.intellij.openapi.diff.actions.MergeFilesAction"/>
       <separator/>
-      <action internal="true" id="DecodeBytesAction" class="com.intellij.internal.encodings.DecodeBytesAction"/>
-      <group id="Internal.Dump" internal="true" popup="true">
-        <action id="DumpExtensions" internal="true" class="com.intellij.internal.DumpExtensionsAction"/>
-        <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
-        <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
-        <action id="DumpConfigurationTypes" internal="true" class="com.intellij.internal.DumpConfigurationTypesAction"/>
-        <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
-        <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"/>
-        <action id="DumpScreenConfiguration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
-      </group>
-
-      <separator/>
-      <group id="Internal.VFS" popup="true">
-        <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
-        <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"/>
-        <separator/>
-        <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction"/>
-        <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction"/>
-        <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"/>
-        <action id="ComputeVFStatistics" internal="true" class="com.intellij.internal.ComputeVirtualFileNameStatAction"/>
-        <action id="DumpVfsInfoForExcludedFiles" internal="true" class="com.intellij.internal.DumpVfsInfoForExcludedFilesAction"/>
-        <separator/>
-        <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction"/>
-        <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction"/>
-        <separator/>
-        <action internal="true" id="ValidateLocalHistory" class="com.intellij.history.integration.ValidateHistoryAction"/>
-      </group>
-
-      <separator/>
-
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
-
-    <action internal="true" id="TestParseEventsSchemeAction"
-            class="com.intellij.internal.statistic.actions.TestParseEventsSchemeAction">
-    </action>
-
-    <action internal="true" id="CollectFUStatisticsAction"
-            class="com.intellij.internal.statistic.actions.CollectFUStatisticsAction">
-      <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
-    </action>
-
-    <!-- Help -->
-    <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction">
-      <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="ShowTips"/>
-    </action>
 
     <!-- Toolbar -->
 
@@ -176,12 +147,6 @@
     </action>
     <group id="MoveModuleToGroup" class="com.intellij.ide.projectView.impl.MoveModuleToGroupTopLevel" popup="true"/>
 
-    <reference ref="AnalyzeMenu">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
-      <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
-      <add-to-group group-id="FavoritesViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
-    </reference>
-
     <group id="EditorPopupMenuAnalyze" class="com.intellij.ide.actions.EditorPopupNoSelectionGroup">
       <reference ref="AnalyzeMenu"/>
       <add-to-group group-id="EditorPopupMenu1" anchor="after" relative-to-action="FindUsages"/>
@@ -201,7 +166,6 @@
     <action id="PackageFile" class="com.intellij.packaging.impl.ui.actions.PackageFileAction" use-shortcut-of="Compile">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Compile"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
-      <add-to-group group-id="FavoritesViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
       <add-to-group group-id="ScopeViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
     </action>
 
@@ -220,7 +184,35 @@
       <add-to-group group-id="StructureViewPopupMenu" anchor="after" relative-to-action="RunContextPopupGroup"/>
     </group>
 
-    <group id="ShowPackageDepsGroup"/>
+
+    <group id="AnalyzeJavaMenu">
+      <separator/>
+      <group id="ShowPackageDepsGroup">
+        <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction">
+          <override-text place="MainMenu"/>
+          <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+        </action>
+        <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction">
+          <override-text place="MainMenu"/>
+          <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+        </action>
+        <action id="ShowDependenciesOnTarget" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesOnSpecifiedTargetAction">
+          <override-text place="MainMenu"/>
+          <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+        </action>
+        <action id="ShowModulesDependencies" class="com.intellij.moduleDependencies.ShowModuleDependenciesAction">
+          <override-text place="MainMenu"/>
+          <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+        </action>
+        <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction">
+          <override-text place="MainMenu"/>
+          <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+        </action>
+        <separator/>
+      </group>
+
+      <add-to-group group-id="AnalyzeActions" anchor="before" relative-to-action="SliceBackward"/>
+    </group>
 
     <group id="CommanderPopupMenu">
       <reference ref="NewGroup"/>
@@ -235,8 +227,6 @@
       <reference ref="InspectCode"/>
       <reference ref="ShowPackageDepsGroup"/>
       <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
       <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
@@ -266,12 +256,12 @@
     </action>
 
     <action id="AddFrameworkSupport" class="com.intellij.ide.util.frameworkSupport.AddFrameworkSupportAction">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
-      <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
+      <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="before" relative-to-action="LoadUnloadModules"/>
     </action>
 
-    <group>
+    <group id="Java.ImportFrom.Group" searchable="false">
       <action id="CreateLibraryFromFile" class="com.intellij.ide.projectView.actions.MarkLibraryRootAction"/>
+      <action id="ExtractModuleFromPackage" class="com.intellij.ide.projectView.actions.ExtractModuleFromPackageAction" internal="true"/>
       <action id="ImportModuleFromImlFile" class="com.intellij.ide.projectView.actions.ImportModuleFromImlFileAction"/>
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" relative-to-action="MarkRootGroup" anchor="after"/>
     </group>
@@ -284,9 +274,11 @@
       <action id="GenerateTestMethod" class="com.intellij.testIntegration.GenerateTestMethodAction"/>
       <action id="GenerateSetUpMethod" class="com.intellij.testIntegration.GenerateSetUpMethodAction"/>
       <action id="GenerateTearDownMethod" class="com.intellij.testIntegration.GenerateTearDownMethodAction"/>
-      <action id="GenerateBeforeClassMethod" class="com.intellij.testIntegration.GenerateBeforeClassMethodAction"/>       
-      <action id="GenerateAfterClassMethod" class="com.intellij.testIntegration.GenerateAfterClassMethodAction"/> 
+      <action id="GenerateBeforeClassMethod" class="com.intellij.testIntegration.GenerateBeforeClassMethodAction"/>
+      <action id="GenerateAfterClassMethod" class="com.intellij.testIntegration.GenerateAfterClassMethodAction"/>
       <action id="GenerateDataMethod" class="com.intellij.testIntegration.GenerateDataMethodAction"/>
+      <action id="GenerateTestDataPathMethods" class="com.intellij.testIntegration.GenerateTestDataPathMethodAction"/>
+      <action id="GenerateTestDataPathFiles" class="com.intellij.testIntegration.GenerateTestDataPathFileAction"/>
       <separator/>
       <action id="GenerateConstructor" class="com.intellij.codeInsight.generation.actions.GenerateConstructorAction"/>
       <action id="GenerateGetter" class="com.intellij.codeInsight.generation.actions.GenerateGetterAction"/>
@@ -314,34 +306,21 @@
     </group>
 
     <action id="InferNullity" class="com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction">
-      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
+      <add-to-group group-id="AnalyzeActions" anchor="after" relative-to-action="ViewOfflineInspection"/>
     </action>
 
     <action id="GenerateModuleDescriptors" class="com.intellij.codeInspection.java19api.Java9GenerateModuleDescriptorsAction">
       <add-to-group group-id="CodeMenu" anchor="last"/>
     </action>
 
-    <group id="AnalyzeJavaMenu">
-      <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction">
-        <override-text place="MainMenu"/>
-        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-      </action>
-      <separator/>
-      <reference id="SliceBackward"/>
-      <reference id="SliceForward"/>
-      <separator/>
-      <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction" overrides="true">
-        <override-text place="MainMenu"/>
-        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-      </action>
-      <add-to-group group-id="AnalyzeMenu" anchor="last"/>
-    </group>
+    <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction" overrides="true">
+      <override-text place="EditorPopup"/>
+    </action>
 
     <group id="RefactoringMenu1">
       <action id="ChangeTypeSignature" class="com.intellij.refactoring.typeMigration.actions.ChangeTypeSignatureAction"/>
       <action id="MakeStatic" class="com.intellij.refactoring.actions.MakeStaticAction"/>
       <action id="ConvertToInstanceMethod" class="com.intellij.refactoring.actions.ConvertToInstanceMethodAction"/>
-      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ChangeSignature"/>
     </group>
 
     <group id="RefactoringMenu2">
@@ -369,19 +348,21 @@
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="RenameElement"/>
     </group>
 
+    <group id="MigrationMenu" popup="true" searchable="true">
+      <group id="MigrationMenu1" class="com.intellij.refactoring.migration.MigrationGroup" popup="false" searchable="false"/>
+      <separator/>
+      <action id="NewMigration" class="com.intellij.refactoring.actions.MigrateAction"/>
+    </group>
+
     <group id="RefactoringMenu4">
+      <separator/>
+      <reference ref="RefactoringMenu1"/>
+      <separator/>
       <action id="TurnRefsToSuper" class="com.intellij.refactoring.actions.TurnRefsToSuperAction"/>
       <action id="InheritanceToDelegation" class="com.intellij.refactoring.actions.InheritanceToDelegationAction"/>
-      <action id="RemoveMiddleman" class="com.intellij.refactoring.actions.RemoveMiddlemanAction"/>
-      <action id="WrapReturnValue" class="com.intellij.refactoring.wrapreturnvalue.WrapReturnValueAction"/>
       <separator/>
       <action id="EncapsulateFields" class="com.intellij.refactoring.actions.EncapsulateFieldsAction"/>
-      <action id="ReplaceTempWithQuery" class="com.intellij.refactoring.actions.TempWithQueryAction"/>
-      <action id="ReplaceConstructorWithFactory" class="com.intellij.refactoring.actions.ReplaceConstructorWithFactoryAction"/>
-      <action id="ReplaceConstructorWithBuilder" class="com.intellij.refactoring.actions.ReplaceConstructorWithBuilderAction"/>
-      <separator/>
-      <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
-      <action id="Migrate" class="com.intellij.refactoring.actions.MigrateAction"/>
+      <reference ref="MigrationMenu"/>
       <separator/>
 
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="MemberPushDown"/>
@@ -395,11 +376,8 @@
       <add-to-group group-id="DebugReloadGroup" anchor="last"/>
     </action>
 
-    <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="AllIcons.Actions.PopFrame">
-      <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="ForceRunToCursor"/>
-      <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="first"/>
-      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="before" relative-to-action="RunToCursor"/>
-      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
+    <action id="RunToolbarHotSwapAction" class="com.intellij.debugger.actions.RunToolbarHotSwapAction" icon="com.intellij.icons.AllIcons.Actions.BuildAutoReloadChanges">
+      <add-to-group group-id="RunToolbarAdditionalProcessActions"/>
     </action>
 
     <group id="ToggleBreakpointAction">
@@ -437,13 +415,13 @@
       <action id="ExpressionStatistics" internal="true" class="com.intellij.internal.ExpressionStatisticsAction"/>
 
       <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"/>
-
-      <action id="InspectStubIndex" internal="true" class="com.intellij.internal.InspectStubIndexAction"/>
-
       <add-to-group group-id="Internal"/>
     </group>
 
     <group id="JavaDebuggerActions">
+      <action id="Debugger.ShowCollectionHistory" class="com.intellij.debugger.actions.ShowCollectionHistoryAction">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      </action>
       <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
         <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="last"/>
@@ -475,12 +453,9 @@
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
       </action>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
-      <action id="Debugger.EditNodeSource" class="com.intellij.debugger.actions.EditSourceAction"/>
-      <action id="Debugger.EditTypeSource" class="com.intellij.debugger.actions.JumpToObjectAction"/>
-      <reference ref="Debugger.PopFrame"/>
-      <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
+      <group id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-      </action>
+      </group>
       <action id="Debugger.FilterArray" class="com.intellij.debugger.actions.ArrayAction$FilterArrayAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
@@ -521,7 +496,7 @@
 
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction">
         <add-to-group group-id="XDebugger.Watches.Inline.Popup" anchor="last"/>
-        <override-text place="XDebuggerTreeInlayPopup"/>
+        <override-text place="XDebuggerTreePopup"/>
       </action>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
       <action id="Debugger.MuteRenderers" class="com.intellij.debugger.actions.ForceOnDemandRenderersAction">
@@ -618,58 +593,6 @@
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </group>
 
-    <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction" internal="true">
-      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ExportImportGroup"/>
-    </action>
-
-    <group id="Debugger.FramePanelPopup">
-      <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.EditNodeSource"/>
-      <reference ref="Debugger.EditTypeSource"/>
-      <separator/>
-      <reference ref="Debugger.ViewAsGroup"/>
-      <separator/>
-      <reference ref="Debugger.AddToWatch"/>
-      <separator/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <separator/>
-      <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CustomizeContextView"/>
-    </group>
-
-    <group id="Debugger.EvaluationDialogPopup">
-      <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.EditNodeSource"/>
-      <reference ref="Debugger.EditTypeSource"/>
-      <separator/>
-      <reference ref="Debugger.ViewAsGroup"/>
-      <separator/>
-      <reference ref="Debugger.AddToWatch"/>
-      <separator/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <separator/>
-      <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CustomizeContextView"/>
-    </group>
-
-    <group id="Debugger.InspectPanelPopup">
-      <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.EditNodeSource"/>
-      <reference ref="Debugger.EditTypeSource"/>
-      <separator/>
-      <reference ref="Debugger.AddToWatch"/>
-      <separator/>
-      <reference ref="Debugger.ViewAsGroup"/>
-      <separator/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <separator/>
-      <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CustomizeContextView"/>
-    </group>
-
     <group id="Debugger.ThreadsPanelPopup">
       <reference ref="Debugger.ResumeThread"/>
       <reference ref="Debugger.FreezeThread"/>
@@ -681,48 +604,6 @@
       <separator/>
       <reference ref="Debugger.CustomizeThreadsView"/>
     </group>
-
-    <group id="Debugger.WatchesPanelPopup">
-      <separator/>
-      <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.EditNodeSource"/>
-      <reference ref="Debugger.EditTypeSource"/>
-      <separator/>
-      <reference ref="Debugger.ViewAsGroup"/>
-      <separator/>
-      <reference ref="Debugger.AddToWatch"/>
-      <separator/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <separator/>
-      <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CustomizeContextView"/>
-    </group>
-
-    <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction">
-      <override-text place="MainMenu"/>
-      <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-      <add-to-group group-id="ShowPackageDepsGroup" anchor="first"/>
-      <add-to-group group-id="AnalyzeActions" anchor="first"/>
-    </action>
-    <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction">
-      <override-text place="MainMenu"/>
-      <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-      <add-to-group group-id="AnalyzeActions" relative-to-action="ShowPackageDeps" anchor="after"/>
-    </action>
-    <action id="ShowDependenciesOnTarget" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesOnSpecifiedTargetAction">
-      <override-text place="MainMenu"/>
-      <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-      <add-to-group group-id="AnalyzeActions" relative-to-action="ShowBackwardPackageDeps" anchor="after"/>
-    </action>
-    <action id="ShowModulesDependencies" class="com.intellij.moduleDependencies.ShowModuleDependenciesAction">
-      <override-text place="MainMenu"/>
-      <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-      <add-to-group group-id="AnalyzeActions" anchor="last"/>
-    </action>
-    <action id="FileChooser.GotoJDK" class="com.intellij.openapi.projectRoots.JdkPopupAction" >
-      <add-to-group group-id="FileChooserToolbar" anchor="last"/>
-    </action>
 
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFindUsagesAction" id="TestCompilerReferenceServiceFindUsages" internal="true"/>
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFunctionalExpressionSearchAction" id="TestCompilerReferenceServiceFunctionalExpressionSearch" internal="true"/>
@@ -736,4 +617,3 @@
     </action>
   </actions>
 </idea-plugin>
-

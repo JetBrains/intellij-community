@@ -1,22 +1,36 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.util.io.*
-import org.junit.Assert.*
+import com.intellij.util.io.readBytes
+import org.junit.Assert.assertEquals
+import org.junit.ComparisonFailure
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import kotlin.collections.LinkedHashMap
+import java.util.jar.JarFile
+import java.util.jar.Manifest
+import java.util.zip.Deflater
+import kotlin.io.path.*
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 sealed class DirectoryContentSpecImpl : DirectoryContentSpec {
+  /**
+   * Path to the original file from which this spec was built. Will be used in 'Comparison Failure' dialog to apply changes to that file.
+   */
+  abstract val originalFile: Path?
+
   abstract override fun mergeWith(other: DirectoryContentSpec): DirectoryContentSpecImpl
 }
 
-abstract class DirectorySpecBase : DirectoryContentSpecImpl() {
+sealed class DirectorySpecBase(override val originalFile: Path?) : DirectoryContentSpecImpl() {
+
   protected val children: LinkedHashMap<String, DirectoryContentSpecImpl> = LinkedHashMap()
 
   fun addChild(name: String, spec: DirectoryContentSpecImpl) {
@@ -51,7 +65,7 @@ abstract class DirectorySpecBase : DirectoryContentSpecImpl() {
     val result = when (other) {
       is DirectorySpec -> DirectorySpec()
       is ZipSpec -> ZipSpec()
-      else -> error(other)
+      is JarSpec -> JarSpec()
     }
     result.children.putAll(children)
     for ((name, child) in other.children) {
@@ -62,7 +76,7 @@ abstract class DirectorySpecBase : DirectoryContentSpecImpl() {
   }
 }
 
-class DirectorySpec : DirectorySpecBase() {
+class DirectorySpec(originalFile: Path? = null) : DirectorySpecBase(originalFile) {
   override fun generate(target: File) {
     if (!FileUtil.createDirectory(target)) {
       throw IOException("Cannot create directory $target")
@@ -71,26 +85,49 @@ class DirectorySpec : DirectorySpecBase() {
   }
 }
 
-class ZipSpec : DirectorySpecBase() {
+sealed class ZipSpecBase(private val extension: String) : DirectorySpecBase(null) {
   override fun generate(target: File) {
-    val contentDir = FileUtil.createTempDirectory("zip-content", null, false)
+    val contentDir = FileUtil.createTempDirectory("$extension-content", null, false)
     try {
       generateInDirectory(contentDir)
-      Compressor.Zip(target).use { it.addDirectory(contentDir) }
+      FileUtil.createParentDirs(target)
+      compress(contentDir, target)
     }
     finally {
       FileUtil.delete(contentDir)
     }
   }
 
+  abstract fun compress(contentDir: File, target: File)
+
   override fun generateInTempDir(): Path {
-    val target = FileUtil.createTempFile("zip-by-spec", ".zip", true)
+    val target = FileUtil.createTempFile("$extension-by-spec", ".$extension", true)
     generate(target)
     return target.toPath()
   }
 }
 
-class FileSpec(val content: ByteArray?) : DirectoryContentSpecImpl() {
+class ZipSpec(val level: Int = Deflater.DEFAULT_COMPRESSION) : ZipSpecBase("zip") {
+  override fun compress(contentDir: File, target: File) {
+    Compressor.Zip(target).withLevel(level).use { it.addDirectory(contentDir) }
+  }
+}
+
+class JarSpec : ZipSpecBase("jar") {
+  override fun compress(contentDir: File, target: File) {
+    Compressor.Jar(target).use {
+      val manifestFile = File(contentDir, JarFile.MANIFEST_NAME)
+      if (manifestFile.exists()) {
+        val manifest = manifestFile.inputStream().use { Manifest(it) }
+        it.addManifest(manifest)
+        it.filter { path, _ -> path != JarFile.MANIFEST_NAME }
+      }
+      it.addDirectory(contentDir) 
+    }
+  }
+}
+
+class FileSpec(val content: ByteArray?, override val originalFile: Path? = null) : DirectoryContentSpecImpl() {
   override fun generate(target: File) {
     FileUtil.writeToFile(target, content ?: ByteArray(0))
   }
@@ -124,38 +161,85 @@ class DirectoryContentBuilderImpl(val result: DirectorySpecBase) : DirectoryCont
   }
 }
 
-fun assertDirectoryContentMatches(file: File,
-                                  spec: DirectoryContentSpecImpl,
-                                  relativePath: String,
-                                  fileTextMatcher: FileTextMatcher,
-                                  filePathFilter: (String) -> Boolean) {
-  assertTrue("$file doesn't exist", file.exists())
+private fun DirectorySpecBase.toString(filePathFilter: (String) -> Boolean): String =
+  ArrayList<String>().also { appendToString(this, it, 0, ".", filePathFilter) }.joinToString("\n")
+
+private fun appendToString(spec: DirectorySpecBase, result: MutableList<String>, indent: Int,
+                           relativePath: String, filePathFilter: (String) -> Boolean) {
+  spec.getChildren().entries
+    .filter { it.value !is FileSpec || filePathFilter("$relativePath/${it.key}") }
+    .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.key })
+    .forEach {
+      result.add("${" ".repeat(indent)}${it.key}")
+      val child = it.value
+      if (child is DirectorySpec) {
+        appendToString(child, result, indent + 2, "$relativePath/${it.key}", filePathFilter)
+      }
+    }
+}
+
+internal fun assertContentUnderFileMatches(file: Path,
+                                           spec: DirectoryContentSpecImpl,
+                                           fileTextMatcher: FileTextMatcher,
+                                           filePathFilter: (String) -> Boolean,
+                                           customErrorReporter: ContentMismatchReporter?,
+                                           expectedDataIsInSpec: Boolean) {
+  if (spec is DirectorySpecBase) {
+    val actualSpec = createSpecByPath(file, file)
+    if (actualSpec is DirectorySpecBase) {
+      val specString = spec.toString(filePathFilter)
+      val dirString = actualSpec.toString(filePathFilter)
+      val (expected, actual) = if (expectedDataIsInSpec) specString to dirString else dirString to specString
+      assertEquals(expected, actual)
+    }
+  }
+  val errorReporter = customErrorReporter ?: ContentMismatchReporter { _, error -> throw error }
+  assertDirectoryContentMatches(file, spec, ".", fileTextMatcher, filePathFilter, errorReporter, expectedDataIsInSpec)
+}
+
+private fun ContentMismatchReporter.assertTrue(relativePath: String, errorMessage: String, condition: Boolean) {
+  if (!condition) {
+    reportError(relativePath, AssertionError(errorMessage))
+  }
+}
+
+private fun assertDirectoryContentMatches(file: Path,
+                                          spec: DirectoryContentSpecImpl,
+                                          relativePath: String,
+                                          fileTextMatcher: FileTextMatcher,
+                                          filePathFilter: (String) -> Boolean,
+                                          errorReporter: ContentMismatchReporter,
+                                          expectedDataIsInSpec: Boolean) {
+  errorReporter.assertTrue(relativePath, "$file doesn't exist", file.exists())
   when (spec) {
     is DirectorySpec -> {
-      assertDirectoryMatches(file, spec, relativePath, fileTextMatcher, filePathFilter)
+      assertDirectoryMatches(file, spec, relativePath, fileTextMatcher, filePathFilter, errorReporter, expectedDataIsInSpec)
     }
-    is ZipSpec -> {
-      assertTrue("$file is not a file", file.isFile)
-      val dirForExtracted = FileUtil.createTempDirectory("extracted-${file.name}", null, false)
+    is ZipSpecBase -> {
+      errorReporter.assertTrue(relativePath, "$file is not a file", file.isRegularFile())
+      val dirForExtracted = FileUtil.createTempDirectory("extracted-${file.name}", null, false).toPath()
       ZipUtil.extract(file, dirForExtracted, null)
-      assertDirectoryMatches(dirForExtracted, spec, relativePath, fileTextMatcher, filePathFilter)
+      assertDirectoryMatches(dirForExtracted, spec, relativePath, fileTextMatcher, filePathFilter, errorReporter, expectedDataIsInSpec)
       FileUtil.delete(dirForExtracted)
     }
     is FileSpec -> {
-      assertTrue("$file is not a file", file.isFile)
+      errorReporter.assertTrue(relativePath, "$file is not a file", file.isRegularFile())
       if (spec.content != null) {
-        val actualBytes = FileUtil.loadFileBytes(file)
-        if (!Arrays.equals(actualBytes, spec.content)) {
-          val actualString = actualBytes.convertToText()
-          val expectedString = spec.content.convertToText()
+        val fileBytes = file.readBytes()
+        if (!fileBytes.contentEquals(spec.content)) {
+          val fileString = fileBytes.convertToText()
+          val specString = spec.content.convertToText()
           val place = if (relativePath != ".") " at $relativePath" else ""
-          if (actualString != null && expectedString != null) {
-            if (!fileTextMatcher.matches(actualString, expectedString)) {
-              assertEquals("File content mismatch$place:", expectedString, actualString)
+          if (fileString != null && specString != null) {
+            if (!fileTextMatcher.matches(fileString, specString)) {
+              val specFilePath = spec.originalFile?.toFile()?.absolutePath
+              val (expected, actual) = if (expectedDataIsInSpec) specString to fileString else fileString to specString
+              val (expectedPath, actualPath) = if (expectedDataIsInSpec) specFilePath to null else null to specFilePath
+              errorReporter.reportError(relativePath, FileComparisonFailure("File content mismatch$place:", expected, actual, expectedPath, actualPath))
             }
           }
           else {
-            fail("Binary file content mismatch$place")
+            errorReporter.reportError(relativePath, AssertionError("Binary file content mismatch$place"))
           }
         }
       }
@@ -164,8 +248,8 @@ fun assertDirectoryContentMatches(file: File,
 }
 
 private fun ByteArray.convertToText(): String? {
-  val encoding = CharsetToolkit(this, Charsets.UTF_8, false).guessFromContent(size)
-  val charset = when (encoding) {
+  if (isEmpty()) return ""
+  val charset = when (CharsetToolkit(this, Charsets.UTF_8, false).guessFromContent(size)) {
     CharsetToolkit.GuessedEncoding.SEVEN_BIT -> Charsets.US_ASCII
     CharsetToolkit.GuessedEncoding.VALID_UTF8 -> Charsets.UTF_8
     else -> return null
@@ -173,39 +257,54 @@ private fun ByteArray.convertToText(): String? {
   return String(this, charset)
 }
 
-private fun assertDirectoryMatches(file: File,
+private fun assertDirectoryMatches(file: Path,
                                    spec: DirectorySpecBase,
                                    relativePath: String,
                                    fileTextMatcher: FileTextMatcher,
-                                   filePathFilter: (String) -> Boolean) {
-  assertTrue("$file is not a directory", file.isDirectory)
+                                   filePathFilter: (String) -> Boolean,
+                                   errorReporter: ContentMismatchReporter,
+                                   expectedDataIsInSpec: Boolean) {
+  errorReporter.assertTrue(relativePath, "$file is not a directory", file.isDirectory())
   fun childNameFilter(name: String) = filePathFilter("$relativePath/$name")
-  val actualChildrenNames = file.listFiles()!!.filter { it.isDirectory || childNameFilter(it.name) }
-    .map { it.name }.sortedWith(String.CASE_INSENSITIVE_ORDER)
+  val childrenNamesInDir = file.directoryStreamIfExists { children ->
+    children.filter { it.isDirectory() || childNameFilter(it.name) }
+      .map { it.name }.sortedWith(String.CASE_INSENSITIVE_ORDER)
+  } ?: emptyList()
   val children = spec.getChildren()
-  val expectedChildrenNames = children.entries.filter { it.value !is FileSpec || childNameFilter(it.key) }
+  val childrenNamesInSpec = children.entries.filter { it.value is DirectorySpec || childNameFilter(it.key) }
     .map { it.key }.sortedWith(String.CASE_INSENSITIVE_ORDER)
-  assertEquals("Directory content mismatch${if (relativePath != "") " at $relativePath" else ""}:",
-               expectedChildrenNames.joinToString("\n"), actualChildrenNames.joinToString("\n"))
-  for (child in actualChildrenNames) {
-    assertDirectoryContentMatches(File(file, child), children.get(child)!!, "$relativePath/$child", fileTextMatcher, filePathFilter)
+  val specString = childrenNamesInSpec.joinToString("\n")
+  val dirString = childrenNamesInDir.joinToString("\n")
+  if (specString != dirString) {
+    val (expected, actual) = if (expectedDataIsInSpec) specString to dirString else dirString to specString
+    errorReporter.reportError(relativePath, ComparisonFailure("Directory content mismatch${if (relativePath != "") " at $relativePath" else ""}:",
+                                    expected, actual))
+  }
+  for (child in childrenNamesInDir) {
+    assertDirectoryContentMatches(file.resolve(child), children.getValue(child), "$relativePath/$child", fileTextMatcher, filePathFilter,
+      errorReporter, expectedDataIsInSpec)
   }
 }
 
-internal fun createSpecByDirectory(dir: Path): DirectorySpec {
-  val spec = DirectorySpec()
+internal fun fillSpecFromDirectory(spec: DirectorySpecBase, dir: Path, originalDir: Path?) {
   dir.directoryStreamIfExists { children ->
     children.forEach {
-      spec.addChild(it.fileName.toString(), createSpecByPath(it))
+      spec.addChild(it.fileName.toString(), createSpecByPath(it, originalDir?.resolve(it.fileName)))
     }
   }
-  return spec
 }
 
-private fun createSpecByPath(path: Path): DirectoryContentSpecImpl {
-  if (path.isFile()) {
-    return FileSpec(Files.readAllBytes(path))
+private fun createSpecByPath(path: Path, originalFile: Path?): DirectoryContentSpecImpl {
+  if (path.isDirectory()) {
+    return DirectorySpec(originalFile).also { fillSpecFromDirectory(it, path, originalFile) }
   }
-  //todo support zip files
-  return createSpecByDirectory(path)
+  if (path.extension in setOf("zip", "jar")) {
+    val dirForExtracted = FileUtil.createTempDirectory("extracted-${path.name}", null, false).toPath()
+    ZipUtil.extract(path, dirForExtracted, null)
+    val spec = if (path.extension == "jar") JarSpec() else ZipSpec()
+    fillSpecFromDirectory(spec, dirForExtracted, null)
+    FileUtil.delete(dirForExtracted)
+    return spec
+  }
+  return FileSpec(Files.readAllBytes(path), originalFile)
 }

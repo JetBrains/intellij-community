@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.project.ProjectType;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -14,36 +15,34 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * The main (and single) purpose of this class is provide lazy initialization
- * of the actions. ClassLoader eats a lot of time on startup to load the actions' classes.
- *
- * @author Vladimir Kondratyev
+ * The main (and single) purpose of this class is to provide lazy initialization
+ * of the actions.
+ * ClassLoader eats up a lot of time on startup to load the actions' classes.
  */
-@SuppressWarnings("ComponentNotRegistered")
 public final class ActionStub extends AnAction implements ActionStubBase {
   private static final Logger LOG = Logger.getInstance(ActionStub.class);
 
-  private final String myClassName;
-  private final String myProjectType;
-  private final Supplier<Presentation> myTemplatePresentation;
-  private final String myId;
-  private final PluginDescriptor myPlugin;
-  private final String myIconPath;
+  private final @NotNull String myClassName;
+  private final @NotNull String myId;
+  private final @NotNull PluginDescriptor myPlugin;
+  private final @Nullable String myIconPath;
+  private final @Nullable ProjectType myProjectType;
+  private final @NotNull Supplier<Presentation> myTemplatePresentation;
   private List<Supplier<String>> mySynonyms = Collections.emptyList();
 
   public ActionStub(@NotNull String actionClass,
                     @NotNull String id,
                     @NotNull PluginDescriptor plugin,
                     @Nullable String iconPath,
-                    @Nullable String projectType,
+                    @Nullable ProjectType projectType,
                     @NotNull Supplier<Presentation> templatePresentation) {
-    myPlugin = plugin;
     myClassName = actionClass;
-    myProjectType = projectType;
-    myTemplatePresentation = templatePresentation;
     LOG.assertTrue(!id.isEmpty());
     myId = id;
+    myPlugin = plugin;
     myIconPath = iconPath;
+    myProjectType = projectType;
+    myTemplatePresentation = templatePresentation;
   }
 
   @Override
@@ -56,36 +55,32 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     }
   }
 
-  @NotNull
   @Override
-  public PluginDescriptor getPlugin() {
+  public @NotNull PluginDescriptor getPlugin() {
     return myPlugin;
   }
 
-  @NotNull
   @Override
-  Presentation createTemplatePresentation() {
+  @NotNull Presentation createTemplatePresentation() {
     return myTemplatePresentation.get();
   }
 
-  @NotNull
-  public String getClassName() {
+  public @NotNull String getClassName() {
     return myClassName;
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return myId;
   }
 
-  public ClassLoader getLoader() {
-    return myPlugin.getPluginClassLoader();
+  @Override
+  public @Nullable String getIconPath() {
+    return myIconPath;
   }
 
-  @Override
-  public String getIconPath() {
-    return myIconPath;
+  public @Nullable ProjectType getProjectType() {
+    return myProjectType;
   }
 
   @Override
@@ -97,12 +92,16 @@ public final class ActionStub extends AnAction implements ActionStubBase {
    * Copies template presentation and shortcuts set to {@code targetAction}.
    */
   @ApiStatus.Internal
-  public final void initAction(@NotNull AnAction targetAction) {
-    copyTemplatePresentation(this.getTemplatePresentation(), targetAction.getTemplatePresentation());
+  public void initAction(@NotNull AnAction targetAction) {
+    copyTemplatePresentation(getTemplatePresentation(), targetAction.getTemplatePresentation());
     targetAction.setShortcutSet(getShortcutSet());
     copyActionTextOverrides(targetAction);
     for (Supplier<String> synonym : mySynonyms) {
       targetAction.addSynonym(synonym);
+    }
+    if (targetAction instanceof ActionGroup) {
+      LOG.warn(String.format("ActionGroup should be registered using <group> tag: id=\"%s\" class=\"%s\"",
+                             myId, targetAction.getClass().getName()));
     }
   }
 
@@ -110,15 +109,11 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     if (targetPresentation.getIcon() == null && sourcePresentation.getIcon() != null) {
       targetPresentation.setIcon(sourcePresentation.getIcon());
     }
-    if (StringUtil.isEmpty(targetPresentation.getText()) && sourcePresentation.getText() != null) {
+    if (Strings.isEmpty(targetPresentation.getText()) && sourcePresentation.getText() != null) {
       targetPresentation.setTextWithMnemonic(sourcePresentation.getTextWithPossibleMnemonic());
     }
     if (targetPresentation.getDescription() == null && sourcePresentation.getDescription() != null) {
       targetPresentation.setDescription(sourcePresentation.getDescription());
     }
-  }
-
-  public String getProjectType() {
-    return myProjectType;
   }
 }

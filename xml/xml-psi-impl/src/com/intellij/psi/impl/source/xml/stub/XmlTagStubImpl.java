@@ -34,6 +34,7 @@ public class XmlTagStubImpl extends StubBase<XmlStubBasedTag> implements XmlTagS
     stream.writeName(name);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return name;

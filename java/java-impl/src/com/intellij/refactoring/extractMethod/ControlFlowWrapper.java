@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -125,7 +125,7 @@ public final class ControlFlowWrapper {
     myFirstExitStatementCopy = (PsiStatement)first.copy();
   }
 
-  boolean isGenerateConditionalExit() {
+  public boolean isGenerateConditionalExit() {
     return myGenerateConditionalExit;
   }
 
@@ -148,19 +148,15 @@ public final class ControlFlowWrapper {
     PsiVariable[] myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoints.toIntArray());
     if (collectVariablesAtExitPoints) {
       //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods
-      final Set<PsiVariable> outputVariables = ContainerUtil.set(myOutputVariables);
+      final Set<PsiVariable> outputVariables = ContainerUtil.newHashSet(myOutputVariables);
       for (PsiStatement statement : myExitStatements) {
         statement.accept(new JavaRecursiveElementVisitor() {
 
           @Override
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
-            final PsiElement resolved = expression.resolve();
-            if (resolved instanceof PsiVariable) {
-              final PsiVariable variable = (PsiVariable)resolved;
-              if (isWrittenInside(variable)) {
-                outputVariables.add(variable);
-              }
+            if (expression.resolve() instanceof PsiVariable variable && isWrittenInside(variable)) {
+              outputVariables.add(variable);
             }
           }
 
@@ -184,7 +180,7 @@ public final class ControlFlowWrapper {
     return myOutputVariables;
   }
 
-  boolean isReturnPresentBetween() {
+  public boolean isReturnPresentBetween() {
     return ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
   }
 

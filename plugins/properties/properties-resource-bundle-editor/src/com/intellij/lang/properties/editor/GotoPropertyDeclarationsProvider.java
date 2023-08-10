@@ -23,7 +23,7 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,11 +40,10 @@ public class GotoPropertyDeclarationsProvider extends GotoRelatedProvider {
   @NotNull
   @Override
   public List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
-    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
-    if (!(editor instanceof ResourceBundleEditor)) {
+    final FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(context);
+    if (!(editor instanceof ResourceBundleEditor resourceBundleEditor)) {
       return Collections.emptyList();
     }
-    final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)editor;
     final Collection<ResourceBundleEditorViewElement> elements = resourceBundleEditor.getSelectedElements();
     if (elements.size() != 1) {
       return Collections.emptyList();

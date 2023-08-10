@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature.inCallers;
 
 import com.intellij.openapi.project.Project;
@@ -47,16 +33,15 @@ public class JavaMethodNode extends JavaMemberNode<PsiMethod> {
     List<PsiMethod> result = new ArrayList<>();
     for (PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
-      if (!(element instanceof PsiReferenceExpression) ||
-          !(((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression)) {
+      if (!(element instanceof PsiReferenceExpression refExpr) ||
+          !(refExpr.getQualifierExpression() instanceof PsiSuperExpression)) {
         final PsiElement enclosingContext = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
-        if (enclosingContext instanceof PsiMethod && !result.contains(enclosingContext) &&
+        if (enclosingContext instanceof PsiMethod enclosingMethod && !result.contains(enclosingContext) &&
             !getMember().equals(enclosingContext) && !myCalled.contains(getMember()) &&  //do not add recursive methods
-            noLibraryInheritors((PsiMethod)enclosingContext)) {
-          result.add((PsiMethod)enclosingContext);
+            noLibraryInheritors(enclosingMethod)) {
+          result.add(enclosingMethod);
         }
-        else if (element instanceof PsiClass) {
-          final PsiClass aClass = (PsiClass)element;
+        else if (element instanceof PsiClass aClass) {
           final PsiMethod method = JavaPsiFacade.getElementFactory(myProject).createMethodFromText(aClass.getName() + "(){}", aClass);
           if (!result.contains(method)) {
             result.add(method);

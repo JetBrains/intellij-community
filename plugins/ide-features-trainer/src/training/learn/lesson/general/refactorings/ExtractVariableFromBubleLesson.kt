@@ -1,45 +1,68 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general.refactorings
 
-import com.intellij.testGuiFramework.impl.jList
-import com.intellij.ui.components.JBList
+import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.introduce.inplace.OccurrencesChooser.BaseReplaceChoice
+import com.intellij.refactoring.rename.inplace.InplaceRefactoring
+import training.dsl.*
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
+import training.learn.course.KLesson
 
-class ExtractVariableFromBubbleLesson(module: Module, lang: String, private val sample: LessonSample)
-  : KLesson("Extract variable", LessonsBundle.message("extract.variable.lesson.name"), module, lang) {
+class ExtractVariableFromBubbleLesson(private val sample: LessonSample)
+  : KLesson("Extract variable", LessonsBundle.message("extract.variable.lesson.name")) {
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       prepareSample(sample)
+      showWarningIfInplaceRefactoringsDisabled()
+
+      fun actionString(n: Int) = RefactoringBundle.message("replace.all.occurrences", n)
       task("IntroduceVariable") {
         text(LessonsBundle.message("extract.variable.start.refactoring", action(it), code("i + 1")))
         triggerStart("IntroduceVariable")
-        restoreIfModifiedOrMoved()
+        restoreIfModifiedOrMoved(sample)
         test {
           actions(it)
         }
       }
 
       task {
+        transparentRestore = true
+        triggerAndBorderHighlight().listItem { item ->
+          item is BaseReplaceChoice && item.formatDescription(3) == actionString(3)
+        }
+        restoreByTimer() // the refactoring may be called from the wrong place
+      }
+
+      task {
         text(LessonsBundle.message("extract.variable.replace.all"))
 
         stateCheck {
-          editor.document.text.split("i + 1").size == 2
+          editor.getUserData(InplaceRefactoring.INPLACE_RENAMER) != null
         }
-        restoreAfterStateBecomeFalse { focusOwner !is JBList<*> }
+        restoreByUi(delayMillis = defaultRestoreDelay)
         test {
           ideFrame {
-            val item = "Replace all 3 occurrences"
+            val item = actionString(3)
             jList(item).clickItem(item)
           }
         }
       }
 
-      actionTask("NextTemplateVariable") {
+      task("NextTemplateVariable") {
         //TODO: fix the shortcut: it should be ${action(it)} but with preference for Enter
-        LessonsBundle.message("extract.variable.choose.name", LessonUtil.rawEnter())
+        text(LessonsBundle.message("extract.variable.choose.name", LessonUtil.rawEnter()))
+        trigger(it)
+        test(waitEditorToBeReady = false) {
+          actions(it)
+        }
       }
+
+      restoreRefactoringOptionsInformer()
     }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("extract.variable.help.link"),
+         LessonUtil.getHelpLink("extract-variable.html")),
+  )
 }

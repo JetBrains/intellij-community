@@ -1,11 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.util.containers.IntStack;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.SignatureData;
@@ -162,24 +163,18 @@ public final class ChainSearcher {
       return;
     }
     boolean doAdd = true;
-    IntStack indicesToRemove = new IntStack();
+    IntStack indicesToRemove = new IntArrayList();
     for (int i = 0; i < result.size(); i++) {
       OperationChain chain = result.get(i);
       OperationChain.CompareResult r = OperationChain.compare(chain, newChain);
       switch (r) {
-        case LEFT_CONTAINS_RIGHT:
-          indicesToRemove.push(i);
-          break;
-        case RIGHT_CONTAINS_LEFT:
-        case EQUAL:
-          doAdd = false;
-          break;
-        case NOT_EQUAL:
-          break;
+        case LEFT_CONTAINS_RIGHT -> indicesToRemove.push(i);
+        case RIGHT_CONTAINS_LEFT, EQUAL -> doAdd = false;
+        case NOT_EQUAL -> {}
       }
     }
-    while (!indicesToRemove.empty()) {
-      result.remove(indicesToRemove.pop());
+    while (!indicesToRemove.isEmpty()) {
+      result.remove(indicesToRemove.popInt());
     }
     if (doAdd) {
       result.add(newChain);

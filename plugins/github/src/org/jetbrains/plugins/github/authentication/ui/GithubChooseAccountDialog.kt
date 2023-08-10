@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.openapi.project.Project
@@ -9,9 +9,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -22,7 +20,7 @@ import javax.swing.JList
 import javax.swing.JTextArea
 import javax.swing.ListSelectionModel
 
-class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
+class GithubChooseAccountDialog @JvmOverloads constructor(project: Project?, parentComponent: Component?,
                                 accounts: Collection<GithubAccount>,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) descriptionText: String?,
                                 showHosts: Boolean, allowDefault: Boolean,
@@ -35,7 +33,7 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
   private val description: JTextArea? = descriptionText?.let {
     JTextArea().apply {
       minimumSize = Dimension(0, 0)
-      font = UIUtil.getLabelFont()
+      font = StartupUiUtil.labelFont
       text = it
       lineWrap = true
       wrapStyleWord = true
@@ -43,10 +41,10 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
       isFocusable = false
       isOpaque = false
       border = null
-      margin = JBUI.emptyInsets()
+      margin = JBInsets.emptyInsets()
     }
   }
-  private val accountsList: JBList<GithubAccount> = JBList<GithubAccount>(accounts).apply {
+  private val accountsList: JBList<GithubAccount> = JBList(accounts).apply {
     selectionMode = ListSelectionModel.SINGLE_SELECTION
     cellRenderer = object : ColoredListCellRenderer<GithubAccount>() {
       override fun customizeCellRenderer(list: JList<out GithubAccount>,
@@ -83,7 +81,7 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
   val setDefault: Boolean get() = setDefaultCheckBox?.isSelected ?: false
 
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     return JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
       .apply { description?.run(::addToTop) }
       .addToCenter(JBScrollPane(accountsList).apply {

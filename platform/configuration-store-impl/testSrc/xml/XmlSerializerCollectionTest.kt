@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION")
 
 package com.intellij.configurationStore.xml
@@ -15,6 +15,7 @@ import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jdom.Element
 import org.junit.Test
+import java.util.*
 
 @Suppress("PropertyName")
 internal class XmlSerializerCollectionTest {
@@ -133,7 +134,7 @@ internal class XmlSerializerCollectionTest {
   fun java9ImmutableSet() {
     class Bean {
       @XCollection
-      var foo = java.util.Set.of("a", "b")
+      var foo = mutableSetOf("a", "b")
     }
 
     val bean = Bean()
@@ -143,6 +144,28 @@ internal class XmlSerializerCollectionTest {
         <option name="foo">
           <option value="a" />
           <option value="b" />
+        </option>
+      </Bean>""".trimIndent(), bean)
+  }
+
+  @Test
+  fun immutableCollections() {
+    class Bean {
+      @XCollection
+      val firstElement: List<String> = listOf("gradle")
+      @XCollection
+      val secondElement: List<String> = Collections.singletonList("maven")
+    }
+
+    val bean = Bean()
+    testSerializer(
+      """
+      <Bean>
+        <option name="firstElement">
+          <option value="gradle" />
+        </option>
+        <option name="secondElement">
+          <option value="maven" />
         </option>
       </Bean>""".trimIndent(), bean)
   }

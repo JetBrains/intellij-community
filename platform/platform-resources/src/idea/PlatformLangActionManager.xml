@@ -23,99 +23,61 @@
 
     <action id="EditorLookupUp" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$UpAction"/>
     <action id="EditorLookupDown" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$DownAction"/>
+    <action id="EditorLookupSelectionUp" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$UpInLookupAction"/>
+    <action id="EditorLookupSelectionDown" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$DownInLookupAction"/>
   </actions>
 
   <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/LangActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/UsageViewActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <xi:include href="/META-INF/statistics-devkit.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
-
   <actions>
     <group id="WelcomeScreen.QuickStart.Platform">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>
 
-    <group id="AnalyzePlatformMenu">
-      <separator/>
-      <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction">
-        <override-text place="MainMenu"/>
-        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-      </action>
-
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </group>
-
-    <group id="InspectCodeGroup">
-      <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
-      <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
-      <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction" />
-      <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction" />
-      <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.ConfigureHighlightingLevelAction"/>
-      <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
-    </group>
-
-    <group id="InspectCodeInCodeMenuGroup">
-      <separator/>
-      <reference ref="InspectCodeGroup"/>
-      <separator/>
-      <reference ref="SliceBackward"/>
-      <reference ref="SliceForward"/>
-      <separator/>
-
-      <add-to-group group-id="CodeMenu" anchor="last"/>
-    </group>
-
     <group id="InspectCodeActionInPopupMenus">
       <reference ref="InspectCode"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
-      <add-to-group group-id="FavoritesViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
     </group>
 
     <group id="ProblemsView.ToolWindow.SecondaryActions">
       <action id="ProblemsView.AutoscrollToSource"
               icon="AllIcons.General.AutoscrollToSource"
               class="com.intellij.analysis.problemsView.toolWindow.AutoscrollToSource"/>
+      <action id="ProblemsView.OpenInPreviewTab"
+              class="com.intellij.analysis.problemsView.toolWindow.OpenInPreviewTab"/>
       <action id="ProblemsView.ShowPreview"
               icon="AllIcons.Actions.PreviewDetails"
               class="com.intellij.analysis.problemsView.toolWindow.ShowPreview"/>
-      <separator/>
-      <group id="ProblemsView.SeverityFilters" class="com.intellij.analysis.problemsView.toolWindow.SeverityFiltersActionGroup"/>
-      <separator/>
-      <action id="ProblemsView.SortFoldersFirst"
-              icon="AllIcons.ObjectBrowser.SortByType"
-              class="com.intellij.analysis.problemsView.toolWindow.SortFoldersFirst"/>
-      <action id="ProblemsView.SortBySeverity"
-              icon="AllIcons.Nodes.SortBySeverity"
-              class="com.intellij.analysis.problemsView.toolWindow.SortBySeverity"/>
-      <action id="ProblemsView.SortByName"
-              icon="AllIcons.ObjectBrowser.Sorted"
-              class="com.intellij.analysis.problemsView.toolWindow.SortByName"/>
     </group>
 
     <group id="ProblemsView.ToolWindow.Toolbar">
-      <group id="ProblemsView.Options" icon="AllIcons.Actions.Show" popup="true">
-        <reference ref="ProblemsView.SeverityFilters"/>
+      <group id="ProblemsView.Options" icon="AllIcons.Actions.GroupBy" popup="true">
+        <separator key="group.ProblemsView.Show.text"/>
+        <group id="ProblemsView.SeverityFilters" class="com.intellij.analysis.problemsView.toolWindow.SeverityFiltersActionGroup"/>
+        <separator key="group.ProblemsView.SortBy.text"/>
+        <action id="ProblemsView.SortFoldersFirst"
+                icon="AllIcons.ObjectBrowser.SortByType"
+                class="com.intellij.analysis.problemsView.toolWindow.SortFoldersFirst"/>
+        <action id="ProblemsView.SortBySeverity"
+                icon="AllIcons.Nodes.SortBySeverity"
+                class="com.intellij.analysis.problemsView.toolWindow.SortBySeverity"/>
+        <action id="ProblemsView.SortByName"
+                icon="AllIcons.ObjectBrowser.Sorted"
+                class="com.intellij.analysis.problemsView.toolWindow.SortByName"/>
         <separator/>
-        <reference ref="ProblemsView.SortFoldersFirst"/>
-        <reference ref="ProblemsView.SortBySeverity"/>
-        <reference ref="ProblemsView.SortByName"/>
+        <action id="ProblemsView.GroupByToolId"
+                icon="AllIcons.ObjectBrowser.SortByType"
+                class="com.intellij.analysis.problemsView.toolWindow.GroupByToolId"/>
       </group>
-      <reference ref="ProblemsView.ShowPreview"/>
-      <action id="ProblemsView.ExpandAll"
-              icon="AllIcons.Actions.Expandall"
-              use-shortcut-of="ExpandAll"
-              class="com.intellij.analysis.problemsView.toolWindow.TreeExpandAllAction"/>
-      <action id="ProblemsView.CollapseAll"
-              icon="AllIcons.Actions.Collapseall"
-              use-shortcut-of="CollapseAll"
-              class="com.intellij.analysis.problemsView.toolWindow.TreeCollapseAllAction"/>
       <action id="ProblemsView.QuickFixes"
               icon="AllIcons.Actions.IntentionBulb"
               use-shortcut-of="ShowIntentionActions"
-              class="com.intellij.analysis.problemsView.toolWindow.ShowQuickFixesAction"/>
+              class="com.intellij.analysis.problemsView.toolWindow.ShowProblemsViewQuickFixesAction"/>
+      <reference ref="ProblemsView.ShowPreview"/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
     </group>
 
     <group id="ProblemsView.ToolWindow.TreePopup">

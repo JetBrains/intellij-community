@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,130 +6,90 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.BitUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntLists;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage.RECORD_SIZE;
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.FREE_RECORD_FLAG;
 
-class PersistentFSRecordAccessor {
+/**
+ * This class responsibility is record allocation/deletion/re-use.
+ * <br>
+ * In production env. it marks deleted records with {@linkplain PersistentFS.Flags#FREE_RECORD_FLAG}, which will be
+ * used after restart by {@linkplain  PersistentFSConnection} to build free-list of record IDs to
+ * reuse.
+ * <br>
+ * In unit-tests env. this class, in addition to marking deleted records, also adds them to its own
+ * free-list. That free-list is not utilized for re-use, but for various sanity-checking activities
+ * during the testing.
+ */
+@ApiStatus.Internal
+public final class PersistentFSRecordAccessor {
   private static final Logger LOG = Logger.getInstance(PersistentFSRecordAccessor.class);
-  static final int FREE_RECORD_FLAG = 0x400;
-  static {
-    assert (PersistentFS.Flags.ALL_VALID_FLAGS & FREE_RECORD_FLAG) == 0 : PersistentFS.Flags.ALL_VALID_FLAGS;
+
+
+  private final @NotNull PersistentFSConnection connection;
+  private final @NotNull PersistentFSContentAccessor contentAccessor;
+  private final @NotNull PersistentFSAttributeAccessor attributeAccessor;
+
+  private final Object newFreeRecordsSync = new Object();
+
+  private final IntList newFreeRecords = IntLists.synchronize(new IntArrayList(), newFreeRecordsSync);
+
+
+  PersistentFSRecordAccessor(@NotNull PersistentFSContentAccessor contentAccessor,
+                             @NotNull PersistentFSAttributeAccessor attributeAccessor,
+                             @NotNull PersistentFSConnection connection) {
+    this.contentAccessor = contentAccessor;
+    this.attributeAccessor = attributeAccessor;
+    this.connection = connection;
   }
-  private static final int ALL_VALID_FLAGS = PersistentFS.Flags.ALL_VALID_FLAGS | FREE_RECORD_FLAG;
 
-  @NotNull
-  private final PersistentFSContentAccessor myPersistentFSContentAccessor;
-  @NotNull
-  private final PersistentFSAttributeAccessor myPersistentFSAttributeAccessor;
-  @NotNull
-  private final IntList myNewFreeRecords;
-
-  PersistentFSRecordAccessor(@NotNull PersistentFSContentAccessor accessor,
-                             @NotNull PersistentFSAttributeAccessor attributeAccessor) {
-    myPersistentFSContentAccessor = accessor;
-    myPersistentFSAttributeAccessor = attributeAccessor;
-    myNewFreeRecords = new IntArrayList();
-  }
-
-  void addToFreeRecordsList(int id, @NotNull PersistentFSConnection connection) {
-    connection.markDirty();
-
+  public void markRecordAsDeleted(int id) throws IOException {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      myNewFreeRecords.add(id);
+      newFreeRecords.add(id);
     }
-    // DbConnection.addFreeRecord(id); // important! Do not add fileId to free list until restart
+    // important! Do not add fileId to free list until restart
     connection.getRecords().setFlags(id, FREE_RECORD_FLAG);
+    connection.markDirty();
   }
 
-  // todo: Address  / capacity store in records table, size store with payload
-  int createRecord(@NotNull PersistentFSConnection connection) throws IOException {
+  public int createRecord() throws IOException {
     connection.markDirty();
 
-    final int free = connection.getFreeRecord();
-    if (free == 0) {
-      final int fileLength = length(connection);
-      LOG.assertTrue(fileLength % RECORD_SIZE == 0);
-      int newRecord = fileLength / RECORD_SIZE;
-      connection.getRecords().cleanRecord(newRecord);
-      assert fileLength + RECORD_SIZE == length(connection);
-      return newRecord;
+    final int reusedRecordId = connection.reserveFreeRecord();
+    if (reusedRecordId < 0) {
+      return connection.getRecords().allocateRecord();
     }
-    else {
-      deleteContentAndAttributes(free, connection);
-      connection.getRecords().cleanRecord(free);
-      return free;
+    else {//there is a record for re-use, but let's clean it up first:
+      deleteContentAndAttributes(reusedRecordId);
+      connection.getRecords().cleanRecord(reusedRecordId);
+      return reusedRecordId;
     }
   }
 
-  void checkSanity(@NotNull PersistentFSConnection connection) throws IOException {
-    long t = System.currentTimeMillis();
+  public boolean isDeleted(int id) throws IOException {
+    //TODO RC: why first condition is not enough? How could recordId be in freeRecords, if it doesn't have FREE_RECORD flag on it?
+    final int flags = connection.getRecords().getFlags(id);
+    return hasDeletedFlag(flags) || newFreeRecords.contains(id);
+  }
 
-    final int fileLength = length(connection);
-    assert fileLength % RECORD_SIZE == 0;
-    int recordCount = fileLength / RECORD_SIZE;
+  public static boolean hasDeletedFlag(final int flags) {
+    return BitUtil.isSet(flags, FREE_RECORD_FLAG);
+  }
 
-    IntList usedAttributeRecordIds = new IntArrayList();
-    IntList validAttributeIds = new IntArrayList();
-    for (int id = 2; id < recordCount; id++) {
-      int flags = connection.getRecords().doGetFlags(id);
-      LOG.assertTrue((flags & ~ALL_VALID_FLAGS) == 0, "Invalid flags: 0x" + Integer.toHexString(flags) + ", id: " + id);
-      boolean isFreeRecord = connection.getFreeRecords().contains(id);
-      if (BitUtil.isSet(flags, FREE_RECORD_FLAG)) {
-        LOG.assertTrue(isFreeRecord, "Record, marked free, not in free list: " + id);
-      }
-      else {
-        LOG.assertTrue(!isFreeRecord, "Record, not marked free, in free list: " + id);
-        checkRecordSanity(id, recordCount, usedAttributeRecordIds, validAttributeIds, connection);
-      }
+  public @NotNull IntList getNewFreeRecords() {
+    synchronized (newFreeRecordsSync) {
+      return new IntArrayList(newFreeRecords);
     }
-
-    t = System.currentTimeMillis() - t;
-    LOG.info("Sanity check took " + t + " ms");
   }
 
-  private void checkRecordSanity(int id,
-                                 int recordCount,
-                                 @NotNull IntList usedAttributeRecordIds,
-                                 @NotNull IntList validAttributeIds,
-                                 @NotNull PersistentFSConnection connection) throws IOException {
-    int parentId = connection.getRecords().getParent(id);
-    assert parentId >= 0 && parentId < recordCount;
-    if (parentId > 0 && connection.getRecords().getParent(parentId) > 0) {
-      int parentFlags = connection.getRecords().doGetFlags(parentId);
-      assert !BitUtil.isSet(parentFlags, FREE_RECORD_FLAG) : parentId + ": " + Integer.toHexString(parentFlags);
-      assert BitUtil.isSet(parentFlags, PersistentFS.Flags.IS_DIRECTORY) : parentId + ": " + Integer.toHexString(parentFlags);
-    }
+  //=== internals:
 
-    CharSequence name = getName(id, connection);
-    LOG.assertTrue(parentId == 0 || name.length() != 0, "File with empty name found under " + getName(parentId, connection) + ", id=" + id);
-
-    myPersistentFSContentAccessor.checkContentsStorageSanity(id, connection);
-    myPersistentFSAttributeAccessor.checkAttributesStorageSanity(id, usedAttributeRecordIds, validAttributeIds, connection);
-
-    long length = connection.getRecords().getLength(id);
-    assert length >= -1 : "Invalid file length found for " + name + ": " + length;
-  }
-
-  @NotNull IntList getNewFreeRecords() {
-    return myNewFreeRecords;
-  }
-
-  @Nullable
-  private static String getName(int fileId, @NotNull PersistentFSConnection connection) throws IOException {
-    return connection.getNames().valueOf(connection.getRecords().getNameId(fileId));
-  }
-
-  private static int length(@NotNull PersistentFSConnection connection) {
-    return (int)connection.getRecords().length();
-  }
-
-  private void deleteContentAndAttributes(int id,
-                                          @NotNull PersistentFSConnection connection) throws IOException {
-    myPersistentFSContentAccessor.deleteContent(id, connection);
-    myPersistentFSAttributeAccessor.deleteAttributes(id, connection);
+  private void deleteContentAndAttributes(int id) throws IOException {
+    contentAccessor.deleteContent(id);
+    attributeAccessor.deleteAttributes(id);
   }
 }

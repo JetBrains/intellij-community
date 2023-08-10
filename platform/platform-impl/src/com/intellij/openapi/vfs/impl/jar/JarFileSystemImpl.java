@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.IntegrityCheckCapableFileSystem;
@@ -22,21 +22,19 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCapableFileSystem {
   private final Set<String> myNoCopyJarPaths;
   private final Path myNoCopyJarDir;
 
   public JarFileSystemImpl() {
-    if (!SystemInfo.isWindows) {
+    if (!SystemInfoRt.isWindows) {
       myNoCopyJarPaths = null;
     }
-    else if (SystemInfo.isFileSystemCaseSensitive) {
-      //noinspection SSBasedInspection
-      myNoCopyJarPaths = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    else if (SystemInfoRt.isFileSystemCaseSensitive) {
+      myNoCopyJarPaths = ConcurrentCollectionFactory.createConcurrentSet();
     }
     else {
       myNoCopyJarPaths = ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.caseInsensitive());
@@ -104,7 +102,7 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   @TestOnly
   public void markDirtyAndRefreshVirtualFileDeepInsideJarForTest(@NotNull VirtualFile file) {
     // clear caches in ArchiveHandler so that refresh will actually refresh something
-    getHandler(file).dispose();
+    getHandler(file).clearCaches();
     VfsUtil.markDirtyAndRefresh(false, true, true, file);
   }
 
@@ -138,8 +136,8 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   }
 
   @Override
-  public long getEntryCrc(@NotNull VirtualFile file) throws IOException {
+  public @NotNull Map<String, Long> getArchiveCrcHashes(@NotNull VirtualFile file) throws IOException {
     ArchiveHandler handler = getHandler(file);
-    return ((ZipHandlerBase)handler).getEntryCrc(getRelativePath(file));
+    return ((ZipHandlerBase)handler).getArchiveCrcHashes();
   }
 }

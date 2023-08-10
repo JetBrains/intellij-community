@@ -1,6 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
+import com.intellij.java.analysis.OuterModelsModificationTrackerManager;
+import com.intellij.java.library.JavaLibraryModificationTracker;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
@@ -8,10 +10,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.stubs.StubIndex;
@@ -19,12 +21,10 @@ import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uast.UastModificationTracker;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.IdIterator;
-import gnu.trove.THashSet;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,10 +32,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.psi.PsiAnnotation.TargetType.ANNOTATION_TYPE;
-import static com.intellij.psi.search.GlobalSearchScope.allScope;
-import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrariesScope;
+import static com.intellij.psi.search.GlobalSearchScope.*;
+import static com.intellij.psi.search.GlobalSearchScopesCore.projectProductionScope;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
@@ -43,50 +41,132 @@ import static java.util.Collections.emptySet;
  * NB: Supposed to be used for annotations used in libraries and frameworks only, external annotations are not considered.
  */
 public abstract class MetaAnnotationUtil {
-  private static final TObjectHashingStrategy<PsiClass> HASHING_STRATEGY = new TObjectHashingStrategy<>() {
+  private static final HashingStrategy<PsiClass> HASHING_STRATEGY = new HashingStrategy<>() {
     @Override
-    public int computeHashCode(PsiClass object) {
-      String qualifiedName = object.getQualifiedName();
+    public int hashCode(PsiClass object) {
+      String qualifiedName = object == null ? null : object.getQualifiedName();
       return qualifiedName == null ? 0 : qualifiedName.hashCode();
     }
 
     @Override
     public boolean equals(PsiClass o1, PsiClass o2) {
+      if (o1 == o2) {
+        return true;
+      }
+      if (o1 == null || o2 == null) {
+        return false;
+      }
       return Objects.equals(o1.getQualifiedName(), o2.getQualifiedName());
     }
   };
 
   public static Collection<PsiClass> getAnnotationTypesWithChildren(@NotNull Module module, String annotationName, boolean includeTests) {
-    Project project = module.getProject();
+    return getAllAnnotationClassesMap(module).get(Pair.pair(annotationName, includeTests));
+  }
 
-    Map<Pair<String, Boolean>, Collection<PsiClass>> map = CachedValuesManager.getManager(project).getCachedValue(module, () -> {
-      Map<Pair<String, Boolean>, Collection<PsiClass>> factoryMap = ConcurrentFactoryMap.createMap(key -> {
-        GlobalSearchScope moduleScope = moduleWithDependenciesAndLibrariesScope(module, key.getSecond());
+  private static @NotNull Map<Pair<String, Boolean>, Collection<PsiClass>> getAllAnnotationClassesMap(@NotNull Module module) {
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      Map<Pair<String, Boolean>, Collection<PsiClass>> map = ConcurrentFactoryMap.createMap(key -> {
+        return findAnnotationClasses(module, key.getFirst(), key.getSecond());
+      });
 
-        PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(key.getFirst(), moduleScope);
+      return Result.create(map,
+                           OuterModelsModificationTrackerManager.getInstance(module.getProject()).getTracker(),
+                           JavaLibraryModificationTracker.getInstance(module.getProject()));
+    });
+  }
+
+  private static @NotNull Collection<PsiClass> findAnnotationClasses(@NotNull Module module,
+                                                                     @NotNull String qualifiedName,
+                                                                     boolean includeTests) {
+    PsiClass annotationClass = JavaPsiFacade.getInstance(module.getProject())
+      .findClass(qualifiedName, moduleWithDependenciesAndLibrariesScope(module));
+    if (annotationClass == null || !annotationClass.isAnnotationType()) {
+      return emptySet();
+    }
+
+    PsiFile annotationFile = annotationClass.getContainingFile();
+    if (annotationFile == null) {
+      return emptySet();
+    }
+
+    if (ProjectScope.getLibrariesScope(module.getProject()).contains(annotationFile.getVirtualFile())) {
+      Collection<PsiClass> libsTypes = getChildLibraryAnnotations(module, qualifiedName);
+
+      return findAnnotationTypesWithChildren(libsTypes, getAnnotationSourceSearchScope(module, includeTests));
+    }
+    else {
+      // annotation defined in Project sources, there is no sense in search in libraries
+      return findAnnotationTypesWithChildren(List.of(annotationClass), getAnnotationSourceSearchScope(module, includeTests));
+    }
+  }
+
+  public static Collection<String> getAnnotationNamesWithChildren(@NotNull Module module, String annotationName, boolean includeTests) {
+    return getAllAnnotationClassNamesMap(module).get(Pair.pair(annotationName, includeTests));
+  }
+
+  private static Collection<String> toNames(Collection<PsiClass> classes) {
+    return classes.stream()
+      .map(PsiClass::getQualifiedName)
+      .filter(Objects::nonNull)
+      .sorted()
+      .toList();
+  }
+
+  private static @NotNull Map<Pair<String, Boolean>, Collection<String>> getAllAnnotationClassNamesMap(@NotNull Module module) {
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      Map<Pair<String, Boolean>, Collection<String>> map = ConcurrentFactoryMap.createMap(key -> {
+        return toNames(findAnnotationClasses(module, key.getFirst(), key.getSecond()));
+      });
+
+      return Result.create(map,
+                           OuterModelsModificationTrackerManager.getInstance(module.getProject()).getTracker(),
+                           JavaLibraryModificationTracker.getInstance(module.getProject()));
+    });
+  }
+
+  private static Collection<PsiClass> getChildLibraryAnnotations(@NotNull Module module, String annotation) {
+    return getLibraryAnnotationClassesMap(module).get(annotation);
+  }
+
+  private static @NotNull GlobalSearchScope getAnnotationSourceSearchScope(@NotNull Module module, boolean includeTests) {
+    GlobalSearchScope moduleScope = moduleWithDependenciesScope(module);
+    if (!includeTests) {
+      moduleScope = moduleScope.intersectWith(projectProductionScope(module.getProject()));
+    }
+    return getProjectAnnotationFilesScope(module).intersectWith(moduleScope);
+  }
+
+  private static @NotNull Map<String, Collection<PsiClass>> getLibraryAnnotationClassesMap(@NotNull Module module) {
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      Map<String, Collection<PsiClass>> map = ConcurrentFactoryMap.createMap(key -> {
+        PsiClass annotationClass = JavaPsiFacade.getInstance(module.getProject()).findClass(key, moduleWithLibrariesScope(module));
         if (annotationClass == null || !annotationClass.isAnnotationType()) {
           return emptyList();
         }
 
-        // limit search to files containing annotations
-        GlobalSearchScope effectiveSearchScope = getAllAnnotationFilesScope(project).intersectWith(moduleScope);
-        return getAnnotationTypesWithChildren(annotationClass, effectiveSearchScope);
-      });
-      return Result.create(factoryMap, UastModificationTracker.getInstance(project));
-    });
+        GlobalSearchScope libsScope = moduleWithLibrariesScope(module)
+          .intersectWith(ProjectScope.getLibrariesScope(module.getProject()));
 
-    return map.get(pair(annotationName, includeTests));
+        return findAnnotationTypesWithChildren(List.of(annotationClass), libsScope);
+      });
+
+      return Result.create(map, JavaLibraryModificationTracker.getInstance(module.getProject()));
+    });
   }
 
   public static Set<PsiClass> getChildren(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope scope) {
-    if (AnnotationTargetUtil.findAnnotationTarget(psiClass, ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE) == null) {
+    if (AnnotationTargetUtil.findAnnotationTarget(psiClass, PsiAnnotation.TargetType.ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE) ==
+        null) {
       return emptySet();
     }
 
     String name = psiClass.getQualifiedName();
-    if (name == null) return emptySet();
+    if (name == null) {
+      return emptySet();
+    }
 
-    Set<PsiClass> result = new THashSet<>(HASHING_STRATEGY);
+    Set<PsiClass> result = CollectionFactory.createCustomHashingStrategySet(HASHING_STRATEGY);
     AnnotatedElementsSearch.searchPsiClasses(psiClass, scope).forEach(processorResult -> {
       ProgressManager.checkCanceled();
       if (processorResult.isAnnotationType()) {
@@ -111,8 +191,7 @@ public abstract class MetaAnnotationUtil {
     return map.get(annotationName);
   }
 
-  @NotNull
-  private static Collection<PsiClass> findAnnotatedTypes(@NotNull Module module, @NotNull String annotationName) {
+  private static @NotNull Collection<PsiClass> findAnnotatedTypes(@NotNull Module module, @NotNull String annotationName) {
     GlobalSearchScope scope = moduleWithDependenciesAndLibrariesScope(module, false);
     PsiClass psiClass = JavaPsiFacade.getInstance(module.getProject()).findClass(annotationName, scope);
     if (psiClass == null || !psiClass.isAnnotationType()) {
@@ -121,34 +200,38 @@ public abstract class MetaAnnotationUtil {
     return getChildren(psiClass, scope);
   }
 
-  @NotNull
-  private static Collection<PsiClass> getAnnotationTypesWithChildren(PsiClass annotationClass, GlobalSearchScope scope) {
-    Set<PsiClass> classes = new THashSet<>(HASHING_STRATEGY);
-    collectClassWithChildren(annotationClass, classes, scope);
+  private static @NotNull Collection<PsiClass> findAnnotationTypesWithChildren(Collection<PsiClass> annotationClasses,
+                                                                               GlobalSearchScope scope) {
+    if (scope == EMPTY_SCOPE) return annotationClasses;
+
+    Set<PsiClass> classes = CollectionFactory.createCustomHashingStrategySet(HASHING_STRATEGY);
+    for (PsiClass annotationClass : annotationClasses) {
+      collectClassWithChildren(annotationClass, classes, scope);
+    }
 
     if (classes.isEmpty()) return emptySet();
 
     return classes;
   }
 
-  private static GlobalSearchScope getAllAnnotationFilesScope(Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      GlobalSearchScope javaScope = new FileIdScope(project, getJavaAnnotationInheritorIds(project));
-      GlobalSearchScope otherScope = searchForAnnotationInheritorsInOtherLanguages(project);
+  private static @NotNull GlobalSearchScope getProjectAnnotationFilesScope(@NotNull Module module) {
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      GlobalSearchScope projectScope = module.getModuleWithDependenciesScope();
+      GlobalSearchScope javaScope =
+        filesScope(module.getProject(), ContainerUtil.newHashSet(getJavaAnnotationInheritorIds(module.getProject(), projectScope)));
+      GlobalSearchScope otherScope = searchForAnnotationInheritorsInOtherLanguages(module.getProject(), projectScope);
       return Result.createSingleDependency(
         javaScope.uniteWith(otherScope),
-        UastModificationTracker.getInstance(project));
+        UastModificationTracker.getInstance(module.getProject()));
     });
   }
 
-  @NotNull
-  private static GlobalSearchScope searchForAnnotationInheritorsInOtherLanguages(Project project) {
-    GlobalSearchScope allScope = allScope(project);
+  private static @NotNull GlobalSearchScope searchForAnnotationInheritorsInOtherLanguages(Project project, GlobalSearchScope scope) {
     Set<VirtualFile> allAnnotationFiles = new HashSet<>();
     for (PsiClass javaLangAnnotation : JavaPsiFacade.getInstance(project)
-      .findClasses(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, allScope)) {
+      .findClasses(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, allScope(project))) {
       DirectClassInheritorsSearch.SearchParameters parameters =
-        new DirectClassInheritorsSearch.SearchParameters(javaLangAnnotation, allScope, false, true) {
+        new DirectClassInheritorsSearch.SearchParameters(javaLangAnnotation, scope, false, true) {
           @Override
           public boolean shouldSearchInLanguage(@NotNull Language language) {
             return language != JavaLanguage.INSTANCE;
@@ -161,42 +244,12 @@ public abstract class MetaAnnotationUtil {
       });
     }
 
-    return GlobalSearchScope.filesWithLibrariesScope(project, allAnnotationFiles);
+    return filesWithLibrariesScope(project, allAnnotationFiles);
   }
 
-  @NotNull
-  private static TIntHashSet getJavaAnnotationInheritorIds(Project project) {
-    IdIterator iterator = StubIndex.getInstance().getContainingIds(JavaStubIndexKeys.SUPER_CLASSES, "Annotation", project,
-                                                                   allScope(project));
-    TIntHashSet idSet = new TIntHashSet();
-    while (iterator.hasNext()) {
-      idSet.add(iterator.next());
-    }
-    return idSet;
-  }
-
-  private static class FileIdScope extends GlobalSearchScope {
-    private final TIntHashSet myIdSet;
-
-    FileIdScope(Project project, TIntHashSet idSet) {
-      super(project);
-      myIdSet = idSet;
-    }
-
-    @Override
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return true;
-    }
-
-    @Override
-    public boolean isSearchInLibraries() {
-      return true;
-    }
-
-    @Override
-    public boolean contains(@NotNull VirtualFile file) {
-      return file instanceof VirtualFileWithId && myIdSet.contains(((VirtualFileWithId)file).getId());
-    }
+  private static @NotNull Iterator<VirtualFile> getJavaAnnotationInheritorIds(Project project, GlobalSearchScope scope) {
+    return StubIndex.getInstance()
+      .getContainingFilesIterator(JavaStubIndexKeys.SUPER_CLASSES, "Annotation", project, scope);
   }
 
   private static void collectClassWithChildren(PsiClass psiClass, Set<? super PsiClass> classes, GlobalSearchScope scope) {
@@ -254,6 +307,24 @@ public abstract class MetaAnnotationUtil {
     return false;
   }
 
+  public static Stream<PsiAnnotation> findMetaAnnotationsInHierarchy(
+    @NotNull PsiModifierListOwner listOwner,
+    @NotNull Collection<String> annotations
+  ) {
+    Stream<PsiAnnotation> stream = findMetaAnnotations(listOwner, annotations);
+    if (listOwner instanceof PsiClass) {
+      for (PsiClass superClass : ((PsiClass)listOwner).getSupers()) {
+        stream = Stream.concat(stream, findMetaAnnotations(superClass, annotations));
+      }
+    }
+    else if (listOwner instanceof PsiMethod) {
+      for (PsiMethod method : ((PsiMethod)listOwner).findSuperMethods()) {
+        stream = Stream.concat(stream, findMetaAnnotations(method, annotations));
+      }
+    }
+    return stream;
+  }
+
   @Nullable
   private static PsiAnnotation metaAnnotationCached(PsiClass subjectAnnotation, String annotationToFind) {
     return CachedValuesManager.getCachedValue(subjectAnnotation, () -> {
@@ -301,11 +372,48 @@ public abstract class MetaAnnotationUtil {
     return Stream.concat(directAnnotations, metaAnnotations);
   }
 
+  public static @NotNull Stream<PsiClass> findAnnotationsByMeta(
+    @NotNull PsiModifierListOwner listOwner,
+    @NotNull Collection<String> metaAnnotations
+  ) {
+    Stream<PsiClass> directAnnotations = Stream.of(AnnotationUtil.findAnnotations(listOwner, metaAnnotations))
+      .map(MetaAnnotationUtil::resolveAnnotationType)
+      .filter(Objects::nonNull);
+
+    Stream<PsiClass> lazyResolvedAnnotations =
+      Stream.generate(() -> getResolvedClassesInAnnotationsList(listOwner)).limit(1)
+        .flatMap(Collection::stream);
+
+    Stream<PsiClass> indirectAnnotations =
+      lazyResolvedAnnotations
+        .flatMap(psiClass -> metaAnnotations.stream()
+          .map(annotationFQN -> {
+            PsiAnnotation metaAnnotation = metaAnnotationCached(psiClass, annotationFQN);
+            if (metaAnnotation != null) return psiClass;
+
+            return null;
+          }))
+        .filter(Objects::nonNull);
+
+    return Stream.concat(directAnnotations, indirectAnnotations);
+  }
+
   private static List<PsiClass> getResolvedClassesInAnnotationsList(PsiModifierListOwner owner) {
     PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null) {
-      return ContainerUtil.mapNotNull(modifierList.getApplicableAnnotations(), annotation -> annotation.resolveAnnotationType());
+      return ContainerUtil.mapNotNull(modifierList.getApplicableAnnotations(), MetaAnnotationUtil::resolveAnnotationType);
     }
     return emptyList();
+  }
+
+  // https://youtrack.jetbrains.com/issue/KTIJ-19454
+  private static @Nullable PsiClass resolveAnnotationType(@NotNull PsiAnnotation psiAnnotation) {
+    PsiClass psiClass = psiAnnotation.resolveAnnotationType();
+    if (psiClass != null) return psiClass;
+
+    String annotationQualifiedName = psiAnnotation.getQualifiedName();
+    if (annotationQualifiedName == null) return null;
+
+    return JavaPsiFacade.getInstance(psiAnnotation.getProject()).findClass(annotationQualifiedName, psiAnnotation.getResolveScope());
   }
 }

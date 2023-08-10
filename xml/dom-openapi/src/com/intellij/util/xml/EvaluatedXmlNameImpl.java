@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Key;
@@ -18,9 +18,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 public final class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   private static final Key<CachedValue<Map<String,List<String>>>> NAMESPACE_PROVIDER_KEY = Key.create("NamespaceProvider");
   private static final Map<EvaluatedXmlNameImpl, EvaluatedXmlNameImpl> ourInterned =
@@ -36,17 +33,17 @@ public final class EvaluatedXmlNameImpl implements EvaluatedXmlName {
     myEqualToParent = equalToParent;
   }
 
-  public final @NotNull String getLocalName() {
+  public @NotNull String getLocalName() {
     return myXmlName.getLocalName();
   }
 
   @Override
-  public final XmlName getXmlName() {
+  public XmlName getXmlName() {
     return myXmlName;
   }
 
   @Override
-  public final EvaluatedXmlName evaluateChildName(final @NotNull XmlName name) {
+  public EvaluatedXmlName evaluateChildName(final @NotNull XmlName name) {
     String namespaceKey = name.getNamespaceKey();
     final boolean equalToParent = Objects.equals(namespaceKey, myNamespaceKey);
     if (namespaceKey == null) {
@@ -62,9 +59,7 @@ public final class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof EvaluatedXmlNameImpl)) return false;
-
-    final EvaluatedXmlNameImpl that = (EvaluatedXmlNameImpl)o;
+    if (!(o instanceof EvaluatedXmlNameImpl that)) return false;
 
     if (myEqualToParent != that.myEqualToParent) return false;
     if (myNamespaceKey != null ? !myNamespaceKey.equals(that.myNamespaceKey) : that.myNamespaceKey != null) return false;
@@ -81,7 +76,7 @@ public final class EvaluatedXmlNameImpl implements EvaluatedXmlName {
     return result;
   }
 
-  public final boolean isNamespaceAllowed(DomFileElement element, String namespace) {
+  public boolean isNamespaceAllowed(DomFileElement element, String namespace) {
     if (myNamespaceKey == null || myEqualToParent) return true;
     final XmlFile file = element.getFile();
     return isNamespaceAllowed(namespace, getAllowedNamespaces(file));
@@ -112,13 +107,13 @@ public final class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   }
 
   @Override
-  public final boolean isNamespaceAllowed(String namespace, final XmlFile file, boolean qualified) {
+  public boolean isNamespaceAllowed(String namespace, final XmlFile file, boolean qualified) {
     return myNamespaceKey == null || myEqualToParent && !qualified || isNamespaceAllowed(namespace, getNamespaceList(file));
   }
 
   @Override
   @NonNls
-  public final @NotNull String getNamespace(@NotNull XmlElement parentElement, final XmlFile file) {
+  public @NotNull String getNamespace(@NotNull XmlElement parentElement, final XmlFile file) {
     final String xmlElementNamespace = getXmlElementNamespace(parentElement);
     if (myNamespaceKey != null && !myEqualToParent) {
       final List<String> strings = getAllowedNamespaces(file);

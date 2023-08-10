@@ -66,10 +66,10 @@ public class ReferenceSelectioner extends BasicSelectioner {
       element = firstChild;
     }
 
-//      if (element instanceof PsiMethodCallExpression) {
-    result.addAll(expandToWholeLine(editorText, new TextRange(element.getTextRange().getStartOffset(),
-                                                              endElement.getTextRange().getEndOffset())));
-//      }
+    TextRange range = new TextRange(element.getTextRange().getStartOffset(),
+                                    endElement.getTextRange().getEndOffset());
+    result.add(range);
+    result.addAll(expandToWholeLine(editorText, range));
 
     if (!(e.getParent() instanceof PsiJavaCodeReferenceElement)) {
       if (e.getNextSibling() instanceof PsiJavaToken ||

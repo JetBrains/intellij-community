@@ -11,62 +11,66 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-class IndexedFileWrapper implements FileContent {
-    @NotNull
-    private final IndexedFile myFile;
+public final class IndexedFileWrapper implements FileContent {
+  @NotNull
+  private final IndexedFile myFile;
 
-    IndexedFileWrapper(@NotNull IndexedFile file) {
-        myFile = file;
-    }
+  public IndexedFileWrapper(@NotNull IndexedFile file) {
+    myFile = file;
+  }
 
-    @Override
-    public byte @NotNull [] getContent() {
-        throw new UnsupportedOperationException();
-    }
+  public @NotNull IndexedFile getIndexedFile() {
+    return myFile;
+  }
 
-    @NotNull
-    @Override
-    public CharSequence getContentAsText() {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public byte @NotNull [] getContent() {
+    throw new UnsupportedOperationException();
+  }
 
-    @NotNull
-    @Override
-    public PsiFile getPsiFile() {
-        throw new UnsupportedOperationException();
-    }
+  @NotNull
+  @Override
+  public CharSequence getContentAsText() {
+    throw new UnsupportedOperationException();
+  }
 
-    @NotNull
-    @Override
-    public FileType getFileType() {
-        return myFile.getFileType();
-    }
+  @NotNull
+  @Override
+  public PsiFile getPsiFile() {
+    throw new UnsupportedOperationException();
+  }
 
-    @NotNull
-    @Override
-    public VirtualFile getFile() {
-        return myFile.getFile();
-    }
+  @NotNull
+  @Override
+  public FileType getFileType() {
+    return myFile.getFileType();
+  }
 
-    @NotNull
-    @Override
-    public String getFileName() {
-        return myFile.getFileName();
-    }
+  @NotNull
+  @Override
+  public VirtualFile getFile() {
+    return myFile.getFile();
+  }
 
-    @Override
-    public Project getProject() {
-        return myFile.getProject();
-    }
+  @NotNull
+  @Override
+  public String getFileName() {
+    return myFile.getFileName();
+  }
 
-    @Nullable
-    @Override
-    public <T> T getUserData(@NotNull Key<T> key) {
-        return myFile.getUserData(key);
-    }
+  @Override
+  public Project getProject() {
+    return myFile.getProject();
+  }
 
-    @Override
-    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-        myFile.putUserData(key, value);
-    }
+  @Nullable
+  @Override
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return myFile.getUserData(key);
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myFile.putUserData(key, value);
+  }
 }

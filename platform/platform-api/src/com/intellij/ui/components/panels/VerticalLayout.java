@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.panels;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,9 +18,13 @@ import java.util.List;
  * and the double gap is added between groups of components. The gap will be scaled automatically.
  * <p><b>NB!: this class must be modified together with the {@code HorizontalLayout} class accordingly</b></p>
  *
+ * For simpler cases without groups {@code ListLayout} should be better
+ *
  * @see HorizontalLayout
+ * @see ListLayout
  */
 public final class VerticalLayout implements LayoutManager2 {
+  public static final int FILL = -1;
   public static final String TOP = "TOP";
   public static final String BOTTOM = "BOTTOM";
   public static final String CENTER = "CENTER";
@@ -27,7 +33,7 @@ public final class VerticalLayout implements LayoutManager2 {
   private final ArrayList<Component> myBottom = new ArrayList<>();
   private final ArrayList<Component> myCenter = new ArrayList<>();
   private final int myAlignment;
-  private final int myGap;
+  private final JBValue myGap;
 
   /**
    * Creates a layout with the specified gap.
@@ -35,11 +41,10 @@ public final class VerticalLayout implements LayoutManager2 {
    * but their widths will be set according to the container.
    * The gap will be scaled automatically.
    *
-   * @param gap vertical gap between components
+   * @param gap vertical gap between components, without DPI scaling
    */
   public VerticalLayout(int gap) {
-    myGap = gap;
-    myAlignment = -1;
+    this(gap, FILL);
   }
 
   /**
@@ -47,23 +52,21 @@ public final class VerticalLayout implements LayoutManager2 {
    * All components will have preferred sizes.
    * The gap will be scaled automatically.
    *
-   * @param gap       vertical gap between components
+   * @param gap       vertical gap between components, without DPI scaling
    * @param alignment horizontal alignment for components
-   *
    * @see SwingConstants#LEFT
    * @see SwingConstants#RIGHT
    * @see SwingConstants#CENTER
    */
   public VerticalLayout(int gap, int alignment) {
+    this(new JBValue.Float(Math.max(0, gap)), alignment);
+  }
+
+  public VerticalLayout(@NotNull JBValue gap, int alignment) {
     myGap = gap;
     switch (alignment) {
-      case SwingConstants.LEFT:
-      case SwingConstants.RIGHT:
-      case SwingConstants.CENTER:
-        myAlignment = alignment;
-        break;
-      default:
-        throw new IllegalArgumentException("unsupported alignment: " + alignment);
+      case FILL, SwingConstants.LEFT, SwingConstants.RIGHT, SwingConstants.CENTER -> myAlignment = alignment;
+      default -> throw new IllegalArgumentException("unsupported alignment: " + alignment);
     }
   }
 
@@ -133,7 +136,7 @@ public final class VerticalLayout implements LayoutManager2 {
 
   @Override
   public void layoutContainer(Container container) {
-    int gap = myGap <= 0 ? 0 : JBUI.scale(myGap);
+    int gap = myGap.get();
     synchronized (container.getTreeLock()) {
       Dimension top = getPreferredSize(myTop);
       Dimension bottom = getPreferredSize(myBottom);
@@ -177,12 +180,12 @@ public final class VerticalLayout implements LayoutManager2 {
   }
 
   private int layout(List<? extends Component> list, int y, int width, Insets insets) {
-    int gap = myGap <= 0 ? 0 : JBUI.scale(myGap);
+    int gap = myGap.get();
     for (Component component : list) {
       if (component.isVisible()) {
-        Dimension size = component.getPreferredSize();
+        Dimension size = LayoutUtil.getPreferredSize(component);
         int x = 0;
-        if (myAlignment == -1) {
+        if (myAlignment == FILL) {
           size.width = width;
         }
         else if (myAlignment != SwingConstants.LEFT) {
@@ -213,18 +216,18 @@ public final class VerticalLayout implements LayoutManager2 {
   }
 
   private Dimension getPreferredSize(List<? extends Component> list) {
-    int gap = myGap <= 0 ? 0 : JBUI.scale(myGap);
+    int gap = myGap.get();
     Dimension result = null;
     for (Component component : list) {
       if (component.isVisible()) {
-        result = join(result, gap, component.getPreferredSize());
+        result = join(result, gap, LayoutUtil.getPreferredSize(component));
       }
     }
     return result;
   }
 
   private Dimension getPreferredSize(Container container, boolean aligned) {
-    int gap2 = myGap <= 0 ? 0 : 2 * JBUI.scale(myGap);
+    int gap2 = 2 * myGap.get();
     synchronized (container.getTreeLock()) {
       Dimension top = getPreferredSize(myTop);
       Dimension bottom = getPreferredSize(myBottom);
@@ -236,10 +239,15 @@ public final class VerticalLayout implements LayoutManager2 {
       else if (aligned && center != null) {
         int topHeight = top == null ? 0 : top.height;
         int bottomHeight = bottom == null ? 0 : bottom.height;
-        result.width += Math.abs(topHeight - bottomHeight);
+        result.height += Math.abs(topHeight - bottomHeight);
       }
       JBInsets.addTo(result, container.getInsets());
       return result;
     }
+  }
+
+  @NotNull
+  public List<? extends Component> getComponents() {
+    return ContainerUtil.concat(myTop, myCenter, myBottom);
   }
 }

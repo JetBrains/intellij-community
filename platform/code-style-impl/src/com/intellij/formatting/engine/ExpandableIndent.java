@@ -16,12 +16,17 @@
 package com.intellij.formatting.engine;
 
 import com.intellij.formatting.IndentImpl;
+import org.jetbrains.annotations.NotNull;
 
 public class ExpandableIndent extends IndentImpl {
   private boolean myEnforceIndent;
 
-  public ExpandableIndent(Type type) {
-    super(type, false, 0, false, true);
+  public ExpandableIndent(@NotNull Type type) {
+    this(type, false);
+  }
+
+  public ExpandableIndent(@NotNull Type type, boolean relativeToDirectParent) {
+    super(type, false, 0, relativeToDirectParent, true);
     myEnforceIndent = false;
   }
 
@@ -30,8 +35,8 @@ public class ExpandableIndent extends IndentImpl {
     return myEnforceIndent;
   }
 
-  void setEnforceIndent(boolean value) {
-    myEnforceIndent = value;
+  void enforceIndent() {
+    myEnforceIndent = true;
   }
 
   @Override

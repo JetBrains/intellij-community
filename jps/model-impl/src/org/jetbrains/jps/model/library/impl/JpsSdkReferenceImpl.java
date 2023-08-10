@@ -28,7 +28,7 @@ import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
-public class JpsSdkReferenceImpl<P extends JpsElement> extends JpsNamedElementReferenceBase<JpsLibrary, JpsTypedLibrary<JpsSdk<P>>, JpsSdkReferenceImpl<P>> implements JpsSdkReference<P> {
+public final class JpsSdkReferenceImpl<P extends JpsElement> extends JpsNamedElementReferenceBase<JpsLibrary, JpsTypedLibrary<JpsSdk<P>>, JpsSdkReferenceImpl<P>> implements JpsSdkReference<P> {
   private final JpsSdkType<P> mySdkType;
 
   public JpsSdkReferenceImpl(@NotNull String elementName, @NotNull JpsSdkType<P> sdkType,
@@ -63,5 +63,10 @@ public class JpsSdkReferenceImpl<P extends JpsElement> extends JpsNamedElementRe
   @Nullable
   protected JpsElementCollection<? extends JpsLibrary> getCollection(@NotNull JpsCompositeElement parent) {
     return parent.getContainer().getChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE);
+  }
+
+  @Override
+  public String toString() {
+    return "SDK reference: '" + myElementName + "' in " + getParentReference();
   }
 }

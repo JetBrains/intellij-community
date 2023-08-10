@@ -57,7 +57,6 @@ public interface JpsJavaCompilerConfiguration extends JpsElement {
   Collection<ProcessorConfigProfile> getAnnotationProcessingProfiles();
 
   /**
-   * @param module
    * @return annotation profile with which the given module is associated
    */
   @NotNull

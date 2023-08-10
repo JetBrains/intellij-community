@@ -1,13 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
+import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorConfigurable;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,16 +35,21 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
       if (!original.isTemplate() && !runManager.hasSettings(original)) {
         return true;
       }
-      if (!super.isModified()) {
-        return false;
-      }
 
-      RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
-      if (isSpecificallyModified() ||
-          !RunManagerImplKt.doGetBeforeRunTasks(original.getConfiguration())
-            .equals(RunManagerImplKt.doGetBeforeRunTasks(snapshot.getConfiguration()))) {
+      if (isSpecificallyModified()) {
         return true;
       }
+      SettingsEditor<RunnerAndConfigurationSettings> editor = getEditor();
+      if (editor instanceof ConfigurationSettingsEditorWrapper && !((ConfigurationSettingsEditorWrapper)editor).supportsSnapshots()) {
+        return super.isModified();
+      }
+      if (!getEditor().isReadyForApply()) {
+        return true;
+      }
+      RunnerAndConfigurationSettings snapshot = getSnapshot();
+      Element originalXml = ((SerializableScheme)original).writeScheme();
+      Element snapshotXml = ((SerializableScheme)snapshot).writeScheme();
+      return !JDOMUtil.areElementsEqual(originalXml, snapshotXml);
     }
     catch (ConfigurationException e) {
       //ignore
@@ -49,8 +57,13 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
     return super.isModified();
   }
 
+  @NotNull
+  protected RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
+    return getEditor().getSnapshot();
+  }
+
   boolean isSpecificallyModified() {
-    return false;
+    return getEditor().isSpecificallyModified();
   }
 
   @Override

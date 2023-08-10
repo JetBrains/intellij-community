@@ -65,9 +65,8 @@ public class IndexZeroPredicate extends XPathInspection {
                       addProblem(myManager.createProblemDescriptor(expr, message, (LocalQuickFix)null,
                                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
                     }
-                } else if (expr instanceof XPathBinaryExpression && expr.getType() == XPathType.BOOLEAN) {
-                    final XPathBinaryExpression expression = (XPathBinaryExpression)expr;
-                    if (!XPathTokenTypes.BOOLEAN_OPERATIONS.contains(expression.getOperator())) {
+                } else if (expr instanceof XPathBinaryExpression expression && expr.getType() == XPathType.BOOLEAN) {
+                  if (!XPathTokenTypes.BOOLEAN_OPERATIONS.contains(expression.getOperator())) {
                         return;
                     }
 
@@ -98,12 +97,11 @@ public class IndexZeroPredicate extends XPathInspection {
         private static boolean isPosition(XPathExpression expression) {
             expression = ExpectedTypeUtil.unparenthesize(expression);
 
-            if (!(expression instanceof XPathFunctionCall)) {
+            if (!(expression instanceof XPathFunctionCall call)) {
                 return false;
             }
 
-            final XPathFunctionCall call = (XPathFunctionCall)expression;
-            final PrefixedName qName = call.getQName();
+          final PrefixedName qName = call.getQName();
             if (qName.getPrefix() != null) return false;
             return "position".equals(qName.getLocalName());
         }

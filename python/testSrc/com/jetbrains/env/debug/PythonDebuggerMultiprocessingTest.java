@@ -4,6 +4,7 @@ package com.jetbrains.env.debug;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.SystemInfo;
+import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +57,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testMultiprocessingSubprocess() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_args.py") {
@@ -99,6 +101,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testPythonSubprocessWithCParameter() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_python_subprocess_with_c_parameter.py") {
@@ -196,6 +199,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSubprocessModule() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_subprocess_module.py") {
@@ -215,6 +219,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSubprocessIsolated() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_subprocess_isolated.py") {
@@ -236,6 +241,47 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         return Collections.singleton("python3");
+      }
+    });
+  }
+
+  @Test
+  public void testCallExecWithPythonArg() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_call_exec_with_python_arg.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath("test4.py"), 1);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        setProcessCanTerminate(true);
+        resume();
+        waitForOutput("3");
+      }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return Collections.singleton("python2.7");
+      }
+    });
+
+    runPythonTest(new PyDebuggerTask("/debug", "test_call_python_version.py") {
+      @Override
+      public void testing() throws Exception {
+        waitForTerminate();
+        outputContains("Python");
+      }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return Collections.singleton("python2.7");
       }
     });
   }

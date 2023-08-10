@@ -24,9 +24,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.references.GrLiteralConstructor
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, PsiListLikeElement {
 
   private static final TokenSet MAP_LITERAL_TOKEN_SET = TokenSet.create(GroovyElementTypes.NAMED_ARGUMENT, GroovyTokenTypes.mCOLON);

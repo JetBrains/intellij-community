@@ -15,6 +15,9 @@
  */
 package org.intellij.images.editor;
 
+import org.intellij.images.options.ZoomOptions;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Location model presents bounds of image.
  * The zoom it calculated as y = exp(x/2).
@@ -46,6 +49,14 @@ public interface ImageZoomModel {
     boolean canZoomIn();
 
     boolean isZoomLevelChanged();
+
+    default @Nullable ZoomOptions getCustomZoomOptions() {
+      return null;
+    }
+
+    default void setCustomZoomOptions(@Nullable ZoomOptions zoomOptions) {
+      // Nothing.
+    }
 
     ImageZoomModel STUB = new ImageZoomModel() {
         @Override

@@ -76,10 +76,9 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiElement element = descriptor.getPsiElement();
-        if (!(element instanceof RegExpPattern)) {
+        if (!(element instanceof RegExpPattern pattern)) {
           return;
         }
-        final RegExpPattern pattern = (RegExpPattern)element;
         final PsiElement parent = pattern.getParent();
         final PsiElement victim =
           (parent instanceof RegExpGroup && ((RegExpGroup)parent).getType() == RegExpGroup.Type.NON_CAPTURING) ? parent : pattern;
@@ -96,10 +95,9 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
     final StringBuilder text = new StringBuilder("[");
     for (RegExpBranch branch : pattern.getBranches()) {
       for (PsiElement child : branch.getChildren()) {
-        if (!(child instanceof RegExpChar)) {
+        if (!(child instanceof RegExpChar ch)) {
           return null;
         }
-        final RegExpChar ch = (RegExpChar)child;
         final IElementType type = ch.getNode().getFirstChildNode().getElementType();
         if (type == RegExpTT.REDUNDANT_ESCAPE) {
           final int value = ch.getValue();
@@ -116,27 +114,16 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
         else if (type == RegExpTT.ESC_CHARACTER) {
           final int value = ch.getValue();
           switch (value) {
-            case '.':
-            case '$':
-            case '?':
-            case '*':
-            case '+':
-            case '|':
-            case '{':
-            case '(':
-            case ')':
-              text.append((char)value);
-              break;
-            case '^':
+            case '.', '$', '?', '*', '+', '|', '{', '(', ')' -> text.append((char)value);
+            case '^' -> {
               if (text.length() == 1) {
                 text.append(ch.getUnescapedText());
               }
               else {
                 text.append((char)value);
               }
-              break;
-            default:
-              text.append(ch.getUnescapedText());
+            }
+            default -> text.append(ch.getUnescapedText());
           }
         }
         else {

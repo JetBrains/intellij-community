@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs;
 /**
  * @deprecated Use {@link VcsShowConfirmationOption#STATIC_SHOW_CONFIRMATION}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class VcsShowConfirmationOptionImpl implements VcsShowConfirmationOption {
   private Value myValue = Value.SHOW_CONFIRMATION;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -17,7 +17,10 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -63,36 +66,34 @@ class ExcludeListDialog(val language: Language, private val patternToAdd: String
 
     return panel {
       row {
+        link(LangBundle.message("action.link.reset")) {
+          setLanguageExcludelistToDefault(language)
+        }.align(AlignX.RIGHT)
+      }
+      row {
+        cell(editorTextField)
+          .align(AlignX.FILL)
+      }.bottomGap(BottomGap.SMALL)
+      baseLanguageComment(provider)?.let {
         row {
-          right {
-            link(LangBundle.message("action.link.reset")) {
-              setLanguageBlacklistToDefault(language)
-            }
-          }
+          comment(it)
         }
-
-        row {
-          editorTextField(grow)
-        }
-        row {
-          baseLanguageComment(provider)?.also {
-            commentRow(it)
-          }
-          commentRow(getBlacklistExplanationHTML(language))
-        }
+      }
+      row {
+        comment(getExcludeListExplanationHTML(language))
       }
     }
   }
 
-  private fun baseLanguageComment(provider: InlayParameterHintsProvider): String? {
+  private fun baseLanguageComment(provider: InlayParameterHintsProvider): @Nls String? {
     return provider.blackListDependencyLanguage
-      ?.let { CodeInsightBundle.message("inlay.hints.base.blacklist.description", it.displayName) }
+      ?.let { CodeInsightBundle.message("inlay.hints.base.exclude.list.description", it.displayName) }
   }
 
-  private fun setLanguageBlacklistToDefault(language: Language) {
+  private fun setLanguageExcludelistToDefault(language: Language) {
     val provider = InlayParameterHintsExtension.forLanguage(language)
-    val defaultBlacklist = provider!!.defaultBlackList
-    myEditor.text = StringUtil.join(defaultBlacklist, "\n")
+    val defaultExcludeList = provider!!.defaultBlackList
+    myEditor.text = StringUtil.join(defaultExcludeList, "\n")
   }
 
   private fun updateOkEnabled(editorTextField: EditorTextField) {
@@ -115,12 +116,12 @@ class ExcludeListDialog(val language: Language, private val patternToAdd: String
   }
 
   private fun storeExcludeListDiff(language: Language, text: String) {
-    val updatedBlackList = text.split("\n").filter { e -> e.trim { it <= ' ' }.isNotEmpty() }.toSet()
+    val updatedExcludeList = text.split("\n").filter { e -> e.trim { it <= ' ' }.isNotEmpty() }.toSet()
 
     val provider = InlayParameterHintsExtension.forLanguage(language)
-    val defaultBlackList = provider.defaultBlackList
-    val diff = Diff.build(defaultBlackList, updatedBlackList)
-    ParameterNameHintsSettings.getInstance().setBlackListDiff(getLanguageForSettingKey(language), diff)
+    val defaultExcludeList = provider.defaultBlackList
+    val diff = Diff.build(defaultExcludeList, updatedExcludeList)
+    ParameterNameHintsSettings.getInstance().setExcludeListDiff(getLanguageForSettingKey(language), diff)
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
   }
 }
@@ -128,7 +129,7 @@ class ExcludeListDialog(val language: Language, private val patternToAdd: String
 
 private fun getLanguageExcludeList(language: Language): String {
   val hintsProvider = InlayParameterHintsExtension.forLanguage(language) ?: return ""
-  val diff = ParameterNameHintsSettings.getInstance().getBlackListDiff(getLanguageForSettingKey(language))
+  val diff = ParameterNameHintsSettings.getInstance().getExcludeListDiff(getLanguageForSettingKey(language))
   val excludeList = diff.applyOn(hintsProvider.defaultBlackList)
   return StringUtil.join(excludeList, "\n")
 }
@@ -158,8 +159,8 @@ private fun highlightErrorLines(lines: List<Int>, editor: Editor) {
 }
 
 @NlsContexts.DetailedDescription
-private fun getBlacklistExplanationHTML(language: Language): String {
+private fun getExcludeListExplanationHTML(language: Language): String {
   val hintsProvider = InlayParameterHintsExtension.forLanguage(language) ?: return CodeInsightBundle.message(
-    "inlay.hints.blacklist.pattern.explanation")
+    "inlay.hints.exclude.list.pattern.explanation")
   return hintsProvider.blacklistExplanationHTML
 }

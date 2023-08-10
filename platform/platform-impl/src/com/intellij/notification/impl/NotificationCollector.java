@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
@@ -14,94 +14,60 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById;
-import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getUnknownPlugin;
 import static com.intellij.notification.impl.NotificationsEventLogGroup.*;
 
-@SuppressWarnings("deprecation")
 public final class NotificationCollector {
-  private static final Logger LOG = Logger.getInstance(NotificationCollector.class);
-  private static final Map<String, PluginInfo> ourNotificationGroupsWhitelist = new ConcurrentHashMap<>();
-  private static final Set<String> ourNotificationsWhitelist = new HashSet<>();
   public static final String UNKNOWN = "unknown";
 
   private NotificationCollector() {
-    NotificationWhitelistEP.EP_NAME.getExtensionList().forEach(NotificationCollector::addNotificationsToWhitelist);
-    NotificationAllowlistEP.EP_NAME.getExtensionList().forEach(NotificationCollector::addNotificationsToWhitelist);
-
-    ExtensionPointListener<NotificationAllowlistEP> extensionPointListener = new ExtensionPointListener<>() {
-      @Override
-      public void extensionAdded(@NotNull NotificationAllowlistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-        addNotificationsToWhitelist(extension);
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull NotificationAllowlistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-        removeNotificationsFromWhitelist(extension);
-      }
-    };
-    NotificationWhitelistEP.EP_NAME.addExtensionPointListener(extensionPointListener, null);
-    NotificationAllowlistEP.EP_NAME.addExtensionPointListener(extensionPointListener, null);
   }
 
   public void logBalloonShown(@Nullable Project project,
                               @NotNull NotificationDisplayType displayType,
                               @NotNull Notification notification,
                               boolean isExpandable) {
-    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
+    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     data.add(DISPLAY_TYPE.with(displayType));
     NotificationSeverity severity = getType(notification);
-    if (severity != null) {
-      data.add(SEVERITY.with(severity));
-    }
+    data.add(SEVERITY.with(severity));
     data.add(IS_EXPANDABLE.with(isExpandable));
     SHOWN.log(project, data);
   }
 
   public void logToolWindowNotificationShown(@Nullable Project project,
                                              @NotNull Notification notification) {
-    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
+    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     data.add(DISPLAY_TYPE.with(NotificationDisplayType.TOOL_WINDOW));
     NotificationSeverity severity = getType(notification);
-    if (severity != null) {
-      data.add(SEVERITY.with(severity));
-    }
+    data.add(SEVERITY.with(severity));
     SHOWN.log(project, data);
   }
 
   public void logNotificationLoggedInEventLog(@NotNull Project project, @NotNull Notification notification) {
-    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
+    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     NotificationSeverity severity = getType(notification);
-    if (severity != null) {
-      data.add(SEVERITY.with(severity));
-    }
+    data.add(SEVERITY.with(severity));
     LOGGED.log(project, data);
   }
 
-  private static @Nullable NotificationSeverity getType(@NotNull Notification notification) {
+  private static @NotNull NotificationSeverity getType(@NotNull Notification notification) {
     NotificationType type = notification.getType();
-    switch (type) {
-      case ERROR:
-        return NotificationSeverity.ERROR;
-      case WARNING:
-        return NotificationSeverity.WARNING;
-      case INFORMATION:
-      case IDE_UPDATE:
-        return NotificationSeverity.INFORMATION;
-    }
-    return null;
+    return switch (type) {
+      case ERROR -> NotificationSeverity.ERROR;
+      case WARNING -> NotificationSeverity.WARNING;
+      case INFORMATION, IDE_UPDATE -> NotificationSeverity.INFORMATION;
+    };
   }
 
   public void logNotificationBalloonClosedByUser(@Nullable Project project,
@@ -116,10 +82,10 @@ public final class NotificationCollector {
                                            @NotNull Notification notification,
                                            @NotNull AnAction action,
                                            @NotNull NotificationPlace notificationPlace) {
-    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
+    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     data.add(NOTIFICATION_PLACE.with(notificationPlace));
     if (action instanceof NotificationAction.Simple) {
-      Object actionInstance = ((NotificationAction.Simple)action).getActionInstance();
+      Object actionInstance = ((NotificationAction.Simple)action).getDelegate();
       PluginInfo info = PluginInfoDetectorKt.getPluginInfo(actionInstance.getClass());
       String actionId = info.isSafeToReport() ? actionInstance.getClass().getName() : ActionsCollectorImpl.DEFAULT_ID;
       data.add(ActionsEventLogGroup.ACTION_ID.with(actionId));
@@ -131,11 +97,11 @@ public final class NotificationCollector {
   }
 
   public void logHyperlinkClicked(@NotNull Notification notification) {
-    HYPERLINK_CLICKED.log(createNotificationData(notification.getGroupId(), notification.id, notification.displayId));
+    HYPERLINK_CLICKED.log(createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId()));
   }
 
   public void logBalloonShownFromEventLog(@Nullable Project project, @NotNull Notification notification) {
-    EVENT_LOG_BALLOON_SHOWN.log(project, createNotificationData(notification.getGroupId(), notification.id, notification.displayId));
+    EVENT_LOG_BALLOON_SHOWN.log(project, createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId()));
   }
 
   public void logNotificationSettingsClicked(@NotNull String notificationId,
@@ -145,11 +111,11 @@ public final class NotificationCollector {
   }
 
   public void logNotificationBalloonExpanded(@Nullable Project project, @NotNull Notification notification) {
-    BALLOON_EXPANDED.log(project, createNotificationData(notification.getGroupId(), notification.id, notification.displayId));
+    BALLOON_EXPANDED.log(project, createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId()));
   }
 
   public void logNotificationBalloonCollapsed(@Nullable Project project, @NotNull Notification notification) {
-    BALLOON_COLLAPSED.log(project, createNotificationData(notification.getGroupId(), notification.id, notification.displayId));
+    BALLOON_COLLAPSED.log(project, createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId()));
   }
 
   private static @NotNull List<EventPair<?>> createNotificationData(@Nullable String groupId,
@@ -157,7 +123,9 @@ public final class NotificationCollector {
                                                                     @Nullable String displayId) {
     ArrayList<EventPair<?>> data = new ArrayList<>();
     data.add(ID.with(id));
-    data.add(ADDITIONAL.with(new ObjectEventData(NOTIFICATION_ID.with(Strings.isNotEmpty(displayId) ? displayId : UNKNOWN))));
+    if (Strings.isNotEmpty(displayId)) {
+      data.add(ADDITIONAL.with(new ObjectEventData(NOTIFICATION_ID.with(displayId))));
+    }
     data.add(NOTIFICATION_GROUP_ID.with(Strings.isNotEmpty(groupId) ? groupId : UNKNOWN));
     PluginInfo pluginInfo = getPluginInfo(groupId);
     if (pluginInfo != null) {
@@ -170,47 +138,11 @@ public final class NotificationCollector {
     return ApplicationManager.getApplication().getService(NotificationCollector.class);
   }
 
-  private static void removeNotificationsFromWhitelist(@NotNull NotificationAllowlistEP extension) {
-    PluginDescriptor pluginDescriptor = extension.getPluginDescriptor();
-    if (pluginDescriptor == null) return;
-    PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor);
-    if (!info.isDevelopedByJetBrains()) return;
-
-    List<String> notificationGroups = parseIds(extension.groupIds);
-    for (String notificationGroup : notificationGroups) {
-      ourNotificationGroupsWhitelist.remove(notificationGroup, info);
-    }
-  }
-
   private static @Nullable PluginInfo getPluginInfo(@Nullable String groupId) {
     if (groupId == null) return null;
-    PluginInfo pluginInfo = ourNotificationGroupsWhitelist.get(groupId);
-    if (pluginInfo != null) {
-      return pluginInfo;
-    }
     NotificationGroup group = NotificationGroup.findRegisteredGroup(groupId);
     if (group == null) return null;
     return getPluginInfoById(group.getPluginId());
-  }
-
-  private static void addNotificationsToWhitelist(@NotNull NotificationAllowlistEP extension) {
-    PluginDescriptor pluginDescriptor = extension.getPluginDescriptor();
-    if (pluginDescriptor == null) return;
-    PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor);
-    if (!info.isDevelopedByJetBrains()) return;
-
-    List<String> notificationGroups = parseIds(extension.groupIds);
-    for (String notificationGroup : notificationGroups) {
-      ourNotificationGroupsWhitelist.merge(notificationGroup, info, (oldValue, newValue) -> {
-        if (!oldValue.equals(newValue)) {
-          LOG.warn("Notification group '" + notificationGroup + "' is already registered in whitelist");
-          return getUnknownPlugin();
-        }
-        return oldValue;
-      });
-    }
-
-    ourNotificationsWhitelist.addAll(parseIds(extension.notificationIds));
   }
 
   public static @NotNull List<String> parseIds(@Nullable String entry) {
@@ -230,40 +162,47 @@ public final class NotificationCollector {
   }
 
   static final class NotificationGroupValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "notification_group".equals(ruleId);
+    public String getRuleId() {
+      return "notification_group";
     }
 
     @Override
     protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      if (UNKNOWN.equals(data)) return ValidationResultType.ACCEPTED;
+      if (UNKNOWN.equals(data)) {
+        return ValidationResultType.ACCEPTED;
+      }
+
       NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup(data);
       if (group != null && getPluginInfoById(group.getPluginId()).isDevelopedByJetBrains()) {
         return ValidationResultType.ACCEPTED;
       }
-      return ourNotificationGroupsWhitelist.containsKey(data) ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
+      return ValidationResultType.REJECTED;
     }
   }
 
   static final class NotificationIdValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "notification_display_id".equals(ruleId);
+    public String getRuleId() {
+      return "notification_display_id";
     }
 
     @Override
     protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      if (UNKNOWN.equals(data)) return ValidationResultType.ACCEPTED;
+      if (UNKNOWN.equals(data)) {
+        return ValidationResultType.ACCEPTED;
+      }
       if (NotificationGroupManager.getInstance().isRegisteredNotificationId(data)) {
         return ValidationResultType.ACCEPTED;
       }
-      return ourNotificationsWhitelist.contains(data) ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
+      return ValidationResultType.REJECTED;
     }
   }
 
   public enum NotificationPlace {
-    BALLOON, EVENT_LOG, TOOL_WINDOW,
+    BALLOON, ACTION_CENTER, EVENT_LOG, TOOL_WINDOW,
   }
 
   public enum NotificationSeverity {

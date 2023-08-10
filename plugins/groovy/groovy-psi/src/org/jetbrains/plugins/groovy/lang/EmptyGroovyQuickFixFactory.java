@@ -1,14 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixes;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -17,6 +19,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+
+import java.util.List;
 
 public class EmptyGroovyQuickFixFactory extends GroovyQuickFixFactory {
   @Override
@@ -142,5 +146,15 @@ public class EmptyGroovyQuickFixFactory extends GroovyQuickFixFactory {
   @Override
   public GroovyFix createMapConstructorFix() {
     return GroovyFix.EMPTY_FIX;
+  }
+
+  @Override
+  public GroovyFix createQualifyExpressionFix() {
+    return GroovyFix.EMPTY_FIX;
+  }
+
+  @Override
+  public GroovyFix createAddMissingCasesFix(List<? extends PsiElement> expressions, GrSwitchElement switchElement) {
+    return null;
   }
 }

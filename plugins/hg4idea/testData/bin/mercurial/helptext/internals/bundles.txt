@@ -1,0 +1,93 @@
+A bundle is a container for repository data.
+
+Bundles are used as standalone files as well as the interchange format
+over the wire protocol used when two Mercurial peers communicate with
+each other.
+
+Headers
+=======
+
+Bundles produced since Mercurial 0.7 (September 2005) have a 4 byte
+header identifying the major bundle type. The header always begins with
+``HG`` and the follow 2 bytes indicate the bundle type/version. Some
+bundle types have additional data after this 4 byte header.
+
+The following sections describe each bundle header/type.
+
+HG10
+----
+
+``HG10`` headers indicate a *changegroup bundle*. This is the original
+bundle format, so it is sometimes referred to as *bundle1*. It has been
+present since version 0.7 (released September 2005).
+
+This header is followed by 2 bytes indicating the compression algorithm
+used for data that follows. All subsequent data following this
+compression identifier is compressed according to the algorithm/method
+specified.
+
+Supported algorithms include the following.
+
+``BZ``
+   *bzip2* compression.
+
+   Bzip2 compressors emit a leading ``BZ`` header. Mercurial uses this
+   leading ``BZ`` as part of the bundle header. Therefore consumers
+   of bzip2 bundles need to *seed* the bzip2 decompressor with ``BZ`` or
+   seek the input stream back to the beginning of the algorithm component
+   of the bundle header so that decompressor input is valid. This behavior
+   is unique among supported compression algorithms.
+
+   Supported since version 0.7 (released December 2006).
+
+``GZ``
+  *zlib* compression.
+
+   Supported since version 0.9.2 (released December 2006).
+
+``UN``
+  *Uncompressed* or no compression. Unmodified changegroup data follows.
+
+  Supported since version 0.9.2 (released December 2006).
+
+3rd party extensions may implement their own compression. However, no
+authority reserves values for their compression algorithm identifiers.
+
+HG2X
+----
+
+``HG2X`` headers (where ``X`` is any value) denote a *bundle2* bundle.
+Bundle2 bundles are a container format for various kinds of repository
+data and capabilities, beyond changegroup data (which was the only data
+supported by ``HG10`` bundles.
+
+``HG20`` is currently the only defined bundle2 version.
+
+The ``HG20`` format is documented at :hg:`help internals.bundle2`.
+
+Initial ``HG20`` support was added in Mercurial 3.0 (released May
+2014). However, bundle2 bundles were hidden behind an experimental flag
+until version 3.5 (released August 2015), when they were enabled in the
+wire protocol. Various commands (including ``hg bundle``) did not
+support generating bundle2 files until Mercurial 3.6 (released November
+2015).
+
+HGS1
+----
+
+*Experimental*
+
+A ``HGS1`` header indicates a *streaming clone bundle*. This is a bundle
+that contains raw revlog data from a repository store. (Typically revlog
+data is exchanged in the form of changegroups.)
+
+The purpose of *streaming clone bundles* are to *clone* repository data
+very efficiently.
+
+The ``HGS1`` header is always followed by 2 bytes indicating a
+compression algorithm of the data that follows. Only ``UN``
+(uncompressed data) is currently allowed.
+
+``HGS1UN`` support was added as an experimental feature in version 3.6
+(released November 2015) as part of the initial offering of the *clone
+bundles* feature.

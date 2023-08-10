@@ -1,0 +1,8 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.k2.refactoring.introduce">
+    <dependencies>
+        <module name="kotlin.refactorings.k2"/>
+    </dependencies>
+    <extensions defaultExtensionNs="com.intellij">
+
+    </extensions>
+</idea-plugin>

@@ -6,7 +6,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Abstract function parameter; may cover either a named parameter or a tuple of parameters.
  * @see com.jetbrains.python.psi.impl.ParamHelper
- * User: dcheryasov
  */
 public interface PyParameter extends PyElement {
 

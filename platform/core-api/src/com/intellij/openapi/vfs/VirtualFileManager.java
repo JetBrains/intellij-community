@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.Disposable;
@@ -6,14 +6,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 /**
  * Manages virtual file systems.
@@ -22,11 +21,13 @@ import java.nio.file.Path;
  */
 public abstract class VirtualFileManager implements ModificationTracker {
   @Topic.AppLevel
-  public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>(BulkFileListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
+  public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>(BulkFileListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
   public static final @NotNull ModificationTracker VFS_STRUCTURE_MODIFICATIONS = () -> getInstance().getStructureModificationCount();
 
-  private static VirtualFileManager ourInstance = CachedSingletonsRegistry.markCachedField(VirtualFileManager.class);
+  private static final Supplier<VirtualFileManager> ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    return ApplicationManager.getApplication().getService(VirtualFileManager.class);
+  });
 
   /**
    * Gets the instance of {@code VirtualFileManager}.
@@ -34,11 +35,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @return {@code VirtualFileManager}
    */
   public static @NotNull VirtualFileManager getInstance() {
-    VirtualFileManager result = ourInstance;
-    if (result == null) {
-      ourInstance = result = ApplicationManager.getApplication().getService(VirtualFileManager.class);
-    }
-    return result;
+    return ourInstance.get();
   }
 
   /**
@@ -48,7 +45,8 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @return {@link VirtualFileSystem}
    * @see VirtualFileSystem#getProtocol
    */
-  public abstract VirtualFileSystem getFileSystem(String protocol);
+  @Contract("null -> null")
+  public abstract VirtualFileSystem getFileSystem(@Nullable String protocol);
 
   /**
    * <p>Refreshes the cached file systems information from the physical file systems synchronously.<p/>
@@ -63,10 +61,15 @@ public abstract class VirtualFileManager implements ModificationTracker {
   /**
    * Refreshes the cached file systems information from the physical file systems asynchronously.
    * Launches specified action when refresh is finished.
-   *
+   * <p>
+   * @param postAction - action which will be executed in write-action after the refresh session finished.
    * @return refresh session ID.
    */
   public abstract long asyncRefresh(@Nullable Runnable postAction);
+
+  public final long asyncRefresh() {
+    return asyncRefresh(null);
+  }
 
   public abstract void refreshWithoutFileWatcher(boolean asynchronous);
 
@@ -85,6 +88,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   /**
    * Looks for a related {@link VirtualFile} for a given {@link Path}
+   *
    * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
    * @see VirtualFile#getUrl
    * @see VirtualFileSystem#findFileByPath
@@ -130,19 +134,20 @@ public abstract class VirtualFileManager implements ModificationTracker {
   }
 
   /**
-   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
+   * @deprecated Prefer {@link #addVirtualFileListener(VirtualFileListener, Disposable)} or other VFS listeners.
    */
   @Deprecated
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener);
 
   /**
-   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
+   * @deprecated When possible, migrate to {@link AsyncFileListener} to process events on a pooled thread.
+   * Otherwise, consider using {@link #VFS_CHANGES} message bus topic to avoid early initialization of {@link VirtualFileManager}.
    */
   @Deprecated
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
+   * @deprecated Prefer {@link #addVirtualFileListener(VirtualFileListener, Disposable)} or other VFS listeners.
    */
   @Deprecated
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
@@ -184,10 +189,12 @@ public abstract class VirtualFileManager implements ModificationTracker {
     return URLUtil.extractPath(url);
   }
 
-  public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
-
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable);
 
+  /**
+   * @deprecated Use {@link #addVirtualFileManagerListener(VirtualFileManagerListener, Disposable)}
+   */
+  @Deprecated
   public abstract void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 
   public abstract void notifyPropertyChanged(@NotNull VirtualFile virtualFile,
@@ -197,7 +204,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   /**
    * @return a number that's incremented every time something changes in the VFS, i.e. file hierarchy, names, flags, attributes, contents.
-   * This only counts modifications done in current IDE session.
+   * This only counts modifications done in the current IDE session.
    * @see #getStructureModificationCount()
    */
   @Override
@@ -205,13 +212,19 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   /**
    * @return a number that's incremented every time something changes in the VFS structure, i.e. file hierarchy or names.
-   * This only counts modifications done in current IDE session.
+   * This only counts modifications done in the current IDE session.
    * @see #getModificationCount()
    */
   public abstract long getStructureModificationCount();
 
+  @ApiStatus.Internal
   public VirtualFile findFileById(int id) {
     return null;
+  }
+
+  @ApiStatus.Internal
+  public int[] listAllChildIds(int id) {
+    return ArrayUtil.EMPTY_INT_ARRAY;
   }
 
   @ApiStatus.Internal

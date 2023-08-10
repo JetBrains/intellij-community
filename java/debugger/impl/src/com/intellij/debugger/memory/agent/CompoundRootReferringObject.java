@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.DebuggerContext;
@@ -26,8 +26,8 @@ import java.util.stream.Collectors;
 public class CompoundRootReferringObject implements ReferringObject {
   private final MemoryAgentReferenceKind[] myKinds;
 
-  public CompoundRootReferringObject(MemoryAgentReferenceKind @NotNull[] kinds) {
-    myKinds = ContainerUtil.set(kinds).toArray(new MemoryAgentReferenceKind[0]);
+  public CompoundRootReferringObject(MemoryAgentReferenceKind @NotNull [] kinds) {
+    myKinds = ContainerUtil.newHashSet(kinds).toArray(new MemoryAgentReferenceKind[0]);
   }
 
   @NotNull

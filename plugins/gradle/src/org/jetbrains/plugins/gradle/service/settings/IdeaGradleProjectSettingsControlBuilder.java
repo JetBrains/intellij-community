@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.settings.LocationSettingType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.options.ConfigurationException;
@@ -23,8 +22,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -33,7 +30,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.GridBag;
@@ -42,10 +38,11 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import one.util.streamex.StreamEx;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.target.GradleRuntimeTargetUI;
+import org.jetbrains.plugins.gradle.execution.target.TargetPathFieldWithBrowseButton;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -65,6 +62,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil.INSETS;
 import static com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil.createUniqueSdkName;
@@ -83,58 +81,50 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   private static final long BALLOON_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(1);
   private static final String HIDDEN_KEY = "hidden";
-  @NotNull
-  private final GradleProjectSettings myInitialSettings;
-  @NotNull
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+
+  private final @NotNull GradleProjectSettings myInitialSettings;
+
+  private final @NotNull Alarm myAlarm = new Alarm();
+
   /**
    * The target {@link Project} reference of the UI control.
-   * It can be the current project of the settings UI configurable (see {@org.jetbrains.plugins.gradle.service.settings.GradleConfigurable}),
+   * It can be the current project of the settings UI configurable (see {@link GradleConfigurable}),
    * or the target project from the wizard context.
    */
-  @NotNull
-  private final Ref<Project> myProjectRef = Ref.create();
-  @NotNull
-  private final Disposable myProjectRefDisposable = () -> myProjectRef.set(null);
-  @Nullable JComboBox<DistributionTypeItem> myGradleDistributionComboBox;
-  @Nullable JBLabel myGradleDistributionHint;
-  @NotNull
-  private LocationSettingType myGradleHomeSettingType = LocationSettingType.UNKNOWN;
+  private final @NotNull Ref<Project> myProjectRef = Ref.create();
+  private final @NotNull Disposable myProjectRefDisposable = () -> myProjectRef.set(null);
+
   private boolean myShowBalloonIfNecessary;
-  @Nullable
-  private TextFieldWithBrowseButton myGradleHomePathField;
-  @SuppressWarnings({"unused", "RedundantSuppression"}) // used by ExternalSystemUiUtil.showUi to show/hide the component via reflection
-  private JPanel myGradlePanel;
-  @Nullable
-  private JLabel myGradleJdkLabel;
-  @Nullable
-  private SdkComboBox myGradleJdkComboBox;
-  private JPanel myGradleJdkComboBoxWrapper;
   private boolean dropGradleJdkComponents;
   private boolean dropUseWrapperButton;
   private boolean dropCustomizableWrapperButton;
   private boolean dropUseLocalDistributionButton;
   private boolean dropUseBundledDistributionButton;
-  @SuppressWarnings({"unused", "RedundantSuppression"}) // used by ExternalSystemUiUtil.showUi to show/hide the component via reflection
-  private JPanel myImportPanel;
-  private JPanel myModulePerSourceSetPanel;
-  @Nullable
-  private JBCheckBox myResolveModulePerSourceSetCheckBox;
   private boolean dropResolveModulePerSourceSetCheckBox;
-  @Nullable
-  private JBCheckBox myResolveExternalAnnotationsCheckBox;
-  private boolean dropResolveExternalAnnotationsCheckBox = false;
-  @Nullable
-  private JLabel myDelegateBuildLabel;
-  @Nullable
-  private ComboBox<BuildRunItem> myDelegateBuildCombobox;
+  private boolean dropResolveExternalAnnotationsCheckBox;
   private boolean dropDelegateBuildCombobox;
-  @Nullable
-  private JLabel myTestRunnerLabel;
-  @Nullable
-  private ComboBox<TestRunnerItem> myTestRunnerCombobox;
   private boolean dropTestRunnerCombobox;
-  private JPanel myDelegatePanel;
+
+  private @Nullable JComboBox<DistributionTypeItem> myGradleDistributionComboBox;
+  private @Nullable JBLabel myGradleDistributionHint;
+  private @NotNull LocationSettingType myGradleHomeSettingType = LocationSettingType.UNKNOWN;
+  private @Nullable TargetPathFieldWithBrowseButton myGradleHomePathField;
+  @SuppressWarnings({"unused", "RedundantSuppression"}) // used by ExternalSystemUiUtil.showUi to show/hide the component via reflection
+  private @Nullable JPanel myGradlePanel;
+  private @Nullable JLabel myGradleJdkLabel;
+  private @Nullable SdkComboBox myGradleJdkComboBox;
+  private @Nullable JPanel myGradleJdkComboBoxWrapper;
+  @SuppressWarnings({"unused", "RedundantSuppression"}) // used by ExternalSystemUiUtil.showUi to show/hide the component via reflection
+  private @Nullable JPanel myImportPanel;
+  private @Nullable JPanel myModulePerSourceSetPanel;
+  private @Nullable JBCheckBox myResolveModulePerSourceSetCheckBox;
+  private @Nullable JBCheckBox myResolveExternalAnnotationsCheckBox;
+  private @Nullable JLabel myDelegateBuildLabel;
+
+  private @Nullable ComboBox<BuildRunItem> myDelegateBuildCombobox;
+  private @Nullable JLabel myTestRunnerLabel;
+  private @Nullable ComboBox<TestRunnerItem> myTestRunnerCombobox;
+  private @Nullable JPanel myDelegatePanel;
 
   public IdeaGradleProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings) {
     myInitialSettings = initialSettings;
@@ -166,10 +156,10 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   }
 
   /**
-   * @deprecated see {@link ExternalProjectSettings#setUseAutoImport} for details
+   * @deprecated Auto-import cannot be disabled
+   * @see com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public IdeaGradleProjectSettingsControlBuilder dropUseAutoImportBox() {
     return this;
   }
@@ -282,7 +272,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   private void deduceGradleHomeIfPossible() {
     if (myGradleHomePathField == null) return;
 
-    File gradleHome = GradleInstallationManager.getInstance().getAutodetectedGradleHome();
+    File gradleHome = GradleInstallationManager.getInstance().getAutodetectedGradleHome(myProjectRef.get());
     if (gradleHome == null) {
       new DelayedBalloonInfo(MessageType.WARNING, LocationSettingType.UNKNOWN, BALLOON_DELAY_MILLIS).run();
       return;
@@ -329,12 +319,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     myGradleDistributionComboBox.setRenderer(new MyItemCellRenderer<>());
 
     myGradleDistributionHint = new JBLabel();
-
-    myGradleHomePathField = new TextFieldWithBrowseButton();
-    myGradleHomePathField.addBrowseFolderListener("", GradleBundle.message("gradle.settings.text.home.path"), null,
-                                                  GradleUtil.getGradleHomeFileChooserDescriptor(),
-                                                  TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
-
+    myGradleHomePathField = new TargetPathFieldWithBrowseButton();
     myGradleDistributionHint.setLabelFor(myGradleHomePathField);
 
     myGradleHomePathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
@@ -362,7 +347,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     myGradleDistributionComboBox.setModel(new CollectionComboBoxModel<>(availableDistributions));
     if (!availableDistributions.isEmpty()) {
-      content.add(new JBLabel(GradleBundle.message("gradle.settings.text.distribution")), ExternalSystemUiUtil.getLabelConstraints(indentLevel));
+      content.add(new JBLabel(GradleBundle.message("gradle.project.settings.distribution")),
+                  ExternalSystemUiUtil.getLabelConstraints(indentLevel));
       content.add(myGradleDistributionComboBox, ExternalSystemUiUtil.getLabelConstraints(0));
 
       JPanel additionalControlsPanel = new JPanel(new GridBagLayout());
@@ -401,7 +387,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
         deduceGradleHomeIfPossible();
       }
       else {
-        if (GradleInstallationManager.getInstance().isGradleSdkHome(myGradleHomePathField.getText())) {
+        Project project = myProjectRef.get();
+        if (GradleInstallationManager.getInstance().isGradleSdkHome(project, myGradleHomePathField.getText())) {
           myGradleHomeSettingType = LocationSettingType.EXPLICIT_CORRECT;
         }
         else {
@@ -444,7 +431,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
         myGradleHomeSettingType = LocationSettingType.UNKNOWN;
         throw new ConfigurationException(GradleBundle.message("gradle.home.setting.type.explicit.empty", gradleHomePath));
       }
-      else if (!GradleInstallationManager.getInstance().isGradleSdkHome(new File(gradleHomePath))) {
+      else if (!GradleInstallationManager.getInstance().isGradleSdkHome(myProjectRef.get(), new File(gradleHomePath))) {
         myGradleHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT;
         new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType, 0).run();
         throw new ConfigurationException(GradleBundle.message("gradle.home.setting.type.explicit.incorrect", gradleHomePath));
@@ -458,11 +445,12 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   }
 
   private @NotNull SdkInfo getSelectedGradleJvmInfo(@NotNull SdkComboBox comboBox) {
-    SdkLookupProvider sdkLookupProvider = getSdkLookupProvider(comboBox.getModel().getProject());
+    Project project = comboBox.getModel().getProject();
+    SdkLookupProvider sdkLookupProvider = getSdkLookupProvider(project);
     String externalProjectPath = myInitialSettings.getExternalProjectPath();
     Sdk projectSdk = comboBox.getModel().getSdksModel().getProjectSdk();
     String gradleJvm = getSelectedGradleJvmReference(comboBox, sdkLookupProvider);
-    return nonblockingResolveGradleJvmInfo(sdkLookupProvider, projectSdk, externalProjectPath, gradleJvm);
+    return nonblockingResolveGradleJvmInfo(sdkLookupProvider, project, projectSdk, externalProjectPath, gradleJvm);
   }
 
   @Override
@@ -472,11 +460,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       String gradleHomePath = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
       File gradleHomeFile = new File(gradleHomePath);
       String finalGradleHomePath;
-      if (GradleInstallationManager.getInstance().isGradleSdkHome(gradleHomeFile)) {
+      if (GradleInstallationManager.getInstance().isGradleSdkHome(myProjectRef.get(), gradleHomeFile)) {
         finalGradleHomePath = gradleHomePath;
       }
       else {
-        finalGradleHomePath = GradleInstallationManager.getInstance().suggestBetterGradleHomePath(gradleHomePath);
+        finalGradleHomePath = GradleInstallationManager.getInstance().suggestBetterGradleHomePath(myProjectRef.get(), gradleHomePath);
         if (finalGradleHomePath != null) {
           SwingUtilities.invokeLater(() -> {
             myGradleHomePathField.setText(finalGradleHomePath);
@@ -548,12 +536,12 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     }
 
     if (myDelegateBuildCombobox != null && myDelegateBuildCombobox.getSelectedItem() instanceof MyItem
-        && !Objects.equals(((MyItem)myDelegateBuildCombobox.getSelectedItem()).value, myInitialSettings.getDelegatedBuild())) {
+        && !Objects.equals(((MyItem<?>)myDelegateBuildCombobox.getSelectedItem()).value, myInitialSettings.getDelegatedBuild())) {
       return true;
     }
 
     if (myTestRunnerCombobox != null && myTestRunnerCombobox.getSelectedItem() instanceof MyItem
-        && !Objects.equals(((MyItem)myTestRunnerCombobox.getSelectedItem()).value, myInitialSettings.getTestRunner())) {
+        && !Objects.equals(((MyItem<?>)myTestRunnerCombobox.getSelectedItem()).value, myInitialSettings.getTestRunner())) {
       return true;
     }
 
@@ -592,6 +580,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     String gradleHome = settings.getGradleHome();
     if (myGradleHomePathField != null) {
+      GradleRuntimeTargetUI.installActionListener(myGradleHomePathField, myProjectRef.get(),
+                                                  GradleBundle.message("gradle.settings.text.home.path"));
       myGradleHomePathField.setText(gradleHome == null ? "" : gradleHome);
       myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
     }
@@ -607,11 +597,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     }
     else {
       File gradleHomeFile = new File(gradleHome);
-      if (GradleInstallationManager.getInstance().isGradleSdkHome(gradleHomeFile)) {
+      if (GradleInstallationManager.getInstance().isGradleSdkHome(project, gradleHomeFile)) {
         myGradleHomeSettingType = LocationSettingType.EXPLICIT_CORRECT;
       }
       else {
-        myGradleHomeSettingType = GradleInstallationManager.getInstance().suggestBetterGradleHomePath(gradleHome) != null
+        myGradleHomeSettingType = GradleInstallationManager.getInstance().suggestBetterGradleHomePath(project, gradleHome) != null
                                   ? LocationSettingType.EXPLICIT_CORRECT
                                   : LocationSettingType.EXPLICIT_INCORRECT;
       }
@@ -668,18 +658,20 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     setupProjectSdksModel(sdksModel, project, projectSdk);
     recreateGradleJdkComboBox(project, sdksModel);
 
-    SdkLookupProvider sdkLookupProvider = getSdkLookupProvider(myGradleJdkComboBox.getModel().getProject());
+    SdkLookupProvider sdkLookupProvider = getSdkLookupProvider(project);
     String externalProjectPath = myInitialSettings.getExternalProjectPath();
     addUsefulGradleJvmReferences(myGradleJdkComboBox, externalProjectPath);
     setSelectedGradleJvmReference(myGradleJdkComboBox, sdkLookupProvider, externalProjectPath, settings.getGradleJvm());
   }
 
   private void recreateGradleJdkComboBox(@NotNull Project project, @NotNull ProjectSdksModel sdksModel) {
-    if (myGradleJdkComboBox != null) {
-      myGradleJdkComboBoxWrapper.remove(myGradleJdkComboBox);
+    if (myGradleJdkComboBoxWrapper != null) {
+      if (myGradleJdkComboBox != null) {
+        myGradleJdkComboBoxWrapper.remove(myGradleJdkComboBox);
+      }
+      myGradleJdkComboBox = new SdkComboBox(createJdkComboBoxModel(project, sdksModel));
+      myGradleJdkComboBoxWrapper.add(myGradleJdkComboBox, BorderLayout.CENTER);
     }
-    myGradleJdkComboBox = new SdkComboBox(createJdkComboBoxModel(project, sdksModel));
-    myGradleJdkComboBoxWrapper.add(myGradleJdkComboBox, BorderLayout.CENTER);
   }
 
   private void resetWrapperControls(String linkedProjectPath, @NotNull GradleProjectSettings settings, boolean isDefaultModuleCreation) {
@@ -788,17 +780,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       return;
     }
     myShowBalloonIfNecessary = false;
-    MessageType messageType = null;
-    switch (myGradleHomeSettingType) {
-      case DEDUCED:
-        messageType = MessageType.INFO;
-        break;
-      case EXPLICIT_INCORRECT:
-      case UNKNOWN:
-        messageType = MessageType.ERROR;
-        break;
-      default:
-    }
+    MessageType messageType = switch (myGradleHomeSettingType) {
+      case DEDUCED -> MessageType.INFO;
+      case EXPLICIT_INCORRECT, UNKNOWN -> MessageType.ERROR;
+      default -> null;
+    };
     if (messageType != null) {
       new DelayedBalloonInfo(messageType, myGradleHomeSettingType, BALLOON_DELAY_MILLIS).run();
     }
@@ -808,8 +794,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     if (wizardContext != null && wizardContext.getProject() != null) {
       project = wizardContext.getProject();
     }
-    if (project != null && project != myProjectRef.get()
-        && Disposer.findRegisteredObject(project, myProjectRefDisposable) == null) {
+    if (project != null && project != myProjectRef.get()) {
       Disposer.register(project, myProjectRefDisposable);
     }
     myProjectRef.set(project);
@@ -827,7 +812,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     }
     int count = result.getComponentCount();
 
-    configuration.consume(result);
+    configuration.accept(result);
 
     if (result.getComponentCount() > count) {
       content.add(result, ExternalSystemUiUtil.getFillLineConstraints(0).insets(0, 0, 0, 0));
@@ -941,10 +926,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof MyItem)) return false;
-      MyItem item = (MyItem)o;
-      return Objects.equals(value, item.value);
+      return this == o || o instanceof MyItem<?> item && Objects.equals(value, item.value);
     }
 
     @Override
@@ -998,7 +980,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     @NotNull
     @NlsContexts.ListItem
-    private String getText(@Nullable Boolean state) {
+    private static String getText(@Nullable Boolean state) {
       if (state == Boolean.TRUE) {
         return GradleConstants.GRADLE_NAME; //NON-NLS GRADLE_NAME
       }
@@ -1030,7 +1012,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     @NotNull
     @NlsContexts.ListItem
-    private String getText(@Nullable TestRunner runner) {
+    private static String getText(@Nullable TestRunner runner) {
       if (runner == TestRunner.GRADLE) {
         return GradleConstants.GRADLE_NAME;  //NON-NLS GRADLE_NAME
       }
@@ -1063,18 +1045,14 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     @NotNull
     @NlsContexts.ListItem
-    private String getText(@Nullable DistributionType value) {
+    private static String getText(@Nullable DistributionType value) {
       if (value != null) {
-        switch (value) {
-          case BUNDLED:
-            return GradleBundle.message("gradle.settings.text.distribution.bundled", GradleVersion.current().getVersion());
-          case DEFAULT_WRAPPED:
-            return GradleBundle.message("gradle.settings.text.distribution.wrapper");
-          case WRAPPED:
-            return GradleBundle.message("gradle.settings.text.distribution.wrapper.task");
-          case LOCAL:
-            return GradleBundle.message("gradle.settings.text.distribution.location");
-        }
+        return switch (value) {
+          case BUNDLED -> GradleBundle.message("gradle.project.settings.distribution.bundled");
+          case DEFAULT_WRAPPED -> GradleBundle.message("gradle.project.settings.distribution.wrapper");
+          case WRAPPED -> GradleBundle.message("gradle.project.settings.distribution.wrapper.task");
+          case LOCAL -> GradleBundle.message("gradle.project.settings.distribution.local");
+        };
       }
       LOG.error("Unexpected: " + value);
       return GradleBundle.message("gradle.settings.text.unexpected", value);

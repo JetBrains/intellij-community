@@ -15,8 +15,8 @@
  */
 package com.intellij.framework.library.impl;
 
-import com.intellij.framework.library.DownloadableLibraryFileDescription;
 import com.intellij.framework.FrameworkAvailabilityCondition;
+import com.intellij.framework.library.DownloadableLibraryFileDescription;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.download.impl.DownloadableFileSetDescriptionImpl;
@@ -33,7 +33,7 @@ public class FrameworkLibraryVersionImpl extends DownloadableFileSetDescriptionI
   public FrameworkLibraryVersionImpl(@Nullable String libraryName,
                                      @NotNull String versionString,
                                      @NotNull FrameworkAvailabilityCondition availabilityCondition,
-                                     @NotNull List<DownloadableLibraryFileDescription> libraryFiles,
+                                     @NotNull List<? extends DownloadableLibraryFileDescription> libraryFiles,
                                      @NotNull String category) {
     super(category, versionString, libraryFiles);
     myLibraryName = libraryName;

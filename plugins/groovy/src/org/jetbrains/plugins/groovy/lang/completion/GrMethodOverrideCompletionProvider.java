@@ -65,7 +65,7 @@ class GrMethodOverrideCompletionProvider extends CompletionProvider<CompletionPa
       PsiSubstitutor substitutor = candidateInfo.getSubstitutor();
       String parameters = PsiFormatUtil.formatMethod(method, substitutor, PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_NAME);
       String visibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
-      String modifiers = (visibility == PsiModifier.PACKAGE_LOCAL ? "" : visibility + " ");
+      String modifiers = visibility.equals(PsiModifier.PACKAGE_LOCAL) ? "" : visibility + " ";
       PsiType type = substitutor.substitute(method.getReturnType());
       String parentClassName = psiClass == null ? "" : psiClass.getName();
       String signature = modifiers + (type == null ? "" : type.getPresentableText() + " ") + method.getName();

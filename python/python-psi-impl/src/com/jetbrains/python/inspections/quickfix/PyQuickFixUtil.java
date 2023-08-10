@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,14 +19,12 @@ public final class PyQuickFixUtil {
       return null;
     }
 
-    EditorFactory instance = EditorFactory.getInstance();
-    return instance == null ? null : instance.editors(document).findFirst().orElse(null);
+    return PsiEditorUtil.findEditor(element);
   }
 
   public static @Nullable PsiElement dereference(PsiElement element) {
     if (element instanceof PyReferenceExpression) {
-      PsiReference reference = element.getReference();
-      return reference != null ? reference.resolve() : null;
+      return element.getReference().resolve();
     }
     return element;
   }

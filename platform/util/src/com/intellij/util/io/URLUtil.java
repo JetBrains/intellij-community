@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ThreeState;
 import com.intellij.util.UrlUtilRt;
@@ -233,7 +234,7 @@ public final class URLUtil {
       host = host.substring(at + 1);
     }
     else {
-      int firstColon = host.indexOf(':');
+      int firstColon = host.indexOf("://");
       if (firstColon > 0) {
         host = host.substring(firstColon + 3);
       }
@@ -265,7 +266,8 @@ public final class URLUtil {
    * Encodes a URI component by replacing each instance of certain characters by one, two, three,
    * or four escape sequences representing the UTF-8 encoding of the character.
    * Behaves similarly to standard JavaScript build-in function <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent">encodeURIComponent</a>.
-   * @param s  a component of a URI
+   *
+   * @param s a component of a URI
    * @return a new string representing the provided string encoded as a URI component
    */
   public static @NotNull String encodeURIComponent(@NotNull String s) {
@@ -326,5 +328,23 @@ public final class URLUtil {
   public static @NotNull String extractPath(@NotNull String url) {
     int index = url.indexOf(SCHEME_SEPARATOR);
     return index >= 0 ? url.substring(index + SCHEME_SEPARATOR.length()) : url;
+  }
+
+  public static String encodePath(String path) {
+    try {
+      return new URI(null, null, path, null, null).toASCIIString();
+    }
+    catch (URISyntaxException e) {
+      return path;
+    }
+  }
+
+  public static String encodeQuery(String query) {
+    try {
+      return new URI(null, null, null, query, null).toASCIIString().substring(1);  // remove leading ?
+    }
+    catch (URISyntaxException e) {
+      return query;
+    }
   }
 }

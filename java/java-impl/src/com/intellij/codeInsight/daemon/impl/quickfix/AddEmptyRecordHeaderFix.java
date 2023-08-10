@@ -1,39 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiRecordHeader;
+import com.intellij.psi.PsiTypeParameterList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class AddEmptyRecordHeaderFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class AddEmptyRecordHeaderFix extends PsiUpdateModCommandAction<PsiClass> {
   public AddEmptyRecordHeaderFix(@NotNull PsiClass record) {
     super(record);
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    PsiClass record = (PsiClass)startElement;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiClass record, @NotNull ModPsiUpdater updater) {
     if (!record.isRecord() || record.getRecordHeader() != null) return;
     PsiTypeParameterList typeParameterList = record.getTypeParameterList();
     if (typeParameterList == null) return;
-    PsiRecordHeader recordHeader = JavaPsiFacade.getElementFactory(project).createRecordHeaderFromText("", record);
+    PsiRecordHeader recordHeader = JavaPsiFacade.getElementFactory(context.project())
+      .createRecordHeaderFromText("", record);
     record.addAfter(recordHeader, typeParameterList);
-  }
-
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
-  @Override
-  public String getText() {
-    return getFamilyName();
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)

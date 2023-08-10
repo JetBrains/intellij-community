@@ -22,7 +22,7 @@ import com.intellij.util.Consumer
 
 class LogbackDeclarationSearcher : PomDeclarationSearcher() {
 
-  override fun findDeclarationsAt(element: PsiElement, offsetInElement: Int, consumer: Consumer<PomTarget>) {
+  override fun findDeclarationsAt(element: PsiElement, offsetInElement: Int, consumer: Consumer<in PomTarget>) {
     if (appenderDeclarationPattern.accepts(element)) {
       consumer.consume(AppenderTarget(element))
     }

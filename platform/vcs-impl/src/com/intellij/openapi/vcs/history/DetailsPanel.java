@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.ide.CopyProvider;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -83,7 +84,7 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
     for (TreeNodeOnVcsRevision revision : mySelection) {
       String message = revision.getRevision().getCommitMessage();
       if (StringUtil.isEmpty(message)) continue;
-      if (html.length() > 0) {
+      if (!html.isEmpty()) {
         html.append("<br/><br/>"); //NON-NLS
       }
       if (addRevisionInfo) {
@@ -99,6 +100,11 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
   @Override
   public Color getBackground() {
     return UIUtil.getEditorPaneBackground();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

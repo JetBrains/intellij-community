@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -53,7 +55,9 @@ public final class GitRepositoryFiles {
   private static final @NonNls String SHALLOW = "shallow";
   private static final @NonNls String LOGS = "logs";
   private static final @NonNls String STASH = "stash";
+  private static final @NonNls String WORKTREES_DIR = "worktrees";
 
+  private final VirtualFile myRootDir;
   private final VirtualFile myMainDir;
   private final VirtualFile myWorktreeDir;
 
@@ -78,8 +82,17 @@ public final class GitRepositoryFiles {
   private final @NonNls String myHooksDirPath;
   private final @NonNls String myShallow;
   private final @NonNls String myStashReflogPath;
+  private final @NonNls String myWorktreesDirPath;
 
-  private GitRepositoryFiles(@NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
+  private @Nullable @NonNls String myCustomHooksDirPath;
+
+  /**
+   * @param rootDir     Root of the repository (parent directory of '.git' file/directory).
+   * @param mainDir     '.git' directory location. For worktrees - location of the 'main_repo/.git'.
+   * @param worktreeDir '.git' directory location. For worktrees - location of the 'main_repo/.git/worktrees/worktree_name/'.
+   */
+  private GitRepositoryFiles(@NotNull VirtualFile rootDir, @NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
+    myRootDir = rootDir;
     myMainDir = mainDir;
     myWorktreeDir = worktreeDir;
 
@@ -95,6 +108,7 @@ public final class GitRepositoryFiles {
     myHooksDirPath = mainPath + slash(HOOKS);
     myShallow = mainPath + slash(SHALLOW);
     myStashReflogPath = mainPath + slash(LOGS) + slash(REFS) + slash(STASH);
+    myWorktreesDirPath = mainPath + slash(WORKTREES_DIR);
 
     String worktreePath = myWorktreeDir.getPath();
     myHeadFilePath = worktreePath + slash(HEAD);
@@ -111,10 +125,11 @@ public final class GitRepositoryFiles {
   }
 
   @NotNull
-  public static GitRepositoryFiles getInstance(@NotNull VirtualFile gitDir) {
+  public static GitRepositoryFiles createInstance(@NotNull VirtualFile rootDir,
+                                                  @NotNull VirtualFile gitDir) {
     VirtualFile gitDirForWorktree = getMainGitDirForWorktree(gitDir);
     VirtualFile mainDir = gitDirForWorktree == null ? gitDir : gitDirForWorktree;
-    return new GitRepositoryFiles(mainDir, gitDir);
+    return new GitRepositoryFiles(rootDir, mainDir, gitDir);
   }
 
   /**
@@ -182,7 +197,7 @@ public final class GitRepositoryFiles {
   }
 
   @NotNull
-  File getConfigFile() {
+  public File getConfigFile() {
     return file(myConfigFilePath);
   }
 
@@ -221,19 +236,35 @@ public final class GitRepositoryFiles {
     return file(myMergeSquashPath);
   }
 
+  public void updateCustomPaths(@NotNull GitConfig.Core core) {
+    String hooksPath = core.getHooksPath();
+    if (hooksPath != null) {
+      try {
+        myCustomHooksDirPath = myRootDir.toNioPath().resolve(hooksPath).toString();
+      }
+      catch (InvalidPathException e) {
+        LOG.warn("Can't resolve custom hooks path: '" + hooksPath + "'");
+        myCustomHooksDirPath = null;
+      }
+    }
+    else {
+      myCustomHooksDirPath = null;
+    }
+  }
+
   @NotNull
   public File getPreCommitHookFile() {
-    return file(myHooksDirPath + slash(PRE_COMMIT_HOOK));
+    return hook(PRE_COMMIT_HOOK);
   }
 
   @NotNull
   public File getPrePushHookFile() {
-    return file(myHooksDirPath + slash(PRE_PUSH_HOOK));
+    return hook(PRE_PUSH_HOOK);
   }
 
   @NotNull
   public File getCommitMsgHookFile() {
-    return file(myHooksDirPath + slash(COMMIT_MSG_HOOK));
+    return hook(COMMIT_MSG_HOOK);
   }
 
   @NotNull
@@ -249,6 +280,16 @@ public final class GitRepositoryFiles {
   @NotNull
   public File getStashReflogFile() {
     return file(myStashReflogPath);
+  }
+
+  @NotNull
+  public File getWorktreesDirFile() {
+    return file(myWorktreesDirPath);
+  }
+
+  @NotNull
+  private File hook(@NotNull String filePath) {
+    return file(ObjectUtils.chooseNotNull(myCustomHooksDirPath, myHooksDirPath) + slash(filePath));
   }
 
   @NotNull
@@ -374,7 +415,7 @@ public final class GitRepositoryFiles {
 
   /**
    * Refresh that part of .git repository files, which is not covered by {@link GitRepository#update()}, e.g. the {@code refs/tags/} dir.
-   *
+   * <p>
    * The call to this method should be probably be done together with a call to update(): thus all information will be updated,
    * but some of it will be updated synchronously, the rest - asynchronously.
    */

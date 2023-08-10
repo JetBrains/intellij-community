@@ -1,6 +1,10 @@
 <html>
 <body>
-Detects <b>package</b> statements that do not correspond to the project directory structure
-and reports classes without <b>package</b> statements.
+Detects <code>package</code> statements that do not correspond to the project directory structure.
+Also, reports classes without <code>package</code> statements if the class is not located directly in
+source root directory.
+<p>While it's not strictly mandated by Java language, it's good to keep classes 
+from package <code>com.example.myapp</code> inside the <code>com/example/myapp</code> directory under 
+  the source root. Failure to do this may confuse code readers and make some tools working incorrectly.</p>
 </body>
 </html>

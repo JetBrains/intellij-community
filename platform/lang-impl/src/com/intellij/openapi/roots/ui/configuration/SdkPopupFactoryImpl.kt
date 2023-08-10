@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.ui.configuration.SdkPopupBuilder.SuggestedSdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -41,6 +42,7 @@ private data class SdkPopupBuilderImpl(
   val sdkTypeFilter: Condition<SdkTypeId>? = null,
   val sdkTypeCreateFilter: Condition<SdkTypeId>? = null,
   val sdkFilter: Condition<Sdk>? = null,
+  val suggestedSdkFilter: Condition<SuggestedSdk>? = null,
 
   val registerNewSdk : Boolean = false,
   val updateProjectSdk : Boolean = false,
@@ -50,6 +52,8 @@ private data class SdkPopupBuilderImpl(
 
   val onItemSelected: Consumer<SdkListItem>? = null,
   val onSdkSelected: Consumer<Sdk>? = null,
+  val withAddActions: Boolean? = null,
+  val withDownloadActions: Boolean? = null,
   val onPopupClosed: Runnable? = null
 ) : SdkPopupBuilder {
   override fun registerNewSdk() = copy(registerNewSdk = true)
@@ -64,6 +68,9 @@ private data class SdkPopupBuilderImpl(
   override fun withSdkTypeFilter(filter: Condition<SdkTypeId>) = copy(sdkTypeFilter = filter)
   override fun withSdkTypeCreateFilter(filter: Condition<SdkTypeId>) = copy(sdkTypeCreateFilter = filter)
   override fun withSdkFilter(filter: Condition<Sdk>) = copy(sdkFilter = filter)
+  override fun withSuggestedSdkFilter(filter: Condition<SuggestedSdk>) = copy(suggestedSdkFilter = filter)
+  override fun withNoAddActions() = copy(withAddActions = false)
+  override fun withNoDownlaodActions() = copy(withDownloadActions = false)
   override fun onItemSelected(onItemSelected: Consumer<SdkListItem>) = copy(onItemSelected = onItemSelected)
   override fun onPopupClosed(onClosed: Runnable) = copy(onPopupClosed = onClosed)
   override fun onSdkSelected(onSdkSelected: Consumer<Sdk>) = copy(onSdkSelected = onSdkSelected)
@@ -91,7 +98,7 @@ private interface SdkPopupListener {
 internal class PlatformSdkPopupFactory : SdkPopupFactory {
   override fun createBuilder(): SdkPopupBuilder = SdkPopupBuilderImpl()
 
-  override fun createEditorNotificationPanelHandler(builder: SdkPopupBuilder) = object : ActionHandler {
+  override fun createEditorNotificationPanelHandler(builder: SdkPopupBuilder): ActionHandler = object : ActionHandler {
     override fun handlePanelActionClick(panel: EditorNotificationPanel,
                                         event: HyperlinkEvent) {
       //FileEditorManager#addTopComponent wraps the panel to implement borders, unwrapping
@@ -120,6 +127,9 @@ internal class PlatformSdkPopupFactory : SdkPopupFactory {
       require(sdkTypeFilter == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
       require(sdkTypeCreateFilter == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
       require(sdkFilter == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
+      require(suggestedSdkFilter == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
+      require(withAddActions == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
+      require(withDownloadActions == null) { "sdkListModelBuilder was set explicitly via " + ::withSdkListModelBuilder.name }
       sdkListModelBuilder
     }
     else {
@@ -128,7 +138,23 @@ internal class PlatformSdkPopupFactory : SdkPopupFactory {
         sdksModel,
         sdkTypeFilter,
         sdkTypeCreateFilter,
-        sdkFilter
+        sdkFilter,
+        Condition {
+          val box = object : SuggestedSdk {
+            override val type: SdkTypeId get() = it.sdkType
+            override val versionString: String get() = it.version
+            override val homePath: String get() = it.homePath
+            override fun toString() = "SuggestedSdk($it)"
+          }
+          it != null && (suggestedSdkFilter?.value(box) != false)
+        },
+        Condition {
+          when(it) {
+            SdkListItem.ActionRole.ADD -> withAddActions != false
+            SdkListItem.ActionRole.DOWNLOAD -> withDownloadActions != false
+            else -> true
+          }
+        }
       )
     }
 
@@ -299,7 +325,7 @@ private class SdkListItemContext(
 ) : ComboBoxPopup.Context<SdkListItem> {
   var myModel = SdkListModel.emptyModel()
 
-  private val myRenderer = SdkListPresenter { myModel }
+  private val myRenderer = SdkListPresenter.create<SdkListItem>(null, { myModel }, { it })
 
   override fun getProject() = myProject
   override fun getMaximumRowCount() = 30

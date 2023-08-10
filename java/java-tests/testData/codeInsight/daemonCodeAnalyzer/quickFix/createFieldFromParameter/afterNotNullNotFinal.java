@@ -1,4 +1,4 @@
-// "Create field for parameter 'name'" "true"
+// "Create field for parameter 'name'" "true-preview"
 
 import org.jetbrains.annotations.NotNull;
 

@@ -1,0 +1,5 @@
+// AFTER-WARNING: Parameter 'args' is never used
+fun main(args: Array<String>) {
+    val foo: String? = "foo"
+    if (foo != null) foo.length
+}

@@ -84,7 +84,7 @@ public final class SidePanel extends JPanel {
       @Override
       protected void layout() {
         myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
-        myExtraPanel.add(myComponent, BorderLayout.CENTER);
+        myExtraPanel.add(getItemComponent(), BorderLayout.CENTER);
         myExtraPanel.add(myCountLabel, BorderLayout.EAST);
         myRendererComponent.add(myExtraPanel, BorderLayout.CENTER);
       }
@@ -97,7 +97,7 @@ public final class SidePanel extends JPanel {
                                                     boolean cellHasFocus) {
         layout();
         myCountLabel.setText("");
-        final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if ("Problems".equals(descriptor.getTextFor(value))) {
           final ErrorPaneConfigurable errorPane = (ErrorPaneConfigurable)value.myPlace.getPath("category");
           int errorsCount;
@@ -106,12 +106,12 @@ public final class SidePanel extends JPanel {
             myCountLabel.setText(errorsCount > 100 ? "100+" : String.valueOf(errorsCount));
           }
         }
-        if (UIUtil.isClientPropertyTrue(list, ExpandableItemsHandler.EXPANDED_RENDERER)) {
+        if (ClientProperty.isTrue(list, ExpandableItemsHandler.EXPANDED_RENDERER)) {
           Rectangle bounds = list.getCellBounds(index, index);
           bounds.setSize((int)component.getPreferredSize().getWidth(), (int)bounds.getHeight());
           AbstractExpandableItemsHandler.setRelativeBounds(component, bounds, myExtraPanel, myValidationParent);
           myExtraPanel.setSize((int)myExtraPanel.getPreferredSize().getWidth(), myExtraPanel.getHeight());
-          ComponentUtil.putClientProperty(myExtraPanel, ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
+          myExtraPanel.putClientProperty(ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
           return myExtraPanel;
         }
         return component;
@@ -120,6 +120,7 @@ public final class SidePanel extends JPanel {
       @Override
       protected JComponent createItemComponent() {
         myExtraPanel = new NonOpaquePanel(new BorderLayout());
+
         myCountLabel = new SidePanelCountLabel();
         final JComponent component = super.createItemComponent();
 

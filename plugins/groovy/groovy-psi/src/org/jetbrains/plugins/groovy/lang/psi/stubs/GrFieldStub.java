@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 
-/**
- * @author ilyas
- */
 public class GrFieldStub extends GrVariableStubBase<GrField> {
 
   public static final byte IS_PROPERTY = 0x01;

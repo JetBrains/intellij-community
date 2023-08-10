@@ -18,8 +18,5 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 
-/**
- * @author ilyas
- */
 public interface GrDocInlinedTag extends GrDocTag, PsiInlineDocTag {
 }

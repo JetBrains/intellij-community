@@ -31,8 +31,8 @@ public interface PsiNamedElement extends PsiElement {
    * Renames the element.
    *
    * @param name the new element name.
-   * @return the element corresponding to this element after the rename (either {@code this}
-   * or a different element if the rename caused the element to be replaced).
+   * @return the element corresponding to this element after the renaming (either {@code this}
+   * or a different element if the renaming caused the element to be replaced).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement setName(@NlsSafe @NotNull String name) throws IncorrectOperationException;

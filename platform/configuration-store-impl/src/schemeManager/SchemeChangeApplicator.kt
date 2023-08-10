@@ -1,44 +1,48 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeContentChangedHandler
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.CollectionFactory
 import java.util.function.Function
 
-internal interface SchemeChangeEvent {
-  fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>)
+internal sealed interface SchemeChangeEvent<T : Scheme, M : T> {
+  fun execute(schemaLoader: Lazy<SchemeLoader<T, M>>, schemeManager: SchemeManagerImpl<T, M>)
 }
 
 internal interface SchemeAddOrUpdateEvent {
   val file: VirtualFile
 }
 
-private fun findExternalizableSchemeByFileName(fileName: String, schemeManager: SchemeManagerImpl<Any, Any>): Any? {
+private fun <T : Scheme, M : T> findExternalizableSchemeByFileName(fileName: String, schemeManager: SchemeManagerImpl<T, M>): T? {
   return schemeManager.schemes.firstOrNull {
     fileName == getSchemeFileName(schemeManager, it)
   }
 }
 
-internal fun <T : Any> getSchemeFileName(schemeManager: SchemeManagerImpl<T, T>, scheme: T): String {
+internal fun <T : Scheme, M : T> getSchemeFileName(schemeManager: SchemeManagerImpl<T, M>, scheme: T): String {
   return "${schemeManager.getFileName(scheme)}${schemeManager.schemeExtension}"
 }
 
-internal fun <T : Any> readSchemeFromFile(file: VirtualFile, schemeLoader: SchemeLoader<T, T>, schemeManager: SchemeManagerImpl<T, T>): T? {
+internal fun <T : Scheme, M : T> readSchemeFromFile(file: VirtualFile,
+                                                    schemeLoader: SchemeLoader<T, M>,
+                                                    schemeManager: SchemeManagerImpl<T, M>): T? {
   val fileName = file.name
   if (file.isDirectory || !schemeManager.canRead(fileName)) {
     return null
   }
 
   return catchAndLog({ file.path }) {
-    schemeLoader.loadScheme(fileName, null, file.contentsToByteArray())
+    schemeLoader.loadScheme(fileName = fileName, input = null, preloadedBytes = file.contentsToByteArray())
   }
 }
 
-internal class SchemeChangeApplicator(private val schemeManager: SchemeManagerImpl<Any, Any>) {
-  fun reload(events: Collection<SchemeChangeEvent>) {
+internal class SchemeChangeApplicator<T : Scheme, M : T>(private val schemeManager: SchemeManagerImpl<T, M>) {
+  fun reload(events: Collection<SchemeChangeEvent<T, M>>) {
     val lazySchemeLoader = lazy { schemeManager.createSchemeLoader() }
     doReload(events, lazySchemeLoader)
     if (lazySchemeLoader.isInitialized()) {
@@ -46,9 +50,9 @@ internal class SchemeChangeApplicator(private val schemeManager: SchemeManagerIm
     }
   }
 
-  private fun doReload(events: Collection<SchemeChangeEvent>, lazySchemaLoader: Lazy<SchemeLoader<Any, Any>>) {
+  private fun doReload(events: Collection<SchemeChangeEvent<T, M>>, lazySchemaLoader: Lazy<SchemeLoader<T, M>>) {
     val oldActiveScheme = schemeManager.activeScheme
-    var newActiveScheme: Any? = null
+    var newActiveScheme: T? = null
 
     val processor = schemeManager.processor
     for (event in sortSchemeChangeEvents(events)) {
@@ -64,7 +68,9 @@ internal class SchemeChangeApplicator(private val schemeManager: SchemeManagerIm
       }
 
       val fileName = file.name
-      val changedScheme = findExternalizableSchemeByFileName(fileName, schemeManager)
+
+      @Suppress("UNCHECKED_CAST")
+      val changedScheme = findExternalizableSchemeByFileName(fileName, schemeManager) as M?
       if (callSchemeContentChangedIfSupported(changedScheme, fileName, file, schemeManager)) {
         continue
       }
@@ -99,13 +105,13 @@ internal class SchemeChangeApplicator(private val schemeManager: SchemeManagerIm
 
     if (newActiveScheme != null) {
       schemeManager.activeScheme = newActiveScheme
-      processor.onCurrentSchemeSwitched(oldActiveScheme, newActiveScheme, false)
+      processor.onCurrentSchemeSwitched(oldScheme = oldActiveScheme, newScheme = newActiveScheme, processChangeSynchronously = false)
     }
   }
 }
 
 // exposed for test only
-internal fun sortSchemeChangeEvents(inputEvents: Collection<SchemeChangeEvent>): Collection<SchemeChangeEvent> {
+internal fun <T : Scheme, M : T> sortSchemeChangeEvents(inputEvents: Collection<SchemeChangeEvent<T, M>>): Collection<SchemeChangeEvent<T, M>> {
   if (inputEvents.size < 2) {
     return inputEvents
   }
@@ -113,8 +119,8 @@ internal fun sortSchemeChangeEvents(inputEvents: Collection<SchemeChangeEvent>):
   var isThereSomeRemoveEvent = false
 
 
-  val existingAddOrUpdate = CollectionFactory.createSmallMemoryFootprintSet<String>()
-  val removedFileNames = CollectionFactory.createSmallMemoryFootprintSet<String>()
+  val existingAddOrUpdate = HashSet<String>()
+  val removedFileNames = HashSet<String>()
   val result = ArrayList(inputEvents)
   // first, remove any event before RemoveAllSchemes and remove RemoveScheme event if there is any subsequent add/update
   for (i in (result.size - 1) downTo 0) {
@@ -145,12 +151,7 @@ internal fun sortSchemeChangeEvents(inputEvents: Collection<SchemeChangeEvent>):
     }
   }
 
-  fun weight(event: SchemeChangeEvent): Int {
-    return when (event) {
-      is SchemeAddOrUpdateEvent -> 1
-      else -> 0
-    }
-  }
+  fun weight(event: SchemeChangeEvent<T, M>): Int = if (event is SchemeAddOrUpdateEvent) 1 else 0
 
   if (isThereSomeRemoveEvent) {
     // second, move all RemoveScheme to first place, to ensure that SchemeLoader will be not created during processing of RemoveScheme event
@@ -163,14 +164,17 @@ internal fun sortSchemeChangeEvents(inputEvents: Collection<SchemeChangeEvent>):
   return result
 }
 
-private fun callSchemeContentChangedIfSupported(changedScheme: Any?, fileName: String, file: VirtualFile, schemeManager: SchemeManagerImpl<Any, Any>): Boolean {
+private fun <T : Scheme, M : T> callSchemeContentChangedIfSupported(changedScheme: M?,
+                                                                    fileName: String,
+                                                                    file: VirtualFile,
+                                                                    schemeManager: SchemeManagerImpl<T, M>): Boolean {
   if (changedScheme == null || schemeManager.processor !is SchemeContentChangedHandler<*> || schemeManager.processor !is LazySchemeProcessor) {
     return false
   }
 
   // unrealistic case, but who knows
-  val externalInfo = schemeManager.schemeToInfo.get(changedScheme) ?: return false
-  catchAndLog({ file.path }) {
+  val externalInfo = schemeManager.schemeListManager.getExternalInfo(changedScheme) ?: return false
+  return catchAndLog({ file.path }) {
     val bytes = file.contentsToByteArray()
     lazyPreloadScheme(bytes, schemeManager.isOldSchemeNaming) { name, parser ->
       val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
@@ -179,10 +183,11 @@ private fun callSchemeContentChangedIfSupported(changedScheme: Any?, fileName: S
                        ?: throw nameIsMissed(bytes)
 
       val dataHolder = SchemeDataHolderImpl(schemeManager.processor, bytes, externalInfo)
+
+      val processor = schemeManager.processor
       @Suppress("UNCHECKED_CAST")
-      (schemeManager.processor as SchemeContentChangedHandler<Any>).schemeContentChanged(changedScheme, schemeName, dataHolder)
+      (processor as SchemeContentChangedHandler<M>).schemeContentChanged(changedScheme, schemeName, dataHolder)
     }
-    return true
-  }
-  return false
+    true
+  } ?: false
 }

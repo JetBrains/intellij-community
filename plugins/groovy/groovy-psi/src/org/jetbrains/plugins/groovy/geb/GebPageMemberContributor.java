@@ -17,9 +17,6 @@ import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.sorryCannotKnowElementKind;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GebPageMemberContributor extends NonCodeMembersContributor {
 
   @Override
@@ -41,8 +38,7 @@ public class GebPageMemberContributor extends NonCodeMembersContributor {
       PsiElement grClosure = grCall.getParent();
       if (grClosure instanceof GrClosableBlock) {
         PsiElement contentField = grClosure.getParent();
-        if (contentField instanceof GrField) {
-          GrField f = (GrField)contentField;
+        if (contentField instanceof GrField f) {
           if ("content".equals(f.getName()) && f.hasModifierProperty(PsiModifier.STATIC) && f.getContainingClass() == aClass) {
             Map<String, PsiMember> elements = GebUtil.getContentElements(aClass);
             for (PsiMember element : elements.values()) {

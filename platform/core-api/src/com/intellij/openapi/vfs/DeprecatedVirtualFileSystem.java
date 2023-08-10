@@ -1,10 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +21,17 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
   protected void startEventPropagation() {
     Application app = ApplicationManager.getApplication();
     if (app != null) {
-      app.getMessageBus().connect().subscribe(
+      ExtensionPoint<KeyedLazyInstance<VirtualFileSystem>> extensionPoint = app.getExtensionArea().getExtensionPointIfRegistered(VirtualFileSystem.EP_NAME.getName());
+      MessageBusConnection connection;
+      if (extensionPoint != null) {
+        Disposable extensionDisposable = ExtensionPointUtil.createExtensionDisposable(this, extensionPoint, ep -> ep.getKey().equals(getProtocol()));
+        connection = app.getMessageBus().connect(extensionDisposable);
+      }
+      else {
+        connection = app.getMessageBus().connect();
+      }
+
+      connection.subscribe(
         VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(myEventDispatcher.getMulticaster(), this));
     }
   }
@@ -123,21 +138,18 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     throw unsupported("renameFile", vFile);
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
+  public @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     throw unsupported("createChildFile", vDir);
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
+  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     throw unsupported("createChildDirectory", vDir);
   }
 
-  @NotNull
   @Override
-  public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException {
+  public @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException {
     throw unsupported("copyFile", vFile);
   }
 

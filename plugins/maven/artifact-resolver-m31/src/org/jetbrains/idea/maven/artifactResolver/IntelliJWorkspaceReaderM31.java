@@ -25,9 +25,6 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 @Component(role = WorkspaceReader.class, hint = "ide")
 public class IntelliJWorkspaceReaderM31 implements WorkspaceReader {
 

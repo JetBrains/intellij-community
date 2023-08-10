@@ -1,9 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
+import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
+import com.intellij.openapi.vfs.encoding.EncodingManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+import java.io.File
 import java.nio.charset.Charset
 
 /**
@@ -11,23 +15,34 @@ import java.nio.charset.Charset
  */
 @ApiStatus.Experimental
 sealed class PythonExecution {
-  var workingDir: TargetEnvironmentFunction<String?>? = null
+  /**
+   * Path to workdir on target
+   */
+  var workingDir: TargetEnvironmentFunction<out FullPathOnTarget?>? = null
 
+  /** Parameters that return [SKIP_ARGUMENT] are removed from the resulting argument list. */
   val parameters: MutableList<TargetEnvironmentFunction<String>> = mutableListOf()
 
   val envs: MutableMap<String, TargetEnvironmentFunction<String>> = mutableMapOf()
 
-  var charset: Charset? = null
+  var charset: Charset = EncodingManager.getInstance().defaultConsoleEncoding
+
+  var inputFile: File? = null
 
   fun addParameter(value: String) {
     addParameter(constant(value))
   }
 
+  /** If the function returns [SKIP_ARGUMENT], the parameter will be removed from the resulting argument list. */
   fun addParameter(value: TargetEnvironmentFunction<String>) {
     parameters.add(value)
   }
 
   fun addParameters(vararg parameters: String) {
+    parameters.forEach { parameter -> addParameter(parameter) }
+  }
+
+  fun addParameters(parameters: List<String>) {
     parameters.forEach { parameter -> addParameter(parameter) }
   }
 
@@ -39,6 +54,10 @@ sealed class PythonExecution {
     envs[key] = value
   }
 
+  fun withInputFile(file: File) {
+    inputFile = file
+  }
+
   /**
    * Java alternative for [PythonExecution] sealed Kotlin class functionality.
    */
@@ -48,6 +67,12 @@ sealed class PythonExecution {
     fun visit(pythonScriptExecution: PythonScriptExecution)
 
     fun visit(pythonModuleExecution: PythonModuleExecution)
+  }
+
+  companion object {
+    /** See docs for [parameters]. */
+    // python -c 'print(repr(__import__("random").randbytes(16))[2:-1])'
+    const val SKIP_ARGUMENT = """\xdc'S>\x02\x03%\x14\xee\xc0\xa1`\xcb\r\xf0\x95"""
   }
 }
 

@@ -39,9 +39,6 @@ public final class CommandUtil {
   /**
    * Puts given value to parameters if condition is satisfied
    *
-   * @param parameters
-   * @param condition
-   * @param value
    */
   public static void put(@NotNull List<? super String> parameters, boolean condition, @NonNls @NotNull String value) {
     if (condition) {
@@ -189,8 +186,6 @@ public final class CommandUtil {
   /**
    * Gets svn status represented by single character.
    *
-   * @param type
-   * @return
    */
   public static char getStatusChar(@Nullable String type) {
     return !StringUtil.isEmpty(type) ? type.charAt(0) : ' ';

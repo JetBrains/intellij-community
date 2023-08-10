@@ -23,7 +23,7 @@ import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 import java.io.File;
 import java.util.Map;
 
-class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, String, JpsSdkType<?>> {
+final class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, String, JpsSdkType<?>> {
   private final JpsMacroExpander myExpander;
 
   JpsIdeaSpecificSettings(JpsMacroExpander expander) {

@@ -18,15 +18,15 @@ class Command:
         self.interpreter = interpreter
         self.code_fragment = code_fragment
         self.more = None
+        self.exception_occurred = False
 
-
+    @staticmethod
     def symbol_for_fragment(code_fragment):
         if code_fragment.is_single_line:
             symbol = 'single'
         else:
             symbol = 'exec' # Jython doesn't support this
         return symbol
-    symbol_for_fragment = staticmethod(symbol_for_fragment)
 
     def run(self):
         text = self.code_fragment.text

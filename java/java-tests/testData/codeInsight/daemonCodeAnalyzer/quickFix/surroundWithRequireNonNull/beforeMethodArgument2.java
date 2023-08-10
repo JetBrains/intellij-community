@@ -1,4 +1,4 @@
-// "Replace with 'Objects.requireNonNull(Math.random() > 0.5 ? get(1) : get(2))'" "true"
+// "Replace with 'Objects.requireNonNull(Math.random() > 0.5 ? get(1) : get(2))'" "true-preview"
 
 import java.util.List;
 

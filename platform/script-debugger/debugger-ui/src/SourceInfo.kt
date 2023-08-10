@@ -38,5 +38,5 @@ class SourceInfo @JvmOverloads constructor(private val file: VirtualFile, privat
 
   override fun createNavigatable(project: Project): OpenFileDescriptor = OpenFileDescriptor(project, file, line, column)
 
-  override fun toString(): String = file.path + ":" + line + if (column == -1) "" else ":" + column
+  override fun toString(): String = file.path + ":" + line + if (column == -1) "" else ":$column"
 }

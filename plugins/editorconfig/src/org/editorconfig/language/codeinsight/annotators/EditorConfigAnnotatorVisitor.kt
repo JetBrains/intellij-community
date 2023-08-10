@@ -78,6 +78,10 @@ class EditorConfigAnnotatorVisitor(private val holder: AnnotationHolder) : Edito
     holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(identifier).textAttributes(EditorConfigSyntaxHighlighter.PROPERTY_VALUE).create()
   }
 
+  override fun visitRawOptionValue(rawOptionValue: EditorConfigRawOptionValue) {
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(rawOptionValue).textAttributes(EditorConfigSyntaxHighlighter.PROPERTY_VALUE).create()
+  }
+
   override fun visitFlatPattern(flatPattern: EditorConfigFlatPattern) {
     holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(flatPattern).textAttributes(EditorConfigSyntaxHighlighter.PATTERN).create()
     if (!flatPattern.textContains('\\')) return

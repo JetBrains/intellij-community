@@ -34,7 +34,6 @@ public class SuiteInProgressState extends TestInProgressState {
 
   /**
    * If any of child failed proxy also is defect
-   * @return
    */
   @Override
   public boolean isDefect() {
@@ -53,16 +52,6 @@ public class SuiteInProgressState extends TestInProgressState {
 
     //cannot cache because one of child tests may fail in future
     return false;
-  }
-
-  @Override
-  public boolean wasTerminated() {
-    return false;
-  }
-
-  @Override
-  public Magnitude getMagnitude() {
-    return Magnitude.RUNNING_INDEX;
   }
 
   @Override

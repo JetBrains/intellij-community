@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -20,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -37,6 +24,8 @@ import java.util.Collection;
  * @author Maxim.Mossienko
  */
 public class GroovyScriptMacro extends Macro {
+  private static final Logger LOG = Logger.getInstance(GroovyScriptMacro.class);
+
   @Override
   public String getName() {
     return "groovyScript";
@@ -51,7 +40,7 @@ public class GroovyScriptMacro extends Macro {
   public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     if (params.length == 0) return null;
     Object o = runIt(params, context);
-    if (o instanceof Collection && !((Collection)o).isEmpty()) {
+    if (o instanceof Collection && !((Collection<?>)o).isEmpty()) {
       return new TextResult(toNormalizedString(((Collection)o).iterator().next()));
     }
     if (o instanceof Object[] && ((Object[])o).length > 0) {
@@ -79,7 +68,7 @@ public class GroovyScriptMacro extends Macro {
         Result paramResult = params[i].calculateResult(context);
         Object value = null;
         if (paramResult instanceof ListResult) {
-          value = ContainerUtil.map2List(((ListResult)paramResult).getComponents(), result1 -> result1.toString());
+          value = ContainerUtil.map(((ListResult)paramResult).getComponents(), result1 -> result1.toString());
         } else if (paramResult != null) {
           value = paramResult.toString();
         }
@@ -92,6 +81,7 @@ public class GroovyScriptMacro extends Macro {
 
       return script.run();
     } catch (Exception | Error e) {
+      LOG.info(e);
       return StringUtil.convertLineSeparators(e.getLocalizedMessage());
     }
   }

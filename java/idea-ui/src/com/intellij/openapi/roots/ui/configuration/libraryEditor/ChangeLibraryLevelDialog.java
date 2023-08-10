@@ -38,7 +38,6 @@ public class ChangeLibraryLevelDialog extends DialogWrapper {
     myAllowEmptyName = allowEmptyName;
     setTitle(JavaUiBundle.message(copy ? "dialog.title.0.library.copy" : "dialog.title.0.library.move"));
     myCopyFilesCheckBox.setText(JavaUiBundle.message(copy? "checkbox.0.library.files.to.copy" : "checkbox.0.library.files.to.move"));
-    myCopyFilesCheckBox.setMnemonic(copy ? 'C' : 'M');
     myCopyFilesCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

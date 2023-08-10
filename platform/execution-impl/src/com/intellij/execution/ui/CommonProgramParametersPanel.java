@@ -83,7 +83,6 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     // for backward compatibility: com.microsoft.tooling.msservices.intellij.azure:3.0.11
     myWorkingDirectoryField = new TextFieldWithBrowseButton();
 
-    //noinspection DialogTitleCapitalization
     myWorkingDirectoryField.addBrowseFolderListener(ExecutionBundle.message("select.working.directory.message"), null,
                                                     getProject(),
                                                     FileChooserDescriptorFactory.createSingleFolderDescriptor(),
@@ -102,8 +101,6 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
       initMacroSupport();
     }
 
-    setPreferredSize(new Dimension(10, 10));
-
     copyDialogCaption(myProgramParametersComponent);
   }
 
@@ -115,7 +112,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   /**
    * @deprecated use {@link MacroComboBoxWithBrowseButton}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected JComponent createComponentWithMacroBrowse(@NotNull final TextFieldWithBrowseButton textAccessor) {
     final FixedSizeButton button = new FixedSizeButton(textAccessor);
     button.setIcon(AllIcons.Actions.ListFiles);

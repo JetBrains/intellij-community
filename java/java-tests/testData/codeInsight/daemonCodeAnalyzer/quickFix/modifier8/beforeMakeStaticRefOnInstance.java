@@ -1,4 +1,4 @@
-// "Make 'filter' static" "false"
+// "Make 'filter()' static" "false"
 
 import java.util.function.Predicate;
 

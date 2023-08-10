@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -15,10 +15,13 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -51,13 +54,18 @@ public final class LightEditUtil {
 
   private static final ThreadLocal<LightEditCommandLineOptions> ourCommandLineOptions = new ThreadLocal<>();
 
+  public static final Key<Boolean> SUGGEST_SWITCH_TO_PROJECT = Key.create("light.edit.suggest.project.switch");
+
   private LightEditUtil() {
   }
 
   @Nullable
-  public static Project openFile(@NotNull Path path) {
+  public static Project openFile(@NotNull Path path, boolean suggestSwitchToProject) {
     VirtualFile virtualFile = VfsUtil.findFile(path, true);
     if (virtualFile != null) {
+      if (suggestSwitchToProject) {
+        virtualFile.putUserData(SUGGEST_SWITCH_TO_PROJECT, true);
+      }
       Project project = LightEditService.getInstance().openFile(virtualFile);
       LightEditFeatureUsagesUtil.logFileOpen(project, CommandLine);
       return project;
@@ -167,7 +175,7 @@ public final class LightEditUtil {
     }
   }
 
-  static boolean isLightEditEnabled() {
+  public static boolean isLightEditEnabled() {
     return Registry.is(ENABLED_FILE_OPEN_KEY) && !PlatformUtils.isDataGrip();
   }
 
@@ -194,7 +202,7 @@ public final class LightEditUtil {
   }
 
   @Nullable
-  public static EditorWithProviderComposite findEditorComposite(@NotNull FileEditor fileEditor) {
+  public static EditorComposite findEditorComposite(@NotNull FileEditor fileEditor) {
     return ((LightEditServiceImpl)LightEditService.getInstance()).getEditPanel().getTabs().findEditorComposite(fileEditor);
   }
 
@@ -221,21 +229,21 @@ public final class LightEditUtil {
     return project;
   }
 
+  public static void forbidServiceInLightEditMode(@Nullable Project project, @NotNull Class<?> serviceClass) {
+    if (LightEdit.owns(project)) {
+      LOG.error("LightEdit mode lacks tool windows, so " + serviceClass.getName() + " shouldn't be instantiated there. " +
+                "Please change the caller to avoid loading the service in LightEdit mode!");
+    }
+  }
+
   @NotNull
   static Project requireProject() {
     return requireLightEditProject(LightEditService.getInstance().getProject());
   }
 
-  public static <T> @NotNull T computeWithCommandLineOptions(boolean shouldWait,
-                                                             boolean lightEditMode,
-                                                             @NotNull Computable<T> computable) {
+  public static @NotNull AutoCloseable computeWithCommandLineOptions(boolean shouldWait, boolean lightEditMode) {
     ourCommandLineOptions.set(new LightEditCommandLineOptions(shouldWait, lightEditMode));
-    try {
-      return computable.compute();
-    }
-    finally {
-      ourCommandLineOptions.set(null);
-    }
+    return () -> ourCommandLineOptions.set(null);
   }
 
   public static void useCommandLineOptions(boolean shouldWait,

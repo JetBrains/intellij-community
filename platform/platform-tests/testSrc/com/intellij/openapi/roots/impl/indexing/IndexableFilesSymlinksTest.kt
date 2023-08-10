@@ -1,11 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.indexing
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.SyntheticLibrary
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.RunsInEdt
@@ -77,6 +74,35 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
     )
   }
 
+  /**
+   * Indicator of the following bug: IDEA-189247
+   * When a directory is soft-linked into a project, its excluded subdirectories are still indexed.
+   */
+  @Test
+  fun `index excluded directories if they are referenced via symlink`() {
+    lateinit var sourcesDir: DirectorySpec
+    lateinit var workspaceSymlink: SymlinkSpec
+    projectModelRule.createJavaModule("moduleName") {
+      content("contentRoot") {
+        val workspace = moduleDir("workspace") {
+          sourcesDir = source("sources") {
+            file("SourceFile.java", "class SourceFile {}")
+          }
+          excluded("excluded") {
+            file("ExcludedFile.java", "class ExcludedFile {}")
+          }
+        }
+        workspaceSymlink = symlink("workspace-link", workspace)
+      }
+    }
+    assertIndexableFiles(
+      sourcesDir.file / "SourceFile.java",
+      workspaceSymlink.file,
+      workspaceSymlink.file / "sources" / "SourceFile.java",
+      workspaceSymlink.file / "excluded" / "ExcludedFile.java",
+    )
+  }
+
   @Test
   fun `symlink which is a root of a Library must be indexed even if its target is excluded`() {
     lateinit var classesSymlink: SymlinkSpec
@@ -138,7 +164,7 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       sourcesSymlink = symlink("sources", sourcesDir)
     }
 
-    val sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdk")) { sdkModificator ->
+    val sdk = projectModelRule.addSdk("sdk") { sdkModificator ->
       sdkModificator.addRoot(classesSymlink.file, OrderRootType.CLASSES)
       sdkModificator.addRoot(sourcesSymlink.file, OrderRootType.SOURCES)
     }
@@ -181,7 +207,7 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       sourcesSymlink = symlink("sources", sourcesDir)
     }
 
-    val sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdk")) { sdkModificator ->
+    val sdk = projectModelRule.addSdk("sdk") { sdkModificator ->
       sdkModificator.addRoot(classesSymlink.file, OrderRootType.CLASSES)
       sdkModificator.addRoot(sourcesSymlink.file, OrderRootType.SOURCES)
     }
@@ -207,9 +233,10 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       }
       symlinkToTarget = symlink("symlinkDir", targetDir)
     }
+    val symlinkToTargetFile = symlinkToTarget.file // load VFS synchronously outside read action
     val contributor = object : IndexableSetContributor() {
       override fun getAdditionalRootsToIndex(): Set<VirtualFile> =
-        setOf(symlinkToTarget.file)
+        setOf(symlinkToTargetFile)
     }
     maskIndexableSetContributors(contributor)
     assertIndexableFiles(symlinkToTarget.file, symlinkToTarget.file / "TargetFile.java")
@@ -235,12 +262,13 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
     buildDirectoryContent(contributorRoot) {
       symlinkToTarget = symlink("symlinkDir", targetDir)
     }
+    val symlinkToTargetFile = symlinkToTarget.file // load VFS synchronously outside read action
     val contributor = object : IndexableSetContributor() {
       override fun getAdditionalRootsToIndex(): Set<VirtualFile> =
-        setOf(symlinkToTarget.file)
+        setOf(symlinkToTargetFile)
     }
     maskIndexableSetContributors(contributor)
-    assertIndexableFiles(symlinkToTarget.file, symlinkToTarget.file / "TargetFile.java")
+    assertIndexableFiles(symlinkToTargetFile, symlinkToTargetFile / "TargetFile.java")
   }
 
   @Test
@@ -265,11 +293,14 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       }
     }
 
+    val sourcesDirSymlinkFile = sourcesDirSymlink.file   // load VFS synchronously outside read action
+    val binariesDirSymlinkFile = binariesDirSymlink.file // load VFS synchronously outside read action
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project) = listOf(
         SyntheticLibrary.newImmutableLibrary(
-          listOf(sourcesDirSymlink.file),
-          listOf(binariesDirSymlink.file),
+          "test",
+          listOf(sourcesDirSymlinkFile),
+          listOf(binariesDirSymlinkFile),
           emptySet(),
           null
         )
@@ -278,10 +309,10 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
 
     maskAdditionalLibraryRootsProviders(additionalLibraryRootsProvider)
     assertIndexableFiles(
-      sourcesDirSymlink.file,
-      sourcesDirSymlink.file / "SourceFile.java",
-      binariesDirSymlink.file,
-      binariesDirSymlink.file / "BinaryFile.java"
+      sourcesDirSymlinkFile,
+      sourcesDirSymlinkFile / "SourceFile.java",
+      binariesDirSymlinkFile,
+      binariesDirSymlinkFile / "BinaryFile.java"
     )
   }
 
@@ -310,11 +341,14 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       binariesSymlink = symlink("binaries", targetBinaries)
     }
 
+    val sourcesSymlinkFile = sourcesSymlink.file // load VFS synchronously outside read action
+    val binariesSymlinkFile = binariesSymlink.file // load VFS synchronously outside read action
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project) = listOf(
         SyntheticLibrary.newImmutableLibrary(
-          listOf(sourcesSymlink.file),
-          listOf(binariesSymlink.file),
+          "test",
+          listOf(sourcesSymlinkFile),
+          listOf(binariesSymlinkFile),
           emptySet(),
           null
         )
@@ -342,11 +376,14 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       symlinkDirTwo = symlink("symlinkDirTwo", targetDir)
     }
 
+    val symlinkDirOneFile = symlinkDirOne.file // load VFS synchronously outside read action
+    val symlinkDirTwoFile = symlinkDirTwo.file // load VFS synchronously outside read action
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project) = listOf(
         SyntheticLibrary.newImmutableLibrary(
-          listOf(symlinkDirOne.file),
-          listOf(symlinkDirTwo.file),
+          "test",
+          listOf(symlinkDirOneFile),
+          listOf(symlinkDirTwoFile),
           emptySet(),
           null
         )
@@ -354,10 +391,10 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
     }
     maskAdditionalLibraryRootsProviders(additionalLibraryRootsProvider)
     assertIndexableFiles(
-      symlinkDirOne.file,
-      symlinkDirOne.file / "TargetFile.java",
-      symlinkDirTwo.file,
-      symlinkDirTwo.file / "TargetFile.java"
+      symlinkDirOneFile,
+      symlinkDirOneFile / "TargetFile.java",
+      symlinkDirTwoFile,
+      symlinkDirTwoFile / "TargetFile.java"
     )
   }
 
@@ -378,9 +415,10 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       }
     }
 
+    val sourceDirFile = sourceDir.file // load VFS synchronously outside read action
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project) = listOf(
-        SyntheticLibrary.newImmutableLibrary(listOf(sourceDir.file))
+        SyntheticLibrary.newImmutableLibrary(listOf(sourceDirFile))
       )
     }
 

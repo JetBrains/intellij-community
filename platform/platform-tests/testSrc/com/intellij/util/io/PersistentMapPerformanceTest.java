@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.idea.HardwareAgentRequired;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.storage.AbstractStorage;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Eugene Zhuravlev
@@ -61,7 +63,9 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     try {
       map = constructor.createMap(file);
       long len = 0;
-      for (T key : map.getAllKeysWithExistingMapping()) {
+      List<T> result = new ArrayList<>();
+      map.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(result));
+      for (T key : result) {
         len += getter.readValue(map, key).length();
       }
       assertEquals(1200000000L, len);
@@ -281,7 +285,9 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
 
       long len = 0;
 
-      for (T key : map.getAllKeysWithExistingMapping()) {
+      List<T> result = new ArrayList<>();
+      map.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(result));
+      for (T key : result) {
         for (String k : map.get(key)) {
           len += k.length();
         }
@@ -312,33 +318,31 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
 
   public void testPerformance() throws IOException {
     final IntObjectCache<String> stringCache = new IntObjectCache<>(2000);
-    PersistentMapImpl<String, String> unwrappedMap = PersistentMapImpl.unwrap(myMap);
-    final IntObjectCache.DeletedPairsListener listener = (key, mapKey) -> {
+    IntObjectCache.DeletedPairsListener<String> listener = (key, mapKey) -> {
       try {
-        final String _mapKey = (String)mapKey;
-        assertEquals(unwrappedMap.enumerate(_mapKey), key);
-
-        final String expectedMapValue = _mapKey == null ? null : _mapKey + "_value";
-        final String actual = myMap.get(_mapKey);
+        final String expectedMapValue = mapKey == null ? null : mapKey + "_value";
+        final String actual = myMap.get(mapKey);
         assertEquals(expectedMapValue, actual);
 
-        myMap.remove(_mapKey);
+        myMap.remove(mapKey);
 
-        assertNull(myMap.get(_mapKey));
+        assertNull(myMap.get(mapKey));
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
     };
 
+    AtomicInteger count = new AtomicInteger();
     PlatformTestUtil.startPerformanceTest("put/remove", 9000, () -> {
       try {
         stringCache.addDeletedPairsListener(listener);
         for (int i = 0; i < 100000; ++i) {
           final String string = createRandomString();
-          final int id = unwrappedMap.enumerate(string);
-          stringCache.put(id, string);
-          myMap.put(string, string + "_value");
+          if (!myMap.containsMapping(string)) {
+            stringCache.put(count.incrementAndGet(), string);
+            myMap.put(string, string + "_value");
+          }
         }
         stringCache.removeDeletedPairsListener(listener);
         for (String key : stringCache) {

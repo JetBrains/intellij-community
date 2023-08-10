@@ -134,7 +134,6 @@ public final class ElementFactory {
    * Sets the basic element information from the given type.
    *
    * @param element   the element to set information from the type
-   * @param factory
    * @param type      the type
    * @param modifiers modifier list
    * @since 2.15
@@ -175,13 +174,13 @@ public final class ElementFactory {
     if (PsiAdapter.isDateType(factory, type)) element.setDate(true);
     if (PsiAdapter.isCalendarType(factory, type)) element.setCalendar(true);
     if (PsiAdapter.isBooleanType(factory, type)) element.setBoolean(true);
-    if (PsiType.VOID.equals(type)) element.setVoid(true);
-    if (PsiType.LONG.equals(type)) element.setLong(true);
-    if (PsiType.FLOAT.equals(type)) element.setFloat(true);
-    if (PsiType.DOUBLE.equals(type)) element.setDouble(true);
-    if (PsiType.BYTE.equals(type)) element.setByte(true);
-    if (PsiType.CHAR.equals(type)) element.setChar(true);
-    if (PsiType.SHORT.equals(type)) element.setShort(true);
+    if (PsiTypes.voidType().equals(type)) element.setVoid(true);
+    if (PsiTypes.longType().equals(type)) element.setLong(true);
+    if (PsiTypes.floatType().equals(type)) element.setFloat(true);
+    if (PsiTypes.doubleType().equals(type)) element.setDouble(true);
+    if (PsiTypes.byteType().equals(type)) element.setByte(true);
+    if (PsiTypes.charType().equals(type)) element.setChar(true);
+    if (PsiTypes.shortType().equals(type)) element.setShort(true);
     element.setNestedArray(PsiAdapter.isNestedArray(type));
     // modifiers
     if (modifiers != null) {

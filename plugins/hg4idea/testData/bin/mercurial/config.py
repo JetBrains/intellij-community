@@ -1,130 +1,179 @@
 # config.py - configuration parsing for Mercurial
 #
-#  Copyright 2009 Matt Mackall <mpm@selenic.com> and others
+#  Copyright 2009 Olivia Mackall <olivia@selenic.com> and others
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from i18n import _
-import error, util
-import os, errno
+from __future__ import absolute_import
 
-class sortdict(dict):
-    'a simple sorted dictionary'
-    def __init__(self, data=None):
-        self._list = []
-        if data:
-            self.update(data)
-    def copy(self):
-        return sortdict(self)
-    def __setitem__(self, key, val):
-        if key in self:
-            self._list.remove(key)
-        self._list.append(key)
-        dict.__setitem__(self, key, val)
-    def __iter__(self):
-        return self._list.__iter__()
-    def update(self, src):
-        for k in src:
-            self[k] = src[k]
-    def clear(self):
-        dict.clear(self)
-        self._list = []
-    def items(self):
-        return [(k, self[k]) for k in self._list]
-    def __delitem__(self, key):
-        dict.__delitem__(self, key)
-        self._list.remove(key)
-    def keys(self):
-        return self._list
-    def iterkeys(self):
-        return self._list.__iter__()
+import errno
+import os
+
+from .i18n import _
+from .pycompat import getattr
+from . import (
+    encoding,
+    error,
+    pycompat,
+    util,
+)
+
 
 class config(object):
     def __init__(self, data=None):
+        self._current_source_level = 0
         self._data = {}
-        self._source = {}
         self._unset = []
         if data:
             for k in data._data:
                 self._data[k] = data[k].copy()
-            self._source = data._source.copy()
+            self._current_source_level = data._current_source_level + 1
+
+    def new_source(self):
+        """increment the source counter
+
+        This is used to define source priority when reading"""
+        self._current_source_level += 1
+
     def copy(self):
         return config(self)
+
     def __contains__(self, section):
         return section in self._data
+
+    def hasitem(self, section, item):
+        return item in self._data.get(section, {})
+
     def __getitem__(self, section):
         return self._data.get(section, {})
+
     def __iter__(self):
         for d in self.sections():
             yield d
-    def update(self, src):
-        for s, n in src._unset:
-            if s in self and n in self._data[s]:
-                del self._data[s][n]
-                del self._source[(s, n)]
-        for s in src:
-            if s not in self:
-                self._data[s] = sortdict()
-            self._data[s].update(src._data[s])
-        self._source.update(src._source)
-    def get(self, section, item, default=None):
-        return self._data.get(section, {}).get(item, default)
 
-    def backup(self, section, item):
+    def update(self, src):
+        current_level = self._current_source_level
+        current_level += 1
+        max_level = self._current_source_level
+        for s, n in src._unset:
+            ds = self._data.get(s, None)
+            if ds is not None and n in ds:
+                self._data[s] = ds.preparewrite()
+                del self._data[s][n]
+        for s in src:
+            ds = self._data.get(s, None)
+            if ds:
+                self._data[s] = ds.preparewrite()
+            else:
+                self._data[s] = util.cowsortdict()
+            for k, v in src._data[s].items():
+                value, source, level = v
+                level += current_level
+                max_level = max(level, current_level)
+                self._data[s][k] = (value, source, level)
+        self._current_source_level = max_level
+
+    def _get(self, section, item):
+        return self._data.get(section, {}).get(item)
+
+    def get(self, section, item, default=None):
+        result = self._get(section, item)
+        if result is None:
+            return default
+        return result[0]
+
+    def backup(self, section, key):
         """return a tuple allowing restore to reinstall a previous value
 
         The main reason we need it is because it handles the "no data" case.
         """
         try:
-            value = self._data[section][item]
-            source = self.source(section, item)
-            return (section, item, value, source)
+            item = self._data[section][key]
         except KeyError:
-            return (section, item)
+            return (section, key)
+        else:
+            return (section, key) + item
 
     def source(self, section, item):
-        return self._source.get((section, item), "")
+        result = self._get(section, item)
+        if result is None:
+            return b""
+        return result[1]
+
+    def level(self, section, item):
+        result = self._get(section, item)
+        if result is None:
+            return None
+        return result[2]
+
     def sections(self):
         return sorted(self._data.keys())
+
     def items(self, section):
-        return self._data.get(section, {}).items()
-    def set(self, section, item, value, source=""):
+        items = pycompat.iteritems(self._data.get(section, {}))
+        return [(k, v[0]) for (k, v) in items]
+
+    def set(self, section, item, value, source=b""):
+        if pycompat.ispy3:
+            assert not isinstance(
+                section, str
+            ), b'config section may not be unicode strings on Python 3'
+            assert not isinstance(
+                item, str
+            ), b'config item may not be unicode strings on Python 3'
+            assert not isinstance(
+                value, str
+            ), b'config values may not be unicode strings on Python 3'
         if section not in self:
-            self._data[section] = sortdict()
-        self._data[section][item] = value
-        self._source[(section, item)] = source
+            self._data[section] = util.cowsortdict()
+        else:
+            self._data[section] = self._data[section].preparewrite()
+        self._data[section][item] = (value, source, self._current_source_level)
+
+    def alter(self, section, key, new_value):
+        """alter a value without altering its source or level
+
+        This method is meant to be used by `ui.fixconfig` only."""
+        item = self._data[section][key]
+        size = len(item)
+        new_item = (new_value,) + item[1:]
+        assert len(new_item) == size
+        self._data[section][key] = new_item
 
     def restore(self, data):
         """restore data returned by self.backup"""
-        if len(data) == 4:
+        if len(data) != 2:
             # restore old data
-            section, item, value, source = data
-            self._data[section][item] = value
-            self._source[(section, item)] = source
+            section, key = data[:2]
+            item = data[2:]
+            self._data[section] = self._data[section].preparewrite()
+            self._data[section][key] = item
         else:
             # no data before, remove everything
             section, item = data
             if section in self._data:
-                del self._data[section][item]
-            self._source.pop((section, item), None)
+                self._data[section].pop(item, None)
 
     def parse(self, src, data, sections=None, remap=None, include=None):
-        sectionre = util.compilere(r'\[([^\[]+)\]')
-        itemre = util.compilere(r'([^=\s][^=]*?)\s*=\s*(.*\S|)')
-        contre = util.compilere(r'\s+(\S|\S.*\S)\s*$')
-        emptyre = util.compilere(r'(;|#|\s*$)')
-        commentre = util.compilere(r'(;|#)')
-        unsetre = util.compilere(r'%unset\s+(\S+)')
-        includere = util.compilere(r'%include\s+(\S|\S.*\S)\s*$')
-        section = ""
+        sectionre = util.re.compile(br'\[([^\[]+)\]')
+        itemre = util.re.compile(br'([^=\s][^=]*?)\s*=\s*(.*\S|)')
+        contre = util.re.compile(br'\s+(\S|\S.*\S)\s*$')
+        emptyre = util.re.compile(br'(;|#|\s*$)')
+        commentre = util.re.compile(br'(;|#)')
+        unsetre = util.re.compile(br'%unset\s+(\S+)')
+        includere = util.re.compile(br'%include\s+(\S|\S.*\S)\s*$')
+        section = b""
         item = None
         line = 0
         cont = False
 
+        if remap:
+            section = remap.get(section, section)
+
         for l in data.splitlines(True):
             line += 1
-            if line == 1 and l.startswith('\xef\xbb\xbf'):
+            if line == 1 and l.startswith(b'\xef\xbb\xbf'):
                 # Someone set us up the BOM
                 l = l[3:]
             if cont:
@@ -134,24 +183,24 @@ class config(object):
                 if m:
                     if sections and section not in sections:
                         continue
-                    v = self.get(section, item) + "\n" + m.group(1)
-                    self.set(section, item, v, "%s:%d" % (src, line))
+                    v = self.get(section, item) + b"\n" + m.group(1)
+                    self.set(section, item, v, b"%s:%d" % (src, line))
                     continue
                 item = None
                 cont = False
             m = includere.match(l)
-            if m:
-                inc = util.expandpath(m.group(1))
-                base = os.path.dirname(src)
-                inc = os.path.normpath(os.path.join(base, inc))
-                if include:
-                    try:
-                        include(inc, remap=remap, sections=sections)
-                    except IOError, inst:
-                        if inst.errno != errno.ENOENT:
-                            raise error.ParseError(_("cannot include %s (%s)")
-                                                   % (inc, inst.strerror),
-                                                   "%s:%s" % (src, line))
+
+            if m and include:
+                expanded = util.expandpath(m.group(1))
+                try:
+                    include(expanded, remap=remap, sections=sections)
+                except IOError as inst:
+                    if inst.errno != errno.ENOENT:
+                        raise error.ConfigError(
+                            _(b"cannot include %s (%s)")
+                            % (expanded, encoding.strtolocal(inst.strerror)),
+                            b"%s:%d" % (src, line),
+                        )
                 continue
             if emptyre.match(l):
                 continue
@@ -161,7 +210,7 @@ class config(object):
                 if remap:
                     section = remap.get(section, section)
                 if section not in self:
-                    self._data[section] = sortdict()
+                    self._data[section] = util.cowsortdict()
                 continue
             m = itemre.match(l)
             if m:
@@ -169,7 +218,7 @@ class config(object):
                 cont = True
                 if sections and section not in sections:
                     continue
-                self.set(section, item, m.group(2), "%s:%d" % (src, line))
+                self.set(section, item, m.group(2), b"%s:%d" % (src, line))
                 continue
             m = unsetre.match(l)
             if m:
@@ -177,13 +226,35 @@ class config(object):
                 if sections and section not in sections:
                     continue
                 if self.get(section, name) is not None:
+                    self._data[section] = self._data[section].preparewrite()
                     del self._data[section][name]
                 self._unset.append((section, name))
                 continue
 
-            raise error.ParseError(l.rstrip(), ("%s:%s" % (src, line)))
+            message = l.rstrip()
+            if l.startswith(b' '):
+                message = b"unexpected leading whitespace: %s" % message
+            raise error.ConfigError(message, (b"%s:%d" % (src, line)))
 
     def read(self, path, fp=None, sections=None, remap=None):
+        self.new_source()
         if not fp:
-            fp = util.posixfile(path)
-        self.parse(path, fp.read(), sections, remap, self.read)
+            fp = util.posixfile(path, b'rb')
+        assert (
+            getattr(fp, 'mode', 'rb') == 'rb'
+        ), b'config files must be opened in binary mode, got fp=%r mode=%r' % (
+            fp,
+            fp.mode,
+        )
+
+        dir = os.path.dirname(path)
+
+        def include(rel, remap, sections):
+            abs = os.path.normpath(os.path.join(dir, rel))
+            self.read(abs, remap=remap, sections=sections)
+            # anything after the include has a higher level
+            self.new_source()
+
+        self.parse(
+            path, fp.read(), sections=sections, remap=remap, include=include
+        )

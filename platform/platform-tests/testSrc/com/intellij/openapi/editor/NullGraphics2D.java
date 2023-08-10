@@ -187,9 +187,7 @@ public class NullGraphics2D extends Graphics2D {
 
   @Override
   public void addRenderingHints(Map<?, ?> hints) {
-    for (Map.Entry<?, ?> entry : hints.entrySet()) {
-      myRenderingHints.put(entry.getKey(), entry.getValue());
-    }
+    myRenderingHints.putAll(hints);
     myResult += Objects.hashCode(hints);
   }
 

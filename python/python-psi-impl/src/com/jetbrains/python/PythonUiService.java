@@ -1,15 +1,11 @@
 package com.jetbrains.python;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsContexts.Checkbox;
 import com.intellij.openapi.util.NlsContexts.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,11 +51,6 @@ public class PythonUiService {
     return false;
   }
 
-  public JComponent createCompatibilityInspectionOptionsPanel(@NotNull List<String> supportedInSettings,
-                                                              JDOMExternalizableStringList ourVersions) {
-    return null;
-  }
-
   public void runRenameProcessor(Project project,
                                  PsiElement element,
                                  String newName,
@@ -79,41 +70,7 @@ public class PythonUiService {
     return null;
   }
 
-  public JComponent createSingleCheckboxOptionsPanel(@Checkbox String label, InspectionProfileEntry inspection, String property) {
-    return null;
-  }
-
   public void annotateTypesIntention(Editor editor, PyFunction function) {
-  }
-
-  @NotNull
-  public JComponent createEncodingsOptionsPanel(String @ListItem [] possibleEncodings,
-                                                @ListItem String defaultEncoding,
-                                                String @ListItem[] possibleFormats,
-                                                int formatIndex,
-                                                Consumer<String> encodingChanged,
-                                                Consumer<Integer> formatIndexChanged) {
-    return null;
-  }
-
-  public JCheckBox createInspectionCheckBox(@Checkbox String message, InspectionProfileEntry inspection, String property) {
-    return null;
-  }
-
-  public <E> JComboBox<E> createComboBox(E[] items) {
-    return null;
-  }
-
-  public <E> JComboBox<E> createComboBox(E[] items, int width) {
-    return null;
-  }
-
-  public JComponent createListEditForm(@ColumnName String title, List<String> stringList) {
-    return null;
-  }
-
-  public JComponent onePixelSplitter(boolean b, JComponent first, JComponent second) {
-    return null;
   }
 
   public void showErrorHint(Editor editor, @NotNull @HintText String message) {
@@ -128,21 +85,12 @@ public class PythonUiService {
     return null;
   }
 
-  @Nullable
-  public JComponent createComboBoxWithLabel(@NotNull @NlsContexts.Label String label,
-                                            String @ListItem [] items,
-                                            @ListItem String selectedItem,
-                                            Consumer<Object> selectedItemChanged) {
-    return null;
-  }
-
   public void showPopup(Project project, List<String> items, @PopupTitle String title, Consumer<String> callback) {
   }
 
   /**
    * Shows a panel with name redefinition conflicts, if needed.
    *
-   * @param project
    * @param conflicts what {@link #findDefinitions} would return
    * @param obscured  name or its topmost qualifier that is obscured, used at top of pane.
    * @param name      full name (maybe qualified) to show as obscured and display as qualifier in "would be" chunks.

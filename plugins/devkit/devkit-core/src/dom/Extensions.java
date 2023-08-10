@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.ExtensionNsConverter;
@@ -27,13 +28,12 @@ public interface Extensions extends DomElement {
   GenericAttributeValue<IdeaPlugin> getDefaultExtensionNs();
 
   /**
-   * @deprecated use {@link #getDefaultExtensionNs()}
+   * Use {@link #getDefaultExtensionNs()} instead
    */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   @Convert(value = ExtensionNsConverter.class, soft = true)
   @Stubbed
-  @Deprecated
+  @ApiStatus.Internal
   GenericAttributeValue<IdeaPlugin> getXmlns();
 
   /**
@@ -42,9 +42,9 @@ public interface Extensions extends DomElement {
   List<Extension> collectExtensions();
 
   /**
-   * @deprecated dummy method for DOM, use {@link #collectExtensions()}.
+   * Dummy method for DOM, use {@link #collectExtensions()}.
    */
-  @Deprecated
+  @ApiStatus.Internal
   List<Extension> getExtensions();
 
   Extension addExtension();

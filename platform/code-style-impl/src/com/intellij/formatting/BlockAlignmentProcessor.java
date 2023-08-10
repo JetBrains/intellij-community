@@ -25,8 +25,6 @@ import java.util.Set;
 /**
  * Stands for block alignment strategy (e.g. we may want to use different strategies for the different
  * {@link Alignment.Anchor alignment acnhors}).
- * 
- * @author Denis Zhdanov
  */
 public interface BlockAlignmentProcessor {
   
@@ -62,28 +60,11 @@ public interface BlockAlignmentProcessor {
    */
   Result applyAlignment(@NotNull Context context);
   
-  class Context {
-
-    @NotNull public final Document                                             document;
-    @NotNull public final AlignmentImpl                                        alignment;
-    @NotNull public final LeafBlockWrapper                                     targetBlock;
-    @NotNull public final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> alignmentMappings;
-    @NotNull public final Map<LeafBlockWrapper, Set<LeafBlockWrapper>>         backwardShiftedAlignedBlocks;
-    @NotNull public final CommonCodeStyleSettings.IndentOptions                indentOptions;
-
-    public Context(@NotNull Document document,
-                   @NotNull AlignmentImpl alignment,
-                   @NotNull LeafBlockWrapper targetBlock,
-                   @NotNull Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> alignmentMappings,
-                   @NotNull Map<LeafBlockWrapper, Set<LeafBlockWrapper>> backwardShiftedAlignedBlocks,
-                   @NotNull CommonCodeStyleSettings.IndentOptions indentOptions)
-    {
-      this.document = document;
-      this.alignment = alignment;
-      this.targetBlock = targetBlock;
-      this.alignmentMappings = alignmentMappings;
-      this.backwardShiftedAlignedBlocks = backwardShiftedAlignedBlocks;
-      this.indentOptions = indentOptions;
-    }
+  record Context(@NotNull Document document,
+                 @NotNull AlignmentImpl alignment,
+                 @NotNull LeafBlockWrapper targetBlock,
+                 @NotNull Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> alignmentMappings,
+                 @NotNull Map<LeafBlockWrapper, Set<LeafBlockWrapper>> backwardShiftedAlignedBlocks,
+                 @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
   }
 }

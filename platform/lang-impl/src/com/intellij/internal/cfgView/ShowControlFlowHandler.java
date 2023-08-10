@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.cfgView;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,7 +36,7 @@ public class ShowControlFlowHandler implements CodeInsightActionHandler {
 
   private static final Logger LOGGER = Logger.getInstance(ShowControlFlowHandler.class);
 
-  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Show control flow group");
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Show control flow group");
   private static final String NO_GRAPHVIZ_HELP = "Probably graphviz is missing." +
                                                  "You could install graphviz using `apt install graphviz` or `brew install graphviz`";
 
@@ -76,7 +77,10 @@ public class ShowControlFlowHandler implements CodeInsightActionHandler {
       }
     }
     catch (FileNotFoundException e) {
-      NOTIFICATION_GROUP.createNotification("Show CFG:", e.getMessage(), NO_GRAPHVIZ_HELP, NotificationType.ERROR).notify(project);
+      NOTIFICATION_GROUP
+        .createNotification("Show CFG:", NO_GRAPHVIZ_HELP, NotificationType.ERROR)
+        .setSubtitle(e.getMessage())
+        .notify(project);
       LOGGER.warn(e);
     }
     catch (IOException | ExecutionException e) {
@@ -131,8 +135,7 @@ public class ShowControlFlowHandler implements CodeInsightActionHandler {
     for (Instruction instruction : flow.getInstructions()) {
       printInstruction(builder, instruction, provider);
 
-      if (instruction instanceof ConditionalInstruction) {
-        ConditionalInstruction conditionalInstruction = (ConditionalInstruction)instruction;
+      if (instruction instanceof ConditionalInstruction conditionalInstruction) {
         builder.append("\n").append("Its ").append(conditionalInstruction.getResult()).
           append(" branch, condition: ").append(conditionalInstruction.getCondition().getText());
       }

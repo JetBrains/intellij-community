@@ -18,9 +18,6 @@ package com.intellij.diagnostic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public interface Dumpable {
 
   @NonNls @NotNull

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.labels;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -27,7 +28,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * A {@link JLabel}-based link that does not support mnemonics.
+ * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
  * @author kir
+ * @see <a href="https://jetbrains.github.io/ui/controls/link/">IJ Platform UI Guidelines | Link</a>
  */
 public class LinkLabel<T> extends JLabel {
   protected boolean myUnderline;
@@ -46,27 +50,58 @@ public class LinkLabel<T> extends JLabel {
   private boolean myClickIsBeingProcessed;
   protected boolean myPaintUnderline = true;
 
+  /**
+   * Creates a {@link JLabel}-based link that does not support mnemonics.
+   * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
+   * Note that this constructor sets inappropriate icon.
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
+   */
   public LinkLabel() {
     this("", AllIcons.Ide.Link);
   }
 
+  /**
+   * Creates a {@link JLabel}-based link that does not support mnemonics.
+   * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
+   */
   public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon) {
     this(text, icon, null, null, null);
   }
 
+  /**
+   * Creates a {@link JLabel}-based link that does not support mnemonics.
+   * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
+   */
   public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener) {
     this(text, icon, aListener, null, null);
   }
 
+  /**
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
+   * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
+   */
+  @Deprecated
   @NotNull
   public static LinkLabel<?> create(@Nullable @NlsContexts.LinkLabel String text, @Nullable Runnable action) {
     return new LinkLabel<>(text, null, action == null ? null : (__, ___) -> action.run(), null, null);
   }
 
+  /**
+   * Creates a {@link JLabel}-based link that does not support mnemonics.
+   * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
+   */
   public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener, @Nullable T aLinkData) {
     this(text, icon, aListener, aLinkData, null);
   }
 
+  /**
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
+   * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
+   */
+  @Deprecated
   public LinkLabel(@NlsContexts.LinkLabel String text,
                    @Nullable Icon icon,
                    @Nullable LinkListener<T> aListener,
@@ -277,7 +312,7 @@ public class LinkLabel<T> extends JLabel {
   }
 
   private static void setStatusBarText(@NlsContexts.StatusBarText String statusBarText) {
-    if (ApplicationManager.getApplication() == null) return; // makes this component work in UIDesigner preview.
+    if (ApplicationManager.getApplication() == null || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) return; // makes this component work in UIDesigner preview.
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       StatusBar.Info.set(statusBarText, project);
@@ -317,6 +352,7 @@ public class LinkLabel<T> extends JLabel {
     public void mousePressed(MouseEvent e) {
       if (isEnabled() && isInClickableArea(e.getPoint())) {
         setActive(true);
+        e.consume();
       }
     }
 
@@ -324,6 +360,7 @@ public class LinkLabel<T> extends JLabel {
     public void mouseReleased(MouseEvent e) {
       if (isEnabled() && myIsLinkActive && isInClickableArea(e.getPoint())) {
         doClick(e);
+        e.consume();
       }
       setActive(false);
     }

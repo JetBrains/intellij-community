@@ -39,4 +39,8 @@ public class DataFlowInspection10Test extends DataFlowInspectionTestCase {
   }
 
   public void testStreamCollector10Inlining() { doTest(); }
+
+  public void testAvoidWarningAtNotInferredType() { doTest();}
+
+  public void testSameArguments() { doTest(); }
 }

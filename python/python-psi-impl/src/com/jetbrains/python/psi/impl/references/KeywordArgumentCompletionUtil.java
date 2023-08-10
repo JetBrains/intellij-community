@@ -19,7 +19,7 @@ import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class KeywordArgumentCompletionUtil {
+public final class KeywordArgumentCompletionUtil {
   public static void collectFunctionArgNames(PyElement element,
                                              List<? super LookupElement> ret,
                                              @NotNull final TypeEvalContext context,
@@ -82,7 +82,7 @@ public class KeywordArgumentCompletionUtil {
   }
 
   private static PsiElement getElementByChain(@NotNull PyReferenceExpression callee, @NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.implicitContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.implicitContext(context);
     final QualifiedResolveResult result = callee.followAssignmentsChain(resolveContext);
     return result.getElement();
   }
@@ -209,8 +209,7 @@ public class KeywordArgumentCompletionUtil {
       else if (node.isCalleeText("__init__")) {
         kwArgsTransit = false;
         for (PyExpression e : node.getArguments()) {
-          if (e instanceof PyStarArgument) {
-            PyStarArgument kw = (PyStarArgument)e;
+          if (e instanceof PyStarArgument kw) {
             if (Objects.equals(myKwArgs.getName(), kw.getFirstChild().getNextSibling().getText())) {
               kwArgsTransit = true;
               break;
@@ -234,7 +233,6 @@ public class KeywordArgumentCompletionUtil {
     /**
      * is name of kwargs parameter the same as transmitted to __init__ call
      *
-     * @return
      */
     public boolean isKwArgsTransit() {
       return kwArgsTransit;

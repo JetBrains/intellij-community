@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.navigationToolbar;
 
@@ -6,8 +6,10 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.module.Module;
@@ -18,28 +20,40 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.*;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairProcessor;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 import static com.intellij.psi.util.PsiUtilCore.findFileSystemItem;
+import static com.intellij.util.concurrency.SequentialTaskExecutor.createSequentialApplicationPoolExecutor;
 
 /**
  * @author Konstantin Bulenkov
  * @author Anna Kozlova
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public class NavBarModel {
-  private List<Object> myModel;
-  private int mySelectedIndex;
-  private final Project myProject;
+
+  private static final ExecutorService ourExecutor = createSequentialApplicationPoolExecutor("Navbar model builder");
+
   private final NavBarModelListener myNotificator;
   private final NavBarModelBuilder myBuilder;
-  private boolean myChanged = true;
-  private boolean updated = false;
-  private boolean isFixedComponent = false;
+  private final Project myProject;
+
+  private volatile int mySelectedIndex;
+  private volatile List<Object> myModel;
+
+  private volatile boolean myChanged = true;
+  private volatile boolean updated = false;
+  private volatile boolean isFixedComponent = false;
 
   public NavBarModel(@NotNull Project project) {
     this(project, project.getMessageBus().syncPublisher(NavBarModelListener.NAV_BAR), NavBarModelBuilder.getInstance());
@@ -56,15 +70,28 @@ public class NavBarModel {
     return mySelectedIndex;
   }
 
-  @Nullable
-  public Object getSelectedValue() {
-    return getElement(mySelectedIndex);
+  @Nullable Object getRawSelectedObject() {
+    List<Object> model = myModel;
+    if (model.isEmpty()) return null;
+    int index = mySelectedIndex;
+    int adjusted = index >= 0 && index < model.size()
+                   ? index
+                   : model.size() - 1;
+    return model.get(adjusted);
   }
 
   @Nullable
   public Object getElement(int index) {
-    if (index != -1 && index < myModel.size()) {
-      return get(index);
+    Object raw = getRawElement(index);
+    if (raw == null) return null;
+    return unwrapRaw(raw);
+  }
+
+  @Nullable
+  public Object getRawElement(int index) {
+    List<Object> model = myModel;
+    if (index != -1 && index < model.size()) {
+      return model.get(index);
     }
     return null;
   }
@@ -78,20 +105,58 @@ public class NavBarModel {
   }
 
   public int getIndexByModel(int index) {
-    if (index < 0) return myModel.size() + index;
-    if (index >= myModel.size() && myModel.size() > 0) return index % myModel.size();
+    List<Object> model = myModel;
+    if (index < 0) return model.size() + index;
+    if (index >= model.size() && model.size() > 0) return index % model.size();
     return index;
   }
 
-  public void updateModel(DataContext dataContext) {
-    if (LaterInvocator.isInModalContext() || (updated && !isFixedComponent)) return;
+  public void updateModelAsync(@NotNull DataContext dataContext, @Nullable Runnable callback) {
+    if (LaterInvocator.isInModalContext() ||
+        PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) {
+      return;
+    }
 
-    if (PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) return;
-
-    SlowOperations.allowSlowOperations(() -> doUpdateModel(dataContext));
+    DataContext wrappedDataContext = wrapDataContext(dataContext);
+    ReadAction.nonBlocking(() -> createModel(wrappedDataContext))
+      .expireWith(myProject)
+      .finishOnUiThread(ModalityState.current(), model -> {
+        setModelWithUpdate(model);
+        if (callback != null) callback.run();
+      })
+      .submit(ourExecutor);
   }
 
-  private void doUpdateModel(DataContext dataContext) {
+  @NotNull
+  private static DataContext wrapDataContext(@NotNull DataContext context) {
+    DataContext wrapped = Utils.wrapDataContext(context);
+    if (Utils.isAsyncDataContext(wrapped)) return wrapped;
+
+    return SimpleDataContext.builder().addAll(
+      context,
+      CommonDataKeys.PSI_FILE,
+      CommonDataKeys.PROJECT,
+      CommonDataKeys.VIRTUAL_FILE,
+      PlatformCoreDataKeys.MODULE,
+      CommonDataKeys.EDITOR,
+      PlatformCoreDataKeys.SELECTED_ITEMS).build();
+  }
+
+  private void setModelWithUpdate(@Nullable List<Object> model) {
+    if (model != null) setModel(model);
+
+    setChanged(false);
+    updated = true;
+  }
+
+  public void updateModel(DataContext dataContext) {
+    setModelWithUpdate(createModel(dataContext));
+  }
+
+  @Nullable
+  private List<Object> createModel(@NotNull DataContext dataContext) {
+    if (updated && !isFixedComponent) return null;
+
     NavBarModelExtension ownerExtension = null;
     PsiElement psiElement = null;
     for (NavBarModelExtension extension : NavBarModelExtension.EP_NAME.getExtensionList()) {
@@ -106,39 +171,38 @@ public class NavBarModel {
       psiElement = CommonDataKeys.PSI_FILE.getData(dataContext);
     }
     if (psiElement == null) {
-      psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-      if (psiElement == null) {
-        psiElement = findFileSystemItem(
-          CommonDataKeys.PROJECT.getData(dataContext),
-          CommonDataKeys.VIRTUAL_FILE.getData(dataContext));
-      }
+      psiElement = findFileSystemItem(
+        CommonDataKeys.PROJECT.getData(dataContext),
+        CommonDataKeys.VIRTUAL_FILE.getData(dataContext));
     }
 
     if (ownerExtension == null) {
       psiElement = normalize(psiElement);
     }
-    if (!myModel.isEmpty() && Objects.equals(get(myModel.size() - 1), psiElement) && !myChanged) return;
+
+    // Save to a local variable in order to avoid OutOfBounds exception while working with a volatile property
+    final List<Object> model = myModel;
+    if (!model.isEmpty() && Objects.equals(get(model, model.size() - 1), psiElement) && !myChanged) return null;
 
     if (psiElement != null && psiElement.isValid()) {
-      updateModel(psiElement, ownerExtension);
+      return createModel(psiElement, dataContext, ownerExtension);
     }
     else {
-      if (UISettings.getInstance().getShowNavigationBar() && !myModel.isEmpty()) return;
+      if (UISettings.getInstance().getShowNavigationBar() && !model.isEmpty()) return null;
 
       Object root = calculateRoot(dataContext);
 
       if (root != null) {
-        setModel(Collections.singletonList(root));
+        return Collections.singletonList(root);
       }
     }
-    setChanged(false);
 
-    updated = true;
+    return null;
   }
 
   private Object calculateRoot(DataContext dataContext) {
     // Narrow down the root element to the first interesting one
-    Module root = LangDataKeys.MODULE.getData(dataContext);
+    Module root = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (root != null && !ModuleType.isInternal(root)) return root;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -158,7 +222,11 @@ public class NavBarModel {
   }
 
   protected void updateModel(final PsiElement psiElement, @Nullable NavBarModelExtension ownerExtension) {
+    setModel(createModel(psiElement, null, ownerExtension));
+  }
 
+  @NotNull
+  private List<Object> createModel(final PsiElement psiElement, @Nullable DataContext dataContext, @Nullable NavBarModelExtension ownerExtension) {
     final Set<VirtualFile> roots = new HashSet<>();
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
     final ProjectFileIndex projectFileIndex = projectRootManager.getFileIndex();
@@ -179,18 +247,20 @@ public class NavBarModel {
       }
     }
 
-    List<Object> updatedModel = ReadAction.compute(() -> isValid(psiElement) ? myBuilder.createModel(psiElement, roots, ownerExtension) : Collections.emptyList());
+    List<Object> updatedModel =
+      ReadAction.compute(() -> isValid(psiElement) ? myBuilder.createModel(psiElement, roots, dataContext, ownerExtension) : Collections.emptyList());
 
-    setModel(ContainerUtil.reverse(updatedModel));
+    return ContainerUtil.reverse(updatedModel);
   }
 
   void revalidate() {
     final List<Object> objects = new ArrayList<>();
     boolean update = false;
     for (Object o : myModel) {
-      if (isValid(TreeAnchorizer.getService().retrieveElement(o))) {
+      if (isValid(unwrapRaw(o))) {
         objects.add(o);
-      } else {
+      }
+      else {
         update = true;
         break;
       }
@@ -271,7 +341,7 @@ public class NavBarModel {
     return child;
   }
 
-  protected List<Object> getChildren(final Object object) {
+  public List<Object> getChildren(final Object object) {
     final List<Object> result = new ArrayList<>();
     PairProcessor<Object, NavBarModelExtension> processor = (o, ext) -> {
       ContainerUtil.addIfNotNull(result, o instanceof PsiElement && ext.normalizeChildren() ? normalize((PsiElement)o) : o);
@@ -299,14 +369,23 @@ public class NavBarModel {
     return true;
   }
 
-  public Object get(final int index) {
-    return TreeAnchorizer.getService().retrieveElement(myModel.get(index));
+  @Nullable Object unwrapRaw(@NotNull Object o) {
+    return TreeAnchorizer.getService().retrieveElement(o);
+  }
+
+  public @Nullable Object get(int index) {
+    return get(myModel, index);
+  }
+
+  private @Nullable Object get(List<Object> model, int index) {
+    return unwrapRaw(model.get(index));
   }
 
   public int indexOf(Object value) {
-    for (int i = 0; i < myModel.size(); i++) {
-      Object o = myModel.get(i);
-      if (Objects.equals(TreeAnchorizer.getService().retrieveElement(o), value)) {
+    List<Object> model = myModel;
+    for (int i = 0; i < model.size(); i++) {
+      Object o = model.get(i);
+      if (Objects.equals(unwrapRaw(o), value)) {
         return i;
       }
     }

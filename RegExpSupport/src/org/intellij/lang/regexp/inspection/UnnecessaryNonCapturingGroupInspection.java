@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -10,10 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.intellij.lang.regexp.RegExpBundle;
-import org.intellij.lang.regexp.psi.RegExpBranch;
-import org.intellij.lang.regexp.psi.RegExpElementVisitor;
-import org.intellij.lang.regexp.psi.RegExpGroup;
-import org.intellij.lang.regexp.psi.RegExpPattern;
+import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,19 +38,28 @@ public class UnnecessaryNonCapturingGroupInspection extends LocalInspectionTool 
         return;
       }
       final PsiElement parent = group.getParent();
-      if (parent instanceof RegExpBranch) {
-        if (hasOneBranch(group.getPattern())) {
+      final RegExpPattern pattern = group.getPattern();
+      final RegExpAtom atom = getSingleAtom(pattern);
+      if (atom != null) {
+        if (!(parent instanceof RegExpClosure) || !(atom instanceof RegExpClosure)) {
+          registerProblem(group);
+        }
+      }
+      else if (parent instanceof RegExpBranch) {
+        final RegExpBranch[] branches = pattern.getBranches();
+        if (branches.length == 1) {
+          if (branches[0].getAtoms().length == 0) {
+            // don't warn on empty group because those already get an empty group warning
+            return;
+          }
           registerProblem(group);
         }
         else {
           final PsiElement grandParent = parent.getParent();
-          if (grandParent instanceof RegExpPattern && hasSingleAtom((RegExpPattern)grandParent)) {
+          if (grandParent instanceof RegExpPattern && getSingleAtom((RegExpPattern)grandParent) != null) {
             registerProblem(group);
           }
         }
-      }
-      else if (hasSingleAtom(group.getPattern())) {
-        registerProblem(group);
       }
     }
 
@@ -64,16 +70,12 @@ public class UnnecessaryNonCapturingGroupInspection extends LocalInspectionTool 
     }
   }
 
-  private static boolean hasOneBranch(RegExpPattern pattern) {
-    return pattern != null && pattern.getBranches().length == 1;
-  }
-
-  private static boolean hasSingleAtom(RegExpPattern pattern) {
-    if (pattern == null) {
-      return false;
-    }
+  private static RegExpAtom getSingleAtom(RegExpPattern pattern) {
+    if (pattern == null) return null;
     final RegExpBranch[] branches = pattern.getBranches();
-    return branches.length == 1 && branches[0].getAtoms().length == 1;
+    if (branches.length != 1) return null;
+    final RegExpAtom[] atoms = branches[0].getAtoms();
+    return atoms.length != 1 ? null : atoms[0];
   }
 
   private static class UnnecessaryNonCapturingGroupFix implements LocalQuickFix {
@@ -85,10 +87,9 @@ public class UnnecessaryNonCapturingGroupInspection extends LocalInspectionTool 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      if (!(element instanceof RegExpGroup)) {
+      if (!(element instanceof RegExpGroup group)) {
         return;
       }
-      final RegExpGroup group = (RegExpGroup)element;
       RegExpReplacementUtil.replaceInContext(group, group.getPattern().getUnescapedText());
     }
   }

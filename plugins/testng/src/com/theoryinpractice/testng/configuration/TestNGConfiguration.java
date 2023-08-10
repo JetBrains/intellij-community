@@ -443,11 +443,10 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
       return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
     }
     else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
-      if (!(element instanceof PsiMethod)) {
+      if (!(element instanceof PsiMethod method)) {
         final RefactoringElementListener listener = RefactoringListeners.getClassOrPackageListener(element, myClass);
         return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
       }
-      final PsiMethod method = (PsiMethod)element;
       if (!method.getName().equals(data.getMethodName())) return null;
       if (!method.getContainingClass().equals(myClass.getPsiElement())) return null;
       class Listener extends RefactoringElementAdapter implements UndoRefactoringElementListener {

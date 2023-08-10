@@ -1,0 +1,9 @@
+// WARNING: Variable name 'a' matches the name of a different component
+// FIX: none
+data class Foo(val a: String, val b: Int) {
+    operator fun component3() = a + b.toString()
+}
+
+fun bar(f: Foo) {
+    val (x, y, <caret>a) = f
+}

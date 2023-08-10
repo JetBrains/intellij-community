@@ -107,10 +107,4 @@ public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<Psi
     }
     return statements;
   }
-
-  @Nullable
-  @Override
-  public String getFeatureId() {
-    return super.getFeatureId();
-  }
 }

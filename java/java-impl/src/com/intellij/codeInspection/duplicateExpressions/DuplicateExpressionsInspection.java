@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -16,27 +17,23 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceVariable.InputValidator;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
-import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
-/**
- * @author Pavel.Dolgov
- */
-public class DuplicateExpressionsInspection extends LocalInspectionTool {
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
+public final class DuplicateExpressionsInspection extends LocalInspectionTool {
   public int complexityThreshold = 70;
 
   @NotNull
@@ -46,7 +43,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
                                         @NotNull LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         super.visitExpression(expression);
 
         if (expression instanceof PsiParenthesizedExpression) {
@@ -56,7 +53,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
       }
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
 
         if (expression.getParent() instanceof PsiCallExpression) {
@@ -82,7 +79,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         super.visitMethod(method);
 
         PsiCodeBlock body = method.getBody();
@@ -92,14 +89,14 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
       }
 
       @Override
-      public void visitClassInitializer(PsiClassInitializer initializer) {
+      public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
         super.visitClassInitializer(initializer);
 
         registerProblemsForExpressions(initializer.getBody(), session);
       }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
 
         PsiElement body = expression.getBody();
@@ -112,7 +109,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
         DuplicateExpressionsContext context = DuplicateExpressionsContext.getContext(body, session);
         if (context == null) return;
 
-        Set<PsiExpression> processed = new THashSet<>();
+        Set<PsiExpression> processed = new HashSet<>();
         context.forEach((pattern, occurrences) -> {
           if (!processed.contains(pattern)) {
             processed.addAll(occurrences);
@@ -154,7 +151,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     if (variables == null) return false;
     if (variables.isEmpty()) return true;
 
-    PsiElement anchor = RefactoringUtil.getAnchorElementForMultipleExpressions(occurrences.toArray(PsiExpression.EMPTY_ARRAY), null);
+    PsiElement anchor = CommonJavaRefactoringUtil.getAnchorElementForMultipleExpressions(occurrences.toArray(PsiExpression.EMPTY_ARRAY), null);
     if (anchor == null) return false;
     PsiElement anchorParent = anchor.getParent();
     if (anchorParent == null) return false;
@@ -178,11 +175,11 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
 
   @Nullable
   private static Set<PsiVariable> collectVariablesSafeToExtract(@NotNull List<? extends PsiExpression> occurrences) {
-    Set<PsiVariable> variables = new THashSet<>();
+    Set<PsiVariable> variables = new HashSet<>();
     Ref<Boolean> refFailed = new Ref<>(Boolean.FALSE);
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
 
         PsiElement resolved = reference.resolve();
@@ -211,7 +208,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     if (occurrences.size() <= 1) {
       return Collections.emptyMap();
     }
-    Map<PsiVariable, PsiExpression> initializers = new THashMap<>();
+    Map<PsiVariable, PsiExpression> initializers = new HashMap<>();
     for (PsiExpression occurrence : occurrences) {
       PsiVariable variable = findVariableByInitializer(occurrence);
       if (variable != null) {
@@ -222,7 +219,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
       return Collections.emptyMap();
     }
 
-    Map<PsiExpression, List<PsiVariable>> result = new THashMap<>();
+    Map<PsiExpression, List<PsiVariable>> result = new HashMap<>();
     initializers.forEach((variable, initializer) -> {
       for (PsiExpression occurrence : occurrences) {
         if (occurrence != initializer && canReplaceWith(occurrence, variable)) {
@@ -236,7 +233,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
   private static boolean canReplaceOtherOccurrences(@NotNull PsiExpression originalOccurrence,
                                                     @NotNull List<? extends PsiExpression> occurrences,
                                                     @NotNull PsiVariable variable) {
-    return occurrences.stream().anyMatch(occurrence -> occurrence != originalOccurrence && canReplaceWith(occurrence, variable));
+    return ContainerUtil.exists(occurrences, occurrence -> occurrence != originalOccurrence && canReplaceWith(occurrence, variable));
   }
 
   private static boolean canReplaceWith(@NotNull PsiExpression occurrence, @NotNull PsiVariable variable) {
@@ -258,20 +255,16 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
   @Nullable
   private static PsiVariable findVariableByInitializer(@NotNull PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiVariable) {
-      PsiVariable variable = (PsiVariable)parent;
-      if (PsiTreeUtil.isAncestor(variable.getInitializer(), expression, false)) {
-        return variable;
-      }
+    if (parent instanceof PsiVariable variable && PsiTreeUtil.isAncestor(variable.getInitializer(), expression, false)) {
+      return variable;
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      JavaBundle.message("inspection.duplicate.expressions.complexity.threshold"), this, "complexityThreshold", 3);
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("complexityThreshold", JavaBundle.message("inspection.duplicate.expressions.complexity.threshold"), 1, 1000));
   }
 
   private static final class IntroduceVariableFix implements LocalQuickFix {
@@ -305,27 +298,15 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
         VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
         Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), true);
         if (editor != null) {
-          new MyIntroduceVariableHandler().invoke(project, editor, (PsiExpression)element);
+          JavaIntroduceVariableHandlerBase handler =
+            (JavaIntroduceVariableHandlerBase)JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
+          handler.invoke(project, editor, (PsiExpression)element);
         }
-      }
-    }
-
-    private static class MyIntroduceVariableHandler extends IntroduceVariableHandler {
-      @Override
-      public IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr,
-                                                   PsiExpression[] occurrences, TypeSelectorManagerImpl typeSelectorManager,
-                                                   boolean declareFinalIfAll, boolean anyAssignmentLHS, InputValidator validator,
-                                                   PsiElement anchor, JavaReplaceChoice replaceChoice) {
-        if (replaceChoice == null && ApplicationManager.getApplication().isUnitTestMode()) {
-          replaceChoice = JavaReplaceChoice.ALL;
-        }
-        return super.getSettings(project, editor, expr, occurrences, typeSelectorManager,
-                                 declareFinalIfAll, anyAssignmentLHS, validator, anchor, replaceChoice);
       }
     }
   }
 
-  private static final class ReuseVariableFix implements LocalQuickFix {
+  private static final class ReuseVariableFix extends PsiUpdateModCommandQuickFix {
     private final String myExpressionText;
     private final String myVariableName;
 
@@ -349,15 +330,14 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (element instanceof PsiExpression) {
         new CommentTracker().replaceAndRestoreComments(element, myVariableName);
       }
     }
   }
 
-  private static final class ReplaceOtherOccurrencesFix implements LocalQuickFix {
+  private static final class ReplaceOtherOccurrencesFix extends PsiUpdateModCommandQuickFix {
     private final String myExpressionText;
     private final String myVariableName;
 
@@ -381,10 +361,9 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiExpression) {
-        List<PsiExpression> occurrences = collectReplaceableOccurrences((PsiExpression)element);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (element instanceof PsiExpression expr) {
+        List<PsiExpression> occurrences = collectReplaceableOccurrences(expr);
         for (PsiExpression occurrence : occurrences) {
           new CommentTracker().replaceAndRestoreComments(occurrence, myVariableName);
         }
@@ -401,7 +380,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
           final ExpressionHashingStrategy hashingStrategy = new ExpressionHashingStrategy();
 
           @Override
-          public void visitExpression(PsiExpression occurrence) {
+          public void visitExpression(@NotNull PsiExpression occurrence) {
             super.visitExpression(occurrence);
 
             if (occurrence != originalExpr &&

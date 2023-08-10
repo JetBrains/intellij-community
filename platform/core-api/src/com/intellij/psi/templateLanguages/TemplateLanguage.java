@@ -17,8 +17,6 @@ package com.intellij.psi.templateLanguages;
 
 /**
  * Marker interface to distinguish templating languages from the others
- *
- * @author peter
  */
 public interface TemplateLanguage {
 }

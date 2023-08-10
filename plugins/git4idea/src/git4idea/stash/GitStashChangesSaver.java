@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash;
 
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,6 +14,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
+import git4idea.GitStashUsageCollector;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -20,6 +22,7 @@ import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.i18n.GitBundle;
+import git4idea.index.GitStageManagerKt;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -62,7 +65,10 @@ public class GitStashChangesSaver extends GitChangesSaver {
         LOG.error("Repository is null for root " + root);
       }
       else {
+        StructuredIdeActivity activity = GitStashUsageCollector.logStashPush(myProject);
         GitCommandResult result = myGit.stashSave(repository, myStashMessage);
+        activity.finished();
+
         if (result.success() && somethingWasStashed(result)) {
           myStashedRoots.put(root, myGit.resolveReference(repository, "stash@{0}"));
         }
@@ -88,11 +94,14 @@ public class GitStashChangesSaver extends GitChangesSaver {
   @Override
   public void load() {
     final String oldProgressTitle = myProgressIndicator.getText();
-    GitStashUtils.unstash(myProject, myStashedRoots, (root) -> {
+    GitStashOperations.unstash(myProject, myStashedRoots, (root) -> {
       String message = GitBundle.message("stash.unstash.progress.indicator.title", root.getName());
       myProgressIndicator.setText(message);
       GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.STASH);
       handler.addParameters("pop");
+      if (GitStageManagerKt.isStagingAreaAvailable(myProject)) {
+        handler.addParameters("--index");
+      }
       return handler;
     }, new UnstashConflictResolver(myProject, myGit, myStashedRoots.keySet(), myParams));
     myProgressIndicator.setText(oldProgressTitle);

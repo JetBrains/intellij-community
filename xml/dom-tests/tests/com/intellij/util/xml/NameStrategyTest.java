@@ -17,9 +17,6 @@ package com.intellij.util.xml;
 
 import junit.framework.TestCase;
 
-/**
- * @author peter
- */
 public class NameStrategyTest extends TestCase {
 
   public void testHyphenStrategy() {

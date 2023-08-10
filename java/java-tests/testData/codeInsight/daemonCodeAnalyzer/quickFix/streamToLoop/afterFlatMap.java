@@ -11,12 +11,12 @@ import static java.util.Arrays.asList;
 public class Main {
   private static long testChain(List<? extends String> list) {
       long count = 0L;
-      for (Object o : Arrays.asList(0, null, "1", list)) {
-          for (Object o1 : Arrays.asList(o)) {
-              for (Object o2 : Arrays.asList(o1)) {
-                  for (Object o3 : Arrays.asList(o2)) {
-                      for (Object o4 : Arrays.asList(o3)) {
-                          for (Object o5 : Arrays.asList(o4)) {
+      for (Object o : asList(0, null, "1", list)) {
+          for (Object object : asList(o)) {
+              for (Object o1 : asList(object)) {
+                  for (Object object1 : asList(o1)) {
+                      for (Object o2 : asList(object1)) {
+                          for (Object object2 : asList(o2)) {
                               count++;
                           }
                       }

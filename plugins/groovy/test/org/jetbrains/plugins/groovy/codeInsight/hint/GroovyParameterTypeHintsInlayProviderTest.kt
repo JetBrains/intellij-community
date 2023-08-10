@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.codeInsight.hint.types.GroovyParameterTypeHintsInlayProvider
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
 
 class GroovyParameterTypeHintsInlayProviderTest : InlayHintsProviderTestCase() {
@@ -13,10 +15,10 @@ class GroovyParameterTypeHintsInlayProviderTest : InlayHintsProviderTestCase() {
     return GroovyProjectDescriptors.GROOVY_3_0
   }
 
-  private fun testTypeHints(text: String, settings:
+  private fun testTypeHints(@Language("Groovy") text: String, settings:
   GroovyParameterTypeHintsInlayProvider.Settings = GroovyParameterTypeHintsInlayProvider.Settings(showInferredParameterTypes = true,
                                                                                                   showTypeParameterList = true)) {
-    testProvider("test.groovy", text, GroovyParameterTypeHintsInlayProvider(), settings)
+    doTestProvider("test.groovy", text, GroovyParameterTypeHintsInlayProvider(), settings)
   }
 
   override fun setUp() {
@@ -25,13 +27,20 @@ class GroovyParameterTypeHintsInlayProviderTest : InlayHintsProviderTestCase() {
   }
 
   override fun tearDown() {
-    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).resetToDefault()
-    super.tearDown()
+    try {
+      Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).resetToDefault()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun testSingleType() {
     val text = """
-def foo(<# [Integer  ] #>a) {}
+def foo(/*<# [Integer  ] #>*/a) {}
 
 foo(1)
     """.trimIndent()
@@ -40,7 +49,7 @@ foo(1)
 
   fun testWildcard() {
     val text = """
-def foo(<# [[List < [? [ super  Number]] >]  ] #>a) {
+def foo(/*<# [[List < [? [ super  Number]] >]  ] #>*/a) {
   a.add(1)
 }
 
@@ -52,7 +61,7 @@ foo(null as List<Number>)
 
   fun testTypeParameters() {
     val text = """
-def<# [< T >] #> foo(<# [[ArrayList < T >]  ] #>a, <# [[ArrayList < [? [ extends  T]] >]  ] #>b) {
+def/*<# [< T >] #>*/ foo(/*<# [[ArrayList < T >]  ] #>*/a, /*<# [[ArrayList < [? [ extends  T]] >]  ] #>*/b) {
   a.add(b[0])
 }
 
@@ -64,13 +73,13 @@ foo(['q'], ['q'])
 
   fun testClosure() {
     val text = """
-def<# [< [T extends  A] >] #> foo(<# [T  ] #>a, <# [[Closure < [?  ] >]  ] #>c) {
+def/*<# [< [T extends  A] >] #>*/ foo(/*<# [T  ] #>*/a, /*<# [[Closure < [?  ] >]  ] #>*/c) {
   c(a)
 }
 
 interface A{def foo()}
 
-foo(null as A) {<# [A  it -> ] #>
+foo(null as A) {/*<# [A  it -> ] #>*/
   it.foo()
 }
     """.trimIndent()
@@ -80,22 +89,22 @@ foo(null as A) {<# [A  it -> ] #>
 
   fun testInsideClosure() {
     val text = """
-def foo(<# [Integer  ] #>arg, <# [[Closure < [?  ] >]  ] #>closure) {
+def foo(/*<# [Integer  ] #>*/arg, /*<# [[Closure < [?  ] >]  ] #>*/closure) {
   closure(arg)
 }
 
-foo(1) { <# [Integer  ] #>a -> a.byteValue() }
+foo(1) { /*<# [Integer  ] #>*/a -> a.byteValue() }
     """.trimIndent()
     testTypeHints(text)
   }
 
   fun testInsideLambda() {
     val text = """
-def foo(<# [Integer  ] #>arg, <# [[Closure < [?  ] >]  ] #>closure) {
+def foo(/*<# [Integer  ] #>*/arg, /*<# [[Closure < [?  ] >]  ] #>*/closure) {
   closure(arg)
 }
 
-foo(1, <# [Integer  ] #>a -> a.byteValue())
+foo(1, /*<# [Integer  ] #>*/a -> a.byteValue())
     """.trimIndent()
     testTypeHints(text)
   }
@@ -113,8 +122,8 @@ import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
 def foo(@ClosureParams(value=SimpleType, options=['java.lang.Integer'])Closure a) {}
 def bar(@ClosureParams(value=SimpleType, options=['java.lang.Integer'])Closure b) {}
-foo { <# [Integer  ] #>a ->
-  bar { <# [Integer  ] #>b ->
+foo { /*<# [Integer  ] #>*/a ->
+  bar { /*<# [Integer  ] #>*/b ->
     for (x in y){}
   }
 }

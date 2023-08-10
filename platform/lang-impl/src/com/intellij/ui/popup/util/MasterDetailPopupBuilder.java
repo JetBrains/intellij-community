@@ -93,8 +93,7 @@ public final class MasterDetailPopupBuilder implements MasterController {
   }
 
   private void removeSelectedItems() {
-    if (myChooserComponent instanceof JList) {
-      JList list = (JList)myChooserComponent;
+    if (myChooserComponent instanceof JList list) {
       ListModel listModel = list.getModel();
 
       int index = list.getSelectedIndex();
@@ -228,7 +227,7 @@ public final class MasterDetailPopupBuilder implements MasterController {
       setUseDimensionServiceForXYLocation(myDimensionServiceKey != null).
       setSettingButton(toolBar).
       setSouthComponent(footerPanel).
-      setItemChoosenCallback(itemCallback).
+      setItemChosenCallback(itemCallback).
       setFilteringEnabled(o -> ((ItemWrapper)o).speedSearchText());
 
     if (myPopupTuner != null) {
@@ -271,7 +270,7 @@ public final class MasterDetailPopupBuilder implements MasterController {
     myPopup = builder.createPopup();
 
     builder.getScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
-    mySpeedSearch = ((ListWithFilter)builder.getPreferableFocusComponent()).getSpeedSearch();
+    mySpeedSearch = ((ListWithFilter<?>)builder.getPreferableFocusComponent()).getSpeedSearch();
 
     myPopup.addListener(new JBPopupListener() {
       @Override
@@ -307,7 +306,7 @@ public final class MasterDetailPopupBuilder implements MasterController {
     Object[] values = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     if (myChooserComponent instanceof JList) {
       //noinspection deprecation
-      values = ((JList)myChooserComponent).getSelectedValues();
+      values = ((JList<?>)myChooserComponent).getSelectedValues();
     }
     else if (myChooserComponent instanceof JTree) {
       values = myDelegate.getSelectedItemsInTree();

@@ -1,0 +1,6 @@
+class A {
+    private fun bar(): () -> Any = {
+        class Local()
+        Local()
+    }
+}

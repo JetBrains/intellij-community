@@ -11,6 +11,7 @@ import org.junit.rules.ExternalResource;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.nio.file.Path;
 import java.util.function.Function;
 
 import static com.intellij.ui.scale.TestScaleHelper.loadImage;
@@ -87,11 +88,11 @@ public abstract class AbstractPainter2DTest {
                                             JreHiDpiUtil.isJreHiDPIEnabled() + "; scale=" + scale + "; ");
   }
 
-  private String getGoldenImagePath(int scale) {
-    return PlatformTestUtil.getPlatformTestDataPath() +
+  private Path getGoldenImagePath(int scale) {
+    return Path.of(PlatformTestUtil.getPlatformTestDataPath() +
            "ui/paint/" + getGoldenImageName() +
            (scale > 1 && JreHiDpiUtil.isJreHiDPIEnabled() ? "_hd@" : "@") +
-           scale + "x.png";
+           scale + "x.png");
   }
 
   protected abstract Void paint(Graphics2D g);

@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Contributes element types of various kinds specific for a particular Python dialect.
  *
- * @author vlan
  */
 public interface PythonDialectsTokenSetContributor {
   ExtensionPointName<PythonDialectsTokenSetContributor> EP_NAME = ExtensionPointName.create("Pythonid.dialectsTokenSetContributor");

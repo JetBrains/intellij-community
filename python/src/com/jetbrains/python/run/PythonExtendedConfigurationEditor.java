@@ -19,18 +19,17 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 
-/**
- * @author Alexander Koshevoy
- */
 public class PythonExtendedConfigurationEditor<T extends AbstractPythonRunConfiguration<T>> extends SettingsEditor<T> {
   @NotNull private final SettingsEditor<T> myMainSettingsEditor;
 
-  private PyRunConfigurationEditorExtension myCurrentEditor;
-  private SettingsEditor<AbstractPythonRunConfiguration> myCurrentSettingsEditor;
+  private @Nullable PyRunConfigurationEditorFactory myCurrentEditorFactory;
+  private @Nullable SettingsEditor<AbstractPythonRunConfiguration<?>> myCurrentSettingsEditor;
   private JComponent myCurrentSettingsEditorComponent;
 
   private JPanel mySettingsPlaceholder;
@@ -65,8 +64,12 @@ public class PythonExtendedConfigurationEditor<T extends AbstractPythonRunConfig
   }
 
   private boolean updateCurrentEditor(T s) {
-    PyRunConfigurationEditorExtension newEditor = PyRunConfigurationEditorExtension.Factory.getExtension(s);
-    if (myCurrentEditor != newEditor) {
+    PyRunConfigurationEditorFactory newEditorFactory = PyRunConfigurationEditorExtension.EP_NAME.getExtensionList().stream()
+      .map(extension -> extension.accepts(s))
+      .filter(Objects::nonNull)
+      .findFirst()
+      .orElse(null);
+    if (!Objects.equals(myCurrentEditorFactory, newEditorFactory)) {
       // discard previous
       if (myCurrentSettingsEditorComponent != null) {
         mySettingsPlaceholder.remove(myCurrentSettingsEditorComponent);
@@ -75,11 +78,11 @@ public class PythonExtendedConfigurationEditor<T extends AbstractPythonRunConfig
         Disposer.dispose(myCurrentSettingsEditor);
       }
       // set current editor
-      myCurrentEditor = newEditor;
+      myCurrentEditorFactory = newEditorFactory;
       myCurrentSettingsEditor = null;
       // add new
-      if (newEditor != null) {
-        myCurrentSettingsEditor = newEditor.createEditor(s);
+      if (newEditorFactory != null) {
+        myCurrentSettingsEditor = newEditorFactory.createEditor(s);
         myCurrentSettingsEditorComponent = myCurrentSettingsEditor.getComponent();
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridy = 1;

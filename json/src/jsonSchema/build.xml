@@ -12,13 +12,11 @@
       <local name="baseUrl"/>
       <fixcrlf file="@{toFile}"/>
       <property name="baseUrl" value="@{fromUrl}" />
-      <script language="javascript"><![CDATA[
-        var url = new java.net.URL(project.getProperty("baseUrl"));
-        var connection = url.openConnection();
-        var etag = connection.getHeaderField("ETag");
-        project.setProperty("etag", etag);
-      ]]></script>
-      <echo message="${etag}" file="@{toFile}.ETAG" />
+      <exec executable="bash" outputproperty="etag">
+        <arg value="-c"/>
+        <arg line='"curl -sI ${baseUrl} | grep ETag | cut -f 2,3 -d ":" | xargs"'/>
+      </exec>
+      <echo message="&quot;${etag}&quot;" file="@{toFile}.ETAG" />
     </sequential>
   </macrodef>
 

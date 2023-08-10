@@ -10,6 +10,8 @@ import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
+import com.intellij.util.indexing.storage.UpdatableSnapshotInputMappingIndex;
+import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +26,7 @@ public class SnapshotSingleValueIndexStorage<Key, Value> implements VfsAwareInde
   private static final Logger LOG = Logger.getInstance(SnapshotSingleValueIndexStorage.class);
 
   // shareable snapshots
-  private volatile SnapshotInputMappings<Key, Value> mySnapshotInputMappings;
+  private volatile UpdatableSnapshotInputMappingIndex<Key, Value, FileContent> mySnapshotInputMappings;
 
   // input -> hash (client instance dependent)
   private volatile IntForwardIndex myForwardIndex;
@@ -124,11 +126,22 @@ public class SnapshotSingleValueIndexStorage<Key, Value> implements VfsAwareInde
   }
 
   @Override
+  public int keysCountApproximately() {
+    assert myInitialized;
+    return MeasurableIndexStore.keysCountApproximatelyIfPossible(myForwardIndex);
+  }
+
+  @Override
   public void close() throws StorageException {}
 
   @Override
   public void flush() throws IOException {
     clearCaches();
+  }
+
+  @Override
+  public boolean isDirty() {
+    return mySnapshotInputMappings.isDirty();
   }
 
   private void checkKeyInputIdConsistency(Key key, int inputId) {

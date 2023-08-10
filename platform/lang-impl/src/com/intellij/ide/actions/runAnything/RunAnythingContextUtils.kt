@@ -6,9 +6,12 @@ package com.intellij.ide.actions.runAnything
 import com.intellij.ide.actions.runAnything.RunAnythingContext.*
 import com.intellij.openapi.project.guessModuleDir
 import com.intellij.openapi.project.guessProjectDir
+import org.jetbrains.annotations.NonNls
 
-fun RunAnythingContext.getPath() = when (this) {
+fun RunAnythingContext.getPath(): @NonNls String? = when (this) {
   is ProjectContext -> project.guessProjectDir()?.path
+                       // Base path may not be present in VFS caches
+                       ?: project.basePath
   is ModuleContext -> module.guessModuleDir()?.path
   is RecentDirectoryContext -> path
   is BrowseRecentDirectoryContext -> null

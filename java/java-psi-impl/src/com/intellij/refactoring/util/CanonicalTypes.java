@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,9 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * @author dsl
- */
 public final class CanonicalTypes {
   private CanonicalTypes() { }
 
@@ -44,7 +41,15 @@ public final class CanonicalTypes {
     protected final TypeAnnotationProvider myProvider;
 
     AnnotatedType(@NotNull TypeAnnotationProvider provider) {
-      PsiAnnotation[] annotations = ContainerUtil.map(provider.getAnnotations(), annotation -> (PsiAnnotation)annotation.copy(), PsiAnnotation.EMPTY_ARRAY);
+      PsiAnnotation[] annotations = ContainerUtil.map(
+        provider.getAnnotations(),
+        annotation -> {
+          PsiElement copy = annotation.copy();
+          if (copy instanceof PsiAnnotation) return (PsiAnnotation)copy;
+          // copy is not implemented (e.g., for KtUltraLightSimpleAnnotation)
+          return JavaPsiFacade.getElementFactory(annotation.getProject()).createAnnotationFromText(annotation.getText(), annotation);
+        },
+        PsiAnnotation.EMPTY_ARRAY);
       myProvider = TypeAnnotationProvider.Static.create(annotations);
     }
   }
@@ -64,7 +69,7 @@ public final class CanonicalTypes {
 
     @Override
     public String getTypeText() {
-      return myType.getPresentableText();
+      return myType.getPresentableText(true);
     }
   }
 
@@ -128,7 +133,7 @@ public final class CanonicalTypes {
       }
       else {
         PsiType boundType = myBound.getType(context, manager);
-        if (boundType.equals(PsiType.NULL)) {
+        if (boundType.equals(PsiTypes.nullType())) {
           throw new IncorrectOperationException("Bound type is null " + getTypeText());
         }
         if (boundType instanceof PsiWildcardType) {
@@ -229,6 +234,9 @@ public final class CanonicalTypes {
         if (type != null) {
           type.addImportsTo(fragment);
         }
+      }
+      for (PsiAnnotation annotation : myProvider.getAnnotations()) {
+        fragment.addImportsFromString(annotation.getQualifiedName());
       }
     }
   }

@@ -29,9 +29,7 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
   @NotNull
   @Override
   public ThreeState isEquals(@NotNull Change change1, @NotNull Change change2) {
-    if (change1 instanceof ConflictedSvnChange && change2 instanceof ConflictedSvnChange) {
-      ConflictedSvnChange conflict1 = (ConflictedSvnChange)change1;
-      ConflictedSvnChange conflict2 = (ConflictedSvnChange)change2;
+    if (change1 instanceof ConflictedSvnChange conflict1 && change2 instanceof ConflictedSvnChange conflict2) {
 
       if (!conflict1.isTreeConflict() && !conflict2.isTreeConflict()) return ThreeState.UNSURE;
       if (!conflict1.isTreeConflict() || !conflict2.isTreeConflict()) return ThreeState.NO;

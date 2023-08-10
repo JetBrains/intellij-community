@@ -5,9 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Collection;
 
 public interface FilesProcessor extends Disposable {
-  @NotNull
-  List<VirtualFile> processFiles(@NotNull List<VirtualFile> files);
+  void processFiles(@NotNull Collection<VirtualFile> files);
 }

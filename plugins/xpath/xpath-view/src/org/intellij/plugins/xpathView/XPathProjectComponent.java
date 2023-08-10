@@ -15,7 +15,10 @@
  */
 package org.intellij.plugins.xpathView;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import org.intellij.plugins.xpathView.util.Namespace;
 import org.intellij.plugins.xpathView.util.Variable;
@@ -143,6 +146,6 @@ public class XPathProjectComponent implements PersistentStateComponent<Element> 
     }
 
     public static XPathProjectComponent getInstance(Project project) {
-        return ServiceManager.getService(project, XPathProjectComponent.class);
+      return project.getService(XPathProjectComponent.class);
     }
 }

@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.ProjectTopics;
+import com.intellij.codeInsight.daemon.impl.analysis.VirtualManifestProvider;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
@@ -24,13 +26,15 @@ import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
+import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -42,17 +46,10 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private static final Logger LOG = Logger.getInstance(JavaFileManagerImpl.class);
 
   private final PsiManagerEx myManager;
-  private volatile Set<String> myNontrivialPackagePrefixes;
   private boolean myDisposed;
 
   public JavaFileManagerImpl(Project project) {
     myManager = PsiManagerEx.getInstanceEx(project);
-    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull final ModuleRootEvent event) {
-        myNontrivialPackagePrefixes = null;
-      }
-    });
   }
 
   @Override
@@ -61,15 +58,14 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   }
 
   @Override
-  @Nullable
-  public PsiPackage findPackage(@NotNull String packageName) {
+  public @Nullable PsiPackage findPackage(@NotNull String packageName) {
     Query<VirtualFile> dirs = PackageIndex.getInstance(myManager.getProject()).getDirsByPackageName(packageName, true);
     if (dirs.findFirst() == null) return null;
     return new PsiPackageImpl(myManager, packageName);
   }
 
   @Override
-  public PsiClass @NotNull [] findClasses(@NotNull String qName, @NotNull final GlobalSearchScope scope) {
+  public PsiClass @NotNull [] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     List<Pair<PsiClass, VirtualFile>> result = doFindClasses(qName, scope);
 
     int count = result.size();
@@ -81,15 +77,12 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return result.stream().map(p -> p.getFirst()).toArray(PsiClass[]::new);
   }
 
-  @NotNull
-  private List<Pair<PsiClass, VirtualFile>> doFindClasses(@NotNull String qName, @NotNull final GlobalSearchScope scope) {
-    final Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
+  private @NotNull List<Pair<PsiClass, VirtualFile>> doFindClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
+    Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName, myManager.getProject(), scope);
     if (classes.isEmpty()) return Collections.emptyList();
+
     List<Pair<PsiClass, VirtualFile>> result = new ArrayList<>(classes.size());
     for (PsiClass aClass : classes) {
-      final String qualifiedName = aClass.getQualifiedName();
-      if (!qName.equals(qualifiedName)) continue;
-
       PsiFile file = aClass.getContainingFile();
       if (file == null) {
         throw new AssertionError("No file for class: " + aClass + " of " + aClass.getClass());
@@ -104,8 +97,7 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   }
 
   @Override
-  @Nullable
-  public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
+  public @Nullable PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     LOG.assertTrue(!myDisposed);
     VirtualFile bestFile = null;
     PsiClass bestClass = null;
@@ -127,9 +119,9 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private boolean hasAcceptablePackage(@NotNull VirtualFile vFile) {
     if (FileTypeRegistry.getInstance().isFileOfType(vFile, JavaClassFileType.INSTANCE)) {
       // See IDEADEV-5626
-      final VirtualFile root = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().getClassRootForFile(vFile);
+      VirtualFile root = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().getClassRootForFile(vFile);
       VirtualFile parent = vFile.getParent();
-      final PsiNameHelper nameHelper = PsiNameHelper.getInstance(myManager.getProject());
+      PsiNameHelper nameHelper = PsiNameHelper.getInstance(myManager.getProject());
       while (parent != null && !Comparing.equal(parent, root)) {
         if (!nameHelper.isIdentifier(parent.getName())) return false;
         parent = parent.getParent();
@@ -139,43 +131,59 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return true;
   }
 
-  @NotNull
   @Override
-  public Collection<String> getNonTrivialPackagePrefixes() {
-    Set<String> names = myNontrivialPackagePrefixes;
-    if (names == null) {
-      names = new HashSet<>();
-      final ProjectRootManager rootManager = ProjectRootManager.getInstance(myManager.getProject());
-      final List<VirtualFile> sourceRoots = rootManager.getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
-      final ProjectFileIndex fileIndex = rootManager.getFileIndex();
-      for (final VirtualFile sourceRoot : sourceRoots) {
-        if (sourceRoot.isDirectory()) {
-          final String packageName = fileIndex.getPackageNameByDirectory(sourceRoot);
-          if (packageName != null && !packageName.isEmpty()) {
-            names.add(packageName);
-          }
-        }
-      }
-      myNontrivialPackagePrefixes = names;
-    }
-    return names;
+  public @NotNull Collection<String> getNonTrivialPackagePrefixes() {
+    return PackagePrefixElementFinder.getInstance(myManager.getProject()).getAllPackagePrefixes(GlobalSearchScope.projectScope(myManager.getProject()));
   }
 
-  @NotNull
   @Override
-  public Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
+  public @NotNull Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
     GlobalSearchScope excludingScope = new LibSrcExcludingScope(scope);
 
-    List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().get(moduleName, myManager.getProject(), excludingScope));
+    Project project = myManager.getProject();
+    List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().get(moduleName, project, excludingScope));
 
+    Set<VirtualFile> shadowedRoots = new HashSet<>();
     for (VirtualFile manifest : JavaSourceModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
-      results.add(LightJavaModule.create(myManager, manifest.getParent().getParent(), moduleName));
-    }
-
-    for (VirtualFile root : JavaAutoModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
+      VirtualFile root = manifest.getParent().getParent();
+      shadowedRoots.add(root);
       results.add(LightJavaModule.create(myManager, root, moduleName));
     }
 
+    for (VirtualFile root : JavaAutoModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
+      if (shadowedRoots.contains(root)) { //already found by MANIFEST attribute
+        continue;
+      }
+      VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
+      if (manifest != null && LightJavaModule.claimedModuleName(manifest) != null) {
+        continue;
+      }
+      results.add(LightJavaModule.create(myManager, root, moduleName));
+    }
+
+    if (results.isEmpty()) {
+      CachedValuesManager valuesManager = CachedValuesManager.getManager(project);
+      ProjectRootModificationTracker rootModificationTracker = ProjectRootModificationTracker.getInstance(project);
+      for (Module module : ModuleManager.getInstance(project).getModules()) {
+        VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(false);
+        if (sourceRoots.length > 0) {
+          String virtualAutoModuleName = VirtualManifestProvider.getAttributeValue(module, PsiJavaModule.AUTO_MODULE_NAME);
+          if (moduleName.equals(virtualAutoModuleName)) {
+            results.add(LightJavaModule.create(myManager, sourceRoots[0], moduleName));
+            break;
+          }
+
+          String defaultModuleName = valuesManager.getCachedValue(module, () ->
+            CachedValueProvider.Result.create(LightJavaModule.moduleName(module.getName()), rootModificationTracker)
+          );
+          if (moduleName.equals(defaultModuleName)) {
+            results.add(LightJavaModule.create(myManager, sourceRoots[0], moduleName));
+            break;
+          }
+        }
+      }
+    }
+    
     return upgradeModules(sortModules(results, scope), moduleName, scope);
   }
 

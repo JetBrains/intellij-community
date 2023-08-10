@@ -1,33 +1,45 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.Settings;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.ui.TextComponentAccessors;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.terminal.TerminalUiSettingsManager;
+import com.intellij.ui.*;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.plaf.basic.BasicComboBoxEditor;
 import java.awt.*;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,7 +49,7 @@ import java.util.function.Supplier;
 
 public class TerminalSettingsPanel {
   private JPanel myWholePanel;
-  private TextFieldWithBrowseButton myShellPathField;
+  private TextFieldWithHistoryWithBrowseButton myShellPathField;
   private JBCheckBox mySoundBellCheckBox;
   private JBCheckBox myCloseSessionCheckBox;
   private JBCheckBox myMouseReportCheckBox;
@@ -55,13 +67,19 @@ public class TerminalSettingsPanel {
 
   private EnvironmentVariablesTextFieldWithBrowseButton myEnvVarField;
   private ActionLink myConfigureTerminalKeybindingsActionLink;
+  private ComboBox<TerminalUiSettingsManager.CursorShape> myCursorShape;
+  private JBCheckBox myUseOptionAsMetaKey;
 
+  private Project myProject;
   private TerminalOptionsProvider myOptionsProvider;
   private TerminalProjectOptionsProvider myProjectOptionsProvider;
 
-  private final java.util.List<UnnamedConfigurable> myConfigurables = new ArrayList<>();
+  private final List<UnnamedConfigurable> myConfigurables = new ArrayList<>();
 
-  public JComponent createPanel(@NotNull TerminalOptionsProvider provider, @NotNull TerminalProjectOptionsProvider projectOptionsProvider) {
+  public JComponent createPanel(@NotNull Project project,
+                                @NotNull TerminalOptionsProvider provider,
+                                @NotNull TerminalProjectOptionsProvider projectOptionsProvider) {
+    myProject = project;
     myOptionsProvider = provider;
     myProjectOptionsProvider = projectOptionsProvider;
 
@@ -96,6 +114,8 @@ public class TerminalSettingsPanel {
       }
     }
 
+    myUseOptionAsMetaKey.getParent().setVisible(SystemInfo.isMac);
+
     return myWholePanel;
   }
 
@@ -116,9 +136,9 @@ public class TerminalSettingsPanel {
       TerminalBundle.message("settings.terminal.shell.executable.path.browseFolder.description"),
       null,
       FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
-      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
+      TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT
     );
-    setupTextFieldDefaultValue(myShellPathField.getTextField(), () -> myProjectOptionsProvider.defaultShellPath());
+    setupTextFieldDefaultValue(myShellPathField.getChildComponent().getTextEditor(), () -> myProjectOptionsProvider.defaultShellPath());
   }
 
   private void setupTextFieldDefaultValue(@NotNull JTextField textField, @NotNull Supplier<@NlsSafe String> defaultValueSupplier) {
@@ -139,16 +159,18 @@ public class TerminalSettingsPanel {
     return !Objects.equals(myShellPathField.getText(), myProjectOptionsProvider.getShellPath())
            || !Objects.equals(myStartDirectoryField.getText(), StringUtil.notNullize(myProjectOptionsProvider.getStartingDirectory()))
            || !Objects.equals(myTabNameTextField.getText(), myOptionsProvider.getTabName())
-           || (myCloseSessionCheckBox.isSelected() != myOptionsProvider.closeSessionOnLogout())
-           || (myMouseReportCheckBox.isSelected() != myOptionsProvider.enableMouseReporting())
-           || (mySoundBellCheckBox.isSelected() != myOptionsProvider.audibleBell())
-           || (myCopyOnSelectionCheckBox.isSelected() != myOptionsProvider.copyOnSelection())
-           || (myPasteOnMiddleButtonCheckBox.isSelected() != myOptionsProvider.pasteOnMiddleMouseButton())
-           || (myOverrideIdeShortcuts.isSelected() != myOptionsProvider.overrideIdeShortcuts())
-           || (myShellIntegration.isSelected() != myOptionsProvider.shellIntegration())
-           || (myHighlightHyperlinks.isSelected() != myOptionsProvider.highlightHyperlinks()) ||
-           myConfigurables.stream().anyMatch(c -> c.isModified())
-           || !Comparing.equal(myEnvVarField.getData(), myProjectOptionsProvider.getEnvData());
+           || (myCloseSessionCheckBox.isSelected() != myOptionsProvider.getCloseSessionOnLogout())
+           || (myMouseReportCheckBox.isSelected() != myOptionsProvider.getMouseReporting())
+           || (mySoundBellCheckBox.isSelected() != myOptionsProvider.getAudibleBell())
+           || (myCopyOnSelectionCheckBox.isSelected() != myOptionsProvider.getCopyOnSelection())
+           || (myPasteOnMiddleButtonCheckBox.isSelected() != myOptionsProvider.getPasteOnMiddleMouseButton())
+           || (myOverrideIdeShortcuts.isSelected() != myOptionsProvider.getOverrideIdeShortcuts())
+           || (myShellIntegration.isSelected() != myOptionsProvider.getShellIntegration())
+           || (myHighlightHyperlinks.isSelected() != myOptionsProvider.getHighlightHyperlinks())
+           || (myUseOptionAsMetaKey.isSelected() != myOptionsProvider.getUseOptionAsMetaKey())
+           || myConfigurables.stream().anyMatch(c -> c.isModified())
+           || !Comparing.equal(myEnvVarField.getData(), myProjectOptionsProvider.getEnvData())
+           || myCursorShape.getItem() != myOptionsProvider.getCursorShape();
   }
 
   public void apply() {
@@ -156,13 +178,14 @@ public class TerminalSettingsPanel {
     myProjectOptionsProvider.setShellPath(myShellPathField.getText());
     myOptionsProvider.setTabName(myTabNameTextField.getText());
     myOptionsProvider.setCloseSessionOnLogout(myCloseSessionCheckBox.isSelected());
-    myOptionsProvider.setReportMouse(myMouseReportCheckBox.isSelected());
-    myOptionsProvider.setSoundBell(mySoundBellCheckBox.isSelected());
+    myOptionsProvider.setMouseReporting(myMouseReportCheckBox.isSelected());
+    myOptionsProvider.setAudibleBell(mySoundBellCheckBox.isSelected());
     myOptionsProvider.setCopyOnSelection(myCopyOnSelectionCheckBox.isSelected());
     myOptionsProvider.setPasteOnMiddleMouseButton(myPasteOnMiddleButtonCheckBox.isSelected());
     myOptionsProvider.setOverrideIdeShortcuts(myOverrideIdeShortcuts.isSelected());
     myOptionsProvider.setShellIntegration(myShellIntegration.isSelected());
     myOptionsProvider.setHighlightHyperlinks(myHighlightHyperlinks.isSelected());
+    myOptionsProvider.setUseOptionAsMetaKey(myUseOptionAsMetaKey.isSelected());
     myConfigurables.forEach(c -> {
       try {
         c.apply();
@@ -172,22 +195,26 @@ public class TerminalSettingsPanel {
       }
     });
     myProjectOptionsProvider.setEnvData(myEnvVarField.getData());
+    myOptionsProvider.setCursorShape(ObjectUtils.notNull(myCursorShape.getItem(), TerminalUiSettingsManager.CursorShape.BLOCK));
   }
 
   public void reset() {
     myShellPathField.setText(myProjectOptionsProvider.getShellPath());
     myStartDirectoryField.setText(myProjectOptionsProvider.getStartingDirectory());
     myTabNameTextField.setText(myOptionsProvider.getTabName());
-    myCloseSessionCheckBox.setSelected(myOptionsProvider.closeSessionOnLogout());
-    myMouseReportCheckBox.setSelected(myOptionsProvider.enableMouseReporting());
-    mySoundBellCheckBox.setSelected(myOptionsProvider.audibleBell());
-    myCopyOnSelectionCheckBox.setSelected(myOptionsProvider.copyOnSelection());
-    myPasteOnMiddleButtonCheckBox.setSelected(myOptionsProvider.pasteOnMiddleMouseButton());
-    myOverrideIdeShortcuts.setSelected(myOptionsProvider.overrideIdeShortcuts());
-    myShellIntegration.setSelected(myOptionsProvider.shellIntegration());
-    myHighlightHyperlinks.setSelected(myOptionsProvider.highlightHyperlinks());
+    myCloseSessionCheckBox.setSelected(myOptionsProvider.getCloseSessionOnLogout());
+    myMouseReportCheckBox.setSelected(myOptionsProvider.getMouseReporting());
+    mySoundBellCheckBox.setSelected(myOptionsProvider.getAudibleBell());
+    myCopyOnSelectionCheckBox.setSelected(myOptionsProvider.getCopyOnSelection());
+    myPasteOnMiddleButtonCheckBox.setSelected(myOptionsProvider.getPasteOnMiddleMouseButton());
+    myOverrideIdeShortcuts.setSelected(myOptionsProvider.getOverrideIdeShortcuts());
+    myShellIntegration.setSelected(myOptionsProvider.getShellIntegration());
+    myHighlightHyperlinks.setSelected(myOptionsProvider.getHighlightHyperlinks());
+    myUseOptionAsMetaKey.setSelected(myOptionsProvider.getUseOptionAsMetaKey());
     myConfigurables.forEach(c -> c.reset());
     myEnvVarField.setData(myProjectOptionsProvider.getEnvData());
+    myCursorShape.setItem(myOptionsProvider.getCursorShape());
+    myEnvVarField.setEnabled(TrustedProjects.isTrusted(myProject));
   }
 
   public Color getDefaultValueColor() {
@@ -195,10 +222,8 @@ public class TerminalSettingsPanel {
   }
 
   private void createUIComponents() {
-    myConfigureTerminalKeybindingsActionLink = new ActionLink(null, new DumbAwareAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        Settings settings = e.getData(Settings.KEY);
+    myConfigureTerminalKeybindingsActionLink = new ActionLink("", e -> {
+        Settings settings = DataManager.getInstance().getDataContext((ActionLink)e.getSource()).getData(Settings.KEY);
         if (settings != null) {
           Configurable configurable = settings.find("preferences.keymap");
           settings.select(configurable, "Terminal").doWhenDone(() -> {
@@ -208,9 +233,73 @@ public class TerminalSettingsPanel {
             }, 100, TimeUnit.MILLISECONDS);
           });
         }
-      }
     });
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myConfigureTerminalKeybindingsActionLink);
+    myCursorShape = new ComboBox<>(TerminalUiSettingsManager.CursorShape.values());
+    myCursorShape.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+      label.setText(value.getText());
+    }));
+    myShellPathField = createShellPath();
+  }
+
+  private @NotNull TextFieldWithHistoryWithBrowseButton createShellPath() {
+    TextFieldWithHistoryWithBrowseButton textFieldWithHistoryWithBrowseButton = new TextFieldWithHistoryWithBrowseButton();
+    final TextFieldWithHistory textFieldWithHistory = textFieldWithHistoryWithBrowseButton.getChildComponent();
+    textFieldWithHistory.setEditor(new BasicComboBoxEditor() {
+      @Override
+      protected JTextField createEditorComponent() {
+        return new JBTextField();
+      }
+    });
+    textFieldWithHistory.setHistorySize(-1);
+    textFieldWithHistory.setMinimumAndPreferredWidth(0);
+    SwingHelper.addHistoryOnExpansion(textFieldWithHistory, () -> {
+      return detectShells();
+    });
+    return textFieldWithHistoryWithBrowseButton;
+  }
+
+  private @NotNull List<String> detectShells() {
+    List<String> shells = new ArrayList<>();
+    if (SystemInfo.isUnix) {
+      addIfExists(shells, "/bin/bash");
+      addIfExists(shells, "/usr/bin/zsh");
+      addIfExists(shells, "/usr/local/bin/zsh");
+      addIfExists(shells, "/usr/bin/fish");
+      addIfExists(shells, "/usr/local/bin/fish");
+    }
+    else if (SystemInfo.isWindows) {
+      File powershell = PathEnvironmentVariableUtil.findInPath("powershell.exe");
+      if (powershell != null && StringUtil.startsWithIgnoreCase(powershell.getAbsolutePath(), "C:\\Windows\\System32\\WindowsPowerShell\\")) {
+        shells.add(powershell.getAbsolutePath());
+      }
+      File cmd = PathEnvironmentVariableUtil.findInPath("cmd.exe");
+      if (cmd != null && StringUtil.startsWithIgnoreCase(cmd.getAbsolutePath(), "C:\\Windows\\System32\\")) {
+        shells.add(cmd.getAbsolutePath());
+      }
+      File pwsh = PathEnvironmentVariableUtil.findInPath("pwsh.exe");
+      if (pwsh != null && StringUtil.startsWithIgnoreCase(pwsh.getAbsolutePath(), "C:\\Program Files\\PowerShell\\")) {
+        shells.add(pwsh.getAbsolutePath());
+      }
+      File gitBash = new File("C:\\Program Files\\Git\\bin\\bash.exe");
+      if (gitBash.isFile()) {
+        shells.add(gitBash.getAbsolutePath());
+      }
+      String cmderRoot = EnvironmentUtil.getValue("CMDER_ROOT");
+      if (cmderRoot == null) {
+        cmderRoot = myEnvVarField.getEnvs().get("CMDER_ROOT");
+      }
+      if (cmderRoot != null && cmd != null && StringUtil.startsWithIgnoreCase(cmd.getAbsolutePath(), "C:\\Windows\\System32\\")) {
+        shells.add("cmd.exe /k \"%CMDER_ROOT%\\vendor\\init.bat\"");
+      }
+    }
+    return shells;
+  }
+
+  private static void addIfExists(@NotNull List<String> shells, @NotNull String filePath) {
+    if (Files.exists(Path.of(filePath))) {
+      shells.add(filePath);
+    }
   }
 
   @NotNull

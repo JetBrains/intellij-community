@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ActionCallback;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,8 +39,7 @@ public abstract class ActionManager {
    * @param group Group from which the actions for the menu are taken.
    * @return An instance of {@code ActionPopupMenu}
    */
-  @NotNull
-  public abstract ActionPopupMenu createActionPopupMenu(@NonNls @NotNull String place, @NotNull ActionGroup group);
+  public abstract @NotNull ActionPopupMenu createActionPopupMenu(@NonNls @NotNull String place, @NotNull ActionGroup group);
 
   /**
    * Factory method that creates an {@code ActionToolbar} from the
@@ -54,8 +52,7 @@ public abstract class ActionManager {
    * @param horizontal The orientation of the toolbar ({@code true} - horizontal, {@code false} - vertical)
    * @return An instance of {@code ActionToolbar}
    */
-  @NotNull
-  public abstract ActionToolbar createActionToolbar(@NonNls @NotNull String place, @NotNull ActionGroup group, boolean horizontal);
+  public abstract @NotNull ActionToolbar createActionToolbar(@NonNls @NotNull String place, @NotNull ActionGroup group, boolean horizontal);
 
   /**
    * Returns action associated with the specified actionId.
@@ -71,12 +68,10 @@ public abstract class ActionManager {
   /**
    * Returns actionId associated with the specified action.
    *
-   * @return id associated with the specified action, {@code null} if action
-   * is not registered
+   * @return id associated with the specified action, {@code null} if action is not registered
    * @throws IllegalArgumentException if {@code action} is {@code null}
    */
-  @NonNls
-  public abstract String getId(@NotNull AnAction action);
+  public abstract @NonNls @Nullable String getId(@NotNull AnAction action);
 
   /**
    * Registers the specified action with the specified id. Note that the IDE's keymaps
@@ -139,38 +134,45 @@ public abstract class ActionManager {
    * @param messageActionGroup the action group from which the toolbar is created.
    * @return the created panel.
    *
-   * @deprecated use {@link #createActionToolbar(String, ActionGroup, boolean)} or {@link com.intellij.ui.ToolbarDecorator} instead.
+   * @deprecated use regular Swing {@link Action},
+   *   {@link com.intellij.openapi.ui.DialogWrapper#createActions()},
+   *   {@link com.intellij.openapi.ui.DialogWrapper#createLeftSideActions()},
+   *   {@link #createActionToolbar(String, ActionGroup, boolean)}, or
+   *   {@link com.intellij.ui.ToolbarDecorator} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @NotNull
-  public abstract JComponent createButtonToolbar(@NotNull String actionPlace, @NotNull ActionGroup messageActionGroup);
+  @Deprecated(forRemoval = true)
+  public abstract @NotNull JComponent createButtonToolbar(@NotNull String actionPlace, @NotNull ActionGroup messageActionGroup);
 
-  @Nullable
-  public abstract AnAction getActionOrStub(@NotNull @NonNls String id);
+  public abstract @Nullable AnAction getActionOrStub(@NotNull @NonNls String id);
 
-  public abstract void addTimerListener(int delay, @NotNull TimerListener listener);
+  public abstract void addTimerListener(@NotNull TimerListener listener);
+
+  /**
+   * @deprecated use {@link #addTimerListener(TimerListener)}
+   */
+  @Deprecated(forRemoval = true)
+  public void addTimerListener(int unused, @NotNull TimerListener listener) {
+    addTimerListener(listener);
+  }
 
   public abstract void removeTimerListener(@NotNull TimerListener listener);
 
-  public abstract void addTransparentTimerListener(int delay, @NotNull TimerListener listener);
-
-  public abstract void removeTransparentTimerListener(@NotNull TimerListener listener);
-
-  @NotNull
-  public abstract ActionCallback tryToExecute(@NotNull AnAction action, @NotNull InputEvent inputEvent, @Nullable Component contextComponent,
-                                              @Nullable String place, boolean now);
+  public abstract @NotNull ActionCallback tryToExecute(@NotNull AnAction action,
+                                                       @Nullable InputEvent inputEvent,
+                                                       @Nullable Component contextComponent,
+                                                       @Nullable String place,
+                                                       boolean now);
 
   /**
    * @deprecated Use {@link AnActionListener#TOPIC}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addAnActionListener(AnActionListener listener);
 
   /**
    * @deprecated Use {@link AnActionListener#TOPIC}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void addAnActionListener(AnActionListener listener, Disposable parentDisposable) {
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(AnActionListener.TOPIC, listener);
   }
@@ -178,9 +180,8 @@ public abstract class ActionManager {
   /**
    * @deprecated Use {@link AnActionListener#TOPIC}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void removeAnActionListener(AnActionListener listener);
 
-  @Nullable
-  public abstract KeyboardShortcut getKeyboardShortcut(@NonNls @NotNull String actionId);
+  public abstract @Nullable KeyboardShortcut getKeyboardShortcut(@NonNls @NotNull String actionId);
 }

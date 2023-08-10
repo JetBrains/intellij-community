@@ -1,34 +1,70 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui.welcomeScreen
 
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
-import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.HeightLimitedPane
-import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts
-import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.scale.JBUIScale
-import icons.FeaturesTrainerIcons.Img.PluginIcon
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.InteractiveCoursePanel
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.HyperlinkAdapter
+import com.intellij.util.ui.HTMLEditorKitBuilder
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import training.FeaturesTrainerIcons
+import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
-import training.learn.interfaces.Module
-import training.statistic.StatisticBase
-import training.util.rigid
+import training.learn.OpenLessonActivities
+import training.learn.course.IftModule
+import training.ui.views.NewContentLabel
+import training.util.enableLessonsAndPromoters
+import training.util.iftPluginIsUsing
+import training.util.learningPanelWasOpenedInCurrentVersion
+import java.awt.Component
 import java.awt.event.ActionEvent
 import javax.swing.*
-import javax.swing.plaf.FontUIResource
-import javax.swing.plaf.LabelUI
+import javax.swing.event.HyperlinkEvent
 
-class IFTInteractiveCourse : InteractiveCourseFactory {
-  override fun getInteractiveCourseData(): InteractiveCourseData = IFTInteractiveCourseData()
+internal class IFTInteractiveCourse : InteractiveCourseFactory {
+
+  override val isActive: Boolean get() = LangManager.getInstance().getLangSupport()?.useUserProjects == false
+
+  override val isEnabled: Boolean = enableLessonsAndPromoters
+
+  override val disabledText: String = LearnBundle.message("welcome.tab.toggle.new.ui.hint")
+
+  override fun getInteractiveCourseComponent(): JComponent = IFTInteractiveCoursePanel(isEnabled, disabledText)
+
+  override fun getCourseData(): InteractiveCourseData {
+    return IFTInteractiveCourseData()
+  }
 }
 
-class IFTInteractiveCourseData : InteractiveCourseData {
+private class IFTInteractiveCoursePanel(isEnabled: Boolean, disabledText: String) : InteractiveCoursePanel(IFTInteractiveCourseData(), isEnabled) {
+
+  init {
+    if (!enableLessonsAndPromoters) {
+      add(JTextPane().apply {
+        contentType = "text/html"
+        addHyperlinkListener(object : HyperlinkAdapter() {
+          override fun hyperlinkActivated(e: HyperlinkEvent) {
+            ExperimentalUI.setNewUI(true)
+          }
+        })
+        editorKit = HTMLEditorKitBuilder.simple()
+        text = disabledText
+        isEditable = false
+        isOpaque = false
+        highlighter = null
+        foreground = UIUtil.getLabelInfoForeground()
+        border = JBUI.Borders.empty(14, leftMargin, 0, 0)
+        alignmentX = Component.LEFT_ALIGNMENT
+      })
+    }
+  }
+}
+
+private class IFTInteractiveCourseData : InteractiveCourseData {
 
   override fun getName(): String {
     return LearnBundle.message("welcome.tab.header.learn.ide.features")
@@ -39,7 +75,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
   }
 
   override fun getIcon(): Icon {
-    return PluginIcon
+    return FeaturesTrainerIcons.PluginIcon
   }
 
   override fun getActionButtonName(): String {
@@ -49,60 +85,32 @@ class IFTInteractiveCourseData : InteractiveCourseData {
   override fun getAction(): Action {
     return object : AbstractAction(LearnBundle.message("welcome.tab.start.learning.button")) {
       override fun actionPerformed(e: ActionEvent?) {
-        openLearningFromWelcomeScreen(null)
+        openLearningFromWelcomeScreen()
       }
     }
   }
-
-  override fun getExpandContent(): JComponent {
-    val modules = CourseManager.instance.modules
-    val panel = JPanel()
-    panel.isOpaque = false
-    panel.layout = BoxLayout(panel, BoxLayout.PAGE_AXIS)
-
-    panel.add(rigid(16, 1))
-    for (module in modules) {
-      panel.add(moduleHeader(module))
-      panel.add(rigid(2, 2))
-      panel.add(moduleDescription(module))
-      panel.add(rigid(16, 16))
+  private fun moduleHasNewContent(module: IftModule): Boolean {
+    if (!iftPluginIsUsing) {
+      return false
     }
-    panel.add(rigid(16, 15))
-    StatisticBase.logWelcomeScreenPanelExpanded()
-    return panel
+    return module.lessons.any { it.isNewLesson() }
   }
 
-  private fun moduleDescription(module: Module): HeightLimitedPane {
-    return HeightLimitedPane(module.description ?: "", -1, LearnIdeContentColorsAndFonts.ModuleDescriptionColor)
-  }
-
-  private fun moduleHeader(module: Module): LinkLabel<Any> {
-    val linkLabel = object : LinkLabel<Any>(module.name, null) {
-      override fun setUI(ui: LabelUI?) {
-        super.setUI(ui)
-        if (font != null) {
-          font = FontUIResource(font.deriveFont(font.size2D + JBUIScale.scale(-1) + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0))
-        }
-      }
+  override fun newContentMarker(): JComponent? {
+    if (learningPanelWasOpenedInCurrentVersion) {
+      return null
     }
-    linkLabel.name = "linkLabel.${module.name}"
-    linkLabel.setListener(
-      { _, _ ->
-        StatisticBase.logModuleStarted(module)
-        openLearningFromWelcomeScreen(module)
-      }, null)
-    return linkLabel
+    if (CourseManager.instance.modules.any { moduleHasNewContent(it) }) {
+      return NewContentLabel()
+    }
+    return null
   }
 
-  private fun openLearningFromWelcomeScreen(module: Module?) {
-    val action = ActionManager.getInstance().getAction("ShowLearnPanel")
-
-    //val context = if (module != null) SimpleDataContext.getSimpleContext(OpenLearnPanel.LEARNING_MODULE_KEY.name, module)
-    //else DataContext.EMPTY_CONTEXT
-
-    CourseManager.instance.unfoldModuleOnInit = module ?: CourseManager.instance.modules.firstOrNull()
-
-    val anActionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT)
-    ActionUtil.performActionDumbAware(action, anActionEvent)
+  private fun openLearningFromWelcomeScreen() {
+    LangManager.getInstance().getLangSupport()?.startFromWelcomeFrame { selectedSdk: Sdk? ->
+      CourseManager.instance.unfoldModuleOnInit = CourseManager.instance.modules.firstOrNull()
+      OpenLessonActivities.openLearnProjectFromWelcomeScreen(selectedSdk)
+    }
   }
+
 }

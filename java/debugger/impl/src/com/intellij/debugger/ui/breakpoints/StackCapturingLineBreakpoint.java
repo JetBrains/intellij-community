@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -10,17 +10,17 @@ import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluatorImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 
@@ -163,7 +164,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
     try {
       Location location = frame.location();
       String className = location.declaringType().name();
-      String methodName = location.method().name();
+      String methodName = DebuggerUtilsEx.getLocationMethodName(location);
 
       for (StackCapturingLineBreakpoint b : captureBreakpoints) {
         String insertClassName = b.myCapturePoint.myInsertClassName;
@@ -193,7 +194,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
     if (process != null && key != null) {
       Map<Object, List<StackFrameItem>> data = process.getUserData(CAPTURED_STACKS);
       if (data != null) {
-        return data.get(key);
+        return data.get(getKey(key));
       }
     }
     return null;
@@ -206,7 +207,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
   private static class MyEvaluator {
     private final String myExpression;
     private ExpressionEvaluator myEvaluator;
-    private final Map<Location, ExpressionEvaluator> myEvaluatorCache = ContainerUtil.createWeakMap();
+    private final Map<Location, ExpressionEvaluator> myEvaluatorCache = new WeakHashMap<>();
 
     MyEvaluator(String expression) {
       myExpression = expression;
@@ -233,9 +234,9 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
       if (evaluator == null) {
         @SuppressWarnings("ConstantConditions")
         Location location = context.getFrameProxy().location();
-        evaluator = myEvaluatorCache.get(location);
+        evaluator = location == null ? null : myEvaluatorCache.get(location);
         if (evaluator == null && !StringUtil.isEmpty(myExpression)) {
-          evaluator = ApplicationManager.getApplication().runReadAction((ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
+          evaluator = ReadAction.compute(() -> {
             SourcePosition sourcePosition = ContextUtil.getSourcePosition(context);
             PsiElement contextElement = ContextUtil.getContextElement(sourcePosition);
             return EvaluatorBuilderImpl.build(

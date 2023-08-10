@@ -3,7 +3,6 @@ package com.intellij.util.text;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -11,28 +10,28 @@ import java.util.Date;
  * @author Konstantin Bulenkov
  */
 public class CustomJBDateTimeFormatter extends JBDateTimeFormatter {
-  @NotNull private final DateFormat myDateFormat;
-  @NotNull private final DateFormat myDateTimeFormat;
-  @NotNull private final DateFormat myDateTimeSecondsFormat;
+  @NotNull private final SyncDateFormat myDateFormat;
+  @NotNull private final SyncDateFormat myDateTimeFormat;
+  @NotNull private final SyncDateFormat myDateTimeSecondsFormat;
 
   public CustomJBDateTimeFormatter(@NotNull String pattern, boolean use24hour) {
-    myDateFormat = new SimpleDateFormat(pattern);
-    myDateTimeFormat = new SimpleDateFormat(pattern + ", " + (use24hour ? "HH:mm" : "h:mm a"));
-    myDateTimeSecondsFormat = new SimpleDateFormat(pattern + ", " + (use24hour ? "HH:mm:ss" : "h:mm:ss a"));
+    myDateFormat = new SyncDateFormat(new SimpleDateFormat(pattern));
+    myDateTimeFormat = new SyncDateFormat(new SimpleDateFormat(pattern + ", " + (use24hour ? "HH:mm" : "h:mm a")));
+    myDateTimeSecondsFormat = new SyncDateFormat(new SimpleDateFormat(pattern + ", " + (use24hour ? "HH:mm:ss" : "h:mm:ss a")));
   }
 
   @NotNull
-  protected DateFormat getFormat() {
+  private SyncDateFormat getFormat() {
     return myDateFormat;
   }
 
   @NotNull
-  protected DateFormat getDateTimeFormat() {
+  private SyncDateFormat getDateTimeFormat() {
     return myDateTimeFormat;
   }
 
   @NotNull
-  protected DateFormat getDateTimeSecondsFormat() {
+  private SyncDateFormat getDateTimeSecondsFormat() {
     return myDateTimeSecondsFormat;
   }
 

@@ -6,6 +6,10 @@ import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -38,7 +42,7 @@ public class ResourceBundleContextFoldingBuilder extends FoldingBuilderEx {
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     if (!PropertiesFoldingSettings.getInstance().isFoldPlaceholdersToContext()) {
-      return FoldingDescriptor.EMPTY;
+      return FoldingDescriptor.EMPTY_ARRAY;
     }
     List<FoldingDescriptor> result = new ArrayList<>();
     for (IProperty property : ((PropertiesFile)root).getProperties()) {
@@ -47,12 +51,25 @@ public class ResourceBundleContextFoldingBuilder extends FoldingBuilderEx {
         fold(property, result);
       }
     }
-    return result.toArray(FoldingDescriptor.EMPTY);
+    return result.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }
 
   private static void fold(@NotNull IProperty property, @NotNull List<? super FoldingDescriptor> result) {
-    ReferencesSearch.search(property.getPsiElement()).forEach((PsiReference reference) -> !tryToFoldReference(reference, property, result));
+    ProgressManager.getInstance().executeProcessUnderProgress(() ->
+    ReferencesSearch.search(property.getPsiElement()).forEach((PsiReference reference) -> !tryToFoldReference(reference, property, result)),
+      getOrCreateIndicator());
   }
+  @NotNull
+  private static ProgressIndicator getOrCreateIndicator() {
+    ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    if (progress == null) {
+      progress = new EmptyProgressIndicator();
+      progress.start();
+    }
+    progress.setIndeterminate(false);
+    return progress;
+  }
+
 
   // return true if folded successfully
   private static boolean tryToFoldReference(@NotNull PsiReference reference,

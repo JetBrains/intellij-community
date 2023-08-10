@@ -1,38 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
-import com.intellij.find.FindManager;
-import com.intellij.find.findUsages.FindUsagesHandler;
-import com.intellij.find.findUsages.FindUsagesManager;
-import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.module.ModuleGroupTestsKt;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.*;
-import com.intellij.util.concurrency.EdtExecutorService;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewSettings;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 
 public class UsageViewTreeTest extends UsefulTestCase {
   private TestFixtureBuilder<IdeaProjectTestFixture> myFixtureBuilder;
@@ -69,11 +59,13 @@ public class UsageViewTreeTest extends UsefulTestCase {
   public void testSimpleModule() throws Exception {
     addModule("main");
     PsiFile file = myFixture.addFileToProject("main/A.txt", "hello");
-    assertUsageViewStructureEquals(new UsageInfo(file), "<root> (1)\n" +
-                                                        " Non-code usages (1)\n" +
-                                                        "  main (1)\n" +
-                                                        "   A.txt (1)\n" +
-                                                        "    1hello\n");
+    assertUsageViewStructureEquals(new UsageInfo(file), """
+      <root> (1)
+       Non-code usages in (1)
+        main (1)
+         A.txt (1)
+          1hello
+      """);
   }
 
   public void testModuleWithQualifiedName() throws Exception {
@@ -81,12 +73,14 @@ public class UsageViewTreeTest extends UsefulTestCase {
     PsiFile file = myFixture.addFileToProject("xxx.main/A.txt", "hello");
     UsageViewSettings.getInstance().setFlattenModules(false);
     ModuleGroupTestsKt.runWithQualifiedModuleNamesEnabled(() -> {
-      assertUsageViewStructureEquals(new UsageInfo(file), "<root> (1)\n" +
-                                                          " Non-code usages (1)\n" +
-                                                          "  xxx (1)\n" +
-                                                          "   main (1)\n" +
-                                                          "    A.txt (1)\n" +
-                                                          "     1hello\n");
+      assertUsageViewStructureEquals(new UsageInfo(file), """
+        <root> (1)
+         Non-code usages in (1)
+          xxx (1)
+           main (1)
+            A.txt (1)
+             1hello
+        """);
       return null;
     });
   }
@@ -97,16 +91,18 @@ public class UsageViewTreeTest extends UsefulTestCase {
     UsageViewSettings.getInstance().setGroupByDirectoryStructure(true); // must ignore group by package
     PsiFile file = myFixture.addFileToProject("xxx.main/x/i1/A.txt", "hello");
     PsiFile file2 = myFixture.addFileToProject("xxx.main/y/B.txt", "hello");
-    assertEquals("<root> (2)\n" +
-                 " Non-code usages (2)\n" +
-                 "  xxx.main (2)\n" +
-                 "   x (1)\n" +
-                 "    i1 (1)\n" +
-                 "     A.txt (1)\n" +
-                 "      1hello\n" +
-                 "   y (1)\n" +
-                 "    B.txt (1)\n" +
-                 "     1hello\n"
+    assertEquals("""
+                   <root> (2)
+                    Non-code usages in (2)
+                     xxx.main (2)
+                      x (1)
+                       i1 (1)
+                        A.txt (1)
+                         1hello
+                      y (1)
+                       B.txt (1)
+                        1hello
+                   """
       , myFixture.getUsageViewTreeTextRepresentation(Arrays.asList(new UsageInfo(file), new UsageInfo(file2))));
   }
 

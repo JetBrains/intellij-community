@@ -25,16 +25,14 @@ import java.util.Arrays;
 public class JUnit5NamingTest extends JUnit5CodeInsightTest {
   @Test
   void arrayParameters() {
-    PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("MyTest.java", "import org.junit.jupiter.api.*;" +
-                                                                             "class MyTest {" +
-                                                                             "  @Test void foo(int[] i); \n" +
-                                                                             "  @Test void foo(int i); \n" +
-                                                                             "  @Test void foo(String[] i); \n" +
-                                                                             "  @Test void foo(String i); \n" +
-                                                                             "  @Test void foo(Foo[] i); \n" +
-                                                                             "  @Test void foo(Foo i); \n" +
-                                                                             "  static class Foo {}" +
-                                                                             "}");
+    PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("MyTest.java", """
+      import org.junit.jupiter.api.*;class MyTest {  @Test void foo(int[] i);\s
+        @Test void foo(int i);\s
+        @Test void foo(String[] i);\s
+        @Test void foo(String i);\s
+        @Test void foo(Foo[] i);\s
+        @Test void foo(Foo i);\s
+        static class Foo {}}""");
     String[] methodPresentations =
       Arrays.stream(file.getClasses()[0].getMethods())
         .map(method -> JUnitConfiguration.Data.getMethodPresentation(method))

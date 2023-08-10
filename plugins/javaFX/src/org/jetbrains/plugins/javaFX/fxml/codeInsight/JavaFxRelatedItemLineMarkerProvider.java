@@ -88,15 +88,13 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
     ReferencesSearch.search(field, GlobalSearchScope.filesScope(field.getProject(), fxmls)).forEach(
       reference -> {
         final PsiElement referenceElement = reference.getElement();
-        if (referenceElement == null) return true;
         final PsiFile containingFile = referenceElement.getContainingFile();
         if (containingFile == null) return true;
         if (!JavaFxFileTypeFactory.isFxml(containingFile)) return true;
-        if (!(referenceElement instanceof XmlAttributeValue)) return true;
-        final XmlAttributeValue attributeValue = (XmlAttributeValue)referenceElement;
+        if (!(referenceElement instanceof final XmlAttributeValue attributeValue)) return true;
         final PsiElement parent = attributeValue.getParent();
-        if (!(parent instanceof XmlAttribute)) return true;
-        if (!FxmlConstants.FX_ID.equals(((XmlAttribute)parent).getName())) return true;
+        if (!(parent instanceof XmlAttribute attribute)) return true;
+        if (!FxmlConstants.FX_ID.equals(attribute.getName())) return true;
         targets.add(fun.fun(parent));
         return !stopAtFirst;
       });

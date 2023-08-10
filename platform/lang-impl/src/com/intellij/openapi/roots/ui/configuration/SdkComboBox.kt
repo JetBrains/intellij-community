@@ -9,7 +9,7 @@ import com.intellij.ui.PopupMenuListenerAdapter
 import javax.swing.event.PopupMenuEvent
 
 class SdkComboBox(model: SdkComboBoxModel) : SdkComboBoxBase<SdkListItem>(model.modelBuilder) {
-  val model get() = getModel() as SdkComboBoxModel
+  val model: SdkComboBoxModel get() = getModel() as SdkComboBoxModel
 
   override fun onModelUpdated(listModel: SdkListModel) {
     setModel(model.copyAndSetListModel(listModel))
@@ -64,7 +64,7 @@ class SdkComboBox(model: SdkComboBoxModel) : SdkComboBoxBase<SdkListItem>(model.
 
   init {
     setModel(model)
-    setRenderer(SdkListPresenter { this@SdkComboBox.model.listModel })
+    setRenderer(SdkListPresenter.create(this, { this@SdkComboBox.model.listModel }, { it }))
     addPopupMenuListener(ModelReloadProvider())
     reloadModel()
   }

@@ -1,24 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-class ArrayBackedFMap implements KeyFMap {
-  static final int ARRAY_THRESHOLD = 8;
-  // Invariant: keys are always sorted
-  private final int[] keys;
-  private final Object[] values;
+import java.util.Arrays;
 
-  ArrayBackedFMap(int @NotNull [] keys, Object @NotNull [] values) {
+final class ArrayBackedFMap implements KeyFMap {
+  static final int ARRAY_THRESHOLD = 8;
+  // Invariant: keys are always sorted, never mutated inplace
+  private final int[] keys;
+  private final @NotNull Object @NotNull [] values; //never mutated inplace
+
+  ArrayBackedFMap(int @NotNull [] keys, @NotNull Object @NotNull [] values) {
     this.keys = keys;
     this.values = values;
   }
 
-  @NotNull
   @Override
-  public <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
+  public @NotNull <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
     int keyCode = key.hashCode();
     int keyPos = indexOf(keyCode);
     if (keyPos >= 0) {
@@ -52,9 +53,8 @@ class ArrayBackedFMap implements KeyFMap {
     return -keys.length - 1;
   }
 
-  @NotNull
   @Override
-  public KeyFMap minus(@NotNull Key<?> key) {
+  public @NotNull KeyFMap minus(@NotNull Key<?> key) {
     int i = indexOf(key.hashCode());
     if (i >= 0) {
       if (size() == 3) {
@@ -108,18 +108,21 @@ class ArrayBackedFMap implements KeyFMap {
   }
 
   @Override
-  public Key @NotNull [] getKeys() {
+  public @NotNull Key<?> @NotNull [] getKeys() {
     return getKeysByIndices(keys);
   }
 
-  static Key @NotNull [] getKeysByIndices(int[] indexes) {
-    Key[] result = new Key[indexes.length];
+  static @NotNull Key<?> @NotNull [] getKeysByIndices(int @NotNull [] indexes) {
+    Key<?>[] result = new Key[indexes.length];
 
-    for (int i = 0; i < indexes.length; i++) {
-      result[i] = Key.getKeyByIndex(indexes[i]);
+    int o = 0;
+    for (int index : indexes) {
+      Key<Object> key = Key.getKeyByIndex(index);
+      if (key != null) {
+        result[o++] = key;
+      }
     }
-
-    return result;
+    return o == result.length ? result : Arrays.copyOf(result, o);
   }
 
   @Override
@@ -149,7 +152,7 @@ class ArrayBackedFMap implements KeyFMap {
   }
 
   @Override
-  public boolean equalsByReference(KeyFMap o) {
+  public boolean equalsByReference(@NotNull KeyFMap o) {
     if (this == o) return true;
     if (!(o instanceof ArrayBackedFMap)) return false;
 

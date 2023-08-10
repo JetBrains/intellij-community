@@ -21,9 +21,6 @@ import com.intellij.testFramework.LightResolveTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class TypeInferenceTest extends LightResolveTestCase {
   @NotNull
   @Override

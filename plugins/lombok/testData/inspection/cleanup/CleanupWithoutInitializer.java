@@ -8,6 +8,6 @@ import java.io.InputStream;
 
 public class CleanupWithoutInitializer {
   public static void main(String[] args) throws IOException {
-    <error descr="'@Cleanup' variable declarations need to be initialized.">@Cleanup</error> InputStream in;
+    <error descr="@Cleanup variable declarations need to be initialized.">@Cleanup</error> InputStream in;
   }
 }

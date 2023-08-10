@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
@@ -17,11 +16,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * A service used to create and store {@link CachedValue} objects.<p/>
  *
- * By default cached values are stored in the user data of associated objects implementing {@link UserDataHolder}.
+ * By default, cached values are stored in the user data of associated objects implementing {@link UserDataHolder}.
  *
  * @see #createCachedValue(CachedValueProvider, boolean)
  * @see #getCachedValue(PsiElement, CachedValueProvider)
@@ -34,8 +34,8 @@ public abstract class CachedValuesManager {
 
   /**
    * Creates new CachedValue instance with given provider. If the return value is marked as trackable, it's treated as
-   * yet another dependency and must comply its specification. See {@link CachedValueProvider.Result#getDependencyItems()} for
-   * the details.
+   * yet another dependency and must comply with its specification.
+   * See {@link CachedValueProvider.Result#getDependencyItems()} for the details.
    *
    * @param provider computes values.
    * @param trackValue if value tracking is required. T should be trackable in this case.
@@ -146,7 +146,7 @@ public abstract class CachedValuesManager {
   public static <T> T getCachedValue(final @NotNull PsiElement context, @NotNull Key<CachedValue<T>> key, final @NotNull CachedValueProvider<T> provider) {
     CachedValue<T> value = context.getUserData(key);
     if (value != null) {
-      Getter<T> data = value.getUpToDateOrNull();
+      Supplier<T> data = value.getUpToDateOrNull();
       if (data != null) {
         return data.get();
       }

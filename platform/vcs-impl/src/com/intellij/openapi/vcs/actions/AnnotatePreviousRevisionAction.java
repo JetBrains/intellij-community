@@ -31,11 +31,11 @@ class AnnotatePreviousRevisionAction extends AnnotateRevisionAction {
     super.update(e);
   }
 
-  @Nullable
   @Override
-  protected VcsFileRevision getRevision(int lineNumber) {
+  protected @Nullable VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
     assert myProvider != null;
 
+    int lineNumber = ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext());
     if (lineNumber == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) {
       return myProvider.getLastRevision();
     }
@@ -43,5 +43,10 @@ class AnnotatePreviousRevisionAction extends AnnotateRevisionAction {
       if (lineNumber < 0 || lineNumber >= myAnnotation.getLineCount()) return null;
       return myProvider.getPreviousRevision(lineNumber);
     }
+  }
+
+  @Override
+  protected int getAnnotatedLine(@NotNull AnActionEvent e) {
+    return ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext(), true);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.exception.FrequentErrorLogger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +66,6 @@ import java.util.function.Supplier;
 public final class AstLoadingFilter {
 
   private static final Logger LOG = Logger.getInstance(AstLoadingFilter.class);
-  private static final FrequentErrorLogger ourErrorLogger = FrequentErrorLogger.newInstance(LOG);
   /**
    * Holds not-null value if loading was disabled in current thread.
    * Initial value is {@code null} meaning loading is enabled by default.
@@ -91,12 +89,11 @@ public final class AstLoadingFilter {
     }
     else {
       AstLoadingException throwable = new AstLoadingException();
-      ourErrorLogger.error("Tree access disabled", throwable, new Attachment("debugInfo", buildDebugInfo(file, disallowedInfo)));
+      LOG.error("Tree access disabled", throwable, new Attachment("debugInfo", buildDebugInfo(file, disallowedInfo)));
     }
   }
 
-  @NotNull
-  private static String buildDebugInfo(@NotNull VirtualFile file, @NotNull Supplier<String> disabledInfo) {
+  private static @NotNull String buildDebugInfo(@NotNull VirtualFile file, @NotNull Supplier<String> disabledInfo) {
     @NonNls StringBuilder debugInfo = new StringBuilder();
     debugInfo.append("Accessed file path: ").append(file.getPath());
     String additionalInfo = disabledInfo.get();
@@ -109,6 +106,11 @@ public final class AstLoadingFilter {
   public static <E extends Throwable>
   void disallowTreeLoading(@NotNull ThrowableRunnable<E> runnable) throws E {
     disallowTreeLoading(toComputable(runnable));
+  }
+
+  public static <E extends Throwable>
+  void disallowTreeLoading(@NotNull ThrowableRunnable<E> runnable, @NotNull Supplier<String> debugInfo) throws E {
+    disallowTreeLoading(toComputable(runnable), debugInfo);
   }
 
   public static <T, E extends Throwable>

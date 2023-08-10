@@ -4,7 +4,7 @@ public class m {
 
 class Outer extends m{
     static class Inner extends Super {
-        private Outer anObject;
+        private final Outer anObject;
 
         public Inner(Outer anObject) {
             this.anObject = anObject;

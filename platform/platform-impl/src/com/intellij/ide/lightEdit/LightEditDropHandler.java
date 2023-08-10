@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -15,12 +16,12 @@ import java.util.List;
 
 final class LightEditDropHandler implements EditorDropHandler {
   @Override
-  public boolean canHandleDrop(DataFlavor[] transferFlavors) {
-    return transferFlavors != null && FileCopyPasteUtil.isFileListFlavorAvailable(transferFlavors);
+  public boolean canHandleDrop(DataFlavor @NotNull [] transferFlavors) {
+    return FileCopyPasteUtil.isFileListFlavorAvailable(transferFlavors);
   }
 
   @Override
-  public void handleDrop(Transferable t, Project project, EditorWindow editorWindow) {
+  public void handleDrop(@NotNull Transferable t, Project project, EditorWindow editorWindow) {
     List<File> fileList = FileCopyPasteUtil.getFileList(t);
     if (fileList == null) {
       return;

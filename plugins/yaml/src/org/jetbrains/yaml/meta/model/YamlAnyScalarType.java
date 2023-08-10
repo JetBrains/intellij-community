@@ -16,7 +16,10 @@ public class YamlAnyScalarType extends YamlScalarType {
   }
 
   public YamlAnyScalarType() {
-    super("yaml:any-scalar");
-    setDisplayName("any scalar");
+    this("any scalar");
+  }
+
+  public YamlAnyScalarType(String displayName) {
+    super("yaml:any-scalar", displayName);
   }
 }

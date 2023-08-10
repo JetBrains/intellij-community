@@ -1,0 +1,8 @@
+// AFTER-WARNING: Parameter 'fn' is never used
+// AFTER-WARNING: Parameter 'x' is never used, could be renamed to _
+fun <T> foo(fn: (T) -> Unit) {}
+
+fun test() {
+    foo(<caret>fun(x: String) {
+    })
+}

@@ -27,9 +27,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyDemorganIntention extends PyBaseIntentionAction {
   @NotNull
   @Override

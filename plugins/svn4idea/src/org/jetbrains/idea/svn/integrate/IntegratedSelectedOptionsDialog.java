@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -39,9 +38,10 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 public class IntegratedSelectedOptionsDialog extends DialogWrapper {
+  private final DefaultListModel<WorkingCopyInfo> myWorkingCopyInfoModel;
   private JPanel contentPane;
   private JCheckBox myDryRunCheckbox;
-  private JList myWorkingCopiesList;
+  private JList<WorkingCopyInfo> myWorkingCopiesList;
   private JComponent myToolbar;
   private JLabel mySourceInfoLabel;
   private JLabel myTargetInfoLabel;
@@ -69,7 +69,8 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     setTitle(message("dialog.title.integrate.to.branch"));
     init();
 
-    myWorkingCopiesList.setModel(new DefaultListModel());
+    myWorkingCopyInfoModel = new DefaultListModel<>();
+    myWorkingCopiesList.setModel(myWorkingCopyInfoModel);
     myWorkingCopiesList
       .addListSelectionListener(e -> setOKActionEnabled((!myMustSelectBeforeOk) || (myWorkingCopiesList.getSelectedIndex() != -1)));
     setOKActionEnabled((! myMustSelectBeforeOk) || (myWorkingCopiesList.getSelectedIndex() != -1));
@@ -84,7 +85,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     workingCopyInfoList.sort(WorkingCopyInfoComparator.getInstance());
 
     for (WorkingCopyInfo info : workingCopyInfoList) {
-      ((DefaultListModel)myWorkingCopiesList.getModel()).addElement(info);
+      myWorkingCopyInfoModel.addElement(info);
     }
     if (!workingCopyInfoList.isEmpty()) {
       myWorkingCopiesList.setSelectedIndex(0);
@@ -139,9 +140,14 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void update(@NotNull final AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
-        final int idx = (myWorkingCopiesList == null) ? -1 : myWorkingCopiesList.getSelectedIndex();
+        final int idx = myWorkingCopiesList.getSelectedIndex();
         presentation.setEnabled(idx != -1);
       }
 
@@ -149,9 +155,8 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
       public void actionPerformed(@NotNull final AnActionEvent e) {
         final int idx = myWorkingCopiesList.getSelectedIndex();
         if (idx != -1) {
-          final DefaultListModel model = (DefaultListModel)myWorkingCopiesList.getModel();
-          final WorkingCopyInfo info = (WorkingCopyInfo)model.get(idx);
-          model.removeElementAt(idx);
+          final WorkingCopyInfo info = myWorkingCopyInfoModel.get(idx);
+          myWorkingCopyInfoModel.removeElementAt(idx);
           SvnBranchMapperManager.getInstance().remove(mySelectedBranchUrl, new File(info.getLocalPath()));
         }
       }
@@ -159,10 +164,9 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   }
 
   public void setSelectedWcPath(final String path) {
-    final ListModel model = myWorkingCopiesList.getModel();
-    final int size = model.getSize();
+    final int size = myWorkingCopyInfoModel.getSize();
     for (int i = 0; i < size; i++) {
-      final WorkingCopyInfo info = (WorkingCopyInfo) model.getElementAt(i);
+      final WorkingCopyInfo info = myWorkingCopyInfoModel.getElementAt(i);
       if (info.getLocalPath().equals(path)) {
         myWorkingCopiesList.setSelectedValue(info, true);
         return;
@@ -185,11 +189,10 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   }
 
   private boolean hasDuplicate(final File file) {
-    final DefaultListModel model = (DefaultListModel)myWorkingCopiesList.getModel();
     final String path = file.getAbsolutePath();
 
-    for (int i = 0; i < model.getSize(); i++) {
-      final WorkingCopyInfo info = (WorkingCopyInfo)model.getElementAt(i);
+    for (int i = 0; i < myWorkingCopyInfoModel.getSize(); i++) {
+      final WorkingCopyInfo info = myWorkingCopyInfoModel.getElementAt(i);
       if (path.equals(info.getLocalPath())) {
         return true;
       }
@@ -199,8 +202,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
   private void onOkToAdd(final File file) {
     final WorkingCopyInfo info = new WorkingCopyInfo(file.getAbsolutePath(), underProject(file));
-    final DefaultListModel model = (DefaultListModel) myWorkingCopiesList.getModel();
-    model.addElement(info);
+    myWorkingCopyInfoModel.addElement(info);
     myWorkingCopiesList.setSelectedValue(info, true);
     SvnBranchMapperManager.getInstance().put(mySelectedBranchUrl, file);
   }
@@ -208,12 +210,12 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   private boolean underProject(final File file) {
     return ReadAction.compute(() -> {
       final VirtualFile vf = SvnUtil.getVirtualFile(file.getAbsolutePath());
-      return (vf == null) || ServiceManager.getService(myProject, FileIndexFacade.class).isInContent(vf);
+      return (vf == null) || myProject.getService(FileIndexFacade.class).isInContent(vf);
     });
   }
 
   public WorkingCopyInfo getSelectedWc() {
-    return (WorkingCopyInfo)myWorkingCopiesList.getSelectedValue();
+    return myWorkingCopiesList.getSelectedValue();
   }
 
   public void saveOptions() {

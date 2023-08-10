@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
- * @author: Eugene Zhuravlev
+ * @author Eugene Zhuravlev
  */
 package com.intellij.debugger.ui.breakpoints;
 
@@ -118,7 +118,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
   }
 
   @Override
-  protected String getDimensionServiceKey(){
+  protected String getDimensionServiceKey() {
     return "#com.intellij.debugger.ui.breakpoints.BreakpointsConfigurationDialogFactory.BreakpointsConfigurationDialog.AddFieldBreakpointDialog";
   }
 
@@ -130,7 +130,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    if(validateData()) {
+    if (validateData()) {
       super.doOKAction();
     }
   }

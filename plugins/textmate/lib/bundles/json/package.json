@@ -1,16 +1,8 @@
 {
   "name": "json",
-  "displayName": "%displayName%",
-  "description": "%description%",
   "version": "1.0.0",
-  "publisher": "vscode",
+  "description": "%description%",
   "license": "MIT",
-  "engines": {
-    "vscode": "0.10.x"
-  },
-  "scripts": {
-    "update-grammar": "node ./build/update-grammars.js"
-  },
   "contributes": {
     "languages": [
       {
@@ -29,7 +21,9 @@
           ".ts.map",
           ".har",
           ".jslintrc",
-          ".jsonld"
+          ".jsonld",
+          ".geojson",
+          ".ipynb"
         ],
         "filenames": [
           "composer.lock",
@@ -57,7 +51,10 @@
           ".babelrc"
         ],
         "filenames": [
-          ".ember-cli"
+          "babel.config.json",
+          ".babelrc.json",
+          ".ember-cli",
+          "typedoc.json"
         ],
         "configuration": "./language-configuration.json"
       }

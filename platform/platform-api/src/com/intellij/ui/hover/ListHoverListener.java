@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.hover;
 
 import com.intellij.openapi.util.Key;
@@ -6,10 +6,8 @@ import com.intellij.ui.render.RenderingUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JList;
-import java.awt.Component;
-import java.awt.Point;
-import java.awt.Rectangle;
+import javax.swing.*;
+import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
 
@@ -36,8 +34,7 @@ public abstract class ListHoverListener extends HoverListener {
   private final AtomicInteger indexHolder = new AtomicInteger(-1);
 
   private void update(@NotNull Component component, @NotNull ToIntFunction<? super JList<?>> indexFunc) {
-    if (component instanceof JList) {
-      JList<?> list = (JList<?>)component;
+    if (component instanceof JList<?> list) {
       int indexNew = indexFunc.applyAsInt(list);
       int indexOld = indexHolder.getAndSet(indexNew);
       if (indexNew != indexOld) onHover(list, indexNew);

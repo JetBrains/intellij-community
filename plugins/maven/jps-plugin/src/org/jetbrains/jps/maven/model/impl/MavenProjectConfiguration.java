@@ -48,7 +48,7 @@ public final class MavenProjectConfiguration {
   public Map<String, MavenEjbClientConfiguration> ejbClientArtifactConfigs = new HashMap<>();
 
   @Nullable
-  public MavenModuleResourceConfiguration findProject(MavenIdBean id) {
+  private MavenModuleResourceConfiguration findProject(MavenIdBean id) {
     return getModuleConfigurationMap().get(id);
   }
 

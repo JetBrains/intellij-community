@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -82,17 +82,17 @@ import java.util.List;
  *
  * Q: How are lookup elements sorted?<br>
  * A: Basically in lexicographic order, ascending, by lookup string ({@link LookupElement#getLookupString()}).
- * Also there's a number of "weigher" extensions under "completion" key (see {@link CompletionWeigher}) that bubble up the most relevant
+ * Also, there's a number of "weigher" extensions under "completion" key (see {@link CompletionWeigher}) that bubble up the most relevant
  * items. To control lookup elements order you may implement {@link CompletionWeigher} or use {@link PrioritizedLookupElement}.<br>
  * To debug the order of the completion items use '<code>Dump lookup element weights to log</code>' action when the completion lookup is
  * shown (Ctrl+Alt+Shift+W / Cmd+Alt+Shift+W), the action also copies the debug info to the Clipboard.<p>
  *
  * Q: Elements in the lookup are sorted in an unexpected way, the weights I provide are not honored, why?<br>
- * A: To be more responsive, when first lookup elements are produced, completion infrastructure waits for some small time
- * and then displays the lookup with whatever items are ready. After that, few the most relevant of the displayed items
+ * A: To be more responsive, when first lookup elements are produced, the completion infrastructure waits for some short time
+ * and then displays the lookup with whatever items are ready. After that, few of the most relevant displayed items
  * are considered "frozen" and not re-sorted anymore, to avoid changes around the selected item that the user already sees
  * and can interact with. Even if new, more relevant items are added, they won't make it to the top of the list anymore.
- * Therefore you should try to create the most relevant items as early as possible. If you can't reliably produce
+ * Therefore, you should try to create the most relevant items as early as possible. If you can't reliably produce
  * most relevant items first, you could also return all your items in batch via {@link CompletionResultSet#addAllElements} to ensure
  * that this batch is all sorted and displayed together.<p>
  *
@@ -113,15 +113,15 @@ import java.util.List;
  * So it's a bad idea to do blocking requests from it directly since it runs in a read action,
  * and if it can't do {@link ProgressManager#checkCanceled()} and therefore any attempt to type in a document will freeze the UI.
  * A common solution is to start another thread, without read action, for such blocking requests,
- * and wait for their results in completion thread. You can use {@link com.intellij.openapi.application.ex.ApplicationUtil#runWithCheckCanceled} for that.<p>
+ * and wait for their results in the completion thread.
+ * You can use {@link com.intellij.openapi.application.ex.ApplicationUtil#runWithCheckCanceled} for that.<p>
  *
  * Q: How can I trigger showing completion popup programmatically?<br>
  * A: See {@link com.intellij.codeInsight.AutoPopupController}.<p>
  *
- * Q: The suggestion popup hides when I type some exotic character but I want completion keep going matching against typed character.<br>
+ * Q: The suggestion popup hides when I type some exotic character,
+ * but I want completion to keep going, matching against the typed character.<br>
  * A: See {@link com.intellij.codeInsight.lookup.CharFilter#acceptChar(char, int, com.intellij.codeInsight.lookup.Lookup)}.
- *
- * @author peter
  */
 public abstract class CompletionContributor {
   public static final ExtensionPointName<CompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.contributor");
@@ -130,7 +130,7 @@ public abstract class CompletionContributor {
     new MultiMap<>();
 
   public final void extend(@Nullable CompletionType type,
-                           @NotNull final ElementPattern<? extends PsiElement> place, CompletionProvider<CompletionParameters> provider) {
+                           final @NotNull ElementPattern<? extends PsiElement> place, CompletionProvider<CompletionParameters> provider) {
     myMap.putValue(type, new Pair<>(place, provider));
   }
 
@@ -147,7 +147,7 @@ public abstract class CompletionContributor {
    * ensure you call {@link ProgressManager#checkCanceled()} often enough so that the completion process
    * can be cancelled smoothly when the user begins to type in the editor.
    */
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
+  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(parameters.getCompletionType())) {
       ProgressManager.checkCanceled();
       final ProcessingContext context = new ProcessingContext();
@@ -170,19 +170,17 @@ public abstract class CompletionContributor {
   }
 
   /**
-   * Invoked before completion is started. Is used mainly for determining custom offsets in editor, and to change default dummy identifier.
+   * Invoked before completion is started. It is used mainly for determining custom offsets in the editor, and to change default dummy identifier.
    */
   public void beforeCompletion(@NotNull CompletionInitializationContext context) {
   }
 
   /**
    * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
-   * @return text to be shown at the bottom of lookup list
+   * @return text to be shown at the bottom of the lookup list
    */
-  @Deprecated
-  @Nullable
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String advertise(@NotNull CompletionParameters parameters) {
+  @Deprecated(forRemoval = true)
+  public @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String advertise(@NotNull CompletionParameters parameters) {
     return null;
   }
 
@@ -190,16 +188,14 @@ public abstract class CompletionContributor {
    *
    * @return hint text to be shown if no variants are found, typically "No suggestions"
    */
-  @Nullable
-  public @NlsContexts.HintText String handleEmptyLookup(@NotNull CompletionParameters parameters, final Editor editor) {
+  public @Nullable @NlsContexts.HintText String handleEmptyLookup(@NotNull CompletionParameters parameters, final Editor editor) {
     return null;
   }
 
   /**
    * Called when the completion is finished quickly, lookup hasn't been shown and gives possibility to auto-insert some item (typically - the only one).
    */
-  @Nullable
-  public AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
+  public @Nullable AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
     return null;
   }
 
@@ -225,21 +221,18 @@ public abstract class CompletionContributor {
   public void duringCompletion(@NotNull CompletionInitializationContext context) {
   }
 
-  @NotNull
-  public static List<CompletionContributor> forParameters(@NotNull final CompletionParameters parameters) {
+  public static @NotNull List<CompletionContributor> forParameters(final @NotNull CompletionParameters parameters) {
     return ReadAction.compute(() -> {
       PsiElement position = parameters.getPosition();
       return forLanguageHonorDumbness(PsiUtilCore.getLanguageAtOffset(position.getContainingFile(), parameters.getOffset()), position.getProject());
     });
   }
 
-  @NotNull
-  public static List<CompletionContributor> forLanguage(@NotNull Language language) {
+  public static @NotNull List<CompletionContributor> forLanguage(@NotNull Language language) {
     return INSTANCE.forKey(language);
   }
 
-  @NotNull
-  public static List<CompletionContributor> forLanguageHonorDumbness(@NotNull Language language, @NotNull Project project) {
+  public static @NotNull List<CompletionContributor> forLanguageHonorDumbness(@NotNull Language language, @NotNull Project project) {
     return DumbService.getInstance(project).filterByDumbAwareness(forLanguage(language));
   }
 

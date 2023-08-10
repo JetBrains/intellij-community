@@ -34,11 +34,9 @@ import java.util.*;
 
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isAbsoluteUrl;
 
-/**
- * @author Irina.Chernushina on 2/2/2016.
- */
 public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable {
   @NonNls public static final String SETTINGS_JSON_SCHEMA = "settings.json.schema";
+  private Runnable myInitializer = null;
 
   private final static Comparator<UserDefinedJsonSchemaConfiguration> COMPARATOR = (o1, o2) -> {
     if (o1.isApplicationDefined() != o2.isApplicationDefined()) {
@@ -46,7 +44,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     }
     return o1.getName().compareToIgnoreCase(o2.getName());
   };
-  static final String STUB_SCHEMA_NAME = "New Schema";
+  static final @Nls String STUB_SCHEMA_NAME = JsonBundle.message("new.schema");
   private @Nls String myError;
 
   @NotNull
@@ -94,6 +92,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   public UserDefinedJsonSchemaConfiguration addProjectSchema() {
     UserDefinedJsonSchemaConfiguration configuration = new UserDefinedJsonSchemaConfiguration(createUniqueName(STUB_SCHEMA_NAME),
                                                                                      JsonSchemaVersion.SCHEMA_4, "", false, null);
+    configuration.setGeneratedName(configuration.getName());
     addCreatedMappings(configuration);
     return configuration;
   }
@@ -289,10 +288,18 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     return uiList;
   }
 
+  public void setInitializer(@NotNull Runnable initializer) {
+    myInitializer = initializer;
+  }
+
   @Override
   public void reset() {
     fillTree();
     updateWarningText(true);
+    if (myInitializer != null) {
+      myInitializer.run();
+      myInitializer = null;
+    }
   }
 
   @Override

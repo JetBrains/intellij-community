@@ -49,19 +49,20 @@ public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
 
   public void testVarArgPoly() {
     @Language("JAVA")
-    String template = "import java.util.Map;\n" +
-                      "\n" +
-                      "class X {\n" +
-                      "  " +
-                      "public void foo() {\n" +
-                      "    Map<Integer, Class<?>> map = ofEntries(\n" +
-                      "      $entries$\n" +
-                      "    );\n" +
-                      "  }\n" +
-                      "\n" +
-                      "  static native <K, V> Map<K, V> ofEntries(Map.Entry<? extends K, ? extends V>... entries);\n" +
-                      "  static native <K, V> Map.Entry<K, V> entry(K k, V v);\n" +
-                      "}\n";
+    String template = """
+      import java.util.Map;
+
+      class X {
+        public void foo() {
+          Map<Integer, Class<?>> map = ofEntries(
+            $entries$
+          );
+        }
+
+        static native <K, V> Map<K, V> ofEntries(Map.Entry<? extends K, ? extends V>... entries);
+        static native <K, V> Map.Entry<K, V> entry(K k, V v);
+      }
+      """;
     int count = 70;
     String entries = IntStreamEx.range(count).mapToObj(i -> "entry(" + i + ", String.class)").joining(",\n      ");
     configureFromFileText("Test.java", template.replace("$entries$", entries));
@@ -88,30 +89,30 @@ public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
   public void testLongQualifierChainInsideLambdaInTypeCast() {
     enableInspectionTool(new RedundantCastInspection());
      @Language("JAVA")
-    String template = "import java.util.function.Function;\n" +
-                      "abstract class Snippet {\n" +
-                      "    abstract <V> V valueOf(V var2);\n" +
-                      "    abstract <V> V valueOf(java.util.List<? extends V> var2);\n" +
-                      "    static final class Builder {\n" +
-                      "        public Builder foo(Foo foo) {\n" +
-                      "            return this;\n" +
-                      "        }\n" +
-                      "        public Snippet build() {\n" +
-                      "            return null;\n" +
-                      "        }\n" +
-                      "    }\n" +
-                      "    public static final class Foo { }\n" +
-                      "\n" +
-                      "\n" +
-                      "    public static final Function<Snippet, Snippet> _snippet = snippet -> {\n" +
-                      "        Foo foo = new Foo();\n" +
-                      "\n" +
-                      "        return new Builder().\n" +
-                      "                $chain$" +
-                      "                .build();\n" +
-                      "    };\n" +
-                      "\n" +
-                      "}";
+    String template = """
+       import java.util.function.Function;
+       abstract class Snippet {
+           abstract <V> V valueOf(V var2);
+           abstract <V> V valueOf(java.util.List<? extends V> var2);
+           static final class Builder {
+               public Builder foo(Foo foo) {
+                   return this;
+               }
+               public Snippet build() {
+                   return null;
+               }
+           }
+           public static final class Foo { }
+
+
+           public static final Function<Snippet, Snippet> _snippet = snippet -> {
+               Foo foo = new Foo();
+
+               return new Builder().
+                       $chain$                .build();
+           };
+
+       }""";
     int count = 70;
     String entries = "foo(snippet.valueOf(foo))\n" +//to trick injection 
                      StringUtil.repeat(".foo(snippet.valueOf(foo))\n", count);

@@ -18,6 +18,7 @@ package org.intellij.lang.xpath.completion;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.util.PlatformIcons;
 import org.intellij.lang.xpath.psi.XPathNodeTest;
+import org.jetbrains.annotations.NotNull;
 
 class NodeLookup extends AbstractLookup {
   private final XPathNodeTest.PrincipalType principalType;
@@ -28,7 +29,7 @@ class NodeLookup extends AbstractLookup {
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     super.renderElement(presentation);
     presentation.setIcon(principalType == XPathNodeTest.PrincipalType.ATTRIBUTE ? PlatformIcons.ANNOTATION_TYPE_ICON : PlatformIcons.XML_TAG_ICON);
   }

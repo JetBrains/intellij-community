@@ -1,22 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.ui.SeparatorComponent
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.ConstraintParser
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.swing.*
 import javax.swing.text.JTextComponent
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal fun overrideFlags(cc: CC, flags: Array<out CCFlags>) {
   for (flag in flags) {
     when (flag) {
-      //CCFlags.wrap -> isWrap = true
       CCFlags.grow -> cc.grow()
       CCFlags.growX -> {
         cc.growX(1000f)
@@ -36,13 +39,15 @@ internal fun overrideFlags(cc: CC, flags: Array<out CCFlags>) {
   }
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal class DefaultComponentConstraintCreator(private val spacing: SpacingConfiguration) {
   private val shortTextSizeSpec = ConstraintParser.parseBoundSize("${spacing.shortTextWidth}px!", false, true)
   private val mediumTextSizeSpec = ConstraintParser.parseBoundSize("${spacing.shortTextWidth}px::${spacing.maxShortTextWidth}px", false, true)
 
   val vertical1pxGap: BoundSize = ConstraintParser.parseBoundSize("${JBUI.scale(1)}px!", true, false)
 
-  val horizontalUnitSizeGap = gapToBoundSize(spacing.unitSize, true)
+  val horizontalUnitSizeGap: BoundSize = gapToBoundSize(spacing.unitSize, true)
 
   fun addGrowIfNeeded(cc: CC, component: Component, spacing: SpacingConfiguration) {
     when {
@@ -60,7 +65,7 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
         //.pushX()
       }
 
-      component is JScrollPane || component.isPanelWithToolbar() -> {
+      component is JScrollPane || component.isPanelWithToolbar() || component.isToolbarDecoratorPanel() -> {
         // no need to use pushX - default pushX for cell is 100. avoid to configure more than need
         cc.grow()
           .pushY()
@@ -87,4 +92,8 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
 private fun Component.isPanelWithToolbar(): Boolean {
   return this is JPanel && componentCount == 1 &&
          (getComponent(0) as? JComponent)?.getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY) != null
+}
+
+private fun Component.isToolbarDecoratorPanel(): Boolean {
+  return this is JPanel && getClientProperty(ToolbarDecorator.DECORATOR_KEY) != null
 }

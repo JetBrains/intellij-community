@@ -14,15 +14,15 @@ sealed class PortableFilePath {
 
   @JsonTypeName("project")
   object ProjectRoot : PortableFilePath() {
-    override val presentablePath
+    override val presentablePath: String
       get() = "<project home>"
 
-    override fun equals(other: Any?) = other is ProjectRoot
+    override fun equals(other: Any?): Boolean = other is ProjectRoot
 
     /**
      * Make it constant across IDE restarts.
      */
-    override fun hashCode() = 42
+    override fun hashCode(): Int = 42
   }
 
   @JsonTypeName("library")
@@ -37,10 +37,10 @@ sealed class PortableFilePath {
     enum class LibraryType {
       APPLICATION, PROJECT, MODULE;
 
-      override fun toString() = name.toLowerCase()
+      override fun toString(): String = name.toLowerCase()
     }
 
-    override val presentablePath
+    override val presentablePath: String
       get() = "<$libraryType ${if (libraryType == LibraryType.MODULE) "'$moduleName' " else ""}library '$libraryName'>/" +
               "<library " + (if (inClassFiles) "class" else "source") + " root #$libraryRootIndex>"
   }
@@ -51,7 +51,7 @@ sealed class PortableFilePath {
     val jdkRootIndex: Int,
     val inClassFiles: Boolean
   ) : PortableFilePath() {
-    override val presentablePath
+    override val presentablePath: String
       get() = "<jdk $jdkName>/" +
               "<jdk " + (if (inClassFiles) "class" else "source") + " root #$jdkRootIndex>"
   }
@@ -62,19 +62,19 @@ sealed class PortableFilePath {
       require(ideDirectoryType in IdePortableFilePathProvider.IDE_PATHS.keys) { ideDirectoryType }
     }
 
-    override val presentablePath
+    override val presentablePath: String
       get() = "<ide $ideDirectoryType dir>"
   }
 
   @JsonTypeName("archive")
   data class ArchiveRoot(val archiveLocalPath: PortableFilePath) : PortableFilePath() {
-    override val presentablePath
+    override val presentablePath: String
       get() = archiveLocalPath.presentablePath + "!/"
   }
 
   @JsonTypeName("absolute")
   data class AbsolutePath(val absoluteUrl: String) : PortableFilePath() {
-    override val presentablePath
+    override val presentablePath: String
       get() = "<absolute>/$absoluteUrl"
   }
 
@@ -84,9 +84,9 @@ sealed class PortableFilePath {
       require(!relativePath.startsWith('/')) { relativePath }
     }
 
-    override val presentablePath
+    override val presentablePath: String
       get() = root.presentablePath.trimEnd('/') + '/' + relativePath
   }
 
-  override fun toString() = presentablePath
+  override fun toString(): String = presentablePath
 }

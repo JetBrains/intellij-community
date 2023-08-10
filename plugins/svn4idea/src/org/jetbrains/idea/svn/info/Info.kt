@@ -37,9 +37,6 @@ class Info(val file: File?,
   val conflictNewFile = resolveConflictFile(file, conflictNewFilePath)
   val conflictWrkFile = resolveConflictFile(file, conflictWorkingFilePath)
 
-  @Deprecated("Use url property", ReplaceWith("url"))
-  fun getURL() = url
-
   companion object {
     const val SCHEDULE_ADD = "add"
   }

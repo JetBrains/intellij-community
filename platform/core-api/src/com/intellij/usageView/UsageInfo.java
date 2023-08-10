@@ -1,11 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usageView;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +21,7 @@ public class UsageInfo {
   private static final Logger LOG = Logger.getInstance(UsageInfo.class);
   private final SmartPsiElementPointer<?> mySmartPointer;
   private final SmartPsiFileRange myPsiFileRange;
-  @Nullable private Class<? extends PsiReference> myReferenceClass = null;
+  private @Nullable Class<? extends PsiReference> myReferenceClass;
 
   public final boolean isNonCodeUsage;
   protected boolean myDynamicUsage;
@@ -146,8 +149,7 @@ public class UsageInfo {
     this(element, false);
   }
 
-  @NotNull
-  public SmartPsiElementPointer<?> getSmartPointer() {
+  public @NotNull SmartPsiElementPointer<?> getSmartPointer() {
     return mySmartPointer;
   }
 
@@ -167,13 +169,11 @@ public class UsageInfo {
     return myReferenceClass;
   }
 
-  @Nullable
-  public PsiElement getElement() { // SmartPointer is used to fix SCR #4572, hotya eto krivo i nado vse perepisat'
+  public @Nullable PsiElement getElement() { // SmartPointer is used to fix SCR #4572, hotya eto krivo i nado vse perepisat'
     return mySmartPointer.getElement();
   }
 
-  @Nullable
-  public PsiReference getReference() {
+  public @Nullable PsiReference getReference() {
     PsiElement element = getElement();
     return element == null ? null : element.getReference();
   }
@@ -181,8 +181,7 @@ public class UsageInfo {
   /**
    * @return range in element
    */
-  @Nullable("null means range is invalid")
-  public ProperTextRange getRangeInElement() {
+  public @Nullable("null means range is invalid") ProperTextRange getRangeInElement() {
     PsiElement element = getElement();
     if (element == null) return null;
     PsiFile psiFile = getFile();
@@ -265,13 +264,16 @@ public class UsageInfo {
     return psiFile != null && psiFile.getFileType().isBinary();
   }
 
-  @Nullable
-  public Segment getSegment() {
+  public @Nullable Segment getSegment() {
     PsiElement element = getElement();
-    if (element == null
-        // in case of binary file
-        || myPsiFileRange == null && element instanceof PsiFile) return null;
-    TextRange range = element.getTextRange();
+    if (element instanceof PsiFile && ((PsiFile)element).getFileType().isBinary()) {
+      return null;
+    }
+    TextRange range = element != null ? element.getTextRange() : null;
+    if (range == null) {
+      return null;
+    }
+
     TextRange.assertProperRange(range, element);
     if (element instanceof PsiFile) {
       // hack: it's actually a range inside file, use document for range checking since during the "find|replace all" operation, file range might have been changed
@@ -286,7 +288,17 @@ public class UsageInfo {
                                Math.min(range.getEndOffset(), range.getStartOffset() + rangeInElement.getEndOffset()));
   }
 
-  private Pair<VirtualFile, Integer> offset() {
+  private static class FileWithOffset {
+    private final VirtualFile myFile;
+    private final int myOffset;
+
+    private FileWithOffset(VirtualFile file, int offset) {
+      myFile = file;
+      myOffset = offset;
+    }
+  }
+
+  private FileWithOffset offset() {
     VirtualFile containingFile0 = getVirtualFile();
     int shift0 = 0;
     if (containingFile0 instanceof VirtualFileWindow) {
@@ -295,28 +307,27 @@ public class UsageInfo {
     }
     Segment range = myPsiFileRange == null ? mySmartPointer.getPsiRange() : myPsiFileRange.getPsiRange();
     if (range == null) return null;
-    return Pair.create(containingFile0, range.getStartOffset() + shift0);
+    return new FileWithOffset(containingFile0, range.getStartOffset() + shift0);
   }
 
   public int compareToByStartOffset(@NotNull UsageInfo info) {
-    Pair<VirtualFile, Integer> offset0 = offset();
-    Pair<VirtualFile, Integer> offset1 = info.offset();
+    FileWithOffset offset0 = offset();
+    FileWithOffset offset1 = info.offset();
     if (offset0 == null || offset1 == null) {
       return (offset0 == null ? 0 : 1) - (offset1 == null ? 0 : 1);
     }
-    VirtualFile file0 = offset0.first;
-    VirtualFile file1 = offset1.first;
+    VirtualFile file0 = offset0.myFile;
+    VirtualFile file1 = offset1.myFile;
     if (file0 == null || file1 == null) {
       return (file0 == null ? 0 : 1) - (file1 == null ? 0 : 1);
     }
-    if (Comparing.equal(file0, file1)) {
-      return offset0.second - offset1.second;
+    if (file0.equals(file1)) {
+      return Integer.compare(offset0.myOffset, offset1.myOffset);
     }
     return file0.getPath().compareTo(file1.getPath());
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return mySmartPointer.getProject();
   }
 
@@ -356,13 +367,11 @@ public class UsageInfo {
     return reference.getCanonicalText() + " (" + reference.getClass() + ")";
   }
 
-  @Nullable
-  public PsiFile getFile() {
+  public @Nullable PsiFile getFile() {
     return mySmartPointer.getContainingFile();
   }
 
-  @Nullable
-  public VirtualFile getVirtualFile() {
+  public @Nullable VirtualFile getVirtualFile() {
     return mySmartPointer.getVirtualFile();
   }
 
@@ -371,8 +380,7 @@ public class UsageInfo {
   }
 
   // creates new smart pointers
-  @Nullable("null means could not copy because info is no longer valid")
-  public UsageInfo copy() {
+  public @Nullable("null means could not copy because info is no longer valid") UsageInfo copy() {
     PsiElement element = mySmartPointer.getElement();
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(getProject());
     PsiFile containingFile = myPsiFileRange == null ? null : myPsiFileRange.getContainingFile();

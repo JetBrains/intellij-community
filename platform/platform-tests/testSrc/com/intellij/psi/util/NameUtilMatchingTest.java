@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.util;
 
-import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.AllOccurrencesMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -12,6 +11,8 @@ import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.util.text.Matcher;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.function.ToIntFunction;
 
 public class NameUtilMatchingTest extends TestCase {
   public void testSimpleCases() {
@@ -222,30 +223,6 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("abc", "aaa:bbb:ccc");
     assertMatches("textField:sh", "textField:shouldChangeCharactersInRange:replacementString:");
     assertMatches("text*:sh", "textField:shouldChangeCharactersInRange:replacementString:");
-  }
-
-  private static MinusculeMatcher fileStructureMatcher(String pattern) {
-    return FileStructureDialog.createFileStructureMatcher(pattern);
-  }
-
-  public void testFileStructure() {
-    assert !fileStructureMatcher("hint").matches("height: int");
-    assert  fileStructureMatcher("Hint").matches("Height:int");
-    assert !fileStructureMatcher("Hint").matches("Height: int");
-    assert  fileStructureMatcher("hI").  matches("Height: int");
-
-    assert  fileStructureMatcher("getColor"). matches("getBackground(): Color");
-    assert  fileStructureMatcher("get color").matches("getBackground(): Color");
-    assert !fileStructureMatcher("getcolor"). matches("getBackground(): Color");
-
-    assert  fileStructureMatcher("get()").matches("getBackground(): Color");
-
-    assert  fileStructureMatcher("setColor").  matches("setBackground(Color): void");
-    assert  fileStructureMatcher("set color"). matches("setBackground(Color): void");
-    assert  fileStructureMatcher("set Color"). matches("setBackground(Color): void");
-    assert  fileStructureMatcher("set(color"). matches("setBackground(Color): void");
-    assert  fileStructureMatcher("set(color)").matches("setBackground(Color): void");
-    assert !fileStructureMatcher("setcolor").  matches("setBackground(Color): void");
   }
 
   public void testMiddleMatchingMinimumTwoConsecutiveLettersInWordMiddle() {
@@ -575,10 +552,6 @@ public class NameUtilMatchingTest extends TestCase {
     assertPreference("*icon", "getInitControl", "getErrorIcon", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  public void testPreferBeforeSeparators() {
-    assertPreference(fileStructureMatcher("*point"), "getLocation(): Point", "getPoint(): Point");
-  }
-
   public void testPreferNoWordSkipping() {
     assertPreference("CBP", "CustomProcessBP", "ComputationBatchProcess", NameUtil.MatchingCaseSensitivity.NONE);
   }
@@ -615,8 +588,12 @@ public class NameUtilMatchingTest extends TestCase {
   }
 
   private static void assertPreference(MinusculeMatcher matcher, String less, String more) {
-    int iLess = matcher.matchingDegree(less);
-    int iMore = matcher.matchingDegree(more);
+    assertPreference(less, more, matcher::matchingDegree);
+  }
+
+  private static void assertPreference(String less, String more, ToIntFunction<String> matchingDegree) {
+    int iLess = matchingDegree.applyAsInt(less);
+    int iMore = matchingDegree.applyAsInt(more);
     assertTrue(iLess + ">=" + iMore + "; " + less + ">=" + more, iLess < iMore);
   }
 

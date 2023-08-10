@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.vcs.log.graph.GraphCommit;
@@ -8,8 +8,7 @@ import java.util.*;
 
 public class VcsLogMultiRepoJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
-  @NotNull
-  public List<Commit> join(@NotNull Collection<? extends List<Commit>> logsFromRepos) {
+  public @NotNull List<Commit> join(@NotNull Collection<? extends List<Commit>> logsFromRepos) {
     if (logsFromRepos.size() == 1) {
       return logsFromRepos.iterator().next();
     }
@@ -42,8 +41,7 @@ public class VcsLogMultiRepoJoiner<CommitId, Commit extends GraphCommit<CommitId
     return result;
   }
 
-  @NotNull
-  private Commit findLatestCommit(@NotNull Set<? extends Commit> commits) {
+  private @NotNull Commit findLatestCommit(@NotNull Set<? extends Commit> commits) {
     long maxTimeStamp = Long.MIN_VALUE;
     Commit lastCommit = null;
     for (Commit commit : commits) {

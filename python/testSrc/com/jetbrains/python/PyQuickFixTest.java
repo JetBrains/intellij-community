@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,17 +16,20 @@ import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.quickFixes.PyRenameElementQuickFixTest;
-import org.intellij.lang.regexp.inspection.RedundantEscapeInspection;
+import org.intellij.lang.regexp.inspection.RegExpRedundantEscapeInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author dcheryasov
- */
 @TestDataPath("$CONTENT_ROOT/../testData/inspections/")
 public class PyQuickFixTest extends PyTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -78,7 +82,7 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.copyDirectoryToProject("importFromModuleStar", "");
     myFixture.configureFromTempProjectFile("source.py");
     myFixture.checkHighlighting(true, false, false);
-    final IntentionAction intentionAction = myFixture.findSingleIntention("Import 'target.xyzzy()'");
+    final IntentionAction intentionAction = myFixture.findSingleIntention("Import 'target.xyzzy'");
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile("importFromModuleStar/source_after.py");
@@ -106,7 +110,7 @@ public class PyQuickFixTest extends PyTestCase {
     settings.HIGHLIGHT_UNUSED_IMPORTS = false;
     try {
       doInspectionTest(new String[]{"AddToImportFromList.py", "AddToImportFromFoo.py"}, PyUnresolvedReferencesInspection.class,
-                       "Import 'add_to_import_test_unique_name() from AddToImportFromFoo'", true, true);
+                       "Import 'add_to_import_test_unique_name from AddToImportFromFoo'", true, true);
     }
     finally {
       settings.HIGHLIGHT_UNUSED_IMPORTS = oldHighlightUnused;
@@ -126,7 +130,12 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-22045
   public void testBatchReplacePrintInsertsFutureImportOnlyOnce() {
-    doInspectionTest(PyCompatibilityInspection.class, "Fix all 'Code compatibility inspection' problems in file", true, true);
+    doInspectionTest(
+      PyCompatibilityInspection.class,
+      "Fix all 'Code is incompatible with specific Python versions' problems in file",
+      true,
+      true
+    );
   }
 
   // PY-4556
@@ -282,7 +291,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-1470
   public void testRedundantParentheses() {
-    String[] testFiles = new String[]{"RedundantParentheses.py"};
+    String[] testFiles = {"RedundantParentheses.py"};
     myFixture.enableInspections(PyRedundantParenthesesInspection.class);
     myFixture.configureByFiles(testFiles);
     myFixture.checkHighlighting(true, false, true);
@@ -597,7 +606,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testUnnecessaryBackslash() {
-    String[] testFiles = new String[]{"UnnecessaryBackslash.py"};
+    String[] testFiles = {"UnnecessaryBackslash.py"};
     myFixture.enableInspections(PyUnnecessaryBackslashInspection.class);
     myFixture.configureByFiles(testFiles);
     myFixture.checkHighlighting(true, false, true);
@@ -613,7 +622,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testUnnecessaryBackslashInArgumentList() {
-    String[] testFiles = new String[]{"UnnecessaryBackslashInArguments.py"};
+    String[] testFiles = {"UnnecessaryBackslashInArguments.py"};
     myFixture.enableInspections(PyUnnecessaryBackslashInspection.class);
     myFixture.configureByFiles(testFiles);
     myFixture.checkHighlighting(true, false, true);
@@ -685,7 +694,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-20452
   public void testRemoveRedundantEscapeInOnePartRegExp() {
-    myFixture.enableInspections(new RedundantEscapeInspection());
+    myFixture.enableInspections(new RegExpRedundantEscapeInspection());
     myFixture.configureByText(PythonFileType.INSTANCE, "import re\nre.compile(\"(?P<foo>((<caret>\\/(?P<bar>.+))?))\")");
 
     final List<IntentionAction> quickFixes = myFixture.getAllQuickFixes();
@@ -700,10 +709,11 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-20452
   public void testRemoveRedundantEscapeInMultiPartRegExp() {
-    myFixture.enableInspections(new RedundantEscapeInspection());
-    myFixture.configureByText(PythonFileType.INSTANCE, "import re\n" +
-                                                       "re.compile(\"(?P<foo>\"\n" +
-                                                       "           \"((<caret>\\/(?P<bar>.+))?))\")");
+    myFixture.enableInspections(new RegExpRedundantEscapeInspection());
+    myFixture.configureByText(PythonFileType.INSTANCE, """
+      import re
+      re.compile("(?P<foo>"
+                 "((<caret>\\/(?P<bar>.+))?))")""");
 
     final List<IntentionAction> quickFixes = myFixture.getAllQuickFixes();
     assertEquals(1, quickFixes.size());
@@ -712,9 +722,10 @@ public class PyQuickFixTest extends PyTestCase {
     assertEquals("Remove redundant escape", removeRedundantEscapeFix.getText());
 
     myFixture.launchAction(removeRedundantEscapeFix);
-    myFixture.checkResult("import re\n" +
-                          "re.compile(\"(?P<foo>\"\n" +
-                          "           \"((/(?P<bar>.+))?))\")");
+    myFixture.checkResult("""
+                            import re
+                            re.compile("(?P<foo>"
+                                       "((/(?P<bar>.+))?))")""");
   }
 
   // PY-8174
@@ -733,6 +744,13 @@ public class PyQuickFixTest extends PyTestCase {
   // PY-8174
   public void testChangeSignatureNewParametersNames() {
     doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(i1, <b>i</b>, <b>i3</b>, <b>num</b>)</html>", true, true);
+  }
+
+  // PY-53671
+  public void testChangeSignatureOfExportedBoundMethod() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFilesInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of method(self, a, b, <b>i</b>)</html>", "mod.py");
+    });
   }
 
   // PY-8174
@@ -786,7 +804,6 @@ public class PyQuickFixTest extends PyTestCase {
    * @param quickFixName    how the resulting fix should be named (the human-readable name users see)
    * @param applyFix        true if the fix needs to be applied
    * @param available       true if the fix should be available, false if it should be explicitly not available.
-   * @throws Exception
    */
   protected void doInspectionTest(@NonNls String @NotNull [] testFiles,
                                   @NotNull Class<? extends LocalInspectionTool> inspectionClass,

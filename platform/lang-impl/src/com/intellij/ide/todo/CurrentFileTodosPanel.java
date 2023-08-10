@@ -15,11 +15,11 @@
  */
 package com.intellij.ide.todo;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -27,15 +27,20 @@ import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
 abstract class CurrentFileTodosPanel extends TodoPanel {
-  CurrentFileTodosPanel(Project project, TodoPanelSettings settings, Content content) {
-    super(project, settings, true, content);
 
-    VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
+  CurrentFileTodosPanel(@NotNull TodoView todoView,
+                        @NotNull TodoPanelSettings settings,
+                        @NotNull Content content) {
+    super(todoView, settings, true, content);
+
+    VirtualFile[] files = FileEditorManager.getInstance(myProject).getSelectedFiles();
     setFile(files.length == 0 ? null : PsiManager.getInstance(myProject).findFile(files[0]), true);
+    ClientId clientId = ClientId.getCurrent();
     // It's important to remove this listener. It prevents invocation of setFile method after the tree builder is disposed
-    project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    myProject.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent e) {
+        if (!clientId.equals(ClientId.getCurrent())) return;
         VirtualFile file = e.getNewFile();
         final PsiFile psiFile = file != null && file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
         // This invokeLater is required. The problem is setFile does a commit to PSI, but setFile is
@@ -48,15 +53,15 @@ abstract class CurrentFileTodosPanel extends TodoPanel {
   private void setFile(PsiFile file, boolean initialUpdate) {
     // setFile method is invoked in LaterInvocator so PsiManager
     // can be already disposed, so we need to check this before using it.
-    if (myProject == null || PsiManager.getInstance(myProject).isDisposed()) {
+    if (PsiManager.getInstance(myProject).isDisposed()) {
       return;
     }
 
     if (file != null && getSelectedFile() == file) return;
 
-    CurrentFileTodosTreeBuilder builder = (CurrentFileTodosTreeBuilder)myTodoTreeBuilder;
+    CurrentFileTodosTreeBuilder builder = (CurrentFileTodosTreeBuilder)getTreeBuilder();
     builder.setFile(file);
-    if (myTodoTreeBuilder.isUpdatable() || initialUpdate) {
+    if (builder.isUpdatable() || initialUpdate) {
       Object selectableElement = builder.getTodoTreeStructure().getFirstSelectableElement();
       if (selectableElement != null) {
         builder.select(selectableElement);

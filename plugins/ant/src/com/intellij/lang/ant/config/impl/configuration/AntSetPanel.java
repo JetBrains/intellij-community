@@ -118,7 +118,7 @@ public class AntSetPanel {
       myAnts.addAddAction(new NewAntFactory(myAnts));
       myAnts.addRemoveButtonForAnt(antInstallation.IS_USER_ANT, AntBundle.message("remove.action.name"));
       myAnts.actionsBuilt();
-      JList list = myAnts.getList();
+      JList<AntInstallation> list = myAnts.getList();
       list.setCellRenderer(new AntUIUtil.AntInstallationRenderer(this));
       list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         @Override
@@ -142,7 +142,7 @@ public class AntSetPanel {
       });
     }
 
-    public JList getAntsList() {
+    public JList<AntInstallation> getAntsList() {
       return myAnts.getList();
     }
 
@@ -233,11 +233,11 @@ public class AntSetPanel {
     private void adjustName(final AntInstallation justCreated) {
       int nameIndex = 0;
       String adjustedName = justCreated.getName();
-      final ListModel model = myParent.getList().getModel();
+      final ListModel<AntInstallation> model = myParent.getList().getModel();
 
       int idx = 0;
       while (idx < model.getSize()) {
-        final AntInstallation inst = (AntInstallation)model.getElementAt(idx++);
+        final AntInstallation inst = model.getElementAt(idx++);
         if (adjustedName.equals(inst.getName())) {
           adjustedName = justCreated.getName() + " (" + (++nameIndex) + ")";
           idx = 0; // search from beginning
@@ -277,9 +277,9 @@ public class AntSetPanel {
     @Override
     protected void doOKAction() {
       final Set<String> names = new HashSet<>();
-      final ListModel model = myForm.getAntsList().getModel();
+      final ListModel<AntInstallation> model = myForm.getAntsList().getModel();
       for (int idx = 0; idx  < model.getSize(); idx++) {
-        final AntInstallation inst = (AntInstallation)model.getElementAt(idx);
+        final AntInstallation inst = model.getElementAt(idx);
         @NlsSafe final String name = AntInstallation.NAME.get(myForm.getProperties(inst));
         if (names.contains(name)) {
           Messages.showErrorDialog(AntBundle.message("dialog.message.duplicate.ant.installation.name", name), getTitle());

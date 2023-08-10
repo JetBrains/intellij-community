@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Alexey Chmutov
- */
 public class DataLanguageBlockFragmentWrapper implements Block {
   private final Block myOwner;
   private final TextRange myRange;

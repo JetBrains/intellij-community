@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -14,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class CachedFileType {
@@ -43,6 +46,17 @@ public final class CachedFileType {
     ourInterner.clear();
   }
 
+  /**
+   * @return result that returns true if no files changed their types since method invocation
+   */
+  @NotNull
+  public static Supplier<@NotNull Boolean> getFileTypeChangeChecker() {
+    CachedFileType type = ReadAction.compute(() -> forType(PlainTextFileType.INSTANCE));
+    return () -> {
+      return type.getUpToDateOrNull() != null;
+    };
+  }
+
   static final class PsiListener implements PsiModificationTracker.Listener {
     @Override
     public void modificationCountChanged() {
@@ -52,7 +66,7 @@ public final class CachedFileType {
 
   static final class ReparseListener implements BulkFileListener {
     @Override
-    public void after(@NotNull List<? extends VFileEvent> events) {
+    public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
       for (VFileEvent event : events) {
         if (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor())) {
           clearCache();

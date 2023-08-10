@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.inspector;
 
 import com.intellij.openapi.command.CommandProcessor;
@@ -7,12 +7,11 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.spellchecker.DictionaryLevel;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.util.Collections;
-
-import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.PROJECT;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class AcceptWordAsCorrectTest extends BasePlatformTestCase {
@@ -25,7 +24,7 @@ public class AcceptWordAsCorrectTest extends BasePlatformTestCase {
     try {
       assertTrue(manager.hasProblem(word));
       CommandProcessor.getInstance().executeCommand(getProject(), () -> manager
-        .acceptWordAsCorrect(word, file, getProject(), PROJECT), getName(), null);
+        .acceptWordAsCorrect$intellij_spellchecker(word, file, getProject(), DictionaryLevel.PROJECT), getName(), null);
       assertFalse(manager.hasProblem(word));
     }
     finally {
@@ -79,7 +78,7 @@ public class AcceptWordAsCorrectTest extends BasePlatformTestCase {
 
     assertTrue(manager.hasProblem(TYPPO));
     CommandProcessor.getInstance().executeCommand(getProject(), () -> manager
-      .acceptWordAsCorrect(TYPPO, file, getProject(), PROJECT), getName(), null);
+      .acceptWordAsCorrect$intellij_spellchecker(TYPPO, file, getProject(), DictionaryLevel.PROJECT), getName(), null);
     assertFalse(manager.hasProblem(TYPPO));
 
     instance.undo(FileEditorManager.getInstance(getProject()).getSelectedEditor(file));

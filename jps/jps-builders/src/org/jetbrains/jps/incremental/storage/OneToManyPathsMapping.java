@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.util.Function;
@@ -30,11 +30,11 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
     super.update(normalizePath(keyPath), normalizePaths(boundPaths));
   }
 
-  public final void update(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
+  public void update(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
     super.update(normalizePath(keyPath), Collections.singleton(normalizePath(boundPath)));
   }
 
-  public final void appendData(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
+  public void appendData(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
     super.appendData(normalizePath(keyPath), Collections.singleton(normalizePath(boundPath)));
   }
 
@@ -53,7 +53,7 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
   @NotNull
   public Iterator<String> getStateIterator(@NotNull String keyPath) throws IOException {
     Collection<String> collection = super.getState(normalizePath(keyPath));
-    return collection == null? Collections.emptyIterator() : Iterators.map(collection.iterator(), toFull());
+    return collection == null ? Collections.emptyIterator() : Iterators.map(collection.iterator(), myRelativizer::toFull);
   }
 
   @Override
@@ -68,19 +68,21 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
 
   @Override
   public Iterator<String> getKeysIterator() throws IOException {
-    return Iterators.map(super.getKeysIterator(), toFull());
+    return Iterators.map(super.getKeysIterator(), myRelativizer::toFull);
   }
 
-  public final void removeData(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
+  public void removeData(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
     final Collection<String> outputPaths = getState(keyPath);
     if (outputPaths != null) {
-      final boolean removed = outputPaths.remove(normalizePath(boundPath));
-      if (outputPaths.isEmpty()) {
-        remove(keyPath);
-      }
-      else {
-        if (removed) {
-          update(keyPath, outputPaths);
+      String normalizedPath = normalizePath(boundPath);
+      List<String> newState = ContainerUtil.filter(outputPaths, path -> !normalizedPath.equals(path));
+      final boolean removed = newState.size() != outputPaths.size();
+      if (removed) {
+        if (newState.isEmpty()) {
+          remove(keyPath);
+        }
+        else {
+          update(keyPath, newState);
         }
       }
     }

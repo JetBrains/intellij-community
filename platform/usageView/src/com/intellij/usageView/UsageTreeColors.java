@@ -16,10 +16,12 @@
 package com.intellij.usageView;
 
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 
 public interface UsageTreeColors {
-  SimpleTextAttributes NUMBER_OF_USAGES_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getInactiveTextColor());
-  SimpleTextAttributes INVALID_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getErrorForeground());
-  SimpleTextAttributes READ_ONLY_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getErrorForeground());
+  SimpleTextAttributes NUMBER_OF_USAGES_ATTRIBUTES =
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, NamedColorUtil.getInactiveTextColor());
+  SimpleTextAttributes INVALID_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, NamedColorUtil.getErrorForeground());
+  SimpleTextAttributes READ_ONLY_ATTRIBUTES =
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, NamedColorUtil.getErrorForeground());
 }

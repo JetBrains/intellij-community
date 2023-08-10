@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.core.CoreBundle;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -11,29 +12,31 @@ import javax.swing.*;
 public final class UnknownFileType implements FileType {
   public static final FileType INSTANCE = new UnknownFileType();
 
-  private UnknownFileType() {}
+  private UnknownFileType() { }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "UNKNOWN";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
-    return CoreBundle.message("filetype.description.unknown");
+  public @NotNull String getDescription() {
+    return CoreBundle.message("filetype.unknown.description");
   }
 
   @Override
-  @NotNull
-  public String getDefaultExtension() {
+  public @Nls @NotNull String getDisplayName() {
+    return CoreBundle.message("filetype.unknown.display.name");
+  }
+
+  @Override
+  public @NotNull String getDefaultExtension() {
     return "";
   }
 
   @Override
   public Icon getIcon() {
-    return AllIcons.FileTypes.Unknown;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.UnknownFileType);
   }
 
   @Override

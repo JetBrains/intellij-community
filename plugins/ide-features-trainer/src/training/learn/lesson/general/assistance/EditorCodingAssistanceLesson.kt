@@ -2,25 +2,19 @@
 package training.learn.lesson.general.assistance
 
 import com.intellij.ide.IdeBundle
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.impl.jList
-import com.intellij.testGuiFramework.util.Key
-import com.intellij.testGuiFramework.util.Modifier
-import com.intellij.testGuiFramework.util.Shortcut
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
-import training.commands.kotlin.TaskTestContext
+import com.intellij.ui.HyperlinkLabel
+import org.apache.commons.lang.StringEscapeUtils
+import org.jetbrains.annotations.Nls
+import training.dsl.*
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonSample
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import training.util.PerformActionUtil
+import training.learn.course.KLesson
+import training.util.isToStringContains
+import java.awt.Rectangle
 import javax.swing.JEditorPane
 
-abstract class EditorCodingAssistanceLesson(module: Module, lang: String, private val sample: LessonSample) :
-  KLesson("CodeAssistance.EditorCodingAssistance", LessonsBundle.message("editor.coding.assistance.lesson.name"), module, lang) {
+abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
+  KLesson("CodeAssistance.EditorCodingAssistance", LessonsBundle.message("editor.coding.assistance.lesson.name")) {
 
   protected abstract val errorIntentionText: String
   protected abstract val warningIntentionText: String
@@ -34,11 +28,19 @@ abstract class EditorCodingAssistanceLesson(module: Module, lang: String, privat
     prepareSample(sample)
 
     actionTask("GotoNextError") {
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       LessonsBundle.message("editor.coding.assistance.goto.next.error", action(it))
     }
 
-    fixErrorUsingIntentionTask(errorIntentionText, errorFixedText) { addFixErrorTaskText() }
+    task("ShowIntentionActions") {
+      text(getFixErrorTaskText())
+      stateCheck { editor.document.charsSequence.contains(errorFixedText) }
+      restoreIfModifiedOrMoved()
+      test {
+        Thread.sleep(500)
+        invokeIntention(errorIntentionText)
+      }
+    }
 
     task("GotoNextError") {
       text(LessonsBundle.message("editor.coding.assistance.goto.next.warning", action(it)))
@@ -50,28 +52,34 @@ abstract class EditorCodingAssistanceLesson(module: Module, lang: String, privat
       }
     }
 
-    // instantly close error description popup after GotoNextError action
-    prepareRuntimeTask {
-      PerformActionUtil.performAction("EditorPopupMenu", editor, project) {}
-    }
-
     task("ShowErrorDescription") {
       text(LessonsBundle.message("editor.coding.assistance.show.warning.description", action(it)))
-      val inspectionInfoLabelText = IdeBundle.message("inspection.message.inspection.info")
-      triggerByUiComponentAndHighlight<JEditorPane>(false, false) { ui ->
-        ui.text.contains(inspectionInfoLabelText)
+      // escapeHtml required in case of hieroglyph localization
+      val inspectionInfoLabelText = StringEscapeUtils.escapeHtml(IdeBundle.message("inspection.message.inspection.info"))
+      triggerUI().component { ui: JEditorPane ->
+        ui.text.isToStringContains(inspectionInfoLabelText)
       }
       restoreIfModifiedOrMoved()
       test {
         Thread.sleep(500)
-        val errorDescriptionShortcut = Shortcut(hashSetOf(Modifier.CONTROL), Key.F1)
-        GuiTestUtil.shortcut(errorDescriptionShortcut)
-        GuiTestUtil.shortcut(errorDescriptionShortcut)
+        invokeActionViaShortcut("CONTROL F1")
       }
     }
 
-    fixErrorUsingIntentionTask(warningIntentionText, warningFixedText) {
-      text(LessonsBundle.message("editor.coding.assistance.fix.warning", action("ShowIntentionActions"), strong(warningIntentionText)))
+    task {
+      text(LessonsBundle.message("editor.coding.assistance.fix.warning") + " " + getFixWarningText())
+      triggerAndBorderHighlight().componentPart { ui: HyperlinkLabel ->
+        if (ui.text == warningIntentionText) {
+          Rectangle(ui.x - 20, ui.y - 10, ui.width + 125, ui.height + 10)
+        }
+        else null
+      }
+      stateCheck { editor.document.charsSequence.contains(warningFixedText) }
+      restoreByUi()
+      test {
+        Thread.sleep(500)
+        invokeActionViaShortcut("ALT SHIFT ENTER")
+      }
     }
 
     caret(variableNameToHighlight)
@@ -84,29 +92,12 @@ abstract class EditorCodingAssistanceLesson(module: Module, lang: String, privat
     }
   }
 
-  private fun LessonContext.fixErrorUsingIntentionTask(errorIntentionText: String,
-                                                       errorFixedText: String,
-                                                       addText: TaskContext.() -> Unit) {
-    task("ShowIntentionActions") {
-      addText()
-      triggerByListItemAndHighlight { item -> isHighlightedListItem(item.toString()) }
-      stateCheck { editor.document.charsSequence.contains(errorFixedText) }
-      restoreIfModifiedOrMoved()
-      test {
-        Thread.sleep(500)
-        invokeIntention(errorIntentionText)
-      }
-    }
+  protected open fun LearningDslBase.getFixErrorTaskText(): @Nls String {
+    return LessonsBundle.message("editor.coding.assistance.fix.error", action("ShowIntentionActions"),
+                                 strong(errorIntentionText))
   }
 
-  protected open fun isHighlightedListItem(item: String): Boolean {
-    return item == errorIntentionText || item == warningIntentionText
-  }
-
-
-  protected open fun TaskContext.addFixErrorTaskText() {
-    text(LessonsBundle.message("editor.coding.assistance.fix.error", action("ShowIntentionActions"), strong(errorIntentionText)))
-  }
+  protected abstract fun getFixWarningText(): @Nls String
 
   private fun TaskTestContext.invokeIntention(intentionText: String) {
     actions("ShowIntentionActions")
@@ -120,4 +111,9 @@ abstract class EditorCodingAssistanceLesson(module: Module, lang: String, privat
     val sequence = editor.document.charsSequence
     return caretOffset != sequence.length && sequence[caretOffset].isLetter()
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("editor.coding.assistance.help.link"),
+         LessonUtil.getHelpLink("working-with-source-code.html")),
+  )
 }

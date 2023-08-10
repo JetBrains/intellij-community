@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author Nikolay Matveev
- */
 public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   public void testSimpleTree() throws Exception {
     matchStructures(
@@ -178,12 +175,10 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   private static void matchNodesDeeply(@NotNull Configurable configurable, @NotNull Node node) {
-    if (configurable instanceof SearchableConfigurable) {
-      SearchableConfigurable searchableConfigurable = (SearchableConfigurable) configurable;
+    if (configurable instanceof SearchableConfigurable searchableConfigurable) {
       assertEquals(node.getId(), searchableConfigurable.getId());
       List<Configurable> children = Collections.emptyList();
-      if (configurable instanceof Configurable.Composite) {
-        Configurable.Composite composite = (Configurable.Composite) configurable;
+      if (configurable instanceof Configurable.Composite composite) {
         children = Arrays.asList(composite.getConfigurables());
       }
       assertEquals(node.getChildren().size(), children.size());
@@ -426,11 +421,11 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
                                                node("cyclic.chain")))))),
                       node("configurable.group.cyclic",
                            node("cyclic.configurable")),
+                      node("configurable.group.other",
+                           node("missed.configurable")),
                       node("configurable.group.parent",
                            node("configurable.group.custom",
-                                node("custom.configurable"))),
-                      node("configurable.group.other",
-                           node("missed.configurable"))),
+                                node("custom.configurable")))),
                  getRootCustom(false));
   }
 
@@ -483,8 +478,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
 
   private static Node node(Configurable configurable) {
     SearchableConfigurable sc = (SearchableConfigurable)configurable;
-    if (configurable instanceof Configurable.Composite) {
-      Configurable.Composite composite = (Configurable.Composite)configurable;
+    if (configurable instanceof Configurable.Composite composite) {
       return node(sc.getId(), Arrays.asList(composite.getConfigurables()));
     }
     return node(sc.getId());
@@ -523,8 +517,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
 
     @Override
     public boolean equals(Object object) {
-      if (object instanceof Node) {
-        Node node = (Node)object;
+      if (object instanceof Node node) {
         if (node.myId == null ? myId == null : node.myId.equals(myId)) {
           return node.myChildren.equals(myChildren);
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts.ui;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -68,29 +68,30 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
 
   public void testModuleWithLibraryJar() {
     final Module module = addModuleWithSourceRoot("a");
-    addProjectLibrary(module, "jdom", getJDomJar());
+    addProjectLibrary(module, "jdom", getFastUtilJar());
     createFromTemplate(module, null, null, true);
     assertLayout("a.jar\n" +
                  " module:a\n" +
-                 " extracted:" + getLocalJarPath(getJDomJar()) + "!/");
+                 " extracted:" + getLocalJarPath(getFastUtilJar()) + "!/");
   }
 
   public void testModuleWithLibraryJarWithManifest() {
     final VirtualFile file = createFile("src/A.java");
     final Module module = addModule("a", file.getParent());
-    VirtualFile jDomJar = getJDomJar();
+    VirtualFile jDomJar = getFastUtilJar();
     addProjectLibrary(module, "jdom", jDomJar);
     createFromTemplate(module, null, file.getParent().getPath(), false);
-    assertLayout("<root>\n" +
-                 " a.jar\n" +
-                 "  module:a\n" +
-                 " lib:jdom(project)");
+    assertLayout("""
+                   <root>
+                    a.jar
+                     module:a
+                    lib:jdom(project)""");
     assertManifest(null, jDomJar.getName());
   }
 
   public void testSkipTestLibrary() {
     final Module a = addModuleWithSourceRoot("a");
-    addProjectLibrary(a, "jdom", DependencyScope.TEST, getJDomJar());
+    addProjectLibrary(a, "jdom", DependencyScope.TEST, getFastUtilJar());
     createFromTemplate(a, null, null, true);
     assertLayout("a.jar\n" +
                  " module:a");
@@ -98,7 +99,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
 
   public void testSkipProvidedLibrary() {
     final Module a = addModuleWithSourceRoot("a");
-    addProjectLibrary(a, "jdom", DependencyScope.PROVIDED, getJDomJar());
+    addProjectLibrary(a, "jdom", DependencyScope.PROVIDED, getFastUtilJar());
     createFromTemplate(a, null, null, true);
     assertLayout("a.jar\n" +
                  " module:a");
@@ -107,21 +108,21 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
   public void testIncludeTests() {
     final Module a = addModuleWithSourceRoot("a");
     PsiTestUtil.addSourceRoot(a, createDir("testSrc-a"), true);
-    addProjectLibrary(a, "jdom", DependencyScope.TEST, getJDomJar());
+    addProjectLibrary(a, "jdom", DependencyScope.TEST, getFastUtilJar());
     createFromTemplate(a, null, null, true, true);
     assertLayout("a.jar\n" +
                  " module:a\n" +
                  " module-tests:a\n" +
-                 " extracted:" + getLocalJarPath(getJDomJar()) + "!/");
+                 " extracted:" + getLocalJarPath(getFastUtilJar()) + "!/");
   }
 
   public void testDoNotIncludeTestsForModuleWithoutTestSources() {
     final Module a = addModuleWithSourceRoot("a");
-    addProjectLibrary(a, "jdom", DependencyScope.TEST, getJDomJar());
+    addProjectLibrary(a, "jdom", DependencyScope.TEST, getFastUtilJar());
     createFromTemplate(a, null, null, true, true);
     assertLayout("a.jar\n" +
                  " module:a\n" +
-                 " extracted:" + getLocalJarPath(getJDomJar()) + "!/");
+                 " extracted:" + getLocalJarPath(getFastUtilJar()) + "!/");
   }
 
   public void testTwoIndependentModules() {
@@ -146,21 +147,22 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
     final Module b = addModuleWithSourceRoot("b");
     addModuleDependency(a, b);
     createFromTemplate(a, null, null, true);
-    assertLayout("a.jar\n" +
-                 " module:a\n" +
-                 " module:b");
+    assertLayout("""
+                   a.jar
+                    module:a
+                    module:b""");
   }
 
   public void testDependentModuleWithLibrary() {
     final Module a = addModuleWithSourceRoot("a");
     final Module b = addModuleWithSourceRoot("b");
     addModuleDependency(a, b);
-    addProjectLibrary(b, "jdom", getJDomJar());
+    addProjectLibrary(b, "jdom", getFastUtilJar());
     createFromTemplate(a, null, null, true);
     assertLayout("a.jar\n" +
                  " module:a\n" +
                  " module:b\n" +
-                 " extracted:" + getLocalJarPath(getJDomJar()) + "!/");
+                 " extracted:" + getLocalJarPath(getFastUtilJar()) + "!/");
   }
 
   public void testExtractedLibraryWithDirectories() {
@@ -168,9 +170,10 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
     final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "dir", dir);
     createFromTemplate(a, null, null, true);
-    assertLayout("a.jar\n" +
-                 " module:a\n" +
-                 " lib:dir(project)");
+    assertLayout("""
+                   a.jar
+                    module:a
+                    lib:dir(project)""");
   }
 
   public void testCopiedLibraryWithDirectories() {
@@ -190,18 +193,18 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
   public void testExtractedLibraryWithJarsAndDirs() {
     final VirtualFile dir = createDir("lib");
     final Module a = addModuleWithSourceRoot("a");
-    addProjectLibrary(a, "dir", dir, getJDomJar());
+    addProjectLibrary(a, "dir", dir, getFastUtilJar());
     createFromTemplate(a, null, null, true);
     assertLayout("a.jar\n" +
                  " module:a\n" +
                  " dir:" + dir.getPath() + "\n" +
-                 " extracted:" + getLocalJarPath(getJDomJar()) + "!/");
+                 " extracted:" + getLocalJarPath(getFastUtilJar()) + "!/");
   }
 
   public void testCopiedLibraryWithJarsAndDirs() {
     final VirtualFile dir = createDir("lib");
     final Module a = addModuleWithSourceRoot("a");
-    VirtualFile jDomJar = getJDomJar();
+    VirtualFile jDomJar = getFastUtilJar();
     addProjectLibrary(a, "dir", dir, jDomJar);
     final String basePath = myProject.getBasePath();
     createFromTemplate(a, null, basePath, false);

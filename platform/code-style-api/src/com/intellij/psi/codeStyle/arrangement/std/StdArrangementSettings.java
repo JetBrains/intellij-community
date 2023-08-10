@@ -14,9 +14,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class StdArrangementSettings implements ArrangementSettings {
   @NotNull private final   List<ArrangementSectionRule> mySectionRules     = new ArrayList<>();
   @NotNull private final   List<ArrangementGroupingRule> myGroupings       = new ArrayList<>();

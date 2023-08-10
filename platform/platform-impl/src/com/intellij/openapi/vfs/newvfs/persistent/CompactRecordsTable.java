@@ -1,25 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.util.io.PagePool;
+import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.AbstractRecordsTable;
 import com.intellij.util.io.storage.RecordIdIterator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.BitSet;
+import java.util.concurrent.locks.Lock;
 
 // Twice as compact as AbstractRecordsTable: 8 bytes per record: int offset ([0..Integer.MAX_INT]), int ((capacity [0..0xFFFF) << 16) | (size [-1..0xFFFF)))
 // if int offset is overflowed then new 8 byte record is created to
 // hold long offset and original record contains negative new record number,
 // same if size / capacity is overflowed: new record is created to hold integer offset / capacity and original record contains its
 // negative number
+//TODO RC: this class is not really thread-safe, even though it does use locks here and there
 final class CompactRecordsTable extends AbstractRecordsTable {
   private final byte[] zeroes;
   private final boolean forceSplit;
 
-  CompactRecordsTable(@NotNull Path recordsFile, PagePool pool, boolean forceSplit) throws IOException {
+  CompactRecordsTable(@NotNull Path recordsFile, StorageLockContext pool, boolean forceSplit) throws IOException {
     super(recordsFile, pool);
     zeroes = new byte[getRecordSize()];
     this.forceSplit = forceSplit;
@@ -46,7 +49,7 @@ final class CompactRecordsTable extends AbstractRecordsTable {
   private static final int CAPACITY_OFFSET_IN_INDIRECT_RECORD = 4;
 
   @Override
-  public long getAddress(int record) {
+  public long getAddress(int record) throws IOException {
     int address = myStorage.getInt(getOffset(record, ADDRESS_OFFSET));
     if (address < 0) { // read address from indirect record
       return super.getAddress(-address);
@@ -55,7 +58,7 @@ final class CompactRecordsTable extends AbstractRecordsTable {
   }
 
   @Override
-  public void setAddress(int record, long address) {
+  public void setAddress(int record, long address) throws IOException {
     markDirty();
 
     int addressOfRecordAbsoluteOffset = getOffset(record, ADDRESS_OFFSET);
@@ -91,19 +94,26 @@ final class CompactRecordsTable extends AbstractRecordsTable {
   private static final int SPECIAL_POSITIVE_VALUE_FOR_SPECIAL_NEGATIVE_SIZE = 0xFFFF;
 
   @Override
-  public int getSize(int record) {
-    int currentValue = myStorage.getInt(getOffset(record, SIZE_AND_CAPACITY_OFFSET));
-    if (currentValue < 0) {
-      // read size from indirect record
-      return myStorage.getInt(getOffset(-currentValue, SIZE_OFFSET_IN_INDIRECT_RECORD));
+  public int getSize(int record) throws IOException {
+    final Lock readLock = myStorage.getStorageLockContext().readLock();
+    readLock.lock();
+    try {
+      int currentValue = myStorage.getInt(getOffset(record, SIZE_AND_CAPACITY_OFFSET));
+      if (currentValue < 0) {
+        // read size from indirect record
+        return myStorage.getInt(getOffset(-currentValue, SIZE_OFFSET_IN_INDIRECT_RECORD));
+      }
+      int i = currentValue & SIZE_MASK;
+      if (i == SPECIAL_POSITIVE_VALUE_FOR_SPECIAL_NEGATIVE_SIZE) i = SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD;
+      return i;
     }
-    int i = currentValue & SIZE_MASK;
-    if (i == SPECIAL_POSITIVE_VALUE_FOR_SPECIAL_NEGATIVE_SIZE) i = SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD;
-    return i;
+    finally {
+      readLock.unlock();
+    }
   }
 
   @Override
-  public void setSize(int record, int size) {
+  public void setSize(int record, int size) throws IOException {
     markDirty();
 
     int sizeAndCapacityOfRecordAbsoluteOffset = getOffset(record, SIZE_AND_CAPACITY_OFFSET);
@@ -111,6 +121,7 @@ final class CompactRecordsTable extends AbstractRecordsTable {
     if (currentValue < 0) {
       // update size in indirect record
       myStorage.putInt(getOffset(-currentValue, SIZE_OFFSET_IN_INDIRECT_RECORD), size);
+      myStorage.putInt(getOffset(-currentValue, CAPACITY_OFFSET_IN_INDIRECT_RECORD), size);
       return;
     }
 
@@ -128,7 +139,7 @@ final class CompactRecordsTable extends AbstractRecordsTable {
     myStorage.putInt(sizeAndCapacityOfRecordAbsoluteOffset, size | (currentValue & CAPACITY_MASK));
   }
 
-  private void extendSizeAndCapacityRecord(int record, int size, int capacity) {
+  private void extendSizeAndCapacityRecord(int record, int size, int capacity) throws IOException {
     int extendedRecord = doCreateNewRecord();
     myStorage.putInt(getOffset(extendedRecord, SIZE_OFFSET_IN_INDIRECT_RECORD), size);
     myStorage.putInt(getOffset(extendedRecord, CAPACITY_OFFSET_IN_INDIRECT_RECORD), capacity);
@@ -136,7 +147,7 @@ final class CompactRecordsTable extends AbstractRecordsTable {
   }
 
   @Override
-  public int getCapacity(int record) {
+  public int getCapacity(int record) throws IOException {
     int currentValue = myStorage.getInt(getOffset(record, SIZE_AND_CAPACITY_OFFSET));
     if (currentValue < 0) {
       // read capacity from indirect record
@@ -146,7 +157,7 @@ final class CompactRecordsTable extends AbstractRecordsTable {
   }
 
   @Override
-  public void setCapacity(int record, int capacity) {
+  public void setCapacity(int record, int capacity) throws IOException {
     markDirty();
 
     int sizeAndCapacityOfRecordAbsoluteOffset = getOffset(record, SIZE_AND_CAPACITY_OFFSET);
@@ -194,9 +205,9 @@ final class CompactRecordsTable extends AbstractRecordsTable {
       int nextId = scanToNextId();
 
       private int scanToNextId() {
-        while(iterator.hasNextId()) {
+        while (iterator.hasNextId()) {
           int next = iterator.nextId();
-          if ( !extraRecordsIds.get(next)) return next;
+          if (!extraRecordsIds.get(next)) return next;
         }
         return -1;
       }
@@ -214,8 +225,9 @@ final class CompactRecordsTable extends AbstractRecordsTable {
         return result;
       }
 
+      @TestOnly
       @Override
-      public boolean validId() {
+      public boolean validId() throws IOException {
         assert hasNextId();
         return isSizeOfLiveRecord(getSize(nextId));
       }
@@ -227,7 +239,7 @@ final class CompactRecordsTable extends AbstractRecordsTable {
     final BitSet extraRecords = new BitSet();
 
     final RecordIdIterator iterator = super.createRecordIdIterator();
-    while(iterator.hasNextId()) {
+    while (iterator.hasNextId()) {
       int recordId = iterator.nextId();
       final int sizeAndCapacityOfRecordAbsoluteOffset = getOffset(recordId, SIZE_AND_CAPACITY_OFFSET);
       final int sizeAndCapacityValue = myStorage.getInt(sizeAndCapacityOfRecordAbsoluteOffset);

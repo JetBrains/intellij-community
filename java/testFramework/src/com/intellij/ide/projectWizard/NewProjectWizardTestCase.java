@@ -19,6 +19,7 @@ import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -26,10 +27,10 @@ import java.io.File;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class NewProjectWizardTestCase extends ProjectWizardTestCase {
+public abstract class NewProjectWizardTestCase extends ProjectWizardTestCase<AbstractProjectWizard> {
   @Override
-  protected AbstractProjectWizard createWizard(@Nullable Project project, File directory) {
+  protected AbstractProjectWizard createWizard(@Nullable Project project, @Nullable File directory) {
     ModulesProvider modulesProvider = project == null ? ModulesProvider.EMPTY_MODULES_PROVIDER : new DefaultModulesProvider(project);
-    return new NewProjectWizard(project, modulesProvider, directory.getPath());
+    return new NewProjectWizard(project, modulesProvider, ObjectUtils.doIfNotNull(directory, it -> it.getPath()));
   }
 }

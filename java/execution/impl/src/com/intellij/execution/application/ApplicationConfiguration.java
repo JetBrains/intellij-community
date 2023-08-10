@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -11,6 +11,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.LanguageRuntimeType;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -33,15 +34,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
 public class ApplicationConfiguration extends JavaRunConfigurationBase
   implements SingleClassConfiguration, RefactoringListenerProvider, InputRedirectAware, TargetEnvironmentAwareRunProfile,
-             FusAwareRunConfiguration {
+             FusAwareRunConfiguration, EnvFilesOptions {
   /* deprecated, but 3rd-party used variables */
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated public String MAIN_CLASS_NAME;
@@ -125,6 +128,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     return getConfigurationModule().findClass(getMainClassName());
   }
 
+  @NlsSafe
   @Nullable
   public String getMainClassName() {
     return MAIN_CLASS_NAME;
@@ -133,10 +137,22 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   @Override
   @Nullable
   public String suggestedName() {
-    if (getMainClassName() == null) {
+    String mainClassName = getMainClassName();
+    if (mainClassName == null) {
       return null;
     }
-    return JavaExecutionUtil.getPresentableClassName(getMainClassName());
+    String configName = JavaExecutionUtil.getPresentableClassName(mainClassName);
+    if (configName != null) {
+      RunnerAndConfigurationSettings configuration = RunManager.getInstance(getProject()).findConfigurationByTypeAndName(getType(), configName);
+      if (configuration != null) {
+        RunConfiguration thatConfig = configuration.getConfiguration();
+        if (thatConfig instanceof ApplicationConfiguration && 
+            !Objects.equals(((ApplicationConfiguration)thatConfig).getMainClassName(), mainClassName)) {
+          return mainClassName;
+        }
+      }
+    }
+    return configName;
   }
 
   @Override
@@ -156,17 +172,24 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    if (getDefaultTargetName() == null) {
+    if (TargetEnvironmentConfigurations.getEffectiveTargetName(this, getProject()) == null) {
       JavaParametersUtil.checkAlternativeJRE(this);
     }
+    final JavaRunConfigurationModule configurationModule = checkClass();
+    ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), configurationModule.getModule());
+    ProgramParametersUtil.checkEnvFiles(this);
+    JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
+  }
+
+  @NotNull
+  public JavaRunConfigurationModule checkClass() throws RuntimeConfigurationException {
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
     final PsiClass psiClass =
       configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
     if (!PsiMethodUtil.hasMainMethod(psiClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", getMainClassName()));
     }
-    ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), configurationModule.getModule());
-    JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
+    return configurationModule;
   }
 
   @Override
@@ -223,6 +246,16 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   @Override
   public boolean isPassParentEnvs() {
     return getOptions().isPassParentEnv();
+  }
+
+  @Override
+  public @NotNull List<String> getEnvFilePaths() {
+    return getOptions().getEnvFilePaths();
+  }
+
+  @Override
+  public void setEnvFilePaths(@NotNull List<String> paths) {
+    getOptions().setEnvFilePaths(paths);
   }
 
   @Override
@@ -288,16 +321,17 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
   @Override
   public boolean needPrepareTarget() {
-    return getDefaultTargetName() != null || runsUnderWslJdk();
+    return TargetEnvironmentAwareRunProfile.super.needPrepareTarget() || runsUnderWslJdk();
   }
 
   @Override
   public @NotNull List<EventPair<?>> getAdditionalUsageData() {
     PsiClass mainClass = getMainClass();
+    List<EventPair<?>> additionalUsageData = super.getAdditionalUsageData();
     if (mainClass == null) {
-      return Collections.emptyList();
+      return additionalUsageData;
     }
-    return Collections.singletonList(EventFields.Language.with(mainClass.getLanguage()));
+    return ContainerUtil.concat(additionalUsageData, Collections.singletonList(EventFields.Language.with(mainClass.getLanguage())));
   }
 
   public static void onAlternativeJreChanged(boolean changed, Project project) {
@@ -390,10 +424,20 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     public JavaApplicationCommandLineState(@NotNull final T configuration, final ExecutionEnvironment environment) {
       super(configuration, environment);
     }
+    
+    @TestOnly
+    public JavaParameters createJavaParameters4Test() throws ExecutionException {
+      return createJavaParameters();
+    }
 
     @Override
     protected boolean isProvidedScopeIncluded() {
       return myConfiguration.isProvidedScopeIncluded();
+    }
+
+    @Override
+    protected boolean isReadActionRequired() {
+      return false;
     }
   }
 }

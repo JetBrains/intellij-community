@@ -1,4 +1,4 @@
-// "Extract side effects as an 'if' statement" "true"
+// "Extract side effects as an 'if' statement" "true-preview"
 class Test {
   void test(int x) {
     i<caret>f(x > 0 ? !foo(x, 1) ^ foo(x, 2) : foo(x, 3)) {

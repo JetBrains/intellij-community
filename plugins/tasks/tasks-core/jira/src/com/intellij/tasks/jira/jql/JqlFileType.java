@@ -28,7 +28,7 @@ public final class JqlFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return TaskBundle.message("label.jira.query");
+    return TaskBundle.message("filetype.jira.query.description");
   }
 
   @NotNull
@@ -38,7 +38,7 @@ public final class JqlFileType extends LanguageFileType {
   }
 
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return TasksCoreIcons.Jira;
   }
 }

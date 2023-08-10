@@ -1,4 +1,4 @@
-// "Avoid mutation using Stream API 'count()' operation" "true"
+// "Avoid mutation using Stream API 'count()' operation" "true-preview"
 
 import java.util.*;
 

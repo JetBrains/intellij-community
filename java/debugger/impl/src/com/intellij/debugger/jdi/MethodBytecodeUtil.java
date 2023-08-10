@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -23,16 +23,26 @@ import java.util.*;
 public final class MethodBytecodeUtil {
   private MethodBytecodeUtil() { }
 
+  public interface InstructionOffsetReader {
+    void readBytecodeInstructionOffset(int offset);
+  }
+
   /**
-   * Allows to use ASM MethodVisitor with JDI method bytecode
+   * Allows to use ASM {@link MethodVisitor} with JDI method bytecode.
+   * Visitor could implement {@link InstructionOffsetReader} to additionally consume bytecode instruction offsets.
    */
   public static void visit(Method method, MethodVisitor methodVisitor, boolean withLineNumbers) {
+    assert method.virtualMachine().canGetBytecodes();
     visit(method, method.bytecodes(), methodVisitor, withLineNumbers);
   }
 
+  /**
+   * @see #visit(Method, MethodVisitor, boolean)
+   */
   public static void visit(Method method, long maxOffset, MethodVisitor methodVisitor, boolean withLineNumbers) {
     if (maxOffset > 0) {
       // need to keep the size, otherwise labels array will not be initialized correctly
+      assert method.virtualMachine().canGetBytecodes();
       byte[] originalBytecodes = method.bytecodes();
       byte[] bytecodes = originalBytecodes;
       if (maxOffset < originalBytecodes.length) {
@@ -46,11 +56,14 @@ public final class MethodBytecodeUtil {
   private static void visit(Method method, byte[] bytecodes, MethodVisitor methodVisitor, boolean withLineNumbers) {
     ReferenceType type = method.declaringType();
 
+    assert type.virtualMachine().canGetConstantPool();
     BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
     try (DataOutputStream dos = new DataOutputStream(bytes)) {
       writeClassHeader(dos, type.constantPoolCount(), type.constantPool());
     }
-    catch (IOException e) { throw new RuntimeException(e); }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     ClassReader reader = new ClassReader(bytes.getInternalBuffer(), 0, bytes.size());
 
     ClassWriter writer = new ClassWriter(reader, 0);
@@ -72,7 +85,18 @@ public final class MethodBytecodeUtil {
     MethodVisitor mv = writer.visitMethod(Opcodes.ACC_PUBLIC, method.name(), method.signature(), method.signature(), null);
     mv.visitAttribute(createCode(writer, method, bytecodes, withLineNumbers));
 
-    new ClassReader(writer.toByteArray()).accept(new ClassVisitor(Opcodes.API_VERSION) {
+    InstructionOffsetReader insnOffsReader = methodVisitor instanceof InstructionOffsetReader
+                                             ? (InstructionOffsetReader)methodVisitor
+                                             : null;
+
+    new ClassReader(writer.toByteArray()) {
+      @Override
+      protected void readBytecodeInstructionOffset(int bytecodeOffset) {
+        if (insnOffsReader != null) {
+          insnOffsReader.readBytecodeInstructionOffset(bytecodeOffset);
+        }
+      }
+    }.accept(new ClassVisitor(Opcodes.API_VERSION) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         assert name.equals(method.name());
@@ -108,12 +132,10 @@ public final class MethodBytecodeUtil {
       int index = classReader.getItem(i);
       int tag = classReader.readByte(index - 1);
       switch (tag) {
-        case 5:  // Symbol.CONSTANT_LONG_TAG
-        case 6:  // Symbol.CONSTANT_DOUBLE_TAG
+        case 5, 6 ->  // Symbol.CONSTANT_LONG_TAG, Symbol.CONSTANT_DOUBLE_TAG
           //noinspection AssignmentToForLoopParameter
           ++i;
-          break;
-        case 18:  // Symbol.CONSTANT_INVOKE_DYNAMIC_TAG
+        case 17, 18 ->  // Symbol.CONSTANT_DYNAMIC_TAG, Symbol.CONSTANT_INVOKE_DYNAMIC_TAG
           bootstrapMethods.add(classReader.readShort(index));
       }
     }
@@ -156,7 +178,7 @@ public final class MethodBytecodeUtil {
     });
   }
 
-  private static Attribute createAttribute(String name, ThrowableConsumer<DataOutputStream, IOException> generator) {
+  private static Attribute createAttribute(String name, ThrowableConsumer<? super DataOutputStream, ? extends IOException> generator) {
     BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
     int start, end;
 
@@ -166,7 +188,9 @@ public final class MethodBytecodeUtil {
       generator.consume(dos);
       end = dos.size();
     }
-    catch (IOException e) { throw new RuntimeException(e); }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
 
     ClassReader reader = new ClassReader(bytes.getInternalBuffer(), 0, bytes.size());
     return new Attribute(name) {
@@ -179,25 +203,13 @@ public final class MethodBytecodeUtil {
   private static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
 
   public static Type getVarInstructionType(int opcode) {
-    switch (opcode) {
-      case Opcodes.LLOAD:
-      case Opcodes.LSTORE:
-        return Type.LONG_TYPE;
-      case Opcodes.DLOAD:
-      case Opcodes.DSTORE:
-        return Type.DOUBLE_TYPE;
-      case Opcodes.FLOAD:
-      case Opcodes.FSTORE:
-        return Type.FLOAT_TYPE;
-      case Opcodes.ILOAD:
-      case Opcodes.ISTORE:
-        return Type.INT_TYPE;
-      default:
-        // case Opcodes.ALOAD:
-        // case Opcodes.ASTORE:
-        // case RET:
-        return OBJECT_TYPE;
-    }
+    return switch (opcode) {
+      case Opcodes.LLOAD, Opcodes.LSTORE -> Type.LONG_TYPE;
+      case Opcodes.DLOAD, Opcodes.DSTORE -> Type.DOUBLE_TYPE;
+      case Opcodes.FLOAD, Opcodes.FSTORE -> Type.FLOAT_TYPE;
+      case Opcodes.ILOAD, Opcodes.ISTORE -> Type.INT_TYPE;
+      default -> OBJECT_TYPE;
+    };
   }
 
   @Nullable
@@ -225,19 +237,12 @@ public final class MethodBytecodeUtil {
           return;
         }
         ReferenceType declaringType = method.declaringType();
-        ReferenceType cls;
         owner = Type.getObjectType(owner).getClassName();
-        if (declaringType.name().equals(owner)) {
-          cls = declaringType;
-        }
-        else {
-          cls = ContainerUtil.getFirstItem(classesByName.get(owner));
-        }
+        ReferenceType cls = declaringType.name().equals(owner) ?
+                            declaringType :
+                            ContainerUtil.getFirstItem(classesByName.get(owner));
         if (cls != null) {
-          Method method = DebuggerUtils.findMethod(cls, name, desc);
-          if (method != null) {
-            methodRef.setIfNull(method);
-          }
+          methodRef.setIfNull(DebuggerUtils.findMethod(cls, name, desc));
         }
       }
     }, false);
@@ -265,7 +270,8 @@ public final class MethodBytecodeUtil {
       return locations;
     }
 
-    if (!method.declaringType().virtualMachine().canGetConstantPool()) {
+    VirtualMachine vm = method.declaringType().virtualMachine();
+    if (!vm.canGetConstantPool() || !vm.canGetBytecodes()) {
       return locations;
     }
 

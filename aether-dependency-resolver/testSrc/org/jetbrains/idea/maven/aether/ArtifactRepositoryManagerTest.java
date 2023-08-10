@@ -31,11 +31,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.ZipFile;
 
 public class ArtifactRepositoryManagerTest extends UsefulTestCase {
   private static final RemoteRepository mavenLocal;
 
   static {
+    System.setProperty("org.jetbrains.idea.maven.aether.strictValidation", "true");
     File mavenLocalDir = new File(SystemProperties.getUserHome(), ".m2/repository");
     mavenLocal = new RemoteRepository
       .Builder("mavenLocal", "default", "file://" + mavenLocalDir.getAbsolutePath())
@@ -94,9 +96,10 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
     ArtifactDependencyNode second = result.getDependencies().get(1);
     assertCoordinates(first.getArtifact(), "org.apache.httpcomponents", "httpclient", "4.5.5");
     assertCoordinates(second.getArtifact(), "commons-logging", "commons-logging", "1.2");
-    assertEquals(2, first.getDependencies().size());
+    assertEquals(3, first.getDependencies().size());
     assertCoordinates(first.getDependencies().get(0).getArtifact(), "org.apache.httpcomponents", "httpcore", "4.4.9");
-    assertCoordinates(first.getDependencies().get(1).getArtifact(), "commons-codec", "commons-codec", "1.10");
+    assertCoordinates(first.getDependencies().get(1).getArtifact(), "commons-logging", "commons-logging", "1.2");
+    assertCoordinates(first.getDependencies().get(2).getArtifact(), "commons-codec", "commons-codec", "1.10");
   }
 
   public void testTransitiveSnapshotDependenciesExcluded() throws Exception {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.*
@@ -28,9 +28,10 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.InputStream
 import java.nio.file.Files
+import java.nio.file.OpenOption
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.function.Function
+import kotlin.io.path.inputStream
 
 /**
  * Functionality without stream provider covered, ICS has own test suite
@@ -138,7 +139,7 @@ internal class SchemeManagerTest {
   @Test fun testGenerateUniqueSchemeName() {
     val manager = createAndLoad("options1")
     val scheme = TestScheme("first")
-    manager.addScheme(scheme, false)
+    manager.addScheme(scheme = scheme, replaceExisting = false)
 
     assertThat("first2").isEqualTo(scheme.name)
   }
@@ -170,8 +171,8 @@ internal class SchemeManagerTest {
     val schemeManager = SchemeManagerImpl(FILE_SPEC, ATestSchemeProcessor(), object : StreamProvider {
       override val isExclusive = true
 
-      override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-        getFile(fileSpec).write(content, 0, size)
+      override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
+        getFile(fileSpec).write(content)
       }
 
       override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
@@ -184,6 +185,7 @@ internal class SchemeManagerTest {
                                    filter: (name: String) -> Boolean,
                                    processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
         for (name in fileNames) {
+          arrayOf<OpenOption>()
           dir.resolve(name).inputStream().use {
             processor(name, it, false)
           }
@@ -278,7 +280,7 @@ internal class SchemeManagerTest {
     doReloadTest(RemoveScheme::class.java)
   }
 
-  private fun doReloadTest(kind: Class<out SchemeChangeEvent>) {
+  private fun doReloadTest(kind: Class<out SchemeChangeEvent<*,*>>) {
     val dir = fsRule.fs.getPath("/test").createDirectories()
     fun writeScheme(index: Int, value: String): TestScheme {
       val name = "s$index"
@@ -287,8 +289,8 @@ internal class SchemeManagerTest {
       return TestScheme(name, data)
     }
 
-    var s1 = writeScheme(1, "foo")
-    var s2 = writeScheme(2, "foo")
+    var s1 = writeScheme(1, "initial data")
+    var s2 = writeScheme(2, "initial data")
 
     fun createVirtualFile(scheme: TestScheme): VirtualFile {
       val fileName = "${scheme.name}.xml"
@@ -300,23 +302,22 @@ internal class SchemeManagerTest {
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).containsExactly(s1, s2)
 
-    s1 = writeScheme(1, "bar")
-    s2 = writeScheme(2, "bar")
+    s1 = writeScheme(1, "new data")
+    s2 = writeScheme(2, "new data")
 
-    @Suppress("UNCHECKED_CAST")
-    val schemeChangeApplicator = SchemeChangeApplicator(schemeManager as SchemeManagerImpl<Any, Any>)
+    val schemeChangeApplicator = SchemeChangeApplicator(schemeManager)
     if (kind == UpdateScheme::class.java) {
       schemeChangeApplicator.reload(listOf(UpdateScheme(createVirtualFile(s1)), UpdateScheme(createVirtualFile(s2))))
     }
     else {
       val sF2 = createVirtualFile(s2)
-      val updateEventS1 = UpdateScheme(createVirtualFile(s1))
-      val updateEventS2 = UpdateScheme(sF2)
+      val updateEventS1 = UpdateScheme<TestScheme,TestScheme>(createVirtualFile(s1))
+      val updateEventS2 = UpdateScheme<TestScheme,TestScheme>(sF2)
       val events = listOf(updateEventS1, RemoveScheme(sF2.name), updateEventS2)
 
       assertThat(sortSchemeChangeEvents(events)).containsExactly(updateEventS1, updateEventS2)
 
-      val removeAllSchemes = RemoveAllSchemes()
+      val removeAllSchemes = RemoveAllSchemes<TestScheme,TestScheme>()
       assertThat(sortSchemeChangeEvents(listOf(updateEventS1, RemoveScheme("foo"), updateEventS2, removeAllSchemes))).containsExactly(removeAllSchemes)
       assertThat(sortSchemeChangeEvents(listOf(updateEventS1, RemoveScheme("foo"), removeAllSchemes, updateEventS2))).containsExactly(removeAllSchemes, updateEventS2)
       assertThat(sortSchemeChangeEvents(listOf(removeAllSchemes, updateEventS2, RemoveScheme(sF2.name)))).containsExactly(removeAllSchemes, RemoveScheme(sF2.name))
@@ -545,7 +546,7 @@ internal class SchemeManagerTest {
     try {
       val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, fileChangeSubscriber = { schemeManager ->
         @Suppress("UNCHECKED_CAST")
-        val schemeFileTracker = SchemeFileTracker(schemeManager as SchemeManagerImpl<Any, Any>, projectRule.project)
+        val schemeFileTracker = SchemeFileTracker(schemeManager as SchemeManagerImpl<TestScheme, TestScheme>, projectRule.project)
         ApplicationManager.getApplication().messageBus.connect(busDisposable).subscribe(VirtualFileManager.VFS_CHANGES, schemeFileTracker)
       })
 
@@ -595,11 +596,13 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `path must be system-independent`() {
-    DefaultLogger.disableStderrDumping(disposableRule.disposable);
+    DefaultLogger.disableStderrDumping(disposableRule.disposable)
     assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemeProcessor())}.hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 
-  private fun createSchemeManager(dir: Path) = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir)
+  private fun createSchemeManager(dir: Path): SchemeManagerImpl<TestScheme, TestScheme> {
+    return SchemeManagerImpl(fileSpec = FILE_SPEC, processor = TestSchemeProcessor(), provider = null, ioDirectory = dir)
+  }
 
   private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme, TestScheme> {
     createTempFiles(testData)
@@ -662,7 +665,8 @@ private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean
 }
 
 @Tag("scheme")
-data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field:kotlin.jvm.JvmField var name: String = "", @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme, SerializableScheme {
+data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field:JvmField var name: String = "",
+                      @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme, SerializableScheme {
   override fun getName() = name
 
   override fun setName(value: String) {
@@ -675,7 +679,7 @@ data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field
 open class TestSchemeProcessor : LazySchemeProcessor<TestScheme, TestScheme>() {
   override fun createScheme(dataHolder: SchemeDataHolder<TestScheme>,
                             name: String,
-                            attributeProvider: Function<in String, String?>,
+                            attributeProvider: (String) -> String?,
                             isBundled: Boolean): TestScheme {
     val scheme = dataHolder.read().deserialize(TestScheme::class.java)
     dataHolder.updateDigest(scheme)

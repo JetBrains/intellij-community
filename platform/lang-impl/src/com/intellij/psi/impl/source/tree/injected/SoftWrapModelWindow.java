@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.openapi.editor.SoftWrap;
@@ -13,7 +13,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-class SoftWrapModelWindow implements SoftWrapModelEx {
+final class SoftWrapModelWindow implements SoftWrapModelEx {
   SoftWrapModelWindow() {}
 
   @Override
@@ -55,21 +55,18 @@ class SoftWrapModelWindow implements SoftWrapModelEx {
     return false;
   }
 
-  @Nullable
   @Override
-  public SoftWrap getSoftWrap(int offset) {
+  public @Nullable SoftWrap getSoftWrap(int offset) {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<? extends SoftWrap> getSoftWrapsForRange(int start, int end) {
+  public @NotNull List<? extends SoftWrap> getSoftWrapsForRange(int start, int end) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public List<? extends SoftWrap> getSoftWrapsForLine(int documentLine) {
+  public @NotNull List<? extends SoftWrap> getSoftWrapsForLine(int documentLine) {
     return Collections.emptyList();
   }
 

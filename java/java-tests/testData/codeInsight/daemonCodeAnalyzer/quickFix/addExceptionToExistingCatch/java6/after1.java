@@ -1,4 +1,4 @@
-// "Replace 'FileNotFoundException' with more generic 'IOException'" "true"
+// "Replace 'FileNotFoundException' with more generic 'IOException'" "true-preview"
 import java.io.*;
 
 

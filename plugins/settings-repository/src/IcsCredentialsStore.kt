@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.credentialStore.CredentialAttributes
@@ -11,15 +11,15 @@ import com.intellij.ide.passwordSafe.PasswordSafe
  * Also, if you remove password from keychain, ssh-agent will continue to use cached password.
  */
 class IcsCredentialsStore {
-  fun get(host: String?, sshKeyFile: String?, accountName: String?): Credentials? = CredentialAttributes(host, sshKeyFile, accountName)?.let { PasswordSafe.instance.get(it) }
+  fun get(host: String?, sshKeyFile: String?, accountName: String?): Credentials? = CredentialAttributes(host, sshKeyFile, accountName).let { PasswordSafe.instance.get(it) }
 
   fun set(host: String?, sshKeyFile: String?, credentials: Credentials?) {
-    CredentialAttributes(host, sshKeyFile, credentials?.userName)?.let { PasswordSafe.instance.set(it, credentials) }
+    CredentialAttributes(host, sshKeyFile, credentials?.userName).let { PasswordSafe.instance.set(it, credentials) }
   }
 }
 
 @Suppress("FunctionName")
-private fun CredentialAttributes(host: String?, sshKeyFile: String?, accountName: String?): CredentialAttributes? {
+private fun CredentialAttributes(host: String?, sshKeyFile: String?, accountName: String?): CredentialAttributes {
   if (sshKeyFile == null) {
     return CredentialAttributes(generateServiceName("Settings Repository", host.toString()), accountName)
   }

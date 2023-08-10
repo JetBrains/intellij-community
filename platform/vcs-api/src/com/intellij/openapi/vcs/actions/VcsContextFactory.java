@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -32,18 +32,22 @@ public interface VcsContextFactory {
 
   /**
    * Creates a FilePath corresponding to the specified java.io.File.
+   * <p>
    *
    * @param file the file for which the FilePath should be created.
    * @return the FilePath instance.
+   * @deprecated This method will detect {@link FilePath#isDirectory()} using NIO.
+   * Avoid using the method, if {@code isDirectory} is known from context or not important.
    */
   @NotNull
+  @Deprecated
   FilePath createFilePathOn(@NotNull File file);
 
   /**
    * Creates a FilePath corresponding to the specified java.io.File. If the file does not exist, uses the value
    * of the {@code isDirectory} parameter to determine if the file is a directory.
    *
-   * @param file the file for which the FilePath should be created.
+   * @param file        the file for which the FilePath should be created.
    * @param isDirectory whether {@code file} specifies a file or a directory.
    * @return the FilePath instance.
    */
@@ -55,7 +59,7 @@ public interface VcsContextFactory {
    * Creates a FilePath corresponding to the specified path in a VCS repository. Does not try to locate
    * the file in the local filesystem.
    *
-   * @param path the repository path for which the FilePath should be created.
+   * @param path        the repository path for which the FilePath should be created.
    * @param isDirectory whether {@code file} specifies a file or a directory.
    * @return the FilePath instance.
    */
@@ -82,12 +86,21 @@ public interface VcsContextFactory {
 
   @NotNull FilePath createFilePath(@NotNull @NonNls String path, boolean isDirectory);
 
+  static VcsContextFactory getInstance() {
+    return ApplicationManager.getApplication().getService(VcsContextFactory.class);
+  }
+
+  /**
+   * @deprecated use {@link VcsContextFactory#getInstance()} instead
+   */
+  @Deprecated(forRemoval = true)
   final class SERVICE {
+
     private SERVICE() {
     }
 
     public static VcsContextFactory getInstance() {
-      return ApplicationManager.getApplication().getService(VcsContextFactory.class);
+      return VcsContextFactory.getInstance();
     }
   }
 }

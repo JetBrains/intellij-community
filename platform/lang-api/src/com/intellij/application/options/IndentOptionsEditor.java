@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options;
 
@@ -34,6 +20,14 @@ import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_INDENT_SIZE;
 import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_TAB_SIZE;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS;
 
+/**
+ * A specialized option group for editing indent options.
+ * <p>
+ *   <em>Implementation note:</em> make sure all the necessary Swing components are only created
+ *   in the {@link #createPanel()} and/or {@link #addComponents()} methods and not in the
+ *   constructor or field/property initializers. See {@link OptionGroup} for details.
+ * </p>
+ */
 public class IndentOptionsEditor extends OptionGroup implements CodeStyleSettingsCustomizable {
 
   private JTextField myIndentField;
@@ -81,14 +75,6 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
     myTabSizeField = createIndentTextField(getTabSizeLabel(), MIN_TAB_SIZE, MAX_TAB_SIZE, DEFAULT_TAB_SIZE);
     myTabSizeLabel = new JLabel(getTabSizeLabel());
     add(myTabSizeLabel, myTabSizeField);
-  }
-
-  /**
-   * @deprecated Use {@link #createIndentTextField(String, int, int, int)}
-   */
-  @Deprecated
-  protected JTextField createIndentTextField() {
-    return createIndentTextField(null, Integer.MIN_VALUE, Integer.MAX_VALUE, 0);
   }
 
   protected IntegerField createIndentTextField(@Nullable String valueName, int minSize, int maxSize, int defaultValue) {
@@ -180,7 +166,7 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
   /**
    * @deprecated Create {@link IntegerField} and use {@link IntegerField#getValue()} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected int getFieldValue(JTextField field, int minValue, int defValue) {
     if (field instanceof IntegerField) {
       return ((IntegerField)field).getValue();

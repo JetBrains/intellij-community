@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Irina.Chernushina on 5/23/2017.
- */
 public class JsonSchemaIconProvider implements FileIconProvider {
   @Nullable
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.template;
 
@@ -10,8 +10,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Used to build and run a live template.
+ *
  * @see TemplateManager
  */
 public abstract class Template implements PresentableLookupValue {
@@ -26,17 +29,24 @@ public abstract class Template implements PresentableLookupValue {
   private boolean myUseStaticImport;
 
   public abstract void addTextSegment(@NotNull String text);
+
   public abstract void addVariableSegment(@NonNls @NotNull String name);
 
   @NotNull
   public Variable addVariable(@NonNls @NotNull String name, @NotNull Expression defaultValueExpression, boolean isAlwaysStopAt) {
     return addVariable(name, defaultValueExpression, defaultValueExpression, isAlwaysStopAt);
   }
+
+  public abstract List<Variable> getVariables();
+
   @NotNull
   public abstract Variable addVariable(@NotNull Expression expression, boolean isAlwaysStopAt);
 
   @NotNull
-  public Variable addVariable(@NonNls @NotNull String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt) {
+  public Variable addVariable(@NonNls @NotNull String name,
+                              Expression expression,
+                              Expression defaultValueExpression,
+                              boolean isAlwaysStopAt) {
     return addVariable(name, expression, defaultValueExpression, isAlwaysStopAt, false);
   }
 
@@ -48,6 +58,8 @@ public abstract class Template implements PresentableLookupValue {
                                        boolean skipOnStart);
   @NotNull
   public abstract Variable addVariable(@NonNls @NotNull String name, @NonNls String expression, @NonNls String defaultValueExpression, boolean isAlwaysStopAt);
+
+  public abstract void addVariable(@NotNull Variable variable);
 
   public abstract void addEndVariable();
   public abstract void addSelectionStartVariable();

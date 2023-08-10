@@ -2,6 +2,7 @@
 package org.jetbrains.jps.intellilang.instrumentation;
 
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.org.objectweb.asm.*;
 
 import java.text.MessageFormat;
@@ -65,7 +66,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
         String shortName = annotationClassName.substring(annotationClassName.lastIndexOf('.') + 1);
         PatternValue patternValue = new PatternValue(parameter + myParamAnnotationOffset, shortName, pattern);
         myParameterPatterns.add(patternValue);
-        if (pattern == PatternInstrumenter.NULL_PATTERN) {
+        if (Strings.areSameInstance(pattern, PatternInstrumenter.NULL_PATTERN)) {
           return new MyAnnotationVisitor(av, patternValue);
         }
       }
@@ -84,7 +85,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
       if (pattern != null) {
         String shortName = annotationClassName.substring(annotationClassName.lastIndexOf('.') + 1);
         myMethodPattern = new PatternValue(-1, shortName, pattern);
-        if (pattern == PatternInstrumenter.NULL_PATTERN) {
+        if (Strings.areSameInstance(pattern, PatternInstrumenter.NULL_PATTERN)) {
           return new MyAnnotationVisitor(av, myMethodPattern);
         }
       }
@@ -215,7 +216,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
     PatternValue(int parameterIndex, String annotation, String pattern) {
       this.parameterIndex = parameterIndex;
       this.annotation = annotation;
-      if (pattern != PatternInstrumenter.NULL_PATTERN) {
+      if (!Strings.areSameInstance(pattern, PatternInstrumenter.NULL_PATTERN)) {
         set(pattern);
       }
     }

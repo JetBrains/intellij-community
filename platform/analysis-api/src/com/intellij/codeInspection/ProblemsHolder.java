@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.BundleBase;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -16,6 +17,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.CheckReturnValue;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,14 +44,14 @@ public class ProblemsHolder {
 
   public void registerProblem(@NotNull PsiElement psiElement,
                               @NotNull @InspectionMessage String descriptionTemplate,
-                              LocalQuickFix @Nullable ... fixes) {
+                              @NotNull LocalQuickFix @Nullable ... fixes) {
     registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
   }
 
   public void registerProblem(@NotNull PsiElement psiElement,
                               @NotNull @InspectionMessage String descriptionTemplate,
                               @NotNull ProblemHighlightType highlightType,
-                              LocalQuickFix @Nullable ... fixes) {
+                              @NotNull LocalQuickFix @Nullable ... fixes) {
     registerProblem(myManager.createProblemDescriptor(psiElement, descriptionTemplate, myOnTheFly, fixes, highlightType));
   }
 
@@ -73,22 +76,18 @@ public class ProblemsHolder {
     return file != null && myFile.getViewProvider() == file.getViewProvider();
   }
 
-  private void redirectProblem(@NotNull final ProblemDescriptor problem, @NotNull final PsiElement target) {
-    final PsiElement original = problem.getPsiElement();
-    final VirtualFile vFile = original.getContainingFile().getVirtualFile();
+  private void redirectProblem(@NotNull ProblemDescriptor problem, @NotNull PsiElement target) {
+    PsiElement original = problem.getPsiElement();
+    VirtualFile vFile = original.getContainingFile().getVirtualFile();
     assert vFile != null;
-    final String path = FileUtil.toSystemIndependentName(vFile.getPath());
+    String path = FileUtil.toSystemIndependentName(vFile.getPath());
 
     String description = XmlStringUtil.stripHtml(problem.getDescriptionTemplate());
 
-    final String template =
-      AnalysisBundle.message("inspection.redirect.template",
-                             description, path, original.getTextRange().getStartOffset(), vFile.getName());
-
-
-    final InspectionManager manager = InspectionManager.getInstance(original.getProject());
-    final ProblemDescriptor newProblem =
-      manager.createProblemDescriptor(target, template, (LocalQuickFix)null, problem.getHighlightType(), isOnTheFly());
+    String template = AnalysisBundle.message("inspection.redirect.template",
+                                             description, path, original.getTextRange().getStartOffset(), vFile.getName());
+    ProblemDescriptor newProblem =
+      getManager().createProblemDescriptor(target, template, (LocalQuickFix)null, problem.getHighlightType(), isOnTheFly());
     registerProblem(newProblem);
   }
 
@@ -105,7 +104,7 @@ public class ProblemsHolder {
   public void registerProblemForReference(@NotNull PsiReference reference,
                                           @NotNull ProblemHighlightType highlightType,
                                           @NotNull @InspectionMessage String descriptionTemplate,
-                                          LocalQuickFix @Nullable ... fixes) {
+                                          @NotNull LocalQuickFix @Nullable ... fixes) {
     ProblemDescriptor descriptor = myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(),
                                                                      descriptionTemplate, highlightType, myOnTheFly, fixes);
     registerProblem(descriptor);
@@ -120,16 +119,25 @@ public class ProblemsHolder {
   }
 
   /**
+   * Use to register a place ({@code identifier}) which was skipped during local analysis e.g., due to too long search or similar.
+   * <p/>
+   * Such problems would be silently skipped in batch. During local analysis they would signal 'RedundantSuppression' inspection
+   * that this part was not fully processed by initial inspection and that the suppression may be not redundant
+   */
+  @SuppressWarnings({"HardCodedStringLiteral", "DialogTitleCapitalization"})
+  public void registerPossibleProblem(PsiElement identifier) {
+    registerProblem(identifier, "possible problem", ProblemHighlightType.POSSIBLE_PROBLEM);
+  }
+
+  /**
    * Returns {@link EmptyResolveMessageProvider#getUnresolvedMessagePattern()} (if implemented),
    * otherwise, default message "Cannot resolve symbol '[reference.getCanonicalText()]'".
    */
-  @NotNull
-  public static @InspectionMessage String unresolvedReferenceMessage(@NotNull PsiReference reference) {
+  public static @NotNull @InspectionMessage String unresolvedReferenceMessage(@NotNull PsiReference reference) {
     String message;
     if (reference instanceof EmptyResolveMessageProvider) {
       String pattern = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
       try {
-        //noinspection HardCodedStringLiteral
         message = BundleBase.format(pattern, reference.getCanonicalText()); // avoid double formatting
       }
       catch (IllegalArgumentException ex) {
@@ -147,7 +155,7 @@ public class ProblemsHolder {
   public void registerProblem(@NotNull PsiElement psiElement,
                               @Nullable TextRange rangeInElement,
                               @NotNull @InspectionMessage String descriptionTemplate,
-                              LocalQuickFix @Nullable ... fixes) {
+                              @NotNull LocalQuickFix @Nullable ... fixes) {
     registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, rangeInElement, fixes);
   }
 
@@ -165,22 +173,20 @@ public class ProblemsHolder {
                               @NotNull @InspectionMessage String descriptionTemplate,
                               @NotNull ProblemHighlightType highlightType,
                               @Nullable TextRange rangeInElement,
-                              LocalQuickFix @Nullable ... fixes) {
+                              @NotNull LocalQuickFix @Nullable ... fixes) {
     registerProblem(myManager.createProblemDescriptor(psiElement, rangeInElement, descriptionTemplate, highlightType, myOnTheFly, fixes));
   }
 
-  @NotNull
-  public List<ProblemDescriptor> getResults() {
+  public @NotNull List<ProblemDescriptor> getResults() {
     return myProblems;
   }
 
   public ProblemDescriptor @NotNull [] getResultsArray() {
-    final List<ProblemDescriptor> problems = getResults();
+    List<ProblemDescriptor> problems = getResults();
     return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public final InspectionManager getManager() {
+  public final @NotNull InspectionManager getManager() {
     return myManager;
   }
 
@@ -196,13 +202,113 @@ public class ProblemsHolder {
     return myOnTheFly;
   }
 
-  @NotNull
-  public PsiFile getFile() {
+  public @NotNull PsiFile getFile() {
     return myFile;
   }
 
-  @NotNull
-  public final Project getProject() {
+  public final @NotNull Project getProject() {
     return myManager.getProject();
+  }
+
+  /**
+   * Creates a builder to report a problem. Make sure to call {@link ProblemBuilder#register()} afterwards 
+   * @param psiElement element to anchor the problem
+   * @param descriptionTemplate problem description template
+   * @return the builder that allows adding more information and eventually register the problem
+   */
+  @Contract(pure = true)
+  public @NotNull ProblemBuilder problem(@NotNull PsiElement psiElement, @InspectionMessage @NotNull String descriptionTemplate) {
+    return new ProblemBuilder(psiElement, descriptionTemplate);
+  }
+
+  /**
+   * The builder to create a problem report
+   */
+  @SuppressWarnings("UnstableApiUsage")
+  public final class ProblemBuilder {
+    private final @InspectionMessage @NotNull String myDescriptionTemplate;
+    private final @NotNull PsiElement myPsiElement;
+    private @NotNull ProblemHighlightType myHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+    private @Nullable TextRange myRange;
+    private final @NotNull List<LocalQuickFix> myFixes = new ArrayList<>();
+
+    private ProblemBuilder(@NotNull PsiElement element, @InspectionMessage @NotNull String template) {
+      myPsiElement = element;
+      myDescriptionTemplate = template;
+    }
+
+    /**
+     * @param problemHighlightType desired highlighting type
+     * @return this builder
+     */
+    @Contract(value = "_ -> this", mutates = "this")
+    @CheckReturnValue
+    public ProblemBuilder highlight(ProblemHighlightType problemHighlightType) {
+      myHighlightType = problemHighlightType;
+      return this;
+    }
+
+    /**
+     * @param rangeInElement desired highlighting range within the element
+     * @return this builder
+     */
+    @Contract(value = "_ -> this", mutates = "this")
+    @CheckReturnValue
+    public ProblemBuilder range(@NotNull TextRange rangeInElement) {
+      myRange = rangeInElement;
+      return this;
+    }
+
+    /**
+     * @param fix a new fix to add to the problem
+     * @return this builder
+     */
+    @Contract(value = "_ -> this", mutates = "this")
+    @CheckReturnValue
+    public ProblemBuilder fix(@NotNull LocalQuickFix fix) {
+      myFixes.add(fix);
+      return this;
+    }
+
+    /**
+     * @param action a new fix to add to the problem
+     * @return this builder
+     */
+    @Contract(value = "_ -> this", mutates = "this")
+    @CheckReturnValue
+    public ProblemBuilder fix(@NotNull ModCommandAction action) {
+      myFixes.add(LocalQuickFix.from(action));
+      return this;
+    }
+
+    /**
+     * @param fix a new fix to add to the problem; does nothing if it's null
+     * @return this builder
+     */
+    @Contract(value = "_ -> this", mutates = "this")
+    @CheckReturnValue
+    public ProblemBuilder maybeFix(@Nullable LocalQuickFix fix) {
+      if (fix != null) {
+        myFixes.add(fix);
+      }
+      return this;
+    }
+
+    /**
+     * @param action a new fix to add to the problem; does nothing if it's null
+     * @return this builder
+     */
+    @Contract(value = "_ -> this", mutates = "this")
+    @CheckReturnValue
+    public ProblemBuilder maybeFix(@Nullable ModCommandAction action) {
+      if (action != null) {
+        myFixes.add(LocalQuickFix.from(action));
+      }
+      return this;
+    }
+
+    public void register() {
+      registerProblem(myPsiElement, myDescriptionTemplate, myHighlightType, myRange, myFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+    }
   }
 }

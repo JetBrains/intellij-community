@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -9,15 +9,13 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.*;
-import com.intellij.util.containers.IntStack;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.IntFunction;
 
 public final class ControlFlowUtil {
   private static final Logger LOG = Logger.getInstance(ControlFlowUtil.class);
@@ -558,16 +556,25 @@ public final class ControlFlowUtil {
       private Map<PsiVariable, Set<PsiElement>> getReachableAfterWrite(@NotNull Map<PsiVariable, IntList> writeOffsets,
                                                                        @NotNull Map<PsiVariable, IntList> visibleReadOffsets) {
         final Map<PsiVariable, Set<PsiElement>> afterWrite = new HashMap<>();
+        final IntFunction<BitSet> calculator = getReachableInstructionsCalculator();
         for (PsiVariable variable : visibleReadOffsets.keySet()) {
-          final Function<Integer, BitSet> calculator = getReachableInstructionsCalculator();
           final BitSet collectedOffsets = new BitSet(flowEnd);
           for (int writeOffset : writeOffsets.get(variable).toIntArray()) {
             LOG.assertTrue(writeOffset >= flowStart, "writeOffset");
-            final BitSet reachableOffsets = calculator.fun(writeOffset);
+            final BitSet reachableOffsets = calculator.apply(writeOffset);
+            //skip current assignment
+            reachableOffsets.set(writeOffset, false);
+            if (writeOffset + 1 < flow.getSize()) {
+              final PsiElement nextOffsetElement = flow.getElement(writeOffset + 1);
+              if (nextOffsetElement instanceof PsiExpressionStatement) {
+                if (flow.getElement(writeOffset) == ((PsiExpressionStatement)nextOffsetElement).getExpression()) {
+                  reachableOffsets.set(writeOffset + 1, false);
+                }
+              }
+            }
             collectedOffsets.or(reachableOffsets);
           }
-          Set<PsiElement> throwSources = afterWrite.get(variable);
-          if (throwSources == null) afterWrite.put(variable, throwSources = new HashSet<>());
+          Set<PsiElement> throwSources = afterWrite.getOrDefault(variable, new HashSet<>());
           for (int i = flowStart; i < flowEnd; i++) {
             if (collectedOffsets.get(i)) {
               throwSources.add(flow.getElement(i));
@@ -579,7 +586,12 @@ public final class ControlFlowUtil {
               subordinates.add(element);
             }
           }
-          throwSources.removeAll(subordinates);
+          subordinates.forEach(throwSources::remove);
+          if (throwSources.isEmpty()) {
+            afterWrite.remove(variable);
+          } else {
+            afterWrite.put(variable, throwSources);
+          }
         }
         LOG.debug("afterWrite:", afterWrite);
         return afterWrite;
@@ -629,7 +641,7 @@ public final class ControlFlowUtil {
       }
 
       @NotNull
-      private Function<Integer, BitSet> getReachableInstructionsCalculator() {
+      private IntFunction<BitSet> getReachableInstructionsCalculator() {
         final ControlFlowGraph graph = new ControlFlowGraph(flow.getSize()) {
           @Override
           void addArc(int offset, int nextOffset) {
@@ -665,11 +677,17 @@ public final class ControlFlowUtil {
     final Map<PsiVariable, Set<PsiElement>> afterWrite = worker.getReachableAfterWrite(writeOffsets, visibleReadOffsets);
     if (afterWrite.isEmpty()) return false;
 
+    final PsiClassType runtimeException = PsiType.getJavaLangRuntimeException(tryBlock.getManager(), tryBlock.getResolveScope());
+    final boolean runtimeExceptionIsCaught = ContainerUtil.
+      exists(tryStatements, (tryStatement) -> isExceptionCaught(tryStatement, runtimeException));
+
     for (Map.Entry<PsiVariable, Set<PsiElement>> entry : afterWrite.entrySet()) {
       final PsiVariable variable = entry.getKey();
       final PsiElement[] psiElements = entry.getValue().toArray(PsiElement.EMPTY_ARRAY);
       final List<PsiClassType> thrownExceptions = ExceptionUtil.getThrownExceptions(psiElements);
-
+      if (runtimeExceptionIsCaught) {
+        thrownExceptions.add(runtimeException);
+      }
       if (!thrownExceptions.isEmpty()) {
         final IntList catchOrFinallyOffsets = worker.getCatchOrFinallyOffsets(tryStatements, thrownExceptions);
         if (worker.isAnyReadOffsetReachableFrom(visibleReadOffsets.get(variable), catchOrFinallyOffsets)) {
@@ -678,6 +696,10 @@ public final class ControlFlowUtil {
       }
     }
     return false;
+  }
+
+  private static boolean isExceptionCaught(@NotNull PsiTryStatement tryStatement, @NotNull PsiClassType exceptionType){
+    return ContainerUtil.exists(tryStatement.getCatchBlockParameters(), (parameter) -> exceptionType.isAssignableFrom(exceptionType));
   }
 
   @Nullable
@@ -1127,7 +1149,9 @@ public final class ControlFlowUtil {
           PsiElement element = myFlow.getElement(i);
 
           final PsiElement unreachableParent = getUnreachableExpressionParent(element);
-          if (unreachableParent != null) return unreachableParent;
+          if (unreachableParent != null) {
+            return correctUnreachableStatement(unreachableParent);
+          }
 
           if (element == null || !PsiUtil.isStatement(element)) continue;
           if (element.getParent() instanceof PsiExpression) continue;
@@ -1154,20 +1178,64 @@ public final class ControlFlowUtil {
       return null;
     }
 
+    private static PsiElement correctUnreachableStatement(PsiElement statement) {
+      if (!(statement instanceof PsiStatement)) return statement;
+      while (true) {
+        PsiElement parent = statement.getParent();
+        if (parent instanceof PsiDoWhileStatement || parent instanceof PsiLabeledStatement) {
+          statement = parent;
+          continue;
+        }
+        if (parent instanceof PsiCodeBlock && PsiTreeUtil.getPrevSiblingOfType(statement, PsiStatement.class) == null) {
+          PsiElement grandParent = parent.getParent();
+          if (grandParent instanceof PsiBlockStatement) {
+            statement = grandParent;
+            continue;
+          }
+        }
+        return statement;
+      }
+    }
+
     @Nullable
     private static PsiElement getUnreachableExpressionParent(@Nullable PsiElement element) {
       if (element instanceof PsiExpression) {
-        final PsiElement expression = PsiTreeUtil.findFirstParent(element, e -> !(e.getParent() instanceof PsiParenthesizedExpression));
-        if (expression != null) {
+        PsiElement expression = PsiTreeUtil.findFirstParent(element, e -> !(e.getParent() instanceof PsiParenthesizedExpression));
+        while (expression != null) {
           final PsiElement parent = expression.getParent();
           if (parent instanceof PsiExpressionStatement) {
-            return getUnreachableStatementParent(parent);
+            final PsiElement grandParent = parent.getParent();
+            if (grandParent instanceof PsiForStatement) {
+              if (((PsiForStatement)grandParent).getInitialization() == parent) {
+                return grandParent;
+              }
+              return null;
+            }
+            return parent;
+          }
+          if (parent instanceof PsiLocalVariable && ((PsiLocalVariable)parent).getInitializer() == expression) {
+            PsiElement grandParent = parent.getParent();
+            if (grandParent instanceof PsiDeclarationStatement) return grandParent;
+            if (grandParent instanceof PsiResourceList && grandParent.getParent() instanceof PsiTryStatement) {
+              return grandParent.getParent();
+            }
+            return null;
           }
           if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == expression ||
               parent instanceof PsiSwitchBlock && ((PsiSwitchBlock)parent).getExpression() == expression ||
               parent instanceof PsiWhileStatement && ((PsiWhileStatement)parent).getCondition() == expression ||
-              parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == expression) {
+              parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == expression ||
+              parent instanceof PsiReturnStatement && ((PsiReturnStatement)parent).getReturnValue() == expression ||
+              parent instanceof PsiYieldStatement && ((PsiYieldStatement)parent).getExpression() == expression ||
+              parent instanceof PsiThrowStatement && ((PsiThrowStatement)parent).getException() == expression ||
+              parent instanceof PsiSynchronizedStatement && ((PsiSynchronizedStatement)parent).getLockExpression() == expression ||
+              parent instanceof PsiAssertStatement && ((PsiAssertStatement)parent).getAssertCondition() == expression) {
             return parent;
+          }
+          if (parent instanceof PsiExpression) {
+            expression = parent;
+          } else {
+            break;
           }
         }
       }
@@ -2099,7 +2167,7 @@ public final class ControlFlowUtil {
                                                                   @NotNull Set<? extends PsiVariable> writeVars,
                                                                   @NotNull Set<? extends PsiVariable> readVars,
                                                                   final int stopPoint) {
-    Map<PsiElement, PsiVariable> writes = new HashMap<>();
+    Map<PsiElement, PsiVariable> writes = new LinkedHashMap<>();
     List<Instruction> instructions = flow.getInstructions();
 
     for (int i = 0; i < instructions.size(); i++) {
@@ -2273,11 +2341,11 @@ public final class ControlFlowUtil {
 
     boolean depthFirstSearch(final int startOffset, @NotNull BitSet visitedOffsets) {
       // traverse the graph starting with the startOffset
-      IntStack walkThroughStack = new IntStack(Math.max(size() / 2, 2));
+      IntStack walkThroughStack=new IntArrayList(Math.max(size() / 2, 2));
       visitedOffsets.clear();
       walkThroughStack.push(startOffset);
-      while (!walkThroughStack.empty()) {
-        int currentOffset = walkThroughStack.pop();
+      while (!walkThroughStack.isEmpty()) {
+        int currentOffset = walkThroughStack.popInt();
         if (currentOffset < size() && !visitedOffsets.get(currentOffset)) {
           visitedOffsets.set(currentOffset);
           int[] nextOffsets = getNextOffsets(currentOffset);

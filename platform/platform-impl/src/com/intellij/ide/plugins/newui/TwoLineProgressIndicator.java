@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,16 +21,15 @@ public class TwoLineProgressIndicator extends OneLineProgressIndicator {
   }
 
   @Override
-  protected void createCompactTextAndProgress() {
+  protected void createCompactTextAndProgress(@NotNull JPanel component) {
     JPanel textWrapper = new NonOpaquePanel(new BorderLayout());
-    textWrapper.add(myText, BorderLayout.CENTER);
-    myText.recomputeSize();
+    textWrapper.add(text, BorderLayout.CENTER);
+    text.recomputeSize();
 
     NonOpaquePanel progressWrapper = new NonOpaquePanel(new BorderLayout());
     progressWrapper.setBorder(JBUI.Borders.emptyRight(4));
-    progressWrapper.add(myProgress, BorderLayout.CENTER);
+    progressWrapper.add(progress, BorderLayout.CENTER);
 
-    JComponent component = getComponent();
     component.add(textWrapper, BorderLayout.NORTH);
     component.add(progressWrapper, BorderLayout.CENTER);
   }

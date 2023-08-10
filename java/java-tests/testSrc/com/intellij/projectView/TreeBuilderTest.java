@@ -92,11 +92,6 @@ public class TreeBuilderTest extends LightPlatformTestCase {
     }
 
     @Override
-    protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-      return false;
-    }
-
-    @Override
     protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
       return nodeDescriptor.getElement() == ROOT;
     }

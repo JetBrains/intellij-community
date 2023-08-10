@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -17,9 +18,12 @@ import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.JavaDummyHolderFactory;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +39,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final ConcurrentMap<String, PsiPackage> myPackageCache = ContainerUtil.createConcurrentSoftValueMap();
-  private final ConcurrentMap<GlobalSearchScope, Map<String, PsiClass>> myClassCache = ContainerUtil.createConcurrentSoftKeySoftValueMap();
-  private final Map<GlobalSearchScope, Map<String, Collection<PsiJavaModule>>> myModuleCache = ContainerUtil.createConcurrentSoftKeySoftValueMap();
+
+  private final ConcurrentMap<GlobalSearchScope, Map<String, Optional<PsiClass>>> myClassCache = ContainerUtil.createConcurrentSoftKeySoftValueMap();
   private final Project myProject;
   private final JavaFileManager myFileManager;
   private final NotNullLazyValue<JvmFacadeImpl> myJvmFacade;
@@ -52,7 +56,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     project.getMessageBus().connect().subscribe(PsiModificationTracker.TOPIC, () -> {
       myClassCache.clear();
       myPackageCache.clear();
-      myModuleCache.clear();
     });
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
@@ -62,17 +65,17 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   public PsiClass findClass(@NotNull final String qualifiedName, @NotNull GlobalSearchScope scope) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
-    Map<String, PsiClass> map = myClassCache.computeIfAbsent(scope, scope1 -> ContainerUtil.createConcurrentWeakValueMap());
-    PsiClass result = map.get(qualifiedName);
+    Map<String, Optional<PsiClass>> map = myClassCache.computeIfAbsent(scope, scope1 -> ContainerUtil.createConcurrentWeakValueMap());
+    Optional<PsiClass> result = map.get(qualifiedName);
     if (result == null) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
-      result = doFindClass(qualifiedName, scope);
-      if (result != null && stamp.mayCacheNow()) {
+      result = Optional.ofNullable(doFindClass(qualifiedName, scope));
+      if (stamp.mayCacheNow()) {
         map.put(qualifiedName, result);
       }
     }
 
-    return result;
+    return result.orElse(null);
   }
 
   @Nullable
@@ -179,7 +182,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   private boolean shouldUseSlowResolve() {
     DumbService dumbService = DumbService.getInstance(getProject());
-    return dumbService.isDumb() && dumbService.isAlternativeResolveEnabled();
+    return dumbService.isAlternativeResolveEnabled();
   }
 
   @Override
@@ -214,9 +217,19 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   @NotNull
   @Override
   public Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
-    return myModuleCache
-      .computeIfAbsent(scope, k -> ContainerUtil.createConcurrentWeakValueMap())
-      .computeIfAbsent(moduleName, k -> JavaFileManager.getInstance(myProject).findModules(k, scope));
+    JavaFileManager javaFileManager = JavaFileManager.getInstance(myProject);
+    return CachedValuesManager.getManager(myProject)
+      .getCachedValue(myProject, () -> {
+        Map<GlobalSearchScope, Map<String, Collection<PsiJavaModule>>> scope2ModulesMap =
+          ConcurrentFactoryMap.create(searchScope ->
+                                        ConcurrentFactoryMap.create(name -> javaFileManager.findModules(name, searchScope), () -> ContainerUtil.createConcurrentWeakValueMap()),
+                                      () -> ContainerUtil.createConcurrentSoftKeySoftValueMap());
+        return new CachedValueProvider.Result<>(scope2ModulesMap, 
+                                                PsiJavaModuleModificationTracker.getInstance(myProject),
+                                                ProjectRootModificationTracker.getInstance(myProject));
+      })
+      .get(scope)
+      .get(moduleName);
   }
 
   @NotNull
@@ -233,7 +246,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   @Override
   @NotNull
   public PsiResolveHelper getResolveHelper() {
-    return PsiResolveHelper.SERVICE.getInstance(myProject);
+    return PsiResolveHelper.getInstance(myProject);
   }
 
   @Override

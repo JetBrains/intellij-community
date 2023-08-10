@@ -2,10 +2,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiUsesStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.PsiUsesStatementStub;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -19,6 +16,16 @@ public class ClsUsesStatementImpl extends ClsRepositoryPsiElement<PsiUsesStateme
   public ClsUsesStatementImpl(PsiUsesStatementStub stub) {
     super(stub);
     myClassReference = new ClsJavaCodeReferenceElementImpl(this, stub.getClassName());
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitUsesStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

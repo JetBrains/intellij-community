@@ -18,7 +18,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
   private static final class RegexpMatcher implements MaskMatcher {
     private final Matcher myMatcher;
 
-    private RegexpMatcher(String pattern) {
+    RegexpMatcher(@NotNull String pattern) {
       myMatcher = PatternUtil.fromMask(pattern).matcher("");
     }
 
@@ -34,7 +34,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
   private static final class SuffixMatcher implements MaskMatcher {
     private final String mySuffix;
 
-    private SuffixMatcher(final String suffix) {
+    SuffixMatcher(@NotNull String suffix) {
       mySuffix = suffix;
     }
 
@@ -47,7 +47,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
   private static final class PrefixMatcher implements MaskMatcher {
     private final String myPrefix;
 
-    private PrefixMatcher(final String prefix) {
+    private PrefixMatcher(@NotNull String prefix) {
       myPrefix = prefix;
     }
 
@@ -60,7 +60,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
   private static final class InfixMatcher implements MaskMatcher {
     private final String myInfix;
 
-    private InfixMatcher(final String infix) {
+    InfixMatcher(@NotNull String infix) {
       myInfix = infix;
     }
 
@@ -78,7 +78,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
     myMatcher = createMatcher(pattern);
   }
 
-  private static MaskMatcher createMatcher(final String pattern) {
+  private static @NotNull MaskMatcher createMatcher(final @NotNull String pattern) {
     int len = pattern.length();
     if (len > 1 && pattern.indexOf('?') < 0) {
       if (pattern.charAt(0) == '*' && pattern.indexOf('*', 1) < 0) {

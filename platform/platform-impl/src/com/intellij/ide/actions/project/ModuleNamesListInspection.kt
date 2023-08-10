@@ -5,12 +5,14 @@ package com.intellij.ide.actions.project
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.Nls
 
 internal class ModuleNamesListInspection : LocalInspectionTool() {
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
@@ -31,18 +33,18 @@ internal class ModuleNamesListInspection : LocalInspectionTool() {
     return problems.toTypedArray()
   }
 
-  override fun getGroupDisplayName() = ProjectBundle.message("convert.module.groups.inspection.group.name")
+  override fun getGroupDisplayName(): @Nls String = ProjectBundle.message("convert.module.groups.inspection.group.name")
 
-  override fun getDisplayName() = ProjectBundle.message("convert.module.groups.inspection.display.name")
+  override fun getDisplayName(): @Nls String = ProjectBundle.message("convert.module.groups.inspection.display.name")
 
-  override fun getStaticDescription() = ""
+  override fun getStaticDescription(): String = ""
 
-  override fun isEnabledByDefault() = true
+  override fun isEnabledByDefault(): Boolean = true
 
   override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.ERROR
 
   companion object {
-    inline fun checkModuleNames(lines: List<String>, project: Project, reportError: (Int, String) -> Unit) {
+    inline fun checkModuleNames(lines: List<String>, project: Project, reportError: (Int, @InspectionMessage String) -> Unit) {
       val modulesCount = ModuleManager.getInstance(project).modules.size
       val counts = lines.fold(HashMap<String, Int>(), { map, s -> map[s] = map.getOrDefault(s, 0) + 1; map })
       lines.forEachIndexed { line, s ->

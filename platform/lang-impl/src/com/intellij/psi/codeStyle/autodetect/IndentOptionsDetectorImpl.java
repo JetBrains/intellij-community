@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.application.options.CodeStyle;
@@ -18,36 +18,29 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 
 public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
-  private final PsiFile myFile;
+  private final VirtualFile myFile;
   private final Project myProject;
   private final Document myDocument;
   private final ProgressIndicator myProgressIndicator;
 
-  public IndentOptionsDetectorImpl(@NotNull PsiFile file, @NotNull ProgressIndicator indicator) {
+  public IndentOptionsDetectorImpl(@NotNull Project project,
+                                   @NotNull VirtualFile file,
+                                   @NotNull Document document,
+                                   @NotNull ProgressIndicator indicator) {
     myFile = file;
-    myProject = file.getProject();
-    myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myFile);
+    myProject = project;
+    myDocument = document;
     myProgressIndicator = indicator;
   }
-  
-  @TestOnly
-  public IndentOptionsDetectorImpl(@NotNull PsiFile file) {
-    myFile = file;
-    myProject = file.getProject();
-    myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myFile);
-    myProgressIndicator = null;
-  }
-  
+
   @Override
-  @Nullable
-  public IndentOptionsAdjuster getIndentOptionsAdjuster() {
+  public @Nullable IndentOptionsAdjuster getIndentOptionsAdjuster() {
     try {
       List<LineIndentInfo> linesInfo = calcLineIndentInfo(myProgressIndicator);
       if (linesInfo != null) {
@@ -57,12 +50,11 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     catch (IndexNotReadyException ignore) { }
     return null;
   }
-  
+
   @Override
-  @NotNull
-  public IndentOptions getIndentOptions() {
+  public @NotNull IndentOptions getIndentOptions() {
     IndentOptions indentOptions =
-      (IndentOptions)CodeStyle.getSettings(myFile).getIndentOptions(myFile.getFileType()).clone();
+      (IndentOptions)CodeStyle.getSettings(myProject, myFile).getIndentOptions(myFile.getFileType()).clone();
 
     IndentOptionsAdjuster adjuster = getIndentOptionsAdjuster();
     if (adjuster != null) {
@@ -72,24 +64,31 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     return indentOptions;
   }
 
-  @Nullable
-  private List<LineIndentInfo> calcLineIndentInfo(@Nullable ProgressIndicator indicator) {
-    if (myDocument == null || myDocument.getLineCount() < 3 || isFileBigToDetect()) {
+  private @Nullable List<LineIndentInfo> calcLineIndentInfo(@Nullable ProgressIndicator indicator) {
+    if (myDocument.getLineCount() < 3 || isFileBigToDetect()) {
+      return null;
+    }
+    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+    if (psiFile == null || !isUpToDate(psiFile, myDocument)) {
       return null;
     }
 
-    CodeStyleSettings settings = CodeStyle.getSettings(myFile);
-    FormattingModelBuilder modelBuilder = LanguageFormatting.INSTANCE.forContext(myFile);
+    CodeStyleSettings settings = CodeStyle.getSettings(myProject, myFile);
+    FormattingModelBuilder modelBuilder = LanguageFormatting.INSTANCE.forContext(psiFile);
     if (modelBuilder == null) return null;
 
-    FormattingModel model = modelBuilder.createModel(FormattingContext.create(myFile, settings));
+    FormattingModel model = modelBuilder.createModel(FormattingContext.create(psiFile, settings));
     Block rootBlock = model.getRootBlock();
     return new FormatterBasedLineIndentInfoBuilder(myDocument, rootBlock, indicator).build();
   }
 
+  private boolean isUpToDate(@NotNull PsiFile file, @NotNull Document document) {
+    return PsiDocumentManager.getInstance(myProject).isCommitted(myDocument) &&
+           file.isValid() && file.getTextLength() == document.getTextLength();
+  }
+
   private boolean isFileBigToDetect() {
-    VirtualFile file = myFile.getVirtualFile();
-    if (file != null && file.getLength() > FileUtilRt.MEGABYTE) {
+    if (myFile.getLength() > FileUtilRt.MEGABYTE) {
       return true;
     }
     return false;

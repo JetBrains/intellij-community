@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-/**
- * @author Pavel.Dolgov
- */
 final class InstructionKey implements Comparable<InstructionKey> {
   private final int myOffset;
   private final int[] myCallStack; // shared between instructions on the same stack level

@@ -1,12 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
+import com.intellij.collaboration.util.resolveRelative
+import git4idea.remote.hosting.HostedRepositoryCoordinates
 import com.intellij.openapi.util.NlsSafe
+import java.net.URI
 
-data class GHRepositoryCoordinates(val serverPath: GithubServerPath, val repositoryPath: GHRepositoryPath) {
+data class GHRepositoryCoordinates(override val serverPath: GithubServerPath,
+                                   val repositoryPath: GHRepositoryPath)
+  : HostedRepositoryCoordinates {
+
   fun toUrl(): String {
     return serverPath.toUrl() + "/" + repositoryPath
   }
+
+  override fun getWebURI(): URI = serverPath.toURI().resolveRelative(repositoryPath.toString())
 
   @NlsSafe
   override fun toString(): String {

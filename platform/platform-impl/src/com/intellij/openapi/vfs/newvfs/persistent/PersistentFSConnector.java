@@ -1,218 +1,279 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.BitUtil;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.*;
-import com.intellij.util.io.storage.*;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
+import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.io.CorruptedException;
+import com.intellij.util.io.VersionUpdatedException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-class PersistentFSConnector {
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
+import static com.intellij.util.ExceptionUtil.findCauseAndSuppressed;
+
+/**
+ * Static helper responsible for 'connecting' (opening, initializing) {@linkplain PersistentFSConnection} object,
+ * and closing it. It does a few tries to initialize VFS storages, tries to correct/rebuild broken parts, and so on.
+ */
+final class PersistentFSConnector {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnector.class);
+
+  //FIXME RC: temporary, 'false' is not really an long-term alternative -- decide shortly about it
+  private static final boolean PARALLELIZE_VFS_INITIALIZATION = SystemProperties.getBooleanProperty("vfs.parallelize-initialization", true);
+
+  //TODO RC: lower down to 3 -- really, never seen even >2 attempts in FUS data for months
   private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
 
-  static @NotNull PersistentFSConnection connect(@NotNull String cachesDir, int version, boolean useContentHashes) {
-    return FSRecords.writeAndHandleErrors(() -> {
-      return init(cachesDir, version, useContentHashes);
-    });
+  public static final List<VFSRecoverer> RECOVERERS = List.of(
+    //new NotClosedProperlyRecoverer(),
+    new ContentStoragesRecoverer()
+  );
+
+  //@formatter:off
+  private static Lock noLock() {
+    return new Lock() {
+      @Override public void lock() { }
+      @Override public void lockInterruptibly() throws InterruptedException { }
+      @Override public boolean tryLock() { return true; }
+      @Override public boolean tryLock(long time, @NotNull TimeUnit unit) throws InterruptedException { return true; }
+      @Override public void unlock() { }
+      @NotNull @Override public Condition newCondition() { throw new UnsupportedOperationException(); }
+    };
+  }
+  //@formatter:on
+
+  private static final Lock connectDisconnectLock = !VfsLog.isVfsTrackingEnabled() ? new ReentrantLock() : noLock();
+
+
+  public static @NotNull VFSInitializationResult connect(@NotNull Path cachesDir,
+                                                         int version,
+                                                         boolean enableVfsLog,
+                                                         List<ConnectionInterceptor> interceptors) {
+    connectDisconnectLock.lock();
+    try {
+      return init(cachesDir, version, enableVfsLog, interceptors);
+    }
+    finally {
+      connectDisconnectLock.unlock();
+    }
   }
 
-  private static @NotNull PersistentFSConnection init(@NotNull String cachesDir, int expectedVersion, boolean useContentHashes) {
-    Exception exception = null;
-    for (int i = 0; i < MAX_INITIALIZATION_ATTEMPTS; i++) {
-      Pair<PersistentFSConnection, Exception> pair = tryInit(cachesDir, expectedVersion, useContentHashes);
-      exception = pair.getSecond();
-      if (exception == null) {
-        return pair.getFirst();
+  public static void disconnect(@NotNull PersistentFSConnection connection) throws IOException {
+    connectDisconnectLock.lock();
+    try {
+      connection.close();
+    }
+    finally {
+      connectDisconnectLock.unlock();
+    }
+  }
+
+  //=== internals:
+
+  private static @NotNull VFSInitializationResult init(@NotNull Path cachesDir,
+                                                       int expectedVersion,
+                                                       boolean enableVfsLog,
+                                                       List<ConnectionInterceptor> interceptors) {
+    List<Throwable> attemptsFailures = new ArrayList<>();
+    long initializationStartedNs = System.nanoTime();
+    for (int attempt = 0; attempt < MAX_INITIALIZATION_ATTEMPTS; attempt++) {
+      try {
+        PersistentFSConnection connection = tryInit(
+          cachesDir,
+          expectedVersion,
+          enableVfsLog,
+          interceptors,
+          RECOVERERS
+        );
+        //heuristics: just created VFS contains only 1 record (=super-root):
+        boolean justCreated = connection.getRecords().recordsCount() == 1
+                              && connection.isDirty();
+
+        return new VFSInitializationResult(
+          connection,
+          justCreated,
+          attemptsFailures,
+          System.nanoTime() - initializationStartedNs
+        );
+      }
+      catch (Exception e) {
+        LOG.info("Init VFS attempt #" + attempt + " failed: " + e.getMessage());
+
+        attemptsFailures.add(e);
       }
     }
-    throw new RuntimeException("Can't initialize filesystem storage", exception);
+
+    RuntimeException fail = new RuntimeException("VFS can't be initialized (" + MAX_INITIALIZATION_ATTEMPTS + " attempts failed)");
+    for (Throwable failure : attemptsFailures) {
+      fail.addSuppressed(failure);
+    }
+    throw fail;
   }
 
-  private static @NotNull Pair<PersistentFSConnection, Exception> tryInit(@NotNull String cachesDir,
-                                                                          int expectedVersion,
-                                                                          boolean useContentHashes) {
-    Storage attributes = null;
-    RefCountingStorage contents = null;
-    PersistentFSRecordsStorage records = null;
-    ContentHashEnumerator contentHashesEnumerator = null;
-    PersistentStringEnumerator names = null;
-    boolean markDirty = false;
+  @VisibleForTesting
+  static @NotNull PersistentFSConnection tryInit(@NotNull Path cachesDir,
+                                                 int currentImplVersion,
+                                                 boolean enableVfsLog,
+                                                 @NotNull List<ConnectionInterceptor> interceptors,
+                                                 @NotNull List<VFSRecoverer> recoverers) throws IOException {
+    //RC: Mental model behind VFS initialization:
+    //   VFS consists of few different storages: records, attributes, content... Each storage has its own on-disk
+    //   data format. Each storage also has a writeable header field .version, which is (must be) 0 by default.
+    //   VFS as a whole defines 'implementation version' (currentImplVersion) which is the overall on-disk data
+    //   format known to current VFS code.
+    //
+    //   When VFS is initialized from scratch, this 'VFS impl version' is stamped into each storage .version header field.
+    //   When VFS is loaded (from already existing on-disk representation), we load each storage from apt file(s), collect
+    //   all the storage.versions and check them against currentImplVersion -- and if all the versions are equal to
+    //   currentImplVersion => VFS is OK and ready to use ('success path')
+    //
+    //   If not all versions are equal to currentImplVersion => we assume VFS is outdated, drop all the VFS files, and throw
+    //   exception, which most likely triggers VFS rebuild from 0 somewhere above.
+    //   Now, versions could be != currentImplVersion for different reasons:
+    //   1) On-disk VFS are of an ancient version -- the most obvious reason
+    //   2) Some of the VFS storages are missed on disk, and initialized from 0, thus having their .version=0
+    //   3) Some of the VFS storages have an unrecognizable on-disk format (e.g. corrupted) -- in this case
+    //      specific storage implementation could either
+    //      a) re-create storage from 0 => will have .version=0, see branch #2
+    //      b) throw an exception => will be caught, and VFS files will be all dropped,
+    //                               and likely lead to VFS rebuild from 0 somewhere upper the callstack
+    //   So the simple condition (all storages .version must be == currentImplVersion) actually covers a set of different cases
+    //   which is convenient.
+    //
+    //MAYBE RC: Current model has important drawback: it is all-or-nothing, i.e. even a minor change in VFS on-disk format requires
+    //          full VFS rebuild. VFS rebuild itself is not so costly -- but it invalidates all fileIds, which causes Indexes rebuild,
+    //          which IS costly.
+    //          It would be nicer if VFS be able to just 'upgrade' a minor change in format to a newer version, without full rebuild
+    //          -- but with current approach such functionality it is hard to plug in.
+    //          Sketch of a better implementation:
+    //          1) VFS currentImplVersion is stored in a single dedicated place, in 'version.txt' file (human-readable)
+    //          2) Each VFS storage manages its own on-disk-format-version -- i.e. each storage has its own CURRENT_IMPL_VERSION,
+    //             which it stores somewhere in a file(s) header. And each storage is responsible for detecting on-disk version,
+    //             and either read the known format, or read-and-silently-upgrade known but slightly outdated format, or throw
+    //             an error if it can't deal with on-disk data at all.
+    //          VFS.currentImplVersion is changed only on a major format changes, there implement 'upgrade' is too costly, and full
+    //          rebuild is the way to go. Another reason for full rebuild is if any of storages is completely confused by on-disk
+    //          data (=likely corruption or too old data format). In other cases VFS could be upgraded 'under the carpet' without
+    //          invalidating fileId, hence Indexes don't need to be rebuild.
+
+    Path basePath = cachesDir.toAbsolutePath();
+    Files.createDirectories(basePath);
+
+    //MAYBE RC: use Dispatchers.IO-kind pool, with many threads (appExecutor has 1 core thread, so needs time to inflate)
+    //MAYBE RC: looks like it all could be much easier with coroutines
+    ExecutorService pool = PARALLELIZE_VFS_INITIALIZATION ? AppExecutorUtil.getAppExecutorService()
+                                                          : ConcurrencyUtil.newSameThreadExecutorService();
 
     PersistentFSPaths persistentFSPaths = new PersistentFSPaths(cachesDir);
-    Path basePath = new File(cachesDir).getAbsoluteFile().toPath();
+    PersistentFSLoader vfsLoader = new PersistentFSLoader(persistentFSPaths, enableVfsLog, pool);
     try {
-      Files.createDirectories(basePath);
-    }
-    catch (IOException e) {
-      return Pair.create(null, e);
-    }
-
-    Path namesFile = basePath.resolve("names" + PersistentFSPaths.VFS_FILES_EXTENSION);
-    Path attributesFile = basePath.resolve("attrib" + PersistentFSPaths.VFS_FILES_EXTENSION);
-    Path contentsFile = basePath.resolve("content" + PersistentFSPaths.VFS_FILES_EXTENSION);
-    Path contentsHashesFile = basePath.resolve("contentHashes" + PersistentFSPaths.VFS_FILES_EXTENSION);
-    Path recordsFile = basePath.resolve("records" + PersistentFSPaths.VFS_FILES_EXTENSION);
-
-    File vfsDependentEnumBaseFile = persistentFSPaths.getVfsEnumBaseFile();
-
-    if (!Files.exists(namesFile)) {
-      invalidateIndex("'" + namesFile + "' does not exist");
-    }
-
-    try {
-      if (persistentFSPaths.getCorruptionMarkerFile().exists()) {
-        invalidateIndex("corruption marker found");
-        throw new IOException("Corruption marker file found");
+      if (VfsLog.isVfsTrackingEnabled() && enableVfsLog) {
+        vfsLoader.replaceStoragesIfMarkerPresent();
       }
+      vfsLoader.failIfCorruptionMarkerPresent();
 
-      StorageLockContext storageLockContext = new StorageLockContext(false);
-      names = new PersistentStringEnumerator(namesFile, storageLockContext);
-
-      attributes = new Storage(attributesFile, PersistentFSConnection.REASONABLY_SMALL) {
-        @Override
-        protected AbstractRecordsTable createRecordsTable(PagePool pool, @NotNull Path recordsFile) throws IOException {
-          return FSRecords.inlineAttributes && FSRecords.useSmallAttrTable
-                 ? new CompactRecordsTable(recordsFile, pool, false)
-                 : super.createRecordsTable(pool, recordsFile);
+      if (VfsLog.isVfsTrackingEnabled() && enableVfsLog) {
+        if (vfsLoader.recoverCachesFromVfsLogIfAppWasNotClosedProperly()) {
+          LOG.info("Recovered caches from VfsLog");
+        } else {
+          LOG.info("Failed to recover caches from VfsLog");
         }
-      };
-
-      contents = new RefCountingStorage(contentsFile,
-                                        CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
-                                        SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Content Write Pool"),
-                                        FSRecords.useCompressionUtil);
-
-      // sources usually zipped with 4x ratio
-      contentHashesEnumerator = useContentHashes ? new ContentHashEnumerator(contentsHashesFile, storageLockContext) : null;
-
-      boolean aligned = PagedFileStorage.BUFFER_SIZE % PersistentFSRecordsStorage.RECORD_SIZE == 0;
-      if (!aligned) {
-        LOG.error("Buffer size " + PagedFileStorage.BUFFER_SIZE + " is not aligned for record size " + PersistentFSRecordsStorage.RECORD_SIZE);
-      }
-      records = new PersistentFSRecordsStorage(new ResizeableMappedFile(recordsFile,
-                                                                        20 * 1024,
-                                                                        storageLockContext,
-                                                                        PagedFileStorage.BUFFER_SIZE,
-                                                                        aligned,
-                                                                        IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER));
-
-      boolean initial = records.length() == 0;
-
-      if (initial) {
-        // Clean header
-        records.cleanRecord(0);
-        // Create root record
-        records.cleanRecord(1);
-        setCurrentVersion(records, attributes, contents, expectedVersion);
       }
 
-      int version = getVersion(records, attributes, contents);
-      if (version != expectedVersion) {
-        throw new IOException("FS repository version mismatch: actual=" + version + " expected=" + FSRecords.VERSION);
+      vfsLoader.initializeStorages();
+
+      vfsLoader.ensureStoragesVersionsAreConsistent(currentImplVersion);
+
+      boolean needInitialization = vfsLoader.isJustCreated();
+
+      if (needInitialization) {
+        // Create root record:
+        int rootRecordId = vfsLoader.recordsStorage().allocateRecord();
+        if (rootRecordId != FSRecords.ROOT_FILE_ID) {
+          throw new AssertionError("First record created must have id=" + FSRecords.ROOT_FILE_ID + " but " + rootRecordId + " got instead");
+        }
+        vfsLoader.recordsStorage().cleanRecord(rootRecordId);
+      }
+      else {
+        vfsLoader.selfCheck();
+
+        if (!vfsLoader.problemsDuringLoad().isEmpty()) {
+          for (VFSRecoverer recoverer : recoverers) {
+            recoverer.tryRecover(vfsLoader);
+          }
+          // TODO perhaps add recovery attempt from vfsLog here, but it's complicated, because another self check is probably needed.
+          //  On the other hand, probably every relevant problem should be already covered by wasProperlyClosedLastSession check above
+
+          //Were all problems recovered? -> fail if not
+          List<VFSInitException> problemsNotRecovered = vfsLoader.problemsDuringLoad();
+          if (!problemsNotRecovered.isEmpty()) {
+            VFSInitException mainEx = problemsNotRecovered.get(0);
+            for (int i = 1; i < problemsNotRecovered.size(); i++) {
+              mainEx.addSuppressed(problemsNotRecovered.get(i));
+            }
+            throw mainEx;
+          }
+        }
       }
 
-      if (records.getConnectionStatus() != PersistentFSHeaders.SAFELY_CLOSED_MAGIC) {
-        throw new IOException("FS repository wasn't safely shut down");
+
+      PersistentFSConnection connection = vfsLoader.createConnection(interceptors);
+
+      if (needInitialization) {//make just-initialized connection dirty (i.e. it must be saved)
+        connection.markDirty();
       }
-      if (initial) {
-        markDirty = true;
-      }
-      IntList freeRecords = scanFreeRecords(records);
-      return Pair.create(new PersistentFSConnection(persistentFSPaths,
-                                                    records,
-                                                    names,
-                                                    attributes,
-                                                    contents,
-                                                    contentHashesEnumerator,
-                                                    freeRecords,
-                                                    markDirty), null);
+
+      return connection;
     }
-    catch (Exception e) { // IOException, IllegalArgumentException
-      LOG.info("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());
+    catch (Throwable e) { // IOException, IllegalArgumentException, AssertionError
+      LOG.warn("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());
       try {
-        PersistentFSConnection.closeStorages(records, names, attributes, contentHashesEnumerator, contents);
+        vfsLoader.closeEverything();
+        vfsLoader.deleteEverything();
+      }
+      catch (IOException cleanEx) {
+        e.addSuppressed(cleanEx);
+        LOG.warn("Cannot clean filesystem storage", cleanEx);
+      }
 
-        boolean deleted = FileUtil.delete(persistentFSPaths.getCorruptionMarkerFile());
-        deleted &= IOUtil.deleteAllFilesStartingWith(namesFile);
-        deleted &= AbstractStorage.deleteFiles(attributesFile);
-        deleted &= AbstractStorage.deleteFiles(contentsFile);
-        deleted &= IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
-        deleted &= IOUtil.deleteAllFilesStartingWith(recordsFile);
-        deleted &= IOUtil.deleteAllFilesStartingWith(vfsDependentEnumBaseFile);
+      //Try to unwrap exception, so the real cause appears, we could throw VFSNeedsRebuildException with it:
 
-        Path rootsFile = persistentFSPaths.getRootsFile();
-        deleted &= rootsFile == null || IOUtil.deleteAllFilesStartingWith(rootsFile);
-
-        if (!deleted) {
-          throw new IOException("Cannot delete filesystem storage files");
+      List<VFSInitException> vfsNeedsRebuildExceptions = findCauseAndSuppressed(e, VFSInitException.class);
+      if (!vfsNeedsRebuildExceptions.isEmpty()) {
+        VFSInitException mainEx = vfsNeedsRebuildExceptions.get(0);
+        for (VFSInitException suppressed : vfsNeedsRebuildExceptions.subList(1, vfsNeedsRebuildExceptions.size())) {
+          mainEx.addSuppressed(suppressed);
         }
+        throw mainEx;
       }
-      catch (IOException e1) {
-        e1.addSuppressed(e);
-        LOG.warn("Cannot rebuild filesystem storage", e1);
-        return Pair.create(null, e1);
+      if (!findCauseAndSuppressed(e, CorruptedException.class).isEmpty()) {
+        //'not closed properly' is the most likely explanation of corrupted enumerator -- but not the only one,
+        // it could also be a code bug
+        throw new VFSInitException(NOT_CLOSED_PROPERLY, "Some of storages were corrupted", e);
+      }
+      if (!findCauseAndSuppressed(e, VersionUpdatedException.class).isEmpty()) {
+        throw new VFSInitException(IMPL_VERSION_MISMATCH, "Some of storages versions were changed", e);
       }
 
-      return Pair.create(null, e);
+      throw new VFSInitException(UNRECOGNIZED, "Can't find specific cause of VFS init failure", e);
     }
-  }
-
-  private static void invalidateIndex(@NotNull String reason) {
-    LOG.info("Marking VFS as corrupted: " + reason);
-    final File indexRoot = PathManager.getIndexRoot();
-    if (indexRoot.exists()) {
-      final String[] children = indexRoot.list();
-      if (children != null && children.length > 0) {
-        // create index corruption marker only if index directory exists and is non-empty
-        // It is incorrect to consider non-existing indices "corrupted"
-        FileUtil.createIfDoesntExist(new File(PathManager.getIndexRoot(), "corruption.marker"));
-      }
-    }
-  }
-
-  private static IntList scanFreeRecords(PersistentFSRecordsStorage records) {
-    final IntList freeRecords = new IntArrayList();
-    final int fileLength = (int)records.length();
-    LOG.assertTrue(fileLength % PersistentFSRecordsStorage.RECORD_SIZE == 0, "invalid file size: " + fileLength);
-
-    int count = fileLength / PersistentFSRecordsStorage.RECORD_SIZE;
-    for (int n = 2; n < count; n++) {
-      if (BitUtil.isSet(records.doGetFlags(n), PersistentFSRecordAccessor.FREE_RECORD_FLAG)) {
-        freeRecords.add(n);
-      }
-    }
-    return freeRecords;
-  }
-
-  private static int getVersion(PersistentFSRecordsStorage records,
-                                Storage attributes,
-                                RefCountingStorage contents) {
-    final int recordsVersion = records.getVersion();
-    if (attributes.getVersion() != recordsVersion || contents.getVersion() != recordsVersion) return -1;
-
-    return recordsVersion;
-  }
-
-  private static void setCurrentVersion(PersistentFSRecordsStorage records,
-                                        Storage attributes,
-                                        RefCountingStorage contents,
-                                        int version) {
-    records.setVersion(version);
-    attributes.setVersion(version);
-    contents.setVersion(version);
-    records.setConnectionStatus(PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
   }
 }

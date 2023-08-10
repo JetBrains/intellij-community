@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -100,7 +100,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
           final XmlProlog xmlProlog = xmlDocument.getProlog();
           if (xmlProlog != null) {
             final PsiElement element = xmlProlog.addBefore(instructions.iterator().next(), xmlProlog.getFirstChild());
-            xmlProlog.addAfter(PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n\n"), element);
+            xmlProlog.addAfter(PsiParserFacade.getInstance(project).createWhiteSpaceFromText("\n\n"), element);
           }
         }
       }

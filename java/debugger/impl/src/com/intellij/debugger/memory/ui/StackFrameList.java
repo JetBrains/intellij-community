@@ -18,6 +18,8 @@ import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.util.List;
 
 class StackFrameList extends XDebuggerFramesList {
@@ -28,6 +30,14 @@ class StackFrameList extends XDebuggerFramesList {
   StackFrameList(DebugProcessImpl debugProcess) {
     super(debugProcess.getProject());
     myDebugProcess = debugProcess;
+    getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(final ListSelectionEvent e) {
+        if (!e.getValueIsAdjusting()) {
+          navigateToSelectedValue(false);
+        }
+      }
+    });
   }
 
   void setFrameItems(@NotNull List<? extends StackFrameItem> items) {
@@ -60,18 +70,10 @@ class StackFrameList extends XDebuggerFramesList {
     }
   }
 
-  @Override
-  protected void onFrameChanged(Object selectedValue) {
-    navigateTo(selectedValue, false);
-  }
-
   void navigateToSelectedValue(boolean focusOnEditor) {
-    navigateTo(getSelectedValue(), focusOnEditor);
-  }
-
-  private void navigateTo(Object frame, boolean focusOnEditor) {
-    if (frame instanceof XStackFrame) {
-      navigateToFrame((XStackFrame)frame, focusOnEditor);
+    XStackFrame frame = getSelectedFrame();
+    if (frame != null) {
+      navigateToFrame(frame, focusOnEditor);
     }
   }
 

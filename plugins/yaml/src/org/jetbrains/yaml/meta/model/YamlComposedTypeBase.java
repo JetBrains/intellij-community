@@ -31,8 +31,7 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
       if (next instanceof YamlScalarType) {
         flattenedTypes.add(next);
       }
-      else if (next instanceof YamlComposedTypeBase) {
-        YamlComposedTypeBase that = (YamlComposedTypeBase)next;
+      else if (next instanceof YamlComposedTypeBase that) {
         flattenedTypes.addAll(that.myTypes);
       }
       else {
@@ -44,8 +43,8 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
 
   protected abstract YamlMetaType composeTypes(YamlMetaType... types);
 
-  protected YamlComposedTypeBase(@NotNull String typeName, List<YamlMetaType> types) {
-    super(typeName);
+  protected YamlComposedTypeBase(@NotNull String typeName, @NotNull String displayName, List<YamlMetaType> types) {
+    super(typeName, displayName);
     assert types.size() > 1 : "Nothing to compose: " + types;
     myTypes = copyList(types);
   }
@@ -125,8 +124,14 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
     }
     else {
       markup.append(":");
-      markup.increaseTabs(1);
-      markup.newLineAndTabs(relation == Field.Relation.SEQUENCE_ITEM);
+
+      if (relation == Field.Relation.SEQUENCE_ITEM) {
+        markup.doTabbedBlockForSequenceItem();
+      }
+      else {
+        markup.increaseTabs(1);
+        markup.newLineAndTabs();
+      }
     }
     markup.appendCaret();
   }
@@ -139,8 +144,8 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
     return ContainerUtil.filter(myTypes, next -> !(next instanceof YamlScalarType));
   }
 
-  protected final Iterable<YamlMetaType> getSubTypes() {
-    return myTypes;
+  public final Iterable<YamlMetaType> getSubTypes() {
+    return copyList(myTypes);
   }
 
   protected final Stream<YamlMetaType> streamSubTypes() {
@@ -154,10 +159,12 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
   @Nullable
   private Field mergeFields(@NotNull List<Pair<Field, YamlMetaType>> pairs) {
     switch (pairs.size()) {
-      case 0:
+      case 0 -> {
         return null;
-      case 1:
+      }
+      case 1 -> {
         return pairs.get(0).getFirst();
+      }
     }
     Set<String> allNames = pairs.stream().map(fieldAndType -> fieldAndType.getFirst().getName()).collect(Collectors.toSet());
     assert allNames.size() == 1 : "Can't merge fields with different names: " + allNames;
@@ -167,11 +174,11 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
 
     List<Field> fields = ContainerUtil.map(pairs, pair -> pair.getFirst());
     // we will assume that "positive" field qualities are merged by ANY while "negative" qualities are merged by ALL
-    boolean required = fields.stream().allMatch(f -> f.isRequired());
-    boolean deprecated = fields.stream().allMatch(f -> f.isDeprecated());
-    boolean editable = fields.stream().anyMatch(f -> f.isEditable());
-    boolean emptyAllowed = fields.stream().anyMatch(f -> f.isEmptyValueAllowed());
-    boolean anyName = fields.stream().anyMatch(f -> f.isAnyNameAllowed());
+    boolean required = ContainerUtil.and(fields, f -> f.isRequired());
+    boolean deprecated = ContainerUtil.and(fields, f -> f.isDeprecated());
+    boolean editable = ContainerUtil.exists(fields, f -> f.isEditable());
+    boolean emptyAllowed = ContainerUtil.exists(fields, f -> f.isEmptyValueAllowed());
+    boolean anyName = ContainerUtil.exists(fields, f -> f.isAnyNameAllowed());
 
     YamlMetaType type = composeTypes(pairs.stream().map(p -> p.getSecond()).toArray(YamlMetaType[]::new));
     Field result = new Field(theName, type);

@@ -22,7 +22,7 @@ import java.io.File
 
 class LogFileManager(private val filePathProvider: FilePathProvider, private val chunkSizeLimit: Int = MAX_CHUNK_SIZE) : FileLogger {
     private companion object {
-        const val MAX_CHUNK_SIZE = 100 * 1024
+        const val MAX_CHUNK_SIZE = 30 * 1024
     }
 
     private var storage = LineStorage()

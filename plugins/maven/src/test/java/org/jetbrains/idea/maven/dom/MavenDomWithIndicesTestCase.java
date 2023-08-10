@@ -15,17 +15,23 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.maven.testFramework.MavenDomTestCase;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
-import org.jetbrains.idea.maven.onlinecompletion.IndexBasedCompletionProvider;
-import org.jetbrains.idea.maven.onlinecompletion.ProjectModulesCompletionProvider;
-import org.jetbrains.idea.reposearch.DependencySearchProvider;
+import org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory;
+import org.jetbrains.idea.maven.server.MavenServerConnector;
+import org.jetbrains.idea.maven.server.MavenServerDownloadListener;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static java.util.Collections.emptyList;
+import java.io.File;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
   protected MavenIndicesTestFixture myIndicesFixture;
@@ -33,14 +39,24 @@ public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    ExtensionTestUtil.maskExtensions(DependencySearchService.EP_NAME,
+                                     Collections.singletonList(new MavenCompletionProviderFactory()),
+                                     getTestRootDisposable(), false, null);
     myIndicesFixture = createIndicesFixture();
-    myIndicesFixture.setUp();
-    List<DependencySearchProvider> indexProviders =
-      new ArrayList<>(ContainerUtil.map(myIndicesFixture.getProjectIndicesManager().getIndices(), IndexBasedCompletionProvider::new));
-    indexProviders.add(new ProjectModulesCompletionProvider(myProject));
-    DependencySearchService.getInstance(myProject).setProviders(indexProviders,
-                                                                emptyList()
-    );
+    myIndicesFixture.setUpBeforeImport();
+
+    if (importProjectOnSetup()) {
+      importProject("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      """);
+    }
+    myIndicesFixture.setUpAfterImport();
+  }
+
+  protected boolean importProjectOnSetup() {
+    return false;
   }
 
   protected MavenIndicesTestFixture createIndicesFixture() {
@@ -61,6 +77,68 @@ public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
     finally {
       super.tearDown();
     }
+  }
+
+  protected void runAndExpectPluginIndexEvents(Set<String> expectedArtifactIds, Runnable action) {
+    var latch = new CountDownLatch(1);
+    Set<String> artifactIdsToIndex = ConcurrentHashMap.newKeySet();
+    artifactIdsToIndex.addAll(expectedArtifactIds);
+
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
+      .subscribe(MavenIndicesManager.INDEXER_TOPIC, new MavenIndicesManager.MavenIndexerListener() {
+        @Override
+        public void indexUpdated(Set<File> added, Set<File> failedToAdd) {
+          artifactIdsToIndex.removeIf(artifactId -> ContainerUtil.exists(added, file -> file.getPath().contains(artifactId)));
+          if (artifactIdsToIndex.isEmpty()) {
+            latch.countDown();
+          }
+        }
+      });
+
+    action.run();
+
+    try {
+      latch.await(1, TimeUnit.MINUTES);
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+
+    assertTrue("Maven plugins are not indexed in time: " + String.join(", ", artifactIdsToIndex), artifactIdsToIndex.isEmpty());
+  }
+
+  protected void runAndExpectArtifactDownloadEvents(String groupId, Set<String> artifactIds, Runnable action) {
+    var groupFolder = groupId.replace('.', '/');
+    var latch = new CountDownLatch(1);
+    Set<String> actualEvents = ConcurrentHashMap.newKeySet();
+    var downloadListener = new MavenServerDownloadListener() {
+      @Override
+      public void artifactDownloaded(File file, String relativePath) {
+        if (relativePath.startsWith(groupFolder)) {
+          var artifactId = relativePath.substring(groupFolder.length()).split("/")[1];
+          if (artifactIds.contains(artifactId)) {
+            actualEvents.add(artifactId);
+            if (actualEvents.size() == artifactIds.size()) {
+              latch.countDown();
+            }
+          }
+        }
+      }
+    };
+
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
+      .subscribe(MavenServerConnector.DOWNLOAD_LISTENER_TOPIC, downloadListener);
+
+    action.run();
+
+    try {
+      latch.await(1, TimeUnit.MINUTES);
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+
+    assertUnorderedElementsAreEqual(artifactIds, actualEvents);
   }
 
 }

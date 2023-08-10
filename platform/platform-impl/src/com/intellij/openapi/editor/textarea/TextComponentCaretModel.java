@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.textarea;
 
 import com.intellij.openapi.Disposable;
@@ -12,9 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 class TextComponentCaretModel implements CaretModel {
   private final TextComponentEditor myEditor;
   private final Caret myCaret;
@@ -29,8 +27,11 @@ class TextComponentCaretModel implements CaretModel {
   public void moveCaretRelatively(final int columnShift,
                                   final int lineShift,
                                   final boolean withSelection, final boolean blockSelection, final boolean scrollToCaret) {
-    if (lineShift == 0 && !withSelection && !blockSelection && !scrollToCaret) {
+    if (lineShift == 0 && !withSelection && !blockSelection) {
       moveToOffset(getOffset() + columnShift);
+      if (scrollToCaret) {
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      }
       return;
     }
     throw new UnsupportedOperationException("Not implemented");

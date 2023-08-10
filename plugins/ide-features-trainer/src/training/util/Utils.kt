@@ -1,33 +1,47 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.util
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.intellij.DynamicBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
+import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.CourseManager
 import training.learn.LearnBundle
-import training.learn.interfaces.Lesson
+import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.learn.lesson.LessonStateManager
+import training.ui.LearnToolWindow
 import training.ui.LearnToolWindowFactory
 import training.ui.LearningUiManager
 import java.awt.BorderLayout
@@ -35,6 +49,7 @@ import java.awt.Component
 import java.awt.Desktop
 import java.awt.Dimension
 import java.net.URI
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import javax.swing.*
@@ -42,7 +57,10 @@ import javax.swing.*
 fun createNamedSingleThreadExecutor(name: String): ExecutorService =
   Executors.newSingleThreadExecutor(ThreadFactoryBuilder().setNameFormat(name).build())
 
-private val excludedLanguages: Map<String, Array<String>> = mapOf("AppCode" to arrayOf("JavaScript")) //IDE name to language id
+private val excludedLanguages: Map<String, Array<String>> = mapOf( //IDE name to language id
+  "AppCode" to arrayOf("JavaScript"),
+  "DataSpell" to arrayOf("Python"),
+)
 
 fun courseCanBeUsed(languageId: String): Boolean {
   val excludedCourses = excludedLanguages[ApplicationNamesInfo.getInstance().productName]
@@ -62,7 +80,7 @@ fun findLanguageByID(id: String): Language? {
 fun createBalloon(@Nls text: String): Balloon = createBalloon(text, 3000)
 fun createBalloon(@Nls text: String, delay: Long): Balloon =
   JBPopupFactory.getInstance()
-    .createHtmlTextBalloonBuilder(text, null, UIUtil.getToolTipBackground(), null)
+    .createHtmlTextBalloonBuilder(text, MessageType.WARNING, null)
     .setHideOnClickOutside(true)
     .setCloseButtonEnabled(true)
     .setHideOnKeyOutside(true)
@@ -70,28 +88,30 @@ fun createBalloon(@Nls text: String, delay: Long): Balloon =
     .setFadeoutTime(delay)
     .createBalloon()
 
-const val trainerPluginConfigName: String = "ide-features-trainer.xml"
+internal const val trainerPluginConfigName: String = "ide-features-trainer.xml"
 
-val featureTrainerVersion: String by lazy {
-  val featureTrainerPluginId = PluginManagerCore.getPluginByClassName(CourseManager::class.java.name)
-  PluginManagerCore.getPlugin(featureTrainerPluginId)?.version ?: "UNKNOWN"
+internal val featureTrainerVersion: String by lazy {
+  PluginManager.getPluginByClass(CourseManager::class.java)?.version ?: "UNKNOWN"
 }
 
-fun clearTrainingProgress() {
+val adaptToNotNativeLocalization: Boolean
+  get() = Registry.`is`("ift.adapt.to.not.native.localization") || DynamicBundle.getLocale() != Locale.ENGLISH
+
+internal fun clearTrainingProgress() {
   LessonManager.instance.stopLesson()
   LessonStateManager.resetPassedStatus()
-  for (toolWindow in LearnToolWindowFactory.learnWindowPerProject.values) {
+  for (toolWindow in getAllLearnToolWindows()) {
     toolWindow.reinitViews()
     toolWindow.setModulesPanel()
   }
   LearningUiManager.activeToolWindow = null
 }
 
-fun resetPrimaryLanguage(activeLangSupport: LangSupport): Boolean {
-  val old = LangManager.getInstance().getLangSupport()
-  if (activeLangSupport != old) {
+internal fun resetPrimaryLanguage(newLanguageId: String): Boolean {
+  val oldLanguageId = LangManager.getInstance().getLanguageId()
+  if (newLanguageId != oldLanguageId) {
     LessonManager.instance.stopLesson()
-    LangManager.getInstance().updateLangSupport(activeLangSupport)
+    LangManager.getInstance().updateLangSupport(newLanguageId)
     LearningUiManager.activeToolWindow?.setModulesPanel()
     return true
   }
@@ -99,31 +119,38 @@ fun resetPrimaryLanguage(activeLangSupport: LangSupport): Boolean {
 }
 
 fun findLanguageSupport(project: Project): LangSupport? {
-  val langSupport = LangManager.getInstance().getLangSupport() ?: return null
-  if (isLearningProject(project, langSupport)) {
-    return langSupport
+  val languageId = LangManager.getInstance().getLanguageId() ?: return null
+  if (isLearningProject(project, languageId)) {
+    return LangManager.getInstance().getLangSupport()
   }
   return null
 }
 
-fun isLearningProject(project: Project, langSupport: LangSupport): Boolean {
-  return FileUtil.pathsEqual(project.basePath, LangManager.getInstance().getLearningProjectPath(langSupport))
+fun isLearningProject(project: Project, languageId: String): Boolean {
+  return FileUtil.pathsEqual(project.basePath, LangManager.getInstance().getLearningProjectPath(languageId))
 }
 
 fun getFeedbackLink(langSupport: LangSupport, ownRegistry: Boolean): String? {
-  val suffix = langSupport.primaryLanguage.toLowerCase()
-  val needToShow = Registry.`is`("ift.show.feedback.link" + if (ownRegistry) ".$suffix" else "", false)
-  return if (needToShow) "https://surveys.jetbrains.com/s3/features-trainer-feedback-$suffix" else null
+  return getFeedbackLink(langSupport.primaryLanguage.lowercase(), ownRegistry)
+}
+
+fun getFeedbackLink(langName: String, ownRegistry: Boolean): String? {
+  val needToShow = Registry.`is`("ift.show.feedback.link" + if (ownRegistry) ".$langName" else "", false)
+  return if (needToShow) "https://surveys.jetbrains.com/s3/features-trainer-feedback-$langName" else null
 }
 
 val switchOnExperimentalLessons: Boolean
   get() = Registry.`is`("ift.experimental.lessons", false)
 
+val enableLessonsAndPromoters: Boolean
+  get() = ExperimentalUI.isNewUI() || Registry.`is`("ift.enable.in.old.ui", false) || PlatformUtils.isDataSpell()
+
 fun invokeActionForFocusContext(action: AnAction) {
   DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
     invokeLater {
       val event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.LEARN_TOOLWINDOW, dataContext)
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext)
+      event.presentation.isPerformGroup = true
+      performActionDumbAwareWithCallbacks(action, event)
     }
   }
 }
@@ -157,8 +184,18 @@ fun scaledRigid(width: Int, height: Int): Component {
   }
 }
 
-fun lessonOpenedInProject(project: Project?): Lesson? {
-  return if (LearnToolWindowFactory.learnWindowPerProject[project] != null) LessonManager.instance.currentLesson else null
+internal fun getLearnToolWindowForProject(project: Project): LearnToolWindow? {
+  val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW) ?: return null
+  val jComponent = toolWindow.contentManagerIfCreated?.contents?.singleOrNull()?.component
+  return jComponent as? LearnToolWindow
+}
+
+internal fun getAllLearnToolWindows(): List<LearnToolWindow> {
+  return ProjectUtilCore.getOpenProjects().mapNotNull { getLearnToolWindowForProject(it) }
+}
+
+internal fun lessonOpenedInProject(project: Project?): Lesson? {
+  return if (project != null && getLearnToolWindowForProject(project) != null) LessonManager.instance.currentLesson else null
 }
 
 fun getNextLessonForCurrent(): Lesson? {
@@ -190,3 +227,58 @@ fun learningProgressString(lessons: List<Lesson>): String {
   else
     LearnBundle.message("learn.module.progress", done, total)
 }
+
+fun learningToolWindow(project: Project): ToolWindow? {
+  return ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)
+}
+
+fun Any?.toNullableString(): String? {
+  return if (this == null) null else excludeNullCheck(toString())
+}
+
+fun Any?.isToStringContains(string: String): Boolean {
+  return this.toNullableString()?.contains(string) ?: false
+}
+
+fun getActionById(actionId: String): AnAction {
+  return ActionManager.getInstance().getAction(actionId)
+         ?: error("No action with id $actionId in ${ApplicationNamesInfo.getInstance().fullProductNameWithEdition}")
+}
+
+private fun excludeNullCheck(value: String?): String? {
+  return value
+}
+
+fun String.replaceSpacesWithNonBreakSpace(): String = this.replace(" ", StringUtil.NON_BREAK_SPACE)
+
+fun String.surroundWithNonBreakSpaces(): String {
+  val spaces = "${StringUtil.NON_BREAK_SPACE}${StringUtil.NON_BREAK_SPACE}"
+  return spaces + this + spaces
+}
+
+internal val iftPluginIsUsing: Boolean get() = LessonStateManager.getPassedLessonsNumber() >= 5
+
+internal const val SHOW_NEW_LESSONS_NOTIFICATION = "ift.show.new.lessons.notification"
+internal const val LEARNING_PANEL_OPENED_IN = "ift.learning.panel.opened.in"
+internal val learningPanelWasOpenedInCurrentVersion: Boolean
+  get() {
+    val savedValue = PropertiesComponent.getInstance().getValue(LEARNING_PANEL_OPENED_IN) ?: return false
+    val savedBuild = BuildNumber.fromString(savedValue) ?: return false
+    return savedBuild >= ApplicationInfo.getInstance().build
+  }
+
+internal fun filterUnseenLessons(newLessons: List<Lesson>): List<Lesson> {
+  val zeroBuild = BuildNumber("", 0, 0)
+  val maxSeenVersion = newLessons.filter { it.passed }.maxOfOrNull { lesson ->
+    lesson.properties.availableSince?.let { BuildNumber.fromString(it) }
+    ?: zeroBuild
+  }
+  val unseenLessons = if (maxSeenVersion == null) newLessons
+  else newLessons.filter { lesson ->
+    (lesson.properties.availableSince?.let { BuildNumber.fromString(it) } ?: zeroBuild) > maxSeenVersion
+  }
+  return unseenLessons
+}
+
+val iftNotificationGroup: NotificationGroup get() =
+  NotificationGroupManager.getInstance().getNotificationGroup("IDE Features Trainer")

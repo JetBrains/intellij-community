@@ -22,9 +22,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenConsole;
-import org.jetbrains.idea.maven.server.MavenServerConsole;
-
-import java.text.MessageFormat;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
 public abstract class MavenExecutor {
   final MavenRunnerParameters myParameters;
@@ -92,16 +90,16 @@ public abstract class MavenExecutor {
 
   protected boolean printExitSummary() {
     if (isCancelled()) {
-      myConsole.systemMessage(MavenServerConsole.LEVEL_INFO, RunnerBundle.message("maven.execution.aborted"), null);
+      myConsole.systemMessage(MavenServerConsoleIndicator.LEVEL_INFO, RunnerBundle.message("maven.execution.aborted"), null);
       return false;
     }
     else if (exitCode == 0) {
-      myConsole.systemMessage(MavenServerConsole.LEVEL_INFO, RunnerBundle.message("maven.execution.finished"), null);
+      myConsole.systemMessage(MavenServerConsoleIndicator.LEVEL_INFO, RunnerBundle.message("maven.execution.finished"), null);
       return true;
     }
     else {
       myConsole
-        .systemMessage(MavenServerConsole.LEVEL_ERROR, RunnerBundle.message("maven.execution.terminated.abnormally", exitCode), null);
+        .systemMessage(MavenServerConsoleIndicator.LEVEL_ERROR, RunnerBundle.message("maven.execution.terminated.abnormally", exitCode), null);
       return false;
     }
   }

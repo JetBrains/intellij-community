@@ -4,8 +4,8 @@
   <category>Build Tools</category>
   <vendor>JetBrains</vendor>
   <description>
-      <![CDATA[
-      Provides integration with <a href="http://www.gradle.org">Gradle</a> for automation of building, testing, publishing, and deployment of software packages.
+    <![CDATA[
+      Provides integration with <a href="https://www.gradle.org">Gradle</a> for automation of building, testing, publishing, and deployment of software packages.
       <ul>
       <li>Create a new Gradle project or import an existing Gradle project.</li>
       <li>Edit Gradle files with coding assistance (code completion, inspections, refactoring, and much more).</li>
@@ -40,22 +40,30 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.issueChecker" interface="org.jetbrains.plugins.gradle.issue.GradleIssueChecker"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.targetEnvironmentAware" interface="org.jetbrains.plugins.gradle.execution.target.GradleTargetEnvironmentAware"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName= "org.jetbrains.plugins.gradle.taskResultListener" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskResultListener"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.operationHelperExtension" interface="org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseResolverExtension"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.UnsupportedGradleVersionIssueChecker"/>
+    <issueChecker implementation="org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.IncompatibleGradleJdkIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleDaemonStartupIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleBuildCancelledIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleOutOfMemoryIssueChecker"/>
+    <operationHelperExtension implementation="org.jetbrains.plugins.gradle.service.execution.GradleExecutionMeasuringExtension"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
     <externalSystemUnlinkedProjectAware implementation="org.jetbrains.plugins.gradle.autolink.GradleUnlinkedProjectAware"/>
-    <externalSystemSettingsListener implementation="org.jetbrains.plugins.gradle.startup.GradleProjectSettingsUpdater"/>
+    <externalSystemSettingsListener id="gradle" implementation="org.jetbrains.plugins.gradle.startup.GradleProjectSettingsUpdater"/>
     <projectOpenProcessor id="gradle" implementation="org.jetbrains.plugins.gradle.service.project.open.GradleProjectOpenProcessor"/>
     <orderEnumerationHandlerFactory implementation="org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler$FactoryImpl"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.gradle.execution.GradleConsoleFilterProvider"/>
@@ -67,9 +75,13 @@
     <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.GradleExecutionConsoleManager"
                                            id="gradle"/>
 
+    <executionTargetLanguageRuntimeType implementation="org.jetbrains.plugins.gradle.execution.target.GradleRuntimeType" />
+
     <externalSystemWorkspaceContributor implementation="org.jetbrains.plugins.gradle.service.project.GradleWorkspaceContributor"/>
     <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.gradle.service.project.GradleTaskTriggersImporter"/>
     <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.gradle.service.project.ActionDelegateConfigImporter"/>
+    <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.gradle.service.project.IDEAProjectFilesPostProcessor"/>
+    <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.gradle.service.project.GenerateImlFilesSettings"/>
     <externalSystem.beforeRunTaskImporter implementation="org.jetbrains.plugins.gradle.service.project.GradleBeforeRunTaskImporter"/>
     <internalFileTemplate name="Gradle Build Script"/>
     <internalFileTemplate name="Gradle Build Script with wrapper"/>
@@ -85,52 +97,107 @@
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.GradleSourceSetDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.CompositeBuildDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService"/>
-    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.PerformanceTraceDataService"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.GradleExcludeBuildFilesDataService"/>
     <externalProjectStructureCustomizer implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectStructureCustomizer"/>
     <externalIconProvider key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.ui.GradleIconProvider"/>
-    <externalExecutionAware key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.GradleExecutionAware"/>
+    <externalExecutionAware id="gradleOnWsl" order="before gradle" key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.wsl.GradleOnWslExecutionAware"/>
+    <externalExecutionAware id="gradle" key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware"/>
     <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationExtension" order="last"/>
 
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
+    <externalSystemTaskNotificationListener
+      implementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager$BuildLayoutParametersCacheCleanupListener"/>
 
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager"
+                        serviceImplementation="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManagerImpl"/>
+
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper$SystemPropertiesAdjuster"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSystemSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilitySupportUpdater"/>
+
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettingsMigration$LegacyDefaultGradleProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettingsMigration"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.GradleNotification"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.task.ExecuteGradleTaskHistoryService"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleImportHintService"
                     configurationSchemaKey="importHint.gradle" />
+    <projectService serviceInterface="org.jetbrains.plugins.gradle.service.project.GradleTasksIndices"
+                    serviceImplementation="org.jetbrains.plugins.gradle.service.project.GradleTasksIndicesImpl"/>
     <createDirectoryCompletionContributor implementation="org.jetbrains.plugins.gradle.GradleDirectoryCompletionContributor"/>
+    <externalSystemContentRootContributor implementation="org.jetbrains.plugins.gradle.GradleContentRootContributor"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings$Service"/>
 
     <stepsBeforeRunProvider implementation="org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider" />
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>
 
+    <!--Gradle tool window -->
     <toolWindow id="Gradle" anchor="right" icon="GradleIcons.ToolWindowGradle"
                 factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"/>
+    <toolWindowExtractorMode id="Gradle" mode="mirror"/>
+    <externalSystemViewContributor id="gradle"
+                                   implementation="org.jetbrains.plugins.gradle.ui.GradleViewContributor"/>
 
     <copyPastePreProcessor implementation="org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor"/>
 
     <runAnything.executionProvider implementation="org.jetbrains.plugins.gradle.execution.GradleRunAnythingProvider" order="first"/>
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.plugins.gradle.statistics.GradleSettingsCollector"/>
-    <statistics.counterUsagesCollector groupId="build.gradle.actions" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.gradle.statistics.GradleExecutionPerformanceCollector"/>
+    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.gradle.statistics.GradleExecutionPerformanceCollector$TaskNameValidator"/>
+    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.gradle.statistics.GradleExecutionPerformanceCollector$TaskPluginValidator"/>
+
+    <externalSystem.runConfigurationEx implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationExtension"/>
     <externalSystem.runConfigurationImporter
-        implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationImporter"/>
+      implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationImporter"/>
+
+    <externalSystemDependencyAnalyzer implementation="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerExtension"/>
 
     <search.optionContributor implementation="org.jetbrains.plugins.gradle.config.GradleSearchableOptionContributor"/>
+
+    <registryKey defaultValue="https://download.jetbrains.com/resources/intellij/plugins/gradle/v1/compatibility.json"
+                 description="URL to get updates for gradle/jvm compatibility matrix" key="gradle.compatibility.config.url"/>
+
+    <registryKey defaultValue="14"
+                 description="Time to check in days for gradle compatibility update. Set to 0 to disable updates"
+                 key="gradle.compatibility.update.interval"/>
 
     <registryKey key="gradle.settings.showDeprecatedSettings" defaultValue="false"
                  description="Enables some deprecated setting in the Gradle settings dialog for troubleshooting"/>
     <registryKey key="gradle.tooling.custom.serializer" defaultValue="true"
                  description="Enable custom serialization of custom tooling objects"/>
-
+    <registryKey key="gradle.tooling.use.external.process" defaultValue="false"
+                 description="Enable running gradle tooling api out of IDE process"/>
+    <registryKey key="gradle.testLauncherAPI.enabled" defaultValue="true"
+                 description="Allow to use Test Launcher API to run tests when applicable"/>
+    <registryKey key="gradle.tooling.adjust.user.dir" defaultValue="true"
+                 description="Change IDE user.dir system property during the Gradle tooling API call to have expected Gradle daemon CWD."/>
+    <registryKey key="gradle.improved.hotswap.detection" defaultValue="false"
+                 description="Enable improved hotswap detection when build is delegated to Gradle"/>
+    <registryKey key="gradle.exclude.build.files.when.in.source.set" defaultValue="false"
+                 description="If build.gradle[.kts] and settings.gradle[.kts] files should be excluded from content root, if they are in source set"/>
+    <registryKey key="gradle.report.recently.saved.paths" defaultValue="true"
+                 description="Send information on recently saved files to Gradle Daemon right before executing a task"/>
+    <registryKey key="gradle.version.catalogs.dynamic.support" defaultValue="true"
+                 description="Enable experimental support of version catalogs based on after-sync gradle models"/>
+    <registryKey key="gradle.download.sources" defaultValue="false"
+                 description="Download sources of project dependencies during import"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
-    <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON"/>
+    <warmupConfigurator implementation="org.jetbrains.plugins.gradle.GradleWarmupConfigurator"/>
+    <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON" bundle="messages.GradleBundle" key="notification.group.gradle"/>
+    <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder"/>
+    <iconMapper mappingFile="GradleIconMappings.json"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="org.jetbrains.plugins.gradle.service.GradleInstallationManager$BuildLayoutParametersCacheCleanupListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="org.jetbrains.plugins.gradle.service.GradleInstallationManager$BuildLayoutParametersCacheCleanupListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+  </applicationListeners>
 
   <actions>
     <group id="Gradle.GenerateGroup">
@@ -138,13 +205,29 @@
     </group>
 
     <action id="Gradle.ExecuteTask" class="org.jetbrains.plugins.gradle.action.GradleExecuteTaskAction"
-            icon="GradleIcons.Gradle">
+            icon="AllIcons.Actions.Run_anything">
     </action>
     <action id="Gradle.ToggleOfflineAction" class="org.jetbrains.plugins.gradle.action.ToggleOfflineAction"
             icon="AllIcons.Actions.OfflineMode"/>
     <action id="Gradle.OpenProjectCompositeConfiguration" class="org.jetbrains.plugins.gradle.action.GradleOpenProjectCompositeConfigurationAction"/>
 
     <action id="Gradle.RefreshDependencies" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectDependenciesAction"/>
+
+    <action id="Gradle.ViewDependencyAnalyzer" class="org.jetbrains.plugins.gradle.dependency.analyzer.ViewDependencyAnalyzerAction"/>
+    <action id="Gradle.ToolbarDependencyAnalyzer" class="org.jetbrains.plugins.gradle.dependency.analyzer.ToolbarDependencyAnalyzerAction"/>
+    <action id="Gradle.ProjectViewDependencyAnalyzer" class="org.jetbrains.plugins.gradle.dependency.analyzer.ProjectViewDependencyAnalyzerAction">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="UML.Group"/>
+    </action>
+    <action id="Gradle.DependencyAnalyzer.OpenConfig" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerOpenConfigAction">
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyListGroup"/>
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
+    </action>
+    <action id="Gradle.DependencyAnalyzer.GoTo" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerGoToAction">
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyListGroup"/>
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
+    </action>
 
     <group id="Gradle.View.ActionsToolbar.LeftPanel">
       <separator/>
@@ -157,16 +240,35 @@
       <add-to-group group-id="ExternalSystemView.ActionsToolbar.RightPanel"/>
     </group>
 
-    <group id="Gradle.View.ProjectMenu">
+    <group id="Gradle.View.ActionsToolbar.CenterPanel">
+      <separator/>
       <reference id="Gradle.OpenProjectCompositeConfiguration"/>
-      <add-to-group group-id="ExternalSystemView.ProjectMenu"/>
+      <reference id="Gradle.ToolbarDependencyAnalyzer"/>
+      <separator/>
+      <add-to-group group-id="ExternalSystemView.ActionsToolbar.CenterPanel" anchor="last"/>
     </group>
 
-    <group id="Gradle.View.BaseProjectMenu">
+    <group id="Gradle.View.ProjectMenu">
       <separator/>
+      <reference id="Gradle.OpenProjectCompositeConfiguration"/>
       <reference id="Gradle.RefreshDependencies"/>
+      <reference id="Gradle.ViewDependencyAnalyzer"/>
       <separator/>
-      <add-to-group group-id="ExternalSystemView.BaseProjectMenu" anchor="last"/>
+      <add-to-group group-id="ExternalSystemView.ProjectMenu" anchor="last"/>
+    </group>
+
+    <group id="Gradle.View.ModuleMenu">
+      <separator/>
+      <reference id="Gradle.ViewDependencyAnalyzer"/>
+      <separator/>
+      <add-to-group group-id="ExternalSystemView.ModuleMenu" anchor="last"/>
+    </group>
+
+    <group id="Gradle.View.DependencyMenu">
+      <separator/>
+      <reference id="Gradle.ViewDependencyAnalyzer"/>
+      <separator/>
+      <add-to-group group-id="ExternalSystemView.DependencyMenu" anchor="last"/>
     </group>
 
     <action id="Gradle.ShowDaemons" class="org.jetbrains.plugins.gradle.internal.daemon.ShowGradleDaemonsAction"/>
@@ -176,4 +278,8 @@
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
     </action>
   </actions>
+  <projectListeners>
+    <listener class="org.jetbrains.plugins.gradle.service.GradleFileModificationListener"
+              topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+  </projectListeners>
 </idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 
-public class PsiInvalidElementAccessException extends RuntimeException implements ExceptionWithAttachments {
+public final class PsiInvalidElementAccessException extends RuntimeException implements ExceptionWithAttachments {
   private static final Key<Object> INVALIDATION_TRACE = Key.create("INVALIDATION_TRACE");
   private static final Key<Boolean> REPORTING_EXCEPTION = Key.create("REPORTING_EXCEPTION");
 
@@ -87,8 +87,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
                                                          : new Attachment("diagnostic.txt", trace.toString())};
   }
 
-  @Nullable
-  private static Object getPsiInvalidationTrace(@NotNull PsiElement element) {
+  private static @Nullable Object getPsiInvalidationTrace(@NotNull PsiElement element) {
     Object trace = getInvalidationTrace(element);
     if (trace != null) return trace;
 
@@ -98,10 +97,10 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     return findInvalidationTrace(element.getNode());
   }
 
-  private static String getMessageWithReason(@NotNull PsiElement element,
-                                             @Nullable String message,
-                                             boolean recursiveInvocation,
-                                             @Nullable Object trace) {
+  private static @NotNull String getMessageWithReason(@NotNull PsiElement element,
+                                                      @Nullable String message,
+                                                      boolean recursiveInvocation,
+                                                      @Nullable Object trace) {
     @NonNls String reason = "Element: " + element.getClass();
     if (!recursiveInvocation) {
       try {
@@ -120,8 +119,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     return reason + (message == null ? "" : "; " + message);
   }
 
-  @NotNull
-  private static Language getLanguage(@NotNull PsiElement element) {
+  private static @NotNull Language getLanguage(@NotNull PsiElement element) {
     return element instanceof ASTNode ? ((ASTNode)element).getElementType().getLanguage() : element.getLanguage();
   }
 
@@ -154,10 +152,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     return null;
   }
 
-  @SuppressWarnings("StringConcatenationInLoop")
-  @NonNls
-  @NotNull
-  public static String findOutInvalidationReason(@NotNull PsiElement root) {
+  public static @NonNls @NotNull String findOutInvalidationReason(@NotNull PsiElement root) {
     if (root == PsiUtilCore.NULL_PSI_ELEMENT) {
       return "NULL_PSI_ELEMENT";
     }
@@ -182,46 +177,47 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
 
     String hierarchy = "";
     while (element != null && !(element instanceof PsiFile)) {
-      hierarchy += (hierarchy.isEmpty() ? "," : "") + element.getClass();
+      //noinspection StringConcatenationInLoop
+      hierarchy += (hierarchy.isEmpty() ? "" : ", ") + element.getClass();
       lastParent = element;
       element = element.getParent();
     }
-    PsiFile file = (PsiFile)element;
-    if (file == null) {
+    PsiFile psiFile = (PsiFile)element;
+    if (psiFile == null) {
       PsiElement context = lastParent.getContext();
       return "containing file is null; hierarchy=" + hierarchy +
              ", context=" + context +
              ", contextFile=" + JBIterable.generate(context, PsiElement::getParent).find(e -> e instanceof PsiFile);
     }
 
-    FileViewProvider provider = file.getViewProvider();
+    FileViewProvider provider = psiFile.getViewProvider();
     VirtualFile vFile = provider.getVirtualFile();
     if (!vFile.isValid()) {
       return vFile + " is invalid";
     }
     if (!provider.isPhysical()) {
-      PsiElement context = file.getContext();
+      PsiElement context = psiFile.getContext();
       if (context != null && !context.isValid()) {
         return "invalid context: " + findOutInvalidationReason(context);
       }
     }
 
-    PsiFile original = file.getOriginalFile();
-    if (original != file && !original.isValid()) {
+    PsiFile original = psiFile.getOriginalFile();
+    if (original != psiFile && !original.isValid()) {
       return "invalid original: " + findOutInvalidationReason(original);
     }
 
-    PsiManager manager = file.getManager();
+    PsiManager manager = psiFile.getManager();
     if (manager.getProject().isDisposed()) {
       return "project is disposed: " + manager.getProject();
     }
 
-    Language language = file.getLanguage();
+    Language language = psiFile.getLanguage();
     if (language != provider.getBaseLanguage()) {
       return "File language:" + language + " != Provider base language:" + provider.getBaseLanguage();
     }
 
-    FileViewProvider p = manager.findViewProvider(vFile);
+    FileViewProvider p = manager.findCachedViewProvider(vFile);
     if (provider != p) {
       return "different providers: " + provider + "(" + id(provider) + "); " + p + "(" + id(p) + ")";
     }
@@ -233,7 +229,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     return "psi is outdated";
   }
 
-  private static String id(FileViewProvider provider) {
+  private static @NotNull String id(@Nullable FileViewProvider provider) {
     return Integer.toHexString(System.identityHashCode(provider));
   }
 
@@ -246,11 +242,10 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
   }
 
   public static boolean isTrackingInvalidation() {
-    return Registry.is("psi.track.invalidation");
+    return Registry.is("psi.track.invalidation", true);
   }
 
-  @Nullable
-  public PsiElement getPsiElement() {
+  public @Nullable PsiElement getPsiElement() {
     return myElementReference.get();
   }
 }

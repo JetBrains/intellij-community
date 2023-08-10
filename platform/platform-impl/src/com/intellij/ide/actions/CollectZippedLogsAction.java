@@ -1,12 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector;
+import com.intellij.ide.troubleshooting.DimensionServiceTroubleInfoCollectorKt;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.*;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.idea.LoggerFactory;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -15,140 +20,145 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.troubleshooting.TroubleInfoCollector;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.io.Compressor;
+import com.intellij.util.ui.IoErrorText;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 public class CollectZippedLogsAction extends AnAction implements DumbAware {
-
   private static final String CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog";
-  private static class Holder {
-    private static final NotificationGroup NOTIFICATION_GROUP =
-      new NotificationGroup("Collect Zipped Logs", NotificationDisplayType.BALLOON, true);
-  }
+  public static final String NOTIFICATION_GROUP = "Collect Zipped Logs";
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
-    final Project project = e.getProject();
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
 
-    final boolean doNotShowDialog = PropertiesComponent.getInstance().getBoolean(CONFIRMATION_DIALOG);
-
+    boolean doNotShowDialog = PropertiesComponent.getInstance().getBoolean(CONFIRMATION_DIALOG);
     if (!doNotShowDialog) {
-      if (!MessageDialogBuilder.okCancel(IdeBundle.message("dialog.title.sensitive.data"),
-                                         IdeBundle.message("message.included.logs.and.settings.may.contain.sensitive.data"))
-        .yesText(IdeBundle.message("button.show.in.file.manager", RevealFileAction.getFileManagerName()))
+      String title = IdeBundle.message("collect.logs.sensitive.title");
+      String message = IdeBundle.message("collect.logs.sensitive.text");
+      boolean confirmed = MessageDialogBuilder.okCancel(title, message)
+        .yesText(ActionsBundle.message("action.RevealIn.name.other", RevealFileAction.getFileManagerName()))
         .noText(CommonBundle.getCancelButtonText())
         .icon(Messages.getWarningIcon())
-        .doNotAsk(new DialogWrapper.DoNotAskOption.Adapter() {
+        .doNotAsk(new DoNotAskOption.Adapter() {
           @Override
-          public void rememberChoice(final boolean selected, final int exitCode) {
+          public void rememberChoice(boolean selected, int exitCode) {
             PropertiesComponent.getInstance().setValue(CONFIRMATION_DIALOG, selected);
           }
         })
-        .ask(project)) {
+        .ask(project);
+      if (!confirmed) {
         return;
       }
     }
+
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
-        final File zippedLogsFile = createZip(project, compressor -> {});
+        Path logs = packLogs(project);
         if (RevealFileAction.isSupported()) {
-          RevealFileAction.openFile(zippedLogsFile);
+          RevealFileAction.openFile(logs);
         }
         else {
-          final Notification logNotification = new Notification(Holder.NOTIFICATION_GROUP.getDisplayId(),
-                                                                "",
-                                                                IdeBundle.message("notification.content.log.file.is.created.0",
-                                                                                  zippedLogsFile.getAbsolutePath()),
-                                                                NotificationType.INFORMATION);
-          Notifications.Bus.notify(logNotification);
+          new Notification(NOTIFICATION_GROUP, IdeBundle.message("collect.logs.notification.success", logs), NotificationType.INFORMATION).notify(project);
         }
       }
-      catch (final IOException exception) {
-        Logger.getInstance(getClass()).warn(exception);
-
-        final Notification errorNotification = new Notification(Holder.NOTIFICATION_GROUP.getDisplayId(),
-                                                                "",
-                                                                IdeBundle.message("notification.content.can.t.create.zip.file.with.logs.0",
-                                                                                  exception.getLocalizedMessage()),
-                                                                NotificationType.ERROR);
-        Notifications.Bus.notify(errorNotification);
+      catch (IOException x) {
+        Logger.getInstance(getClass()).warn(x);
+        String message = IdeBundle.message("collect.logs.notification.error", IoErrorText.message(x));
+        new Notification(NOTIFICATION_GROUP, message, NotificationType.ERROR).notify(project);
       }
-    }, IdeBundle.message("progress.title.collecting.logs"), true, project);
+    }, IdeBundle.message("collect.logs.progress.title"), true, project);
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public static File createZip(@Nullable Project project,
-                               @NotNull Consumer<? super @NotNull Compressor> additionalFiles) throws IOException {
-    PerformanceWatcher.getInstance().dumpThreads("", false);
+  @RequiresBackgroundThread
+  public static @NotNull Path packLogs(@Nullable Project project) throws IOException {
+    return packLogs(project, compressor -> { });
+  }
 
-    String productName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getLowercaseProductName());
-    File zippedLogsFile = FileUtil.createTempFile(productName + "-logs-" + getDate(), ".zip");
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  public static @NotNull Path packLogs(@Nullable Project project, @NotNull Consumer<? super Compressor> additionalFiles) throws IOException {
+    PerformanceWatcher.getInstance().dumpThreads("", false, false);
 
-    try (Compressor zip = new Compressor.Zip(zippedLogsFile)) {
-      // Add additional files before logs folder to collect any logging
-      // happened in additionalFiles.accept
+    String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.ENGLISH);
+    String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+    Path archive = Files.createTempFile(productName + "-logs-" + date, ".zip");
+
+    try (Compressor zip = new Compressor.Zip(archive)) {
+      // packing additional files before logs, to collect any problems happening in the process
       ProgressManager.checkCanceled();
       additionalFiles.accept(zip);
 
       ProgressManager.checkCanceled();
-      zip.addDirectory(new File(PathManager.getLogPath()));
+      Path logs = PathManager.getLogDir(), caches = PathManager.getSystemDir();
+      if (Files.isSameFile(logs, caches)) {
+        throw new IOException("cannot collect logs, because log directory set to be the same as the 'system' one: " + logs);
+      }
+      if (Logger.getFactory() instanceof LoggerFactory lf) {
+        lf.flushHandlers();
+      }
+      zip.addDirectory(logs);
 
-      StringBuilder troubleshooting = collectInfoFromExtensions(project);
-      if (troubleshooting != null) {
-        ProgressManager.checkCanceled();
-        zip.addFile("troubleshooting.txt", troubleshooting.toString().getBytes(StandardCharsets.UTF_8));
+      ProgressManager.checkCanceled();
+      if (project != null) {
+        StringBuilder settings = new StringBuilder();
+        settings.append(new CompositeGeneralTroubleInfoCollector().collectInfo(project));
+        for (TroubleInfoCollector troubleInfoCollector : TroubleInfoCollector.EP_SETTINGS.getExtensions()) {
+          ProgressManager.checkCanceled();
+          settings.append(troubleInfoCollector.collectInfo(project)).append('\n');
+        }
+        zip.addFile("troubleshooting.txt", settings.toString().getBytes(StandardCharsets.UTF_8));
+        zip.addFile(
+          "dimension.txt",
+          DimensionServiceTroubleInfoCollectorKt.collectDimensionServiceDiagnosticsData(project).getBytes(StandardCharsets.UTF_8)
+        );
       }
 
-      for (File javaErrorLog : getJavaErrorLogs()) {
-        ProgressManager.checkCanceled();
-        zip.addFile(javaErrorLog.getName(), javaErrorLog);
+      // JVM crash logs
+      try (DirectoryStream<Path> paths = Files.newDirectoryStream(Path.of(SystemProperties.getUserHome()))) {
+        for (Path path : paths) {
+          ProgressManager.checkCanceled();
+          String name = path.getFileName().toString();
+          if ((name.startsWith("java_error_in") || name.startsWith("jbr_err_pid")) && !name.endsWith("hprof") && Files.isRegularFile(path)) {
+            zip.addFile(name, path);
+          }
+        }
       }
     }
-    catch (Exception exception) {
-      FileUtil.delete(zippedLogsFile);
-      throw exception;
-    }
-
-    return zippedLogsFile;
-  }
-
-  @Nullable
-  private static StringBuilder collectInfoFromExtensions(@Nullable Project project) {
-    StringBuilder settings = null;
-    if (project != null) {
-      settings = new StringBuilder();
-      settings.append(new CompositeGeneralTroubleInfoCollector().collectInfo(project));
-      for (TroubleInfoCollector troubleInfoCollector : TroubleInfoCollector.EP_SETTINGS.getExtensions()) {
-        settings.append(troubleInfoCollector.collectInfo(project)).append('\n');
+    catch (IOException e) {
+      try {
+        Files.delete(archive);
       }
+      catch (IOException x) {
+        e.addSuppressed(x);
+      }
+      throw e;
     }
-    return settings;
+
+    return archive;
   }
 
-  private static File[] getJavaErrorLogs() {
-    return new File(SystemProperties.getUserHome())
-      .listFiles(file -> file.isFile() && file.getName().startsWith("java_error_in") && !file.getName().endsWith("hprof"));
-  }
-
-  @NotNull
-  private static String getDate() {
-    return new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

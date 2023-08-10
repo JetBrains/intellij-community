@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -16,8 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
   public static ChangeListsScopesProvider getInstance(Project project) {
     return CUSTOM_SCOPES_PROVIDER.findExtension(ChangeListsScopesProvider.class, project);
@@ -27,17 +27,19 @@ public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public List<NamedScope> getCustomScopes() {
-    if (myProject.isDefault() || !ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return Collections.emptyList();
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+  public @NotNull List<NamedScope> getCustomScopes() {
+    if (myProject.isDefault() || !ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
+      return Collections.emptyList();
+    }
 
-    final List<NamedScope> result = new ArrayList<>();
+    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+
+    List<NamedScope> result = new ArrayList<>();
     result.add(new ChangeListScope(changeListManager));
 
-    if (changeListManager.areChangeListsEnabled()) {
-      List<LocalChangeList> changeLists = changeListManager.getChangeListsCopy();
+    if (ChangesUtil.hasMeaningfulChangelists(myProject)) {
+      List<LocalChangeList> changeLists = changeListManager.getChangeLists();
       boolean skipSingleDefaultCL = Registry.is("vcs.skip.single.default.changelist") &&
                                     changeLists.size() == 1 && changeLists.get(0).isBlank();
       if (!skipSingleDefaultCL) {
@@ -56,7 +58,7 @@ public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
     if (ChangeListScope.ALL_CHANGED_FILES_SCOPE_NAME.equals(name)) {
       return new ChangeListScope(changeListManager);
     }
-    if (changeListManager.areChangeListsEnabled()) {
+    if (ChangesUtil.hasMeaningfulChangelists(myProject)) {
       final LocalChangeList changeList = changeListManager.findChangeList(name);
       if (changeList != null) {
         return new ChangeListScope(changeListManager, changeList.getName());

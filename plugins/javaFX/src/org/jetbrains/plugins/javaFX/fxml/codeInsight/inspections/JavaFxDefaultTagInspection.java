@@ -41,7 +41,7 @@ public class JavaFxDefaultTagInspection extends XmlSuppressableInspectionTool{
 
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         super.visitXmlTag(tag);
         final XmlElementDescriptor descriptor = tag.getDescriptor();
         if (descriptor instanceof JavaFxPropertyTagDescriptor) {

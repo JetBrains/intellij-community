@@ -13,7 +13,10 @@ from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_comm import InternalDataViewerAction
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
-from pydev_console.pydev_protocol import CompletionOption, CompletionOptionType, PythonUnhandledException
+from _pydevd_bundle.pydevd_tables import exec_table_command
+from _pydevd_bundle.pydevd_user_type_renderers import parse_set_type_renderers_message
+from pydev_console.pydev_protocol import CompletionOption, CompletionOptionType, \
+    PythonUnhandledException, PythonTableException
 
 try:
     import cStringIO as StringIO  # may not always be available @UnusedImport
@@ -97,8 +100,10 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         self.mainThread = mainThread
         self.banner_shown = False
         self.connect_status_queue = connect_status_queue
+        self.user_type_renderers = {}
 
         self.rpc_client = rpc_client
+        self._first_command_executed = False
 
     def build_banner(self):
         return 'print({0})\n'.format(repr(self.get_greeting_msg()))
@@ -147,53 +152,6 @@ class BaseInterpreterInterface(BaseCodeExecutor):
             traceback.print_exc()
             raise PythonUnhandledException(traceback.format_exc())
 
-    def interrupt(self):
-        self.buffer = None  # Also clear the buffer when it's interrupted.
-        try:
-            if self.interruptable:
-                called = False
-                try:
-                    # Fix for #PyDev-500: Console interrupt can't interrupt on sleep
-                    if os.name == 'posix':
-                        # On Linux we can't interrupt 0 as in Windows because it's
-                        # actually owned by a process -- on the good side, signals
-                        # work much better on Linux!
-                        os.kill(os.getpid(), signal.SIGINT)
-                        called = True
-
-                    elif os.name == 'nt':
-                        # Stupid windows: sending a Ctrl+C to a process given its pid
-                        # is absurdly difficult.
-                        # There are utilities to make it work such as
-                        # http://www.latenighthacking.com/projects/2003/sendSignal/
-                        # but fortunately for us, it seems Python does allow a CTRL_C_EVENT
-                        # for the current process in Windows if pid 0 is passed... if we needed
-                        # to send a signal to another process the approach would be
-                        # much more difficult.
-                        # Still, note that CTRL_C_EVENT is only Python 2.7 onwards...
-                        # Also, this doesn't seem to be documented anywhere!? (stumbled
-                        # upon it by chance after digging quite a lot).
-                        os.kill(0, signal.CTRL_C_EVENT)
-                        called = True
-                except:
-                    # Many things to go wrong (from CTRL_C_EVENT not being there
-                    # to failing import signal)... if that's the case, ask for
-                    # forgiveness and go on to the approach which will interrupt
-                    # the main thread (but it'll only work when it's executing some Python
-                    # code -- not on sleep() for instance).
-                    pass
-
-                if not called:
-                    if hasattr(thread, 'interrupt_main'):  # Jython doesn't have it
-                        thread.interrupt_main()
-                    else:
-                        self.mainThread._thread.interrupt()  # Jython
-            self.finish_exec(False)
-            return True
-        except:
-            traceback.print_exc()
-            return False
-
     def close(self):
         sys.exit(0)
 
@@ -210,28 +168,36 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         if server is not None:
             server.showConsole()
 
-    def finish_exec(self, more):
+    def notify_first_command_executed(self):
+        pass
+
+    def finish_exec(self, more, exception_occurred):
         self.interruptable = False
+
+        if not self._first_command_executed:
+            self.notify_first_command_executed()
+            self._first_command_executed = True
 
         server = self.get_server()
 
         if server is not None:
-            return server.notifyFinished(more)
+            return server.notifyFinished(more, exception_occurred)
         else:
             return True
 
-    def getFrame(self):
+    def getFrame(self, group_type):
         try:
             hidden_ns = self.get_ipython_hidden_vars_dict()
-            return pydevd_thrift.frame_vars_to_struct(self.get_namespace(), hidden_ns)
+            return pydevd_thrift.frame_vars_to_struct(self.get_namespace(), group_type, hidden_ns, self.user_type_renderers)
         except:
             traceback.print_exc()
             raise PythonUnhandledException(traceback.format_exc())
 
     def getVariable(self, attributes):
         try:
+            namespace = self.get_namespace()
             debug_values = []
-            val_dict = pydevd_vars.resolve_compound_var_object_fields(self.get_namespace(), attributes)
+            val_dict = pydevd_vars.resolve_compound_var_object_fields(namespace, attributes, self.user_type_renderers)
             if val_dict is None:
                 val_dict = {}
 
@@ -239,7 +205,7 @@ class BaseInterpreterInterface(BaseCodeExecutor):
             for k in keys:
                 val = val_dict[k]
                 evaluate_full_value = pydevd_thrift.should_evaluate_full_value(val)
-                debug_values.append(pydevd_thrift.var_to_struct(val, k, evaluate_full_value=evaluate_full_value))
+                debug_values.append(pydevd_thrift.var_to_struct(val, k, evaluate_full_value=evaluate_full_value, user_type_renderers=self.user_type_renderers))
 
             return debug_values
         except:
@@ -255,6 +221,15 @@ class BaseInterpreterInterface(BaseCodeExecutor):
             traceback.print_exc()
             raise PythonUnhandledException(traceback.format_exc())
 
+    def setUserTypeRenderers(self, message):
+        try:
+            renderers = parse_set_type_renderers_message(message)
+            self.user_type_renderers = renderers
+            return True
+        except:
+            traceback.print_exc()
+            raise PythonUnhandledException(traceback.format_exc())
+
     def execDataViewerAction(self, varName, action, args):
         try:
             tmp_var = pydevd_vars.eval_in_context(varName, self.get_namespace(), self.get_namespace())
@@ -266,8 +241,9 @@ class BaseInterpreterInterface(BaseCodeExecutor):
     def evaluate(self, expression, do_trunc):
         # returns `DebugValue` of evaluated expression
         try:
-            result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
-            return [pydevd_thrift.var_to_struct(result, expression, do_trim=do_trunc)]
+            namespace = self.get_namespace()
+            result = pydevd_vars.eval_in_context(expression, namespace, namespace)
+            return [pydevd_thrift.var_to_struct(result, expression, do_trim=do_trunc, user_type_renderers=self.user_type_renderers)]
         except:
             traceback.print_exc()
             raise PythonUnhandledException(traceback.format_exc())
@@ -329,13 +305,13 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                     attrs = None
                 if name in frame_variables.keys():
                     var_object = pydevd_vars.resolve_var_object(frame_variables[name], attrs)
-                    var_objects.append((var_object, name))
                 else:
                     var_object = pydevd_vars.eval_in_context(name, frame_variables, frame_variables)
-                    var_objects.append((var_object, name))
+
+                var_objects.append((var_object, name))
 
             from _pydev_bundle.pydev_console_commands import ThriftGetValueAsyncThreadConsole
-            t = ThriftGetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
+            t = ThriftGetValueAsyncThreadConsole(self.get_server(), seq, var_objects, self.user_type_renderers)
             t.start()
         except:
             traceback.print_exc()
@@ -399,7 +375,7 @@ class BaseInterpreterInterface(BaseCodeExecutor):
 
                 from _pydevd_bundle.pydevd_constants import set_thread_id
                 from _pydev_bundle import pydev_localhost
-                set_thread_id(threading.currentThread(), "console_main")
+                set_thread_id(threading.current_thread(), "console_main")
 
                 self.orig_find_frame = pydevd_vars.find_frame
                 pydevd_vars.find_frame = self._findFrame
@@ -425,7 +401,8 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                     pydevconsole.set_debug_hook(self.debugger.process_internal_commands)
                 except:
                     traceback.print_exc()
-                    sys.stderr.write('Version of Python does not support debuggable Interactive Console.\n')
+                    sys.stderr.write(
+                        'Version of Python does not support debuggable Interactive Console.\n')
 
             # Important: it has to be really enabled in the main thread, so, schedule
             # it to run in the main thread.
@@ -434,6 +411,27 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         except:
             traceback.print_exc()
             raise PythonUnhandledException(traceback.format_exc())
+
+    #
+    def execTableCommand(self, command, command_type, start_index, end_index):
+        try:
+            try:
+                start_index = int(start_index)
+                end_index = int(end_index)
+            except ValueError:
+                start_index = None
+                end_index = None
+            success, res = exec_table_command(command, command_type,
+                                              start_index, end_index,
+                                              self.get_namespace(),
+                                              self.get_namespace())
+            if success:
+                return res
+        except:
+            traceback.print_exc()
+            raise PythonUnhandledException(traceback.format_exc())
+        if not success:
+            raise PythonTableException(str(res))
 
     def handshake(self):
         if self.connect_status_queue is not None:

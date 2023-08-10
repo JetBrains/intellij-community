@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
-import com.google.common.collect.ImmutableList;
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider;
 import com.intellij.ide.structureView.impl.java.JavaLambdaNodeProvider;
 import com.intellij.ide.ui.UISettings;
@@ -28,7 +27,7 @@ import static com.intellij.psi.util.PsiFormatUtilBase.*;
  * @author anna
  */
 public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
-  private final List<NodeProvider<?>> myNodeProviders = ImmutableList.of(new JavaLambdaNodeProvider(), new JavaAnonymousClassesNodeProvider());
+  private static final List<NodeProvider<?>> myNodeProviders = List.of(new JavaLambdaNodeProvider(), new JavaAnonymousClassesNodeProvider());
 
   @Nullable
   @Override
@@ -38,20 +37,20 @@ public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
 
   @Override
   public String getPresentableText(final Object object, boolean forPopup) {
-    if (object instanceof PsiMember) {
-      if (forPopup && object instanceof PsiMethod) {
-        return PsiFormatUtil.formatMethod((PsiMethod)object,
+    if (object instanceof PsiMember member) {
+      if (forPopup && object instanceof PsiMethod method) {
+        return PsiFormatUtil.formatMethod(method,
                                           PsiSubstitutor.EMPTY,
                                           SHOW_NAME | TYPE_AFTER | SHOW_PARAMETERS,
                                           SHOW_TYPE);
       }
-      return ElementDescriptionUtil.getElementDescription((PsiElement)object, UsageViewShortNameLocation.INSTANCE);
+      return ElementDescriptionUtil.getElementDescription(member, UsageViewShortNameLocation.INSTANCE);
     }
-    else if (object instanceof PsiPackage) {
-      final String name = ((PsiPackage)object).getName();
+    else if (object instanceof PsiPackage psiPackage) {
+      final String name = psiPackage.getName();
       return name != null ? name : JavaBundle.message("dependencies.tree.node.default.package.abbreviation");
     }
-    else if (object instanceof PsiDirectory && JrtFileSystem.isRoot(((PsiDirectory)object).getVirtualFile())) {
+    else if (object instanceof PsiDirectory directory && JrtFileSystem.isRoot(directory.getVirtualFile())) {
       return JavaBundle.message("jrt.node.short");
     }
     else if (object instanceof PsiLambdaExpression) {
@@ -62,9 +61,9 @@ public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
 
   @Override
   public PsiElement getParent(final PsiElement psiElement) {
-    if (psiElement instanceof PsiPackage) {
-      final PsiPackage parentPackage = ((PsiPackage)psiElement).getParentPackage();
-      if (parentPackage != null && parentPackage.getQualifiedName().length() > 0) {
+    if (psiElement instanceof PsiPackage psiPackage) {
+      final PsiPackage parentPackage = psiPackage.getParentPackage();
+      if (parentPackage != null && !parentPackage.getQualifiedName().isEmpty()) {
         return parentPackage;
       }
     }
@@ -80,13 +79,10 @@ public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
       final VirtualFile file = containingFile.getVirtualFile();
       if (file != null &&
           (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibrary(file))) {
-        if (psiElement instanceof PsiJavaFile) {
-          final PsiJavaFile psiJavaFile = (PsiJavaFile)psiElement;
-          if (psiJavaFile.getViewProvider().getBaseLanguage() == JavaLanguage.INSTANCE) {
-            final PsiClass[] psiClasses = psiJavaFile.getClasses();
-            if (psiClasses.length == 1) {
-              return psiClasses[0];
-            }
+        if (psiElement instanceof PsiJavaFile psiJavaFile && psiJavaFile.getViewProvider().getBaseLanguage() == JavaLanguage.INSTANCE) {
+          final PsiClass[] psiClasses = psiJavaFile.getClasses();
+          if (psiClasses.length == 1) {
+            return psiClasses[0];
           }
         }
         if (!UISettings.getInstance().getShowMembersInNavigationBar() && psiElement instanceof PsiClass) {
@@ -114,8 +110,8 @@ public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
 
   @Override
   protected boolean acceptParentFromModel(@Nullable PsiElement psiElement) {
-    if (psiElement instanceof PsiJavaFile) {
-      return ((PsiJavaFile) psiElement).getClasses().length > 1;
+    if (psiElement instanceof PsiJavaFile javaFile) {
+      return javaFile.getClasses().length > 1;
     }
     return true;
   }

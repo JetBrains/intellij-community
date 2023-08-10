@@ -17,9 +17,6 @@ package com.intellij.facet;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public interface FacetAsVirtualFile {
 
   @Nullable

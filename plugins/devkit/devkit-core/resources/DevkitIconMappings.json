@@ -1,0 +1,14 @@
+{
+  "icons": {
+    "expui": {
+      "gutter": {
+        "descriptionFile@14x14.svg": "icons/gutter/descriptionFile.svg",
+        "diff@14x14.svg": "icons/gutter/diff.svg",
+        "plugin@14x14.svg": "icons/gutter/plugin.svg",
+        "properties@14x14.svg": "icons/gutter/properties.svg"
+      },
+      "addSDK.svg": "icons/add_sdk.svg",
+      "sdkClosed.svg": "icons/sdk_closed.svg"
+    }
+  }
+}

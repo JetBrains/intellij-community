@@ -1,0 +1,2 @@
+bleach.css_sanitizer  # Requires tinycss2 to be installed
+bleach.html5lib_shim.*

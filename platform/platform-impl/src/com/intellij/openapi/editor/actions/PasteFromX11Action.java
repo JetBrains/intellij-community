@@ -42,9 +42,8 @@ public class PasteFromX11Action extends EditorAction {
     else {
       boolean rightPlace = true;
       final InputEvent inputEvent = e.getInputEvent();
-      if (inputEvent instanceof MouseEvent) {
+      if (inputEvent instanceof MouseEvent me) {
         rightPlace = false;
-        final MouseEvent me = (MouseEvent)inputEvent;
         if (dataContext.getData(EditorGutter.KEY) == null) {
           final Component component = SwingUtilities.getDeepestComponentAt(me.getComponent(), me.getX(), me.getY());
           rightPlace = !(component instanceof JScrollBar);

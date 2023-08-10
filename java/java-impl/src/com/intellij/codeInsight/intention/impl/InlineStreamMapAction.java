@@ -1,23 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
+public class InlineStreamMapAction extends PsiUpdateModCommandAction<PsiIdentifier> {
   private static final Logger LOG = Logger.getInstance(InlineStreamMapAction.class.getName());
   public static final class Holder {
     private static final Set<String> MAP_METHODS =
@@ -35,22 +35,23 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
       .of("flatMap", "flatMapToInt", "flatMapToLong", "flatMapToDouble", "forEach", "forEachOrdered", "anyMatch", "noneMatch", "allMatch")
       .append(MAP_METHODS).toSet();
   }
+  
+  public InlineStreamMapAction() {
+    super(PsiIdentifier.class);
+  }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull final PsiElement element) {
-    if (!(element instanceof PsiIdentifier)) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiIdentifier element) {
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiReferenceExpression)) return false;
+    if (!(parent instanceof PsiReferenceExpression)) return null;
     final PsiElement gParent = parent.getParent();
-    if (!(gParent instanceof PsiMethodCallExpression)) return false;
-    PsiMethodCallExpression curCall = (PsiMethodCallExpression)gParent;
-    if (!isMapCall(curCall)) return false;
+    if (!(gParent instanceof PsiMethodCallExpression curCall)) return null;
+    if (!isMapCall(curCall)) return null;
     PsiMethodCallExpression nextCall = getNextExpressionToMerge(curCall);
-    if(nextCall == null) return false;
+    if(nextCall == null) return null;
     String key = curCall.getArgumentList().isEmpty() || nextCall.getArgumentList().isEmpty() ?
                  "intention.inline.map.merge.text" : "intention.inline.map.inline.text";
-    setText(JavaBundle.message(key, element.getText(), nextCall.getMethodExpression().getReferenceName()));
-    return true;
+    return Presentation.of(JavaBundle.message(key, element.getText(), nextCall.getMethodExpression().getReferenceName()));
   }
 
   private static boolean isMapCall(@NotNull PsiMethodCallExpression methodCallExpression) {
@@ -120,18 +121,13 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
       String nextClassName = nextClass.getQualifiedName();
       if(nextClassName == null) return null;
       if(prevClassName.equals(nextClassName)) return "map";
-      switch(nextClassName) {
-        case CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM:
-          return "mapToInt";
-        case CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM:
-          return "mapToLong";
-        case CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM:
-          return "mapToDouble";
-        case CommonClassNames.JAVA_UTIL_STREAM_STREAM:
-          return "mapToObj";
-        default:
-          return null;
-      }
+      return switch (nextClassName) {
+        case CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM -> "mapToInt";
+        case CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM -> "mapToLong";
+        case CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM -> "mapToDouble";
+        case CommonClassNames.JAVA_UTIL_STREAM_STREAM -> "mapToObj";
+        default -> null;
+      };
     }
     if(nextName.equals("flatMap") && prevClassName.equals(CommonClassNames.JAVA_UTIL_STREAM_STREAM)) {
       return mapToFlatMap(prevName);
@@ -142,33 +138,26 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
   @Contract(pure = true)
   @Nullable
   private static String mapToFlatMap(String mapMethod) {
-    switch (mapMethod) {
-      case "map":
-        return "flatMap";
-      case "mapToInt":
-        return "flatMapToInt";
-      case "mapToLong":
-        return "flatMapToLong";
-      case "mapToDouble":
-        return "flatMapToDouble";
-    }
-    // Something unsupported passed: ignore
-    return null;
+    return switch (mapMethod) {
+      case "map" -> "flatMap";
+      case "mapToInt" -> "flatMapToInt";
+      case "mapToLong" -> "flatMapToLong";
+      case "mapToDouble" -> "flatMapToDouble";
+      default ->
+        // Something unsupported passed: ignore
+        null;
+    };
   }
 
   @Contract(pure = true)
   @NotNull
   private static String translateMap(String nextMethod) {
-    switch (nextMethod) {
-      case "boxed":
-        return "mapToObj";
-      case "asLongStream":
-        return "mapToLong";
-      case "asDoubleStream":
-        return "mapToDouble";
-      default:
-        return nextMethod;
-    }
+    return switch (nextMethod) {
+      case "boxed" -> "mapToObj";
+      case "asLongStream" -> "mapToLong";
+      case "asDoubleStream" -> "mapToDouble";
+      default -> nextMethod;
+    };
   }
 
   @Override
@@ -178,7 +167,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiIdentifier element, @NotNull ModPsiUpdater updater) {
     PsiMethodCallExpression mapCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     if(mapCall == null) return;
 
@@ -203,7 +192,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
 
     CommentTracker ct = new CommentTracker();
 
-    if(!lambda.isPhysical()) {
+    if (lambda.getContainingFile() instanceof DummyHolder) {
       lambda = (PsiLambdaExpression)nextCall.getArgumentList().add(lambda);
     }
     PsiElement body = lambda.getBody();
@@ -214,18 +203,17 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     LOG.assertTrue(nextParameters.length == 1);
     PsiParameter[] prevParameters = previousLambda.getParameterList().getParameters();
     LOG.assertTrue(prevParameters.length == 1);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    for(PsiReference ref : ReferencesSearch.search(nextParameters[0], new LocalSearchScope(body)).findAll()) {
-      PsiElement e = ref.getElement();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
+    for(PsiReferenceExpression ref : VariableAccessUtils.getVariableReferences(nextParameters[0], body)) {
       PsiExpression replacement = ct.markUnchanged(previousBody);
-      if (e.getParent() instanceof PsiExpression &&
-          ParenthesesUtils.areParenthesesNeeded(previousBody, (PsiExpression)e.getParent(), false)) {
-        replacement = factory.createExpressionFromText("(a)", e);
+      if (ref.getParent() instanceof PsiExpression &&
+          ParenthesesUtils.areParenthesesNeeded(previousBody, (PsiExpression)ref.getParent(), false)) {
+        replacement = factory.createExpressionFromText("(a)", ref);
         PsiExpression parenthesized = ((PsiParenthesizedExpression)replacement).getExpression();
         LOG.assertTrue(parenthesized != null);
         parenthesized.replace(previousBody);
       }
-      ct.replace(e, replacement);
+      ct.replace(ref, replacement);
     }
     ct.replace(lambda.getParameterList(), previousLambda.getParameterList());
     ExpressionUtils.bindReferenceTo(nextRef, newName);
@@ -235,7 +223,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     } else {
       ct.replaceAndRestoreComments(nextQualifier, prevQualifier);
     }
-    CodeStyleManager.getInstance(project).reformat(lambda);
+    CodeStyleManager.getInstance(context.project()).reformat(lambda);
   }
 
   @Nullable
@@ -259,20 +247,21 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     String varName;
     String type;
     switch (className) {
-      case CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM:
+      case CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM -> {
         varName = "i";
         type = CommonClassNames.JAVA_LANG_INTEGER;
-        break;
-      case CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM:
+      }
+      case CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM -> {
         varName = "l";
         type = CommonClassNames.JAVA_LANG_LONG;
-        break;
-      case CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM:
+      }
+      case CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM -> {
         varName = "d";
         type = CommonClassNames.JAVA_LANG_DOUBLE;
-        break;
-      default:
+      }
+      default -> {
         return null;
+      }
     }
     varName = JavaCodeStyleManager.getInstance(call.getProject()).suggestUniqueVariableName(varName, call, true);
     String expression;

@@ -29,6 +29,7 @@ import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -63,7 +64,9 @@ public class TestMethods extends TestMethod {
     final Module module = configurationModule.getModule();
     final GlobalSearchScope searchScope = module != null ? module.getModuleRuntimeScope(true)
                                                          : GlobalSearchScope.allScope(project);
-    addClassesListToJavaParameters(myFailedTests, testInfo -> testInfo != null ? getTestPresentation(testInfo, project, searchScope) : null, data.getPackageName(), true, javaParameters);
+    ReadAction.run(() -> addClassesListToJavaParameters(myFailedTests, testInfo -> testInfo != null
+                                                                                   ? getTestPresentation(testInfo, project, searchScope)
+                                                                                   : null, data.getPackageName(), true, javaParameters));
 
     return javaParameters;
   }

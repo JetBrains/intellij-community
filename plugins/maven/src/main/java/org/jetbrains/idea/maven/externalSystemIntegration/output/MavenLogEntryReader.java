@@ -22,8 +22,6 @@ public interface MavenLogEntryReader {
   /**
    * Read lines while predicate is true
    *
-   * @param logEntryPredicate
-   * @return
    */
   default List<MavenLogEntry> readWhile(Predicate<MavenLogEntry> logEntryPredicate) {
     List<MavenLogEntry> result = new SmartList<>();
@@ -43,8 +41,6 @@ public interface MavenLogEntryReader {
   /**
    * read first line which matches the predicate, other lines are ignored
    *
-   * @param logEntryPredicate
-   * @return
    */
   default MavenLogEntry findFirst(Predicate<MavenLogEntry> logEntryPredicate) {
     MavenLogEntry result;

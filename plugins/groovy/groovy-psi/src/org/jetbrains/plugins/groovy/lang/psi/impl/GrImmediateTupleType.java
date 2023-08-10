@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author ven
- */
 public class GrImmediateTupleType extends GrTupleType {
 
   private final List<PsiType> myComponentTypes;

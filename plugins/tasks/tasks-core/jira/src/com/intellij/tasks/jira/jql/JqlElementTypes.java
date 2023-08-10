@@ -72,7 +72,6 @@ import org.jetbrains.annotations.NotNull;
  *
  */
 public interface JqlElementTypes {
-  IFileElementType FILE = new IFileElementType(JqlLanguage.INSTANCE);
   IElementType QUERY = new JqlElementType("QUERY");
   IElementType OR_CLAUSE = new JqlElementType("OR_CLAUSE");
   IElementType AND_CLAUSE = new JqlElementType("AND_CLAUSE");

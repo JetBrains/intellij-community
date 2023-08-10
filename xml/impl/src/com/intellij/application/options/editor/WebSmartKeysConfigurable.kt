@@ -6,20 +6,20 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.*
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.xml.XmlBundle
 import java.util.function.Function
 
 // @formatter:off
 private val model = WebEditorOptions.getInstance()
-private val myAutomaticallyInsertClosingTagCheckBox                     get() = CheckboxDescriptor(XmlBundle.message("smart.keys.insert.closing.tag.on.tag.completion"), PropertyBinding(model::isAutomaticallyInsertClosingTag, model::setAutomaticallyInsertClosingTag))
-private val myAutomaticallyInsertRequiredAttributesCheckBox             get() = CheckboxDescriptor(XmlBundle.message("smart.keys.insert.required.attributes.on.tag.completion"), PropertyBinding(model::isAutomaticallyInsertRequiredAttributes, model::setAutomaticallyInsertRequiredAttributes))
-private val myAutomaticallyInsertRequiredSubTagsCheckBox                get() = CheckboxDescriptor(XmlBundle.message("smart.keys.insert.required.subtags.on.tag.completion"), PropertyBinding(model::isAutomaticallyInsertRequiredSubTags, model::setAutomaticallyInsertRequiredSubTags))
-private val myAutomaticallyStartAttributeAfterCheckBox                  get() = CheckboxDescriptor(XmlBundle.message("smart.keys.start.attribute.on.tag.completion"), PropertyBinding(model::isAutomaticallyStartAttribute, model::setAutomaticallyStartAttribute))
-private val myAddQuotasForAttributeValue                                get() = CheckboxDescriptor(XmlBundle.message("smart.keys.add.quotes.for.attribute.value.on.typing.equal.and.attribute.completion"), PropertyBinding(model::isInsertQuotesForAttributeValue, model::setInsertQuotesForAttributeValue))
-private val myAutoCloseTagCheckBox                                      get() = CheckboxDescriptor(XmlBundle.message("smart.keys.auto.close.tag.on.typing.less"), PropertyBinding(model::isAutoCloseTag, model::setAutoCloseTag))
-private val mySyncTagEditing                                            get() = CheckboxDescriptor(XmlBundle.message("smart.keys.simultaneous.tags.editing"), PropertyBinding(model::isSyncTagEditing, model::setSyncTagEditing))
-private val mySelectWholeCssIdentifierOnDoubleClick                     get() = CheckboxDescriptor(XmlBundle.message("smart.keys.select.whole.css.identifiers.on.double.click"), PropertyBinding(model::isSelectWholeCssIdentifierOnDoubleClick, model::setSelectWholeCssIdentifierOnDoubleClick))
+private val myAutomaticallyInsertClosingTagCheckBox         get() = CheckboxDescriptor(XmlBundle.message("smart.keys.insert.closing.tag.on.tag.completion"), model::isAutomaticallyInsertClosingTag, model::setAutomaticallyInsertClosingTag)
+private val myAutomaticallyInsertRequiredAttributesCheckBox get() = CheckboxDescriptor(XmlBundle.message("smart.keys.insert.required.attributes.on.tag.completion"), model::isAutomaticallyInsertRequiredAttributes, model::setAutomaticallyInsertRequiredAttributes)
+private val myAutomaticallyInsertRequiredSubTagsCheckBox    get() = CheckboxDescriptor(XmlBundle.message("smart.keys.insert.required.subtags.on.tag.completion"), model::isAutomaticallyInsertRequiredSubTags, model::setAutomaticallyInsertRequiredSubTags)
+private val myAutomaticallyStartAttributeAfterCheckBox      get() = CheckboxDescriptor(XmlBundle.message("smart.keys.start.attribute.on.tag.completion"), model::isAutomaticallyStartAttribute, model::setAutomaticallyStartAttribute)
+private val myAddQuotasForAttributeValue                    get() = CheckboxDescriptor(XmlBundle.message("smart.keys.add.quotes.for.attribute.value.on.typing.equal.and.attribute.completion"), model::isInsertQuotesForAttributeValue, model::setInsertQuotesForAttributeValue)
+private val myAutoCloseTagCheckBox                          get() = CheckboxDescriptor(XmlBundle.message("smart.keys.auto.close.tag.on.typing.less"), model::isAutoCloseTag, model::setAutoCloseTag)
+private val mySyncTagEditing                                get() = CheckboxDescriptor(XmlBundle.message("smart.keys.simultaneous.tags.editing"), model::isSyncTagEditing, model::setSyncTagEditing)
+private val mySelectWholeCssIdentifierOnDoubleClick         get() = CheckboxDescriptor(XmlBundle.message("smart.keys.select.whole.css.identifiers.on.double.click"), model::isSelectWholeCssIdentifierOnDoubleClick, model::setSelectWholeCssIdentifierOnDoubleClick)
 // @formatter:on
 
 private val webEditorOptionDescriptors
@@ -38,7 +38,7 @@ internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConf
   XmlBundle.message("configurable.name.html.css")), ConfigurableWithOptionDescriptors, Configurable.WithEpDependencies {
   override fun createPanel(): DialogPanel {
     return panel {
-      titledRow(XmlBundle.message("xml.editor.options.misc.title")) {
+      group(XmlBundle.message("xml.editor.options.misc.title")) {
         row {
           checkBox(myAutomaticallyInsertClosingTagCheckBox)
         }
@@ -61,13 +61,13 @@ internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConf
           checkBox(mySyncTagEditing)
         }
       }
-      titledRow(XmlBundle.message("xml.editor.options.css.title")) {
+      group(XmlBundle.message("xml.editor.options.css.title")) {
         row {
           checkBox(mySelectWholeCssIdentifierOnDoubleClick)
         }
       }
       for (configurable in configurables) {
-        appendDslConfigurableRow(configurable)
+        appendDslConfigurable(configurable)
       }
     }
   }

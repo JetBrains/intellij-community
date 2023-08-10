@@ -49,47 +49,53 @@ public class XmlSmartCompletionTest extends BasePlatformTestCase {
 
   public void testServletName() {
 
-    doForText("<!DOCTYPE web-app\n" +
-              "        PUBLIC \"-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN\"\n" +
-              "        \"http://java.sun.com/j2ee/dtds/web-app_2_3.dtd\">\n" +
-              "<web-app>\n" +
-              "\n" +
-              "    <servlet>\n" +
-              "        <s<caret>\n" +
-              "    </servlet>\n" +
-              "</web-app>",
+    doForText("""
+                <!DOCTYPE web-app
+                        PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+                        "http://java.sun.com/j2ee/dtds/web-app_2_3.dtd">
+                <web-app>
 
-              "<!DOCTYPE web-app\n" +
-              "        PUBLIC \"-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN\"\n" +
-              "        \"http://java.sun.com/j2ee/dtds/web-app_2_3.dtd\">\n" +
-              "<web-app>\n" +
-              "\n" +
-              "    <servlet>\n" +
-              "        <servlet-name\n" +
-              "    </servlet>\n" +
-              "</web-app>");
+                    <servlet>
+                        <s<caret>
+                    </servlet>
+                </web-app>""",
+
+              """
+                <!DOCTYPE web-app
+                        PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+                        "http://java.sun.com/j2ee/dtds/web-app_2_3.dtd">
+                <web-app>
+
+                    <servlet>
+                        <servlet-name
+                    </servlet>
+                </web-app>""");
   }
 
   public void testPrefix() {
-    doForText("<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
-              "    <ann<caret>\n" +
-              "</xs:schema>",
+    doForText("""
+                <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <ann<caret>
+                </xs:schema>""",
 
-              "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
-              "    <xs:annotation\n" +
-              "</xs:schema>");
+              """
+                <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                    <xs:annotation
+                </xs:schema>""");
   }
 
   public void testInvalidXmlException() {
-    doForText("<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
-              "  <element name=\"foo\"><<caret></element>>\n" +
-              "  </element>\n" +
-              "</schema>",
+    doForText("""
+                <schema xmlns="http://www.w3.org/2001/XMLSchema">
+                  <element name="foo"><<caret></element>>
+                  </element>
+                </schema>""",
 
-              "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
-              "  <element name=\"foo\"><</element>>\n" +
-              "  </element>\n" +
-              "</schema>");
+              """
+                <schema xmlns="http://www.w3.org/2001/XMLSchema">
+                  <element name="foo"><</element>>
+                  </element>
+                </schema>""");
   }
 
   private void doForText(String before, String after) {

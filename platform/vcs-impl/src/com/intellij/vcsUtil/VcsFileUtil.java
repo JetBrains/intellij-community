@@ -18,13 +18,11 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
-import it.unimi.dsi.fastutil.Hash;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,7 +47,6 @@ public final class VcsFileUtil {
    * @param processor function to execute on each chunk
    * @param <T>       type of result value
    * @return list of result values
-   * @throws VcsException
    */
   @NotNull
   public static <T> List<T> foreachChunk(@NotNull List<String> arguments,
@@ -71,7 +68,6 @@ public final class VcsFileUtil {
    * @param arguments the arguments to chunk
    * @param groupSize size of argument groups that should be put in the same chunk (like a name and a value)
    * @param consumer  consumer to feed each chunk
-   * @throws VcsException
    */
   public static void foreachChunk(@NotNull List<String> arguments,
                                   int groupSize,
@@ -396,7 +392,7 @@ public final class VcsFileUtil {
   }
 
   private static void performAdditions(@NotNull AbstractVcs vcs,
-                                       @NotNull List<VirtualFile> value) {
+                                       @NotNull List<? extends VirtualFile> value) {
     CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
     if (checkinEnvironment != null) {
       checkinEnvironment.scheduleUnversionedFilesForAddition(value);
@@ -429,18 +425,18 @@ public final class VcsFileUtil {
    * </p>
    *
    * @param path a path to unescape
-   * @param encoding to use while converting char octets
    * @return unescaped path ready to be searched in the VFS or file system.
    * @throws IllegalArgumentException if the path is invalid
    */
   @NotNull
-  public static String unescapeGitPath(@NotNull String path, @Nullable String encoding) throws IllegalArgumentException {
+  public static String unescapeGitPath(@NotNull String path) throws IllegalArgumentException {
     final String QUOTE = "\"";
     if (path.startsWith(QUOTE) && path.endsWith(QUOTE)) {
       path = path.substring(1, path.length() - 1);
     }
+    if (path.indexOf('\\') == -1) return path;
 
-    encoding = encoding != null ? encoding : Charset.defaultCharset().name();
+    Charset encoding = Charset.defaultCharset();
 
     final int l = path.length();
     StringBuilder rc = new StringBuilder(l);
@@ -454,31 +450,15 @@ public final class VcsFileUtil {
         }
         final char e = path.charAt(i);
         switch (e) {
-          case '\\':
-            rc.append('\\');
-            break;
-          case 't':
-            rc.append('\t');
-            break;
-          case 'n':
-            rc.append('\n');
-            break;
-          case 'r':
-            rc.append('\r');
-            break;
-          case 'a':
-            rc.append('\u0007');
-            break;
-          case 'b':
-            rc.append('\b');
-            break;
-          case 'f':
-            rc.append('\f');
-            break;
-          case '"':
-            rc.append('"');
-            break;
-          default:
+          case '\\' -> rc.append('\\');
+          case 't' -> rc.append('\t');
+          case 'n' -> rc.append('\n');
+          case 'r' -> rc.append('\r');
+          case 'a' -> rc.append('\u0007');
+          case 'b' -> rc.append('\b');
+          case 'f' -> rc.append('\f');
+          case '"' -> rc.append('"');
+          default -> {
             if (isOctal(e)) {
               // collect sequence of characters as a byte array.
               // count bytes first
@@ -518,16 +498,12 @@ public final class VcsFileUtil {
               i--;
               assert n == b.length;
               // add them to string
-              try {
-                rc.append(new String(b, encoding));
-              }
-              catch (UnsupportedEncodingException e1) {
-                throw new IllegalArgumentException("The file name encoding is unsupported: " + encoding);
-              }
+              rc.append(new String(b, encoding));
             }
             else {
               throw new IllegalArgumentException("Unknown escape sequence '\\" + path.charAt(i) + "' in the path: " + path);
             }
+          }
         }
       }
       else {
@@ -537,14 +513,9 @@ public final class VcsFileUtil {
     return rc.toString();
   }
 
-  @NotNull
-  public static String unescapeGitPath(@NotNull String path) {
-    return unescapeGitPath(path, null);
-  }
+  public static final HashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY = new FilePathCaseSensitiveStrategy();
 
-  public static final Hash.Strategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY = new FilePathCaseSensitiveStrategy();
-
-  private static class FilePathCaseSensitiveStrategy implements Hash.Strategy<FilePath> {
+  private static class FilePathCaseSensitiveStrategy implements HashingStrategy<FilePath> {
 
     @Override
     public boolean equals(FilePath path1, FilePath path2) {

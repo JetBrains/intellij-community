@@ -1,0 +1,9 @@
+// "Add missing actual declarations" "true"
+// DISABLE-ERRORS
+
+package my
+
+import other.Another
+import other.Other
+
+expect class My<caret> : Other<Another>

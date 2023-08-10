@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command;
 
 import com.intellij.openapi.editor.Document;
@@ -19,17 +19,9 @@ public class CommandEvent extends EventObject {
   private final Document myDocument;
 
   public CommandEvent(@NotNull CommandProcessor processor, @NotNull Runnable command, Project project, @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
-    this(processor, command, null, null, project, undoConfirmationPolicy);
+    this(processor, command, null, null, project, undoConfirmationPolicy, true, null);
   }
 
-  public CommandEvent(@NotNull CommandProcessor processor,
-                      @NotNull Runnable command,
-                      @NlsContexts.Command String commandName,
-                      Object commandGroupId,
-                      Project project,
-                      @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
-    this(processor, command, commandName, commandGroupId, project, undoConfirmationPolicy, true, null);
-  }
   public CommandEvent(@NotNull CommandProcessor processor,
                       @NotNull Runnable command,
                       @NlsContexts.Command String commandName,
@@ -48,13 +40,11 @@ public class CommandEvent extends EventObject {
     myDocument = document;
   }
 
-  @NotNull
-  public CommandProcessor getCommandProcessor() {
+  public @NotNull CommandProcessor getCommandProcessor() {
     return (CommandProcessor)getSource();
   }
 
-  @NotNull
-  public Runnable getCommand() {
+  public @NotNull Runnable getCommand() {
     return myCommand;
   }
 
@@ -62,8 +52,7 @@ public class CommandEvent extends EventObject {
     return myProject;
   }
 
-  @NlsContexts.Command
-  public String getCommandName() {
+  public @NlsContexts.Command String getCommandName() {
     return myCommandName;
   }
 
@@ -71,8 +60,7 @@ public class CommandEvent extends EventObject {
     return myCommandGroupId;
   }
 
-  @NotNull
-  public UndoConfirmationPolicy getUndoConfirmationPolicy() {
+  public @NotNull UndoConfirmationPolicy getUndoConfirmationPolicy() {
     return myUndoConfirmationPolicy;
   }
 
@@ -80,8 +68,7 @@ public class CommandEvent extends EventObject {
     return myShouldRecordActionForActiveDocument;
   }
 
-  @Nullable
-  public Document getDocument() {
+  public @Nullable Document getDocument() {
     return myDocument;
   }
 }

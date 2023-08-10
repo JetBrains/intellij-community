@@ -28,8 +28,6 @@ import java.util.List;
  * <li>comment and comment: remove indentation and hash sign;</li>
  * <li>second line is 'class' or 'def': fail.</li>
  * </ul>
- *
- * @author dcheryasov
  */
 public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
   private final static Joiner[] JOINERS = {
@@ -55,7 +53,7 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     final CharSequence text = document.getCharsSequence();
     if (start >= 0 && text.charAt(start) == '\n') start -= 1;
     if (start >= 0 && text.charAt(start) == '\\') start -= 1;
-    while (start >= 0 && text.charAt(start) == ' ' || text.charAt(start) == '\t') {
+    while (start >= 0 && (text.charAt(start) == ' ' || text.charAt(start) == '\t')) {
       start -= 1;
     }
     if (start < 0) {

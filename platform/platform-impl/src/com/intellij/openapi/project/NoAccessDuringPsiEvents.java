@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -15,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public final class NoAccessDuringPsiEvents {
   private static final Logger LOG = Logger.getInstance(NoAccessDuringPsiEvents.class);
   private static final Set<String> ourReportedTraces = new HashSet<>();
@@ -39,6 +37,7 @@ public final class NoAccessDuringPsiEvents {
     MessageBus bus = application.getMessageBus();
     return bus.hasUndeliveredEvents(VirtualFileManager.VFS_CHANGES) ||
            bus.hasUndeliveredEvents(PsiModificationTracker.TOPIC) ||
-           bus.hasUndeliveredEvents(ProjectTopics.PROJECT_ROOTS);
+           bus.hasUndeliveredEvents(ProjectTopics.PROJECT_ROOTS) ||
+           bus.hasUndeliveredEvents(AdditionalLibraryRootsListener.TOPIC);
   }
 }

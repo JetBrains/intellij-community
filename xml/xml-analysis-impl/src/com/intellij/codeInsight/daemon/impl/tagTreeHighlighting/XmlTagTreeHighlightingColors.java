@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public final class XmlTagTreeHighlightingColors {
   private static ColorKey[] ourColorKeys = null;
 

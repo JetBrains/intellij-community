@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,9 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author yole
- */
+
 public class GridDropLocation implements ComponentDropLocation {
   private static final Logger LOG = Logger.getInstance(GridDropLocation.class);
 
@@ -178,13 +176,13 @@ public class GridDropLocation implements ComponentDropLocation {
   @Override
   @Nullable
   public ComponentDropLocation getAdjacentLocation(Direction direction) {
-    switch(direction) {
-      case LEFT:  return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.ColumnBefore);
-      case UP:    return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.RowBefore);
-      case RIGHT: return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.ColumnAfter);
-      case DOWN:  return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.RowAfter);
-    }
-    return null;
+    var insertMode = switch (direction) {
+      case LEFT -> GridInsertMode.ColumnBefore;
+      case UP -> GridInsertMode.RowBefore;
+      case RIGHT -> GridInsertMode.ColumnAfter;
+      case DOWN -> GridInsertMode.RowAfter;
+    };
+    return new GridInsertLocation(myContainer, myRow, myColumn, insertMode);
   }
 
   @NonNls @Override public String toString() {

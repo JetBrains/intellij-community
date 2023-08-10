@@ -3,6 +3,7 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -18,7 +19,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -28,7 +28,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   private Ref<? extends UsageView> myUsageView;
   private final Collection<T> myData;
 
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myAlarm = new Alarm();
   private final Object lock = new Object();
 
   private volatile boolean myCanceled;
@@ -38,11 +38,6 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   public BackgroundUpdaterTaskBase(@Nullable Project project, @ProgressTitle @NotNull String title, @Nullable Comparator<? super T> comparator) {
     super(project, title);
     myData = comparator == null ? new SmartList<>() : new TreeSet<>(comparator);
-  }
-
-  @TestOnly
-  public GenericListComponentUpdater<T> getUpdater() {
-    return myUpdater;
   }
 
   public void init(@NotNull JBPopup popup, @NotNull GenericListComponentUpdater<T> updater, @NotNull Ref<? extends UsageView> usageView) {
@@ -55,7 +50,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   public abstract @PopupTitle String getCaption(int size);
 
   @Nullable
-  protected abstract Usage createUsage(T element);
+  protected abstract Usage createUsage(@NotNull T element);
 
   protected void replaceModel(@NotNull List<? extends T> data) {
     myUpdater.replaceModel(data);
@@ -78,8 +73,8 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   /**
    * @deprecated Use {@link #BackgroundUpdaterTaskBase(Project, String, Comparator)} and {@link #updateComponent(T)} instead
    */
-  @Deprecated
-  public boolean updateComponent(@NotNull T element, @Nullable Comparator comparator) {
+  @Deprecated(forRemoval = true)
+  protected boolean updateComponent(@NotNull T element, @Nullable Comparator comparator) {
     if (tryAppendUsage(element)) return true;
     if (myCanceled) return false;
 
@@ -104,11 +99,14 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   private boolean tryAppendUsage(@NotNull T element) {
     final UsageView view = myUsageView.get();
     if (view != null && !((UsageViewImpl)view).isDisposed()) {
-      Usage usage = createUsage(element);
-      if (usage == null)
-        return false;
-      ApplicationManager.getApplication().runReadAction(() -> view.appendUsage(usage));
-      return true;
+      return ReadAction.compute(() -> {
+        Usage usage = createUsage(element);
+        if (usage == null) {
+          return false;
+        }
+        view.appendUsage(usage);
+        return true;
+      });
     }
     return false;
   }
@@ -181,6 +179,11 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
     return null;
   }
 
+  public Collection<T> getItems() {
+    synchronized (lock) {
+      return new ArrayList<>(myData);
+    }
+  }
   public boolean isFinished() {
     return myFinished;
   }

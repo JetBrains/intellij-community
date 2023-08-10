@@ -1,0 +1,6 @@
+PIL.FpxImagePlugin
+PIL.ImageQt.ImageQt
+PIL.ImageQt.QImage  # Does exist at runtime usually, but stubtest can't see it
+PIL.ImageQt.QPixmap  # Does exist at runtime usually, but stubtest can't see it
+PIL.MicImagePlugin
+PIL.WmfImagePlugin.WmfHandler

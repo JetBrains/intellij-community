@@ -5,7 +5,6 @@ import com.intellij.lang.jvm.DefaultJvmElementVisitor;
 import com.intellij.lang.jvm.JvmClass;
 import com.intellij.lang.jvm.JvmElementVisitor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;

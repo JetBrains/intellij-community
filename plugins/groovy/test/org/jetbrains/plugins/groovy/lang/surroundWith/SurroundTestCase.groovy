@@ -19,9 +19,6 @@ import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler
 import com.intellij.lang.surroundWith.Surrounder
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
-/**
- * @author peter
- */
 abstract class SurroundTestCase extends LightGroovyTestCase {
   protected void doTest(final Surrounder surrounder) {
     def (String before, String after) = TestUtils.readInput(testDataPath + "/" + getTestName(true) + ".test")

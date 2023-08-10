@@ -20,7 +20,6 @@ import com.intellij.ui.treeStructure.Tree
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.util.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 import kotlin.test.assertFalse
@@ -33,7 +32,7 @@ private val ORDER = arrayOf(CONFIGURATION_TYPE, //Application
                             CONFIGURATION, TEMPORARY_CONFIGURATION, CONFIGURATION_TYPE, //JUnit
                             FOLDER, //4
                             CONFIGURATION, CONFIGURATION, FOLDER, //5
-                            CONFIGURATION, CONFIGURATION, TEMPORARY_CONFIGURATION, UNKNOWN //Defaults
+                            CONFIGURATION, CONFIGURATION, TEMPORARY_CONFIGURATION
 )
 
 @RunsInEdt
@@ -168,25 +167,25 @@ internal class RunConfigurableTest {
   fun testMoveUpDown() {
     doExpand()
     checkPositionToMove(0, 1, null)
-    checkPositionToMove(2, 1, Trinity.create<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>(2, 3, BELOW))
+    checkPositionToMove(2, 1, Trinity.create(2, 3, BELOW))
     checkPositionToMove(2, -1, null)
     checkPositionToMove(14, 1, null)
     checkPositionToMove(14, -1, null)
     checkPositionToMove(15, -1, null)
     checkPositionToMove(16, -1, null)
-    checkPositionToMove(3, -1, Trinity.create<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>(3, 2, ABOVE))
-    checkPositionToMove(6, 1, Trinity.create<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>(6, 9, BELOW))
-    checkPositionToMove(7, 1, Trinity.create<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>(7, 8, BELOW))
-    checkPositionToMove(10, -1, Trinity.create<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>(10, 8, BELOW))
-    checkPositionToMove(8, 1, Trinity.create<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>(8, 9, BELOW))
-    checkPositionToMove(21, -1, Trinity.create<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>(21, 20, BELOW))
+    checkPositionToMove(3, -1, Trinity.create(3, 2, ABOVE))
+    checkPositionToMove(6, 1, Trinity.create(6, 9, BELOW))
+    checkPositionToMove(7, 1, Trinity.create(7, 8, BELOW))
+    checkPositionToMove(10, -1, Trinity.create(10, 8, BELOW))
+    checkPositionToMove(8, 1, Trinity.create(8, 9, BELOW))
+    checkPositionToMove(21, -1, Trinity.create(21, 20, BELOW))
     checkPositionToMove(21, 1, null)
-    checkPositionToMove(20, 1, Trinity.create<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>(20, 21, ABOVE))
-    checkPositionToMove(20, -1, Trinity.create<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>(20, 19, ABOVE))
-    checkPositionToMove(19, 1, Trinity.create<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>(19, 20, BELOW))
-    checkPositionToMove(19, -1, Trinity.create<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>(19, 17, BELOW))
-    checkPositionToMove(17, -1, Trinity.create<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>(17, 16, ABOVE))
-    checkPositionToMove(17, 1, Trinity.create<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>(17, 18, BELOW))
+    checkPositionToMove(20, 1, Trinity.create(20, 21, ABOVE))
+    checkPositionToMove(20, -1, Trinity.create(20, 19, ABOVE))
+    checkPositionToMove(19, 1, Trinity.create(19, 20, BELOW))
+    checkPositionToMove(19, -1, Trinity.create(19, 17, BELOW))
+    checkPositionToMove(17, -1, Trinity.create(17, 16, ABOVE))
+    checkPositionToMove(17, 1, Trinity.create(17, 18, BELOW))
   }
 
   private fun checkPositionToMove(selectedRow: Int,

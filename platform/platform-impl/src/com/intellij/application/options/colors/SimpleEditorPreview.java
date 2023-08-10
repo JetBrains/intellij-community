@@ -6,6 +6,7 @@ import com.intellij.application.options.colors.highlighting.HighlightData;
 import com.intellij.application.options.colors.highlighting.HighlightsExtractor;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.UsedColors;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -23,6 +24,7 @@ import com.intellij.openapi.options.colors.EditorHighlightingProvidingColorSetti
 import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.EditorCustomization;
 import com.intellij.util.Alarm;
@@ -62,15 +64,23 @@ public class SimpleEditorPreview implements PreviewPanel {
     myHighlightsExtractor = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap(),
                                                     page.getAdditionalInlineElementToDescriptorMap(),
                                                     page.getAdditionalHighlightingTagToColorKeyMap());
+    EditorColorsScheme colorScheme = myPage.customizeColorScheme(myOptions.getSelectedScheme());
+    String demoText = page.getDemoText();
+    try {
+      StringUtil.assertValidSeparators(demoText);
+    }
+    catch (Exception e) {
+      throw PluginException.createByClass("Implementation of ColorSettingsPage::getDemoText in " + page.getClass() + " must use \\n separators", e, page.getClass());
+    }
     myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(
-      myHighlightsExtractor.extractHighlights(page.getDemoText(), myHighlightData), // text without tags
-      myOptions.getSelectedScheme(), false);
+      myHighlightsExtractor.extractHighlights(demoText, myHighlightData), // text without tags
+      colorScheme, false);
     if (page instanceof EditorCustomization) {
       ((EditorCustomization)page).customize(myEditor);
     }
 
     FontEditorPreview.installTrafficLights(myEditor);
-    myBlinkingAlarm = new Alarm().setActivationComponent(myEditor.getComponent());
+    myBlinkingAlarm = new Alarm(myEditor.getComponent(), ((EditorImpl)myEditor).getDisposable());
     if (navigatable) {
       myEditor.getContentComponent().addMouseMotionListener(new MouseMotionAdapter() {
         @Override
@@ -136,7 +146,7 @@ public class SimpleEditorPreview implements PreviewPanel {
   @Nullable
   private  HighlightData getDataFromOffset(int offset) {
     for (HighlightData highlightData : myHighlightData) {
-      if (offset >= highlightData.getStartOffset() && offset <= highlightData.getEndOffset()) {
+      if (offset >= highlightData.getStartOffset() && offset < highlightData.getEndOffset()) {
         return highlightData;
       }
     }
@@ -166,7 +176,7 @@ public class SimpleEditorPreview implements PreviewPanel {
 
   @Override
   public void updateView() {
-    EditorColorsScheme scheme = myOptions.getSelectedScheme();
+    EditorColorsScheme scheme = myPage.customizeColorScheme(myOptions.getSelectedScheme());
 
     myEditor.setColorsScheme(scheme);
 
@@ -191,7 +201,7 @@ public class SimpleEditorPreview implements PreviewPanel {
       removeDecorations();
       final Map<TextAttributesKey, String> displayText = ColorSettingsUtil.keyToDisplayTextMap(myPage);
       for (final HighlightData data : myHighlightData) {
-        data.addHighlToView(myEditor, myOptions.getSelectedScheme(), displayText);
+        data.addHighlToView(myEditor, myEditor.getColorsScheme(), displayText);
       }
       if (myCustomizer != null) {
         myCustomizer.addCustomizations(myEditor, null);
@@ -239,7 +249,8 @@ public class SimpleEditorPreview implements PreviewPanel {
     }
     if (needScroll && minOffset != Integer.MAX_VALUE) {
       LogicalPosition pos = myEditor.offsetToLogicalPosition(minOffset);
-      myEditor.getScrollingModel().scrollTo(pos, ScrollType.MAKE_VISIBLE);
+      myEditor.getCaretModel().moveToOffset(minOffset);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
   }
 
@@ -309,7 +320,7 @@ public class SimpleEditorPreview implements PreviewPanel {
         prevHighlightData.setEndOffset(highlightData.getEndOffset());
       }
       else {
-        highlightData.addHighlToView(editor, myOptions.getSelectedScheme(), displayText);
+        highlightData.addHighlToView(editor, myEditor.getColorsScheme(), displayText);
       }
     }
     if (myCustomizer != null) {
@@ -346,7 +357,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     final List<HighlightData> rainbowMarkup = setupRainbowHighlighting(
       page,
       initialMarkup,
-      new RainbowHighlighter(colorsScheme).getRainbowTempKeys(),
+      RainbowHighlighter.getRainbowTempKeys(colorsScheme),
       RainbowHighlighter.isRainbowEnabledWithInheritance(colorsScheme, page.getLanguage()));
 
     myHighlightData.clear();

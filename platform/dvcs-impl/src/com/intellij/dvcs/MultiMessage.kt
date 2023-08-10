@@ -5,6 +5,7 @@ import com.intellij.dvcs.DvcsUtil.joinWithAnd
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsImplUtil.getShortVcsRootName
 import org.jetbrains.annotations.Nls
@@ -20,7 +21,8 @@ open class MultiMessage<Aspect>(private val allValues: Collection<Aspect>,
                                 html: Boolean = true) {
   private val LOG = Logger.getInstance(MultiMessage::class.java)
   private val messages = linkedMapOf<Aspect, String>()
-  private val lineSeparator = if (html) "<br/>\n" else "\n" // NON-NLS
+  @NlsSafe
+  private val lineSeparator = if (html) "<br/>\n" else "\n"
 
   fun append(aspect: Aspect, message: @Nls String): MultiMessage<Aspect> {
     if (!allValues.contains(aspect)) {

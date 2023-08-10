@@ -9,22 +9,17 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Irina.Chernushina on 3/31/2016.
- */
 public abstract class JsonSchemaBaseReference<T extends PsiElement> extends PsiReferenceBase<T> {
   public JsonSchemaBaseReference(T element, TextRange textRange) {
     super(element, textRange, true);
   }
 
-  @Nullable
   @Override
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false);
   }
 
-  @Nullable
-  public abstract PsiElement resolveInner();
+  public abstract @Nullable PsiElement resolveInner();
 
 
   @Override
@@ -46,13 +41,12 @@ public abstract class JsonSchemaBaseReference<T extends PsiElement> extends PsiR
     return myElement.hashCode();
   }
 
-  private static class MyResolver implements ResolveCache.Resolver {
+  private static final class MyResolver implements ResolveCache.Resolver {
     private static final MyResolver INSTANCE = new MyResolver();
 
     @Override
-    @Nullable
-    public PsiElement resolve(@NotNull PsiReference ref, boolean incompleteCode) {
-      return ((JsonSchemaBaseReference)ref).resolveInner();
+    public @Nullable PsiElement resolve(@NotNull PsiReference ref, boolean incompleteCode) {
+      return ((JsonSchemaBaseReference<?>)ref).resolveInner();
     }
   }
 }

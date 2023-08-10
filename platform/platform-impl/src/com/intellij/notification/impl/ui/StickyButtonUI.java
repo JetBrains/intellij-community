@@ -14,9 +14,6 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
-/**
- * @author spleaner
- */
 public class StickyButtonUI<B extends AbstractButton> extends BasicToggleButtonUI {
   private static final JBValue FONT_SIZE = new JBValue.Float(11.0f);
   private static final JBValue BW = new JBValue.Float(1);

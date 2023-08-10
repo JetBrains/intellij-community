@@ -35,8 +35,7 @@ public final class TagNameVariantCollector {
     PsiElement context = element.getParent();
     PsiElement curElement = element.getParent();
 
-    while(curElement instanceof XmlTag){
-      final XmlTag declarationTag = (XmlTag)curElement;
+    while(curElement instanceof XmlTag declarationTag){
       final String namespace = declarationTag.getNamespace();
 
       if(!descriptorsMap.containsKey(namespace)) {
@@ -161,7 +160,9 @@ public final class TagNameVariantCollector {
     if (XmlUtil.nsFromTemplateFramework(childNamespace)) return true;
     if (parentTag == null) return true;
     if (parentDescriptor == null) return false;
-    final XmlTag childTag = parentTag.createChildTag(childDescriptor.getName(), childNamespace, null, false);
+    String name = childDescriptor.getName();
+    if (name == null) return false;
+    final XmlTag childTag = parentTag.createChildTag(name, childNamespace, null, false);
     childTag.putUserData(XmlElement.INCLUDING_ELEMENT, parentTag);
     XmlElementDescriptor descriptor = parentDescriptor.getElementDescriptor(childTag, parentTag);
     return descriptor != null && (!strict || !(descriptor instanceof AnyXmlElementDescriptor));

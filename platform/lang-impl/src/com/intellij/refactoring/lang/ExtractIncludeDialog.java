@@ -28,9 +28,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.io.File;
 
-/**
- * @author ven
- */
 public class ExtractIncludeDialog extends DialogWrapper {
   private final PsiDirectory myCurrentDirectory;
   protected final String myExtension;

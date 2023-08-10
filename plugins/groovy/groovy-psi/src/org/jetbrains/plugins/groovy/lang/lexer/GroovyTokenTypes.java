@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.lexer;
 
@@ -8,8 +8,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 /**
  * Interface that contains all tokens returned by GroovyLexer
- *
- * @author ilyas
  */
 public interface GroovyTokenTypes {
 
@@ -52,8 +50,6 @@ public interface GroovyTokenTypes {
   /* **************************************************************************************************
  *  Strings & regular expressions
  * ****************************************************************************************************/
-
-  @Deprecated IElementType mSTRING_LITERAL = STRING_SQ;
 
   IElementType mGSTRING_BEGIN = GSTRING_BEGIN;
   IElementType mGSTRING_CONTENT = GSTRING_CONTENT;
@@ -121,10 +117,13 @@ public interface GroovyTokenTypes {
   IElementType mSEMI = T_SEMI;
   IElementType mDOLLAR = T_DOLLAR;
   IElementType mRANGE_INCLUSIVE = T_RANGE;
-  IElementType mRANGE_EXCLUSIVE = T_RANGE_EX;
+  IElementType mRANGE_EXCLUSIVE_LEFT = T_RANGE_LEFT_OPEN;
+  IElementType mRANGE_EXCLUSIVE_RIGHT = T_RANGE_RIGHT_OPEN;
+  IElementType mRANGE_EXCLUSIVE_BOTH = T_RANGE_BOTH_OPEN;
   IElementType mTRIPLE_DOT = T_ELLIPSIS;
   IElementType mSPREAD_DOT = T_SPREAD_DOT;
   IElementType mOPTIONAL_DOT = T_SAFE_DOT;
+  IElementType mOPTIONAL_CHAIN_DOT = T_SAFE_CHAIN_DOT;
   IElementType mMEMBER_POINTER = T_METHOD_CLOSURE;
   IElementType mREGEX_FIND = T_REGEX_FIND;
   IElementType mREGEX_MATCH = T_REGEX_MATCH;
@@ -171,12 +170,18 @@ public interface GroovyTokenTypes {
   IElementType kLONG = KW_LONG;
   IElementType kNATIVE = KW_NATIVE;
   IElementType kNEW = KW_NEW;
+  IElementType kNON_SEALED = KW_NON_SEALED;
+  IElementType kNOT_IN = T_NOT_IN;
+  IElementType kNOT_INSTANCEOF = T_NOT_INSTANCEOF;
   IElementType kNULL = KW_NULL;
   IElementType kPACKAGE = KW_PACKAGE;
+  IElementType kPERMITS = KW_PERMITS;
   IElementType kPRIVATE = KW_PRIVATE;
   IElementType kPROTECTED = KW_PROTECTED;
   IElementType kPUBLIC = KW_PUBLIC;
   IElementType kRETURN = KW_RETURN;
+  IElementType kRECORD = KW_RECORD;
+  IElementType kSEALED = KW_SEALED;
   IElementType kSHORT = KW_SHORT;
   IElementType kSTATIC = KW_STATIC;
   IElementType kSTRICTFP = KW_STRICTFP;
@@ -193,4 +198,5 @@ public interface GroovyTokenTypes {
   IElementType kVOID = KW_VOID;
   IElementType kVOLATILE = KW_VOLATILE;
   IElementType kWHILE = KW_WHILE;
+  IElementType kYIELD = KW_YIELD;
 }

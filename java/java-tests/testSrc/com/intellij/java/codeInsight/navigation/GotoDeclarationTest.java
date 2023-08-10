@@ -1,17 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   @NotNull
@@ -21,11 +27,35 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testContinue() { doTest(); }
+
   public void testContinueLabel() { doTest(); }
-  public void testBreak() {  doTest(); }
-  public void testBreak1() {  doTest(); }
-  public void testBreakLabel() {  doTest(); }
-  public void testAnonymous() {  doTest(); }
+
+  public void testBreak() { doTest(); }
+
+  public void testBreak1() { doTest(); }
+
+  public void testBreakLabel() { doTest(); }
+
+  public void testAnonymous() { doTest(); }
+
+  public void testFromGuardToDestructuringPattern() { doGotoTest(); }
+
+  public void testFromArrowToDestructuringPattern() { doGotoTest(); }
+
+  public void testFromStatementToDestructuringPattern() { doGotoTest(); }
+
+  public void testFromIfToDestructuringPattern() { doGotoTest(); }
+
+  public void testToGuardedTypeTest() { doGotoTest(); }
+
+  public void testRecordPatternInForEach() { doGotoTest(); }
+
+  private void doGotoTest() {
+    String name = getTestName(false);
+    configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
+    performAction();
+    checkResultByFile("/codeInsight/gotoDeclaration/" + name + "_after.java");
+  }
 
   private void performAction() {
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
@@ -43,15 +73,13 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testGotoDirectory() {
-    String name = getTestName(false);
-    configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
+    configure();
     PsiDirectory element = (PsiDirectory)GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
     assertEquals("java.lang", JavaDirectoryService.getInstance().getPackage(element).getQualifiedName());
   }
 
   private void doTestMultipleConstructors() {
-    String name = getTestName(false);
-    configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
+    configure();
     final int offset = getEditor().getCaretModel().getOffset();
     final PsiElement[] elements =
       GotoDeclarationAction.findAllTargetElements(getProject(), getEditor(), offset);
@@ -73,8 +101,7 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testMultipleConstructorsButArrayCreation() {
-    String name = getTestName(false);
-    configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
+    configure();
     final int offset = getEditor().getCaretModel().getOffset();
     final PsiReference reference = getFile().findReferenceAt(offset);
     assertNotNull(reference);
@@ -86,18 +113,34 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testToStringInAnonymous() {
-    configureFromFileText("A.java", "class A {{" +
-                                    "       final Object o = new Object() {\n" +
-                                    "            @Override\n" +
-                                    "            public String toString() {\n" +
-                                    "                return super.toString();\n" +
-                                    "            }\n" +
-                                    "        };\n" +
-                                    "        o.to<caret>String();\n }}");
+    configureFromFileText("A.java", """
+      class A {{       final Object o = new Object() {
+                  @Override
+                  public String toString() {
+                      return super.toString();
+                  }
+              };
+              o.to<caret>String();
+       }}""");
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
     assertInstanceOf(element, PsiMethod.class);
     PsiClass containingClass = ((PsiMethod)element).getContainingClass();
     assertInstanceOf(containingClass, PsiAnonymousClass.class);
+  }
+
+  public void testToFieldFromQualifierInNew() {
+    configureFromFileText("A.java", """
+      class A {Util myContext;
+          private class Util {
+              public class Filter {
+                  public Filter() {
+                  }
+              }}
+          private void method() {
+              Util.Filter filter = my<caret>Context.new Filter();
+          }}""");
+    PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertInstanceOf(element, PsiField.class);
   }
 
   public void testArrayIndexNotCovered() {
@@ -117,5 +160,65 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
     configureFromFileText("A.java", "class A {{ String[] arr; arr<caret>");
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
     assertNotNull("Unexpected null", element);
+  }
+
+  public void testPatternMatchingGuardInSwitchExpression() {
+    doTestGoToField();
+  }
+
+  public void testPatternMatchingGuardInSwitchStatement() {
+    doTestGoToField();
+  }
+
+  public void testPatternMatchingWithParensAroundReference() {
+    doTestGoToField();
+  }
+
+
+  public void testReferenceFieldInPatternMatchingInSwitchStatement() {
+    doTestGoToField();
+  }
+
+  public void testCaseNullAfterPatternMatching() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, () -> doTestGoToField());
+  }
+
+  public void testCaseNullAfterPatternMatchingExpr() {
+    doTestGoToPatternVariable();
+  }
+
+  public void testDefaultAfterPatternMatching() {
+    doTestGoToField();
+  }
+
+  public void testDefaultAfterPatternMatchingExpr() {
+    doTestGoToField();
+  }
+
+  private void doTestGoToField() {
+    configure();
+    final PsiField field = PsiTreeUtil.findChildOfType(getFile(), PsiField.class);
+    final PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertThat(element).isEqualTo(field);
+  }
+
+  private void doTestGoToPatternVariable() {
+    configure();
+    final PsiPatternVariable patternVariable = PsiTreeUtil.findChildOfType(getFile(), PsiPatternVariable.class);
+    final PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertThat(element).isEqualTo(patternVariable);
+  }
+
+  private void doTestGoToSecondPatternVariable() {
+    configure();
+    final Iterator<PsiPatternVariable> iterator = PsiTreeUtil.findChildrenOfType(getFile(), PsiPatternVariable.class).iterator();
+    iterator.next();
+    final PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertThat(element).isEqualTo(iterator.next());
+  }
+
+  private void configure() {
+    String name = getTestName(false);
+    configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
   }
 }

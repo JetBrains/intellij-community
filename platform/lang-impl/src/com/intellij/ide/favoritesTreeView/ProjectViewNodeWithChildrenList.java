@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@Deprecated(forRemoval = true)
 public abstract class ProjectViewNodeWithChildrenList<T> extends ProjectViewNode<T> {
   protected final List<AbstractTreeNode<?>> myChildren;
 

@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -99,12 +98,8 @@ public class CreateClassDialog extends DialogWrapper {
     }
 
     myTfClassName.setText(myClassName);
-    myDestinationCB.setData(myProject, getBaseDir(targetPackageName), new Pass<@NlsContexts.DialogMessage String>() {
-      @Override
-      public void pass(@NlsContexts.DialogMessage String s) {
-        setErrorText(s, myDestinationCB);
-      }
-    }, myPackageComponent.getChildComponent());
+    myDestinationCB.setData(myProject, getBaseDir(targetPackageName), s-> setErrorText(s, myDestinationCB)
+    , myPackageComponent.getChildComponent());
   }
 
   protected boolean reportBaseInTestSelectionInSource() {

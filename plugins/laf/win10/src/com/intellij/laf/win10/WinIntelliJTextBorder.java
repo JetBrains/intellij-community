@@ -30,7 +30,7 @@ import static com.intellij.laf.win10.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 /**
  * @author Konstantin Bulenkov
  */
-public class WinIntelliJTextBorder extends DarculaTextBorder {
+public final class WinIntelliJTextBorder extends DarculaTextBorder {
   static final JBValue MINIMUM_HEIGHT = new JBValue.Float(22);
 
   @Override
@@ -52,9 +52,9 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
 
       boolean isCellRenderer = DarculaUIUtil.isTableCellEditor(c);
       int bw = 1;
-      Object op = jc.getClientProperty("JComponent.outline");
+      DarculaUIUtil.Outline op = DarculaUIUtil.getOutline(jc);
       if (c.isEnabled() && op != null) {
-        DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
+        op.setGraphicsColor(g2, c.hasFocus());
         bw = isCellRenderer ? 1 : 2;
       }
       else {

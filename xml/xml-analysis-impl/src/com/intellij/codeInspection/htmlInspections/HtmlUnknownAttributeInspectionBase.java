@@ -16,28 +16,25 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
-import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.text.EditDistance;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
+import com.intellij.xml.impl.XmlAttributeDescriptorEx;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import java.util.ArrayList;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
 
 public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspection {
   private static final Key<HtmlUnknownElementInspection> ATTRIBUTE_KEY = Key.create(ATTRIBUTE_SHORT_NAME);
@@ -56,17 +53,6 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
   @NotNull
   public String getShortName() {
     return ATTRIBUTE_SHORT_NAME;
-  }
-
-  @Override
-  protected String getCheckboxTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.attribute.checkbox.title");
-  }
-
-  @NotNull
-  @Override
-  protected String getPanelTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.attribute.title");
   }
 
   @Override
@@ -99,10 +85,13 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
             quickfixes.add(new SwitchToHtml5WithHighPriorityAction());
           }
           addSimilarAttributesQuickFixes(tag, name, quickfixes);
+          addRenameXmlAttributeQuickFixes(tag, name, quickfixes);
 
           registerProblemOnAttributeName(attribute, XmlAnalysisBundle.message("xml.inspections.attribute.is.not.allowed.here", attribute.getName()), holder,
                                          quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
+      } else if (attributeDescriptor instanceof XmlAttributeDescriptorEx) {
+        ((XmlAttributeDescriptorEx)attributeDescriptor).validateAttributeName(attribute, holder, isOnTheFly);
       }
     }
   }
@@ -113,39 +102,16 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
     XmlAttributeDescriptor[] descriptors = descriptor.getAttributesDescriptors(tag);
     int initialSize = quickfixes.size();
     for (XmlAttributeDescriptor attr : descriptors) {
-      if (EditDistance.optimalAlignment(name, attr.getName(), false) <= 1) {
-        quickfixes.add(new RenameAttributeFix(attr));
+      if (EditDistance.optimalAlignment(name, attr.getName(), false, 1) <= 1) {
+        quickfixes.add(new XmlAttributeRenameFix(attr));
       }
       if (quickfixes.size() >= initialSize + 3) break;
     }
   }
 
-  private static class RenameAttributeFix implements LocalQuickFix, HighPriorityAction {
-    private final String name;
-
-    RenameAttributeFix(XmlAttributeDescriptor attr) {
-      name = attr.getName();
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return XmlAnalysisBundle.message("html.quickfix.rename.attribute.family");
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return XmlAnalysisBundle.message("html.quickfix.rename.attribute.text", name);
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      XmlAttribute attribute = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlAttribute.class);
-      if (attribute == null) return;
-      attribute.setName(name);
+  private static void addRenameXmlAttributeQuickFixes(XmlTag tag, String name, ArrayList<? super LocalQuickFix> quickfixes) {
+    for (XmlAttributeRenameProvider renameProvider : XmlAttributeRenameProvider.EP_NAME.getExtensionList()) {
+      quickfixes.addAll(renameProvider.getAttributeFixes(tag, name));
     }
   }
 }

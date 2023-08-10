@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import static org.jetbrains.idea.maven.utils.ManifestBuilder.getClasspathPrefix;
 
 /**
+ * Extension point for take additional MANIFEST.MF entries.
  * @author Vladislav.Soroka
  */
 public abstract class ManifestImporter {
@@ -48,7 +49,7 @@ public abstract class ManifestImporter {
     StringBuilder classpath = new StringBuilder();
     String classpathPrefix = getClasspathPrefix(manifestConfiguration);
     for (MavenArtifact mavenArtifact : mavenProject.getDependencies()) {
-      final DependencyScope scope = MavenModuleImporter.selectScope(mavenArtifact.getScope());
+      final DependencyScope scope = MavenLegacyModuleImporter.selectScope(mavenArtifact.getScope());
       if (scope.isForProductionCompile() || scope.isForProductionRuntime()) {
         if (classpath.length() > 0) {
           classpath.append(" ");

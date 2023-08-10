@@ -54,11 +54,9 @@ public class GroovySillyAssignmentInspection extends BaseInspection {
       if (rhs == null) {
         return;
       }
-      if (!(rhs instanceof GrReferenceExpression) || !(lhs instanceof GrReferenceExpression)) {
+      if (!(rhs instanceof GrReferenceExpression rhsReference) || !(lhs instanceof GrReferenceExpression lhsReference)) {
         return;
       }
-      final GrReferenceExpression rhsReference = (GrReferenceExpression) rhs;
-      final GrReferenceExpression lhsReference = (GrReferenceExpression) lhs;
       final GrExpression rhsQualifier = rhsReference.getQualifierExpression();
       final GrExpression lhsQualifier = lhsReference.getQualifierExpression();
       if (rhsQualifier != null || lhsQualifier != null) {

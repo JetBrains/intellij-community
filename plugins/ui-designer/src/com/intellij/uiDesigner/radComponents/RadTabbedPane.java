@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,11 +30,6 @@ import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.Objects;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- * @author yole
- */
 public final class RadTabbedPane extends RadContainer implements ITabbedPane {
 
   public static class Factory extends RadComponentFactory {
@@ -85,8 +80,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   private RadComponent getRadComponent(final int i) {
     RadComponent c = null;
     final Component component = getTabbedPane().getComponentAt(i);
-    if (component instanceof JComponent) {
-      JComponent jc = (JComponent) component;
+    if (component instanceof JComponent jc) {
       c = (RadComponent) jc.getClientProperty(RadComponent.CLIENT_PROP_RAD_COMPONENT);
     }
     return c;

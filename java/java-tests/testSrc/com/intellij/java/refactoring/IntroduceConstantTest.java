@@ -28,9 +28,8 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
+import java.util.List;
+
 @TestDataPath("$CONTENT_ROOT/testData")
 public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/refactoring/introduceConstant/";
@@ -43,6 +42,23 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
 
   public void testInNonNls() {
     doTest(false);
+  }
+
+  public void testChooseStaticContainer() {
+    doTest(false);
+  }
+  
+  public void testNonStaticContainerForCompilerConstant() {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    PsiLocalVariable local = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
+    new MockLocalToFieldHandler(getProject(), true, false){
+      @Override
+      protected int getChosenClassIndex(List<PsiClass> classes) {
+        return 0;
+      }
+    }
+    .convertLocalToField(local, getEditor());
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
   private void doTest(boolean makeEnumConstant) {

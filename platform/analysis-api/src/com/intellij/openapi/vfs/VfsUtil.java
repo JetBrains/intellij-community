@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -16,14 +15,13 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -39,11 +37,9 @@ public final class VfsUtil extends VfsUtilCore {
    */
   public static final long NOTIFICATION_DELAY_MILLIS = 300;
 
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
-    Charset charset = file.getCharset();
-    try (OutputStream stream = file.getOutputStream(file)) {
-      stream.write(text.getBytes(charset));
-    }
+    VfsUtilCore.saveText(file, text);
   }
 
   public static byte @NotNull [] toByteArray(@NotNull VirtualFile file, @NotNull String text) throws IOException {
@@ -99,8 +95,7 @@ public final class VfsUtil extends VfsUtilCore {
    * @param toDir     directory to make a copy in
    * @throws IOException if file failed to be copied
    */
-  @NotNull
-  public static VirtualFile copy(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir) throws IOException {
+  public static @NotNull VirtualFile copy(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir) throws IOException {
     if (file.isDirectory()) {
       VirtualFile newDir = toDir.createChildDirectory(requestor, file.getName());
       copyDirectory(requestor, file, newDir, null);
@@ -280,13 +275,19 @@ public final class VfsUtil extends VfsUtilCore {
     }
   }
 
-  @NotNull
-  public static String getUrlForLibraryRoot(@NotNull File libraryRoot) {
-    String path = FileUtil.toSystemIndependentName(libraryRoot.getAbsolutePath());
-    if (FileTypeRegistry.getInstance().getFileTypeByFileName(libraryRoot.getName()) == ArchiveFileType.INSTANCE) {
-      return VirtualFileManager.constructUrl(StandardFileSystems.JAR_PROTOCOL, path + URLUtil.JAR_SEPARATOR);
-    }
-    return VirtualFileManager.constructUrl(LocalFileSystem.getInstance().getProtocol(), path);
+  public static @NotNull String getUrlForLibraryRoot(@NotNull File libraryRoot) {
+    return getUrlForLibraryRoot(libraryRoot.getAbsolutePath(), libraryRoot.getName());
+  }
+
+  public static @NotNull String getUrlForLibraryRoot(@NotNull Path libraryRoot) {
+    return getUrlForLibraryRoot(libraryRoot.toAbsolutePath().toString(), libraryRoot.getFileName().toString());
+  }
+
+  private static @NotNull String getUrlForLibraryRoot(@NotNull String libraryRootAbsolutePath, @NotNull String libraryRootFileName) {
+    String path = FileUtil.toSystemIndependentName(libraryRootAbsolutePath);
+    return FileTypeRegistry.getInstance().getFileTypeByFileName(libraryRootFileName) == ArchiveFileType.INSTANCE
+           ? VirtualFileManager.constructUrl(StandardFileSystems.JAR_PROTOCOL, path + URLUtil.JAR_SEPARATOR)
+           : VirtualFileManager.constructUrl(LocalFileSystem.getInstance().getProtocol(), path);
   }
 
   public static @NotNull String getNextAvailableName(@NotNull VirtualFile dir,
@@ -323,8 +324,22 @@ public final class VfsUtil extends VfsUtilCore {
     return result;
   }
 
+  /**
+   * Returns {@code true} if the given name is illegal from the VFS point of view.
+   * Rejected are: nulls, empty strings, traversals ({@code "."} and {@code ".."}), and strings containing back- and forward slashes.
+   */
+  @Contract(value = "null -> true", pure = true)
   public static boolean isBadName(String name) {
-    return name == null || name.isEmpty() || "/".equals(name) || "\\".equals(name);
+    if (name == null || name.isEmpty() || ".".equals(name) || "..".equals(name)) {
+      return true;
+    }
+    for (int i = 0; i < name.length(); i++) {
+      char ch = name.charAt(i);
+      if (ch == '/' || ch == '\\') {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static VirtualFile createDirectories(@NotNull String directoryPath) throws IOException {
@@ -363,7 +378,8 @@ public final class VfsUtil extends VfsUtilCore {
       return null;
     }
 
-    VirtualFile parent = createDirectoryIfMissing(fileSystem, path.substring(0, pos));
+    String parentPath = StringUtil.defaultIfEmpty(path.substring(0, pos), "/");
+    VirtualFile parent = createDirectoryIfMissing(fileSystem, parentPath);
     if (parent == null) {
       return null;
     }
@@ -451,24 +467,22 @@ public final class VfsUtil extends VfsUtilCore {
 
   public static @NotNull List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, VirtualFile @NotNull ... files) {
     List<VirtualFile> list = ContainerUtil.filter(files, Conditions.notNull());
-    if (list.isEmpty()) {
-      return Collections.emptyList();
-    }
+    if (list.isEmpty()) return Collections.emptyList();
 
-    for (VirtualFile file : list) {
+    for (var file : list) {
       if (reloadChildren && file.isValid()) {
         file.getChildren();
       }
-
-      if (file instanceof NewVirtualFile) {
+      if (file instanceof NewVirtualFile nvf) {
         if (recursive) {
-          ((NewVirtualFile)file).markDirtyRecursively();
+          nvf.markDirtyRecursively();
         }
         else {
-          ((NewVirtualFile)file).markDirty();
+          nvf.markDirty();
         }
       }
     }
+
     return list;
   }
 
@@ -512,50 +526,4 @@ public final class VfsUtil extends VfsUtilCore {
     }
     return file;
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-
-  /** @deprecated incorrect when {@code src} is a directory; use {@link #findRelativePath(VirtualFile, VirtualFile, char)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static @Nullable String getPath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {
-    final VirtualFile commonAncestor = getCommonAncestor(src, dst);
-    if (commonAncestor != null) {
-      StringBuilder buffer = new StringBuilder();
-      if (!Comparing.equal(src, commonAncestor)) {
-        while (!Comparing.equal(src.getParent(), commonAncestor)) {
-          buffer.append("..").append(separatorChar);
-          src = src.getParent();
-        }
-      }
-      buffer.append(getRelativePath(dst, commonAncestor, separatorChar));
-      return buffer.toString();
-    }
-
-    return null;
-  }
-
-  /** @deprecated incorrect, use {@link #toUri(String)} if needed (to be removed in IDEA 2019 */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static @NotNull URI toUri(@NotNull VirtualFile file) {
-    String path = file.getPath();
-    try {
-      String protocol = file.getFileSystem().getProtocol();
-      if (file.isInLocalFileSystem()) {
-        if (SystemInfo.isWindows && path.charAt(0) != '/') {
-          path = '/' + path;
-        }
-        return new URI(protocol, "", path, null, null);
-      }
-      if (URLUtil.HTTP_PROTOCOL.equals(protocol)) {
-        return new URI(URLUtil.HTTP_PROTOCOL + URLUtil.SCHEME_SEPARATOR + path);
-      }
-      return new URI(protocol, path, null);
-    }
-    catch (URISyntaxException e) {
-      throw new IllegalArgumentException(e);
-    }
-  }
-  //</editor-fold>
 }

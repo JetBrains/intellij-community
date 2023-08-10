@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.TestAll;
@@ -6,8 +6,10 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.testFramework.TestRunnerUtil;
+import com.intellij.testFramework.GlobalState;
 import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.UITestUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +21,8 @@ import java.util.List;
 import java.util.prefs.Preferences;
 
 /**
- * This is should be first test in all tests so we can measure how long tests are starting up.
+ * This should be the first test in all test runs,
+ * so we can measure how long the tests are starting up.
  *
  * @author max
  */
@@ -38,7 +41,7 @@ public class _FirstInSuiteTest extends TestCase {
 
     StringBuilder builder = new StringBuilder("The following test classes were not loaded:\n");
     for (Throwable each : problems) {
-      builder.append(each).append("\n");
+      builder.append(ExceptionUtil.getThrowableText(each)).append("\n");
       each.printStackTrace(System.out);
     }
 
@@ -57,7 +60,7 @@ public class _FirstInSuiteTest extends TestCase {
     // in tests EDT inexplicably shuts down sometimes during the first access,
     // which leads to nasty problems in ApplicationImpl which assumes there is only one EDT.
     // so we try to forcibly terminate EDT here to urge JVM to re-spawn new shiny permanent EDT-1
-    TestRunnerUtil.replaceIdeEventQueueSafely();
+    UITestUtil.replaceIdeEventQueueSafely();
     SwingUtilities.invokeAndWait(() -> System.out.println("EDT is " + Thread.currentThread()));
 
     // force platform JNA load
@@ -96,10 +99,15 @@ public class _FirstInSuiteTest extends TestCase {
   @ReviseWhenPortedToJDK("13")
   public void testSymlinkAbility() {
     assertTrue(
-      String.format("Symlink creation not supported for %s on %s (%s)", SystemProperties.getUserName(), SystemInfo.OS_NAME, SystemInfo.OS_VERSION),
+      String.format("Symlink creation not supported for %s on %s (%s)",
+                    SystemProperties.getUserName(), SystemInfo.OS_NAME, SystemInfo.OS_VERSION),
       IoTestUtil.isSymLinkCreationSupported);
     assertEquals(
       "The `sun.io.useCanonCaches` makes `File#getCanonical*` methods unreliable and should be set to `false`",
       "false", System.getProperty("sun.io.useCanonCaches", Runtime.version().feature() >= 13 ? "false" : ""));
+  }
+
+  public void testGlobalState() {
+    GlobalState.checkSystemStreams(); // Rather initialize than check.
   }
 }

@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf
 
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
 import com.intellij.util.concurrency.NonUrgentExecutor
@@ -21,7 +22,7 @@ sealed class SystemDarkThemeDetector {
     @JvmStatic
     fun createDetector(syncFunction: Consumer<Boolean>): SystemDarkThemeDetector {
       return when {
-        SystemInfo.isMacOSMojave -> MacOSDetector(syncFunction)
+        SystemInfoRt.isMac -> MacOSDetector(syncFunction)
         SystemInfo.isWin10OrNewer -> WindowsDetector(syncFunction)
         else -> EmptyDetector()
       }
@@ -51,7 +52,7 @@ private abstract class AsyncDetector : SystemDarkThemeDetector() {
 
 private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : AsyncDetector() {
   override val detectionSupported: Boolean
-    get() = SystemInfo.isMacOSMojave && JnaLoader.isLoaded()
+    get() = SystemInfoRt.isMac && JnaLoader.isLoaded()
 
   val themeChangedCallback = object : Callback {
     @Suppress("unused")
@@ -63,20 +64,32 @@ private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : Asyn
   init {
     val pool = Foundation.NSAutoreleasePool()
     try {
-        val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSColorChangesObserver")
-        if (ID.NIL != delegateClass) {
-          if (!Foundation.addMethod(delegateClass, Foundation.createSelector("handleAppleThemeChanged:"), themeChangedCallback, "v@")) {
+      val selector = if (useAppearanceApi()) Foundation.createSelector("observeValueForKeyPath:ofObject:change:context:")
+      else Foundation.createSelector("handleAppleThemeChanged:")
+
+      val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSColorChangesObserver")
+
+      if (ID.NIL != delegateClass) {
+          if (!Foundation.addMethod(delegateClass, selector, themeChangedCallback, "v@")) {
             throw RuntimeException("Cannot add observer method")
           }
           Foundation.registerObjcClassPair(delegateClass)
         }
 
-        val delegate = Foundation.invoke("NSColorChangesObserver", "new")
+      val delegate = Foundation.invoke("NSColorChangesObserver", "new")
+
+      if (useAppearanceApi()) {
+        val app = Foundation.invoke("NSApplication", "sharedApplication")
+        Foundation.invoke(app, "addObserver:forKeyPath:options:context:", delegate, Foundation.nsString("effectiveAppearance"),
+                          0x01 /*NSKeyValueObservingOptionNew*/, ID.NIL)
+      }
+      else {
         Foundation.invoke(Foundation.invoke("NSDistributedNotificationCenter", "defaultCenter"), "addObserver:selector:name:object:",
                           delegate,
-                          Foundation.createSelector("handleAppleThemeChanged:"),
+                          selector,
                           Foundation.nsString("AppleInterfaceThemeChangedNotification"),
                           ID.NIL)
+      }
     }
     finally {
       pool.drain()
@@ -85,12 +98,16 @@ private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : Asyn
 
   override fun isDark(): Boolean {
     val pool = Foundation.NSAutoreleasePool()
-    try { // https://developer.apple.com/forums/thread/118974
+    try {
+      if (useAppearanceApi()) {
+        val app = Foundation.invoke("NSApplication", "sharedApplication")
+        val name = Foundation.toStringViaUTF8(Foundation.invoke(Foundation.invoke(app, "effectiveAppearance"), "name"))
+        return name?.equals("NSAppearanceNameDarkAqua") ?: false
+      }
+
+      // https://developer.apple.com/forums/thread/118974
       val userDefaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults")
       val appleInterfaceStyle = Foundation.toStringViaUTF8(Foundation.invoke(userDefaults, "objectForKey:", Foundation.nsString("AppleInterfaceStyle")))
-
-      //val autoMode = SystemInfo.isMacOSCatalina &&
-      //               Foundation.invoke(userDefaults, "boolForKey:", Foundation.nsString("AppleInterfaceStyleSwitchesAutomatically")).booleanValue()
 
       return appleInterfaceStyle?.toLowerCase()?.contains("dark") ?: false
     }
@@ -98,6 +115,8 @@ private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : Asyn
       pool.drain()
     }
   }
+
+  private fun useAppearanceApi() = SystemInfo.isMacOSCatalina && "system".equals(System.getProperty("apple.awt.application.appearance"), true)
 }
 
 private class WindowsDetector(override val syncFunction: Consumer<Boolean>) : AsyncDetector() {
@@ -111,7 +130,7 @@ private class WindowsDetector(override val syncFunction: Consumer<Boolean>) : As
 
   init {
     Toolkit.getDefaultToolkit().addPropertyChangeListener("win.lightTheme.on") { e: PropertyChangeEvent ->
-      syncFunction.accept(e.newValue != java.lang.Boolean.TRUE)
+      ApplicationManager.getApplication().invokeLater(Runnable { syncFunction.accept(e.newValue != java.lang.Boolean.TRUE) }, ModalityState.any())
     }
   }
 

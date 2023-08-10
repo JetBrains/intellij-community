@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.BatchUpdateListener
-import com.intellij.openapi.diagnostic.debugOrInfoIfTestMode
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -11,11 +10,9 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 
-abstract class StateStorageBase<T : Any> : StateStorage {
-  companion object {
-    private val LOG = logger<StateStorageBase<*>>()
-  }
+private val LOG = logger<StateStorageBase<*>>()
 
+abstract class StateStorageBase<T : Any> : StateStorage {
   private var isSavingDisabled = false
 
   protected val storageDataRef: AtomicReference<T> = AtomicReference()
@@ -61,18 +58,18 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   protected abstract fun loadData(): T
 
   fun disableSaving() {
-    LOG.debugOrInfoIfTestMode { "Disable saving: ${toString()}" }
+    LOG.debug { "Disable saving: ${toString()}" }
     isSavingDisabled = true
   }
 
   fun enableSaving() {
-    LOG.debugOrInfoIfTestMode { "Enable saving: ${toString()}" }
+    LOG.debug { "Enable saving: ${toString()}" }
     isSavingDisabled = false
   }
 
   protected fun checkIsSavingDisabled(): Boolean {
     if (isSavingDisabled) {
-      LOG.debugOrInfoIfTestMode { "Saving disabled: ${toString()}" }
+      LOG.debug { "Saving disabled: ${toString()}" }
       return true
     }
     else {

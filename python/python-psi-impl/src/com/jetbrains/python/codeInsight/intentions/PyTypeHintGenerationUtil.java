@@ -39,7 +39,7 @@ public final class PyTypeHintGenerationUtil {
 
   public static final String TYPE_COMMENT_PREFIX = "# type: ";
 
-  private PyTypeHintGenerationUtil() {}
+  private PyTypeHintGenerationUtil() { }
 
   public static void insertStandaloneAttributeTypeComment(@NotNull PyTargetExpression target,
                                                           @NotNull TypeEvalContext context,
@@ -274,11 +274,11 @@ public final class PyTypeHintGenerationUtil {
     }
   }
 
-  private static void addImportsForTypeAnnotations(@NotNull List<PyType> types,
-                                                   @NotNull TypeEvalContext context,
-                                                   @NotNull PsiFile file) {
-    final Set<PsiNamedElement> symbols = new HashSet<>();
-    final Set<String> namesFromTyping = new HashSet<>();
+  public static void addImportsForTypeAnnotations(@NotNull List<PyType> types,
+                                                  @NotNull TypeEvalContext context,
+                                                  @NotNull PsiFile file) {
+    final Set<PsiNamedElement> symbols = new LinkedHashSet<>();
+    final Set<String> namesFromTyping = new LinkedHashSet<>();
 
     for (PyType type : types) {
       collectImportTargetsFromType(type, context, symbols, namesFromTyping);
@@ -305,7 +305,9 @@ public final class PyTypeHintGenerationUtil {
     else if (type instanceof PyUnionType) {
       final Collection<PyType> members = ((PyUnionType)type).getMembers();
       final boolean isOptional = members.size() == 2 && members.contains(PyNoneType.INSTANCE);
-      typingTypes.add(isOptional ? "Optional" : "Union");
+      if (!PyTypingTypeProvider.isBitwiseOrUnionAvailable(context)) {
+        typingTypes.add(isOptional ? "Optional" : "Union");
+      }
       for (PyType pyType : members) {
         collectImportTargetsFromType(pyType, context, symbols, typingTypes);
       }
@@ -315,6 +317,9 @@ public final class PyTypeHintGenerationUtil {
       if (element instanceof PsiNamedElement) {
         symbols.add((PsiNamedElement)element);
       }
+    }
+    else if (type instanceof PyLiteralStringType) {
+      typingTypes.add("LiteralString");
     }
     else if (type instanceof PyCollectionType) {
       if (type instanceof PyCollectionTypeImpl) {
@@ -330,6 +335,9 @@ public final class PyTypeHintGenerationUtil {
       else if (type instanceof PyTupleType) {
         typingTypes.add("Tuple");
       }
+      else if (type instanceof PyTypedDictType) {
+        typingTypes.add("Dict");
+      }
       for (PyType pyType : ((PyCollectionType)type).getElementTypes()) {
         collectImportTargetsFromType(pyType, context, symbols, typingTypes);
       }
@@ -337,9 +345,8 @@ public final class PyTypeHintGenerationUtil {
     else if (type instanceof PyClassType) {
       symbols.add(((PyClassType)type).getPyClass());
     }
-    else if (type instanceof PyCallableType) {
+    else if (type instanceof PyCallableType callableType) {
       typingTypes.add("Callable");
-      final PyCallableType callableType = (PyCallableType)type;
       for (PyCallableParameter parameter : ContainerUtil.notNullize(callableType.getParameters(context))) {
         collectImportTargetsFromType(parameter.getType(context), context, symbols, typingTypes);
       }
@@ -351,7 +358,7 @@ public final class PyTypeHintGenerationUtil {
         symbols.add(target);
       }
     }
-    if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
+    if (type instanceof PyInstantiableType && ((PyInstantiableType<?>)type).isDefinition()) {
       typingTypes.add("Type");
     }
   }
@@ -375,8 +382,7 @@ public final class PyTypeHintGenerationUtil {
     else if (type instanceof PyClassType) {
       // In this order since PyCollectionTypeImpl implements PyClassType
     }
-    else if (type instanceof PyCallableType) {
-      final PyCallableType callableType = (PyCallableType)type;
+    else if (type instanceof PyCallableType callableType) {
       for (PyCallableParameter parameter : ContainerUtil.notNullize(callableType.getParameters(context))) {
         checkPep484Compatibility(parameter.getType(context), context);
       }

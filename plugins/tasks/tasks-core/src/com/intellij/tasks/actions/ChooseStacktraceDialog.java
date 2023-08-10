@@ -22,7 +22,7 @@ import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,7 +58,7 @@ public class ChooseStacktraceDialog extends DialogWrapper {
     ContainerUtil.addAll(list, comments);
 
     myList.setModel(new CollectionListModel<>(list));
-    myList.setCellRenderer(SimpleListCellRenderer.create("", o ->
+    myList.setCellRenderer(BuilderKt.textListCellRenderer(o ->
       o instanceof Description ? TaskBundle.message("label.description") :
       TaskBundle.message("label.commented.by", o.getAuthor(), o.getDate())));
     myEditor = AnalyzeStacktraceUtil.createEditorPanel(project, myDisposable);

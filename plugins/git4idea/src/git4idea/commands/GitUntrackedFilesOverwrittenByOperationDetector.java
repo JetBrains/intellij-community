@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,8 +39,10 @@ public class GitUntrackedFilesOverwrittenByOperationDetector extends GitMessageW
 
   private static final Event NEW_UNTRACKED_FILES_OVERWRITTEN_BY = new Event(
     "UntrackedFileDetector",
-    "The following untracked working tree files would be overwritten by",
-    "Please move or remove them before"
+    List.of(Pattern.compile(".*The following untracked working tree files would be overwritten by.*")),
+    List.of(Pattern.compile(".*Please move or remove them before.*"),
+            Pattern.compile(".*Merge with strategy .* failed.*"),
+            Pattern.compile(".*No merge strategy handled the merge.*"))
   );
 
   public GitUntrackedFilesOverwrittenByOperationDetector(VirtualFile root) {

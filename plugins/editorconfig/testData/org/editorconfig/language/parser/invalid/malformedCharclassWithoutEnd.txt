@@ -2,10 +2,10 @@ EditorConfig file
   EditorConfigSectionImpl(SECTION)
     EditorConfigHeaderImpl(HEADER)
       PsiElement(EditorConfigTokenType.L_BRACKET)('[')
-      EditorConfigPatternImpl(PATTERN)
+      EditorConfigConcatenatedPatternImpl(CONCATENATED_PATTERN)
         EditorConfigFlatPatternImpl(FLAT_PATTERN)
           PsiElement(EditorConfigTokenType.PATTERN_IDENTIFIER)('onetwo')
-        EditorConfigCharClassImpl(CHAR_CLASS)
+        EditorConfigCharClassPatternImpl(CHAR_CLASS_PATTERN)
           PsiElement(EditorConfigTokenType.L_BRACKET)('[')
           EditorConfigCharClassLetterImpl(CHAR_CLASS_LETTER)
             PsiElement(EditorConfigTokenType.CHARCLASS_LETTER)('t')
@@ -18,10 +18,10 @@ EditorConfig file
           EditorConfigCharClassLetterImpl(CHAR_CLASS_LETTER)
             PsiElement(EditorConfigTokenType.CHARCLASS_LETTER)('e')
           PsiElement(EditorConfigTokenType.R_BRACKET)(']')
-        PsiWhiteSpace('\n')
         EditorConfigFlatPatternImpl(FLAT_PATTERN)
+          PsiElement(EditorConfigTokenType.PATTERN_WHITE_SPACE)('\n')
           PsiElement(EditorConfigTokenType.PATTERN_IDENTIFIER)('hello')
-      PsiErrorElement:<pattern>, EditorConfigTokenType.ASTERISK, EditorConfigTokenType.DOUBLE_ASTERISK, EditorConfigTokenType.L_BRACKET, EditorConfigTokenType.L_CURLY, EditorConfigTokenType.PATTERN_IDENTIFIER, EditorConfigTokenType.QUESTION or EditorConfigTokenType.R_BRACKET expected, got '='
+      PsiErrorElement:<flat pattern>, EditorConfigTokenType.ASTERISK, EditorConfigTokenType.DOUBLE_ASTERISK, EditorConfigTokenType.L_BRACKET, EditorConfigTokenType.L_CURLY, EditorConfigTokenType.PATTERN_IDENTIFIER, EditorConfigTokenType.PATTERN_WHITE_SPACE, EditorConfigTokenType.QUESTION or EditorConfigTokenType.R_BRACKET expected, got '='
         PsiElement(EditorConfigTokenType.SEPARATOR)('=')
     world
       world

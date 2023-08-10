@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -17,14 +18,20 @@ public @interface Storage {
   /**
    * @deprecated Use {@link #value()}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   String file() default "";
 
   /**
-   * Relative to component container configuration root path.
+   * The configuration root path relative to component container.
    * Consider using shorthand form - {@code @Storage("yourName.xml")} (when you need to specify only file path).
    * <p>
-   * Consider reusing existing storage files instead of a new one to avoid creating new ones. Related components should reuse the same storage file.
+   * Consider reusing existing storage files instead of a new one to avoid creating too many of them.
+   * Related components should reuse the same storage file.
+   * But don't mix components with different RoamingTypes in a single file, it is prohibited.
+   * <p>
+   * The actual path to the storage file on disk is not strictly defined as relative to the container path,
+   * in fact it can be different, e.g. application-wide {@link RoamingType#PER_OS os-dependent} settings are stored in the subfolder
+   * correspondent to the current OS, e.g. in {@code APP_CONFIG/options/mac/}.
    *
    * @see StoragePathMacros
    */
@@ -53,6 +60,11 @@ public @interface Storage {
 
   /**
    * Whether to apply save threshold policy (defaults to {@code true} if {@link #roamingType()} is set to {@link RoamingType#DISABLED}).
+   * <p>
+   * If the threshold is enabled, calls of {@link Application#saveSettings()} will save the component at most once in 5 minutes, but if user
+   * explicitly invokes 'Save All' action, the component will be saved immediately. Use this attribute to disable the threshold for components
+   * which configuration may be read from external processes, and therefore it's important to save them immediately.
+   * </p>
    */
   ThreeState useSaveThreshold() default ThreeState.UNSURE;
 
@@ -63,4 +75,7 @@ public @interface Storage {
    * Is exportable (Export Settings dialog) regardless of roaming type.
    */
   boolean exportable() default false;
+
+  @ApiStatus.Internal
+  boolean usePathMacroManager() default true;
 }

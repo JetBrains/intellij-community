@@ -12,8 +12,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Represents id of the task enqueued to external API for execution.
- *
- * @author Denis Zhdanov
  */
 public final class ExternalSystemTaskId implements Serializable {
 
@@ -77,6 +75,10 @@ public final class ExternalSystemTaskId implements Serializable {
   @NotNull
   public ExternalSystemTaskType getType() {
     return myType;
+  }
+
+  public long getId() {
+    return myId;
   }
 
   @Override

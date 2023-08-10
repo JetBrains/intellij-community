@@ -1,14 +1,17 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.module.Module;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.PyMethodParametersInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.types.PyNamedTupleType;
@@ -19,15 +22,9 @@ import org.junit.Ignore;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 @TestDataPath("$CONTENT_ROOT/../testData/completion")
 public class Py3CompletionTest extends PyTestCase {
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
-  }
 
   public void testPropertyDecorator() {
     doTest();
@@ -53,10 +50,14 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-13157
   public void testMetaClass() {
-    doTestByText("class C(meta<caret>):\n" +
-                 "    pass\n");
-    myFixture.checkResult("class C(metaclass=):\n" +
-                          "    pass\n");
+    doTestByText("""
+                   class C(meta<caret>):
+                       pass
+                   """);
+    myFixture.checkResult("""
+                            class C(metaclass=):
+                                pass
+                            """);
   }
 
   private void doTest() {
@@ -65,6 +66,13 @@ public class Py3CompletionTest extends PyTestCase {
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();
     myFixture.checkResultByFile(testName + ".after.py");
+  }
+
+  private void doTabTest() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    myFixture.completeBasic();
+    myFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR);
+    myFixture.checkResultByFile(getTestName(true) + ".after.py");
   }
 
   public void doNegativeTest() {
@@ -84,23 +92,21 @@ public class Py3CompletionTest extends PyTestCase {
 
 
   protected void doMultiFileTest(@NotNull List<String> sourceRoots) {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      myFixture.copyDirectoryToProject(getTestName(true), "");
-      final Module module = myFixture.getModule();
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    final Module module = myFixture.getModule();
+    for (String root : sourceRoots) {
+      PsiTestUtil.addSourceRoot(module, myFixture.findFileInTempDir(root));
+    }
+    try {
+      myFixture.configureByFile("a.py");
+      myFixture.completeBasic();
+      myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
+    }
+    finally {
       for (String root : sourceRoots) {
-        PsiTestUtil.addSourceRoot(module, myFixture.findFileInTempDir(root));
+        PsiTestUtil.removeSourceRoot(module, myFixture.findFileInTempDir(root));
       }
-      try {
-        myFixture.configureByFile("a.py");
-        myFixture.completeBasic();
-        myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
-      }
-      finally {
-        for (String root : sourceRoots) {
-          PsiTestUtil.removeSourceRoot(module, myFixture.findFileInTempDir(root));
-        }
-      }
-    });
+    }
   }
 
   @Nullable
@@ -112,20 +118,15 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-4073
   public void testSpecialFunctionAttributesPy3() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON34,
-      () -> {
-        List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
-        assertNotNull(suggested);
-        assertEmpty(suggested);
+    List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
+    assertNotNull(suggested);
+    assertEmpty(suggested);
 
-        suggested = doTestByText("def func(): pass; func.__<caret>");
-        assertNotNull(suggested);
-        assertContainsElements(suggested, "__defaults__", "__globals__", "__closure__",
-                               "__code__", "__name__", "__doc__", "__dict__", "__module__");
-        assertContainsElements(suggested, "__annotations__", "__kwdefaults__");
-      }
-    );
+    suggested = doTestByText("def func(): pass; func.__<caret>");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "__defaults__", "__globals__", "__closure__",
+                           "__code__", "__name__", "__doc__", "__dict__", "__module__");
+    assertContainsElements(suggested, "__annotations__", "__kwdefaults__");
   }
 
   // PY-7375
@@ -171,7 +172,7 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-15390
   public void testMatMul() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   // PY-11214
@@ -180,70 +181,56 @@ public class Py3CompletionTest extends PyTestCase {
   }
 
   public void testAsync() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    PyModuleNameCompletionContributor.ENABLED = false;
+    doTest();
   }
 
   public void testAwait() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   // PY-17828
   public void testDunderPrepare() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON34,
-      () -> {
-        final String testName = getTestName(true);
-        myFixture.configureByFile(testName + ".py");
-        myFixture.completeBasicAllCarets(null);
-        myFixture.checkResultByFile(testName + ".after.py");
-      }
-    );
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasicAllCarets(null);
+    myFixture.checkResultByFile(testName + ".after.py");
   }
 
   // PY-17828
   // TODO: do we need this?
   @Ignore
   public void ignore_testDunderPrepareHonourInspectionSettings() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON34,
-      () -> {
-        myFixture.enableInspections(PyMethodParametersInspection.class);
+    myFixture.enableInspections(PyMethodParametersInspection.class);
 
-        final String testName = getTestName(true);
-        myFixture.configureByFile(testName + ".py");
-        myFixture.completeBasicAllCarets(null);
-        myFixture.checkResultByFile(testName + ".after.py");
-      }
-    );
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasicAllCarets(null);
+    myFixture.checkResultByFile(testName + ".after.py");
   }
 
   // PY-20279
   public void testImplicitDunderClass() {
-    doTestByText("class First:\n" +
-                 "    def foo(self):\n" +
-                 "        print(__cl<caret>)");
-    myFixture.checkResult("class First:\n" +
-                          "    def foo(self):\n" +
-                          "        print(__class__)");
+    final List<String> inClassMethod = doTestByText("""
+                                                      class First:
+                                                          def foo(self):
+                                                              print(__cl<caret>)""");
+    assertNotNull(inClassMethod);
+    assertContainsElements(inClassMethod, PyNames.__CLASS__);
 
-    doTestByText("class First:\n" +
-                 "    @staticmethod\n" +
-                 "    def foo():\n" +
-                 "        print(__cl<caret>)");
-    myFixture.checkResult("class First:\n" +
-                          "    @staticmethod\n" +
-                          "    def foo():\n" +
-                          "        print(__class__)");
+    final List<String> inStaticMethod = doTestByText("""
+                                                       class First:
+                                                           @staticmethod
+                                                           def foo():
+                                                               print(__cl<caret>)""");
+    assertNotNull(inStaticMethod);
+    assertContainsElements(inStaticMethod, PyNames.__CLASS__);
 
-    doTestByText("class First:\n" +
-                 "    print(__cl<caret>)");
-    myFixture.checkResult("class First:\n" +
-                          "    print(__cl)");
+    assertNullOrEmpty(doTestByText("class First:\n" +
+                                   "    print(__cl<caret>)"));
 
-    doTestByText("def abc():\n" +
-                 "    print(__cl<caret>)");
-    myFixture.checkResult("def abc():\n" +
-                          "    print(__cl)");
+    assertNullOrEmpty(doTestByText("def abc():\n" +
+                                   "    print(__cl<caret>)"));
   }
 
   // PY-11208
@@ -276,18 +263,19 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-21060
   public void testGenericTypeInheritor() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   // PY-19702
   public void testMetaclassAttributeOnDefinition() {
-    final List<String> suggested = doTestByText("class Meta(type):\n" +
-                                                "    def __init__(self, what, bases, dict):\n" +
-                                                "        self.meta_attr = \"attr\"\n" +
-                                                "        super().__init__(what, bases, dict)\n" +
-                                                "class A(metaclass=Meta):\n" +
-                                                "    pass\n" +
-                                                "print(A.<caret>)");
+    final List<String> suggested = doTestByText("""
+                                                  class Meta(type):
+                                                      def __init__(self, what, bases, dict):
+                                                          self.meta_attr = "attr"
+                                                          super().__init__(what, bases, dict)
+                                                  class A(metaclass=Meta):
+                                                      pass
+                                                  print(A.<caret>)""");
 
     assertNotNull(suggested);
     assertContainsElements(suggested, "meta_attr");
@@ -295,37 +283,40 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-19702
   public void testMetaclassAttributeOnInstance() {
-    final List<String> suggested = doTestByText("class Meta(type):\n" +
-                                                "    def __init__(self, what, bases, dict):\n" +
-                                                "        self.meta_attr = \"attr\"\n" +
-                                                "        super().__init__(what, bases, dict)\n" +
-                                                "class A(metaclass=Meta):\n" +
-                                                "    pass\n" +
-                                                "print(A().<caret>)");
+    final List<String> suggested = doTestByText("""
+                                                  class Meta(type):
+                                                      def __init__(self, what, bases, dict):
+                                                          self.meta_attr = "attr"
+                                                          super().__init__(what, bases, dict)
+                                                  class A(metaclass=Meta):
+                                                      pass
+                                                  print(A().<caret>)""");
 
     assertNotNull(suggested);
     assertContainsElements(suggested, "meta_attr");
   }
 
   public void testMetaclassMethodOnDefinition() {
-    final List<String> suggested = doTestByText("class Meta(type):\n" +
-                                                "    def meta_method(cls):\n" +
-                                                "        pass\n" +
-                                                "class A(metaclass=Meta):\n" +
-                                                "    pass\n" +
-                                                "print(A.<caret>)");
+    final List<String> suggested = doTestByText("""
+                                                  class Meta(type):
+                                                      def meta_method(cls):
+                                                          pass
+                                                  class A(metaclass=Meta):
+                                                      pass
+                                                  print(A.<caret>)""");
 
     assertNotNull(suggested);
     assertContainsElements(suggested, "meta_method");
   }
 
   public void testMetaclassMethodOnInstance() {
-    final List<String> suggested = doTestByText("class Meta(type):\n" +
-                                                "    def meta_method(cls):\n" +
-                                                "        pass\n" +
-                                                "class A(metaclass=Meta):\n" +
-                                                "    pass\n" +
-                                                "print(A().<caret>)");
+    final List<String> suggested = doTestByText("""
+                                                  class Meta(type):
+                                                      def meta_method(cls):
+                                                          pass
+                                                  class A(metaclass=Meta):
+                                                      pass
+                                                  print(A().<caret>)""");
 
     assertNotNull(suggested);
     assertDoesntContain(suggested, "meta_method");
@@ -333,60 +324,82 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-27398
   public void testDataclassPostInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+    doMultiFileTest();
   }
 
   // PY-27398
   public void testDataclassWithInitVarPostInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+    doMultiFileTest();
   }
 
   // PY-27398
   public void testDataclassPostInitNoInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+    doMultiFileTest();
   }
 
   // PY-26354
   public void testAttrsPostInit() {
-    doTestByText("import attr\n" +
-                 "\n" +
-                 "@attr.s\n" +
-                 "class C:\n" +
-                 "    x = attr.ib()\n" +
-                 "    y = attr.ib(init=False)\n" +
-                 "\n" +
-                 "    def __attrs_<caret>");
+    runWithAdditionalClassEntryInSdkRoots(
+      "../packages",
+      () -> {
+        doTestByText(
+          """
+            import attr
 
-    myFixture.checkResult("import attr\n" +
-                          "\n" +
-                          "@attr.s\n" +
-                          "class C:\n" +
-                          "    x = attr.ib()\n" +
-                          "    y = attr.ib(init=False)\n" +
-                          "\n" +
-                          "    def __attrs_post_init__(self):");
+            @attr.s
+            class C:
+                x = attr.ib()
+                y = attr.ib(init=False)
+
+                def __attrs_<caret>"""
+        );
+
+        myFixture.checkResult(
+          """
+            import attr
+
+            @attr.s
+            class C:
+                x = attr.ib()
+                y = attr.ib(init=False)
+
+                def __attrs_post_init__(self):"""
+        );
+      }
+    );
   }
 
   // PY-26354
   public void testAttrsPostInitNoInit() {
-    assertEmpty(
-      doTestByText("import attr\n" +
-                   "\n" +
-                   "@attr.s(init=False)\n" +
-                   "class C:\n" +
-                   "    x = attr.ib()\n" +
-                   "    y = attr.ib(init=False)\n" +
-                   "\n" +
-                   "    def __attrs_<caret>")
+    runWithAdditionalClassEntryInSdkRoots(
+      "../packages",
+      () -> assertEmpty(
+        doTestByText(
+          """
+            import attr
+
+            @attr.s(init=False)
+            class C:
+                x = attr.ib()
+                y = attr.ib(init=False)
+
+                def __attrs_<caret>"""
+        )
+      )
     );
   }
 
   // PY-26354
   public void testAttrsValidatorParameters() {
-    final String testName = getTestName(true);
-    myFixture.configureByFile(testName + ".py");
-    myFixture.completeBasicAllCarets(null);
-    myFixture.checkResultByFile(testName + ".after.py");
+    runWithAdditionalClassEntryInSdkRoots(
+      "../packages",
+      () -> {
+        final String testName = getTestName(true);
+        myFixture.configureByFile(testName + ".py");
+        myFixture.completeBasicAllCarets(null);
+        myFixture.checkResultByFile(testName + ".after.py");
+      }
+    );
   }
 
   //PY-28332
@@ -401,11 +414,12 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-27148
   public void testNamedTupleSpecial() {
-    final List<String> suggested = doTestByText("from collections import namedtuple\n" +
-                                                "class Cat1(namedtuple(\"Cat\", \"name age\")):\n" +
-                                                "    pass\n" +
-                                                "c1 = Cat1(\"name\", 5)\n" +
-                                                "c1.<caret>");
+    final List<String> suggested = doTestByText("""
+                                                  from collections import namedtuple
+                                                  class Cat1(namedtuple("Cat", "name age")):
+                                                      pass
+                                                  c1 = Cat1("name", 5)
+                                                  c1.<caret>""");
     assertNotNull(suggested);
     assertContainsElements(suggested, PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES);
   }
@@ -420,12 +434,12 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-42700
   public void testFStringLikeCompletionInOrdinaryStringLiterals() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionPreservesParenthesesForCallables() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-42700
@@ -435,58 +449,250 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-42700
   public void testFStringLikeCompletionNotAvailableInByteLiterals() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+    doNegativeTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionNotAvailableInUnicodeLiterals() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+    doNegativeTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionNotAvailableInStrFormatCalls() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+    doNegativeTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionNotAvailableAfterEscapedOpeningBrace() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+    doNegativeTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionAvailableAfterOpeningBraceFollowingEscapedOne() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionDoesNotDuplicateClosingBrace() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionOnMultipleCaretsDoesNotDuplicatePrefix() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionDoesNotWorkInStringWithInjections() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+    doNegativeTest();
   }
 
   // EA-232631
   public void testFStringLikeCompletionNotAvailableInStringElementsInSyntacticallyIllegalPosition() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+    doNegativeTest();
   }
 
   // PY-45459
   public void testFStringLikeCompletionAvailableRightAfterOpeningBrace() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      myFixture.configureByFile(getTestName(true) + ".py");
-      LookupElement[] variants = myFixture.completeBasic();
-      assertNotNull(variants);
-      assertTrue(variants.length > 0);
-      assertTrue(ContainerUtil.exists(variants, v -> v.getLookupString().equals("my_expr")));
-    });
+    myFixture.configureByFile(getTestName(true) + ".py");
+    LookupElement[] variants = myFixture.completeBasic();
+    assertNotNull(variants);
+    assertTrue(variants.length > 0);
+    assertTrue(ContainerUtil.exists(variants, v -> v.getLookupString().equals("my_expr")));
+  }
+
+  // PY-46178
+  public void testFStringLikeCompletionInsideUrl() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    assertContainsElements(myFixture.getLookupElementStrings(), "city");
+  }
+
+  // PY-48665
+  public void testFStringLikeCompletionNotAvailableInLiteralPatterns() {
+    doNegativeTest();
+  }
+
+  // PY-46056
+  public void testImportCompletionHintForSameDirectoryModuleInOrdinaryPackage() {
+    doTestVariantTailText("ordinaryPackage/sample.py", "logging", null);
+  }
+
+  // PY-46056
+  public void testImportCompletionHintForSameDirectoryModuleInPlainDirectory() {
+    doTestVariantTailText("plainDirectory/sample.py", "logging", " (plainDirectory)");
+  }
+
+  // PY-46056
+  public void testFromImportCompletionHintForSameDirectoryModuleInOrdinaryPackage() {
+    doTestVariantTailText("ordinaryPackage/sample.py", "logging", null);
+  }
+
+  // PY-46056
+  public void testFromImportCompletionHintForSameDirectoryModuleInPlainDirectory() {
+    doTestVariantTailText("plainDirectory/sample.py", "logging", " (plainDirectory)");
+  }
+
+  private void doTestVariantTailText(@NotNull String entryFilePath, @NotNull String variantName, @Nullable String tailText) {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile(entryFilePath);
+    LookupElement[] variants = myFixture.completeBasic();
+    assertNotNull(variants);
+    LookupElement lookupElement = ContainerUtil.find(variants, v -> v.getLookupString().equals(variantName));
+    assertNotNull(lookupElement);
+    assertEquals(tailText, TestLookupElementPresentation.renderElement(lookupElement).getTailText());
+  }
+
+  // PY-46054
+  public void testFromImportFromSameDirectoryModule() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("foo_bar/sample.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(getTestName(true) + "/foo_bar/sample.after.py");
+  }
+
+  // PY-49156
+  public void testHaveCompletionVariantsForOsPath() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    LookupElement[] variants = myFixture.completeBasic();
+    assertNotNull(variants);
+    assertTrue(variants.length > 0);
+    assertTrue(ContainerUtil.exists(variants, v -> v.getLookupString().equals("join")));
+  }
+
+  // PY-48012
+  public void testInstanceAttributesSuggestedForKeywordPatterns() {
+    doTest();
+  }
+
+  // PY-48012
+  public void testClassAttributesSuggestedForKeywordPatterns() {
+    doTest();
+  }
+
+  // PY-48012
+  public void testInheritedAttributesSuggestedForKeywordPatterns() {
+    doTest();
+  }
+
+  // PY-48012
+  public void testPropertiesSuggestedForKeywordPatterns() {
+    doTest();
+  }
+
+  // PY-48012
+  public void testExistingKeywordPattern() {
+    doTest();
+  }
+
+  // PY-48012
+  public void testEqualSignRenderedInKeywordPatternVariant() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    LookupElement[] variants = myFixture.completeBasic();
+    assertNotNull(variants);
+    TestLookupElementPresentation presentation = new TestLookupElementPresentation();
+    LookupElement attrVariant = ContainerUtil.find(variants, v -> v.getLookupString().equals("attr="));
+    assertNotNull(attrVariant);
+    attrVariant.renderElement(presentation);
+    assertTrue(presentation.getItemText().endsWith("="));
+  }
+
+  // PY-48012
+  public void testTabCompletionOverridesEqualSignInKeywordPattern() {
+    doTabTest();
+  }
+
+  // PY-48012
+  public void testInnerClassesNotSuggestedForKeywordPatterns() {
+    doNegativeTest();
+  }
+
+  // PY-48012
+  public void testMethodsNotSuggestedForKeywordPatterns() {
+    doNegativeTest();
+  }
+
+  // PY-48012
+  public void testSpecialAttributesNotSuggestedForKeywordPatterns() {
+    doNegativeTest();
+  }
+
+  // PY-48012
+  public void testClassPrivateAttributesNotSuggestedForKeywordPatterns() {
+    doNegativeTest();
+  }
+
+  // EA-404000
+  public void testUnresolvedClassPatternLeadsToNothingSuggestedForKeywordPatterns() {
+    doNegativeTest();
+  }
+
+  // PY-48012
+  public void testAttributesOfDataclassSuggestedForKeywordPatterns() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    List<String> variants = myFixture.getLookupElementStrings();
+    assertContainsElements(variants, "count=", "name=");
+  }
+
+  // PY-48012
+  public void testAttributesOfNamedTupleSuggestedForKeywordPatterns() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    List<String> variants = myFixture.getLookupElementStrings();
+    assertContainsElements(variants, "count=", "name=");
+  }
+
+  // PY-48012
+  public void testSpacesAroundEqualSignForKeywordPatternsIfEnabled() {
+    getPythonCodeStyleSettings().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = true;
+    doTest();
+  }
+
+  // PY-48012
+  public void testTabCompletionOverridesSpacesAroundEqualSignInKeywordPatternIfEnabled() {
+    getPythonCodeStyleSettings().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = true;
+    doTabTest();
+  }
+
+  // PY-53104
+  public void testOnSelf() {
+    doTestVariants("foo", "bar");
+  }
+
+  // PY-53104
+  public void testOnListSelf() {
+    doTestVariants("foo", "bar");
+  }
+
+  // PY-53104
+  public void testOnListSelfInNestedClass() {
+    doTestVariants("foo", "bar");
+  }
+
+  // PY-53104
+  public void testOnSelfInsideClassFunction() {
+    doTestVariants("x", "foo");
+  }
+
+  // PY-53104
+  public void testOnSelfInsideClassFunctionNestedFunction() {
+    doTestVariants("x", "foo");
+  }
+
+  private void doTestVariants(String @NotNull ... expected) {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    List<String> variants = myFixture.getLookupElementStrings();
+    assertContainsElements(variants, expected);
+  }
+
+  private @NotNull PyCodeStyleSettings getPythonCodeStyleSettings() {
+    return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
   }
 
   @Override

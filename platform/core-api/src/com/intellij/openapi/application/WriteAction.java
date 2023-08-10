@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   /**
    * @deprecated Use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} or similar method instead
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public WriteAction() {
   }
@@ -35,19 +37,14 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * or (if really desperate) {@link #computeAndWait(ThrowableComputable)} instead
    */
   @Deprecated
-  @NotNull
   @Override
-  public RunResult<T> execute() {
+  public @NotNull RunResult<T> execute() {
     final RunResult<T> result = new RunResult<>(this);
 
     Application application = ApplicationManager.getApplication();
-    if (application.isWriteThread()) {
-      AccessToken token = start(getClass());
-      try {
+    if (application.isWriteIntentLockAcquired()) {
+      try(AccessToken ignored = ApplicationManager.getApplication().acquireWriteActionLock(getClass())) {
         result.run();
-      }
-      finally {
-        token.finish();
       }
       return result;
     }
@@ -57,12 +54,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     }
 
     WriteThread.invokeAndWait(() -> {
-      AccessToken token = start(getClass());
-      try {
+      try(AccessToken ignored = ApplicationManager.getApplication().acquireWriteActionLock(getClass())){
         result.run();
-      }
-      finally {
-        token.finish();
       }
     });
 
@@ -76,30 +69,17 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * @see #compute(ThrowableComputable)
    */
   @Deprecated
-  @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public static AccessToken start() {
+  @ApiStatus.ScheduledForRemoval
+  public static @NotNull AccessToken start() {
     // get useful information about the write action
     Class<?> callerClass = ObjectUtils.notNull(ReflectionUtil.getCallerClass(3), WriteAction.class);
-    return start(callerClass);
-  }
-
-  /**
-   * @deprecated Use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
-   * @see #run(ThrowableRunnable)
-   * @see #compute(ThrowableComputable)
-   */
-  @Deprecated
-  @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  private static AccessToken start(@NotNull Class<?> clazz) {
-    return ApplicationManager.getApplication().acquireWriteActionLock(clazz);
+    return ApplicationManager.getApplication().acquireWriteActionLock(callerClass);
   }
 
   /**
    * Executes {@code action} inside write action.
-   * Must be called from the EDT.
    */
+  @RequiresEdt
   public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
     ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Void, E>)() -> {
       action.run();
@@ -109,8 +89,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
   /**
    * Executes {@code action} inside write action and returns the result.
-   * Must be called from the EDT.
    */
+  @RequiresEdt
   public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
     return ApplicationManager.getApplication().runWriteAction(action);
   }
@@ -144,13 +124,17 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * <br/>Instead, please use {@link #compute(ThrowableComputable)}.
    */
   public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action) throws E {
+    return computeAndWait(action, ModalityState.defaultModalityState());
+  }
+
+  public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action, ModalityState modalityState) throws E {
     Application application = ApplicationManager.getApplication();
-    if (application.isWriteThread()) {
+    if (application.isWriteIntentLockAcquired()) {
       return ApplicationManager.getApplication().runWriteAction(action);
     }
 
     if (SwingUtilities.isEventDispatchThread()) {
-      LOG.error("You can't run blocking actions from EDT in Pure UI mode");
+      return application.runWriteIntentReadAction(() -> application.runWriteAction(action));
     }
 
     if (application.isReadAccessAllowed()) {
@@ -166,7 +150,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       catch (Throwable e) {
         exception.set(e);
       }
-    });
+    }, modalityState);
 
     Throwable t = exception.get();
     if (t != null) {

@@ -16,6 +16,7 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -136,6 +137,9 @@ public class HgCommandExecutor {
                                                boolean ignoreDefaultOptions,
                                                @NotNull HgLineProcessListener listener) {
     if (myProject == null || myProject.isDisposed() || myVcs == null) return false;
+    if (!myProject.isDefault() && !TrustedProjects.isTrusted(myProject)) {
+      throw new IllegalStateException("Shouldn't be possible to run a Hg command in the safe mode");
+    }
 
     ShellCommand shellCommand = createShellCommandWithArgs(repo, operation, arguments, ignoreDefaultOptions);
     try {

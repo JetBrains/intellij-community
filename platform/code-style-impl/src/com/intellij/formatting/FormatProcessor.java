@@ -157,16 +157,7 @@ public class FormatProcessor {
     }
   }
 
-  public static class ChildAttributesInfo {
-    public final AbstractBlockWrapper parent;
-    public final ChildAttributes attributes;
-    public final int index;
-
-    public ChildAttributesInfo(final AbstractBlockWrapper parent, final ChildAttributes attributes, final int index) {
-      this.parent = parent;
-      this.attributes = attributes;
-      this.index = index;
-    }
+  public record ChildAttributesInfo(AbstractBlockWrapper parent, ChildAttributes attributes, int index) {
   }
 
   public IndentInfo getIndentAt(final int offset) {

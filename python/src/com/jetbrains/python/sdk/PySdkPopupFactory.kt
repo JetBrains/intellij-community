@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -13,14 +14,16 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.text.trimMiddle
 import com.intellij.util.ui.SwingHelper
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.add.PyAddSdkDialog
-import java.util.function.Consumer
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.run.codeCouldProbablyBeRunWithConfig
 
 class PySdkPopupFactory(val project: Project, val module: Module) {
 
@@ -39,7 +42,7 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
       DataManager.getInstance()
         .dataContextFromFocusAsync
         .onSuccess {
-          val popup = PySdkPopupFactory(project, module).createPopup(it) ?: return@onSuccess
+          val popup = PySdkPopupFactory(project, module).createPopup(it)
 
           val component = SwingHelper.getComponentFromRecentMouseEvent()
           if (component != null) {
@@ -52,30 +55,51 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     }
   }
 
-  fun createPopup(context: DataContext): ListPopup? {
+  fun createPopup(context: DataContext): ListPopup {
     val group = DefaultActionGroup()
 
     val interpreterList = PyConfigurableInterpreterList.getInstance(project)
-    val moduleSdksByTypes = groupModuleSdksByTypes(interpreterList.getAllPythonSdks(project), module) {
-      PythonSdkUtil.isInvalid(it) ||
+    val moduleSdksByTypes = groupModuleSdksByTypes(interpreterList.getAllPythonSdks(project, module), module) {
+      !it.sdkSeemsValid ||
       PythonSdkType.hasInvalidRemoteCredentials(it) ||
       PythonSdkType.isIncompleteRemote(it) ||
       !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(it))
     }
 
+    val currentSdk = module.pythonSdk
     val model = interpreterList.model
+    val targetModuleSitsOn = PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(module)
     PyRenderedSdkType.values().forEachIndexed { index, type ->
       if (type in moduleSdksByTypes) {
         if (index != 0) group.addSeparator()
-        group.addAll(moduleSdksByTypes.getValue(type).mapNotNull { model.findSdk(it) }.map { SwitchToSdkAction(it) })
+        group.addAll(moduleSdksByTypes
+                       .getValue(type)
+                       .filter {
+                         targetModuleSitsOn == null ||
+                         targetModuleSitsOn.codeCouldProbablyBeRunWithConfig(it.targetAdditionalData?.targetEnvironmentConfiguration)
+                       }
+                       .mapNotNull { model.findSdk(it) }
+                       .map { SwitchToSdkAction(it, currentSdk) })
       }
     }
 
     if (moduleSdksByTypes.isNotEmpty()) group.addSeparator()
+    if (Registry.get("python.use.targets.api").asBoolean()) {
+      val addNewInterpreterPopupGroup = DefaultActionGroup(PyBundle.message("python.sdk.action.add.new.interpreter.text"), true)
+      addNewInterpreterPopupGroup.addAll(collectAddInterpreterActions(project, module) { switchToSdk(module, it, currentSdk) })
+      group.add(addNewInterpreterPopupGroup)
+      group.addSeparator()
+    }
     group.add(InterpreterSettingsAction())
-    group.add(AddInterpreterAction())
+    if (!Registry.get("python.use.targets.api").asBoolean()) {
+      group.add(AddInterpreterAction(project, module, currentSdk))
+    }
+    group.add(object : AnAction(PyBundle.message("python.packaging.interpreter.widget.manage.packages")) {
+      override fun actionPerformed(e: AnActionEvent) {
+        ToolWindowManager.getInstance(project).getToolWindow("Python Packages")?.show()
+      }
+    })
 
-    val currentSdk = module.pythonSdk
     return JBPopupFactory.getInstance().createActionGroupPopup(
       PyBundle.message("configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"),
       group,
@@ -89,13 +113,7 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     ).apply { setHandleAutoSelectionBeforeShow(true) }
   }
 
-  private fun switchToSdk(sdk: Sdk) {
-    (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
-    project.pythonSdk = sdk
-    module.pythonSdk = sdk
-  }
-
-  private inner class SwitchToSdkAction(val sdk: Sdk) : DumbAwareAction() {
+  private inner class SwitchToSdkAction(val sdk: Sdk, val currentSdk: Sdk?) : DumbAwareAction() {
 
     init {
       val presentation = templatePresentation
@@ -104,32 +122,12 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
       presentation.icon = icon(sdk)
     }
 
-    override fun actionPerformed(e: AnActionEvent) = switchToSdk(sdk)
+    override fun actionPerformed(e: AnActionEvent) = switchToSdk(module, sdk, currentSdk)
   }
 
   private inner class InterpreterSettingsAction : DumbAwareAction(PyBundle.messagePointer("python.sdk.popup.interpreter.settings")) {
     override fun actionPerformed(e: AnActionEvent) {
       PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, module)
-    }
-  }
-
-  private inner class AddInterpreterAction : DumbAwareAction(PyBundle.messagePointer("python.sdk.popup.add.interpreter")) {
-
-    override fun actionPerformed(e: AnActionEvent) {
-      val model = PyConfigurableInterpreterList.getInstance(project).model
-
-      PyAddSdkDialog.show(
-        project,
-        module,
-        model.sdks.asList(),
-        Consumer {
-          if (it != null && model.findSdk(it.name) == null) {
-            model.addSdk(it)
-            model.apply()
-            switchToSdk(it)
-          }
-        }
-      )
     }
   }
 }

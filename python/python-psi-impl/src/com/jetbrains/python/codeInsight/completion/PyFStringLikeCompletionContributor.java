@@ -3,8 +3,8 @@ package com.jetbrains.python.codeInsight.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ProcessingContext;
@@ -34,15 +34,16 @@ import static com.jetbrains.python.psi.PyUtil.as;
  *     print(f'# {line&lt;caret&gt;}')
  * </code></pre>
  */
-public class PyFStringLikeCompletionContributor extends CompletionContributor {
+public class PyFStringLikeCompletionContributor extends CompletionContributor implements DumbAware {
 
-  private static final PsiElementPattern.Capture<PyPlainStringElement> INSIDE_NON_FORMATTED_STRING_ELEMENT =
+  private static final PsiElementPattern.Capture<PyPlainStringElement> APPLICABLE_STRING_ELEMENT =
     psiElement(PyPlainStringElement.class)
       .withParent(PyStringLiteralExpression.class)
+      .andNot(psiElement().withSuperParent(2, PyLiteralPattern.class))
       .andNot(psiElement().inside(PyStringFormatCompletionContributor.FORMAT_STRING_CAPTURE));
 
   public PyFStringLikeCompletionContributor() {
-    extend(CompletionType.BASIC, INSIDE_NON_FORMATTED_STRING_ELEMENT, new CompletionProvider<>() {
+    extend(CompletionType.BASIC, APPLICABLE_STRING_ELEMENT, new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
@@ -72,7 +73,12 @@ public class PyFStringLikeCompletionContributor extends CompletionContributor {
         if (prefixCannotStartReference) {
           return;
         }
-        PyExpression fString = PyUtil.createExpressionFromFragment("f" + stringElemText, stringLiteral.getParent());
+
+        String fStringText = new StringBuilder()
+          .append("f").append(stringElemText)
+          .insert(relOffset + 1 + CompletionUtilCore.DUMMY_IDENTIFIER.length(), "} ")
+          .toString();
+        PyExpression fString = PyUtil.createExpressionFromFragment(fStringText, stringLiteral.getParent());
         assert fString != null;
         PsiReference reference = fString.findReferenceAt(relOffset + 1);
         if (reference == null) {
@@ -95,7 +101,7 @@ public class PyFStringLikeCompletionContributor extends CompletionContributor {
                 document.insertString(tailOffset, "}");
               }
               // It can happen when completion is invoked on multiple carets inside the same string
-              String stringElemPrefix = PyStringLiteralUtil.getPrefix(docChars, stringElemStart);
+              String stringElemPrefix = PyStringLiteralCoreUtil.getPrefix(docChars, stringElemStart);
               if (!PyStringLiteralUtil.isFormattedPrefix(stringElemPrefix)) {
                 document.insertString(stringElemStart, "f");
               }

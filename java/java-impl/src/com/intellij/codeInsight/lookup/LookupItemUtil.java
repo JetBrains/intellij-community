@@ -16,7 +16,7 @@ public final class LookupItemUtil {
   /**
    * @deprecated use {@link LookupElementBuilder}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static LookupElement objectToLookupItem(Object object) {
     if (object instanceof LookupElement) return (LookupElement)object;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.collectors.fus.ActionCustomPlaceAllowlist
@@ -111,7 +111,23 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("file_path"))
     Assert.assertTrue(build["file_path"] != path)
-    Assert.assertTrue(build["file_path"] == EventLogConfiguration.anonymize(path))
+    Assert.assertTrue(build["file_path"] != EventLogConfiguration.getInstance().getOrCreate("ABC").anonymize(path))
+    Assert.assertTrue(build["file_path"] == EventLogConfiguration.getInstance().getOrCreate("FUS").anonymize(path))
+    Assert.assertTrue(build["file_path"] != EventLogConfiguration.getInstance().getOrCreate("ABC").anonymizeSkipCache(path))
+    Assert.assertTrue(build["file_path"] == EventLogConfiguration.getInstance().getOrCreate("FUS").anonymizeSkipCache(path))
+  }
+
+  @Test
+  fun `test add anonymized path with another recorder`() {
+    val path = "/my/path/to/smth"
+    val build = FeatureUsageData("ABC").addAnonymizedPath(path).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("file_path"))
+    Assert.assertTrue(build["file_path"] != path)
+    Assert.assertTrue(build["file_path"] != EventLogConfiguration.getInstance().getOrCreate("FUS").anonymize(path))
+    Assert.assertTrue(build["file_path"] == EventLogConfiguration.getInstance().getOrCreate("ABC").anonymize(path))
+    Assert.assertTrue(build["file_path"] != EventLogConfiguration.getInstance().getOrCreate("FUS").anonymizeSkipCache(path))
+    Assert.assertTrue(build["file_path"] == EventLogConfiguration.getInstance().getOrCreate("ABC").anonymizeSkipCache(path))
   }
 
   @Test
@@ -128,8 +144,128 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
     val build = FeatureUsageData().addAnonymizedId(id).build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("anonymous_id"))
+    Assert.assertTrue(build["anonymous_id"].toString().length == 64)
     Assert.assertTrue(build["anonymous_id"] != id)
-    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.anonymize(id))
+    Assert.assertTrue(build["anonymous_id"] != EventLogConfiguration.getInstance().getOrCreate("ABC").anonymize(id))
+    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.getInstance().getOrCreate("FUS").anonymize(id))
+    Assert.assertTrue(build["anonymous_id"] != EventLogConfiguration.getInstance().getOrCreate("ABC").anonymizeSkipCache(id))
+    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.getInstance().getOrCreate("FUS").anonymizeSkipCache(id))
+  }
+
+  @Test
+  fun `test add anonymized id with another recorder`() {
+    val id = "item-id"
+    val build = FeatureUsageData("ABC").addAnonymizedId(id).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("anonymous_id"))
+    Assert.assertTrue(build["anonymous_id"].toString().length == 64)
+    Assert.assertTrue(build["anonymous_id"] != id)
+    Assert.assertTrue(build["anonymous_id"] != EventLogConfiguration.getInstance().getOrCreate("FUS").anonymize(id))
+    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.getInstance().getOrCreate("ABC").anonymize(id))
+    Assert.assertTrue(build["anonymous_id"] != EventLogConfiguration.getInstance().getOrCreate("FUS").anonymizeSkipCache(id))
+    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.getInstance().getOrCreate("ABC").anonymizeSkipCache(id))
+  }
+
+  @Test
+  fun `test add anonymized value`() {
+    val key = "item-key"
+    val value = "item-value"
+    val build = FeatureUsageData().addAnonymizedValue(key, value).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey(key))
+    Assert.assertTrue(build[key].toString().length == 64)
+    Assert.assertTrue(build[key] != value)
+    Assert.assertTrue(build[key] != EventLogConfiguration.getInstance().getOrCreate("ABC").anonymize(value))
+    Assert.assertTrue(build[key] == EventLogConfiguration.getInstance().getOrCreate("FUS").anonymize(value))
+    Assert.assertTrue(build[key] != EventLogConfiguration.getInstance().getOrCreate("ABC").anonymizeSkipCache(value))
+    Assert.assertTrue(build[key] != EventLogConfiguration.getInstance().getOrCreate("FUS").anonymizeSkipCache(value, true))
+    Assert.assertTrue(build[key] == EventLogConfiguration.getInstance().getOrCreate("FUS").anonymizeSkipCache(value))
+  }
+
+  @Test
+  fun `test add anonymized value with another recorder`() {
+    val key = "item-key"
+    val value = "item-value"
+    val build = FeatureUsageData("ABC").addAnonymizedValue(key, value).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey(key))
+    Assert.assertTrue(build[key].toString().length == 64)
+    Assert.assertTrue(build[key] != value)
+    Assert.assertTrue(build[key] != EventLogConfiguration.getInstance().getOrCreate("FUS").anonymize(value))
+    Assert.assertTrue(build[key] == EventLogConfiguration.getInstance().getOrCreate("ABC").anonymize(value))
+    Assert.assertTrue(build[key] != EventLogConfiguration.getInstance().getOrCreate("FUS").anonymizeSkipCache(value))
+    Assert.assertTrue(build[key] != EventLogConfiguration.getInstance().getOrCreate("ABC").anonymizeSkipCache(value, true))
+    Assert.assertTrue(build[key] == EventLogConfiguration.getInstance().getOrCreate("ABC").anonymizeSkipCache(value))
+  }
+
+  @Test
+  fun `test add short anonymized value`() {
+    val key = "item-short-key"
+    val value = "item-short-value"
+    val build = FeatureUsageData().addAnonymizedValue(key, value, true).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey(key))
+    Assert.assertTrue(build[key].toString().length == 12)
+    Assert.assertTrue(build[key] != value)
+    Assert.assertTrue(build[key] != EventLogConfiguration.getInstance().getOrCreate("ABC").anonymize(value, true))
+    Assert.assertTrue(build[key] == EventLogConfiguration.getInstance().getOrCreate("FUS").anonymize(value, true))
+    Assert.assertTrue(build[key] != EventLogConfiguration.getInstance().getOrCreate("ABC").anonymizeSkipCache(value, true))
+    Assert.assertTrue(build[key] != EventLogConfiguration.getInstance().getOrCreate("FUS").anonymizeSkipCache(value, false))
+    Assert.assertTrue(build[key] == EventLogConfiguration.getInstance().getOrCreate("FUS").anonymizeSkipCache(value, true))
+  }
+
+  @Test
+  fun `test add short anonymized value with another recorder`() {
+    val key = "item-short-key"
+    val value = "item-short-value"
+    val build = FeatureUsageData("ABC").addAnonymizedValue(key, value, true).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey(key))
+    Assert.assertTrue(build[key].toString().length == 12)
+    Assert.assertTrue(build[key] != value)
+    Assert.assertTrue(build[key] != EventLogConfiguration.getInstance().getOrCreate("FUS").anonymize(value, true))
+    Assert.assertTrue(build[key] == EventLogConfiguration.getInstance().getOrCreate("ABC").anonymize(value, true))
+    Assert.assertTrue(build[key] != EventLogConfiguration.getInstance().getOrCreate("FUS").anonymizeSkipCache(value, true))
+    Assert.assertTrue(build[key] != EventLogConfiguration.getInstance().getOrCreate("ABC").anonymizeSkipCache(value, false))
+    Assert.assertTrue(build[key] == EventLogConfiguration.getInstance().getOrCreate("ABC").anonymizeSkipCache(value, true))
+  }
+
+  @Test
+  fun `test add dated short anonymized value`() {
+    val key = "item-dated-short-key"
+    val value = "item-dated-short-value"
+    val timestamp = 1685722587000L
+    val datePrefix = "230602-"
+    val build = FeatureUsageData().addDatedShortAnonymizedValue(key, timestamp, value).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey(key))
+    Assert.assertTrue(build[key].toString().length == 19)
+    Assert.assertTrue(build[key].toString().startsWith(datePrefix))
+    Assert.assertTrue(build[key] != value)
+    Assert.assertTrue(build[key] != datePrefix + EventLogConfiguration.getInstance().getOrCreate("ABC").anonymize(value, true))
+    Assert.assertTrue(build[key] == datePrefix + EventLogConfiguration.getInstance().getOrCreate("FUS").anonymize(value, true))
+    Assert.assertTrue(build[key] != datePrefix + EventLogConfiguration.getInstance().getOrCreate("ABC").anonymizeSkipCache(value, true))
+    Assert.assertTrue(build[key] != datePrefix + EventLogConfiguration.getInstance().getOrCreate("FUS").anonymizeSkipCache(value, false))
+    Assert.assertTrue(build[key] == datePrefix + EventLogConfiguration.getInstance().getOrCreate("FUS").anonymizeSkipCache(value, true))
+  }
+
+  @Test
+  fun `test add dated short anonymized value with another recorder`() {
+    val key = "item-dated-short-key"
+    val value = "item-dated-short-value"
+    val timestamp = 1685722587000L
+    val datePrefix = "230602-"
+    val build = FeatureUsageData("ABC").addDatedShortAnonymizedValue(key, timestamp, value).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey(key))
+    Assert.assertTrue(build[key].toString().length == 19)
+    Assert.assertTrue(build[key].toString().startsWith(datePrefix))
+    Assert.assertTrue(build[key] != value)
+    Assert.assertTrue(build[key] != datePrefix + EventLogConfiguration.getInstance().getOrCreate("FUS").anonymize(value, true))
+    Assert.assertTrue(build[key] == datePrefix + EventLogConfiguration.getInstance().getOrCreate("ABC").anonymize(value, true))
+    Assert.assertTrue(build[key] != datePrefix + EventLogConfiguration.getInstance().getOrCreate("FUS").anonymizeSkipCache(value, true))
+    Assert.assertTrue(build[key] != datePrefix + EventLogConfiguration.getInstance().getOrCreate("ABC").anonymizeSkipCache(value, false))
+    Assert.assertTrue(build[key] == datePrefix + EventLogConfiguration.getInstance().getOrCreate("ABC").anonymizeSkipCache(value, true))
   }
 
   @Test

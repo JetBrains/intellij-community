@@ -12,7 +12,6 @@ import com.intellij.task.*
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.isPending
 import org.jetbrains.concurrency.resolvedPromise
@@ -40,38 +39,6 @@ class ProjectTaskManagerImplTest : LightPlatformTestCase() {
     Assert.assertNotNull(taskManager.rebuild(*emptyArray).run(promiseHandler))
   }
 
-  @Test
-  fun `test deprecated api calls`() {
-    val tasks = getTasksToRun(testRootDisposable)
-    val taskManager = ProjectTaskManagerImpl.getInstance(project)
-    val promiseHandler: (Promise<ProjectTaskResult?>) -> ProjectTaskResult? = promiseHandler()
-    fun doTest(body: (ProjectTaskNotification) -> Unit) {
-      val promise1 = AsyncPromise<ProjectTaskResult?>()
-      body.invoke(object : ProjectTaskNotification {
-        override fun finished(executionResult: ProjectTaskResult) {
-          promise1.setResult(executionResult)
-        }
-      })
-      Assert.assertNotNull(promise1.run(promiseHandler))
-
-      val promise2 = AsyncPromise<ProjectTaskResult?>()
-      body.invoke(object : ProjectTaskNotification {
-        override fun finished(context: ProjectTaskContext, executionResult: ProjectTaskResult) {
-          promise2.setResult(executionResult)
-        }
-      })
-      Assert.assertNotNull(promise2.run(promiseHandler))
-    }
-
-    val context = ProjectTaskContext()
-    doTest { taskManager.run(tasks, it) }
-    doTest { taskManager.run(context, tasks, it) }
-    doTest { taskManager.buildAllModules(it) }
-    doTest { taskManager.build(Module.EMPTY_ARRAY, it) }
-    doTest { taskManager.rebuild(Module.EMPTY_ARRAY, it) }
-    doTest { taskManager.compile(VirtualFile.EMPTY_ARRAY, it) }
-    doTest { taskManager.build(arrayOf<ProjectModelBuildableElement>(), it) }
-  }
 }
 
 private fun <T> promiseHandler(): (Promise<T?>) -> T? = {
@@ -102,7 +69,10 @@ private fun getTasksToRun(testRootDisposable: Disposable): ProjectTaskList {
   val task2 = DummyTask()
   val runner2 = object : ProjectTaskRunner() {
     override fun canRun(projectTask: ProjectTask) = projectTask == task2
-    override fun run(project: Project, context: ProjectTaskContext, callback: ProjectTaskNotification?, vararg tasks: ProjectTask?) {
+    override fun run(project: Project,
+                     context: ProjectTaskContext,
+                     callback: ProjectTaskNotification?,
+                     tasks: Collection<ProjectTask>) {
       callback?.finished(ProjectTaskResult(false, 0, 0))
     }
   }
@@ -113,19 +83,9 @@ private fun getTasksToRun(testRootDisposable: Disposable): ProjectTaskList {
                      context: ProjectTaskContext,
                      callback: ProjectTaskNotification?,
                      tasks: Collection<ProjectTask>) {
-      callback?.finished(ProjectTaskResult(false, 0, 0))
-    }
-  }
-  val task4 = DummyTask()
-  val runner4 = object : ProjectTaskRunner() {
-    override fun canRun(projectTask: ProjectTask) = projectTask == task4
-    override fun run(project: Project,
-                     context: ProjectTaskContext,
-                     callback: ProjectTaskNotification?,
-                     tasks: Collection<ProjectTask>) {
       callback?.finished(context, ProjectTaskResult(false, 0, 0))
     }
   }
-  maskExtensions(ProjectTaskRunner.EP_NAME, listOf(runner1, runner2, runner3, runner4), testRootDisposable)
-  return ProjectTaskList.asList(task1, task2, task3, task4, DummyTask())
+  maskExtensions(ProjectTaskRunner.EP_NAME, listOf(runner1, runner2, runner3), testRootDisposable)
+  return ProjectTaskList.asList(task1, task2, task3, DummyTask())
 }

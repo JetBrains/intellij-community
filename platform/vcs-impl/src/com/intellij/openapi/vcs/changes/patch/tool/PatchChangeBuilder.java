@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.comparison.ByWord;
@@ -8,25 +8,26 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.tools.fragmented.LineNumberConvertor;
 import com.intellij.diff.tools.util.text.LineOffsets;
 import com.intellij.diff.tools.util.text.LineOffsetsUtil;
-import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.DiffRangeUtil;
 import com.intellij.diff.util.LineRange;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.AppliedSplitPatchHunk;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PatchChangeBuilder {
+public final class PatchChangeBuilder {
   @NotNull private final StringBuilder myBuilder = new StringBuilder();
   @NotNull private final List<Hunk> myHunks = new ArrayList<>();
   @NotNull private final LineNumberConvertor.Builder myConvertor1 = new LineNumberConvertor.Builder();
   @NotNull private final LineNumberConvertor.Builder myConvertor2 = new LineNumberConvertor.Builder();
-  @NotNull private final TIntArrayList myChangedLines = new TIntArrayList();
+  @NotNull private final IntList myChangedLines = new IntArrayList();
 
   private int totalLines = 0;
 
@@ -118,10 +119,9 @@ public class PatchChangeBuilder {
   }
 
   @NotNull
-  public TIntArrayList getSeparatorLines() {
+  public IntList getSeparatorLines() {
     return myChangedLines;
   }
-
 
   @Nullable
   public static List<DiffFragment> computeInnerDifferences(@NotNull Document patchContent,
@@ -139,8 +139,8 @@ public class PatchChangeBuilder {
     if (deletionRange.isEmpty() || insertionRange.isEmpty()) return null;
 
     try {
-      CharSequence deleted = DiffUtil.getLinesContent(patchContent, lineOffsets, deletionRange.start, deletionRange.end);
-      CharSequence inserted = DiffUtil.getLinesContent(patchContent, lineOffsets, insertionRange.start, insertionRange.end);
+      CharSequence deleted = DiffRangeUtil.getLinesContent(patchContent, lineOffsets, deletionRange.start, deletionRange.end);
+      CharSequence inserted = DiffRangeUtil.getLinesContent(patchContent, lineOffsets, insertionRange.start, insertionRange.end);
 
       return ByWord.compare(deleted, inserted, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
     }

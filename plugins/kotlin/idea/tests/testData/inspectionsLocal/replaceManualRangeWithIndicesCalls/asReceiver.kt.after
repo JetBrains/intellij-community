@@ -1,0 +1,6 @@
+// WITH_STDLIB
+fun foo(list: List<String>) {
+    list.indices.forEach {
+        println(it)
+    }
+}

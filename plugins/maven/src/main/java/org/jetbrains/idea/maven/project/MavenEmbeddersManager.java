@@ -1,34 +1,22 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,7 +25,6 @@ public class MavenEmbeddersManager {
   public static final Key FOR_PLUGINS_RESOLVE = Key.create(MavenEmbeddersManager.class + ".FOR_PLUGINS_RESOLVE");
   public static final Key FOR_FOLDERS_RESOLVE = Key.create(MavenEmbeddersManager.class + ".FOR_FOLDERS_RESOLVE");
   public static final Key FOR_POST_PROCESSING = Key.create(MavenEmbeddersManager.class + ".FOR_POST_PROCESSING");
-  public static final Key FOR_GET_VERSIONS = Key.create(MavenEmbeddersManager.class + ".FOR_GET_VERSIONS");
   public static final Key FOR_MODEL_READ = Key.create(MavenEmbeddersManager.class + ".FOR_MODEL_READ");
 
   // will always regardless to 'work offline' setting
@@ -45,9 +32,8 @@ public class MavenEmbeddersManager {
 
   private final Project myProject;
 
-  private final Map<Trinity<Key, String, String>, MavenEmbedderWrapper> myPool = ContainerUtil.createSoftValueMap();
-  private final Set<MavenEmbedderWrapper> myEmbeddersInUse = new THashSet<>();
-  private final Set<MavenEmbedderWrapper> myEmbeddersToClear = new THashSet<>();
+  private final Map<Pair<Key, String>, MavenEmbedderWrapper> myPool = ContainerUtil.createSoftValueMap();
+  private final Set<MavenEmbedderWrapper> myEmbeddersInUse = new HashSet<>();
 
   public MavenEmbeddersManager(Project project) {
     myProject = project;
@@ -57,53 +43,78 @@ public class MavenEmbeddersManager {
     releasePooledEmbedders(false);
   }
 
-  public synchronized void clearCaches() {
-    forEachPooled(false, each -> {
-      each.clearCaches();
-      return null;
-    });
-    myEmbeddersToClear.addAll(myEmbeddersInUse);
+  @NotNull
+  // used in third-party plugins
+  public synchronized MavenEmbedderWrapper getEmbedder(@NotNull MavenProject mavenProject, Key kind) {
+    String baseDir = MavenUtil.getBaseDir(mavenProject.getDirectoryFile()).toString();
+    return getEmbedder(kind, baseDir);
   }
 
   @NotNull
-  public synchronized MavenEmbedderWrapper getEmbedder(@NotNull MavenProject mavenProject, Key kind) {
-    File baseDir = MavenUtil.getBaseDir(mavenProject.getDirectoryFile());
-    return getEmbedder(kind, baseDir.getPath(), baseDir.getPath());
-  }
-  @NotNull
-  public synchronized MavenEmbedderWrapper getEmbedder(Key kind, String workingDirectory,  @NotNull String multiModuleProjectDirectory) {
-    Trinity<Key, String, String> key = Trinity.create(kind, workingDirectory, multiModuleProjectDirectory);
+  public synchronized MavenEmbedderWrapper getEmbedder(Key kind, @NotNull String multiModuleProjectDirectory) {
+    String embedderDir = guessExistingEmbedderDir(multiModuleProjectDirectory);
+
+    Pair<Key, String> key = Pair.create(kind, embedderDir);
     MavenEmbedderWrapper result = myPool.get(key);
     boolean alwaysOnline = kind == FOR_DOWNLOAD;
 
     if (result == null) {
-      result = MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, workingDirectory, multiModuleProjectDirectory);
+      result = createEmbedder(embedderDir, alwaysOnline);
       myPool.put(key, result);
     }
 
     if (myEmbeddersInUse.contains(result)) {
       MavenLog.LOG.warn("embedder " + key + " is already used");
-      return MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, workingDirectory, multiModuleProjectDirectory);
+      return createEmbedder(embedderDir, alwaysOnline);
     }
 
     myEmbeddersInUse.add(result);
     return result;
   }
 
+  private String guessExistingEmbedderDir(@NotNull String multiModuleProjectDirectory) {
+    var dir = multiModuleProjectDirectory;
+    if (dir.isBlank()) {
+      MavenLog.LOG.warn("Maven project directory is blank. Using project base path");
+      dir = myProject.getBasePath();
+    }
+    if (null == dir || dir.isBlank()) {
+      MavenLog.LOG.error("Maven project directory is blank. Using tmp dir");
+      dir = System.getProperty("java.io.tmpdir");
+    }
+    Path path = Path.of(dir).toAbsolutePath();
+    while (null != path && !Files.exists(path)) {
+      MavenLog.LOG.warn(String.format("Maven project %s directory does not exist. Using parent", path));
+      path = path.getParent();
+    }
+    if (null == path) {
+      throw new RuntimeException("Could not determine maven project directory: " + multiModuleProjectDirectory);
+    }
+    return path.toString();
+  }
+
+  @NotNull
+  private MavenEmbedderWrapper createEmbedder(@NotNull String multiModuleProjectDirectory, boolean alwaysOnline) {
+    return MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, multiModuleProjectDirectory);
+  }
+
+  /**
+   * @deprecated use {@link MavenEmbeddersManager#getEmbedder(Key, String)} instead
+   */
+  @Deprecated
+  @NotNull
+  // used in third-party plugins
+  public synchronized MavenEmbedderWrapper getEmbedder(Key kind, String ignoredWorkingDirectory, @NotNull String multiModuleProjectDirectory) {
+    return getEmbedder(kind, multiModuleProjectDirectory);
+  }
+
   public synchronized void release(@NotNull MavenEmbedderWrapper embedder) {
     if (!myEmbeddersInUse.contains(embedder)) {
       embedder.release();
-      myEmbeddersToClear.remove(embedder);
       return;
     }
 
-    embedder.reset();
     myEmbeddersInUse.remove(embedder);
-
-    if (myEmbeddersToClear.contains(embedder)) {
-      embedder.clearCaches();
-      myEmbeddersToClear.remove(embedder);
-    }
   }
 
   @TestOnly
@@ -125,15 +136,37 @@ public class MavenEmbeddersManager {
     });
     myPool.clear();
     myEmbeddersInUse.clear();
-    myEmbeddersToClear.clear();
   }
 
   private void forEachPooled(boolean includeInUse, Function<MavenEmbedderWrapper, ?> func) {
-    for (Trinity<Key, String, String> each : myPool.keySet()) {
+    for (var each : myPool.keySet()) {
       MavenEmbedderWrapper embedder = myPool.get(each);
       if (embedder == null) continue; // collected
       if (!includeInUse && myEmbeddersInUse.contains(embedder)) continue;
       func.fun(embedder);
     }
+  }
+
+  public void execute(@NotNull MavenProject mavenProject,
+                      @NotNull Key embedderKind,
+                      @NotNull MavenEmbeddersManager.EmbedderTask task) throws MavenProcessCanceledException {
+    var baseDir = MavenUtil.getBaseDir(mavenProject.getDirectoryFile()).toString();
+    execute(baseDir, embedderKind, task);
+  }
+
+  public void execute(@NotNull String baseDir,
+                      @NotNull Key embedderKind,
+                      @NotNull MavenEmbeddersManager.EmbedderTask task) throws MavenProcessCanceledException {
+    MavenEmbedderWrapper embedder = getEmbedder(embedderKind, baseDir);
+    try {
+      task.run(embedder);
+    }
+    finally {
+      release(embedder);
+    }
+  }
+
+  public interface EmbedderTask {
+    void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException;
   }
 }

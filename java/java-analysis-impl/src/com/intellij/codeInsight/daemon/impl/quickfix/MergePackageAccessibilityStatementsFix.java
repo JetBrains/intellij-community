@@ -1,8 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiKeyword;
@@ -17,13 +16,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Pavel.Dolgov
- */
 public class MergePackageAccessibilityStatementsFix
   extends MergeModuleStatementsFix<PsiPackageAccessibilityStatement> {
 
-  private static final Logger LOG = Logger.getInstance(MergePackageAccessibilityStatementsFix.class);
   private final String myPackageName;
   private final Role myRole;
 
@@ -96,25 +91,17 @@ public class MergePackageAccessibilityStatementsFix
 
   @NotNull
   private static Iterable<PsiPackageAccessibilityStatement> getStatements(@NotNull PsiJavaModule javaModule, @NotNull Role role) {
-    switch (role) {
-      case OPENS:
-        return javaModule.getOpens();
-      case EXPORTS:
-        return javaModule.getExports();
-    }
-    LOG.error("Unexpected role " + role);
-    return Collections.emptyList();
+    return switch (role) {
+      case OPENS -> javaModule.getOpens();
+      case EXPORTS -> javaModule.getExports();
+    };
   }
 
   @NotNull
   private String getKeyword() {
-    switch (myRole) {
-      case OPENS:
-        return PsiKeyword.OPENS;
-      case EXPORTS:
-        return PsiKeyword.EXPORTS;
-    }
-    LOG.error("Unexpected role " + myRole);
-    return "";
+    return switch (myRole) {
+      case OPENS -> PsiKeyword.OPENS;
+      case EXPORTS -> PsiKeyword.EXPORTS;
+    };
   }
 }

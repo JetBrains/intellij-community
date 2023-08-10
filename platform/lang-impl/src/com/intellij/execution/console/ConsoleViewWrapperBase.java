@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class ConsoleViewWrapperBase implements ConsoleView, ExecutionConsoleEx {
+  public static final String CONSOLE_VIEW_WRAPPER_VIEW_ID_PREFIX = "ConsoleViewWrapper";
+
   @NotNull
   private final ConsoleView myDelegate;
 

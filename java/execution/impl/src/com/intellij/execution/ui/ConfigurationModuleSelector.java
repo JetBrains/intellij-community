@@ -51,9 +51,27 @@ public class ConfigurationModuleSelector {
   /**
    * @deprecated use {@link #ConfigurationModuleSelector(Project, ModulesComboBox)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ConfigurationModuleSelector(@NotNull Project project, final JComboBox<? extends Module> modulesList) {
-    this(project, modulesList, JavaPsiBundle.message("list.item.no.module"));
+    String noModule = JavaPsiBundle.message("list.item.no.module");
+    myProject = project;
+    myModulesList = modulesList;
+    myModulesDescriptionsComboBox = null;
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(modulesList, null) {
+      @Override
+      protected String getElementText(Object element) {
+        if (element instanceof Module) {
+          return ((Module)element).getName();
+        }
+        else if (element == null) {
+          return noModule;
+        }
+        return super.getElementText(element);
+      }
+    };
+    search.setupListeners();
+    myModulesList.setModel(new SortedComboBoxModel<>(ModulesAlphaComparator.INSTANCE));
+    myModulesList.setRenderer(new ModuleListCellRenderer(noModule));
   }
 
   public ConfigurationModuleSelector(@NotNull Project project, ModulesComboBox modulesComboBox) {
@@ -65,7 +83,7 @@ public class ConfigurationModuleSelector {
   }
 
   public ConfigurationModuleSelector(@NotNull Project project, ModulesCombo modulesDescriptionsComboBox) {
-    this(project, modulesDescriptionsComboBox, null);
+    this(project, modulesDescriptionsComboBox, JavaPsiBundle.message("list.item.no.module"));
   }
 
   private ConfigurationModuleSelector(@NotNull Project project, ModulesCombo modulesDescriptionsComboBox, @NlsContexts.ListItem @Nullable String emptySelectionText) {
@@ -82,29 +100,6 @@ public class ConfigurationModuleSelector {
     myModulesList = modulesComboBox;
     myModulesDescriptionsComboBox = null;
     modulesComboBox.allowEmptySelection(noModule);
-  }
-
-  /**
-   * @deprecated use {@link #ConfigurationModuleSelector(Project, ModulesComboBox, String)} instead
-   */
-  @Deprecated
-  public ConfigurationModuleSelector(@NotNull Project project, final JComboBox<? extends Module> modulesList, final @NlsContexts.ListItem String noModule) {
-    myProject = project;
-    myModulesList = modulesList;
-    myModulesDescriptionsComboBox = null;
-    new ComboboxSpeedSearch(modulesList){
-      @Override
-      protected String getElementText(Object element) {
-        if (element instanceof Module){
-          return ((Module)element).getName();
-        } else if (element == null) {
-          return noModule;
-        }
-        return super.getElementText(element);
-      }
-    };
-    myModulesList.setModel(new SortedComboBoxModel<>(ModulesAlphaComparator.INSTANCE));
-    myModulesList.setRenderer(new ModuleListCellRenderer(noModule));
   }
 
   public void applyTo(final ModuleBasedConfiguration configurationModule) {

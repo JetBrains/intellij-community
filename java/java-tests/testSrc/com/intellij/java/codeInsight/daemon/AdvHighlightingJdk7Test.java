@@ -32,14 +32,18 @@ public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testStaticImports() {
-    myFixture.addClass("package P1;\n" +
-                       "public class C1 {\n" +
-                       "    public static final int Foo;\n" +
-                       "}\n");
-    myFixture.addClass("package P1;\n" +
-                       "public class C2 {\n" +
-                       "    public static final int Foo;\n" +
-                       "}\n");
+    myFixture.addClass("""
+                         package P1;
+                         public class C1 {
+                             public static final int Foo;
+                         }
+                         """);
+    myFixture.addClass("""
+                         package P1;
+                         public class C2 {
+                             public static final int Foo;
+                         }
+                         """);
 
     doTest();
   }
@@ -50,30 +54,32 @@ public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase
 
   //static import conflicts---------------
   private void setupBaseClasses() {
-    myFixture.addClass("package x;\n" +
-                       "\n" +
-                       "public class Base1 {\n" +
-                       "  public static final int F = 1;\n" +
-                       "  public static void m(int i) { }\n" +
-                       "  public static class F { }\n" +
-                       "  public static class D { }\n" +
-                       "  public interface I1 {\n" +
-                       "    int IF = 1;\n" +
-                       "  }\n" +
-                       "  public interface I2 {\n" +
-                       "    float IF = 2.0f;\n" +
-                       "  }\n" +
-                       "}");
-    myFixture.addClass("package x;\n" +
-                       "\n" +
-                       "public class Base2 extends Base1 {\n" +
-                       "  public static final float F = 2.0f;\n" +
-                       "  public static void m(float f) { }\n" +
-                       "  public static class F { }\n" +
-                       "  public static class D { }\n" +
-                       "  public interface II extends I1, I2 { }\n" +
-                       "  public enum E { }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package x;
+
+                         public class Base1 {
+                           public static final int F = 1;
+                           public static void m(int i) { }
+                           public static class F { }
+                           public static class D { }
+                           public interface I1 {
+                             int IF = 1;
+                           }
+                           public interface I2 {
+                             float IF = 2.0f;
+                           }
+                         }""");
+    myFixture.addClass("""
+                         package x;
+
+                         public class Base2 extends Base1 {
+                           public static final float F = 2.0f;
+                           public static void m(float f) { }
+                           public static class F { }
+                           public static class D { }
+                           public interface II extends I1, I2 { }
+                           public enum E { }
+                         }""");
   }
 
   public void testStaticImportConflict() {
@@ -83,9 +89,10 @@ public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase
 
   public void testStaticOnDemandImportConflict() {
     setupBaseClasses();
-    myFixture.addClass("package x;\n" +
-                       "\n" +
-                       "public class E { }");
+    myFixture.addClass("""
+                         package x;
+
+                         public class E { }""");
     doTest();
   }
 
@@ -97,34 +104,40 @@ public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase
   //----------------------------------------
 
   public void testRawInnerClassImport() {
-    myFixture.addClass("package p;\n" +
-                       "import p2.GenericClass.InnerClass;\n" +
-                       "public class Class2 {\n" +
-                       "  public static boolean test(InnerClass context) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "}\n");
-    myFixture.addClass("package p2;\n" +
-                       "public class GenericClass<T> {\n" +
-                       "  public class InnerClass {\n" +
-                       "  }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package p;
+                         import p2.GenericClass.InnerClass;
+                         public class Class2 {
+                           public static boolean test(InnerClass context) {
+                             return true;
+                           }
+                         }
+                         """);
+    myFixture.addClass("""
+                         package p2;
+                         public class GenericClass<T> {
+                           public class InnerClass {
+                           }
+                         }""");
     doTest();
   }
 
   public void testRawInnerClassImportOnDemand() {
-    myFixture.addClass("package p;\n" +
-                       "import p2.GenericClass.*;\n" +
-                       "public class Class2 {\n" +
-                       "  public static boolean test(InnerClass context) {\n" +
-                       "    return true;\n" +
-                       "  }\n" +
-                       "}\n");
-    myFixture.addClass("package p2;\n" +
-                       "public class GenericClass<T> {\n" +
-                       "  public class InnerClass {\n" +
-                       "  }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package p;
+                         import p2.GenericClass.*;
+                         public class Class2 {
+                           public static boolean test(InnerClass context) {
+                             return true;
+                           }
+                         }
+                         """);
+    myFixture.addClass("""
+                         package p2;
+                         public class GenericClass<T> {
+                           public class InnerClass {
+                           }
+                         }""");
     doTest();
   }
 
@@ -238,11 +251,13 @@ public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testAmbiguousIDEA22547() {
-    myFixture.addClass("package pck;\n" +
-                       "class Assert {\n" +
-                       "  static void assertEquals(Object o1, Object o2) {}\n" +
-                       "  static void assertEquals(long l1, long l2) {}\n" +
-                       "}\n");
+    myFixture.addClass("""
+                         package pck;
+                         class Assert {
+                           static void assertEquals(Object o1, Object o2) {}
+                           static void assertEquals(long l1, long l2) {}
+                         }
+                         """);
     doTest();
   }
 
@@ -288,17 +303,19 @@ public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase
 
   public void testAmbiguousStaticImportMethod() {
     myFixture.addFileToProject("pck\\A.java",
-                               "package pck;\n" +
-                               "public class A {\n" +
-                               "    static void bar(Object a) {\n" +
-                               "        System.out.println(\"A\");\n" +
-                               "    }\n" +
-                               "}\n" +
-                               "class B {\n" +
-                               "    static void bar(Object a) {\n" +
-                               "        System.out.println(\"B\");\n" +
-                               "    }\n" +
-                               "}\n");
+                               """
+                                 package pck;
+                                 public class A {
+                                     static void bar(Object a) {
+                                         System.out.println("A");
+                                     }
+                                 }
+                                 class B {
+                                     static void bar(Object a) {
+                                         System.out.println("B");
+                                     }
+                                 }
+                                 """);
     doTest();
   }
 

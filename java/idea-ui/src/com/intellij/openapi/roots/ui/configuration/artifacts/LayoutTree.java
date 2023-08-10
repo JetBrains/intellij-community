@@ -23,7 +23,6 @@ import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +32,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource {
@@ -56,14 +56,14 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
 
   @Override
   protected void configureUiHelper(TreeUIHelper helper) {
-    final Convertor<TreePath, String> convertor = path -> {
+    final Function<TreePath, String> f = path -> {
       final SimpleNode node = getNodeFor(path);
       if (node instanceof PackagingElementNode) {
         return ((PackagingElementNode<?>)node).getElementPresentation().getSearchName();
       }
       return "";
     };
-    new TreeSpeedSearch(this, convertor, true);
+    TreeSpeedSearch.installOn(this, true, f);
   }
 
   private List<PackagingElementNode<?>> getNodesToDrag() {
@@ -71,12 +71,12 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   }
 
   @Override
-  public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+  public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
     return !getNodesToDrag().isEmpty();
   }
 
   @Override
-  public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+  public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
     return new DnDDragStartBean(new LayoutNodesDraggingObject(myArtifactsEditor, getNodesToDrag()));
   }
 
@@ -116,7 +116,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     myTreeModel.invalidate(elementNode, true);
   }
 
-  public TreeVisitor createVisitorCompositeNodeChild(String parentPath, Predicate<PackagingElementNode<?>> childFilter) {
+  public TreeVisitor createVisitorCompositeNodeChild(String parentPath, Predicate<? super PackagingElementNode<?>> childFilter) {
     List<Predicate<PackagingElementNode<?>>> parentElementFilters = ContainerUtil.map(StringUtil.split(parentPath, "/"),
                                                                                       LayoutTree::createCompositeNodeByNameFilter);
     TreePath predicatesPath = TreePathUtil.convertCollectionToTreePath(ContainerUtil.append(parentElementFilters, childFilter));
@@ -144,7 +144,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
       final JTextField field = (JTextField)super.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row);
       final Object node = ((DefaultMutableTreeNode)value).getUserObject();
-      final PackagingElement<?> element = ((PackagingElementNode)node).getElementIfSingle();
+      final PackagingElement<?> element = ((PackagingElementNode<?>)node).getElementIfSingle();
       LOG.assertTrue(element != null);
       final String name = ((RenameablePackagingElement)element).getName();
       field.setText(name);
@@ -161,7 +161,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       final Object node = getNodeFor(path);
       RenameablePackagingElement currentElement = null;
       if (node instanceof PackagingElementNode) {
-        final PackagingElement<?> element = ((PackagingElementNode)node).getElementIfSingle();
+        final PackagingElement<?> element = ((PackagingElementNode<?>)node).getElementIfSingle();
         if (element instanceof RenameablePackagingElement) {
           currentElement = (RenameablePackagingElement)element;
         }

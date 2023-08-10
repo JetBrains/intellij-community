@@ -1,46 +1,49 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general.assistance
 
-import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.codeInsight.documentation.QuickDocUtil
 import com.intellij.codeInsight.hint.ImplementationViewComponent
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
-import training.commands.kotlin.TaskRuntimeContext
+import org.assertj.swing.timing.Timeout
+import training.dsl.*
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonSample
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
+import training.learn.course.KLesson
+import training.ui.LearningUiUtil
+import java.util.concurrent.TimeUnit
 
-class QuickPopupsLesson(module: Module, lang: String, private val sample: LessonSample) :
-  KLesson("CodeAssistance.QuickPopups", LessonsBundle.message("quick.popups.lesson.name"), module, lang) {
+class QuickPopupsLesson(private val sample: LessonSample) :
+  KLesson("CodeAssistance.QuickPopups", LessonsBundle.message("quick.popups.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
 
     task("QuickJavaDoc") {
       text(LessonsBundle.message("quick.popups.show.documentation", action(it)))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { _: DocumentationComponent -> true }
-      restoreIfModifiedOrMoved()
+      triggerOnQuickDocumentationPopup()
+      restoreIfModifiedOrMoved(sample)
       test { actions(it) }
     }
 
     task {
       text(LessonsBundle.message("quick.popups.press.escape", action("EditorEscape")))
-      stateCheck { checkDocComponentClosed() }
+      stateCheck { previous.ui?.isShowing != true }
       restoreIfModifiedOrMoved()
       test {
-        GuiTestUtil.shortcut(Key.ESCAPE)
+        invokeActionViaShortcut("ESCAPE")
       }
     }
 
     task("QuickImplementations") {
       text(LessonsBundle.message("quick.popups.show.implementation", action(it)))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { _: ImplementationViewComponent -> true }
+      triggerUI().component { _: ImplementationViewComponent -> true }
       restoreIfModifiedOrMoved()
-      test { actions(it) }
+      test {
+        actions(it)
+        val delay = Timeout.timeout(3, TimeUnit.SECONDS)
+        LearningUiUtil.findShowingComponentWithTimeout(project, ImplementationViewComponent::class.java, delay)
+        Thread.sleep(500)
+        invokeActionViaShortcut("ESCAPE")
+      }
     }
   }
 
@@ -48,4 +51,9 @@ class QuickPopupsLesson(module: Module, lang: String, private val sample: Lesson
     val activeDocComponent = QuickDocUtil.getActiveDocComponent(project)
     return activeDocComponent == null || !activeDocComponent.isShowing
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("quick.popups.help.link"),
+         LessonUtil.getHelpLink("using-code-editor.html#quick_popups")),
+  )
 }

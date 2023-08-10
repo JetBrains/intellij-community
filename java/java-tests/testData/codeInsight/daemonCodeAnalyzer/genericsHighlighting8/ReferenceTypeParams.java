@@ -88,7 +88,7 @@ class myAList<T> extends mylist<T> {
 
   Class<T> foo (Class<T> clazz) {
         Class<String> clazz1 = (Class<String>)clazz;  //Should be unchecked warning
-        return <error descr="Cannot select from a type variable">T</error>.class;
+        return <error descr="Cannot access class object of a type parameter">T</error>.class;
   }
 }
 
@@ -121,7 +121,7 @@ class Foo {
 //end of IDEADEV-6103
 
 class IDontCompile {
-   Map<error descr="Cannot select static class 'java.util.Map.Entry' from parameterized type"><?, ?></error>.Entry map;
+   Map<error descr="Type arguments are not allowed here because class 'java.util.Map.Entry' is static"><?, ?></error>.Entry map;
 }
 
 abstract class GenericTest99<E extends Enum<E>> {
@@ -130,11 +130,11 @@ abstract class GenericTest99<E extends Enum<E>> {
 
 class ClassLiteral<T> {
   {
-    Object c1 = <error descr="Cannot select from a type variable">T</error>.class;
-    Object c2 = <error descr="Cannot select from a type variable">T[]</error>.class;
+    Object c1 = <error descr="Cannot access class object of a type parameter">T</error>.class;
+    Object c2 = <error descr="Cannot access class object of a type parameter">T[]</error>.class;
     
-    Object c3 = <error descr="Cannot select from parameterized type">List<String></error>.class;
-    Object c4 = <error descr="Cannot select from parameterized type">List<String>[]</error>.class;
+    Object c3 = <error descr="Cannot access class object of parameterized type">List<String></error>.class;
+    Object c4 = <error descr="Cannot access class object of parameterized type">List<String>[]</error>.class;
     Object c5 = List[].class;
     Object c6 = List.class;
   }

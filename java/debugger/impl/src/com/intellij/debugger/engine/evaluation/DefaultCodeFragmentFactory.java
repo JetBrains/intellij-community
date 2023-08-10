@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.codeInsight.completion.CompletionService;
@@ -63,11 +63,10 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
       fragment = factory.createCodeBlockCodeFragment(text, context, true);
     }
 
-    if(item.getImports().length() > 0) {
+    if (item.getImports().length() > 0) {
       fragment.addImportsFromString(item.getImports());
     }
     fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-    //noinspection HardCodedStringLiteral
     fragment.putUserData(KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
     fragment.putCopyableUserData(JavaCompletionUtil.DYNAMIC_TYPE_EVALUATOR, (expression, parameters) -> {
       if (!RuntimeTypeEvaluator.isSubtypeable(expression)) {

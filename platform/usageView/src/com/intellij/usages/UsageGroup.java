@@ -1,23 +1,60 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
-  @Nullable
-  Icon getIcon(boolean isOpen);
 
-  @NlsContexts.ListItem @NotNull String getText(@Nullable UsageView view);
+  /**
+   * @deprecated implement {@link #getIcon()} instead
+   */
+  @Deprecated(forRemoval = true)
+  default @Nullable Icon getIcon(boolean isOpen) {
+    if (ReflectionUtil.getMethodDeclaringClass(getClass(), "getIcon") == UsageGroup.class) {
+      return null;
+    }
+    return getIcon(); // getIcon() is implemented
+  }
 
-  @Nullable
-  FileStatus getFileStatus();
+  default @Nullable Icon getIcon() {
+    return getIcon(true);
+  }
 
-  boolean isValid();
-  void update();
+  /**
+   * @deprecated implement {@link #getPresentableGroupText()} instead
+   */
+  @Deprecated(forRemoval = true)
+  default @ListItem @NotNull String getText(@Nullable UsageView view) {
+    if (ReflectionUtil.getMethodDeclaringClass(getClass(), "getPresentableGroupText") == UsageGroup.class) {
+      throw new AbstractMethodError("getPresentableGroupText() must be implemented");
+    }
+    return getPresentableGroupText(); // getPresentableGroupText() is implemented
+  }
+
+  default @ListItem @NotNull String getPresentableGroupText() {
+    return getText(null);
+  }
+
+  default @Nullable FileStatus getFileStatus() {
+    return null;
+  }
+
+  default boolean isValid() {
+    return true;
+  }
+
+  default SimpleTextAttributes getTextAttributes(boolean isSelected) {
+    return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+  }
+
+  default void update() {
+  }
 }

@@ -47,8 +47,7 @@ public final class StubIdList {
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (!(obj instanceof StubIdList)) return false;
-    StubIdList other = (StubIdList)obj;
+    if (!(obj instanceof StubIdList other)) return false;
     if (myArray == null) {
       return other.myArray == null && other.myData == myData;
     }

@@ -1,55 +1,51 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.psi.util.*;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ConvertSwitchToIfIntention implements IntentionAction {
-  private final PsiSwitchStatement mySwitchStatement;
-
+public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwitchStatement> {
   public ConvertSwitchToIfIntention(@NotNull PsiSwitchStatement switchStatement) {
-    mySwitchStatement = switchStatement;
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.SWITCH, PsiKeyword.IF);
+    super(switchStatement);
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return getText();
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.SWITCH, PsiKeyword.IF);
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return isAvailable(mySwitchStatement);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiSwitchStatement statement) {
+    return isAvailable(statement) ? Presentation.of(getFamilyName()).withFixAllOption(this) : null;
   }
 
-  public static boolean isAvailable(PsiSwitchStatement switchStatement) {
+  public static boolean isAvailable(@NotNull PsiSwitchStatement switchStatement) {
     final PsiCodeBlock body = switchStatement.getBody();
     return body != null && !body.isEmpty() && BreakConverter.from(switchStatement) != null && !mayFallThroughNonTerminalDefaultCase(body);
   }
@@ -57,28 +53,17 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
   private static boolean mayFallThroughNonTerminalDefaultCase(PsiCodeBlock body) {
     List<PsiSwitchLabelStatementBase> labels = PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class);
     return StreamEx.of(labels).pairMap((prev, next) -> {
-        if (prev.isDefaultCase()) {
-          Set<PsiSwitchLabelStatementBase> targets = getFallThroughTargets(body);
-          return targets.contains(prev) || targets.contains(next);
-        }
-        return false;
-      }).has(true);
+      if (SwitchUtils.isDefaultLabel(prev)) {
+        Set<PsiSwitchLabelStatementBase> targets = getFallThroughTargets(body);
+        return targets.contains(prev) || targets.contains(next);
+      }
+      return false;
+    }).has(true);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    doProcessIntention(mySwitchStatement);
-  }
-
-  @NotNull
-  @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return mySwitchStatement;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiSwitchStatement statement, @NotNull ModPsiUpdater updater) {
+    doProcessIntention(statement);
   }
 
   public static void doProcessIntention(@NotNull PsiSwitchStatement switchStatement) {
@@ -86,18 +71,11 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     if (switchExpression == null) {
       return;
     }
-    final PsiType switchExpressionType = RefactoringUtil.getTypeByExpressionWithExpectedType(switchExpression);
+    final PsiType switchExpressionType = CommonJavaRefactoringUtil.getTypeByExpressionWithExpectedType(switchExpression);
     if (switchExpressionType == null) {
       return;
     }
     CommentTracker commentTracker = new CommentTracker();
-    final boolean isSwitchOnString = switchExpressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
-    boolean useEquals = isSwitchOnString;
-    if (!useEquals) {
-      final PsiClass aClass = PsiUtil.resolveClassInType(switchExpressionType);
-      String fqn;
-      useEquals = aClass != null && !aClass.isEnum() && ((fqn = aClass.getQualifiedName()) == null || !TypeConversionUtil.isPrimitiveWrapper(fqn));
-    }
     PsiCodeBlock body = switchStatement.getBody();
     if (body == null) {
       return;
@@ -108,17 +86,31 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     BreakConverter converter = BreakConverter.from(switchStatement);
     if (converter == null) return;
     converter.process();
-    final List<SwitchStatementBranch> allBranches = extractBranches(commentTracker, body, fallThroughTargets);
+    final List<SwitchStatementBranch> allBranches = extractBranches(body, fallThroughTargets);
+    boolean needNullCheck = false;
+    final boolean isSwitchOnString = switchExpressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
+    boolean useEquals = isSwitchOnString;
+    if (!useEquals) {
+      final PsiClass aClass = PsiUtil.resolveClassInType(switchExpressionType);
+      if (aClass != null) {
+        String fqn = aClass.getQualifiedName();
+        useEquals = !aClass.isEnum() && (fqn == null || !TypeConversionUtil.isPrimitiveWrapper(fqn));
+        Nullability nullability = NullabilityUtil.getExpressionNullability(switchExpression, true);
+        needNullCheck =
+          nullability != Nullability.NOT_NULL && (fqn == null || !TypeConversionUtil.isPrimitiveWrapper(fqn)) && !hasNullCase(allBranches);
+      }
+    }
 
     final String declarationString;
     final boolean hadSideEffects;
     final String expressionText;
     final Project project = switchStatement.getProject();
-    int totalCases = allBranches.stream().mapToInt(br -> br.getCaseValues().size()).sum();
+    int totalCases = allBranches.stream().mapToInt(br -> br.getCaseElements().size()).sum();
+    List<PsiExpression> sideEffectExpressions = SideEffectChecker.extractSideEffectExpressions(switchExpression);
     if (totalCases > 0) {
       commentTracker.markUnchanged(switchExpression);
     }
-    if (totalCases > 1 && RemoveUnusedVariableUtil.checkSideEffects(switchExpression, null, new ArrayList<>())) {
+    if (totalCases > 1 && !sideEffectExpressions.isEmpty()) {
       hadSideEffects = true;
 
       final String variableName = new VariableNameGenerator(switchExpression, VariableKind.LOCAL_VARIABLE)
@@ -127,9 +119,10 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       declarationString = switchExpressionType.getCanonicalText() + ' ' + variableName + " = " + switchExpression.getText() + ';';
     }
     else {
-      hadSideEffects = false;
+      hadSideEffects = totalCases == 0 && !sideEffectExpressions.isEmpty();
       declarationString = null;
-      expressionText = ParenthesesUtils.getPrecedence(switchExpression) > ParenthesesUtils.EQUALITY_PRECEDENCE
+      int exprPrecedence = useEquals ? ParenthesesUtils.METHOD_CALL_PRECEDENCE : ParenthesesUtils.EQUALITY_PRECEDENCE;
+      expressionText = ParenthesesUtils.getPrecedence(switchExpression) > exprPrecedence
                        ? '(' + switchExpression.getText() + ')'
                        : switchExpression.getText();
     }
@@ -137,14 +130,21 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     final StringBuilder ifStatementBuilder = new StringBuilder();
     boolean firstBranch = true;
     SwitchStatementBranch defaultBranch = null;
+    boolean java7plus = PsiUtil.getLanguageLevel(switchStatement).isAtLeast(LanguageLevel.JDK_1_7);
     for (SwitchStatementBranch branch : allBranches) {
       if (branch.isDefault()) {
         defaultBranch = branch;
       }
       else {
-        dumpBranch(branch, expressionText, firstBranch, useEquals, ifStatementBuilder, commentTracker);
+        dumpBranch(branch, expressionText, firstBranch, useEquals, needNullCheck && java7plus, ifStatementBuilder, commentTracker);
         firstBranch = false;
       }
+    }
+    if (needNullCheck && !java7plus) {
+      if (!firstBranch) {
+        ifStatementBuilder.append("else ");
+      }
+      ifStatementBuilder.append("if(").append(expressionText).append("==null) { throw new NullPointerException(); }");
     }
     boolean unwrapDefault = false;
     if (defaultBranch != null) {
@@ -170,8 +170,16 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     }
     JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
     if (hadSideEffects) {
-      final PsiStatement declarationStatement = factory.createStatementFromText(declarationString, switchStatement);
-      javaCodeStyleManager.shortenClassReferences(parent.addBefore(declarationStatement, switchStatement));
+      if (declarationString == null) {
+        sideEffectExpressions.forEach(commentTracker::markUnchanged);
+        PsiStatement[] statements = StatementExtractor.generateStatements(sideEffectExpressions, switchExpression);
+        for (PsiStatement statement : statements) {
+          javaCodeStyleManager.shortenClassReferences(parent.addBefore(statement, switchStatement));
+        }
+      } else {
+        final PsiStatement declarationStatement = factory.createStatementFromText(declarationString, switchStatement);
+        javaCodeStyleManager.shortenClassReferences(parent.addBefore(declarationStatement, switchStatement));
+      }
     }
     final PsiStatement ifStatement = factory.createStatementFromText(ifStatementText, switchStatement);
     if (unwrapDefault) {
@@ -199,9 +207,13 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     }
   }
 
+  private static boolean hasNullCase(@NotNull List<SwitchStatementBranch> allBranches) {
+    return ContainerUtil.or(allBranches, br -> ContainerUtil.or(br.getCaseElements(), el -> el instanceof PsiExpression expr &&
+                                                                                            ExpressionUtils.isNullLiteral(expr)));
+  }
+
   @NotNull
-  private static List<SwitchStatementBranch> extractBranches(CommentTracker commentTracker,
-                                                             PsiCodeBlock body,
+  private static List<SwitchStatementBranch> extractBranches(PsiCodeBlock body,
                                                              Set<PsiSwitchLabelStatementBase> fallThroughTargets) {
     final List<SwitchStatementBranch> openBranches = new ArrayList<>();
     final Set<PsiElement> declaredElements = new HashSet<>();
@@ -210,12 +222,11 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     final PsiElement[] children = body.getChildren();
     List<PsiSwitchLabelStatementBase> labels = PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class);
     boolean defaultAlwaysExecuted = !labels.isEmpty() &&
-                                    Objects.requireNonNull(ContainerUtil.getLastItem(labels)).isDefaultCase() &&
+                                    SwitchUtils.isDefaultLabel(ContainerUtil.getLastItem(labels)) &&
                                     fallThroughTargets.containsAll(labels.subList(1, labels.size()));
     for (int i = 1; i < children.length - 1; i++) {
       final PsiElement statement = children[i];
-      if (statement instanceof PsiSwitchLabelStatement) {
-        final PsiSwitchLabelStatement label = (PsiSwitchLabelStatement)statement;
+      if (statement instanceof PsiSwitchLabelStatement label) {
         if (currentBranch == null || !fallThroughTargets.contains(statement)) {
           openBranches.clear();
           currentBranch = new SwitchStatementBranch();
@@ -228,28 +239,26 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
           allBranches.add(currentBranch);
           openBranches.add(currentBranch);
         }
-        if (label.isDefaultCase() && defaultAlwaysExecuted) {
+        if (SwitchUtils.isDefaultLabel(label) && defaultAlwaysExecuted) {
           openBranches.retainAll(Collections.singleton(currentBranch));
         }
-        currentBranch.addCaseValues(label, defaultAlwaysExecuted, commentTracker);
+        currentBranch.addCaseValues(label, defaultAlwaysExecuted);
       }
-      else if (statement instanceof PsiSwitchLabeledRuleStatement) {
+      else if (statement instanceof PsiSwitchLabeledRuleStatement rule) {
         openBranches.clear();
-        PsiSwitchLabeledRuleStatement rule = (PsiSwitchLabeledRuleStatement)statement;
         currentBranch = new SwitchStatementBranch();
 
         PsiStatement ruleBody = rule.getBody();
         if (ruleBody != null) {
           currentBranch.addStatement(ruleBody);
         }
-        currentBranch.addCaseValues(rule, defaultAlwaysExecuted, commentTracker);
+        currentBranch.addCaseValues(rule, defaultAlwaysExecuted);
         openBranches.add(currentBranch);
         allBranches.add(currentBranch);
       }
       else {
         if (statement instanceof PsiStatement) {
-          if (statement instanceof PsiDeclarationStatement) {
-            final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
+          if (statement instanceof PsiDeclarationStatement declarationStatement) {
             Collections.addAll(declaredElements, declarationStatement.getDeclaredElements());
           }
           for (SwitchStatementBranch branch : openBranches) {
@@ -273,8 +282,8 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
 
   private static Set<PsiSwitchLabelStatementBase> getFallThroughTargets(PsiCodeBlock body) {
     return StreamEx.of(body.getStatements())
-      .pairMap((s1, s2) -> s2 instanceof PsiSwitchLabelStatement && !(s1 instanceof PsiSwitchLabeledRuleStatement) && 
-                           ControlFlowUtils.statementMayCompleteNormally(s1) ? (PsiSwitchLabelStatement)s2 : null)
+      .pairMap((s1, s2) -> s2 instanceof PsiSwitchLabelStatement labelStatement && !(s1 instanceof PsiSwitchLabeledRuleStatement) &&
+                           ControlFlowUtils.statementMayCompleteNormally(s1) ? labelStatement : null)
       .nonNull().collect(Collectors.toSet());
   }
 
@@ -282,40 +291,142 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
                                  String expressionText,
                                  boolean firstBranch,
                                  boolean useEquals,
+                                 boolean useRequireNonNullMethod,
                                  @NonNls StringBuilder out,
                                  CommentTracker commentTracker) {
     if (!firstBranch) {
       out.append("else ");
     }
-    dumpCaseValues(expressionText, branch.getCaseValues(), useEquals, out);
+    dumpCaseValues(expressionText, branch.getCaseElements(), firstBranch, useEquals, useRequireNonNullMethod, commentTracker, out);
     dumpBody(branch, out, commentTracker);
   }
 
   private static void dumpCaseValues(String expressionText,
-                                     List<String> caseValues,
+                                     List<PsiCaseLabelElement> caseElements,
+                                     boolean firstBranch,
                                      boolean useEquals,
+                                     boolean useRequireNonNullMethod,
+                                     CommentTracker commentTracker,
                                      @NonNls StringBuilder out) {
     out.append("if(");
     boolean firstCaseValue = true;
-    for (String caseValue : caseValues) {
+    for (PsiElement caseElement : caseElements) {
       if (!firstCaseValue) {
         out.append("||");
       }
+      final String newExpressionText =
+        firstBranch && firstCaseValue && useRequireNonNullMethod
+        ? "java.util.Objects.requireNonNull(" + expressionText + ")"
+        : expressionText;
       firstCaseValue = false;
-      if (useEquals) {
-        out.append(caseValue).append(".equals(").append(expressionText).append(')');
-      }
-      else if (caseValue.equals("true")) {
-        out.append(expressionText);
-      }
-      else if (caseValue.equals("false")) {
-        out.append("!(").append(expressionText).append(")");
+      if (caseElement instanceof PsiExpression) {
+        PsiExpression caseExpression = PsiUtil.skipParenthesizedExprDown((PsiExpression)caseElement);
+        String caseValue = getCaseValueText(caseExpression, commentTracker);
+        if (useEquals && caseExpression != null && !(caseExpression.getType() instanceof PsiPrimitiveType)) {
+          if (PsiPrecedenceUtil.getPrecedence(caseExpression) > PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE) {
+            caseValue = "(" + caseValue + ")";
+          }
+          out.append(expressionText).append(".equals(").append(caseValue).append(')');
+        }
+        else if (caseValue.equals("true")) {
+          out.append(newExpressionText);
+        }
+        else if (caseValue.equals("false")) {
+          out.append("!(").append(newExpressionText).append(")");
+        }
+        else {
+          out.append(newExpressionText).append("==").append(caseValue);
+        }
       }
       else {
-        out.append(expressionText).append("==").append(caseValue);
+        final String patternCondition;
+        if (caseElement instanceof PsiPattern pattern) {
+          patternCondition = createIfCondition(pattern, newExpressionText, commentTracker);
+        }
+        else if (caseElement instanceof PsiPatternGuard patternGuard) {
+          patternCondition = createIfCondition(patternGuard, newExpressionText, commentTracker);
+        }
+        else {
+          patternCondition = null;
+        }
+        if (patternCondition != null) {
+          out.append(patternCondition);
+        }
+        else {
+          //incomplete/red code
+          out.append(caseElement.getText());
+        }
       }
     }
     out.append(')');
+  }
+
+  private static @Nullable String createIfCondition(PsiPatternGuard patternGuard, String expressionText, CommentTracker commentTracker) {
+    PsiPattern pattern = patternGuard.getPattern();
+    PsiExpression guardingExpression = patternGuard.getGuardingExpression();
+    if (guardingExpression == null) {
+      return null;
+    }
+    String patternCondition = createIfCondition(pattern, expressionText, commentTracker);
+    if (patternCondition == null) {
+      return null;
+    }
+    return patternCondition +
+           "&&" +
+           commentTracker.textWithComments(guardingExpression, ParenthesesUtils.AND_PRECEDENCE);
+  }
+
+  private static @Nullable String createIfCondition(PsiPattern pattern, String expressionText, CommentTracker commentTracker) {
+    PsiPattern normalizedPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern);
+    if (normalizedPattern instanceof PsiTypeTestPattern typeTestPattern) {
+      return createIfCondition(typeTestPattern, expressionText, commentTracker);
+    }
+    else if (normalizedPattern instanceof PsiDeconstructionPattern deconstructionPattern) {
+      return createIfCondition(deconstructionPattern, expressionText, commentTracker);
+    }
+    return null;
+  }
+
+  private static @NotNull String createIfCondition(PsiDeconstructionPattern deconstructionPattern,
+                                                   String expressionText,
+                                                   CommentTracker commentTracker) {
+    return expressionText + " instanceof " + commentTracker.text(deconstructionPattern);
+  }
+
+  private static @Nullable String createIfCondition(PsiTypeTestPattern typeTestPattern,
+                                                    String expressionText,
+                                                    CommentTracker commentTracker) {
+    PsiTypeElement checkType = typeTestPattern.getCheckType();
+    if (checkType == null) return null;
+    String typeText = commentTracker.textWithComments(checkType);
+    PsiPatternVariable variable = typeTestPattern.getPatternVariable();
+    if (variable == null) return null;
+    PsiElement context = PsiTreeUtil.getParentOfType(variable, PsiSwitchStatement.class);
+    boolean isUsedPatternVariable = VariableAccessUtils.variableIsUsed(variable, context);
+    PsiIdentifier identifier = variable.getNameIdentifier();
+    String variableName = isUsedPatternVariable ? commentTracker.textWithComments(identifier) : commentTracker.commentsBefore(identifier);
+    return expressionText + " instanceof " + typeText + " " + variableName;
+  }
+
+  private static @NotNull String getCaseValueText(@Nullable PsiExpression value, @NotNull CommentTracker commentTracker) {
+    if (value == null) {
+      return "";
+    }
+    if (!(value instanceof PsiReferenceExpression referenceExpression)) {
+      return commentTracker.text(value);
+    }
+    final PsiElement target = referenceExpression.resolve();
+
+    if (!(target instanceof PsiEnumConstant enumConstant)) {
+      return commentTracker.text(value);
+    }
+    final PsiClass aClass = enumConstant.getContainingClass();
+    if (aClass == null) {
+      return commentTracker.text(value);
+    }
+
+    String qualifiedName = ObjectUtils.notNull(aClass.getQualifiedName(), Objects.requireNonNull(aClass.getName()));
+    return qualifiedName + '.' + commentTracker.text(referenceExpression);
   }
 
   private static void dumpBody(SwitchStatementBranch branch, @NonNls StringBuilder out, CommentTracker commentTracker) {
@@ -324,8 +435,8 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     if (!bodyStatements.isEmpty()) {
       PsiElement firstBodyElement = bodyStatements.get(0);
       PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(firstBodyElement);
-      if (prev instanceof PsiSwitchLabelStatementBase) {
-        PsiExpressionList values = ((PsiSwitchLabelStatementBase)prev).getCaseValues();
+      if (prev instanceof PsiSwitchLabelStatementBase labelStatement) {
+        PsiCaseLabelElementList values = labelStatement.getCaseLabelElementList();
         if (values != null) {
           out.append(CommentTracker.commentsBetween(values, firstBodyElement));
         }
@@ -333,10 +444,10 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     }
     for (PsiElement element : branch.getPendingDeclarations()) {
       if (ReferencesSearch.search(element, new LocalSearchScope(bodyStatements.toArray(PsiElement.EMPTY_ARRAY))).findFirst() != null) {
-        if (element instanceof PsiVariable) {
-          PsiVariable var = (PsiVariable)element;
+        if (element instanceof PsiVariable var) {
           out.append(var.getType().getCanonicalText()).append(' ').append(var.getName()).append(';');
-        } else {
+        }
+        else {
           // Class
           out.append(element.getText());
         }
@@ -344,11 +455,10 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     }
 
     for (PsiElement bodyStatement : bodyStatements) {
-      if (bodyStatement instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)bodyStatement;
+      if (bodyStatement instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-        PsiElement start = PsiTreeUtil.skipWhitespacesForward(codeBlock.getFirstBodyElement());
-        PsiElement end = PsiTreeUtil.skipWhitespacesBackward(codeBlock.getLastBodyElement());
+        PsiElement start = PsiTreeUtil.skipWhitespacesForward(codeBlock.getLBrace());
+        PsiElement end = PsiTreeUtil.skipWhitespacesBackward(codeBlock.getRBrace());
         if (start != null && end != null && start != codeBlock.getRBrace()) {
           for (PsiElement child = start; child != null; child = child.getNextSibling()) {
             out.append(commentTracker.text(child));

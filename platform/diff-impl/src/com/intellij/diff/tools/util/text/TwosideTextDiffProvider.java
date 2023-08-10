@@ -32,7 +32,7 @@ public interface TwosideTextDiffProvider extends TextDiffProvider {
   @Nullable
   List<List<LineFragment>> compare(@NotNull CharSequence text1,
                                    @NotNull CharSequence text2,
-                                   @NotNull List<Range> linesRanges,
+                                   @NotNull List<? extends Range> linesRanges,
                                    @NotNull ProgressIndicator indicator);
 
   default boolean isHighlightingDisabled() {
@@ -51,7 +51,7 @@ public interface TwosideTextDiffProvider extends TextDiffProvider {
     @Override
     List<List<LineFragment>> compare(@NotNull CharSequence text1,
                                      @NotNull CharSequence text2,
-                                     @NotNull List<Range> linesRanges,
+                                     @NotNull List<? extends Range> linesRanges,
                                      @NotNull ProgressIndicator indicator);
   }
 }

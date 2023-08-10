@@ -7,9 +7,9 @@ import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.testFramework.TestFileType;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class FoldingTest extends AbstractEditorTest {
@@ -32,7 +33,7 @@ public class FoldingTest extends AbstractEditorTest {
       "When I use a word,\" Humpty Dumpty said, in a rather scornful tone, \"it means just what I choose it to mean -- neither more nor less." +
       "The question is,\" said Alice, \"whether you can make words mean so many different things." +
       "The question is,\" said Humpty Dumpty, \"which is to be master -- that's all.",
-         TestFileType.TEXT);
+         PlainTextFileType.INSTANCE);
     myModel = (FoldingModelEx)getEditor().getFoldingModel();
   }
 
@@ -239,9 +240,6 @@ public class FoldingTest extends AbstractEditorTest {
       public void onFoldRegionStateChange(@NotNull FoldRegion region) {
         notifications.add(region);
       }
-
-      @Override
-      public void onFoldProcessingEnd() {}
     }, getTestRootDisposable());
     runFoldingOperation(() -> myModel.removeFoldRegion(regionRef.get()));
     assertSize(1, notifications);
@@ -311,8 +309,8 @@ public class FoldingTest extends AbstractEditorTest {
     WriteAction.run(() -> getEditor().getDocument().deleteString(10, 15));
     FoldRegion[] regions = getEditor().getFoldingModel().getAllFoldRegions();
     assertSize(2, regions);
-    assertEquals(TextRange.create(10, 15), TextRange.create(regions[0]));
-    assertEquals(TextRange.create(11, 12), TextRange.create(regions[1]));
+    assertEquals(TextRange.create(10, 15), regions[0].getTextRange());
+    assertEquals(TextRange.create(11, 12), regions[1].getTextRange());
   }
 
   public void test1() {
@@ -368,7 +366,7 @@ public class FoldingTest extends AbstractEditorTest {
     assertFalse(regions[0].isValid());
     assertTrue(regions[1].isValid());
     List<FoldRegion> newRegionsInGroup = myModel.getGroupedRegions(group);
-    assertEquals(Arrays.asList(regions[1]), newRegionsInGroup);
+    assertEquals(Collections.singletonList(regions[1]), newRegionsInGroup);
   }
 
   public void testAllRegionsFromInvalidNodeAreRemovedFromGroups() {
@@ -382,14 +380,14 @@ public class FoldingTest extends AbstractEditorTest {
     assertNotNull(regions[0]);
     assertNotNull(regions[1]);
     assertNotNull(regions[2]);
-    runWriteCommand(() -> DocumentUtil.executeInBulk(getEditor().getDocument(), true, () -> {
+    runWriteCommand(() -> DocumentUtil.executeInBulk(getEditor().getDocument(), () -> {
       getEditor().getDocument().deleteString(1, 3); // make first two regions belong to the same interval tree node
       getEditor().getDocument().deleteString(1, 2); // invalidate regions
     }));
     assertFalse(regions[0].isValid());
     assertFalse(regions[1].isValid());
     assertTrue(regions[2].isValid());
-    List<FoldRegion> regionsInGroup = myModel.getGroupedRegions(regions[2].getGroup());
+    List<FoldRegion> regionsInGroup = myModel.getGroupedRegions(group);
     assertEquals(Collections.singletonList(regions[2]), regionsInGroup);
   }
 
@@ -434,28 +432,67 @@ public class FoldingTest extends AbstractEditorTest {
   }
 
   public void testExpandRegionDoesNotImpactOutsideCaret() {
-    initText("(\n" +
-             "  foo [\n" +
-             "    bar<caret>\n" +
-             "  ]\n" +
-             ")");
+    initText("""
+               (
+                 foo [
+                   bar<caret>
+                 ]
+               )""");
     foldOccurrences("(?s)\\(.*\\)", "...");
     foldOccurrences("(?s)\\[.*\\]", "...");
-    checkResultByText("<caret>(\n" +
-                      "  foo [\n" +
-                      "    bar\n" +
-                      "  ]\n" +
-                      ")");
+    checkResultByText("""
+                        <caret>(
+                          foo [
+                            bar
+                          ]
+                        )""");
 
     getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("foo"));
     verifyFoldingState("[FoldRegion -(0:23), placeholder='...', FoldRegion +(8:21), placeholder='...']");
 
     executeAction(IdeActions.ACTION_EXPAND_ALL_REGIONS);
 
-    checkResultByText("(\n" +
-                      "  <caret>foo [\n" +
-                      "    bar\n" +
-                      "  ]\n" +
-                      ")");
+    checkResultByText("""
+                        (
+                          <caret>foo [
+                            bar
+                          ]
+                        )""");
+  }
+
+  public void testDisposalListenerMethodCalledOnExplicitRemoval() {
+    AtomicInteger invocationCount = new AtomicInteger();
+    myModel.addListener(new FoldingListener() {
+      @Override
+      public void beforeFoldRegionDisposed(@NotNull FoldRegion region) {
+        invocationCount.incrementAndGet();
+      }
+    }, getTestRootDisposable());
+    Ref<FoldRegion> regionRef = new Ref<>();
+    myModel.runBatchFoldingOperation(() -> regionRef.set(myModel.addFoldRegion(1, 2, ".")));
+    assertNotNull(regionRef.get());
+    assertTrue(regionRef.get().isValid());
+    assertEquals(0, invocationCount.get());
+    myModel.runBatchFoldingOperation(() -> myModel.removeFoldRegion(regionRef.get()));
+    assertFalse(regionRef.get().isValid());
+    assertEquals(1, invocationCount.get());
+  }
+
+  public void testDisposalListenerMethodCalledOnImplicitRemoval() {
+    AtomicInteger invocationCount = new AtomicInteger();
+    myModel.addListener(new FoldingListener() {
+      @Override
+      public void beforeFoldRegionDisposed(@NotNull FoldRegion region) {
+        invocationCount.incrementAndGet();
+      }
+    }, getTestRootDisposable());
+    Ref<FoldRegion> regionRef = new Ref<>();
+    myModel.runBatchFoldingOperation(() -> regionRef.set(myModel.addFoldRegion(1, 2, ".")));
+    assertNotNull(regionRef.get());
+    assertTrue(regionRef.get().isValid());
+    assertEquals(0, invocationCount.get());
+    runWriteCommand(() -> getEditor().getDocument().deleteString(0, 3));
+    assertFalse(regionRef.get().isValid());
+    assertEquals(1, invocationCount.get());
   }
 }

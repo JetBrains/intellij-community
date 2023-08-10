@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author Denis Zhdanov
- */
 public interface ArrangementEditorAware {
 
   @NotNull

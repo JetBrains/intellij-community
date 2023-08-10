@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,15 +21,11 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
     return a.getTemplatePresentation().getIcon() != AllIcons.Actions.Forward;
   };
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  protected static final Icon ourCurrentAction = AllIcons.Actions.Forward;
-
   protected static final Icon ourNotCurrentAction = IconLoader.createLazy(() -> {
     return EmptyIcon.create(AllIcons.Actions.Forward.getIconWidth(), AllIcons.Actions.Forward.getIconHeight());
   });
 
-  protected String myActionPlace = ActionPlaces.UNKNOWN;
+  protected String myActionPlace;
 
   private final boolean myShowPopupWithNoActions;
 
@@ -40,6 +35,11 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
 
   protected QuickSwitchSchemeAction(boolean showPopupWithNoActions) {
     myShowPopupWithNoActions = showPopupWithNoActions;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

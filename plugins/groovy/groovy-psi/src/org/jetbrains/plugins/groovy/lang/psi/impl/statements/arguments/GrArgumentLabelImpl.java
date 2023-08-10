@@ -39,9 +39,6 @@ import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.references.GrMapConstructorPropertyReference.getConstructorReference;
 
-/**
- * @author ilyas
- */
 public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgumentLabel {
 
   private final GrMapConstructorPropertyReference myConstructorPropertyReference = new GrMapConstructorPropertyReference(this);

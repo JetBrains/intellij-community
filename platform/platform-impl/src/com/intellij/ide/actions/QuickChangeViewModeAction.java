@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.openapi.util.Conditions.instanceOf;
 import static com.intellij.openapi.util.Conditions.not;
 
-public class QuickChangeViewModeAction extends QuickSwitchSchemeAction {
+public class QuickChangeViewModeAction extends QuickSwitchSchemeAction implements ActionRemoteBehaviorSpecification.Frontend {
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     for (AnAction child : getActions()) {

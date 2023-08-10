@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.CallHierarchyBrowserBase;
@@ -6,7 +6,6 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -17,7 +16,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.PopupHandler;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,27 +30,17 @@ public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
     super(project, method);
   }
 
-  /**
-   * @deprecated use CallHierarchyBrowser#CallHierarchyBrowser(Project, PsiMember)
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public CallHierarchyBrowser(@NotNull Project project, @NotNull PsiMethod method) {
-    super(project, method);
-  }
-
   @Override
-  protected void createTrees(@NotNull final Map<String, JTree> type2TreeMap) {
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_CALL_HIERARCHY_POPUP);
-    final JTree tree1 = createTree(false);
-    PopupHandler.installPopupHandler(tree1, group, ActionPlaces.CALL_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
-    final BaseOnThisMethodAction baseOnThisMethodAction = new BaseOnThisMethodAction();
+  protected void createTrees(@NotNull Map<? super @Nls String, ? super JTree> type2TreeMap) {
+    JTree tree1 = createTree(false);
+    PopupHandler.installPopupMenu(tree1, IdeActions.GROUP_CALL_HIERARCHY_POPUP, ActionPlaces.CALL_HIERARCHY_VIEW_POPUP);
+    BaseOnThisMethodAction baseOnThisMethodAction = new BaseOnThisMethodAction();
     baseOnThisMethodAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_CALL_HIERARCHY).getShortcutSet(), tree1);
     type2TreeMap.put(getCalleeType(), tree1);
 
-    final JTree tree2 = createTree(false);
-    PopupHandler.installPopupHandler(tree2, group, ActionPlaces.CALL_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+    JTree tree2 = createTree(false);
+    PopupHandler.installPopupMenu(tree2, IdeActions.GROUP_CALL_HIERARCHY_POPUP, ActionPlaces.CALL_HIERARCHY_VIEW_POPUP);
     baseOnThisMethodAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_CALL_HIERARCHY).getShortcutSet(), tree2);
     type2TreeMap.put(getCallerType(), tree2);
@@ -59,8 +48,7 @@ public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
 
   @Override
   protected PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
-    if (descriptor instanceof CallHierarchyNodeDescriptor) {
-      CallHierarchyNodeDescriptor nodeDescriptor = (CallHierarchyNodeDescriptor)descriptor;
+    if (descriptor instanceof CallHierarchyNodeDescriptor nodeDescriptor) {
       return nodeDescriptor.getEnclosingElement();
     }
     return null;
@@ -68,8 +56,7 @@ public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
 
   @Override
   protected PsiElement getOpenFileElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
-    if (descriptor instanceof CallHierarchyNodeDescriptor) {
-      CallHierarchyNodeDescriptor nodeDescriptor = (CallHierarchyNodeDescriptor)descriptor;
+    if (descriptor instanceof CallHierarchyNodeDescriptor nodeDescriptor) {
       return nodeDescriptor.getTargetElement();
     }
     return null;
@@ -81,7 +68,7 @@ public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
   }
 
   @Override
-  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
+  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String typeName, @NotNull PsiElement psiElement) {
     if (getCallerType().equals(typeName)) {
       return new CallerMethodsTreeStructure(myProject, (PsiMember)psiElement, getCurrentScopeType());
     }

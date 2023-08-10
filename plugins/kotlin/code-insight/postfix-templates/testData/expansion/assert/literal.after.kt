@@ -1,0 +1,3 @@
+fun test() {
+    assert(true)
+}

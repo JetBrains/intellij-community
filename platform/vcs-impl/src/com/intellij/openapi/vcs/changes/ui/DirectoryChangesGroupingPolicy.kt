@@ -2,69 +2,58 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.DIRECTORY_CACHE
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.PATH_NODE_BUILDER
+import java.util.function.Function
 import javax.swing.tree.DefaultTreeModel
 
 class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
-  override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
-    DIRECTORY_POLICY.set(subtreeRoot, this)
+  override fun getParentNodeFor(nodePath: StaticFilePath,
+                                node: ChangesBrowserNode<*>,
+                                subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
+    val nextPolicyGroup = nextPolicy?.getParentNodeFor(nodePath, node, subtreeRoot)
+    val grandParent = nextPolicyGroup ?: subtreeRoot
+    val cachingRoot = getCachingRoot(grandParent, subtreeRoot)
+    val pathBuilder = PATH_NODE_BUILDER.getRequired(subtreeRoot)
 
-    val grandParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot) ?: subtreeRoot
-    HIERARCHY_UPPER_BOUND.set(subtreeRoot, grandParent)
-    CACHING_ROOT.set(subtreeRoot, getCachingRoot(grandParent, subtreeRoot))
-
-    return getParentNodeRecursive(nodePath, subtreeRoot)
+    return getParentNodeRecursive(nodePath, pathBuilder, grandParent, cachingRoot)
   }
 
-  private fun getParentNodeRecursive(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
-    generateSequence(nodePath.parent) { it.parent }.forEach { parentPath ->
-      val cachingRoot = getCachingRoot(subtreeRoot)
+  private fun getParentNodeRecursive(nodePath: StaticFilePath,
+                                     pathBuilder: Function<StaticFilePath, ChangesBrowserNode<*>?>,
+                                     grandParent: ChangesBrowserNode<*>,
+                                     cachingRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
+    var cachedParent: ChangesBrowserNode<*>? = null
+    val nodes = mutableListOf<ChangesBrowserNode<*>>()
 
-      DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key]?.let {
-        if (HIERARCHY_UPPER_BOUND.get(subtreeRoot) == it) {
-          GRAND_PARENT_CANDIDATE.set(subtreeRoot, it)
-          try {
-            return getPathNode(parentPath, subtreeRoot) ?: it
-          }
-          finally {
-            GRAND_PARENT_CANDIDATE.set(subtreeRoot, null)
-          }
-        }
-        return it
+    // for(var parentPath = nodePath.parent; parentPath != null; parentPath = parentPath.parent)
+    var parentPath: StaticFilePath = nodePath
+    while (true) {
+      parentPath = parentPath.parent ?: break
+
+      cachedParent = DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key]
+      if (cachedParent != null) {
+        break
       }
 
-      getPathNode(parentPath, subtreeRoot)?.let { return it }
+      val pathNode = pathBuilder.apply(parentPath)
+      if (pathNode != null) {
+        pathNode.markAsHelperNode()
+        DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key] = pathNode
+        nodes.add(pathNode)
+      }
     }
 
-    return HIERARCHY_UPPER_BOUND.getRequired(subtreeRoot)
-  }
-
-  private fun getPathNode(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
-    PATH_NODE_BUILDER.getRequired(subtreeRoot).apply(nodePath)?.let {
-      it.markAsHelperNode()
-
-      val grandParent = GRAND_PARENT_CANDIDATE.get(subtreeRoot) ?: getParentNodeRecursive(nodePath, subtreeRoot)
-      val cachingRoot = getCachingRoot(subtreeRoot)
-
-      model.insertNodeInto(it, grandParent, grandParent.childCount)
-      DIRECTORY_CACHE.getValue(cachingRoot)[nodePath.key] = it
-      return it
+    var node = cachedParent ?: grandParent
+    for (nextNode in nodes.asReversed()) {
+      model.insertNodeInto(nextNode, node, node.childCount)
+      node = nextNode
     }
-    return null
+    return node
   }
 
   class Factory : ChangesGroupingPolicyFactory() {
-    override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): DirectoryChangesGroupingPolicy = DirectoryChangesGroupingPolicy(project, model)
-  }
-
-  companion object {
-    @JvmField internal val DIRECTORY_POLICY = Key.create<DirectoryChangesGroupingPolicy>("ChangesTree.DirectoryPolicy")
-    internal val GRAND_PARENT_CANDIDATE = Key.create<ChangesBrowserNode<*>?>("ChangesTree.GrandParentCandidate")
-    internal val HIERARCHY_UPPER_BOUND = Key.create<ChangesBrowserNode<*>?>("ChangesTree.HierarchyUpperBound")
-    internal val CACHING_ROOT = Key.create<ChangesBrowserNode<*>?>("ChangesTree.CachingRoot")
-
-    internal fun getCachingRoot(subtreeRoot: ChangesBrowserNode<*>) = CACHING_ROOT.get(subtreeRoot) ?: subtreeRoot
+    override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): DirectoryChangesGroupingPolicy =
+      DirectoryChangesGroupingPolicy(project, model)
   }
 }

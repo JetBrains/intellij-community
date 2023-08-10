@@ -89,7 +89,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
     // which files in .hg were changed
     boolean branchHeadsChanged = false;
     boolean branchFileChanged = false;
@@ -106,9 +106,6 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     boolean configHgrcChanged = false;
     for (VFileEvent event : events) {
       String filePath = event.getPath();
-      if (filePath == null) {
-        continue;
-      }
       if (myRepositoryFiles.isbranchHeadsFile(filePath)) {
         branchHeadsChanged = true;
       }
@@ -182,7 +179,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     }
 
     @Override
-    public boolean canEat(Update update) {
+    public boolean canEat(@NotNull Update update) {
       return true;
     }
 

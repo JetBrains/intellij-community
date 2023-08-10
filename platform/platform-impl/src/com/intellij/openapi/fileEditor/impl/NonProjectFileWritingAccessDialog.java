@@ -2,6 +2,8 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
@@ -18,7 +20,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-public class NonProjectFileWritingAccessDialog extends DialogWrapper {
+class NonProjectFileWritingAccessDialog extends DialogWrapper {
   private JPanel myPanel;
   private JLabel myListTitle;
   private JList<VirtualFile> myFileList;
@@ -26,7 +28,7 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
   private JRadioButton myUnlockDirButton;
   private JRadioButton myUnlockAllButton;
 
-  public NonProjectFileWritingAccessDialog(@NotNull Project project, @NotNull List<? extends VirtualFile> nonProjectFiles) {
+  NonProjectFileWritingAccessDialog(@NotNull Project project, @NotNull List<? extends VirtualFile> nonProjectFiles) {
     super(project);
     setTitle(IdeBundle.message("dialog.title.non.project.files.protection"));
 
@@ -54,11 +56,12 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
     setTextAndMnemonicAndListeners(myUnlockDirButton, dirsText, "dir");
 
     setTextAndMnemonicAndListeners(myUnlockAllButton, IdeBundle.message("button.i.want.to.edit.any.non.project.file.in.current.session"), "any");
-
-    getRootPane().registerKeyboardAction(e -> doOKAction(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK),
-                                         JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    getRootPane().registerKeyboardAction(e -> doOKAction(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK),
-                                         JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      getRootPane().registerKeyboardAction(e -> doOKAction(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK),
+                                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+      getRootPane().registerKeyboardAction(e -> doOKAction(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK),
+                                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    }
 
     init();
   }
@@ -87,10 +90,10 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
     return myPanel;
   }
 
-  public @NotNull NonProjectFileWritingAccessProvider.UnlockOption getUnlockOption() {
-    if (myUnlockAllButton.isSelected()) return NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK_ALL;
-    if (myUnlockDirButton.isSelected()) return NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK_DIR;
-    return NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK;
+  public @NotNull UnlockOption getUnlockOption() {
+    if (myUnlockAllButton.isSelected()) return UnlockOption.UNLOCK_ALL;
+    if (myUnlockDirButton.isSelected()) return UnlockOption.UNLOCK_DIR;
+    return UnlockOption.UNLOCK;
   }
 
   @Override

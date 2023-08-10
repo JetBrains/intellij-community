@@ -33,7 +33,7 @@ public abstract class DeploymentConfigurator<D extends DeploymentConfiguration, 
   public abstract D createDefaultConfiguration(@NotNull DeploymentSource source);
 
   @Nullable
-  public abstract SettingsEditor<D> createEditor(@NotNull DeploymentSource source, @NotNull RemoteServer<S> server);
+  public abstract SettingsEditor<D> createEditor(@NotNull DeploymentSource source, @Nullable RemoteServer<S> server);
 
   /**
    * @see LocatableConfiguration#isGeneratedName()

@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlToken;
-import com.intellij.ui.ColorChooser;
+import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorPickerListener;
 import com.intellij.ui.ColorPickerListenerFactory;
 import com.intellij.ui.ColorUtil;
@@ -63,8 +63,8 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
     context.setLaterRunnable(() -> {
       if (editor.isDisposed() || project.isDisposed()) return;
       List<ColorPickerListener> listeners = ColorPickerListenerFactory.createListenersFor(element);
-      Color color = ColorChooser.chooseColor(project, WindowManager.getInstance().suggestParentWindow(project),
-                                             IdeBundle.message("dialog.title.choose.color"), myColorAtCaret, true, listeners, true);
+      Color color = ColorChooserService.getInstance().showDialog(project, WindowManager.getInstance().suggestParentWindow(project),
+                                                                 IdeBundle.message("dialog.title.choose.color"), myColorAtCaret, true, listeners, true);
       if (color != null) {
         WriteCommandAction.runWriteCommandAction(project, () -> {
           editor.getCaretModel().moveToOffset(startOffset);

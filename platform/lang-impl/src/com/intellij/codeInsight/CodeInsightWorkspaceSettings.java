@@ -13,17 +13,13 @@ import org.jetbrains.annotations.TestOnly;
 @Service
 @State(name = "CodeInsightWorkspaceSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class CodeInsightWorkspaceSettings extends SimpleModificationTracker implements PersistentStateComponent<CodeInsightWorkspaceSettings> {
-  /**
-   * @deprecated Use {{@link #isOptimizeImportsOnTheFly()}}
-   */
-  @OptionTag
-  @Deprecated
-  public boolean optimizeImportsOnTheFly;
+  private boolean optimizeImportsOnTheFly;
 
   public static CodeInsightWorkspaceSettings getInstance(@NotNull Project project) {
     return project.getService(CodeInsightWorkspaceSettings.class);
   }
 
+  @OptionTag
   public boolean isOptimizeImportsOnTheFly() {
     return optimizeImportsOnTheFly;
   }

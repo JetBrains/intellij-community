@@ -19,7 +19,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
+import javax.swing.Icon
 
 class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
   private class Data(
@@ -153,15 +155,15 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
   }
 
   companion object {
-    val disabledRefactoringTooltip = RefactoringBundle.message("suggested.refactoring.disabled.gutter.icon.tooltip")
+    val disabledRefactoringTooltip: @Nls String = RefactoringBundle.message("suggested.refactoring.disabled.gutter.icon.tooltip")
   }
 }
 
 class RefactoringAvailableGutterIconRenderer(@NlsContexts.Tooltip private val tooltip: String) : GutterIconRenderer() {
-  override fun getIcon() = AllIcons.Gutter.SuggestedRefactoringBulb
-  override fun getTooltipText() = tooltip
-  override fun isNavigateAction() = true
-  override fun getAlignment() = Alignment.RIGHT
+  override fun getIcon(): Icon = AllIcons.Gutter.SuggestedRefactoringBulb
+  override fun getTooltipText(): String = tooltip
+  override fun isNavigateAction(): Boolean = true
+  override fun getAlignment(): Alignment = Alignment.RIGHT
 
   override fun getClickAction(): AnAction {
     return object : AnAction() {
@@ -184,25 +186,25 @@ class RefactoringAvailableGutterIconRenderer(@NlsContexts.Tooltip private val to
     }
   }
 
-  override fun equals(other: Any?) = other === this
-  override fun hashCode() = 0
+  override fun equals(other: Any?): Boolean = other === this
+  override fun hashCode(): Int = 0
 }
 
-class RefactoringDisabledGutterIconRenderer(private @NlsContexts.Tooltip val tooltip: String) : GutterIconRenderer() {
-  override fun getIcon() = AllIcons.Gutter.SuggestedRefactoringBulbDisabled
-  override fun getTooltipText() = tooltip
-  override fun getAlignment() = Alignment.RIGHT
+class RefactoringDisabledGutterIconRenderer(@NlsContexts.Tooltip private val tooltip: String) : GutterIconRenderer() {
+  override fun getIcon(): Icon = AllIcons.Gutter.SuggestedRefactoringBulbDisabled
+  override fun getTooltipText(): String = tooltip
+  override fun getAlignment(): Alignment = Alignment.RIGHT
 
-  override fun equals(other: Any?) = other === this
-  override fun hashCode() = 0
+  override fun equals(other: Any?): Boolean = other === this
+  override fun hashCode(): Int = 0
 }
 
 internal fun SuggestedRefactoringAvailabilityIndicator.update(
-  declaration: PsiElement,
+  anchor: PsiElement,
   refactoringData: SuggestedRefactoringData?,
   refactoringSupport: SuggestedRefactoringSupport
 ) {
-  val psiFile = declaration.containingFile
+  val psiFile = anchor.containingFile
   val psiDocumentManager = PsiDocumentManager.getInstance(psiFile.project)
   val document = psiDocumentManager.getDocument(psiFile)!!
   require(psiDocumentManager.isCommitted(document))
@@ -233,15 +235,15 @@ internal fun SuggestedRefactoringAvailabilityIndicator.update(
         refactoringData.oldSignature.name,
         intentionActionShortcutHint()
       )
-      markerRange = refactoringSupport.nameRange(refactoringData.declaration)!!
-      availabilityRange = refactoringSupport.changeSignatureAvailabilityRange(refactoringData.declaration)
+      markerRange = refactoringSupport.nameRange(refactoringData.anchor)!!
+      availabilityRange = refactoringSupport.changeSignatureAvailabilityRange(refactoringData.anchor)
     }
 
     null -> {
       refactoringAvailable = false
       tooltip = SuggestedRefactoringAvailabilityIndicator.disabledRefactoringTooltip
-      markerRange = refactoringSupport.nameRange(declaration)!!
-      availabilityRange = refactoringSupport.changeSignatureAvailabilityRange(declaration)
+      markerRange = refactoringSupport.nameRange(anchor)!!
+      availabilityRange = refactoringSupport.changeSignatureAvailabilityRange(anchor)
     }
   }
 
@@ -272,12 +274,12 @@ private fun intentionActionShortcutHint(): String {
   return "(${KeymapUtil.getShortcutText(shortcut)})"
 }
 
-internal fun SuggestedRefactoringSupport.changeSignatureAvailabilityRange(declaration: PsiElement): TextRange? {
-  val file = declaration.containingFile
+internal fun SuggestedRefactoringSupport.changeSignatureAvailabilityRange(anchor: PsiElement): TextRange? {
+  val file = anchor.containingFile
   val psiDocumentManager = PsiDocumentManager.getInstance(file.project)
   val document = psiDocumentManager.getDocument(file)!!
   require(psiDocumentManager.isCommitted(document))
-  return signatureRange(declaration)
+  return signatureRange(anchor)
     ?.extend(document.charsSequence) { it == ' ' || it == '\t' }
 }
 

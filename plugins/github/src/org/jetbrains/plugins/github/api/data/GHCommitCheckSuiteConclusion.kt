@@ -20,6 +20,9 @@ enum class GHCommitCheckSuiteConclusion {
   //The check suite or run was marked stale. For internal use only.
   STALE,
 
+  //The check suite or run has failed at startup.
+  STARTUP_FAILURE,
+
   //The check suite or run has succeeded.
   SUCCESS,
 

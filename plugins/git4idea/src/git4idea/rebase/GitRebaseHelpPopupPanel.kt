@@ -1,13 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
-import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.labels.LinkListener
-import com.intellij.ui.layout.*
-import com.intellij.util.JBHiDPIScaledImage
+import com.intellij.ui.components.BrowserLink
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.icons.HiDPIImage
 import com.intellij.util.ui.JBImageIcon
 import com.intellij.util.ui.StartupUiUtil
 import git4idea.i18n.GitBundle
@@ -19,7 +16,6 @@ import javax.imageio.ImageIO
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.SwingConstants
 
 class GitRebaseHelpPopupPanel : JPanel() {
 
@@ -45,19 +41,15 @@ class GitRebaseHelpPopupPanel : JPanel() {
       label(GitBundle.message("rebase.help.rebase.branch"))
     }
     row {
-      rebaseBranchImage()
+      cell(rebaseBranchImage)
     }
     row {
-      helpLink()
+      cell(helpLink)
     }
   }
 
-  private fun createHelpLink() = LinkLabel<Any?>(GitBundle.message("rebase.help.link"),
-                                                 AllIcons.Ide.External_link_arrow,
-                                                 LinkListener { _, _ -> BrowserUtil.browse("https://git-scm.com/docs/git-rebase") }).apply {
-    iconTextGap = 0
-    setHorizontalTextPosition(SwingConstants.LEFT)
-  }
+  private fun createHelpLink() = BrowserLink(GitBundle.message("rebase.help.link"),
+                                             "https://git-scm.com/docs/git-rebase")
 
   private fun createImageComponent(imagePath: String): JComponent {
     val suitableImagePath = chooseImage(imagePath)
@@ -68,8 +60,7 @@ class GitRebaseHelpPopupPanel : JPanel() {
   private fun loadImage(path: String): Image? {
     return try {
       val img = ImageIO.read(javaClass.getResourceAsStream(path))
-
-      JBHiDPIScaledImage(img, 274, 140, img.type)
+      HiDPIImage(image = img, width = 274, height = 140, type = img.type)
     }
     catch (e: Exception) {
       LOG.warn("Failed to load image: ${path}", e)
@@ -78,8 +69,8 @@ class GitRebaseHelpPopupPanel : JPanel() {
   }
 
   private fun chooseImage(imagePath: String): String {
-    val themePart = if (StartupUiUtil.isUnderDarcula()) DARK_POSTFIX else ""
-    val retinaPart = if (StartupUiUtil.isJreHiDPI()) HIDPI_POSTFIX else ""
+    val themePart = if (StartupUiUtil.isUnderDarcula) DARK_POSTFIX else ""
+    val retinaPart = if (StartupUiUtil.isJreHiDPI) HIDPI_POSTFIX else ""
 
     return "${imagePath}${themePart}${retinaPart}.png"
   }

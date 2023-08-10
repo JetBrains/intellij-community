@@ -1,15 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JPopupMenu;
+import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.lang.ref.WeakReference;
@@ -26,7 +27,13 @@ public abstract class PopupState<Popup> {
   private boolean hiddenLongEnough = true;
   private long timeHiddenAt;
 
-
+  /**
+   * Do not use it for simple cases: {@link com.intellij.ui.popup.AbstractPopup} will automatically store the pressed button
+   * from the last input event and so in most cases the "closing" click on that button will not invoke the popup.
+   * <p>
+   * In case of asynchronous popup creation, it may be possible to store the pressed button to the popup manually via
+   * {@link PopupUtil#setPopupToggleComponent} API.
+   */
   public static @NotNull PopupState<JBPopup> forPopup() {
     return new JBPopupState();
   }

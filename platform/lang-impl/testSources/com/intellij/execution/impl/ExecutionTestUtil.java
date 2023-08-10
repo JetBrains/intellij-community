@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionManager;
@@ -20,7 +20,7 @@ public final class ExecutionTestUtil {
 
   @NotNull
   public static RunContentDescriptor getSingleRunContentDescriptor(@NotNull ExecutionManager executionManager) {
-    List<RunContentDescriptor> descriptors = ((ExecutionManagerImpl)executionManager).getRunningDescriptors(Conditions.alwaysTrue());
+    List<RunContentDescriptor> descriptors = executionManager.getRunningDescriptors(Conditions.alwaysTrue());
     String actualDescriptorsMsg = stringifyDescriptors(descriptors);
     Assert.assertEquals(actualDescriptorsMsg, 1, descriptors.size());
     RunContentDescriptor descriptor = ContainerUtil.getFirstItem(descriptors);
@@ -28,7 +28,7 @@ public final class ExecutionTestUtil {
   }
 
   public static void terminateAllRunningDescriptors(@NotNull ExecutionManager executionManager) {
-    List<RunContentDescriptor> descriptors = ((ExecutionManagerImpl)executionManager).getRunningDescriptors(Conditions.alwaysTrue());
+    List<RunContentDescriptor> descriptors = executionManager.getRunningDescriptors(Conditions.alwaysTrue());
     for (RunContentDescriptor descriptor : descriptors) {
       ProcessHandler processHandler = descriptor.getProcessHandler();
       if (processHandler != null) {

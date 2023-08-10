@@ -7,6 +7,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ConsolePropertiesProvider {
+  /**
+   * @return nonnull value if IDEA should build tree view
+   *         null otherwise
+   */
   default @Nullable TestConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
     return null;
   }

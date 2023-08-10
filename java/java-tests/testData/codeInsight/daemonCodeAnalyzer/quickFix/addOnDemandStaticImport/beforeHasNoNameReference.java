@@ -1,4 +1,4 @@
-// "Add on-demand static import for 'pkg.F'" "true"
+// "Add on-demand static import for 'pkg.F'" "true-preview"
 package pkg;
 
 class F {

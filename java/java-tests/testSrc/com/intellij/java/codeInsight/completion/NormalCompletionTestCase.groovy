@@ -6,14 +6,12 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 abstract class NormalCompletionTestCase extends LightFixtureCompletionTestCase {
   @Override
@@ -32,6 +30,7 @@ abstract class NormalCompletionTestCase extends LightFixtureCompletionTestCase {
   void doTest(String finishChar) {
     configure()
     type finishChar
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     checkResult()
   }
 

@@ -1,0 +1,9 @@
+// "Change return type of enclosing function 'test' to 'String?'" "true"
+fun test() {
+    if (true) return "foo"
+    return null<caret>
+}
+
+/* IGNORE_FIR */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForEnclosing

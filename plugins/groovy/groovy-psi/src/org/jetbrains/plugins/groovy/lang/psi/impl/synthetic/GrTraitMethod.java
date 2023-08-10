@@ -24,13 +24,13 @@ public class GrTraitMethod extends LightMethod implements PsiMirrorElement {
   public GrTraitMethod(@NotNull PsiClass containingClass,
                        @NotNull PsiMethod method,
                        @NotNull PsiSubstitutor substitutor) {
-    super(containingClass, method, substitutor);
+    super(containingClass.getManager(), method, containingClass, containingClass.getLanguage(), substitutor);
     setNavigationElement(method);
   }
 
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
-    return name != PsiModifier.ABSTRACT && super.hasModifierProperty(name);
+    return !name.equals(PsiModifier.ABSTRACT) && super.hasModifierProperty(name);
   }
 
   @NotNull

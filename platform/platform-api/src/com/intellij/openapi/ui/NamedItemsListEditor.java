@@ -1,16 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.*;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,21 +79,12 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   }
 
   /**
-   * @deprecated override {@link #getCopyDialogTitle()}, {@link #getCreateNewDialogTitle()}, {@link #getNewLabelText()} instead
-   */
-  @SuppressWarnings({"DeprecatedIsStillUsed", "HardCodedStringLiteral"})
-  @Deprecated
-  protected String subjDisplayName() {
-    return "item";
-  }
-
-  /**
    * Returns title for "Copy" dialog. The method must be overriden in the implementations because the default implementation isn't friendly
    * for localization.
    */
   protected @NlsContexts.DialogTitle String getCopyDialogTitle() {
     //noinspection HardCodedStringLiteral
-    return "Copy " + subjDisplayName();
+    return "Copy item";
   }
 
   /**
@@ -105,7 +93,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
    */
   protected @NlsContexts.Label String getNewLabelText() {
     //noinspection HardCodedStringLiteral
-    return "New " + subjDisplayName() + " name:";
+    return "New item name:";
   }
 
   /**
@@ -114,7 +102,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
    */
   protected @NlsContexts.DialogTitle String getCreateNewDialogTitle() {
     //noinspection HardCodedStringLiteral
-    return "Create New " + subjDisplayName();
+    return "Create New item";
   }
 
 
@@ -159,6 +147,10 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   }
 
   protected boolean canDelete(T item) {
+    return true;
+  }
+
+  protected boolean canCopy(T item) {
     return true;
   }
 
@@ -319,8 +311,13 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
     @Override
     public void update(@NotNull AnActionEvent event) {
-      super.update(event);
-      event.getPresentation().setEnabled(getSelectedObject() != null);
+      T object = (T)getSelectedObject();
+      event.getPresentation().setEnabled(object != null && canCopy(object));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -330,7 +327,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   private final class AddAction extends DumbAwareAction {
     AddAction() {
       super(IdeBundle.messagePointer("action.NamedItemsListEditor.AddAction.text.add"),
-            IdeBundle.messagePointer("action.NamedItemsListEditor.AddAction.description.add"), IconUtil.getAddIcon());
+            IdeBundle.messagePointer("action.NamedItemsListEditor.AddAction.description.add"), AllIcons.General.Add);
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
     }
 

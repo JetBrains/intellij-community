@@ -38,15 +38,15 @@ public class RelatedFilesRenamer extends AutomaticRenamer {
       NestingTreeStructureProvider.getFilesShownAsChildrenInProjectView(psiFile.getProject(), psiFile.getVirtualFile());
 
     for (NestingTreeStructureProvider.ChildFileInfo info : relatedFileInfos) {
-      final PsiFile relatedPsiFile = psiFile.getManager().findFile(info.file);
+      final PsiFile relatedPsiFile = psiFile.getManager().findFile(info.file());
       if (relatedPsiFile == null) continue;
 
-      LOG.assertTrue(psiFile.getName().startsWith(info.namePartCommonWithParentFile) &&
-                     relatedPsiFile.getName().startsWith(info.namePartCommonWithParentFile),
-                     psiFile.getName() + "," + relatedPsiFile.getName() + "," + info.namePartCommonWithParentFile);
+      LOG.assertTrue(psiFile.getName().startsWith(info.namePartCommonWithParentFile()) &&
+                     relatedPsiFile.getName().startsWith(info.namePartCommonWithParentFile()),
+                     psiFile.getName() + "," + relatedPsiFile.getName() + "," + info.namePartCommonWithParentFile());
 
-      final String suffix = psiFile.getName().substring(info.namePartCommonWithParentFile.length());
-      LOG.assertTrue(suffix.length() > 0, psiFile.getName() + "," + info.namePartCommonWithParentFile);
+      final String suffix = psiFile.getName().substring(info.namePartCommonWithParentFile().length());
+      LOG.assertTrue(suffix.length() > 0, psiFile.getName() + "," + info.namePartCommonWithParentFile());
 
       if (!newName.endsWith(suffix)) {
         // if suffix touched we can't suggest any reasonable new name for the related file
@@ -54,7 +54,7 @@ public class RelatedFilesRenamer extends AutomaticRenamer {
       }
 
       final String newRelatedFileName = newName.substring(0, newName.length() - suffix.length()) +
-                                        relatedPsiFile.getName().substring(info.namePartCommonWithParentFile.length());
+                                        relatedPsiFile.getName().substring(info.namePartCommonWithParentFile().length());
       myElements.add(relatedPsiFile);
       suggestAllNames(relatedPsiFile.getName(), newRelatedFileName);
     }

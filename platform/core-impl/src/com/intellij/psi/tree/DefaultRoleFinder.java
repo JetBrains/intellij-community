@@ -17,6 +17,7 @@
 package com.intellij.psi.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
@@ -37,8 +38,8 @@ public class DefaultRoleFinder implements RoleFinder{
   public ASTNode findChild(@NotNull ASTNode parent) {
     ASTNode current = parent.getFirstChildNode();
     while(current != null){
-      for (IElementType elementType : myComputable.get()) {
-        if (current.getElementType() == elementType) return current;
+      if (ArrayUtil.indexOfIdentity(myComputable.get(), current.getElementType()) != -1) {
+        return current;
       }
       current = current.getTreeNext();
     }

@@ -1,0 +1,2 @@
+<warning descr="Lone semicolons in the import list are not supported in releases since Java 21">;</warning>
+import java.util.*;<warning descr="Lone semicolons in the import list are not supported in releases since Java 21">;</warning>

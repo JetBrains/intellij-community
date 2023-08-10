@@ -19,7 +19,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +69,6 @@ public class PlaceInModuleClasspath extends PlaceInProjectStructure {
   @NotNull
   @Override
   public ActionCallback navigate() {
-    return ProjectStructureConfigurable.getInstance(myContext.getProject()).selectOrderEntry(myModule, myOrderEntry);
+    return myContext.getModulesConfigurator().getProjectStructureConfigurable().selectOrderEntry(myModule, myOrderEntry);
   }
 }

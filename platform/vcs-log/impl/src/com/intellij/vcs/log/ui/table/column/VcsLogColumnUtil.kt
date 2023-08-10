@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.vcs.log.impl.CommonUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import org.jetbrains.annotations.ApiStatus
 
 internal fun VcsLogUiProperties.supportsColumnsReordering() = exists(CommonUiProperties.COLUMN_ID_ORDER)
 
@@ -14,6 +15,18 @@ internal fun VcsLogUiProperties.supportsColumnsToggling(): Boolean {
 
 internal fun isValidColumnOrder(columnOrder: List<VcsLogColumn<*>>): Boolean {
   return Root in columnOrder && Commit in columnOrder
+}
+
+internal fun makeValidColumnOrder(columnOrder: List<VcsLogColumn<*>>): List<VcsLogColumn<*>> {
+  val result = mutableListOf<VcsLogColumn<*>>()
+  if (Root !in columnOrder) {
+    result.add(Root)
+  }
+  if (Commit !in columnOrder) {
+    result.add(Commit)
+  }
+  result.addAll(columnOrder)
+  return result
 }
 
 /**
@@ -57,7 +70,8 @@ internal fun VcsLogUiProperties.updateOrder(newOrder: List<VcsLogColumn<*>>) {
   set(CommonUiProperties.COLUMN_ID_ORDER, newOrder.map { it.id }.distinct())
 }
 
-internal fun VcsLogColumn<*>.isVisible(properties: VcsLogUiProperties): Boolean = withColumnProperties { columnProperties ->
+@ApiStatus.Internal
+fun VcsLogColumn<*>.isVisible(properties: VcsLogUiProperties): Boolean = withColumnProperties { columnProperties ->
   properties.getPropertyValue(columnProperties.visibility, true)
 }
 
@@ -85,7 +99,7 @@ private fun <T> VcsLogColumn<*>.withColumnProperties(block: (VcsLogColumnPropert
   return block(properties)
 }
 
-private fun <T> VcsLogUiProperties.changeProperty(property: VcsLogUiProperty<T>, value: T) {
+private fun <T : Any> VcsLogUiProperties.changeProperty(property: VcsLogUiProperty<T>, value: T) {
   if (exists(property)) {
     if (get(property) != value) {
       set(property, value)

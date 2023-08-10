@@ -127,7 +127,7 @@ public class TestNGConfigurationModel
           final LinkedHashSet<String> set = new LinkedHashSet<>();
           final String[] patterns = getText(TestType.PATTERN).split("\\|\\|");
           for (String pattern : patterns) {
-            if (pattern.length() > 0) {
+            if (!pattern.isEmpty()) {
               set.add(pattern);
             }
           }

@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.fetch
 
 import com.intellij.dvcs.MultiMessage
 import com.intellij.dvcs.MultiRootMessage
-import com.intellij.internal.statistic.IdeActivity
+import com.intellij.externalProcessAuthHelper.AuthenticationGate
+import com.intellij.externalProcessAuthHelper.RestrictingAuthenticationGate
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -11,20 +12,22 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector
 import com.intellij.util.concurrency.AppExecutorUtil
+import git4idea.GitNotificationIdsHolder
 import git4idea.GitUtil.findRemoteByName
 import git4idea.GitUtil.mention
 import git4idea.commands.Git
-import git4idea.commands.GitAuthenticationGate
 import git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS
 import git4idea.commands.GitImpl
-import git4idea.commands.GitRestrictingAuthenticationGate
 import git4idea.config.GitConfigUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRemote
@@ -37,6 +40,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
+import kotlin.math.min
 
 private val LOG = logger<GitFetchSupportImpl>()
 private val PRUNE_PATTERN = Pattern.compile("\\s*x\\s*\\[deleted\\].*->\\s*(\\S*)") // x [deleted]  (none) -> origin/branch
@@ -95,11 +99,15 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     return fetch(listOf(RemoteRefCoordinates(repository, remote, refspec)))
   }
 
+  override fun fetchRemotes(remotes: Collection<Pair<GitRepository, GitRemote>>): GitFetchResult {
+    return fetch(remotes.map { RemoteRefCoordinates(it.first, it.second) })
+  }
+
   private fun fetch(arguments: List<RemoteRefCoordinates>): GitFetchResult {
     try {
       fetchRequestCounter.incrementAndGet()
       return withIndicator {
-        val activity = IdeActivity.started(project, "vcs", "fetch")
+        val activity = VcsStatisticsCollector.FETCH_ACTIVITY.started(project)
 
         val tasks = fetchInParallel(arguments)
         val results = waitForFetchTasks(tasks)
@@ -141,7 +149,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     LOG.debug("Fetching $remotes using $maxThreads threads")
     val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitFetch pool", maxThreads)
     val commonIndicator = progressManager.progressIndicator ?: EmptyProgressIndicator()
-    val authenticationGate = GitRestrictingAuthenticationGate()
+    val authenticationGate = RestrictingAuthenticationGate()
     for ((repository, remote, refspec) in remotes) {
       LOG.debug("Fetching $remote in $repository")
       val future: Future<SingleRemoteResult> = executor.submit<SingleRemoteResult> {
@@ -167,7 +175,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       config > 0 -> config
       config == -1 -> Runtime.getRuntime().availableProcessors()
       config == -2 -> numberOfRemotes
-      config == -3 -> Math.min(numberOfRemotes, Runtime.getRuntime().availableProcessors() * 2)
+      config == -3 -> min(numberOfRemotes, Runtime.getRuntime().availableProcessors() * 2)
       else -> 1
     }
 
@@ -175,7 +183,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       return 1
     }
 
-    return Math.min(maxThreads, MAX_SSH_CONNECTIONS)
+    return min(maxThreads, MAX_SSH_CONNECTIONS)
   }
 
   private fun isStoreCredentialsHelperUsed(repositories: Collection<GitRepository>): Boolean {
@@ -215,7 +223,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     }
   }
 
-  private fun doFetch(repository: GitRepository, remote: GitRemote, refspec: String?, authenticationGate: GitAuthenticationGate? = null)
+  private fun doFetch(repository: GitRepository, remote: GitRemote, refspec: String?, authenticationGate: AuthenticationGate? = null)
     : SingleRemoteResult {
 
     val recurseSubmodules = "--recurse-submodules=no"
@@ -243,7 +251,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
 
     fun totallySuccessful() = results.values.all { it.success() }
 
-    fun error(): String? {
+    fun error(): @Nls String {
       val errorMessage = multiRemoteMessage(true)
       for ((remote, result) in results) {
         if (result.error != null) errorMessage.append(remote, result.error)
@@ -251,7 +259,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       return errorMessage.asString()
     }
 
-    fun prunedRefs(): String {
+    fun prunedRefs(): @NlsSafe String {
       val prunedRefs = multiRemoteMessage(false)
       for ((remote, result) in results) {
         if (result.prunedRefs.isNotEmpty()) prunedRefs.append(remote, result.prunedRefs.joinToString("\n"))
@@ -296,7 +304,8 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     private fun doShowNotification(failureTitle: @Nls String? = null) {
       val type = if (!isFailed) NotificationType.INFORMATION else NotificationType.ERROR
       val message = buildMessage(failureTitle)
-      val notification = STANDARD_NOTIFICATION.createNotification("", message, type, null)
+      val notification = STANDARD_NOTIFICATION.createNotification(message, type)
+      notification.setDisplayId(if (!isFailed) GitNotificationIdsHolder.FETCH_RESULT else GitNotificationIdsHolder.FETCH_RESULT_ERROR)
       vcsNotifier.notify(notification)
     }
 
@@ -312,7 +321,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       val failed = results.filterValues { !it.totallySuccessful() }
 
       for ((repo, result) in failed) {
-        if (result.error() != null) errorMessage.append(repo.root, result.error()!!)
+        errorMessage.append(repo.root, result.error())
       }
       for ((repo, result) in results) {
         prunedRefs.append(repo.root, result.prunedRefs())

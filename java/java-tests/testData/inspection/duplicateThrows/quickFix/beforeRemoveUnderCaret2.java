@@ -1,4 +1,4 @@
-// "Remove 'IOException' from 'execute' throws list" "false"
+// "Remove 'IOException' from 'execute()' throws list" "false"
 import java.io.*;
 
 class X {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.notification.Notification;
@@ -9,10 +9,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitNotificationIdsHolder;
 import git4idea.GitRevisionNumber;
 import git4idea.GitTag;
 import git4idea.GitUtil;
@@ -77,7 +77,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
         markSuccessful(repository);
       }
       else {
-        fatalError(GitBundle.message("delete.tag.operation.tag.was.not.deleted", myTagName), result.getErrorOutputAsJoinedString());
+        fatalError(GitBundle.message("delete.tag.operation.tag.was.not.deleted", myTagName), result);
         return;
       }
     }
@@ -87,8 +87,8 @@ class GitDeleteTagOperation extends GitBranchOperation {
   @Override
   protected void notifySuccess() {
     String message = GitBundle.message("delete.tag.operation.deleted.tag", myTagName);
-    Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null,
-                                                                         "git.tag.deleted");
+    Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION);
+    notification.setDisplayId(GitNotificationIdsHolder.TAG_DELETED);
     notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer(
       "action.NotificationAction.GitDeleteTagOperation.text.restore"), () -> restoreInBackground(notification)));
 
@@ -117,9 +117,9 @@ class GitDeleteTagOperation extends GitBranchOperation {
   protected void rollback() {
     GitCompoundResult result = doRollback();
     if (result.totalSuccess()) {
-      Notification notification =
-        STANDARD_NOTIFICATION.createNotification(GitBundle.message("delete.tag.operation.rollback.successful"), GitBundle
-          .message("delete.tag.operation.restored.tag", myTagName), NotificationType.INFORMATION, null, "git.tag.restored");
+      Notification notification = STANDARD_NOTIFICATION.createNotification(GitBundle.message("delete.tag.operation.rollback.successful"), GitBundle
+          .message("delete.tag.operation.restored.tag", myTagName), NotificationType.INFORMATION);
+      notification.setDisplayId(GitNotificationIdsHolder.TAG_RESTORED);
       myNotifier.notify(notification);
     }
     else {
@@ -174,7 +174,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
 
   @Override
   @NotNull
-  public String getSuccessMessage() {
+  protected String getSuccessMessage() {
     throw new UnsupportedOperationException();
   }
 

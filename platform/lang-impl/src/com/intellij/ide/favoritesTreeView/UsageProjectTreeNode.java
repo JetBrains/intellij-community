@@ -28,6 +28,7 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsagePresentation;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated(forRemoval = true)
 public class UsageProjectTreeNode extends ProjectViewNodeWithChildrenList<UsageInfo> {
   private final UsagePresentation myUsagePresentation;
 

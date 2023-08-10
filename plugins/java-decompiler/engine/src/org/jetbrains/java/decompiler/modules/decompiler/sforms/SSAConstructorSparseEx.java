@@ -1,7 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.CancellationManager;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
@@ -11,18 +13,19 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 public class SSAConstructorSparseEx {
 
@@ -48,6 +51,7 @@ public class SSAConstructorSparseEx {
   private FastSparseSetFactory<Integer> factory;
 
   public void splitVariables(RootStatement root, StructMethod mt) {
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
 
     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
@@ -70,6 +74,7 @@ public class SSAConstructorSparseEx {
     HashSet<String> updated = new HashSet<>();
     do {
       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
+      cancellationManager.checkCanceled();
       ssaStatements(dgraph, updated);
       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
     }
@@ -121,7 +126,7 @@ public class SSAConstructorSparseEx {
           outNegVarVersions.put(node.id, varmaparr[1]);
         }
 
-        for (DirectNode nd : node.succs) {
+        for (DirectNode nd : node.successors) {
           updated.add(nd.id);
         }
       }
@@ -138,7 +143,7 @@ public class SSAConstructorSparseEx {
     boolean finished = false;
 
     switch (expr.type) {
-      case Exprent.EXPRENT_ASSIGNMENT:
+      case Exprent.EXPRENT_ASSIGNMENT -> {
         AssignmentExprent assexpr = (AssignmentExprent)expr;
         if (assexpr.getCondType() == AssignmentExprent.CONDITION_NONE) {
           Exprent dest = assexpr.getLeft();
@@ -146,11 +151,11 @@ public class SSAConstructorSparseEx {
             varassign = (VarExprent)dest;
           }
         }
-        break;
-      case Exprent.EXPRENT_FUNCTION:
+      }
+      case Exprent.EXPRENT_FUNCTION -> {
         FunctionExprent func = (FunctionExprent)expr;
         switch (func.getFuncType()) {
-          case FunctionExprent.FUNCTION_IIF:
+          case FunctionExprent.FUNCTION_IIF -> {
             processExprent(func.getLstOperands().get(0), varmaparr);
 
             SFormsFastMapDirect varmapFalse;
@@ -171,8 +176,8 @@ public class SSAConstructorSparseEx {
             varmaparr[1] = null;
 
             finished = true;
-            break;
-          case FunctionExprent.FUNCTION_CADD:
+          }
+          case FunctionExprent.FUNCTION_CADD -> {
             processExprent(func.getLstOperands().get(0), varmaparr);
 
             SFormsFastMapDirect[] varmaparrAnd = new SFormsFastMapDirect[]{new SFormsFastMapDirect(varmaparr[0]), null};
@@ -185,8 +190,8 @@ public class SSAConstructorSparseEx {
             varmaparr[0] = varmaparrAnd[0];
 
             finished = true;
-            break;
-          case FunctionExprent.FUNCTION_COR:
+          }
+          case FunctionExprent.FUNCTION_COR -> {
             processExprent(func.getLstOperands().get(0), varmaparr);
 
             SFormsFastMapDirect[] varmaparrOr =
@@ -200,7 +205,9 @@ public class SSAConstructorSparseEx {
             varmaparr[0] = mergeMaps(varmaparr[0], varmaparrOr[0]);
 
             finished = true;
+          }
         }
+      }
     }
 
     if (finished) {
@@ -284,7 +291,7 @@ public class SSAConstructorSparseEx {
 
     SFormsFastMapDirect mapNew = new SFormsFastMapDirect();
 
-    for (DirectNode pred : node.preds) {
+    for (DirectNode pred : node.predecessors) {
       SFormsFastMapDirect mapOut = getFilteredOutMap(node.id, pred.id, dgraph, node.id);
       if (mapNew.isEmpty()) {
         mapNew = mapOut.getCopy();
@@ -422,7 +429,7 @@ public class SSAConstructorSparseEx {
     }
 
     for (Entry<Integer, FastSparseSet<Integer>> ent2 : map2.entryList()) {
-      if (!InterpreterUtil.equalObjects(map1.get(ent2.getKey()), ent2.getValue())) {
+      if (!Objects.equals(map1.get(ent2.getKey()), ent2.getValue())) {
         return false;
       }
     }
@@ -441,11 +448,9 @@ public class SSAConstructorSparseEx {
     SFormsFastMapDirect map;
 
     switch (stat.type) {
-      case Statement.TYPE_CATCHALL:
-      case Statement.TYPE_TRYCATCH:
-
+      case CATCH_ALL, TRY_CATCH -> {
         List<VarExprent> lstVars;
-        if (stat.type == Statement.TYPE_CATCHALL) {
+        if (stat.type == StatementType.CATCH_ALL) {
           lstVars = ((CatchAllStatement)stat).getVars();
         }
         else {
@@ -461,6 +466,7 @@ public class SSAConstructorSparseEx {
 
           extraVarVersions.put(dgraph.nodes.getWithKey(flatthelper.getMapDestinationNodes().get(stat.getStats().get(i).id)[0]).id, map);
         }
+      }
     }
 
     for (Statement st : stat.getStats()) {
@@ -489,11 +495,11 @@ public class SSAConstructorSparseEx {
           varindex++;
         }
         else {
-          varindex += md.params[i - 1].stackSize;
+          varindex += md.params[i - 1].getStackSize();
         }
       }
       else {
-        varindex += md.params[i].stackSize;
+        varindex += md.params[i].getStackSize();
       }
     }
 

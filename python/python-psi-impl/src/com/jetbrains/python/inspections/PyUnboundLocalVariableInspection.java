@@ -8,7 +8,6 @@ import com.intellij.codeInsight.dataflow.DFALimitExceededException;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -27,6 +26,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyDelStatementNavigator;
 import com.jetbrains.python.psi.impl.PyGlobalStatementNavigator;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,19 +34,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PyUnboundLocalVariableInspection extends PyInspection {
-  private static final Key<Set<ScopeOwner>> LARGE_FUNCTIONS_KEY = Key.create("PyUnboundLocalVariableInspection.LargeFunctions");
-
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull final LocalInspectionToolSession session) {
-    session.putUserData(LARGE_FUNCTIONS_KEY, new HashSet<>());
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
-
-    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
-      super(holder, session);
+    Set<ScopeOwner> LARGE_FUNCTIONS = new HashSet<>();
+    Visitor(final ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -75,7 +72,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         return;
       }
       final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(node, name);
-      final Set<ScopeOwner> largeFunctions = getSession().getUserData(LARGE_FUNCTIONS_KEY);
+      final Set<ScopeOwner> largeFunctions = LARGE_FUNCTIONS;
       assert largeFunctions != null;
       if (owner == null || largeFunctions.contains(owner)) {
         return;
@@ -181,8 +178,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
       }
       final Ref<Boolean> first = Ref.create(true);
       ControlFlowUtil.iteratePrev(num, instructions, instruction -> {
-        if (instruction instanceof ReadWriteInstruction) {
-          final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
+        if (instruction instanceof ReadWriteInstruction rwInstruction) {
           final String name = rwInstruction.getName();
           final PsiElement element = rwInstruction.getElement();
           if (element != null && name != null && name.equals(nodeName) && instruction.num() < num) {

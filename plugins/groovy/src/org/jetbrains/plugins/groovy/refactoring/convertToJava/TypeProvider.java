@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -40,9 +41,9 @@ public class TypeProvider {
       if (typeElement != null) return typeElement.getType();
     }
     final PsiType smartReturnType = PsiUtil.getSmartReturnType(method);
-    if (smartReturnType != null && !PsiType.NULL.equals(smartReturnType)) return smartReturnType;
+    if (smartReturnType != null && !PsiTypes.nullType().equals(smartReturnType)) return smartReturnType;
 
-    if (PsiType.NULL.equals(smartReturnType) && PsiUtil.isVoidMethod(method)) return PsiType.VOID;
+    if (PsiTypes.nullType().equals(smartReturnType) && PsiUtil.isVoidMethod(method)) return PsiTypes.voidType();
 
     //todo make smarter. search for usages and infer type from them
     return TypesUtil.getJavaLangObject(method);
@@ -97,7 +98,7 @@ public class TypeProvider {
 
     final GrParameter[] parameters = method.getParameters();
 
-    final IntArrayList paramInds = new IntArrayList(parameters.length);
+    final IntList paramInds = new IntArrayList(parameters.length);
     final PsiType[] types = PsiType.createArray(parameters.length);
     for (int i = 0; i < parameters.length; i++) {
       if (parameters[i].getTypeElementGroovy() == null) {
@@ -128,7 +129,7 @@ public class TypeProvider {
       });
     }
     paramInds.forEach((IntConsumer)i -> {
-      if (types[i] == null || types[i] == PsiType.NULL) {
+      if (types[i] == null || types[i] == PsiTypes.nullType()) {
         types[i] = parameters[i].getType();
       }
     });
@@ -139,8 +140,8 @@ public class TypeProvider {
   @NotNull
   public PsiType getReturnType(GrClosableBlock closure) {
     final PsiType returnType = closure.getReturnType();
-    if (PsiType.NULL.equals(returnType) && PsiUtil.isBlockReturnVoid(closure)) {
-      return PsiType.VOID;
+    if (PsiTypes.nullType().equals(returnType) && PsiUtil.isBlockReturnVoid(closure)) {
+      return PsiTypes.voidType();
     }
 
     if (returnType == null) {

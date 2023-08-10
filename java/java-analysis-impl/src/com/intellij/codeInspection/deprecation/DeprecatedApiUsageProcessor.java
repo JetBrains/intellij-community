@@ -1,15 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.JavaDeprecationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -30,7 +28,6 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
   private final boolean myIgnoreMethodsOfDeprecated;
   private final boolean myIgnoreInSameOutermostClass;
   private final boolean myForRemoval;
-  private final ProblemHighlightType myHighlightType;
 
   public DeprecatedApiUsageProcessor(@NotNull ProblemsHolder holder,
                                      boolean ignoreInsideDeprecated,
@@ -38,8 +35,7 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
                                      boolean ignoreImportStatements,
                                      boolean ignoreMethodsOfDeprecated,
                                      boolean ignoreInSameOutermostClass,
-                                     boolean forRemoval,
-                                     @Nullable HighlightSeverity severity) {
+                                     boolean forRemoval) {
     myHolder = holder;
     myIgnoreInsideDeprecated = ignoreInsideDeprecated;
     myIgnoreAbstractDeprecatedOverrides = ignoreAbstractDeprecatedOverrides;
@@ -47,14 +43,10 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
     myIgnoreMethodsOfDeprecated = ignoreMethodsOfDeprecated;
     myIgnoreInSameOutermostClass = ignoreInSameOutermostClass;
     myForRemoval = forRemoval;
-    myHighlightType = forRemoval && severity == HighlightSeverity.ERROR
-                      ? ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL
-                      : ProblemHighlightType.LIKE_DEPRECATED;
   }
 
   @Override
   public void processReference(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target, @Nullable UExpression qualifier) {
-    if (sourceNode instanceof ULambdaExpression) return;
     checkTargetDeprecated(sourceNode, target);
   }
 
@@ -72,7 +64,7 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
 
   private void checkTargetDeprecated(@NotNull PsiElement elementToHighlight, @NotNull PsiModifierListOwner target) {
     checkDeprecated(target, elementToHighlight, null, myIgnoreInsideDeprecated, myIgnoreImportStatements,
-                    myIgnoreMethodsOfDeprecated, myIgnoreInSameOutermostClass, myHolder, myForRemoval, myHighlightType);
+                    myIgnoreMethodsOfDeprecated, myIgnoreInSameOutermostClass, myHolder, myForRemoval);
   }
 
   @Override
@@ -81,7 +73,7 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
                                            @Nullable PsiMethod constructor,
                                            @Nullable UClass subclassDeclaration) {
     if (constructor != null) {
-      if (PsiImplUtil.isDeprecated(constructor) && myForRemoval == isForRemovalAttributeSet(constructor)) {
+      if (JavaDeprecationUtils.isDeprecated(constructor, sourceNode.getSourcePsi()) && myForRemoval == isForRemovalAttributeSet(constructor)) {
         checkTargetDeprecated(sourceNode, constructor);
         return;
       }
@@ -96,7 +88,8 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
                                                      ? "marked.for.removal.default.constructor"
                                                      : "deprecated.default.constructor",
                                                    instantiatedClass.getQualifiedName());
-      myHolder.registerProblem(elementToHighlight, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
+
+      myHolder.registerProblem(elementToHighlight, description);
     }
   }
 
@@ -116,7 +109,7 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
     if (overriddenMethod.isDeprecated() && myForRemoval == isForRemovalAttributeSet(overriddenMethod)) {
       String description = JavaErrorBundle.message(myForRemoval ? "overrides.marked.for.removal.method" : "overrides.deprecated.method",
                                                    getPresentableName(aClass));
-      myHolder.registerProblem(methodNameElement, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
+      myHolder.registerProblem(methodNameElement, description);
     }
   }
 

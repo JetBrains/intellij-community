@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.containers.CollectionFactory;
@@ -48,7 +50,11 @@ public final class FileWatchRequestModifier implements Runnable, Disposable {
 
       Set<String> newWatchedRoots = CollectionFactory.createFilePathSet();
       for (VcsDirectoryMapping mapping : myNewMappings.getDirectoryMappings()) {
-        if (!mapping.isDefaultMapping()) {
+        // <Project> mappings are ignored because they should already be watched by the Project
+        if (mapping.isDefaultMapping()) continue;
+
+        AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).findVcsByName(mapping.getVcs());
+        if (vcs != null && vcs.needsLFSWatchesForRoots()) {
           newWatchedRoots.add(FileUtil.toCanonicalPath(mapping.getDirectory()));
         }
       }

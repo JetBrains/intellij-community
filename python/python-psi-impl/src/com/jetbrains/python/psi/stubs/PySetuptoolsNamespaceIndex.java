@@ -16,10 +16,11 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.BinaryFileTypePolicy;
+import com.intellij.util.indexing.hints.FileNameSuffixInputFilter;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
@@ -31,9 +32,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author vlan
- */
 public class PySetuptoolsNamespaceIndex extends ScalarIndexExtension<String> {
   public static final ID<String, Void> NAME = ID.create("Py.setuptools.namespace");
   private static final Pattern RE_NAMESPACE = Pattern.compile("sys\\.modules\\.setdefault\\('([^']*)'");
@@ -54,7 +52,8 @@ public class PySetuptoolsNamespaceIndex extends ScalarIndexExtension<String> {
     }
   };
 
-  private final FileBasedIndex.InputFilter myInputFilter = file -> StringUtil.endsWith(file.getNameSequence(), NAMESPACE_FILE_SUFFIX) && !file.getFileType().isBinary();
+  private final FileBasedIndex.InputFilter myInputFilter =
+    new FileNameSuffixInputFilter(NAMESPACE_FILE_SUFFIX, false /* don't ignore case */, BinaryFileTypePolicy.NON_BINARY);
 
   @NotNull
   @Override

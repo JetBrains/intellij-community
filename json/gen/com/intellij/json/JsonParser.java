@@ -76,7 +76,7 @@ public class JsonParser implements PsiParser, LightPsiParser {
     r = value(b, l + 1);
     p = r; // pin = 1
     r = r && array_element_1(b, l + 1);
-    exit_section_(b, l, m, r, p, not_bracket_or_next_value_parser_);
+    exit_section_(b, l, m, r, p, JsonParser::not_bracket_or_next_value);
     return r || p;
   }
 
@@ -115,19 +115,15 @@ public class JsonParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // value+
+  // value*
   static boolean json(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "json")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = value(b, l + 1);
-    while (r) {
+    while (true) {
       int c = current_position_(b);
       if (!value(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "json", c)) break;
     }
-    exit_section_(b, m, null, r);
-    return r;
+    return true;
   }
 
   /* ********************************************************** */
@@ -243,7 +239,7 @@ public class JsonParser implements PsiParser, LightPsiParser {
     r = property(b, l + 1);
     p = r; // pin = 1
     r = r && object_element_1(b, l + 1);
-    exit_section_(b, l, m, r, p, not_brace_or_next_value_parser_);
+    exit_section_(b, l, m, r, p, JsonParser::not_brace_or_next_value);
     return r || p;
   }
 
@@ -269,7 +265,7 @@ public class JsonParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // property_name (':' value)
+  // property_name (':' property_value)
   public static boolean property(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "property")) return false;
     boolean r, p;
@@ -281,14 +277,14 @@ public class JsonParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // ':' value
+  // ':' property_value
   private static boolean property_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "property_1")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, COLON);
     p = r; // pin = 1
-    r = r && value(b, l + 1);
+    r = r && property_value(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -301,6 +297,12 @@ public class JsonParser implements PsiParser, LightPsiParser {
     r = literal(b, l + 1);
     if (!r) r = reference_expression(b, l + 1);
     return r;
+  }
+
+  /* ********************************************************** */
+  // value
+  static boolean property_value(PsiBuilder b, int l) {
+    return value(b, l + 1);
   }
 
   /* ********************************************************** */
@@ -342,14 +344,4 @@ public class JsonParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  static final Parser not_brace_or_next_value_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return not_brace_or_next_value(b, l + 1);
-    }
-  };
-  static final Parser not_bracket_or_next_value_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return not_bracket_or_next_value(b, l + 1);
-    }
-  };
 }

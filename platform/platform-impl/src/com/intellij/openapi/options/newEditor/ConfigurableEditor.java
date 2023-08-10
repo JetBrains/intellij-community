@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
@@ -7,14 +7,16 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionResult;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableCardPanel;
-import com.intellij.openapi.options.ex.SortedConfigurableGroup;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -23,7 +25,9 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.ActionLink;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -95,7 +99,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     add(BorderLayout.SOUTH, RelativeFont.HUGE.install(myErrorLabel));
     add(BorderLayout.CENTER, myCardPanel);
     Disposer.register(this, myCardPanel);
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(TOPIC, this);
+    MessageBusConnection messageBus = ApplicationManager.getApplication().getMessageBus().connect(this);
+    messageBus.subscribe(AnActionListener.TOPIC, this);
+    messageBus.subscribe(ExternalUpdateRequest.TOPIC, conf -> updateCurrent(conf, false));
     getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
     if (configurable != null) {
       myConfigurable = configurable;
@@ -147,11 +153,11 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   @Override
-  public final void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext context, @NotNull AnActionEvent event) {
+  public final void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
   }
 
   @Override
-  public final void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext context, @NotNull AnActionEvent event) {
+  public final void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
     requestUpdate();
   }
 
@@ -165,21 +171,18 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   @Override
   public final void eventDispatched(AWTEvent event) {
     switch (event.getID()) {
-      case MouseEvent.MOUSE_PRESSED:
-      case MouseEvent.MOUSE_RELEASED:
-      case MouseEvent.MOUSE_DRAGGED:
+      case MouseEvent.MOUSE_PRESSED, MouseEvent.MOUSE_RELEASED, MouseEvent.MOUSE_DRAGGED -> {
         MouseEvent me = (MouseEvent)event;
         if (isDescendingFrom(me.getComponent(), this) || isPopupOverEditor(me.getComponent())) {
           requestUpdate();
         }
-        break;
-      case KeyEvent.KEY_PRESSED:
-      case KeyEvent.KEY_RELEASED:
+      }
+      case KeyEvent.KEY_PRESSED, KeyEvent.KEY_RELEASED -> {
         KeyEvent ke = (KeyEvent)event;
         if (isDescendingFrom(ke.getComponent(), this)) {
           requestUpdate();
         }
-        break;
+      }
     }
   }
 
@@ -208,8 +211,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       }
       // heavy-weight popup opens new window with the corresponding parent
       if (popup != null && editor == popup.getParent()) {
-        if (popup instanceof JDialog) {
-          JDialog dialog = (JDialog)popup;
+        if (popup instanceof JDialog dialog) {
           return Dialog.ModalityType.MODELESS == dialog.getModalityType();
         }
         return popup instanceof JWindow;
@@ -239,6 +241,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   @NotNull
   final Promise<? super Object> select(final Configurable configurable) {
     assert !myDisposed : "Already disposed";
+    long startTime = System.currentTimeMillis();
+    final boolean loadedFromCache = myCardPanel.getValue(configurable, false) != null;
     ActionCallback callback = myCardPanel.select(configurable, false);
     callback
       .doWhenDone(() -> {
@@ -246,7 +250,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         updateCurrent(configurable, false);
         postUpdateCurrent(configurable);
         if (configurable != null) {
-          FeatureUsageUiEventsKt.getUiEventLogger().logSelectConfigurable(configurable);
+          FeatureUsageUiEventsKt.getUiEventLogger().logSelectConfigurable(configurable, loadedFromCache, System.currentTimeMillis() - startTime);
         }
       });
     return Promises.toPromise(callback);
@@ -262,7 +266,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         HtmlChunk.text(exception.getTitle()).wrapWith("strong"),
         HtmlChunk.text(":"),
         HtmlChunk.br(),
-        HtmlChunk.text(exception.getMessage())
+        exception.isHtmlMessage() ? HtmlChunk.raw(exception.getMessage()) : HtmlChunk.text(exception.getMessage())
       ).wrapWith("html").toString());
       myErrorLabel.setVisible(true);
     }
@@ -283,23 +287,26 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   private JComponent createDefaultContent(Configurable configurable) {
     JComponent content = new JPanel(new BorderLayout());
     content.setBorder(JBUI.Borders.empty(11, 16, 16, 16));
-    SortedConfigurableGroup group = configurable instanceof SortedConfigurableGroup ? (SortedConfigurableGroup)configurable : null;
-    String description = group == null ? null : group.getDescription();
-    if (description == null) {
-      description = IdeBundle.message("label.select.configuration.element");
+
+    Configurable.Composite compositeGroup = ObjectUtils.tryCast(configurable, Configurable.Composite.class);
+    if (compositeGroup == null) {
+      String description = IdeBundle.message("label.select.configuration.element");
       content.add(BorderLayout.CENTER, new JLabel(description, SwingConstants.CENTER));
       content.setPreferredSize(JBUI.size(800, 600));
     }
     else {
+      ConfigurableGroup configurableGroup = ConfigurableWrapper.cast(ConfigurableGroup.class, configurable);
+      String description = configurableGroup != null ? configurableGroup.getDescription() : null;
+
       content.add(BorderLayout.NORTH, new JLabel(description));
 
       JPanel panel = new JPanel();
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
       content.add(BorderLayout.CENTER, panel);
       panel.add(Box.createVerticalStrut(10));
-      for (Configurable current : group.getConfigurables()) {
+      for (Configurable current : compositeGroup.getConfigurables()) {
         //noinspection DialogTitleCapitalization (title case is OK here)
-        LinkLabel<?> label = LinkLabel.create(current.getDisplayName(), () -> openLink(current));
+        ActionLink label = new ActionLink(current.getDisplayName(), e -> { openLink(current); });
         label.setBorder(JBUI.Borders.empty(1, 17, 3, 1));
         panel.add(label);
       }

@@ -22,10 +22,6 @@ import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterPro
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- */
 public class PyStringLiteralFixer extends PyFixer<PyStringLiteralExpression> {
   public PyStringLiteralFixer() {
     super(PyStringLiteralExpression.class);

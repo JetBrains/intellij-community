@@ -5,14 +5,12 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -21,6 +19,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -35,6 +34,8 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -173,7 +174,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       final String[] names = suggestNames(replaceAllOccurrences, getLocalVariable());
       boolean started = false;
-      try {
+      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
         if (replaceAllOccurrences) {
           int segmentsLimit = Registry.intValue("inplace.rename.segments.limit", -1);
           // Too many occurrences: rename template won't start, see InplaceRefactoring.buildTemplateAndStart
@@ -268,6 +269,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     }
   }
 
+  private RangeMarker mySelectedRange = null;
   private boolean myShouldSelect = true;
   @Override
   protected boolean shouldSelectAll() {
@@ -280,6 +282,15 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       if (templateState != null) {
         myEditor.putUserData(INTRODUCE_RESTART, true);
         try {
+          SelectionModel selectionModel = myEditor.getSelectionModel();
+          if (selectionModel.hasSelection()) {
+            mySelectedRange = myEditor.getDocument().createRangeMarker(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+            mySelectedRange.setGreedyToRight(true);
+            mySelectedRange.setGreedyToLeft(true);
+          }
+          else {
+            mySelectedRange = null;
+          }
           final TextRange range = templateState.getCurrentVariableRange();
           if (range != null) {
             final TextResult inputText = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
@@ -296,6 +307,10 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
             startInplaceIntroduceTemplate();
           }
           finally {
+            if (mySelectedRange != null) {
+              mySelectedRange.dispose();
+              mySelectedRange = null;
+            }
             myShouldSelect = true;
           }
         }
@@ -311,7 +326,12 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   @Override
   protected void restoreSelection() {
     if (!shouldSelectAll()) {
-      myEditor.getSelectionModel().removeSelection();
+      if (mySelectedRange != null) {
+        VariableInplaceRenamer.restoreSelection(myEditor, mySelectedRange.getTextRange());
+      }
+      else {
+        myEditor.getSelectionModel().removeSelection();
+      }
     }
   }
 
@@ -351,10 +371,11 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   }
 
   @Override
-  protected void addReferenceAtCaret(Collection<PsiReference> refs) {
-    final V variable = getLocalVariable();
+  protected void addReferenceAtCaret(Collection<? super PsiReference> refs) {
+    final V variable = ApplicationManager.getApplication().runReadAction((Computable<V>)() -> getLocalVariable());
     if (variable != null) {
       for (PsiReference reference : ReferencesSearch.search(variable)) {
+        ProgressManager.checkCanceled();
         refs.add(reference);
       }
     } else {
@@ -363,7 +384,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   }
 
   @Override
-  protected void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages) {
+  protected void collectAdditionalElementsToRename(@NotNull List<? super Pair<PsiElement, TextRange>> stringUsages) {
     if (isReplaceAllOccurrences()) {
       for (E expression : getOccurrences()) {
         PsiUtilCore.ensureValid(expression);

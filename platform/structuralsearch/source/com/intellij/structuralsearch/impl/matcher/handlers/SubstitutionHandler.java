@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.FilteringNodeIterator;
@@ -15,10 +15,9 @@ import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.predicates.AndPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
-import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,6 +82,10 @@ public class SubstitutionHandler extends MatchingHandler {
     this.subtype = subtype;
   }
 
+  public void setRepeatedVar(boolean repeatedVar) {
+    myRepeatedVar = repeatedVar;
+  }
+
   public void setPredicate(@NotNull MatchPredicate handler) {
     predicate = handler;
   }
@@ -91,25 +94,18 @@ public class SubstitutionHandler extends MatchingHandler {
     return predicate;
   }
 
-  @Nullable
-  public RegExpPredicate findRegExpPredicate() {
-    return findRegExpPredicate(getPredicate());
+  public @Nullable <T extends MatchPredicate> T findPredicate(@NotNull Class<T> aClass) {
+    return findPredicate(getPredicate(), aClass);
   }
 
-  public void setRepeatedVar(boolean repeatedVar) {
-    myRepeatedVar = repeatedVar;
-  }
-
-  private static RegExpPredicate findRegExpPredicate(MatchPredicate start) {
-    if (start==null) return null;
-    if (start instanceof RegExpPredicate) return (RegExpPredicate)start;
-
-    if(start instanceof AndPredicate) {
-      final AndPredicate binary = (AndPredicate)start;
-      final RegExpPredicate result = findRegExpPredicate(binary.getFirst());
-      if (result!=null) return result;
-
-      return findRegExpPredicate(binary.getSecond());
+  @Contract("null, _ -> null")
+  private static @Nullable <T extends MatchPredicate> T findPredicate(@Nullable MatchPredicate start, @NotNull Class<T> aClass) {
+    if (start == null) return null;
+    if (aClass.isInstance(start)) return aClass.cast(start);
+    if (start instanceof AndPredicate binaryPredicate) {
+      final T firstBranchCheck = findPredicate(binaryPredicate.getFirst(), aClass);
+      if (firstBranchCheck != null) return firstBranchCheck;
+      return findPredicate(binaryPredicate.getSecond(), aClass);
     } else if (start instanceof NotPredicate) {
       return null;
     }
@@ -153,7 +149,7 @@ public class SubstitutionHandler extends MatchingHandler {
     if (result != null) {
       if (minOccurs == 1 && maxOccurs == 1) {
         // check if they are the same
-        return validateOneMatch(match, start, end, result,context);
+        return validateOneMatch(match, start, end, result, context);
       }
       if (maxOccurs > 1 && totalMatchedOccurs != -1) {
         if (result.isMultipleMatch()) {
@@ -194,7 +190,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
       if (substitution == null) {
         matchResult.addChild(createMatch(match, start, end) );
-      } else if (maxOccurs > 1) {
+      } else if (maxOccurs > 1 || target && !myRepeatedVar) {
         final MatchResultImpl result = createMatch(match, start, end);
   
         if (!substitution.isMultipleMatch()) {
@@ -208,7 +204,7 @@ public class SubstitutionHandler extends MatchingHandler {
             target
           );
 
-          substitution.setMatchRef(new SmartPsiPointer(match));
+          substitution.setMatch(match);
           substitution.setMultipleMatch(true);
 
           if (substitution.isScopeMatch()) {
@@ -250,32 +246,25 @@ public class SubstitutionHandler extends MatchingHandler {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(match);
     assert profile != null;
     final String image = profile.getText(match, start, end);
-    final SmartPsiPointer ref = new SmartPsiPointer(match);
 
-    final MatchResultImpl result = myNestedResult == null ? new MatchResultImpl(
-      name,
-      image,
-      ref,
-      start,
-      end,
-      target
-    ) : myNestedResult;
-
-    if (myNestedResult != null) {
-      myNestedResult.setName(name);
-      myNestedResult.setMatchImage(image);
-      myNestedResult.setMatchRef(ref);
-      myNestedResult.setStart(start);
-      myNestedResult.setEnd(end);
-      myNestedResult.setTarget(target);
-      myNestedResult = null;
+    if (myNestedResult == null) {
+      return new MatchResultImpl(name, image, match, start, end, target);
     }
+    final MatchResultImpl result = myNestedResult;
+    result.setName(name);
+    result.setMatchImage(image);
+    result.setMatch(match);
+    result.setStart(start);
+    result.setEnd(end);
+    result.setTarget(target);
+    myNestedResult = null;
 
     return result;
   }
 
   @Override
   public boolean validate(@NotNull MatchContext context, int matchedOccurs) {
+    if (target) return matchedOccurs > 0;
     if (minOccurs > matchedOccurs) return false;
     if (maxOccurs < matchedOccurs) return false;
     return true;
@@ -339,7 +328,7 @@ public class SubstitutionHandler extends MatchingHandler {
       boolean flag = false;
       final List<PsiElement> matchedNodes = new SmartList<>();
 
-      while (fNodes.hasNext() && matchedOccurs < minOccurs) {
+      while (fNodes.hasNext() && (matchedOccurs < minOccurs || target && !myRepeatedVar && !(handler instanceof TopLevelMatchingHandler))) {
         final PsiElement current = matchNodes.current();
         if (handler.match(currentPatternNode, current, context)) {
           matchedNodes.add(current);
@@ -354,7 +343,7 @@ public class SubstitutionHandler extends MatchingHandler {
         flag = true;
       }
 
-      if (matchedOccurs != minOccurs) {
+      if (matchedOccurs != minOccurs && (!target || myRepeatedVar || matchedOccurs == 0)) {
         // failed even for min occurs
         removeLastResults(matchedOccurs, context);
         fNodes.rewind(matchedOccurs);
@@ -476,7 +465,7 @@ public class SubstitutionHandler extends MatchingHandler {
     if (result == null && context.getPreviousResult() != null) {
       result = context.getPreviousResult().getChild(name);
     }
-    return result == null || result.size() == matchedOccurs;
+    return result == null || result.size() == matchedOccurs || target;
   }
 
   public void setTarget(boolean target) {
@@ -503,8 +492,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
   @Override
   public boolean shouldAdvanceThePatternFor(@NotNull PsiElement patternElement, @NotNull PsiElement matchedElement) {
-    if(maxOccurs > 1) return false;
-    return super.shouldAdvanceThePatternFor(patternElement,matchedElement);
+    return maxOccurs <= 1 && !target;
   }
 
   public void setNestedResult(MatchResultImpl nestedResult) {

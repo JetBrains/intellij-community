@@ -37,6 +37,12 @@ interface Foo {
 
   interface I1 {}
   
+  sealed interface GrandParent permits Parent {}
+  static sealed class Parent implements GrandParent permits Child {}
+  static final class Child extends Parent {}
+  static class RandomClass {} 
+  
+  
   static void testA(A a) {
     if (<error descr="Inconvertible types; cannot cast 'Foo.A' to 'Foo'">a instanceof Foo</error>)
       System.out.println("It's a Foo");
@@ -84,5 +90,46 @@ interface Foo {
 
   static void testRecursive1(Recursive1 r1) {
     if (r1 instanceof I1) {}
+  }
+  
+  static void testDeepSealedHierarchy(GrandParent gp) {
+    if (<error descr="Inconvertible types; cannot cast 'Foo.GrandParent' to 'Foo.RandomClass'">gp instanceof RandomClass</error>) {
+      System.out.println("It's a RandomClass");
+    }
+  }
+  
+  static class Wildcards {
+    sealed interface I<T> {}
+    final class C<T> implements I<T> {}
+    void f(I<String> f) {
+      C<?> r = (C<?>) f;  
+    }
+  }
+
+  static class Enums {
+    interface B {}
+    interface C extends B {}
+    interface I<T extends B> {}
+    enum E implements I<C> {
+      A() {};
+    }
+    void f(I<?> i) {
+      E e = (E) i;
+    }
+  }
+
+  static class CastWithNonSealed {
+
+    protected interface ReferenceInt{}
+    sealed class SealedA permits FinalB, NonSealedC, SealedD{
+    }
+    final class FinalB extends SealedA{}
+    non-sealed class NonSealedC extends SealedA{}
+    sealed class SealedD extends SealedA permits finalF{}
+    final class finalF extends SealedD{}
+
+    public void castToInt(SealedA sealedA){
+      ReferenceInt referenceInt = (ReferenceInt) sealedA;
+    }
   }
 }

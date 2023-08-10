@@ -20,9 +20,6 @@ import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public interface DomParentStrategy {
   @Nullable DomInvocationHandler getParentHandler();
 

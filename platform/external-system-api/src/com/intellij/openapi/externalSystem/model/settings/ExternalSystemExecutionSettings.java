@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.model.settings;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,14 +21,15 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
   public static final String REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY = "external.system.remote.process.idle.ttl.ms";
   private static final int DEFAULT_REMOTE_PROCESS_TTL_MS = -1;
 
+  public static final Key<Boolean> DEBUG_SERVER_PROCESS_KEY = Key.create("DEBUG_SERVER_PROCESS");
+
   private static final long serialVersionUID = 1L;
 
   private long myRemoteProcessIdleTtlInMs;
   private boolean myVerboseProcessing;
-  @NotNull private final List<String> myJvmArguments;
-  @NotNull private final List<String> myArguments;
-  @NotNull
-  private final Map<String, String> myEnv;
+  private final @NotNull List<String> myJvmArguments;
+  private final @NotNull List<String> myArguments;
+  private final @NotNull Map<String, String> myEnv;
   private boolean myPassParentEnvs = true;
 
   @NotNull private final transient UserDataHolderBase myUserData = new UserDataHolderBase();
@@ -78,6 +80,11 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
     return myPassParentEnvs;
   }
 
+  public boolean isDebugServerProcess() {
+    var value = getUserData(DEBUG_SERVER_PROCESS_KEY);
+    return ObjectUtils.chooseNotNull(value, false);
+  }
+
   public ExternalSystemExecutionSettings withVmOptions(Collection<String> vmOptions) {
     myJvmArguments.addAll(vmOptions);
     return this;
@@ -106,6 +113,10 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
   public ExternalSystemExecutionSettings withArgument(String argument) {
     myArguments.add(argument);
     return this;
+  }
+
+  public void prependArguments(String... arguments) {
+    myArguments.addAll(0, Arrays.asList(arguments));
   }
 
   public ExternalSystemExecutionSettings withEnvironmentVariables(Map<String, String> envs) {

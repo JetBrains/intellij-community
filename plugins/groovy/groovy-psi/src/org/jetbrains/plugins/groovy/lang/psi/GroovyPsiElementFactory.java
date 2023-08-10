@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
@@ -76,7 +75,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   @NotNull
   public static GroovyPsiElementFactory getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, GroovyPsiElementFactory.class);
+    return project.getService(GroovyPsiElementFactory.class);
   }
 
   /**
@@ -90,10 +89,6 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   public abstract GrClassInitializer createClassInitializer() throws IncorrectOperationException;
 
   /**
-   * @param qName
-   * @param isStatic
-   * @param isOnDemand
-   * @param alias
    * @return import statement for given class
    */
   @NotNull
@@ -345,4 +340,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   @NotNull
   public abstract GrTraitTypeDefinition createTrait(@NlsSafe @NotNull String name);
+
+  @NotNull
+  public abstract GrTraitTypeDefinition createRecord(@NlsSafe @NotNull String name);
 }

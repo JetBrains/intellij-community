@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.execution.filters.FileHyperlinkInfo;
@@ -6,6 +6,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -62,22 +63,29 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
   private boolean myIsLoading = false;
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     ConsoleViewImpl consoleView = ObjectUtils.tryCast(e.getData(LangDataKeys.CONSOLE_VIEW), ConsoleViewImpl.class);
-    boolean isShown = consoleView != null && consoleView.getEditor().getGutter().isAnnotationsShown();
-    e.getPresentation().setEnabled(consoleView != null && !isShown && !myIsLoading);
+    Editor editor = consoleView != null ? consoleView.getEditor() : null;
+    boolean isShown = editor != null && editor.getGutter().isAnnotationsShown();
+    e.getPresentation().setEnabled(editor != null && !isShown && !myIsLoading);
   }
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     myIsLoading = true;
+    Project project = e.getProject();
     ConsoleViewImpl consoleView = (ConsoleViewImpl)e.getData(LangDataKeys.CONSOLE_VIEW);
-    if (consoleView == null) return;
-    Editor editor = consoleView.getEditor();
+    Editor editor = consoleView != null ? consoleView.getEditor() : null;
+    if (project == null || editor == null) return;
     EditorHyperlinkSupport hyperlinks = consoleView.getHyperlinks();
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(editor.getProject(),
-                                                              LangBundle.message("progress.title.getting.file.history"), true) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(
+      project, LangBundle.message("progress.title.getting.file.history"), true) {
       private final Object LOCK = new Object();
       private final MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("AnnotateStackTraceAction", 200, true, null);
 
@@ -156,13 +164,13 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
       @Nullable
       private LastRevision getLastRevision(@NotNull VirtualFile file) {
         try {
-          AbstractVcs vcs = VcsUtil.getVcsFor(editor.getProject(), file);
+          AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
           if (vcs == null) return null;
 
           VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
           if (historyProvider == null) return null;
 
-          FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+          FilePath filePath = VcsContextFactory.getInstance().createFilePathOn(file);
 
           if (historyProvider instanceof VcsHistoryProviderEx) {
             VcsFileRevision revision = ((VcsHistoryProviderEx)historyProvider).getLastRevision(filePath);
@@ -189,7 +197,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
 
   @Nullable
   @RequiresReadLock
-  private static VirtualFile getHyperlinkVirtualFile(@NotNull List<RangeHighlighter> links) {
+  private static VirtualFile getHyperlinkVirtualFile(@NotNull List<? extends RangeHighlighter> links) {
     RangeHighlighter key = ContainerUtil.getLastItem(links);
     if (key == null) return null;
     HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
@@ -252,8 +260,8 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
     private int myMaxDateLength = 0;
 
     MyActiveAnnotationGutter(@NotNull Project project,
-                                    @NotNull EditorHyperlinkSupport hyperlinks,
-                                    @NotNull ProgressIndicator indicator) {
+                             @NotNull EditorHyperlinkSupport hyperlinks,
+                             @NotNull ProgressIndicator indicator) {
       myProject = project;
       myHyperlinks = hyperlinks;
       myIndicator = indicator;

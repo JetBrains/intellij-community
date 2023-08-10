@@ -104,7 +104,15 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
     checkEditorText(initial, getFirstEditor());
   }
 
+  public void testTransparentBackspaceBeforeRedo() {
+    doTestTransparentActionBeforeRedo(() -> backspace(getFirstEditor()));
+  }
+
   public void testTransparentActionBeforeRedo() {
+    doTestTransparentActionBeforeRedo(() -> typeInText("1"));
+  }
+
+  private void doTestTransparentActionBeforeRedo(@NotNull Command command) {
     Editor editor = getFirstEditor();
 
     executeCommand(() -> typeInText("a"));
@@ -116,7 +124,7 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
     undo(editor);
     checkEditorText(afterType1, editor);
 
-    executeTransparently(() -> typeInText("1"));
+    executeTransparently(command);
 
     assertUndoIsAvailable(editor);
     assertRedoIsAvailable(editor);

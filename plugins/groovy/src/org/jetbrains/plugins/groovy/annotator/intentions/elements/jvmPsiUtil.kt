@@ -76,7 +76,7 @@ internal fun JvmSubstitutor.toPsiSubstitutor(project: Project): PsiSubstitutor {
 internal fun CreateMethodRequest.createPropertyTypeConstraints(kind: PropertyKind): ExpectedTypes {
   return when (kind) {
     PropertyKind.GETTER -> returnType
-    PropertyKind.BOOLEAN_GETTER -> listOf(expectedType(PsiType.BOOLEAN))
+    PropertyKind.BOOLEAN_GETTER -> listOf(expectedType(PsiTypes.booleanType()))
     PropertyKind.SETTER -> expectedParameters.single().expectedTypes
   }
 }

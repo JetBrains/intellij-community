@@ -18,6 +18,7 @@ import org.gradle.internal.logging.events.OutputEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
 import org.gradle.internal.nativeintegration.filesystem.FileSystem;
 import org.gradle.internal.service.ServiceRegistry;
+import org.gradle.launcher.configuration.BuildLayoutResult;
 import org.gradle.launcher.daemon.client.DaemonClientFactory;
 import org.gradle.launcher.daemon.configuration.DaemonParameters;
 import org.gradle.util.GradleVersion;
@@ -27,7 +28,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 /**
  * @author Vladislav.Soroka
@@ -92,20 +92,18 @@ public abstract class DaemonAction {
   private static DaemonParameters daemonParameters6Dot6(BuildLayoutParameters layout) {
     try {
       ClassLoader classLoader = DaemonAction.class.getClassLoader();
-      // Using reflection for code: "new BuildLayoutConverter().defaultValues().applyTo(BuildLayoutParameters);"
-      Class buildLayoutConvertedClass = classLoader.loadClass("org.gradle.launcher.cli.converter.BuildLayoutConverter");
-      Object buildLayoutConverter = buildLayoutConvertedClass.newInstance();
-      Method defaultValuesMethod = buildLayoutConvertedClass.getMethod("defaultValues");
-      Object buildLayoutResult = defaultValuesMethod.invoke(buildLayoutConverter);
-      Class buildLayoutResultClass = classLoader.loadClass("org.gradle.launcher.configuration.BuildLayoutResult");
-      Method applyTo = buildLayoutResultClass.getMethod("applyTo", BuildLayoutParameters.class);
-      applyTo.invoke(buildLayoutResult, layout);
+      // Using reflection for code: "new BuildLayoutConverter$Result(BuildLayoutParameters);"
+      Class resultClass = classLoader.loadClass("org.gradle.launcher.cli.converter.BuildLayoutConverter$Result");
+      Constructor resultConstructor = resultClass.getConstructor(layout.getClass());
+      resultConstructor.setAccessible(true);
+      BuildLayoutResult buildLayoutResult = (BuildLayoutResult)resultConstructor.newInstance(layout);
+      resultConstructor.setAccessible(false);
 
       Factory<PatternSet> patternSetFactory = PatternSets.getPatternSetFactory(PatternSpecFactory.INSTANCE);
       //noinspection JavaReflectionMemberAccess
       IdentityFileResolver identityFileResolver = IdentityFileResolver.class.getConstructor().newInstance();
       DefaultFileCollectionFactory collectionFactory = createCollectionFactory6Dot3(identityFileResolver, patternSetFactory);
-      return DaemonParameters.class.getConstructor(buildLayoutResultClass, FileCollectionFactory.class).newInstance(buildLayoutResult, collectionFactory);
+      return DaemonParameters.class.getConstructor(BuildLayoutResult.class, FileCollectionFactory.class).newInstance(buildLayoutResult, collectionFactory);
     }
     catch (ClassNotFoundException | NoSuchFieldException | InstantiationException | IllegalAccessException | InvocationTargetException |
       NoSuchMethodException e) {
