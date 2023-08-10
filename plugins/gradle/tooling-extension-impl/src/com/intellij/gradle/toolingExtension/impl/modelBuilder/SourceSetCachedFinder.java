@@ -13,6 +13,7 @@ import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.composite.internal.DefaultIncludedBuild;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil;
 import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil;
@@ -28,24 +29,24 @@ import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolv
 
 public class SourceSetCachedFinder {
 
-  private static final GradleVersion gradleBaseVersion = GradleVersion.current().getBaseVersion();
+  private static final @NotNull GradleVersion gradleBaseVersion = GradleVersion.current().getBaseVersion();
   private static final boolean is51OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("5.1")) >= 0;
 
-  private static final DataProvider<ArtifactsMap> ARTIFACTS_PROVIDER =
+  private static final @NotNull DataProvider<ArtifactsMap> ARTIFACTS_PROVIDER =
     (gradle, ___) -> createArtifactsMap(gradle);
 
-  private static final DataProvider<ConcurrentMap<String, Set<File>>> SOURCES_DATA_KEY =
+  private static final @NotNull DataProvider<ConcurrentMap<String, Set<File>>> SOURCES_DATA_KEY =
     (__, ___) -> new ConcurrentHashMap<>();
 
-  private final ArtifactsMap myArtifactsMap;
-  private final ConcurrentMap<String, Set<File>> mySourcesMap;
+  private final @NotNull ArtifactsMap myArtifactsMap;
+  private final @NotNull ConcurrentMap<String, Set<File>> mySourcesMap;
 
   public SourceSetCachedFinder(@NotNull ModelBuilderContext context) {
     myArtifactsMap = context.getData(ARTIFACTS_PROVIDER);
     mySourcesMap = context.getData(SOURCES_DATA_KEY);
   }
 
-  public Set<File> findSourcesByArtifact(String path) {
+  public @Nullable Set<File> findSourcesByArtifact(@NotNull String path) {
     if (!mySourcesMap.containsKey(path)) {
       SourceSet sourceSet = myArtifactsMap.myArtifactsMap.get(path);
       if (sourceSet != null) {
@@ -57,15 +58,15 @@ public class SourceSetCachedFinder {
     return null;
   }
 
-  public SourceSet findByArtifact(String artifactPath) {
+  public @Nullable SourceSet findByArtifact(@NotNull String artifactPath) {
     return myArtifactsMap.myArtifactsMap.get(artifactPath);
   }
 
-  public String findArtifactBySourceSetOutputDir(String outputPath) {
+  public @Nullable String findArtifactBySourceSetOutputDir(@NotNull String outputPath) {
     return myArtifactsMap.mySourceSetOutputDirsToArtifactsMap.get(outputPath);
   }
 
-  private static ArtifactsMap createArtifactsMap(@NotNull Gradle gradle) {
+  private static @NotNull ArtifactsMap createArtifactsMap(@NotNull Gradle gradle) {
     Map<String, SourceSet> artifactsMap = new HashMap<>();
     Map<String, String> sourceSetOutputDirsToArtifactsMap = new HashMap<>();
     List<Project> projects = new ArrayList<>(gradle.getRootProject().getAllprojects());
@@ -101,7 +102,7 @@ public class SourceSetCachedFinder {
     return new ArtifactsMap(artifactsMap, sourceSetOutputDirsToArtifactsMap);
   }
 
-  private static List<Project> exposeIncludedBuilds(Gradle gradle) {
+  private static @NotNull List<Project> exposeIncludedBuilds(@NotNull Gradle gradle) {
     List<Project> result = new ArrayList<>();
     for (IncludedBuild includedBuild : gradle.getIncludedBuilds()) {
       Object unwrapped = maybeUnwrapIncludedBuildInternal(includedBuild);
@@ -117,12 +118,12 @@ public class SourceSetCachedFinder {
     return result;
   }
 
-  private static Set<Project> getProjectsWithReflection(DefaultIncludedBuild build) {
+  private static @NotNull Set<Project> getProjectsWithReflection(@NotNull DefaultIncludedBuild build) {
     GradleInternal gradleInternal = ReflectionUtil.reflectiveCall(build, "getConfiguredBuild", GradleInternal.class);
     return gradleInternal.getRootProject().getAllprojects();
   }
 
-  private static Object maybeUnwrapIncludedBuildInternal(IncludedBuild includedBuild) {
+  private static @NotNull Object maybeUnwrapIncludedBuildInternal(@NotNull IncludedBuild includedBuild) {
     Class<?> includedBuildInternalClass = ReflectionUtil.findClassForName("org.gradle.internal.composite.IncludedBuildInternal");
     if (includedBuildInternalClass != null && includedBuildInternalClass.isAssignableFrom(includedBuild.getClass())) {
       return ReflectionUtil.reflectiveCall(includedBuild, "getTarget", Object.class);
@@ -132,10 +133,10 @@ public class SourceSetCachedFinder {
 
   private static class ArtifactsMap {
 
-    public final Map<String, SourceSet> myArtifactsMap;
-    public final Map<String, String> mySourceSetOutputDirsToArtifactsMap;
+    public final @NotNull Map<String, SourceSet> myArtifactsMap;
+    public final @NotNull Map<String, String> mySourceSetOutputDirsToArtifactsMap;
 
-    ArtifactsMap(Map<String, SourceSet> artifactsMap, Map<String, String> sourceSetOutputDirsToArtifactsMap) {
+    ArtifactsMap(@NotNull Map<String, SourceSet> artifactsMap, @NotNull Map<String, String> sourceSetOutputDirsToArtifactsMap) {
       myArtifactsMap = unmodifiableMap(artifactsMap);
       mySourceSetOutputDirsToArtifactsMap = unmodifiableMap(sourceSetOutputDirsToArtifactsMap);
     }
