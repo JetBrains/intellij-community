@@ -10,13 +10,14 @@ import javax.swing.Icon
 
 object PsiIconUtil {
   @JvmStatic
+  @Suppress("IdentifierGrammar")
   fun getProvidersIcon(element: PsiElement, @IconFlags flags: Int): Icon? {
     val isDumb = DumbService.getInstance(element.getProject()).isDumb
     for (provider in IconProvider.EXTENSION_POINT_NAME.getIterable()) {
-      if (isDumb && !isDumbAware(provider)) {
+      if (provider == null || (isDumb && !isDumbAware(provider))) {
         continue
       }
-      provider!!.getIcon(element, flags)?.let {
+      provider.getIcon(element, flags)?.let {
         return it
       }
     }
