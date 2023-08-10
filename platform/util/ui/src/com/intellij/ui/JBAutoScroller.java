@@ -16,6 +16,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.concurrent.Callable;
 
 public final class JBAutoScroller implements ActionListener {
   private static final int SCROLL_UPDATE_INTERVAL = 15;
@@ -190,6 +191,19 @@ public final class JBAutoScroller implements ActionListener {
         locked = true;
         runnable.run();
       } finally {
+        locked = false;
+      }
+    }
+
+    public <T> T runWithLock(Callable<T> runnable) {
+      try {
+        locked = true;
+        return runnable.call();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+      finally {
         locked = false;
       }
     }
