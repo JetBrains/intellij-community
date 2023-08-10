@@ -55,7 +55,6 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
 
     private fun out(indent: Int, text: String) {
         println("\t".repeat(indent) + text, ProcessOutputTypes.SYSTEM)
-        println(text)
     }
 
     private fun Throwable.stackTraceAsString(): String {
