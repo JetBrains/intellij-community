@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.utils.addIfNotNull
+import java.util.*
 
 abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     private fun getOnReturnOrThrowUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
@@ -33,6 +34,15 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
             else -> null
         } as? KtExpression ?: return null
         return OnExitUsagesHandler(editor, file, expression, false)
+    }
+
+    private fun getOnBreakOrContinueUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
+        val expression = when (val parent = target.parent) {
+            is KtBreakExpression, is KtContinueExpression -> parent
+            is KtLoopExpression -> parent
+            else -> null
+        } as? KtExpression ?: return null
+        return OnLoopUsagesHandler(editor, file, expression, false)
     }
 
     private fun getOnLambdaCallUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
@@ -57,6 +67,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
 
     override fun createHighlightUsagesHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
         return getOnReturnOrThrowUsageHandler(editor, file, target)
+            ?: getOnBreakOrContinueUsageHandler(editor, file, target)
             ?: getOnLambdaCallUsageHandler(editor, file, target)
     }
 
@@ -91,7 +102,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
     private inner class OnExitUsagesHandler(editor: Editor, file: PsiFile, val target: KtExpression, val highlightReferences: Boolean) :
         HighlightUsagesHandlerBase<PsiElement>(editor, file) {
 
-        override fun getTargets() = listOf(target)
+        override fun getTargets(): List<KtExpression> = listOf(target)
 
         override fun selectTargets(targets: List<PsiElement>, selectionConsumer: Consumer<in List<PsiElement>>) {
             selectionConsumer.consume(targets)
@@ -288,6 +299,89 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
         }
 
         override fun highlightReferences(): Boolean = highlightReferences
+    }
+
+    private inner class OnLoopUsagesHandler(editor: Editor, file: PsiFile, val target: KtExpression, val highlightReferences: Boolean) :
+        HighlightUsagesHandlerBase<PsiElement>(editor, file) {
+        override fun getTargets(): List<KtExpression> = listOf(target)
+
+        override fun selectTargets(targets: List<PsiElement>, selectionConsumer: Consumer<in List<PsiElement>>) {
+            selectionConsumer.consume(targets)
+        }
+
+        override fun computeUsages(targets: MutableList<out PsiElement>) {
+            val labelName = when (target) {
+                is KtExpressionWithLabel -> target.getLabelName()
+                is KtLoopExpression -> (target.parent as? KtLabeledExpression)?.getLabelName()
+                else -> null
+            }
+            val relevantLoop: KtLoopExpression = when (target) {
+                is KtLoopExpression -> target
+                else -> {
+                    var element: PsiElement? = target
+                    var targetLoop: KtLoopExpression? = null
+                    while (element != null) {
+                        val parent = element.parent
+                        if (element is KtLoopExpression && (labelName == null || (parent as? KtLabeledExpression)?.getLabelName() == labelName)) {
+                            targetLoop = element
+                            break
+                        }
+                        element = parent
+                    }
+                    targetLoop
+                }
+            } ?: return
+
+            when(relevantLoop) {
+                is KtForExpression -> addOccurrence(relevantLoop.forKeyword)
+                is KtDoWhileExpression -> relevantLoop.node.findChildByType(KtTokens.DO_KEYWORD)?.psi?.let(::addOccurrence)
+                is KtWhileExpression -> relevantLoop.node.findChildByType(KtTokens.WHILE_KEYWORD)?.psi?.let(::addOccurrence)
+            }
+
+
+
+            relevantLoop.accept(object : KtVisitorVoid() {
+                var nestedLoopExpressions = Stack<KtLoopExpression>()
+
+                override fun visitKtElement(element: KtElement) {
+                    ProgressIndicatorProvider.checkCanceled()
+                    element.acceptChildren(this)
+                }
+
+                override fun visitExpression(expression: KtExpression) {
+                    val nestedLoopFound = if (expression != relevantLoop && expression is KtLoopExpression) {
+                        val loopLabelName = (expression.parent as? KtLabeledExpression)?.getLabelName()
+                        // no reasons to step into another loop with the same label name or no label name
+                        if (labelName == null || labelName == loopLabelName) return
+
+                        nestedLoopExpressions.push(expression)
+                        true
+                    } else {
+                        false
+                    }
+
+                    if (expression is KtBreakExpression || expression is KtContinueExpression) {
+                        val expressionLabelName = (expression as? KtExpressionWithLabel)?.getLabelName()
+                        if (nestedLoopExpressions.isEmpty()) {
+                            if (expressionLabelName == null || expressionLabelName == labelName) {
+                                addOccurrence(expression)
+                            }
+                        } else if (expressionLabelName == labelName) {
+                            addOccurrence(expression)
+                        }
+                    }
+
+                    try {
+                        super.visitExpression(expression)
+                    } finally {
+                        if (nestedLoopFound) {
+                            nestedLoopExpressions.pop()
+                        }
+                    }
+                }
+            })
+        }
+
     }
 
     private fun MutableSet<PsiElement>.addIfNotNullAndNotBlock(element: PsiElement?) {
