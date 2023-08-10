@@ -155,8 +155,9 @@ object IconUtil {
    * @return a deferred icon for the file, taking into account [FileIconProvider] and [FileIconPatcher] extensions.
    */
   @JvmStatic
-  fun computeFileIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon =
-    computeFileIconImpl(BackedVirtualFile.getOriginFileIfBacked(file), project, flags)
+  fun computeFileIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon {
+    return computeFileIconImpl(BackedVirtualFile.getOriginFileIfBacked(file), project, flags)
+  }
 
   private fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int): Icon {
     if (!file.isValid || project != null && (project.isDisposed || !wasEverInitialized(project))) {

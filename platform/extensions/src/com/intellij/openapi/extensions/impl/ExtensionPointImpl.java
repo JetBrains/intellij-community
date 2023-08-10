@@ -288,7 +288,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
 
   public final void processWithPluginDescriptor(boolean shouldBeSorted, @NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
     if (isInReadOnlyMode()) {
-      for (T extension : cachedExtensionsAsArray) {
+      for (T extension : Objects.requireNonNull(cachedExtensionsAsArray)) {
         consumer.accept(extension, pluginDescriptor /* doesn't matter for tests */);
       }
       return;
@@ -304,7 +304,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
 
   public final void processImplementations(boolean shouldBeSorted, @NotNull BiConsumer<? super Supplier<? extends @Nullable T>, ? super PluginDescriptor> consumer) {
     if (isInReadOnlyMode()) {
-      for (T extension : cachedExtensionsAsArray) {
+      for (T extension : Objects.requireNonNull(cachedExtensionsAsArray)) {
         consumer.accept((Supplier<T>)() -> extension, pluginDescriptor /* doesn't matter for tests */);
       }
       return;
@@ -393,7 +393,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   private T @NotNull [] processAdapters() {
     assertNotReadOnlyMode();
 
-    // check before to avoid any "restore" work if already cancelled
+    // check before to avoid any "restore" work if already canceled
     CHECK_CANCELED.run();
 
     long startTime = System.nanoTime();
@@ -1004,8 +1004,8 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   }
 
   public final <V> @NotNull List<@NotNull T> findExtensions(@NotNull Class<V> aClass) {
-    T[] extensionsCache = cachedExtensionsAsArray;
-    if (extensionsCache == null) {
+    T[] extensionCache = cachedExtensionsAsArray;
+    if (extensionCache == null) {
       List<T> suitableInstances = new ArrayList<>();
       for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
         try {
@@ -1024,7 +1024,13 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
       return suitableInstances;
     }
     else {
-      return ContainerUtil.filter(extensionsCache, aClass::isInstance);
+      List<T> result = new ArrayList<>();
+      for (T t : extensionCache) {
+        if (aClass.isInstance(t)) {
+          result.add(t);
+        }
+      }
+      return result;
     }
   }
 
@@ -1094,7 +1100,12 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   }
 
   private static boolean isInsideClassInitializer(StackTraceElement @NotNull [] trace) {
-    //noinspection SpellCheckingInspection
-    return ContainerUtil.exists(trace, s -> "<clinit>".equals(s.getMethodName()));
+    for (StackTraceElement t : trace) {
+      //noinspection SpellCheckingInspection
+      if ("<clinit>".equals(t.getMethodName())) {
+        return true;
+      }
+    }
+    return false;
   }
 }
