@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.notebooks.visualization
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 
 /**
@@ -30,7 +30,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
   }
 
   override fun intervalsIterator(startLine: Int): ListIterator<NotebookCellLines.Interval> {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ThreadingAssertions.softAssertReadAccess()
     val ordinal = intervals.find { startLine <= it.lines.last }?.ordinal ?: intervals.size
     return intervals.listIterator(ordinal)
   }
@@ -92,7 +92,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
     }
 
     override fun documentChanged(event: DocumentEvent) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed()
+      ThreadingAssertions.assertWriteAccess()
       val oldIntervals = intervals
       intervals = intervalsGenerator.makeIntervals(document)
 
