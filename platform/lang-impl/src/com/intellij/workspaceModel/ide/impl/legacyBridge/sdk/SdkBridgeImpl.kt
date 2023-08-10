@@ -126,6 +126,10 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkMainEntity.Builder) : UserD
   }
 
   internal fun getEntity(): SdkMainEntity = sdkEntityBuilder
+
+  override fun toString(): String {
+    return "$name $versionString ($homePath )"
+  }
 }
 
 internal fun SdkMainEntity.Builder.getSdkType(): SdkTypeId {

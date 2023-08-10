@@ -58,7 +58,7 @@ open class ProjectJdkTableImpl: ProjectJdkTable() {
 
   override fun getAllJdks(): Array<Sdk> = delegate.getAllSdks().toTypedArray()
 
-  override fun getSdksOfType(type: SdkTypeId): List<Sdk> = delegate.getAllSdks().filter { it.name == type.name }
+  override fun getSdksOfType(type: SdkTypeId): List<Sdk> = delegate.getAllSdks().filter { it.sdkType.name == type.name }
 
   override fun addJdk(sdk: Sdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
