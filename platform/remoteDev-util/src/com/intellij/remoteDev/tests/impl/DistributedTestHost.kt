@@ -313,7 +313,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
   private fun makeScreenshot(actionName: String): Boolean {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-      error("Don't try making screenshots on application in headless mode.")
+      LOG.warn("Can't make screenshot on application in headless mode.")
+      return false
     }
 
     val timeNow = LocalDateTime.now()
