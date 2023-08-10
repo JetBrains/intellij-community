@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootManager
@@ -85,9 +84,12 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
       VfsRootAccess.allowRootAccess(testRootDisposable, javaHome)
 
       def jdk = JavaSdk.getInstance().createJdk(module.getName() + "_jdk", javaHome, false)
-      ((ProjectJdkImpl)jdk).setVersionString(JavaSdkVersion.JDK_11.description)
 
       ApplicationManager.application.runWriteAction {
+        def sdkModificator = jdk.sdkModificator
+        sdkModificator.setVersionString(JavaSdkVersion.JDK_11.description)
+        sdkModificator.commitChanges()
+
         ProjectJdkTable jdkTable = ProjectJdkTable.getInstance()
         jdkTable.addJdk(jdk, testRootDisposable)
         ModuleRootModificationUtil.modifyModel(module) { model ->
