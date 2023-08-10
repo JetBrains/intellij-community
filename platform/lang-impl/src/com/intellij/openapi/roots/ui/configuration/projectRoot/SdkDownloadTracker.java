@@ -3,10 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.google.common.collect.Sets;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
@@ -485,8 +482,13 @@ public final class SdkDownloadTracker {
     SdkModificator mod = sdk.getSdkModificator();
     mod.setHomePath(FileUtil.toSystemIndependentName(task.getPlannedHomeDir()));
     mod.setVersionString(task.getPlannedVersion());
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      mod.commitChanges();
-    });
+
+    Application application = ApplicationManager.getApplication();
+    Runnable runnable = () -> mod.commitChanges();
+    if (application.isDispatchThread()) {
+      application.runWriteAction(runnable);
+    } else {
+      application.invokeAndWait(() -> application.runWriteAction(runnable));
+    }
   }
 }
