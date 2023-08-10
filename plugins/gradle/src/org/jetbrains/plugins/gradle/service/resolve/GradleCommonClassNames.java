@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve;
 
 import org.jetbrains.annotations.NonNls;
@@ -88,6 +88,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_PROCESS_EXEC_SPEC = "org.gradle.process.ExecSpec";
   @NonNls public static final String GRADLE_API_PROVIDER_PROPERTY = "org.gradle.api.provider.Property";
   @NonNls public static final String GRADLE_API_PROVIDER_PROVIDER = "org.gradle.api.provider.Provider";
+  @NonNls public static final String GRADLE_API_PROVIDER_PROVIDER_CONVERTIBLE = "org.gradle.api.provider.ProviderConvertible";
   @NonNls public static final String GRADLE_PLUGIN_USE_PLUGIN_DEPENDENCY = "org.gradle.plugin.use.PluginDependency";
 
   private GradleCommonClassNames() {
