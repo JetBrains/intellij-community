@@ -2,10 +2,12 @@
 package com.jetbrains.python.configuration
 
 import com.intellij.ui.ExperimentalUIConfigurable
+import com.intellij.util.PlatformUtils
 
 class PyExperimentalUIConfigurable : ExperimentalUIConfigurable() {
 
   override fun getExploreNewUiUrl(): String {
-    return EXPLORE_NEW_UI_URL_TEMPLATE.format("pycharm")
+    // DataSpell loads PyExperimentalUIConfigurable and therefore cannot use own ExperimentalUIConfigurable (because of conflicts)
+    return EXPLORE_NEW_UI_URL_TEMPLATE.format(if (PlatformUtils.isDataSpell()) "dataspell" else "pycharm")
   }
 }
