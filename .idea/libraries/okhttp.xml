@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="okhttp" type="repository">
-    <properties maven-id="com.squareup.okhttp3:okhttp-jvm:5.0.0-alpha.11">
+    <properties jar-repository-id="central-proxy" maven-id="com.squareup.okhttp3:okhttp-jvm:5.0.0-alpha.11">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp-jvm/5.0.0-alpha.11/okhttp-jvm-5.0.0-alpha.11.jar">
           <sha256sum>506a1d3aba9f99b55570c7f8813cd79a44946531f29050d5b938474efdb4cf80</sha256sum>

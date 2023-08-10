@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="XStream" type="repository">
-    <properties maven-id="com.thoughtworks.xstream:xstream:1.4.20">
+    <properties jar-repository-id="central-proxy" maven-id="com.thoughtworks.xstream:xstream:1.4.20">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.20/xstream-1.4.20.jar">
           <sha256sum>87df0f0be57c92037d0110fbb225a30b651702dc275653d285afcfef31bc2e81</sha256sum>
