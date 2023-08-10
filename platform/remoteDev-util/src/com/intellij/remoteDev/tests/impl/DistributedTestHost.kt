@@ -9,11 +9,9 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.isFocusAncestor
@@ -29,6 +27,7 @@ import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.impl.RdTask
+import com.jetbrains.rd.framework.util.launch
 import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.measureTimeMillis
@@ -43,9 +42,7 @@ import java.io.File
 import java.net.InetAddress
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
@@ -128,6 +125,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
     LOG.info("Advise for session...")
     model.session.viewNotNull(lifetime) { sessionLifetime, session ->
+      val isNotRdHost = !(session.agentInfo.productTypeType == RdProductType.REMOTE_DEVELOPMENT && session.agentInfo.agentType == RdAgentType.HOST)
+
       try {
         setUpLogging(sessionLifetime, session)
         val app = ApplicationManager.getApplication()
@@ -155,28 +154,35 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           testClassObject.performInit(testMethod)
           testMethod.invoke(testClassObject)
 
-          fun runAction(agentAction: AgentAction, expectIsDispatchThread: Boolean): RdTask<String?> {
+          fun runAction(agentAction: AgentAction): RdTask<String?> {
             val actionTitle = agentAction.title
+            val expectBlockedEdt = agentAction.expectBlockedEdt
             try {
               assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local when test method starts" }
-              assert(app.isDispatchThread == expectIsDispatchThread) {
-                "Expected to be started on EDT: $expectIsDispatchThread, actual: ${Thread.currentThread()}"
-              }
 
-              if (expectIsDispatchThread) {
-                LOG.info("'$actionTitle': preparing to start action")
+              LOG.info("'$actionTitle': preparing to start action on ${Thread.currentThread().name}, " +
+                       "expectBlockedEdt=$expectBlockedEdt")
 
-                val isNotRdHost = !(session.agentInfo.productTypeType == RdProductType.REMOTE_DEVELOPMENT && session.agentInfo.agentType == RdAgentType.HOST)
-                if (!app.isHeadlessEnvironment && isNotRdHost) {
-                  app.flushQueueFromAnyThread()
-                  requestFocus(actionTitle)
+              if (app.isDispatchThread) {
+                projectOrNull?.let {
+                  // Sync state across all IDE agents to maintain proper order in protocol events
+                  LOG.info("'$actionTitle': Sync protocol events before execution...")
+                  val elapsedSync = measureTimeMillis {
+                    DistributedTestBridge.getInstance(it).syncProtocolEvents()
+                  }
+                  LOG.info("'$actionTitle': Protocol state sync completed in ${elapsedSync}ms")
                 }
               }
 
+              if (!expectBlockedEdt) {
+                app.flushQueueFromAnyThread()
+              }
+
+              if (!app.isHeadlessEnvironment && isNotRdHost && app.isDispatchThread) {
+                requestFocus(actionTitle)
+              }
+
               showNotification("${session.agentInfo.id}: $actionTitle")
-              // Flush all events to process pending protocol events and other things
-              //   before actual test method execution
-              app.flushQueueFromAnyThread()
 
               val agentContext = when (session.agentInfo.agentType) {
                 RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, protocol, lifetime)
@@ -192,30 +198,20 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               }
               LOG.info("'$actionTitle': completed action in ${elapsedAction}ms")
 
-              projectOrNull?.let {
-                // Sync state across all IDE agents to maintain proper order in protocol events
-                LOG.info("'$actionTitle': Sync protocol events after execution...")
-                val elapsedSync = measureTimeMillis {
-                  DistributedTestBridge.getInstance(it).syncProtocolEvents()
-                  app.flushQueueFromAnyThread()
-                }
-                LOG.info("'$actionTitle': Protocol state sync completed in ${elapsedSync}ms")
-              }
-
               // Assert state
               assertLoggerFactory()
 
               return result
             }
             catch (ex: Throwable) {
-              val msg = "${session.agentInfo.id}: ${actionTitle.let { "'$it' " }.orEmpty()}hasn't finished successfully"
+              val msg = "${session.agentInfo.id}: ${actionTitle.let { "'$it' " }}hasn't finished successfully"
               LOG.warn(msg, ex)
-              if (!app.isHeadlessEnvironment) {
-                makeScreenshot(actionTitle)
+              if (!app.isHeadlessEnvironment && isNotRdHost) {
                 runBlockingCancellable {
                   lifetime.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) { // even if there is a modal window opened
                     makeScreenshot(actionTitle)
                   }
+                }
               }
               return RdTask.faulted(AssertionError(msg, ex))
             }
@@ -223,12 +219,13 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           // Advice for processing events
           session.runNextAction.set { _, _ ->
-            runAction(queue.remove(), true)
+            runAction(queue.remove())
           }
 
           // Special handler to be used in
           session.runNextActionBackground.set(SynchronousScheduler, SynchronousScheduler) { _, _ ->
-            runAction(queue.remove(), false)
+            val (action, expectBlockedDispatchThread) = queue.remove()
+            runAction(action, expectIsDispatchThread = false, expectBlockedDispatchThread)
           }
         }
 
