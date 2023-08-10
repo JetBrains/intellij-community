@@ -16,9 +16,9 @@ class CancelledAtMetric (override val showByDefault: Boolean, private val n: Int
     val lookups = sessions.flatMap { session -> session.lookups }
 
     val fileSample = Sample()
-    lookups.filter {it.suggestions.isNotEmpty() }.forEach { lookup ->
+    lookups.forEach { lookup ->
       val indexOfRelevantSuggestion = lookup.suggestions.indexOfFirst { it.isRelevant }
-      if (indexOfRelevantSuggestion in 0 until n) {
+      if (lookup.suggestions.isEmpty() || indexOfRelevantSuggestion in 0 until n) {
         fileSample.add(0.0)
         sample.add(0.0)
       }

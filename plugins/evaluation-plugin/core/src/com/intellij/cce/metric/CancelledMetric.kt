@@ -16,8 +16,8 @@ class CancelledMetric (override val showByDefault: Boolean): Metric {
     val lookups = sessions.flatMap { session -> session.lookups }
 
     val fileSample = Sample()
-    lookups.filter {it.suggestions.isNotEmpty() }.forEach { lookup ->
-      val value = if (lookup.suggestions.any { it.isRelevant }) 0.0 else 1.0
+    lookups.forEach { lookup ->
+      val value = if (lookup.suggestions.isEmpty() || lookup.suggestions.any { it.isRelevant }) 0.0 else 1.0
       fileSample.add(value)
       sample.add(value)
     }

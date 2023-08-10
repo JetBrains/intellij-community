@@ -18,7 +18,7 @@ class MetricsEvaluatorTest {
 
     val sessionTop1Custom = Mockito.mock(Session::class.java)
     val sessionNoTop1Custom = Mockito.mock(Session::class.java)
-    val sessionNoneCustom = Mockito.mock(Session::class.java)
+    val sessionNoMatchCustom = Mockito.mock(Session::class.java)
     val sessionNoSuggestionsCustom = Mockito.mock(Session::class.java)
 
     private const val EXPECTED = "expected"
@@ -41,7 +41,7 @@ class MetricsEvaluatorTest {
       listOf("expected other", "expected string_", "qwerty")
     )
     mockSessionCustom(
-      sessionNoneCustom,
+      sessionNoMatchCustom,
       "expected string",
       listOf("suggestion_1", "suggestion_2", "suggestion_3")
     )
@@ -83,7 +83,7 @@ class MetricsEvaluatorTest {
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1Custom)))
     Assertions.assertEquals(0.5, metric.evaluate(listOf(sessionTop1Custom, sessionNoTop1Custom)))
     Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionNoTop1Custom)))
-    Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionNoneCustom)))
+    Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionNoMatchCustom)))
   }
 
   @Test
@@ -92,7 +92,13 @@ class MetricsEvaluatorTest {
     Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionTop1Custom)))
     Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionTop1Custom, sessionNoTop1Custom)))
     Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionTop1Custom, sessionNoSuggestionsCustom)))
-    Assertions.assertEquals(0.5, metric.evaluate(listOf(sessionTop1Custom, sessionNoneCustom)))
+    Assertions.assertEquals(0.5, metric.evaluate(listOf(sessionTop1Custom, sessionNoMatchCustom)))
+    Assertions.assertEquals(0.25, metric.evaluate(listOf(
+      sessionTop1Custom,
+      sessionNoTop1Custom,
+      sessionNoMatchCustom,
+      sessionNoSuggestionsCustom
+    )))
   }
 
   @Test
@@ -101,6 +107,12 @@ class MetricsEvaluatorTest {
     Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionTop1Custom)))
     Assertions.assertEquals(0.5, metric.evaluate(listOf(sessionTop1Custom, sessionNoTop1Custom)))
     Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionTop1Custom, sessionNoSuggestionsCustom)))
+    Assertions.assertEquals(0.5, metric.evaluate(listOf(
+      sessionTop1Custom,
+      sessionNoTop1Custom,
+      sessionNoMatchCustom,
+      sessionNoSuggestionsCustom
+    )))
   }
 
   @Test
@@ -109,7 +121,7 @@ class MetricsEvaluatorTest {
     Assertions.assertEquals(0.5, metric.evaluate(listOf(sessionTop1Custom)))
     Assertions.assertEquals(0.25, metric.evaluate(listOf(sessionTop1Custom, sessionNoTop1Custom)))
     Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionNoTop1Custom)))
-    Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionNoneCustom)))
+    Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionNoMatchCustom)))
   }
 
   @Test
@@ -117,7 +129,7 @@ class MetricsEvaluatorTest {
     val metric = MatchedRatioAt(false, 3)
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1Custom)))
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1Custom, sessionNoTop1Custom)))
-    Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionNoneCustom)))
+    Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionNoMatchCustom)))
   }
 
   @Test
