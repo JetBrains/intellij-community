@@ -243,7 +243,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
       .apply {
         border = JBUI.Borders.compound(
           JBUI.Borders.customLineBottom(CombinedDiffUI.EDITOR_BORDER_COLOR),
-          JBUI.Borders.empty(5, 10)
+          JBUI.Borders.empty(CombinedDiffUI.MAIN_HEADER_INSETS)
         )
       }
     GuiUtils.installVisibilityReferent(topPanel, leftToolbar.component)

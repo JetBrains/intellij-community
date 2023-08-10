@@ -64,7 +64,7 @@ class CombinedSimpleDiffHeader(project: Project,
     background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
 
     addToCenter(if (withPathOnly) createTextComponent(project, blockId.path) else buildToolbar(project, blockId).component)
-    border = JBUI.Borders.empty(12, 10)
+    border = JBUI.Borders.empty(CombinedDiffUI.BLOCK_HEADER_INSETS)
   }
 
   private fun buildToolbar(project: Project, blockId: CombinedPathBlockId): ActionToolbar {

@@ -792,6 +792,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       // VCS log
       defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), 24)
       defaults.put(JBUI.CurrentTheme.VersionControl.Log.verticalPaddingKey(), 4)
+      // VCS Combined Diff
+      defaults.put(JBUI.CurrentTheme.VersionControl.CombinedDiff.mainToolbarInsetsKey(), cmInsets(1, 10))
+      defaults.put(JBUI.CurrentTheme.VersionControl.CombinedDiff.fileToolbarInsetsKey(), cmInsets(7, 10))
     }
   }
 

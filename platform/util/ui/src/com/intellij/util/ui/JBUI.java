@@ -1638,6 +1638,24 @@ public final class JBUI {
           return 7;
         }
       }
+
+      public static final class CombinedDiff {
+        public static @NotNull Insets mainToolbarInsets() {
+          return insets(mainToolbarInsetsKey(), isNewUI() ? insets(5, 10) : insets(1, 10));
+        }
+
+        public static @NotNull String mainToolbarInsetsKey() {
+          return "CombinedDiff.mainToolbarInsets";
+        }
+
+        public static @NotNull Insets fileToolbarInsets() {
+          return insets(fileToolbarInsetsKey(), isNewUI() ? insets(12, 10) : insets(7, 10));
+        }
+
+        public static @NotNull String fileToolbarInsetsKey() {
+          return "CombinedDiff.fileToolbarInsets";
+        }
+      }
     }
 
     public interface Window {
