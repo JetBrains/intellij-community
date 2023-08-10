@@ -65,9 +65,7 @@ class GitGraphAnnotator : Annotator {
 
     if (identifier.textMatches(mainBranchName)) return
 
-    val parent = element.parent ?: return
-
-    val matchingIds = parent
+    val matchingIds = element
       .siblings(forward = false, withSelf = false)
       .filterIsInstance<MermaidBranchStatement>()
       .map { it.identifier() }
@@ -87,9 +85,7 @@ class GitGraphAnnotator : Annotator {
   private fun annotateUnresolvedCommitId(element: MermaidCherryPickStatement, holder: AnnotationHolder) {
     val identifier = element.commitIdAttribute.commitIdValue
 
-    val parent = element.parent ?: return
-
-    val matchingIds = parent
+    val matchingIds = element
       .siblings(forward = false, withSelf = false)
       .filterIsInstance<MermaidCommitStatement>()
       .mapNotNull { it.commitIdAttribute?.commitIdValue }
