@@ -104,17 +104,13 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
 
       int startOffset = highlighter.getStartOffset();
       int endOffset = highlighter.getEndOffset();
-      FoldingModel foldingModel = editor.getFoldingModel();
-      if (foldingModel.isOffsetCollapsed(startOffset)) return;
-      Document doc = highlighter.getDocument();
-      FoldRegion headerRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineEndOffset(doc.getLineNumber(startOffset)));
-      FoldRegion tailRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineStartOffset(doc.getLineNumber(endOffset)));
-      if (tailRegion != null && tailRegion == headerRegion) return;
-
-      VisualPosition startPosition = editor.offsetToVisualPosition(startOffset);
-      VisualPosition endPosition = editor.offsetToVisualPosition(endOffset);
-      Point start = editor.visualPositionToXY(new VisualPosition(startPosition.line, indent - 1));
-      Point end = editor.visualPositionToXY(new VisualPosition(endPosition.line, indent - 1));
+      int startLine = editor.offsetToVisualLine(startOffset, false);
+      int endLine = editor.offsetToVisualLine(endOffset, false);
+      if (startLine == endLine && editor.getFoldingModel().isOffsetCollapsed(startOffset)) {
+        return;
+      }
+      Point start = editor.visualPositionToXY(new VisualPosition(startLine, indent - 1));
+      Point end = editor.visualPositionToXY(new VisualPosition(endLine, indent - 1));
 
       EditorColorsScheme scheme = editor.getColorsScheme();
       g.setColor(scheme.getColor(EditorColors.STRING_CONTENT_INDENT_GUIDE_COLOR));
@@ -128,7 +124,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       float startY = start.y + baseline - ascent;
       float endY = end.y + baseline + descent;
 
-      Point right = editor.visualPositionToXY(new VisualPosition(startPosition.line, indent));
+      Point right = editor.visualPositionToXY(new VisualPosition(startLine, indent));
       float x = (start.x + right.x) / 2f;
       LinePainter2D.paint((Graphics2D)g, x, startY, x, endY);
     }
