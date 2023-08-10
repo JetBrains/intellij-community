@@ -4,8 +4,8 @@ package com.intellij.util
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 
-internal class PerformanceAssertionImpl: PerformanceAssertion() {
-  override fun checkNotAffectHighlighting() {
+internal class PerformanceAssertionsImpl: PerformanceAssertions() {
+  override fun checkDoesNotAffectHighlighting() {
     GeneralHighlightingPass.assertHighlightingPassNotRunning()
     ReferenceProvidersRegistry.assertNotContributingReferences()
   }

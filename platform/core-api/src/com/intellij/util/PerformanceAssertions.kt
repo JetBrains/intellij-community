@@ -6,9 +6,9 @@ import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
-abstract class PerformanceAssertion {
+abstract class PerformanceAssertions {
 
-  abstract fun checkNotAffectHighlighting()
+  abstract fun checkDoesNotAffectHighlighting()
 
   companion object {
 
@@ -19,8 +19,8 @@ abstract class PerformanceAssertion {
      * It is similar to [SlowOperations.assertSlowOperationsAreAllowed] but imposes more strict restrictions.
      */
     @JvmStatic
-    fun assertNotAffectHighlighting() {
-      ApplicationManager.getApplication().service<PerformanceAssertion>().checkNotAffectHighlighting()
+    fun assertDoesNotAffectHighlighting() {
+      ApplicationManager.getApplication().service<PerformanceAssertions>().checkDoesNotAffectHighlighting()
     }
 
   }
