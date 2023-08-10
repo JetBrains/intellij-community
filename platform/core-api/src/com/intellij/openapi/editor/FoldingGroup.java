@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class FoldingGroup {
   private static final AtomicLong ourCounter = new AtomicLong();
 
-  @NonNls private final String myDebugName;
+  private final @NonNls String myDebugName;
   private final long myId;
 
   private FoldingGroup(@NonNls String debugName) {

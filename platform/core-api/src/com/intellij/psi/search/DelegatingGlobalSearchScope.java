@@ -65,21 +65,18 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
     return getDelegate().isSearchInLibraries();
   }
 
-  @NotNull
   @Override
-  public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+  public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     return getDelegate().getUnloadedModulesBelongingToScope();
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return getDelegate().getDisplayName();
   }
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return getDelegate().getIcon();
   }
 
@@ -108,13 +105,11 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
     return result;
   }
 
-  @NotNull
-  public GlobalSearchScope getDelegate() {
+  public @NotNull GlobalSearchScope getDelegate() {
     return myBaseScope;
   }
 
-  @NotNull
-  public GlobalSearchScope unwrap() {
+  public @NotNull GlobalSearchScope unwrap() {
     GlobalSearchScope delegate = getDelegate();
     return delegate instanceof DelegatingGlobalSearchScope ? ((DelegatingGlobalSearchScope)delegate).unwrap() : delegate;
   }

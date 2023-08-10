@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,9 +46,8 @@ public final class VFileContentChangeEvent extends VFileEvent {
     myNewLength = newLength;
   }
 
-  @NotNull
   @Override
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
@@ -81,8 +80,7 @@ public final class VFileContentChangeEvent extends VFileEvent {
            myOldLength != UNDEFINED_TIMESTAMP_OR_LENGTH || myNewLength != UNDEFINED_TIMESTAMP_OR_LENGTH;
   }
 
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "VfsEvent[update: " + myFile.getPresentableUrl() +
            ", oldTimestamp:" + myOldTimestamp + ", newTimestamp:" + myNewTimestamp +
            ", oldModificationStamp:" + myOldModificationStamp + ", newModificationStamp:" + myNewModificationStamp +
@@ -90,15 +88,13 @@ public final class VFileContentChangeEvent extends VFileEvent {
            "]";
   }
 
-  @NotNull
   @Override
-  protected String computePath() {
+  protected @NotNull String computePath() {
     return myFile.getPath();
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 

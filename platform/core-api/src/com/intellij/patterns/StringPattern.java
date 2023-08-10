@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -26,60 +26,55 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
   private StringPattern() {
     super(new InitialPatternCondition<String>(String.class) {
       @Override
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
         return o instanceof String;
       }
 
 
       @Override
-      public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
+      public void append(final @NotNull @NonNls StringBuilder builder, final String indent) {
         builder.append("string()");
       }
     });
   }
 
-  @NotNull
-  public StringPattern startsWith(@NonNls @NotNull final String s) {
+  public @NotNull StringPattern startsWith(final @NonNls @NotNull String s) {
     return with(new PatternCondition<String>("startsWith") {
       @Override
-      public boolean accepts(@NotNull final String str, final ProcessingContext context) {
+      public boolean accepts(final @NotNull String str, final ProcessingContext context) {
         return StringUtil.startsWith(str, s);
       }
     });
   }
 
-  @NotNull
-  public StringPattern endsWith(@NonNls @NotNull final String s) {
+  public @NotNull StringPattern endsWith(final @NonNls @NotNull String s) {
     return with(new PatternCondition<String>("endsWith") {
       @Override
-      public boolean accepts(@NotNull final String str, final ProcessingContext context) {
+      public boolean accepts(final @NotNull String str, final ProcessingContext context) {
         return StringUtil.endsWith(str, s);
       }
     });
   }
 
-  @NotNull
-  public StringPattern contains(@NonNls @NotNull final String s) {
+  public @NotNull StringPattern contains(final @NonNls @NotNull String s) {
     return with(new PatternCondition<String>("contains") {
       @Override
-      public boolean accepts(@NotNull final String str, final ProcessingContext context) {
+      public boolean accepts(final @NotNull String str, final ProcessingContext context) {
         return StringUtil.contains(str, s);
       }
     });
   }
 
-  @NotNull
-  public StringPattern containsChars(@NonNls @NotNull final String s) {
+  public @NotNull StringPattern containsChars(final @NonNls @NotNull String s) {
     return with(new PatternCondition<String>("containsChars") {
       @Override
-      public boolean accepts(@NotNull final String str, final ProcessingContext context) {
+      public boolean accepts(final @NotNull String str, final ProcessingContext context) {
         return StringUtil.containsAnyChar(str, s);
       }
     });
   }
 
-  @NotNull
-  public StringPattern matches(@NonNls @NotNull final String s) {
+  public @NotNull StringPattern matches(final @NonNls @NotNull String s) {
     final String escaped = StringUtil.escapeToRegexp(s);
     if (escaped.equals(s)) {
       return equalTo(s);
@@ -88,7 +83,7 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
     final Pattern pattern = Pattern.compile(s);
     return with(new ValuePatternCondition<String>("matches") {
       @Override
-      public boolean accepts(@NotNull final String str, final ProcessingContext context) {
+      public boolean accepts(final @NotNull String str, final ProcessingContext context) {
         return pattern.matcher(newBombedCharSequence(str)).matches();
       }
 
@@ -99,11 +94,10 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
     });
   }
 
-  @NotNull
-  public StringPattern contains(@NonNls @NotNull final ElementPattern<Character> pattern) {
+  public @NotNull StringPattern contains(final @NonNls @NotNull ElementPattern<Character> pattern) {
     return with(new PatternCondition<String>("contains") {
       @Override
-      public boolean accepts(@NotNull final String str, final ProcessingContext context) {
+      public boolean accepts(final @NotNull String str, final ProcessingContext context) {
         for (int i = 0; i < str.length(); i++) {
           if (pattern.accepts(str.charAt(i))) return true;
         }
@@ -115,7 +109,7 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
   public StringPattern longerThan(final int minLength) {
     return with(new PatternCondition<String>("longerThan") {
       @Override
-      public boolean accepts(@NotNull final String s, final ProcessingContext context) {
+      public boolean accepts(final @NotNull String s, final ProcessingContext context) {
         return s.length() > minLength;
       }
     });
@@ -124,7 +118,7 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
   public StringPattern shorterThan(final int maxLength) {
     return with(new PatternCondition<String>("shorterThan") {
       @Override
-      public boolean accepts(@NotNull final String s, final ProcessingContext context) {
+      public boolean accepts(final @NotNull String s, final ProcessingContext context) {
         return s.length() < maxLength;
       }
     });
@@ -133,31 +127,27 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
   public StringPattern withLength(final int length) {
     return with(new PatternCondition<String>("withLength") {
       @Override
-      public boolean accepts(@NotNull final String s, final ProcessingContext context) {
+      public boolean accepts(final @NotNull String s, final ProcessingContext context) {
         return s.length() == length;
       }
     });
   }
 
   @Override
-  @NotNull
-  public StringPattern oneOf(@NonNls final String @NotNull ... values) {
+  public @NotNull StringPattern oneOf(final @NonNls String @NotNull ... values) {
     return super.oneOf(values);
   }
 
-  @NotNull
-  public StringPattern oneOfIgnoreCase(@NonNls final String... values) {
+  public @NotNull StringPattern oneOfIgnoreCase(final @NonNls String... values) {
     return with(new CaseInsensitiveValuePatternCondition("oneOfIgnoreCase", values));
   }
 
   @Override
-  @NotNull
-  public StringPattern oneOf(@NonNls final Collection<String> set) {
+  public @NotNull StringPattern oneOf(final @NonNls Collection<String> set) {
     return super.oneOf(set);
   }
 
-  @NotNull
-  public static CharSequence newBombedCharSequence(@NotNull CharSequence sequence) {
+  public static @NotNull CharSequence newBombedCharSequence(@NotNull CharSequence sequence) {
     if (sequence instanceof StringUtil.BombedCharSequence) return sequence;
     return new StringUtil.BombedCharSequence(sequence) {
       @Override

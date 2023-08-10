@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi;
 
@@ -26,7 +12,7 @@ import java.util.Collection;
  * Trivial implementation of {@link ResolveResult}.
  */
 public class PsiElementResolveResult implements ResolveResult{
-  @NotNull private final PsiElement myElement;
+  private final @NotNull PsiElement myElement;
   private final boolean myValidResult;
 
   /**
@@ -38,13 +24,13 @@ public class PsiElementResolveResult implements ResolveResult{
     this(element, true);
   }
 
-  public PsiElementResolveResult(@NotNull final PsiElement element, final boolean validResult) {
+  public PsiElementResolveResult(final @NotNull PsiElement element, final boolean validResult) {
     myElement = element;
     myValidResult = validResult;
   }
 
   @Override
-  @NotNull public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myElement;
   }
 
@@ -68,8 +54,7 @@ public class PsiElementResolveResult implements ResolveResult{
     return myElement.hashCode();
   }
 
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "PsiElementResolveResult with " + myElement.getClass() + ": " +
            (myElement instanceof PsiNamedElement ? ((PsiNamedElement)myElement).getName() : myElement.getText());
   }

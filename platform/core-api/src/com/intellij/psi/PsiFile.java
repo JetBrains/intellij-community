@@ -106,8 +106,7 @@ public interface PsiFile extends PsiFileSystemItem {
   /**
    * @return the element type of the file node, but possibly in an efficient node that doesn't instantiate the node.
    */
-  @Nullable
-  default IFileElementType getFileElementType() {
+  default @Nullable IFileElementType getFileElementType() {
     return ObjectUtils.tryCast(PsiUtilCore.getElementType(getNode()), IFileElementType.class);
   }
 }

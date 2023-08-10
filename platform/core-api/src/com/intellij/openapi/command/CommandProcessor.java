@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -71,18 +71,13 @@ public abstract class CommandProcessor {
 
   public abstract void setCurrentCommandGroupId(@Nullable Object groupId);
 
-  @Nullable
-  public abstract Runnable getCurrentCommand();
+  public abstract @Nullable Runnable getCurrentCommand();
 
-  @Nullable
-  @Nls
-  public abstract String getCurrentCommandName();
+  public abstract @Nullable @Nls String getCurrentCommandName();
 
-  @Nullable
-  public abstract Object getCurrentCommandGroupId();
+  public abstract @Nullable Object getCurrentCommandGroupId();
 
-  @Nullable
-  public abstract Project getCurrentCommandProject();
+  public abstract @Nullable Project getCurrentCommandProject();
 
   /**
    * Defines a scope which contains undoable actions, for which there won't be a separate undo/redo step - they will be undone/redone along

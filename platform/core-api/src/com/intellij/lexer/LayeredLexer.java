@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lexer;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,8 +62,7 @@ public class LayeredLexer extends DelegateLexer {
     }
   }
 
-  @Nullable
-  protected Lexer findLayerLexer(IElementType baseTokenType) {
+  protected @Nullable Lexer findLayerLexer(IElementType baseTokenType) {
     return myStartTokenToLayerLexer.get(baseTokenType);
   }
 
@@ -148,9 +147,8 @@ public class LayeredLexer extends DelegateLexer {
     myState = isLayerActive() ? IN_LAYER_STATE : super.getState();
   }
 
-  @NotNull
   @Override
-  public LexerPosition getCurrentPosition() {
+  public @NotNull LexerPosition getCurrentPosition() {
     return new LexerPositionImpl(getTokenStart(), getState());
   }
 

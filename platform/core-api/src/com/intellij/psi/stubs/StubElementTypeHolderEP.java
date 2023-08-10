@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
@@ -49,9 +49,7 @@ public final class StubElementTypeHolderEP {
    * <li>For all other fields, if any, the same {@code prefix+debugName} concatenation doesn't produce an external id used by any other stub element type</li>
    * </ul>
    */
-  @Attribute("externalIdPrefix")
-  @Nullable
-  public String externalIdPrefix;
+  @Attribute("externalIdPrefix") public @Nullable String externalIdPrefix;
 
   int initializeOptimized(@NotNull PluginDescriptor pluginDescriptor,
                           @NotNull List<? super StubFieldAccessor> result) {

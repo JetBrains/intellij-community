@@ -30,9 +30,8 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * @deprecated use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
    */
   @Deprecated
-  @NotNull
   @Override
-  public RunResult<T> execute() {
+  public @NotNull RunResult<T> execute() {
     final RunResult<T> result = new RunResult<>(this);
     return compute(() -> result.run());
   }
@@ -88,10 +87,9 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * which greatly lowers its probability of being idempotent,
    * which in turn may cause delayed bugs in unrelated places and races.
    */
-  @NotNull
   @Contract(pure = true)
   @Deprecated
-  public static NonBlockingReadAction<Void> nonBlocking(@NotNull Runnable task) {
+  public static @NotNull NonBlockingReadAction<Void> nonBlocking(@NotNull Runnable task) {
     return nonBlocking(new RunnableCallable(task));
   }
 
@@ -101,9 +99,8 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * @see CoroutinesKt#readAction
    * @see CoroutinesKt#constrainedReadAction
    */
-  @NotNull
   @Contract(pure = true)
-  public static <T> NonBlockingReadAction<T> nonBlocking(@NotNull Callable<? extends T> task) {
+  public static @NotNull <T> NonBlockingReadAction<T> nonBlocking(@NotNull Callable<? extends T> task) {
     return AsyncExecutionService.getService().buildNonBlockingReadAction(task);
   }
 

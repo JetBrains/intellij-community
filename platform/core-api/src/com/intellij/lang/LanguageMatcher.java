@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -20,8 +20,7 @@ public abstract class LanguageMatcher {
    * </ul>
    */
   @Contract(pure = true)
-  @NotNull
-  public static LanguageMatcher match(@NotNull Language language) {
+  public static @NotNull LanguageMatcher match(@NotNull Language language) {
     if (language instanceof MetaLanguage) {
       return new MetaLanguageMatcher((MetaLanguage)language);
     }
@@ -38,8 +37,7 @@ public abstract class LanguageMatcher {
    * </ul>
    */
   @Contract(pure = true)
-  @NotNull
-  public static LanguageMatcher matchWithDialects(@NotNull Language language) {
+  public static @NotNull LanguageMatcher matchWithDialects(@NotNull Language language) {
     if (language instanceof MetaLanguage) {
       return new MetaLanguageKindMatcher((MetaLanguage)language);
     }

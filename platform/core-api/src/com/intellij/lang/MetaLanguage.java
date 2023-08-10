@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -45,8 +45,7 @@ public abstract class MetaLanguage extends Language {
   /**
    * Returns the list of all languages matching this meta-language.
    */
-  @NotNull
-  public Collection<Language> getMatchingLanguages() {
+  public @NotNull Collection<Language> getMatchingLanguages() {
     return ContainerUtil.filter(Language.getRegisteredLanguages(), this::matchesLanguage);
   }
 }

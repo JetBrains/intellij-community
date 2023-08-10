@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.util.Comparing;
@@ -243,8 +243,7 @@ public final class AttributesFlyweight {
   /**
    * @return all attributes effects, main and additional ones
    */
-  @NotNull
-  public Map<EffectType, Color> getAllEffects() {
+  public @NotNull Map<EffectType, Color> getAllEffects() {
     if (myAdditionalEffects.isEmpty()) {
       return myEffectType == null || myEffectColor == null ? Collections.emptyMap() : Collections.singletonMap(myEffectType, myEffectColor);
     }
@@ -327,9 +326,8 @@ public final class AttributesFlyweight {
     return myHashCode;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "AttributesFlyweight{myForeground=" + myForeground + ", myBackground=" + myBackground + ", myFontType=" + myFontType +
            ", myEffectColor=" + myEffectColor + ", myEffectType=" + myEffectType + ", myErrorStripeColor=" + myErrorStripeColor + '}';
   }

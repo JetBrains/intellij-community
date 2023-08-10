@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -93,8 +93,7 @@ public final class AstLoadingFilter {
     }
   }
 
-  @NotNull
-  private static String buildDebugInfo(@NotNull VirtualFile file, @NotNull Supplier<String> disabledInfo) {
+  private static @NotNull String buildDebugInfo(@NotNull VirtualFile file, @NotNull Supplier<String> disabledInfo) {
     @NonNls StringBuilder debugInfo = new StringBuilder();
     debugInfo.append("Accessed file path: ").append(file.getPath());
     String additionalInfo = disabledInfo.get();

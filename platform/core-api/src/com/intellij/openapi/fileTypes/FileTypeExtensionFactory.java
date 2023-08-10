@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,9 +13,8 @@ public final class FileTypeExtensionFactory<T> extends KeyedExtensionFactory<T, 
     super(interfaceClass, epName, ApplicationManager.getApplication());
   }
 
-  @NotNull
   @Override
-  public String getKey(@NotNull FileType key) {
+  public @NotNull String getKey(@NotNull FileType key) {
     return key.getName();
   }
 }

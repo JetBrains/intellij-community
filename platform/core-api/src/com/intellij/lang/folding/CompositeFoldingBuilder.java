@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.folding;
 
 import com.intellij.diagnostic.PluginException;
@@ -24,8 +24,7 @@ import java.util.*;
  * @see LanguageFolding
  */
 public class CompositeFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
-  @NotNull
-  private final List<? extends FoldingBuilder> myBuilders;
+  private final @NotNull List<? extends FoldingBuilder> myBuilders;
 
   CompositeFoldingBuilder(@NotNull List<? extends FoldingBuilder> builders) {
     myBuilders = builders;
@@ -100,8 +99,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
     return project == null || !DumbService.isDumb(project);
   }
 
-  @Nullable
-  private static Project getProjectByNode(@NotNull ASTNode node) {
+  private static @Nullable Project getProjectByNode(@NotNull ASTNode node) {
     PsiElement psi = node.getPsi();
     if (psi == null) {
       ASTNode parent = node.getTreeParent();
@@ -125,8 +123,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
     return false;
   }
 
-  @Nullable
-  public static FoldingBuilder getOriginalBuilder(@NotNull FoldingDescriptor foldingDescriptor) {
+  public static @Nullable FoldingBuilder getOriginalBuilder(@NotNull FoldingDescriptor foldingDescriptor) {
     if (foldingDescriptor instanceof FoldingDescriptorWrapper) {
       return ((FoldingDescriptorWrapper) foldingDescriptor).myBuilder;
     }
@@ -134,8 +131,8 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
   }
 
   private static class FoldingDescriptorWrapper extends FoldingDescriptor {
-    @NotNull private final FoldingDescriptor myFoldingDescriptor;
-    @NotNull private final FoldingBuilder myBuilder;
+    private final @NotNull FoldingDescriptor myFoldingDescriptor;
+    private final @NotNull FoldingBuilder myBuilder;
 
     FoldingDescriptorWrapper(@NotNull FoldingDescriptor foldingDescriptor, @NotNull FoldingBuilder builder) {
       super(foldingDescriptor.getElement(),
@@ -159,9 +156,8 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
       return placeholderTextIsFallback ? cachedText : textFromGetText;
     }
 
-    @NotNull
     @Override
-    public Set<Object> getDependencies() {
+    public @NotNull Set<Object> getDependencies() {
       return myFoldingDescriptor.getDependencies();
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,9 +37,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * or (if really desperate) {@link #computeAndWait(ThrowableComputable)} instead
    */
   @Deprecated
-  @NotNull
   @Override
-  public RunResult<T> execute() {
+  public @NotNull RunResult<T> execute() {
     final RunResult<T> result = new RunResult<>(this);
 
     Application application = ApplicationManager.getApplication();
@@ -70,9 +69,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * @see #compute(ThrowableComputable)
    */
   @Deprecated
-  @NotNull
   @ApiStatus.ScheduledForRemoval
-  public static AccessToken start() {
+  public static @NotNull AccessToken start() {
     // get useful information about the write action
     Class<?> callerClass = ObjectUtils.notNull(ReflectionUtil.getCallerClass(3), WriteAction.class);
     return ApplicationManager.getApplication().acquireWriteActionLock(callerClass);

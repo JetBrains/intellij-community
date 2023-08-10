@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.util.io.AbstractStringEnumerator;
@@ -20,11 +20,11 @@ public class StubOutputStream extends DataOutputStream {
     myNameStorage = nameStorage;
   }
 
-  public void writeUTFFast(@NotNull final String arg) throws IOException {
+  public void writeUTFFast(final @NotNull String arg) throws IOException {
     IOUtil.writeUTF(this, arg);
   }
 
-  public void writeName(@Nullable final String arg) throws IOException {
+  public void writeName(final @Nullable String arg) throws IOException {
     final int nameId = arg != null ? myNameStorage.enumerate(arg) : 0;
     DataInputOutputUtil.writeINT(this, nameId);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.editor.Document;
@@ -11,12 +11,11 @@ import org.jetbrains.annotations.Nullable;
  * @author ignatov
  */
 public final class SelfManagingCommenterUtil {
-  @Nullable
-  public static TextRange getBlockCommentRange(int selectionStart,
-                                               int selectionEnd,
-                                               @NotNull Document document,
-                                               @NotNull String prefix,
-                                               @NotNull String suffix) {
+  public static @Nullable TextRange getBlockCommentRange(int selectionStart,
+                                                         int selectionEnd,
+                                                         @NotNull Document document,
+                                                         @NotNull String prefix,
+                                                         @NotNull String suffix) {
     CharSequence sequence = document.getCharsSequence();
     selectionStart = CharArrayUtil.shiftForward(sequence, selectionStart, " \t\n");
     selectionEnd = CharArrayUtil.shiftBackward(sequence, selectionEnd - 1, " \t\n") + 1;
@@ -32,12 +31,11 @@ public final class SelfManagingCommenterUtil {
     return null;
   }
 
-  @NotNull
-  public static TextRange insertBlockComment(int startOffset,
-                                             int endOffset,
-                                             @NotNull Document document,
-                                             @NotNull String prefix,
-                                             @NotNull String suffix) {
+  public static @NotNull TextRange insertBlockComment(int startOffset,
+                                                      int endOffset,
+                                                      @NotNull Document document,
+                                                      @NotNull String prefix,
+                                                      @NotNull String suffix) {
     document.insertString(startOffset, prefix);
     document.insertString(endOffset + prefix.length(), suffix);
     return new TextRange(startOffset, endOffset + prefix.length() + suffix.length());

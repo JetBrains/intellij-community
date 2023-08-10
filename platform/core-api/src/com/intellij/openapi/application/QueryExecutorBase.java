@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.project.DumbService;
@@ -41,7 +41,7 @@ public abstract class QueryExecutorBase<Result, Params> implements QueryExecutor
   }
 
   @Override
-  public final boolean execute(@NotNull final Params queryParameters, @NotNull final Processor<? super Result> consumer) {
+  public final boolean execute(final @NotNull Params queryParameters, final @NotNull Processor<? super Result> consumer) {
     final AtomicBoolean toContinue = new AtomicBoolean(true);
     final Processor<Result> wrapper = result -> {
       if (!toContinue.get()) {

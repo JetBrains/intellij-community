@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight;
 
@@ -61,7 +61,7 @@ public final class PsiEquivalenceUtil {
   }
 
   private static class ReferenceComparator implements BiPredicate<PsiReference, PsiReference> {
-    private @Nullable final BiPredicate<? super PsiElement, ? super PsiElement> myResolvedElementsComparator;
+    private final @Nullable BiPredicate<? super PsiElement, ? super PsiElement> myResolvedElementsComparator;
 
     ReferenceComparator(@Nullable BiPredicate<? super PsiElement, ? super PsiElement> resolvedElementsComparator) {
       myResolvedElementsComparator = resolvedElementsComparator;
@@ -141,7 +141,7 @@ public final class PsiEquivalenceUtil {
     return areEquivalent(element1, element2, null, false);
   }
 
-  public static PsiElement @NotNull [] getFilteredChildren(@NotNull final PsiElement element,
+  public static PsiElement @NotNull [] getFilteredChildren(final @NotNull PsiElement element,
                                                            @Nullable Predicate<? super PsiElement> isElementSignificantCondition,
                                                            boolean areCommentsSignificant) {
     ASTNode[] children1 = element.getNode().getChildren(null);

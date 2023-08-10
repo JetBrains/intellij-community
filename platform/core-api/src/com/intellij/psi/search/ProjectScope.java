@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.core.CoreBundle;
@@ -33,31 +33,26 @@ public final class ProjectScope {
   /**
    * @return Scope for all things inside the project: files in the project content plus files in libraries/library source
    */
-  @NotNull
-  public static GlobalSearchScope getAllScope(@NotNull Project project) {
+  public static @NotNull GlobalSearchScope getAllScope(@NotNull Project project) {
     return ALL_SCOPE_KEY.getValue(project);
   }
 
-  @NotNull
-  public static GlobalSearchScope getProjectScope(@NotNull Project project) {
+  public static @NotNull GlobalSearchScope getProjectScope(@NotNull Project project) {
     return PROJECT_SCOPE_KEY.getValue(project);
   }
 
-  @NotNull
-  public static GlobalSearchScope getLibrariesScope(@NotNull Project project) {
+  public static @NotNull GlobalSearchScope getLibrariesScope(@NotNull Project project) {
     return LIBRARIES_SCOPE_KEY.getValue(project);
   }
 
-  @NotNull
-  public static GlobalSearchScope getContentScope(@NotNull Project project) {
+  public static @NotNull GlobalSearchScope getContentScope(@NotNull Project project) {
     return CONTENT_SCOPE_KEY.getValue(project);
   }
 
   /**
    * @return The biggest possible scope: every file on the planet belongs to this.
    */
-  @NotNull
-  public static GlobalSearchScope getEverythingScope(@NotNull Project project) {
+  public static @NotNull GlobalSearchScope getEverythingScope(@NotNull Project project) {
     return EVERYTHING_SCOPE_KEY.getValue(project);
   }
 

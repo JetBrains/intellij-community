@@ -21,8 +21,7 @@ public interface ExpirableExecutor extends BaseExpirableExecutor<ExpirableExecut
   /**
    * Creates constrained executor from provided executor
    */
-  @NotNull
-  static ExpirableExecutor on(@NotNull Executor executor) {
+  static @NotNull ExpirableExecutor on(@NotNull Executor executor) {
     return AsyncExecutionService.getService().createExecutor(executor);
   }
 }

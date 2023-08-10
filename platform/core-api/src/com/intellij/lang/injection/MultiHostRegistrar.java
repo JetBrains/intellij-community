@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.injection;
 
 import com.intellij.lang.Language;
@@ -47,8 +47,7 @@ public interface MultiHostRegistrar {
    *
    * @param extension the created injected file name will have. Some parsers require specific extension. By default the extension is taken from the host file.
    */
-  @NotNull
-  default MultiHostRegistrar startInjecting(@NotNull Language language, @Nullable String extension) {
+  default @NotNull MultiHostRegistrar startInjecting(@NotNull Language language, @Nullable String extension) {
     return startInjecting(language);
   }
 

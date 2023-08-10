@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.ide.plugins.PluginUtil;
@@ -23,7 +23,7 @@ public class ID<K, V> extends IndexId<K,V> {
 
   private static volatile SimpleStringPersistentEnumerator ourNameToIdRegistry = new SimpleStringPersistentEnumerator(getEnumFile());
 
-  private final static Map<String, ID<?, ?>> ourIdObjects = new ConcurrentHashMap<>();
+  private static final Map<String, ID<?, ?>> ourIdObjects = new ConcurrentHashMap<>();
 
   private static final Map<ID<?, ?>, PluginId> ourIdToPluginId = Collections.synchronizedMap(new HashMap<>());
   private static final Map<ID<?, ?>, Throwable> ourIdToRegistrationStackTrace = Collections.synchronizedMap(new HashMap<>());
@@ -32,8 +32,7 @@ public class ID<K, V> extends IndexId<K,V> {
   private volatile int myUniqueId;
 
   @ApiStatus.Internal
-  @NotNull
-  private static Path getEnumFile() {
+  private static @NotNull Path getEnumFile() {
     return PathManager.getIndexRoot().resolve("indices.enum");
   }
 
@@ -105,23 +104,20 @@ public class ID<K, V> extends IndexId<K,V> {
     ourNameToIdRegistry.forceDiskSync();
   }
 
-  @NotNull
-  public static synchronized <K, V> ID<K, V> create(@NonNls @NotNull String name) {
+  public static synchronized @NotNull <K, V> ID<K, V> create(@NonNls @NotNull String name) {
     PluginId pluginId = getCallerPluginId();
     final ID<K, V> found = findByName(name, true, pluginId);
     return found == null ? new ID<>(name, pluginId) : found;
   }
 
-  @Nullable
-  public static <K, V> ID<K, V> findByName(@NotNull String name) {
+  public static @Nullable <K, V> ID<K, V> findByName(@NotNull String name) {
     return findByName(name, false, null);
   }
 
   @ApiStatus.Internal
-  @Nullable
-  protected static <K, V> ID<K, V> findByName(@NotNull String name,
-                                              boolean checkCallerPlugin,
-                                              @Nullable PluginId requiredPluginId) {
+  protected static @Nullable <K, V> ID<K, V> findByName(@NotNull String name,
+                                                        boolean checkCallerPlugin,
+                                                        @Nullable PluginId requiredPluginId) {
     //noinspection unchecked
     ID<K, V> id = (ID<K, V>)findById(stringToId(name));
     if (checkCallerPlugin && id != null) {
@@ -143,11 +139,10 @@ public class ID<K, V> extends IndexId<K,V> {
     return id;
   }
 
-  @NotNull
-  private static String getInvalidIdAccessMessage(@NotNull String name,
-                                                  @Nullable String actualPluginIdStr,
-                                                  @Nullable String requiredPluginIdStr,
-                                                  @Nullable Throwable registrationStackTrace) {
+  private static @NotNull String getInvalidIdAccessMessage(@NotNull String name,
+                                                           @Nullable String actualPluginIdStr,
+                                                           @Nullable String requiredPluginIdStr,
+                                                           @Nullable Throwable registrationStackTrace) {
     return "ID with name '" + name +
            "' requested for plugin " + requiredPluginIdStr +
            " but registered for " + actualPluginIdStr + " plugin. " +
@@ -163,8 +158,7 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public Throwable getRegistrationTrace() {
+  public @NotNull Throwable getRegistrationTrace() {
     return ourIdToRegistrationStackTrace.get(this);
   }
 
@@ -174,8 +168,7 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   @ApiStatus.Internal
-  @Nullable
-  public PluginId getPluginId() {
+  public @Nullable PluginId getPluginId() {
     return ourIdToPluginId.get(this);
   }
 
@@ -186,13 +179,12 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   @ApiStatus.Internal
-  @Nullable
-  protected static PluginId getCallerPluginId() {
+  protected static @Nullable PluginId getCallerPluginId() {
     return PluginUtil.getInstance().getCallerPlugin(4);
   }
 
   @ApiStatus.Internal
-  public synchronized static void unloadId(@NotNull ID<?, ?> id) {
+  public static synchronized void unloadId(@NotNull ID<?, ?> id) {
     String name = id.getName();
     ID<?, ?> oldID = ourIdObjects.remove(name);
     LOG.assertTrue(id.equals(oldID), "Failed to unload: " + name);

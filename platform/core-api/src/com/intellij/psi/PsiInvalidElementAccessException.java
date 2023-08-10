@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
@@ -87,8 +87,7 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
                                                          : new Attachment("diagnostic.txt", trace.toString())};
   }
 
-  @Nullable
-  private static Object getPsiInvalidationTrace(@NotNull PsiElement element) {
+  private static @Nullable Object getPsiInvalidationTrace(@NotNull PsiElement element) {
     Object trace = getInvalidationTrace(element);
     if (trace != null) return trace;
 
@@ -120,8 +119,7 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
     return reason + (message == null ? "" : "; " + message);
   }
 
-  @NotNull
-  private static Language getLanguage(@NotNull PsiElement element) {
+  private static @NotNull Language getLanguage(@NotNull PsiElement element) {
     return element instanceof ASTNode ? ((ASTNode)element).getElementType().getLanguage() : element.getLanguage();
   }
 
@@ -154,9 +152,7 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
     return null;
   }
 
-  @NonNls
-  @NotNull
-  public static String findOutInvalidationReason(@NotNull PsiElement root) {
+  public static @NonNls @NotNull String findOutInvalidationReason(@NotNull PsiElement root) {
     if (root == PsiUtilCore.NULL_PSI_ELEMENT) {
       return "NULL_PSI_ELEMENT";
     }
@@ -249,8 +245,7 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
     return Registry.is("psi.track.invalidation", true);
   }
 
-  @Nullable
-  public PsiElement getPsiElement() {
+  public @Nullable PsiElement getPsiElement() {
     return myElementReference.get();
   }
 }

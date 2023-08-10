@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,8 +44,7 @@ public final class CachedValueProfiler {
     return ourGlobalContext.consumer != null;
   }
 
-  @Nullable
-  public static EventConsumer setEventConsumer(@Nullable EventConsumer eventConsumer) {
+  public static @Nullable EventConsumer setEventConsumer(@Nullable EventConsumer eventConsumer) {
     GlobalContext prev = ourGlobalContext;
     if (prev.consumer == null && eventConsumer == null) return null;
     ourGlobalContext = new GlobalContext(eventConsumer, prev.epoch + 1);
@@ -251,7 +250,7 @@ public final class CachedValueProfiler {
   }
 
   private static class ThreadContext {
-    @Nullable final EventConsumer consumer;
+    final @Nullable EventConsumer consumer;
     final int epoch;
     @Nullable Frame topFrame;
 

@@ -66,10 +66,9 @@ public final class LanguageUtil {
     return language == null ? null : language.getAssociatedFileType();
   }
 
-  @NotNull
-  public static ParserDefinition.SpaceRequirements canStickTokensTogetherByLexer(@NotNull ASTNode left,
-                                                                                 @NotNull ASTNode right,
-                                                                                 @NotNull Lexer lexer) {
+  public static @NotNull ParserDefinition.SpaceRequirements canStickTokensTogetherByLexer(@NotNull ASTNode left,
+                                                                                          @NotNull ASTNode right,
+                                                                                          @NotNull Lexer lexer) {
     String textStr = left.getText() + right.getText();
 
     lexer.start(textStr, 0, textStr.length());
@@ -197,8 +196,7 @@ public final class LanguageUtil {
     language.putUserData(MATCHING_LANGUAGES, null);
   }
 
-  @NotNull
-  public static JBIterable<Language> getBaseLanguages(@NotNull Language language) {
+  public static @NotNull JBIterable<Language> getBaseLanguages(@NotNull Language language) {
     return JBIterable.generate(language, Language::getBaseLanguage);
   }
 

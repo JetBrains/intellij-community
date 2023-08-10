@@ -40,8 +40,7 @@ public abstract class ModalityState {
   /**
    * @deprecated use {@link #nonModal()} instead
    */
-  @Deprecated
-  @NotNull public static final ModalityState NON_MODAL;
+  @Deprecated public static final @NotNull ModalityState NON_MODAL;
 
   static {
     try {

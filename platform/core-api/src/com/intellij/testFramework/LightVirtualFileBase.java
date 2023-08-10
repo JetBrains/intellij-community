@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -51,14 +51,12 @@ public abstract class LightVirtualFileBase extends VirtualFile {
     }
 
     @Override
-    @NotNull
-    public String getProtocol() {
+    public @NotNull String getProtocol() {
       return PROTOCOL;
     }
 
     @Override
-    @Nullable
-    public VirtualFile findFileByPath(@NotNull String path) {
+    public @Nullable VirtualFile findFileByPath(@NotNull String path) {
       return null;
     }
 
@@ -66,8 +64,7 @@ public abstract class LightVirtualFileBase extends VirtualFile {
     public void refresh(boolean asynchronous) { }
 
     @Override
-    @Nullable
-    public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
+    public @Nullable VirtualFile refreshAndFindFileByPath(@NotNull String path) {
       return null;
     }
   }
@@ -75,19 +72,16 @@ public abstract class LightVirtualFileBase extends VirtualFile {
   private static final MyVirtualFileSystem ourFileSystem = new MyVirtualFileSystem();
 
   @Override
-  @NotNull
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return ourFileSystem;
   }
 
-  @Nullable
-  public FileType getAssignedFileType() {
+  public @Nullable FileType getAssignedFileType() {
     return myFileType;
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     VirtualFile parent = getParent();
     return (parent == null ? "" : parent.getPath()) + "/" + getName();
   }
@@ -173,16 +167,14 @@ public abstract class LightVirtualFileBase extends VirtualFile {
     }
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
+  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
     assertWritable();
     return super.createChildDirectory(requestor, name);
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
+  public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
     assertWritable();
     return super.createChildData(requestor, name);
   }

@@ -32,8 +32,7 @@ public interface Commenter {
    *
    * @return the list of line comment prefixes
    */
-  @NotNull
-  default List<String> getLineCommentPrefixes() {
+  default @NotNull List<String> getLineCommentPrefixes() {
     return ContainerUtil.createMaybeSingletonList(getLineCommentPrefix());
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
  * @see DumbAware
  */
 public final class IndexNotReadyException extends RuntimeException implements ExceptionWithAttachments {
-  @Nullable private final Throwable myStartTrace;
+  private final @Nullable Throwable myStartTrace;
 
   // constructor is private to not let ForkJoinTask.getThrowableException() clone this by reflection causing invalid nesting etc
   private IndexNotReadyException(@Nullable Throwable startTrace) {
@@ -56,13 +56,11 @@ public final class IndexNotReadyException extends RuntimeException implements Ex
            : new Attachment[]{new Attachment("indexingStart", myStartTrace)};
   }
 
-  @NotNull
-  public static IndexNotReadyException create() {
+  public static @NotNull IndexNotReadyException create() {
     return create(null);
   }
 
-  @NotNull
-  public static IndexNotReadyException create(@Nullable Throwable startTrace) {
+  public static @NotNull IndexNotReadyException create(@Nullable Throwable startTrace) {
     return new IndexNotReadyException(startTrace);
   }
 }

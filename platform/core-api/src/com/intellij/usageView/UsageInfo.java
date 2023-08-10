@@ -1,11 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usageView;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +21,7 @@ public class UsageInfo {
   private static final Logger LOG = Logger.getInstance(UsageInfo.class);
   private final SmartPsiElementPointer<?> mySmartPointer;
   private final SmartPsiFileRange myPsiFileRange;
-  @Nullable private Class<? extends PsiReference> myReferenceClass;
+  private @Nullable Class<? extends PsiReference> myReferenceClass;
 
   public final boolean isNonCodeUsage;
   protected boolean myDynamicUsage;
@@ -146,8 +149,7 @@ public class UsageInfo {
     this(element, false);
   }
 
-  @NotNull
-  public SmartPsiElementPointer<?> getSmartPointer() {
+  public @NotNull SmartPsiElementPointer<?> getSmartPointer() {
     return mySmartPointer;
   }
 
@@ -167,13 +169,11 @@ public class UsageInfo {
     return myReferenceClass;
   }
 
-  @Nullable
-  public PsiElement getElement() { // SmartPointer is used to fix SCR #4572, hotya eto krivo i nado vse perepisat'
+  public @Nullable PsiElement getElement() { // SmartPointer is used to fix SCR #4572, hotya eto krivo i nado vse perepisat'
     return mySmartPointer.getElement();
   }
 
-  @Nullable
-  public PsiReference getReference() {
+  public @Nullable PsiReference getReference() {
     PsiElement element = getElement();
     return element == null ? null : element.getReference();
   }
@@ -181,8 +181,7 @@ public class UsageInfo {
   /**
    * @return range in element
    */
-  @Nullable("null means range is invalid")
-  public ProperTextRange getRangeInElement() {
+  public @Nullable("null means range is invalid") ProperTextRange getRangeInElement() {
     PsiElement element = getElement();
     if (element == null) return null;
     PsiFile psiFile = getFile();
@@ -265,8 +264,7 @@ public class UsageInfo {
     return psiFile != null && psiFile.getFileType().isBinary();
   }
 
-  @Nullable
-  public Segment getSegment() {
+  public @Nullable Segment getSegment() {
     PsiElement element = getElement();
     if (element instanceof PsiFile && ((PsiFile)element).getFileType().isBinary()) {
       return null;
@@ -329,8 +327,7 @@ public class UsageInfo {
     return file0.getPath().compareTo(file1.getPath());
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return mySmartPointer.getProject();
   }
 
@@ -370,13 +367,11 @@ public class UsageInfo {
     return reference.getCanonicalText() + " (" + reference.getClass() + ")";
   }
 
-  @Nullable
-  public PsiFile getFile() {
+  public @Nullable PsiFile getFile() {
     return mySmartPointer.getContainingFile();
   }
 
-  @Nullable
-  public VirtualFile getVirtualFile() {
+  public @Nullable VirtualFile getVirtualFile() {
     return mySmartPointer.getVirtualFile();
   }
 
@@ -385,8 +380,7 @@ public class UsageInfo {
   }
 
   // creates new smart pointers
-  @Nullable("null means could not copy because info is no longer valid")
-  public UsageInfo copy() {
+  public @Nullable("null means could not copy because info is no longer valid") UsageInfo copy() {
     PsiElement element = mySmartPointer.getElement();
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(getProject());
     PsiFile containingFile = myPsiFileRange == null ? null : myPsiFileRange.getContainingFile();

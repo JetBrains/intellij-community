@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.lang.LanguageMatcher;
@@ -86,9 +86,8 @@ public class LocalSearchScope extends SearchScope {
     return myIgnoreInjectedPsi;
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return myDisplayName == null ? super.getDisplayName() : myDisplayName;
   }
 
@@ -132,14 +131,12 @@ public class LocalSearchScope extends SearchScope {
     return result;
   }
 
-  @NotNull
-  public LocalSearchScope intersectWith(@NotNull LocalSearchScope scope2) {
+  public @NotNull LocalSearchScope intersectWith(@NotNull LocalSearchScope scope2) {
     if (equals(scope2)) return this;
     return intersection(this, scope2);
   }
 
-  @NotNull
-  private static LocalSearchScope intersection(@NotNull LocalSearchScope scope1, @NotNull LocalSearchScope scope2) {
+  private static @NotNull LocalSearchScope intersection(@NotNull LocalSearchScope scope1, @NotNull LocalSearchScope scope2) {
     List<PsiElement> result = new ArrayList<>();
     for (PsiElement element1 : scope1.myScope) {
       for (PsiElement element2 : scope2.myScope) {
@@ -152,9 +149,8 @@ public class LocalSearchScope extends SearchScope {
     return new LocalSearchScope(PsiUtilCore.toPsiElementArray(result), null, scope1.myIgnoreInjectedPsi || scope2.myIgnoreInjectedPsi);
   }
 
-  @NotNull
   @Override
-  public SearchScope intersectWith(@NotNull SearchScope scope2) {
+  public @NotNull SearchScope intersectWith(@NotNull SearchScope scope2) {
     if (scope2 instanceof LocalSearchScope) {
       return intersectWith((LocalSearchScope)scope2);
     }
@@ -163,8 +159,7 @@ public class LocalSearchScope extends SearchScope {
     return ((GlobalSearchScope)scope2).intersectWith(this);
   }
 
-  @Nullable
-  private LocalSearchScope tryIntersectNonPhysicalWith(@NotNull GlobalSearchScope scope) {
+  private @Nullable LocalSearchScope tryIntersectNonPhysicalWith(@NotNull GlobalSearchScope scope) {
     Project project = scope.getProject();
     for (PsiElement element : myScope) {
       PsiFile containingFile = element.getContainingFile();
@@ -177,8 +172,7 @@ public class LocalSearchScope extends SearchScope {
     return this;
   }
 
-  @Nullable
-  private static PsiElement intersectScopeElements(@NotNull PsiElement element1, @NotNull PsiElement element2) {
+  private static @Nullable PsiElement intersectScopeElements(@NotNull PsiElement element1, @NotNull PsiElement element2) {
     if (PsiTreeUtil.isContextAncestor(element1, element2, false)) return element2;
     if (PsiTreeUtil.isContextAncestor(element2, element1, false)) return element1;
     if (PsiTreeUtil.isAncestor(element1, element2, false)) return element2;
@@ -192,8 +186,7 @@ public class LocalSearchScope extends SearchScope {
   }
 
   @Override
-  @NotNull
-  public SearchScope union(@NotNull SearchScope scope) {
+  public @NotNull SearchScope union(@NotNull SearchScope scope) {
     if (scope instanceof LocalSearchScope) return union((LocalSearchScope)scope);
     return ((GlobalSearchScope)scope).union(this);
   }
@@ -203,8 +196,7 @@ public class LocalSearchScope extends SearchScope {
     return isInScope(file);
   }
 
-  @NotNull
-  public SearchScope union(@NotNull LocalSearchScope scope2) {
+  public @NotNull SearchScope union(@NotNull LocalSearchScope scope2) {
     if (equals(scope2)) return this;
     PsiElement[] elements1 = getScope();
     PsiElement[] elements2 = scope2.getScope();
@@ -251,9 +243,8 @@ public class LocalSearchScope extends SearchScope {
     return false;
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static LocalSearchScope getScopeRestrictedByFileTypes(@NotNull LocalSearchScope scope, FileType @NotNull ... fileTypes) {
+  public static @NotNull LocalSearchScope getScopeRestrictedByFileTypes(@NotNull LocalSearchScope scope, FileType @NotNull ... fileTypes) {
     if (fileTypes.length == 0) throw new IllegalArgumentException("empty fileTypes");
     if (scope == EMPTY) {
       return EMPTY;
@@ -275,8 +266,7 @@ public class LocalSearchScope extends SearchScope {
   }
 
   @Contract(pure = true)
-  @NotNull
-  static LocalSearchScope getScopeRestrictedByFileLanguage(@NotNull LocalSearchScope scope, @NotNull LanguageMatcher matcher) {
+  static @NotNull LocalSearchScope getScopeRestrictedByFileLanguage(@NotNull LocalSearchScope scope, @NotNull LanguageMatcher matcher) {
     if (scope == EMPTY) {
       return EMPTY;
     }

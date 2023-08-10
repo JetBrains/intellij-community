@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.project.Project;
@@ -20,8 +20,7 @@ public interface AppUIExecutor extends BaseExpirableExecutor<AppUIExecutor> {
    * Creates a EDT-based executor working with the given modality state.
    * @see ModalityState
    */
-  @NotNull
-  static AppUIExecutor onUiThread(@NotNull ModalityState modality) {
+  static @NotNull AppUIExecutor onUiThread(@NotNull ModalityState modality) {
     return AsyncExecutionService.getService().createUIExecutor(modality);
   }
 
@@ -29,8 +28,7 @@ public interface AppUIExecutor extends BaseExpirableExecutor<AppUIExecutor> {
    * Creates a Write-thread-based executor working with the given modality state.
    * @see ModalityState
    */
-  @NotNull
-  static AppUIExecutor onWriteThread(@NotNull ModalityState modality) {
+  static @NotNull AppUIExecutor onWriteThread(@NotNull ModalityState modality) {
     return AsyncExecutionService.getService().createWriteThreadExecutor(modality);
   }
 
@@ -38,8 +36,7 @@ public interface AppUIExecutor extends BaseExpirableExecutor<AppUIExecutor> {
    * Creates a EDT-based executor working with the default modality state.
    * @see ModalityState#defaultModalityState()
    */
-  @NotNull
-  static AppUIExecutor onUiThread() {
+  static @NotNull AppUIExecutor onUiThread() {
     return onUiThread(ModalityState.defaultModalityState());
   }
 
@@ -47,8 +44,7 @@ public interface AppUIExecutor extends BaseExpirableExecutor<AppUIExecutor> {
    * Creates a Write-thread-based executor working with the default modality state.
    * @see ModalityState#defaultModalityState()
    */
-  @NotNull
-  static AppUIExecutor onWriteThread() {
+  static @NotNull AppUIExecutor onWriteThread() {
     return onWriteThread(ModalityState.defaultModalityState());
   }
 

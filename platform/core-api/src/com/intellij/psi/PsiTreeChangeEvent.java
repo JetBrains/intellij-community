@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NonNls;
@@ -41,21 +27,20 @@ import java.util.EventObject;
  * @see PsiTreeChangeListener
  */
 public abstract class PsiTreeChangeEvent extends EventObject {
-  @NonNls public static final String PROP_FILE_NAME = "fileName";
-  @NonNls public static final String PROP_DIRECTORY_NAME  = "directoryName";
-  @NonNls public static final String PROP_WRITABLE = "writable";
+  public static final @NonNls String PROP_FILE_NAME = "fileName";
+  public static final @NonNls String PROP_DIRECTORY_NAME  = "directoryName";
+  public static final @NonNls String PROP_WRITABLE = "writable";
 
-  @NonNls public static final String PROP_ROOTS = "roots";
+  public static final @NonNls String PROP_ROOTS = "roots";
 
-  @NonNls public static final String PROP_FILE_TYPES = "propFileTypes";
+  public static final @NonNls String PROP_FILE_TYPES = "propFileTypes";
 
   /**
    * A property change event with this property is fired when some change (e.g. VFS) somewhere in the project has occurred,
    * and there was no PSI loaded for that area, so no more specific events about that PSI can be generated. Given the absence
    * of specific information, the most likely strategy for listeners is to clear all their cache.
    */
-  @NonNls
-  public static final String PROP_UNLOADED_PSI = "propUnloadedPsi";
+  public static final @NonNls String PROP_UNLOADED_PSI = "propUnloadedPsi";
 
   protected PsiElement myParent;
   protected PsiElement myOldParent;
@@ -117,8 +102,7 @@ public abstract class PsiTreeChangeEvent extends EventObject {
     return myNewValue;
   }
 
-  @Nullable
-  public PsiFile getFile() {
+  public @Nullable PsiFile getFile() {
     return myFile;
   }
 }

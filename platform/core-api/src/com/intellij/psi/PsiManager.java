@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.Disposable;
@@ -22,8 +22,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @param project the project for which the PSI manager is requested.
    * @return the PSI manager instance.
    */
-  @NotNull
-  public static PsiManager getInstance(@NotNull Project project) {
+  public static @NotNull PsiManager getInstance(@NotNull Project project) {
     return project.getService(PsiManager.class);
   }
 
@@ -32,8 +31,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @return the project instance
    */
-  @NotNull
-  public abstract Project getProject();
+  public abstract @NotNull Project getProject();
 
   /**
    * Returns the PSI file corresponding to the specified virtual file.
@@ -45,8 +43,7 @@ public abstract class PsiManager extends UserDataHolderBase {
   @RequiresReadLock
   public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file);
 
-  @Nullable
-  public abstract FileViewProvider findViewProvider(@NotNull VirtualFile file);
+  public abstract @Nullable FileViewProvider findViewProvider(@NotNull VirtualFile file);
 
   /**
    * Returns the PSI directory corresponding to the specified virtual file system directory.
@@ -54,8 +51,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @param file the directory for which the PSI is requested.
    * @return the PSI directory, or {@code null} if there is no PSI for the specified directory in this project.
    */
-  @Nullable
-  public abstract PsiDirectory findDirectory(@NotNull VirtualFile file);
+  public abstract @Nullable PsiDirectory findDirectory(@NotNull VirtualFile file);
 
   /**
    * Checks if the specified two PSI elements (possibly invalid) represent the same source element
@@ -111,8 +107,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @return the modification tracker instance.
    */
-  @NotNull
-  public abstract PsiModificationTracker getModificationTracker();
+  public abstract @NotNull PsiModificationTracker getModificationTracker();
 
   /**
    * Notifies the PSI manager that a batch operation sequentially processing multiple files
