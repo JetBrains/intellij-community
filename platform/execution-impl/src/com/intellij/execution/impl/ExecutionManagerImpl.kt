@@ -34,10 +34,7 @@ import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
@@ -89,6 +86,12 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     @JvmStatic
     fun getEnvironmentDataContext(): DataContext? {
       return currentThreadContext()[EnvDataContextElement]?.dataContext
+    }
+
+    @Internal
+    fun withEnvironmentDataContext(dataContext: DataContext?): AccessToken {
+      val context = currentThreadContext()
+      return installThreadContext(context + EnvDataContextElement(dataContext), true)
     }
 
     private class EnvDataContextElement(val dataContext: DataContext?) : CoroutineContext.Element {
@@ -683,8 +686,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
   @ApiStatus.Internal
   fun executeConfiguration(environment: ExecutionEnvironment, showSettings: Boolean, assignNewId: Boolean = true) {
-    val context = currentThreadContext()
-    installThreadContext(context + EnvDataContextElement(environment.dataContext), true).use {
+    withEnvironmentDataContext(environment.dataContext).use {
       val runnerAndConfigurationSettings = environment.runnerAndConfigurationSettings
       val project = environment.project
       val runner = environment.runner
