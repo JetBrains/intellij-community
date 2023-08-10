@@ -190,6 +190,6 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
 
   @Override
   public String getToolTip(boolean composite) {
-    return LayeredIcon.combineIconTooltips(myIcons);
+    return LayeredIcon.Companion.combineIconTooltips(myIcons);
   }
 }

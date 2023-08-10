@@ -11,12 +11,14 @@ import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.IconWithToolTip
 import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.scale.UserScaleContext
-import com.intellij.util.ArrayUtil
+import com.intellij.util.ArrayUtilRt
 import com.intellij.util.IconUtil.copy
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBCachingScalableIcon
 import org.intellij.lang.annotations.MagicConstant
 import java.awt.Component
 import java.awt.Graphics
+import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.SwingConstants
 import kotlin.math.ceil
@@ -27,41 +29,74 @@ import kotlin.math.min
 private val LOG = logger<LayeredIcon>()
 
 open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, CompositeIcon, IconWithToolTip {
-  val allLayers: Array<Icon?>
-  private var scaledIcons: Array<Icon>? = null
-  private val disabledLayers: BooleanArray
-  private val hShifts: IntArray
-  private val vShifts: IntArray
+  private val iconListSupplier: Supplier<Array<Icon?>>
+  private var scaledIcons: Array<Icon?>?
+  private var disabledLayers: BooleanArray
+  private var hShifts: IntArray
+  private var vShifts: IntArray
   private var xShift = 0
   private var yShift = 0
   private var width = 0
   private var height = 0
 
   init {
-    scaleContext.addUpdateListener(UserScaleContext.UpdateListener(::updateSize))
+    scaleContext.addUpdateListener(UserScaleContext.UpdateListener { updateSize(allLayers) })
+    @Suppress("LeakingThis")
     setAutoUpdateScaleContext(false)
   }
 
   constructor(layerCount: Int) {
-    allLayers = arrayOfNulls(layerCount)
+    val arrayOfNulls = arrayOfNulls<Icon>(layerCount)
+    iconListSupplier = Supplier { arrayOfNulls }
     disabledLayers = BooleanArray(layerCount)
     hShifts = IntArray(layerCount)
     vShifts = IntArray(layerCount)
+    scaledIcons = null
   }
 
-  constructor(vararg icons: Icon) : this(icons.size) {
-    for (i in icons.indices) {
-      setIcon(icons[i], i)
+  constructor(vararg icons: Icon) {
+    val layerCount = icons.size
+
+    val arrayOfNulls = arrayOfNulls<Icon>(layerCount)
+    icons.copyInto(arrayOfNulls)
+    iconListSupplier = Supplier { arrayOfNulls }
+
+    disabledLayers = BooleanArray(layerCount)
+    hShifts = IntArray(layerCount)
+    vShifts = IntArray(layerCount)
+    scaledIcons = null
+    updateSize(arrayOfNulls)
+  }
+
+  private constructor(icons: Supplier<Array<Icon>>) {
+    iconListSupplier = SynchronizedClearableLazy {
+      @Suppress("UNCHECKED_CAST")
+      val result = icons.get() as Array<Icon?>
+
+      disabledLayers = BooleanArray(result.size)
+      hShifts = IntArray(result.size)
+      vShifts = IntArray(result.size)
+      updateSize(result)
+
+      result
     }
+
+    disabledLayers = ArrayUtilRt.EMPTY_BOOLEAN_ARRAY
+    hShifts = ArrayUtilRt.EMPTY_INT_ARRAY
+    vShifts = ArrayUtilRt.EMPTY_INT_ARRAY
+    scaledIcons = null
   }
 
   companion object {
     @JvmField
-    val ADD_WITH_DROPDOWN: Icon = LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown)
+    val ADD_WITH_DROPDOWN: Icon = LayeredIcon(Supplier { arrayOf(AllIcons.General.Add, AllIcons.General.Dropdown) })
     @JvmField
-    val EDIT_WITH_DROPDOWN: Icon = LayeredIcon(AllIcons.Actions.Edit, AllIcons.General.Dropdown)
+    val EDIT_WITH_DROPDOWN: Icon = LayeredIcon(Supplier { arrayOf(AllIcons.Actions.Edit, AllIcons.General.Dropdown) })
     @JvmField
-    val GEAR_WITH_DROPDOWN: Icon = LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown)
+    val GEAR_WITH_DROPDOWN: Icon = LayeredIcon(Supplier { arrayOf(AllIcons.General.GearPlain, AllIcons.General.Dropdown) })
+
+    @JvmStatic
+    fun layeredIcon(icons: Supplier<Array<Icon>>): Icon = LayeredIcon(icons)
 
     @JvmStatic
     fun create(backgroundIcon: Icon?, foregroundIcon: Icon?): Icon {
@@ -71,16 +106,16 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
       return layeredIcon
     }
 
-    @JvmStatic
     fun combineIconTooltips(icons: Array<Icon?>): @NlsContexts.Tooltip String? {
-      // If a layered icon contains only a single non-null layer and other layers are null, its tooltip is not a composite one.
+      // If a layered icon contains only a single non-null layer and other layers are null, its tooltip is not composite.
       var singleIcon: Icon? = null
       for (icon in icons) {
         if (icon != null) {
           if (singleIcon != null) {
             val result: @NlsContexts.Tooltip StringBuilder = StringBuilder()
-            val seenTooltips: MutableSet<String> = HashSet()
-            buildCompositeTooltip(icons, result, seenTooltips)
+            val seenTooltips = HashSet<String>()
+            buildCompositeTooltip(icons = icons, result = result, seenTooltips = seenTooltips)
+            @Suppress("HardCodedStringLiteral")
             return result.toString()
           }
           singleIcon = icon
@@ -93,39 +128,41 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     }
   }
 
-  protected constructor(icon: LayeredIcon) : super(icon) {
-    allLayers = ArrayUtil.copyOf(icon.allLayers)!!
+  private constructor(icon: LayeredIcon, replacer: IconReplacer?) : super(icon) {
+    val icons = icon.iconListSupplier.get().copyOf()
+    if (replacer != null) {
+      for ((i, subIcon) in icons.withIndex()) {
+        icons[i] = replacer.replaceIcon(subIcon)
+      }
+    }
+    iconListSupplier = Supplier { icons }
+
     scaledIcons = null
-    disabledLayers = ArrayUtil.copyOf(icon.disabledLayers)
-    hShifts = ArrayUtil.copyOf(icon.hShifts)
-    vShifts = ArrayUtil.copyOf(icon.vShifts)
+    disabledLayers = icon.disabledLayers.copyOf()
+    hShifts = icon.hShifts.copyOf()
+    vShifts = icon.vShifts.copyOf()
     xShift = icon.xShift
     yShift = icon.yShift
     width = icon.width
     height = icon.height
   }
 
-  override fun replaceBy(replacer: IconReplacer): LayeredIcon {
-    val result = LayeredIcon(this)
-    for (i in result.allLayers.indices) {
-      result.allLayers[i] = replacer.replaceIcon(result.allLayers[i])
-    }
-    return result
-  }
+  val allLayers: Array<Icon?>
+    get() = iconListSupplier.get()
 
-  override fun copy(): LayeredIcon {
-    return LayeredIcon(this)
-  }
+  override fun replaceBy(replacer: IconReplacer) = LayeredIcon(icon = this, replacer = replacer)
+
+  override fun copy(): LayeredIcon = LayeredIcon(icon = this, replacer = null)
 
   override fun deepCopy(): LayeredIcon {
-    val icon = LayeredIcon(this)
-    for (i in icon.allLayers.indices) {
-      icon.allLayers[i] = if (icon.allLayers[i] == null) null else copy(icon.allLayers[i]!!, null)
-    }
-    return icon
+    return LayeredIcon(icon = this, replacer = object : IconReplacer {
+      override fun replaceIcon(icon: Icon?): Icon? {
+        return icon?.let { copy(icon = it, ancestor = null) }
+      }
+    })
   }
 
-  private fun myScaledIcons(): Array<Icon> {
+  private fun myScaledIcons(): Array<Icon?> {
     scaledIcons?.let {
       return it
     }
@@ -134,7 +171,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
 
   override fun withIconPreScaled(preScaled: Boolean): LayeredIcon {
     super.withIconPreScaled(preScaled)
-    updateSize()
+    updateSize(allLayers)
     return this
   }
 
@@ -166,11 +203,12 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
       icon.checkIHaventIconInsideMe(this)
     }
 
+    val allLayers = allLayers
     allLayers[layer] = icon
     scaledIcons = null
     hShifts[layer] = hShift
     vShifts[layer] = vShift
-    updateSize()
+    updateSize(allLayers)
   }
 
   /**
@@ -232,6 +270,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     setIcon(icon, layer, x, y)
   }
 
+  @Suppress("SpellCheckingInspection")
   private fun checkIHaventIconInsideMe(icon: Icon) {
     LOG.assertTrue(icon !== this)
     for (child in allLayers) {
@@ -241,21 +280,21 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     }
   }
 
-  override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     scaleContext.update()
     val icons = myScaledIcons()
-    for (i in icons.indices) {
-      val icon = icons[i]
-      if (icon == null || disabledLayers[i]) continue
+    for ((i, icon) in icons.withIndex()) {
+      if (icon == null || disabledLayers[i]) {
+        continue
+      }
+
       val xOffset = floor(x + scaleVal((xShift + getHShift(i)).toDouble(), ScaleType.OBJ_SCALE)).toInt()
       val yOffset = floor(y + scaleVal((yShift + getVShift(i)).toDouble(), ScaleType.OBJ_SCALE)).toInt()
       icon.paintIcon(c, g, xOffset, yOffset)
     }
   }
 
-  fun isLayerEnabled(layer: Int): Boolean {
-    return !disabledLayers[layer]
-  }
+  fun isLayerEnabled(layer: Int): Boolean = !disabledLayers[layer]
 
   fun setLayerEnabled(layer: Int, enabled: Boolean) {
     if (disabledLayers[layer] == enabled) {
@@ -266,13 +305,17 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
 
   override fun getIconWidth(): Int {
     scaleContext.update()
-    if (width <= 1) updateSize()
+    if (width <= 1) {
+      updateSize(allLayers)
+    }
     return ceil(scaleVal(width.toDouble(), ScaleType.OBJ_SCALE)).toInt()
   }
 
   override fun getIconHeight(): Int {
     scaleContext.update()
-    if (height <= 1) updateSize()
+    if (height <= 1) {
+      updateSize(allLayers)
+    }
     return ceil(scaleVal(height.toDouble(), ScaleType.OBJ_SCALE)).toInt()
   }
 
@@ -284,14 +327,13 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     return floor(scaleVal(vShifts[i].toDouble(), ScaleType.USR_SCALE)).toInt()
   }
 
-  protected fun updateSize() {
+  protected fun updateSize(allLayers: Array<Icon?>) {
     var minX = Int.MAX_VALUE
     var maxX = Int.MIN_VALUE
     var minY = Int.MAX_VALUE
     var maxY = Int.MIN_VALUE
     var allIconsAreNull = true
-    for (i in allLayers.indices) {
-      val icon = allLayers[i]
+    for ((i, icon) in allLayers.withIndex()) {
       if (icon == null) {
         continue
       }
@@ -319,8 +361,8 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
 
   override fun getDarkIcon(isDark: Boolean): Icon {
     val newIcon = copy()
-    for (i in newIcon.allLayers.indices) {
-      newIcon.allLayers[i] = if (newIcon.allLayers[i] == null) null else getDarkIcon(newIcon.allLayers[i]!!, isDark)
+    for ((i, icon) in newIcon.allLayers.withIndex()) {
+      newIcon.allLayers[i] = icon?.let { getDarkIcon(icon = it, dark = isDark) }
     }
     return newIcon
   }
