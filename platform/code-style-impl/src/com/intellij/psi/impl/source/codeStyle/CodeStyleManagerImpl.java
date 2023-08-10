@@ -11,6 +11,7 @@ import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -31,6 +32,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -520,44 +522,52 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   @Override
   public void scheduleReformatWhenSettingsComputed(@NotNull PsiFile file) {
     if (LightVirtualFile.shouldSkipEventSystem(file.getViewProvider().getVirtualFile())) {
-      commitAndFormat(file);
+      ensureDocumentCommitted(file);
+      formatBlockingPostprocess(file);
       return;
     }
 
     final Runnable commandRunnable = () -> {
       if (file.isValid()) {
         WriteCommandAction.runWriteCommandAction(
-          myProject, CodeStyleBundle.message("command.name.reformat"), null, () -> commitAndFormat(file), file);
+          myProject, CodeStyleBundle.message("command.name.reformat"), null, () -> formatBlockingPostprocess(file), file);
       }
     };
 
     CodeStyleCachingService.getInstance(myProject).scheduleWhenSettingsComputed(
       file,
       () -> {
-        //noinspection SSBasedInspection
         if (ApplicationManager.getApplication().isUnitTestMode()) {
+          ensureDocumentCommitted(file);
           commandRunnable.run();
         }
         else {
-          ApplicationManager.getApplication().invokeLater(commandRunnable, ModalityState.nonModal(), file.getProject().getDisposed());
+          ReadAction.nonBlocking(
+                      () -> {
+                        CodeFormattingData data = CodeFormattingData.getOrCreate(file);
+                        data.prepare(file, Collections.singletonList(file.getTextRange()));
+                        return data;
+                      }
+                    )
+                    .withDocumentsCommitted(myProject)
+                    .expireWhen(() -> myProject.isDisposed())
+                    .finishOnUiThread(ModalityState.nonModal(), data -> commandRunnable.run())
+                    .submit(AppExecutorUtil.getAppExecutorService());
         }
       }
     );
   }
 
-  private void commitAndFormat(@NotNull PsiFile file) {
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    Document document = documentManager.getDocument(file);
-    if (document != null) {
-      documentManager.commitDocument(document);
-    }
+  private void formatBlockingPostprocess(@NotNull PsiFile file) {
     PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> reformat(ensureValid(file)));
   }
 
   @NotNull
   private PsiFile ensureValid(@NotNull PsiFile file) {
     if (!file.isValid()) {
-      return PsiUtilCore.getPsiFile(myProject, file.getViewProvider().getVirtualFile());
+      PsiFile fileToUse = PsiUtilCore.getPsiFile(myProject, file.getViewProvider().getVirtualFile());
+      CodeFormattingData.copy(file, fileToUse);
+      return fileToUse;
     }
     return file;
   }

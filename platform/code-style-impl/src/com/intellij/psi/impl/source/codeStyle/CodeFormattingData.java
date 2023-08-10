@@ -33,6 +33,10 @@ public final class CodeFormattingData {
     }
     return formattingData;
   }
+  
+  public static void copy(@NotNull PsiFile source, @NotNull PsiFile target) {
+    target.putUserData(CODE_FORMATTING_DATA_KEY, source.getUserData(CODE_FORMATTING_DATA_KEY));
+  }
 
   public void prepare(@NotNull PsiFile file, @NotNull List<TextRange> ranges) {
     CodeFormattingData formattingData = getOrCreate(file);
