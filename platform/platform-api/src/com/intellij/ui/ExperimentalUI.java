@@ -75,11 +75,6 @@ public abstract class ExperimentalUI {
     return NewUiValue.isEnabled();
   }
 
-  public static void overrideNewUiForOneRemDevSession(boolean newUi) {
-    NewUiValue.overrideNewUiForOneRemDevSession(newUi);
-    getInstance().lookAndFeelChanged();
-  }
-
   public static void setNewUI(boolean newUI) {
     getInstance().setNewUIInternal(newUI, true);
   }
