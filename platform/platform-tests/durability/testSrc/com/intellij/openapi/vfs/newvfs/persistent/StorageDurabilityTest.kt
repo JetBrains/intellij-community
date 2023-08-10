@@ -153,7 +153,7 @@ class StorageUser : User {
   }
 
   override fun run(userAgent: UserAgent) {
-    val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     val random = userAgent.random
     val timesToKill = 10
     val lastAcknowledgedState = ByteArray(StorageDurabilityTest.stateSize)
@@ -233,7 +233,7 @@ class StorageUser : User {
 
           val killerJob = coroutineScope.launch(start = CoroutineStart.LAZY) {
             val delayNs = random.nextLong(25.milliseconds.inWholeNanoseconds)
-            LockSupport.parkNanos(delayNs);
+            LockSupport.parkNanos(delayNs) // delay from coroutines works in milliseconds only
             app.kill()
           }
           try {
