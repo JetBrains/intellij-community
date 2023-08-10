@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinPsiModificationUtils")
 
 package org.jetbrains.kotlin.idea.base.psi
@@ -118,22 +118,23 @@ fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement {
     return addAfter(newDefaultValue, eq) as KtExpression
 }
 
+/**
+ * Moves the lambda argument inside parentheses and replaces it with the specified replacement expression.
+ *
+ * @param replacement The replacement expression to be used.
+ * @param lambdaArgumentName The name of the lambda argument; use `null` if no name is needed.
+ * @return The modified `KtCallExpression` with the lambda argument moved inside parentheses and replaced with
+ * the specified replacement expression.
+ */
 fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
     replacement: KtExpression,
-    functionLiteralArgumentName: Name?,
-    withNameCheck: Boolean = true,
+    lambdaArgumentName: Name?,
 ): KtCallExpression {
     val oldCallExpression = parent as KtCallExpression
     val newCallExpression = oldCallExpression.copy() as KtCallExpression
 
     val psiFactory = KtPsiFactory(project)
-
-    val argument =
-        if (withNameCheck && shouldLambdaParameterBeNamed(newCallExpression.getValueArgumentsInParentheses(), oldCallExpression)) {
-            psiFactory.createArgument(replacement, functionLiteralArgumentName)
-        } else {
-            psiFactory.createArgument(replacement)
-        }
+    val argument = psiFactory.createArgument(replacement, lambdaArgumentName)
 
     val functionLiteralArgument = newCallExpression.lambdaArguments.firstOrNull()!!
     val valueArgumentList = newCallExpression.valueArgumentList ?: psiFactory.createCallArguments("()")
@@ -149,8 +150,13 @@ fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
     return oldCallExpression.replace(newCallExpression) as KtCallExpression
 }
 
-private fun shouldLambdaParameterBeNamed(args: List<ValueArgument>, callExpr: KtCallExpression): Boolean {
+/**
+ * Returns `true` if the lambda argument should be named, `false` otherwise.
+ */
+fun shouldLambdaParameterBeNamed(argument: KtLambdaArgument): Boolean {
+    val callExpression = argument.parent as KtCallExpression
+    val args = callExpression.getValueArgumentsInParentheses()
     if (args.any { it.isNamed() }) return true
-    val callee = (callExpr.calleeExpression?.mainReference?.resolve() as? KtFunction) ?: return false
+    val callee = (callExpression.calleeExpression?.mainReference?.resolve() as? KtFunction) ?: return false
     return if (callee.valueParameters.any { it.isVarArg }) true else callee.valueParameters.size - 1 > args.size
 }
