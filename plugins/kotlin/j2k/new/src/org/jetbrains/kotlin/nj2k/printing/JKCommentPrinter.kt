@@ -41,22 +41,22 @@ internal class JKCommentPrinter(private val printer: JKPrinter) {
     private fun String.hasNoLineBreakAfterSingleLineComment() = lastIndexOf('\n') < lastIndexOf("//")
 
 
-    fun printLeadingComments(element: JKFormattingOwner) {
-        val text = element.leadingComments.createText()
+    fun printCommentsAfter(element: JKFormattingOwner) {
+        val text = element.commentsAfter.createText()
         printer.print(text)
 
-        val addNewLine = element.hasLeadingLineBreak || text.hasNoLineBreakAfterSingleLineComment()
+        val addNewLine = element.hasLineBreakAfter || text.hasNoLineBreakAfterSingleLineComment()
         if (addNewLine) printer.println()
     }
 
 
-    fun printTrailingComments(element: JKFormattingOwner) {
-        val text = element.trailingComments.createText()
+    fun printCommentsBefore(element: JKFormattingOwner) {
+        val text = element.commentsBefore.createText()
         printer.print(text)
 
-        val addNewLine = element.hasTrailingLineBreak
-                || element is JKDeclaration && element.trailingComments.isNotEmpty() // add new line between comment & declaration
-                || text.hasNoLineBreakAfterSingleLineComment()
+        val addNewLine = element.hasLineBreakBefore
+                         || element is JKDeclaration && element.commentsBefore.isNotEmpty() // add new line between comment & declaration
+                         || text.hasNoLineBreakAfterSingleLineComment()
 
         if (addNewLine) printer.println()
     }

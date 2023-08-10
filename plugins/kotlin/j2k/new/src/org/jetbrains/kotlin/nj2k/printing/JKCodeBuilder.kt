@@ -31,11 +31,11 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
     private inner class Visitor : JKVisitorWithCommentsPrinting() {
         override fun printLeftNonCodeElements(element: JKFormattingOwner) {
-            commentPrinter.printTrailingComments(element)
+            commentPrinter.printCommentsBefore(element)
         }
 
         override fun printRightNonCodeElements(element: JKFormattingOwner) {
-            commentPrinter.printLeadingComments(element)
+            commentPrinter.printCommentsAfter(element)
         }
 
         private fun renderTokenElement(tokenElement: JKTokenElement) {

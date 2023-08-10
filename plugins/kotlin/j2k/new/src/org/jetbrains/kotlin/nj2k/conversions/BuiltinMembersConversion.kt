@@ -37,10 +37,10 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
         val newSelector = conversion.createBuilder().build(selector)
 
         if (this is JKQualifiedExpression && conversion.replaceType == REPLACE_WITH_QUALIFIER) {
-            newSelector.leadingComments += receiver.trailingComments
-            newSelector.leadingComments += receiver.leadingComments
-            newSelector.leadingComments += selector.trailingComments
-            newSelector.leadingComments += selector.leadingComments
+            newSelector.commentsAfter += receiver.commentsBefore
+            newSelector.commentsAfter += receiver.commentsAfter
+            newSelector.commentsAfter += selector.commentsBefore
+            newSelector.commentsAfter += selector.commentsAfter
         }
 
         return when (conversion.replaceType) {

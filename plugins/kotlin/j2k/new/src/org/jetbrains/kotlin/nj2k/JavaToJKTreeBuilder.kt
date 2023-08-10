@@ -79,16 +79,16 @@ class JavaToJKTreeBuilder(
     private val formattingCollector = FormattingCollector()
 
     // we don't want to capture comments of previous declaration/statement
-    private fun PsiElement.takeLeadingCommentsNeeded() =
+    private fun PsiElement.takeCommentsAfterNeeded() =
         this !is PsiMember && this !is PsiStatement
 
     private fun <T : JKFormattingOwner> T.withFormattingFrom(
         psi: PsiElement?,
         assignLineBreaks: Boolean = false,
-        takeTrailingComments: Boolean = true,
-        takeLeadingComments: Boolean = psi?.takeLeadingCommentsNeeded() ?: false
+        takeCommentsBefore: Boolean = true,
+        takeCommentsAfter: Boolean = psi?.takeCommentsAfterNeeded() ?: false
     ): T = with(formattingCollector) {
-        takeFormattingFrom(this@withFormattingFrom, psi, assignLineBreaks, takeTrailingComments, takeLeadingComments)
+        takeFormattingFrom(this@withFormattingFrom, psi, assignLineBreaks, takeCommentsBefore, takeCommentsAfter)
         this@withFormattingFrom
     }
 
@@ -97,10 +97,10 @@ class JavaToJKTreeBuilder(
         this@withLineBreaksFrom
     }
 
-    private fun <O : JKFormattingOwner> O.withLeadingCommentsWithParent(psi: PsiElement?) = with(formattingCollector) {
-        if (psi == null) return@with this@withLeadingCommentsWithParent
-        this@withLeadingCommentsWithParent.leadingComments += psi.leadingCommentsWithParent()
-        return this@withLeadingCommentsWithParent
+    private fun <O : JKFormattingOwner> O.withCommentsAfterWithParent(psi: PsiElement?) = with(formattingCollector) {
+        if (psi == null) return@with this@withCommentsAfterWithParent
+        this@withCommentsAfterWithParent.commentsAfter += psi.commentsAfterWithParent()
+        return this@withCommentsAfterWithParent
     }
 
     private fun PsiJavaFile.toJK(): JKFile =
@@ -115,7 +115,7 @@ class JavaToJKTreeBuilder(
             val innerComments = this?.collectDescendantsOfType<PsiComment>()?.map { comment ->
                 JKComment(comment.text)
             }.orEmpty()
-            importList.trailingComments += innerComments
+            importList.commentsBefore += innerComments
         }
 
     private fun PsiPackageStatement.toJK(): JKPackageDeclaration =
@@ -669,8 +669,8 @@ class JavaToJKTreeBuilder(
                                 JKKtSpreadOperator(lastExpressionType.toJK())
                             ).withFormattingFrom(jkExpressions.last())
                         staredExpression.expression.also {
-                            it.hasLeadingLineBreak = false
-                            it.hasTrailingLineBreak = false
+                            it.hasLineBreakAfter = false
+                            it.hasLineBreakBefore = false
                         }
                         jkExpressions.dropLast(1) + staredExpression
                     } else jkExpressions
@@ -786,11 +786,11 @@ class JavaToJKTreeBuilder(
             ).also {
                 it.leftBrace.withFormattingFrom(
                     lBrace,
-                    takeLeadingComments = false
+                    takeCommentsAfter = false
                 ) // do not capture comments which belongs to following declarations
                 it.rightBrace.withFormattingFrom(rBrace)
                 it.declarations.lastOrNull()?.let { lastMember ->
-                    lastMember.withLeadingCommentsWithParent(lastMember.psi)
+                    lastMember.withCommentsAfterWithParent(lastMember.psi)
                 }
             }
 

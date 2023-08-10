@@ -38,10 +38,10 @@ abstract class JKBlock : JKTreeElement() {
 
 
 object JKBodyStub : JKBlock() {
-    override val trailingComments: MutableList<JKComment> = mutableListOf()
-    override val leadingComments: MutableList<JKComment> = mutableListOf()
-    override var hasTrailingLineBreak = false
-    override var hasLeadingLineBreak = false
+    override val commentsBefore: MutableList<JKComment> = mutableListOf()
+    override val commentsAfter: MutableList<JKComment> = mutableListOf()
+    override var hasLineBreakBefore = false
+    override var hasLineBreakAfter = false
 
     override fun copy(): JKTreeElement = this
 

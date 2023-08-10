@@ -17,23 +17,23 @@ class FormattingCollector {
         element: JKFormattingOwner,
         psi: PsiElement?,
         saveLineBreaks: Boolean,
-        takeTrailingComments: Boolean,
-        takeLeadingComments: Boolean
+        takeCommentsBefore: Boolean,
+        takeCommentsAfter: Boolean
     ) {
         if (psi == null || psi is PsiCompiledElement) return
-        val (leftTokens, rightTokens) = psi.collectComments(takeTrailingComments, takeLeadingComments)
-        element.trailingComments += leftTokens
-        element.leadingComments += rightTokens
+        val (leftTokens, rightTokens) = psi.collectComments(takeCommentsBefore, takeCommentsAfter)
+        element.commentsBefore += leftTokens
+        element.commentsAfter += rightTokens
         if (saveLineBreaks) {
-            element.hasLeadingLineBreak = psi.hasLineBreakAfter()
-            element.hasTrailingLineBreak = psi.hasLineBreakBefore()
+            element.hasLineBreakAfter = psi.hasLineBreakAfter()
+            element.hasLineBreakBefore = psi.hasLineBreakBefore()
         }
     }
 
     fun takeLineBreaksFrom(element: JKFormattingOwner, psi: PsiElement?) {
         if (psi == null) return
-        element.hasLeadingLineBreak = psi.hasLineBreakAfter()
-        element.hasTrailingLineBreak = psi.hasLineBreakBefore()
+        element.hasLineBreakAfter = psi.hasLineBreakAfter()
+        element.hasLineBreakBefore = psi.hasLineBreakBefore()
     }
 
     private fun PsiElement.asComment(): JKComment? {
@@ -65,37 +65,37 @@ class FormattingCollector {
             .mapNotNull { it.asComment() }
             .toList()
 
-    fun PsiElement.leadingCommentsWithParent(): Sequence<JKComment> {
-        val innerElements = leadingComments()
+    fun PsiElement.commentsAfterWithParent(): Sequence<JKComment> {
+        val innerElements = commentsAfter()
         return (if (innerElements.lastOrNull()?.nextSibling == null && this is PsiKeyword)
-            innerElements + parent?.leadingComments().orEmpty()
+            innerElements + parent?.commentsAfter().orEmpty()
         else innerElements).mapNotNull { it.asComment() }
     }
 
-    private fun PsiElement.trailingCommentsWithParent(): Sequence<JKComment> {
-        val innerElements = trailingComments()
+    private fun PsiElement.commentsBeforeWithParent(): Sequence<JKComment> {
+        val innerElements = commentsBefore()
         return (if (innerElements.firstOrNull()?.prevSibling == null && this is PsiKeyword)
-            innerElements + parent?.trailingComments().orEmpty()
+            innerElements + parent?.commentsBefore().orEmpty()
         else innerElements).mapNotNull { it.asComment() }
     }
 
     private fun PsiElement.isNonCodeElement() =
         this is PsiComment || this is PsiWhiteSpace || textMatches(";") || textLength == 0
 
-    private fun PsiElement.leadingComments() =
+    private fun PsiElement.commentsAfter() =
         generateSequence(nextSibling) { it.nextSibling }
             .takeWhile { it.isNonCodeElement() }
 
-    private fun PsiElement.trailingComments() =
+    private fun PsiElement.commentsBefore() =
         generateSequence(prevSibling) { it.prevSibling }
             .takeWhile { it.isNonCodeElement() }
 
-    private fun PsiElement.hasLineBreakBefore() = trailingComments().any { it is PsiWhiteSpace && it.textContains('\n') }
-    private fun PsiElement.hasLineBreakAfter() = leadingComments().any { it is PsiWhiteSpace && it.textContains('\n') }
+    private fun PsiElement.hasLineBreakBefore() = commentsBefore().any { it is PsiWhiteSpace && it.textContains('\n') }
+    private fun PsiElement.hasLineBreakAfter() = commentsAfter().any { it is PsiWhiteSpace && it.textContains('\n') }
 
     private fun PsiElement.collectComments(
-        takeTrailingComments: Boolean,
-        takeLeadingComments: Boolean
+        takeCommentsBefore: Boolean,
+        takeCommentsAfter: Boolean
     ): Pair<List<JKComment>, List<JKComment>> {
         val leftInnerTokens = children.asSequence().toComments().asReversed()
         val rightInnerTokens = when {
@@ -105,8 +105,8 @@ class FormattingCollector {
                 .asReversed()
         }
 
-        val leftComments = (leftInnerTokens + if (takeTrailingComments) trailingCommentsWithParent() else emptySequence()).asReversed()
-        val rightComments = rightInnerTokens + if (takeLeadingComments) leadingCommentsWithParent() else emptySequence()
+        val leftComments = (leftInnerTokens + if (takeCommentsBefore) commentsBeforeWithParent() else emptySequence()).asReversed()
+        val rightComments = rightInnerTokens + if (takeCommentsAfter) commentsAfterWithParent() else emptySequence()
         return leftComments to rightComments
     }
 }

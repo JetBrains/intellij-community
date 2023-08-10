@@ -44,10 +44,10 @@ private class JKListChild<T : JKElement>(val value: Int) : ReadWriteProperty<JKT
 
 
 abstract class JKTreeElement : JKElement, JKFormattingOwner, Cloneable {
-    override val trailingComments: MutableList<JKComment> = mutableListOf()
-    override val leadingComments: MutableList<JKComment> = mutableListOf()
-    override var hasTrailingLineBreak = false
-    override var hasLeadingLineBreak = false
+    override val commentsBefore: MutableList<JKComment> = mutableListOf()
+    override val commentsAfter: MutableList<JKComment> = mutableListOf()
+    override var hasLineBreakBefore = false
+    override var hasLineBreakAfter = false
 
     override var parent: JKElement? = null
 
