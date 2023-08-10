@@ -140,10 +140,6 @@ internal sealed class EntitiesBarrel {
           assert(symbolicId !in symbolicIds) { "Duplicated symbolic ids: $symbolicId" }
           symbolicIds.add(symbolicId!!)
         }
-
-        if (entityData is WithAssertableConsistency) {
-          entityData.assertConsistency(abstractEntityStorage)
-        }
       }
     }
   }

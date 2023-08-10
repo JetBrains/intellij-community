@@ -588,20 +588,6 @@ internal fun WorkspaceEntityData<*>.symbolicId(): SymbolicEntityId<*>? = when (t
   else -> null
 }
 
-/**
- * This interface is a solution for checking consistency of some entities that can't be checked automatically
- *
- * For example, we can mark LibraryPropertiesEntityData with this interface and check that entity source of properties is the same as
- *  entity source of the library itself.
- *
- * Interface should be applied to *entity data*.
- *
- * [assertConsistency] method is called during [MutableEntityStorageImpl.assertConsistency].
- */
-internal interface WithAssertableConsistency {
-  fun assertConsistency(storage: EntityStorage)
-}
-
 public class UsedClassesCollector(
   public var sameForAllEntities: Boolean = false,
   internal var collection: MutableSet<Class<out Any>> = HashSet(),
