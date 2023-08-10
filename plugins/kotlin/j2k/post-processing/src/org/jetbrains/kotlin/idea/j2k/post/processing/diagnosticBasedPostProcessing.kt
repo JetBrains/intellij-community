@@ -32,16 +32,13 @@ internal class DiagnosticBasedPostProcessingGroup(diagnosticBasedProcessings: Li
         }
 
     override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
-        val (range, diagnostics) = runReadAction {
+        val diagnostics = runReadAction {
             val resolutionFacade = KotlinCacheService.getInstance(converterContext.project).getResolutionFacade(allFiles)
-            Pair(
-              rangeMarker?.range ?: file.textRange,
-              analyzeFileRange(file, rangeMarker, resolutionFacade).all()
-            )
+            analyzeFileRange(file, rangeMarker, resolutionFacade).all()
         }
 
         for (diagnostic in diagnostics) {
-            processDiagnostic(diagnostic, range)
+            processDiagnostic(diagnostic, file, rangeMarker)
         }
     }
 
@@ -57,9 +54,12 @@ internal class DiagnosticBasedPostProcessingGroup(diagnosticBasedProcessings: Li
         else Diagnostics.EMPTY
     }
 
-    private fun processDiagnostic(diagnostic: Diagnostic, range: TextRange) {
+    private fun processDiagnostic(diagnostic: Diagnostic, file: KtFile, rangeMarker: RangeMarker?) {
         val fixes = diagnosticToFixes[diagnostic.factory] ?: return
-        val elementIsInRange = runReadAction { range.contains(diagnostic.psiElement.textRange) }
+        val elementIsInRange = runReadAction {
+            val range = rangeMarker?.range ?: file.textRange
+            range.contains(diagnostic.psiElement.textRange)
+        }
         if (!elementIsInRange) return
 
         for (fix in fixes) {

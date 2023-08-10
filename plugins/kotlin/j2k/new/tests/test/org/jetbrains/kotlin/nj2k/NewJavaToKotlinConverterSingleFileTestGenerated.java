@@ -2126,6 +2126,24 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/newJ2k/explicitApiMode")
+    public static class ExplicitApiMode extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("strict.java")
+        public void testStrict() throws Exception {
+            runTest("testData/newJ2k/explicitApiMode/strict.java");
+        }
+
+        @TestMetadata("warning.java")
+        public void testWarning() throws Exception {
+            runTest("testData/newJ2k/explicitApiMode/warning.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/newJ2k/field")
     public static class Field extends AbstractNewJavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {

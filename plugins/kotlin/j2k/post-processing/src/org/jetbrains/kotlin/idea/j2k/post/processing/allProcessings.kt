@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.intentions.branchedTransformations.shouldBeTran
 import org.jetbrains.kotlin.idea.j2k.post.processing.processings.*
 import org.jetbrains.kotlin.idea.quickfix.*
 import org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix.ReturnTypeMismatchOnOverrideFactory
+import org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix.SetExplicitVisibilityFactory
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -56,6 +57,11 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
         Errors.EXPOSED_SUPER_CLASS,
         Errors.EXPOSED_SUPER_INTERFACE,
         Errors.EXPOSED_TYPE_PARAMETER_BOUND
+    ),
+    diagnosticBasedProcessing(
+      SetExplicitVisibilityFactory,
+      Errors.NO_EXPLICIT_VISIBILITY_IN_API_MODE,
+      Errors.NO_EXPLICIT_VISIBILITY_IN_API_MODE_WARNING,
     ),
     fixValToVarDiagnosticBasedProcessing,
     fixTypeMismatchDiagnosticBasedProcessing
