@@ -8,9 +8,8 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.listCellRenderer
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.listCellRenderer.iconListCellRenderer
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.ui.JBDimension
 import org.jetbrains.annotations.ApiStatus
@@ -25,9 +24,9 @@ internal class ListCellRendererPanel {
       row {
         jbList(listOf("First", "Second", "Last"), textListCellRenderer { it })
         jbList((1..100).map { "Item $it" }, textListCellRenderer { it })
-        jbList((1..100).map { "Item $it" }, iconListCellRenderer { icon, text ->
-          icon.icon = if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear
-          text.text = value
+        jbList((1..100).map { "Item $it" }, listCellRenderer {
+          icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
+          text(value)
         })
       }
     }
@@ -44,9 +43,9 @@ internal class ListCellRendererPanel {
         comboBox(listOf("First", "Second", "Try with y", "Try with ()"), textListCellRenderer { it })
       }
       row("Items with icon:") {
-        comboBox((1..100).map { "Item $it" }, iconListCellRenderer { icon, text ->
-          icon.icon = if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear
-          text.text = value
+        comboBox((1..100).map { "Item $it" }, listCellRenderer {
+          icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
+          text(value ?: "")
         })
       }
       row("Long items:") {
@@ -56,15 +55,15 @@ internal class ListCellRendererPanel {
 
     group("Renderers") {
       row("iconListCellRenderer:") {
-        val renderer = iconListCellRenderer<String> { icon, text ->
-          icon.icon = AllIcons.General.Gear
-          text.text = value
+        val renderer = listCellRenderer {
+          icon(AllIcons.General.Gear)
+          text(value)
         }
         cell(renderer.getListCellRendererComponent(JBList(), "Some text", 0, false, false) as JComponent)
       }
 
       row("SimpleListCellRenderer:") {
-        val renderer = SimpleListCellRenderer.create<String> { label, value, index ->
+        val renderer = SimpleListCellRenderer.create<String> { label, value, _ ->
           label.icon = AllIcons.General.Gear
           label.text = value
         }
@@ -74,11 +73,11 @@ internal class ListCellRendererPanel {
 
     group("Legacy") {
       row {
-        jbList((1..100).map { "Item $it" }, listCellRenderer { text = it })
+        jbList((1..100).map { "Item $it" }, com.intellij.ui.dsl.builder.listCellRenderer { text = it })
 
         panel {
           row("Few items:") {
-            comboBox(listOf("First", "Second", "Try with y", "Try with ()"), listCellRenderer { text = it })
+            comboBox(listOf("First", "Second", "Try with y", "Try with ()"), com.intellij.ui.dsl.builder.listCellRenderer { text = it })
           }
           row("Items with icon:") {
             comboBox((1..100).map { "Item $it" }, SimpleListCellRenderer.create { label, value, index ->
@@ -87,7 +86,7 @@ internal class ListCellRendererPanel {
             })
           }
           row("Long items:") {
-            comboBox((1..100).map { "$it " + "Item".repeat(10) }, listCellRenderer { text = it }).component
+            comboBox((1..100).map { "$it " + "Item".repeat(10) }, com.intellij.ui.dsl.builder.listCellRenderer { text = it }).component
           }
         }.align(Align.FILL)
       }

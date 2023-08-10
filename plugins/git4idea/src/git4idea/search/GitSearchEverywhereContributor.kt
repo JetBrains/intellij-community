@@ -121,30 +121,29 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
   }
 
   private val renderer = listCellRenderer<Any> {
-    val icon = icon()
-    val center = text {
+    val value = this.value
+    val iconBg = background ?: JBUI.CurrentTheme.List.BACKGROUND
+
+    icon(
+      if (value is VcsRef) LabelIcon(list, JBUI.scale(16), iconBg, listOf(value.type.backgroundColor)) else AllIcons.Vcs.CommitNode)
+
+    text(when (value) {
+           is VcsRef -> value.name
+           is VcsCommitMetadata -> value.subject
+           else -> ""
+         }) {
       grow = true
     }
-    val right = text {
-      style = LcrTextInitParams.Style.GRAYED
-    }
 
-    renderer {
-      val value = this.value
-      val background = rowParams.background ?: JBUI.CurrentTheme.List.BACKGROUND
-      icon.icon = when (value) {
-                       is VcsRef -> LabelIcon(list, JBUI.scale(16), background, listOf(value.type.backgroundColor))
-                       else -> AllIcons.Vcs.CommitNode
-                     }
-      center.text = when (value) {
-        is VcsRef -> value.name
-        is VcsCommitMetadata -> value.subject
-        else -> null
-      }
-      right.text = when (value) {
-        is VcsRef -> getTrackingRemoteBranchName(value)
-        is VcsCommitMetadata -> value.id.toShortString()
-        else -> null
+    @NlsSafe
+    val rightText = when (value) {
+      is VcsRef -> getTrackingRemoteBranchName(value)
+      is VcsCommitMetadata -> value.id.toShortString()
+      else -> null
+    }
+    if (rightText != null) {
+      text(rightText) {
+        style = LcrTextInitParams.Style.GRAYED
       }
     }
   }

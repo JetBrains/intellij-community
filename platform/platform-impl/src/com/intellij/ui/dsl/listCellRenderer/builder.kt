@@ -10,7 +10,7 @@ import javax.swing.ListCellRenderer
 internal annotation class LcrDslMarker
 
 /**
- * Builds [ListCellRenderer], which can contains several cells with texts or icons placed in one row.
+ * Builds [ListCellRenderer], which can contains several cells with texts, icons and other entities placed in one row.
  * Covers most common kinds of renderers and provides all necessary functionality:
  *
  * * Rectangular selection and correct insets for old UI
@@ -24,11 +24,7 @@ internal annotation class LcrDslMarker
  */
 @ApiStatus.Experimental
 fun <T> listCellRenderer(init: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
-  val result = LcrRowImpl<T>()
-  result.init()
-  result.onInitFinished()
-
-  return result
+  return LcrRowImpl(init)
 }
 
 /**
@@ -37,22 +33,6 @@ fun <T> listCellRenderer(init: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
 @ApiStatus.Experimental
 fun <T> textListCellRenderer(textExtractor: (T) -> @Nls String?): ListCellRenderer<T> {
   return listCellRenderer {
-    val text = text()
-    renderer { text.text = textExtractor(value) }
-  }
-}
-
-/**
- * Simplified version of [listCellRenderer] with icon and text
- */
-@ApiStatus.Experimental
-fun <T> iconListCellRenderer(init: RenderContext<T>.(icon: LcrIcon, text: LcrText) -> Unit): ListCellRenderer<T> {
-  return listCellRenderer {
-    val icon = icon()
-    val text = text()
-
-    renderer {
-      init.invoke(this, icon, text)
-    }
+    text(textExtractor(value) ?: "")
   }
 }

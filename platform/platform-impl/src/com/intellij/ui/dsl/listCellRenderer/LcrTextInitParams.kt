@@ -19,4 +19,5 @@ interface LcrTextInitParams : LcrInitParams {
    * Default value is [Style.NORMAL]
    */
   var style: Style
+
 }
