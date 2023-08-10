@@ -1,370 +1,349 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui;
+package com.intellij.ui
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.icons.CompositeIcon;
-import com.intellij.ui.icons.DarkIconProvider;
-import com.intellij.ui.icons.IconReplacer;
-import com.intellij.ui.icons.IconWithToolTip;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IconUtil;
-import com.intellij.util.ui.JBCachingScalableIcon;
-import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.IconLoader.getDarkIcon
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.icons.CompositeIcon
+import com.intellij.ui.icons.DarkIconProvider
+import com.intellij.ui.icons.IconReplacer
+import com.intellij.ui.icons.IconWithToolTip
+import com.intellij.ui.scale.ScaleType
+import com.intellij.ui.scale.UserScaleContext
+import com.intellij.util.ArrayUtil
+import com.intellij.util.IconUtil.copy
+import com.intellij.util.ui.JBCachingScalableIcon
+import org.intellij.lang.annotations.MagicConstant
+import java.awt.Component
+import java.awt.Graphics
+import javax.swing.Icon
+import javax.swing.SwingConstants
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.max
+import kotlin.math.min
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+private val LOG = logger<LayeredIcon>()
 
-import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
-import static com.intellij.ui.scale.ScaleType.USR_SCALE;
+open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, CompositeIcon, IconWithToolTip {
+  val allLayers: Array<Icon?>
+  private var scaledIcons: Array<Icon>? = null
+  private val disabledLayers: BooleanArray
+  private val hShifts: IntArray
+  private val vShifts: IntArray
+  private var xShift = 0
+  private var yShift = 0
+  private var width = 0
+  private var height = 0
 
-public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements DarkIconProvider, CompositeIcon, IconWithToolTip {
-  private static final Logger LOG = Logger.getInstance(LayeredIcon.class);
-  private final Icon[] myIcons;
-  private Icon[] myScaledIcons;
-  private final boolean[] myDisabledLayers;
-  private final int[] myHShifts;
-  private final int[] myVShifts;
-
-  private int myXShift;
-  private int myYShift;
-
-  private int myWidth;
-  private int myHeight;
-
-  public static final Icon ADD_WITH_DROPDOWN = new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown);
-  public static final Icon EDIT_WITH_DROPDOWN = new LayeredIcon(AllIcons.Actions.Edit, AllIcons.General.Dropdown);
-  public static final Icon GEAR_WITH_DROPDOWN = new LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown);
-
-  {
-    getScaleContext().addUpdateListener(this::updateSize);
-    setAutoUpdateScaleContext(false);
+  init {
+    scaleContext.addUpdateListener(UserScaleContext.UpdateListener(::updateSize))
+    setAutoUpdateScaleContext(false)
   }
 
-  public LayeredIcon(int layerCount) {
-    myIcons = new Icon[layerCount];
-    myDisabledLayers = new boolean[layerCount];
-    myHShifts = new int[layerCount];
-    myVShifts = new int[layerCount];
+  constructor(layerCount: Int) {
+    allLayers = arrayOfNulls(layerCount)
+    disabledLayers = BooleanArray(layerCount)
+    hShifts = IntArray(layerCount)
+    vShifts = IntArray(layerCount)
   }
 
-  public LayeredIcon(Icon @NotNull ... icons) {
-    this(icons.length);
-    for (int i = 0; i < icons.length; i++) {
-      setIcon(icons[i], i);
+  constructor(vararg icons: Icon) : this(icons.size) {
+    for (i in icons.indices) {
+      setIcon(icons[i], i)
     }
   }
 
-  protected LayeredIcon(@NotNull LayeredIcon icon) {
-    super(icon);
-    myIcons = ArrayUtil.copyOf(icon.myIcons);
-    myScaledIcons = null;
-    myDisabledLayers = ArrayUtil.copyOf(icon.myDisabledLayers);
-    myHShifts = ArrayUtil.copyOf(icon.myHShifts);
-    myVShifts = ArrayUtil.copyOf(icon.myVShifts);
-    myXShift = icon.myXShift;
-    myYShift = icon.myYShift;
-    myWidth = icon.myWidth;
-    myHeight = icon.myHeight;
-  }
+  companion object {
+    @JvmField
+    val ADD_WITH_DROPDOWN: Icon = LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown)
+    @JvmField
+    val EDIT_WITH_DROPDOWN: Icon = LayeredIcon(AllIcons.Actions.Edit, AllIcons.General.Dropdown)
+    @JvmField
+    val GEAR_WITH_DROPDOWN: Icon = LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown)
 
-  @Override
-  public @NotNull LayeredIcon replaceBy(@NotNull IconReplacer replacer) {
-    LayeredIcon result = new LayeredIcon(this);
-    for (int i = 0; i < result.myIcons.length; i++) {
-      result.myIcons[i] = replacer.replaceIcon(result.myIcons[i]);
+    @JvmStatic
+    fun create(backgroundIcon: Icon?, foregroundIcon: Icon?): Icon {
+      val layeredIcon = LayeredIcon(2)
+      layeredIcon.setIcon(backgroundIcon, 0)
+      layeredIcon.setIcon(foregroundIcon, 1)
+      return layeredIcon
     }
-    return result;
-  }
 
-  @Override
-  public @NotNull LayeredIcon copy() {
-    return new LayeredIcon(this);
-  }
-
-  @Override
-  public @NotNull LayeredIcon deepCopy() {
-    LayeredIcon icon = new LayeredIcon(this);
-    for (int i = 0; i < icon.myIcons.length; i++) {
-      icon.myIcons[i] = icon.myIcons[i] == null ? null : IconUtil.copy(icon.myIcons[i], null);
+    @JvmStatic
+    fun combineIconTooltips(icons: Array<Icon?>): @NlsContexts.Tooltip String? {
+      // If a layered icon contains only a single non-null layer and other layers are null, its tooltip is not a composite one.
+      var singleIcon: Icon? = null
+      for (icon in icons) {
+        if (icon != null) {
+          if (singleIcon != null) {
+            val result: @NlsContexts.Tooltip StringBuilder = StringBuilder()
+            val seenTooltips: MutableSet<String> = HashSet()
+            buildCompositeTooltip(icons, result, seenTooltips)
+            return result.toString()
+          }
+          singleIcon = icon
+        }
+      }
+      if (singleIcon != null) {
+        return if (singleIcon is IconWithToolTip) singleIcon.getToolTip(false) else null
+      }
+      return null
     }
-    return icon;
   }
 
-  private Icon @NotNull [] myScaledIcons() {
-    if (myScaledIcons != null) {
-      return myScaledIcons;
+  protected constructor(icon: LayeredIcon) : super(icon) {
+    allLayers = ArrayUtil.copyOf(icon.allLayers)!!
+    scaledIcons = null
+    disabledLayers = ArrayUtil.copyOf(icon.disabledLayers)
+    hShifts = ArrayUtil.copyOf(icon.hShifts)
+    vShifts = ArrayUtil.copyOf(icon.vShifts)
+    xShift = icon.xShift
+    yShift = icon.yShift
+    width = icon.width
+    height = icon.height
+  }
+
+  override fun replaceBy(replacer: IconReplacer): LayeredIcon {
+    val result = LayeredIcon(this)
+    for (i in result.allLayers.indices) {
+      result.allLayers[i] = replacer.replaceIcon(result.allLayers[i])
     }
-    return myScaledIcons = RowIcon.scaleIcons(myIcons, getScale());
+    return result
   }
 
-  @Override
-  public @NotNull LayeredIcon withIconPreScaled(boolean preScaled) {
-    super.withIconPreScaled(preScaled);
-    updateSize();
-    return this;
+  override fun copy(): LayeredIcon {
+    return LayeredIcon(this)
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof LayeredIcon icon)) return false;
-
-    if (myHeight != icon.myHeight) return false;
-    if (myWidth != icon.myWidth) return false;
-    if (myXShift != icon.myXShift) return false;
-    if (myYShift != icon.myYShift) return false;
-    if (!Arrays.equals(myHShifts, icon.myHShifts)) return false;
-    if (!Arrays.equals(myIcons, icon.myIcons)) return false;
-    if (!Arrays.equals(myVShifts, icon.myVShifts)) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return 0;
-  }
-
-  public void setIcon(Icon icon, int layer) {
-    setIcon(icon, layer, 0, 0);
-  }
-
-  @Override
-  public Icon getIcon(int layer) {
-    return myIcons[layer];
-  }
-
-  @Override
-  public int getIconCount() {
-    return myIcons.length;
-  }
-
-  public Icon @NotNull [] getAllLayers() {
-    return myIcons;
-  }
-
-  public void setIcon(Icon icon, int layer, int hShift, int vShift) {
-    if (icon instanceof LayeredIcon) {
-      ((LayeredIcon)icon).checkIHaventIconInsideMe(this);
+  override fun deepCopy(): LayeredIcon {
+    val icon = LayeredIcon(this)
+    for (i in icon.allLayers.indices) {
+      icon.allLayers[i] = if (icon.allLayers[i] == null) null else copy(icon.allLayers[i]!!, null)
     }
-    myIcons[layer] = icon;
-    myScaledIcons = null;
-    myHShifts[layer] = hShift;
-    myVShifts[layer] = vShift;
-    updateSize();
+    return icon
+  }
+
+  private fun myScaledIcons(): Array<Icon> {
+    scaledIcons?.let {
+      return it
+    }
+    return RowIcon.scaleIcons(allLayers, scale).also { scaledIcons = it }
+  }
+
+  override fun withIconPreScaled(preScaled: Boolean): LayeredIcon {
+    super.withIconPreScaled(preScaled)
+    updateSize()
+    return this
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is LayeredIcon) return false
+    if (height != other.height) return false
+    if (width != other.width) return false
+    if (xShift != other.xShift) return false
+    if (yShift != other.yShift) return false
+    if (!hShifts.contentEquals(other.hShifts)) return false
+    if (!allLayers.contentEquals(other.allLayers)) return false
+    if (!vShifts.contentEquals(other.vShifts)) return false
+    return true
+  }
+
+  override fun hashCode() = 0
+
+  fun setIcon(icon: Icon?, layer: Int) {
+    setIcon(icon = icon, layer = layer, hShift = 0, vShift = 0)
+  }
+
+  override fun getIcon(layer: Int) = allLayers[layer]
+
+  override fun getIconCount() = allLayers.size
+
+  fun setIcon(icon: Icon?, layer: Int, hShift: Int, vShift: Int) {
+    if (icon is LayeredIcon) {
+      icon.checkIHaventIconInsideMe(this)
+    }
+
+    allLayers[layer] = icon
+    scaledIcons = null
+    hShifts[layer] = hShift
+    vShifts[layer] = vShift
+    updateSize()
   }
 
   /**
    *
    * @param constraint is expected to be one of the compass-directions or CENTER
    */
-  public void setIcon(Icon icon, int layer, @MagicConstant(valuesFromClass = SwingConstants.class) int constraint) {
-    int width = getIconWidth();
-    int height = getIconHeight();
-    int w = icon.getIconWidth();
-    int h = icon.getIconHeight();
+  fun setIcon(icon: Icon, layer: Int, @MagicConstant(valuesFromClass = SwingConstants::class) constraint: Int) {
+    val width = getIconWidth()
+    val height = getIconHeight()
+    val w = icon.iconWidth
+    val h = icon.iconHeight
     if (width <= 1 || height <= 1) {
-      setIcon(icon, layer);
-      return;
+      setIcon(icon, layer)
+      return
     }
-    int x;
-    int y;
-    switch (constraint) {
-      case SwingConstants.CENTER -> {
-        x = (width - w) / 2;
-        y = (height - h) / 2;
+
+    val x: Int
+    val y: Int
+    when (constraint) {
+      SwingConstants.CENTER -> {
+        x = (width - w) / 2
+        y = (height - h) / 2
       }
-      case SwingConstants.NORTH -> {
-        x = (width - w) / 2;
-        y = 0;
+      SwingConstants.NORTH -> {
+        x = (width - w) / 2
+        y = 0
       }
-      case SwingConstants.NORTH_EAST -> {
-        x = width - w;
-        y = 0;
+      SwingConstants.NORTH_EAST -> {
+        x = width - w
+        y = 0
       }
-      case SwingConstants.EAST -> {
-        x = width - w;
-        y = (height - h) / 2;
+      SwingConstants.EAST -> {
+        x = width - w
+        y = (height - h) / 2
       }
-      case SwingConstants.SOUTH_EAST -> {
-        x = width - w;
-        y = height - h;
+      SwingConstants.SOUTH_EAST -> {
+        x = width - w
+        y = height - h
       }
-      case SwingConstants.SOUTH -> {
-        x = (width - w) / 2;
-        y = height - h;
+      SwingConstants.SOUTH -> {
+        x = (width - w) / 2
+        y = height - h
       }
-      case SwingConstants.SOUTH_WEST -> {
-        x = 0;
-        y = height - h;
+      SwingConstants.SOUTH_WEST -> {
+        x = 0
+        y = height - h
       }
-      case SwingConstants.WEST -> {
-        x = 0;
-        y = (height - h) / 2;
+      SwingConstants.WEST -> {
+        x = 0
+        y = (height - h) / 2
       }
-      case SwingConstants.NORTH_WEST -> {
-        x = 0;
-        y = 0;
+      SwingConstants.NORTH_WEST -> {
+        x = 0
+        y = 0
       }
-      default -> throw new IllegalArgumentException(
-        "The constraint should be one of SwingConstants' compass-directions [1..8] or CENTER [0], actual value is " + constraint);
+      else -> throw IllegalArgumentException(
+        "The constraint should be one of SwingConstants' compass-directions [1..8] or CENTER [0], actual value is $constraint")
     }
-    setIcon(icon, layer, x, y);
+    setIcon(icon, layer, x, y)
   }
 
-  private void checkIHaventIconInsideMe(Icon icon) {
-    LOG.assertTrue(icon != this);
-    for (Icon child : myIcons) {
-      if (child instanceof LayeredIcon) {
-        ((LayeredIcon)child).checkIHaventIconInsideMe(icon);
+  private fun checkIHaventIconInsideMe(icon: Icon) {
+    LOG.assertTrue(icon !== this)
+    for (child in allLayers) {
+      if (child is LayeredIcon) {
+        child.checkIHaventIconInsideMe(icon)
       }
-    }
-  }
-
-  @Override
-  public void paintIcon(Component c, Graphics g, int x, int y) {
-    getScaleContext().update();
-    Icon[] icons = myScaledIcons();
-    for (int i = 0; i < icons.length; i++) {
-      Icon icon = icons[i];
-      if (icon == null || myDisabledLayers[i]) continue;
-      int xOffset = (int)Math.floor(x + scaleVal(myXShift + getHShift(i), OBJ_SCALE));
-      int yOffset = (int)Math.floor(y + scaleVal(myYShift + getVShift(i), OBJ_SCALE));
-      icon.paintIcon(c, g, xOffset, yOffset);
     }
   }
 
-  public boolean isLayerEnabled(int layer) {
-    return !myDisabledLayers[layer];
-  }
-
-  public void setLayerEnabled(int layer, boolean enabled) {
-    if (myDisabledLayers[layer] == enabled) {
-      myDisabledLayers[layer] = !enabled;
-      clearCachedScaledValue();
+  override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+    scaleContext.update()
+    val icons = myScaledIcons()
+    for (i in icons.indices) {
+      val icon = icons[i]
+      if (icon == null || disabledLayers[i]) continue
+      val xOffset = floor(x + scaleVal((xShift + getHShift(i)).toDouble(), ScaleType.OBJ_SCALE)).toInt()
+      val yOffset = floor(y + scaleVal((yShift + getVShift(i)).toDouble(), ScaleType.OBJ_SCALE)).toInt()
+      icon.paintIcon(c, g, xOffset, yOffset)
     }
   }
 
-  @Override
-  public int getIconWidth() {
-    getScaleContext().update();
-    if (myWidth <= 1) updateSize();
-
-    return (int)Math.ceil(scaleVal(myWidth, OBJ_SCALE));
+  fun isLayerEnabled(layer: Int): Boolean {
+    return !disabledLayers[layer]
   }
 
-  @Override
-  public int getIconHeight() {
-    getScaleContext().update();
-    if (myHeight <= 1) updateSize();
-
-    return (int)Math.ceil(scaleVal(myHeight, OBJ_SCALE));
-  }
-
-  public int getHShift(int i) {
-    return (int)Math.floor(scaleVal(myHShifts[i], USR_SCALE));
-  }
-
-  public int getVShift(int i) {
-    return (int)Math.floor(scaleVal(myVShifts[i], USR_SCALE));
-  }
-
-  protected void updateSize() {
-    int minX = Integer.MAX_VALUE;
-    int maxX = Integer.MIN_VALUE;
-    int minY = Integer.MAX_VALUE;
-    int maxY = Integer.MIN_VALUE;
-    boolean allIconsAreNull = true;
-    for (int i = 0; i < myIcons.length; i++) {
-      Icon icon = myIcons[i];
-      if (icon == null) continue;
-      allIconsAreNull = false;
-      int hShift = getHShift(i);
-      int vShift = getVShift(i);
-      minX = Math.min(minX, hShift);
-      maxX = Math.max(maxX, hShift + icon.getIconWidth());
-      minY = Math.min(minY, vShift);
-      maxY = Math.max(maxY, vShift + icon.getIconHeight());
-    }
-    if (allIconsAreNull) return;
-    myWidth = maxX - minX;
-    myHeight = maxY - minY;
-
-    if (myIcons.length > 1) {
-      myXShift = -minX;
-      myYShift = -minY;
+  fun setLayerEnabled(layer: Int, enabled: Boolean) {
+    if (disabledLayers[layer] == enabled) {
+      disabledLayers[layer] = !enabled
+      clearCachedScaledValue()
     }
   }
 
-  @Override
-  public @NotNull Icon getDarkIcon(boolean isDark) {
-    LayeredIcon newIcon = copy();
-    for (int i=0; i<newIcon.myIcons.length; i++) {
-      newIcon.myIcons[i] = newIcon.myIcons[i] == null ? null : IconLoader.getDarkIcon(newIcon.myIcons[i], isDark);
+  override fun getIconWidth(): Int {
+    scaleContext.update()
+    if (width <= 1) updateSize()
+    return ceil(scaleVal(width.toDouble(), ScaleType.OBJ_SCALE)).toInt()
+  }
+
+  override fun getIconHeight(): Int {
+    scaleContext.update()
+    if (height <= 1) updateSize()
+    return ceil(scaleVal(height.toDouble(), ScaleType.OBJ_SCALE)).toInt()
+  }
+
+  fun getHShift(i: Int): Int {
+    return floor(scaleVal(hShifts[i].toDouble(), ScaleType.USR_SCALE)).toInt()
+  }
+
+  fun getVShift(i: Int): Int {
+    return floor(scaleVal(vShifts[i].toDouble(), ScaleType.USR_SCALE)).toInt()
+  }
+
+  protected fun updateSize() {
+    var minX = Int.MAX_VALUE
+    var maxX = Int.MIN_VALUE
+    var minY = Int.MAX_VALUE
+    var maxY = Int.MIN_VALUE
+    var allIconsAreNull = true
+    for (i in allLayers.indices) {
+      val icon = allLayers[i]
+      if (icon == null) {
+        continue
+      }
+
+      allIconsAreNull = false
+      val hShift = getHShift(i)
+      val vShift = getVShift(i)
+      minX = min(minX.toDouble(), hShift.toDouble()).toInt()
+      maxX = max(maxX.toDouble(), (hShift + icon.iconWidth).toDouble()).toInt()
+      minY = min(minY.toDouble(), vShift.toDouble()).toInt()
+      maxY = max(maxY.toDouble(), (vShift + icon.iconHeight).toDouble()).toInt()
     }
-    return newIcon;
+
+    if (allIconsAreNull) {
+      return
+    }
+
+    width = maxX - minX
+    height = maxY - minY
+    if (allLayers.size > 1) {
+      xShift = -minX
+      yShift = -minY
+    }
   }
 
-  public static @NotNull Icon create(Icon backgroundIcon, Icon foregroundIcon) {
-    LayeredIcon layeredIcon = new LayeredIcon(2);
-    layeredIcon.setIcon(backgroundIcon, 0);
-    layeredIcon.setIcon(foregroundIcon, 1);
-    return layeredIcon;
+  override fun getDarkIcon(isDark: Boolean): Icon {
+    val newIcon = copy()
+    for (i in newIcon.allLayers.indices) {
+      newIcon.allLayers[i] = if (newIcon.allLayers[i] == null) null else getDarkIcon(newIcon.allLayers[i]!!, isDark)
+    }
+    return newIcon
   }
 
-  @Override
-  public String toString() {
-    return "Layered icon "+getIconWidth()+"x"+getIconHeight()+". myIcons=" + Arrays.asList(myIcons);
-  }
+  override fun toString() = "Layered icon ${getIconWidth()}x${getIconHeight()}. myIcons=$allLayers"
 
-  @Override
-  public String getToolTip(boolean composite) {
-    return combineIconTooltips(myIcons);
-  }
+  override fun getToolTip(composite: Boolean) = combineIconTooltips(allLayers)
+}
 
-  static @Nullable @NlsContexts.Tooltip String combineIconTooltips(Icon[] icons) {
-    // If a layered icon contains only a single non-null layer and other layers are null, its tooltip is not a composite one.
-    Icon singleIcon = null;
-    for (Icon icon : icons) {
-      if (icon != null) {
-        if (singleIcon != null) {
-          @NlsContexts.Tooltip StringBuilder result = new StringBuilder();
-          Set<String> seenTooltips = new HashSet<>();
-          buildCompositeTooltip(icons, result, seenTooltips);
-          return result.toString();
+private fun buildCompositeTooltip(icons: Array<Icon?>, result: StringBuilder, seenTooltips: MutableSet<String>) {
+  for (i in icons.indices) {
+    // the first layer is the actual object (noun), other layers are modifiers (adjectives), so put a first object in the last position
+    val icon = if (i == icons.size - 1) icons[0] else icons[i + 1]
+    if (icon is LayeredIcon) {
+      buildCompositeTooltip(icons = icon.allLayers, result = result, seenTooltips = seenTooltips)
+    }
+    else if (icon is IconWithToolTip) {
+      val toolTip = icon.getToolTip(true)
+      if (toolTip != null && seenTooltips.add(toolTip)) {
+        if (!result.isEmpty()) {
+          result.append(' ')
         }
-        singleIcon = icon;
-      }
-    }
-    if (singleIcon != null) {
-      return singleIcon instanceof IconWithToolTip ? ((IconWithToolTip) singleIcon).getToolTip(false) : null;
-    }
-    return null;
-  }
-
-  private static void buildCompositeTooltip(Icon[] icons, StringBuilder result, Set<? super String> seenTooltips) {
-    for (int i = 0; i < icons.length; i++) {
-      // the first layer is the actual object (noun), other layers are modifiers (adjectives), so put a first object in the last position
-      Icon icon = i == icons.length - 1 ? icons[0] : icons[i + 1];
-      if (icon instanceof LayeredIcon) {
-        buildCompositeTooltip(((LayeredIcon) icon).myIcons, result, seenTooltips);
-      }
-      else if (icon instanceof IconWithToolTip) {
-        String toolTip = ((IconWithToolTip)icon).getToolTip(true);
-        if (toolTip != null && seenTooltips.add(toolTip)) {
-          if (!result.isEmpty()) {
-            result.append(' ');
-          }
-          result.append(toolTip);
-        }
+        result.append(toolTip)
       }
     }
   }

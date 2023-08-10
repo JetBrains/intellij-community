@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
@@ -262,8 +262,7 @@ public final class ExecutionUtil {
     ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(environment);
   }
 
-  @Nullable
-  public static ExecutionEnvironmentBuilder createEnvironment(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) {
+  public static @Nullable ExecutionEnvironmentBuilder createEnvironment(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) {
     try {
       return ExecutionEnvironmentBuilder.create(executor, settings);
     }
@@ -280,29 +279,24 @@ public final class ExecutionUtil {
     }
   }
 
-  @NotNull
-  public static Icon getLiveIndicator(@Nullable final Icon base) {
+  public static @NotNull Icon getLiveIndicator(final @Nullable Icon base) {
     return getLiveIndicator(base, true);
   }
 
-  @NotNull
-  public static Icon getLiveIndicator(@Nullable final Icon base, boolean isAlive) {
+  public static @NotNull Icon getLiveIndicator(final @Nullable Icon base, boolean isAlive) {
     return getLiveIndicator(base, 13, 13, isAlive);
   }
 
-  @NotNull
-  public static Icon getLiveIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight) {
+  public static @NotNull Icon getLiveIndicator(final @Nullable Icon base, int emptyIconWidth, int emptyIconHeight) {
     return getLiveIndicator(base, emptyIconWidth, emptyIconHeight, true);
   }
 
   @SuppressWarnings("UseJBColor")
-  @NotNull
-  public static Icon getLiveIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight, boolean isAlive) {
+  public static @NotNull Icon getLiveIndicator(final @Nullable Icon base, int emptyIconWidth, int emptyIconHeight, boolean isAlive) {
     return getIndicator(base, emptyIconWidth, emptyIconHeight, isAlive ? Color.GREEN : Color.GRAY);
   }
 
-  @NotNull
-  public static Icon getIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight, Color color) {
+  public static @NotNull Icon getIndicator(final @Nullable Icon base, int emptyIconWidth, int emptyIconHeight, Color color) {
     return new LayeredIcon(base, new IndicatorIcon(base, emptyIconWidth, emptyIconHeight, color));
   }
 }
