@@ -8,6 +8,7 @@ import com.intellij.facet.FacetType
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModifiableModuleModel
@@ -108,7 +109,7 @@ open class ProjectModelRule : TestRule {
       setup(sdkModificator)
     }
     finally {
-      sdkModificator.commitChanges()
+      runWriteAction { sdkModificator.commitChanges() }
     }
   }
 
