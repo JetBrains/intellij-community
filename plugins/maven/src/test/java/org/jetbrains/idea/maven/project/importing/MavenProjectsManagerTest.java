@@ -30,6 +30,7 @@ import com.intellij.util.FileContentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -1411,6 +1412,70 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     importProject(mavenParentPom);
     assertEquals(3, ModuleManager.getInstance(myProject).getModules().length);
     assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+  }
+
+
+  @Test
+  public void testSameArtifactIdDifferentTypeDependency() {
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                         <module>m3</module>
+                       </modules>
+                       """);
+
+    VirtualFile m1 = createModulePom("m1",
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       """);
+
+    VirtualFile m2 = createModulePom("m2",
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       <dependencies>
+                                           <dependency>
+                                               <groupId>test</groupId>
+                                               <artifactId>m1</artifactId>
+                                               <version>1</version>
+                                           </dependency>
+                                       </dependencies>
+                                       """);
+
+    VirtualFile m3 = createModulePom("m3",
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m3</artifactId>
+                                       <version>1</version>
+                                       <dependencies>
+                                           <dependency>
+                                               <groupId>test</groupId>
+                                               <artifactId>m1</artifactId>
+                                               <version>1</version>
+                                               <type>ejb</type>
+                                           </dependency>
+                                       </dependencies>
+                                       """);
+    importProject();
+
+    assertModuleModuleDeps("m2", "m1");
+    assertModuleModuleDeps("m3", "m1");
+
+    var mavenProject2 = myProjectsManager.findProject(m2);
+    var m21dep = mavenProject2.findDependencies(new MavenId("test:m1:1")).get(0);
+    assertEquals("jar", m21dep.getType());
+
+    var mavenProject3 = myProjectsManager.findProject(m3);
+    var m31dep = mavenProject3.findDependencies(new MavenId("test:m1:1")).get(0);
+    assertEquals("ejb", m31dep.getType());
   }
 
   @Test
