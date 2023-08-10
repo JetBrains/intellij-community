@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.configuration
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -11,7 +10,6 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 
 @Service(Service.Level.PROJECT)
@@ -39,9 +37,7 @@ class KotlinProjectConfigurationService(private val coroutineScope: CoroutineSco
             }
 
             if (autoConfigSettings == null) return@launch
-            withContext(Dispatchers.EDT) {
-                autoConfigurator.runAutoConfig(autoConfigSettings)
-            }
+            autoConfigurator.runAutoConfig(autoConfigSettings)
         }
     }
 }
