@@ -21,6 +21,9 @@ class MyExtensionImpl : MyExtension {
         // test annotation's moving
         @MyAnnotation
         val a = 0
+
+        // test protected members moving
+        val p = 0
     }
 
     companion object {

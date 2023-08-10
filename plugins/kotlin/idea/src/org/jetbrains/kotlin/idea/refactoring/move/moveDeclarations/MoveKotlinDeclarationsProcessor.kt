@@ -72,7 +72,7 @@ private object ElementHashingStrategy : HashingStrategy<PsiElement> {
     }
 }
 
-class MoveKotlinDeclarationsProcessor(
+open class MoveKotlinDeclarationsProcessor(
     val descriptor: MoveDeclarationsDescriptor,
     val mover: KotlinMover = KotlinMover.Default,
     private val throwOnConflicts: Boolean = false

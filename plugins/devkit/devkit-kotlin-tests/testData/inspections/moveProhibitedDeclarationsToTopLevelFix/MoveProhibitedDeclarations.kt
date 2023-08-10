@@ -27,6 +27,15 @@ class MyExtensionImpl : MyExtension {
     // test annotation's moving
     @MyAnnotation
     val a = 0
+
+    // test @JvmStatic
+    @JvmStatic
+    fun bar() { }
+
+    // test protected memebrs
+    protected fun giz() { }
+
+    protected val myVal = 0
   }
 }
 
