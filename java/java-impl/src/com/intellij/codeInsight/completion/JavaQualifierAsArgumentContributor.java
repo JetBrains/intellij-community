@@ -1,25 +1,29 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.impl.PsiShortNamesCacheImpl;
+import com.intellij.psi.impl.java.stubs.index.JavaStaticMemberNameIndex;
+import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Consumer;
+import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -30,6 +34,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.psi.util.PsiFormatUtil.formatVariable;
 import static com.intellij.psi.util.PsiFormatUtilBase.MAX_PARAMS_TO_SHOW;
@@ -46,7 +51,8 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
       return;
     }
 
-    if (parameters.getCompletionType() != CompletionType.BASIC || parameters.getInvocationCount() < 1) {
+    if ((parameters.getCompletionType() != CompletionType.BASIC && parameters.getCompletionType() != CompletionType.SMART) ||
+        parameters.getInvocationCount() < 2) {
       return;
     }
     PsiElement position = parameters.getPosition();
@@ -63,31 +69,100 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
     PrefixMatcher matcher = result.getPrefixMatcher();
     Project project = parameters.getEditor().getProject();
     if (project == null) return;
-
-    PsiShortNamesCache shortNamesCache = PsiShortNamesCache.getInstance(project);
     MyStaticMembersProcessor processor = new MyStaticMembersProcessor(parameters, qualifierExpression);
-    HashSet<PsiClass> classesToSkip = new HashSet<>();
+    process(parameters, matcher, processor, result);
+  }
 
-    shortNamesCache.processAllMethodNames(new Processor<>() {
+  private static void process(@NotNull CompletionParameters parameters,
+                              @NotNull PrefixMatcher matcher,
+                              @NotNull MyStaticMembersProcessor processor,
+                              @NotNull CompletionResultSet result) {
+
+    PsiElement position = parameters.getPosition();
+    GlobalSearchScope scope = position.getResolveScope();
+    Project project = position.getProject();
+    if (project.isDefault()) {
+      return;
+    }
+    Processor<PsiMember> psiStaticMethodProcessor = new Processor<>() {
       private int size = 0;
+      private final Set<PsiClass> classesToSkip = new HashSet<>();
 
       @Override
-      public boolean process(String name) {
+      public boolean process(PsiMember member) {
+        ProgressManager.checkCanceled();
+        String name = member.getName();
+        if (name == null || !matcher.prefixMatches(name)) {
+          return true;
+        }
+        if (!(member instanceof PsiMethod method && method.hasModifier(JvmModifier.STATIC))) {
+          return true;
+        }
+        processor.processStaticMember(element -> {
+          size++;
+          result.consume(element);
+        }, member, classesToSkip);
+        return size < MAX_SIZE;
+      }
+    };
+
+    PsiElement originalPosition = parameters.getOriginalPosition();
+    if (originalPosition != null) {
+      PsiClass nextClass = PsiTreeUtil.getParentOfType(originalPosition, PsiClass.class);
+      while (nextClass != null) {
+        PsiMethod[] methods = nextClass.getMethods();
+        for (PsiMethod method : methods) {
+          ProgressManager.checkCanceled();
+          if (!psiStaticMethodProcessor.process(method)) {
+            return;
+          }
+        }
+        nextClass = PsiTreeUtil.getParentOfType(nextClass, PsiClass.class);
+      }
+
+    }
+
+    //process java static separately
+    Collection<String> memberNames = JavaStaticMemberNameIndex.getInstance().getAllKeys(project);
+    for (String memberName : matcher.sortMatching(memberNames)) {
+      ProgressManager.checkCanceled();
+      for (PsiMember member : JavaStaticMemberNameIndex.getInstance().getStaticMembers(memberName, project, scope)) {
+        ProgressManager.checkCanceled();
+        if (!psiStaticMethodProcessor.process(member)) {
+          return;
+        }
+      }
+    }
+
+    List<PsiShortNamesCache> list = PsiShortNamesCache.EP_NAME.getExtensionList(project);
+    AtomicBoolean stop = new AtomicBoolean(false);
+    for (PsiShortNamesCache cache : list) {
+      //skip java
+      if (cache instanceof PsiShortNamesCacheImpl) {
+        continue;
+      }
+      if (stop.get()) {
+        break;
+      }
+      cache.processAllMethodNames(name -> {
+        ProgressManager.checkCanceled();
+        if (stop.get()) {
+          return false;
+        }
         if (!matcher.prefixMatches(name)) {
           return true;
         }
-        ProgressManager.checkCanceled();
-        shortNamesCache.processMethodsWithName(name, position.getResolveScope(), method -> {
-          processor.processStaticMember(element -> {
-            size++;
-            result.consume(element);
-          }, method, classesToSkip);
-          return size < MAX_SIZE;
-        });
-        return size < MAX_SIZE;
-      }
-    }, position.getResolveScope(), null);
+        cache.processMethodsWithName(name, method -> {
+          ProgressManager.checkCanceled();
+          boolean continueProcess = psiStaticMethodProcessor.process(method);
+          stop.set(!continueProcess);
+          return !stop.get();
+        }, scope, null);
+        return !stop.get();
+      }, scope, null);
+    }
   }
+
 
   private static final class MyStaticMembersProcessor extends JavaStaticMemberProcessor {
 
@@ -95,31 +170,51 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
     private final PsiExpression myOldQualifiedExpression;
     @Nullable
     private final PsiElement myOriginalPosition;
+    private final boolean isSmart;
+
+    @NotNull
+    private final NotNullLazyValue<Collection<PsiType>> myExpectedTypes;
+
 
     private MyStaticMembersProcessor(@NotNull CompletionParameters parameters,
                                      @NotNull PsiExpression oldQualifiedExpression) {
       super(parameters);
       this.myOldQualifiedExpression = oldQualifiedExpression;
       this.myOriginalPosition = parameters.getOriginalPosition();
+      this.myExpectedTypes =
+        NotNullLazyValue.createValue(
+          () -> ContainerUtil.map(JavaSmartCompletionContributor.getExpectedTypes(parameters),
+                                  (ExpectedTypeInfo info) -> {
+                                    PsiType type = info.getType();
+                                    return FunctionalInterfaceParameterizationUtil.getGroundTargetType(type);
+                                  }));
+      isSmart = parameters.getCompletionType() == CompletionType.SMART;
     }
 
     @Override
-    public void processStaticMember(@NotNull Consumer<? super LookupElement> consumer, PsiMember member, Set<PsiClass> classesToSkip) {
-      if (!(member instanceof PsiMethod method) || !filter(method)) {
-        return;
-      }
-      super.processStaticMember(consumer, member, classesToSkip);
+    protected boolean additionalFilter(PsiMember member) {
+      return (member instanceof PsiMethod method && filter(method));
     }
 
     @Override
     protected @NotNull JavaMethodCallElement getMethodCallElement(boolean shouldImport, List<? extends PsiMethod> members) {
       PsiMethod method = members.get(0);
       boolean shouldImportOrQualify = true;
-      if (myOriginalPosition!=null && PsiTreeUtil.isAncestor(method.getContainingClass(), myOriginalPosition, true)) {
+      boolean shouldShowClass = true;
+      if (myOriginalPosition != null && PsiTreeUtil.isAncestor(method.getContainingClass(), myOriginalPosition, true)) {
         shouldImportOrQualify = false;
+        shouldShowClass = false;
+      }
+      if (myOriginalPosition != null && ImportsUtil.hasStaticImportOn(myOriginalPosition, method, true)) {
+        PsiClass psiClass = PsiTreeUtil.getParentOfType(myOriginalPosition, PsiClass.class);
+        if (psiClass!=null  &&
+            !PsiTreeUtil.isAncestor(psiClass, method, true) &&
+            !ContainerUtil.and(psiClass.getAllMethods(), containingMethod -> method.getName().equals(containingMethod.getName()))) {
+          shouldImportOrQualify = false;
+        }
       }
       return new JavaQualifierAsParameterMethodCallElement(members.stream().filter(t -> filter(t)).toList(), myOldQualifiedExpression,
-                                                           shouldImport, shouldImportOrQualify);
+                                                           shouldImport, shouldImportOrQualify, shouldShowClass);
     }
 
     private boolean filter(PsiMethod member) {
@@ -132,11 +227,42 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
         return false;
       }
       PsiType paramType = PsiTypesUtil.getParameterType(list.getParameters(), 0, true);
-      paramType = TypeConversionUtil.erasure(paramType);
-      if (paramType == null) {
+      PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+      for (PsiTypeParameter typeParameter : member.getTypeParameters()) {
+        PsiClass[] supers = typeParameter.getSupers();
+        PsiType[] types = typeParameter.getSuperTypes();
+        if (ContainerUtil.or(supers, s -> s instanceof PsiTypeParameter && InheritanceUtil.getCircularClass(s) != null)) {
+          types = new PsiType[]{TypeConversionUtil.erasure(types[0])};
+        }
+        PsiType composite = PsiIntersectionType.createIntersection(true, types);
+
+        substitutor = substitutor.put(typeParameter, PsiWildcardType.createExtends(typeParameter.getManager(), composite));
+      }
+      PsiType targetType = substitutor.substitute(paramType);
+      if (!TypeConversionUtil.areTypesAssignmentCompatible(targetType, myOldQualifiedExpression)) {
         return false;
       }
-      return TypeConversionUtil.areTypesAssignmentCompatible(paramType, myOldQualifiedExpression);
+      if (myOldQualifiedExpression instanceof PsiLiteralExpression literalExpression &&
+          PsiTypes.nullType().equals(literalExpression.getType())) {
+        if (NullableNotNullManager.isNotNull(parameter)) {
+          return false;
+        }
+      }
+      if (!isSmart) {
+        return true;
+      }
+      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(parameter.getType());
+      if (psiClass instanceof PsiTypeParameter typeParameter) {
+        substitutor = substitutor.put(typeParameter, myOldQualifiedExpression.getType());
+      }
+      PsiType returnType = member.getReturnType();
+      returnType = substitutor.substitute(returnType);
+      for (PsiType type : myExpectedTypes.getValue()) {
+        if (TypeConversionUtil.isAssignable(type, returnType)) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 
@@ -147,17 +273,20 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
     private final boolean myShouldImport;
     private final boolean myShouldImportOrQualify;
     private final boolean myMergedOverloads;
+    private final boolean myShouldShowClass;
 
     private JavaQualifierAsParameterMethodCallElement(@NotNull Collection<? extends PsiMethod> methods,
                                                       @NotNull PsiExpression oldQualifierExpression,
                                                       boolean shouldImportStatic,
-                                                      boolean shouldImportOrQualify) {
+                                                      boolean shouldImportOrQualify,
+                                                      boolean shouldShowClass) {
       super(methods.iterator().next(), shouldImportStatic, methods.size() > 1);
       myMethods = methods;
       myMergedOverloads = methods.size() > 1;
       myOldQualifierExpression = oldQualifierExpression;
       myShouldImport = shouldImportStatic;
       myShouldImportOrQualify = shouldImportOrQualify;
+      myShouldShowClass = shouldShowClass;
     }
 
     @Override
@@ -178,7 +307,8 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
       presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));
       PsiMethod method = myMethods.iterator().next();
       PsiClass containingClass = method.getContainingClass();
-      final String className = containingClass == null ? "???" : containingClass.getName();
+      final String className =
+        containingClass == null || !myShouldShowClass ? "" : containingClass.getName();
       final String memberName = method.getName();
       if (StringUtil.isNotEmpty(className)) {
         presentation.setItemText(className + "." + memberName);
@@ -251,7 +381,11 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
           String text = myOldQualifierExpression.getText();
           boolean hasOneArgument = ContainerUtil.exists(myMethods, method -> method.getParameterList().getParameters().length == 1);
           if (!hasOneArgument) {
-            text += ", ";
+            CommonCodeStyleSettings codeStyleSettings = CodeStyle.getLanguageSettings(myOldQualifierExpression.getContainingFile());
+            text += ",";
+            if (codeStyleSettings.SPACE_AFTER_COMMA) {
+              text += " ";
+            }
           }
           context.getDocument().insertString(argumentList.getStartOffset() + 1, text);
           context.getEditor().getCaretModel().moveToOffset(argumentList.getStartOffset() + 1 + text.length());

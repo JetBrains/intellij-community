@@ -58,7 +58,7 @@ public abstract class StaticMemberProcessor {
 
       if (JavaCompletionUtil.isSourceLevelAccessible(myPosition, containingClass, myPackagedContext)) {
         if (member instanceof PsiMethod && !classesToSkip.add(containingClass)) return;
-
+        if(!additionalFilter(member)) return;
         boolean shouldImport = myStaticImportedClasses.contains(containingClass);
         showHint(shouldImport);
         LookupElement item = member instanceof PsiMethod ? createItemWithOverloads((PsiMethod)member, containingClass, shouldImport) :
@@ -69,6 +69,10 @@ public abstract class StaticMemberProcessor {
         }
       }
     }
+  }
+
+  protected boolean additionalFilter(PsiMember member) {
+    return true;
   }
 
   @Nullable
