@@ -177,7 +177,7 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
   @Override
   public @NotNull Icon getDarkIcon(boolean isDark) {
     RowIcon newIcon = copy();
-    for (int i=0; i<newIcon.myIcons.length; i++) {
+    for (int i = 0; i < newIcon.myIcons.length; i++) {
       newIcon.myIcons[i] = newIcon.myIcons[i] == null ? null : IconLoader.getDarkIcon(newIcon.myIcons[i], isDark);
     }
     return newIcon;
@@ -190,6 +190,6 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
 
   @Override
   public String getToolTip(boolean composite) {
-    return LayeredIcon.Companion.combineIconTooltips(myIcons);
+    return LayeredIconKt.combineIconTooltips(myIcons);
   }
 }

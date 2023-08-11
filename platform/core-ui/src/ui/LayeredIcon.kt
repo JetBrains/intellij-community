@@ -105,27 +105,6 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
       layeredIcon.setIcon(foregroundIcon, 1)
       return layeredIcon
     }
-
-    fun combineIconTooltips(icons: Array<Icon?>): @NlsContexts.Tooltip String? {
-      // If a layered icon contains only a single non-null layer and other layers are null, its tooltip is not composite.
-      var singleIcon: Icon? = null
-      for (icon in icons) {
-        if (icon != null) {
-          if (singleIcon != null) {
-            val result: @NlsContexts.Tooltip StringBuilder = StringBuilder()
-            val seenTooltips = HashSet<String>()
-            buildCompositeTooltip(icons = icons, result = result, seenTooltips = seenTooltips)
-            @Suppress("HardCodedStringLiteral")
-            return result.toString()
-          }
-          singleIcon = icon
-        }
-      }
-      if (singleIcon != null) {
-        return if (singleIcon is IconWithToolTip) singleIcon.getToolTip(false) else null
-      }
-      return null
-    }
   }
 
   private constructor(icon: LayeredIcon, replacer: IconReplacer?) : super(icon) {
@@ -367,9 +346,30 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     return newIcon
   }
 
-  override fun toString() = "Layered icon ${getIconWidth()}x${getIconHeight()}. myIcons=$allLayers"
+  override fun toString() = "LayeredIcon(w=$width, h=$height, icons=[${allLayers.joinToString(", ")}]"
 
   override fun getToolTip(composite: Boolean) = combineIconTooltips(allLayers)
+}
+
+internal fun combineIconTooltips(icons: Array<Icon?>): @NlsContexts.Tooltip String? {
+  // If a layered icon contains only a single non-null layer and other layers are null, its tooltip is not composite.
+  var singleIcon: Icon? = null
+  for (icon in icons) {
+    if (icon != null) {
+      if (singleIcon != null) {
+        val result: @NlsContexts.Tooltip StringBuilder = StringBuilder()
+        val seenTooltips = HashSet<String>()
+        buildCompositeTooltip(icons = icons, result = result, seenTooltips = seenTooltips)
+        @Suppress("HardCodedStringLiteral")
+        return result.toString()
+      }
+      singleIcon = icon
+    }
+  }
+  if (singleIcon != null) {
+    return if (singleIcon is IconWithToolTip) singleIcon.getToolTip(false) else null
+  }
+  return null
 }
 
 private fun buildCompositeTooltip(icons: Array<Icon?>, result: StringBuilder, seenTooltips: MutableSet<String>) {
