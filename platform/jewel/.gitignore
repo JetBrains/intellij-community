@@ -39,6 +39,7 @@ local.properties
 !.idea/dataSources.xml
 !.idea/detekt.xml
 !.idea/encodings.xml
+!.idea/externalDependencies.xml
 !.idea/fileTemplates/
 !.idea/icon.svg
 !.idea/icon.png
