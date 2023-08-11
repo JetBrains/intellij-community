@@ -121,7 +121,7 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
     }
 
     // not a plugin
-    if (moduleName == "intellij.idea.ultimate.resources" || moduleName == "intellij.lightEdit" || moduleName == "intellij.webstorm") {
+    if (moduleName == "intellij.idea.ultimate.customization" || moduleName == "intellij.lightEdit" || moduleName == "intellij.webstorm") {
       continue
     }
 

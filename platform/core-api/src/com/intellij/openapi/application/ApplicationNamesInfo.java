@@ -32,7 +32,7 @@ public final class ApplicationNamesInfo {
     if (Boolean.getBoolean("idea.use.dev.build.server")) {
       String module = null;
       if (prefix.isEmpty() || prefix.equals(PlatformUtils.IDEA_PREFIX)) {
-        module = "intellij.idea.ultimate.resources";
+        module = "intellij.idea.ultimate.customization";
       }
       else if (prefix.equals(PlatformUtils.WEB_PREFIX)) {
         module = "intellij.webstorm";
