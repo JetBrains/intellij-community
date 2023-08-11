@@ -38,9 +38,13 @@ public final class JpsMavenSettings {
     return new File(defaultMavenFolder, SETTINGS_XML);
   }
 
-  @NotNull
+  @Nullable
   public static File getGlobalMavenSettingsXml() {
-    return new File(resolveMavenHomeDirectory() + File.separator + CONF_DIR, SETTINGS_XML);
+    String mavenHome = resolveMavenHomeDirectory();
+    if (mavenHome == null) {
+      return null;
+    }
+    return new File(mavenHome + File.separator + CONF_DIR, SETTINGS_XML);
   }
 
   @Nullable
@@ -80,7 +84,7 @@ public final class JpsMavenSettings {
 
     // Check global maven local settings
     File globalSettingsFile = getGlobalMavenSettingsXml();
-    if (globalSettingsFile.exists()) {
+    if (globalSettingsFile != null && globalSettingsFile.exists()) {
       String fromGlobalSettings = getRepositoryFromSettings(globalSettingsFile);
       if (isNotEmpty(fromGlobalSettings) && new File(fromGlobalSettings).exists()) {
         return fromGlobalSettings;
@@ -104,15 +108,15 @@ public final class JpsMavenSettings {
   @ApiStatus.Internal
   @NotNull
   public static Map<String, RemoteRepositoryAuthentication> loadAuthenticationSettings(
-    @NotNull File globalMavenSettingsXml,
+    @Nullable File globalMavenSettingsXml,
     @NotNull File userMavenSettingsXml
   ) {
-    if (!globalMavenSettingsXml.exists() && !userMavenSettingsXml.exists()) {
+    if ((globalMavenSettingsXml == null || !globalMavenSettingsXml.exists()) && !userMavenSettingsXml.exists()) {
       return Collections.emptyMap();
     }
 
     Map<String, RemoteRepositoryAuthentication> result = new HashMap<>();
-    if (globalMavenSettingsXml.exists()) {
+    if (globalMavenSettingsXml != null && globalMavenSettingsXml.exists()) {
       loadAuthenticationFromSettings(globalMavenSettingsXml, result);
     }
     if (userMavenSettingsXml.exists()) {

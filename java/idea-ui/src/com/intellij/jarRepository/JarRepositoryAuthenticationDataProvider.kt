@@ -65,10 +65,10 @@ private class MavenSettingsXmlRepositoryAuthenticationDataProvider(private val c
 
   init {
     val localFileSystem = LocalFileSystem.getInstance()
-    val absolutePaths = listOf(
-      FileUtilRt.toSystemIndependentName(globalMavenSettingsXml.absolutePath),
-      FileUtilRt.toSystemIndependentName(userMavenSettingsXml.absolutePath)
-    )
+    val absolutePaths = buildList {
+      add(FileUtilRt.toSystemIndependentName(userMavenSettingsXml.absolutePath))
+      globalMavenSettingsXml?.let { add(FileUtilRt.toSystemIndependentName(it.absolutePath)) }
+    }
     watchedRoots = absolutePaths.mapNotNull {
       localFileSystem.refreshAndFindFileByPath(it)
       localFileSystem.addRootToWatch(it, false)
