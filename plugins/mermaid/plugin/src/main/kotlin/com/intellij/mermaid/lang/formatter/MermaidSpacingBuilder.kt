@@ -248,7 +248,9 @@ internal object MermaidSpacingBuilder {
       .between(MermaidTokens.COMMA, MermaidElements.IDENTIFYING_QUOTED_SANKEY_FIELD).spaceIf(false)
       .aroundInside(MermaidTokens.STYLE_SEPARATOR, MermaidElements.STYLED_VERTEX).spaceIf(false)
       .around(MermaidElements.GENERIC_TYPE_ID).spaceIf(false)
-      .after(MermaidTokens.Directives.CLOSE_DIRECTIVE).spaceIf(false)
+      .around(MermaidElements.DIRECTIVE_VALUE).spaceIf(false)
+      .around(MermaidTokens.Directives.CLOSE_DIRECTIVE).spaceIf(false)
+      .after(MermaidTokens.Directives.OPEN_DIRECTIVE).spaceIf(false)
       .beforeInside(MermaidTokens.COLON, GIT_GRAPH_ATTRIBUTES).spaceIf(false)
   }
 

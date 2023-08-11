@@ -120,10 +120,13 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^] { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 <directive> {
-  [^%}]* { }
   "}"/"%%" { return Directives.DIRECTIVE_TEXT; }
-  [^] { }
-  "%%" { yypopstate(); return Directives.CLOSE_DIRECTIVE; }
+  "%%"/[\n\r]? { yypopstate(); return Directives.CLOSE_DIRECTIVE; }
+
+  [^\n\r]+"}"/"%%" { return Directives.DIRECTIVE_TEXT; }
+  [^\n\r]+ { return Directives.DIRECTIVE_TEXT; }
+
+  [\n\r] { return EOL; }
 }
 <frontmatter> {
   "---" { yybegin(YYINITIAL); return Frontmatter.FRONTMATTER_END; }

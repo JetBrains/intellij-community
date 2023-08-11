@@ -872,7 +872,9 @@ complexSankeyText ::= SANKEY_TEXT+
 
 
 directive ::= OPEN_DIRECTIVE directiveValue? CLOSE_DIRECTIVE
-directiveValue ::= DIRECTIVE_TEXT { mixin="com.intellij.mermaid.lang.psi.impl.MermaidLanguageInjectionHost" }
+directiveValue ::= directiveValueLines { mixin="com.intellij.mermaid.lang.psi.impl.MermaidLanguageInjectionHost" }
+private directiveValueLines ::= directiveValueLine [directiveValueLines]
+private directiveValueLine ::= DIRECTIVE_TEXT [EOL] | EOL
 
 flowchartClickStatement ::= CLICK [CLICK_DATA] [HREF] string [string] [LINK_TARGET]
   | CLICK [CALL] CLICK_DATA [callbackArgs] string
