@@ -28,11 +28,11 @@ import javax.swing.*;
 public class GrCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
 
   private JCheckBox myCbUseFQClassNamesInJavaDoc;
-  
+
   @Override
-  protected CodeStyleImportsBaseUI createKotlinUI() {
+  protected CodeStyleImportsBaseUI createKotlinUI(JComponent packages, JComponent importLayout) {
     myCbUseFQClassNamesInJavaDoc = new JCheckBox(ApplicationBundle.message("checkbox.use.fully.qualified.class.names.in.javadoc"));
-    GroovyCodeStyleImportsUI result = new GroovyCodeStyleImportsUI(myCbUseFQClassNamesInJavaDoc);
+    GroovyCodeStyleImportsUI result = new GroovyCodeStyleImportsUI(packages, importLayout, myCbUseFQClassNamesInJavaDoc);
     result.init();
     return result;
   }

@@ -50,11 +50,12 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   private TableView<InnerClassItem> mydoNotInsertInnerTable;
 
   @Override
-  protected CodeStyleImportsBaseUI createKotlinUI() {
+  protected CodeStyleImportsBaseUI createKotlinUI(JComponent packages, JComponent importLayout) {
     createDoNotImportInnerList();
     myFqnInJavadocOption = new FullyQualifiedNamesInJavadocOptionProvider();
 
-    JavaCodeStyleImportsUI result = new JavaCodeStyleImportsUI(mydoNotInsertInnerTable, myFqnInJavadocOption.getPanel());
+    JavaCodeStyleImportsUI result =
+      new JavaCodeStyleImportsUI(packages, importLayout, mydoNotInsertInnerTable, myFqnInJavadocOption.getPanel());
     result.init();
     return result;
   }

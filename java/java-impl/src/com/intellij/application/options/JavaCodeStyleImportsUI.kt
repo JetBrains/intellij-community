@@ -14,8 +14,9 @@ import com.intellij.ui.table.TableView
 import com.intellij.util.ui.JBDimension
 import javax.swing.JComponent
 
-internal class JavaCodeStyleImportsUI(private val doNotInsertInnerTable: TableView<InnerClassItem>,
-                                      private val fqnInJavadocOption: JComponent) : CodeStyleImportsBaseUI() {
+internal class JavaCodeStyleImportsUI(packages: JComponent, importLayout: JComponent,
+                                      private val doNotInsertInnerTable: TableView<InnerClassItem>,
+                                      private val fqnInJavadocOption: JComponent) : CodeStyleImportsBaseUI(packages, importLayout) {
 
   override fun init() {
     super.init()

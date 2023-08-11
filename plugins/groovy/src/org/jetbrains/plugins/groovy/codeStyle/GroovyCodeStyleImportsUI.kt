@@ -4,8 +4,11 @@ package org.jetbrains.plugins.groovy.codeStyle
 import com.intellij.application.options.CodeStyleImportsBaseUI
 import com.intellij.ui.dsl.builder.Panel
 import javax.swing.JCheckBox
+import javax.swing.JComponent
 
-class GroovyCodeStyleImportsUI(private val cbUseFQClassNamesInJavaDoc: JCheckBox) : CodeStyleImportsBaseUI() {
+class GroovyCodeStyleImportsUI(packages: JComponent,
+                               importLayout: JComponent,
+                               private val cbUseFQClassNamesInJavaDoc: JCheckBox) : CodeStyleImportsBaseUI(packages, importLayout) {
 
   override fun Panel.fillCustomOptions() {
     row {

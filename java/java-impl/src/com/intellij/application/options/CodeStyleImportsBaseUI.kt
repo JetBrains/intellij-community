@@ -5,13 +5,16 @@ import com.intellij.java.JavaBundle
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.psi.codeStyle.ImportsLayoutSettings
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.JBUI
 import javax.swing.JCheckBox
+import javax.swing.JComponent
 import javax.swing.JTextField
 
-open class CodeStyleImportsBaseUI {
+open class CodeStyleImportsBaseUI(private val packages: JComponent, private val importLayout: JComponent) {
 
   private lateinit var cbUseSingleClassImports: JCheckBox
   private lateinit var cbUseFQClassNames: JCheckBox
@@ -47,7 +50,16 @@ open class CodeStyleImportsBaseUI {
             .columns(3)
             .component
         }
+      }.resizableRow()
+
+      row {
+        cell(packages).align(Align.FILL)
       }
+      row {
+        cell(importLayout).align(Align.FILL)
+      }
+    }.apply {
+      border = JBUI.Borders.empty(0, 10, 10, 10)
     }
   }
 

@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.ImportsLayoutSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,22 +31,24 @@ import java.awt.*;
 public abstract class CodeStyleImportsPanelBase extends JPanel {
   private final PackageEntryTable myPackageList = new PackageEntryTable();
   private final CodeStyleImportsBaseUI kotlinUI;
-  private JBTable myPackageTable;
-
-  private JPanel myGeneralPanel;
-  private JPanel myPackagesPanel;
-  private JPanel myImportsLayoutPanel;
-  private JPanel myWholePanel;
-  private ImportLayoutPanel myImportLayoutPanel;
+  private final JBTable myPackageTable;
+  private final ImportLayoutPanel myImportLayoutPanel;
 
   public CodeStyleImportsPanelBase() {
-    setLayout(new BorderLayout());
-    add(myWholePanel, BorderLayout.CENTER);
+    myImportLayoutPanel = new ImportLayoutPanel() {
+      @Override
+      public void refresh() {
+        refreshTable(myPackageTable, myPackageList);
+        refreshTable(getImportLayoutTable(), getImportLayoutList());
+      }
+    };
 
-    kotlinUI = createKotlinUI();
-    myGeneralPanel.add(kotlinUI.panel, BorderLayout.CENTER);
-    createImportPanel();
-    createPackagePanel();
+    myPackageTable = ImportLayoutPanel.createTableForPackageEntries(myPackageList, myImportLayoutPanel);
+
+    kotlinUI = createKotlinUI(PackagePanel.createPackagesPanel(myPackageTable, myPackageList), myImportLayoutPanel);
+
+    setLayout(new BorderLayout());
+    add(new JBScrollPane(kotlinUI.panel), BorderLayout.CENTER);
   }
 
   public abstract void reset(CodeStyleSettings settings);
@@ -54,24 +57,8 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
 
   public abstract boolean isModified(CodeStyleSettings settings);
 
-  private void createImportPanel() {
-    myImportLayoutPanel = new ImportLayoutPanel() {
-      @Override
-      public void refresh() {
-        refreshTable(myPackageTable, myPackageList);
-        refreshTable(getImportLayoutTable(), getImportLayoutList());
-      }
-    };
-    myImportsLayoutPanel.add(myImportLayoutPanel, BorderLayout.CENTER);
-  }
-
-  private void createPackagePanel() {
-    myPackageTable = ImportLayoutPanel.createTableForPackageEntries(myPackageList, myImportLayoutPanel);
-    myPackagesPanel.add(PackagePanel.createPackagesPanel(myPackageTable, myPackageList), BorderLayout.CENTER);
-  }
-
-  protected CodeStyleImportsBaseUI createKotlinUI() {
-    CodeStyleImportsBaseUI result = new CodeStyleImportsBaseUI();
+  protected CodeStyleImportsBaseUI createKotlinUI(JComponent packages, JComponent importLayout) {
+    CodeStyleImportsBaseUI result = new CodeStyleImportsBaseUI(packages, importLayout);
     result.init();
     return result;
   }
