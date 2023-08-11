@@ -4,7 +4,6 @@ package com.intellij.ide.troubleshooting;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.troubleshooting.GeneralTroubleInfoCollector;
@@ -28,7 +27,7 @@ final class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
 
   @Override
   public @NotNull String collectInfo(@NotNull Project project) {
-    ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     Calendar cal = appInfo.getBuildDate();
 
     String output = "Build version: ";
