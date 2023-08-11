@@ -99,4 +99,10 @@ class KotlinMppCompilerArgumentsImportingTests : AbstractKotlinMppGradleImportin
     fun testMixedCompilerOptionsWithTasks() {
         doTest()
     }
+
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-9107+")
+    @Test
+    fun testCompilerOptionsInProjectAndTarget() {
+        doTest()
+    }
 }
