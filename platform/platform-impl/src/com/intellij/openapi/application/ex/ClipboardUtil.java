@@ -46,8 +46,8 @@ public final class ClipboardUtil {
       }
       return defaultValue;
     };
-    return IdeEventQueue.getInstance().isDispatchingOnMainThread || ApplicationManager.getApplication().isDispatchThread()
-           ? waitOnEdtWithTimeout(task, defaultValue)
+    return ApplicationManager.getApplication().isDispatchThread()
+           ? (IdeEventQueue.getInstance().isDispatchingOnMainThread ? task.compute() : waitOnEdtWithTimeout(task, defaultValue))
            : DiskQueryRelay.compute(task);
   }
 
