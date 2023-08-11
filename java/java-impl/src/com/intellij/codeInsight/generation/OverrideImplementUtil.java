@@ -519,9 +519,12 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   @Nullable
-  private static JavaOverrideImplementMemberChooser showJavaOverrideImplementChooser(@NotNull JavaOverrideImplementMemberChooserContainer container,
+  private static JavaOverrideImplementMemberChooser showJavaOverrideImplementChooser(@Nullable JavaOverrideImplementMemberChooserContainer container,
                                                                                      @NotNull Editor editor,
                                                                                      @NotNull PsiElement aClass) {
+    if (container == null) {
+      return null;
+    }
     final JavaOverrideImplementMemberChooser chooser = create(container);
     Project project = aClass.getProject();
     registerHandlerForComplementaryAction(project, editor, aClass, container.toImplement(), chooser);
