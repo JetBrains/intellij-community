@@ -32,10 +32,7 @@ import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
-import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.*
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
@@ -341,7 +338,8 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
             scope.hasKotlinJvmRuntime(module.project)
                     || runReadAction { hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, KotlinJavaScriptLibraryKind)) }
-                    || hasKotlinCommonRuntimeInScope(scope)
+                    || hasKotlinCommonRuntimeInScope(module)
+                    || hasKotlinCommonLegacyRuntimeInScope(scope)
                     || hasKotlinJsRuntimeInScope(module)
                     || hasKotlinWasmRuntimeInScope(module)
                     || hasKotlinNativeRuntimeInScope(module)
@@ -385,7 +383,17 @@ fun hasKotlinJsLegacyRuntimeInScope(module: Module): Boolean {
     }
 }
 
-fun hasKotlinCommonRuntimeInScope(scope: GlobalSearchScope): Boolean {
+/**
+ * Will check if kotlin is present as klib (knm files)
+ */
+fun hasKotlinCommonRuntimeInScope(module: Module): Boolean {
+    return hasKotlinPlatformRuntimeInScope(module, StandardNames.BUILT_INS_PACKAGE_FQ_NAME, KotlinCommonLibraryKind)
+}
+
+/**
+ * Will check if kotlin is present as .kotlin_metadata (legacy) file
+ */
+fun hasKotlinCommonLegacyRuntimeInScope(scope: GlobalSearchScope): Boolean {
     return IdeVirtualFileFinder(scope).hasMetadataPackage(StandardNames.BUILT_INS_PACKAGE_FQ_NAME)
 }
 
