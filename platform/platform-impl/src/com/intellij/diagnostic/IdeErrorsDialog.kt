@@ -322,7 +322,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     rootPanel.add(attachmentsPanel, BorderLayout.CENTER)
     rootPanel.add(bottomRow, BorderLayout.SOUTH)
 
-    loadingDecorator = LoadingDecorator(rootPanel, disposable, 100)
+    loadingDecorator = LoadingDecorator(rootPanel, disposable, 100, useMinimumSize = true)
     return loadingDecorator.component
   }
 
