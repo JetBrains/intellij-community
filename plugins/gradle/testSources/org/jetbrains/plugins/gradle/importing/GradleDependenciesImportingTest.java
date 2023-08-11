@@ -933,15 +933,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModules("project", "project.main", "project.test");
   }
 
-  /**
-   * At the moment, IDEA does not support depending on an artifact containing output of multiple source sets.
-   * There is only one source set to choose as the module dependency.
-   * "Owning" sourceSet should be preferred for a jar task with name equal to sourceSet.getJarTaskName()
-   */
   @Test
-  public void testProjectDependencyOnArtifactsContainingMultipleSourceSets() throws Exception {
+  public void testProjectDependencyOnArtifactsContainingOnlySourceSetsOutputs() throws Exception {
     createSettingsFile("include 'api', 'impl' ");
-    String archiveBaseName = (isGradleOlderThan("7.0") ? "baseName" : "archiveBaseName") + " = 'my-archive'\n";
 
     importProject(
       createBuildScriptBuilder()
@@ -949,29 +943,23 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         .project(":api", it -> {
           it
             .addPostfix("""
-                          configurations { myConfig }
-                          sourceSets { mainX }
-                          jar { from sourceSets.mainX.output }
-                          def mainXJarTask = tasks.create(sourceSets.mainX.getJarTaskName(), Jar) {
-                            """ +  archiveBaseName + """
-                            from sourceSets.mainX.output
-                          }
-                          artifacts { myConfig mainXJarTask }
+                          sourceSets { extraSourceSet }
+                          jar { from sourceSets.extraSourceSet.output }
                           """);
         })
         .project(":impl", it -> {
           it.addImplementationDependency(it.project(":api"));
-          it.addTestImplementationDependency(it.project(":api", "myConfig"));
         })
         .generate()
     );
 
     assertModules("project", "project.main", "project.test",
-                  "project.api", "project.api.main", "project.api.test", "project.api.mainX",
+                  "project.api", "project.api.main", "project.api.test", "project.api.extraSourceSet",
                   "project.impl", "project.impl.main", "project.impl.test");
 
-    assertModuleModuleDeps("project.impl.main", "project.api.main"); // does not depend on mainX
-    assertModuleModuleDeps("project.impl.test", "project.impl.main", "project.api.main", "project.api.mainX");
+    assertModuleModuleDeps("project.impl.main",  "project.api.extraSourceSet", "project.api.main");
+    assertModuleLibDeps("project.impl.main");
+    assertModuleModuleDeps("project.impl.test", "project.impl.main", "project.api.extraSourceSet", "project.api.main");
   }
 
   @Test

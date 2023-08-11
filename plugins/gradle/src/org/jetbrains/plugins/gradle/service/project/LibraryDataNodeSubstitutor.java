@@ -77,17 +77,14 @@ public class LibraryDataNodeSubstitutor {
     final ArrayDeque<String> unprocessedPaths = new ArrayDeque<>(libraryPaths);
     while (!unprocessedPaths.isEmpty()) {
       final String path = unprocessedPaths.remove();
-      ModuleLookupResult lookupResult = lookupTargetModule(path);
-      if (lookupResult == null) {
-        continue;
+      Collection<ModuleLookupResult> lookupResults = lookupTargetModule(path);
+      for (ModuleLookupResult result : lookupResults) {
+        if (createAndMaybeAttachNewModuleDependency(libraryDependencyDataNode, result, libraryPaths,
+                                                    shouldKeepTransitiveDependencies,
+                                                    unprocessedPaths, path, classpathOrderShift)) {
+          classpathOrderShift++;
+        }
       }
-
-      if (createAndMaybeAttachNewModuleDependency(libraryDependencyDataNode, lookupResult, libraryPaths,
-                                              shouldKeepTransitiveDependencies,
-                                              unprocessedPaths, path)) {
-        classpathOrderShift++;
-      }
-
       if (libraryPaths.isEmpty()) {
         libraryDependencyDataNode.clear(true);
         break;
@@ -132,11 +129,11 @@ public class LibraryDataNodeSubstitutor {
   }
 
   private static boolean createAndMaybeAttachNewModuleDependency(@NotNull DataNode<LibraryDependencyData> libraryDependencyDataNode,
-                                @NotNull ModuleLookupResult lookupResult,
-                                @NotNull Set<String> libraryPaths,
-                                boolean shouldKeepTransitiveDependencies,
-                                @NotNull ArrayDeque<String> unprocessedPaths,
-                                @NotNull String path) {
+                                                                 @NotNull ModuleLookupResult lookupResult,
+                                                                 @NotNull Set<String> libraryPaths,
+                                                                 boolean shouldKeepTransitiveDependencies,
+                                                                 @NotNull ArrayDeque<String> unprocessedPaths,
+                                                                 @NotNull String path, int classpathOrderShift) {
 
     boolean addedNewDependency = false;
     LibraryDependencyData libraryDependencyData = libraryDependencyDataNode.getData();
@@ -160,7 +157,7 @@ public class LibraryDataNodeSubstitutor {
     final ModuleData ownerModule = libraryDependencyData.getOwnerModule();
     final ModuleDependencyData moduleDependencyData = new ModuleDependencyData(ownerModule, targetModuleData);
     moduleDependencyData.setScope(libraryDependencyData.getScope());
-    moduleDependencyData.setOrder(libraryDependencyData.getOrder());
+    moduleDependencyData.setOrder(libraryDependencyData.getOrder() + classpathOrderShift + 1);
 
     if (targetExternalSourceSet != null && isTestSourceSet(targetExternalSourceSet)) {
       moduleDependencyData.setProductionOnTestDependency(true);
@@ -211,8 +208,9 @@ public class LibraryDataNodeSubstitutor {
     return addedNewDependency;
   }
 
-  private ModuleLookupResult lookupTargetModule(String path) {
-    Set<String> targetModuleOutputPaths = null;
+  @NotNull
+  private Collection<ModuleLookupResult> lookupTargetModule(String path) {
+    List<ModuleLookupResult> results = new ArrayList<>();
 
     GradleSourceSetData targetModule = Optional.ofNullable(resolverContext.getSettings())
       .map(GradleExecutionSettings::getExecutionWorkspace)
@@ -222,30 +220,32 @@ public class LibraryDataNodeSubstitutor {
       .orElse(null);
 
     if (targetModule != null) {
-      return new ModuleLookupResult(Collections.singleton(path),
+      return Collections.singleton(new ModuleLookupResult(Collections.singleton(path),
                                     new DataNode<>(GradleSourceSetData.KEY, targetModule, null),
-                                    null);
+                                    null));
     }
 
     final String moduleId;
     final Pair<String, ExternalSystemSourceType> sourceTypePair = moduleOutputsMap.get(path);
-    if (sourceTypePair == null) {
-      ModuleMappingInfo mapping = artifactsMap.getModuleMapping(path);
-      moduleId = mapping != null ? mapping.getModuleId() : null;
-      if (moduleId != null) {
-        targetModuleOutputPaths = Set.of(path);
+    if (sourceTypePair != null) {
+      moduleId = sourceTypePair.first;
+      final Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> pair = sourceSetMap.get(moduleId);
+      if (pair != null) {
+        return Collections.singleton(new ModuleLookupResult(null, pair.first, pair.second));
       }
     }
-    else {
-      moduleId = sourceTypePair.first;
-    }
-    if (moduleId == null) return null;
 
-    final Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> pair = sourceSetMap.get(moduleId);
-    if (pair == null) {
-      return null;
+    ModuleMappingInfo mapping = artifactsMap.getModuleMapping(path);
+    if (mapping != null) {
+      for (String id : mapping.getModuleIds()) {
+        final Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> pair = sourceSetMap.get(id);
+        if (pair != null) {
+          results.add(new ModuleLookupResult(Set.of(path), pair.first, pair.second));
+        }
+      }
     }
-    return new ModuleLookupResult(targetModuleOutputPaths, pair.first, pair.second);
+
+    return results;
   }
 
 
