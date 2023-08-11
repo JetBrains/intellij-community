@@ -6,9 +6,9 @@ expect interface <!LINE_MARKER("descr='Has actuals in jvm module'"), LINE_MARKER
     fun <!LINE_MARKER("descr='Has actuals in jvm module'")!>common_2_C<!>()
 }
 
-actual interface <!LINE_MARKER("descr='Has expects in common-1 module'"), LINE_MARKER("descr='Is implemented by B [jvm] (sample) Press ... to navigate'")!>A<!> : C {
+<!ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER, ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_SUPERTYPES_AS_NON_FINAL_EXPECT_CLASSIFIER!>actual interface <!LINE_MARKER("descr='Has expects in common-1 module'"), LINE_MARKER("descr='Is implemented by B [jvm] (sample) Press ... to navigate'")!>A<!><!> : C {
     actual fun <!LINE_MARKER("descr='Has expects in common-1 module'")!>common_1_A<!>()
-    fun common_2_A()
+    fun <!NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION!>common_2_A<!>()
 }
 
 typealias A_Common_2_Alias = A
