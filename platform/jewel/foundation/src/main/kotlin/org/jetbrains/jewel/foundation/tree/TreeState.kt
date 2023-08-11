@@ -37,11 +37,13 @@ class TreeState(
         return true
     }
 
-    suspend fun addElementsToSelection(indexList: List<Int>, itemToFocus: Int? = indexList.lastOrNull()) =
+    suspend fun addElementsToSelection(indexList: List<Int>, itemToFocus: Int? = indexList.lastOrNull()) {
         delegate.addElementsToSelection(indexList, itemToFocus)
+    }
 
-    suspend fun addElementToSelection(elementIndex: Int, changeFocus: Boolean = true) =
+    suspend fun addElementToSelection(elementIndex: Int, changeFocus: Boolean = true) {
         delegate.addElementToSelection(elementIndex, changeFocus)
+    }
 
     suspend fun toggleElementSelection(flattenIndex: Int) {
         delegate.toggleSelection(flattenIndex)
@@ -51,7 +53,7 @@ class TreeState(
         delegate.deselectSingleElement(itemIndex, changeFocus)
     }
 
-    suspend fun deselectAll() {
+    fun deselectAll() {
         delegate.deselectAll()
     }
 

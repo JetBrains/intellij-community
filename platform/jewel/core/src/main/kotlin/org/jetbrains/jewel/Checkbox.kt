@@ -88,20 +88,22 @@ fun TriStateCheckbox(
     metrics: CheckboxMetrics = LocalCheckboxStyle.current.metrics,
     icons: CheckboxIcons = LocalCheckboxStyle.current.icons,
     textStyle: TextStyle = LocalTextStyle.current,
-) = CheckboxImpl(
-    state = state,
-    onClick = onClick,
-    modifier = modifier,
-    enabled = enabled,
-    outline = outline,
-    interactionSource = interactionSource,
-    colors = colors,
-    metrics = metrics,
-    icons = icons,
-    textStyle = textStyle,
-    resourceLoader = resourceLoader,
-    content = null
-)
+) {
+    CheckboxImpl(
+        state = state,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        outline = outline,
+        interactionSource = interactionSource,
+        colors = colors,
+        metrics = metrics,
+        icons = icons,
+        textStyle = textStyle,
+        resourceLoader = resourceLoader,
+        content = null
+    )
+}
 
 @Composable
 fun TriStateCheckboxRow(
@@ -117,20 +119,22 @@ fun TriStateCheckboxRow(
     metrics: CheckboxMetrics = LocalCheckboxStyle.current.metrics,
     icons: CheckboxIcons = LocalCheckboxStyle.current.icons,
     textStyle: TextStyle = LocalTextStyle.current,
-) = CheckboxImpl(
-    state = state,
-    onClick = onClick,
-    modifier = modifier,
-    enabled = enabled,
-    outline = outline,
-    interactionSource = interactionSource,
-    colors = colors,
-    metrics = metrics,
-    icons = icons,
-    resourceLoader = resourceLoader,
-    textStyle = textStyle
 ) {
-    Text(text)
+    CheckboxImpl(
+        state = state,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        outline = outline,
+        interactionSource = interactionSource,
+        colors = colors,
+        metrics = metrics,
+        icons = icons,
+        resourceLoader = resourceLoader,
+        textStyle = textStyle
+    ) {
+        Text(text)
+    }
 }
 
 @Composable
@@ -181,22 +185,24 @@ fun CheckboxRow(
     icons: CheckboxIcons = LocalCheckboxStyle.current.icons,
     textStyle: TextStyle = LocalTextStyle.current,
     content: @Composable RowScope.() -> Unit,
-) = CheckboxImpl(
-    state = ToggleableState(checked),
-    onClick = {
-        onCheckedChange?.invoke(!checked)
-    },
-    modifier = modifier,
-    enabled = enabled,
-    outline = outline,
-    interactionSource = interactionSource,
-    colors = colors,
-    metrics = metrics,
-    icons = icons,
-    resourceLoader = resourceLoader,
-    textStyle = textStyle,
-    content = content
-)
+) {
+    CheckboxImpl(
+        state = ToggleableState(checked),
+        onClick = {
+            onCheckedChange?.invoke(!checked)
+        },
+        modifier = modifier,
+        enabled = enabled,
+        outline = outline,
+        interactionSource = interactionSource,
+        colors = colors,
+        metrics = metrics,
+        icons = icons,
+        resourceLoader = resourceLoader,
+        textStyle = textStyle,
+        content = content
+    )
+}
 
 @Composable
 fun TriStateCheckboxRow(
@@ -212,20 +218,22 @@ fun TriStateCheckboxRow(
     icons: CheckboxIcons = LocalCheckboxStyle.current.icons,
     textStyle: TextStyle = LocalTextStyle.current,
     content: @Composable RowScope.() -> Unit,
-) = CheckboxImpl(
-    state = state,
-    onClick = onClick,
-    modifier = modifier,
-    enabled = enabled,
-    outline = outline,
-    interactionSource = interactionSource,
-    colors = colors,
-    metrics = metrics,
-    icons = icons,
-    resourceLoader = resourceLoader,
-    textStyle = textStyle,
-    content = content
-)
+) {
+    CheckboxImpl(
+        state = state,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        outline = outline,
+        interactionSource = interactionSource,
+        colors = colors,
+        metrics = metrics,
+        icons = icons,
+        resourceLoader = resourceLoader,
+        textStyle = textStyle,
+        content = content
+    )
+}
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable

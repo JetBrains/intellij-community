@@ -103,13 +103,14 @@ open class DefaultSelectableOnKeyEvent(
     override suspend fun onExtendSelectionToLastItem(currentIndex: Int) {
         if (selectableState.keys.isNotEmpty()) {
             val lastKey = selectableState.keys.lastIndex
-            buildList {
+            val keys = buildList {
                 for (i in currentIndex..lastKey) {
-                    if (selectableState.keys[i].selectable) add(element = i)
+                    if (selectableState.keys[i].selectable) {
+                        add(element = i)
+                    }
                 }
-            }.let {
-                selectableState.addElementsToSelection(it)
             }
+            selectableState.addElementsToSelection(keys)
         }
     }
 

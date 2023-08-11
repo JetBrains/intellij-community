@@ -62,7 +62,9 @@ internal fun ContextMenu(
         },
         popupPositionProvider = rememberCursorPositionProvider(style.metrics.offset),
         onKeyEvent = {
-            handlePopupMenuOnKeyEvent(it, focusManager!!, inputModeManager!!, menuManager)
+            val currentFocusManager = checkNotNull(focusManager) { "FocusManager must not be null" }
+            val currentInputModeManager = checkNotNull(inputModeManager) { "InputModeManager must not be null" }
+            handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuManager)
         }
     ) {
         focusManager = LocalFocusManager.current

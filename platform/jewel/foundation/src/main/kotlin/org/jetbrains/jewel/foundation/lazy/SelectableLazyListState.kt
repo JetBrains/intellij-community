@@ -41,7 +41,9 @@ class SelectableLazyListState(
 
     internal val keys: List<SelectableKey>
         get() = internalKeys
-    private var internalKeys = mutableListOf<SelectableKey>()
+
+    private val internalKeys = mutableListOf<SelectableKey>()
+
     val selectedItemIndexes get() = selectedIdsMap.values.toList()
     var lastSelectedIndex by mutableStateOf<Int?>(null)
     private var uuid: String? = null
@@ -68,7 +70,9 @@ class SelectableLazyListState(
         updateKeysIndexes()
     }
 
-    internal fun clearKeys() = internalKeys.clear()
+    internal fun clearKeys() {
+        internalKeys.clear()
+    }
 
     internal fun updateKeysIndexes() {
         keys.forEachIndexed { index, key ->
@@ -295,8 +299,13 @@ class SelectableLazyListState(
     }
 }
 
-private suspend fun LazyListState.scrollToItem(index: Int, animate: Boolean, scrollOffset: Int = 0) =
-    if (animate) animateScrollToItem(index, scrollOffset) else scrollToItem(index, scrollOffset)
+private suspend fun LazyListState.scrollToItem(index: Int, animate: Boolean, scrollOffset: Int = 0) {
+    if (animate) {
+        animateScrollToItem(index, scrollOffset)
+    } else {
+        scrollToItem(index, scrollOffset)
+    }
+}
 
 /**
  * Represents a selectable key used in a selectable lazy list.

@@ -7,7 +7,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.isUnspecified
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.res.ResourceLoader
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 import org.jetbrains.jewel.foundation.tree.BasicLazyTree
@@ -71,8 +71,7 @@ fun <T> LazyTree(
                             false
                         )
                     ).value
-                        .takeIf { !it.isUnspecified }
-                        ?: LocalContentColor.current
+                        .takeOrElse { LocalContentColor.current }
                     )
             ) { nodeContent(it) }
         }

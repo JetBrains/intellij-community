@@ -35,9 +35,9 @@ open class DefaultTreeViewOnKeyEvent(
     }
 
     override suspend fun onSelectPreviousItem(currentIndex: Int) {
-        treeState.delegate.keys.getOrNull(currentIndex - 1)?.let {
-            treeState.selectSingleElement(currentIndex - 1)
-        }
+        if (treeState.delegate.keys.getOrNull(currentIndex - 1) == null) return
+
+        treeState.selectSingleElement(currentIndex - 1)
     }
 
     override suspend fun onExtendSelectionWithPreviousItem(currentIndex: Int) {

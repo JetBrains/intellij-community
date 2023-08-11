@@ -182,7 +182,9 @@ internal fun DropdownMenu(
         onDismissRequest = { onDismissRequest(InputMode.Touch) },
         popupPositionProvider = popupPositionProvider,
         onKeyEvent = {
-            handlePopupMenuOnKeyEvent(it, focusManager!!, inputModeManager!!, menuManager)
+            val currentFocusManager = checkNotNull(focusManager) { "FocusManager must not be null" }
+            val currentInputModeManager = checkNotNull(inputModeManager) { "InputModeManager must not be null" }
+            handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuManager)
         },
         focusable = true
     ) {

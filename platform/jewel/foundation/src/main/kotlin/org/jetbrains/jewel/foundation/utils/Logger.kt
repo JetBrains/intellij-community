@@ -16,20 +16,25 @@ internal interface Logger {
     // Resets previous color codes
     private fun resetColor() = "\u001b[0m"
     fun log(level: LogLevel, msg: String)
-    fun e(msg: String) =
+    fun e(msg: String) {
         log(LogLevel.Error, LogLevel.Error.color + msg + resetColor())
+    }
 
-    fun d(msg: String) =
+    fun d(msg: String) {
         log(LogLevel.Debug, LogLevel.Debug.color + msg + resetColor())
+    }
 
-    fun w(msg: String) =
+    fun w(msg: String) {
         log(LogLevel.Warn, LogLevel.Warn.color + msg + resetColor())
+    }
 
-    fun i(msg: String) =
+    fun i(msg: String) {
         log(LogLevel.Info, LogLevel.Info.color + msg + resetColor())
+    }
 
-    fun t(msg: String) =
+    fun t(msg: String) {
         log(LogLevel.Trace, LogLevel.Trace.color + msg + resetColor())
+    }
 }
 
 internal object Log : Logger {

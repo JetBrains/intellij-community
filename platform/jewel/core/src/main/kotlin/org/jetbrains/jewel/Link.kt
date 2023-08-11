@@ -67,25 +67,27 @@ fun Link(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     indication: Indication? = null,
     style: LinkStyle = LocalLinkStyle.current,
-) = LinkImpl(
-    text = text,
-    onClick = onClick,
-    modifier = modifier,
-    enabled = enabled,
-    fontSize = fontSize,
-    fontStyle = fontStyle,
-    fontWeight = fontWeight,
-    fontFamily = fontFamily,
-    letterSpacing = letterSpacing,
-    textAlign = textAlign,
-    overflow = overflow,
-    lineHeight = lineHeight,
-    interactionSource = interactionSource,
-    indication = indication,
-    style = style,
-    resourceLoader = resourceLoader,
-    icon = null
-)
+) {
+    LinkImpl(
+        text = text,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        fontSize = fontSize,
+        fontStyle = fontStyle,
+        fontWeight = fontWeight,
+        fontFamily = fontFamily,
+        letterSpacing = letterSpacing,
+        textAlign = textAlign,
+        overflow = overflow,
+        lineHeight = lineHeight,
+        interactionSource = interactionSource,
+        indication = indication,
+        style = style,
+        resourceLoader = resourceLoader,
+        icon = null
+    )
+}
 
 @Composable
 fun ExternalLink(
@@ -105,25 +107,27 @@ fun ExternalLink(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     indication: Indication? = null,
     style: LinkStyle = LocalLinkStyle.current,
-) = LinkImpl(
-    text = text,
-    onClick = onClick,
-    modifier = modifier,
-    enabled = enabled,
-    fontSize = fontSize,
-    fontStyle = fontStyle,
-    fontWeight = fontWeight,
-    fontFamily = fontFamily,
-    letterSpacing = letterSpacing,
-    textAlign = textAlign,
-    overflow = overflow,
-    lineHeight = lineHeight,
-    interactionSource = interactionSource,
-    indication = indication,
-    style = style,
-    resourceLoader = resourceLoader,
-    icon = style.icons.externalLink
-)
+) {
+    LinkImpl(
+        text = text,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        fontSize = fontSize,
+        fontStyle = fontStyle,
+        fontWeight = fontWeight,
+        fontFamily = fontFamily,
+        letterSpacing = letterSpacing,
+        textAlign = textAlign,
+        overflow = overflow,
+        lineHeight = lineHeight,
+        interactionSource = interactionSource,
+        indication = indication,
+        style = style,
+        resourceLoader = resourceLoader,
+        icon = style.icons.externalLink
+    )
+}
 
 @Composable
 fun DropdownLink(

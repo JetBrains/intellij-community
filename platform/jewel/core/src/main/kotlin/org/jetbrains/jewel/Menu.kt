@@ -157,8 +157,10 @@ fun MenuScope.items(
     isSelected: (Int) -> Boolean,
     onItemClick: (Int) -> Unit,
     content: @Composable (Int) -> Unit,
-) = repeat(count) {
-    selectableItem(isSelected(it), onClick = { onItemClick(it) }) { content(it) }
+) {
+    repeat(count) {
+        selectableItem(isSelected(it), onClick = { onItemClick(it) }) { content(it) }
+    }
 }
 
 fun <T> MenuScope.items(
@@ -166,8 +168,10 @@ fun <T> MenuScope.items(
     isSelected: (T) -> Boolean,
     onItemClick: (T) -> Unit,
     content: @Composable (T) -> Unit,
-) = repeat(items.count()) {
-    selectableItem(isSelected(items[it]), onClick = { onItemClick(items[it]) }) { content(items[it]) }
+) {
+    repeat(items.count()) {
+        selectableItem(isSelected(items[it]), onClick = { onItemClick(items[it]) }) { content(items[it]) }
+    }
 }
 
 private fun (MenuScope.() -> Unit).asList() = buildList {
@@ -445,7 +449,9 @@ internal fun Submenu(
         },
         popupPositionProvider = popupPositionProvider,
         onKeyEvent = {
-            handlePopupMenuOnKeyEvent(it, focusManager!!, inputModeManager!!, menuManager)
+            val currentFocusManager = checkNotNull(focusManager) { "FocusManager must not be null" }
+            val currentInputModeManager = checkNotNull(inputModeManager) { "InputModeManager must not be null" }
+            handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuManager)
         }
     ) {
         focusManager = LocalFocusManager.current

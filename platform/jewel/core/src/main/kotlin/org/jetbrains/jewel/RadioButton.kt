@@ -47,18 +47,20 @@ fun RadioButton(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: RadioButtonStyle = IntelliJTheme.radioButtonStyle,
     textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
-) = RadioButtonImpl(
-    selected = selected,
-    onClick = onClick,
-    modifier = modifier,
-    enabled = enabled,
-    outline = outline,
-    resourceLoader = resourceLoader,
-    interactionSource = interactionSource,
-    style = style,
-    textStyle = textStyle,
-    content = null
-)
+) {
+    RadioButtonImpl(
+        selected = selected,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        outline = outline,
+        resourceLoader = resourceLoader,
+        interactionSource = interactionSource,
+        style = style,
+        textStyle = textStyle,
+        content = null
+    )
+}
 
 @Composable
 fun RadioButtonRow(
@@ -72,18 +74,20 @@ fun RadioButtonRow(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: RadioButtonStyle = IntelliJTheme.radioButtonStyle,
     textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
-) = RadioButtonImpl(
-    selected = selected,
-    onClick = onClick,
-    modifier = modifier,
-    enabled = enabled,
-    outline = outline,
-    resourceLoader = resourceLoader,
-    interactionSource = interactionSource,
-    style = style,
-    textStyle = textStyle
 ) {
-    Text(text)
+    RadioButtonImpl(
+        selected = selected,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        outline = outline,
+        resourceLoader = resourceLoader,
+        interactionSource = interactionSource,
+        style = style,
+        textStyle = textStyle
+    ) {
+        Text(text)
+    }
 }
 
 @Composable
@@ -98,18 +102,20 @@ fun RadioButtonRow(
     style: RadioButtonStyle = IntelliJTheme.radioButtonStyle,
     textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
     content: @Composable RowScope.() -> Unit,
-) = RadioButtonImpl(
-    selected = selected,
-    onClick = onClick,
-    modifier = modifier,
-    enabled = enabled,
-    outline = outline,
-    interactionSource = interactionSource,
-    style = style,
-    textStyle = textStyle,
-    resourceLoader = resourceLoader,
-    content = content
-)
+) {
+    RadioButtonImpl(
+        selected = selected,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        outline = outline,
+        interactionSource = interactionSource,
+        style = style,
+        textStyle = textStyle,
+        resourceLoader = resourceLoader,
+        content = content
+    )
+}
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable

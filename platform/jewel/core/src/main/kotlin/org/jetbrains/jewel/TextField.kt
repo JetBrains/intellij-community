@@ -96,34 +96,36 @@ fun TextField(
     style: TextFieldStyle = IntelliJTheme.textFieldStyle,
     textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-) = InputField(
-    value = value,
-    onValueChange = onValueChange,
-    modifier = modifier,
-    enabled = enabled,
-    readOnly = readOnly,
-    isError = isError,
-    undecorated = undecorated,
-    visualTransformation = visualTransformation,
-    keyboardOptions = keyboardOptions,
-    keyboardActions = keyboardActions,
-    singleLine = true,
-    maxLines = 1,
-    onTextLayout = onTextLayout,
-    style = style,
-    textStyle = textStyle,
-    interactionSource = interactionSource
-) { innerTextField, _ ->
-    val minSize = style.metrics.minSize
+) {
+    InputField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        enabled = enabled,
+        readOnly = readOnly,
+        isError = isError,
+        undecorated = undecorated,
+        visualTransformation = visualTransformation,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        singleLine = true,
+        maxLines = 1,
+        onTextLayout = onTextLayout,
+        style = style,
+        textStyle = textStyle,
+        interactionSource = interactionSource
+    ) { innerTextField, _ ->
+        val minSize = style.metrics.minSize
 
-    TextFieldDecorationBox(
-        modifier = Modifier.defaultMinSize(minHeight = minSize.width, minWidth = minSize.height)
-            .padding(style.metrics.contentPadding),
-        innerTextField = innerTextField,
-        placeholderTextColor = style.colors.placeholder,
-        placeholder = if (value.text.isEmpty()) placeholder else null,
-        trailingIcon = trailingIcon
-    )
+        TextFieldDecorationBox(
+            modifier = Modifier.defaultMinSize(minHeight = minSize.width, minWidth = minSize.height)
+                .padding(style.metrics.contentPadding),
+            innerTextField = innerTextField,
+            placeholderTextColor = style.colors.placeholder,
+            placeholder = if (value.text.isEmpty()) placeholder else null,
+            trailingIcon = trailingIcon
+        )
+    }
 }
 
 @Composable
