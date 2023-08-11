@@ -294,14 +294,18 @@ public class Invoker implements InvokerMBean {
 
   private static Constructor<?> getConstructor(@NotNull RemoteCall call, @NotNull Class<?> targetClass, Object[] transformedArgs) {
     int argCount = call.getArgs().length;
-    List<Constructor<?>> constructors = Arrays.stream(targetClass.getConstructors())
+    List<Constructor<?>> availableConstructors = Arrays.stream(targetClass.getConstructors()).toList();
+    List<Constructor<?>> constructors = availableConstructors.stream()
       .filter(x -> x.getParameterCount() == argCount)
       .toList();
 
     if (constructors.isEmpty()) {
       throw new IllegalStateException(
-        "No constructor with parameter count " + argCount +
-        " in class " + call.getClassName());
+        String.format("No constructor with parameter count %s in class %s. Available constructors: %n%s",
+                      argCount, call.getClassName(),
+                      availableConstructors.stream().map(it -> it.toString())
+                        .collect(Collectors.joining(" - " + System.lineSeparator()))
+        ));
     }
 
     if (constructors.size() > 1) {
@@ -321,15 +325,19 @@ public class Invoker implements InvokerMBean {
     Class<?> clazz = getTargetClass(call);
 
     int argCount = call.getArgs().length;
-    List<Method> targetMethods = Arrays.stream(clazz.getMethods())
+
+    List<Method> availableMethods = Arrays.stream(clazz.getMethods()).toList();
+    List<Method> targetMethods = availableMethods.stream()
       .filter(m -> m.getName().equals(call.getMethodName()) && argCount == m.getParameterCount())
       .toList();
 
     if (targetMethods.isEmpty()) {
       throw new IllegalStateException(
-        "No method " + call.getMethodName() +
-        " with parameter count " + argCount +
-        " in class " + clazz);
+        String.format("No method '%s' with parameter count %s in class %s. Available methods: %n%s",
+                      call.getMethodName(), argCount, call.getClassName(),
+                      availableMethods.stream().map(it -> it.toString())
+                        .collect(Collectors.joining(" - " + System.lineSeparator()))
+        ));
     }
 
     if (targetMethods.size() > 1) {
