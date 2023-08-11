@@ -59,6 +59,7 @@ object DistributedTestModel : Ext(TestRoot) {
     property("ready", bool.nullable)
     signal("sendException", RdTestSessionException).async
     signal("shutdown", void)
+    signal("showNotification", string)
     call("closeProject", void, bool)
     call("closeProjectIfOpened", void, bool)
     call("runNextAction", void, string.nullable)

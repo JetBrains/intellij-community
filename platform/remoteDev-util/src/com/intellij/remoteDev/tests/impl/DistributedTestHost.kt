@@ -279,6 +279,10 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           return@set makeScreenshot(fileName)
         }
 
+        session.showNotification.advise(sessionLifetime) { actionTitle ->
+          showNotification("${session.agentInfo.id}: $actionTitle")
+        }
+
         // Initialize loggers
         DebugLogManager.getInstance().applyCategories(
           session.traceCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.TRACE) } +
