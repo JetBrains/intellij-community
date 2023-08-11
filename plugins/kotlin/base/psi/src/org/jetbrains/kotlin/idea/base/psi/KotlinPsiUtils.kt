@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:JvmName("KotlinPsiUtils")
 
@@ -17,10 +17,8 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
-import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
+import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
@@ -237,5 +235,13 @@ fun KtExpression.unwrapIfLabeled(): KtExpression {
     var statement = this
     while (true) {
         statement = statement.parent as? KtLabeledExpression ?: return statement
+    }
+}
+
+fun getCallElement(argument: KtValueArgument): KtCallElement? {
+    return if (argument is KtLambdaArgument) {
+        argument.parent as? KtCallElement
+    } else {
+        argument.parents.match(KtValueArgumentList::class, last = KtCallElement::class)
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core
 
@@ -64,11 +64,24 @@ fun KtLambdaArgument.moveInsideParentheses(bindingContext: BindingContext): KtCa
     return moveInsideParenthesesAndReplaceWith(ktExpression, bindingContext)
 }
 
+/**
+ * Moves the lambda argument inside parentheses and replaces it with the specified replacement expression.
+ * If the lambda argument should be named, it retrieves the lambda argument name from the binding context.
+ *
+ * @param replacement The replacement expression to be used.
+ * @param bindingContext The binding context used to retrieve the lambda argument name if necessary.
+ * @return The modified `KtCallExpression` with the lambda argument moved inside parentheses and replaced with
+ * the specified replacement expression.
+ */
 fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
     replacement: KtExpression,
     bindingContext: BindingContext
-): KtCallExpression = moveInsideParenthesesAndReplaceWith(replacement, getLambdaArgumentName(bindingContext))
-
+): KtCallExpression {
+    val lambdaArgumentName = if (shouldLambdaParameterBeNamed(this)) {
+        this.getLambdaArgumentName(bindingContext)
+    } else null
+    return this.moveInsideParenthesesAndReplaceWith(replacement, lambdaArgumentName)
+}
 
 fun KtLambdaArgument.getLambdaArgumentName(bindingContext: BindingContext): Name? {
     val callExpression = parent as KtCallExpression

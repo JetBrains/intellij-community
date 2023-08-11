@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.engine.ContextUtil
 import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactory
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
@@ -26,7 +27,8 @@ import org.jetbrains.eval4j.ObjectValue
 import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentFactory
+import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
+import org.jetbrains.kotlin.idea.debugger.evaluate.DebugContextProvider
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinter
@@ -203,15 +205,20 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
         val debuggerContext = createDebuggerContext(myDebuggerSession, suspendContext, threadProxy, frameProxy)
         debuggerContext.initCaches()
 
-        val contextElement = ContextUtil.getContextElement(debuggerContext)!!
+        val contextElement = runReadAction {
+            CodeFragmentContextTuner.getInstance().tuneContextElement(ContextUtil.getContextElement(debuggerContext))!!
+        }
 
-        assert(KotlinCodeFragmentFactory().isContextAccepted(contextElement)) {
+        val codeFragmentFactory = CodeFragmentFactory.EXTENSION_POINT_NAME.extensions
+            .first { it.fileType == KotlinFileType.INSTANCE }
+
+        assert(codeFragmentFactory.isContextAccepted(contextElement)) {
             val text = runReadAction { contextElement.text }
             "KotlinCodeFragmentFactory should be accepted for context element otherwise default evaluator will be called. " +
                     "ContextElement = $text"
         }
 
-        contextElement.putCopyableUserData(KotlinCodeFragmentFactory.DEBUG_CONTEXT_FOR_TESTS, debuggerContext)
+        DebugContextProvider.supplyTestDebugContext(contextElement, debuggerContext)
 
         suspendContext.runActionInSuspendCommand {
             try {

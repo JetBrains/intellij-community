@@ -145,9 +145,9 @@ private fun <T : PsiElement> getPsiElementPopup(
         .presentationProvider(presentationProvider)
         .builderConsumer { builder ->
             builder
-                .setItemChosenCallback { presentation ->
+                .setItemSelectedCallback() { presentation ->
                     highlighter?.dropHighlight()
-                    val psiElement = (presentation?.item as? SmartPsiElementPointer<*>)?.element ?: return@setItemChosenCallback
+                    val psiElement = (presentation?.item as? SmartPsiElementPointer<*>)?.element ?: return@setItemSelectedCallback
                     highlighter?.highlight(psiElement)
                 }
                 .setItemChosenCallback {

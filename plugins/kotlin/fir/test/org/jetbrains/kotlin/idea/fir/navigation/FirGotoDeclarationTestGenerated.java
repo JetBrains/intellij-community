@@ -23,6 +23,11 @@ public class FirGotoDeclarationTestGenerated extends AbstractFirGotoDeclarationT
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("annotationCallWithMissedTypeArgs.test")
+    public void testAnnotationCallWithMissedTypeArgs() throws Exception {
+        runTest("../idea/tests/testData/navigation/gotoDeclaration/annotationCallWithMissedTypeArgs.test");
+    }
+
     @TestMetadata("dataClassToString.test")
     public void testDataClassToString() throws Exception {
         runTest("../idea/tests/testData/navigation/gotoDeclaration/dataClassToString.test");

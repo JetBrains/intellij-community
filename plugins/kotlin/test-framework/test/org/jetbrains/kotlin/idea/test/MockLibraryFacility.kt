@@ -6,19 +6,51 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.testFramework.IdeaTestUtil
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import java.io.File
 
-data class MockLibraryFacility(
+class MockLibraryFacility(
     val sources: List<File>,
     val attachSources: Boolean = true,
     val platform: KotlinCompilerStandalone.Platform = KotlinCompilerStandalone.Platform.Jvm(),
-    val options: List<String> = emptyList(),
+    options: List<String> = emptyList(),
     val classpath: List<File> = emptyList(),
     val libraryName: String = MOCK_LIBRARY_NAME,
     val target: File = KotlinCompilerStandalone.defaultTargetJar(),
+    val frontend: KotlinCompilerFrontend = KotlinCompilerFrontend.K1,
 ) {
+
+    private val options: List<String>
+
+    init {
+        val languageVersionByCompilerOptionsIndex = options.indexOf(LANGUAGE_VERSION_PARAMETER_NAME)
+        if (languageVersionByCompilerOptionsIndex != -1) {
+            val languageVersion = LanguageVersion.fromVersionString(options[languageVersionByCompilerOptionsIndex + 1])
+                ?: error("Invalid language version provided")
+            when (frontend) {
+                KotlinCompilerFrontend.K1 -> {
+                    require(languageVersion < LanguageVersion.KOTLIN_2_0) {
+                        "Cannot use $languageVersion with K1 compiler"
+                    }
+                }
+                KotlinCompilerFrontend.K2 ->  {
+                    require(languageVersion >= LanguageVersion.KOTLIN_2_0) {
+                        "Cannot use $languageVersion with K2 compiler"
+                    }
+                }
+            }
+            this.options = options
+        } else {
+            val languageVersionToUse = when (frontend) {
+                KotlinCompilerFrontend.K1 -> LanguageVersion.values().last { !it.usesK2 }
+                KotlinCompilerFrontend.K2 -> maxOf(LanguageVersion.LATEST_STABLE, LanguageVersion.KOTLIN_2_0)
+            }
+            this.options = options + listOf(LANGUAGE_VERSION_PARAMETER_NAME, languageVersionToUse.versionString)
+        }
+    }
+
     constructor(
         source: File,
         attachSources: Boolean = true,
@@ -27,7 +59,8 @@ data class MockLibraryFacility(
         classpath: List<File> = emptyList(),
         libraryName: String = MOCK_LIBRARY_NAME,
         target: File = KotlinCompilerStandalone.defaultTargetJar(),
-    ) : this(listOf(source), attachSources, platform, options, classpath, libraryName, target)
+        frontend: KotlinCompilerFrontend = KotlinCompilerFrontend.K1,
+    ) : this(listOf(source), attachSources, platform, options, classpath, libraryName, target, frontend)
 
     companion object {
         const val MOCK_LIBRARY_NAME = "kotlinMockLibrary"
@@ -69,4 +102,10 @@ data class MockLibraryFacility(
             else
                 IdeaTestUtil.getMockJdk18()
         }
+
+    enum class KotlinCompilerFrontend {
+        K1, K2
+    }
 }
+
+private const val LANGUAGE_VERSION_PARAMETER_NAME = "-language-version"

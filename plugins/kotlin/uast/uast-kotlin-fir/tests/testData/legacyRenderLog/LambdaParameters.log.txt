@@ -7,10 +7,11 @@ UFile (package = )
                     USimpleNameReferenceExpression (identifier = buildString, resolvesTo = null)
                     ULambdaExpression
                         UBlockExpression
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
-                                UIdentifier (Identifier (append))
-                                USimpleNameReferenceExpression (identifier = append, resolvesTo = null)
-                                ULiteralExpression (value = "a")
+                            UReturnExpression
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                    UIdentifier (Identifier (append))
+                                    USimpleNameReferenceExpression (identifier = append, resolvesTo = null)
+                                    ULiteralExpression (value = "a")
         UMethod (name = itParameter)
             UBlockExpression
                 UQualifiedReferenceExpression

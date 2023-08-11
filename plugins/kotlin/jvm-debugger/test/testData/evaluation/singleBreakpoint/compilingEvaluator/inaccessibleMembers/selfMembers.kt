@@ -47,3 +47,5 @@ fun <T> block(block: () -> T): T {
 
 // EXPRESSION: block { privateVal }
 // RESULT: 7: I
+
+// IGNORE_K2

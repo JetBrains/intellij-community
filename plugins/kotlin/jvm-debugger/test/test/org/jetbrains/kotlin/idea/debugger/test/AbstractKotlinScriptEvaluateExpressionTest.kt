@@ -24,7 +24,7 @@ abstract class AbstractKotlinScriptEvaluateExpressionTest : AbstractIrKotlinEval
 
     override fun createBreakpoints(className: String?) = super.createBreakpoints(getScriptKtFile())
 
-    override fun analyzeAndFindMainClass(compilerFacility: DebuggerTestCompilerFacility) = K2JVMCompiler::class.qualifiedName!!
+    override fun getMainClassName(compilerFacility: DebuggerTestCompilerFacility) = K2JVMCompiler::class.qualifiedName!!
 
     override fun createJavaParameters(mainClass: String?): JavaParameters {
         return super.createJavaParameters(mainClass).apply {

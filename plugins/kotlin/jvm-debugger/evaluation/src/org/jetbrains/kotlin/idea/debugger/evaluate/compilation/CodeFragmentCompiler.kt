@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.kotlin.analysis.api.components.KtCompiledFile
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
@@ -41,8 +42,6 @@ import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.utils.Printer
 import java.util.concurrent.Callable
-
-class CodeFragmentCodegenException(val reason: Exception) : Exception()
 
 class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
@@ -169,7 +168,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         declaration: KtCodeFragment,
         className: Name,
         methodName: Name,
-        parameterInfo: CodeFragmentParameterInfo,
+        parameterInfo: K1CodeFragmentParameterInfo,
         returnType: KotlinType,
         packageFragmentDescriptor: PackageFragmentDescriptor
     ): Pair<ClassDescriptor, FunctionDescriptor> {
@@ -212,7 +211,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         fun erase(type: KotlinType): KotlinType = upperBoundIfTypeParameter(type) ?: eraseTypeArguments(type)
 
-        val parameters = parameterInfo.parameters.mapIndexed { index, parameter ->
+        val parameters = parameterInfo.smartParameters.mapIndexed { index, parameter ->
             ValueParameterDescriptorImpl(
                 methodDescriptor, null, index, Annotations.EMPTY, Name.identifier("p$index"),
                 erase(parameter.targetType),
@@ -337,7 +336,15 @@ private class EvaluatorModuleDescriptor(
 }
 
 internal val OutputFile.internalClassName: String
-    get() = relativePath.removeSuffix(".class").replace('/', '.')
+    get() = computeInternalClassName(relativePath)
+
+internal val KtCompiledFile.internalClassName: String
+    get() = computeInternalClassName(path)
+
+private fun computeInternalClassName(path: String): String {
+    require(path.endsWith(".class", ignoreCase = true))
+    return path.dropLast(".class".length).replace('/', '.')
+}
 
 class CodeFragmentCompilationStats {
     var analysisTimeMs: Long = -1L

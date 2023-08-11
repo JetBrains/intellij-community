@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
+import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.idea.completion.lookups.*
@@ -24,6 +25,9 @@ import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtContextReceiver
+import org.jetbrains.kotlin.psi.KtContextReceiverList
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.renderer.render
@@ -70,6 +74,9 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
                 // add temporary suffix for type in the receiver type position, in order for it to be resolved and shortened correctly
                 token?.isCallableDeclarationIdentifier() == true -> "" to ".f"
 
+                // if a context receiver has no owner declaration then its type reference is not resolved and therefore cannot be shortened
+                token?.isContextReceiverWithoutOwnerDeclaration() == true -> "" to ") fun"
+
                 // if there is no reference in the current context and the position is not receiver type position,
                 // add temporary prefix and suffix
                 token?.parent !is KtNameReferenceExpression -> "$;val v:" to "$"
@@ -107,4 +114,11 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
 
     private fun PsiElement.isCallableDeclarationIdentifier(): Boolean =
         elementType == KtTokens.IDENTIFIER && parent is KtCallableDeclaration
+
+    private fun PsiElement.isContextReceiverWithoutOwnerDeclaration(): Boolean {
+        val contextReceiver = parentOfType<KtContextReceiver>()
+        val contextReceiverList = contextReceiver?.parent as? KtContextReceiverList ?: return false
+
+        return contextReceiverList.parent !is KtDeclaration
+    }
 }

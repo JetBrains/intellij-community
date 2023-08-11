@@ -29,7 +29,7 @@ class NavigateToMultipartJvmStdlibSourcesTest : LightJavaCodeInsightFixtureTestC
                 mapOf("" to "").<caret>mapNotNull {  }
             }
         """.trimIndent())
-        assertEquals("<sources for library kotlin-stdlib-common>", stdlibCommonElement?.moduleInfo?.name.toString())
+        assertEquals("<sources for library kotlin-stdlib>", stdlibCommonElement?.moduleInfo?.name.toString())
 
         val stdlibJvmElement = configureAndResolve("""
             fun bar() {

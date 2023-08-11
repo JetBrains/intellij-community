@@ -12,6 +12,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -156,14 +158,19 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
   protected void performRefactoring(UsageInfo @NotNull [] usages) {
     RefactoringTransaction transaction = getTransaction();
     final ChangeInfo changeInfo = myChangeInfo;
-    final RefactoringElementListener elementListener = transaction == null ? null : transaction.getElementListener(changeInfo.getMethod());
-    final String fqn = CopyReferenceAction.elementToFqn(changeInfo.getMethod());
+    PsiElement method = changeInfo.getMethod();
+    final RefactoringElementListener elementListener = transaction == null ? null : transaction.getElementListener(method);
+    final String fqn = CopyReferenceAction.elementToFqn(method);
     if (fqn != null) {
+      SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(method);
       UndoableAction action = new BasicUndoableAction() {
         @Override
         public void undo() {
           if (elementListener instanceof UndoRefactoringElementListener) {
-            ((UndoRefactoringElementListener)elementListener).undoElementMovedOrRenamed(changeInfo.getMethod(), fqn);
+            PsiElement element = pointer.getElement();
+            if (element != null) {
+              ((UndoRefactoringElementListener)elementListener).undoElementMovedOrRenamed(element, fqn);
+            }
           }
         }
 
@@ -175,7 +182,6 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     }
     try {
       doChangeSignature(changeInfo, usages);
-      final PsiElement method = changeInfo.getMethod();
       LOG.assertTrue(method.isValid());
       if (elementListener != null && changeInfo.isNameChanged()) {
         elementListener.elementRenamed(method);

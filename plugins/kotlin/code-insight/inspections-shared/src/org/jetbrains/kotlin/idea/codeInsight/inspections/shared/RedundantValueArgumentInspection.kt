@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.AddArgumentNamesUtils
+import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -99,7 +99,7 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
 
             for ((followingArgumentIndex, name) in followingArgumentMapping) {
                 val followingArgument = argumentList.arguments[followingArgumentIndex]
-                AddArgumentNamesUtils.addArgumentName(followingArgument, name)
+                NamedArgumentUtils.addArgumentName(followingArgument, name)
             }
 
             argumentList.removeArgument(argument)

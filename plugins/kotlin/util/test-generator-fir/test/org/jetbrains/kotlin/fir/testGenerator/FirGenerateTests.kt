@@ -3,9 +3,12 @@
 package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.fir.uast.test.*
+import org.jetbrains.kotlin.copyright.AbstractFirUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightTests
 import org.jetbrains.kotlin.idea.fir.actions.AbstractK2AddImportActionTest
+import org.jetbrains.kotlin.idea.fir.actions.AbstractK2BytecodeToolWindowTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractIdeKotlinAnnotationsResolverTest
+import org.jetbrains.kotlin.idea.fir.analysis.providers.dependents.AbstractModuleDependentsTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
 import org.jetbrains.kotlin.idea.fir.codeInsight.AbstractK2MultiModuleLineMarkerTest
@@ -79,6 +82,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractIdeKotlinAnnotationsResolverTest> {
             model("annotationsResolver", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractModuleDependentsTest> {
+            model("moduleDependents", pattern = DIRECTORY, isRecursive = false)
         }
     }
 
@@ -204,16 +211,20 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("editor/optimizeImports/jvm", pattern = KT_WITHOUT_DOTS)
             model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
         }
+
+        testClass<AbstractK2BytecodeToolWindowTest> {
+            model("internal/toolWindow", isRecursive = false, pattern = DIRECTORY, testMethodName = "doTestWithIr")
+        }
     }
 
     testGroup("fir", testDataPath = "../completion/testData") {
-        testClass<AbstractHighLevelJvmBasicCompletionTest> {
+        testClass<AbstractK2JvmBasicCompletionTest> {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
             model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
             model("../../idea-fir/testData/completion/basic/common", testClassName = "CommonFir")
         }
 
-        testClass<AbstractHighLevelJvmBasicCompletionTest>("org.jetbrains.kotlin.idea.fir.completion.HighLevelKDocCompletionTestGenerated") {
+        testClass<AbstractK2JvmBasicCompletionTest>("org.jetbrains.kotlin.idea.fir.completion.K2KDocCompletionTestGenerated") {
             model("kdoc", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
@@ -363,6 +374,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFirLegacyUastValuesTest> {
             model("")
+        }
+    }
+
+    testGroup("copyright/fir-tests", testDataPath = "../../copyright/tests/testData") {
+        testClass<AbstractFirUpdateKotlinCopyrightTest> {
+            model("update", pattern = KT_OR_KTS, testMethodName = "doTest")
         }
     }
 }

@@ -2215,9 +2215,9 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private fun stdlibJvm(): LibraryEx = projectLibrary("kotlin-stdlib", TestKotlinArtifacts.kotlinStdlib.jarRoot)
 
     private fun stdlibJs(): LibraryEx = projectLibrary(
-      "kotlin-stdlib-js",
-      TestKotlinArtifacts.kotlinStdlibJs.jarRoot,
-      kind = KotlinJavaScriptLibraryKind
+        "kotlin-stdlib-js",
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(TestKotlinArtifacts.kotlinStdlibJs),
+        kind = KotlinJavaScriptLibraryKind
     )
 
     private fun stdlibWasm(): LibraryEx = projectLibrary(

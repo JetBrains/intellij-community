@@ -33,7 +33,7 @@ abstract class AbstractKotlinApplicableIntentionWithContext<ELEMENT : KtElement,
     }
 
     final override fun startInWriteAction(): Boolean =
-        // `applyTo` should start without a write action because it first uses `analyzeWithReadAction` to get the context. Also,
+        // `applyTo` should start without a write action because it first uses `analyse` to get the context. Also,
         // `getContext` when called from `applyTo` should not have access to a write action for `element` to discourage mutating `element`.
         false
 }

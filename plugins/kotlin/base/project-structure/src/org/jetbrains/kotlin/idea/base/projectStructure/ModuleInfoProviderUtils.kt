@@ -34,7 +34,7 @@ private fun cachedModuleInfo(psiFile: PsiFile): IdeaModuleInfo? = CachedValuesMa
         ModuleInfoProvider.getInstance(project).firstOrNull(psiFile),
         ProjectRootModificationTracker.getInstance(project),
         JavaLibraryModificationTracker.getInstance(project),
-        KotlinModificationTrackerFactory.getService(project).createProjectWideOutOfBlockModificationTracker(),
+        KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker(),
     )
 }
 

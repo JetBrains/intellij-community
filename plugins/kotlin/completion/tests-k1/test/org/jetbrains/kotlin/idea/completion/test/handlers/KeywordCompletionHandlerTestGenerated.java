@@ -113,6 +113,16 @@ public class KeywordCompletionHandlerTestGenerated extends AbstractKeywordComple
         runTest("../testData/handlers/keywords/ConstructorPrimary.kt");
     }
 
+    @TestMetadata("Context.kt")
+    public void testContext() throws Exception {
+        runTest("../testData/handlers/keywords/Context.kt");
+    }
+
+    @TestMetadata("ContextWithoutDeclaration.kt")
+    public void testContextWithoutDeclaration() throws Exception {
+        runTest("../testData/handlers/keywords/ContextWithoutDeclaration.kt");
+    }
+
     @TestMetadata("Do.kt")
     public void testDo() throws Exception {
         runTest("../testData/handlers/keywords/Do.kt");

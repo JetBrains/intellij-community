@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils.BLOCK_CODE_FRAGMENT
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
-import org.jetbrains.kotlin.idea.debugger.core.getContextElement
+import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -61,14 +61,17 @@ internal fun JavaCodeInsightTestFixture.configureByCodeFragment(filePath: String
     configureFromExistingVirtualFile(file.virtualFile!!)
 }
 
-internal fun createCodeFragment(filePath: String, contextElement: PsiElement, isBlock: Boolean): KtCodeFragment {
+private fun createCodeFragment(filePath: String, contextElement: PsiElement, isBlock: Boolean): KtCodeFragment {
+    val contextTuner = CodeFragmentContextTuner.getInstance()
+    val effectiveContextElement = contextTuner.tuneContextElement(contextElement)
+
     val fileForFragment = File("$filePath.fragment")
     val codeFragmentText = FileUtil.loadFile(fileForFragment, true).trim()
     val psiFactory = KtPsiFactory(contextElement.project)
 
     return if (isBlock) {
-        psiFactory.createBlockCodeFragment(codeFragmentText, getContextElement(contextElement))
+        psiFactory.createBlockCodeFragment(codeFragmentText, effectiveContextElement)
     } else {
-        psiFactory.createExpressionCodeFragment(codeFragmentText, getContextElement(contextElement))
+        psiFactory.createExpressionCodeFragment(codeFragmentText, effectiveContextElement)
     }
 }

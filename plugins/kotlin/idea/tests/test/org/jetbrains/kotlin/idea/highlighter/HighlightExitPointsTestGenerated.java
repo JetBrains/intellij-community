@@ -33,6 +33,36 @@ public class HighlightExitPointsTestGenerated extends AbstractHighlightExitPoint
         runTest("testData/exitPoints/anonymousFunction2.kt");
     }
 
+    @TestMetadata("forLoopBreak.kt")
+    public void testForLoopBreak() throws Exception {
+        runTest("testData/exitPoints/forLoopBreak.kt");
+    }
+
+    @TestMetadata("forLoopNestedBreak.kt")
+    public void testForLoopNestedBreak() throws Exception {
+        runTest("testData/exitPoints/forLoopNestedBreak.kt");
+    }
+
+    @TestMetadata("forLoopNestedBreak2.kt")
+    public void testForLoopNestedBreak2() throws Exception {
+        runTest("testData/exitPoints/forLoopNestedBreak2.kt");
+    }
+
+    @TestMetadata("forLoopNestedLabeledBreak.kt")
+    public void testForLoopNestedLabeledBreak() throws Exception {
+        runTest("testData/exitPoints/forLoopNestedLabeledBreak.kt");
+    }
+
+    @TestMetadata("forLoopNestedLabeledBreakOnLoop.kt")
+    public void testForLoopNestedLabeledBreakOnLoop() throws Exception {
+        runTest("testData/exitPoints/forLoopNestedLabeledBreakOnLoop.kt");
+    }
+
+    @TestMetadata("forLoopNestedLabeledBreakOnLoop2.kt")
+    public void testForLoopNestedLabeledBreakOnLoop2() throws Exception {
+        runTest("testData/exitPoints/forLoopNestedLabeledBreakOnLoop2.kt");
+    }
+
     @TestMetadata("funKeyword.kt")
     public void testFunKeyword() throws Exception {
         runTest("testData/exitPoints/funKeyword.kt");

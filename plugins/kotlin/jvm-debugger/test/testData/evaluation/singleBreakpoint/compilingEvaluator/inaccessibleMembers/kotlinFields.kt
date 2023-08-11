@@ -69,3 +69,5 @@ fun main() {
 
 // EXPRESSION: block { Intf.c }
 // RESULT: 1: I
+
+// IGNORE_K2

@@ -29,10 +29,11 @@ UFile (package = ) [public final class ResolveKt {...]
                         ULambdaExpression [{ var it: A ->...}] : PsiType:Function1<? super A, ? extends Unit>
                             UParameter (name = it) [var it: A]
                             UBlockExpression [{...}]
-                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(it)] : PsiType:Unit
-                                    UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
-                                    USimpleNameReferenceExpression (identifier = it) [it] : PsiType:A
+                                UReturnExpression [return println(it)]
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(it)] : PsiType:Unit
+                                        UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
+                                        USimpleNameReferenceExpression (identifier = it) [it] : PsiType:A
                 UQualifiedReferenceExpression [listOf("").joinToString()] : PsiType:String
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("")] : PsiType:List<? extends String>
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]

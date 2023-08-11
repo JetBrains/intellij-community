@@ -3,5 +3,5 @@
 
 inline fun <reified <caret>T> fff(labelText: String, a: Any): T {
   if (a is T) {}
-  return T::class.java.getConstructor().newInstance() //not found in K2, KTIJ-24230
+  return T::class.java.getConstructor().newInstance()
 }

@@ -2,6 +2,5 @@
   "type": "AUTO_DETECT",
   "mainFile": "SyntheticProperty.java",
   "newName": "foo",
-  "withRuntime": "true",
-  "enabledInK2": "true"
+  "withRuntime": "true"
 }

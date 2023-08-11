@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 package test2
 
 fun foo(ali<caret>)

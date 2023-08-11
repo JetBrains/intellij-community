@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.fir.extensions
 
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlFile
@@ -56,10 +55,6 @@ private class ExtensionForTests(private val xmlFile: XmlFile) : KtResolveExtensi
 
     override fun getKtFiles(): List<KtResolveExtensionFile> {
         return files
-    }
-
-    override fun getModificationTracker(): ModificationTracker {
-        return ModificationTracker { xmlFile.modificationStamp }
     }
 }
 

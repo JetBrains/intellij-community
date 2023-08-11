@@ -21,11 +21,11 @@ import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
-import org.jetbrains.kotlin.idea.codeinsight.utils.getValueArgumentName
+import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
@@ -88,7 +88,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     val functionLiteralArgument = expressionToReplace.getStrictParentOfType<KtLambdaArgument>()!!
                     val argumentName =
                         analyzeInModalWindow(expressionToReplace, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-                            functionLiteralArgument.getValueArgumentName()
+                            NamedArgumentUtils.getStableNameFor(functionLiteralArgument)
                         }
                     val newCallExpression = functionLiteralArgument.moveInsideParenthesesAndReplaceWith(replacement, argumentName)
                     newCallExpression.valueArguments.last().getArgumentExpression()!!

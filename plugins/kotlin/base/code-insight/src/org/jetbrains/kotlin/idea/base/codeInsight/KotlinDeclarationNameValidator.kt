@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -18,19 +20,24 @@ class KotlinDeclarationNameValidator(
 
     init {
         check(
-            target == KotlinNameSuggestionProvider.ValidatorTarget.PROPERTY ||
-                    target == KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE ||
-                    target == KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER
+          target == KotlinNameSuggestionProvider.ValidatorTarget.PROPERTY ||
+          target == KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE ||
+          target == KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER ||
+          target == KotlinNameSuggestionProvider.ValidatorTarget.CLASS
         ) {
             "Unsupported yet target $target"
         }
     }
 
+
     override fun invoke(name: String): Boolean {
         val identifier = Name.identifier(name)
 
-        with(analysisSession) {
-            if (hasConflict(identifier)) return false
+        @OptIn(KtAllowAnalysisOnEdt::class)
+        allowAnalysisOnEdt {
+            with(analysisSession) {
+                if (hasConflict(identifier)) return false
+            }
         }
 
         return visibleDeclarationsContext.siblings(withItself = checkVisibleDeclarationsContext).none { declaration ->
@@ -48,6 +55,11 @@ class KotlinDeclarationNameValidator(
                 scope.getCallableSymbols(identifier).filterIsInstance<KtVariableLikeSymbol>().any {
                     !it.isExtension && (containingClassSymbol.value?.let { cl -> it.isVisibleInClass(cl) } != false)
                 }
+            }
+            KotlinNameSuggestionProvider.ValidatorTarget.CLASS -> {
+                val scope =
+                  visibleDeclarationsContext.containingKtFile.getScopeContextForPosition(visibleDeclarationsContext).getCompositeScope()
+                scope.getClassifierSymbols(identifier).any()
             }
             else -> false
         }

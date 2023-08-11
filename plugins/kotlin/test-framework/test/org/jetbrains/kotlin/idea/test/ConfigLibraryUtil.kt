@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.test
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.LibraryOrderEntry
@@ -13,10 +14,12 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
+import com.intellij.util.io.jarFile
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
@@ -107,6 +110,30 @@ object ConfigLibraryUtil {
         }
     }
 
+    fun addProjectLibrary(
+        project: Project,
+        name: String,
+        init: Library.ModifiableModel.() -> Unit,
+    ): Library = runWriteAction {
+        LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary(name).apply {
+            modifiableModel.init()
+        }
+    }
+
+    fun addProjectLibraryWithClassesRoot(project: Project, name: String): Library = runWriteAction {
+        addProjectLibrary(project, name) {
+            // Add a unique root to avoid deduplication of library infos in tests (see `LibraryInfoCache`).
+            addEmptyClassesRoot()
+            commit()
+        }
+    }
+
+    fun removeProjectLibrary(project: Project, library: Library) {
+        runWriteAction {
+            LibraryTablesRegistrar.getInstance().getLibraryTable(project).removeLibrary(library)
+        }
+    }
+
     fun addLibrary(module: Module, name: String, kind: PersistentLibraryKind<*>? = null, init: Library.ModifiableModel.() -> Unit) {
         runWriteAction {
             ModuleRootManager.getInstance(module).modifiableModel.apply {
@@ -146,7 +173,6 @@ object ConfigLibraryUtil {
 
         return library
     }
-
 
     fun removeLibrary(module: Module, libraryName: String): Boolean {
         return runWriteAction {
@@ -224,4 +250,9 @@ object ConfigLibraryUtil {
 
 fun Library.ModifiableModel.addRoot(file: File, kind: OrderRootType) {
     addRoot(VfsUtil.getUrlForLibraryRoot(file), kind)
+}
+
+fun Library.ModifiableModel.addEmptyClassesRoot() {
+    val jarFile = jarFile { }.generateInTempDir()
+    addRoot(jarFile.toFile(), OrderRootType.CLASSES)
 }

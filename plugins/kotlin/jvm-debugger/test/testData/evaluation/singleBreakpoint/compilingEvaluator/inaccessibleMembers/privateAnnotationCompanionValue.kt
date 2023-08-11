@@ -17,3 +17,5 @@ fun main(args: Array<String>) {
 
 // EXPRESSION: Anno.test
 // RESULT: 4: I
+
+// IGNORE_K2

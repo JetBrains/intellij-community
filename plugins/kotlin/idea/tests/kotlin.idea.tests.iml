@@ -27,7 +27,7 @@
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
     <orderEntry type="module" module-name="kotlin.base.scripting" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
-    <orderEntry type="module" module-name="kotlin.base.highlighting" />
+    <orderEntry type="module" module-name="kotlin.highlighting.shared" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="kotlin.base.fe10.kdoc" />
@@ -134,5 +134,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="module" module-name="kotlin.jvm-decompiler" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.highlighting.k1" scope="TEST" />
   </component>
 </module>

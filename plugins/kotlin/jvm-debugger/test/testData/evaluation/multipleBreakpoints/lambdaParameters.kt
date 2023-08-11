@@ -20,3 +20,5 @@ fun main(args: Array<String>) {
 
 // EXPRESSION: f("abc")
 // RESULT: Evaluation of 'crossinline' lambdas is not supported
+
+// IGNORE_K2
