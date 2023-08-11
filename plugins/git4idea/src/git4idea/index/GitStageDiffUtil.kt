@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.DiffContentFactoryEx
 import com.intellij.diff.DiffRequestFactoryImpl
+import com.intellij.diff.DiffVcsDataKeys
 import com.intellij.diff.chains.DiffRequestProducerException
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.contents.DocumentContent
@@ -15,6 +16,7 @@ import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
@@ -86,14 +88,16 @@ private fun createContentRevision(project: Project, root: VirtualFile, status: G
 private fun headDiffContent(project: Project, root: VirtualFile, status: GitFileStatus): DiffContent {
   if (!status.has(ContentVersion.HEAD)) return DiffContentFactory.getInstance().createEmpty()
 
+  val currentRevision = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root)?.currentRevision ?: GitUtil.HEAD
+
   val submodule = GitContentRevision.getRepositoryIfSubmodule(project, status.path)
   if (submodule != null) {
-    val hash = GitIndexUtil.loadSubmoduleHashAt(submodule.repository, submodule.parent, GitRevisionNumber.HEAD)
+    val hash = GitIndexUtil.loadSubmoduleHashAt(submodule.repository, submodule.parent, GitRevisionNumber(currentRevision))
                ?: throw VcsException(DiffBundle.message("error.cant.show.diff.cant.load.revision.content"))
     return DiffContentFactory.getInstance().create(project, hash.asString())
   }
 
-  val headContent = headContentBytes(project, root, status)
+  val headContent = headContentBytes(project, root, status, currentRevision)
   return DiffContentFactoryEx.getInstanceEx().createFromBytes(project, headContent, status.path)
 }
 
@@ -129,9 +133,9 @@ private fun localDiffContent(project: Project, status: GitFileStatus): DiffConte
 }
 
 @Throws(VcsException::class)
-private fun headContentBytes(project: Project, root: VirtualFile, status: GitFileStatus): ByteArray {
+private fun headContentBytes(project: Project, root: VirtualFile, status: GitFileStatus, currentRevision: String): ByteArray {
   val filePath = status.path(ContentVersion.HEAD)
-  return GitFileUtils.getFileContent(project, root, GitUtil.HEAD, VcsFileUtil.relativePath(root, filePath))
+  return GitFileUtils.getFileContent(project, root, currentRevision, VcsFileUtil.relativePath(root, filePath))
 }
 
 @Throws(VcsException::class)
@@ -350,7 +354,7 @@ private class HeadContentRevision(val project: Project, val root: VirtualFile, v
   override fun getContent(): String? = ContentRevisionCache.getAsString(contentAsBytes, file, null)
 
   @Throws(VcsException::class)
-  override fun getContentAsBytes(): ByteArray = headContentBytes(project, root, status)
+  override fun getContentAsBytes(): ByteArray = headContentBytes(project, root, status, GitUtil.HEAD)
 }
 
 private class StagedContentRevision(val project: Project, val root: VirtualFile, val status: GitFileStatus) : ByteBackedContentRevision {
