@@ -111,6 +111,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
         dialog.show()
         if (!dialog.isOK) return
+        val kotlinVersion = dialog.kotlinVersion ?: return
 
         KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project)
         val commandKey = "command.name.configure.kotlin"
@@ -119,7 +120,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
               project = project,
               modules = dialog.modulesToConfigure,
               kotlinVersionsAndModules = dialog.versionsAndModules,
-              version = IdeKotlinVersion.get(dialog.kotlinVersion),
+              version = IdeKotlinVersion.get(kotlinVersion),
               modulesAndJvmTargets = dialog.modulesAndJvmTargets,
               commandKey = commandKey
             )

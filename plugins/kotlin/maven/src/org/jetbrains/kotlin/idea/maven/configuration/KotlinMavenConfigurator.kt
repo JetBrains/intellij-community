@@ -106,6 +106,8 @@ protected constructor(
 
         dialog.show()
         if (!dialog.isOK) return
+        val kotlinVersion = dialog.kotlinVersion ?: return
+
         KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project)
 
         WriteCommandAction.runWriteCommandAction(project) {
@@ -113,7 +115,7 @@ protected constructor(
             for (module in excludeMavenChildrenModules(project, dialog.modulesToConfigure)) {
                 val file = findModulePomFile(module)
                 if (file != null && canConfigureFile(file)) {
-                    configureModule(module, file, IdeKotlinVersion.get(dialog.kotlinVersion), collector)
+                    configureModule(module, file, IdeKotlinVersion.get(kotlinVersion), collector)
                     OpenFileAction.openFile(file.virtualFile, project)
                 } else {
                     showErrorMessage(project, KotlinMavenBundle.message("error.cant.find.pom.for.module", module.name))
