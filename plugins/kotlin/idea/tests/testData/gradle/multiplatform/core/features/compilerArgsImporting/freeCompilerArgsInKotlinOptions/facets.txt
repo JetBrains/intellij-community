@@ -9,6 +9,7 @@ project.androidTest
 project.appleMain
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
+    compilerSettings = -language-version=1.7 -api-version=1.7 -opt-in=OptInAnnotation
 
 project.appleTest
     languageLevel = {{LATEST_STABLE}}
@@ -17,6 +18,7 @@ project.appleTest
 project.commonMain
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
+    compilerSettings = -language-version=1.7 -api-version=1.7 -opt-in=OptInAnnotation
 
 project.commonTest
     languageLevel = {{LATEST_STABLE}}
@@ -35,6 +37,7 @@ project.iosArm64Test
 project.iosMain
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
+    compilerSettings = -language-version=1.7 -api-version=1.7 -opt-in=OptInAnnotation
 
 project.iosTest
     languageLevel = {{LATEST_STABLE}}
@@ -63,6 +66,7 @@ project.jsTest
 project.jvmAndroidMain
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
+    compilerSettings = -language-version=1.7 -api-version=1.7 -opt-in=OptInAnnotation
 
 project.jvmAndroidTest
     languageLevel = {{LATEST_STABLE}}
@@ -86,6 +90,7 @@ project.main
 project.nativeMain
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
+    compilerSettings = -language-version=1.7 -api-version=1.7 -opt-in=OptInAnnotation
 
 project.nativeTest
     languageLevel = {{LATEST_STABLE}}

@@ -7,16 +7,18 @@ project.androidTest
     compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
 
 project.appleMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
+    compilerSettings = -opt-in=CompilationOptInAnnotation
 
 project.appleTest
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
 
 project.commonMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
+    compilerSettings = -opt-in=CompilationOptInAnnotation
 
 project.commonTest
     languageLevel = {{LATEST_STABLE}}
@@ -33,8 +35,9 @@ project.iosArm64Test
     compilerSettings = -opt-in CompilationOptInAnnotation
 
 project.iosMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
+    compilerSettings = -opt-in=CompilationOptInAnnotation
 
 project.iosTest
     languageLevel = {{LATEST_STABLE}}
@@ -61,8 +64,9 @@ project.jsTest
     compilerSettings = -opt-in CompilationOptInAnnotation
 
 project.jvmAndroidMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
+    compilerSettings = -opt-in=CompilationOptInAnnotation
 
 project.jvmAndroidTest
     languageLevel = {{LATEST_STABLE}}
@@ -84,8 +88,9 @@ project.main
     compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
 
 project.nativeMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
+    compilerSettings = -opt-in=CompilationOptInAnnotation
 
 project.nativeTest
     languageLevel = {{LATEST_STABLE}}

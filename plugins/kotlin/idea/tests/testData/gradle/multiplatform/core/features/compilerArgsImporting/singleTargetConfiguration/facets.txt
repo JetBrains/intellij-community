@@ -2,73 +2,75 @@ MODULES
 project
 
 project.appleMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
 
 project.appleTest
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
 
 project.commonMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
 
 project.commonTest
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
 
 project.iosArm64Main
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
 
 project.iosArm64Test
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
 
 project.iosMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
 
 project.iosTest
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
 
 project.iosX64Main
-    languageLevel = 1.6
-    apiLevel = 1.6
+    languageLevel = 1.8
+    apiLevel = 1.8
     compilerSettings = -opt-in IosAllOptInAnnotation
 
 project.iosX64Test
-    languageLevel = 1.6
-    apiLevel = 1.6
+    languageLevel = 1.8
+    apiLevel = 1.8
     compilerSettings = -opt-in IosAllOptInAnnotation
 
 project.jsMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
-
-project.jsTest
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
-
-project.jvmMain
     languageLevel = 1.7
     apiLevel = 1.7
+    compilerSettings = -main call
+
+project.jsTest
+    languageLevel = 1.7
+    apiLevel = 1.7
+    compilerSettings = -main call
+
+project.jvmMain
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
     compilerSettings = -opt-in JvmMainOptInAnnotation
 
 project.jvmTest
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
 
 project.main
 
 project.nativeMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
 
 project.nativeTest
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.7
+    apiLevel = 1.7
 
 project.test
 
