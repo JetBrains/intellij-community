@@ -2243,6 +2243,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("EnumWithoutCompanionObject.kt")
+            public void testEnumWithoutCompanionObject() throws Exception {
+                runTest("../testData/basic/common/staticMembers/EnumWithoutCompanionObject.kt");
+            }
+
             @TestMetadata("ImportsFromEnumEntry.kt")
             public void testImportsFromEnumEntry() throws Exception {
                 runTest("../testData/basic/common/staticMembers/ImportsFromEnumEntry.kt");
