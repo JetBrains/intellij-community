@@ -11,7 +11,6 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
@@ -241,11 +240,8 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       }
 
       project.tasks.withType(AbstractArchiveTask) { AbstractArchiveTask task ->
-        def isOwnJarTask = task.name == sourceSet.jarTaskName
-        if (isOwnJarTask ||
-          (isCustomJarTask(task, sourceSets) && containsAllSourceSetOutput(task, sourceSet))
-        ) {
-          externalSourceSet.artifacts.add(getTaskArchiveFile(task))
+        if (containsAllSourceSetOutput(task, sourceSet)) {
+          externalSourceSet.artifacts.add(getArchiveFile(task))
         }
       }
 
@@ -617,17 +613,5 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       project.getLogger().info("Unable to resolve task source path: ${targetException?.message} (${targetException?.class?.canonicalName})")
       return object
     }
-  }
-
-  private static boolean isCustomJarTask(@NotNull AbstractArchiveTask archiveTask,
-                                         @NotNull SourceSetContainer sourceSets) {
-    for (final SourceSet sourceSet in sourceSets) {
-      if (archiveTask.name == sourceSet.jarTaskName) {
-        // there is a sourceSet that 'owns' this task
-        return false
-      }
-    }
-    // name of this task is not associated with any source set
-    return true
   }
 }

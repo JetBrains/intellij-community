@@ -660,20 +660,23 @@ public final class GradleProjectResolverUtil {
       }
     }
     if (projectDependencyInfos.isEmpty()) {
-      String moduleId;
+
       Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> projectPair;
       MultiMap<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, File> projectPairs =
         new MultiMap<>(new Reference2ObjectLinkedOpenHashMap<>());
 
       for (File file : projectDependency.getProjectDependencyArtifacts()) {
         ModuleMappingInfo mapping = artifactMap.getModuleMapping(ExternalSystemApiUtil.toCanonicalPath(file.getPath()));
-        moduleId = mapping != null ? mapping.getModuleId() : null;
-        if (moduleId == null) continue;
-        projectPair = sourceSetMap.get(moduleId);
+        List<String> moduleIds = mapping != null ? mapping.getModuleIds() : Collections.emptyList();
+        for (String moduleId: moduleIds) {
+          if (moduleId == null) continue;
+          projectPair = sourceSetMap.get(moduleId);
 
-        if (projectPair == null) continue;
-        projectPairs.putValue(projectPair, file);
+          if (projectPair == null) continue;
+          projectPairs.putValue(projectPair, file);
+        }
       }
+
       for (Map.Entry<Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>, Collection<File>> entry : projectPairs.entrySet()) {
         projectDependencyInfos.add(new ProjectDependencyInfo(
           entry.getKey().first.getData(), entry.getKey().second, entry.getValue()));
