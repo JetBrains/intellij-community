@@ -241,6 +241,7 @@ abstract class BaseCompletionGolfFileReportGenerator(
       attributes["data-id"] = uuid
       attributes["data-offset"] = offsetInFile.toString()
       attributes["data-evaluation-id"] = evaluationIndex.toString()
+      id = "$uuid $columnId"
       +text
     }
     return offset + text.length

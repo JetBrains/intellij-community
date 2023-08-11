@@ -71,7 +71,7 @@ function selectFavoriteFeature(type, name, element) {
 
 function getLookup(sessionDiv) {
   if (isCompletionGolf) {
-    const sessionId = getId(sessionDiv).split(" ")[0]
+    const sessionId = sessionDiv.id.split(" ")[0]
     const lookups = sessions[sessionId]["_lookups"]
     return lookups[sessionDiv.dataset.cl]
   }
@@ -85,15 +85,6 @@ function getLookup(sessionDiv) {
   }
 }
 
-function getId(sessionDiv) {
-  if (isCompletionGolf) {
-    return sessionDiv.dataset.id
-  }
-  else {
-    return sessionDiv.id
-  }
-}
-
 function updatePopup(sessionDiv) {
   const lookup = getLookup(sessionDiv)
   const popup = document.createElement("DIV")
@@ -104,7 +95,7 @@ function updatePopup(sessionDiv) {
   popup.appendChild(prefixDiv)
   const needAddFeatures = sessionDiv.classList.contains("suggestions")
   closeAllLists()
-  if (!isCompletionGolf && needAddFeatures) {
+  if (needAddFeatures) {
     addCommonFeatures(sessionDiv, popup)
   }
   else {
@@ -138,12 +129,12 @@ function addCommonFeatures(sessionDiv, popup) {
 function addSuggestions(sessionDiv, popup, lookup) {
   sessionDiv.classList.add("suggestions")
   sessionDiv.classList.remove("features")
-  const sessionId = getId(sessionDiv).split(" ")[0]
+  const sessionId = sessionDiv.id.split(" ")[0]
   const suggestions = lookup["suggestions"]
   for (let i = 0; i < suggestions.length; i++) {
     let suggestionDiv = document.createElement("DIV")
     suggestionDiv.setAttribute("class", "suggestion")
-    suggestionDiv.setAttribute("id", `${getId(sessionDiv)} ${i}`)
+    suggestionDiv.setAttribute("id", `${sessionDiv.id} ${i}`)
     let p = document.createElement(isCompletionGolf ? "code" : "plaintext")
     p.setAttribute("class", "suggestion-p")
     if (lookup["selectedPosition"] == i) {
