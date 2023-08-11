@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -27,7 +27,7 @@ private val LOG = Logger.getInstance(StructuredIdeActivity::class.java)
  * [com.intellij.internal.statistic.IdeActivityDefinition.startedAsync] to record start events,
  * and [com.intellij.internal.statistic.StructuredIdeActivity.finished] to record finish events.
  *
- * See example in dev-guide/fus-collectors.md.
+ * See example in [FUS Collectors](https://youtrack.jetbrains.com/articles/IJPL-A-153/Fus-Collectors).
  */
 @ApiStatus.Internal
 class StructuredIdeActivity internal constructor(private val projectOrNullForApplication: Project?,

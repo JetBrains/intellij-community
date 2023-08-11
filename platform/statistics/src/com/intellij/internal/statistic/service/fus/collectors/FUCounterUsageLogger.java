@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.concurrency.JobScheduler;
@@ -29,7 +29,7 @@ import static com.intellij.internal.statistic.service.fus.collectors.UsageCollec
 
 /**
  * Please do not implement any new collectors using this API directly.
- * Please refer to "fus-collectors.md" dev-guide and {@link EventLogGroup#registerEvent} doc comments for the new collector API.
+ * Please refer to <a href="https://youtrack.jetbrains.com/articles/IJPL-A-153/Fus-Collectors">FUS Collectors</a> and {@link EventLogGroup#registerEvent} doc comments for the new collector API.
  *
  * @see CounterUsagesCollector
  * @see ApplicationUsagesCollector
