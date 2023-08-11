@@ -26,14 +26,15 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.psi.util.PsiFormatUtil.formatVariable;
@@ -86,7 +87,7 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
     }
     Processor<PsiMember> psiStaticMethodProcessor = new Processor<>() {
       private int size = 0;
-      private final Set<PsiClass> classesToSkip = new HashSet<>();
+      private final MultiMap<PsiClass, String> classesToSkip = new MultiMap<>();
 
       @Override
       public boolean process(PsiMember member) {
@@ -98,10 +99,20 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
         if (!(member instanceof PsiMethod method && method.hasModifier(JvmModifier.STATIC))) {
           return true;
         }
+        PsiClass containingClass = method.getContainingClass();
+        String methodName = method.getName();
+        if (containingClass == null) {
+          return true;
+        }
+        Collection<String> names = classesToSkip.get(containingClass);
+        if (names.contains(methodName)) {
+          return true;
+        }
         processor.processStaticMember(element -> {
           size++;
           result.consume(element);
-        }, member, classesToSkip);
+          classesToSkip.putValue(containingClass, methodName);
+        }, member, new HashSet<>());
         return size < MAX_SIZE;
       }
     };
@@ -119,7 +130,6 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
         }
         nextClass = PsiTreeUtil.getParentOfType(nextClass, PsiClass.class);
       }
-
     }
 
     //process java static separately
@@ -144,22 +154,22 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
       if (stop.get()) {
         break;
       }
+      List<String> allNames = new ArrayList<>();
       cache.processAllMethodNames(name -> {
-        ProgressManager.checkCanceled();
-        if (stop.get()) {
-          return false;
-        }
         if (!matcher.prefixMatches(name)) {
           return true;
         }
+        allNames.add(name);
+        return true;
+      }, scope, null);
+      for (String name : allNames) {
         cache.processMethodsWithName(name, method -> {
           ProgressManager.checkCanceled();
           boolean continueProcess = psiStaticMethodProcessor.process(method);
           stop.set(!continueProcess);
           return !stop.get();
         }, scope, null);
-        return !stop.get();
-      }, scope, null);
+      }
     }
   }
 
@@ -207,7 +217,7 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
       }
       if (myOriginalPosition != null && ImportsUtil.hasStaticImportOn(myOriginalPosition, method, true)) {
         PsiClass psiClass = PsiTreeUtil.getParentOfType(myOriginalPosition, PsiClass.class);
-        if (psiClass!=null  &&
+        if (psiClass != null &&
             !PsiTreeUtil.isAncestor(psiClass, method, true) &&
             !ContainerUtil.and(psiClass.getAllMethods(), containingMethod -> method.getName().equals(containingMethod.getName()))) {
           shouldImportOrQualify = false;
