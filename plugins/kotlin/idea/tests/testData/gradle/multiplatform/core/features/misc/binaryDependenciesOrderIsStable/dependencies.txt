@@ -20,14 +20,10 @@ my-app.consumer.jvmTest
     org.jetbrains.kotlin.mpp.tests:lib1-jvm:1.0 (TEST)
 
 my-app.consumer.linuxMain
-    org.jetbrains.kotlin.mpp.tests:lib2:commonMain:1.0 (COMPILE)
-    org.jetbrains.kotlin.mpp.tests:lib1:commonMain:1.0 (COMPILE)
     org.jetbrains.kotlin.mpp.tests:lib2-linuxx64:1.0 (COMPILE)
     org.jetbrains.kotlin.mpp.tests:lib1-linuxx64:1.0 (COMPILE)
 
 my-app.consumer.linuxTest
-    org.jetbrains.kotlin.mpp.tests:lib2:commonMain:1.0 (TEST)
-    org.jetbrains.kotlin.mpp.tests:lib1:commonMain:1.0 (TEST)
     org.jetbrains.kotlin.mpp.tests:lib2-linuxx64:1.0 (TEST)
     org.jetbrains.kotlin.mpp.tests:lib1-linuxx64:1.0 (TEST)
 
@@ -40,14 +36,10 @@ my-app.consumer.linuxX64Test
     org.jetbrains.kotlin.mpp.tests:lib1-linuxx64:1.0 (TEST)
 
 my-app.consumer.nativeMain
-    org.jetbrains.kotlin.mpp.tests:lib2:commonMain:1.0 (COMPILE)
-    org.jetbrains.kotlin.mpp.tests:lib1:commonMain:1.0 (COMPILE)
     org.jetbrains.kotlin.mpp.tests:lib2-linuxx64:1.0 (COMPILE)
     org.jetbrains.kotlin.mpp.tests:lib1-linuxx64:1.0 (COMPILE)
 
 my-app.consumer.nativeTest
-    org.jetbrains.kotlin.mpp.tests:lib2:commonMain:1.0 (TEST)
-    org.jetbrains.kotlin.mpp.tests:lib1:commonMain:1.0 (TEST)
     org.jetbrains.kotlin.mpp.tests:lib2-linuxx64:1.0 (TEST)
     org.jetbrains.kotlin.mpp.tests:lib1-linuxx64:1.0 (TEST)
 
