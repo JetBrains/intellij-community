@@ -9,11 +9,13 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 object KotlinGradlePluginVersionTestsProperty : KotlinTestsResolvableProperty {
     override val id: String = "KGP_VERSION"
 
+    @Suppress("unused") // passed using environment variables
     enum class Value(val acronym: String, val version: String) {
         MinSupported("MIN", "1.7.21"),
         PreviousMajorRelease("PREV_RELEASE", "1.8.22"),
         LatestStable("STABLE", "1.9.0"),
-        Latest("LATEST", KotlinGradlePluginVersions.latest.toString())
+        Latest("LATEST", KotlinGradlePluginVersions.latest.toString()),
+        SNAPSHOT("SNAPSHOT", KotlinGradlePluginVersions.latest.run { "$major.$minor.255-SNAPSHOT" })
     }
 
     override val valuesByAcronyms: Map<String, String> = Value.values().associate { it.acronym to it.version }
