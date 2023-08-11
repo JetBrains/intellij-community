@@ -7,7 +7,7 @@ project.appleMain
     commonMain (refines, COMPILE)
     jvmAndNativeMain (refines, COMPILE)
     nativeMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
 
 project.appleTest
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
@@ -19,14 +19,14 @@ project.appleTest
     jvmAndNativeTest (refines, TEST)
     nativeMain (friend, TEST)
     nativeTest (refines, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
 
 project.commonMain
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
 
 project.commonTest
     commonMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
 
 project.iosArm64Main
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
@@ -73,7 +73,7 @@ project.iosSimulatorArm64Test
 project.jsMain
     commonMain (refines, COMPILE)
     org.jetbrains.kotlin:kotlin-dom-api-compat:klib:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-js:klib:{{KGP_VERSION}} (COMPILE)
 
 project.jsTest
     commonMain (friend, TEST)
@@ -81,23 +81,21 @@ project.jsTest
     jsMain (friend, RUNTIME)
     jsMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-dom-api-compat:klib:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-js:klib:{{KGP_VERSION}} (TEST)
 
 project.jvmAndNativeMain
     commonMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
 
 project.jvmAndNativeTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
     jvmAndNativeMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
 
 project.jvmMain
     commonMain (refines, COMPILE)
     jvmAndNativeMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
@@ -108,8 +106,6 @@ project.jvmTest
     jvmAndNativeTest (refines, TEST)
     jvmMain (friend, RUNTIME)
     jvmMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 
@@ -157,7 +153,7 @@ project.nativeMain
     Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
     commonMain (refines, COMPILE)
     jvmAndNativeMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
 
 project.nativeTest
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
@@ -167,7 +163,7 @@ project.nativeTest
     jvmAndNativeMain (friend, TEST)
     jvmAndNativeTest (refines, TEST)
     nativeMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
 
 
 Test configuration:
