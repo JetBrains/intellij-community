@@ -115,6 +115,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/kotlin/collections/ArraysJVM
      +PsiDirectory: text
      +PsiDirectory: time
      _Assertions
+     AllowDifferentMembersInActual
      BuilderInference
      ContextFunctionTypeParams
      DeepRecursiveFunction

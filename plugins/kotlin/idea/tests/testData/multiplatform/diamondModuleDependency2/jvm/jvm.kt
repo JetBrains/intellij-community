@@ -9,8 +9,8 @@ interface D : A {
     fun foo_D()
 }
 
-actual typealias <!LINE_MARKER("descr='Has expects in common-2-1 module'")!>B<!> = D
-actual typealias <!LINE_MARKER("descr='Has expects in common-2-2 module'")!>C<!> = D
+actual typealias <!ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER, LINE_MARKER("descr='Has expects in common-2-1 module'")!>B<!> = D
+actual typealias <!ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER, LINE_MARKER("descr='Has expects in common-2-2 module'")!>C<!> = D
 
 fun take0(x: D): Unit = null!!
 

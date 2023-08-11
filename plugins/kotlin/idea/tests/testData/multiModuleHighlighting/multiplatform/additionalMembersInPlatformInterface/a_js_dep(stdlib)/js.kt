@@ -1,4 +1,6 @@
 actual interface A
+@OptIn(ExperimentalMultiplatform::class)
+@AllowDifferentMembersInActual // New 'AbstractMutableCollection` supertype is added compared to the expect declaration
 actual interface B {
     fun z()
     fun x()

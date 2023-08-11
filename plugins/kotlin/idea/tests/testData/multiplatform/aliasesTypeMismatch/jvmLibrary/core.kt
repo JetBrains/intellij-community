@@ -4,4 +4,4 @@ open class <!LINE_MARKER("descr='Is subclassed by MyCancellationException (platf
 
 open class <!LINE_MARKER("descr='Is subclassed by MyCancellationException (platform.lib) OtherException [jvm] Press ... to navigate'")!>MyIllegalStateException<!> : MyException()
 
-open class MyCancellationException : MyIllegalStateException()
+class MyCancellationException : MyIllegalStateException()

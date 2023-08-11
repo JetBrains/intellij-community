@@ -4,10 +4,10 @@ package foo
 
 interface <!LINE_MARKER("descr='Is implemented by A [jvm] (foo) AImpl (foo) Press ... to navigate'")!>B<!>
 
-actual interface <!LINE_MARKER("descr='Has expects in common module'"), LINE_MARKER("descr='Is implemented by AImpl (foo) Press ... to navigate'")!>A<!> : B {
+<!ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER, ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_SUPERTYPES_AS_NON_FINAL_EXPECT_CLASSIFIER!>actual interface <!LINE_MARKER("descr='Has expects in common module'"), LINE_MARKER("descr='Is implemented by AImpl (foo) Press ... to navigate'")!>A<!><!> : B {
     actual fun <!LINE_MARKER("descr='Has expects in common module'"), LINE_MARKER("descr='Is implemented in AImpl (foo) Press ... to navigate'")!>commonFun<!>()
 
-    fun <!LINE_MARKER("descr='Is implemented in AImpl (foo) Press ... to navigate'")!>platformFun<!>()
+    fun <!LINE_MARKER("descr='Is implemented in AImpl (foo) Press ... to navigate'"), NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION!>platformFun<!>()
 }
 
 class AImpl : A {

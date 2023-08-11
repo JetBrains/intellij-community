@@ -6,6 +6,8 @@ private class CancelFutureOnCancel : JobNode()  {
     }
 }
 
+@OptIn(ExperimentalMultiplatform::class)
+@AllowDifferentMembersInActual
 internal actual abstract class CompletionHandlerBase actual constructor() : CompletionHandler {
     actual abstract override fun invoke(cause: Throwable?)
 }
