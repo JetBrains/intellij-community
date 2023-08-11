@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.ui
 
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.chains.DiffRequestProducer
+import com.intellij.diff.requests.DiffRequest
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
@@ -18,10 +19,7 @@ import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.log.runInEdtAsync
-import git4idea.index.GitStageTracker
-import git4idea.index.GitStageTrackerListener
-import git4idea.index.KindTag
-import git4idea.index.createTwoSidesDiffRequestProducer
+import git4idea.index.*
 import org.jetbrains.annotations.Nls
 import java.util.*
 
@@ -65,6 +63,16 @@ class GitStageDiffPreview(project: Project,
 
   override fun createGoToChangeAction(): AnAction {
     return MyGoToChangePopupAction()
+  }
+
+  override fun loadRequestFast(provider: DiffRequestProducer): DiffRequest? {
+    val request = super.loadRequestFast(provider) ?: return null
+    if (!request.isValid()) return null
+    return request
+  }
+
+  private fun DiffRequest.isValid(): Boolean {
+    return getUserData(HEAD_INFO)?.isCurrent(project) ?: true
   }
 
   private inner class MyGoToChangePopupAction : PresentableGoToChangePopupAction.Default<Wrapper>() {

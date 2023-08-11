@@ -16,6 +16,7 @@ import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
@@ -84,6 +85,14 @@ private fun createContentRevision(project: Project, root: VirtualFile, status: G
   }
 }
 
+internal data class HeadInfo(val root: VirtualFile, val revision: String)
+internal val HEAD_INFO: Key<HeadInfo> = Key.create("GitStage.HeadInfo")
+
+internal fun HeadInfo.isCurrent(project: Project): Boolean {
+  val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root) ?: return false
+  return repository.currentRevision == revision
+}
+
 @Throws(VcsException::class, IOException::class)
 private fun headDiffContent(project: Project, root: VirtualFile, status: GitFileStatus): DiffContent {
   if (!status.has(ContentVersion.HEAD)) return DiffContentFactory.getInstance().createEmpty()
@@ -103,6 +112,7 @@ private fun headDiffContent(project: Project, root: VirtualFile, status: GitFile
   }
 
   diffContent.putUserData(DiffVcsDataKeys.REVISION_INFO, Pair(status.path, currentRevisionNumber))
+  diffContent.putUserData(HEAD_INFO, HeadInfo(root, currentRevision))
 
   return diffContent
 }
