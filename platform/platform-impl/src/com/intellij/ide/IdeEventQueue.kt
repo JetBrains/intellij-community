@@ -63,6 +63,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import javax.swing.*
 import javax.swing.plaf.basic.ComboPopup
@@ -97,6 +98,9 @@ class IdeEventQueue private constructor() : EventQueue() {
   @VisibleForTesting
   @JvmField
   val keyboardEventDispatched: AtomicInteger = AtomicInteger()
+
+  private val eventsPosted = AtomicLong()
+  private val eventsReturned = AtomicLong()
 
   private var isInInputEvent = false
   var trueCurrentEvent: AWTEvent = InvocationEvent(this, EmptyRunnable.getInstance())
@@ -469,6 +473,7 @@ class IdeEventQueue private constructor() : EventQueue() {
         super.getNextEvent()
       }
     }
+    eventsReturned.incrementAndGet()
     if (isKeyboardEvent(event) && keyboardEventDispatched.incrementAndGet() > keyboardEventPosted.get()) {
       throw RuntimeException("$event; posted: $keyboardEventPosted; dispatched: $keyboardEventDispatched")
     }
@@ -814,6 +819,7 @@ class IdeEventQueue private constructor() : EventQueue() {
         return false
       }
     }
+    eventsPosted.incrementAndGet()
     // We don't 'attach' current client id to PeerEvent instances for two reasons.
     // First, they are often posted to EventQueue indirectly (first to sun.awt.PostEventQueue, and then to the EventQueue by
     // SunToolkit.flushPendingEvents), so current client id might be unrelated to the code that created those events.
@@ -878,6 +884,12 @@ class IdeEventQueue private constructor() : EventQueue() {
       postEventListeners.remove(listener)
     }
   }
+
+  fun getPostedEventCount() = eventsPosted.get()
+
+  fun getReturnedEventCount() = eventsReturned.get()
+
+  fun getPostedSystemEventCount() = (AppContext.getAppContext()?.get("jb.postedSystemEventCount") as? AtomicLong)?.get() ?: -1
 }
 
 // IdeEventQueue is created before log configuration - cannot be initialized as a part of IdeEventQueue
