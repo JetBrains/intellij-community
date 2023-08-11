@@ -57,7 +57,7 @@ class KotlinMppCompilerArgumentsImportingTests : AbstractKotlinMppGradleImportin
         doTest()
     }
 
-    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-9107+")
     @Test
     fun testSingleTargetConfiguration() {
         doTest()
