@@ -224,9 +224,24 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/anonymousBlock/fieldUsageInInitBlockBeforeDeclarationWithInitializerWithStaticMixed.java");
         }
 
+        @TestMetadata("finalPrimitiveFieldInitializedInInitBlock.java")
+        public void testFinalPrimitiveFieldInitializedInInitBlock() throws Exception {
+            runTest("testData/newJ2k/anonymousBlock/finalPrimitiveFieldInitializedInInitBlock.java");
+        }
+
+        @TestMetadata("finalPrimitiveStaticFieldInitializedInStaticInitBlock.java")
+        public void testFinalPrimitiveStaticFieldInitializedInStaticInitBlock() throws Exception {
+            runTest("testData/newJ2k/anonymousBlock/finalPrimitiveStaticFieldInitializedInStaticInitBlock.java");
+        }
+
         @TestMetadata("KTIJ-15768.java")
         public void testKTIJ_15768() throws Exception {
             runTest("testData/newJ2k/anonymousBlock/KTIJ-15768.java");
+        }
+
+        @TestMetadata("ktij14729.java")
+        public void testKtij14729() throws Exception {
+            runTest("testData/newJ2k/anonymousBlock/ktij14729.java");
         }
 
         @TestMetadata("oneAnonBlock.java")

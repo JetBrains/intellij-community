@@ -66,28 +66,32 @@ class ImplicitInitializerConversion(context: NewJ2kConverterContext) : Recursive
             .toMap()
             .toMutableMap()
 
-        val constructorsWithInitializers = findUsages(containingClass, context).mapNotNull { usage ->
+        val declarationsWithInitializers = findUsages(containingClass, context).mapNotNull { usage ->
             val parent = usage.parent
-            val assignmentStatement =
-                when {
-                    parent is JKKtAssignmentStatement -> parent
-                    parent is JKQualifiedExpression && parent.receiver is JKThisExpression ->
-                        parent.parent as? JKKtAssignmentStatement
+            val assignmentStatement = when {
+                parent is JKKtAssignmentStatement -> parent
+                parent is JKQualifiedExpression && parent.receiver is JKThisExpression ->
+                    parent.parent as? JKKtAssignmentStatement
 
-                    else -> null
-                } ?: return@mapNotNull null
-            val constructor =
-                (assignmentStatement.parent as? JKBlock)?.parent as? JKConstructor ?: return@mapNotNull null
-
+                else -> null
+            } ?: return@mapNotNull null
             val isInitializer = when (parent) {
                 is JKKtAssignmentStatement -> (parent.field as? JKFieldAccessExpression)?.identifier == fieldSymbol
                 is JKQualifiedExpression -> (parent.selector as? JKFieldAccessExpression)?.identifier == fieldSymbol
                 else -> false
             }
-            if (!isInitializer) return@mapNotNull null
-            constructor
+
+            val containingDeclaration = (assignmentStatement.parent as? JKBlock)?.parent as? JKDeclaration ?: return@mapNotNull null
+            if (isInitializer) containingDeclaration else null
         }
 
+        val initBlocks = containingClass.declarationList.filterIsInstance<JKInitDeclaration>()
+        if (initBlocks.isNotEmpty() && initBlocks.all { it in declarationsWithInitializers }) {
+            // If the field is initialized in all init declarations it definitely doesn't need an explicit stub initializer
+            return InitializationState.INITIALIZED_IN_ALL_CONSTRUCTORS
+        }
+
+        val constructorsWithInitializers = declarationsWithInitializers.filterIsInstance<JKConstructor>()
         for (constructor in constructorsWithInitializers) {
             constructors[symbolProvider.provideUniverseSymbol(constructor)] = true
         }
