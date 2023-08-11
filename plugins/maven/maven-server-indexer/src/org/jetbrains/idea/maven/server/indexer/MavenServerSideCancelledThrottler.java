@@ -30,9 +30,10 @@ public class MavenServerSideCancelledThrottler implements MavenServerProgressInd
   @Override
   public boolean isCanceled() throws RemoteException {
     if (cancelled) return true;
-    if (lastTime.get() + CHECK_PERIOD > System.currentTimeMillis()) return cancelled;
+    if (lastTime.get() + CHECK_PERIOD > System.currentTimeMillis()) return false;
     lastTime.set(System.currentTimeMillis());
-    return myIndicator.isCanceled();
+    cancelled =  myIndicator.isCanceled();
+    return cancelled;
   }
 
   @Override
