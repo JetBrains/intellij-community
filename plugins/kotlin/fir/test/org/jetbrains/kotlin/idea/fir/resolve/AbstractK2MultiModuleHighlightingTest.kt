@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.resolve
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore.loadText
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNamedElement
@@ -65,7 +65,7 @@ abstract class AbstractK2MultiModuleHighlightingTest : AbstractMultiModuleTest()
         target as PsiNamedElement
 
         val testFile = LocalFileSystem.getInstance().refreshAndFindFileByPath("$filePath/sourceModule/test.txt")!!
-        val text = loadText(testFile)
+        val text = VfsUtilCore.loadText(testFile)
 
         assertEquals(findStringWithPrefixes(text, "// expected class:"), target.name)
 

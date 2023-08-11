@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.UtilBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
@@ -223,6 +224,11 @@ public class FileUtil extends FileUtilRt {
     return bytes;
   }
 
+  /**
+   * use {@link com.intellij.openapi.vfs.VfsUtilCore#loadNBytes}
+   * or {@link InputStream#readNBytes(int)}
+   */
+  @Deprecated
   public static byte @NotNull [] loadFirstAndClose(@NotNull InputStream stream, int maxLength) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     try {
