@@ -47,6 +47,7 @@ Navigation item file #1: kotlin-stdlib-sources.jar!/kotlin/annotation/Annotation
      +PsiDirectory: text
      +PsiDirectory: time
      _Assertions
+     AllowDifferentMembersInActual
      BuilderInference
      ContextFunctionTypeParams
      DeepRecursiveFunction
