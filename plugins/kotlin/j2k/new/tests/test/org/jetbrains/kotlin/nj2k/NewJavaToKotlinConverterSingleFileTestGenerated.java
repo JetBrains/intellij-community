@@ -2989,6 +2989,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/implicitCasts/ternary.java");
         }
 
+        @TestMetadata("ternaryCastBranchWithNumericType.java")
+        public void testTernaryCastBranchWithNumericType() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/ternaryCastBranchWithNumericType.java");
+        }
+
         @TestMetadata("unary.java")
         public void testUnary() throws Exception {
             runTest("testData/newJ2k/implicitCasts/unary.java");

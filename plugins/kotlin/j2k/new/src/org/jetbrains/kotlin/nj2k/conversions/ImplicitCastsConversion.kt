@@ -22,6 +22,7 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
             is JKCallExpression -> convertMethodCallExpression(element)
             is JKNewExpression -> convertNewExpression(element)
             is JKBinaryExpression -> return recurse(convertBinaryExpression(element))
+            is JKIfElseExpression -> convertIfElseExpression(element)
             is JKKtAssignmentStatement -> convertAssignmentStatement(element)
         }
         return recurse(element)
@@ -158,6 +159,24 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
 
     private fun convertMethodCallExpression(expression: JKCallExpression) {
         convertArguments(expression.identifier, expression.arguments.arguments)
+    }
+
+    private fun convertIfElseExpression(expression: JKIfElseExpression) {
+        val type = expression.calculateType(typeFactory)?.asPrimitiveType() ?: return
+        val thenType = expression.thenBranch.calculateType(typeFactory)?.asPrimitiveType() ?: return
+        val elseType = expression.elseBranch.calculateType(typeFactory)?.asPrimitiveType() ?: return
+
+        if (thenType != type) {
+            expression.thenBranch.castTo(type)?.let {
+                expression.thenBranch = it.copyTreeAndDetach()
+            }
+        }
+
+        if (elseType != type) {
+            expression.elseBranch.castTo(type)?.let {
+                expression.elseBranch = it.copyTreeAndDetach()
+            }
+        }
     }
 
     private fun convertArguments(methodSymbol: JKMethodSymbol, arguments: List<JKArgument>) {
