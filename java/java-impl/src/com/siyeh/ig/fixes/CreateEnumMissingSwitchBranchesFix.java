@@ -24,7 +24,7 @@ public final class CreateEnumMissingSwitchBranchesFix extends CreateMissingSwitc
   }
 
   @Override
-  protected @NotNull List<String> getAllNames(@NotNull PsiClass aClass) {
+  protected @NotNull List<String> getAllNames(@NotNull PsiClass aClass, @NotNull PsiSwitchBlock switchBlock) {
     return StreamEx.of(aClass.getAllFields()).select(PsiEnumConstant.class).map(PsiField::getName).toList();
   }
 

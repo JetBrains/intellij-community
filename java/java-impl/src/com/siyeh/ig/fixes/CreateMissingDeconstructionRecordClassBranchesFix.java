@@ -41,7 +41,7 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
   }
 
   @Override
-  protected @NotNull List<String> getAllNames(@NotNull PsiClass aClass) {
+  protected @NotNull List<String> getAllNames(@NotNull PsiClass aClass, @NotNull PsiSwitchBlock switchBlock) {
     return allNames;
   }
 
