@@ -46,16 +46,15 @@ internal class BreadcrumbsConfigurableUI(configurables: List<BreadcrumbsConfigur
         }.bind(settings::isBreadcrumbsAbove, settings::setBreadcrumbsAbove)
 
         row {
-          label(ApplicationBundle.message("label.breadcrumbs.languages")).applyToComponent {
-            putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(bottom = false))
-          }
+          label(ApplicationBundle.message("label.breadcrumbs.languages"))
         }
 
         panel {
-          for (i in sortedList.indices step 3) {
+          val rowCount = (sortedList.size + 2) / 3
+          for (i in 0..rowCount - 1) {
             row {
               for (j in 0..2) {
-                sortedList.getOrNull(i + j)?.let { (id, checkBox) ->
+                sortedList.getOrNull(i + rowCount * j)?.let { (id, checkBox) ->
                   cell(checkBox)
                     .bindSelected({ settings.isBreadcrumbsShownFor(id) }, { settings.setBreadcrumbsShownFor(id, it) })
                     .gap(RightGap.COLUMNS)
