@@ -25,12 +25,10 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
 
   @JvmField
-  var taintedAnnotations: MutableList<String?> = mutableListOf("javax.annotation.Tainted",
-                                                               "org.checkerframework.checker.tainting.qual.Tainted")
+  var taintedAnnotations: MutableList<String?> = mutableListOf("org.checkerframework.checker.tainting.qual.Tainted")
 
   @JvmField
-  var untaintedAnnotations: MutableList<String?> = mutableListOf("javax.annotation.Untainted",
-                                                                 "org.checkerframework.checker.tainting.qual.Untainted")
+  var untaintedAnnotations: MutableList<String?> = mutableListOf("org.checkerframework.checker.tainting.qual.Untainted")
 
   @JvmField
   var untaintedParameterIndex: MutableList<String?> = mutableListOf()
@@ -214,6 +212,9 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
     }
 
     if (firstAnnotation == null && untaintedParameterIndex.size == 0 && untaintedParameterWithPlaceIndex.size == 0) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    if (session.file.name.endsWith(".kts") || session.file.name.endsWith(".md")) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
 
