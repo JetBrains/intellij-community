@@ -93,4 +93,18 @@ diff --git a/community/plugins/textmate/lib/bundles/cmake/package.json b/communi
  				],
  				"aliases": [
  					"CMake"
+diff --git a/community/plugins/textmate/lib/bundles/terraform/language-configuration.json b/community/plugins/textmate/lib/bundles/terraform/language-configuration.json
+--- a/community/plugins/textmate/lib/bundles/terraform/language-configuration.json	(revision 3e3a2028fd1f0ed13bca9290e5065a201859510e)
++++ b/community/plugins/textmate/lib/bundles/terraform/language-configuration.json	(revision 77af558e37b0311cdd20a24759053f10944cb698)
+@@ -77,5 +77,9 @@
+ 			"start": "^\\s*#region",
+ 			"end": "^\\s*#endregion"
+ 		}
+-	}
++	},
++  "indentationRules": {
++    "increaseIndentPattern": "^((?!\\/\\/).)*(\\{[^}\"'`]*|\\([^)\"'`]*|\\[[^\\]\"'`]*)$",
++    "decreaseIndentPattern": "^((?!.*?\\/\\*).*\\*/)?\\s*[\\)\\}\\]].*$"
++  }
+ }
 
