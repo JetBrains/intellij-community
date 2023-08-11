@@ -24,10 +24,12 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
 
   @JvmField
-  var taintedAnnotations: MutableList<String?> = mutableListOf("org.checkerframework.checker.tainting.qual.Tainted")
+  var taintedAnnotations: MutableList<String?> = mutableListOf("javax.annotation.Tainted",
+                                                               "org.checkerframework.checker.tainting.qual.Tainted")
 
   @JvmField
-  var untaintedAnnotations: MutableList<String?> = mutableListOf("org.checkerframework.checker.tainting.qual.Untainted")
+  var untaintedAnnotations: MutableList<String?> = mutableListOf("javax.annotation.Untainted",
+                                                                 "org.checkerframework.checker.tainting.qual.Untainted")
 
   @JvmField
   var untaintedParameterIndex: MutableList<String?> = mutableListOf()
