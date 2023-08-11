@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MarkdownIndexPatternBuilder implements IndexPatternBuilder {
-  public static final TokenSet COMMENT_TOKEN_SET = TokenSet.create(MarkdownElementTypes.LINK_COMMENT);
+  public static final TokenSet COMMENT_TOKEN_SET = TokenSet.create(MarkdownElementTypes.COMMENT_VALUE);
 
   @Nullable
   @Override
@@ -51,11 +51,11 @@ public class MarkdownIndexPatternBuilder implements IndexPatternBuilder {
 
   @Override
   public int getCommentStartDelta(IElementType tokenType) {
-    return 1;
+    return 0;
   }
 
   @Override
   public int getCommentEndDelta(IElementType tokenType) {
-    return 1;
+    return 0;
   }
 }
