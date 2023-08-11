@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.highlighting.highlighters
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotationClassIds
@@ -17,16 +17,11 @@ import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtElement
 
-internal class DslHighlighter(project: Project) : AfterResolveHighlighter(project) {
-
-    context(KtAnalysisSession)
-    override fun highlight(element: KtElement): List<HighlightInfo.Builder> {
-        return when (element) {
-            is KtCallExpression -> listOfNotNull(highlightCall(element))
-            else -> emptyList()
-        }
+context(KtAnalysisSession)
+internal class DslHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
+    override fun visitCallExpression(expression: KtCallExpression) {
+        holder.add(highlightCall(expression)?.create())
     }
 
     /**

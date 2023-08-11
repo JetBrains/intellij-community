@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.highlighting.highlighters
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -13,27 +13,21 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticName
 import org.jetbrains.kotlin.idea.highlighting.KotlinRefsHolder
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtValueArgumentName
 
-internal class VariableReferenceHighlighter(
-  project: Project,
-  private val kotlinRefsHolder: KotlinRefsHolder
-) : AfterResolveHighlighter(project) {
-
-    context(KtAnalysisSession)
-    override fun highlight(element: KtElement): List<HighlightInfo.Builder> {
-        return when (element) {
-            is KtSimpleNameExpression -> highlightSimpleNameExpression(element)
-            else -> emptyList()
-        }
+context(KtAnalysisSession)
+internal class VariableReferenceHighlighter(private val kotlinRefsHolder: KotlinRefsHolder, holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
+    override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+        highlightSimpleNameExpression(expression).forEach { holder.add(it.create()) }
     }
 
-    context(KtAnalysisSession)
     private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression): List<HighlightInfo.Builder> {
         if (expression.isAssignmentReference()) return emptyList()
         if (expression.isByNameArgumentReference()) return emptyList()
         if (expression.parent is KtInstanceExpressionWithLabel) return emptyList()
-
 
         return when (val symbol = expression.mainReference.resolveToSymbol()) {
             is KtBackingFieldSymbol -> highlightBackingField(symbol, expression)
@@ -63,7 +57,6 @@ internal class VariableReferenceHighlighter(
         }
     }
 
-    context(KtAnalysisSession)
     private fun KtVariableSymbol.getHighlightingForMutableVar(expression: KtSimpleNameExpression): HighlightInfo.Builder? {
         return if (isVal) {
             null
@@ -72,7 +65,6 @@ internal class VariableReferenceHighlighter(
         }
     }
 
-    context(KtAnalysisSession)
     private fun highlightValueParameter(symbol: KtValueParameterSymbol, expression: KtSimpleNameExpression): HighlightInfo.Builder? {
         kotlinRefsHolder.registerLocalRef(symbol.psi, expression)
         return when {
@@ -88,7 +80,6 @@ internal class VariableReferenceHighlighter(
         }
     }
 
-    context(KtAnalysisSession)
     private fun highlightProperty(
         symbol: KtKotlinPropertySymbol,
         expression: KtSimpleNameExpression
@@ -115,7 +106,6 @@ internal class VariableReferenceHighlighter(
         return result
     }
 
-    context(KtAnalysisSession)
     private fun highlightBackingField(symbol: KtBackingFieldSymbol, expression: KtSimpleNameExpression): List<HighlightInfo.Builder> {
         val result = mutableListOf<HighlightInfo.Builder>()
         if (!symbol.owningProperty.isVal) {

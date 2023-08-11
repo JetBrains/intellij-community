@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractShare
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2LocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.idea.kdoc.AbstractSharedK2KDocHighlightingTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2InspectionTest
+import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2LocalInspectionAndGeneralHighlightingTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2LocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2MultiFileLocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2MultiFileQuickFixTest
@@ -41,8 +42,14 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/removeRedundantQualifierName")
             model("${idea}/inspectionsLocal/equalsBetweenInconvertibleTypes")
             model("${idea}/inspectionsLocal/redundantIf")
-            model("${idea}/inspectionsLocal/unusedSymbol")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
+        }
+        /**
+         * `unusedSymbol` tests require [com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass] to run,
+         * so they extend the other base class [AbstractK2LocalInspectionAndGeneralHighlightingTest]
+         */
+        testClass<AbstractK2LocalInspectionAndGeneralHighlightingTest> {
+            model("${idea}/inspectionsLocal/unusedSymbol")
         }
 
         testClass<AbstractK2InspectionTest> {

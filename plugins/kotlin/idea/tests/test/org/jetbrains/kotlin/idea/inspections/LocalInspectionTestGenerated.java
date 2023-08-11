@@ -16859,9 +16859,14 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/contextReceiver.kt");
         }
 
-        @TestMetadata("dataInlineClassDeclaration.kt")
-        public void testDataInlineClassDeclaration() throws Exception {
-            runTest("testData/inspectionsLocal/unusedSymbol/dataInlineClassDeclaration.kt");
+        @TestMetadata("dataInlineClassDeclarationk1.kt")
+        public void testDataInlineClassDeclarationk1() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/dataInlineClassDeclarationk1.kt");
+        }
+
+        @TestMetadata("dataInlineClassDeclarationk2.kt")
+        public void testDataInlineClassDeclarationk2() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/dataInlineClassDeclarationk2.kt");
         }
 
         @TestMetadata("enumSecondaryConstructor.kt")

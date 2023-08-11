@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting.highlighters
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiverSmartCastKind
@@ -11,21 +10,13 @@ import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.psi.*
 
-internal class ExpressionsSmartcastHighlighter(
-  project: Project,
-) : AfterResolveHighlighter(project) {
-
-    context(KtAnalysisSession)
-    override fun highlight(element: KtElement): List<HighlightInfo.Builder> {
-        return when (element) {
-            is KtExpression -> highlightExpression(element)
-            else -> emptyList()
-        }
+context(KtAnalysisSession)
+internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
+    override fun visitExpression(expression: KtExpression) {
+        highlightExpression(expression)
     }
 
-    context(KtAnalysisSession)
-    private fun highlightExpression(expression: KtExpression): List<HighlightInfo.Builder> {
-        val result = mutableListOf<HighlightInfo.Builder>()
+    private fun highlightExpression(expression: KtExpression) {
         expression.getImplicitReceiverSmartCast().forEach {
             val receiverName = when (it.kind) {
                 KtImplicitReceiverSmartCastKind.EXTENSION -> KotlinBaseHighlightingBundle.message("extension.implicit.receiver")
@@ -42,7 +33,7 @@ internal class ExpressionsSmartcastHighlighter(
               )
             )
             if (builder != null) {
-                result.add(builder)
+                holder.add(builder.create())
             }
         }
         expression.getSmartCastInfo()?.let { info ->
@@ -55,10 +46,9 @@ internal class ExpressionsSmartcastHighlighter(
               )
             )
             if (builder != null) {
-                result.add(builder)
+                holder.add(builder.create())
             }
         }
-        return result
     }
 }
 

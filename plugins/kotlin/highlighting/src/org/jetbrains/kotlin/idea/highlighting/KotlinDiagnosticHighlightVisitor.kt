@@ -21,26 +21,25 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactoryName
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
+import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningProblemGroup
 import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
-
+    lateinit var holder: HighlightInfoHolder
     override fun suitableForFile(file: PsiFile): Boolean {
         return file is KtFile
     }
 
     override fun analyze(file: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
-        if (file !is KtFile) return false
         val highlightingLevelManager = HighlightingLevelManager.getInstance(file.project)
         if (highlightingLevelManager.runEssentialHighlightingOnly(file)) {
             return true
         }
+        this.holder = holder
         try {
-            analyze(file, holder)
             action.run()
         } catch (e: Throwable) {
             if (e is ControlFlowException) throw e
@@ -50,7 +49,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         return true
     }
 
-    private fun analyze(file: KtFile, holder: HighlightInfoHolder) {
+    private fun analyze(file: KtFile) {
         analyze(file) {
             val diagnostics = file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             for (diagnostic in diagnostics) {
@@ -135,8 +134,9 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     }
 
     override fun visit(element: PsiElement) {
-        // After-analysis highlighting visitors are implemented as a separate highlighting pass, see [KotlinSemanticHighlightingPass],
-        // so this method that is called after the analysis is empty.
+        if (element is KtFile) {
+            analyze(element)
+        }
     }
 
     override fun clone(): HighlightVisitor {

@@ -2,9 +2,8 @@
 
 package org.jetbrains.kotlin.idea.highlighting.highlighters
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
-import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
@@ -22,63 +21,57 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
-internal class FunctionCallHighlighter(
-  project: Project,
-  private val kotlinRefsHolder: KotlinRefsHolder
-) : AfterResolveHighlighter(project) {
-
-    context(KtAnalysisSession)
-    override fun highlight(element: KtElement): List<HighlightInfo.Builder> {
-        return when (element) {
-            is KtBinaryExpression -> highlightBinaryExpression(element)
-            is KtCallExpression -> highlightCallExpression(element)
-            is KtCallableReferenceExpression -> rememberCallableReference(element)
-            else -> emptyList()
-        }
+context(KtAnalysisSession)
+internal class FunctionCallHighlighter(private val kotlinRefsHolder: KotlinRefsHolder, holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
+    override fun visitBinaryExpression(expression: KtBinaryExpression) {
+        highlightBinaryExpression(expression)
     }
 
-    context(KtAnalysisSession)
-    private fun highlightBinaryExpression(expression: KtBinaryExpression): List<HighlightInfo.Builder> {
-        val operationReference = expression.operationReference as? KtReferenceExpression ?: return emptyList()
-        if (operationReference.isAssignment()) return emptyList()
-        val call = expression.resolveCall()?.successfulCallOrNull<KtCall>() ?: return emptyList()
+    override fun visitCallExpression(expression: KtCallExpression) {
+        highlightCallExpression(expression)
+    }
+
+    override fun visitCallableReferenceExpression(expression: KtCallableReferenceExpression) {
+        rememberCallableReference(expression)
+    }
+
+    private fun highlightBinaryExpression(expression: KtBinaryExpression) {
+        val operationReference = expression.operationReference as? KtReferenceExpression ?: return
+        if (operationReference.isAssignment()) return
+        val call = expression.resolveCall()?.successfulCallOrNull<KtCall>() ?: return
         if (call is KtSimpleFunctionCall) {
             kotlinRefsHolder.registerLocalRef(call.symbol.psi, expression)
         }
-        if (call is KtSimpleFunctionCall && (call.symbol as? KtFunctionSymbol)?.isOperator == true) return emptyList()
-        val h = getDefaultHighlightInfoTypeForCall(call)?.let { highlightInfoType ->
-            HighlightingFactory.highlightName(operationReference, highlightInfoType)
+        if (call is KtSimpleFunctionCall && (call.symbol as? KtFunctionSymbol)?.isOperator == true) return
+        val highlightInfoType = getDefaultHighlightInfoTypeForCall(call)
+        if (highlightInfoType != null) {
+            val builder = HighlightingFactory.highlightName(operationReference, highlightInfoType)
+            holder.add(builder?.create())
         }
-        return listOfNotNull(h)
     }
 
     private fun KtReferenceExpression.isAssignment() =
         (this as? KtOperationReferenceExpression)?.operationSignTokenType == KtTokens.EQ
 
-    context(KtAnalysisSession)
-    private fun highlightCallExpression(expression: KtCallExpression): List<HighlightInfo.Builder> {
-        val callee = expression.calleeExpression ?: return emptyList()
-        val call = expression.resolveCall()?.singleCallOrNull<KtCall>() ?: return emptyList()
-        if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return emptyList()
+    private fun highlightCallExpression(expression: KtCallExpression) {
+        val callee = expression.calleeExpression ?: return
+        val call = expression.resolveCall()?.singleCallOrNull<KtCall>() ?: return
+        if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
         kotlinRefsHolder.registerLocalRef((call as? KtSimpleFunctionCall)?.symbol?.psi, expression)
         val highlightInfoType = getHighlightInfoTypeForCallFromExtension(callee, call)
             ?: getDefaultHighlightInfoTypeForCall(call)
-            ?: return emptyList()
-        return listOfNotNull(HighlightingFactory.highlightName(callee, highlightInfoType))
+            ?: return
+        holder.add(HighlightingFactory.highlightName(callee, highlightInfoType)?.create())
     }
 
-    context(KtAnalysisSession)
-    private fun rememberCallableReference(expression: KtCallableReferenceExpression): List<HighlightInfo.Builder> {
-        val symbol = expression.callableReference.mainReference.resolveToSymbol() ?: return emptyList()
+    private fun rememberCallableReference(expression: KtCallableReferenceExpression) {
+        val symbol = expression.callableReference.mainReference.resolveToSymbol() ?: return
         kotlinRefsHolder.registerLocalRef(symbol.psi, expression)
-        return emptyList()
     }
 
-    context(KtAnalysisSession)
     private fun getHighlightInfoTypeForCallFromExtension(callee: KtExpression, call: KtCall): HighlightInfoType? =
         KotlinCallHighlighterExtension.EP_NAME.extensionList.firstNotNullOfOrNull { it.highlightCall(callee, call) }
 
-    context(KtAnalysisSession)
     private fun getDefaultHighlightInfoTypeForCall(call: KtCall): HighlightInfoType? {
         if (call !is KtSimpleFunctionCall) return null
         return when (val function = call.symbol) {

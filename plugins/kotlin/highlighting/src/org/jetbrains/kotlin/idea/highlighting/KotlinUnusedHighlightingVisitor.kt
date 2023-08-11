@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
@@ -14,37 +15,22 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
-import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.base.psi.mustHaveNonEmptyPrimaryConstructor
 import org.jetbrains.kotlin.idea.inspections.describe
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtClassBody
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtConstructor
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtParameterList
-import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
 class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile, private val holder: KotlinRefsHolder) {
 
-    internal fun collectHighlights(progress: ProgressIndicator, infos: MutableList<HighlightInfo>) {
+    internal fun collectHighlights(infos: HighlightInfoHolder) {
         val profile = InspectionProjectProfileManager.getInstance(ktFile.project).getCurrentProfile().let { p ->
             InspectionProfileWrapper.getCustomInspectionProfileWrapper(ktFile)?.let { it.apply(p).inspectionProfile } ?: p
         }
@@ -120,7 +106,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile, private val ho
                     .group(GeneralHighlightingPass.POST_UPDATE_ALL)
                     .registerFix(SafeDeleteFix(declaration), null, null, null, deadCodeKey)
                     .create()
-                infos.addIfNotNull(info)
+                infos.add(info)
             }
         }
     }

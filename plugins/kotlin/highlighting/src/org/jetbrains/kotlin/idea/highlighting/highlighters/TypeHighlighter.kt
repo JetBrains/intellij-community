@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting.highlighters
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -14,41 +13,33 @@ import org.jetbrains.kotlin.idea.highlighting.KotlinRefsHolder
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 
-internal class TypeHighlighter(
-  project: Project,
-  private val kotlinRefsHolder: KotlinRefsHolder
-) : AfterResolveHighlighter(project) {
-
-    context(KtAnalysisSession)
-    override fun highlight(element: KtElement): List<HighlightInfo.Builder> {
-        return when (element) {
-            is KtSimpleNameExpression -> highlightSimpleNameExpression(element)
-            else -> emptyList()
-        }
+context(KtAnalysisSession)
+internal class TypeHighlighter(private val kotlinRefsHolder: KotlinRefsHolder, holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
+    override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+        highlightSimpleNameExpression(expression)
     }
 
-    context(KtAnalysisSession)
-    private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression): List<HighlightInfo.Builder> {
-        if (expression.isCalleeExpression()) return emptyList()
+    private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression) {
+        if (expression.isCalleeExpression()) return
         val parent = expression.parent
 
         if (parent is KtInstanceExpressionWithLabel) {
             // Do nothing: 'super' and 'this' are highlighted as a keyword
-            return emptyList()
+            return
         }
         if (expression.isConstructorCallReference()) {
             kotlinRefsHolder.registerLocalRef((expression.mainReference.resolveToSymbol() as? KtConstructorSymbol)?.psi, expression)
             // Do not highlight constructor call as class reference
-            return emptyList()
+            return
         }
 
-        val symbol = expression.mainReference.resolveToSymbol() as? KtClassifierSymbol ?: return emptyList()
+        val symbol = expression.mainReference.resolveToSymbol() as? KtClassifierSymbol ?: return
 
         kotlinRefsHolder.registerLocalRef(symbol.psi, expression)
 
         if (isAnnotationCall(expression, symbol)) {
             // higlighted by AnnotationEntryHiglightingVisitor
-            return emptyList()
+            return
         }
 
         val color = when (symbol) {
@@ -70,10 +61,9 @@ internal class TypeHighlighter(
             is KtTypeParameterSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER
         }
 
-        return listOfNotNull(HighlightingFactory.highlightName(expression, color))
+        holder.add(HighlightingFactory.highlightName(expression, color)?.create())
     }
 
-    context(KtAnalysisSession)
     private fun isAnnotationCall(expression: KtSimpleNameExpression, target: KtSymbol): Boolean {
         val isKotlinAnnotation = target is KtConstructorSymbol
                 && target.isPrimary
