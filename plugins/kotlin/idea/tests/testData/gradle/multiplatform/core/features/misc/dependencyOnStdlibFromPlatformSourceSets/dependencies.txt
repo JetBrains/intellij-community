@@ -2,11 +2,11 @@ MODULES
 my-app
 
 my-app.commonMain
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
 
 my-app.commonTest
     commonMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
 
 my-app.jsMain
     commonMain (refines, COMPILE)
@@ -22,8 +22,6 @@ my-app.jsTest
 
 my-app.jvmMain
     commonMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
@@ -31,8 +29,6 @@ my-app.jvmTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
     jvmMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 
