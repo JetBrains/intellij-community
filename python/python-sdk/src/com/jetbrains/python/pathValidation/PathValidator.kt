@@ -52,7 +52,8 @@ class ValidationRequest(@NonNls internal val path: String?,
 
   private fun isAbsolutePath(path: String): Boolean = when (platformAndRoot.platform) {
     Platform.UNIX -> path.startsWith("/")
-    Platform.WINDOWS -> OSAgnosticPathUtil.isAbsoluteDosPath(path)
+    // On Windows user may create project in \\wsl
+    Platform.WINDOWS -> OSAgnosticPathUtil.isAbsoluteDosPath(path) || path.startsWith("\\\\wsl")
   }
 }
 
