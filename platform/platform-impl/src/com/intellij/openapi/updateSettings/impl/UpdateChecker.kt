@@ -29,6 +29,7 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -105,8 +106,8 @@ object UpdateChecker {
   const val MACHINE_ID_DISABLED_PROPERTY: String = "machine.id.disabled"
   const val MACHINE_ID_PARAMETER: String = "mid"
 
-  private val updateUrl: String
-    get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls!!.checkingUrl
+  private val updateUrl: String?
+    get() = System.getProperty("idea.updates.url") ?: ExternalProductResourceUrls.getInstance().updatesMetadataXmlUrl
 
   private val productDataLock = ReentrantLock()
   private var productDataCache: SoftReference<Result<Product?>>? = null
@@ -213,6 +214,7 @@ object UpdateChecker {
     productDataLock.withLock {
       val cached = productDataCache?.get()
       if (cached != null) return@withLock cached.getOrThrow()
+      val updateUrl = updateUrl ?: return@withLock null
 
       val result = runCatching {
         var url = Urls.newFromEncoded(updateUrl)

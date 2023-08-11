@@ -383,6 +383,8 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"/>
+    <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls" 
+                        serviceImplementation="com.intellij.platform.ide.customization.impl.LegacyExternalProductResourceUrls"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"/>
 

@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -13,6 +12,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.copy
@@ -35,7 +35,8 @@ internal object UpdateInstaller {
   private const val UPDATER_ENTRY = "com/intellij/updater/Runner.class"
 
   private val patchesUrl: URL
-    get() = URL(System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls!!.patchesUrl)
+    get() = URL(System.getProperty("idea.patches.url") ?: ExternalProductResourceUrls.getInstance().basePatchDownloadUrl 
+                ?: error("Metadata contains information about a patch, but 'ExternalProductResourceUrls.basePatchDownloadUrl' returns null"))
 
   @JvmStatic
   @Throws(IOException::class)
