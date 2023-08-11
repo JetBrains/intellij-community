@@ -56,7 +56,7 @@ class AddManagedFilesAction : MavenAction() {
     }
 
     val fileToSelect = e.getData(CommonDataKeys.VIRTUAL_FILE)
-    val files = FileChooser.chooseFiles(singlePomSelection, project, fileToSelect)
+    val files = withContext(Dispatchers.EDT) { FileChooser.chooseFiles(singlePomSelection, project, fileToSelect) }
 
     if (files.size == 1) {
       val projectFile = files[0]
