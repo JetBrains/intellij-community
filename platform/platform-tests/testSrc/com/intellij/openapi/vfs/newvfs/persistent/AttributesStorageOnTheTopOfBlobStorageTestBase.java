@@ -565,7 +565,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   //TODO RC: make AttributeRecord inner class of Attributes, hence methods .store() and .delete()
   //         could be invoked through AttributeRecord itself
   //@Immutable
-  public static class AttributeRecord {
+  protected static class AttributeRecord {
     private final int attributesRecordId;
     private final int fileId;
     private final int attributeId;
@@ -680,12 +680,12 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
 
   /**
    * AttributeRecords are logically not independent: in real use-cases attributeRecordId is tiered
-   * to fileId (via FSRecords), hence AttributeRecords with same fileId can't have different attributeRecordIds.
+   * to fileId (via FSRecords), hence AttributeRecords with the same fileId can't have different attributeRecordIds.
    * This class emulates (very small subset of) FSRecords: it keeps fileId -> attributeRecordId mapping,
    * and maintains it during insertions/updates/deletions -- this is why all modifications should go
    * through it
    */
-  public static class Attributes {
+  protected static class Attributes {
     private final Int2IntMap fileIdToAttributeRecordId = new Int2IntOpenHashMap();
 
     public AttributeRecord insertOrUpdateRecord(final AttributeRecord record,
