@@ -82,7 +82,7 @@ public class InvertedFilenameHashBasedIndex {
    * 'empty' and 'deleted' entries.
    */
   @VisibleForTesting
-  protected static class Int2IntMultimap {
+  static class Int2IntMultimap {
     protected static final int NO_VALUE = 0;
 
     private final float loadFactor;

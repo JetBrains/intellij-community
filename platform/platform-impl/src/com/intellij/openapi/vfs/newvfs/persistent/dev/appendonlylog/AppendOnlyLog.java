@@ -36,6 +36,8 @@ public interface AppendOnlyLog extends Closeable {
   @Override
   void close() throws IOException;
 
+  void flush(boolean force) throws IOException;
+
   interface RecordReader {
     /** @return true if reading should continue, false to stop the reading */
     boolean read(long recordId,

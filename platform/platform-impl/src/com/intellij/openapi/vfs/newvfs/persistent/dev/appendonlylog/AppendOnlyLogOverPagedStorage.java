@@ -63,6 +63,12 @@ public class AppendOnlyLogOverPagedStorage implements AppendOnlyLog {
     storage.close();
   }
 
+  @Override
+  public void flush(boolean force) throws IOException {
+    //TODO please, implement me
+    throw new UnsupportedOperationException("Method is not implemented yet");
+  }
+
   private long offsetToId(long offset) {
     throw new UnsupportedOperationException("Method not implemented yet");
   }

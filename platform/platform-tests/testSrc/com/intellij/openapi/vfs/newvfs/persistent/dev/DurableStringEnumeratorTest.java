@@ -9,8 +9,9 @@ import java.nio.file.Path;
 
 import static com.intellij.util.io.DataEnumeratorEx.NULL_ID;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
-public class StringPersistentEnumeratorTest extends StringEnumeratorTestBase<StringPersistentEnumerator> {
+public class DurableStringEnumeratorTest extends StringEnumeratorTestBase<DurableStringEnumerator> {
 
   @Test
   public void nullValue_EnumeratedTo_NULL_ID() throws IOException {
@@ -22,8 +23,17 @@ public class StringPersistentEnumeratorTest extends StringEnumeratorTestBase<Str
     );
   }
 
+  @Test
+  public void valueOf_NULL_ID_IsNull() throws IOException {
+    String value = enumerator.valueOf(NULL_ID);
+    assertNull(
+      "valueOf(NULL_ID(=0)) must be null",
+      value
+    );
+  }
+
   @Override
-  protected StringPersistentEnumerator openEnumerator(@NotNull Path storagePath) throws IOException {
-    return new StringPersistentEnumerator(storagePath);
+  protected DurableStringEnumerator openEnumerator(@NotNull Path storagePath) throws IOException {
+    return new DurableStringEnumerator(storagePath);
   }
 }
