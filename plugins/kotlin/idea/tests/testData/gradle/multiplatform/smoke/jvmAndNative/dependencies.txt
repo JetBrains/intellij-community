@@ -4,6 +4,8 @@ project
 project.appleMain
     commonMain (refines, COMPILE)
     nativeMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (COMPILE)
     org.jetbrains.kotlinx:atomicfu:commonMain:0.20.2 (COMPILE)
     org.jetbrains.kotlinx:atomicfu:nativeMain:0.20.2 (COMPILE)
     org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.7.1 (COMPILE)
@@ -18,6 +20,8 @@ project.appleTest
     macosMain (friend, TEST)
     nativeMain (friend, TEST)
     nativeTest (refines, TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (TEST)
     org.jetbrains.kotlinx:atomicfu:commonMain:0.20.2 (TEST)
     org.jetbrains.kotlinx:atomicfu:nativeMain:0.20.2 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.7.1 (TEST)
@@ -26,16 +30,22 @@ project.appleTest
     org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.7.1 (TEST)
 
 project.commonMain
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (COMPILE)
     org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.7.1 (COMPILE)
     org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.7.1 (COMPILE)
 
 project.commonTest
     commonMain (friend, TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.7.1 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.7.1 (TEST)
 
 project.jvmMain
     commonMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (COMPILE)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.1 (COMPILE)
     org.jetbrains:annotations:23.0.0 (COMPILE)
 
@@ -45,6 +55,8 @@ project.jvmTest
     junit:junit:4.13.2 (TEST)
     jvmMain (friend, TEST)
     org.hamcrest:hamcrest-core:1.3 (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (TEST)
     org.jetbrains.kotlin:kotlin-test-junit:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.1 (TEST)
@@ -56,7 +68,6 @@ project.linuxArm64Main
     nativeMain (refines, COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib:1.8.20 (COMPILE)
     org.jetbrains.kotlinx:atomicfu-linuxarm64:0.20.2 (COMPILE)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-linuxarm64:1.7.1 (COMPILE)
 
@@ -70,13 +81,14 @@ project.linuxArm64Test
     nativeTest (refines, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib:1.8.20 (TEST)
     org.jetbrains.kotlinx:atomicfu-linuxarm64:0.20.2 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-linuxarm64:1.7.1 (TEST)
 
 project.linuxMain
     commonMain (refines, COMPILE)
     nativeMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (COMPILE)
     org.jetbrains.kotlinx:atomicfu:commonMain:0.20.2 (COMPILE)
     org.jetbrains.kotlinx:atomicfu:nativeMain:0.20.2 (COMPILE)
     org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.7.1 (COMPILE)
@@ -90,6 +102,8 @@ project.linuxTest
     linuxMain (friend, TEST)
     nativeMain (friend, TEST)
     nativeTest (refines, TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (TEST)
     org.jetbrains.kotlinx:atomicfu:commonMain:0.20.2 (TEST)
     org.jetbrains.kotlinx:atomicfu:nativeMain:0.20.2 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.7.1 (TEST)
@@ -103,7 +117,6 @@ project.linuxX64Main
     nativeMain (refines, COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib:1.8.20 (COMPILE)
     org.jetbrains.kotlinx:atomicfu-linuxx64:0.20.2 (COMPILE)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-linuxx64:1.7.1 (COMPILE)
 
@@ -117,7 +130,6 @@ project.linuxX64Test
     nativeTest (refines, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib:1.8.20 (TEST)
     org.jetbrains.kotlinx:atomicfu-linuxx64:0.20.2 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-linuxx64:1.7.1 (TEST)
 
@@ -128,7 +140,6 @@ project.macosArm64Main
     nativeMain (refines, COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib:1.8.20 (COMPILE)
     org.jetbrains.kotlinx:atomicfu-macosarm64:0.20.2 (COMPILE)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-macosarm64:1.7.1 (COMPILE)
 
@@ -144,7 +155,6 @@ project.macosArm64Test
     nativeTest (refines, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib:1.8.20 (TEST)
     org.jetbrains.kotlinx:atomicfu-macosarm64:0.20.2 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-macosarm64:1.7.1 (TEST)
 
@@ -152,6 +162,8 @@ project.macosMain
     appleMain (refines, COMPILE)
     commonMain (refines, COMPILE)
     nativeMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (COMPILE)
     org.jetbrains.kotlinx:atomicfu:commonMain:0.20.2 (COMPILE)
     org.jetbrains.kotlinx:atomicfu:nativeMain:0.20.2 (COMPILE)
     org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.7.1 (COMPILE)
@@ -167,6 +179,8 @@ project.macosTest
     macosMain (friend, TEST)
     nativeMain (friend, TEST)
     nativeTest (refines, TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (TEST)
     org.jetbrains.kotlinx:atomicfu:commonMain:0.20.2 (TEST)
     org.jetbrains.kotlinx:atomicfu:nativeMain:0.20.2 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.7.1 (TEST)
@@ -181,7 +195,6 @@ project.macosX64Main
     nativeMain (refines, COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib:1.8.20 (COMPILE)
     org.jetbrains.kotlinx:atomicfu-macosx64:0.20.2 (COMPILE)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-macosx64:1.7.1 (COMPILE)
 
@@ -197,12 +210,13 @@ project.macosX64Test
     nativeTest (refines, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib:1.8.20 (TEST)
     org.jetbrains.kotlinx:atomicfu-macosx64:0.20.2 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-macosx64:1.7.1 (TEST)
 
 project.nativeMain
     commonMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (COMPILE)
     org.jetbrains.kotlinx:atomicfu:commonMain:0.20.2 (COMPILE)
     org.jetbrains.kotlinx:atomicfu:nativeMain:0.20.2 (COMPILE)
     org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.7.1 (COMPILE)
@@ -213,6 +227,8 @@ project.nativeTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
     nativeMain (friend, TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (TEST)
     org.jetbrains.kotlinx:atomicfu:commonMain:0.20.2 (TEST)
     org.jetbrains.kotlinx:atomicfu:nativeMain:0.20.2 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.7.1 (TEST)
