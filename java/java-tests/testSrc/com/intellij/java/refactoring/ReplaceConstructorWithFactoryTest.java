@@ -44,6 +44,13 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
   public void testConstructorTypeParameters() { runTest("08", null); }
   
   public void testInnerClass2() { runTest("InnerClass2", "SimpleClass"); }
+  public void testRecords() {
+    configureByFile("/refactoring/replaceConstructorWithFactory/before" + "RecordConstructor" + ".java");
+    ReplaceConstructorWithFactoryAction action = new ReplaceConstructorWithFactoryAction();
+    ActionContext context = ActionContext.from(getEditor(), getFile());
+    Presentation presentation = action.getPresentation(context);
+    assertNull(presentation);
+ }
 
   private void runTest(final String testIndex, @NonNls String targetClassName) {
     configureByFile("/refactoring/replaceConstructorWithFactory/before" + testIndex + ".java");

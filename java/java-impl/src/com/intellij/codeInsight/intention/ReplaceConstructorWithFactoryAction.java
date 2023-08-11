@@ -238,7 +238,7 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
   }
 
   private static boolean isSuitableClass(PsiClass containingClass) {
-    return containingClass != null && !containingClass.isInterface() && !containingClass.isEnum()
-           && !containingClass.hasModifierProperty(PsiModifier.ABSTRACT) && containingClass.getQualifiedName() != null;
+    return containingClass != null && !containingClass.isInterface() && !containingClass.isEnum() && !containingClass.isRecord() &&
+            !containingClass.hasModifierProperty(PsiModifier.ABSTRACT) && containingClass.getQualifiedName() != null;
   }
 }
