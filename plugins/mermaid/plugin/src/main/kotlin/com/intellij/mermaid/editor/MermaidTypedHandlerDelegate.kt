@@ -41,6 +41,12 @@ class MermaidTypedHandlerDelegate : TypedHandlerDelegate() {
         writeText(editor, offset, "|")
       }
     }
+    if (c == '{' && offset - 3 >= 0 && document.getText(TextRange(offset - 3, offset)) == "%%{") {
+      if (document.textLength == 3 || document.getText(TextRange(offset - 3, offset + 1)) != "%%{}") {
+        writeText(editor, offset, "}")
+      }
+      writeText(editor, offset + 1, "%%", offset)
+    }
 
     return Result.CONTINUE
   }
@@ -56,11 +62,15 @@ class MermaidTypedHandlerDelegate : TypedHandlerDelegate() {
   }
 
   private fun writeText(editor: Editor, offset: Int, text: String) {
+    writeText(editor, offset, text, offset)
+  }
+
+  private fun writeText(editor: Editor, offset: Int, text: String, moveToOffset: Int) {
     val typedAction = TypedAction.getInstance() as TypedActionImpl
     runWriteAction {
       typedAction.defaultRawTypedHandler.beginUndoablePostProcessing()
       editor.document.insertString(offset, text)
-      editor.caretModel.moveToOffset(offset)
+      editor.caretModel.moveToOffset(moveToOffset)
       editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
       editor.selectionModel.removeSelection()
     }
