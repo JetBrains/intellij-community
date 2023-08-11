@@ -175,7 +175,7 @@ fun compareThreeVersions(project: Project, root: VirtualFile, status: GitFileSta
   }
 }
 
-private class UnStagedProducer constructor(private val project: Project, file: GitFileStatusNode) : GitFileStatusNodeProducerBase(file) {
+private class UnStagedProducer(private val project: Project, file: GitFileStatusNode) : GitFileStatusNodeProducerBase(file) {
   @Throws(VcsException::class)
   override fun processImpl(): DiffRequest {
     return compareStagedWithLocal(project, statusNode.root, statusNode.status)
@@ -198,7 +198,7 @@ private class UnStagedProducer constructor(private val project: Project, file: G
   }
 }
 
-private class StagedProducer constructor(private val project: Project, file: GitFileStatusNode) : GitFileStatusNodeProducerBase(file) {
+private class StagedProducer(private val project: Project, file: GitFileStatusNode) : GitFileStatusNodeProducerBase(file) {
   @Throws(VcsException::class, IOException::class)
   override fun processImpl(): DiffRequest {
     return compareHeadWithStaged(project, statusNode.root, statusNode.status)
