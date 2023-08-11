@@ -152,7 +152,6 @@ public final class SLRUFileNameCache implements FileNameCache {
 
   private static final String FS_SEPARATORS = "/" + (File.separatorChar == '/' ? "" : File.separatorChar);
 
-  @VisibleForTesting
   static void assertShortFileName(@NotNull String name) throws IllegalArgumentException {
     //TODO RC: those verification rules are very wierd, they seems to be just cherry-picked to solve
     //         specific problems. We should either abandon verification altogether, or formulate simple
@@ -181,7 +180,7 @@ public final class SLRUFileNameCache implements FileNameCache {
   }
 
   /** Generally, I see this check as assistance in testing */
-  private static boolean isFileNameSanityCheckEnabledByDefault() {
+  static boolean isFileNameSanityCheckEnabledByDefault() {
     boolean enabled = ApplicationManagerEx.isInIntegrationTest();
     Application app = ApplicationManager.getApplication();
     if (app != null) {

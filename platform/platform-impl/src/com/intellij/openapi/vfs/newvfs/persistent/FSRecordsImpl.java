@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
+import com.intellij.openapi.vfs.newvfs.persistent.namecache.MRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
@@ -81,6 +82,7 @@ public final class FSRecordsImpl {
   public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.use-streamlined-attributes-storage", true);
   public static final boolean USE_RAW_ACCESS_TO_READ_CHILDREN = getBooleanProperty("vfs.use-raw-access-to-read-children", true);
   private static final boolean USE_FILE_NAME_CACHE = getBooleanProperty("vfs.name-cache.enable", true);
+  private static final boolean USE_MRU_FILE_NAME_CACHE = getBooleanProperty("vfs.name-cache.use-mru", false);
   //@formatter:on
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
@@ -309,7 +311,12 @@ public final class FSRecordsImpl {
     //RC: this cache is actually a replacement for CachingEnumerator inside PersistentStringEnumerator.
     //    This inside-cache is disabled in VFS, and re-implemented on top.
     if (USE_FILE_NAME_CACHE) {
-      this.fileNamesEnumerator = new SLRUFileNameCache(connection.getNames());
+      if (USE_MRU_FILE_NAME_CACHE) {
+        this.fileNamesEnumerator = new MRUFileNameCache(connection.getNames());
+      }
+      else {
+        this.fileNamesEnumerator = new SLRUFileNameCache(connection.getNames());
+      }
     }
     else {
       this.fileNamesEnumerator = connection.getNames();

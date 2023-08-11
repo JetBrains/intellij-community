@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache;
 import com.intellij.util.io.DataEnumeratorEx;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
-import org.jetbrains.annotations.Nullable;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -36,15 +36,23 @@ public class VFSFileNameAccessBenchmark {
     @Param("500000")//500k distinct file names
     public int FILE_NAMES_COUNT = 500_000;
 
+    @Param({"5000", "30000", "80000", "500000"})//request only those files/filenames
+    public int FILES_TO_ACCESS = 5_000;
+
     private int maxFileId;
     private int minFileId;
+
     private SLRUFileNameCache fileNameCacheOverFakeEnumerator;
     private DataEnumeratorEx<String> fakeEnumerator;
+
+    private int[] allNameIds;
 
     @Setup
     public void setup(FSRecordsContext vfsContext) throws Exception {
       FSRecordsImpl vfs = vfsContext.vfs();
       PersistentFSRecordsStorage records = vfs.connection().getRecords();
+
+      IntOpenHashSet allNameIds = new IntOpenHashSet();
       for (int i = 0; i < FILE_RECORDS_COUNT; i++) {
         int fileId = records.allocateRecord();
         if (minFileId == 0) {
@@ -53,9 +61,13 @@ public class VFSFileNameAccessBenchmark {
         String name = "fileName" + (i % FILE_NAMES_COUNT);
         int nameId = vfs.getNameId(name);
         records.setNameId(fileId, nameId);
+
+        allNameIds.add(nameId);
       }
       maxFileId = records.maxAllocatedID();
+      this.allNameIds = allNameIds.toIntArray();
 
+      // name <=> id.toString()
       fakeEnumerator = new DataEnumeratorEx<>() {
         @Override
         public int tryEnumerate(String value) throws IOException {
@@ -78,6 +90,11 @@ public class VFSFileNameAccessBenchmark {
     private int generateFileId(ThreadLocalRandom rnd) {
       return rnd.nextInt(minFileId, maxFileId + 1);
     }
+
+    private int generateFileId(ThreadLocalRandom rnd,
+                               int subsetSize) {
+      return rnd.nextInt(maxFileId + 1 - subsetSize, maxFileId + 1);
+    }
   }
 
 
@@ -87,7 +104,7 @@ public class VFSFileNameAccessBenchmark {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     FSRecordsImpl vfs = vfsContext.vfs();
 
-    int fileId = mainContext.generateFileId(rnd);
+    int fileId = mainContext.generateFileId(rnd, mainContext.FILES_TO_ACCESS);
     return vfs.getName(fileId);
   }
 
@@ -98,7 +115,7 @@ public class VFSFileNameAccessBenchmark {
     FSRecordsImpl vfs = vfsContext.vfs();
     ScannableDataEnumeratorEx<String> names = vfs.connection().getNames();
 
-    int fileId = mainContext.generateFileId(rnd);
+    int fileId = mainContext.generateFileId(rnd, mainContext.FILES_TO_ACCESS);
     int nameId = vfs.getNameIdByFileId(fileId);
     return names.valueOf(nameId);
   }
@@ -111,7 +128,7 @@ public class VFSFileNameAccessBenchmark {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     SLRUFileNameCache fileNameCache = mainContext.fileNameCacheOverFakeEnumerator;
 
-    int nameId = rnd.nextInt(1, mainContext.FILE_RECORDS_COUNT);
+    int nameId = rnd.nextInt(1, mainContext.FILES_TO_ACCESS);
     return fileNameCache.valueOf(nameId);
   }
 
@@ -120,7 +137,7 @@ public class VFSFileNameAccessBenchmark {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     SLRUFileNameCache fileNameCache = mainContext.fileNameCacheOverFakeEnumerator;
 
-    int nameId = rnd.nextInt(1, mainContext.FILE_RECORDS_COUNT);
+    int nameId = rnd.nextInt(1, mainContext.FILES_TO_ACCESS);
     return fileNameCache.valueOf(nameId);
   }
 
@@ -133,14 +150,14 @@ public class VFSFileNameAccessBenchmark {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     FSRecordsImpl vfs = vfsContext.vfs();
 
-    int fileId = mainContext.generateFileId(rnd);
+    int fileId = mainContext.generateFileId(rnd, mainContext.FILES_TO_ACCESS);
     return vfs.getNameIdByFileId(fileId);
   }
 
   @Benchmark
   public int _baseline_rnd_(Context mainContext) {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    return mainContext.generateFileId(rnd);
+    return mainContext.generateFileId(rnd, mainContext.FILES_TO_ACCESS);
   }
 
 
@@ -151,7 +168,9 @@ public class VFSFileNameAccessBenchmark {
 
         "-Dvfs.name-cache.check-names=false",
         "-Dvfs.name-cache.track-stats=false",
-        //"-Dvfs.name-cache.enable=false",
+
+        "-Dvfs.name-cache.enable=true",
+        "-Dvfs.name-cache.use-mru=true",
 
         "-Dvfs.use-fast-names-enumerator=false"
       )
