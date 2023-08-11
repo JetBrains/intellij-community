@@ -652,6 +652,7 @@ public final class GradleProjectResolverUtil {
     DependencyScope dependencyScope = getDependencyScope(projectDependency.getScope());
 
     Collection<ProjectDependencyInfo> projectDependencyInfos = new ArrayList<>();
+    List<File> artifactsToKeepAsLibraries = new ArrayList<>();
     if (resolverCtx.getSettings() != null) {
       GradleExecutionWorkspace executionWorkspace = resolverCtx.getSettings().getExecutionWorkspace();
       ModuleData moduleData = executionWorkspace.findModuleDataByArtifacts(projectDependency.getProjectDependencyArtifacts());
@@ -667,13 +668,17 @@ public final class GradleProjectResolverUtil {
 
       for (File file : projectDependency.getProjectDependencyArtifacts()) {
         ModuleMappingInfo mapping = artifactMap.getModuleMapping(ExternalSystemApiUtil.toCanonicalPath(file.getPath()));
-        List<String> moduleIds = mapping != null ? mapping.getModuleIds() : Collections.emptyList();
-        for (String moduleId: moduleIds) {
-          if (moduleId == null) continue;
-          projectPair = sourceSetMap.get(moduleId);
+        if (mapping != null) {
+          for (String moduleId : mapping.getModuleIds()) {
+            if (moduleId == null) continue;
+            projectPair = sourceSetMap.get(moduleId);
 
-          if (projectPair == null) continue;
-          projectPairs.putValue(projectPair, file);
+            if (projectPair == null) continue;
+            projectPairs.putValue(projectPair, file);
+          }
+          if (mapping.getHasNonModulesContent()) {
+            artifactsToKeepAsLibraries.add(file);
+          }
         }
       }
 
@@ -696,16 +701,12 @@ public final class GradleProjectResolverUtil {
     }
 
     if (projectDependencyInfos.isEmpty()) {
-      final LibraryLevel level = LibraryLevel.MODULE;
-      final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, "");
-      LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule, library, level);
-      libraryDependencyData.setScope(dependencyScope);
-      libraryDependencyData.setOrder(projectDependency.getClasspathOrder() + classpathOrderShift.get());
-      libraryDependencyData.setExported(projectDependency.getExported());
+      LibraryDependencyData libraryDependencyData =
+        createLibraryDependencyData(projectDependency, classpathOrderShift.get(), ownerModule, dependencyScope);
 
       if (!projectDependency.getProjectDependencyArtifacts().isEmpty()) {
         for (File artifact : projectDependency.getProjectDependencyArtifacts()) {
-          library.addPath(LibraryPathType.BINARY, artifact.getPath());
+          libraryDependencyData.getTarget().addPath(LibraryPathType.BINARY, artifact.getPath());
         }
         resultDataNode = ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
       }
@@ -730,6 +731,13 @@ public final class GradleProjectResolverUtil {
         resultDataNode = ownerDataNode.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
       }
 
+      for (File artifact : artifactsToKeepAsLibraries) {
+        LibraryDependencyData data =
+          createLibraryDependencyData(projectDependency, classpathOrderShift.incrementAndGet(), ownerModule, dependencyScope);
+        data.getTarget().addPath(LibraryPathType.BINARY, artifact.getPath());
+        ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, data);
+      }
+
       // put transitive dependencies to the ownerDataNode,
       // since we can not determine from what project dependency artifact it was originated
       if (projectDependencyInfos.size() > 1) {
@@ -738,6 +746,20 @@ public final class GradleProjectResolverUtil {
     }
 
     return resultDataNode;
+  }
+
+  @NotNull
+  private static LibraryDependencyData createLibraryDependencyData(ExternalProjectDependency projectDependency,
+                                               int classpathOrderShift,
+                                               ModuleData ownerModule,
+                                               DependencyScope dependencyScope) {
+    final LibraryLevel level = LibraryLevel.MODULE;
+    final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, "");
+    LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule, library, level);
+    libraryDependencyData.setScope(dependencyScope);
+    libraryDependencyData.setOrder(projectDependency.getClasspathOrder() + classpathOrderShift);
+    libraryDependencyData.setExported(projectDependency.getExported());
+    return libraryDependencyData;
   }
 
 

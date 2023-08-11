@@ -106,6 +106,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     writeFiles(writer, "taskArtifacts", sourceSetModel.getTaskArtifacts());
     writeConfigurationArtifacts(writer, sourceSetModel.getConfigurationArtifacts());
     writeSourceSets(writer, context, sourceSetModel.getSourceSets());
+    writeFiles(writer, "additionalArtifacts", sourceSetModel.getAdditionalArtifacts());
 
     writer.stepOut();
   }
@@ -467,6 +468,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     sourceSetModel.setTaskArtifacts(readFiles(reader, "taskArtifacts"));
     sourceSetModel.setConfigurationArtifacts(readConfigurationArtifacts(reader));
     sourceSetModel.setSourceSets(readSourceSets(reader, context));
+    sourceSetModel.setAdditionalArtifacts(readFiles(reader));
     reader.stepOut();
     return sourceSetModel;
   }

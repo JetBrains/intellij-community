@@ -15,16 +15,13 @@ import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.internal.metaobject.AbstractDynamicObject
 import org.gradle.jvm.toolchain.internal.JavaToolchain
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet
-import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
-import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet
-import org.jetbrains.plugins.gradle.model.ExternalSourceSet
-import org.jetbrains.plugins.gradle.model.GradleSourceSetModel
+import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.tooling.*
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
@@ -58,6 +55,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     sourceSetModel.setTaskArtifacts(collectProjectTaskArtifacts(project, context))
     sourceSetModel.setConfigurationArtifacts(collectProjectConfigurationArtifacts(project, context))
     sourceSetModel.setSourceSets(getSourceSets(project, context))
+    sourceSetModel.setAdditionalArtifacts(collectNonSourceSetArtifacts(project, context))
 
     GradleSourceSetCache.getInstance(context)
       .setSourceSetModel(project, sourceSetModel)
@@ -93,6 +91,32 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       }
     })
     return taskArtifacts
+  }
+
+  @NotNull
+  private static List<File> collectNonSourceSetArtifacts(
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context
+  ) {
+    List<File> additionalArtifacts = new ArrayList<File>()
+    project.getTasks().withType(Jar.class, { Jar jar ->
+      try {
+        def archiveFile = getTaskArchiveFile(jar)
+        if (archiveFile != null) {
+          if (isJarDescendant(jar) || containsPotentialClasspathElements(jar, project)) {
+            additionalArtifacts.add(archiveFile)
+          }
+        }
+      }
+      catch (e) {
+        Message message = MessageBuilder.create(
+          "Jar task configuration error",
+          "Cannot resolve artifact file for the project Jar task: " + jar.path
+        ).warning().withException(e).build()
+        context.report(project, message)
+      }
+    })
+    return additionalArtifacts
   }
 
   @NotNull
@@ -524,6 +548,34 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         }
       }
     }
+  }
+
+  private static boolean isJarDescendant(Jar task) {
+    if (is44OrBetter) {
+      return task.getTaskIdentity().type != Jar
+    } else {
+      return (task.asDynamicObject as AbstractDynamicObject).publicType != Jar
+    }
+  }
+
+  private static boolean containsOnlySourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull Project project) {
+    def sourceSetContainer = JavaPluginUtil.getJavaPluginAccessor(project).sourceSetContainer
+    if (sourceSetContainer == null || sourceSetContainer.isEmpty()) {
+      return false
+    }
+    def outputFiles = new HashSet<File>();
+    sourceSetContainer.all { SourceSet ss -> outputFiles.addAll(ss.output.files) }
+    for (Object path: getArchiveTaskSourcePaths(archiveTask)) {
+      if (isSafeToResolve(path, project)) {
+        def files = project.files(path).files
+        if (!outputFiles.containsAll(files)) {
+          return false
+        }
+      } else {
+        return false
+      }
+    }
+    return true
   }
 
   private static boolean containsAllSourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull SourceSet sourceSet) {

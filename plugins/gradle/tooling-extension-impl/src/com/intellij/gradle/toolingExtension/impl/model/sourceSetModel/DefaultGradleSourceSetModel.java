@@ -20,12 +20,15 @@ public final class DefaultGradleSourceSetModel implements GradleSourceSetModel {
   private @NotNull Map<String, Set<File>> configurationArtifacts;
   private @NotNull Map<String, DefaultExternalSourceSet> sourceSets;
 
+  private @NotNull List<File> additionalArtifacts;
+
   public DefaultGradleSourceSetModel() {
     sourceCompatibility = null;
     targetCompatibility = null;
     taskArtifacts = new ArrayList<>();
     configurationArtifacts = new LinkedHashMap<>();
     sourceSets = new LinkedHashMap<>();
+    additionalArtifacts = new ArrayList<>(0);
   }
 
   public DefaultGradleSourceSetModel(@NotNull GradleSourceSetModel sourceSetModel) {
@@ -37,6 +40,7 @@ public final class DefaultGradleSourceSetModel implements GradleSourceSetModel {
     for (Map.Entry<String, ? extends ExternalSourceSet> entry : sourceSetModel.getSourceSets().entrySet()) {
       sourceSets.put(entry.getKey(), new DefaultExternalSourceSet(entry.getValue()));
     }
+    additionalArtifacts = new ArrayList<>(sourceSetModel.getAdditionalArtifacts());
   }
 
   @Override
@@ -83,4 +87,15 @@ public final class DefaultGradleSourceSetModel implements GradleSourceSetModel {
   public void setSourceSets(@NotNull Map<String, DefaultExternalSourceSet> sourceSets) {
     this.sourceSets = sourceSets;
   }
+
+
+  public void setAdditionalArtifacts(@NotNull List<File> additionalArtifacts) {
+    this.additionalArtifacts = additionalArtifacts;
+  }
+
+  @Override
+  public  @NotNull List<File> getAdditionalArtifacts() {
+    return additionalArtifacts;
+  }
+
 }

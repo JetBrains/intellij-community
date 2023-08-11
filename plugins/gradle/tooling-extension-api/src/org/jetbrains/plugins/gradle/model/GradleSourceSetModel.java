@@ -21,4 +21,6 @@ public interface GradleSourceSetModel extends Serializable {
   @NotNull Map<String, Set<File>> getConfigurationArtifacts();
 
   @NotNull Map<String, ? extends ExternalSourceSet> getSourceSets();
+
+  @NotNull List<File> getAdditionalArtifacts();
 }

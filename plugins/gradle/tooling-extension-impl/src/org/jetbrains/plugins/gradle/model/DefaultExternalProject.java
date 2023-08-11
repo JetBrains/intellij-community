@@ -43,8 +43,8 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
   private Map<String, DefaultExternalTask> tasks;
   @NotNull
   private String externalSystemId;
-
-  private @NotNull DefaultGradleSourceSetModel sourceSetModel;
+  @NotNull
+  private DefaultGradleSourceSetModel sourceSetModel;
 
   public DefaultExternalProject() {
     childProjects = new TreeMap<>();

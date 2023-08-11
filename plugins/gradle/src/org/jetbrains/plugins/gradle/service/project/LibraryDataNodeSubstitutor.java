@@ -81,9 +81,14 @@ public class LibraryDataNodeSubstitutor {
       for (ModuleLookupResult result : lookupResults) {
         if (createAndMaybeAttachNewModuleDependency(libraryDependencyDataNode, result, libraryPaths,
                                                     shouldKeepTransitiveDependencies,
-                                                    unprocessedPaths, path, classpathOrderShift)) {
+                                                    unprocessedPaths, classpathOrderShift)) {
           classpathOrderShift++;
         }
+      }
+
+      ModuleMappingInfo mapping = resolverContext.getArtifactsMap().getModuleMapping(path);
+      if (mapping != null && !mapping.getHasNonModulesContent()) {
+        libraryPaths.remove(path);
       }
       if (libraryPaths.isEmpty()) {
         libraryDependencyDataNode.clear(true);
@@ -133,7 +138,7 @@ public class LibraryDataNodeSubstitutor {
                                                                  @NotNull Set<String> libraryPaths,
                                                                  boolean shouldKeepTransitiveDependencies,
                                                                  @NotNull ArrayDeque<String> unprocessedPaths,
-                                                                 @NotNull String path, int classpathOrderShift) {
+                                                                 int classpathOrderShift) {
 
     boolean addedNewDependency = false;
     LibraryDependencyData libraryDependencyData = libraryDependencyDataNode.getData();
@@ -141,18 +146,13 @@ public class LibraryDataNodeSubstitutor {
     if (libraryNodeParent == null) {
       return addedNewDependency;
     }
-    Set<String> targetModuleOutputPaths;
+
     DataNode<GradleSourceSetData> targetSourceSetNode = lookupResult.sourceSetDataDataNode();
     ExternalSourceSet targetExternalSourceSet = lookupResult.externalSourceSet();
     final ModuleData targetModuleData = targetSourceSetNode.getData();
 
-
-    if (lookupResult.targetModuleOutputPaths() != null) {
-      targetModuleOutputPaths = lookupResult.targetModuleOutputPaths();
-    } else {
-      targetModuleOutputPaths = collectTargetModuleOutputPaths(libraryPaths,
+    Set<String> targetModuleOutputPaths = collectTargetModuleOutputPaths(libraryPaths,
                                                                targetSourceSetNode.getUserData(GradleProjectResolver.GRADLE_OUTPUTS));
-    }
 
     final ModuleData ownerModule = libraryDependencyData.getOwnerModule();
     final ModuleDependencyData moduleDependencyData = new ModuleDependencyData(ownerModule, targetModuleData);
@@ -185,25 +185,20 @@ public class LibraryDataNodeSubstitutor {
         return result;
       });
 
-    if (targetModuleOutputPaths != null) {
-      if (found == null) {
-        DataNode<ModuleDependencyData> moduleDependencyNode =
-          libraryNodeParent.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
-        addedNewDependency = true;
-        if (shouldKeepTransitiveDependencies) {
-          for (DataNode<?> node : libraryDependencyDataNode.getChildren()) {
-            moduleDependencyNode.addChild(node);
-          }
+    if (found == null) {
+      DataNode<ModuleDependencyData> moduleDependencyNode =
+        libraryNodeParent.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
+      addedNewDependency = true;
+      if (shouldKeepTransitiveDependencies) {
+        for (DataNode<?> node : libraryDependencyDataNode.getChildren()) {
+          moduleDependencyNode.addChild(node);
         }
       }
+    }
+
+    if (targetModuleOutputPaths != null) {
       unprocessedPaths.removeAll(targetModuleOutputPaths);
       libraryPaths.removeAll(targetModuleOutputPaths);
-    }
-    else {
-      // do not add the path as library dependency if another module dependency is already contain the path as one of its output paths
-      if (found != null) {
-        libraryPaths.remove(path);
-      }
     }
     return addedNewDependency;
   }
@@ -220,8 +215,7 @@ public class LibraryDataNodeSubstitutor {
       .orElse(null);
 
     if (targetModule != null) {
-      return Collections.singleton(new ModuleLookupResult(Collections.singleton(path),
-                                    new DataNode<>(GradleSourceSetData.KEY, targetModule, null),
+      return Collections.singleton(new ModuleLookupResult(new DataNode<>(GradleSourceSetData.KEY, targetModule, null),
                                     null));
     }
 
@@ -231,7 +225,7 @@ public class LibraryDataNodeSubstitutor {
       moduleId = sourceTypePair.first;
       final Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> pair = sourceSetMap.get(moduleId);
       if (pair != null) {
-        return Collections.singleton(new ModuleLookupResult(null, pair.first, pair.second));
+        return Collections.singleton(new ModuleLookupResult(pair.first, pair.second));
       }
     }
 
@@ -240,7 +234,7 @@ public class LibraryDataNodeSubstitutor {
       for (String id : mapping.getModuleIds()) {
         final Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> pair = sourceSetMap.get(id);
         if (pair != null) {
-          results.add(new ModuleLookupResult(Set.of(path), pair.first, pair.second));
+          results.add(new ModuleLookupResult(pair.first, pair.second));
         }
       }
     }
@@ -285,7 +279,6 @@ public class LibraryDataNodeSubstitutor {
   }
 }
 
-record ModuleLookupResult(@Nullable Set<String> targetModuleOutputPaths,
-                          @NotNull DataNode<GradleSourceSetData> sourceSetDataDataNode,
+record ModuleLookupResult(@NotNull DataNode<GradleSourceSetData> sourceSetDataDataNode,
                           @Nullable ExternalSourceSet externalSourceSet) {
 }
