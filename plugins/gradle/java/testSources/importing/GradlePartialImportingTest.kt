@@ -343,9 +343,10 @@ class TestPartialProjectResolverExtension : AbstractProjectResolverExtension() {
     }
   }
 
-  override fun getProjectsLoadedModelProvider() = ProjectLoadedModelProvider()
-
-  override fun getModelProvider() = BuildFinishedModelProvider()
+  override fun getModelProviders() = listOf(
+    ProjectLoadedModelProvider(),
+    BuildFinishedModelProvider()
+  )
 }
 
 internal class TestProjectModelContributor : ProjectModelContributor {

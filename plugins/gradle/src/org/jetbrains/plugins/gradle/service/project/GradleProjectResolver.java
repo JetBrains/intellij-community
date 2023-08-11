@@ -246,8 +246,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
       // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
       try {
-        projectImportAction.addProjectImportModelProviders(resolverExtension.getModelProviders(), false);
-        projectImportAction.addProjectImportModelProviders(resolverExtension.getProjectsLoadedModelProviders(), true);
+        projectImportAction.addProjectImportModelProviders(resolverExtension.getModelProviders());
       }
       catch (Throwable t) {
         LOG.warn(t);

@@ -2,27 +2,25 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting.importing
 
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptAdditionalTask
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptModelProvider
 import org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinDslScriptModelResolverCommon
 import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptAdditionalTask
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptModelProvider
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
-import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider
-import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.ModifiableGradleProjectModel
 import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.project.ToolingModelsProvider
 
 class KotlinDslScriptModelResolver : KotlinDslScriptModelResolverCommon() {
-    override fun getModelProvider() = KotlinDslScriptModelProvider()
 
-    override fun getProjectsLoadedModelProvider(): ProjectImportModelProvider {
-        return GradleClassBuildModelProvider(
-            KotlinDslScriptAdditionalTask::class.java
-        )
-    }
+    override fun getModelProviders() = listOf(
+        GradleClassBuildModelProvider(KotlinDslScriptAdditionalTask::class.java, GradleModelFetchPhase.PROJECT_LOADED_PHASE),
+        KotlinDslScriptModelProvider()
+    )
 
     override fun getExtraProjectModelClasses(): Set<Class<out Any>> {
         return mutableSetOf<Class<out Any>>(KotlinToolingVersion::class.java).also { it.addAll(super.getExtraProjectModelClasses())}

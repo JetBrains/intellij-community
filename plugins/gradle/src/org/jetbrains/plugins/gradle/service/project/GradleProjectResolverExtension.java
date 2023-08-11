@@ -25,7 +25,6 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
-import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.IntermediateResultHandler;
 import org.gradle.tooling.model.BuildModel;
@@ -109,32 +108,12 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   @NotNull
   Set<Class<?>> getExtraBuildModelClasses();
 
-  /**
-   * Allows to request gradle tooling models after "sync" tasks are run
-   *
-   * @see BuildActionExecuter.Builder#buildFinished(org.gradle.tooling.BuildAction, IntermediateResultHandler)
-   */
   @Nullable
   default ProjectImportModelProvider getModelProvider() { return null; }
 
   @NotNull
   default List<ProjectImportModelProvider> getModelProviders() {
     ProjectImportModelProvider provider = getModelProvider();
-    return provider == null ? Collections.emptyList() : List.of(provider);
-  }
-
-  /**
-   * Allows to request gradle tooling models after gradle projects are loaded and before "sync" tasks are run.
-   * This can be used to setup "sync" tasks for the import
-   *
-   * @see BuildActionExecuter.Builder#projectsLoaded(org.gradle.tooling.BuildAction, IntermediateResultHandler)
-   */
-  @Nullable
-  default ProjectImportModelProvider getProjectsLoadedModelProvider() { return null; }
-
-  @NotNull
-  default List<ProjectImportModelProvider> getProjectsLoadedModelProviders() {
-    ProjectImportModelProvider provider = getProjectsLoadedModelProvider();
     return provider == null ? Collections.emptyList() : List.of(provider);
   }
 

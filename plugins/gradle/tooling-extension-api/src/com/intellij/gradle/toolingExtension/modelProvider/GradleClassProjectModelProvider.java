@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.modelProvider;
 
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.Model;
 import org.jetbrains.annotations.NotNull;
@@ -18,10 +19,23 @@ import java.util.List;
  */
 public class GradleClassProjectModelProvider<T> implements ProjectImportModelProvider {
 
+  private static final long serialVersionUID = 2L;
+
   private final Class<T> modelClass;
+  private final GradleModelFetchPhase phase;
 
   public GradleClassProjectModelProvider(Class<T> modelClass) {
+    this(modelClass, GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE);
+  }
+
+  public GradleClassProjectModelProvider(Class<T> modelClass, GradleModelFetchPhase phase) {
     this.modelClass = modelClass;
+    this.phase = phase;
+  }
+
+  @Override
+  public GradleModelFetchPhase getPhase() {
+    return phase;
   }
 
   @Override

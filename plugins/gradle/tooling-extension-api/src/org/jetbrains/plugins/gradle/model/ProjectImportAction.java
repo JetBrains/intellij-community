@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.model;
 import com.intellij.gradle.toolingExtension.modelAction.DefaultBuild;
 import com.intellij.gradle.toolingExtension.modelAction.DefaultBuildController;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchAction;
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import com.intellij.util.ReflectionUtilRt;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
@@ -30,14 +31,14 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
  */
 public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
 
-  private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new LinkedHashSet<>();
-  private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new LinkedHashSet<>();
+  private final Set<ProjectImportModelProvider> myModelProviders = new LinkedHashSet<>();
   private final Set<Class<?>> myTargetTypes = new LinkedHashSet<>();
 
   private final boolean myIsPreviewMode;
@@ -54,28 +55,13 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   public void addProjectImportModelProviders(
     @NotNull Collection<? extends ProjectImportModelProvider> providers
   ) {
-    addProjectImportModelProviders(providers, false);
-  }
-
-  public void addProjectImportModelProviders(
-    @NotNull Collection<? extends ProjectImportModelProvider> providers,
-    boolean isProjectLoadedProvider
-  ) {
-    if (isProjectLoadedProvider) {
-      myProjectsLoadedModelProviders.addAll(providers);
-    }
-    else {
-      myBuildFinishedModelProviders.addAll(providers);
-    }
+    myModelProviders.addAll(providers);
   }
 
   @ApiStatus.Internal
   public Set<Class<?>> getModelProvidersClasses() {
     Set<Class<?>> result = new LinkedHashSet<>();
-    for (ProjectImportModelProvider provider : myProjectsLoadedModelProviders) {
-      result.add(provider.getClass());
-    }
-    for (ProjectImportModelProvider provider : myBuildFinishedModelProviders) {
+    for (ProjectImportModelProvider provider : myModelProviders) {
       result.add(provider.getClass());
     }
     return result;
@@ -207,15 +193,17 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   }
 
   private Set<ProjectImportModelProvider> getModelProviders(boolean isProjectsLoadedAction) {
-    Set<ProjectImportModelProvider> modelProviders = new LinkedHashSet<>();
-    if (!myUseProjectsLoadedPhase) {
-      modelProviders.addAll(myProjectsLoadedModelProviders);
-      modelProviders.addAll(myBuildFinishedModelProviders);
+    if (myUseProjectsLoadedPhase) {
+      if (isProjectsLoadedAction) {
+        return myModelProviders.stream()
+          .filter(it -> it.getPhase().equals(GradleModelFetchPhase.PROJECT_LOADED_PHASE))
+          .collect(Collectors.toSet());
+      }
+      return myModelProviders.stream()
+        .filter(it -> !it.getPhase().equals(GradleModelFetchPhase.PROJECT_LOADED_PHASE))
+        .collect(Collectors.toSet());
     }
-    else {
-      modelProviders = isProjectsLoadedAction ? myProjectsLoadedModelProviders : myBuildFinishedModelProviders;
-    }
-    return modelProviders;
+    return myModelProviders;
   }
 
   // Note: This class is NOT thread safe, and it is supposed to be used from a single thread.
