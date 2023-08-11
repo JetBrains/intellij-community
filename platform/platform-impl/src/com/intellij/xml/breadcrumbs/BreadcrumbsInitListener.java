@@ -10,5 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public interface BreadcrumbsInitListener {
   Topic<BreadcrumbsInitListener> TOPIC = new Topic<>(BreadcrumbsInitListener.class);
 
-  void breadcrumbsInitialized(@NotNull BreadcrumbsPanel wrapper, @NotNull FileEditor fileEditor, @NotNull FileEditorManager manager);
+  default void breadcrumbsInitialized(@NotNull BreadcrumbsPanel wrapper, @NotNull FileEditor fileEditor, @NotNull FileEditorManager manager) {}
+
+  default void breadcrumbsPanelRegistered(@NotNull BreadcrumbsPanel wrapper, @NotNull FileEditor fileEditor, @NotNull FileEditorManager manager) {}
 }
