@@ -271,6 +271,10 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           app.exit(true, true, false)
         }
 
+        session.requestFocus.set { actionTitle ->
+          return@set requestFocus(actionTitle)
+        }
+
         session.makeScreenshot.set { fileName ->
           return@set makeScreenshot(fileName)
         }
@@ -290,24 +294,45 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     }
   }
 
-  private fun requestFocus(actionTitle: String) {
-    projectOrNull?.let {
-      val frame = WindowManager.getInstance().getFrame(it)
-      if (frame != null) {
-        if (frame.isFocusAncestor()) {
-          LOG.info("'$actionTitle': Already focused")
+
+  private fun requestFocus(actionTitle: String): Boolean {
+    val currentProject = projectOrNull
+
+    val windowToFocus =
+      if (currentProject != null) {
+        val ideFrame = WindowManager.getInstance().getFrame(currentProject)
+        if (ideFrame == null) {
+          LOG.info("'$actionTitle': No frame yet, nothing to focus")
+          return false
         }
         else {
-          LOG.info("'$actionTitle': Requesting project focus")
-          ProjectUtil.focusProjectWindow(it, true)
-          if (!frame.isFocusAncestor()) {
-            LOG.error("Failed to request the focus.")
-          }
+          ideFrame
         }
       }
       else {
-        LOG.info("'$actionTitle': No frame yet, nothing to focus")
+        val windows = Window.getWindows()
+        if (windows.size != 1) {
+          LOG.info("'$actionTitle': Can't choose a frame to focus. All windows: ${windows.joinToString(", ")}")
+          return false
+        }
+        else {
+          windows.single()
+        }
       }
+
+    LOG.info("'$actionTitle': Needed to be focused: '$windowToFocus'")
+    if (windowToFocus.isFocusAncestor()) {
+      LOG.info("'$actionTitle': Already focused")
+      return true
+    }
+    else {
+      LOG.info("'$actionTitle': Requesting project focus")
+      ProjectUtil.focusProjectWindow(projectOrNull, true)
+      if (!windowToFocus.isFocusAncestor()) {
+        LOG.error("Failed to request the focus.")
+        return false
+      }
+      return true
     }
   }
 
