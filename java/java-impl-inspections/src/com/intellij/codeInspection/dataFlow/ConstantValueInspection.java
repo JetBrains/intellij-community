@@ -308,6 +308,13 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
         }
       }
     }
+
+    //it can be done deliberately, because it is expected to throw exception
+    if (expression instanceof PsiSwitchExpression switchExpression) {
+      if (!PsiTreeUtil.findChildrenOfAnyType(switchExpression, PsiThrowStatement.class).isEmpty()) {
+        return true;
+      }
+    }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     // Don't report "x" in "x == null" as will be anyway reported as "always true"
     if (parent instanceof PsiBinaryExpression binOp && ExpressionUtils.getValueComparedWithNull(binOp) != null) return true;

@@ -61,6 +61,7 @@ public final class AnnotationContext {
     return myOwner;
   }
 
+  @Nullable
   public PsiElement getPlace() {
     return myPlace;
   }

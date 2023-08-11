@@ -16,7 +16,7 @@ internal class Ini(file: File) {
 
   init {
     BufferedReader(FileReader(file)).use { br ->
-      var line: String
+      var line: String?
       var section: String? = null
       while (br.readLine().also { line = it } != null) {
         var m = _section.matcher(line)

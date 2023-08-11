@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import java.util.*
 
 interface TransferSettingsController {
+  fun updateCheckboxes(ideVersion: IdeVersion)
   fun itemSelected(ideVersion: BaseIdeVersion)
 
   fun performImport(project: Project?, ideVersion: IdeVersion, withPlugins: Boolean, pi: ProgressIndicator)
@@ -23,6 +24,8 @@ interface TransferSettingsController {
 }
 
 interface TransferSettingsListener : EventListener {
+  fun checkboxesUpdated(ideVersion: IdeVersion) {}
+
   fun reloadPerformed(ideVersion: FailedIdeVersion) {}
 
   fun importStarted(ideVersion: IdeVersion, settings: Settings) {}
