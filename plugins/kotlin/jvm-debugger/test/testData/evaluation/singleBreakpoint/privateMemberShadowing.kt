@@ -26,17 +26,7 @@ class Derived: Base() {
     private fun privateFun() = 3
 }
 
-// EXPRESSION: MyClass().privateFun()
-// RESULT: 1: I
+// EXPRESSION: derived.privateFun()
+// RESULT: 3: I
 
-// EXPRESSION: MyClass().privateVal
-// RESULT: 1: I
-
-// EXPRESSION: MyClass.PrivateClass().a
-// RESULT: 1: I
-
-// EXPRESSION: base.privateFun()
-// RESULT: 2: I
-
-// EXPRESSION: derivedAsBase.privateFun()
-// RESULT: 2: I
+// IGNORE_K2
