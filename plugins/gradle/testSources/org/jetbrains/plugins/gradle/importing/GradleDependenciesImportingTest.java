@@ -962,6 +962,40 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDeps("project.impl.test", "project.impl.main", "project.api.extraSourceSet", "project.api.main");
   }
 
+
+  @Test
+  @TargetVersions("5.0+")
+  public void testProjectDependencyOnShadowedArtifacts() throws Exception {
+    String shadowVersion = isGradleNewerOrSameAs("8.0") ? "8.1.1" : "5.2.0";
+    createSettingsFile("include 'moduleA', 'moduleB' ");
+    createProjectSubFile("moduleA/build.gradle",  script(it -> {
+      it.withPlugin("com.github.johnrengelman.shadow", shadowVersion);
+      it.withJavaLibraryPlugin();
+      it.withMavenCentral();
+      it.addApiDependency("org.apache.commons:commons-lang3:3.12.0");
+      it.addPostfix("""
+                      sourceSets { extraSourceSet }
+                      shadowJar {
+                        from sourceSets.extraSourceSet.output
+                      }
+                      """); }));
+
+    createProjectSubFile("moduleB/build.gradle",
+                         script( it -> {
+                           it.withJavaPlugin();
+                           it.addImplementationDependency(it.project(":moduleA", "shadow")); }));
+
+    importProject("");
+
+    assertModules("project",
+                  "project.moduleA", "project.moduleA.main", "project.moduleA.test", "project.moduleA.extraSourceSet",
+                  "project.moduleB", "project.moduleB.main", "project.moduleB.test");
+
+    assertModuleModuleDeps("project.moduleB.main", "project.moduleA.extraSourceSet", "project.moduleA.main");
+    assertModuleLibDeps((actual, expected) -> actual.endsWith(expected), "project.moduleB.main", "moduleA-all.jar");
+    assertModuleModuleDeps("project.moduleB.test", "project.moduleB.main", "project.moduleA.extraSourceSet", "project.moduleA.main");
+  }
+
   @Test
   public void testCompileAndRuntimeConfigurationsTransitiveDependencyMerge() throws Exception {
     createSettingsFile("""

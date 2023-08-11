@@ -474,6 +474,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           }
         }
       }
+
+      ExternalProject externalProject = resolverCtx.getExtraProject(ideaModule, ExternalProject.class);
+      externalProject.getAdditionalArtifacts().forEach((artifactFile) -> {
+        artifactsMap.markArtifactPath(toCanonicalPath(artifactFile.getPath()), true);
+      });
     }
     // reuse same gradle home (for auto-discovered buildSrc projects) also for partial imports which doesn't request BuildScriptClasspathModel
     if (gradleHomeDir == null && executionSettings.getGradleHome() != null) {

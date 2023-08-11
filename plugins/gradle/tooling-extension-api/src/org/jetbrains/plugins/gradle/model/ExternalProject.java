@@ -93,4 +93,7 @@ public interface ExternalProject extends Model, Serializable {
    */
   @NotNull
   Map<String, Set<File>> getArtifactsByConfiguration();
+
+  @NotNull
+  List<File> getAdditionalArtifacts();
 }
