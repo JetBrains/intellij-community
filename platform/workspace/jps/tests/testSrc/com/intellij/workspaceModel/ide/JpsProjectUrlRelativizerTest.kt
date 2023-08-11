@@ -196,8 +196,8 @@ class JpsProjectUrlRelativizerTest {
   }
 
   private fun assertBasePathExistsFor(identifier: String) {
-    urlRelativizer.basePaths.forEach { basePath ->
-      if (identifier == basePath.identifier)
+    urlRelativizer.getAllBasePathIdentifiers().forEach { basePathIdentifier ->
+      if (identifier == basePathIdentifier)
         return
     }
     fail("Base path with identifier $identifier not found.")

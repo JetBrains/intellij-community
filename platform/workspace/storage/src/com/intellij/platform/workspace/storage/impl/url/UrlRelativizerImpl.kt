@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.impl.url
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
+import org.jetbrains.annotations.TestOnly
 
 // TODO to make architecture extensible by other plugins, we should make extension points mechanism
 
@@ -14,9 +15,9 @@ import com.intellij.platform.workspace.storage.url.UrlRelativizer
  *                          If provided, these base paths will be added during object initialization.
  *                          Defaults to an empty list.
  */
-open class UrlRelativizerImpl(basePathNameToUrl: List<Pair<String, String>> = listOf()) : UrlRelativizer {
+public open class UrlRelativizerImpl(basePathNameToUrl: List<Pair<String, String>> = listOf()) : UrlRelativizer {
 
-  val basePaths = mutableListOf<BasePath>()
+  internal val basePaths = mutableListOf<BasePath>()
   private val protocols = listOf("file", "jar", "jrt")
 
   init {
@@ -64,7 +65,7 @@ open class UrlRelativizerImpl(basePathNameToUrl: List<Pair<String, String>> = li
    *                   So, pass "PROJECT_DIR" instead of "$PROJECT_DIR$"
    * @param url The URL of the base path.
    */
-  fun addBasePathWithProtocols(identifier: String, url: String) {
+  public fun addBasePathWithProtocols(identifier: String, url: String) {
     val normalizedUrl = normalizeUrl(url)
     val preparedIdentifier = "$$identifier$"
     addBasePath(preparedIdentifier, normalizedUrl)
@@ -79,9 +80,15 @@ open class UrlRelativizerImpl(basePathNameToUrl: List<Pair<String, String>> = li
 
   private fun normalizeUrl(url: String): String = StringUtil.trimTrailing(FileUtil.toSystemIndependentName(url), '/')
 
+  @TestOnly
+  public fun getAllBasePathIdentifiers(): List<String> =
+    basePaths.map { basePath ->
+      basePath.identifier
+    }
+
 }
 
-class BasePath(val identifier: String, val url: String): Comparable<BasePath> {
+internal class BasePath(internal val identifier: String, internal val url: String) : Comparable<BasePath> {
 
   /**
    * The length of the trimmed URL.
