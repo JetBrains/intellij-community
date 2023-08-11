@@ -237,10 +237,15 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
             LOG.info("No artifacts were resolved for repository dependency " + descriptor.getMavenId());
           }
 
-          if (required.size() != resolved.size()) {
-            LOG.debug("Missing files are not downloaded completely for library '" + lib.getName() + "'," +
-                      " descriptor '" + descriptor.getMavenId() + "'." +
-                      " Required " + required + " but resolved only " + resolved);
+          if (LOG.isDebugEnabled()) {
+            Set<String> missing = required.stream().map(it -> FileUtil.toCanonicalPath(it.getAbsolutePath())).collect(Collectors.toSet());
+            resolved.forEach(it -> missing.remove(FileUtil.toCanonicalPath(it.getAbsolutePath())));
+            if (!missing.isEmpty()) {
+              LOG.debug("Files are not downloaded completely for library '" + lib.getName() + "'," +
+                        " descriptor '" + descriptor.getMavenId() + "'." +
+                        " Required " + required + " but resolved " + resolved +
+                        ". Missing " + missing);
+            }
           }
         }
         verifyLibraryRootsChecksums(context, lib.getName(), descriptor, compiledRoots, verifySha256Checksums);
