@@ -1656,7 +1656,14 @@ public abstract class DialogWrapper {
    */
   @ApiStatus.Internal
   public void fitToScreen(Rectangle rect) {
+    Rectangle before = null;
+    if (LOG.isDebugEnabled()) {
+      before = new Rectangle(rect);
+    }
     ScreenUtil.fitToScreen(rect);
+    if (LOG.isDebugEnabled() && !Objects.equals(before, rect)) {
+      LOG.debug("Fitted these bounds to the screen: " + before + " -> " + rect);
+    }
   }
 
   @SuppressWarnings("unused")
@@ -1728,6 +1735,15 @@ public abstract class DialogWrapper {
    * Can return null. In that case dialog will be centered relative to its owner.
    */
   public @Nullable Point getInitialLocation() {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Using " + (
+        myInitialLocationCallback != null
+        ? "the callback (" + myInitialLocationCallback + ")"
+        : myUserLocationSet
+        ? "the set bounds (" + myUserBounds + ")"
+        : "null"
+        ) + " to get the initial location");
+    }
     return myInitialLocationCallback != null
            ? myInitialLocationCallback.compute()
            : myUserLocationSet

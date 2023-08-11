@@ -41,6 +41,7 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.JBIterable;
@@ -623,19 +624,41 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     private void _setSizeForLocation(int width, int height, @Nullable Point initial) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Setting the size (" + width + "," + height + ") for location " + initial);
+      }
       Point location = initial != null ? initial : getLocation();
+      if (initial == null && LOG.isDebugEnabled()) {
+        LOG.debug("Falling back to the actual location because the specified one is null: " + location);
+      }
       Rectangle rect = new Rectangle(location.x, location.y, width, height);
+      Rectangle before = null;
+      if (LOG.isDebugEnabled()) {
+        before = new Rectangle(rect);
+      }
       fitToScreen(rect);
+      if (LOG.isDebugEnabled() && !Objects.equals(before, rect)) {
+        LOG.debug("Fitted these bounds to the screen: " + before + " -> " + rect);
+      }
       if (initial != null || location.x != rect.x || location.y != rect.y) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Setting the location to (" + rect.x + "," + rect.y + ")");
+        }
         setLocation(rect.x, rect.y);
       }
 
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Setting the size to (" + rect.width + "," + rect.height + ")");
+      }
       super.setSize(rect.width, rect.height);
     }
 
     @Override
     public void setBounds(int x, int y, int width, int height) {
       Rectangle rect = new Rectangle(x, y, width, height);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(new Throwable("DialogWrapperPeerImpl.MyDialog.setBounds(title='" + getTitle() + "'): " + rect));
+      }
       fitToScreen(rect);
       super.setBounds(rect.x, rect.y, rect.width, rect.height);
     }
@@ -672,31 +695,76 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       final DialogWrapper dialogWrapper = getDialogWrapper();
       boolean isAutoAdjustable = dialogWrapper.isAutoAdjustable();
       Point location = null;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("START preparing to show a dialog titled '" + getTitle() + "', isAutoAdjustable=" + isAutoAdjustable + ", the screens are:");
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        for (GraphicsDevice device : ge.getScreenDevices()) {
+          DisplayMode displayMode = device.getDisplayMode();
+          GraphicsConfiguration gc = device.getDefaultConfiguration();
+          float scale = JBUIScale.sysScale(gc);
+          Rectangle bounds = ScreenUtil.getScreenRectangle(gc);
+          LOG.debug(String.format("%s (%dx%d scaled at %.02f with insets %s)%s",
+                                  bounds, displayMode.getWidth(), displayMode.getHeight(), scale, ScreenUtil.getScreenInsets(gc),
+                                  (device == ge.getDefaultScreenDevice() ? " (default)" : "")
+          ));
+        }
+      }
       if (isAutoAdjustable) {
         pack();
 
         Dimension initial = dialogWrapper.getInitialSize();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The initial size of the dialog as set/overridden by the API user: " + initial);
+        }
         if (initial == null) initial = new Dimension();
         if (initial.width <= 0 || initial.height <= 0) {
-          maximize(initial, getSize()); // cannot be less than packed size
+          Dimension packedSize = getSize();
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("The size of the dialog after packing: " + packedSize);
+          }
+          maximize(initial, packedSize); // cannot be less than packed size
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("The initial size after coercing it to be at least the packed size: " + initial);
+          }
           if (!SystemInfo.isLinux && Registry.is("ide.dialog.wrapper.resize.by.tables", false)) {
             // [kb] temporary workaround for IDEA-253643
             maximize(initial, getSizeForTableContainer(getContentPane()));
           }
         }
-        maximize(initial, getMinimumSize()); // cannot be less than minimum size
-        initial.width *= dialogWrapper.getHorizontalStretch();
-        initial.height *= dialogWrapper.getVerticalStretch();
+        Dimension minimumSize = getMinimumSize();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The minimum size of the dialog: " + minimumSize);
+        }
+        maximize(initial, minimumSize); // cannot be less than minimum size
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The initial size after coercing it to be at least the minimum size: " + initial);
+        }
+        float hs = dialogWrapper.getHorizontalStretch();
+        initial.width *= hs;
+        float vs = dialogWrapper.getVerticalStretch();
+        initial.height *= vs;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Setting the initial size after stretching it by (" + hs + "," + vs + "): " + initial);
+        }
         setSize(initial);
 
         // Restore dialog's size and location
 
         myDimensionServiceKey = dialogWrapper.getDimensionKey();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The dimension service key is '" + myDimensionServiceKey + "'");
+        }
 
         if (myDimensionServiceKey != null) {
           final Project projectGuess = guessProjectDependingOnKey(myDimensionServiceKey);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("The project is " + projectGuess);
+          }
           location = getWindowStateService(projectGuess).getLocation(myDimensionServiceKey);
           Dimension size = getWindowStateService(projectGuess).getSize(myDimensionServiceKey);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("The stored location and size are " + location + " and " + size + (size != null ? ", using them to set the initial bounds" : ""));
+          }
           if (size != null) {
             myInitialSize = new Dimension(size);
             _setSizeForLocation(myInitialSize.width, myInitialSize.height, location);
@@ -711,18 +779,34 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       if (location == null) {
         location = dialogWrapper.getInitialLocation();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The initial location is " + location);
+        }
       }
 
       if (location != null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Setting the location to " + location);
+        }
         setLocation(location);
       }
       else {
-        setLocationRelativeTo(getOwner());
+        Window owner = getOwner();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Setting the location relative to " + owner);
+        }
+        setLocationRelativeTo(owner);
       }
 
       if (isAutoAdjustable) {
         final Rectangle bounds = getBounds();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Performing auto-adjustment for the resulting bounds: " + bounds);
+        }
         fitToScreen(bounds);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The bounds after fitting to screen: " + bounds);
+        }
         setBounds(bounds);
       }
 
@@ -733,6 +817,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       if (!SystemInfo.isMac || !WindowRoundedCornersManager.isAvailable()) {
         setBackground(UIUtil.getPanelBackground());
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("END preparing to show the dialog, the resulting bounds: " + getBounds());
       }
       super.show();
     }
