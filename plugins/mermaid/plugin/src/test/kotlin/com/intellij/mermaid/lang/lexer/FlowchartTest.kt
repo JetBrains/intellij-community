@@ -234,4 +234,23 @@ class FlowchartTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test node called default`() {
+    val content = """
+    graph TD
+      classDef default fill:#a34,stroke:#000,stroke-width:4px,color:#fff 
+      hello --> default
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test style for node called default`() {
+    val content = """
+    flowchart TD
+      classDef default fill:#a34
+      hello --> default
+      style default stroke:#000,stroke-width:4px
+    """.trimIndent()
+    doTest(content)
+  }
 }

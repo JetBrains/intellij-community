@@ -176,7 +176,10 @@ private subgraphLine ::= subgraphInnerStatement [separator] | separator
 private subgraphInnerStatement ::= flowchartStatement
   | directionStatement
 
-styleStatement ::= STYLE STYLE_TARGET styleOptions
+styleStatement ::= STYLE flowchartStyleTarget styleOptions
+flowchartStyleTarget ::= STYLE_TARGET {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
 
 linkStyleStatement ::= LINK_STYLE linkStyleTarget styleOptions
 private linkStyleTarget ::= STYLE_TARGET (COMMA STYLE_TARGET)* | DEFAULT

@@ -53,7 +53,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states journey, title,title_value,section_task, section, section_title
 
-%states flowchart, flowchart_body, node_text, node_quoted_text, link_text, link_quoted_text, direction_value, style, link_style, link_style_target, style_opt, style_value, flowchart_class, flowchart_class_target, flowchart_class_val, quoted_id
+%states flowchart, flowchart_body, node_text, node_quoted_text, link_text, link_quoted_text, direction_value, style, class_def, link_style, link_style_target, style_opt, style_value, flowchart_class, flowchart_class_target, flowchart_class_val, quoted_id
 
 %states sequence, sequence_id, sequence_alias, sequence_message, sequence_control_id, sequence_links, sequence_links_values, autonumbers
 
@@ -236,7 +236,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
   "linkStyle" { yybegin(link_style); return Flowchart.LINK_STYLE; }
   "style" { yybegin(style); return Flowchart.STYLE; }
-  "classDef" { yybegin(style); return CLASS_DEF; }
+  "classDef" { yybegin(class_def); return CLASS_DEF; }
 
   "class" { yybegin(flowchart_class); return CLASS; }
 
@@ -323,10 +323,11 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\s\"]* { return Flowchart.LINK_TEXT; }
   [^\S\n\r]+ { return WHITE_SPACE; }
 }
-<style> {
+<class_def> {
   "default" { yybegin(style_opt); return DEFAULT; }
+}
+<style, class_def> {
   [^\s;\n]+ { yybegin(style_opt); return Flowchart.STYLE_TARGET; }
-  [^\S\r\n]+ { return WHITE_SPACE; }
 }
 <link_style> {
   [^\S\r\n]+ { yybegin(link_style_target); return WHITE_SPACE; }

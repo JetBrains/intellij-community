@@ -12,4 +12,8 @@ class FlowchartTest : MermaidParserTestCase("flowchart") {
   fun `test frontmatter`() = doTest(true)
 
   fun `test multiple vertices with style`() = doTest(true)
+
+  fun `test node called default`() = doTest(true)
+
+  fun `test style for node called default`() = doTest(true)
 }

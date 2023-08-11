@@ -428,6 +428,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.Frontmatter.FRONTMATTER_START,
         MermaidTokens.Frontmatter.FRONTMATTER_END,
       )
+      holder[MermaidTokens.DEFAULT] = MermaidTextAttributes.constant
     }
     //endregion
   }
