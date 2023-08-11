@@ -89,16 +89,22 @@ private fun headDiffContent(project: Project, root: VirtualFile, status: GitFile
   if (!status.has(ContentVersion.HEAD)) return DiffContentFactory.getInstance().createEmpty()
 
   val currentRevision = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root)?.currentRevision ?: GitUtil.HEAD
+  val currentRevisionNumber = GitRevisionNumber(currentRevision)
 
   val submodule = GitContentRevision.getRepositoryIfSubmodule(project, status.path)
-  if (submodule != null) {
-    val hash = GitIndexUtil.loadSubmoduleHashAt(submodule.repository, submodule.parent, GitRevisionNumber(currentRevision))
+  val diffContent = if (submodule != null) {
+    val hash = GitIndexUtil.loadSubmoduleHashAt(submodule.repository, submodule.parent, currentRevisionNumber)
                ?: throw VcsException(DiffBundle.message("error.cant.show.diff.cant.load.revision.content"))
-    return DiffContentFactory.getInstance().create(project, hash.asString())
+    DiffContentFactory.getInstance().create(project, hash.asString())
+  }
+  else {
+    val headContent = headContentBytes(project, root, status, currentRevision)
+    DiffContentFactoryEx.getInstanceEx().createFromBytes(project, headContent, status.path)
   }
 
-  val headContent = headContentBytes(project, root, status, currentRevision)
-  return DiffContentFactoryEx.getInstanceEx().createFromBytes(project, headContent, status.path)
+  diffContent.putUserData(DiffVcsDataKeys.REVISION_INFO, Pair(status.path, currentRevisionNumber))
+
+  return diffContent
 }
 
 @Throws(VcsException::class)
