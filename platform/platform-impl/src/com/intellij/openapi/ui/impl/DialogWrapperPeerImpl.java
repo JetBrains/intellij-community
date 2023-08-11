@@ -30,6 +30,7 @@ import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
@@ -696,18 +697,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       boolean isAutoAdjustable = dialogWrapper.isAutoAdjustable();
       Point location = null;
       if (LOG.isDebugEnabled()) {
-        LOG.debug("START preparing to show a dialog titled '" + getTitle() + "', isAutoAdjustable=" + isAutoAdjustable + ", the screens are:");
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        for (GraphicsDevice device : ge.getScreenDevices()) {
-          DisplayMode displayMode = device.getDisplayMode();
-          GraphicsConfiguration gc = device.getDefaultConfiguration();
-          float scale = JBUIScale.sysScale(gc);
-          Rectangle bounds = ScreenUtil.getScreenRectangle(gc);
-          LOG.debug(String.format("%s (%dx%d scaled at %.02f with insets %s)%s",
-                                  bounds, displayMode.getWidth(), displayMode.getHeight(), scale, ScreenUtil.getScreenInsets(gc),
-                                  (device == ge.getDefaultScreenDevice() ? " (default)" : "")
-          ));
-        }
+        LOG.debug("START preparing to show a dialog titled '" + getTitle() + "', isAutoAdjustable=" + isAutoAdjustable + ", the monitor configuration is:");
+        logMonitorConfiguration();
       }
       if (isAutoAdjustable) {
         pack();
@@ -822,6 +813,22 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         LOG.debug("END preparing to show the dialog, the resulting bounds: " + getBounds());
       }
       super.show();
+    }
+
+    private void logMonitorConfiguration() {
+      var ideFrame = WindowManager.getInstance().getFrame(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this)));
+      GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+      for (GraphicsDevice device : ge.getScreenDevices()) {
+        DisplayMode displayMode = device.getDisplayMode();
+        GraphicsConfiguration gc = device.getDefaultConfiguration();
+        float scale = JBUIScale.sysScale(gc);
+        Rectangle bounds = ScreenUtil.getScreenRectangle(gc);
+        LOG.debug(String.format("%s (%dx%d scaled at %.02f with insets %s)%s%s",
+                                bounds, displayMode.getWidth(), displayMode.getHeight(), scale, ScreenUtil.getScreenInsets(gc),
+                                (device == ge.getDefaultScreenDevice() ? ", default" : ""),
+                                (ideFrame != null && device == ideFrame.getGraphicsConfiguration().getDevice() ? ", IDE frame" : "")
+        ));
+      }
     }
 
     private @Nullable Project guessProjectDependingOnKey(String key) {
@@ -944,14 +951,27 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         if (myDimensionServiceKey != null &&
             myInitialSize != null &&
             myOpened) { // myInitialSize can be null only if dialog is disposed before first showing
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Saving the bounds of a dialog titled '" + getTitle() + "', the monitor configuration is:");
+            logMonitorConfiguration();
+          }
           final Project projectGuess = guessProjectDependingOnKey(myDimensionServiceKey);
           // Save location
           Point location = getLocation();
           getWindowStateService(projectGuess).putLocation(myDimensionServiceKey, location);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Saved location: " + location);
+          }
           // Save size
           Dimension size = getSize();
           if (!myInitialSize.equals(size)) {
             getWindowStateService(projectGuess).putSize(myDimensionServiceKey, size);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Saved size: " + size + " (the initial size was " + myInitialSize + ")");
+            }
+          }
+          else if (LOG.isDebugEnabled()) {
+            LOG.debug("Didn't save size because it's the same as the initial size: " + size);
           }
           myOpened = false;
         }
