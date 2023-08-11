@@ -21,14 +21,14 @@ project.appleTest
 project.commonMain
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     Kotlin/Native: stdlib (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
 
 project.commonTest
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     Kotlin/Native: stdlib (TEST)
     commonMain (friend, TEST)
     nativeMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
 
 project.linuxMain
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
@@ -108,7 +108,7 @@ project.nativeMain
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     Kotlin/Native: stdlib (COMPILE)
     commonMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
 
 project.nativeTest
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
@@ -116,7 +116,7 @@ project.nativeTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
     nativeMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
 
 
 Test configuration:
