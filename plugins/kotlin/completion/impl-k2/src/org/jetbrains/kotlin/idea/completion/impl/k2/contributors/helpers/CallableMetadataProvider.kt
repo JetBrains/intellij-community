@@ -177,8 +177,8 @@ internal object CallableMetadataProvider {
         val callableReferenceExpression = explicitReceiver.getParentOfType<KtCallableReferenceExpression>(strict = true) ?: return null
         if (callableReferenceExpression.lhs != explicitReceiver) return null
         val symbol = when (explicitReceiver) {
-            is KtDotQualifiedExpression -> explicitReceiver.selectorExpression?.mainReference?.resolveToSymbol()
-            is KtNameReferenceExpression -> explicitReceiver.mainReference.resolveToSymbol()
+            is KtDotQualifiedExpression -> explicitReceiver.selectorExpression?.mainReference?.resolveToExpandedSymbol()
+            is KtNameReferenceExpression -> explicitReceiver.mainReference.resolveToExpandedSymbol()
             else -> return null
         }
         if (symbol !is KtClassLikeSymbol) return null

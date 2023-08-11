@@ -3,6 +3,5 @@
   "mainFile": "test/test.kt",
   "newName": "namedFunB",
   "withRuntime": "true",
-  "hint": "Function 'namedFunB' is already declared in package 'test'",
-  "enabledInK2": "true"
+  "hint": "Function 'namedFunB' is already declared in package 'test'"
 }

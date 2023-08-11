@@ -11,5 +11,4 @@ class Clazz() {
 }
 
 // IGNORE_K2_SMART_STEP_INTO
-// IGNORE_K2
 // Remove after IDEA-326256 fix

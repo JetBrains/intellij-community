@@ -156,6 +156,34 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/testData/handlers/basic/contextReceivers")
+        public static class ContextReceivers extends AbstractHighLevelBasicCompletionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("WithoutDeclaration.kt")
+            public void testWithoutDeclaration() throws Exception {
+                runTest("../completion/testData/handlers/basic/contextReceivers/WithoutDeclaration.kt");
+            }
+
+            @TestMetadata("WithoutDeclarationNestedClass.kt")
+            public void testWithoutDeclarationNestedClass() throws Exception {
+                runTest("../completion/testData/handlers/basic/contextReceivers/WithoutDeclarationNestedClass.kt");
+            }
+
+            @TestMetadata("WithoutDeclarationNestedClass2.kt")
+            public void testWithoutDeclarationNestedClass2() throws Exception {
+                runTest("../completion/testData/handlers/basic/contextReceivers/WithoutDeclarationNestedClass2.kt");
+            }
+
+            @TestMetadata("WithoutDeclarationTypeArgument.kt")
+            public void testWithoutDeclarationTypeArgument() throws Exception {
+                runTest("../completion/testData/handlers/basic/contextReceivers/WithoutDeclarationTypeArgument.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../completion/testData/handlers/basic/defaultImports")
         public static class DefaultImports extends AbstractHighLevelBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {

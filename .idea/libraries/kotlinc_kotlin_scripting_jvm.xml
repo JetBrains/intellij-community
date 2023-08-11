@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-jvm" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:1.9.20-dev-8143">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:1.9.30-dev-222">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.9.20-dev-8143/kotlin-scripting-jvm-1.9.20-dev-8143.jar">
-          <sha256sum>4292efd8dfd2ee0c22edf048f5d2420d21d3dfb563dc9bce26ade225ade7273c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.9.30-dev-222/kotlin-scripting-jvm-1.9.30-dev-222.jar">
+          <sha256sum>18f229e607d32cd92828ca4b9883d03530c0a5976993c26a9d60a81fb202565a</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.9.20-dev-8143/kotlin-scripting-jvm-1.9.20-dev-8143.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.9.30-dev-222/kotlin-scripting-jvm-1.9.30-dev-222.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.9.20-dev-8143/kotlin-scripting-jvm-1.9.20-dev-8143-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.9.30-dev-222/kotlin-scripting-jvm-1.9.30-dev-222-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

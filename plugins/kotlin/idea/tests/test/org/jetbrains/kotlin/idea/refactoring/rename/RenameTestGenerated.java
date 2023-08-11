@@ -753,6 +753,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameKotlinClassByConstructorRef/kotlinClass.test");
     }
 
+    @TestMetadata("renameKotlinClassByImplicitConstructorRef/kotlinClass.test")
+    public void testRenameKotlinClassByImplicitConstructorRef_KotlinClass() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinClassByImplicitConstructorRef/kotlinClass.test");
+    }
+
     @TestMetadata("renameKotlinClassConstructor/renameKotlinConstructor.test")
     public void testRenameKotlinClassConstructor_RenameKotlinConstructor() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinClassConstructor/renameKotlinConstructor.test");

@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.util.reformatted
-import org.jetbrains.kotlin.idea.codeinsight.utils.AddArgumentNamesUtils.addArgumentName
+import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*

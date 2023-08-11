@@ -39,3 +39,5 @@ fun main() {
 
 // EXPRESSION: block { (d as Base).x }
 // RESULT: 0: J
+
+// IGNORE_K2

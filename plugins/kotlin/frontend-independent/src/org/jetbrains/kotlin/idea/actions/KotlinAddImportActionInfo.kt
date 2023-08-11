@@ -3,8 +3,11 @@ package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
+import org.jetbrains.kotlin.psi.UserDataProperty
 
 /** Test hooks allowing inspection of data used for KotlinAddImportAction. **/
 object KotlinAddImportActionInfo {
@@ -12,13 +15,12 @@ object KotlinAddImportActionInfo {
         fun onExecute(variants: List<AutoImportVariant>)
     }
 
-    @Volatile
-    var executeListener: ExecuteListener? = null
+    var PsiFile.executeListener: ExecuteListener? by UserDataProperty(Key("KOTLIN_IMPORT_EXECUTE_LISTENER"))
 
     @TestOnly
-    fun setExecuteListener(disposable: Disposable, listener: ExecuteListener) {
-        assert(executeListener == null)
-        executeListener = listener
-        Disposer.register(disposable) { executeListener = null }
+    fun setExecuteListener(file: PsiFile, disposable: Disposable, listener: ExecuteListener) {
+        assert(file.executeListener == null)
+        file.executeListener = listener
+        Disposer.register(disposable) { file.executeListener = null }
     }
 }

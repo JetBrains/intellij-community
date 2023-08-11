@@ -23,6 +23,11 @@ public class GotoDeclarationTestGenerated extends AbstractGotoDeclarationTest {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("annotationCallWithMissedTypeArgs.test")
+    public void testAnnotationCallWithMissedTypeArgs() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/annotationCallWithMissedTypeArgs.test");
+    }
+
     @TestMetadata("dataClassToString.test")
     public void testDataClassToString() throws Exception {
         runTest("testData/navigation/gotoDeclaration/dataClassToString.test");

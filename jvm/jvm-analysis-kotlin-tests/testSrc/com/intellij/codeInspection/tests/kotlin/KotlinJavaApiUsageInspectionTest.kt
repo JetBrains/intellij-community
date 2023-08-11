@@ -44,6 +44,19 @@ class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  fun `test reference in callable reference`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
+    val withErrorMessage = "\"default charset \${<error descr=\"Usage of API documented as @since 1.7+\">StandardCharsets</error>.UTF_8}\"::toString"
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import java.nio.charset.StandardCharsets
+
+      fun main() {
+        ${withErrorMessage}
+      }
+    """.trimIndent())
+    ""::toString
+  }
+
   fun `test annotation`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """

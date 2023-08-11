@@ -14,3 +14,5 @@ class Some {
 
 // EXPRESSION: base.a
 // RESULT: 4: I
+
+// IGNORE_K2

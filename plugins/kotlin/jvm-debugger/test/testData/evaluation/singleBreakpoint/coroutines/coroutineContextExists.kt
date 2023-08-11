@@ -11,3 +11,5 @@ fun main() = runBlocking(CoroutineName("NAME")) {
     //Breakpoint!
     println("")
 }
+
+// IGNORE_K2

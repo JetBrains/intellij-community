@@ -26,6 +26,9 @@
             serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.LibraryDependenciesCacheImpl"/>
     <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.LibraryUsageIndex"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.libraries.LibraryUsageIndexImpl"/>
+    <projectService
             serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.SdkInfoCache"
             serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.SdkInfoCacheImpl"/>
     <projectService

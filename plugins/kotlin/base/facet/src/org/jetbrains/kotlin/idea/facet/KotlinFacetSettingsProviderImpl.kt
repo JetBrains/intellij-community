@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.base.util.caching.*
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
-import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker.Companion.isKotlinFacet
 
 class KotlinFacetSettingsProviderImpl(project: Project) :
     SynchronizedFineGrainedEntityCache<Module, KotlinFacetSettings>(project, doSelfInitialization = false),

@@ -22,7 +22,19 @@ import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 
 /**
- * @see [org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache]
+ * [LibraryInfo] is the Kotlin plugin's view on a [LibraryEx].
+ *
+ * Multiple different [LibraryEx]s with the same content may be mapped to a single [LibraryInfo]. For example, two different module-level
+ * libraries with the same roots will have the same [LibraryInfo]. Such libraries are called *deduplicated*. The deduplication is performed
+ * by [LibraryInfoCache]. This avoids keeping multiple, duplicate cache entries for [LibraryEx]s with effectively the same content.
+ *
+ * The dependencies and dependents of a [LibraryInfo] are calculated from *all* [LibraryEx]s associated with it. In that sense, a
+ * [LibraryInfo] is a *collection* of [LibraryEx]s.
+ *
+ * @param library The *anchor library* which acts as the content reference for the [LibraryInfo]. It is sometimes used as a cache key in
+ *  deduplication contexts. It is *not* necessarily the only [LibraryEx] associated with this [LibraryInfo].
+ *
+ * @see LibraryInfoCache
  */
 abstract class LibraryInfo internal constructor(
     override val project: Project,

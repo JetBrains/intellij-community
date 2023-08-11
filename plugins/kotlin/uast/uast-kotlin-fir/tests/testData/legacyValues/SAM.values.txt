@@ -99,46 +99,48 @@ UFile (package = ) [import java.lang.Thread...]
                 UDeclarationsExpression [var thread1: java.lang.Thread = <init>({ ...})] = Undetermined
                     ULocalVariable (name = thread1) [var thread1: java.lang.Thread = <init>({ ...})]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>({ ...})] = external <init>({
-    println("hello1")
+    return println("hello1")
 })(Undetermined)
                             UIdentifier (Identifier (Thread)) [UIdentifier (Identifier (Thread))]
                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread) [<init>] = external <init>({
-    println("hello1")
+    return println("hello1")
 })(Undetermined)
                             ULambdaExpression [{ ...}] = Undetermined
-                                UBlockExpression [{...}] = external println("hello1")("hello1")
-                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello1")] = external println("hello1")("hello1")
-                                        UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println("hello1")("hello1")
-                                        ULiteralExpression (value = "hello1") ["hello1"] = "hello1"
+                                UBlockExpression [{...}] = Nothing
+                                    UReturnExpression [return println("hello1")] = Nothing
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello1")] = external println("hello1")("hello1")
+                                            UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                                            USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println("hello1")("hello1")
+                                            ULiteralExpression (value = "hello1") ["hello1"] = "hello1"
         UMethod (name = test2) [public static final fun test2() : void {...}]
             UBlockExpression [{...}] = Undetermined
                 UDeclarationsExpression [var thread2: java.lang.Thread = <init>(Runnable({ ...}))] = Undetermined
                     ULocalVariable (name = thread2) [var thread2: java.lang.Thread = <init>(Runnable({ ...}))]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(Runnable({ ...}))] = external <init>(Runnable({
-    println("hello2")
+    return println("hello2")
 }))(external Runnable({
-    println("hello2")
+    return println("hello2")
 })(Undetermined))
                             UIdentifier (Identifier (Thread)) [UIdentifier (Identifier (Thread))]
                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread) [<init>] = external <init>(Runnable({
-    println("hello2")
+    return println("hello2")
 }))(external Runnable({
-    println("hello2")
+    return println("hello2")
 })(Undetermined))
                             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] = external Runnable({
-    println("hello2")
+    return println("hello2")
 })(Undetermined)
                                 UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
                                 USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] = external Runnable({
-    println("hello2")
+    return println("hello2")
 })(Undetermined)
                                 ULambdaExpression [{ ...}] = Undetermined
-                                    UBlockExpression [{...}] = external println("hello2")("hello2")
-                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello2")] = external println("hello2")("hello2")
-                                            UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                                            USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println("hello2")("hello2")
-                                            ULiteralExpression (value = "hello2") ["hello2"] = "hello2"
+                                    UBlockExpression [{...}] = Nothing
+                                        UReturnExpression [return println("hello2")] = Nothing
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello2")] = external println("hello2")("hello2")
+                                                UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                                                USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println("hello2")("hello2")
+                                                ULiteralExpression (value = "hello2") ["hello2"] = "hello2"
         UMethod (name = test3) [public static final fun test3() : void {...}]
             UBlockExpression [{...}] = external ambiguousSamAcceptor(Callable({
     return "Callable"

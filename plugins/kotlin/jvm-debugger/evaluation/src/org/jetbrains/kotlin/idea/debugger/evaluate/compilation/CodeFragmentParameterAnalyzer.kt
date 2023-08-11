@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.descriptors.impl.SyntheticFieldDescriptor
 import org.jetbrains.kotlin.idea.base.utils.fqname.fqName
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.*
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentFactory.Companion.FAKE_JAVA_CONTEXT_FUNCTION_NAME
+import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinK1CodeFragmentFactory.Companion.FAKE_JAVA_CONTEXT_FUNCTION_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.*
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
@@ -35,10 +35,29 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.expressions.createFunctionType
 
-class CodeFragmentParameterInfo(
-    val parameters: List<Smart>,
+interface CodeFragmentParameterInfo {
+    val parameters: List<Dumb>
     val crossingBounds: Set<Dumb>
-)
+}
+
+class K2CodeFragmentParameterInfo(
+    override val parameters: List<Dumb>,
+    override val crossingBounds: Set<Dumb>
+) : CodeFragmentParameterInfo
+
+class K1CodeFragmentParameterInfo(
+    val smartParameters: List<Smart>,
+    override val crossingBounds: Set<Dumb>
+) : CodeFragmentParameterInfo {
+    override val parameters: List<Dumb> = object : AbstractList<Dumb>() {
+        override val size: Int
+            get() = smartParameters.size
+
+        override fun get(index: Int): Dumb {
+            return smartParameters[index].dumb
+        }
+    }
+}
 
 /*
     The purpose of this class is to figure out what parameters the received code fragment captures.
@@ -60,7 +79,7 @@ class CodeFragmentParameterAnalyzer(
         bindingContext[BindingContext.CONSTRUCTOR, constructor]
     }
 
-    fun analyze(): CodeFragmentParameterInfo {
+    fun analyze(): K1CodeFragmentParameterInfo {
         onceUsedChecker.trigger()
 
         codeFragment.accept(object : KtTreeVisitor<Unit>() {
@@ -198,7 +217,7 @@ class CodeFragmentParameterAnalyzer(
             }
         }, Unit)
 
-        return CodeFragmentParameterInfo(parameters.values.toList(), crossingBounds)
+        return K1CodeFragmentParameterInfo(parameters.values.toList(), crossingBounds)
     }
 
     private fun processReceiver(receiver: ImplicitReceiver): Smart? {

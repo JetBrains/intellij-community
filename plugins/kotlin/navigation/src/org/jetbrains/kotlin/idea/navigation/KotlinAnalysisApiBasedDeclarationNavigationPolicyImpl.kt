@@ -68,10 +68,18 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
                 correspondingOwner.typeParameters.firstOrNull { it.name == declaration.name }
             }
 
+            is KtEnumEntry -> getCorrespondingEnumEntry(declaration, scope, project)
             is KtClassLikeDeclaration -> getCorrespondingClassLikeDeclaration(declaration, scope, project)
             is KtCallableDeclaration -> getCorrespondingCallableDeclaration(declaration, scope, project)
             else -> null
         }
+    }
+
+    private fun getCorrespondingEnumEntry(declaration: KtEnumEntry, scope: GlobalSearchScope, project: Project): KtEnumEntry? {
+        val enumClass = declaration.containingClassOrObject ?: return null
+        val classLikeDeclaration = getCorrespondingClassLikeDeclaration(enumClass, scope, project) as? KtClass ?: return null
+        val enumEntryName = declaration.name
+        return classLikeDeclaration.declarations.firstOrNull { it is KtEnumEntry && it.name == enumEntryName } as? KtEnumEntry
     }
 
     private fun getCorrespondingClassLikeDeclaration(

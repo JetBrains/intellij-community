@@ -57,7 +57,7 @@ UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (ident
     fun String.with2Receivers(a: Int, b: Float) {}
 
 }: A
-        UBlockExpression -> UQualifiedReferenceExpression -> Kotlin_Light_Method: with2Receivers
+        UReturnExpression -> UQualifiedReferenceExpression -> Kotlin_Light_Method: with2Receivers
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = with2Receivers) -> Kotlin_Light_Method: with2Receivers
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer

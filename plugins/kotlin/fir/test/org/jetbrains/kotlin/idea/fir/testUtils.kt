@@ -2,23 +2,21 @@
 
 package org.jetbrains.kotlin.idea.fir
 
-import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals
-import org.jetbrains.kotlin.analysis.api.session.KtAnalysisSessionProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirBuiltinsSessionFactory
-import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import java.io.File
+import org.jetbrains.kotlin.analysis.providers.KotlinGlobalModificationService
 
 @OptIn(KtAnalysisApiInternals::class)
 fun Project.invalidateCaches() {
-    JavaLibraryModificationTracker.incModificationCount(this)
-    service<KotlinModificationTrackerFactory>().incrementModificationsCount()
-    service<KtAnalysisSessionProvider>().clearCaches()
+    runWriteAction {
+        KotlinGlobalModificationService.getInstance(this).publishGlobalModuleStateModification()
+    }
     service<LLFirBuiltinsSessionFactory>().clearForTheNextTest()
 }
 

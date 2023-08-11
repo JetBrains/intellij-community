@@ -3,6 +3,5 @@
   "fqn": "some.foo",
   "newName": "bar",
   "mainFile": "ForClassImport.kt",
-  "comment": "KT-365 Support renaming packages",
-  "enabledInK2": "true"
+  "comment": "KT-365 Support renaming packages"
 }

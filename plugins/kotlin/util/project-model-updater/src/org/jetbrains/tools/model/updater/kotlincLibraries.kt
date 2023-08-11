@@ -88,10 +88,7 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
 
         run {
             val mavenIds = listOf(
-                MavenId.parse("$ktGroup:kotlin-stdlib-jdk8:${kotlincCoordinates.version}"),
                 MavenId.parse("$ktGroup:kotlin-stdlib:${kotlincCoordinates.version}"),
-                MavenId.parse("$ktGroup:kotlin-stdlib-common:${kotlincCoordinates.version}"),
-                MavenId.parse("$ktGroup:kotlin-stdlib-jdk7:${kotlincCoordinates.version}")
             )
 
             val annotationLibrary = JpsLibrary(

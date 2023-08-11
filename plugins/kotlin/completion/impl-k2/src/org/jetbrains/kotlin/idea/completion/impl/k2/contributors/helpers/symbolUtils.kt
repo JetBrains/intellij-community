@@ -4,17 +4,22 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
+import org.jetbrains.kotlin.analysis.api.components.KtScopeWithKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.api.components.KtScopeWithKind
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.idea.references.KtReference
 
+/**
+ * Resolves [reference] to symbol and returns static scope for the obtained symbol. Note that if the symbol is [KtTypeAliasSymbol],
+ * `null` is returned. See KT-34281 for more details.
+ */
 context(KtAnalysisSession)
 internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
     val scopeIndex = CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX
@@ -28,10 +33,16 @@ internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
     }
 }
 
+context(KtAnalysisSession)
+internal fun KtReference.resolveToExpandedSymbol(): KtSymbol? = when (val symbol = resolveToSymbol()) {
+    is KtTypeAliasSymbol -> symbol.expandedType.expandedClassSymbol
+    else -> symbol
+}
+
 internal data class KtClassifierSymbolWithContainingScopeKind(
     private val _symbol: KtClassifierSymbol,
     val scopeKind: KtScopeKind
-): KtLifetimeOwner {
+) : KtLifetimeOwner {
     override val token: KtLifetimeToken
         get() = _symbol.token
     val symbol: KtClassifierSymbol get() = withValidityAssertion { _symbol }
@@ -40,7 +51,7 @@ internal data class KtClassifierSymbolWithContainingScopeKind(
 internal data class KtCallableSignatureWithContainingScopeKind(
     private val _signature: KtCallableSignature<*>,
     val scopeKind: KtScopeKind
-): KtLifetimeOwner {
+) : KtLifetimeOwner {
     override val token: KtLifetimeToken
         get() = _signature.token
     val signature: KtCallableSignature<*> get() = withValidityAssertion { _signature }
@@ -49,7 +60,7 @@ internal data class KtCallableSignatureWithContainingScopeKind(
 internal data class KtSymbolWithOrigin(
     private val _symbol: KtSymbol,
     val origin: CompletionSymbolOrigin,
-): KtLifetimeOwner {
+) : KtLifetimeOwner {
     override val token: KtLifetimeToken
         get() = _symbol.token
     val symbol: KtSymbol get() = withValidityAssertion { _symbol }

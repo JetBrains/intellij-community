@@ -1155,12 +1155,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("weighers/smart", pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
 
-        testClass<AbstractJSBasicCompletionTest> {
+        testClass<AbstractK1JSBasicCompletionTest> {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
             model("basic/js", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
-        testClass<AbstractJvmBasicCompletionTest> {
+        testClass<AbstractK1JvmBasicCompletionTest> {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
             model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
         }
@@ -1205,7 +1205,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("smartMultiFile", pattern = DIRECTORY, isRecursive = false)
         }
 
-        testClass<AbstractJvmBasicCompletionTest>("org.jetbrains.kotlin.idea.completion.test.KDocCompletionTestGenerated") {
+        testClass<AbstractK1JvmBasicCompletionTest>("org.jetbrains.kotlin.idea.completion.test.K1KDocCompletionTestGenerated") {
             model("kdoc", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
 

@@ -43,9 +43,24 @@ public class SessionsInvalidationTestGenerated extends AbstractSessionsInvalidat
         runTest("testData/sessionInvalidation/binaryTreeWithInvalidInRoot/");
     }
 
+    @TestMetadata("cyclical")
+    public void testCyclical() throws Exception {
+        runTest("testData/sessionInvalidation/cyclical/");
+    }
+
+    @TestMetadata("cyclicalWithOutsideDependency")
+    public void testCyclicalWithOutsideDependency() throws Exception {
+        runTest("testData/sessionInvalidation/cyclicalWithOutsideDependency/");
+    }
+
     @TestMetadata("linear")
     public void testLinear() throws Exception {
         runTest("testData/sessionInvalidation/linear/");
+    }
+
+    @TestMetadata("linearWithCyclicalDependency")
+    public void testLinearWithCyclicalDependency() throws Exception {
+        runTest("testData/sessionInvalidation/linearWithCyclicalDependency/");
     }
 
     @TestMetadata("rhombus")

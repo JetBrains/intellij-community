@@ -27,6 +27,7 @@
                     serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.stubBased.deserialization.JvmStubBasedDeserializedSymbolProviderFactory"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirBuiltinsSessionFactory"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionCache"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationService"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirGlobalResolveComponents"/>
   </extensions>
 </idea-plugin>

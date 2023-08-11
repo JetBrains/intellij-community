@@ -1,7 +1,6 @@
 // !DIAGNOSTICS: -UNUSED_VARIABLE
 
-import kotlinx.browser.window
-import kotlinx.<!UNRESOLVED_REFERENCE!>cinterop<!>.<!DEBUG_INFO_MISSING_UNRESOLVED!>CPointed<!>
+import <!UNRESOLVED_REFERENCE!>kotlinx<!>.<!DEBUG_INFO_MISSING_UNRESOLVED!>cinterop<!>.<!DEBUG_INFO_MISSING_UNRESOLVED!>CPointed<!>
 
 fun jvmSpecific(args: Array<String>) {
     val x: <!UNRESOLVED_REFERENCE!>Cloneable<!>? = null
@@ -13,5 +12,5 @@ fun nativeSpecific() {
 }
 
 fun jsSpecific() {
-    val windowClosed = window.closed
+    console.log("Hello")
 }

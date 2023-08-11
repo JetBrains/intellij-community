@@ -1,5 +1,5 @@
 // test outside references
 fun main() {
-    MyExtensionImpl.Util.foo()
-    MyExtensionImpl.Util.a
+    MyExtensionImpl.Util1.foo()
+    MyExtensionImpl.Util1.a
 }

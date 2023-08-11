@@ -24,7 +24,7 @@ import com.intellij.refactoring.rename.inplace.TemplateInlayUtil.createSettingsP
 import com.intellij.ui.dsl.builder.actionListener
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
-import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings

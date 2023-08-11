@@ -7,12 +7,15 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
@@ -70,6 +73,8 @@ open class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceInfo) 
     override val moduleName: String get() = ideaModule.name
 
     override val stableModuleName: String? get() = moduleInfo.stableName?.asString()
+
+    val moduleId: ModuleId get() = ModuleId(moduleName)
 
     override val directRegularDependencies: List<KtModule>
         get() = moduleInfo.collectDependencies(ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED)
@@ -154,20 +159,20 @@ private object DependencyKeys {
     val TEST_MODULE_DEPENDENCIES_IGNORED = Key.create<CachedValue<List<KtModule>>>("TEST_MODULE_DEPENDENCIES_IGNORED")
 }
 
-internal class KtLibraryModuleByModuleInfo(private val moduleInfo: LibraryInfo) : KtModuleByModuleInfoBase(moduleInfo), KtLibraryModule {
+internal class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleByModuleInfoBase(libraryInfo), KtLibraryModule {
     override val libraryName: String
-        get() = moduleInfo.library.name ?: "Unnamed library"
+        get() = libraryInfo.library.name ?: "Unnamed library"
 
     override val librarySources: KtLibrarySourceModule
-        get() = moduleInfo.sourcesModuleInfo.toKtModuleOfType<KtLibrarySourceModule>()
+        get() = libraryInfo.sourcesModuleInfo.toKtModuleOfType<KtLibrarySourceModule>()
 
     override fun getBinaryRoots(): Collection<Path> {
-        return moduleInfo.getLibraryRoots().map(Paths::get)
+        return libraryInfo.getLibraryRoots().map(Paths::get)
     }
 
     override val contentScope: GlobalSearchScope get() = ideaModuleInfo.contentScope
 
-    override val project: Project get() = moduleInfo.project
+    override val project: Project get() = libraryInfo.project
 }
 
 internal class SdkKtModuleByModuleInfo(private val moduleInfo: SdkInfo) : KtModuleByModuleInfoBase(moduleInfo), KtSdkModule {

@@ -3,6 +3,5 @@
   "packageFqn": "testing",
   "oldName": "foo",
   "newName": "bar",
-  "mainFile": "package.kt",
-  "enabledInK2": "true"
+  "mainFile": "package.kt"
 }

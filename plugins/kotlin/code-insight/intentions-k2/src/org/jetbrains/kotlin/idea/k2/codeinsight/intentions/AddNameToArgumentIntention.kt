@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
@@ -10,9 +10,9 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
-import org.jetbrains.kotlin.idea.codeinsight.utils.getValueArgumentName
+import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentName
+import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.getStableNameFor
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeinsight.utils.AddArgumentNamesUtils.addArgumentName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -47,7 +47,7 @@ internal class AddNameToArgumentIntention :
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtValueArgument): Context? {
-        return element.getValueArgumentName()?.let { Context(it) }
+        return getStableNameFor(element)?.let { Context(it) }
     }
 
     override fun apply(element: KtValueArgument, context: Context, project: Project, editor: Editor?) =

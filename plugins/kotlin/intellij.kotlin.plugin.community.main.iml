@@ -24,7 +24,6 @@
     <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" exported="" />
     <orderEntry type="module" module-name="kotlin.base.facet" exported="" />
     <orderEntry type="module" module-name="kotlin.base.klib" exported="" />
-    <orderEntry type="module" module-name="kotlin.base.highlighting" exported="" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" exported="" />
     <orderEntry type="module" module-name="kotlin.base.jps" exported="" />
     <orderEntry type="module" module-name="kotlin.base.external-build-system" exported="" />
@@ -39,8 +38,10 @@
     <orderEntry type="module" module-name="kotlin.base.fe10.highlighting" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.obsolete-compat" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.project-structure" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fir.code-insight" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fir.project-structure" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" exported="" />
@@ -154,7 +155,9 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.inspections-fe10" exported="" />
-    <orderEntry type="module" module-name="kotlin.highlighting" exported="" />
+    <orderEntry type="module" module-name="kotlin.highlighting.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.highlighting.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.highlighting.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" />
     <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k2" exported="" />

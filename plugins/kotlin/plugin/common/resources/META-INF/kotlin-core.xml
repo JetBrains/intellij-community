@@ -85,6 +85,9 @@
             serviceInterface="org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderIdeImpl"/>
     <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KotlinModuleDependentsProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.IdeKotlinModuleDependentsProvider"/>
+    <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KtModuleScopeProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.KtModuleScopeProviderIdeImpl"/>
     <projectService

@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle

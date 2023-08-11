@@ -131,13 +131,14 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                         USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] : PsiType:A
                     ULambdaExpression [{ ...}] : PsiType:Function1<? super A, ? extends Unit>
                         UBlockExpression [{...}]
-                            UQualifiedReferenceExpression ["def".with2Receivers(8, 7.0)] : PsiType:Unit
-                                ULiteralExpression (value = "def") ["def"] : PsiType:String
-                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with2Receivers(8, 7.0)] : PsiType:Unit
-                                    UIdentifier (Identifier (with2Receivers)) [UIdentifier (Identifier (with2Receivers))]
-                                    USimpleNameReferenceExpression (identifier = with2Receivers, resolvesTo = null) [with2Receivers] : PsiType:Unit
-                                    ULiteralExpression (value = 8) [8] : PsiType:int
-                                    ULiteralExpression (value = 7.0) [7.0] : PsiType:float
+                            UReturnExpression [return "def".with2Receivers(8, 7.0)]
+                                UQualifiedReferenceExpression ["def".with2Receivers(8, 7.0)] : PsiType:Unit
+                                    ULiteralExpression (value = "def") ["def"] : PsiType:String
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with2Receivers(8, 7.0)] : PsiType:Unit
+                                        UIdentifier (Identifier (with2Receivers)) [UIdentifier (Identifier (with2Receivers))]
+                                        USimpleNameReferenceExpression (identifier = with2Receivers, resolvesTo = null) [with2Receivers] : PsiType:Unit
+                                        ULiteralExpression (value = 8) [8] : PsiType:int
+                                        ULiteralExpression (value = 7.0) [7.0] : PsiType:float
         UMethod (name = objectLiteral) [public static final fun objectLiteral() : void {...}]
             UBlockExpression [{...}] : PsiType:<ErrorType>
                 UObjectLiteralExpression [anonymous object : Parent(b = 1, a = "foo") { }] : PsiType:Parent

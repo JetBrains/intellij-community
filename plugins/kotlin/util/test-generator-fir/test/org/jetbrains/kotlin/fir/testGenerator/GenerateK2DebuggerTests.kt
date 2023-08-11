@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.*
+import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.testGenerator.model.*
 
 internal fun MutableTWorkspace.generateK2DebuggerTests() {
@@ -21,6 +22,10 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
                 model("stepping/filters", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest")
                 model("stepping/custom", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
             }
+        }
+        testClass<AbstractK2IdeK2CodeKotlinEvaluateExpressionTest> {
+            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR)
         }
         //
         //testClass<AbstractKotlinEvaluateExpressionTest> {

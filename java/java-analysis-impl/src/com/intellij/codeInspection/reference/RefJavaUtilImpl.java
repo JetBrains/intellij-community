@@ -248,6 +248,10 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
                        @Override
                        public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression methodRef) {
+                         UExpression qualifierExpression = methodRef.getQualifierExpression();
+                         if (qualifierExpression != null) {
+                           qualifierExpression.accept(this);
+                         }
                          RefElement refMethod = refManager.getReference(methodRef.getSourcePsi());
                          if (refFrom == refMethod) {
                            visitReferenceExpression(methodRef);
@@ -641,18 +645,17 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     return Integer.compare(getAccessNumber(a1), getAccessNumber(a2));
   }
 
-  @SuppressWarnings("StringEquality")
   private static int getAccessNumber(String a) {
-    if (a == PsiModifier.PRIVATE) {
+    if (PsiModifier.PRIVATE.equals(a)) {
       return 0;
     }
-    if (a == PsiModifier.PACKAGE_LOCAL) {
+    if (PsiModifier.PACKAGE_LOCAL.equals(a)) {
       return 1;
     }
-    if (a == PsiModifier.PROTECTED) {
+    if (PsiModifier.PROTECTED.equals(a)) {
       return 2;
     }
-    if (a == PsiModifier.PUBLIC) return 3;
+    if (PsiModifier.PUBLIC.equals(a)) return 3;
 
     return -1;
   }

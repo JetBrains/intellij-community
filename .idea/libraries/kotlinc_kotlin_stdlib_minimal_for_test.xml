@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-stdlib-minimal-for-test" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-stdlib-minimal-for-test-for-ide:1.9.20-dev-8143">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-stdlib-minimal-for-test-for-ide:1.9.30-dev-222">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.9.20-dev-8143/kotlin-stdlib-minimal-for-test-for-ide-1.9.20-dev-8143.jar">
-          <sha256sum>6c4df6978ac2dd6313c737583e58300148442add91932a008dcbcfb063704639</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.9.30-dev-222/kotlin-stdlib-minimal-for-test-for-ide-1.9.30-dev-222.jar">
+          <sha256sum>15a6e80e211fb0e917439a6df18e37fcd6a9c1ae9fc97ec9ab893674e7cce13e</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.9.20-dev-8143/kotlin-stdlib-minimal-for-test-for-ide-1.9.20-dev-8143.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.9.30-dev-222/kotlin-stdlib-minimal-for-test-for-ide-1.9.30-dev-222.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.9.20-dev-8143/kotlin-stdlib-minimal-for-test-for-ide-1.9.20-dev-8143-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.9.30-dev-222/kotlin-stdlib-minimal-for-test-for-ide-1.9.30-dev-222-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

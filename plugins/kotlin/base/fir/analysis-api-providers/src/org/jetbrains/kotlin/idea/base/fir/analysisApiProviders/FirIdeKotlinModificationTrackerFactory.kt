@@ -5,39 +5,29 @@ import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
-import org.jetbrains.kotlin.analysis.providers.KtModuleStateTracker
-import org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateTrackerProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
 
 internal class FirIdeKotlinModificationTrackerFactory(private val project: Project) : KotlinModificationTrackerFactory() {
-    private val modificationTrackerService = project.getService(FirIdeModificationTrackerService::class.java)
+    private val projectOutOfBlockModificationTracker
+        get() = FirIdeOutOfBlockModificationService.getInstance(project).projectOutOfBlockModificationTracker
 
-    override fun createProjectWideOutOfBlockModificationTracker(): ModificationTracker =
-        modificationTrackerService.projectOutOfBlockModificationTracker
+    private val libraryModificationTracker
+        get() = JavaLibraryModificationTracker.getInstance(project) as JavaLibraryModificationTracker
 
-    override fun createModuleWithoutDependenciesOutOfBlockModificationTracker(module: KtSourceModule): ModificationTracker =
-        modificationTrackerService.getModuleOutOfBlockModificationTracker(module.ideaModule)
+    override fun createProjectWideOutOfBlockModificationTracker(): ModificationTracker = projectOutOfBlockModificationTracker
 
-    override fun createLibrariesWideModificationTracker(): ModificationTracker {
-        return JavaLibraryModificationTracker.getInstance(project)
-    }
-
-    override fun createModuleStateTracker(module: KtModule): KtModuleStateTracker {
-        return KotlinModuleStateTrackerProvider.getInstance(project).getModuleStateTrackerFor(module)
-    }
+    override fun createLibrariesWideModificationTracker(): ModificationTracker = libraryModificationTracker
 
     @TestOnly
-    override fun incrementModificationsCount(includeBinaryTrackers: Boolean) {
+    internal fun incrementModificationsCount(includeBinaryTrackers: Boolean) {
+        projectOutOfBlockModificationTracker.incModificationCount()
         if (includeBinaryTrackers) {
-            (createLibrariesWideModificationTracker() as JavaLibraryModificationTracker).incModificationCount()
+            libraryModificationTracker.incModificationCount()
         }
+    }
 
-        // `FirIdeModificationTrackerService` is for source modules only.
-        modificationTrackerService.increaseModificationCountForAllModules()
-
-        KotlinModuleStateTrackerProvider.getInstance(project).incrementModificationCountForAllModules(includeBinaryTrackers)
+    companion object {
+        fun getInstance(project: Project): FirIdeKotlinModificationTrackerFactory =
+            KotlinModificationTrackerFactory.getInstance(project) as FirIdeKotlinModificationTrackerFactory
     }
 }

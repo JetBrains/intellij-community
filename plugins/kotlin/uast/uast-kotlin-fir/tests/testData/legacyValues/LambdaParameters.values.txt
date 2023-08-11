@@ -2,21 +2,22 @@ UFile (package = ) [public final class LambdaParametersKt {...]
     UClass (name = LambdaParametersKt) [public final class LambdaParametersKt {...}]
         UMethod (name = lambdaWithRecivier) [public static final fun lambdaWithRecivier() : void {...}]
             UBlockExpression [{...}] = external buildString({
-    append("a")
+    return append("a")
 })(Undetermined)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [buildString({ ...})] = external buildString({
-    append("a")
+    return append("a")
 })(Undetermined)
                     UIdentifier (Identifier (buildString)) [UIdentifier (Identifier (buildString))]
                     USimpleNameReferenceExpression (identifier = buildString, resolvesTo = null) [buildString] = external buildString({
-    append("a")
+    return append("a")
 })(Undetermined)
                     ULambdaExpression [{ ...}] = Undetermined
-                        UBlockExpression [{...}] = external append("a")("a")
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [append("a")] = external append("a")("a")
-                                UIdentifier (Identifier (append)) [UIdentifier (Identifier (append))]
-                                USimpleNameReferenceExpression (identifier = append, resolvesTo = null) [append] = external append("a")("a")
-                                ULiteralExpression (value = "a") ["a"] = "a"
+                        UBlockExpression [{...}] = Nothing
+                            UReturnExpression [return append("a")] = Nothing
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [append("a")] = external append("a")("a")
+                                    UIdentifier (Identifier (append)) [UIdentifier (Identifier (append))]
+                                    USimpleNameReferenceExpression (identifier = append, resolvesTo = null) [append] = external append("a")("a")
+                                    ULiteralExpression (value = "a") ["a"] = "a"
         UMethod (name = itParameter) [public static final fun itParameter() : void {...}]
             UBlockExpression [{...}] = external let({ var it: int ->
 

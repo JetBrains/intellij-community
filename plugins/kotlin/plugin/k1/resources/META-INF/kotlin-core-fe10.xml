@@ -25,6 +25,9 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility"
             serviceImplementation="org.jetbrains.kotlin.idea.core.overrideImplement.Fe10OverrideImplementFacility"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.compiler.K1KotlinCompilerIdeAllowedErrorFilter"/>
 
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.util.FirPluginOracleService"

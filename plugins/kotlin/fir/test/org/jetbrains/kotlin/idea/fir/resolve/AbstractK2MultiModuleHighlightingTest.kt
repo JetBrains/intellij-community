@@ -74,8 +74,10 @@ abstract class AbstractK2MultiModuleHighlightingTest : AbstractMultiModuleTest()
         val dep = ModuleManager.getInstance(project).findModuleByName(moduleName)!!
         val targetFileInTemp = dep.sourceRoots[0].findFileByRelativePath(relativePath)!!
         WriteCommandAction.writeCommandAction(project).run<RuntimeException> {
-            //this should trigger cache invalidation
-            (PsiManager.getInstance(project).findFile(targetFileInTemp) as PsiClassOwner).classes[0].unwrapped!!.delete()
+            // This should trigger cache invalidation.
+            val psiFile = (PsiManager.getInstance(project).findFile(targetFileInTemp) as PsiClassOwner)
+            val psiClassOrKtClass = psiFile.classes[0].unwrapped!! as PsiNamedElement
+            psiClassOrKtClass.setName("Element2")
         }
         assertNull(psiReference.resolve())
     }

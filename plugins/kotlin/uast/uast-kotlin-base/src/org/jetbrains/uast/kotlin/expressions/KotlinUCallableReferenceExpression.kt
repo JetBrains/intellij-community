@@ -7,6 +7,8 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.getResolveResultVariants
 
@@ -23,7 +25,10 @@ class KotlinUCallableReferenceExpression(
         }
 
     override val qualifierType by lz {
-        baseResolveProviderService.getDoubleColonReceiverType(sourcePsi, this)
+        if (sourcePsi.receiverExpression !is KtNameReferenceExpression && sourcePsi.receiverExpression !is KtDotQualifiedExpression) {
+            null
+        } else
+            baseResolveProviderService.getDoubleColonReceiverType(sourcePsi, this)
     }
 
     override val callableName: String

@@ -5,7 +5,7 @@ Value: KtLightClassForDecompiledDeclaration of PsiFile:ArraysKt___ArraysKt.class
 Value file: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___ArraysKt.class
 
 Navigation item #0: KtFile: _Arrays.kt
-Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
+Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays.kt
 
 
 -Project

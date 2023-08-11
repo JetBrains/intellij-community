@@ -155,14 +155,16 @@ class ModuleInfoProvider(private val project: Project) {
             }
         }
 
-        val virtualFile = containingFile.originalFile.virtualFile
-        if (virtualFile != null) {
-            val isLibrarySource = if (containingKtFile != null) isLibrarySource(containingKtFile, config) else false
-            collectByFile(virtualFile, isLibrarySource)
-            callExtensions { collectByElement(element, containingFile, virtualFile) }
-        } else {
-            val message = "Analyzing element of type ${element::class.java} in non-physical file of type ${containingFile::class.java}"
-            reportError(KotlinExceptionWithAttachments(message).withAttachment("file.kt", containingFile.text))
+        if (containingFile != null) {
+            val virtualFile = containingFile.originalFile.virtualFile
+            if (virtualFile != null) {
+                val isLibrarySource = if (containingKtFile != null) isLibrarySource(containingKtFile, config) else false
+                collectByFile(virtualFile, isLibrarySource)
+                callExtensions { collectByElement(element, containingFile, virtualFile) }
+            } else {
+                val message = "Analyzing element of type ${element::class.java} in non-physical file of type ${containingFile::class.java}"
+                reportError(KotlinExceptionWithAttachments(message).withAttachment("file.kt", containingFile.text))
+            }
         }
     }
 

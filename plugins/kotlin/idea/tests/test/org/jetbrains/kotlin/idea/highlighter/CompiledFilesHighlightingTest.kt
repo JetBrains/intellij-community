@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
@@ -16,8 +17,12 @@ import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.io.URLUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.idea.actions.bytecode.KotlinBytecodeToolWindow
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.jvmDecompiler.KotlinBytecodeDecompiler
 import org.jetbrains.kotlin.idea.jvmDecompiler.KotlinBytecodeDecompilerTask
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
@@ -51,7 +56,14 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
             doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlibCommonSources, FileHighlightingSetting.SKIP_HIGHLIGHTING) {
                 val file = PsiManager.getInstance(project).findFile(it) ?: error("unable to locate PSI for $it")
                 val ktFile = file as? KtFile ?: error("file expected to be KtFile")
-                KotlinBytecodeDecompilerTask(ktFile).generateDecompiledVirtualFile() ?: error("unable to generate decompiled file")
+
+                val decompiledText = runBlocking(Dispatchers.Default) {
+                    readAction {
+                        KotlinBytecodeDecompiler.decompile(ktFile) ?: error("Cannot decompile file $ktFile")
+                    }
+                }
+
+                KotlinBytecodeDecompilerTask(ktFile).generateDecompiledVirtualFile(decompiledText)
             }
         }
     }

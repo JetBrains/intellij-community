@@ -36,7 +36,7 @@ abstract class AbstractAddImportActionTestBase : KotlinLightCodeInsightFixtureTe
                 actualVariants = variants
             }
         }
-        KotlinAddImportActionInfo.setExecuteListener(testRootDisposable, executeListener)
+        KotlinAddImportActionInfo.setExecuteListener(file, testRootDisposable, executeListener)
 
         (StatisticsManager.getInstance() as StatisticsManagerImpl).enableStatistics(myFixture.testRootDisposable)
         increaseUseCountOf(InTextDirectivesUtils.findListWithPrefixes(fixture.file.text, INCREASE_USE_COUNT_DIRECTIVE))

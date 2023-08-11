@@ -10,3 +10,5 @@ fun main() {
 
 // EXPRESSION: i
 // RESULT: "InlineMe(x=1)": Ljava/lang/String;
+
+// IGNORE_K2

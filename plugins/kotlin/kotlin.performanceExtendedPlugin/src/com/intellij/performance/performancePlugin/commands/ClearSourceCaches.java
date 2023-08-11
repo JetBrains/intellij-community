@@ -11,8 +11,7 @@ import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
-import org.jetbrains.kotlin.analysis.api.session.KtAnalysisSessionProvider;
-import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory;
+import org.jetbrains.kotlin.analysis.providers.KotlinGlobalModificationService;
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinIDEModificationTrackerService;
 
 public class ClearSourceCaches extends AbstractCommand {
@@ -32,8 +31,7 @@ public class ClearSourceCaches extends AbstractCommand {
             PsiManager.getInstance(project).dropPsiCaches();
             KotlinIDEModificationTrackerService.Companion.invalidateCaches(project);
             if (System.getProperty("idea.kotlin.plugin.use.k2", "false").equals("true")) {
-                KtAnalysisSessionProvider.Companion.getInstance(project).clearCaches();
-                project.getService(KotlinModificationTrackerFactory.class).incrementModificationsCount(false);
+                KotlinGlobalModificationService.Companion.getInstance(project).publishGlobalSourceModuleStateModification();
             }
             actionCallback.setDone();
         });

@@ -17,7 +17,7 @@
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.psi" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
-    <orderEntry type="module" module-name="kotlin.base.highlighting" />
+    <orderEntry type="module" module-name="kotlin.highlighting.shared" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />

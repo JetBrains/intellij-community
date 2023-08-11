@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.k2.highlighting.AbstractOutsiderHighlightingTes
 import org.jetbrains.kotlin.testGenerator.model.*
 
 internal fun MutableTWorkspace.generateK2HighlighterTests() {
-    testGroup("highlighting", testDataPath = "../idea/tests/testData") {
+    testGroup("highlighting/highlighting-k2", testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2HighlightingMetaInfoTest> {
             model("highlighterMetaInfo")
         }
@@ -27,7 +27,7 @@ internal fun MutableTWorkspace.generateK2HighlighterTests() {
         }
     }
 
-    testGroup("highlighting") {
+    testGroup("highlighting/highlighting-k2", testDataPath = "testData") {
         testClass<AbstractOutsiderHighlightingTest> {
             model("outsider", pattern = Patterns.DIRECTORY, isRecursive = false, passTestDataPath = false)
         }
