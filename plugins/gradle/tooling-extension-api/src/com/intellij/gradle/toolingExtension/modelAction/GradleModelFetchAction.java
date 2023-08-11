@@ -22,6 +22,7 @@ import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 /**
@@ -145,15 +146,16 @@ public class GradleModelFetchAction {
     }
   }
 
+  private void forEachModelFetchPhase(@NotNull BiConsumer<GradleModelFetchPhase, List<ProjectImportModelProvider>> consumer) {
+    myModelProviders.stream()
+      .collect(Collectors.groupingBy(it -> it.getPhase())).entrySet().stream()
+      .sorted(Map.Entry.comparingByKey())
+      .forEachOrdered(it -> consumer.accept(it.getKey(), it.getValue()));
+  }
+
   private void addModels(@NotNull BuildController controller, @NotNull GradleBuild gradleBuild) {
     try {
-      List<Map.Entry<GradleModelFetchPhase, List<ProjectImportModelProvider>>> phasedModelProviders =
-        myModelProviders.stream()
-          .collect(Collectors.groupingBy(it -> it.getPhase())).entrySet().stream()
-          .sorted(Map.Entry.comparingByKey())
-          .collect(Collectors.toList());
-      for (Map.Entry<GradleModelFetchPhase, List<ProjectImportModelProvider>> entry : phasedModelProviders) {
-        List<ProjectImportModelProvider> modelProviders = entry.getValue();
+      forEachModelFetchPhase((__, modelProviders) -> {
         for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
           for (ProjectImportModelProvider modelProvider : modelProviders) {
             addProjectModels(controller, gradleProject, modelProvider);
@@ -162,7 +164,7 @@ public class GradleModelFetchAction {
         for (ProjectImportModelProvider modelProvider : modelProviders) {
           addBuildModels(controller, gradleBuild, modelProvider);
         }
-      }
+      });
     }
     catch (Exception e) {
       // do not fail project import in a preview mode
