@@ -2811,6 +2811,12 @@ public final class HighlightUtil {
           return null;
         }
 
+        if (expression instanceof PsiJavaCodeReferenceElement &&
+            expression.getParent() instanceof PsiNewExpression newExpression &&
+            newExpression.isArrayCreation() && newExpression.getClassOrAnonymousClassReference() == expression) {
+          return null;
+        }
+
         HighlightInfo.Builder builder = createMemberReferencedError(resolvedName, expression.getTextRange());
         if (expression instanceof PsiReferenceExpression ref && PsiUtil.isInnerClass(parentClass)) {
           String referenceName = ref.getReferenceName();
