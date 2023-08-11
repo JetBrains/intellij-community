@@ -183,12 +183,18 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
     }
 
     private val STDLIB_MODULES = setOf(
-        "org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}}",
+        "org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}}", // Before 1.9.20
+        "org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}}", // After 1.9.20
+        "org.jetbrains.kotlin:kotlin-stdlib:all:{{KGP_VERSION}}", // Supporting disabled KGP based dependency resolution after 1.9.20
         "org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}}",
         "org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}}",
         "org.jetbrains:annotations:13.0",
         "org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}}",
         "org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}}",
+
+        /* In higher KGP versions, we constrain jdk7 & jdk8 to resolve to the empty 1.8.0 artifacts*/
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0",
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0",
     )
 
     // Old import: Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
