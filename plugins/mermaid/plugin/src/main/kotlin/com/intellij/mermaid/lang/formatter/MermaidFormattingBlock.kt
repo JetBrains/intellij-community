@@ -53,6 +53,10 @@ internal open class MermaidFormattingBlock(
   }
 
   override fun buildChildren(): List<Block> {
+    if (node.hasType(MermaidElements.FRONTMATTER_CONTENT)) {
+      return emptyList()
+    }
+
     val children = node.children()
 
     var alignment: Alignment? = null

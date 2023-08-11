@@ -47,7 +47,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 %state acc_descr_value
 %state acc_descr_multiline_value
 
-%states frontmatter, frontmatter_value
+%xstates frontmatter
 
 %states pie, pie_title, pie_title_value, value
 
@@ -126,13 +126,9 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "%%" { yypopstate(); return Directives.CLOSE_DIRECTIVE; }
 }
 <frontmatter> {
-  [\n\r] { yybegin(frontmatter_value); return EOL; }
-}
-<frontmatter_value> {
-  [^-\n\r]+ { }
-  [\n\r]/"---" { return Frontmatter.FRONTMATTER_VALUE; }
-  [^] { }
   "---" { yybegin(YYINITIAL); return Frontmatter.FRONTMATTER_END; }
+  [^\n\r]+ { return Frontmatter.FRONTMATTER_VALUE; }
+  [\n\r] { return EOL; }
 }
 
 <pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, timeline, quadrant, sankey> {
