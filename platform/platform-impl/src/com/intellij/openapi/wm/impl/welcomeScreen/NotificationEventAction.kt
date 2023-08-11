@@ -63,8 +63,8 @@ internal class NotificationEventAction(parentDisposable: Disposable) : DumbAware
       balloonLayout.locationComponent = getComponent(e)
     }
 
-    balloonLayout.showPopup()
     selected = true
+    balloonLayout.showPopup()
   }
 
   private fun getComponent(e: AnActionEvent): JComponent {

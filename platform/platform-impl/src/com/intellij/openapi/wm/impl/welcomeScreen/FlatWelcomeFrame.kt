@@ -114,7 +114,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 
   init {
     val rootPane = getRootPane()
-    balloonLayout = WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8))
+    balloonLayout = createBalloonLayout()
 
     screen = suggestedScreen ?: FlatWelcomeScreen(frame = this)
     executeOnCancelInEdt(coroutineScope) {
@@ -158,7 +158,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     })
     connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       balloonLayout?.dispose()
-      balloonLayout = WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8))
+      balloonLayout = createBalloonLayout()
       updateComponentsAndResize()
       repaint()
     })
@@ -184,6 +184,14 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     )
     app.invokeLater({ (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).dispatchEarlyNotifications() },
                     ModalityState.nonModal())
+  }
+
+  private fun createBalloonLayout(): WelcomeBalloonLayoutImpl {
+    val insets = JBUI.insets(8)
+    if (ExperimentalUI.isNewUI()) {
+      return WelcomeSeparateBalloonLayoutImpl(rootPane, insets)
+    }
+    return WelcomeBalloonLayoutImpl(rootPane, insets)
   }
 
   override fun removeNotify() {

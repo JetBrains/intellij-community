@@ -146,6 +146,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
                 }
               }
             }
+            else if (myHideListener instanceof HideListenerWithMouse listener) {
+              listener.run(me);
+            }
             else {
               myHideListener.run();
             }
@@ -268,7 +271,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   private boolean myAnimationEnabled = true;
   private final boolean myShadow;
   private final Layer myLayer;
-  private final boolean myBlockClicks;
+  private boolean myBlockClicks;
   private RelativePoint myPrevMousePoint;
 
   private boolean isInsideBalloon(@NotNull MouseEvent me) {
@@ -1771,6 +1774,16 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     private final JComponent myContent;
     private ShadowBorderPainter.Shadow myShadow;
 
+    @Override
+    public void setVisible(boolean aFlag) {
+      if (myActionButtons != null) {
+        for (ActionButton button : myActionButtons) {
+          button.setVisible(aFlag);
+        }
+      }
+      super.setVisible(aFlag);
+    }
+
     private MyComponent(JComponent content, BalloonImpl balloon, EmptyBorder shapeBorder) {
       setOpaque(false);
       setLayout(null);
@@ -2208,6 +2221,10 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     return myAnimationEnabled && myAnimationCycle > 0 && !RemoteDesktopService.isRemoteSession();
   }
 
+  public void setBlockClicks(boolean blockClicks) {
+    myBlockClicks = blockClicks;
+  }
+
   public boolean isBlockClicks() {
     return myBlockClicks;
   }
@@ -2224,5 +2241,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
   public void setId(String id) {
     myId = id;
+  }
+
+  public interface HideListenerWithMouse extends Runnable {
+    void run(MouseEvent event);
   }
 }

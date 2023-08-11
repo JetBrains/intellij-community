@@ -294,8 +294,8 @@ public final class WelcomeScreenComponentFactory {
             welcomeBalloonLayout.setHideListener(() -> selectablePanel.setSelectionColor(null));
             hideListenerInstalled = true;
           }
-          welcomeBalloonLayout.showPopup();
           selectablePanel.setSelectionColor(JBUI.CurrentTheme.ActionButton.pressedBackground());
+          welcomeBalloonLayout.showPopup();
         }
       }
     });

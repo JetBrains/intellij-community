@@ -35,13 +35,13 @@ import static com.intellij.notification.impl.NotificationsManagerImpl.FILL_COLOR
 public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   public static final Topic<BalloonNotificationListener> BALLOON_NOTIFICATION_TOPIC =
     Topic.create("balloon notification changed", BalloonNotificationListener.class);
-  private static final String TYPE_KEY = "Type";
+  protected static final String TYPE_KEY = "Type";
 
-  private @Nullable Component myLayoutBaseComponent;
+  protected @Nullable Component myLayoutBaseComponent;
   private BalloonImpl myPopupBalloon;
   private final BalloonPanel myBalloonPanel = new BalloonPanel();
-  private boolean myVisible;
-  private Runnable hideListener;
+  protected boolean myVisible;
+  protected Runnable hideListener;
 
   public WelcomeBalloonLayoutImpl(@NotNull JRootPane parent, @NotNull Insets insets) {
     super(parent, insets);
