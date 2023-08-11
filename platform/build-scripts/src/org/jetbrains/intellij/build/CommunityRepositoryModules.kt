@@ -69,7 +69,9 @@ object CommunityRepositoryModules {
     plugin("intellij.vcs.svn") { spec ->
       spec.withProjectLibrary("sqlite")
     },
-    plugin("intellij.jsonpath"),
+    plugin("intellij.jsonpath") { spec ->
+      spec.withProjectLibrary("jsonpath")
+    },
     plugin("intellij.xpath") { spec ->
       spec.withModule("intellij.xpath.rt", "rt/xslt-rt.jar")
     },
@@ -85,6 +87,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.tasks.jira")
       spec.withModule("intellij.tasks.java")
       spec.withProjectLibrary("XmlRPC")
+      spec.withProjectLibrary("jsonpath")
     },
     plugin("intellij.xslt.debugger") { spec ->
       spec.withModule("intellij.xslt.debugger.rt", "xslt-debugger-rt.jar")

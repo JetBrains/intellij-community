@@ -19,7 +19,6 @@
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
-    <orderEntry type="library" name="jsonpath" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
   </component>
 </module>
