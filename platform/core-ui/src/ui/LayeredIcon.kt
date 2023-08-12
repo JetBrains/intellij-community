@@ -56,6 +56,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
 
   constructor() : this(layerCount = 0)
 
+  @Deprecated(message = "Use [layeredIcon]")
   constructor(vararg icons: Icon) {
     val layerCount = icons.size
 
@@ -100,6 +101,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     @JvmStatic
     fun layeredIcon(icons: Supplier<Array<Icon>>): LayeredIcon = LayeredIcon(icons)
 
+    @Suppress("DEPRECATION")
     @JvmStatic
     fun layeredIcon(icons: Array<Icon>): LayeredIcon = LayeredIcon(*icons)
 

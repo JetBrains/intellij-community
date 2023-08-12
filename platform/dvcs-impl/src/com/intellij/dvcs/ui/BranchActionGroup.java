@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AlwaysVisibleActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.EmptyIcon;
 import icons.DvcsImplIcons;
 import org.jetbrains.annotations.NotNull;
@@ -62,9 +62,8 @@ public abstract class BranchActionGroup extends ActionGroup implements DumbAware
 
   public boolean hasOutgoingCommits() { return false; }
 
-  @Nullable
   @Override
-  public Icon getRightIcon() {
+  public @Nullable Icon getRightIcon() {
     if (hasIncomingCommits()) {
       return hasOutgoingCommits() ? getIncomingOutgoingIcon() : DvcsImplIcons.Incoming;
     }
@@ -72,6 +71,6 @@ public abstract class BranchActionGroup extends ActionGroup implements DumbAware
   }
 
   public static Icon getIncomingOutgoingIcon() {
-    return ExperimentalUI.isNewUI() ? new RowIcon(DvcsImplIcons.Incoming, DvcsImplIcons.Outgoing) : DvcsImplIcons.IncomingOutgoing;
+    return ExperimentalUI.isNewUI() ? IconManager.getInstance().createRowIcon(DvcsImplIcons.Incoming, DvcsImplIcons.Outgoing) : DvcsImplIcons.IncomingOutgoing;
   }
 }
