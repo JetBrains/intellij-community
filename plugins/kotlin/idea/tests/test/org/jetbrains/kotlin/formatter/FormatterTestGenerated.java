@@ -38,6 +38,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/callChain/CallChainWrapping2.after.kt");
             }
 
+            @TestMetadata("CallChainWrappingAlignMultiline.after.kt")
+            public void testCallChainWrappingAlignMultiline() throws Exception {
+                runTest("testData/formatter/callChain/CallChainWrappingAlignMultiline.after.kt");
+            }
+
             @TestMetadata("CallChainWrappingChopDown.after.kt")
             public void testCallChainWrappingChopDown() throws Exception {
                 runTest("testData/formatter/callChain/CallChainWrappingChopDown.after.kt");
@@ -111,6 +116,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @TestMetadata("NotCallChain.after.kt")
             public void testNotCallChain() throws Exception {
                 runTest("testData/formatter/callChain/NotCallChain.after.kt");
+            }
+
+            @TestMetadata("SafeCallChainWrappingAlignMultiline.after.kt")
+            public void testSafeCallChainWrappingAlignMultiline() throws Exception {
+                runTest("testData/formatter/callChain/SafeCallChainWrappingAlignMultiline.after.kt");
             }
         }
 
