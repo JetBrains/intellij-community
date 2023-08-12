@@ -22,7 +22,7 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
   private var width = 0
   private var height = 0
   private val icons: Array<Icon?>
-  private var myScaledIcons: Array<Icon?>?
+  private var scaledIcons: Array<Icon?>?
 
   init {
     scaleContext.addUpdateListener(UserScaleContext.UpdateListener { updateSize() })
@@ -45,7 +45,7 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
   constructor(iconCount: Int, alignment: com.intellij.ui.icons.RowIcon.Alignment = com.intellij.ui.icons.RowIcon.Alignment.TOP) {
     this.alignment = alignment
     icons = arrayOfNulls(iconCount)
-    myScaledIcons = null
+    scaledIcons = null
   }
 
   constructor(vararg icons: Icon?) : this(icons.size) {
@@ -57,7 +57,7 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
     width = icon.width
     height = icon.height
     icons = icon.icons.clone()
-    myScaledIcons = null
+    scaledIcons = null
   }
 
   override fun replaceBy(replacer: IconReplacer): RowIcon {
@@ -78,11 +78,11 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
     return result
   }
 
-  private fun myScaledIcons(): Array<Icon?> {
-    myScaledIcons?.let {
+  private fun getOrComputeScaledIcons(): Array<Icon?> {
+    scaledIcons?.let {
       return it
     }
-    return scaleIcons(icons, scale).also { myScaledIcons = it }
+    return scaleIcons(icons, scale).also { scaledIcons = it }
   }
 
   override fun getAllIcons() = icons.filterNotNull()
@@ -95,7 +95,7 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
 
   override fun setIcon(icon: Icon?, layer: Int) {
     icons[layer] = icon
-    myScaledIcons = null
+    scaledIcons = null
     updateSize()
   }
 
@@ -106,7 +106,7 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
     scaleContext.update()
     var _x = x
     var _y: Int
-    for (icon in myScaledIcons()) {
+    for (icon in getOrComputeScaledIcons()) {
       if (icon == null) {
         continue
       }
@@ -148,7 +148,7 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
 
       width += icon.iconWidth
       //height += icon.getIconHeight();
-      height = max(height.toDouble(), icon.iconHeight.toDouble()).toInt()
+      height = max(height, icon.iconHeight)
     }
     this.width = width
     this.height = height
@@ -162,7 +162,7 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
     return newIcon
   }
 
-  override fun toString() = "RowIcon(icons=${icons.joinToString(separator = ", ")})"
+  override fun toString() = "RowIcon(icons=[${icons.joinToString(separator = ", ")}])"
 
   override fun getToolTip(composite: Boolean) = combineIconTooltips(icons)
 }
