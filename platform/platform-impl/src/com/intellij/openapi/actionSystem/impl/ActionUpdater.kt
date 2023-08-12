@@ -23,11 +23,10 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.client.ClientSessionsManager.Companion.getAppSession
 import com.intellij.openapi.client.ClientSessionsManager.Companion.getProjectSession
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicatorProvider
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
@@ -39,17 +38,18 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
 import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
 import com.intellij.util.*
-import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.BoundedTaskExecutor
 import com.intellij.util.containers.*
 import com.intellij.util.ui.EDT
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.CancellablePromise
 import java.awt.AWTEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.lang.Runnable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
@@ -58,6 +58,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.swing.JComponent
+import kotlin.time.Duration.Companion.minutes
 
 private val LOG = logger<ActionUpdater>()
 
@@ -70,21 +71,59 @@ private val ourPromises: MutableSet<CancellablePromise<*>> = ConcurrentCollectio
 private val ourToolbarPromises: MutableSet<CancellablePromise<*>> = ConcurrentCollectionFactory.createConcurrentSet()
 private var ourInEDTActionOperationStack: FList<String> = FList.emptyList()
 
-private class MyExecutor(private val name: String) : Executor {
+private class MyExecutor(name: String, private val coroutineScope: CoroutineScope) : Executor {
+  private val coroutineName = CoroutineName(name)
+
   override fun execute(command: Runnable) {
-    val threadName = name + if (command is NamedRunnable) " ($command)" else ""
-    AppExecutorUtil.getAppExecutorService().execute {
-      ConcurrencyUtil.runUnderThreadName(threadName, command)
+    val name = if (command is NamedRunnable) CoroutineName("${coroutineName.name} ($command)") else coroutineName
+    coroutineScope.launch(name) {
+      blockingContext {
+        command.run()
+      }
     }
   }
 }
 
-@JvmField
-internal val beforePerformedExecutor: Executor = MyExecutor("Action Updater (Exclusive)")
+internal val beforePerformedExecutor: Executor
+  get() = service<ActionUpdateExecutorManager>().beforePerformedExecutor
 
-private val fastTrackExecutor: Executor = MyExecutor("Action Updater (Fast)")
-private val commonExecutor: Executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2)
 private val fastTrackToolbarsCount = AtomicInteger()
+
+@Service
+private class ActionUpdateExecutorManager(private val coroutineScope: CoroutineScope) {
+  private val fastTrackExecutor: Executor = MyExecutor("Action Updater (Fast)", coroutineScope)
+
+  @JvmField
+  val beforePerformedExecutor: Executor = MyExecutor("Action Updater (Exclusive)", coroutineScope)
+
+  private val commonExecutor: Executor = object : Executor {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val commonExecutorCoroutineContext = Dispatchers.Default.limitedParallelism(2) + CoroutineName("Action Updater (Common)")
+
+    override fun execute(it: Runnable) {
+      coroutineScope.launch(commonExecutorCoroutineContext) {
+        blockingContext {
+          it.run()
+        }
+      }
+    }
+  }
+
+  fun getExecutor(useFastTrack: Boolean): Executor = if (useFastTrack) fastTrackExecutor else commonExecutor
+
+  fun waitForAllUpdatesToFinish() {
+    val jobs = coroutineScope.coroutineContext.job.children.toList()
+    if (jobs.isEmpty()) {
+      return
+    }
+
+    coroutineScope.launch {
+      withTimeout(1.minutes) {
+        jobs.joinAll()
+      }
+    }.asCompletableFuture().join()
+  }
+}
 
 internal class ActionUpdater @JvmOverloads constructor(
   private val presentationFactory: PresentationFactory,
@@ -356,7 +395,6 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
     // only one toolbar fast-track at a time
     val useFastTrack = edtExecutor != null && !(toolbarAction && fastTrackToolbarsCount.get() > 0)
-    val executor = if (useFastTrack) fastTrackExecutor else commonExecutor
     if (useFastTrack && toolbarAction) {
       fastTrackToolbarsCount.incrementAndGet()
     }
@@ -412,7 +450,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       }
     }
     val current = Context.current()
-    executor.execute(object : NamedRunnable(place) {
+    service<ActionUpdateExecutorManager>().getExecutor(useFastTrack).execute(object : NamedRunnable(place) {
       override fun run() {
         current.makeCurrent().use { runnable.run() }
       }
@@ -715,7 +753,7 @@ private fun cancelPromises(promises: MutableCollection<CancellablePromise<*>>, r
 }
 
 internal fun waitForAllUpdatesToFinish() {
-  (commonExecutor as BoundedTaskExecutor).waitAllTasksExecuted(1, TimeUnit.MINUTES)
+  service<ActionUpdateExecutorManager>().waitForAllUpdatesToFinish()
 }
 
 private fun removeUnnecessarySeparators(visible: List<AnAction>): List<AnAction> {
